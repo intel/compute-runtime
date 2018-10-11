@@ -20,8 +20,7 @@ using namespace OCLRT;
 TEST(CommandTest, mapUnmapSubmitWithoutTerminateFlagFlushesCsr) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr;
-    csr.setMemoryManager(device->getMemoryManager());
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -38,8 +37,7 @@ TEST(CommandTest, mapUnmapSubmitWithoutTerminateFlagFlushesCsr) {
 TEST(CommandTest, mapUnmapSubmitWithTerminateFlagAbortsFlush) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr;
-    csr.setMemoryManager(device->getMemoryManager());
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -59,8 +57,7 @@ TEST(CommandTest, mapUnmapSubmitWithTerminateFlagAbortsFlush) {
 TEST(CommandTest, markerSubmitWithoutTerminateFlagFlushesCsr) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr;
-    csr.setMemoryManager(device->getMemoryManager());
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -74,7 +71,7 @@ TEST(CommandTest, markerSubmitWithoutTerminateFlagFlushesCsr) {
 TEST(CommandTest, markerSubmitWithTerminateFlagAbortsFlush) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
-    MockCommandStreamReceiver csr;
+    MockCommandStreamReceiver csr(*device->getExecutionEnvironment());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();

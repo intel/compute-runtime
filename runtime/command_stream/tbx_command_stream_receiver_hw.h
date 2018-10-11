@@ -28,7 +28,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
     typedef typename OCLRT::AUBFamilyMapper<GfxFamily>::AUB AUB;
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
-    using CommandStreamReceiverHw<GfxFamily>::memoryManager;
 
   public:
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
@@ -65,8 +64,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     } engineInfoTable[EngineType::NUM_ENGINES];
 
     MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
-        memoryManager = new TbxMemoryManager(enable64kbPages, enableLocalMemory, this->executionEnvironment);
-        return memoryManager;
+        return new TbxMemoryManager(enable64kbPages, enableLocalMemory, this->executionEnvironment);
     }
     TbxMemoryManager *getMemoryManager() {
         return (TbxMemoryManager *)CommandStreamReceiver::getMemoryManager();

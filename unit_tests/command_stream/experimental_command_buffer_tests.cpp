@@ -160,26 +160,6 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(expectedExOffset, mockExCmdBuffer->experimentalAllocationOffset);
 }
 
-HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhenMemoryManagerIsNotAvailableThenExperimentalBufferAllocationsRemainAllocated) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    MockExperimentalCommandBuffer *mockExCmdBuffer = static_cast<MockExperimentalCommandBuffer *>(commandStreamReceiver.experimentalCmdBuffer.get());
-
-    EXPECT_NE(nullptr, mockExCmdBuffer->experimentalAllocation);
-    EXPECT_NE(nullptr, mockExCmdBuffer->timestamps);
-
-    auto experimentalAllocation = mockExCmdBuffer->experimentalAllocation;
-    auto timestamps = mockExCmdBuffer->timestamps;
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-
-    //null memManager
-    commandStreamReceiver.setMemoryManager(nullptr);
-    //delete experimental cmd buffer and verify its allocations remain intact
-    commandStreamReceiver.setExperimentalCmdBuffer(std::move(std::unique_ptr<ExperimentalCommandBuffer>(nullptr)));
-    memoryManager->freeGraphicsMemory(experimentalAllocation);
-    memoryManager->freeGraphicsMemory(timestamps);
-    commandStreamReceiver.setMemoryManager(memoryManager);
-}
-
 HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhenCsrIsFlushedTwiceThenExpectProperlyFilledExperimentalCmdBufferAndTimestampOffset) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;

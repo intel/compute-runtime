@@ -132,7 +132,6 @@ HWTEST_F(DrmRequirementsTests, enqueueKernelFinish) {
 HWTEST_F(DrmRequirementsTests, csrNewCS) {
     CommandStreamReceiver *pCSR = new UltCommandStreamReceiver<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCSR);
-    pCSR->setMemoryManager(pDevice->getMemoryManager());
     auto memoryManager = pCSR->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
     {
@@ -158,7 +157,6 @@ HWTEST_F(DrmRequirementsTests, csrNewCS) {
 HWTEST_F(DrmRequirementsTests, csrNewCSSized) {
     CommandStreamReceiver *pCSR = new UltCommandStreamReceiver<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCSR);
-    pCSR->setMemoryManager(pDevice->getMemoryManager());
     auto memoryManager = pCSR->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
     {

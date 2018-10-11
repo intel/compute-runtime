@@ -106,14 +106,13 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
         createAubCSR = GetParam();
         csrWithAubDump = new MyMockCsrWithAubDump<MyMockCsr>(DEFAULT_TEST_PLATFORM::hwInfo, createAubCSR, executionEnvironment);
         ASSERT_NE(nullptr, csrWithAubDump);
-
         memoryManager = csrWithAubDump->createMemoryManager(false, false);
+        executionEnvironment.memoryManager.reset(memoryManager);
         ASSERT_NE(nullptr, memoryManager);
     }
 
     void TearDown() override {
         delete csrWithAubDump;
-        delete memoryManager;
     }
     ExecutionEnvironment executionEnvironment;
     MyMockCsrWithAubDump<MyMockCsr> *csrWithAubDump;

@@ -37,14 +37,12 @@ ExperimentalCommandBuffer::~ExperimentalCommandBuffer() {
         timestamp += 2;
     }
     MemoryManager *memoryManager = commandStreamReceiver->getMemoryManager();
-    if (memoryManager) {
-        memoryManager->freeGraphicsMemory(timestamps);
-        memoryManager->freeGraphicsMemory(experimentalAllocation);
+    memoryManager->freeGraphicsMemory(timestamps);
+    memoryManager->freeGraphicsMemory(experimentalAllocation);
 
-        if (currentStream.get()) {
-            memoryManager->freeGraphicsMemory(currentStream->getGraphicsAllocation());
-            currentStream->replaceGraphicsAllocation(nullptr);
-        }
+    if (currentStream.get()) {
+        memoryManager->freeGraphicsMemory(currentStream->getGraphicsAllocation());
+        currentStream->replaceGraphicsAllocation(nullptr);
     }
 }
 

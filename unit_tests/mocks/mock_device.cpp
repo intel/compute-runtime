@@ -21,7 +21,6 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(&hwInfo, *this->executionEnvironment);
     executionEnvironment->commandStreamReceivers.resize(getDeviceIndex() + 1);
     executionEnvironment->commandStreamReceivers[getDeviceIndex()].reset(commandStreamReceiver);
-    commandStreamReceiver->setMemoryManager(this->mockMemoryManager.get());
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
     this->commandStreamReceiver = commandStreamReceiver;
 }
@@ -31,15 +30,6 @@ OCLRT::MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *
     this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, this->getHardwareCapabilities().localMemorySupported, aubUsage, *executionEnvironment));
     this->osTime = MockOSTime::create();
     mockWaTable = *hwInfo.pWaTable;
-}
-
-void MockDevice::setMemoryManager(MemoryManager *memoryManager) {
-    executionEnvironment->memoryManager.reset(memoryManager);
-    for (auto &commandStreamReceiver : executionEnvironment->commandStreamReceivers) {
-        if (commandStreamReceiver) {
-            commandStreamReceiver->setMemoryManager(memoryManager);
-        }
-    }
 }
 
 void MockDevice::setOSTime(OSTime *osTime) {
@@ -55,23 +45,16 @@ bool MockDevice::hasDriverInfo() {
 };
 
 void MockDevice::injectMemoryManager(MemoryManager *memoryManager) {
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()]->setMemoryManager(memoryManager);
-    setMemoryManager(memoryManager);
+    executionEnvironment->memoryManager.reset(memoryManager);
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
     executionEnvironment->commandStreamReceivers[getDeviceIndex()].reset(newCsr);
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()]->setMemoryManager(executionEnvironment->memoryManager.get());
     executionEnvironment->commandStreamReceivers[getDeviceIndex()]->initializeTagAllocation();
     executionEnvironment->commandStreamReceivers[getDeviceIndex()]->setPreemptionCsrAllocation(preemptionAllocation);
     this->commandStreamReceiver = newCsr;
     UNRECOVERABLE_IF(getDeviceIndex() != 0u);
     this->tagAddress = executionEnvironment->commandStreamReceivers[getDeviceIndex()]->getTagAddress();
-}
-
-OCLRT::FailMemoryManager::FailMemoryManager() {
-    agnostic = nullptr;
-    fail = 0;
 }
 
 OCLRT::FailMemoryManager::FailMemoryManager(int32_t fail) {

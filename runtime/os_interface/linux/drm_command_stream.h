@@ -22,7 +22,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
   protected:
     typedef DeviceCommandStreamReceiver<GfxFamily> BaseClass;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAddress;
-    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::memoryManager;
     using BaseClass::getScratchPatchAddress;
     using BaseClass::hwInfo;
     using BaseClass::makeNonResident;

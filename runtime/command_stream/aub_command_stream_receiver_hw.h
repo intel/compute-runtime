@@ -69,9 +69,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void freeEngineInfoTable();
 
     MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
-        this->memoryManager = new OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, true, this->executionEnvironment);
-        this->flatBatchBufferHelper->setMemoryManager(this->memoryManager);
-        return this->memoryManager;
+        return new OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, true, this->executionEnvironment);
     }
 
     static const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType);

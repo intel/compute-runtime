@@ -54,12 +54,10 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *p
 }
 void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory, uint32_t deviceIndex) {
     if (this->memoryManager) {
-        commandStreamReceivers[deviceIndex]->setMemoryManager(this->memoryManager.get());
         return;
     }
 
     memoryManager.reset(commandStreamReceivers[deviceIndex]->createMemoryManager(enable64KBpages, enableLocalMemory));
-    commandStreamReceivers[deviceIndex]->setMemoryManager(memoryManager.get());
     DEBUG_BREAK_IF(!this->memoryManager);
 }
 void ExecutionEnvironment::initSourceLevelDebugger(const HardwareInfo &hwInfo) {

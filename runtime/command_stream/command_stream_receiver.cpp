@@ -43,7 +43,7 @@ CommandStreamReceiver::~CommandStreamReceiver() {
         if (indirectHeap[i] != nullptr) {
             auto allocation = indirectHeap[i]->getGraphicsAllocation();
             if (allocation != nullptr) {
-                memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+                getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
             }
             delete indirectHeap[i];
         }
@@ -119,7 +119,7 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 
 void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType) {
     auto address = getTagAddress();
-    if (address && requiredTaskCount != (unsigned int)-1) {
+    if (address && requiredTaskCount != ObjectNotUsed) {
         while (*address < requiredTaskCount)
             ;
     }
@@ -131,21 +131,12 @@ void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requ
     getMemoryManager()->freeAllocationsList(requiredTaskCount, allocationList);
 }
 
-MemoryManager *CommandStreamReceiver::getMemoryManager() {
-    return memoryManager;
-}
-
-void CommandStreamReceiver::setMemoryManager(MemoryManager *mm) {
-    memoryManager = mm;
-    if (flatBatchBufferHelper) {
-        flatBatchBufferHelper->setMemoryManager(mm);
-    }
+MemoryManager *CommandStreamReceiver::getMemoryManager() const {
+    DEBUG_BREAK_IF(!executionEnvironment.memoryManager);
+    return executionEnvironment.memoryManager.get();
 }
 
 LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
-    auto memoryManager = this->getMemoryManager();
-    DEBUG_BREAK_IF(nullptr == memoryManager);
-
     if (commandStream.getAvailableSpace() < minRequiredSize) {
         // Make sure we have enough room for a MI_BATCH_BUFFER_END and any padding.
         // Currently reserving 64bytes (cacheline) which should be more than enough.
@@ -156,16 +147,16 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
 
         auto requiredSize = minRequiredSize + CSRequirements::csOverfetchSize;
 
-        auto allocation = memoryManager->obtainReusableAllocation(requiredSize, false).release();
+        auto allocation = getMemoryManager()->obtainReusableAllocation(requiredSize, false).release();
         if (!allocation) {
-            allocation = memoryManager->allocateGraphicsMemory(requiredSize);
+            allocation = getMemoryManager()->allocateGraphicsMemory(requiredSize);
         }
 
         allocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
 
         //pass current allocation to reusable list
         if (commandStream.getCpuBase()) {
-            memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream.getGraphicsAllocation()), REUSABLE_ALLOCATION);
+            getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream.getGraphicsAllocation()), REUSABLE_ALLOCATION);
         }
 
         commandStream.replaceBuffer(allocation->getUnderlyingBuffer(), minRequiredSize - sizeForSubmission);
@@ -176,30 +167,30 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
 }
 
 void CommandStreamReceiver::cleanupResources() {
-    if (!memoryManager)
+    if (!getMemoryManager())
         return;
 
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, TEMPORARY_ALLOCATION);
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, REUSABLE_ALLOCATION);
 
     if (scratchAllocation) {
-        memoryManager->freeGraphicsMemory(scratchAllocation);
+        getMemoryManager()->freeGraphicsMemory(scratchAllocation);
         scratchAllocation = nullptr;
     }
 
     if (debugSurface) {
-        memoryManager->freeGraphicsMemory(debugSurface);
+        getMemoryManager()->freeGraphicsMemory(debugSurface);
         debugSurface = nullptr;
     }
 
     if (commandStream.getCpuBase()) {
-        memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
+        getMemoryManager()->freeGraphicsMemory(commandStream.getGraphicsAllocation());
         commandStream.replaceGraphicsAllocation(nullptr);
         commandStream.replaceBuffer(nullptr, 0);
     }
 
     if (tagAllocation) {
-        memoryManager->freeGraphicsMemory(tagAllocation);
+        getMemoryManager()->freeGraphicsMemory(tagAllocation);
         tagAllocation = nullptr;
         tagAddress = nullptr;
     }
@@ -267,7 +258,7 @@ void CommandStreamReceiver::activateAubSubCapture(const MultiDispatchInfo &dispa
 
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
-    debugSurface = memoryManager->allocateGraphicsMemory(size);
+    debugSurface = getMemoryManager()->allocateGraphicsMemory(size);
     return debugSurface;
 }
 
@@ -281,7 +272,7 @@ IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType
         heapMemory = heap->getGraphicsAllocation();
 
     if (heap && heap->getAvailableSpace() < minRequiredSize && heapMemory) {
-        memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
+        getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
         heapMemory = nullptr;
     }
 
@@ -309,13 +300,13 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
 
     finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);
 
-    auto heapMemory = memoryManager->obtainReusableAllocation(finalHeapSize, requireInternalHeap).release();
+    auto heapMemory = getMemoryManager()->obtainReusableAllocation(finalHeapSize, requireInternalHeap).release();
 
     if (!heapMemory) {
         if (requireInternalHeap) {
-            heapMemory = memoryManager->allocate32BitGraphicsMemory(finalHeapSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
+            heapMemory = getMemoryManager()->allocate32BitGraphicsMemory(finalHeapSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
         } else {
-            heapMemory = memoryManager->allocateGraphicsMemory(finalHeapSize);
+            heapMemory = getMemoryManager()->allocateGraphicsMemory(finalHeapSize);
         }
     } else {
         finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
@@ -344,7 +335,7 @@ void CommandStreamReceiver::releaseIndirectHeap(IndirectHeap::Type heapType) {
     if (heap) {
         auto heapMemory = heap->getGraphicsAllocation();
         if (heapMemory != nullptr)
-            memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
+            getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
         heap->replaceBuffer(nullptr, 0);
         heap->replaceGraphicsAllocation(nullptr);
     }
@@ -355,7 +346,7 @@ void CommandStreamReceiver::setExperimentalCmdBuffer(std::unique_ptr<Experimenta
 }
 
 bool CommandStreamReceiver::initializeTagAllocation() {
-    auto tagAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    auto tagAllocation = getMemoryManager()->allocateGraphicsMemory(sizeof(uint32_t));
     if (!tagAllocation) {
         return false;
     }

@@ -63,19 +63,19 @@ struct CommandEnqueueFixture : public CommandEnqueueBaseFixture,
 struct NegativeFailAllocationCommandEnqueueBaseFixture : public CommandEnqueueBaseFixture {
     void SetUp() override {
         CommandEnqueueBaseFixture::SetUp();
-        failMemManager.reset(new FailMemoryManager());
+        failMemManager.reset(new FailMemoryManager(*pDevice->getExecutionEnvironment()));
 
         BufferDefaults::context = context;
         Image2dDefaults::context = context;
         buffer.reset(BufferHelper<>::create());
         image.reset(ImageHelper<Image2dDefaults>::create());
         ptr = static_cast<void *>(array);
-        oldMemManager = pDevice->getMemoryManager();
-        pDevice->getCommandStreamReceiver().setMemoryManager(failMemManager.get());
+        oldMemManager = pDevice->getExecutionEnvironment()->memoryManager.release();
+        pDevice->injectMemoryManager(failMemManager.release());
     }
 
     void TearDown() override {
-        pDevice->getCommandStreamReceiver().setMemoryManager(oldMemManager);
+        pDevice->injectMemoryManager(oldMemManager);
         buffer.reset(nullptr);
         image.reset(nullptr);
         BufferDefaults::context = nullptr;

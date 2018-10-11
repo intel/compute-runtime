@@ -13,6 +13,7 @@ namespace OCLRT {
 template <typename BaseCSR>
 class CommandStreamReceiverWithAUBDump : public BaseCSR {
   public:
+    using BaseCSR::createMemoryManager;
     CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);
     ~CommandStreamReceiverWithAUBDump() override;
 
@@ -23,8 +24,6 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
-
-    MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override;
 
     CommandStreamReceiver *aubCSR = nullptr;
 };

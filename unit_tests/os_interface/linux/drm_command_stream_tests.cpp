@@ -36,53 +36,48 @@ using namespace OCLRT;
 
 class DrmCommandStreamFixture {
   public:
-    DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
-    DrmMemoryManager *mm = nullptr;
-    DrmMockImpl *mock;
-    const int mockFd = 33;
-
     void SetUp() {
         osContext = std::make_unique<OsContext>(nullptr, 0u);
-        this->dbgState = new DebugManagerStateRestore();
         //make sure this is disabled, we don't want test this now
         DebugManager.flags.EnableForcePin.set(false);
 
-        this->mock = new DrmMockImpl(mockFd);
+        mock = std::make_unique<DrmMockImpl>(mockFd);
 
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
-        executionEnvironment.osInterface->get()->setDrm(mock);
+        executionEnvironment.osInterface->get()->setDrm(mock.get());
 
         csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], executionEnvironment,
                                                                      gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
-        executionEnvironment.commandStreamReceivers.resize(1);
-        executionEnvironment.commandStreamReceivers[0].reset(csr);
+        executionEnvironment.commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(csr));
 
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
             .Times(1);
-        mm = static_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
-        ::testing::Mock::VerifyAndClearExpectations(mock);
+        memoryManager = static_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
+        executionEnvironment.memoryManager.reset(memoryManager);
+        ::testing::Mock::VerifyAndClearExpectations(mock.get());
 
         //assert we have memory manager
-        ASSERT_NE(nullptr, mm);
+        ASSERT_NE(nullptr, memoryManager);
     }
 
     void TearDown() {
-        mm->waitForDeletions();
-        mm->peekGemCloseWorker()->close(true);
+        memoryManager->waitForDeletions();
+        memoryManager->peekGemCloseWorker()->close(true);
         executionEnvironment.commandStreamReceivers.clear();
-        ::testing::Mock::VerifyAndClearExpectations(mock);
+        ::testing::Mock::VerifyAndClearExpectations(mock.get());
         // Memory manager closes pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
             .Times(::testing::AtLeast(1));
-        delete mm;
-        delete this->mock;
-        this->mock = 0;
-        delete dbgState;
     }
+
+    DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
+    DrmMemoryManager *memoryManager = nullptr;
+    std::unique_ptr<DrmMockImpl> mock;
+    const int mockFd = 33;
     static const uint64_t alignment = MemoryConstants::allocationAlignment;
-    DebugManagerStateRestore *dbgState;
+    DebugManagerStateRestore dbgState;
     ExecutionEnvironment executionEnvironment;
     std::unique_ptr<OsContext> osContext;
 };

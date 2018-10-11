@@ -80,9 +80,12 @@ class BuiltinDispatchInfoBuilder {
   protected:
     template <typename KernelNameT, typename... KernelsDescArgsT>
     void grabKernels(KernelNameT &&kernelName, Kernel *&kernelDst, KernelsDescArgsT &&... kernelsDesc) {
-        const KernelInfo *ki = prog->getKernelInfo(kernelName);
+        const KernelInfo *kernelInfo = prog->getKernelInfo(kernelName);
+        if (!kernelInfo) {
+            return;
+        }
         cl_int err = 0;
-        kernelDst = Kernel::create(prog.get(), *ki, &err);
+        kernelDst = Kernel::create(prog.get(), *kernelInfo, &err);
         kernelDst->isBuiltIn = true;
         usedKernels.push_back(std::unique_ptr<Kernel>(kernelDst));
         grabKernels(std::forward<KernelsDescArgsT>(kernelsDesc)...);

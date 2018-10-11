@@ -72,9 +72,8 @@ class CommandStreamReceiver {
 
     virtual void addPipeControl(LinearStream &commandStream, bool dcFlush) = 0;
 
-    MemoryManager *getMemoryManager();
+    MemoryManager *getMemoryManager() const;
     virtual MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) { return nullptr; }
-    void setMemoryManager(MemoryManager *mm);
 
     ResidencyContainer &getResidencyAllocations();
     ResidencyContainer &getEvictionAllocations();
@@ -193,8 +192,6 @@ class CommandStreamReceiver {
     GraphicsAllocation *scratchAllocation = nullptr;
     GraphicsAllocation *preemptionCsrAllocation = nullptr;
     GraphicsAllocation *debugSurface = nullptr;
-
-    MemoryManager *memoryManager = nullptr;
     OSInterface *osInterface = nullptr;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;
 

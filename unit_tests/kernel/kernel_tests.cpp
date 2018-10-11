@@ -407,6 +407,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     typedef CommandStreamReceiver BaseClass;
 
   public:
+    using BaseClass::CommandStreamReceiver;
     CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment)) {
         this->mockExecutionEnvironment.reset(&this->executionEnvironment);
     }
@@ -485,9 +486,9 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
     // Test it
-    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager(false, false, *context.getDevice(0)->getExecutionEnvironment()));
-    std::unique_ptr<CommandStreamReceiverMock> csr(new CommandStreamReceiverMock());
-    csr->setMemoryManager(memoryManager.get());
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    executionEnvironment->memoryManager = std::make_unique<OsAgnosticMemoryManager>(false, false, *executionEnvironment);
+    std::unique_ptr<CommandStreamReceiverMock> csr(new CommandStreamReceiverMock(*executionEnvironment));
     csr->residency.clear();
     EXPECT_EQ(0u, csr->residency.size());
 

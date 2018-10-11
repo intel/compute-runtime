@@ -307,8 +307,8 @@ HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThen
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenWaitBeforeMakeNonResidentWhenRequiredIsCalledWithBlockingFlagTrueThenFunctionStallsUntilMakeCoherentUpdatesTagAddress) {
     uint32_t tag = 0;
     MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], *pDevice->executionEnvironment);
-    GraphicsAllocation graphicsAllocation(&tag, sizeof(tag));
-    tbxCsr.setTagAllocation(&graphicsAllocation);
+
+    tbxCsr.setTagAllocation(pDevice->getMemoryManager()->allocateGraphicsMemory(sizeof(tag), &tag));
 
     EXPECT_FALSE(tbxCsr.makeCoherentCalled);
 

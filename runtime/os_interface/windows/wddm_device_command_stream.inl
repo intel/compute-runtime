@@ -150,12 +150,12 @@ void WddmCommandStreamReceiver<GfxFamily>::processEviction(OsContext &osContext)
 
 template <typename GfxFamily>
 WddmMemoryManager *WddmCommandStreamReceiver<GfxFamily>::getMemoryManager() {
-    return (WddmMemoryManager *)CommandStreamReceiver::getMemoryManager();
+    return static_cast<WddmMemoryManager *>(CommandStreamReceiver::getMemoryManager());
 }
 
 template <typename GfxFamily>
 MemoryManager *WddmCommandStreamReceiver<GfxFamily>::createMemoryManager(bool enable64kbPages, bool enableLocalMemory) {
-    return memoryManager = new WddmMemoryManager(enable64kbPages, enableLocalMemory, this->wddm, executionEnvironment);
+    return new WddmMemoryManager(enable64kbPages, enableLocalMemory, this->wddm, executionEnvironment);
 }
 
 template <typename GfxFamily>

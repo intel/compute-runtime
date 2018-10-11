@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/flat_batch_buffer_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
@@ -60,5 +61,9 @@ void FlatBatchBufferHelper::fixCrossThreadDataInfo(std::vector<PatchInfoData> &d
             patchInfoData.targetAllocationOffset += offsetCrossThreadData;
         }
     }
+}
+
+MemoryManager *FlatBatchBufferHelper::getMemoryManager() const {
+    return executionEnvironemnt.memoryManager.get();
 }
 }; // namespace OCLRT

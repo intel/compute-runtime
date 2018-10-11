@@ -39,7 +39,7 @@ class DriverInfoDeviceTest : public ::testing::Test {
 };
 
 CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
-    auto csr = new MockCommandStreamReceiver();
+    auto csr = new MockCommandStreamReceiver(executionEnvironment);
     OSInterface *osInterface = new OSInterface();
     executionEnvironment.osInterface.reset(osInterface);
     auto wddm = new WddmMock();

@@ -190,9 +190,7 @@ HWTEST_F(KernelImageArgTest, givenImgWithMcsAllocWhenMakeResidentThenMakeMcsAllo
     cl_mem memObj = img;
     pKernel->setArg(0, sizeof(memObj), &memObj);
 
-    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager(false, false, *pDevice->executionEnvironment));
     std::unique_ptr<MockCsr<FamilyType>> csr(new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment));
-    csr->setMemoryManager(memoryManager.get());
 
     pKernel->makeResident(*csr.get());
     EXPECT_TRUE(csr->isMadeResident(mcsAlloc));

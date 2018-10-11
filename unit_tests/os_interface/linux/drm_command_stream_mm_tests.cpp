@@ -20,49 +20,38 @@ class DrmCommandStreamMMTest : public ::testing::Test {
 
 HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
     DebugManagerStateRestore dbgRestorer;
-    {
-        ExecutionEnvironment executionEnvironment;
-        DebugManager.flags.EnableForcePin.set(true);
+    DebugManager.flags.EnableForcePin.set(true);
 
-        std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom());
-        ASSERT_NE(nullptr, mock);
+    DrmMockCustom mock;
+    ExecutionEnvironment executionEnvironment;
 
-        executionEnvironment.osInterface = std::make_unique<OSInterface>();
-        executionEnvironment.osInterface->get()->setDrm(mock.get());
+    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.osInterface->get()->setDrm(&mock);
 
-        DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], executionEnvironment,
-                                                 gemCloseWorkerMode::gemCloseWorkerInactive);
+    DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], executionEnvironment,
+                                             gemCloseWorkerMode::gemCloseWorkerInactive);
 
-        auto mm = (DrmMemoryManager *)csr.createMemoryManager(false, false);
-        ASSERT_NE(nullptr, mm);
-        EXPECT_NE(nullptr, mm->getPinBB());
-        csr.setMemoryManager(nullptr);
-
-        delete mm;
-    }
+    auto memoryManager = static_cast<DrmMemoryManager *>(csr.createMemoryManager(false, false));
+    executionEnvironment.memoryManager.reset(memoryManager);
+    ASSERT_NE(nullptr, memoryManager);
+    EXPECT_NE(nullptr, memoryManager->getPinBB());
 }
 
 HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreatedThenPinBBIsCreated) {
     DebugManagerStateRestore dbgRestorer;
-    {
-        ExecutionEnvironment executionEnvironment;
-        DebugManager.flags.EnableForcePin.set(false);
+    DebugManager.flags.EnableForcePin.set(false);
 
-        std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom());
-        ASSERT_NE(nullptr, mock);
+    DrmMockCustom mock;
+    ExecutionEnvironment executionEnvironment;
 
-        executionEnvironment.osInterface = std::make_unique<OSInterface>();
-        executionEnvironment.osInterface->get()->setDrm(mock.get());
+    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.osInterface->get()->setDrm(&mock);
 
-        DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], executionEnvironment,
-                                                 gemCloseWorkerMode::gemCloseWorkerInactive);
+    DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], executionEnvironment,
+                                             gemCloseWorkerMode::gemCloseWorkerInactive);
 
-        auto mm = (DrmMemoryManager *)csr.createMemoryManager(false, false);
-        csr.setMemoryManager(nullptr);
-
-        ASSERT_NE(nullptr, mm);
-        EXPECT_NE(nullptr, mm->getPinBB());
-
-        delete mm;
-    }
+    auto memoryManager = static_cast<DrmMemoryManager *>(csr.createMemoryManager(false, false));
+    executionEnvironment.memoryManager.reset(memoryManager);
+    ASSERT_NE(nullptr, memoryManager);
+    EXPECT_NE(nullptr, memoryManager->getPinBB());
 }

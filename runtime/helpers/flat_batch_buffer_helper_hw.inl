@@ -33,7 +33,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(Batch
 
             auto flatBatchBufferSize = alignUp(sizeMainBatchBuffer + indirectPatchCommandsSize + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);
             flatBatchBuffer =
-                this->memoryManager->allocateGraphicsMemory(flatBatchBufferSize, MemoryConstants::pageSize, false, false);
+                getMemoryManager()->allocateGraphicsMemory(flatBatchBufferSize, MemoryConstants::pageSize, false, false);
             UNRECOVERABLE_IF(flatBatchBuffer == nullptr);
             // Copy main batchbuffer
             memcpy_s(flatBatchBuffer->getUnderlyingBuffer(), sizeMainBatchBuffer,
@@ -108,8 +108,8 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(Batch
 
         flatBatchBufferSize = alignUp(flatBatchBufferSize, MemoryConstants::pageSize);
         flatBatchBufferSize += CSRequirements::csOverfetchSize;
-        flatBatchBuffer = this->memoryManager->allocateGraphicsMemory(static_cast<size_t>(flatBatchBufferSize),
-                                                                      MemoryConstants::pageSize, false, false);
+        flatBatchBuffer = getMemoryManager()->allocateGraphicsMemory(static_cast<size_t>(flatBatchBufferSize),
+                                                                     MemoryConstants::pageSize, false, false);
         UNRECOVERABLE_IF(flatBatchBuffer == nullptr);
 
         char *ptr = reinterpret_cast<char *>(flatBatchBuffer->getUnderlyingBuffer());

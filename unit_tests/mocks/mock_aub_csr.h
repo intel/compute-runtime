@@ -91,7 +91,6 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
     executionEnvironment->commandStreamReceivers.push_back(std::make_unique<CsrType>(*platformDevices[0], "", standalone, *executionEnvironment));
     executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceivers[0u]->createMemoryManager(false, false));
-    executionEnvironment->commandStreamReceivers[0u]->setMemoryManager(executionEnvironment->memoryManager.get());
     if (createTagAllocation) {
         executionEnvironment->commandStreamReceivers[0u]->initializeTagAllocation();
     }

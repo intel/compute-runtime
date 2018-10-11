@@ -880,7 +880,6 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushe
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
     MockNonZeroCopyBuff buffer(executionStamp);
     MockCsr<FamilyType> csr(executionStamp, *pDevice->executionEnvironment);
-    csr.setMemoryManager(pDevice->getMemoryManager());
     csr.setTagAllocation(pDevice->getTagAllocation());
 
     MemObjSizeArray size = {{4, 1, 1}};

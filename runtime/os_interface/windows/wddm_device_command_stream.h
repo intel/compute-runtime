@@ -19,7 +19,6 @@ class Wddm;
 template <typename GfxFamily>
 class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     typedef DeviceCommandStreamReceiver<GfxFamily> BaseClass;
-    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::memoryManager;
 
   public:
     WddmCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);

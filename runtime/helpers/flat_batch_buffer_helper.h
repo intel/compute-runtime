@@ -16,10 +16,11 @@ namespace OCLRT {
 
 enum class DispatchMode;
 class MemoryManager;
+class ExecutionEnvironment;
 
 class FlatBatchBufferHelper {
   public:
-    FlatBatchBufferHelper(MemoryManager *memoryManager) : memoryManager(memoryManager) {}
+    FlatBatchBufferHelper(ExecutionEnvironment &executionEnvironemnt) : executionEnvironemnt(executionEnvironemnt) {}
     virtual ~FlatBatchBufferHelper(){};
     MOCKABLE_VIRTUAL bool setPatchInfoData(const PatchInfoData &data);
     MOCKABLE_VIRTUAL bool removePatchInfoData(uint64_t targetLocation);
@@ -30,7 +31,6 @@ class FlatBatchBufferHelper {
     virtual GraphicsAllocation *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode) = 0;
     virtual char *getIndirectPatchCommands(size_t &indirectPatchCommandsSize, std::vector<PatchInfoData> &indirectPatchInfo) = 0;
     virtual void removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping) = 0;
-    void setMemoryManager(MemoryManager *memoryManager) { this->memoryManager = memoryManager; }
     static void fixCrossThreadDataInfo(std::vector<PatchInfoData> &data, size_t offsetCrossThreadData, uint64_t gpuAddress);
 
     std::vector<CommandChunk> &getCommandChunkList() { return commandChunkList; }
@@ -38,7 +38,8 @@ class FlatBatchBufferHelper {
     std::map<uint64_t, uint64_t> &getBatchBufferStartAddressSequence() { return batchBufferStartAddressSequence; }
 
   protected:
-    MemoryManager *memoryManager = nullptr;
+    MemoryManager *getMemoryManager() const;
+    ExecutionEnvironment &executionEnvironemnt;
 
     std::vector<PatchInfoData> patchInfoCollection;
     std::vector<CommandChunk> commandChunkList;

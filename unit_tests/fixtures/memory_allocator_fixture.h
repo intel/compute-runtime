@@ -23,7 +23,6 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         memoryManager = new OsAgnosticMemoryManager(false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         csr = memoryManager->getCommandStreamReceiver(0);
-        csr->setMemoryManager(memoryManager);
     }
 
     void TearDown() override {

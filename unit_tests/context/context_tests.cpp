@@ -305,7 +305,7 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
         memoryManager = new MockMemoryManager();
         device = new MockDevice(*platformDevices[0]);
         deleter = new MockDeferredDeleter();
-        device->setMemoryManager(memoryManager);
+        device->injectMemoryManager(memoryManager);
         memoryManager->setDeferredDeleter(deleter);
     }
     void TearDown() override {

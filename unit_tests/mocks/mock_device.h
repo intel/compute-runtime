@@ -70,7 +70,6 @@ class MockDevice : public Device {
     void setPerfCounters(PerformanceCounters *perfCounters) {
         performanceCounters = std::unique_ptr<PerformanceCounters>(perfCounters);
     }
-    void setMemoryManager(MemoryManager *memoryManager);
 
     template <typename T>
     UltCommandStreamReceiver<T> &getUltCommandStreamReceiver() {
@@ -124,7 +123,7 @@ inline Device *MockDevice::createWithNewExecutionEnvironment<Device>(const Hardw
 
 class FailMemoryManager : public MockMemoryManager {
   public:
-    FailMemoryManager();
+    using MockMemoryManager::MockMemoryManager;
     FailMemoryManager(int32_t fail);
     virtual ~FailMemoryManager() override {
         if (agnostic) {
@@ -182,8 +181,8 @@ class FailMemoryManager : public MockMemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override {
         return nullptr;
     }
-    int32_t fail;
-    OsAgnosticMemoryManager *agnostic;
+    int32_t fail = 0;
+    OsAgnosticMemoryManager *agnostic = nullptr;
     std::vector<GraphicsAllocation *> allocations;
 };
 
@@ -191,7 +190,7 @@ class FailDevice : public MockDevice {
   public:
     FailDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
         : MockDevice(hwInfo, executionEnvironment, deviceIndex) {
-        this->mockMemoryManager.reset(new FailMemoryManager);
+        this->mockMemoryManager.reset(new FailMemoryManager(*executionEnvironment));
     }
 };
 

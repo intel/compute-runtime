@@ -14,7 +14,7 @@ namespace OCLRT {
 template <typename GfxFamily>
 class FlatBatchBufferHelperHw : public FlatBatchBufferHelper {
   public:
-    FlatBatchBufferHelperHw(MemoryManager *memoryManager) : FlatBatchBufferHelper(memoryManager) {}
+    using FlatBatchBufferHelper::FlatBatchBufferHelper;
     GraphicsAllocation *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode) override;
     char *getIndirectPatchCommands(size_t &indirectPatchCommandsSize, std::vector<PatchInfoData> &indirectPatchInfo) override;
     void removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping) override;

@@ -16,7 +16,6 @@ void MemoryManagerWithCsrFixture::SetUp() {
     csr = new MockCommandStreamReceiver(this->executionEnvironment);
     gmockMemoryManager = new NiceMock<GMockMemoryManager>(executionEnvironment);
     memoryManager = gmockMemoryManager;
-    csr->setMemoryManager(memoryManager);
     executionEnvironment.memoryManager.reset(memoryManager);
 
     ON_CALL(*gmockMemoryManager, cleanAllocationList(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(gmockMemoryManager, &GMockMemoryManager::MemoryManagerCleanAllocationList));

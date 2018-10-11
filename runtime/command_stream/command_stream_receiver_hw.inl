@@ -38,7 +38,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &
       localMemoryEnabled(HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily).isLocalMemoryEnabled(hwInfo)) {
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
     resetKmdNotifyHelper(new KmdNotifyHelper(&(hwInfoIn.capabilityTable.kmdNotifyProperties)));
-    flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(this->memoryManager));
+    flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(executionEnvironment));
     defaultSshSize = getSshHeapSize();
 }
 
@@ -303,7 +303,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         if (is64bit && scratchAllocation && !force32BitAllocations) {
             newGSHbase = (uint64_t)scratchAllocation->getUnderlyingBuffer() - PreambleHelper<GfxFamily>::getScratchSpaceOffsetFor64bit();
         } else if (is64bit && force32BitAllocations && dispatchFlags.GSBA32BitRequired) {
-            newGSHbase = memoryManager->allocator32Bit->getBase();
+            newGSHbase = getMemoryManager()->allocator32Bit->getBase();
             GSBAFor32BitProgrammed = true;
         }
 
@@ -316,7 +316,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             ssh,
             newGSHbase,
             requiredL3Index,
-            memoryManager->getInternalHeapBaseAddress(),
+            getMemoryManager()->getInternalHeapBaseAddress(),
             device.getGmmHelper());
 
         if (sshDirty) {

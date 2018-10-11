@@ -219,7 +219,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueWithOutputEventRegistersEvent) {
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenPatchInfoDataIsNotTransferredToCSR) {
     auto csr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
-    auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(csr->getMemoryManager());
+    auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(*pDevice->executionEnvironment);
     csr->overwriteFlatBatchBufferHelper(mockHelper);
     pDevice->resetCommandStreamReceiver(csr);
 
@@ -241,7 +241,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDu
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
 
     auto csr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
-    auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(csr->getMemoryManager());
+    auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(*pDevice->executionEnvironment);
     csr->overwriteFlatBatchBufferHelper(mockHelper);
     pDevice->resetCommandStreamReceiver(csr);
 

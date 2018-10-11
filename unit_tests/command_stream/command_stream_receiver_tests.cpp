@@ -283,7 +283,8 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenAllocateHeapMemoryIsCalledThenHe
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithoutTagAllocationWhenGetTagAllocationIsCalledThenNullptrIsReturned) {
-    MockCommandStreamReceiver csr;
+    ExecutionEnvironment executionEnvironment;
+    MockCommandStreamReceiver csr(executionEnvironment);
     EXPECT_EQ(nullptr, csr.getTagAllocation());
 }
 
@@ -291,16 +292,18 @@ TEST(CommandStreamReceiverSimpleTest, givenDebugVariableEnabledWhenCreatingCsrTh
     DebugManagerStateRestore restore;
 
     DebugManager.flags.EnableTimestampPacket.set(true);
-    MockCommandStreamReceiver csr1;
+    ExecutionEnvironment executionEnvironment;
+    MockCommandStreamReceiver csr1(executionEnvironment);
     EXPECT_TRUE(csr1.peekTimestampPacketWriteEnabled());
 
     DebugManager.flags.EnableTimestampPacket.set(false);
-    MockCommandStreamReceiver csr2;
+    MockCommandStreamReceiver csr2(executionEnvironment);
     EXPECT_FALSE(csr2.peekTimestampPacketWriteEnabled());
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllocationIsCalledThenCorrectAllocationIsReturned) {
-    MockCommandStreamReceiver csr;
+    ExecutionEnvironment executionEnvironment;
+    MockCommandStreamReceiver csr(executionEnvironment);
     GraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     csr.setTagAllocation(&allocation);
     EXPECT_EQ(&allocation, csr.getTagAllocation());
@@ -318,10 +321,9 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
     auto mockGraphicsAllocation = new MockGraphicsAllocation(nullptr, 1u);
     mockGraphicsAllocation->destructorCalled = &destructorCalled;
     ExecutionEnvironment executionEnvironment;
-    executionEnvironment.commandStreamReceivers.push_back(std::make_unique<MockCommandStreamReceiver>());
+    executionEnvironment.commandStreamReceivers.push_back(std::make_unique<MockCommandStreamReceiver>(executionEnvironment));
     auto csr = executionEnvironment.commandStreamReceivers[0].get();
-    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager(false, false, executionEnvironment));
-    csr->setMemoryManager(memoryManager.get());
+    executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(false, false, executionEnvironment));
     csr->setTagAllocation(mockGraphicsAllocation);
     EXPECT_FALSE(destructorCalled);
     executionEnvironment.commandStreamReceivers[0].reset(nullptr);
@@ -329,39 +331,36 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocated) {
-    auto csr = new MockCommandStreamReceiver;
-    auto executionEnvironment = csr->mockExecutionEnvironment.get();
-    executionEnvironment->commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(csr));
-    executionEnvironment->memoryManager.reset(new OsAgnosticMemoryManager(false, false, *executionEnvironment));
-    csr->setMemoryManager(executionEnvironment->memoryManager.get());
+    ExecutionEnvironment executionEnvironment;
+    auto csr = new MockCommandStreamReceiver(executionEnvironment);
+    executionEnvironment.commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(csr));
+    executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(false, false, executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
     EXPECT_TRUE(csr->getTagAddress() == nullptr);
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAllocation());
     EXPECT_TRUE(csr->getTagAddress() != nullptr);
     EXPECT_EQ(*csr->getTagAddress(), initialHardwareTag);
-    csr->mockExecutionEnvironment.reset();
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocatedAndinitialValueIsMinusOne) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableNullHardware.set(true);
-    auto csr = new MockCommandStreamReceiver;
-    auto executionEnvironment = csr->mockExecutionEnvironment.get();
-    executionEnvironment->commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(csr));
-    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager(false, false, *executionEnvironment));
-    csr->setMemoryManager(memoryManager.get());
+    ExecutionEnvironment executionEnvironment;
+    auto csr = new MockCommandStreamReceiver(executionEnvironment);
+    executionEnvironment.commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(csr));
+    executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(false, false, executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
     EXPECT_TRUE(csr->getTagAddress() == nullptr);
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAllocation());
     EXPECT_TRUE(csr->getTagAddress() != nullptr);
     EXPECT_EQ(*csr->getTagAddress(), static_cast<uint32_t>(-1));
-    csr->mockExecutionEnvironment.reset();
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhenRequiredIsCalledWithBlockingFlagSetThenItReturnsImmediately) {
-    MockCommandStreamReceiver csr;
+    ExecutionEnvironment executionEnvironment;
+    MockCommandStreamReceiver csr(executionEnvironment);
     uint32_t tag = 0;
     GraphicsAllocation allocation(&tag, sizeof(tag));
     csr.latestFlushedTaskCount = 3;

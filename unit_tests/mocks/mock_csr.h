@@ -197,7 +197,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
 template <typename GfxFamily>
 class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
   public:
-    MockFlatBatchBufferHelper(MemoryManager *memoryManager) : FlatBatchBufferHelperHw<GfxFamily>(memoryManager) {}
+    using FlatBatchBufferHelperHw<GfxFamily>::FlatBatchBufferHelperHw;
     MOCK_METHOD1(setPatchInfoData, bool(const PatchInfoData &));
     MOCK_METHOD1(removePatchInfoData, bool(uint64_t));
     MOCK_METHOD1(registerCommandChunk, bool(CommandChunk &));
@@ -214,12 +214,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::tagAddress;
     std::vector<char> instructionHeapReserveredData;
     int *flushBatchedSubmissionsCallCounter = nullptr;
-
-    std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
-
-    MockCommandStreamReceiver() : CommandStreamReceiver(*(new ExecutionEnvironment)) {
-        mockExecutionEnvironment.reset(&this->executionEnvironment);
-    }
 
     ~MockCommandStreamReceiver() {
     }
