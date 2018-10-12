@@ -30,7 +30,7 @@ class WddmAllocation : public GraphicsAllocation {
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
 
     D3DGPU_VIRTUAL_ADDRESS gpuPtr; // set by mapGpuVA
-    WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *alignedCpuPtr, size_t alignedSize, void *reservedAddr, MemoryPool::Type pool)
+    WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *alignedCpuPtr, size_t alignedSize, void *reservedAddr, MemoryPool::Type pool, size_t osContextsCount)
         : GraphicsAllocation(cpuPtrIn, sizeIn),
           handle(0),
           gpuPtr(0),
@@ -41,18 +41,19 @@ class WddmAllocation : public GraphicsAllocation {
         this->memoryPool = pool;
     }
 
-    WddmAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool) : GraphicsAllocation(cpuPtrIn, sizeIn, sharedHandle),
-                                                                                                  handle(0),
-                                                                                                  gpuPtr(0),
-                                                                                                  alignedCpuPtr(nullptr),
-                                                                                                  alignedSize(sizeIn) {
+    WddmAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, size_t osContextsCount)
+        : GraphicsAllocation(cpuPtrIn, sizeIn, sharedHandle),
+          handle(0),
+          gpuPtr(0),
+          alignedCpuPtr(nullptr),
+          alignedSize(sizeIn) {
         trimListPosition = trimListUnusedPosition;
         reservedAddressSpace = nullptr;
         this->memoryPool = pool;
     }
 
-    WddmAllocation(void *alignedCpuPtr, size_t sizeIn, void *reservedAddress, MemoryPool::Type pool)
-        : WddmAllocation(alignedCpuPtr, sizeIn, alignedCpuPtr, sizeIn, reservedAddress, pool) {
+    WddmAllocation(void *alignedCpuPtr, size_t sizeIn, void *reservedAddress, MemoryPool::Type pool, size_t osContextsCount)
+        : WddmAllocation(alignedCpuPtr, sizeIn, alignedCpuPtr, sizeIn, reservedAddress, pool, osContextsCount) {
     }
 
     void *getAlignedCpuPtr() const {
