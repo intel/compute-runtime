@@ -1383,6 +1383,7 @@ HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestT
     HardwareInfo localHwInfo = pDevice->getHardwareInfo();
     localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
     localHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep = true;
+    localHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits = false;
     localHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 1;
     localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds = 2;
 
