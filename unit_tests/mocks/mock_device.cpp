@@ -65,3 +65,7 @@ FailDeviceAfterOne::FailDeviceAfterOne(const HardwareInfo &hwInfo, ExecutionEnvi
     : MockDevice(hwInfo, executionEnvironment, deviceIndex) {
     this->mockMemoryManager.reset(new FailMemoryManager(1));
 }
+
+void MockDevice::setHWCapsLocalMemorySupported(bool localMemorySupported) {
+    this->hardwareCapabilities.localMemorySupported = localMemorySupported;
+}

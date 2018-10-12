@@ -52,6 +52,10 @@ bool Device::getEnabled64kbPages() {
     }
 };
 
+bool Device::getEnableLocalMemory() {
+    return OSInterface::osEnableLocalMemory && getHardwareCapabilities().localMemorySupported;
+};
+
 void Device::setupFp64Flags() {
     if (DebugManager.flags.OverrideDefaultFP64Settings.get() == -1) {
         if (hwInfo.capabilityTable.ftrSupportsFP64) {

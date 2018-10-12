@@ -19,6 +19,7 @@
 
 #include "test.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/utilities/destructor_counted.h"
 #include "unit_tests/helpers/unit_test_helper.h"
@@ -135,6 +136,14 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCal
     EXPECT_EQ(currentAubCenter, executionEnvironment.aubCenter.get());
     EXPECT_EQ(currentAubStreamProvider, executionEnvironment.aubCenter->getStreamProvider());
     EXPECT_EQ(currentAubFileStream, executionEnvironment.aubCenter->getStreamProvider()->getStream());
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenLocalMemorySupportedInMemoryManagerHasCorrectValue) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto executionEnvironment = device->getExecutionEnvironment();
+    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 0u);
+    executionEnvironment->initializeMemoryManager(false, device->getEnableLocalMemory(), 0u);
+    EXPECT_EQ(device->getEnableLocalMemory(), executionEnvironment->memoryManager->isLocalMemorySupported());
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {

@@ -10,6 +10,7 @@
 namespace OCLRT {
 
 bool OSInterface::osEnabled64kbPages = false;
+bool OSInterface::osEnableLocalMemory = false;
 
 OSInterface::OSInterface() {
     osInterfaceImpl = new OSInterfaceImpl();

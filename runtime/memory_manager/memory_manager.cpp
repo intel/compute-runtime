@@ -234,6 +234,10 @@ bool MemoryManager::isAsyncDeleterEnabled() const {
     return asyncDeleterEnabled;
 }
 
+bool MemoryManager::isLocalMemorySupported() const {
+    return localMemorySupported;
+}
+
 bool MemoryManager::isMemoryBudgetExhausted() const {
     return false;
 }

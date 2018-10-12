@@ -113,7 +113,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo, outDevice.getDeviceIndex())) {
         return false;
     }
-    executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages(), outDevice.getHardwareCapabilities().localMemorySupported, outDevice.getDeviceIndex());
+    executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages(), outDevice.getEnableLocalMemory(), outDevice.getDeviceIndex());
 
     outDevice.osContext = new OsContext(executionEnvironment->osInterface.get(), outDevice.getDeviceIndex());
     executionEnvironment->memoryManager->registerOsContext(outDevice.osContext);

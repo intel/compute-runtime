@@ -19,6 +19,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_helper_tests.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_device.h"
 
@@ -766,6 +767,30 @@ TEST(Device_GetCaps, givenDeviceWithNullSourceLevelDebuggerWhenCapsAreInitialize
 }
 
 typedef HwHelperTest DeviceCapsWithModifiedHwInfoTest;
+
+TEST_F(DeviceCapsWithModifiedHwInfoTest, GivenLocalMemorySupportedAndOsEnableLocalMemoryWhenSetThenGetEnableLocalMemoryReturnCorrectValue) {
+    VariableBackup<bool> orgOsEnableLocalMemory(&OSInterface::osEnableLocalMemory);
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    bool orgHwCapsLocalMemorySupported = device->getHardwareCapabilities().localMemorySupported;
+
+    device->setHWCapsLocalMemorySupported(false);
+    OSInterface::osEnableLocalMemory = false;
+    EXPECT_FALSE(device->getEnableLocalMemory());
+
+    device->setHWCapsLocalMemorySupported(false);
+    OSInterface::osEnableLocalMemory = true;
+    EXPECT_FALSE(device->getEnableLocalMemory());
+
+    device->setHWCapsLocalMemorySupported(true);
+    OSInterface::osEnableLocalMemory = false;
+    EXPECT_FALSE(device->getEnableLocalMemory());
+
+    device->setHWCapsLocalMemorySupported(true);
+    OSInterface::osEnableLocalMemory = true;
+    EXPECT_TRUE(device->getEnableLocalMemory());
+
+    device->setHWCapsLocalMemorySupported(orgHwCapsLocalMemorySupported);
+}
 
 TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNotSupportedWhenDeviceIsCreatedThenSourceLevelDebuggerActiveIsSetToFalse) {
 

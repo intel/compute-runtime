@@ -105,6 +105,8 @@ class MockDevice : public Device {
     }
     std::unique_ptr<MemoryManager> mockMemoryManager;
 
+    void setHWCapsLocalMemorySupported(bool localMemorySupported);
+
   private:
     bool forceWhitelistedRegs = false;
     WhitelistedRegisters mockWhitelistedRegs = {0};

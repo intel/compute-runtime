@@ -23,6 +23,7 @@ class OSInterface {
     };
     unsigned int getHwContextId() const;
     static bool osEnabled64kbPages;
+    static bool osEnableLocalMemory;
     static bool are64kbPagesEnabled();
     unsigned int getDeviceHandle() const;
 

@@ -234,6 +234,7 @@ class MemoryManager {
     void waitForDeletions();
 
     bool isAsyncDeleterEnabled() const;
+    bool isLocalMemorySupported() const;
     virtual bool isMemoryBudgetExhausted() const;
 
     virtual AlignedMallocRestrictions *getAlignedMallocRestrictions() {

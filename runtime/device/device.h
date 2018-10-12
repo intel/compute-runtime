@@ -113,6 +113,7 @@ class Device : public BaseObject<_cl_device_id> {
     std::string deviceExtensions;
     std::string name;
     bool getEnabled64kbPages();
+    bool getEnableLocalMemory();
     bool isSourceLevelDebuggerActive() const;
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
