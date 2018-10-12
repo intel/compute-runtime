@@ -352,8 +352,8 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
             batchBuffer.commandBufferAllocation->residencyTaskCount[this->deviceIndex] = this->taskCount;
         }
-        processResidency(allocationsForResidency, osContext);
     }
+    processResidency(allocationsForResidency, osContext);
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(pBatchBuffer)), engineType);
         addPatchInfoComments();

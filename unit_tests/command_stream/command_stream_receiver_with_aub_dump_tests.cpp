@@ -26,6 +26,7 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         flushParametrization.receivedBatchBuffer = &batchBuffer;
         flushParametrization.receivedEngine = engineOrdinal;
         flushParametrization.receivedAllocationsForResidency = &allocationsForResidency;
+        processResidency(allocationsForResidency, osContext);
         return flushParametrization.flushStampToReturn;
     }
 
@@ -174,13 +175,20 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
 }
 
-HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenProcessResidencyIsCalledThenBothBaseAndAubCsrProcessResidencyIsCalled) {
+HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenFlushIsCalledThenBothBaseAndAubCsrProcessResidencyIsCalled) {
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto engineType = OCLRT::ENGINE_RCS;
+
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
     ASSERT_NE(nullptr, gfxAllocation);
-
     ResidencyContainer allocationsForResidency = {gfxAllocation};
     OsContext osContext(nullptr, 0u);
-    csrWithAubDump->processResidency(allocationsForResidency, osContext);
+
+    FlushStamp flushStamp = csrWithAubDump->flush(batchBuffer, engineType, allocationsForResidency, osContext);
+    EXPECT_EQ(flushStamp, csrWithAubDump->flushParametrization.flushStampToReturn);
 
     EXPECT_TRUE(csrWithAubDump->processResidencyParameterization.wasCalled);
     EXPECT_EQ(&allocationsForResidency, csrWithAubDump->processResidencyParameterization.receivedAllocationsForResidency);
@@ -191,6 +199,7 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     }
 
     memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
+    memoryManager->freeGraphicsMemoryImpl(commandBuffer);
 }
 
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenMakeNonResidentIsCalledThenBothBaseAndAubCsrMakeNonResidentIsCalled) {
