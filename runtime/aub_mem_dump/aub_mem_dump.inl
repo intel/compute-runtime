@@ -306,6 +306,7 @@ uint64_t AubPageTableHelper64<Traits>::reserveAddressPPGTT(typename Traits::Stre
 
             stream.writePTE(start_address, pte);
             start_address += sizeof(pte);
+            OCLRT::AubHelper::checkPTEAddress(start_address);
 
             physPage += 4096;
             currPTE++;

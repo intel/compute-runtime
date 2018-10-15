@@ -17,4 +17,8 @@ int AubHelper::getMemTrace(uint64_t pdEntryBits) {
 uint64_t AubHelper::getPTEntryBits(uint64_t pdEntryBits) {
     return pdEntryBits;
 }
+
+void AubHelper::checkPTEAddress(uint64_t address) {
+}
+
 } // namespace OCLRT
