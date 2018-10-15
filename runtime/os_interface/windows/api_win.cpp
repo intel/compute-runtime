@@ -722,3 +722,13 @@ cl_int CL_API_CALL clGetSupportedDX9MediaSurfaceFormatsINTEL(cl_context context,
 
     return CL_SUCCESS;
 }
+
+cl_int CL_API_CALL clGetSupportedDX10TextureFormatsINTEL(cl_context context, cl_mem_flags flags, cl_mem_object_type imageType,
+                                                         cl_uint numEntries, DXGI_FORMAT *formats, cl_uint *numImageFormats) {
+    return getSupportedDXTextureFormats<D3DTypesHelper::D3D10>(context, imageType, numEntries, formats, numImageFormats);
+}
+
+cl_int CL_API_CALL clGetSupportedDX11TextureFormatsINTEL(cl_context context, cl_mem_flags flags, cl_mem_object_type imageType,
+                                                         cl_uint numEntries, DXGI_FORMAT *formats, cl_uint *numImageFormats) {
+    return getSupportedDXTextureFormats<D3DTypesHelper::D3D11>(context, imageType, numEntries, formats, numImageFormats);
+}

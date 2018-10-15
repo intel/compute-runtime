@@ -30,6 +30,11 @@ void D3DSharingFunctions<D3DTypesHelper::D3D9>::fillCreateBufferDesc(D3DBufferDe
 }
 
 template <>
+std::vector<DXGI_FORMAT> &D3DSharingFunctions<D3DTypesHelper::D3D9>::retrieveTextureFormats(cl_mem_object_type imageType) {
+    return DXGINoFormats;
+}
+
+template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D9>::fillCreateTexture2dDesc(D3DTexture2dDesc &desc, D3DTexture2dDesc *srcDesc, cl_uint subresource) {
 }
 
@@ -48,6 +53,15 @@ void D3DSharingFunctions<D3DTypesHelper::D3D9>::createTexture2d(D3DTexture2d **t
 
 template <>
 void D3DSharingFunctions<D3DTypesHelper::D3D9>::createTexture3d(D3DTexture3d **texture, D3DTexture3dDesc *desc, cl_uint subresource) {
+}
+
+template <>
+void D3DSharingFunctions<D3DTypesHelper::D3D9>::checkFormatSupport(DXGI_FORMAT format, UINT *pFormat) {
+}
+
+template <>
+bool D3DSharingFunctions<D3DTypesHelper::D3D9>::memObjectFormatSupport(cl_mem_object_type object, UINT format) {
+    return false;
 }
 
 template <>

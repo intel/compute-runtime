@@ -55,6 +55,8 @@ class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
     MOCK_METHOD2_T(getRenderTargetData, void(D3DTexture2d *renderTarget, D3DTexture2d *dstSurface));
     MOCK_METHOD2_T(updateSurface, void(D3DTexture2d *src, D3DTexture2d *dst));
     MOCK_METHOD1_T(updateDevice, void(D3DResource *resource));
+    MOCK_METHOD2_T(checkFormatSupport, void(DXGI_FORMAT format, UINT *pFormat));
+    MOCK_METHOD2_T(memObjectFormatSupport, bool(cl_mem_object_type object, UINT format));
 
     std::vector<std::pair<D3DResource *, cl_uint>> *getTrackedResourcesVector() { return &this->trackedResources; }
 

@@ -96,5 +96,4 @@ TEST_F(clIntelSharingFormatQueryDX9, givenValidParametersWhenRequestedMediaSurfa
         EXPECT_NE(found, retrievedFormats.end());
     }
 }
-
 } // namespace ULT
