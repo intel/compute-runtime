@@ -826,6 +826,18 @@ void Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, Wdd
     }
 }
 
+void Wddm::unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback) {
+    if (callback == nullptr) {
+        return;
+    }
+    D3DKMT_UNREGISTERTRIMNOTIFICATION unregisterTrimNotification;
+    unregisterTrimNotification.Callback = callback;
+    unregisterTrimNotification.Handle = this->trimCallbackHandle;
+
+    NTSTATUS status = gdi->unregisterTrimNotification(&unregisterTrimNotification);
+    DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+}
+
 void Wddm::releaseReservedAddress(void *reservedAddress) {
     if (reservedAddress) {
         auto status = virtualFree(reservedAddress, 0, MEM_RELEASE);

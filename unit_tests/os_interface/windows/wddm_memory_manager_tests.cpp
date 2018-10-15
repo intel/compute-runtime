@@ -874,7 +874,6 @@ TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhe
     memoryManager->freeGraphicsMemory(wddmAllocation);
 }
 
-
 TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksAllocationsResident) {
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
     ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
@@ -940,6 +939,16 @@ TEST_F(WddmMemoryManagerResidencyTest, trimCallbackIsRegisteredInWddmMemoryManag
     EXPECT_EQ((PFND3DKMT_TRIMNOTIFICATIONCALLBACK)memoryManager->trimCallback, gdi->getRegisterTrimNotificationArg().Callback);
     EXPECT_EQ(reinterpret_cast<void *>(memoryManager.get()), gdi->getRegisterTrimNotificationArg().Context);
     EXPECT_EQ(wddm->getDevice(), gdi->getRegisterTrimNotificationArg().hDevice);
+}
+
+TEST_F(WddmMemoryManagerResidencyTest, givenWddmMemoryManagerWhenCallingDestructorThenUnregisterTrimCallback) {
+    auto trimCallbackHandle = wddm->trimCallbackHandle;
+    auto trimCallbackAddress = reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(memoryManager->trimCallback);
+    memoryManager.reset();
+
+    auto &unregisterNotification = gdi->getUnregisterTrimNotificationArg();
+    EXPECT_EQ(trimCallbackAddress, unregisterNotification.Callback);
+    EXPECT_EQ(trimCallbackHandle, unregisterNotification.Handle);
 }
 
 TEST(WddmDebugModesTests, givenDebugModeWhenItIsActiveThenTrimCallbackIsNotRegistred) {
@@ -1642,15 +1651,16 @@ TEST_F(WddmMemoryManagerTest2, givenMemoryManagerWhenMakeResidentFailsThenMemory
 struct WddmMemoryManagerWithAsyncDeleterTest : ::testing::Test {
     void SetUp() {
         wddm = std::make_unique<WddmMock>();
+        wddm->gdi.reset(new MockGdi());
         wddm->callBaseDestroyAllocations = false;
         deleter = new MockDeferredDeleter;
         memoryManager = std::make_unique<MockWddmMemoryManager>(wddm.get(), executionEnvironment);
         memoryManager->setDeferredDeleter(deleter);
     }
     MockDeferredDeleter *deleter = nullptr;
+    std::unique_ptr<WddmMock> wddm;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<WddmMock> wddm;
 };
 
 TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsEnabledThenCanDeferDeletions) {

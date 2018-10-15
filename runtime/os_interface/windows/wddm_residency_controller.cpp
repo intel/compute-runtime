@@ -8,6 +8,7 @@
 #include "wddm_residency_controller.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/utilities/spinlock.h"
 
 namespace OCLRT {
 
@@ -21,6 +22,16 @@ void WddmResidencyController::acquireLock() {
 
 void WddmResidencyController::releaseLock() {
     lock = false;
+}
+
+void WddmResidencyController::acquireTrimCallbackLock() {
+    SpinLock spinLock;
+    spinLock.enter(this->trimCallbackLock);
+}
+
+void WddmResidencyController::releaseTrimCallbackLock() {
+    SpinLock spinLock;
+    spinLock.leave(this->trimCallbackLock);
 }
 
 WddmAllocation *WddmResidencyController::getTrimCandidateHead() {

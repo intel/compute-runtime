@@ -80,6 +80,7 @@ class Wddm {
 
     NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
     void registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmMemoryManager *memoryManager);
+    void unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback);
     MOCKABLE_VIRTUAL void releaseReservedAddress(void *reservedAddress);
     MOCKABLE_VIRTUAL bool reserveValidAddressRange(size_t size, void *&reservedMem);
 

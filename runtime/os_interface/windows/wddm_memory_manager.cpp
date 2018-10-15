@@ -27,6 +27,16 @@ namespace OCLRT {
 
 WddmMemoryManager::~WddmMemoryManager() {
     applyCommonCleanup();
+
+    for (auto &residencyController : this->residencyControllers) {
+        residencyController->acquireTrimCallbackLock();
+        wddm->unregisterTrimCallback(trimCallback);
+        residencyController->releaseTrimCallbackLock();
+
+        // Wait for lock to ensure trimCallback ended
+        residencyController->acquireTrimCallbackLock();
+        residencyController->releaseTrimCallbackLock();
+    }
 }
 
 WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemory, Wddm *wddm, ExecutionEnvironment &executionEnvironment) : MemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment) {
@@ -44,7 +54,9 @@ void APIENTRY WddmMemoryManager::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *t
     WddmMemoryManager *wddmMemMngr = (WddmMemoryManager *)trimNotification->Context;
     DEBUG_BREAK_IF(wddmMemMngr == nullptr);
 
+    wddmMemMngr->residencyControllers[0]->acquireTrimCallbackLock();
     wddmMemMngr->trimResidency(trimNotification->Flags, trimNotification->NumBytesToTrim);
+    wddmMemMngr->residencyControllers[0]->releaseTrimCallbackLock();
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {

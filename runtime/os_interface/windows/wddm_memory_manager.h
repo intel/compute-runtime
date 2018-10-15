@@ -81,9 +81,10 @@ class WddmMemoryManager : public MemoryManager {
     AlignedMallocRestrictions *getAlignedMallocRestrictions() override;
 
   protected:
-    GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle);
     void trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint64_t bytes);
     bool trimResidencyToBudget(uint64_t bytes);
+
+    GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle);
     static bool validateAllocation(WddmAllocation *alloc);
     bool createWddmAllocation(WddmAllocation *allocation, AllocationOrigin origin);
     std::vector<std::unique_ptr<WddmResidencyController>> residencyControllers;

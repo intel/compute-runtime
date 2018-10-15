@@ -23,6 +23,9 @@ class WddmResidencyController {
     void acquireLock();
     void releaseLock();
 
+    void acquireTrimCallbackLock();
+    void releaseTrimCallbackLock();
+
     WddmAllocation *getTrimCandidateHead();
     void addToTrimCandidateList(GraphicsAllocation *allocation);
     void removeFromTrimCandidateList(GraphicsAllocation *allocation, bool compactList);
@@ -38,6 +41,7 @@ class WddmResidencyController {
 
   protected:
     std::atomic<bool> lock;
+    std::atomic_flag trimCallbackLock = ATOMIC_FLAG_INIT;
     uint64_t lastTrimFenceValue;
     ResidencyContainer trimCandidateList;
     uint32_t trimCandidatesCount = 0;
