@@ -14,9 +14,6 @@
 
 namespace OCLRT {
 struct FlushStampTrackingObj;
-class TimestampPacket;
-template <typename TagType>
-struct TagNode;
 
 namespace CSRequirements {
 //cleanup section usually contains 1-2 pipeControls BB end and place for BB start
@@ -44,7 +41,6 @@ struct DispatchFlags {
     QueueThrottle throttle = QueueThrottle::MEDIUM;
     bool implicitFlush = false;
     bool outOfOrderExecutionAllowed = false;
-    TagNode<TimestampPacket> *timestampPacketForPipeControlWrite = nullptr;
     FlushStampTrackingObj *flushStampReference = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
     EventsRequest *outOfDeviceDependencies = nullptr;

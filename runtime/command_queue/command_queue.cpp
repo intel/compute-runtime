@@ -586,9 +586,4 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
         timestampPacketContainer->add(allocator->getTag());
     }
 }
-
-bool CommandQueue::allowTimestampPacketPipeControlWrite(uint32_t commandType, EventsRequest &eventsRequest) {
-    return this->timestampPacketContainer &&
-           ((CL_COMMAND_MARKER == commandType && eventsRequest.outEvent && eventsRequest.numEventsInWaitList == 0) || (CL_COMMAND_BARRIER == commandType));
-}
 } // namespace OCLRT

@@ -252,9 +252,6 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
     dispatchFlags.lowPriority = cmdQ.getPriority() == QueuePriority::LOW;
     dispatchFlags.throttle = cmdQ.getThrottle();
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(cmdQ.getDevice(), nullptr);
-    if (timestampPacketsForPipeControlWrite) {
-        dispatchFlags.timestampPacketForPipeControlWrite = timestampPacketsForPipeControlWrite->peekNodes().at(0);
-    }
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
@@ -272,10 +269,5 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
     cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
 
     return completionStamp;
-}
-
-void CommandMarker::setTimestampPacketsForPipeControlWrite(TimestampPacketContainer &inputNodes) {
-    timestampPacketsForPipeControlWrite = std::make_unique<TimestampPacketContainer>(cmdQ.getDevice().getMemoryManager());
-    timestampPacketsForPipeControlWrite->assignAndIncrementNodesRefCounts(inputNodes);
 }
 } // namespace OCLRT

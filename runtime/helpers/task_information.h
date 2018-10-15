@@ -120,11 +120,9 @@ class CommandMarker : public Command {
         : cmdQ(cmdQ), csr(csr), clCommandType(clCommandType), commandSize(commandSize) {
     }
 
-    void setTimestampPacketsForPipeControlWrite(TimestampPacketContainer &inputNodes);
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
 
   private:
-    std::unique_ptr<TimestampPacketContainer> timestampPacketsForPipeControlWrite;
     CommandQueue &cmdQ;
     CommandStreamReceiver &csr;
     uint32_t clCommandType;

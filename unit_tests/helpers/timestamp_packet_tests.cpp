@@ -830,60 +830,22 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
     clReleaseEvent(clOutEvent);
 }
 
-HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndOutputEventWhenEnqueueingMarkerThenObtainNewPacketAndEmitPipeControlWithWrite) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-
-    MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
-
-    MockKernelWithInternals mockKernel(*device, context.get());
-    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestmapPacket
-
-    TimestampPacketContainer cmdQNodes(device->getMemoryManager());
-    cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ.timestampPacketContainer);
-
-    cl_event clOutEvent;
-    cmdQ.enqueueMarkerWithWaitList(0, nullptr, &clOutEvent);
-
-    EXPECT_NE(cmdQ.timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // new node obtained
-    EXPECT_EQ(1u, cmdQ.timestampPacketContainer->peekNodes().size());
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(device->getUltCommandStreamReceiver<FamilyType>().commandStream, 0);
-
-    bool pipeControlFound = false;
-    uint64_t expectedAddress = cmdQ.timestampPacketContainer->peekNodes().at(0)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
-    uint32_t expectedAddressLow = static_cast<uint32_t>(expectedAddress & 0x0000FFFFFFFFULL);
-    uint32_t expectedAddressHigh = static_cast<uint32_t>(expectedAddress >> 32);
-    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
-        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        if (pipeControl &&
-            pipeControl->getAddress() == expectedAddressLow &&
-            pipeControl->getAddressHigh() == expectedAddressHigh &&
-            pipeControl->getImmediateData() == 0) {
-            pipeControlFound = true;
-            break;
-        }
-    }
-    EXPECT_TRUE(pipeControlFound);
-
-    clReleaseEvent(clOutEvent);
-}
-
 HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndNoOutputEventWhenEnqueueingMarkerThenDoNothing) {
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
 
     MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
 
     cmdQ.enqueueMarkerWithWaitList(0, nullptr, nullptr);
     EXPECT_EQ(0u, cmdQ.timestampPacketContainer->peekNodes().size());
+    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
 }
 
-HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenObtainNewPacketAndEmitPipeControlWithDataWrite) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenRequestPipeControlOnCsrFlush) {
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
-    csr.storeMakeResidentAllocations = true;
+
+    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
 
     MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
 
@@ -895,62 +857,75 @@ HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenObtainNewPacketAndEmitPi
 
     cmdQ.enqueueBarrierWithWaitList(0, nullptr, nullptr);
 
-    EXPECT_NE(cmdQ.timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // new node obtained
+    EXPECT_EQ(cmdQ.timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // dont obtain new node
     EXPECT_EQ(1u, cmdQ.timestampPacketContainer->peekNodes().size());
 
-    EXPECT_TRUE(csr.isMadeResident(cmdQ.timestampPacketContainer->peekNodes().at(0)->getGraphicsAllocation()));
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
-
-    bool pipeControlFound = false;
-    uint64_t expectedAddress = cmdQ.timestampPacketContainer->peekNodes().at(0)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
-    uint32_t expectedAddressLow = static_cast<uint32_t>(expectedAddress & 0x0000FFFFFFFFULL);
-    uint32_t expectedAddressHigh = static_cast<uint32_t>(expectedAddress >> 32);
-    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
-        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        if (pipeControl &&
-            pipeControl->getAddress() == expectedAddressLow &&
-            pipeControl->getAddressHigh() == expectedAddressHigh &&
-            pipeControl->getImmediateData() == 0) {
-            pipeControlFound = true;
-            break;
-        }
-    }
-    EXPECT_TRUE(pipeControlFound);
+    EXPECT_TRUE(csr.stallingPipeControlOnNextFlushRequired);
 }
 
-HWTEST_F(TimestampPacketTests, givenBlockedQueueWhenEnqueueingBarrierThenObtainNewPacketAndEmitPipeControlWithWrite) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteDisabledWhenEnqueueingBarrierThenDontRequestPipeControlOnCsrFlush) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = false;
+
+    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
+
+    cmdQ.enqueueBarrierWithWaitList(0, nullptr, nullptr);
+
+    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
+}
+
+HWTEST_F(TimestampPacketTests, givenBlockedQueueWhenEnqueueingBarrierThenRequestPipeControlOnCsrFlush) {
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
-    csr.storeMakeResidentAllocations = true;
+    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
 
     MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
 
     UserEvent userEvent;
     cl_event waitlist[] = {&userEvent};
     cmdQ.enqueueBarrierWithWaitList(1, waitlist, nullptr);
+    EXPECT_TRUE(csr.stallingPipeControlOnNextFlushRequired);
+}
 
-    userEvent.setStatus(CL_COMPLETE);
-    EXPECT_TRUE(csr.isMadeResident(cmdQ.timestampPacketContainer->peekNodes().at(0)->getGraphicsAllocation()));
+HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenEstimatingCsrStreamSizeThenAddSizeForPipeControl) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    DispatchFlags flags;
+
+    csr.stallingPipeControlOnNextFlushRequired = false;
+    auto sizeWithoutPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, *device.get());
+
+    csr.stallingPipeControlOnNextFlushRequired = true;
+    auto sizeWithPcRequest = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, *device.get());
+
+    size_t extendedSize = sizeWithoutPcRequest + sizeof(typename FamilyType::PIPE_CONTROL);
+
+    EXPECT_EQ(sizeWithPcRequest, extendedSize);
+}
+
+HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenFlushingThenProgramPipeControlAndResetRequestFlag) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.stallingPipeControlOnNextFlushRequired = true;
+    csr.timestampPacketWriteEnabled = true;
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
+
+    MockKernelWithInternals mockKernel(*device, context.get());
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_FALSE(csr.stallingPipeControlOnNextFlushRequired);
 
     HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(device->getUltCommandStreamReceiver<FamilyType>().commandStream, 0);
+    hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
+    auto secondEnqueueOffset = csr.commandStream.getUsed();
 
-    bool pipeControlFound = false;
-    uint64_t expectedAddress = cmdQ.timestampPacketContainer->peekNodes().at(0)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
-    uint32_t expectedAddressLow = static_cast<uint32_t>(expectedAddress & 0x0000FFFFFFFFULL);
-    uint32_t expectedAddressHigh = static_cast<uint32_t>(expectedAddress >> 32);
-    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
-        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-        if (pipeControl &&
-            pipeControl->getAddress() == expectedAddressLow &&
-            pipeControl->getAddressHigh() == expectedAddressHigh &&
-            pipeControl->getImmediateData() == 0) {
-            pipeControlFound = true;
-            break;
-        }
-    }
-    EXPECT_TRUE(pipeControlFound);
+    auto pipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*hwParser.cmdList.begin());
+    EXPECT_NE(nullptr, pipeControl);
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE, pipeControl->getPostSyncOperation());
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(secondEnqueueOffset, csr.commandStream.getUsed()); // nothing programmed when flag is not set
 }

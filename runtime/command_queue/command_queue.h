@@ -417,7 +417,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                                  AuxTranslationDirection auxTranslationDirection);
 
     void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes);
-    bool allowTimestampPacketPipeControlWrite(uint32_t commandType, EventsRequest &eventsRequest);
 
     Context *context;
     Device *device;

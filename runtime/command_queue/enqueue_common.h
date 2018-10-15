@@ -198,7 +198,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     TimestampPacketContainer previousTimestampPacketNodes(device->getMemoryManager());
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
-    bool emitPipeControlWithTimestampWrite = allowTimestampPacketPipeControlWrite(commandType, eventsRequest);
 
     if (multiDispatchInfo.empty() == false) {
         HwPerfCounter *hwPerfCounter = nullptr;
@@ -271,10 +270,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
         slmUsed = multiDispatchInfo.usesSlm();
     } else if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        if (emitPipeControlWithTimestampWrite) {
-            obtainNewTimestampPacketNodes(1, previousTimestampPacketNodes);
+        if (CL_COMMAND_BARRIER == commandType) {
+            commandStreamReceiver.requestStallingPipeControlOnNextFlush();
         }
-
         if (eventBuilder.getEvent()) {
             // Event from non-kernel enqueue inherits TimestampPackets from waitlist and command queue
             eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
@@ -330,7 +328,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
         }
 
-        auto submissionRequired = !isCommandWithoutKernel(commandType) || emitPipeControlWithTimestampWrite;
+        auto submissionRequired = !isCommandWithoutKernel(commandType);
 
         if (submissionRequired) {
             completionStamp = enqueueNonBlocked<commandType>(
@@ -502,7 +500,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     bool slmUsed,
     PrintfHandler *printfHandler) {
 
-    UNRECOVERABLE_IF(multiDispatchInfo.empty() && !timestampPacketContainer);
+    UNRECOVERABLE_IF(multiDispatchInfo.empty());
 
     auto &commandStreamReceiver = device->getCommandStreamReceiver();
     auto implicitFlush = false;
@@ -567,9 +565,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         ioh = &getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
     }
 
-    if (multiDispatchInfo.peekMainKernel()) {
-        commandStreamReceiver.requestThreadArbitrationPolicy(multiDispatchInfo.peekMainKernel()->getThreadArbitrationPolicy<GfxFamily>());
-    }
+    commandStreamReceiver.requestThreadArbitrationPolicy(multiDispatchInfo.peekMainKernel()->getThreadArbitrationPolicy<GfxFamily>());
 
     DispatchFlags dispatchFlags;
     dispatchFlags.blocking = blocking;
@@ -586,9 +582,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.outOfOrderExecutionAllowed = !eventBuilder.getEvent() || commandStreamReceiver.isNTo1SubmissionModelEnabled();
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         dispatchFlags.outOfDeviceDependencies = &eventsRequest;
-        if (multiDispatchInfo.empty()) {
-            dispatchFlags.timestampPacketForPipeControlWrite = timestampPacketContainer->peekNodes().at(0);
-        }
     }
     dispatchFlags.numGrfRequired = numGrfRequired;
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
@@ -660,10 +653,6 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
                                                                                             nullptr));
 
         auto cmd = std::make_unique<CommandMarker>(*this, commandStreamReceiver, commandType, cmdSize);
-
-        if (allowTimestampPacketPipeControlWrite(commandType, eventsRequest)) {
-            cmd->setTimestampPacketsForPipeControlWrite(*timestampPacketContainer);
-        }
 
         eventBuilder->getEvent()->setCommand(std::move(cmd));
     } else {

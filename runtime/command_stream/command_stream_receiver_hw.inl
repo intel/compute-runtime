@@ -254,10 +254,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (dispatchFlags.outOfDeviceDependencies) {
         handleEventsTimestampPacketTags(commandStreamCSR, dispatchFlags, device);
     }
-    if (dispatchFlags.timestampPacketForPipeControlWrite) {
-        uint64_t address = dispatchFlags.timestampPacketForPipeControlWrite->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
-        KernelCommandsHelper<GfxFamily>::programPipeControlDataWriteWithCsStall(commandStreamCSR, address, 0);
-        makeResident(*dispatchFlags.timestampPacketForPipeControlWrite->getGraphicsAllocation());
+    if (stallingPipeControlOnNextFlushRequired) {
+        stallingPipeControlOnNextFlushRequired = false;
+        auto stallingPipeControlCmd = commandStream.getSpaceForCmd<PIPE_CONTROL>();
+        *stallingPipeControlCmd = PIPE_CONTROL::sInit();
+        stallingPipeControlCmd->setCommandStreamerStallEnable(true);
     }
     initPageTableManagerRegisters(commandStreamCSR);
     programPreemption(commandStreamCSR, device, dispatchFlags);
@@ -649,6 +650,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     }
     if (dispatchFlags.outOfDeviceDependencies) {
         size += dispatchFlags.outOfDeviceDependencies->numEventsInWaitList * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+    }
+    if (stallingPipeControlOnNextFlushRequired) {
+        size += sizeof(typename GfxFamily::PIPE_CONTROL);
     }
     return size;
 }
