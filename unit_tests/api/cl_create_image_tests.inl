@@ -48,21 +48,65 @@ struct clCreateImageTests : public api_fixture,
 
 typedef clCreateImageTests<::testing::Test> clCreateImageTest;
 
-TEST_F(clCreateImageTest, GivenValidParametersWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
-    char ptr[10];
-    imageDesc.image_row_pitch = 128;
+TEST_F(clCreateImageTest, GivenNullHostPtrWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_WRITE,
         &imageFormat,
         &imageDesc,
-        ptr,
+        nullptr,
         &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
 
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clCreateImageTest, GivenNonNullHostPtrAndAlignedRowPitchWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
+    char hostPtr[4096];
+    imageDesc.image_row_pitch = 128;
+
+    auto image = clCreateImage(
+        pContext,
+        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+        &imageFormat,
+        &imageDesc,
+        hostPtr,
+        &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, image);
+
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clCreateImageTest, GivenNonNullHostPtrAndUnalignedRowPitchWhenCreatingImageThenInvalidImageDescriptotErrorIsReturned) {
+    char hostPtr[4096];
+    imageDesc.image_row_pitch = 129;
+    auto image = clCreateImage(
+        pContext,
+        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+        &imageFormat,
+        &imageDesc,
+        hostPtr,
+        &retVal);
+    ASSERT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+    EXPECT_EQ(nullptr, image);
+}
+
+TEST_F(clCreateImageTest, GivenNonNullHostPtrAndSmallRowPitchWhenCreatingImageThenInvalidImageDescriptotErrorIsReturned) {
+    char hostPtr[4096];
+    imageDesc.image_row_pitch = 4;
+    auto image = clCreateImage(
+        pContext,
+        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+        &imageFormat,
+        &imageDesc,
+        hostPtr,
+        &retVal);
+    ASSERT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+    EXPECT_EQ(nullptr, image);
 }
 
 TEST_F(clCreateImageTest, GivenUnrestrictedIntelFlagWhenCreatingImageWithInvalidFlagCombinationThenImageIsCreatedAndSuccessReturned) {
@@ -80,6 +124,19 @@ TEST_F(clCreateImageTest, GivenUnrestrictedIntelFlagWhenCreatingImageWithInvalid
 
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clCreateImageTest, GivenNotNullHostPtrAndNoHostPtrFlagWhenCreatingImageThenInvalidHostPtrErrorIsReturned) {
+    char hostPtr[4096];
+    auto image = clCreateImage(
+        pContext,
+        CL_MEM_READ_WRITE,
+        &imageFormat,
+        &imageDesc,
+        hostPtr,
+        &retVal);
+    ASSERT_EQ(CL_INVALID_HOST_PTR, retVal);
+    EXPECT_EQ(nullptr, image);
 }
 
 TEST_F(clCreateImageTest, GivenInvalidFlagBitsWhenCreatingImageThenInvalidValueErrorIsReturned) {
@@ -135,13 +192,12 @@ TEST_F(clCreateImageTest, GivenInvalidFlagBitsWhenCreatingImageFromAnotherImageT
 
 TEST_F(clCreateImageTest, GivenInvalidRowPitchWhenCreatingImageThenInvalidImageDescriptorErrorIsReturned) {
     imageDesc.image_row_pitch = 655;
-    char ptr[10];
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_WRITE,
         &imageFormat,
         &imageDesc,
-        ptr,
+        nullptr,
         &retVal);
     ASSERT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
     EXPECT_EQ(nullptr, image);
@@ -219,13 +275,12 @@ TEST_F(clCreateImageTest, GivenNonZeroPitchWhenCreatingImageFromBufferThenImageI
 
 TEST_F(clCreateImageTest, GivenNotNullHostPtrAndRowPitchIsNotGreaterThanWidthTimesElementSizeWhenCreatingImageThenInvalidImageDescriptorErrorIsReturned) {
     imageDesc.image_row_pitch = 64;
-    char ptr[10];
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_WRITE,
         &imageFormat,
         &imageDesc,
-        ptr,
+        nullptr,
         &retVal);
     ASSERT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
     EXPECT_EQ(nullptr, image);
@@ -304,17 +359,21 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
                         ::testing::ValuesIn(validFlags));
 
 TEST_P(clCreateImageValidFlags, GivenValidFlagsWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
-
-    char ptr[128 * 32];
-    imageDesc.image_row_pitch = 128;
     cl_mem_flags flags = GetParam();
+    char ptr[10];
+    char *hostPtr = nullptr;
+
+    if (flags & CL_MEM_USE_HOST_PTR ||
+        flags & CL_MEM_COPY_HOST_PTR) {
+        hostPtr = ptr;
+    }
 
     auto image = clCreateImage(
         pContext,
         flags,
         &imageFormat,
         &imageDesc,
-        ptr,
+        hostPtr,
         &retVal);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
