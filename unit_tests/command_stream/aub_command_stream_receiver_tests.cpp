@@ -1409,12 +1409,13 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
     void *lockCpuPtr = nullptr;
 };
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnImageWithNoHostPtrThenResourceShouldBeLockedToGetCpuAddress) {
-    auto memoryManager = new OsAgnosticMemoryManagerForImagesWithNoHostPtr(*pDevice->executionEnvironment);
-    std::unique_ptr<MemoryManager> oldMemoryManager(pDevice->executionEnvironment->memoryManager.release());
-    pDevice->executionEnvironment->memoryManager.reset(memoryManager);
+using AubCommandStreamReceiverNoHostPtrTests = ::testing::Test;
+HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnImageWithNoHostPtrThenResourceShouldBeLockedToGetCpuAddress) {
+    ExecutionEnvironment executionEnvironment;
+    auto memoryManager = new OsAgnosticMemoryManagerForImagesWithNoHostPtr(executionEnvironment);
+    executionEnvironment.memoryManager.reset(memoryManager);
 
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true, *pDevice->executionEnvironment));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true, executionEnvironment));
 
     cl_image_desc imgDesc = {};
     imgDesc.image_width = 512;
@@ -1438,7 +1439,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
 
     queryGmm.release();
     memoryManager->freeGraphicsMemory(imageAllocation);
-    pDevice->executionEnvironment->memoryManager.reset(oldMemoryManager.release());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenNoDbgDeviceIdFlagWhenAubCsrIsCreatedThenUseDefaultDeviceId) {
