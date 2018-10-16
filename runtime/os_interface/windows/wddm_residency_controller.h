@@ -10,8 +10,10 @@
 #include "runtime/memory_manager/residency_container.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
 #include "runtime/os_interface/windows/windows_defs.h"
+#include "runtime/utilities/spinlock.h"
 
 #include <atomic>
+#include <mutex>
 
 namespace OCLRT {
 
@@ -23,11 +25,8 @@ class WddmResidencyController {
   public:
     WddmResidencyController(Wddm &wddm, uint32_t osContextId);
 
-    void acquireLock();
-    void releaseLock();
-
-    void acquireTrimCallbackLock();
-    void releaseTrimCallbackLock();
+    std::unique_lock<SpinLock> acquireLock();
+    std::unique_lock<SpinLock> acquireTrimCallbackLock();
 
     WddmAllocation *getTrimCandidateHead();
     void addToTrimCandidateList(GraphicsAllocation *allocation);
@@ -54,8 +53,8 @@ class WddmResidencyController {
     uint32_t osContextId;
     MonitoredFence monitoredFence = {};
 
-    std::atomic<bool> lock = false;
-    std::atomic_flag trimCallbackLock = ATOMIC_FLAG_INIT;
+    SpinLock lock;
+    SpinLock trimCallbackLock;
 
     uint64_t lastTrimFenceValue = 0u;
     ResidencyContainer trimCandidateList;

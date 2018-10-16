@@ -32,13 +32,13 @@ WddmMemoryManager::~WddmMemoryManager() {
     for (auto osContext : this->registeredOsContexts) {
         if (osContext) {
             auto &residencyController = osContext->get()->getResidencyController();
-            residencyController.acquireTrimCallbackLock();
+
+            auto lock = residencyController.acquireTrimCallbackLock();
             wddm->unregisterTrimCallback(trimCallback, this->trimCallbackHandle);
-            residencyController.releaseTrimCallbackLock();
+            lock.unlock();
 
             // Wait for lock to ensure trimCallback ended
-            residencyController.acquireTrimCallbackLock();
-            residencyController.releaseTrimCallbackLock();
+            lock.lock();
         }
     }
 }
@@ -62,9 +62,8 @@ void APIENTRY WddmMemoryManager::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *t
         return;
     }
 
-    wddmMemMngr->getRegisteredOsContext(0)->get()->getResidencyController().acquireTrimCallbackLock();
+    auto lock = wddmMemMngr->getRegisteredOsContext(0)->get()->getResidencyController().acquireTrimCallbackLock();
     wddmMemMngr->getRegisteredOsContext(0)->get()->getResidencyController().trimResidency(trimNotification->Flags, trimNotification->NumBytesToTrim);
-    wddmMemMngr->getRegisteredOsContext(0)->get()->getResidencyController().releaseTrimCallbackLock();
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
@@ -315,9 +314,8 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     for (auto &osContext : this->registeredOsContexts) {
         if (osContext) {
             auto &residencyController = osContext->get()->getResidencyController();
-            residencyController.acquireLock();
+            auto lock = residencyController.acquireLock();
             residencyController.removeFromTrimCandidateListIfUsed(input, true);
-            residencyController.releaseLock();
         }
     }
 
@@ -480,7 +478,7 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer &all
 
     uint32_t totalHandlesCount = 0;
 
-    osContext.get()->getResidencyController().acquireLock();
+    auto lock = osContext.get()->getResidencyController().acquireLock();
 
     DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.get()->getResidencyController().getMonitoredFence().currentFenceValue);
 
@@ -550,23 +548,17 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer &all
         }
     }
 
-    osContext.get()->getResidencyController().releaseLock();
-
     return result;
 }
 
 void WddmMemoryManager::makeNonResidentEvictionAllocations(ResidencyContainer &evictionAllocations, OsContext &osContext) {
-
-    osContext.get()->getResidencyController().acquireLock();
-
-    size_t residencyCount = evictionAllocations.size();
+    auto lock = osContext.get()->getResidencyController().acquireLock();
+    const size_t residencyCount = evictionAllocations.size();
 
     for (uint32_t i = 0; i < residencyCount; i++) {
         WddmAllocation *allocation = reinterpret_cast<WddmAllocation *>(evictionAllocations[i]);
         osContext.get()->getResidencyController().addToTrimCandidateList(allocation);
     }
-
-    osContext.get()->getResidencyController().releaseLock();
 }
 
 bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {

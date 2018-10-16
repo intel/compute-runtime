@@ -15,24 +15,12 @@ namespace OCLRT {
 
 WddmResidencyController::WddmResidencyController(Wddm &wddm, uint32_t osContextId) : wddm(wddm), osContextId(osContextId) {}
 
-void WddmResidencyController::acquireLock() {
-    bool previousLockValue = false;
-    while (!lock.compare_exchange_weak(previousLockValue, true))
-        previousLockValue = false;
+std::unique_lock<SpinLock> WddmResidencyController::acquireLock() {
+    return std::unique_lock<SpinLock>{this->lock};
 }
 
-void WddmResidencyController::releaseLock() {
-    lock = false;
-}
-
-void WddmResidencyController::acquireTrimCallbackLock() {
-    SpinLock spinLock;
-    spinLock.enter(this->trimCallbackLock);
-}
-
-void WddmResidencyController::releaseTrimCallbackLock() {
-    SpinLock spinLock;
-    spinLock.leave(this->trimCallbackLock);
+std::unique_lock<SpinLock> WddmResidencyController::acquireTrimCallbackLock() {
+    return std::unique_lock<SpinLock>{this->trimCallbackLock};
 }
 
 WddmAllocation *WddmResidencyController::getTrimCandidateHead() {
@@ -177,6 +165,7 @@ void WddmResidencyController::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags,
         bool periodicTrimDone = false;
         D3DKMT_HANDLE fragmentEvictHandles[3] = {0};
         uint64_t sizeToTrim = 0;
+        auto lock = this->acquireLock();
 
         WddmAllocation *wddmAllocation = nullptr;
         while ((wddmAllocation = this->getTrimCandidateHead()) != nullptr) {
@@ -221,17 +210,11 @@ void WddmResidencyController::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags,
         if (this->checkTrimCandidateListCompaction()) {
             this->compactTrimCandidateList();
         }
-
-        this->releaseLock();
     }
 
     if (flags.TrimToBudget) {
-
-        this->acquireLock();
-
+        auto lock = this->acquireLock();
         trimResidencyToBudget(bytes);
-
-        this->releaseLock();
     }
 
     if (flags.PeriodicTrim || flags.RestartPeriodicTrim) {

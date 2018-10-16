@@ -35,7 +35,7 @@ const igc_info_t *pIgcInfo = nullptr;
 std::atomic<int> sequenceCount(1);
 CommandQueue *pCmdQueueForFlushTask = nullptr;
 std::deque<gtpinkexec_t> kernelExecQueue;
-std::atomic_flag kernelExecQueueLock = ATOMIC_FLAG_INIT;
+SpinLock kernelExecQueueLock;
 
 void gtpinNotifyContextCreate(cl_context context) {
     if (isGTPinInitialized) {
@@ -122,10 +122,9 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         kExec.gtpinResource = (cl_mem)resource;
         kExec.commandBuffer = commandBuffer;
         kExec.pCommandQueue = (CommandQueue *)pCmdQueue;
-        SpinLock lock;
-        lock.enter(kernelExecQueueLock);
+        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         kernelExecQueue.push_back(kExec);
-        lock.leave(kernelExecQueueLock);
+        lock.unlock();
         // Patch SSH[gtpinBTI] with GT-Pin resource
         if (!resource) {
             return;
@@ -150,8 +149,7 @@ void gtpinNotifyPreFlushTask(void *pCmdQueue) {
 
 void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
     if (isGTPinInitialized) {
-        SpinLock lock;
-        lock.enter(kernelExecQueueLock);
+        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems; n++) {
             if ((kernelExecQueue[n].pCommandQueue == pCmdQueueForFlushTask) && !kernelExecQueue[n].isTaskCountValid) {
@@ -161,15 +159,13 @@ void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
                 break;
             }
         }
-        lock.leave(kernelExecQueueLock);
         pCmdQueueForFlushTask = nullptr;
     }
 }
 
 void gtpinNotifyTaskCompletion(uint32_t completedTaskCount) {
     if (isGTPinInitialized) {
-        SpinLock lock;
-        lock.enter(kernelExecQueueLock);
+        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems;) {
             if (kernelExecQueue[n].isTaskCountValid && (kernelExecQueue[n].taskCount <= completedTaskCount)) {
@@ -182,14 +178,12 @@ void gtpinNotifyTaskCompletion(uint32_t completedTaskCount) {
                 n++;
             }
         }
-        lock.leave(kernelExecQueueLock);
     }
 }
 
 void gtpinNotifyMakeResident(void *pKernel, void *pCSR) {
     if (isGTPinInitialized) {
-        SpinLock lock;
-        lock.enter(kernelExecQueueLock);
+        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems; n++) {
             if ((kernelExecQueue[n].pKernel == pKernel) && !kernelExecQueue[n].isResourceResident && kernelExecQueue[n].gtpinResource) {
@@ -203,14 +197,12 @@ void gtpinNotifyMakeResident(void *pKernel, void *pCSR) {
                 break;
             }
         }
-        lock.leave(kernelExecQueueLock);
     }
 }
 
 void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResVec) {
     if (isGTPinInitialized) {
-        SpinLock lock;
-        lock.enter(kernelExecQueueLock);
+        std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems; n++) {
             if ((kernelExecQueue[n].pKernel == pKernel) && !kernelExecQueue[n].isResourceResident && kernelExecQueue[n].gtpinResource) {
@@ -225,7 +217,6 @@ void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResVec) {
                 break;
             }
         }
-        lock.leave(kernelExecQueueLock);
     }
 }
 

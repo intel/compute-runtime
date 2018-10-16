@@ -1,64 +1,66 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "runtime/utilities/spinlock.h"
 #include "gtest/gtest.h"
 #include <thread>
+#include <mutex>
 
 using namespace OCLRT;
 
 TEST(SpinLockTest, givenTwoThreadsThenVerifyThatTheySynchronizeWithSpinLock) {
-    std::atomic_flag syncLock = ATOMIC_FLAG_INIT;
     std::atomic<bool> threadStarted(false);
     std::atomic<bool> threadFinished(false);
-    SpinLock lock1;
+    SpinLock spinLock;
     int sharedCount = 0;
 
     // Initially acquire spin lock so the worker thread will wait
-    lock1.enter(syncLock);
+    std::unique_lock<SpinLock> lock1{spinLock};
 
     // Start worker thread
-    std::thread t([&]() {
+    std::thread workerThread([&]() {
         threadStarted = true;
-        SpinLock lock2;
-        lock2.enter(syncLock);
+        std::unique_lock<SpinLock> lock2{spinLock};
         sharedCount++;
         EXPECT_EQ(2, sharedCount);
-        lock2.leave(syncLock);
+        lock2.unlock();
         threadFinished = true;
     });
 
     // Wait till worker thread is started
-    while (!threadStarted) {
-    };
+    while (!threadStarted)
+        ;
     sharedCount++;
     EXPECT_EQ(1, sharedCount);
 
     // Release spin lock thus allowing worker thread to proceed
-    lock1.leave(syncLock);
+    lock1.unlock();
 
     // Wait till worker thread finishes
-    while (!threadFinished) {
-    };
+    while (!threadFinished)
+        ;
     EXPECT_EQ(2, sharedCount);
-    t.join();
+    workerThread.join();
+}
+
+TEST(SpinLockTest, givenSpinLockThenAttemptedLockingWorks) {
+    SpinLock spinLock;
+    auto workerThreadFunction = [&spinLock](bool expectedLockAcquired) {
+        std::unique_lock<SpinLock> lock{spinLock, std::defer_lock};
+        auto lockAcquired = lock.try_lock();
+        EXPECT_EQ(expectedLockAcquired, lockAcquired);
+    };
+
+    // Expect locking to fail when lock is already taken
+    std::unique_lock<SpinLock> lock{spinLock};
+    std::thread workerThread1(workerThreadFunction, false);
+    workerThread1.join();
+
+    lock.unlock();
+    std::thread workerThread2(workerThreadFunction, true);
+    workerThread2.join();
 }
