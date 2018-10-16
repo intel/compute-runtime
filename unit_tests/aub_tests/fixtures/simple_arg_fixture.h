@@ -46,7 +46,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
     using CommandStreamFixture::pCS;
     using IndirectHeapFixture::SetUp;
     using KernelFixture::pKernel;
-    using SimpleArgKernelFixture::SetUp;
+    using KernelFixture::SetUp;
 
     SimpleArgFixture()
         : pDestMemory(nullptr), sizeUserMemory(128 * sizeof(float)) {
@@ -64,7 +64,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
         KernelFixture::SetUp(pDevice);
         ASSERT_NE(nullptr, pKernel);
 
-        int argVal = (int)0x22222222;
+        argVal = static_cast<int>(0x22222222);
         pDestMemory = alignedMalloc(sizeUserMemory, 4096);
         ASSERT_NE(nullptr, pDestMemory);
 
@@ -79,12 +79,21 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
         pKernel->setArgSvm(1, sizeUserMemory, pDestMemory);
 
         auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
-        commandStreamReceiver.createAllocationAndHandleResidency(pDestMemory, sizeUserMemory);
+        outBuffer = commandStreamReceiver.createAllocationAndHandleResidency(pDestMemory, sizeUserMemory);
+        ASSERT_NE(nullptr, outBuffer);
+        outBuffer->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+        outBuffer->setMemObjectsAllocationWithWritableFlags(true);
     }
 
     virtual void TearDown() {
-        alignedFree(pExpectedMemory);
-        alignedFree(pDestMemory);
+        if (pExpectedMemory) {
+            alignedFree(pExpectedMemory);
+            pExpectedMemory = nullptr;
+        }
+        if (pDestMemory) {
+            alignedFree(pDestMemory);
+            pDestMemory = nullptr;
+        }
 
         KernelFixture::TearDown();
         IndirectHeapFixture::TearDown();
@@ -93,8 +102,10 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
         DeviceFixture::TearDown();
     }
 
+    int argVal;
     void *pDestMemory;
     void *pExpectedMemory;
     size_t sizeUserMemory;
+    GraphicsAllocation *outBuffer;
 };
 } // namespace OCLRT

@@ -183,33 +183,35 @@ function(neo_gen_kernels target platform_name suffix)
   set_target_properties(${target} PROPERTIES FOLDER "kernels/${suffix}")
 endfunction()
 
-function(neo_gen_kernel_with_options target platform_name suffix filepath)
-  get_filename_component(filename ${filepath} NAME)
-  get_filename_component(basename ${filepath} NAME_WE)
-  get_filename_component(base_workdir ${filepath} DIRECTORY)
-
-  set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
-  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
-
+function(neo_gen_kernels_with_options target platform_name suffix filepath)
   set(results)
-  foreach(arg ${ARGN})
-    string(REPLACE " " "_" argwospaces ${arg})
+  foreach(filearg ${filepath})
+    get_filename_component(filename ${filearg} NAME)
+    get_filename_component(basename ${filearg} NAME_WE)
+    get_filename_component(base_workdir ${filearg} DIRECTORY)
 
-    set(outputpath_base "${outputdir}/${basename}_${suffix}")
-    set(output_files
-      ${outputpath_base}${ir_extension}${argwospaces}
-      ${outputpath_base}.bin${argwospaces}
-      ${outputpath_base}.gen${argwospaces}
-    )
+    set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
+    set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
 
-    add_custom_command(
-      OUTPUT ${output_files}
-      COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -options ${arg} -options_name
-      WORKING_DIRECTORY ${workdir}
-      DEPENDS ${filepath} cloc
-    )
+    foreach(arg ${ARGN})
+      string(REPLACE " " "_" argwospaces ${arg})
 
-    list(APPEND results ${output_files})
+      set(outputpath_base "${outputdir}/${basename}_${suffix}")
+      set(output_files
+        ${outputpath_base}${ir_extension}${argwospaces}
+        ${outputpath_base}.bin${argwospaces}
+        ${outputpath_base}.gen${argwospaces}
+      )
+
+      add_custom_command(
+        OUTPUT ${output_files}
+        COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -options ${arg} -options_name
+        WORKING_DIRECTORY ${workdir}
+        DEPENDS ${filearg} cloc
+      )
+
+      list(APPEND results ${output_files})
+    endforeach()
   endforeach()
   add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
   set_target_properties(${target} PROPERTIES FOLDER "kernels/${suffix}")
@@ -293,6 +295,7 @@ set(TEST_KERNEL_2_0_options
 
 set(TEST_KERNEL_2_0
   test_files/simple_block_kernel.cl
+  test_files/simple_nonuniform.cl
 )
 
 set(TEST_KERNEL_SIP_DEBUG_options
@@ -306,6 +309,7 @@ set(TEST_KERNEL_SIP_DEBUG_LOCAL_options
 file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/shouldfail.cl")
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_block_kernel.cl")
+list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_nonuniform.cl")
 
 function(gen_run_tests_with_appverifier product slices subslices eu_per_ss)
   if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND "${IGDRCL_OPTION__BITS}" STREQUAL "64" AND APPVERIFIER_ALLOWED)
@@ -373,7 +377,7 @@ macro(macro_for_each_gen)
 
       if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
         neo_gen_kernels(test_kernels_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNELS})
-        neo_gen_kernel_with_options(test_kernel_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL} ${TEST_KERNEL_options})
+        neo_gen_kernels_with_options(test_kernel_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL} ${TEST_KERNEL_options})
 
         # Temporarily disabled debug kernel generation on gen8
         if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
@@ -399,7 +403,7 @@ macro(macro_for_each_gen)
         # add_dependencies(unit_tests test_kernel_sip_debug_${family_name_with_type})
 
         if(PLATFORM_2_0_LOWER)
-          neo_gen_kernel_with_options(test_kernel_2_0_${family_name_with_type} ${PLATFORM_2_0_LOWER} ${family_name_with_type} ${TEST_KERNEL_2_0} ${TEST_KERNEL_2_0_options})
+          neo_gen_kernels_with_options(test_kernel_2_0_${family_name_with_type} ${PLATFORM_2_0_LOWER} ${family_name_with_type} "${TEST_KERNEL_2_0}" ${TEST_KERNEL_2_0_options})
         endif()
       endif()
     endif()

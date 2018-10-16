@@ -117,8 +117,10 @@ class SimpleArgKernelFixture : public ProgramFixture {
     }
 
     virtual void TearDown() {
-        delete pKernel;
-        pKernel = nullptr;
+        if (pKernel) {
+            delete pKernel;
+            pKernel = nullptr;
+        }
 
         pContext->release();
 
@@ -129,4 +131,56 @@ class SimpleArgKernelFixture : public ProgramFixture {
     Kernel *pKernel;
     MockContext *pContext;
 };
+
+class SimpleArgNonUniformKernelFixture : public ProgramFixture {
+  public:
+    using ProgramFixture::SetUp;
+    SimpleArgNonUniformKernelFixture()
+        : retVal(CL_SUCCESS), kernel(nullptr) {
+    }
+
+  protected:
+    void SetUp(Device *device, Context *context) {
+        ProgramFixture::SetUp();
+
+        cl_device_id deviceId = device;
+        cl_context clContext = context;
+
+        CreateProgramFromBinary<Program>(
+            clContext,
+            &deviceId,
+            "simple_nonuniform",
+            "-cl-std=CL2.0");
+        ASSERT_NE(nullptr, pProgram);
+
+        retVal = pProgram->build(
+            1,
+            &deviceId,
+            "-cl-std=CL2.0",
+            nullptr,
+            nullptr,
+            false);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+
+        kernel = Kernel::create<MockKernel>(
+            pProgram,
+            *pProgram->getKernelInfo("simpleNonUniform"),
+            &retVal);
+        ASSERT_NE(nullptr, kernel);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+    }
+
+    virtual void TearDown() {
+        if (kernel) {
+            delete kernel;
+            kernel = nullptr;
+        }
+
+        ProgramFixture::TearDown();
+    }
+
+    cl_int retVal;
+    Kernel *kernel;
+};
+
 } // namespace OCLRT

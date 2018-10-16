@@ -45,9 +45,16 @@ void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
     aubFile.writeMMIO(mmioBase + 0x229c, 0xffff8280);
 
     const size_t sizeHWSP = 0x1000;
-    const size_t alignHWSP = 0x1000;
-    auto pGlobalHWStatusPage = alignedMalloc(sizeHWSP, alignHWSP);
+    const size_t sizeRing = 0x4 * 0x1000;
 
+    const size_t sizeTotal = alignUp((sizeHWSP + sizeRing + csTraits.sizeLRCA), 0x1000);
+    const size_t alignTotal = sizeTotal;
+
+    auto totalBuffer = alignedMalloc(sizeTotal, alignTotal);
+    size_t totalBufferOffset = 0;
+
+    auto pGlobalHWStatusPage = totalBuffer;
+    totalBufferOffset += sizeHWSP;
     uint32_t ggttGlobalHardwareStatusPage = (uint32_t)((uintptr_t)pGlobalHWStatusPage);
     AubGTTData data = {true, false};
     AUB::reserveAddressGGTT(aubFile, ggttGlobalHardwareStatusPage, sizeHWSP, physAddress, data);
@@ -55,10 +62,9 @@ void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
 
     aubFile.writeMMIO(mmioBase + 0x2080, ggttGlobalHardwareStatusPage);
 
-    const size_t sizeRing = 0x4 * 0x1000;
-    const size_t alignRing = 0x1000;
     size_t sizeCommands = 0;
-    auto pRing = alignedMalloc(sizeRing, alignRing);
+    auto pRing = ptrOffset<void *>(totalBuffer, totalBufferOffset);
+    totalBufferOffset += sizeRing;
 
     auto ggttRing = (uint32_t)(uintptr_t)pRing;
     auto physRing = physAddress;
@@ -84,7 +90,8 @@ void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
     AUB::addMemoryWrite(aubFile, physRing, pRing, sizeCommands, AubMemDump::AddressSpaceValues::TraceNonlocal, csTraits.aubHintCommandBuffer);
 
     auto sizeLRCA = csTraits.sizeLRCA;
-    auto pLRCABase = alignedMalloc(csTraits.sizeLRCA, csTraits.alignLRCA);
+    auto pLRCABase = ptrOffset<void *>(totalBuffer, totalBufferOffset);
+    totalBufferOffset += csTraits.sizeLRCA;
 
     csTraits.initialize(pLRCABase);
     csTraits.setRingHead(pLRCABase, 0x0000);
@@ -117,9 +124,7 @@ void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
     aubFile.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[1]);
     aubFile.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[0]);
 
-    alignedFree(pRing);
-    alignedFree(pLRCABase);
-    alignedFree(pGlobalHWStatusPage);
+    alignedFree(totalBuffer);
 
     aubFile.fileHandle.close();
 }

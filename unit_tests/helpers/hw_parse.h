@@ -163,6 +163,22 @@ struct HardwareParse {
         return numCommands;
     }
 
+    template <typename CmdType>
+    uint32_t getCommandCount() {
+        GenCmdList::iterator cmdItor = cmdList.begin();
+        uint32_t cmdCount = 0;
+
+        do {
+            cmdItor = find<CmdType *>(cmdItor, cmdList.end());
+            if (cmdItor != cmdList.end()) {
+                ++cmdCount;
+                ++cmdItor;
+            }
+        } while (cmdItor != cmdList.end());
+
+        return cmdCount;
+    }
+
     // The starting point of parsing commandBuffers.  This is important
     // because as buffers get reused, we only want to parse the deltas.
     LinearStream *previousCS;

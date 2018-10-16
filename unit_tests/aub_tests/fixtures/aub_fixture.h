@@ -49,7 +49,7 @@ class AUBFixture : public CommandQueueHwFixture {
 
         CommandQueueHwFixture::SetUp(AUBFixture::device.get(), cl_command_queue_properties(0));
     }
-    void TearDown() {
+    void TearDown() override {
         CommandQueueHwFixture::TearDown();
     }
 
@@ -65,6 +65,22 @@ class AUBFixture : public CommandQueueHwFixture {
         return aubCsr;
     }
 
+    template <typename FamilyType>
+    void expectMemory(void *gfxAddress, const void *srcAddress, size_t length) {
+        auto aubCsr = getAubCsr<FamilyType>();
+        PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
+            if (offset > length)
+                abort();
+
+            aubCsr->stream->expectMemory(physAddress,
+                                         reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
+                                         size,
+                                         aubCsr->getAddressSpaceFromPTEBits(entryBits));
+        };
+
+        aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);
+    }
+
     static void *getGpuPointer(GraphicsAllocation *allocation) {
         return reinterpret_cast<void *>(allocation->getGpuAddress());
     }
@@ -77,5 +93,19 @@ class AUBFixture : public CommandQueueHwFixture {
 
   private:
     using CommandQueueHwFixture::SetUp;
+};
+
+template <typename KernelFixture>
+struct KernelAUBFixture : public AUBFixture,
+                          public KernelFixture {
+    void SetUp() {
+        AUBFixture::SetUp(nullptr);
+        KernelFixture::SetUp(device.get(), context);
+    }
+
+    void TearDown() {
+        KernelFixture::TearDown();
+        AUBFixture::TearDown();
+    }
 };
 } // namespace OCLRT
