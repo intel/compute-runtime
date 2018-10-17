@@ -120,13 +120,24 @@ struct AUBHelloWorldIntegrateTest : public HelloWorldFixture<AUBHelloWorldFixtur
     void SetUp() override {
         std::tie(KernelFixture::simd, param) = GetParam();
         ParentClass::SetUp();
-        auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
-        commandStreamReceiver.createAllocationAndHandleResidency(pDestMemory, sizeUserMemory);
-        commandStreamReceiver.createAllocationAndHandleResidency(pSrcMemory, sizeUserMemory);
     }
 
     void TearDown() override {
         ParentClass::TearDown();
+    }
+
+    template <typename FamilyType>
+    void writeMemory(GraphicsAllocation *allocation) {
+        AUBCommandStreamReceiverHw<FamilyType> *aubCsr = nullptr;
+        if (testMode == TestMode::AubTests) {
+            aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(pCommandStreamReceiver);
+        } else if (testMode == TestMode::AubTestsWithTbx) {
+            auto tbxWithAubCsr = reinterpret_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver);
+            aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(tbxWithAubCsr->aubCSR);
+            tbxWithAubCsr->writeMemory(*allocation);
+        }
+
+        aubCsr->writeMemory(*allocation);
     }
     TestParam param;
 };
@@ -139,6 +150,9 @@ HWTEST_P(AUBHelloWorldIntegrateTest, simple) {
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
+
+    writeMemory<FamilyType>(destBuffer->getGraphicsAllocation());
+    writeMemory<FamilyType>(srcBuffer->getGraphicsAllocation());
 
     auto retVal = this->pCmdQ->enqueueKernel(
         this->pKernel,
