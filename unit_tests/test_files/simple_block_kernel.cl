@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 void block_fn(size_t tid, int mul, __global int* res)
@@ -39,7 +24,7 @@ kernel void simple_block_kernel(__global int* res)
   if(enq_res != CLK_SUCCESS) { res[tid] = -1; return; }
 }
 
-void block_reflection(size_t scalar, __global uint* buffer, read_only image3d_t img, sampler_t sampler)
+void block_reflection(ulong scalar, __global uint* buffer, read_only image3d_t img, sampler_t sampler)
 {
   float4 color;
   int4 coord;
@@ -47,7 +32,7 @@ void block_reflection(size_t scalar, __global uint* buffer, read_only image3d_t 
   coord.x = scalar;
   coord.y = 0;
   coord.z = 0;
-  
+
   int width = get_image_width( img );
   int heigth = get_image_height( img );
   int depth = get_image_depth( img );
@@ -67,7 +52,7 @@ void block_reflection(size_t scalar, __global uint* buffer, read_only image3d_t 
   color = read_imagef( img, samplerA, coord );
   
   buffer[7] = (uint)color.y;
-  
+
   queue_t def_q = get_default_queue();
   ndrange_t ndrange = ndrange_1D(1);
   if( scalar > 2 ){
@@ -76,7 +61,7 @@ void block_reflection(size_t scalar, __global uint* buffer, read_only image3d_t 
   }
 }
 
-kernel void kernel_reflection(sampler_t sampler, read_only image3d_t img, __global uint* buffer, size_t scalar )
+kernel void kernel_reflection(sampler_t sampler, read_only image3d_t img, __global uint* buffer, ulong scalar)
 {
   size_t tid = get_global_id(0);
 

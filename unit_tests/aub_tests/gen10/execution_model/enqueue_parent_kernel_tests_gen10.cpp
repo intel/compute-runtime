@@ -76,10 +76,10 @@ GEN10TEST_F(GEN10AUBParentKernelFixture, DISABLED_EnqueueParentKernel) {
             CL_FILTER_LINEAR,
             retVal);
 
-        size_t argScalar = 2;
+        uint64_t argScalar = 2;
         pKernel->setArg(
             3,
-            sizeof(size_t),
+            sizeof(uint64_t),
             &argScalar);
 
         pKernel->setArg(

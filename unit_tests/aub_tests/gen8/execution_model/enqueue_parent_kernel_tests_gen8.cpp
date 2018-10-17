@@ -75,10 +75,10 @@ GEN8TEST_F(GEN8AUBParentKernelFixture, EnqueueParentKernel) {
             CL_FILTER_LINEAR,
             retVal));
 
-        size_t argScalar = 2;
+        uint64_t argScalar = 2;
         pKernel->setArg(
             3,
-            sizeof(size_t),
+            sizeof(uint64_t),
             &argScalar);
 
         pKernel->setArg(
