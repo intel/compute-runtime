@@ -295,10 +295,12 @@ int OfflineCompiler::initialize(size_t numArgs, const char *const *argv) {
             std::string internalOptionsFileName = inputFile.substr(0, ext_start);
             internalOptionsFileName.append("_internal_options.txt");
 
-            bool internalOptionsRead = readOptionsFromFile(internalOptions, internalOptionsFileName);
+            std::string internalOptionsFromFile;
+            bool internalOptionsRead = readOptionsFromFile(internalOptionsFromFile, internalOptionsFileName);
             if (internalOptionsRead && !isQuiet()) {
-                printf("Building with internal options:\n%s\n", internalOptions.c_str());
+                printf("Building with internal options:\n%s\n", internalOptionsFromFile.c_str());
             }
+            internalOptions.append(internalOptionsFromFile);
         }
     }
 
