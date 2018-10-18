@@ -137,9 +137,11 @@ void LrcaHelper::initialize(void *pLRCIn) const {
     auto pLRI = ptrOffset(pLRCA, offsetLRI0);
     auto numRegs = numRegsLRI0;
     *pLRI++ = 0x11001000 | (2 * numRegs - 1);
+    uint32_t ctxSrCtlValue = 0x00010001; // Inhibit context-restore
+    setContextSaveRestoreFlags(ctxSrCtlValue);
     while (numRegs-- > 0) {
         *pLRI++ = mmioBase + 0x2244; // CTXT_SR_CTL
-        *pLRI++ = 0x00010001;        // Inhibit context-restore
+        *pLRI++ = ctxSrCtlValue;
     }
 
     // Initialize the other LRI

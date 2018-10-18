@@ -9,6 +9,7 @@
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
+#include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "test.h"
 
@@ -99,4 +100,23 @@ HWTEST_F(AubHelperHwTest, GivenEnabledLocalMemoryWhenGetMemTraceForPtEntryIsCall
     AubHelperHw<FamilyType> aubHelper(true);
     int addressSpace = aubHelper.getMemTraceForPtEntry();
     EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, addressSpace);
+}
+
+struct MockLrcaHelper : AubMemDump::LrcaHelper {
+    mutable uint32_t setContextSaveRestoreFlagsCalled = 0;
+    MockLrcaHelper(uint32_t base) : AubMemDump::LrcaHelper(base) {}
+    void setContextSaveRestoreFlags(uint32_t &value) const override {
+        setContextSaveRestoreFlagsCalled++;
+        AubMemDump::LrcaHelper::setContextSaveRestoreFlags(value);
+    }
+};
+
+HWTEST_F(AubHelperHwTest, giverLrcaHelperWhenContextIsInitializedThenContextFlagsAreSet) {
+    const auto &csTraits = AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(EngineType::ENGINE_RCS);
+    MockLrcaHelper lrcaHelper(csTraits.mmioBase);
+
+    std::unique_ptr<void, std::function<void(void *)>> lrcaBase(alignedMalloc(csTraits.sizeLRCA, csTraits.alignLRCA), alignedFree);
+
+    lrcaHelper.initialize(lrcaBase.get());
+    ASSERT_NE(0u, lrcaHelper.setContextSaveRestoreFlagsCalled);
 }

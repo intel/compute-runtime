@@ -343,6 +343,7 @@ struct LrcaHelper {
     void setPDP3(void *pLRCIn, uint64_t address) const;
 
     void setPML4(void *pLRCIn, uint64_t address) const;
+    MOCKABLE_VIRTUAL void setContextSaveRestoreFlags(uint32_t &value) const;
 };
 
 struct LrcaHelperRcs : public LrcaHelper {
