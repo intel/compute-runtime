@@ -24,4 +24,9 @@ template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isPageTableManagerSupported(const HardwareInfo &hwInfo) {
     return false;
 }
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isTimestmapPacketWriteSupported() {
+    return false;
+}
 } // namespace OCLRT

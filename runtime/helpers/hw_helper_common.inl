@@ -79,4 +79,9 @@ template <typename Family>
 bool HwHelperHw<Family>::supportsYTiling() const {
     return true;
 }
+
+template <typename Family>
+bool HwHelperHw<Family>::timestampPacketWriteSupported() const {
+    return false;
+}
 } // namespace OCLRT

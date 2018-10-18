@@ -34,8 +34,6 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     for (int i = 0; i < IndirectHeap::NUM_TYPES; ++i) {
         indirectHeap[i] = nullptr;
     }
-
-    timestampPacketWriteEnabled = DebugManager.flags.EnableTimestampPacket.get();
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {

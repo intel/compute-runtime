@@ -19,5 +19,7 @@ struct UnitTestHelper {
     static bool evaluateDshUsage(size_t sizeBeforeEnqueue, size_t sizeAfterEnqueue, Kernel *kernel);
 
     static bool isPageTableManagerSupported(const HardwareInfo &hwInfo);
+
+    static bool isTimestmapPacketWriteSupported();
 };
 } // namespace OCLRT

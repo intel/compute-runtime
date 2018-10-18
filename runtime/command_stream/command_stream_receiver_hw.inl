@@ -34,12 +34,20 @@ size_t CommandStreamReceiverHw<GfxFamily>::getSshHeapSize() {
 
 template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
-    : CommandStreamReceiver(executionEnvironment), hwInfo(hwInfoIn),
-      localMemoryEnabled(HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily).isLocalMemoryEnabled(hwInfo)) {
+    : CommandStreamReceiver(executionEnvironment), hwInfo(hwInfoIn) {
+
+    auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
+    localMemoryEnabled = hwHelper.isLocalMemoryEnabled(hwInfo);
+
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
     resetKmdNotifyHelper(new KmdNotifyHelper(&(hwInfoIn.capabilityTable.kmdNotifyProperties)));
     flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(executionEnvironment));
     defaultSshSize = getSshHeapSize();
+
+    timestampPacketWriteEnabled = hwHelper.timestampPacketWriteSupported();
+    if (DebugManager.flags.EnableTimestampPacket.get() != -1) {
+        timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
+    }
 }
 
 template <typename GfxFamily>

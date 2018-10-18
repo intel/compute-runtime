@@ -36,6 +36,7 @@ class HwHelper {
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType) const = 0;
     virtual bool supportsYTiling() const = 0;
+    virtual bool timestampPacketWriteSupported() const = 0;
 
   protected:
     HwHelper() = default;
@@ -92,6 +93,8 @@ class HwHelperHw : public HwHelper {
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) override;
 
     bool supportsYTiling() const override;
+
+    bool timestampPacketWriteSupported() const override;
 
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
 

@@ -15,6 +15,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -288,17 +289,22 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWithoutTagAllocationWhenGetTagAllo
     EXPECT_EQ(nullptr, csr.getTagAllocation());
 }
 
-TEST(CommandStreamReceiverSimpleTest, givenDebugVariableEnabledWhenCreatingCsrThenEnableTimestampPacketWriteMode) {
+HWTEST_F(CommandStreamReceiverTest, givenDebugVariableEnabledWhenCreatingCsrThenEnableTimestampPacketWriteMode) {
     DebugManagerStateRestore restore;
 
     DebugManager.flags.EnableTimestampPacket.set(true);
     ExecutionEnvironment executionEnvironment;
-    MockCommandStreamReceiver csr1(executionEnvironment);
+    CommandStreamReceiverHw<FamilyType> csr1(*platformDevices[0], executionEnvironment);
     EXPECT_TRUE(csr1.peekTimestampPacketWriteEnabled());
 
     DebugManager.flags.EnableTimestampPacket.set(false);
-    MockCommandStreamReceiver csr2(executionEnvironment);
+    CommandStreamReceiverHw<FamilyType> csr2(*platformDevices[0], executionEnvironment);
     EXPECT_FALSE(csr2.peekTimestampPacketWriteEnabled());
+}
+
+HWTEST_F(CommandStreamReceiverTest, whenCsrIsCreatedThenUseTimestampPacketWriteIfPossible) {
+    CommandStreamReceiverHw<FamilyType> csr(*platformDevices[0], executionEnvironment);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::isTimestmapPacketWriteSupported(), csr.peekTimestampPacketWriteEnabled());
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllocationIsCalledThenCorrectAllocationIsReturned) {
