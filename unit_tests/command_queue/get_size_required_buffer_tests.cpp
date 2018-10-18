@@ -22,6 +22,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
+
 using namespace OCLRT;
 
 struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
@@ -95,7 +96,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueFillBuffer) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_FILL_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -107,7 +108,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueFillBuffer) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
@@ -146,7 +147,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueCopyBuffer) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_COPY_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -158,7 +159,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueCopyBuffer) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
@@ -198,7 +199,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueReadBufferNonBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_READ_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -210,7 +211,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueReadBufferNonBlocking) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
@@ -251,7 +252,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueReadBufferBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_READ_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -263,7 +264,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueReadBufferBlocking) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
@@ -304,7 +305,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueWriteBufferNonBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_WRITE_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -313,7 +314,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueWriteBufferNonBlocking) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
@@ -354,7 +355,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueWriteBufferBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_WRITE_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -363,7 +364,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueWriteBufferBlocking) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
@@ -401,7 +402,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelHelloWorld) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, dshAfter - dshBefore);
     EXPECT_GE(expectedSizeIOH, iohAfter - iohBefore);
     EXPECT_GE(expectedSizeSSH, sshAfter - sshBefore);
@@ -443,7 +444,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelSimpleArg) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, dshAfter - dshBefore);
     EXPECT_GE(expectedSizeIOH, iohAfter - iohBefore);
     EXPECT_GE(expectedSizeSSH, sshAfter - sshBefore);

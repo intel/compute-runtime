@@ -97,7 +97,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyImage) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
@@ -147,7 +147,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyReadAndWriteImage) {
 
     pExecEnv->UsesFencesForReadWriteImages = (uint32_t) false;
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
@@ -201,7 +201,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageNonBlocking) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
@@ -255,7 +255,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageBlocking) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
@@ -309,7 +309,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageNonBlocking) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
@@ -363,7 +363,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageBlocking) {
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
 
-    EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
+    EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);

@@ -124,7 +124,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GIVENCommandQueueWithProfilingAndFor
     multiDispatchInfo.push(dispatchInfo);
     multiDispatchInfo.push(dispatchInfo);
     auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, false, nullptr);
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(true, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_TASK, 0, true, false, *pCmdQ, multiDispatchInfo);
     EXPECT_GE(expectedSizeCS, requiredSize);
     EXPECT_GE(commandStreamTask.getAvailableSpace(), requiredSize);
 }
@@ -591,7 +591,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWit
     multiDispatchInfo.push(dispatchInfo);
     multiDispatchInfo.push(dispatchInfo);
     auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, true, nullptr);
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(true, true, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_TASK, 0, true, true, *pCmdQ, multiDispatchInfo);
     EXPECT_GE(expectedSizeCS, requiredSize);
     EXPECT_GE(commandStreamTask.getAvailableSpace(), requiredSize);
 

@@ -377,8 +377,6 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
 template <typename GfxFamily>
 inline void GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(LinearStream *commandStream, Device &currentDevice,
                                                                              cl_uint numEventsInWaitList, const cl_event *eventWaitList) {
-    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-
     for (cl_uint i = 0; i < numEventsInWaitList; i++) {
         auto event = castToObjectOrAbort<Event>(eventWaitList[i]);
         if (event->isUserEvent() || (&event->getCommandQueue()->getDevice() != &currentDevice)) {
@@ -401,47 +399,27 @@ size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(const K
 }
 
 template <typename GfxFamily>
-size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
-    size_t size = KernelCommandsHelper<GfxFamily>::getSizeRequiredCS() +
-                  sizeof(PIPE_CONTROL) * (KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2 : 1);
-    if (reserveProfilingCmdsSpace) {
-        size += 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-    }
-    if (reservePerfCounters) {
-        //start cmds
-        //P_C: flush CS & TimeStamp BEGIN
-        size += 2 * sizeof(PIPE_CONTROL);
-        //SRM NOOPID & Frequency
-        size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        //gp registers
-        size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        //report perf count
-        size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
-        //user registers
-        size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-
-        //end cmds
-        //P_C: flush CS & TimeStamp END;
-        size += 2 * sizeof(PIPE_CONTROL);
-        //OA buffer (status head, tail)
-        size += 3 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        //report perf count
-        size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
-        //gp registers
-        size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        //SRM NOOPID & Frequency
-        size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        //user registers
-        size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-    }
-    Device &device = commandQueue.getDevice();
+size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, cl_uint numEventsInWaitList, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
+    size_t expectedSizeCS = 0;
+    Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     for (auto &dispatchInfo : multiDispatchInfo) {
-        auto &kernel = *dispatchInfo.getKernel();
-        size += sizeof(typename GfxFamily::GPGPU_WALKER);
-        size += GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(&kernel);
-        size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(device);
+        expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, dispatchInfo.getKernel());
     }
-    return size;
+    if (parentKernel) {
+        SchedulerKernel &scheduler = commandQueue.getDevice().getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(parentKernel->getContext());
+        expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, &scheduler);
+    }
+    if (commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        auto semaphoreSize = sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+        auto atomicSize = sizeof(typename GfxFamily::MI_ATOMIC);
+
+        expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
+        expectedSizeCS += numEventsInWaitList * (semaphoreSize + atomicSize);
+        if (!commandQueue.isOOQEnabled()) {
+            expectedSizeCS += semaphoreSize + atomicSize;
+        }
+    }
+    return expectedSizeCS;
 }
 
 template <typename GfxFamily>
