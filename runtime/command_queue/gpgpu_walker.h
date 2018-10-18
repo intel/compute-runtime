@@ -135,8 +135,8 @@ class GpgpuWalkerHelper {
         uint32_t simd,
         uint32_t workDim,
         bool localIdsGenerationByRuntime,
-        bool kernelUsesLocalIds,
-        bool inlineDataProgrammingRequired);
+        bool inlineDataProgrammingRequired,
+        const iOpenCL::SPatchThreadPayload &threadPayload);
 
     static void dispatchProfilingCommandsStart(
         HwTimeStamps &hwTimeStamps,

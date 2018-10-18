@@ -163,24 +163,6 @@ size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     return (size_t)offsetInterfaceDescriptor;
 }
 
-template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::sendCrossThreadData(
-    IndirectHeap &indirectHeap,
-    Kernel &kernel) {
-    indirectHeap.align(GfxFamily::WALKER_TYPE::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
-
-    auto offsetCrossThreadData = indirectHeap.getUsed();
-    auto sizeCrossThreadData = kernel.getCrossThreadDataSize();
-    char *pDest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
-    memcpy_s(pDest, sizeCrossThreadData, kernel.getCrossThreadData(), sizeCrossThreadData);
-
-    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-        FlatBatchBufferHelper::fixCrossThreadDataInfo(kernel.getPatchInfoDataList(), offsetCrossThreadData, indirectHeap.getGraphicsAllocation()->getGpuAddress());
-    }
-
-    return offsetCrossThreadData + static_cast<size_t>(indirectHeap.getHeapGpuStartOffset());
-}
-
 // Returned binding table pointer is relative to given heap (which is assumed to be the Surface state base addess)
 // as required by the INTERFACE_DESCRIPTOR_DATA.
 template <typename GfxFamily>
@@ -308,21 +290,16 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     auto threadsPerThreadGroup = static_cast<uint32_t>(getThreadsPerWG(simd, localWorkItems));
     auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
 
-    uint32_t sizeCrossThreadData = 0;
-    size_t offsetCrossThreadData = 0;
+    uint32_t sizeCrossThreadData = kernel.getCrossThreadDataSize();
 
-    getCrossThreadData(
-        sizeCrossThreadData,
-        offsetCrossThreadData,
-        kernel,
-        inlineDataProgrammingRequired,
-        ioh,
-        walkerCmd);
+    size_t offsetCrossThreadData = KernelCommandsHelper<GfxFamily>::sendCrossThreadData(
+        ioh, kernel, inlineDataProgrammingRequired,
+        walkerCmd, sizeCrossThreadData);
 
     size_t sizePerThreadDataTotal = 0;
     size_t sizePerThreadData = 0;
 
-    programPerThreadData(
+    KernelCommandsHelper<GfxFamily>::programPerThreadData(
         sizePerThreadData,
         localIdsGenerationByRuntime,
         ioh,
@@ -345,7 +322,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
         dsh,
         offsetInterfaceDescriptor,
         kernelStartOffset,
-        getCrossThreadDataSize(sizeCrossThreadData, kernel),
+        sizeCrossThreadData,
         sizePerThreadData,
         dstBindingTablePointer,
         samplerStateOffset,
@@ -441,8 +418,7 @@ bool KernelCommandsHelper<GfxFamily>::doBindingTablePrefetch() {
 template <typename GfxFamily>
 bool KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(const Kernel &kernel) {
     if (DebugManager.flags.EnablePassInlineData.get()) {
-        return kernel.getKernelInfo().patchInfo.threadPayload->PassInlineData &&
-               kernel.getCrossThreadDataSize() <= sizeof(GRF);
+        return kernel.getKernelInfo().patchInfo.threadPayload->PassInlineData;
     }
     return false;
 }

@@ -223,7 +223,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         size_t numWorkGroups[3] = {nwgs.x, nwgs.y, nwgs.z};
         GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(walkerCmd, globalOffsets, startWorkGroups,
                                                                numWorkGroups, localWorkSizes, simd, dim,
-                                                               localIdsGenerationByRuntime, kernelUsesLocalIds, inlineDataProgrammingRequired);
+                                                               localIdsGenerationByRuntime, inlineDataProgrammingRequired,
+                                                               *kernel.getKernelInfo().patchInfo.threadPayload);
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, false);
         currentDispatchIndex++;

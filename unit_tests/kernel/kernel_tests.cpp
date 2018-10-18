@@ -359,6 +359,42 @@ TEST_F(KernelFromBinaryTests, BuiltInIsSetToFalseForRegularKernels) {
     EXPECT_FALSE(isBuiltIn);
 
     delete pKernel;
+    pKernel = nullptr;
+
+    pKernelInfo = pProgram->getKernelInfo("simple_kernel_3");
+
+    pKernel = Kernel::create(
+        pProgram,
+        *pKernelInfo,
+        &retVal);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, pKernel);
+
+    // get builtIn property
+    isBuiltIn = pKernel->isBuiltIn;
+
+    EXPECT_FALSE(isBuiltIn);
+
+    delete pKernel;
+    pKernel = nullptr;
+
+    pKernelInfo = pProgram->getKernelInfo("simple_kernel_4");
+
+    pKernel = Kernel::create(
+        pProgram,
+        *pKernelInfo,
+        &retVal);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, pKernel);
+
+    // get builtIn property
+    isBuiltIn = pKernel->isBuiltIn;
+
+    EXPECT_FALSE(isBuiltIn);
+
+    delete pKernel;
 }
 
 TEST(PatchInfo, Constructor) {

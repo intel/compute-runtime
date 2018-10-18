@@ -75,7 +75,10 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
 
     static size_t sendCrossThreadData(
         IndirectHeap &indirectHeap,
-        Kernel &kernel);
+        Kernel &kernel,
+        bool inlineDataProgrammingRequired,
+        WALKER_TYPE<GfxFamily> *walkerCmd,
+        uint32_t &sizeCrossThreadData);
 
     static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const KernelInfo &srcKernelInfo,
                                                    const void *srcKernelSsh, size_t srcKernelSshSize,
@@ -196,18 +199,6 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
     static void setInterfaceDescriptorOffset(
         WALKER_TYPE<GfxFamily> *walkerCmd,
         uint32_t &interfaceDescriptorIndex);
-
-    static void getCrossThreadData(
-        uint32_t &sizeCrossThreadData,
-        size_t &offsetCrossThreadData,
-        Kernel &kernel,
-        const bool &inlineDataProgrammingRequired,
-        IndirectHeap &ioh,
-        WALKER_TYPE<GfxFamily> *walkerCmd);
-
-    inline static size_t getCrossThreadDataSize(
-        uint32_t &sizeCrossThreadData,
-        Kernel &kernel);
 
     static void programMiSemaphoreWait(LinearStream &commandStream, uint64_t compareAddress, uint32_t compareData);
     static MI_ATOMIC *programMiAtomic(LinearStream &commandStream, uint64_t writeAddress, typename MI_ATOMIC::ATOMIC_OPCODES opcode, typename MI_ATOMIC::DATA_SIZE dataSize);

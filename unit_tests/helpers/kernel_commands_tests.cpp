@@ -155,10 +155,13 @@ HWTEST_F(KernelCommandsTest, sendCrossThreadDataResourceUsage) {
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto usedBefore = indirectHeap.getUsed();
-
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
     KernelCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
-        *kernel);
+        *kernel,
+        false,
+        nullptr,
+        sizeCrossThreadData);
 
     auto usedAfter = indirectHeap.getUsed();
     EXPECT_EQ(kernel->getCrossThreadDataSize(), usedAfter - usedBefore);
@@ -178,10 +181,13 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
 
     PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
     kernel->getPatchInfoDataList().push_back(patchInfoData);
-
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
     KernelCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
-        *kernel);
+        *kernel,
+        false,
+        nullptr,
+        sizeCrossThreadData);
 
     ASSERT_EQ(1u, kernel->getPatchInfoDataList().size());
     EXPECT_EQ(0xaaaaaaaa, kernel->getPatchInfoDataList()[0].sourceAllocation);
@@ -197,9 +203,13 @@ HWTEST_F(KernelCommandsTest, givenIndirectHeapNotAllocatedFromInternalPoolWhenSe
     IndirectHeap indirectHeap(nonInternalAllocation, false);
 
     MockKernelWithInternals mockKernelWithInternal(*pDevice);
+    auto sizeCrossThreadData = mockKernelWithInternal.mockKernel->getCrossThreadDataSize();
     auto offset = KernelCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
-        *mockKernelWithInternal.mockKernel);
+        *mockKernelWithInternal.mockKernel,
+        false,
+        nullptr,
+        sizeCrossThreadData);
     EXPECT_EQ(0u, offset);
     pDevice->getMemoryManager()->freeGraphicsMemory(nonInternalAllocation);
 }
@@ -210,9 +220,13 @@ HWTEST_F(KernelCommandsTest, givenIndirectHeapAllocatedFromInternalPoolWhenSendC
     auto expectedOffset = internalAllocation->getGpuAddressToPatch();
 
     MockKernelWithInternals mockKernelWithInternal(*pDevice);
+    auto sizeCrossThreadData = mockKernelWithInternal.mockKernel->getCrossThreadDataSize();
     auto offset = KernelCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
-        *mockKernelWithInternal.mockKernel);
+        *mockKernelWithInternal.mockKernel,
+        false,
+        nullptr,
+        sizeCrossThreadData);
     EXPECT_EQ(expectedOffset, offset);
 
     pDevice->getMemoryManager()->freeGraphicsMemory(internalAllocation);
@@ -239,10 +253,13 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
 
     kernel->getPatchInfoDataList().push_back(patchInfoData1);
     kernel->getPatchInfoDataList().push_back(patchInfoData2);
-
+    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
     auto offsetCrossThreadData = KernelCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
-        *kernel);
+        *kernel,
+        false,
+        nullptr,
+        sizeCrossThreadData);
 
     ASSERT_NE(0u, offsetCrossThreadData);
     EXPECT_EQ(128u, offsetCrossThreadData);
@@ -1204,7 +1221,7 @@ INSTANTIATE_TEST_CASE_P(ParentKernelCommandsFromBinaryTest,
                             ::testing::Values(binaryFile),
                             ::testing::ValuesIn(KernelNames)));
 
-HWTEST_F(KernelCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineAndCrossThreadSizeLesserEqualThanGrfThenReturnTrue) {
+HWTEST_F(KernelCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineThenReturnTrue) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnablePassInlineData.set(true);
 
@@ -1217,7 +1234,7 @@ HWTEST_F(KernelCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineAnd
     EXPECT_TRUE(KernelCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal.mockKernel));
 }
 
-HWTEST_F(KernelCommandsTest, givenEnabledPassInlineDataWhenKernelDisallowsInlineAndCrossThreadSizeLesserEqualThanGrfThenReturnFalse) {
+HWTEST_F(KernelCommandsTest, givenEnabledPassInlineDataWhenKernelDisallowsInlineThenReturnFalse) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnablePassInlineData.set(true);
 
@@ -1225,19 +1242,6 @@ HWTEST_F(KernelCommandsTest, givenEnabledPassInlineDataWhenKernelDisallowsInline
 
     MockKernelWithInternals mockKernelWithInternal(*pDevice);
     const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->PassInlineData = 0;
-    mockKernelWithInternal.mockKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
-
-    EXPECT_FALSE(KernelCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal.mockKernel));
-}
-
-HWTEST_F(KernelCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineAndCrossThreadSizeGreaterThanGrfThenReturnFalse) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnablePassInlineData.set(true);
-
-    uint32_t crossThreadData[16];
-
-    MockKernelWithInternals mockKernelWithInternal(*pDevice);
-    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->PassInlineData = 1;
     mockKernelWithInternal.mockKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
 
     EXPECT_FALSE(KernelCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal.mockKernel));

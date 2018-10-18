@@ -118,6 +118,26 @@ void KernelCommandsHelper<GfxFamily>::programPerThreadData(
 }
 
 template <typename GfxFamily>
+size_t KernelCommandsHelper<GfxFamily>::sendCrossThreadData(
+    IndirectHeap &indirectHeap,
+    Kernel &kernel,
+    bool inlineDataProgrammingRequired,
+    WALKER_TYPE<GfxFamily> *walkerCmd,
+    uint32_t &sizeCrossThreadData) {
+    indirectHeap.align(WALKER_TYPE<GfxFamily>::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+
+    auto offsetCrossThreadData = indirectHeap.getUsed();
+    char *pDest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
+    memcpy_s(pDest, sizeCrossThreadData, kernel.getCrossThreadData(), sizeCrossThreadData);
+
+    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        FlatBatchBufferHelper::fixCrossThreadDataInfo(kernel.getPatchInfoDataList(), offsetCrossThreadData, indirectHeap.getGraphicsAllocation()->getGpuAddress());
+    }
+
+    return offsetCrossThreadData + static_cast<size_t>(indirectHeap.getHeapGpuStartOffset());
+}
+
+template <typename GfxFamily>
 bool KernelCommandsHelper<GfxFamily>::resetBindingTablePrefetch(Kernel &kernel) {
     return kernel.isSchedulerKernel || !doBindingTablePrefetch();
 }
@@ -128,29 +148,6 @@ void KernelCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
     uint32_t &interfaceDescriptorIndex) {
 
     walkerCmd->setInterfaceDescriptorOffset(interfaceDescriptorIndex++);
-}
-
-template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::getCrossThreadData(
-    uint32_t &sizeCrossThreadData,
-    size_t &offsetCrossThreadData,
-    Kernel &kernel,
-    const bool &inlineDataProgrammingRequired,
-    IndirectHeap &ioh,
-    WALKER_TYPE<GfxFamily> *walkerCmd) {
-
-    sizeCrossThreadData = kernel.getCrossThreadDataSize();
-    offsetCrossThreadData = sendCrossThreadData(
-        ioh,
-        kernel);
-}
-
-template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getCrossThreadDataSize(
-    uint32_t &sizeCrossThreadData,
-    Kernel &kernel) {
-
-    return sizeCrossThreadData;
 }
 
 template <typename GfxFamily>
