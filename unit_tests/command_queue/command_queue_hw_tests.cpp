@@ -935,11 +935,6 @@ HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenNoBlockedThenKern
     cl_int status = pCmdQ->enqueueKernel(mockKernel, 1, &offset, &gws, &lws, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_EQ(1u, mockKernel->makeResidentCalls);
-
-    std::map<GraphicsAllocation *, uint32_t>::iterator it = csr.makeResidentAllocations.begin();
-    for (; it != csr.makeResidentAllocations.end(); it++) {
-        EXPECT_EQ(1u, it->second);
-    }
 }
 
 HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenBlockedThenKernelGetResidencyCalledOnce) {
@@ -963,17 +958,13 @@ HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenBlockedThenKernel
     EXPECT_EQ(1u, mockKernel->getResidencyCalls);
 
     userEvent.setStatus(CL_COMPLETE);
-
-    std::map<GraphicsAllocation *, uint32_t>::iterator it = csr.makeResidentAllocations.begin();
-    for (; it != csr.makeResidentAllocations.end(); it++) {
-        EXPECT_EQ(1u, it->second);
-    }
 }
 
 HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnqueueSurfacesMakeResidentIsCalledOnce) {
     UserEvent userEvent(context);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;
+    csr.timestampPacketWriteEnabled = false;
 
     BufferDefaults::context = context;
     std::unique_ptr<Buffer> buffer(BufferHelper<>::create());

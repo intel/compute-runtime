@@ -269,6 +269,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
 
     auto &cmdStream = mockCmdQ->getCS(0);
 
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
         multiDispatchInfo,
@@ -303,6 +304,33 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
         }
     }
     EXPECT_EQ(2u, walkersFound);
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketDisabledWhenDispatchingGpuWalkerThenDontAddPipeControls) {
+    MockTimestampPacketContainer timestampPacket(device->getMemoryManager(), 1);
+    MockMultiDispatchInfo multiDispatchInfo(kernel->mockKernel);
+    auto &cmdStream = mockCmdQ->getCS(0);
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
+
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *mockCmdQ,
+        multiDispatchInfo,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        &timestampPacket,
+        device->getPreemptionMode(),
+        false);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+
+    auto cmdItor = find<typename FamilyType::PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_EQ(hwParser.cmdList.end(), cmdItor);
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenObtainNewStampAndPassToEvent) {
@@ -812,11 +840,12 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
     event0.addTimestampPacketNodes(node1);
     Event event1(&cmdQ, 0, 0, 0);
     event1.addTimestampPacketNodes(node2);
+    UserEvent userEvent;
 
-    cl_event waitlist[] = {&event0, &event1};
+    cl_event waitlist[] = {&event0, &event1, &userEvent};
 
     cl_event clOutEvent;
-    cmdQ.enqueueMarkerWithWaitList(2, waitlist, &clOutEvent);
+    cmdQ.enqueueMarkerWithWaitList(3, waitlist, &clOutEvent);
 
     auto outEvent = castToObject<Event>(clOutEvent);
 

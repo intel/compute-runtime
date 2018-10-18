@@ -124,6 +124,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TwoOOQsTwoDependentWalkers, shouldHaveOneVFEState) {
 HWTEST_F(TwoOOQsTwoDependentWalkers, shouldHaveAPipecontrolBetweenWalkers) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
+    pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
+
     parseWalkers<FamilyType>();
     auto itorCmd = find<PIPE_CONTROL *>(itorWalker1, itorWalker2);
 

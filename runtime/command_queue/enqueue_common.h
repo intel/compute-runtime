@@ -280,7 +280,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
             for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
                 auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
-                eventBuilder.getEvent()->addTimestampPacketNodes(*waitlistEvent->getTimestampPacketNodes());
+                if (!waitlistEvent->isUserEvent()) {
+                    eventBuilder.getEvent()->addTimestampPacketNodes(*waitlistEvent->getTimestampPacketNodes());
+                }
             }
         }
     }

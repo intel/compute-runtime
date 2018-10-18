@@ -61,8 +61,8 @@ TEST_F(EnqueueWriteBufferTypeTest, eventReturnedShouldBeMaxOfInputEventsAndCmdQP
 
     uint32_t taskLevelEvent1 = 8;
     uint32_t taskLevelEvent2 = 19;
-    Event event1(nullptr, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
-    Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
+    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
+    Event event2(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
 
     cl_bool blockingWrite = CL_TRUE;
     size_t offset = 0;

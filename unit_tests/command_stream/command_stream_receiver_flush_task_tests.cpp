@@ -104,6 +104,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenconfigureCSRtoNonDirtyStateWh
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSubmittedViaCsrThenBbEndCoversPaddingEnoughToFitMiBatchBufferStart) {
     auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr.timestampPacketWriteEnabled = false;
 
     configureCSRtoNonDirtyState<FamilyType>();
 
@@ -269,6 +270,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDeviceWithThreadGroupPreempti
 HWTEST_F(CommandStreamReceiverFlushTaskTests, higherTaskLevelShouldSendAPipeControl) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.timestampPacketWriteEnabled = false;
+
     configureCSRtoNonDirtyState<FamilyType>();
     commandStreamReceiver.taskLevel = taskLevel / 2;
 
@@ -667,6 +670,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     pDevice->setForceWhitelistedRegs(true, &forceRegs);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.timestampPacketWriteEnabled = false;
     // Force a PIPE_CONTROL through a taskLevel transition
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
 
@@ -698,6 +702,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     pDevice->setForceWhitelistedRegs(true, &forceRegs);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.timestampPacketWriteEnabled = false;
     // Force a PIPE_CONTROL through a taskLevel transition
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
     commandStreamReceiver.lastSentCoherencyRequest = 0;
@@ -963,7 +968,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlush
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     MockContext ctx(pDevice);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.timestampPacketWriteEnabled = false;
     cl_event blockingEvent;
     MockEvent<UserEvent> mockEvent(&ctx);
     blockingEvent = &mockEvent;
@@ -1002,7 +1008,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     MockContext ctx(pDevice);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.timestampPacketWriteEnabled = false;
     cl_event blockingEvent;
     MockEvent<UserEvent> mockEvent(&ctx);
     blockingEvent = &mockEvent;
@@ -2855,6 +2862,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests,
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCsr);
+    mockCsr->timestampPacketWriteEnabled = false;
 
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 

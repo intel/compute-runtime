@@ -33,8 +33,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, IOQWithTwoWalkers, shouldHaveOneVFEState) {
 }
 
 HWTEST_F(IOQWithTwoWalkers, shouldHaveAPipecontrolBetweenWalkers2) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.timestampPacketWriteEnabled = false;
+
     enqueueTwoKernels<FamilyType>();
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
 
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 

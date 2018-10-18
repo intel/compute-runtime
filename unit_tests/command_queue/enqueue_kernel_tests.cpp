@@ -1004,9 +1004,10 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
 
     //Two more surfaces from preemptionAllocation and SipKernel
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
+    size_t timestampPacketSurfacesCount = mockCsr->peekTimestampPacketWriteEnabled() ? 1 : 0;
 
     EXPECT_EQ(0, mockCsr->flushCalledCount);
-    EXPECT_EQ(5u + csrSurfaceCount, cmdBuffer->surfaces.size());
+    EXPECT_EQ(5u + csrSurfaceCount + timestampPacketSurfacesCount, cmdBuffer->surfaces.size());
 }
 
 HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtrWithL3FlushRequiredWhenEnqueueKernelIsCalledThenFlushIsCalledForReducedAddressSpacePlatforms) {
@@ -1455,6 +1456,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEv
 
     auto mockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo(), *pDevice->executionEnvironment);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->timestampPacketWriteEnabled = false;
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();

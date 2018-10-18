@@ -1642,7 +1642,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIs
     EXPECT_EQ(0u, commandStreamReceiver.makeResidentAllocations.size());
     pKernel->makeResident(pDevice->getCommandStreamReceiver());
     EXPECT_EQ(1u, commandStreamReceiver.makeResidentAllocations.size());
-    EXPECT_EQ(commandStreamReceiver.makeResidentAllocations.begin()->first, pKernel->getKernelInfo().getGraphicsAllocation());
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(pKernel->getKernelInfo().getGraphicsAllocation()));
 
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }

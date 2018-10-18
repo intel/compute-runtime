@@ -70,8 +70,8 @@ HWTEST_F(FillBufferEventTests, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1
 
     uint32_t taskLevelEvent1 = 8;
     uint32_t taskLevelEvent2 = 19;
-    Event event1(nullptr, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 15);
-    Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 16);
+    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 15);
+    Event event2(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 16);
 
     float pattern[] = {1.0f};
     size_t patternSize = sizeof(pattern);
