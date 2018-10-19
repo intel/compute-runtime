@@ -73,8 +73,6 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
 
 template <typename GfxFamily>
 WddmCommandStreamReceiver<GfxFamily>::~WddmCommandStreamReceiver() {
-    this->cleanupResources();
-
     if (commandBufferHeader)
         delete commandBufferHeader;
 }

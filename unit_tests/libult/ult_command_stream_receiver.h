@@ -28,6 +28,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::iohState;
     using BaseClass::programPreamble;
     using BaseClass::sshState;
+    using BaseClass::CommandStreamReceiver::cleanupResources;
     using BaseClass::CommandStreamReceiver::commandStream;
     using BaseClass::CommandStreamReceiver::disableL3Cache;
     using BaseClass::CommandStreamReceiver::dispatchMode;

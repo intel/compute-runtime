@@ -115,8 +115,6 @@ class CommandStreamReceiver {
 
     void setPreemptionCsrAllocation(GraphicsAllocation *allocation) { preemptionCsrAllocation = allocation; }
 
-    void cleanupResources();
-
     void requestThreadArbitrationPolicy(uint32_t requiredPolicy) { this->requiredThreadArbitrationPolicy = requiredPolicy; }
     void requestStallingPipeControlOnNextFlush() { stallingPipeControlOnNextFlushRequired = true; }
 
@@ -154,6 +152,7 @@ class CommandStreamReceiver {
     AllocationsList &getAllocationsForReuse() { return allocationsForReuse; }
 
   protected:
+    void cleanupResources();
     void setDisableL3Cache(bool val) {
         disableL3Cache = val;
     }
