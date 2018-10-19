@@ -233,6 +233,7 @@ bool MemoryManager::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocat
 }
 
 void MemoryManager::freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList) {
+    std::lock_guard<decltype(mtx)> lock(mtx);
     GraphicsAllocation *curr = allocationsList.detachNodes();
 
     IDList<GraphicsAllocation, false, true> allocationsLeft;
