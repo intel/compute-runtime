@@ -85,6 +85,35 @@ TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenTypeIsChe
     EXPECT_EQ(CommandStreamReceiverType::CSR_AUB, aubCsr->getType());
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetInstanceIsCalledForAGivenEngineTypeThenEngineInstanceForThatTypeIsReturned) {
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    EXPECT_NE(nullptr, aubCsr);
+
+    auto engineId = aubCsr->getEngineInstance(EngineType::ENGINE_RCS);
+    EXPECT_EQ(EngineType::ENGINE_RCS, allEngineInstances[engineId].type);
+
+    engineId = aubCsr->getEngineInstance(EngineType::ENGINE_BCS);
+    EXPECT_EQ(EngineType::ENGINE_BCS, allEngineInstances[engineId].type);
+
+    engineId = aubCsr->getEngineInstance(EngineType::ENGINE_VCS);
+    EXPECT_EQ(EngineType::ENGINE_VCS, allEngineInstances[engineId].type);
+
+    engineId = aubCsr->getEngineInstance(EngineType::ENGINE_VECS);
+    EXPECT_EQ(EngineType::ENGINE_VECS, allEngineInstances[engineId].type);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenSetCsTraitsIsCalledThenLRCAIsSetForAGivenEngine) {
+    const auto &csTraits = AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(EngineType::ENGINE_RCS);
+
+    auto mmioBase = 0x12345679u;
+    const AubMemDump::LrcaHelper lrca(mmioBase);
+    AUBCommandStreamReceiverHw<FamilyType>::setCsTraits(EngineType::ENGINE_RCS, &lrca);
+    const auto &traits = AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(EngineType::ENGINE_RCS);
+    EXPECT_EQ(mmioBase, traits.mmioBase);
+
+    AUBCommandStreamReceiverHw<FamilyType>::setCsTraits(EngineType::ENGINE_RCS, &csTraits);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDefaultSettingsThenItHasBatchedDispatchModeEnabled) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.CsrDispatchMode.set(0);

@@ -17,4 +17,19 @@ enum EngineType : uint32_t {
     NUM_ENGINES
 };
 
+struct EngineInstanceT {
+    EngineType type;
+    int id;
+};
+
+static constexpr EngineInstanceT allEngineInstances[] = {
+    {ENGINE_RCS},
+    {ENGINE_BCS},
+    {ENGINE_VCS},
+    {ENGINE_VECS},
+};
+
+static constexpr EngineInstanceT gpgpuEngineInstances[] = {
+    {ENGINE_RCS},
+};
 } // namespace OCLRT

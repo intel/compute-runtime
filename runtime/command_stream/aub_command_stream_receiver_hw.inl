@@ -22,6 +22,8 @@
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+
+#include <algorithm>
 #include <cstring>
 
 namespace OCLRT {
@@ -58,6 +60,9 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
     }
+
+    setCsrProgrammingMode();
+
     if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
         this->subCaptureManager->subCaptureMode = static_cast<AubSubCaptureManager::SubCaptureMode>(DebugManager.flags.AUBDumpSubCaptureMode.get());
         this->subCaptureManager->subCaptureFilter.dumpKernelStartIdx = static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelStartIdx.get());
@@ -82,6 +87,22 @@ AUBCommandStreamReceiverHw<GfxFamily>::~AUBCommandStreamReceiverHw() {
 template <typename GfxFamily>
 const AubMemDump::LrcaHelper &AUBCommandStreamReceiverHw<GfxFamily>::getCsTraits(EngineType engineType) {
     return *AUBFamilyMapper<GfxFamily>::csTraits[engineType];
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::setCsTraits(EngineType engineType, const AubMemDump::LrcaHelper *lrca) {
+    AUBFamilyMapper<GfxFamily>::csTraits[engineType] = lrca;
+}
+
+template <typename GfxFamily>
+size_t AUBCommandStreamReceiverHw<GfxFamily>::getEngineInstance(EngineType engineType) {
+    constexpr auto numAllEngines = arrayCount(allEngineInstances);
+    constexpr auto findBegin = allEngineInstances;
+    constexpr auto findEnd = findBegin + numAllEngines;
+    auto findCriteria = [&](const auto &it) { return it.type == engineType; };
+    auto engineInstance = std::find_if(findBegin, findEnd, findCriteria);
+    UNRECOVERABLE_IF(engineInstance == findEnd);
+    return engineInstance - findBegin;
 }
 
 template <typename GfxFamily>
@@ -155,9 +176,10 @@ const std::string &AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineType) {
+void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineInstance) {
+    auto engineType = allEngineInstances[engineInstance].type;
     auto mmioBase = getCsTraits(engineType).mmioBase;
-    auto &engineInfo = engineInfoTable[engineType];
+    auto &engineInfo = engineInfoTable[engineInstance];
 
     initGlobalMMIO();
     initEngineMMIO(engineType);
@@ -249,7 +271,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
     }
 
     // Create a context to facilitate AUB dumping of memory using PPGTT
-    addContextToken();
+    addContextToken(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(engineInfo.pLRCA)));
 }
 
 template <typename GfxFamily>
@@ -293,11 +315,13 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     auto streamLocked = stream->lockStream();
+    auto engineInstance = getEngineInstance(engineType);
+    engineType = allEngineInstances[engineInstance].type;
     uint32_t mmioBase = getCsTraits(engineType).mmioBase;
-    auto &engineInfo = engineInfoTable[engineType];
+    auto &engineInfo = engineInfoTable[engineInstance];
 
     if (!engineInfo.pLRCA) {
-        initializeEngine(engineType);
+        initializeEngine(engineInstance);
         DEBUG_BREAK_IF(!engineInfo.pLRCA);
     }
 
@@ -711,7 +735,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(const MultiDis
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::addContextToken() {
+void AUBCommandStreamReceiverHw<GfxFamily>::addContextToken(uint32_t dumpHandle) {
     // Some simulator versions don't support adding the context token.
     // This hook allows specialization for those that do.
 }

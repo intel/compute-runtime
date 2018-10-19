@@ -10,6 +10,7 @@
 #include "command_stream_receiver_simulated_hw.h"
 #include "runtime/command_stream/aub_center.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/memory_manager/address_mapper.h"
 #include "runtime/memory_manager/page_table.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
@@ -48,7 +49,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void initGlobalMMIO();
     void initEngineMMIO(EngineType engineType);
 
-    void addContextToken();
+    MOCKABLE_VIRTUAL void addContextToken(uint32_t dumpHandle);
 
     static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment);
 
@@ -65,7 +66,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL bool isFileOpen() const;
     MOCKABLE_VIRTUAL const std::string &getFileName();
 
-    void initializeEngine(EngineType engineType);
+    void initializeEngine(size_t engineInstance);
     void freeEngineInfoTable();
 
     MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
@@ -73,6 +74,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
 
     static const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType);
+    static void setCsTraits(EngineType engineType, const AubMemDump::LrcaHelper *lrca);
+    size_t getEngineInstance(EngineType engineType);
 
     struct EngineInfo {
         void *pLRCA;
@@ -83,7 +86,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
         uint32_t ggttRingBuffer;
         size_t sizeRingBuffer;
         uint32_t tailRingBuffer;
-    } engineInfoTable[EngineType::NUM_ENGINES] = {};
+    } engineInfoTable[arrayCount(allEngineInstances)] = {};
+    size_t gpgpuEngineInstance = arrayCount(gpgpuEngineInstances) - 1;
 
     AUBCommandStreamReceiver::AubFileStream *stream;
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;
@@ -95,6 +99,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     // remap CPU VA -> GGTT VA
     AddressMapper *gttRemap;
 
+    void setCsrProgrammingMode(void){};
     MOCKABLE_VIRTUAL bool addPatchInfoComments();
     void addGUCStartMessage(uint64_t batchBufferAddress, EngineType engineType);
     uint32_t getGUCWorkQueueItemHeader(EngineType engineType);
