@@ -11,6 +11,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "test.h"
+#include "gmock/gmock.h"
 
 #if defined(__clang__)
 #pragma clang diagnostic push

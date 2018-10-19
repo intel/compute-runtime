@@ -21,6 +21,7 @@
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "runtime/api/api.h"
+#include "gmock/gmock.h"
 
 namespace OCLRT {
 typedef struct _cl_object_for_test2 *cl_object_for_test2;

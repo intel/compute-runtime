@@ -18,6 +18,7 @@
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
+#include "gmock/gmock.h"
 #include "test.h"
 
 using namespace OCLRT;

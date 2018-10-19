@@ -8,6 +8,7 @@
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/compiler_interface/compiler_interface.inl"
 #include "runtime/context/context.h"
+#include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"

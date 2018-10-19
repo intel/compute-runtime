@@ -6,10 +6,7 @@
  */
 
 #include "unit_tests/mocks/mock_device.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/driver_info.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/os_interface/os_time.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/tests_configuration.h"
@@ -24,7 +21,7 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
     this->commandStreamReceiver = commandStreamReceiver;
 }
-OCLRT::MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
+MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : Device(hwInfo, executionEnvironment, deviceIndex) {
     bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
     this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, this->getHardwareCapabilities().localMemorySupported, aubUsage, *executionEnvironment));
@@ -57,12 +54,14 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
     this->tagAddress = executionEnvironment->commandStreamReceivers[getDeviceIndex()]->getTagAddress();
 }
 
-OCLRT::FailMemoryManager::FailMemoryManager(int32_t fail) {
-    allocations.reserve(fail);
-    agnostic = new OsAgnosticMemoryManager(false, false, executionEnvironment);
-    this->fail = fail;
-}
-
 MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(hwInfo, executionEnvironment, deviceIndex) {
     this->mockMemoryManager.reset(new MockAllocSysMemAgnosticMemoryManager(*executionEnvironment));
+}
+FailDevice::FailDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
+    : MockDevice(hwInfo, executionEnvironment, deviceIndex) {
+    this->mockMemoryManager.reset(new FailMemoryManager(*executionEnvironment));
+}
+FailDeviceAfterOne::FailDeviceAfterOne(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
+    : MockDevice(hwInfo, executionEnvironment, deviceIndex) {
+    this->mockMemoryManager.reset(new FailMemoryManager(1));
 }

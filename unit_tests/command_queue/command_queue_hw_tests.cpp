@@ -28,6 +28,7 @@
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"

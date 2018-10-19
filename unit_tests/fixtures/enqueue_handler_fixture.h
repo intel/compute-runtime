@@ -8,6 +8,7 @@
 #pragma once
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "gtest/gtest.h"
 
 class EnqueueHandlerTest : public OCLRT::DeviceFixture,
                            public testing::Test {

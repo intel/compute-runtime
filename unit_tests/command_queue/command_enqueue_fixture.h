@@ -13,6 +13,7 @@
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 
 namespace OCLRT {
 

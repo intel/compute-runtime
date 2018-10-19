@@ -19,10 +19,10 @@
 #include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/memory_management.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 #include "gtest/gtest.h"
 

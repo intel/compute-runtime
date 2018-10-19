@@ -7,6 +7,7 @@
 
 #include "test.h"
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/string_helpers.h"
 #include "runtime/os_interface/debug_settings_manager.h"

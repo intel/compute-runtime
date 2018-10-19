@@ -22,9 +22,9 @@
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_device.h"
 
-#include "hw_cmds.h"
 #include "test.h"
 #include "driver_version.h"
+#include "gmock/gmock.h"
 
 #include <memory>
 

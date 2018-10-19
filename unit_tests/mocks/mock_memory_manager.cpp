@@ -79,4 +79,10 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory(size_t size, size_
     return OsAgnosticMemoryManager::allocateGraphicsMemory(size, alignment, forcePin, uncacheable);
 }
 
+FailMemoryManager::FailMemoryManager(int32_t fail) {
+    allocations.reserve(fail);
+    agnostic = new OsAgnosticMemoryManager(false, false, executionEnvironment);
+    this->fail = fail;
+}
+
 } // namespace OCLRT
