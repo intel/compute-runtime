@@ -809,7 +809,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWhenItIsFlushedWithGemC
     EXPECT_EQ(cs.getCpuBase(), storedBase);
     EXPECT_EQ(cs.getGraphicsAllocation(), storedGraphicsAllocation);
 
-    auto drmAllocation = (DrmAllocation *)storedGraphicsAllocation;
+    auto drmAllocation = static_cast<DrmAllocation *>(storedGraphicsAllocation);
     auto bo = drmAllocation->getBO();
 
     //no allocations should be connected
@@ -845,7 +845,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWh
     EXPECT_EQ(11u, this->mock->execBuffer.buffer_count);
     mm->freeGraphicsMemory(commandBuffer);
     for (auto graphicsAllocation : graphicsAllocations) {
-        DrmAllocation *drmAlloc = reinterpret_cast<DrmAllocation *>(graphicsAllocation);
+        DrmAllocation *drmAlloc = static_cast<DrmAllocation *>(graphicsAllocation);
         EXPECT_FALSE(drmAlloc->getBO()->peekIsResident());
         mm->freeGraphicsMemory(graphicsAllocation);
     }
@@ -853,7 +853,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWh
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenGemCloseWorkerInactiveModeWhenMakeResidentIsCalledThenRefCountsAreNotUpdated) {
-    auto dummyAllocation = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto dummyAllocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
 
     auto bo = dummyAllocation->getBO();
     EXPECT_EQ(1u, bo->getRefCount());
@@ -870,8 +870,8 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenGemCloseWorkerInactiveModeWhenMakeRe
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDifferentThenMakeResidentShouldAddTwoLocations) {
-    auto allocation = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
-    auto allocation2 = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto allocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto allocation2 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
 
     auto bo1 = allocation->getBO();
     auto bo2 = allocation2->getBO();
@@ -898,8 +898,8 @@ TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDi
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsFlushedWithGemCloseWorkerInactiveModeThenCsIsNotNulled) {
-    auto commandBuffer = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
-    auto dummyAllocation = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto commandBuffer = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto dummyAllocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
     LinearStream cs(commandBuffer);
@@ -916,7 +916,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsF
     EXPECT_EQ(cs.getCpuBase(), storedBase);
     EXPECT_EQ(cs.getGraphicsAllocation(), storedGraphicsAllocation);
 
-    auto drmAllocation = (DrmAllocation *)storedGraphicsAllocation;
+    auto drmAllocation = static_cast<DrmAllocation *>(storedGraphicsAllocation);
     auto bo = drmAllocation->getBO();
 
     //no allocations should be connected
@@ -1093,7 +1093,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
 
         auto handleFound = false;
         for (auto &graphicsAllocation : copyOfResidency) {
-            auto bo = ((DrmAllocation *)graphicsAllocation)->getBO();
+            auto bo = static_cast<DrmAllocation *>(graphicsAllocation)->getBO();
             if (bo->peekHandle() == handle) {
                 handleFound = true;
             }
@@ -1474,8 +1474,8 @@ TEST_F(DrmCommandStreamLeaksTest, Flush) {
 }
 
 TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushNotCalled) {
-    auto allocation1 = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
-    auto allocation2 = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto allocation1 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto allocation2 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
     ASSERT_NE(nullptr, allocation1);
     ASSERT_NE(nullptr, allocation2);
 

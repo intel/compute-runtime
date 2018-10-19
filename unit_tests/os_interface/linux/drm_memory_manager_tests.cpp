@@ -339,7 +339,7 @@ TEST_F(DrmMemoryManagerTest, AllocateThenFree) {
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto alloc = reinterpret_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(1024));
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(1024));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -796,7 +796,7 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHos
 
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     auto bufferAddress = buffer->getGraphicsAllocation()->getGpuAddress();
-    auto drmAllocation = (DrmAllocation *)buffer->getGraphicsAllocation();
+    auto drmAllocation = static_cast<DrmAllocation *>(buffer->getGraphicsAllocation());
 
     uintptr_t address64bitOnGpu = (uintptr_t)bufferAddress;
 
@@ -875,7 +875,7 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom64B
                 EXPECT_LT(address64bit - baseAddress, max32BitAddress);
             }
 
-            auto drmAllocation = (DrmAllocation *)buffer->getGraphicsAllocation();
+            auto drmAllocation = static_cast<DrmAllocation *>(buffer->getGraphicsAllocation());
 
             EXPECT_TRUE(drmAllocation->is32BitAllocation);
 
@@ -1499,7 +1499,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleAndBi
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, true);
-    auto drmAllocation = (DrmAllocation *)graphicsAllocation;
+    auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation);
     EXPECT_EQ(1, lseekCalledCount);
     EXPECT_EQ(BIT32_ALLOCATOR_EXTERNAL, drmAllocation->getBO()->peekAllocationType());
@@ -1517,7 +1517,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleIsCre
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false);
-    auto drmAllocation = (DrmAllocation *)graphicsAllocation;
+    auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation);
     EXPECT_EQ(1, lseekCalledCount);
     EXPECT_EQ(MMAP_ALLOCATOR, drmAllocation->getBO()->peekAllocationType());
@@ -1535,7 +1535,7 @@ TEST_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSharedHandleIs
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, true);
-    auto drmAllocation = (DrmAllocation *)graphicsAllocation;
+    auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation);
     EXPECT_EQ(1, lseekCalledCount);
     EXPECT_EQ(MMAP_ALLOCATOR, drmAllocation->getBO()->peekAllocationType());
@@ -1591,7 +1591,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     EXPECT_EQ(allocation->getUnderlyingBuffer(), ptr);
 
     //check DRM_IOCTL_I915_GEM_SET_DOMAIN input params
-    auto drmAllocation = (DrmAllocation *)allocation;
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     EXPECT_EQ((uint32_t)drmAllocation->getBO()->peekHandle(), mock->setDomainHandle);
     EXPECT_EQ((uint32_t)I915_GEM_DOMAIN_CPU, mock->setDomainReadDomains);
     EXPECT_EQ(0u, mock->setDomainWriteDomain);
@@ -1628,7 +1628,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     auto ptr = memoryManager->lockResource(allocation);
     EXPECT_NE(nullptr, ptr);
 
-    auto drmAllocation = (DrmAllocation *)allocation;
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     EXPECT_NE(nullptr, drmAllocation->getBO()->peekLockedAddress());
 
     //check DRM_IOCTL_I915_GEM_MMAP input params
@@ -1834,8 +1834,8 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenItIsR
     EXPECT_FALSE(paddedAllocation->isCoherent());
     EXPECT_EQ(0u, paddedAllocation->fragmentsStorage.fragmentCount);
 
-    auto bufferbo = ((DrmAllocation *)buffer)->getBO();
-    auto bo = ((DrmAllocation *)paddedAllocation)->getBO();
+    auto bufferbo = static_cast<DrmAllocation *>(buffer)->getBO();
+    auto bo = static_cast<DrmAllocation *>(paddedAllocation)->getBO();
     EXPECT_NE(nullptr, bo);
 
     EXPECT_EQ(bufferWithPaddingSize, bo->peekUnmapSize());

@@ -184,7 +184,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, size_t alig
 }
 
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) {
-    auto res = (DrmAllocation *)MemoryManager::allocateGraphicsMemory(size, const_cast<void *>(ptr), forcePin);
+    auto res = static_cast<DrmAllocation *>(MemoryManager::allocateGraphicsMemory(size, const_cast<void *>(ptr), forcePin));
 
     bool forcePinAllowed = res != nullptr && pinBB != nullptr && forcePinEnabled && forcePin && size >= this->pinThreshold;
     if (!validateHostPtrMemory && forcePinAllowed) {
