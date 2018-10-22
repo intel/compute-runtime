@@ -415,9 +415,9 @@ TEST(HostPtrManager, GivenHostPtrFilledWith3TripleFragmentsWhenAskedForPopulatio
     auto reqs = hostPtrManager.getAllocationRequirements(cpuPtr, fragmentSize);
     ASSERT_EQ(3u, reqs.requiredFragmentsCount);
 
-    FragmentStorage fragments[max_fragments_count];
+    FragmentStorage fragments[maxFragmentsCount];
     //check all fragments
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         fragments[i].fragmentCpuPointer = const_cast<void *>(reqs.AllocationFragments[i].allocationPtr);
         fragments[i].fragmentSize = reqs.AllocationFragments[i].allocationSize;
         hostPtrManager.storeFragment(fragments[i]);
@@ -428,7 +428,7 @@ TEST(HostPtrManager, GivenHostPtrFilledWith3TripleFragmentsWhenAskedForPopulatio
     auto OsHandles = hostPtrManager.populateAlreadyAllocatedFragments(reqs, nullptr);
 
     EXPECT_EQ(3u, hostPtrManager.getFragmentCount());
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         EXPECT_EQ(OsHandles.fragmentStorageData[i].cpuPtr, reqs.AllocationFragments[i].allocationPtr);
         EXPECT_EQ(OsHandles.fragmentStorageData[i].fragmentSize, reqs.AllocationFragments[i].allocationSize);
         auto fragment = hostPtrManager.getFragment(const_cast<void *>(reqs.AllocationFragments[i].allocationPtr));
@@ -437,16 +437,16 @@ TEST(HostPtrManager, GivenHostPtrFilledWith3TripleFragmentsWhenAskedForPopulatio
         EXPECT_EQ(OsHandles.fragmentStorageData[i].cpuPtr, fragment->fragmentCpuPointer);
     }
 
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         hostPtrManager.releaseHostPtr(fragments[i].fragmentCpuPointer);
     }
     EXPECT_EQ(3u, hostPtrManager.getFragmentCount());
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         auto fragment = hostPtrManager.getFragment(const_cast<void *>(reqs.AllocationFragments[i].allocationPtr));
         ASSERT_NE(nullptr, fragment);
         EXPECT_EQ(1, fragment->refCount);
     }
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         hostPtrManager.releaseHostPtr(fragments[i].fragmentCpuPointer);
     }
     EXPECT_EQ(0u, hostPtrManager.getFragmentCount());

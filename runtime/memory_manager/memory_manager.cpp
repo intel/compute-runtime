@@ -307,7 +307,7 @@ RequirementsStatus MemoryManager::checkAllocationsForOverlapping(AllocationRequi
     RequirementsStatus status = RequirementsStatus::SUCCESS;
     checkedFragments->count = 0;
 
-    for (unsigned int i = 0; i < max_fragments_count; i++) {
+    for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         checkedFragments->status[i] = OverlapStatus::FRAGMENT_NOT_CHECKED;
         checkedFragments->fragments[i] = nullptr;
     }

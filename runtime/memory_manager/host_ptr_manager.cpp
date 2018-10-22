@@ -154,7 +154,7 @@ void OCLRT::HostPtrManager::storeFragment(AllocationStorageData &storageData) {
 }
 
 void OCLRT::HostPtrManager::releaseHandleStorage(OsHandleStorage &fragments) {
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         if (fragments.fragmentStorageData[i].fragmentSize || fragments.fragmentStorageData[i].cpuPtr) {
             fragments.fragmentStorageData[i].freeTheFragment = releaseHostPtr(fragments.fragmentStorageData[i].cpuPtr);
         }

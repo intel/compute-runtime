@@ -466,11 +466,11 @@ bool Wddm::createAllocation64k(WddmAllocation *alloc) {
 
 NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-    D3DDDI_ALLOCATIONINFO AllocationInfo[max_fragments_count] = {{0}};
+    D3DDDI_ALLOCATIONINFO AllocationInfo[maxFragmentsCount] = {{0}};
     D3DKMT_CREATEALLOCATION CreateAllocation = {0};
 
     auto allocationCount = 0;
-    for (unsigned int i = 0; i < max_fragments_count; i++) {
+    for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (!osHandles.fragmentStorageData[i].osHandleStorage) {
             break;
         }

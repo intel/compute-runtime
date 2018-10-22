@@ -381,10 +381,10 @@ bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
 }
 
 MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
-    uint32_t allocatedFragmentIndexes[max_fragments_count];
+    uint32_t allocatedFragmentIndexes[maxFragmentsCount];
     uint32_t allocatedFragmentsCounter = 0;
 
-    for (unsigned int i = 0; i < max_fragments_count; i++) {
+    for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         // If no fragment is present it means it already exists.
         if (!handleStorage.fragmentStorageData[i].osHandleStorage && handleStorage.fragmentStorageData[i].cpuPtr) {
             handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
@@ -410,10 +410,10 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
 
 void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
 
-    D3DKMT_HANDLE handles[max_fragments_count] = {0};
+    D3DKMT_HANDLE handles[maxFragmentsCount] = {0};
     auto allocationCount = 0;
 
-    for (unsigned int i = 0; i < max_fragments_count; i++) {
+    for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
             handles[allocationCount] = handleStorage.fragmentStorageData[i].osHandleStorage->handle;
             handleStorage.fragmentStorageData[i].residency->resident = false;
@@ -423,7 +423,7 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
 
     bool success = tryDeferDeletions(handles, allocationCount, 0);
 
-    for (unsigned int i = 0; i < max_fragments_count; i++) {
+    for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
             if (success) {
                 handleStorage.fragmentStorageData[i].osHandleStorage->handle = 0;
@@ -473,7 +473,7 @@ uint64_t WddmMemoryManager::getInternalHeapBaseAddress() {
 
 bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, OsContext &osContext) {
     size_t residencyCount = allocationsForResidency.size();
-    std::unique_ptr<D3DKMT_HANDLE[]> handlesForResidency(new D3DKMT_HANDLE[residencyCount * max_fragments_count]);
+    std::unique_ptr<D3DKMT_HANDLE[]> handlesForResidency(new D3DKMT_HANDLE[residencyCount * maxFragmentsCount]);
 
     uint32_t totalHandlesCount = 0;
 

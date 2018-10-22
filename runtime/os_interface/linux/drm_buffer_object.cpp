@@ -157,7 +157,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
 
 int BufferObject::pin(BufferObject *boToPin[], size_t numberOfBos) {
     drm_i915_gem_execbuffer2 execbuf = {};
-    StackVec<drm_i915_gem_exec_object2, max_fragments_count + 1> execObject;
+    StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject;
 
     reinterpret_cast<uint32_t *>(this->address)[0] = 0x05000000;
     reinterpret_cast<uint32_t *>(this->address)[1] = 0x00000000;

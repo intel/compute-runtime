@@ -664,7 +664,7 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
 
     auto reqs = HostPtrManager::getAllocationRequirements(ptr, size);
 
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo);
         EXPECT_EQ(reqs.AllocationFragments[i].allocationSize, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekSize());
         EXPECT_EQ(reqs.AllocationFragments[i].allocationPtr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekAddress());

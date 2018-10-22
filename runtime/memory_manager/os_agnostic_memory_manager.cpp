@@ -188,7 +188,7 @@ void OsAgnosticMemoryManager::turnOnFakingBigAllocations() {
 }
 
 MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
-    for (unsigned int i = 0; i < max_fragments_count; i++) {
+    for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (!handleStorage.fragmentStorageData[i].osHandleStorage && handleStorage.fragmentStorageData[i].cpuPtr) {
             handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
             handleStorage.fragmentStorageData[i].residency = new ResidencyData();
@@ -204,7 +204,7 @@ MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHan
     return AllocationStatus::Success;
 }
 void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
-    for (unsigned int i = 0; i < max_fragments_count; i++) {
+    for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
             delete handleStorage.fragmentStorageData[i].osHandleStorage;
             delete handleStorage.fragmentStorageData[i].residency;

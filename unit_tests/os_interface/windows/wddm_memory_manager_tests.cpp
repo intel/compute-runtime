@@ -1403,7 +1403,7 @@ TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
 
     auto reqs = HostPtrManager::getAllocationRequirements(ptr, size);
 
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
 
         uintptr_t GpuPtr = (uintptr_t)(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gpuPtr);
         uintptr_t CpuPtr = (uintptr_t)(reqs.AllocationFragments[i].allocationPtr);

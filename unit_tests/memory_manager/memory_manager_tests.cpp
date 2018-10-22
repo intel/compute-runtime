@@ -546,7 +546,7 @@ TEST_F(MemoryAllocatorTest, GivenEmptyMemoryManagerAndMisalingedHostPtrWithHugeS
     ASSERT_EQ(3u, reqs.requiredFragmentsCount);
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(size, cpuPtr);
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         EXPECT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage);
         EXPECT_EQ(reqs.AllocationFragments[i].allocationPtr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].cpuPtr);
         EXPECT_EQ(reqs.AllocationFragments[i].allocationSize, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].fragmentSize);
@@ -1535,7 +1535,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
     EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER, checkedFragments.status[0]);
     EXPECT_EQ(nullptr, checkedFragments.fragments[0]);
 
-    for (uint32_t i = 1; i < max_fragments_count; i++) {
+    for (uint32_t i = 1; i < maxFragmentsCount; i++) {
         EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_CHECKED, checkedFragments.status[i]);
         EXPECT_EQ(nullptr, checkedFragments.fragments[i]);
     }
@@ -1591,7 +1591,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
     EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER, checkedFragments.status[0]);
     EXPECT_EQ(nullptr, checkedFragments.fragments[0]);
 
-    for (uint32_t i = 1; i < max_fragments_count; i++) {
+    for (uint32_t i = 1; i < maxFragmentsCount; i++) {
         EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_CHECKED, checkedFragments.status[i]);
         EXPECT_EQ(nullptr, checkedFragments.fragments[i]);
     }
@@ -1643,7 +1643,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
     EXPECT_EQ(OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT, checkedFragments.status[0]);
     EXPECT_EQ(nullptr, checkedFragments.fragments[0]);
 
-    for (uint32_t i = 1; i < max_fragments_count; i++) {
+    for (uint32_t i = 1; i < maxFragmentsCount; i++) {
         EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_CHECKED, checkedFragments.status[i]);
         EXPECT_EQ(nullptr, checkedFragments.fragments[i]);
     }

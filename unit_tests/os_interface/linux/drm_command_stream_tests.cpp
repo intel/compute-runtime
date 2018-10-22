@@ -1205,7 +1205,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwiceWhenFragmentStorage) {
     csr->makeResident(*allocation);
 
     csr->processResidency(csr->getResidencyAllocations(), *osContext);
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
                   reqs.AllocationFragments[i].allocationPtr);
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
@@ -1216,7 +1216,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwiceWhenFragmentStorage) {
     }
 
     csr->makeNonResident(*allocation);
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_FALSE(isResident(bo));
         auto bo1 = getResident(bo);
@@ -1309,7 +1309,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationCreatedFromThreeFragmentsWhenMa
     csr->makeResident(*allocation);
     csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
                   reqs.AllocationFragments[i].allocationPtr);
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
@@ -1319,7 +1319,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationCreatedFromThreeFragmentsWhenMa
         EXPECT_EQ(1u, bo1->getRefCount());
     }
     csr->makeNonResident(*allocation);
-    for (int i = 0; i < max_fragments_count; i++) {
+    for (int i = 0; i < maxFragmentsCount; i++) {
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_FALSE(isResident(bo));
         auto bo1 = getResident(bo);

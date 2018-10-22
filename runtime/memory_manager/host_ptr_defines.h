@@ -16,7 +16,7 @@ struct OsHandle;
 
 using OsGraphicsHandle = OsHandle;
 
-const int max_fragments_count = 3;
+constexpr int maxFragmentsCount = 3;
 
 enum class FragmentPosition {
     NONE = 0,
@@ -45,7 +45,7 @@ struct PartialAllocation {
 };
 
 struct AllocationRequirements {
-    PartialAllocation AllocationFragments[max_fragments_count];
+    PartialAllocation AllocationFragments[maxFragmentsCount];
     uint64_t totalRequiredSize = 0u;
     uint32_t requiredFragmentsCount = 0u;
 };
@@ -68,10 +68,10 @@ struct AllocationStorageData {
 };
 
 struct OsHandleStorage {
-    AllocationStorageData fragmentStorageData[max_fragments_count];
+    AllocationStorageData fragmentStorageData[maxFragmentsCount];
     uint32_t fragmentCount = 0;
     OsHandleStorage() {
-        for (int i = 0; i < max_fragments_count; i++) {
+        for (int i = 0; i < maxFragmentsCount; i++) {
             fragmentStorageData[i].osHandleStorage = nullptr;
             fragmentStorageData[i].cpuPtr = nullptr;
         }
@@ -79,8 +79,8 @@ struct OsHandleStorage {
 };
 
 struct CheckedFragments {
-    FragmentStorage *fragments[max_fragments_count];
-    OverlapStatus status[max_fragments_count];
+    FragmentStorage *fragments[maxFragmentsCount];
+    OverlapStatus status[maxFragmentsCount];
     size_t count = 0;
 };
 } // namespace OCLRT
