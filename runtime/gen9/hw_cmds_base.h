@@ -12,7 +12,8 @@
 #include "hw_info.h"
 #include "igfxfmid.h"
 
-struct SklParse;
+template <class T>
+struct CmdParse;
 
 namespace OCLRT {
 
@@ -22,7 +23,7 @@ struct GEN9 {
 };
 
 struct SKLFamily : public GEN9 {
-    using PARSE = SklParse;
+    using PARSE = CmdParse<SKL>;
     using GfxFamily = SKLFamily;
     using WALKER_TYPE = GPGPU_WALKER;
     static const GPGPU_WALKER cmdInitGpgpuWalker;

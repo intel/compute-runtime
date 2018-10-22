@@ -13,7 +13,8 @@
 #include "igfxfmid.h"
 #define TILERESOURCE_CHICKENBIT_VECTOR_ADDRESS 0x4DFC
 #define TILERESOURCE_CHICKENBIT_VECTOR_BITMASK (1UL << 8)
-struct CnlParse;
+template <class T>
+struct CmdParse;
 namespace OCLRT {
 
 struct GEN10 {
@@ -22,7 +23,7 @@ struct GEN10 {
 };
 
 struct CNLFamily : public GEN10 {
-    using PARSE = CnlParse;
+    using PARSE = CmdParse<CNL>;
     using GfxFamily = CNLFamily;
     using WALKER_TYPE = GPGPU_WALKER;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
