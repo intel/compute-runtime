@@ -57,6 +57,10 @@ void APIENTRY WddmMemoryManager::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *t
     WddmMemoryManager *wddmMemMngr = (WddmMemoryManager *)trimNotification->Context;
     DEBUG_BREAK_IF(wddmMemMngr == nullptr);
 
+    if (wddmMemMngr->getOsContextCount() == 0) {
+        return;
+    }
+
     wddmMemMngr->getRegisteredOsContext(0)->get()->getResidencyController().acquireTrimCallbackLock();
     wddmMemMngr->trimResidency(trimNotification->Flags, trimNotification->NumBytesToTrim);
     wddmMemMngr->getRegisteredOsContext(0)->get()->getResidencyController().releaseTrimCallbackLock();

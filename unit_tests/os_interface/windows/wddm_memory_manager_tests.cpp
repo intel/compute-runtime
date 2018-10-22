@@ -113,6 +113,13 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhichDoesntRegisteredAnyOsContextWhenTrimCallbackIsCalledThenItReturnsWithoutDoingAnyWork) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
+    D3DKMT_TRIMNOTIFICATION trimNotification = {};
+    trimNotification.Context = memoryManager.get();
+    WddmMemoryManager::trimCallback(&trimNotification);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
     auto size = 4096u;
