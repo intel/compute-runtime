@@ -14,6 +14,7 @@
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/flush_stamp.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_interface.h"
 
@@ -34,6 +35,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     for (int i = 0; i < IndirectHeap::NUM_TYPES; ++i) {
         indirectHeap[i] = nullptr;
     }
+    internalAllocationStorage = std::make_unique<InternalAllocationStorage>(*this);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {

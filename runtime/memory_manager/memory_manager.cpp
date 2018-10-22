@@ -18,6 +18,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/deferred_deleter.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/stackvec.h"
 #include "runtime/utilities/tag_allocator.h"
@@ -171,35 +172,17 @@ void MemoryManager::freeSystemMemory(void *ptr) {
 
 void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage) {
     std::lock_guard<decltype(mtx)> lock(mtx);
-
-    uint32_t taskCount = gfxAllocation->taskCount;
-
-    if (allocationUsage == REUSABLE_ALLOCATION) {
-        taskCount = getCommandStreamReceiver(0)->peekTaskCount();
-    }
-
-    storeAllocation(std::move(gfxAllocation), allocationUsage, taskCount);
+    getCommandStreamReceiver(0)->getInternalAllocationStorage()->storeAllocation(std::move(gfxAllocation), allocationUsage);
 }
 
 void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount) {
     std::lock_guard<decltype(mtx)> lock(mtx);
-
-    if (DebugManager.flags.DisableResourceRecycling.get()) {
-        if (allocationUsage == REUSABLE_ALLOCATION) {
-            freeGraphicsMemory(gfxAllocation.release());
-            return;
-        }
-    }
-    auto csr = getCommandStreamReceiver(0);
-    auto &allocationsList = (allocationUsage == TEMPORARY_ALLOCATION) ? csr->getTemporaryAllocations() : csr->getAllocationsForReuse();
-    gfxAllocation->taskCount = taskCount;
-    allocationsList.pushTailOne(*gfxAllocation.release());
+    getCommandStreamReceiver(0)->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::move(gfxAllocation), allocationUsage, taskCount);
 }
 
 std::unique_ptr<GraphicsAllocation> MemoryManager::obtainReusableAllocation(size_t requiredSize, bool internalAllocation) {
     std::lock_guard<decltype(mtx)> lock(mtx);
-    auto allocation = getCommandStreamReceiver(0)->getAllocationsForReuse().detachAllocation(requiredSize, getCommandStreamReceiver(0)->getTagAddress(), internalAllocation);
-    return allocation;
+    return getCommandStreamReceiver(0)->getInternalAllocationStorage()->obtainReusableAllocation(requiredSize, internalAllocation);
 }
 
 void MemoryManager::setForce32BitAllocations(bool newValue) {
@@ -227,29 +210,13 @@ void MemoryManager::applyCommonCleanup() {
 
 bool MemoryManager::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
     std::lock_guard<decltype(mtx)> lock(mtx);
-    auto csr = getCommandStreamReceiver(0);
-    freeAllocationsList(waitTaskCount, (allocationUsage == TEMPORARY_ALLOCATION) ? csr->getTemporaryAllocations() : csr->getAllocationsForReuse());
+    getCommandStreamReceiver(0)->getInternalAllocationStorage()->cleanAllocationsList(waitTaskCount, allocationUsage);
     return false;
 }
 
 void MemoryManager::freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList) {
     std::lock_guard<decltype(mtx)> lock(mtx);
-    GraphicsAllocation *curr = allocationsList.detachNodes();
-
-    IDList<GraphicsAllocation, false, true> allocationsLeft;
-    while (curr != nullptr) {
-        auto *next = curr->next;
-        if (curr->taskCount <= waitTaskCount) {
-            freeGraphicsMemory(curr);
-        } else {
-            allocationsLeft.pushTailOne(*curr);
-        }
-        curr = next;
-    }
-
-    if (allocationsLeft.peekIsEmpty() == false) {
-        allocationsList.splice(*allocationsLeft.detachNodes());
-    }
+    getCommandStreamReceiver(0)->getInternalAllocationStorage()->freeAllocationsList(waitTaskCount, allocationsList);
 }
 
 TagAllocator<HwTimeStamps> *MemoryManager::getEventTsAllocator() {
