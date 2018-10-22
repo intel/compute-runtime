@@ -99,32 +99,32 @@ TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpd
     auto hwQueue = osContextWin->getHwQueue();
     COMMAND_BUFFER_HEADER cmdBufferHeader = {};
 
-    EXPECT_EQ(1u, osContextWin->getMonitoredFence().currentFenceValue);
-    EXPECT_EQ(0u, osContextWin->getMonitoredFence().lastSubmittedFence);
+    EXPECT_EQ(1u, osContextWin->getResidencyController().getMonitoredFence().currentFenceValue);
+    EXPECT_EQ(0u, osContextWin->getResidencyController().getMonitoredFence().lastSubmittedFence);
 
     wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, *osContextWin);
 
     EXPECT_EQ(cmdBufferAddress, getSubmitCommandToHwQueueDataFcn()->CommandBuffer);
     EXPECT_EQ(static_cast<UINT>(cmdSize), getSubmitCommandToHwQueueDataFcn()->CommandLength);
     EXPECT_EQ(hwQueue, getSubmitCommandToHwQueueDataFcn()->hHwQueue);
-    EXPECT_EQ(osContextWin->getMonitoredFence().fenceHandle, getSubmitCommandToHwQueueDataFcn()->HwQueueProgressFenceId);
+    EXPECT_EQ(osContextWin->getResidencyController().getMonitoredFence().fenceHandle, getSubmitCommandToHwQueueDataFcn()->HwQueueProgressFenceId);
     EXPECT_EQ(&cmdBufferHeader, getSubmitCommandToHwQueueDataFcn()->pPrivateDriverData);
     EXPECT_EQ(static_cast<UINT>(MemoryConstants::pageSize), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
 
-    EXPECT_EQ(osContextWin->getMonitoredFence().gpuAddress, cmdBufferHeader.MonitorFenceVA);
-    EXPECT_EQ(osContextWin->getMonitoredFence().lastSubmittedFence, cmdBufferHeader.MonitorFenceValue);
-    EXPECT_EQ(2u, osContextWin->getMonitoredFence().currentFenceValue);
-    EXPECT_EQ(1u, osContextWin->getMonitoredFence().lastSubmittedFence);
+    EXPECT_EQ(osContextWin->getResidencyController().getMonitoredFence().gpuAddress, cmdBufferHeader.MonitorFenceVA);
+    EXPECT_EQ(osContextWin->getResidencyController().getMonitoredFence().lastSubmittedFence, cmdBufferHeader.MonitorFenceValue);
+    EXPECT_EQ(2u, osContextWin->getResidencyController().getMonitoredFence().currentFenceValue);
+    EXPECT_EQ(1u, osContextWin->getResidencyController().getMonitoredFence().lastSubmittedFence);
 }
 
 TEST_F(Wddm23Tests, whenMonitoredFenceIsCreatedThenSetupAllRequiredFields) {
     wddm->wddmInterface->createMonitoredFence(*osContextWin);
 
-    EXPECT_NE(nullptr, osContextWin->getMonitoredFence().cpuAddress);
-    EXPECT_EQ(1u, osContextWin->getMonitoredFence().currentFenceValue);
-    EXPECT_NE(static_cast<D3DKMT_HANDLE>(0), osContextWin->getMonitoredFence().fenceHandle);
-    EXPECT_NE(static_cast<D3DGPU_VIRTUAL_ADDRESS>(0), osContextWin->getMonitoredFence().gpuAddress);
-    EXPECT_EQ(0u, osContextWin->getMonitoredFence().lastSubmittedFence);
+    EXPECT_NE(nullptr, osContextWin->getResidencyController().getMonitoredFence().cpuAddress);
+    EXPECT_EQ(1u, osContextWin->getResidencyController().getMonitoredFence().currentFenceValue);
+    EXPECT_NE(static_cast<D3DKMT_HANDLE>(0), osContextWin->getResidencyController().getMonitoredFence().fenceHandle);
+    EXPECT_NE(static_cast<D3DGPU_VIRTUAL_ADDRESS>(0), osContextWin->getResidencyController().getMonitoredFence().gpuAddress);
+    EXPECT_EQ(0u, osContextWin->getResidencyController().getMonitoredFence().lastSubmittedFence);
 }
 
 TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhenSubmitCalledThenCallWaitOnGpu) {

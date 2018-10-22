@@ -8,6 +8,8 @@
 #pragma once
 
 #include "runtime/memory_manager/residency_container.h"
+#include "runtime/os_interface/windows/windows_wrapper.h"
+#include "runtime/os_interface/windows/windows_defs.h"
 
 #include <atomic>
 
@@ -40,6 +42,9 @@ class WddmResidencyController {
     const ResidencyContainer &peekTrimCandidateList() const { return trimCandidateList; }
     uint32_t peekTrimCandidatesCount() const { return trimCandidatesCount; }
 
+    MonitoredFence &getMonitoredFence() { return monitoredFence; }
+    void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
+
   protected:
     uint32_t osContextId;
     std::atomic<bool> lock = false;
@@ -47,5 +52,6 @@ class WddmResidencyController {
     uint64_t lastTrimFenceValue = 0u;
     ResidencyContainer trimCandidateList;
     uint32_t trimCandidatesCount = 0;
+    MonitoredFence monitoredFence = {};
 };
 } // namespace OCLRT

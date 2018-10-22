@@ -483,7 +483,7 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer &all
 
     osContext.get()->getResidencyController().acquireLock();
 
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.get()->getMonitoredFence().currentFenceValue);
+    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.get()->getResidencyController().getMonitoredFence().currentFenceValue);
 
     for (uint32_t i = 0; i < residencyCount; i++) {
         WddmAllocation *allocation = reinterpret_cast<WddmAllocation *>(allocationsForResidency[i]);
@@ -538,7 +538,7 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer &all
         for (uint32_t i = 0; i < residencyCount; i++) {
             WddmAllocation *allocation = reinterpret_cast<WddmAllocation *>(allocationsForResidency[i]);
             // Update fence value not to early destroy / evict allocation
-            auto currentFence = osContext.get()->getMonitoredFence().currentFenceValue;
+            auto currentFence = osContext.get()->getResidencyController().getMonitoredFence().currentFenceValue;
             allocation->getResidencyData().updateCompletionData(currentFence, osContext.getContextId());
             allocation->getResidencyData().resident = true;
 
@@ -636,7 +636,7 @@ void WddmMemoryManager::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint6
     }
 
     if (flags.PeriodicTrim || flags.RestartPeriodicTrim) {
-        const auto newPeriodicTrimFenceValue = *osContext.get()->getMonitoredFence().cpuAddress;
+        const auto newPeriodicTrimFenceValue = *osContext.get()->getResidencyController().getMonitoredFence().cpuAddress;
         osContext.get()->getResidencyController().setLastTrimFenceValue(newPeriodicTrimFenceValue);
         DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "updated lastPeriodicTrimFenceValue =", newPeriodicTrimFenceValue);
     }
@@ -660,7 +660,7 @@ bool WddmMemoryManager::trimResidencyToBudget(uint64_t bytes) {
         }
 
         lastFence = wddmAllocation->getResidencyData().getFenceValueForContextId(0);
-        auto &monitoredFence = osContext.get()->getMonitoredFence();
+        auto &monitoredFence = osContext.get()->getResidencyController().getMonitoredFence();
 
         if (lastFence <= monitoredFence.lastSubmittedFence) {
             uint32_t fragmentsToEvict = 0;

@@ -711,12 +711,12 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsCo
     if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU(osContext.getContext())) {
         return false;
     }
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.getMonitoredFence().currentFenceValue);
+    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.getResidencyController().getMonitoredFence().currentFenceValue);
 
     status = wddmInterface->submit(commandBuffer, size, commandHeader, osContext);
     if (status) {
-        osContext.getMonitoredFence().lastSubmittedFence = osContext.getMonitoredFence().currentFenceValue;
-        osContext.getMonitoredFence().currentFenceValue++;
+        osContext.getResidencyController().getMonitoredFence().lastSubmittedFence = osContext.getResidencyController().getMonitoredFence().currentFenceValue;
+        osContext.getResidencyController().getMonitoredFence().currentFenceValue++;
     }
     getDeviceState();
     UNRECOVERABLE_IF(!status);
@@ -742,9 +742,10 @@ void Wddm::getDeviceState() {
 }
 
 void Wddm::handleCompletion(OsContextWin &osContext) {
-    if (osContext.getMonitoredFence().cpuAddress) {
-        auto *currentTag = osContext.getMonitoredFence().cpuAddress;
-        while (*currentTag < osContext.getMonitoredFence().currentFenceValue - 1)
+    auto &monitoredFence = osContext.getResidencyController().getMonitoredFence();
+    if (monitoredFence.cpuAddress) {
+        auto *currentTag = monitoredFence.cpuAddress;
+        while (*currentTag < monitoredFence.currentFenceValue - 1)
             ;
     }
 }
@@ -770,10 +771,10 @@ bool Wddm::waitOnGPU(D3DKMT_HANDLE context) {
 bool Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext) {
     NTSTATUS status = STATUS_SUCCESS;
 
-    if (lastFenceValue > *osContext.getMonitoredFence().cpuAddress) {
+    if (lastFenceValue > *osContext.getResidencyController().getMonitoredFence().cpuAddress) {
         D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {0};
         waitFromCpu.ObjectCount = 1;
-        waitFromCpu.ObjectHandleArray = &osContext.getMonitoredFence().fenceHandle;
+        waitFromCpu.ObjectHandleArray = &osContext.getResidencyController().getMonitoredFence().fenceHandle;
         waitFromCpu.FenceValueArray = &lastFenceValue;
         waitFromCpu.hDevice = device;
         waitFromCpu.hAsyncEvent = NULL;

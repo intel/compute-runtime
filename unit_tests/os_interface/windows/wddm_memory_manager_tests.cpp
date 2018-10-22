@@ -894,7 +894,7 @@ TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsUpdatesLa
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
     ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
 
-    osContext->get()->getMonitoredFence().currentFenceValue = 20;
+    osContext->get()->getResidencyController().getMonitoredFence().currentFenceValue = 20;
 
     memoryManager->makeResidentResidencyAllocations(residencyPack, *osContext);
 
@@ -927,7 +927,7 @@ TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsSetsLastF
 
     WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(8196, reinterpret_cast<void *>(0x1500));
 
-    osContext->get()->getMonitoredFence().currentFenceValue = 20;
+    osContext->get()->getResidencyController().getMonitoredFence().currentFenceValue = 20;
 
     ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
     memoryManager->makeResidentResidencyAllocations(residencyPack, *osContext);
@@ -981,7 +981,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenNotUsedAllocationsFromPreviousPeriod
     osContext->get()->getResidencyController().setLastTrimFenceValue(10);
     osContext->get()->getResidencyController().setLastTrimFenceValue(10);
     // Set current fence value to greater value
-    osContext->get()->getMonitoredFence().currentFenceValue = 20;
+    osContext->get()->getResidencyController().getMonitoredFence().currentFenceValue = 20;
 
     wddm->makeNonResidentResult.called = 0;
 
@@ -1015,7 +1015,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenOneUsedAllocationFromPreviousPeriodi
     // Set last periodic fence value
     osContext->get()->getResidencyController().setLastTrimFenceValue(10);
     // Set current fence value to greater value
-    osContext->get()->getMonitoredFence().currentFenceValue = 20;
+    osContext->get()->getResidencyController().getMonitoredFence().currentFenceValue = 20;
 
     wddm->makeNonResidentResult.called = 0;
 
@@ -1059,7 +1059,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedFra
     // Set last periodic fence value
     osContext->get()->getResidencyController().setLastTrimFenceValue(10);
     // Set current fence value to greater value
-    osContext->get()->getMonitoredFence().currentFenceValue = 20;
+    osContext->get()->getResidencyController().getMonitoredFence().currentFenceValue = 20;
 
     wddm->makeNonResidentResult.called = 0;
 
@@ -1086,7 +1086,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenPeriodicTrimWhenTrimCallbackCalledTh
     // Set last periodic fence value
     osContext->get()->getResidencyController().setLastTrimFenceValue(10);
     // Set current fence value to greater value
-    *osContext->get()->getMonitoredFence().cpuAddress = 20;
+    *osContext->get()->getResidencyController().getMonitoredFence().cpuAddress = 20;
 
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
@@ -1103,7 +1103,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenRestartPeriodicTrimWhenTrimCallbackC
     // Set last periodic fence value
     osContext->get()->getResidencyController().setLastTrimFenceValue(10);
     // Set current fence value to greater value
-    *osContext->get()->getMonitoredFence().cpuAddress = 20;
+    *osContext->get()->getResidencyController().getMonitoredFence().cpuAddress = 20;
 
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
@@ -1130,9 +1130,9 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetAllDoneAllocations) {
     allocation3.getResidencyData().updateCompletionData(2, osContext->getContextId());
     allocation3.getResidencyData().resident = true;
 
-    *osContext->get()->getMonitoredFence().cpuAddress = 1;
-    osContext->get()->getMonitoredFence().lastSubmittedFence = 1;
-    osContext->get()->getMonitoredFence().currentFenceValue = 1;
+    *osContext->get()->getResidencyController().getMonitoredFence().cpuAddress = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().lastSubmittedFence = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().currentFenceValue = 1;
 
     wddm->makeNonResidentResult.called = 0;
 
@@ -1161,8 +1161,8 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetReturnsFalseWhenNumBytesToTri
     allocation1.getResidencyData().resident = true;
     allocation1.getResidencyData().updateCompletionData(0, osContext->getContextId());
 
-    *osContext->get()->getMonitoredFence().cpuAddress = 1;
-    osContext->get()->getMonitoredFence().lastSubmittedFence = 1;
+    *osContext->get()->getResidencyController().getMonitoredFence().cpuAddress = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().lastSubmittedFence = 1;
 
     wddm->makeNonResidentResult.called = 0;
 
@@ -1190,9 +1190,9 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetStopsEvictingWhenNumBytesToTr
     allocation3.getResidencyData().updateCompletionData(2, osContext->getContextId());
     allocation3.getResidencyData().resident = true;
 
-    *osContext->get()->getMonitoredFence().cpuAddress = 1;
-    osContext->get()->getMonitoredFence().lastSubmittedFence = 1;
-    osContext->get()->getMonitoredFence().currentFenceValue = 1;
+    *osContext->get()->getResidencyController().getMonitoredFence().cpuAddress = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().lastSubmittedFence = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().currentFenceValue = 1;
 
     wddm->makeNonResidentResult.called = 0;
 
@@ -1225,9 +1225,9 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetMarksEvictedAllocationNonResi
     allocation3.getResidencyData().updateCompletionData(2, osContext->getContextId());
     allocation3.getResidencyData().resident = true;
 
-    *osContext->get()->getMonitoredFence().cpuAddress = 1;
-    osContext->get()->getMonitoredFence().lastSubmittedFence = 1;
-    osContext->get()->getMonitoredFence().currentFenceValue = 1;
+    *osContext->get()->getResidencyController().getMonitoredFence().cpuAddress = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().lastSubmittedFence = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().currentFenceValue = 1;
 
     wddm->makeNonResidentResult.called = 0;
 
@@ -1250,9 +1250,9 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWaitsFromCpuWhenLastFenceIsGr
     allocation1.getResidencyData().resident = true;
     allocation1.getResidencyData().updateCompletionData(2, osContext->getContextId());
 
-    *osContext->get()->getMonitoredFence().cpuAddress = 1;
-    osContext->get()->getMonitoredFence().lastSubmittedFence = 2;
-    osContext->get()->getMonitoredFence().currentFenceValue = 3;
+    *osContext->get()->getResidencyController().getMonitoredFence().cpuAddress = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().lastSubmittedFence = 2;
+    osContext->get()->getResidencyController().getMonitoredFence().currentFenceValue = 3;
 
     wddm->makeNonResidentResult.called = 0;
     wddm->waitFromCpuResult.called = 0;
@@ -1301,9 +1301,9 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetEvictsDoneFragmentsOnly) {
     osContext->get()->getResidencyController().addToTrimCandidateList(allocationTriple);
     osContext->get()->getResidencyController().addToTrimCandidateList(&allocation2);
 
-    *osContext->get()->getMonitoredFence().cpuAddress = 1;
-    osContext->get()->getMonitoredFence().lastSubmittedFence = 1;
-    osContext->get()->getMonitoredFence().currentFenceValue = 2;
+    *osContext->get()->getResidencyController().getMonitoredFence().cpuAddress = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().lastSubmittedFence = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().currentFenceValue = 2;
 
     wddm->makeNonResidentResult.called = 0;
 
@@ -1344,9 +1344,9 @@ TEST_F(WddmMemoryManagerResidencyTest, givenThreeAllocationsAlignedSizeBiggerTha
     allocation3.getResidencyData().updateCompletionData(1, osContext->getContextId());
     allocation3.getResidencyData().resident = true;
 
-    *osContext->get()->getMonitoredFence().cpuAddress = 1;
-    osContext->get()->getMonitoredFence().lastSubmittedFence = 1;
-    osContext->get()->getMonitoredFence().currentFenceValue = 1;
+    *osContext->get()->getResidencyController().getMonitoredFence().cpuAddress = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().lastSubmittedFence = 1;
+    osContext->get()->getResidencyController().getMonitoredFence().currentFenceValue = 1;
 
     wddm->makeNonResidentResult.called = 0;
 
@@ -1624,7 +1624,7 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsSucceedsWhenMakeR
     size_t allocationSize = 0x1000;
     WddmAllocation allocationToTrim(cpuPtr, allocationSize, cpuPtr, allocationSize, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount());
 
-    allocationToTrim.getResidencyData().updateCompletionData(osContext->get()->getMonitoredFence().lastSubmittedFence, osContext->getContextId());
+    allocationToTrim.getResidencyData().updateCompletionData(osContext->get()->getResidencyController().getMonitoredFence().lastSubmittedFence, osContext->getContextId());
 
     auto makeResidentWithOutBytesToTrim = [allocationSize](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = allocationSize;  return false; };
 

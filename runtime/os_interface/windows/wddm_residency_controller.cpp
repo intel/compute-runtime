@@ -163,4 +163,12 @@ void WddmResidencyController::compactTrimCandidateList() {
     checkTrimCandidateCount();
 }
 
+void WddmResidencyController::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress) {
+    monitoredFence.lastSubmittedFence = 0;
+    monitoredFence.currentFenceValue = 1;
+    monitoredFence.fenceHandle = handle;
+    monitoredFence.cpuAddress = cpuAddress;
+    monitoredFence.gpuAddress = gpuAddress;
+}
+
 } // namespace OCLRT

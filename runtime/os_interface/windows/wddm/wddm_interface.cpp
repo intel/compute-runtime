@@ -29,9 +29,9 @@ bool WddmInterface::createMonitoredFence(OsContextWin &osContext) {
 
     DEBUG_BREAK_IF(STATUS_SUCCESS != Status);
 
-    osContext.resetMonitoredFenceParams(CreateSynchronizationObject.hSyncObject,
-                                        reinterpret_cast<uint64_t *>(CreateSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress),
-                                        CreateSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress);
+    osContext.getResidencyController().resetMonitoredFenceParams(CreateSynchronizationObject.hSyncObject,
+                                                                 reinterpret_cast<uint64_t *>(CreateSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress),
+                                                                 CreateSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress);
 
     return Status == STATUS_SUCCESS;
 }
@@ -44,7 +44,7 @@ bool WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandH
     D3DKMT_SUBMITCOMMAND SubmitCommand = {0};
     NTSTATUS status = STATUS_SUCCESS;
 
-    auto monitoredFence = osContext.getMonitoredFence();
+    auto monitoredFence = osContext.getResidencyController().getMonitoredFence();
     SubmitCommand.Commands = commandBuffer;
     SubmitCommand.CommandLength = static_cast<UINT>(size);
     SubmitCommand.BroadcastContextCount = 1;
@@ -99,7 +99,7 @@ const bool WddmInterface23::hwQueuesSupported() {
 }
 
 bool WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) {
-    auto monitoredFence = osContext.getMonitoredFence();
+    auto monitoredFence = osContext.getResidencyController().getMonitoredFence();
 
     D3DKMT_SUBMITCOMMANDTOHWQUEUE submitCommand = {};
     submitCommand.hHwQueue = osContext.getHwQueue();

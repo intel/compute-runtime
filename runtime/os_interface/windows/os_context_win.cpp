@@ -30,14 +30,6 @@ OsContextWin::~OsContextImpl() {
     wddm.destroyContext(context);
 }
 
-void OsContextWin::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress) {
-    monitoredFence.lastSubmittedFence = 0;
-    monitoredFence.currentFenceValue = 1;
-    monitoredFence.fenceHandle = handle;
-    monitoredFence.cpuAddress = cpuAddress;
-    monitoredFence.gpuAddress = gpuAddress;
-}
-
 OsContext::OsContext(OSInterface *osInterface, uint32_t contextId) : contextId(contextId) {
     if (osInterface) {
         osContextImpl = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), contextId);

@@ -383,7 +383,7 @@ TEST_F(Wddm20Tests, makeResidentNonResident) {
     error = wddm->evict(&allocation.handle, 1, sizeToTrim);
     EXPECT_TRUE(error);
 
-    auto monitoredFence = osContextWin->getMonitoredFence();
+    auto monitoredFence = osContextWin->getResidencyController().getMonitoredFence();
     UINT64 fenceValue = 100;
     monitoredFence.cpuAddress = &fenceValue;
     monitoredFence.currentFenceValue = 101;
@@ -634,7 +634,7 @@ TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedTo
     allocation.getResidencyData().updateCompletionData(10, osContext.get()->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
-    *osContextWin->getMonitoredFence().cpuAddress = 10;
+    *osContextWin->getResidencyController().getMonitoredFence().cpuAddress = 10;
 
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
@@ -662,7 +662,7 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
     allocation.getResidencyData().updateCompletionData(10, osContext.get()->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
-    *osContextWin->getMonitoredFence().cpuAddress = 10;
+    *osContextWin->getResidencyController().getMonitoredFence().cpuAddress = 10;
 
     gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
     gdi->getWaitFromCpuArg().Flags.Value = 0;
@@ -685,7 +685,7 @@ TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     allocation.getResidencyData().updateCompletionData(10, osContext.get()->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
-    *osContextWin->getMonitoredFence().cpuAddress = 10;
+    *osContextWin->getResidencyController().getMonitoredFence().cpuAddress = 10;
 
     gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
     gdi->getWaitFromCpuArg().Flags.Value = 0;
@@ -711,7 +711,7 @@ TEST_F(Wddm20Tests, createMonitoredFenceIsInitializedWithFenceValueZeroAndCurren
     wddm->wddmInterface->createMonitoredFence(*osContextWin);
 
     EXPECT_EQ(0u, gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue);
-    EXPECT_EQ(1u, osContextWin->getMonitoredFence().currentFenceValue);
+    EXPECT_EQ(1u, osContextWin->getResidencyController().getMonitoredFence().currentFenceValue);
 }
 
 NTSTATUS APIENTRY queryResourceInfoMock(D3DKMT_QUERYRESOURCEINFO *pData) {

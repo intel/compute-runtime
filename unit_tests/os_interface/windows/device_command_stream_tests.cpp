@@ -194,7 +194,7 @@ TEST_F(WddmCommandStreamTest, Flush) {
 
     EXPECT_EQ(1u, wddm->submitResult.called);
     EXPECT_TRUE(wddm->submitResult.success);
-    EXPECT_EQ(flushStamp, device->getOsContext()->get()->getMonitoredFence().lastSubmittedFence);
+    EXPECT_EQ(flushStamp, device->getOsContext()->get()->getResidencyController().getMonitoredFence().lastSubmittedFence);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }

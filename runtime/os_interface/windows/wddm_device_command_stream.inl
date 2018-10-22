@@ -116,7 +116,7 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
 
     wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader, *osContext.get());
 
-    return osContext.get()->getMonitoredFence().lastSubmittedFence;
+    return osContext.get()->getResidencyController().getMonitoredFence().lastSubmittedFence;
 }
 
 template <typename GfxFamily>
