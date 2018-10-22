@@ -15,6 +15,7 @@ namespace OCLRT {
 class Context;
 class GLSharingFunctions;
 class OsInterface;
+class OsContext;
 
 char *createArbSyncEventName();
 void destroyArbSyncEventName(char *name);

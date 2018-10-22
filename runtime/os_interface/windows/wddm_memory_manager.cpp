@@ -539,13 +539,13 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer &all
             WddmAllocation *allocation = reinterpret_cast<WddmAllocation *>(allocationsForResidency[i]);
             // Update fence value not to early destroy / evict allocation
             auto currentFence = osContext.get()->getMonitoredFence().currentFenceValue;
-            allocation->getResidencyData().updateCompletionData(currentFence, &osContext);
+            allocation->getResidencyData().updateCompletionData(currentFence, osContext.getContextId());
             allocation->getResidencyData().resident = true;
 
             for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
                 auto residencyData = allocation->fragmentsStorage.fragmentStorageData[allocationId].residency;
                 // Update fence value not to remove the fragment referenced by different GA in trimming callback
-                residencyData->updateCompletionData(currentFence, &osContext);
+                residencyData->updateCompletionData(currentFence, osContext.getContextId());
                 residencyData->resident = true;
             }
         }

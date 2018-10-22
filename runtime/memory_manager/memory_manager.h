@@ -23,6 +23,7 @@ class DeferredDeleter;
 class ExecutionEnvironment;
 class GraphicsAllocation;
 class CommandStreamReceiver;
+class OsContext;
 class TimestampPacket;
 
 struct HwPerfCounter;

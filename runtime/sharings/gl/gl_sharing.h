@@ -26,6 +26,7 @@ class Event;
 class GlArbSyncEvent;
 class GLSharingFunctions;
 class OSInterface;
+class OsContext;
 
 typedef unsigned int OS_HANDLE;
 

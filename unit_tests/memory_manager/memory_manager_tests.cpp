@@ -1864,11 +1864,11 @@ TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegistredFromHigherToLowerT
 }
 
 TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenItIsProperlyUpdated) {
-    struct mockResidencyData : public ResidencyData {
-        using ResidencyData::completionData;
+    struct MockResidencyData : public ResidencyData {
+        using ResidencyData::lastFenceValues;
     };
 
-    mockResidencyData residency;
+    MockResidencyData residency;
 
     OsContext osContext(nullptr, 0u);
     OsContext osContext2(nullptr, 1u);
@@ -1877,25 +1877,20 @@ TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenIt
     auto lastFenceValue2 = 23llu;
     auto lastFenceValue3 = 373llu;
 
-    EXPECT_EQ(0u, residency.completionData.size());
+    EXPECT_EQ(0u, residency.lastFenceValues.size());
 
-    residency.updateCompletionData(lastFenceValue, &osContext);
-    EXPECT_EQ(1u, residency.completionData.size());
-    EXPECT_EQ(&osContext, residency.completionData[0].osContext);
-    EXPECT_EQ(lastFenceValue, residency.completionData[0].lastFence);
+    residency.updateCompletionData(lastFenceValue, osContext.getContextId());
+    EXPECT_EQ(1u, residency.lastFenceValues.size());
+    EXPECT_EQ(lastFenceValue, residency.lastFenceValues[0]);
     EXPECT_EQ(lastFenceValue, residency.getFenceValueForContextId(osContext.getContextId()));
-    EXPECT_EQ(&osContext, residency.getOsContextFromId(0u));
 
-    residency.updateCompletionData(lastFenceValue2, &osContext2);
+    residency.updateCompletionData(lastFenceValue2, osContext2.getContextId());
 
-    EXPECT_EQ(2u, residency.completionData.size());
-    EXPECT_EQ(&osContext2, residency.completionData[1].osContext);
-    EXPECT_EQ(lastFenceValue2, residency.completionData[1].lastFence);
+    EXPECT_EQ(2u, residency.lastFenceValues.size());
+    EXPECT_EQ(lastFenceValue2, residency.lastFenceValues[1]);
     EXPECT_EQ(lastFenceValue2, residency.getFenceValueForContextId(osContext2.getContextId()));
-    EXPECT_EQ(&osContext2, residency.getOsContextFromId(1u));
 
-    residency.updateCompletionData(lastFenceValue3, &osContext2);
-    EXPECT_EQ(lastFenceValue3, residency.completionData[1].lastFence);
+    residency.updateCompletionData(lastFenceValue3, osContext2.getContextId());
+    EXPECT_EQ(lastFenceValue3, residency.lastFenceValues[1]);
     EXPECT_EQ(lastFenceValue3, residency.getFenceValueForContextId(osContext2.getContextId()));
-    EXPECT_EQ(&osContext2, residency.getOsContextFromId(1u));
 }
