@@ -1237,22 +1237,6 @@ TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCre
     memoryManager.freeGraphicsMemory(galloc);
 }
 
-TEST(OsAgnosticMemoryManager, checkAllocationsForOverlappingWithNullCsrInMemoryManager) {
-    ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
-
-    AllocationRequirements requirements;
-    CheckedFragments checkedFragments;
-
-    requirements.requiredFragmentsCount = 1;
-    requirements.totalRequiredSize = MemoryConstants::pageSize * 10;
-
-    RequirementsStatus status = memoryManager.checkAllocationsForOverlapping(&requirements, &checkedFragments);
-
-    EXPECT_EQ(RequirementsStatus::SUCCESS, status);
-    EXPECT_EQ(1u, checkedFragments.count);
-}
-
 TEST(OsAgnosticMemoryManager, givenPointerAndSizeWhenCreateInternalAllocationIsCalledThenGraphicsAllocationIsReturned) {
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
@@ -1478,7 +1462,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithoutBiggerOver
     requirements.AllocationFragments[1].allocationSize = MemoryConstants::pageSize;
     requirements.AllocationFragments[1].fragmentPosition = FragmentPosition::TRAILING;
 
-    RequirementsStatus status = memoryManager->checkAllocationsForOverlapping(&requirements, &checkedFragments);
+    RequirementsStatus status = memoryManager->hostPtrManager.checkAllocationsForOverlapping(*memoryManager, &requirements, &checkedFragments);
 
     EXPECT_EQ(RequirementsStatus::SUCCESS, status);
     EXPECT_EQ(2u, checkedFragments.count);
@@ -1528,7 +1512,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
     requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
     requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::NONE;
 
-    RequirementsStatus status = memoryManager->checkAllocationsForOverlapping(&requirements, &checkedFragments);
+    RequirementsStatus status = memoryManager->hostPtrManager.checkAllocationsForOverlapping(*memoryManager, &requirements, &checkedFragments);
 
     EXPECT_EQ(RequirementsStatus::SUCCESS, status);
     EXPECT_EQ(1u, checkedFragments.count);
@@ -1584,7 +1568,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
 
     EXPECT_CALL(*gmockMemoryManager, cleanAllocationList(::testing::_, ::testing::_)).Times(2).WillOnce(::testing::Invoke(cleanAllocations)).WillOnce(::testing::Invoke(cleanAllocationsWithTaskCount));
 
-    RequirementsStatus status = memoryManager->checkAllocationsForOverlapping(&requirements, &checkedFragments);
+    RequirementsStatus status = memoryManager->hostPtrManager.checkAllocationsForOverlapping(*memoryManager, &requirements, &checkedFragments);
 
     EXPECT_EQ(RequirementsStatus::SUCCESS, status);
     EXPECT_EQ(1u, checkedFragments.count);
@@ -1636,7 +1620,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
 
     EXPECT_CALL(*gmockMemoryManager, cleanAllocationList(::testing::_, ::testing::_)).Times(2).WillRepeatedly(::testing::Invoke(cleanAllocations));
 
-    RequirementsStatus status = memoryManager->checkAllocationsForOverlapping(&requirements, &checkedFragments);
+    RequirementsStatus status = memoryManager->hostPtrManager.checkAllocationsForOverlapping(*memoryManager, &requirements, &checkedFragments);
 
     EXPECT_EQ(RequirementsStatus::FATAL, status);
     EXPECT_EQ(1u, checkedFragments.count);

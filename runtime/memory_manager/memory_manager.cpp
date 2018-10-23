@@ -116,31 +116,14 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, boo
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) {
     std::lock_guard<decltype(mtx)> lock(mtx);
-    auto requirements = HostPtrManager::getAllocationRequirements(ptr, size);
-    GraphicsAllocation *graphicsAllocation = nullptr;
-
     if (deferredDeleter) {
         deferredDeleter->drain(true);
     }
-
-    //check for overlaping
-    CheckedFragments checkedFragments;
-    if (checkAllocationsForOverlapping(&requirements, &checkedFragments) == RequirementsStatus::FATAL) {
-        //abort whole application instead of silently passing.
-        abortExecution();
+    GraphicsAllocation *graphicsAllocation = nullptr;
+    auto osStorage = hostPtrManager.prepareOsStorageForAllocation(*this, size, ptr);
+    if (osStorage.fragmentCount > 0) {
+        graphicsAllocation = createGraphicsAllocation(osStorage, size, ptr);
     }
-
-    auto osStorage = hostPtrManager.populateAlreadyAllocatedFragments(requirements, &checkedFragments);
-    if (osStorage.fragmentCount == 0) {
-        return nullptr;
-    }
-    auto result = populateOsHandles(osStorage);
-    if (result != AllocationStatus::Success) {
-        cleanOsHandles(osStorage);
-        return nullptr;
-    }
-
-    graphicsAllocation = createGraphicsAllocation(osStorage, size, ptr);
     return graphicsAllocation;
 }
 
@@ -259,50 +242,6 @@ bool MemoryManager::isAsyncDeleterEnabled() const {
 
 bool MemoryManager::isMemoryBudgetExhausted() const {
     return false;
-}
-
-RequirementsStatus MemoryManager::checkAllocationsForOverlapping(AllocationRequirements *requirements, CheckedFragments *checkedFragments) {
-    DEBUG_BREAK_IF(requirements == nullptr);
-    DEBUG_BREAK_IF(checkedFragments == nullptr);
-
-    RequirementsStatus status = RequirementsStatus::SUCCESS;
-    checkedFragments->count = 0;
-
-    for (unsigned int i = 0; i < maxFragmentsCount; i++) {
-        checkedFragments->status[i] = OverlapStatus::FRAGMENT_NOT_CHECKED;
-        checkedFragments->fragments[i] = nullptr;
-    }
-
-    for (unsigned int i = 0; i < requirements->requiredFragmentsCount; i++) {
-        checkedFragments->count++;
-        checkedFragments->fragments[i] = hostPtrManager.getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
-        if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
-            // clean temporary allocations
-
-            uint32_t taskCount = *getCommandStreamReceiver(0)->getTagAddress();
-            cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
-
-            // check overlapping again
-            checkedFragments->fragments[i] = hostPtrManager.getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
-            if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
-
-                // Wait for completion
-                while (*getCommandStreamReceiver(0)->getTagAddress() < getCommandStreamReceiver(0)->peekLatestSentTaskCount()) {
-                }
-
-                taskCount = *getCommandStreamReceiver(0)->getTagAddress();
-                cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
-
-                // check overlapping last time
-                checkedFragments->fragments[i] = hostPtrManager.getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
-                if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
-                    status = RequirementsStatus::FATAL;
-                    break;
-                }
-            }
-        }
-    }
-    return status;
 }
 
 void MemoryManager::registerOsContext(OsContext *contextToRegister) {

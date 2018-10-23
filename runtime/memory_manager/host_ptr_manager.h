@@ -14,7 +14,7 @@
 namespace OCLRT {
 
 typedef std::map<const void *, FragmentStorage> HostPtrFragmentsContainer;
-
+class MemoryManager;
 class HostPtrManager {
   public:
     static AllocationRequirements getAllocationRequirements(const void *inputPtr, size_t size);
@@ -28,11 +28,13 @@ class HostPtrManager {
     FragmentStorage *getFragment(const void *inputPtr);
     size_t getFragmentCount() { return partialAllocations.size(); }
     FragmentStorage *getFragmentAndCheckForOverlaps(const void *inputPtr, size_t size, OverlapStatus &overlappingStatus);
+    OsHandleStorage prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr);
+    RequirementsStatus checkAllocationsForOverlapping(MemoryManager &memoryManager, AllocationRequirements *requirements, CheckedFragments *checkedFragments);
 
   private:
     std::map<const void *, FragmentStorage>::iterator findElement(const void *ptr);
 
     HostPtrFragmentsContainer partialAllocations;
-    std::mutex allocationsMutex;
+    std::recursive_mutex allocationsMutex;
 };
 } // namespace OCLRT

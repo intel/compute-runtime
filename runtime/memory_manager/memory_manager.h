@@ -207,8 +207,6 @@ class MemoryManager {
     void storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage);
     void storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount);
 
-    RequirementsStatus checkAllocationsForOverlapping(AllocationRequirements *requirements, CheckedFragments *checkedFragments);
-
     TagAllocator<HwTimeStamps> *getEventTsAllocator();
     TagAllocator<HwPerfCounter> *getEventPerfCountAllocator();
     TagAllocator<TimestampPacket> *getTimestampPacketAllocator();
