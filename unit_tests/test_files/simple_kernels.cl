@@ -37,7 +37,7 @@ __kernel void simple_kernel_2(
 
 __kernel void simple_kernel_3(
     __global uint *dst) {
-    dst[get_local_id(0)] = 0;
+    dst[get_global_id(0)] = 0;
 }
 
 __kernel void simple_kernel_4() {
