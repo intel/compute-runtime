@@ -778,3 +778,34 @@ TEST_F(Wddm20Tests, whenContextIsInitializedThenApplyAdditionalContextFlagsIsCal
     EXPECT_TRUE(result);
     EXPECT_EQ(1u, wddm->applyAdditionalContextFlagsResult.called);
 }
+
+TEST_F(Wddm20Tests, givenTrimCallbackRegistrationIsDisabledInDebugVariableWhenRegisteringCallbackThenReturnNullptr) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.DoNotRegisterTrimCallback.set(true);
+    EXPECT_EQ(nullptr, wddm->registerTrimCallback([](D3DKMT_TRIMNOTIFICATION *) {}, nullptr));
+}
+
+TEST_F(Wddm20Tests, givenSuccessWhenRegisteringTrimCallbackThenReturnTrimCallbackHandle) {
+    auto trimCallbackHandle = wddm->registerTrimCallback([](D3DKMT_TRIMNOTIFICATION *) {}, nullptr);
+    EXPECT_NE(nullptr, trimCallbackHandle);
+}
+
+TEST_F(Wddm20Tests, givenCorrectArgumentsWhenUnregisteringTrimCallbackThenPassArgumentsToGdiCall) {
+    PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback = [](D3DKMT_TRIMNOTIFICATION *) {};
+    auto trimCallbackHandle = reinterpret_cast<VOID *>(0x9876);
+
+    wddm->unregisterTrimCallback(callback, trimCallbackHandle);
+    EXPECT_EQ(callback, gdi->getUnregisterTrimNotificationArg().Callback);
+    EXPECT_EQ(trimCallbackHandle, gdi->getUnregisterTrimNotificationArg().Handle);
+}
+
+TEST_F(Wddm20Tests, givenNullTrimCallbackHandleWhenUnregisteringTrimCallbackThenDoNotDoGdiCall) {
+    PFND3DKMT_TRIMNOTIFICATIONCALLBACK callbackBefore = [](D3DKMT_TRIMNOTIFICATION *) {};
+    auto trimCallbackHandleBefore = reinterpret_cast<VOID *>(0x9876);
+    gdi->getUnregisterTrimNotificationArg().Callback = callbackBefore;
+    gdi->getUnregisterTrimNotificationArg().Handle = trimCallbackHandleBefore;
+
+    wddm->unregisterTrimCallback([](D3DKMT_TRIMNOTIFICATION *) {}, nullptr);
+    EXPECT_EQ(callbackBefore, gdi->getUnregisterTrimNotificationArg().Callback);
+    EXPECT_EQ(trimCallbackHandleBefore, gdi->getUnregisterTrimNotificationArg().Handle);
+}

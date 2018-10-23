@@ -946,21 +946,13 @@ TEST_F(WddmMemoryManagerResidencyTest, trimCallbackIsRegisteredInWddmMemoryManag
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, givenWddmMemoryManagerWhenCallingDestructorThenUnregisterTrimCallback) {
-    auto trimCallbackHandle = wddm->trimCallbackHandle;
+    auto trimCallbackHandle = memoryManager->trimCallbackHandle;
     auto trimCallbackAddress = reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(memoryManager->trimCallback);
     memoryManager.reset();
 
     auto &unregisterNotification = gdi->getUnregisterTrimNotificationArg();
     EXPECT_EQ(trimCallbackAddress, unregisterNotification.Callback);
     EXPECT_EQ(trimCallbackHandle, unregisterNotification.Handle);
-}
-
-TEST(WddmDebugModesTests, givenDebugModeWhenItIsActiveThenTrimCallbackIsNotRegistred) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.DoNotRegisterTrimCallback.set(true);
-    WddmMock wddm;
-    wddm.init();
-    EXPECT_EQ(nullptr, wddm.trimCallbackHandle);
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, givenNotUsedAllocationsFromPreviousPeriodicTrimWhenTrimResidencyPeriodicTrimIsCalledThenAllocationsAreEvictedMarkedAndRemovedFromTrimCandidateList) {

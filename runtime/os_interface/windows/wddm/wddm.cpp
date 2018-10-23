@@ -811,9 +811,9 @@ uint64_t Wddm::getHeap32Size() {
     return alignDown(gfxPartition.Heap32[0].Limit, MemoryConstants::pageSize);
 }
 
-void Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmMemoryManager *memoryManager) {
+VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmMemoryManager *memoryManager) {
     if (DebugManager.flags.DoNotRegisterTrimCallback.get()) {
-        return;
+        return nullptr;
     }
     D3DKMT_REGISTERTRIMNOTIFICATION registerTrimNotification;
     registerTrimNotification.Callback = callback;
@@ -823,17 +823,19 @@ void Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, Wdd
 
     NTSTATUS status = gdi->registerTrimNotification(&registerTrimNotification);
     if (status == STATUS_SUCCESS) {
-        trimCallbackHandle = registerTrimNotification.Handle;
+        return registerTrimNotification.Handle;
     }
+    return nullptr;
 }
 
-void Wddm::unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback) {
-    if (callback == nullptr) {
+void Wddm::unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, VOID *trimCallbackHandle) {
+    DEBUG_BREAK_IF(callback == nullptr);
+    if (trimCallbackHandle == nullptr) {
         return;
     }
     D3DKMT_UNREGISTERTRIMNOTIFICATION unregisterTrimNotification;
     unregisterTrimNotification.Callback = callback;
-    unregisterTrimNotification.Handle = this->trimCallbackHandle;
+    unregisterTrimNotification.Handle = trimCallbackHandle;
 
     NTSTATUS status = gdi->unregisterTrimNotification(&unregisterTrimNotification);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);

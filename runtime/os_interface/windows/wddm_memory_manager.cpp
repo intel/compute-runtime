@@ -32,7 +32,7 @@ WddmMemoryManager::~WddmMemoryManager() {
         if (osContext) {
             auto &residencyController = osContext->get()->getResidencyController();
             residencyController.acquireTrimCallbackLock();
-            wddm->unregisterTrimCallback(trimCallback);
+            wddm->unregisterTrimCallback(trimCallback, this->trimCallbackHandle);
             residencyController.releaseTrimCallbackLock();
 
             // Wait for lock to ensure trimCallback ended
@@ -46,7 +46,7 @@ WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemor
     DEBUG_BREAK_IF(wddm == nullptr);
     this->wddm = wddm;
     allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(wddm->getHeap32Base(), wddm->getHeap32Size()));
-    wddm->registerTrimCallback(trimCallback, this);
+    this->trimCallbackHandle = wddm->registerTrimCallback(trimCallback, this);
     asyncDeleterEnabled = DebugManager.flags.EnableDeferredDeleter.get();
     if (asyncDeleterEnabled)
         deferredDeleter = createDeferredDeleter();
