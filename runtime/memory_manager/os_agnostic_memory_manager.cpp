@@ -8,6 +8,7 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/options.h"
@@ -140,8 +141,9 @@ void OsAgnosticMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocat
 void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     if (gfxAllocation == nullptr)
         return;
-    if (gfxAllocation->gmm)
-        freeGmm(gfxAllocation);
+
+    delete gfxAllocation->gmm;
+
     if ((uintptr_t)gfxAllocation->getUnderlyingBuffer() == dummyAddress) {
         delete gfxAllocation;
         return;

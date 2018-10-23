@@ -194,8 +194,6 @@ class MemoryManager {
 
     void checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation);
 
-    void freeGmm(GraphicsAllocation *gfxAllocation);
-
     virtual uint64_t getSystemSharedMemory() = 0;
 
     virtual uint64_t getMaxApplicationAddress() = 0;

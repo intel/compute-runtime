@@ -10,8 +10,6 @@
 #include "runtime/event/event.h"
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/event/perf_counter.h"
-#include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/kernel_commands.h"
@@ -114,10 +112,6 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, boo
         graphicsAllocation->setCoherent(coherent);
     }
     return graphicsAllocation;
-}
-
-void MemoryManager::freeGmm(GraphicsAllocation *gfxAllocation) {
-    delete gfxAllocation->gmm;
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) {
