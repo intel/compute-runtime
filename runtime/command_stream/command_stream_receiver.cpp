@@ -97,19 +97,6 @@ void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &alloc
     this->processEviction(osContext);
 }
 
-GraphicsAllocation *CommandStreamReceiver::createAllocationAndHandleResidency(const void *address, size_t size, bool addToDefferedDeleteList) {
-    GraphicsAllocation *graphicsAllocation = getMemoryManager()->allocateGraphicsMemory(size, address);
-    makeResident(*graphicsAllocation);
-    if (addToDefferedDeleteList) {
-        getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION);
-    }
-    if (!graphicsAllocation->isL3Capable()) {
-        disableL3Cache = true;
-    }
-
-    return graphicsAllocation;
-}
-
 void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation) {
     makeResident(*gfxAllocation);
     if (!gfxAllocation->isL3Capable()) {

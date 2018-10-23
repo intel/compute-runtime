@@ -891,13 +891,15 @@ TEST_F(EventTests, enqueueReadImageBlockedOnUserEvent) {
 
 TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
     auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    auto memoryManager = pCmdQ->getDevice().getMemoryManager();
 
     //kill some temporary objects that fixture creates.
     csr.waitForTaskCountAndCleanAllocationList(-1, TEMPORARY_ALLOCATION);
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
-    GraphicsAllocation *temporaryAllocation = csr.createAllocationAndHandleResidency((void *)0x1234, 200);
+    GraphicsAllocation *temporaryAllocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporaryAllocation), TEMPORARY_ALLOCATION);
 
     EXPECT_EQ(temporaryAllocation, csr.getTemporaryAllocations().peekHead());
 

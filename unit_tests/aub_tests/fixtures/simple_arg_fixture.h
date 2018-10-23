@@ -78,8 +78,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
         pKernel->setArg(0, sizeof(int), &argVal);
         pKernel->setArgSvm(1, sizeUserMemory, pDestMemory);
 
-        auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
-        outBuffer = commandStreamReceiver.createAllocationAndHandleResidency(pDestMemory, sizeUserMemory);
+        outBuffer = AUBCommandStreamFixture::createResidentAllocationAndStoreItInCsr(pDestMemory, sizeUserMemory);
         ASSERT_NE(nullptr, outBuffer);
         outBuffer->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
         outBuffer->setMemObjectsAllocationWithWritableFlags(true);

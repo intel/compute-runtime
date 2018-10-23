@@ -72,6 +72,12 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
         aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);
     }
 
+    GraphicsAllocation *createResidentAllocationAndStoreItInCsr(const void *address, size_t size) {
+        GraphicsAllocation *graphicsAllocation = pCommandStreamReceiver->getMemoryManager()->allocateGraphicsMemory(size, address);
+        pCommandStreamReceiver->makeResidentHostPtrAllocation(graphicsAllocation);
+        pCommandStreamReceiver->getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION);
+        return graphicsAllocation;
+    }
     CommandStreamReceiver *pCommandStreamReceiver = nullptr;
     volatile uint32_t *pTagMemory = nullptr;
 

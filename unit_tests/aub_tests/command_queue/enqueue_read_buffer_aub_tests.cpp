@@ -58,7 +58,7 @@ HWTEST_P(AUBReadBuffer, simple) {
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
-    GraphicsAllocation *allocation = pCommandStreamReceiver->createAllocationAndHandleResidency(pDestMemory, sizeof(destMemory));
+    GraphicsAllocation *allocation = createResidentAllocationAndStoreItInCsr(pDestMemory, sizeof(destMemory));
 
     srcBuffer->forceDisallowCPUCopy = true;
     retVal = pCmdQ->enqueueReadBuffer(
@@ -138,7 +138,7 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
                                            nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    GraphicsAllocation *dstAllocation = pCommandStreamReceiver->createAllocationAndHandleResidency(dstMemory, sizeof(dstMemory));
+    GraphicsAllocation *dstAllocation = createResidentAllocationAndStoreItInCsr(dstMemory, sizeof(dstMemory));
     cl_float *dstGpuAddress = reinterpret_cast<cl_float *>(dstAllocation->getGpuAddress());
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(dstGpuAddress, srcMemory, sizeof(dstMemory));

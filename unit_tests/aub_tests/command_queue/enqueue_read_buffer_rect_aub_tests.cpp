@@ -67,7 +67,7 @@ HWTEST_P(AUBReadBufferRect, simple3D) {
 
     cl_bool blockingRead = CL_TRUE;
 
-    pCommandStreamReceiver->createAllocationAndHandleResidency(destMemory, bufferSize);
+    createResidentAllocationAndStoreItInCsr(destMemory, bufferSize);
 
     size_t bufferOrigin[] = {0, 0, zBuffOffs};
     size_t hostOrigin[] = {0, 0, zHostOffs};

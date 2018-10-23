@@ -95,7 +95,7 @@ TEST_F(AUBcommandstreamTests, makeResident) {
     uint8_t buffer[0x10000];
     size_t size = sizeof(buffer);
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
-    auto graphicsAllocation = commandStreamReceiver.createAllocationAndHandleResidency(buffer, size);
+    auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
     commandStreamReceiver.processResidency(allocationsForResidency, *pDevice->getOsContext());
 }
@@ -103,10 +103,9 @@ TEST_F(AUBcommandstreamTests, makeResident) {
 HWTEST_F(AUBcommandstreamTests, expectMemorySingle) {
     uint32_t buffer = 0xdeadbeef;
     size_t size = sizeof(buffer);
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
-    auto graphicsAllocation = commandStreamReceiver.createAllocationAndHandleResidency(&buffer, size);
+    auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(&buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    commandStreamReceiver.processResidency(allocationsForResidency, *pDevice->getOsContext());
+    pCommandStreamReceiver->processResidency(allocationsForResidency, *pDevice->getOsContext());
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(&buffer, &buffer, size);
 }
@@ -119,10 +118,9 @@ HWTEST_F(AUBcommandstreamTests, expectMemoryLarge) {
         buffer[index] = static_cast<uint8_t>(index);
     }
 
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
-    auto graphicsAllocation = commandStreamReceiver.createAllocationAndHandleResidency(buffer, sizeBuffer);
+    auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, sizeBuffer);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    commandStreamReceiver.processResidency(allocationsForResidency, *pDevice->getOsContext());
+    pCommandStreamReceiver->processResidency(allocationsForResidency, *pDevice->getOsContext());
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(buffer, buffer, sizeBuffer);
     delete[] buffer;

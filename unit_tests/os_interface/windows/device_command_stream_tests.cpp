@@ -592,65 +592,58 @@ TEST_F(WddmCommandStreamTest, makeResidentNonResidentMemObj) {
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
-TEST_F(WddmCommandStreamTest, createAllocationAndMakeResident) {
+TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWhenMakeResidentThenAllocationIsInResidencyContainer) {
     void *hostPtr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1234);
     auto size = 1234u;
 
-    WddmAllocation *gfxAllocation = static_cast<WddmAllocation *>(csr->createAllocationAndHandleResidency(hostPtr, size));
+    auto gfxAllocation = memoryManager->allocateGraphicsMemory(size, hostPtr);
 
     ASSERT_NE(nullptr, gfxAllocation);
 
-    EXPECT_EQ(1u, csr->getResidencyAllocations().size());
+    csr->makeResidentHostPtrAllocation(gfxAllocation);
 
+    EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(hostPtr, gfxAllocation->getUnderlyingBuffer());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
 TEST_F(WddmCommandStreamTest, givenHostPtrWhenPtrBelowRestrictionThenCreateAllocationAndMakeResident) {
     void *hostPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     auto size = 0x2000u;
 
-    WddmAllocation *gfxAllocation = static_cast<WddmAllocation *>(csr->createAllocationAndHandleResidency(hostPtr, size));
+    auto gfxAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(size, hostPtr));
 
     void *expectedReserve = reinterpret_cast<void *>(wddm->virtualAllocAddress);
 
     ASSERT_NE(nullptr, gfxAllocation);
 
-    EXPECT_EQ(1u, csr->getResidencyAllocations().size());
+    csr->makeResidentHostPtrAllocation(gfxAllocation);
 
+    EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(hostPtr, gfxAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedReserve, gfxAllocation->getReservedAddress());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
-TEST_F(WddmCommandStreamTest, killAllTemporaryAllocation) {
-    void *host_ptr = (void *)0x1212341;
-    auto size = 17262u;
-
-    GraphicsAllocation *graphicsAllocation = csr->createAllocationAndHandleResidency(host_ptr, size);
-    ASSERT_NE(nullptr, graphicsAllocation);
-
-    graphicsAllocation->taskCount = 1;
-    csr->waitForTaskCountAndCleanAllocationList(-1, TEMPORARY_ALLOCATION);
-    //no memory leaks reported makes this test pass.
-}
-
-TEST_F(WddmCommandStreamTest, killCompletedAllocations) {
+TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllocationListThenDestoryOnlyCompletedAllocations) {
     void *host_ptr = (void *)0x1212341;
     void *host_ptr2 = (void *)0x2212341;
     auto size = 17262u;
 
-    GraphicsAllocation *graphicsAllocation = csr->createAllocationAndHandleResidency(host_ptr, size);
-    ASSERT_NE(nullptr, graphicsAllocation);
-
-    GraphicsAllocation *graphicsAllocation2 = csr->createAllocationAndHandleResidency(host_ptr2, size);
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(size, host_ptr);
+    GraphicsAllocation *graphicsAllocation2 = memoryManager->allocateGraphicsMemory(size, host_ptr2);
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION);
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation2), TEMPORARY_ALLOCATION);
 
     graphicsAllocation->taskCount = 1;
     graphicsAllocation2->taskCount = 100;
 
     csr->waitForTaskCountAndCleanAllocationList(1, TEMPORARY_ALLOCATION);
-    //graphicsAllocation2 still lives
+    // graphicsAllocation2 still lives
     EXPECT_EQ(host_ptr2, graphicsAllocation2->getUnderlyingBuffer());
 
-    auto *memoryManager = (WddmMemoryManager *)csr->getMemoryManager();
     auto &hostPtrManager = memoryManager->hostPtrManager;
 
     auto alignedPtr = alignDown(host_ptr, MemoryConstants::pageSize);
@@ -663,6 +656,8 @@ TEST_F(WddmCommandStreamTest, killCompletedAllocations) {
 
     auto fragment2 = hostPtrManager.getFragment(alignedPtr);
     EXPECT_EQ(nullptr, fragment2);
+    // destroy remaining allocation
+    csr->waitForTaskCountAndCleanAllocationList(100, TEMPORARY_ALLOCATION);
 }
 
 TEST_F(WddmCommandStreamMockGdiTest, FlushCallsWddmMakeResidentForResidencyAllocations) {

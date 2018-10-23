@@ -382,7 +382,9 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
 
         kernel->setArgSvm(1, sizeUserMemory, destMemory);
 
-        outBuffer = csr->createAllocationAndHandleResidency(destMemory, sizeUserMemory);
+        outBuffer = csr->getMemoryManager()->allocateGraphicsMemory(sizeUserMemory, destMemory);
+        csr->makeResidentHostPtrAllocation(outBuffer);
+        csr->getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(outBuffer), TEMPORARY_ALLOCATION);
         ASSERT_NE(nullptr, outBuffer);
         outBuffer->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
         outBuffer->setMemObjectsAllocationWithWritableFlags(true);
