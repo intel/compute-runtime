@@ -16,10 +16,10 @@ set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_compile_program_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_buffer_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_command_queue_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_command_queue_with_properties_tests.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_command_queue_with_properties_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_context_from_type_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_context_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_image_tests.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_image_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_kernel_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_kernels_in_program_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_perf_counters_command_queue_tests.inl
