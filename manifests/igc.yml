@@ -13,7 +13,7 @@ components:
     branch: master
     dest_dir: llvm_patches
     repository: https://github.com/intel/llvm-patches
-    revision: df8dbd57a245024fbdf037a6e98a6c77864e9b60
+    revision: 3a42341b2e43ad898e4fd2011af9d5ac45fd21f9
   llvm_source:
     branch: release_40
     dest_dir: llvm_source
