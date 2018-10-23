@@ -8,11 +8,12 @@
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/utilities/spinlock.h"
 
 namespace OCLRT {
 
-WddmResidencyController::WddmResidencyController(uint32_t osContextId) : osContextId(osContextId) {}
+WddmResidencyController::WddmResidencyController(Wddm &wddm, uint32_t osContextId) : wddm(wddm), osContextId(osContextId) {}
 
 void WddmResidencyController::acquireLock() {
     bool previousLockValue = false;

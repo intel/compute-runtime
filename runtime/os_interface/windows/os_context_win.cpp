@@ -12,7 +12,7 @@
 
 namespace OCLRT {
 
-OsContextWin::OsContextImpl(Wddm &wddm, uint32_t osContextId) : wddm(wddm), residencyController(osContextId) {
+OsContextWin::OsContextImpl(Wddm &wddm, uint32_t osContextId) : wddm(wddm), residencyController(wddm, osContextId) {
     UNRECOVERABLE_IF(!wddm.isInitialized());
     auto wddmInterface = wddm.getWddmInterface();
     if (!wddm.createContext(context)) {

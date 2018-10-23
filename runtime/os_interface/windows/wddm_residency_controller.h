@@ -17,10 +17,11 @@ namespace OCLRT {
 
 class GraphicsAllocation;
 class WddmAllocation;
+class Wddm;
 
 class WddmResidencyController {
   public:
-    WddmResidencyController(uint32_t osContextId);
+    WddmResidencyController(Wddm &wddm, uint32_t osContextId);
 
     void acquireLock();
     void releaseLock();
@@ -46,9 +47,12 @@ class WddmResidencyController {
     void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
 
   protected:
+    Wddm &wddm;
     uint32_t osContextId;
+
     std::atomic<bool> lock = false;
     std::atomic_flag trimCallbackLock = ATOMIC_FLAG_INIT;
+
     uint64_t lastTrimFenceValue = 0u;
     ResidencyContainer trimCandidateList;
     uint32_t trimCandidatesCount = 0;

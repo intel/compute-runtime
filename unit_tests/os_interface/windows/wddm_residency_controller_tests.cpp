@@ -7,6 +7,7 @@
 
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/os_interface/os_context.h"
+#include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 
 #include "test.h"
@@ -22,12 +23,15 @@ class MockWddmResidencyController : public WddmResidencyController {
 };
 
 struct WddmResidencyControllerTest : ::testing::Test {
+    const uint32_t osContextId = 0u;
+
     void SetUp() {
-        osContext = std::make_unique<OsContext>(nullptr, 0u);
-        residencyController = std::make_unique<MockWddmResidencyController>(osContext->getContextId());
+        wddm = std::unique_ptr<Wddm>(Wddm::createWddm());
+        wddm->init();
+        residencyController = std::make_unique<MockWddmResidencyController>(*wddm, osContextId);
     }
 
-    std::unique_ptr<OsContext> osContext;
+    std::unique_ptr<Wddm> wddm;
     std::unique_ptr<MockWddmResidencyController> residencyController;
 };
 
@@ -35,13 +39,13 @@ TEST_F(WddmResidencyControllerTest, givenUsedAllocationWhenCallingRemoveFromTrim
     MockWddmAllocation allocation;
     residencyController->addToTrimCandidateList(&allocation);
     residencyController->removeFromTrimCandidateListIfUsed(&allocation, false);
-    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContextId));
 }
 
 TEST_F(WddmResidencyControllerTest, givenUnusedAllocationWhenCallingRemoveFromTrimCandidateListIfUsedThenIgnore) {
     MockWddmAllocation allocation;
     residencyController->removeFromTrimCandidateListIfUsed(&allocation, false);
-    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContextId));
 }
 
 TEST_F(WddmResidencyControllerTest, addToTrimCandidateListPlacesAllocationInContainerAndAssignsPosition) {
@@ -49,9 +53,9 @@ TEST_F(WddmResidencyControllerTest, addToTrimCandidateListPlacesAllocationInCont
     residencyController->addToTrimCandidateList(&allocation);
 
     EXPECT_NE(0u, residencyController->trimCandidateList.size());
-    EXPECT_NE(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_NE(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContextId));
 
-    size_t position = allocation.getTrimCandidateListPosition(osContext->getContextId());
+    size_t position = allocation.getTrimCandidateListPosition(osContextId);
     ASSERT_LT(position, residencyController->trimCandidateList.size());
 
     EXPECT_EQ(&allocation, residencyController->trimCandidateList[position]);
@@ -64,9 +68,9 @@ TEST_F(WddmResidencyControllerTest, addToTrimCandidateListDoesNotInsertAllocatio
 
     residencyController->addToTrimCandidateList(&allocation);
 
-    EXPECT_NE(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_NE(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContextId));
 
-    size_t position = allocation.getTrimCandidateListPosition(osContext->getContextId());
+    size_t position = allocation.getTrimCandidateListPosition(osContextId);
     ASSERT_LT(position, residencyController->trimCandidateList.size());
 
     EXPECT_EQ(&allocation, residencyController->trimCandidateList[position]);
@@ -75,7 +79,7 @@ TEST_F(WddmResidencyControllerTest, addToTrimCandidateListDoesNotInsertAllocatio
     residencyController->addToTrimCandidateList(&allocation);
 
     EXPECT_EQ(previousSize, residencyController->trimCandidateList.size());
-    EXPECT_EQ(position, allocation.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_EQ(position, allocation.getTrimCandidateListPosition(osContextId));
 }
 
 TEST_F(WddmResidencyControllerTest, removeFromTrimCandidateListAssignsUnusedPosition) {
@@ -84,14 +88,14 @@ TEST_F(WddmResidencyControllerTest, removeFromTrimCandidateListAssignsUnusedPosi
     residencyController->addToTrimCandidateList(&allocation);
     residencyController->removeFromTrimCandidateList(&allocation, false);
 
-    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContextId));
 }
 
 TEST_F(WddmResidencyControllerTest, removeFromTrimCandidateListRemovesAllocationInAssignedPosition) {
     MockWddmAllocation allocation;
 
     residencyController->addToTrimCandidateList(&allocation);
-    size_t position = allocation.getTrimCandidateListPosition(osContext->getContextId());
+    size_t position = allocation.getTrimCandidateListPosition(osContextId);
 
     residencyController->removeFromTrimCandidateList(&allocation, false);
 
@@ -140,8 +144,8 @@ TEST_F(WddmResidencyControllerTest, successiveAddingToTrimCandidateListAssignsNe
     residencyController->addToTrimCandidateList(&allocation3);
 
     EXPECT_EQ(3u, residencyController->trimCandidateList.size());
-    EXPECT_NE(allocation1.getTrimCandidateListPosition(osContext->getContextId()), allocation2.getTrimCandidateListPosition(osContext->getContextId()));
-    EXPECT_NE(allocation2.getTrimCandidateListPosition(osContext->getContextId()), allocation3.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_NE(allocation1.getTrimCandidateListPosition(osContextId), allocation2.getTrimCandidateListPosition(osContextId));
+    EXPECT_NE(allocation2.getTrimCandidateListPosition(osContextId), allocation3.getTrimCandidateListPosition(osContextId));
 }
 
 TEST_F(WddmResidencyControllerTest, DISABLED_removingNotLastAllocationFromTrimCandidateListSubstituesLastPositionAllocation) {
@@ -155,8 +159,8 @@ TEST_F(WddmResidencyControllerTest, DISABLED_removingNotLastAllocationFromTrimCa
 
     EXPECT_EQ(2u, residencyController->trimCandidateList.size());
 
-    EXPECT_EQ(2u, allocation3.getTrimCandidateListPosition(osContext->getContextId()));
-    EXPECT_NE(allocation2.getTrimCandidateListPosition(osContext->getContextId()), allocation3.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_EQ(2u, allocation3.getTrimCandidateListPosition(osContextId));
+    EXPECT_NE(allocation2.getTrimCandidateListPosition(osContextId), allocation3.getTrimCandidateListPosition(osContextId));
 }
 
 TEST_F(WddmResidencyControllerTest, removingNotLastAllocationFromTrimCandidateListPutsNullEntry) {
@@ -165,8 +169,8 @@ TEST_F(WddmResidencyControllerTest, removingNotLastAllocationFromTrimCandidateLi
     residencyController->addToTrimCandidateList(&allocation1);
     residencyController->addToTrimCandidateList(&allocation2);
     residencyController->addToTrimCandidateList(&allocation3);
-    size_t position2 = allocation2.getTrimCandidateListPosition(osContext->getContextId());
-    size_t position3 = allocation3.getTrimCandidateListPosition(osContext->getContextId());
+    size_t position2 = allocation2.getTrimCandidateListPosition(osContextId);
+    size_t position3 = allocation3.getTrimCandidateListPosition(osContextId);
 
     residencyController->removeFromTrimCandidateList(&allocation2, false);
 
@@ -183,8 +187,8 @@ TEST_F(WddmResidencyControllerTest, compactTrimCandidateListRemovesInitialNullEn
     residencyController->addToTrimCandidateList(&allocation3);
     residencyController->addToTrimCandidateList(&allocation4);
 
-    size_t position3 = allocation3.getTrimCandidateListPosition(osContext->getContextId());
-    size_t position4 = allocation4.getTrimCandidateListPosition(osContext->getContextId());
+    size_t position3 = allocation3.getTrimCandidateListPosition(osContextId);
+    size_t position4 = allocation4.getTrimCandidateListPosition(osContextId);
 
     residencyController->removeFromTrimCandidateList(&allocation2, false);
     residencyController->removeFromTrimCandidateList(&allocation1, false);
@@ -196,10 +200,10 @@ TEST_F(WddmResidencyControllerTest, compactTrimCandidateListRemovesInitialNullEn
     EXPECT_EQ(2u, residencyController->trimCandidateList.size());
 
     EXPECT_EQ(residencyController->trimCandidateList[0], &allocation3);
-    EXPECT_EQ(0u, allocation3.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_EQ(0u, allocation3.getTrimCandidateListPosition(osContextId));
 
     EXPECT_EQ(residencyController->trimCandidateList[1], &allocation4);
-    EXPECT_EQ(1u, allocation4.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_EQ(1u, allocation4.getTrimCandidateListPosition(osContextId));
 }
 
 TEST_F(WddmResidencyControllerTest, compactTrimCandidateListWithNonNullEntries) {
