@@ -17,6 +17,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/validators.h"
+#include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -238,19 +239,19 @@ void Buffer::checkMemory(cl_mem_flags flags,
                          cl_int &errcodeRet,
                          bool &alignementSatisfied,
                          bool &copyMemoryFromHostPtr,
-                         MemoryManager *memMngr) {
+                         MemoryManager *memoryManager) {
     errcodeRet = CL_SUCCESS;
     alignementSatisfied = true;
     copyMemoryFromHostPtr = false;
     uintptr_t minAddress = 0;
-    auto memRestrictions = memMngr->getAlignedMallocRestrictions();
+    auto memRestrictions = memoryManager->getAlignedMallocRestrictions();
     if (memRestrictions) {
         minAddress = memRestrictions->minAddress;
     }
 
     if (flags & CL_MEM_USE_HOST_PTR) {
         if (hostPtr) {
-            auto fragment = memMngr->hostPtrManager.getFragment(hostPtr);
+            auto fragment = memoryManager->getHostPtrManager()->getFragment(hostPtr);
             if (fragment && fragment->driverAllocation) {
                 errcodeRet = CL_INVALID_HOST_PTR;
                 return;

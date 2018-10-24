@@ -14,6 +14,7 @@
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/os_interface/linux/allocator_helper.h"
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
@@ -116,7 +117,7 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
 
     DrmAllocation gfxAllocation(nullptr, cpuPtr, size, MemoryPool::MemoryNull);
     memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
-    auto fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    auto fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
     EXPECT_NE(fragment, nullptr);
     EXPECT_TRUE(fragment->driverAllocation);
     EXPECT_EQ(fragment->refCount, 1);
@@ -129,22 +130,22 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
 
     FragmentStorage fragmentStorage = {};
     fragmentStorage.fragmentCpuPointer = cpuPtr;
-    memoryManager->hostPtrManager.storeFragment(fragmentStorage);
-    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    memoryManager->getHostPtrManager()->storeFragment(fragmentStorage);
+    fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
     EXPECT_EQ(fragment->refCount, 2);
 
     fragment->driverAllocation = false;
     memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
-    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
     EXPECT_EQ(fragment->refCount, 2);
     fragment->driverAllocation = true;
 
     memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
-    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
     EXPECT_EQ(fragment->refCount, 1);
 
     memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
-    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
     EXPECT_EQ(fragment, nullptr);
 }
 
@@ -658,11 +659,11 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
     auto size = MemoryConstants::pageSize * 10;
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(size, ptr);
 
-    auto &hostPtrManager = memoryManager->hostPtrManager;
+    auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
 
-    ASSERT_EQ(3u, hostPtrManager.getFragmentCount());
+    ASSERT_EQ(3u, hostPtrManager->getFragmentCount());
 
-    auto reqs = HostPtrManager::getAllocationRequirements(ptr, size);
+    auto reqs = MockHostPtrManager::getAllocationRequirements(ptr, size);
 
     for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo);
@@ -671,7 +672,7 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
         EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekIsAllocated());
     }
     memoryManager->freeGraphicsMemory(graphicsAllocation);
-    EXPECT_EQ(0u, hostPtrManager.getFragmentCount());
+    EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, testProfilingAllocatorCleanup) {
@@ -2655,9 +2656,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
 
     mock->testIoctls();
 
-    EXPECT_EQ(0u, testedMemoryManager->hostPtrManager.getFragmentCount());
-    EXPECT_EQ(nullptr, testedMemoryManager->hostPtrManager.getFragment(handleStorage.fragmentStorageData[1].cpuPtr));
-    EXPECT_EQ(nullptr, testedMemoryManager->hostPtrManager.getFragment(handleStorage.fragmentStorageData[2].cpuPtr));
+    auto hostPtrManager = static_cast<MockHostPtrManager *>(testedMemoryManager->getHostPtrManager());
+
+    EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
+    EXPECT_EQ(nullptr, hostPtrManager->getFragment(handleStorage.fragmentStorageData[1].cpuPtr));
+    EXPECT_EQ(nullptr, hostPtrManager->getFragment(handleStorage.fragmentStorageData[2].cpuPtr));
 
     handleStorage.fragmentStorageData[0].freeTheFragment = false;
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
@@ -2684,8 +2687,9 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
 
     mock->testIoctls();
 
-    EXPECT_EQ(1u, testedMemoryManager->hostPtrManager.getFragmentCount());
-    EXPECT_NE(nullptr, testedMemoryManager->hostPtrManager.getFragment(handleStorage.fragmentStorageData[0].cpuPtr));
+    auto hostPtrManager = static_cast<MockHostPtrManager *>(testedMemoryManager->getHostPtrManager());
+    EXPECT_EQ(1u, hostPtrManager->getFragmentCount());
+    EXPECT_NE(nullptr, hostPtrManager->getFragment(handleStorage.fragmentStorageData[0].cpuPtr));
 
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
     testedMemoryManager->cleanOsHandles(handleStorage);

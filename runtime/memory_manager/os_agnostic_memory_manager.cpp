@@ -14,6 +14,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/surface_formats.h"
+#include "runtime/memory_manager/host_ptr_manager.h"
 #include <cassert>
 
 namespace OCLRT {
@@ -132,16 +133,16 @@ void OsAgnosticMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *
     fragment.fragmentSize = alignUp(gfxAllocation->getUnderlyingBufferSize(), MemoryConstants::pageSize);
     fragment.osInternalStorage = new OsHandle();
     fragment.residency = new ResidencyData();
-    hostPtrManager.storeFragment(fragment);
+    hostPtrManager->storeFragment(fragment);
 }
 
 void OsAgnosticMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) {
     auto buffer = gfxAllocation->getUnderlyingBuffer();
-    auto fragment = hostPtrManager.getFragment(buffer);
+    auto fragment = hostPtrManager->getFragment(buffer);
     if (fragment && fragment->driverAllocation) {
         OsHandle *osStorageToRelease = fragment->osInternalStorage;
         ResidencyData *residencyDataToRelease = fragment->residency;
-        if (hostPtrManager.releaseHostPtr(buffer)) {
+        if (hostPtrManager->releaseHostPtr(buffer)) {
             delete osStorageToRelease;
             delete residencyDataToRelease;
         }
@@ -210,7 +211,7 @@ MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHan
             newFragment.fragmentSize = handleStorage.fragmentStorageData[i].fragmentSize;
             newFragment.osInternalStorage = handleStorage.fragmentStorageData[i].osHandleStorage;
             newFragment.residency = handleStorage.fragmentStorageData[i].residency;
-            hostPtrManager.storeFragment(newFragment);
+            hostPtrManager->storeFragment(newFragment);
         }
     }
     return AllocationStatus::Success;

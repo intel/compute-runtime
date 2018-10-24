@@ -8,6 +8,7 @@
 #pragma once
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
+#include "unit_tests/mocks/mock_host_ptr_manager.h"
 
 namespace OCLRT {
 class MockWddmMemoryManager : public WddmMemoryManager {
@@ -20,7 +21,9 @@ class MockWddmMemoryManager : public WddmMemoryManager {
     using BaseClass::trimResidencyToBudget;
     using BaseClass::WddmMemoryManager;
 
-    MockWddmMemoryManager(Wddm *wddm, ExecutionEnvironment &executionEnvironment) : WddmMemoryManager(false, false, wddm, executionEnvironment){};
+    MockWddmMemoryManager(Wddm *wddm, ExecutionEnvironment &executionEnvironment) : WddmMemoryManager(false, false, wddm, executionEnvironment) {
+        hostPtrManager.reset(new MockHostPtrManager);
+    };
     void setDeferredDeleter(DeferredDeleter *deleter) {
         this->deferredDeleter.reset(deleter);
     }

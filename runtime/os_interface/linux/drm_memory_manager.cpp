@@ -8,6 +8,7 @@
 #include "runtime/device/device.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/options.h"
+#include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
@@ -406,16 +407,16 @@ void DrmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllo
     fragment.osInternalStorage = new OsHandle();
     fragment.residency = new ResidencyData();
     fragment.osInternalStorage->bo = drmMemory->getBO();
-    hostPtrManager.storeFragment(fragment);
+    hostPtrManager->storeFragment(fragment);
 }
 
 void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) {
     auto buffer = gfxAllocation->getUnderlyingBuffer();
-    auto fragment = hostPtrManager.getFragment(buffer);
+    auto fragment = hostPtrManager->getFragment(buffer);
     if (fragment && fragment->driverAllocation) {
         OsHandle *osStorageToRelease = fragment->osInternalStorage;
         ResidencyData *residencyDataToRelease = fragment->residency;
-        if (hostPtrManager.releaseHostPtr(buffer)) {
+        if (hostPtrManager->releaseHostPtr(buffer)) {
             delete osStorageToRelease;
             delete residencyDataToRelease;
         }
@@ -509,7 +510,7 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
     }
 
     for (uint32_t i = 0; i < numberOfBosAllocated; i++) {
-        hostPtrManager.storeFragment(handleStorage.fragmentStorageData[indexesOfAllocatedBos[i]]);
+        hostPtrManager->storeFragment(handleStorage.fragmentStorageData[indexesOfAllocatedBos[i]]);
     }
     return AllocationStatus::Success;
 }

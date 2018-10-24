@@ -16,6 +16,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/deferred_deleter.h"
+#include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/stackvec.h"
@@ -60,7 +61,8 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
 MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory,
                              ExecutionEnvironment &executionEnvironment) : allocator32Bit(nullptr), enable64kbpages(enable64kbpages),
                                                                            localMemorySupported(enableLocalMemory),
-                                                                           executionEnvironment(executionEnvironment){};
+                                                                           executionEnvironment(executionEnvironment),
+                                                                           hostPtrManager(std::make_unique<HostPtrManager>()){};
 
 MemoryManager::~MemoryManager() {
     for (auto osContext : registeredOsContexts) {
@@ -119,7 +121,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(size_t size, const voi
         deferredDeleter->drain(true);
     }
     GraphicsAllocation *graphicsAllocation = nullptr;
-    auto osStorage = hostPtrManager.prepareOsStorageForAllocation(*this, size, ptr);
+    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, size, ptr);
     if (osStorage.fragmentCount > 0) {
         graphicsAllocation = createGraphicsAllocation(osStorage, size, ptr);
     }
@@ -127,7 +129,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(size_t size, const voi
 }
 
 void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *graphicsAllocation) {
-    hostPtrManager.releaseHandleStorage(graphicsAllocation->fragmentsStorage);
+    hostPtrManager->releaseHandleStorage(graphicsAllocation->fragmentsStorage);
     cleanOsHandles(graphicsAllocation->fragmentsStorage);
 }
 

@@ -644,17 +644,17 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
     // graphicsAllocation2 still lives
     EXPECT_EQ(host_ptr2, graphicsAllocation2->getUnderlyingBuffer());
 
-    auto &hostPtrManager = memoryManager->hostPtrManager;
+    auto hostPtrManager = memoryManager->getHostPtrManager();
 
     auto alignedPtr = alignDown(host_ptr, MemoryConstants::pageSize);
     auto alignedPtr2 = alignDown(host_ptr2, MemoryConstants::pageSize);
 
-    auto fragment = hostPtrManager.getFragment(alignedPtr2);
+    auto fragment = hostPtrManager->getFragment(alignedPtr2);
     ASSERT_NE(nullptr, fragment);
 
     EXPECT_EQ(alignedPtr2, fragment->fragmentCpuPointer);
 
-    auto fragment2 = hostPtrManager.getFragment(alignedPtr);
+    auto fragment2 = hostPtrManager->getFragment(alignedPtr);
     EXPECT_EQ(nullptr, fragment2);
     // destroy remaining allocation
     csr->waitForTaskCountAndCleanAllocationList(100, TEMPORARY_ALLOCATION);

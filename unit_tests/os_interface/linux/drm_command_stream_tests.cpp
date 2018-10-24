@@ -23,6 +23,7 @@
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_program.h"
+#include "unit_tests/mocks/mock_host_ptr_manager.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
@@ -1194,11 +1195,9 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwice) {
 TEST_F(DrmCommandStreamLeaksTest, makeResidentTwiceWhenFragmentStorage) {
     auto ptr = (void *)0x1001;
     auto size = MemoryConstants::pageSize * 10;
-    auto reqs = HostPtrManager::getAllocationRequirements(ptr, size);
+    auto reqs = MockHostPtrManager::getAllocationRequirements(ptr, size);
     auto allocation = mm->allocateGraphicsMemory(size, ptr);
-    auto &hostPtrManager = mm->hostPtrManager;
 
-    EXPECT_EQ(3u, hostPtrManager.getFragmentCount());
     ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
 
     csr->makeResident(*allocation);
@@ -1237,9 +1236,6 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
     auto size2 = MemoryConstants::pageSize - 1;
 
     auto graphicsAllocation2 = mm->allocateGraphicsMemory(size2, offsetedPtr);
-
-    auto &hostPtrManager = mm->hostPtrManager;
-    ASSERT_EQ(3u, hostPtrManager.getFragmentCount());
 
     //graphicsAllocation2 reuses one fragment from graphicsAllocation
     EXPECT_EQ(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency, graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency);
@@ -1297,13 +1293,10 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationCreatedFromThreeFragmentsWhenMa
     auto ptr = (void *)0x1001;
     auto size = MemoryConstants::pageSize * 10;
 
-    auto reqs = HostPtrManager::getAllocationRequirements(ptr, size);
+    auto reqs = MockHostPtrManager::getAllocationRequirements(ptr, size);
 
     auto allocation = mm->allocateGraphicsMemory(size, ptr);
 
-    auto &hostPtrManager = mm->hostPtrManager;
-
-    EXPECT_EQ(3u, hostPtrManager.getFragmentCount());
     ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
 
     csr->makeResident(*allocation);
@@ -1334,13 +1327,10 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
     auto size = MemoryConstants::pageSize;
     auto size2 = 100;
 
-    auto reqs = HostPtrManager::getAllocationRequirements(ptr, size);
+    auto reqs = MockHostPtrManager::getAllocationRequirements(ptr, size);
 
     auto allocation = mm->allocateGraphicsMemory(size, ptr);
 
-    auto &hostPtrManager = mm->hostPtrManager;
-
-    EXPECT_EQ(2u, hostPtrManager.getFragmentCount());
     ASSERT_EQ(2u, allocation->fragmentsStorage.fragmentCount);
     ASSERT_EQ(2u, reqs.requiredFragmentsCount);
 
@@ -1367,12 +1357,9 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
     mm->freeGraphicsMemory(allocation);
     csr->getResidencyAllocations().clear();
 
-    EXPECT_EQ(0u, hostPtrManager.getFragmentCount());
-
     auto allocation2 = mm->allocateGraphicsMemory(size2, ptr);
-    reqs = HostPtrManager::getAllocationRequirements(ptr, size2);
+    reqs = MockHostPtrManager::getAllocationRequirements(ptr, size2);
 
-    EXPECT_EQ(1u, hostPtrManager.getFragmentCount());
     ASSERT_EQ(1u, allocation2->fragmentsStorage.fragmentCount);
     ASSERT_EQ(1u, reqs.requiredFragmentsCount);
 
@@ -1397,7 +1384,6 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
         EXPECT_EQ(1u, allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->getRefCount());
     }
     mm->freeGraphicsMemory(allocation2);
-    EXPECT_EQ(0u, hostPtrManager.getFragmentCount());
 }
 
 TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsTheSameThenMakeResidentShouldAddOnlyOneLocation) {

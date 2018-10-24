@@ -6,6 +6,7 @@
  */
 
 #include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "unit_tests/mocks/mock_host_ptr_manager.h"
 
 namespace OCLRT {
 static off_t lseekReturn = 4096u;
@@ -47,6 +48,7 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
         lseekCalledCount = 0;
         mmapMockCallCount = 0;
         munmapMockCallCount = 0;
+        hostPtrManager.reset(new MockHostPtrManager);
     };
     TestedDrmMemoryManager(Drm *drm, bool allowForcePin, bool validateHostPtrMemory, ExecutionEnvironment &executionEnvironment) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, allowForcePin, validateHostPtrMemory, executionEnvironment) {
         this->lseekFunction = &lseekMock;

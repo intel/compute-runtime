@@ -245,11 +245,12 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPool
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
-    auto hostPtrAllocationCountBefore = memoryManager->hostPtrManager.getFragmentCount();
+    auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
+    auto hostPtrAllocationCountBefore = hostPtrManager->getFragmentCount();
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    auto hostPtrAllocationCountAfter = memoryManager->hostPtrManager.getFragmentCount();
+    auto hostPtrAllocationCountAfter = hostPtrManager->getFragmentCount();
 
     EXPECT_EQ(hostPtrAllocationCountBefore, hostPtrAllocationCountAfter);
 }

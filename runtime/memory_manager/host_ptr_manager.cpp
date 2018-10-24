@@ -6,13 +6,12 @@
  */
 
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/helpers/ptr_math.h"
-#include "runtime/helpers/abort.h"
+#include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 using namespace OCLRT;
 
-std::map<const void *, FragmentStorage>::iterator HostPtrManager::findElement(const void *ptr) {
+HostPtrFragmentsContainer::iterator HostPtrManager::findElement(const void *ptr) {
     auto nextElement = partialAllocations.lower_bound(ptr);
     auto element = nextElement;
     if (element != partialAllocations.end()) {

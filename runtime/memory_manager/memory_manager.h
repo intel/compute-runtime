@@ -9,7 +9,6 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
-#include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/os_interface/32bit_memory.h"
 
 #include <cstdint>
@@ -22,6 +21,7 @@ class Device;
 class DeferredDeleter;
 class ExecutionEnvironment;
 class GraphicsAllocation;
+class HostPtrManager;
 class CommandStreamReceiver;
 class OsContext;
 class TimestampPacket;
@@ -213,8 +213,6 @@ class MemoryManager {
 
     MOCKABLE_VIRTUAL std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize, bool isInternalAllocationRequired);
 
-    HostPtrManager hostPtrManager;
-
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) = 0;
 
     bool peek64kbPagesEnabled() const { return enable64kbpages; }
@@ -252,6 +250,7 @@ class MemoryManager {
     void registerOsContext(OsContext *contextToRegister);
     size_t getOsContextCount() { return registeredOsContexts.size(); }
     CommandStreamReceiver *getCommandStreamReceiver(uint32_t contextId);
+    HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
 
   protected:
     static bool getAllocationData(AllocationData &allocationData, const AllocationFlags &flags, const DevicesBitfield devicesBitfield,
@@ -271,6 +270,7 @@ class MemoryManager {
     bool localMemorySupported = false;
     ExecutionEnvironment &executionEnvironment;
     std::vector<OsContext *> registeredOsContexts;
+    std::unique_ptr<HostPtrManager> hostPtrManager;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();
