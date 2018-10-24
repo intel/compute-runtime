@@ -61,8 +61,8 @@ bool HwHelperHw<GENX>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enab
     return enable;
 }
 template <>
-const AubMemDump::LrcaHelper &HwHelperHw<GENX>::getCsTraits(EngineType engineType) const {
-    return *AUBFamilyMapper<GENX>::csTraits[engineType];
+const AubMemDump::LrcaHelper &HwHelperHw<GENX>::getCsTraits(EngineInstanceT engineInstance) const {
+    return *AUBFamilyMapper<GENX>::csTraits[engineInstance.type];
 }
 
 struct hw_helper_static_init {

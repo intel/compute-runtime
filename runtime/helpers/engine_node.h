@@ -18,6 +18,9 @@ enum EngineType : uint32_t {
 };
 
 struct EngineInstanceT {
+    constexpr EngineInstanceT(EngineType type) : type(type), id(0) {}
+    constexpr EngineInstanceT(EngineType type, int id) : type(type), id(id) {}
+
     EngineType type;
     int id;
 };

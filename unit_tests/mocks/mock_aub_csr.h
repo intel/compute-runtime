@@ -61,7 +61,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     void initProgrammingFlags() override {
         initProgrammingFlagsCalled = true;
     }
-    void pollForCompletion(EngineType engineType) override {
+    void pollForCompletion(EngineInstanceT engineInstance) override {
         pollForCompletionCalled = true;
     }
     bool flushBatchedSubmissionsCalled = false;

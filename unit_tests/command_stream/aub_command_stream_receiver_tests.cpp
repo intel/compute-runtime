@@ -85,33 +85,21 @@ TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenTypeIsChe
     EXPECT_EQ(CommandStreamReceiverType::CSR_AUB, aubCsr->getType());
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetInstanceIsCalledForAGivenEngineTypeThenEngineInstanceForThatTypeIsReturned) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetEngineIndexIsCalledForGivenEngineTypeThenEngineIndexForThatTypeIsReturned) {
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
-    auto engineId = aubCsr->getEngineInstance(EngineType::ENGINE_RCS);
-    EXPECT_EQ(EngineType::ENGINE_RCS, allEngineInstances[engineId].type);
+    auto engineIndex = aubCsr->getEngineIndex(EngineType::ENGINE_RCS);
+    EXPECT_EQ(EngineType::ENGINE_RCS, allEngineInstances[engineIndex].type);
 
-    engineId = aubCsr->getEngineInstance(EngineType::ENGINE_BCS);
-    EXPECT_EQ(EngineType::ENGINE_BCS, allEngineInstances[engineId].type);
+    engineIndex = aubCsr->getEngineIndex(EngineType::ENGINE_BCS);
+    EXPECT_EQ(EngineType::ENGINE_BCS, allEngineInstances[engineIndex].type);
 
-    engineId = aubCsr->getEngineInstance(EngineType::ENGINE_VCS);
-    EXPECT_EQ(EngineType::ENGINE_VCS, allEngineInstances[engineId].type);
+    engineIndex = aubCsr->getEngineIndex(EngineType::ENGINE_VCS);
+    EXPECT_EQ(EngineType::ENGINE_VCS, allEngineInstances[engineIndex].type);
 
-    engineId = aubCsr->getEngineInstance(EngineType::ENGINE_VECS);
-    EXPECT_EQ(EngineType::ENGINE_VECS, allEngineInstances[engineId].type);
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenSetCsTraitsIsCalledThenLRCAIsSetForAGivenEngine) {
-    const auto &csTraits = AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(EngineType::ENGINE_RCS);
-
-    auto mmioBase = 0x12345679u;
-    const AubMemDump::LrcaHelper lrca(mmioBase);
-    AUBCommandStreamReceiverHw<FamilyType>::setCsTraits(EngineType::ENGINE_RCS, &lrca);
-    const auto &traits = AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(EngineType::ENGINE_RCS);
-    EXPECT_EQ(mmioBase, traits.mmioBase);
-
-    AUBCommandStreamReceiverHw<FamilyType>::setCsTraits(EngineType::ENGINE_RCS, &csTraits);
+    engineIndex = aubCsr->getEngineIndex(EngineType::ENGINE_VECS);
+    EXPECT_EQ(EngineType::ENGINE_VECS, allEngineInstances[engineIndex].type);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDefaultSettingsThenItHasBatchedDispatchModeEnabled) {
@@ -243,13 +231,14 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     auto engineType = OCLRT::ENGINE_RCS;
+    auto engineIndex = aubCsr1->getEngineIndex(engineType);
 
-    aubCsr1->initializeEngine(engineType);
+    aubCsr1->initializeEngine(engineIndex);
     EXPECT_NE(0u, aubCsr1->engineInfoTable[engineType].ggttLRCA);
     EXPECT_NE(0u, aubCsr1->engineInfoTable[engineType].ggttHWSP);
     EXPECT_NE(0u, aubCsr1->engineInfoTable[engineType].ggttRingBuffer);
 
-    aubCsr2->initializeEngine(engineType);
+    aubCsr2->initializeEngine(engineIndex);
     EXPECT_NE(aubCsr1->engineInfoTable[engineType].ggttLRCA, aubCsr2->engineInfoTable[engineType].ggttLRCA);
     EXPECT_NE(aubCsr1->engineInfoTable[engineType].ggttHWSP, aubCsr2->engineInfoTable[engineType].ggttHWSP);
     EXPECT_NE(aubCsr1->engineInfoTable[engineType].ggttRingBuffer, aubCsr2->engineInfoTable[engineType].ggttRingBuffer);

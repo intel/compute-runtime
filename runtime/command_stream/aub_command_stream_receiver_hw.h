@@ -44,10 +44,10 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
 
     // Family specific version
-    void submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor);
-    MOCKABLE_VIRTUAL void pollForCompletion(EngineType engineType);
+    void submitLRCA(EngineInstanceT engineInstance, const MiContextDescriptorReg &contextDescriptor);
+    MOCKABLE_VIRTUAL void pollForCompletion(EngineInstanceT engineInstance);
     void initGlobalMMIO();
-    void initEngineMMIO(EngineType engineType);
+    void initEngineMMIO(EngineInstanceT engineInstance);
 
     MOCKABLE_VIRTUAL void addContextToken(uint32_t dumpHandle);
 
@@ -66,16 +66,15 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL bool isFileOpen() const;
     MOCKABLE_VIRTUAL const std::string &getFileName();
 
-    void initializeEngine(size_t engineInstance);
+    void initializeEngine(size_t engineIndex);
     void freeEngineInfoTable();
 
     MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
         return new OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, true, this->executionEnvironment);
     }
 
-    static const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType);
-    static void setCsTraits(EngineType engineType, const AubMemDump::LrcaHelper *lrca);
-    size_t getEngineInstance(EngineType engineType);
+    static const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance);
+    size_t getEngineIndex(EngineType engineType);
 
     struct EngineInfo {
         void *pLRCA;
@@ -87,7 +86,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
         size_t sizeRingBuffer;
         uint32_t tailRingBuffer;
     } engineInfoTable[arrayCount(allEngineInstances)] = {};
-    size_t gpgpuEngineInstance = arrayCount(gpgpuEngineInstances) - 1;
+    size_t gpgpuEngineIndex = arrayCount(gpgpuEngineInstances) - 1;
 
     AUBCommandStreamReceiver::AubFileStream *stream;
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;
