@@ -26,6 +26,12 @@ struct OpenCLObjectMapper<_cl_context> {
     typedef class Context DerivedType;
 };
 
+enum class ContextType {
+    CONTEXT_TYPE_DEFAULT,
+    CONTEXT_TYPE_SPECIALIZED,
+    CONTEXT_TYPE_UNRESTRICTIVE
+};
+
 class Context : public BaseObject<_cl_context> {
   public:
     static const cl_ulong objectMagic = 0xA4234321DC002130LL;
@@ -110,6 +116,8 @@ class Context : public BaseObject<_cl_context> {
     bool getInteropUserSyncEnabled() { return interopUserSync; }
     void setInteropUserSyncEnabled(bool enabled) { interopUserSync = enabled; }
 
+    ContextType peekContextType() { return this->contextType; }
+
   protected:
     Context(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *) = nullptr,
             void *userData = nullptr);
@@ -131,5 +139,6 @@ class Context : public BaseObject<_cl_context> {
     DriverDiagnostics *driverDiagnostics;
     bool interopUserSync = false;
     cl_bool preferD3dSharedResources = 0u;
+    ContextType contextType = ContextType::CONTEXT_TYPE_DEFAULT;
 };
 } // namespace OCLRT

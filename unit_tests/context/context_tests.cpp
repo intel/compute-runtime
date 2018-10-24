@@ -340,3 +340,8 @@ TEST_P(ContextWithAsyncDeleterTest, givenContextWithMemoryManagerWhenAsyncDelete
 INSTANTIATE_TEST_CASE_P(ContextTests,
                         ContextWithAsyncDeleterTest,
                         ::testing::Bool());
+
+TEST(DefaultContext, givenDefaultContextWhenItIsQueriedForTypeThenDefaultTypeIsReturned) {
+    MockContext context;
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_DEFAULT, context.peekContextType());
+}
