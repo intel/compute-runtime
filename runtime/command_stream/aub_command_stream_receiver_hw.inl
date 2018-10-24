@@ -606,7 +606,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
 
     {
         std::ostringstream str;
-        str << "ppgtt: " << std::hex << std::showbase << gpuAddress;
+        str << "ppgtt: " << std::hex << std::showbase << gpuAddress << " end address: " << gpuAddress + size << " cpu address: " << cpuAddress << " device mask: " << gfxAllocation.devicesBitfield << " size: " << std::dec << size;
         stream->addComment(str.str().c_str());
     }
 
