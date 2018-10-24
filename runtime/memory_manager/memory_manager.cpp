@@ -115,7 +115,6 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, boo
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) {
-    std::lock_guard<decltype(mtx)> lock(mtx);
     if (deferredDeleter) {
         deferredDeleter->drain(true);
     }
@@ -148,17 +147,14 @@ void MemoryManager::freeSystemMemory(void *ptr) {
 }
 
 void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage) {
-    std::lock_guard<decltype(mtx)> lock(mtx);
     getCommandStreamReceiver(0)->getInternalAllocationStorage()->storeAllocation(std::move(gfxAllocation), allocationUsage);
 }
 
 void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount) {
-    std::lock_guard<decltype(mtx)> lock(mtx);
     getCommandStreamReceiver(0)->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::move(gfxAllocation), allocationUsage, taskCount);
 }
 
 std::unique_ptr<GraphicsAllocation> MemoryManager::obtainReusableAllocation(size_t requiredSize, bool internalAllocation) {
-    std::lock_guard<decltype(mtx)> lock(mtx);
     return getCommandStreamReceiver(0)->getInternalAllocationStorage()->obtainReusableAllocation(requiredSize, internalAllocation);
 }
 
@@ -186,13 +182,11 @@ void MemoryManager::applyCommonCleanup() {
 }
 
 bool MemoryManager::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
-    std::lock_guard<decltype(mtx)> lock(mtx);
     getCommandStreamReceiver(0)->getInternalAllocationStorage()->cleanAllocationsList(waitTaskCount, allocationUsage);
     return false;
 }
 
 void MemoryManager::freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList) {
-    std::lock_guard<decltype(mtx)> lock(mtx);
     getCommandStreamReceiver(0)->getInternalAllocationStorage()->freeAllocationsList(waitTaskCount, allocationsList);
 }
 

@@ -257,7 +257,6 @@ class MemoryManager {
                                   const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
 
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);
-    std::recursive_mutex mtx;
     std::unique_ptr<TagAllocator<HwTimeStamps>> profilingTimeStampAllocator;
     std::unique_ptr<TagAllocator<HwPerfCounter>> perfCounterAllocator;
     std::unique_ptr<TagAllocator<TimestampPacket>> timestampPacketAllocator;
