@@ -204,9 +204,6 @@ class MemoryManager {
 
     void freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList);
 
-    void storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage);
-    void storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount);
-
     TagAllocator<HwTimeStamps> *getEventTsAllocator();
     TagAllocator<HwPerfCounter> *getEventPerfCountAllocator();
     TagAllocator<TimestampPacket> *getTimestampPacketAllocator();

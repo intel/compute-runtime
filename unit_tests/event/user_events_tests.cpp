@@ -10,6 +10,7 @@
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_event.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 TEST(UserEvent, testInitialStatusOfUserEventCmdQueue) {
@@ -899,7 +900,7 @@ TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
     GraphicsAllocation *temporaryAllocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporaryAllocation), TEMPORARY_ALLOCATION);
+    csr.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporaryAllocation), TEMPORARY_ALLOCATION);
 
     EXPECT_EQ(temporaryAllocation, csr.getTemporaryAllocations().peekHead());
 

@@ -8,6 +8,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include <cstring>
@@ -66,7 +67,7 @@ void ExperimentalCommandBuffer::getCS(size_t minRequiredSize) {
         // Deallocate the old block, if not null
         auto oldAllocation = currentStream->getGraphicsAllocation();
         if (oldAllocation) {
-            memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(oldAllocation), REUSABLE_ALLOCATION);
+            commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(oldAllocation), REUSABLE_ALLOCATION);
         }
         currentStream->replaceBuffer(allocation->getUnderlyingBuffer(), minRequiredSize - CSRequirements::minCommandQueueCommandStreamSize);
         currentStream->replaceGraphicsAllocation(allocation);

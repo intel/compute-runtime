@@ -11,6 +11,7 @@
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/graphics_allocation.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -166,36 +167,19 @@ TEST_F(CommandStreamReceiverTest, memoryManagerHasAccessToCSR) {
     EXPECT_EQ(commandStreamReceiver, memoryManager->getCommandStreamReceiver(0));
 }
 
-HWTEST_F(CommandStreamReceiverTest, storedAllocationsHaveCSRtaskCount) {
+HWTEST_F(CommandStreamReceiverTest, whenStoreAllocationThenStoredAllocationHasTaskCountFromCsr) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto *memoryManager = csr.getMemoryManager();
     void *host_ptr = (void *)0x1234;
     auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
 
+    EXPECT_EQ(ObjectNotUsed, allocation->taskCount);
+
     csr.taskCount = 2u;
 
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    csr.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_EQ(csr.peekTaskCount(), allocation->taskCount);
-}
-
-HWTEST_F(CommandStreamReceiverTest, dontReuseSurfaceIfStillInUse) {
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto *memoryManager = csr.getMemoryManager();
-    void *host_ptr = (void *)0x1234;
-    auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
-
-    csr.taskCount = 2u;
-
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-
-    auto *hwTag = csr.getTagAddress();
-
-    *hwTag = 1;
-
-    auto newAllocation = memoryManager->obtainReusableAllocation(1, false);
-
-    EXPECT_EQ(nullptr, newAllocation);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCheckedForInitialStatusOfStatelessMocsIndexThenUnknownMocsIsReturend) {

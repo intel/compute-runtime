@@ -271,7 +271,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
         eventWaitList,
         event);
 
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION, taskCount);
+    auto storageForAllocation = device->getCommandStreamReceiver().getInternalAllocationStorage();
+    storageForAllocation->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION, taskCount);
 
     return CL_SUCCESS;
 }

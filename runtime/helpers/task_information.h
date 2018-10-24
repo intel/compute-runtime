@@ -19,12 +19,12 @@
 namespace OCLRT {
 class CommandQueue;
 class CommandStreamReceiver;
+class InternalAllocationStorage;
 class Kernel;
 class MemObj;
 class Surface;
 class PrintfHandler;
 struct HwTimeStamps;
-class MemoryManager;
 class TimestampPacketContainer;
 
 enum MapOperationType {
@@ -65,10 +65,10 @@ class CommandMapUnmap : public Command {
 
 struct KernelOperation {
     KernelOperation(std::unique_ptr<LinearStream> commandStream, std::unique_ptr<IndirectHeap> dsh, std::unique_ptr<IndirectHeap> ioh, std::unique_ptr<IndirectHeap> ssh,
-                    MemoryManager &memoryManager)
+                    InternalAllocationStorage &storageForAllocations)
         : commandStream(std::move(commandStream)), dsh(std::move(dsh)),
           ioh(std::move(ioh)), ssh(std::move(ssh)),
-          surfaceStateHeapSizeEM(0), doNotFreeISH(false), memoryManager(memoryManager) {
+          surfaceStateHeapSizeEM(0), doNotFreeISH(false), storageForAllocations(storageForAllocations) {
     }
 
     ~KernelOperation();
@@ -80,7 +80,7 @@ struct KernelOperation {
 
     size_t surfaceStateHeapSizeEM;
     bool doNotFreeISH;
-    MemoryManager &memoryManager;
+    InternalAllocationStorage &storageForAllocations;
 };
 
 class CommandComputeKernel : public Command {

@@ -148,14 +148,6 @@ void MemoryManager::freeSystemMemory(void *ptr) {
     ::alignedFree(ptr);
 }
 
-void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage) {
-    getCommandStreamReceiver(0)->getInternalAllocationStorage()->storeAllocation(std::move(gfxAllocation), allocationUsage);
-}
-
-void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount) {
-    getCommandStreamReceiver(0)->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::move(gfxAllocation), allocationUsage, taskCount);
-}
-
 std::unique_ptr<GraphicsAllocation> MemoryManager::obtainReusableAllocation(size_t requiredSize, bool internalAllocation) {
     return getCommandStreamReceiver(0)->getInternalAllocationStorage()->obtainReusableAllocation(requiredSize, internalAllocation);
 }
@@ -184,7 +176,7 @@ void MemoryManager::applyCommonCleanup() {
 }
 
 bool MemoryManager::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
-    getCommandStreamReceiver(0)->getInternalAllocationStorage()->cleanAllocationsList(waitTaskCount, allocationUsage);
+    getCommandStreamReceiver(0)->getInternalAllocationStorage()->cleanAllocationList(waitTaskCount, allocationUsage);
     return false;
 }
 
@@ -222,7 +214,7 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
     if (gfxAllocation->taskCount == ObjectNotUsed || gfxAllocation->taskCount <= *getCommandStreamReceiver(0)->getTagAddress()) {
         freeGraphicsMemory(gfxAllocation);
     } else {
-        storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation), TEMPORARY_ALLOCATION);
+        getCommandStreamReceiver(0)->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation), TEMPORARY_ALLOCATION);
     }
 }
 

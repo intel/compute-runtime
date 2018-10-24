@@ -12,6 +12,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/buffer.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
@@ -1515,7 +1516,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);
 
-    mm->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer), REUSABLE_ALLOCATION);
+    csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer), REUSABLE_ALLOCATION);
 
     auto commandBuffer2 = mm->allocateGraphicsMemory(1024);
     ASSERT_NE(nullptr, commandBuffer2);
@@ -1529,7 +1530,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(allocation2);
 
-    mm->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer2), REUSABLE_ALLOCATION);
+    csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer2), REUSABLE_ALLOCATION);
     commandBuffer2 = mm->allocateGraphicsMemory(1024);
     ASSERT_NE(nullptr, commandBuffer2);
     cs.replaceBuffer(commandBuffer2->getUnderlyingBuffer(), commandBuffer2->getUnderlyingBufferSize());

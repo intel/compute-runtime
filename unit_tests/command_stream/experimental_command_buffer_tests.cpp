@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
@@ -241,14 +242,15 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
 
 HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhenMemoryManagerAlreadyStoresAllocationThenUseItForLinearSteam) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto storage = commandStreamReceiver.getInternalAllocationStorage();
     commandStreamReceiver.storeMakeResidentAllocations = true;
     MemoryManager *memoryManager = commandStreamReceiver.getMemoryManager();
 
     //Make two allocations, since CSR will try to reuse it also
     auto allocation = memoryManager->allocateGraphicsMemory(3 * MemoryConstants::pageSize);
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
     allocation = memoryManager->allocateGraphicsMemory(3 * MemoryConstants::pageSize);
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     MockExperimentalCommandBuffer *mockExCmdBuffer = static_cast<MockExperimentalCommandBuffer *>(commandStreamReceiver.experimentalCmdBuffer.get());
 

@@ -11,6 +11,7 @@
 #include "runtime/event/perf_counter.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/task_information.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/os_interface.h"
 #include "test.h"
@@ -410,7 +411,7 @@ TEST_F(UpdateEventTest, givenEventContainingCommandQueueWhenItsStatusIsUpdatedTo
     size_t size = 4096;
     auto temporary = memoryManager->allocateGraphicsMemory(size, ptr);
     temporary->taskCount = 3;
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporary), TEMPORARY_ALLOCATION);
+    device->getCommandStreamReceiver().getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporary), TEMPORARY_ALLOCATION);
     Event event(commandQueue.get(), CL_COMMAND_NDRANGE_KERNEL, 3, 3);
 
     EXPECT_EQ(1u, hostPtrManager->getFragmentCount());
@@ -462,7 +463,8 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
     cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ioh), UniqueIH(ssh), *cmdQ.getDevice().getMemoryManager());
+                                                   UniqueIH(ioh), UniqueIH(ssh),
+                                                   *cmdQ.getDevice().getCommandStreamReceiver().getInternalAllocationStorage());
 
     MockKernelWithInternals mockKernelWithInternals(*pDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
@@ -500,7 +502,8 @@ TEST_F(InternalsEventTest, processBlockedCommandsAbortKernelOperation) {
     cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ioh), UniqueIH(ssh), *cmdQ.getDevice().getMemoryManager());
+                                                   UniqueIH(ioh), UniqueIH(ssh),
+                                                   *cmdQ.getDevice().getCommandStreamReceiver().getInternalAllocationStorage());
 
     MockKernelWithInternals mockKernelWithInternals(*pDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
@@ -534,7 +537,8 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ioh), UniqueIH(ssh), *cmdQ.getDevice().getMemoryManager());
+                                                   UniqueIH(ioh), UniqueIH(ssh),
+                                                   *cmdQ.getDevice().getCommandStreamReceiver().getInternalAllocationStorage());
 
     SPatchAllocateStatelessPrintfSurface *pPrintfSurface = new SPatchAllocateStatelessPrintfSurface();
     pPrintfSurface->DataParamOffset = 0;
@@ -1449,7 +1453,7 @@ HWTEST_F(InternalsEventTest, givenAbortedCommandWhenSubmitCalledThenDontUpdateFl
     pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ioh), UniqueIH(ssh), *pCmdQ->getDevice().getMemoryManager());
+                                                   UniqueIH(ioh), UniqueIH(ssh), *pCmdQ->getDevice().getCommandStreamReceiver().getInternalAllocationStorage());
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     std::vector<Surface *> v;
     auto cmd = new CommandComputeKernel(*pCmdQ, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode, pKernel, 1);

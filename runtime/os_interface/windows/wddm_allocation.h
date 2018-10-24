@@ -91,6 +91,7 @@ class WddmAllocation : public GraphicsAllocation {
     void setReservedAddress(void *reserveMem) {
         this->reservedAddressSpace = reserveMem;
     }
+    void setGpuAddress(uint64_t graphicsAddress) { this->gpuAddress = graphicsAddress; }
 
   protected:
     void *alignedCpuPtr;

@@ -17,6 +17,7 @@
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/buffer.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
@@ -634,8 +635,8 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
 
     GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(size, host_ptr);
     GraphicsAllocation *graphicsAllocation2 = memoryManager->allocateGraphicsMemory(size, host_ptr2);
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION);
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation2), TEMPORARY_ALLOCATION);
+    csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION);
+    csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation2), TEMPORARY_ALLOCATION);
 
     graphicsAllocation->taskCount = 1;
     graphicsAllocation2->taskCount = 100;

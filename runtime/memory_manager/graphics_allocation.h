@@ -118,7 +118,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     bool isCoherent() { return coherent; };
     void setCoherent(bool coherentIn) { this->coherent = coherentIn; };
-    void setGpuAddress(uint64_t graphicsAddress) { this->gpuAddress = graphicsAddress; }
     void setSize(size_t size) { this->size = size; }
     osHandle peekSharedHandle() { return sharedHandle; }
 

@@ -17,19 +17,19 @@
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/task_information.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/memory_manager/memory_manager.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/surface.h"
 
 namespace OCLRT {
 KernelOperation::~KernelOperation() {
-    memoryManager.storeAllocation(std::unique_ptr<GraphicsAllocation>(dsh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
+    storageForAllocations.storeAllocation(std::unique_ptr<GraphicsAllocation>(dsh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
     if (ioh.get() == dsh.get()) {
         ioh.release();
     }
     if (ioh) {
-        memoryManager.storeAllocation(std::unique_ptr<GraphicsAllocation>(ioh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
+        storageForAllocations.storeAllocation(std::unique_ptr<GraphicsAllocation>(ioh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
     }
-    memoryManager.storeAllocation(std::unique_ptr<GraphicsAllocation>(ssh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
+    storageForAllocations.storeAllocation(std::unique_ptr<GraphicsAllocation>(ssh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
     alignedFree(commandStream->getCpuBase());
 }
 

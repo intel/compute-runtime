@@ -23,6 +23,7 @@
 #include "runtime/helpers/task_information.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/program/printf_handler.h"
@@ -740,7 +741,8 @@ bool CommandQueueHw<GfxFamily>::createAllocationForHostSurface(HostPtrSurface &s
     }
     allocation->taskCount = Event::eventNotReady;
     surface.setAllocation(allocation);
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+    auto storageForAllocation = device->getCommandStreamReceiver().getInternalAllocationStorage();
+    storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
     return true;
 }
 

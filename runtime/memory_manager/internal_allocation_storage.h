@@ -18,7 +18,7 @@ class GraphicsAllocation;
 class InternalAllocationStorage {
   public:
     InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver);
-    void cleanAllocationsList(uint32_t waitTaskCount, uint32_t allocationUsage);
+    void cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage);
     void freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList);
     void storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage);
     void storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount);

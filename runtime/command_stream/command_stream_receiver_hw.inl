@@ -18,6 +18,7 @@
 #include "runtime/helpers/state_base_address.h"
 #include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/command_stream/preemption.h"
@@ -247,7 +248,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (requiredScratchSize && (!scratchAllocation || scratchAllocation->getUnderlyingBufferSize() < requiredScratchSizeInBytes)) {
         if (scratchAllocation) {
             scratchAllocation->taskCount = this->taskCount;
-            getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchAllocation), TEMPORARY_ALLOCATION);
+            internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchAllocation), TEMPORARY_ALLOCATION);
         }
         createScratchSpaceAllocation(requiredScratchSizeInBytes);
         overrideMediaVFEStateDirty(true);

@@ -380,7 +380,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
 
         outBuffer = csr->getMemoryManager()->allocateGraphicsMemory(sizeUserMemory, destMemory);
         csr->makeResidentHostPtrAllocation(outBuffer);
-        csr->getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(outBuffer), TEMPORARY_ALLOCATION);
+        csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(outBuffer), TEMPORARY_ALLOCATION);
         ASSERT_NE(nullptr, outBuffer);
         outBuffer->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
         outBuffer->setMemObjectsAllocationWithWritableFlags(true);

@@ -9,6 +9,7 @@ set(IGDRCL_SRCS_tests_memory_manager
   ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_mt_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/memory_manager_allocate_in_device_pool_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_allocate_in_device_pool_tests.inl

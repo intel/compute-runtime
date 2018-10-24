@@ -10,6 +10,7 @@
 #include "runtime/device/device.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/deferred_deleter.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/aligned_memory.h"
@@ -294,9 +295,11 @@ void MemObj::waitForCsrCompletion() {
 
 void MemObj::destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy) {
     if (asyncDestroy && allocation->taskCount != ObjectNotUsed) {
-        auto currentTag = *memoryManager->getCommandStreamReceiver(0)->getTagAddress();
+        auto commandStreamReceiver = memoryManager->getCommandStreamReceiver(0);
+        auto currentTag = *commandStreamReceiver->getTagAddress();
         if (currentTag < allocation->taskCount) {
-            memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+            auto storageForAllocation = commandStreamReceiver->getInternalAllocationStorage();
+            storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
             return;
         }
     }

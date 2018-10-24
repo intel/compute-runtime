@@ -43,7 +43,7 @@ CommandStreamReceiver::~CommandStreamReceiver() {
         if (indirectHeap[i] != nullptr) {
             auto allocation = indirectHeap[i]->getGraphicsAllocation();
             if (allocation != nullptr) {
-                getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+                internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
             }
             delete indirectHeap[i];
         }
@@ -143,7 +143,7 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
 
         //pass current allocation to reusable list
         if (commandStream.getCpuBase()) {
-            getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream.getGraphicsAllocation()), REUSABLE_ALLOCATION);
+            internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream.getGraphicsAllocation()), REUSABLE_ALLOCATION);
         }
 
         commandStream.replaceBuffer(allocation->getUnderlyingBuffer(), minRequiredSize - sizeForSubmission);
@@ -259,7 +259,7 @@ IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType
         heapMemory = heap->getGraphicsAllocation();
 
     if (heap && heap->getAvailableSpace() < minRequiredSize && heapMemory) {
-        getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
+        internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
         heapMemory = nullptr;
     }
 
@@ -322,7 +322,7 @@ void CommandStreamReceiver::releaseIndirectHeap(IndirectHeap::Type heapType) {
     if (heap) {
         auto heapMemory = heap->getGraphicsAllocation();
         if (heapMemory != nullptr)
-            getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
+            internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
         heap->replaceBuffer(nullptr, 0);
         heap->replaceGraphicsAllocation(nullptr);
     }

@@ -67,7 +67,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         using UniqueIH = std::unique_ptr<IndirectHeap>;
         *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh), UniqueIH(ioh),
-                                                   UniqueIH(ssh), *commandQueue.getDevice().getMemoryManager());
+                                                   UniqueIH(ssh), *commandQueue.getDevice().getCommandStreamReceiver().getInternalAllocationStorage());
         if (parentKernel) {
             (*blockedCommandsData)->doNotFreeISH = true;
         }

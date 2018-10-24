@@ -8,6 +8,7 @@
 #include "hw_cmds.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/kernel_commands.h"
@@ -320,23 +321,24 @@ TEST_F(CommandQueueCommandStreamTest, getCommandStreamCanRecycle) {
     EXPECT_GE(commandStream.getMaxAvailableSpace(), requiredSize);
 }
 
-TEST_F(CommandQueueCommandStreamTest, MemoryManagerWithReusableAllocationsWhenAskedForCommandStreamReturnsAllocationFromReusablePool) {
+TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForCommandStreamReturnsAllocationFromReusablePool) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     CommandQueue cmdQ(context.get(), pDevice, props);
 
     auto memoryManager = pDevice->getMemoryManager();
     size_t requiredSize = alignUp(100, MemoryConstants::pageSize) + CSRequirements::csOverfetchSize;
     auto allocation = memoryManager->allocateGraphicsMemory(requiredSize);
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
-    EXPECT_FALSE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
-    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekContains(*allocation));
+    EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekContains(*allocation));
 
     const auto &indirectHeap = cmdQ.getCS(100);
 
     EXPECT_EQ(indirectHeap.getGraphicsAllocation(), allocation);
 
-    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
 }
 TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenCommandStreamIsPutOnTheReusabeList) {
     auto cmdQ = new CommandQueue(context.get(), pDevice, 0);
@@ -474,7 +476,7 @@ TEST_P(CommandQueueIndirectHeapTest, alignSizeToCacheLine) {
     EXPECT_TRUE(isAligned<MemoryConstants::cacheLineSize>(indirectHeap.getAvailableSpace()));
 }
 
-TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAskedForHeapAllocationReturnsAllocationFromReusablePool) {
+TEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAllocationsWhenAskedForHeapAllocationReturnsAllocationFromReusablePool) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     CommandQueue cmdQ(context.get(), pDevice, props);
 
@@ -493,10 +495,11 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
         allocation->setSize(cmdQ.getDevice().getCommandStreamReceiver().defaultSshSize * 2);
     }
 
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
-    EXPECT_FALSE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
-    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekContains(*allocation));
+    EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekContains(*allocation));
 
     const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
 
@@ -505,13 +508,12 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
     // if we obtain heap from reusable pool, we need to keep the size of allocation
     // surface state heap is an exception, it is capped at (max_ssh_size_for_HW - page_size)
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
-        EXPECT_EQ(cmdQ.getDevice().getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize,
-                  indirectHeap.getMaxAvailableSpace());
+        EXPECT_EQ(commandStreamReceiver.defaultSshSize - MemoryConstants::pageSize, indirectHeap.getMaxAvailableSpace());
     } else {
         EXPECT_EQ(allocationSize, indirectHeap.getMaxAvailableSpace());
     }
 
-    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
 }
 
 TEST_P(CommandQueueIndirectHeapTest, CommandQueueWhenAskedForNewHeapStoresOldHeapForReuse) {

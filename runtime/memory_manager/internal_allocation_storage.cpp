@@ -24,8 +24,8 @@ void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocati
 }
 void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount) {
     std::lock_guard<decltype(mutex)> lock(mutex);
-    if (DebugManager.flags.DisableResourceRecycling.get()) {
-        if (allocationUsage == REUSABLE_ALLOCATION) {
+    if (allocationUsage == REUSABLE_ALLOCATION) {
+        if (DebugManager.flags.DisableResourceRecycling.get()) {
             commandStreamReceiver.getMemoryManager()->freeGraphicsMemory(gfxAllocation.release());
             return;
         }
@@ -35,7 +35,7 @@ void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<Gra
     allocationsList.pushTailOne(*gfxAllocation.release());
 }
 
-void InternalAllocationStorage::cleanAllocationsList(uint32_t waitTaskCount, uint32_t allocationUsage) {
+void InternalAllocationStorage::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
     std::lock_guard<decltype(mutex)> lock(mutex);
     freeAllocationsList(waitTaskCount, (allocationUsage == TEMPORARY_ALLOCATION) ? commandStreamReceiver.getTemporaryAllocations() : commandStreamReceiver.getAllocationsForReuse());
 }

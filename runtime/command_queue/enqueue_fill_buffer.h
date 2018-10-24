@@ -12,6 +12,7 @@
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/surface.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/built_ins/built_ins.h"
 #include <new>
@@ -72,7 +73,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         eventWaitList,
         event);
 
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(patternAllocation), TEMPORARY_ALLOCATION, taskCount);
+    auto storageForAllocation = device->getCommandStreamReceiver().getInternalAllocationStorage();
+    storageForAllocation->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), TEMPORARY_ALLOCATION, taskCount);
 
     return CL_SUCCESS;
 }
