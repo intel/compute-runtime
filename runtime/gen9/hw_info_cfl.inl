@@ -55,6 +55,7 @@ const RuntimeCapabilityTable CFL::capabilityTable{0,
                                                   true,                           // sourceLevelDebuggerSupported
                                                   CmdServicesMemTraceVersion::DeviceValues::Cfl,
                                                   0,                                 // extraQuantityThreadsPerEU
+                                                  true,                              // SupportsVme
                                                   MemoryConstants::max48BitAddress}; // gpuAddressSpace
 
 const HardwareInfo CFL_1x2x6::hwInfo = {

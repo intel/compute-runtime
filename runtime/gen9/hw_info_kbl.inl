@@ -55,6 +55,7 @@ const RuntimeCapabilityTable KBL::capabilityTable{0,
                                                   true,                           // sourceLevelDebuggerSupported
                                                   CmdServicesMemTraceVersion::DeviceValues::Kbl,
                                                   0,                                 // extraQuantityThreadsPerEU
+                                                  true,                              // SupportsVme
                                                   MemoryConstants::max48BitAddress}; // gpuAddressSpace
 
 const HardwareInfo KBL_1x2x6::hwInfo = {

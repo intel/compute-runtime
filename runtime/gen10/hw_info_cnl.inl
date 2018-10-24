@@ -62,6 +62,7 @@ const RuntimeCapabilityTable CNL::capabilityTable{0,
                                                   true, // sourceLevelDebuggerSupported
                                                   CmdServicesMemTraceVersion::DeviceValues::Cnl,
                                                   0,                                 // extraQuantityThreadsPerEU
+                                                  true,                              // SupportsVme
                                                   MemoryConstants::max48BitAddress}; // gpuAddressSpace
 
 const HardwareInfo CNL_2x5x8::hwInfo = {

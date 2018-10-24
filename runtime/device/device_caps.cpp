@@ -138,6 +138,7 @@ void Device::initializeCaps() {
     deviceInfo.platformLP = (hwInfo.capabilityTable.clVersionSupport == 12) ? true : false;
     deviceInfo.cpuCopyAllowed = true;
     deviceInfo.spirVersions = spirVersions.c_str();
+    auto supportsVme = hwInfo.capabilityTable.supportsVme;
 
     if (enabledClVersion >= 21) {
         deviceInfo.independentForwardProgress = true;
@@ -159,11 +160,11 @@ void Device::initializeCaps() {
         deviceExtensions += "cl_intel_packed_yuv ";
         deviceInfo.packedYuvExtension = true;
     }
-    if (DebugManager.flags.EnableIntelVme.get()) {
+    if (DebugManager.flags.EnableIntelVme.get() && supportsVme) {
         deviceExtensions += "cl_intel_motion_estimation ";
         deviceInfo.vmeExtension = true;
     }
-    if (DebugManager.flags.EnableIntelAdvancedVme.get()) {
+    if (DebugManager.flags.EnableIntelAdvancedVme.get() && supportsVme) {
         deviceExtensions += "cl_intel_advanced_motion_estimation ";
     }
 

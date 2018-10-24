@@ -425,9 +425,11 @@ TEST(Device_GetCaps, givenEnablePackedYuvsetToTrueWhenCapsAreCreatedThenDeviceRe
     DebugManager.flags.EnablePackedYuv.set(false);
 }
 
-TEST(Device_GetCaps, givenEnableVmeSetToTrueWhenCapsAreCreatedThenDeviceReportsVmeExtensionAndBuiltins) {
+TEST(Device_GetCaps, givenEnableVmeSetToTrueAndDeviceSupportsVmeWhenCapsAreCreatedThenDeviceReportsVmeExtensionAndBuiltins) {
     DebugManager.flags.EnableIntelVme.set(true);
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsVme = true;
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_motion_estimation")));
@@ -438,9 +440,11 @@ TEST(Device_GetCaps, givenEnableVmeSetToTrueWhenCapsAreCreatedThenDeviceReportsV
     DebugManager.flags.EnableIntelVme.set(false);
 }
 
-TEST(Device_GetCaps, givenEnableVmeSetToFalseWhenCapsAreCreatedThenDeviceDoesNotReportsVmeExtensionAndBuiltins) {
-    DebugManager.flags.EnableIntelVme.set(false);
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+TEST(Device_GetCaps, givenEnableVmeSetToTrueAndDeviceDoesNotSupportVmeWhenCapsAreCreatedThenDeviceDoesNotReportVmeExtensionAndBuiltins) {
+    DebugManager.flags.EnableIntelVme.set(true);
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsVme = false;
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_motion_estimation"))));
@@ -451,9 +455,41 @@ TEST(Device_GetCaps, givenEnableVmeSetToFalseWhenCapsAreCreatedThenDeviceDoesNot
     DebugManager.flags.EnableIntelVme.set(false);
 }
 
-TEST(Device_GetCaps, givenEnableAdvancedVmeSetToTrueWhenCapsAreCreatedThenDeviceReportsAdvancedVmeExtensionAndBuiltins) {
+TEST(Device_GetCaps, givenEnableVmeSetToFalseAndDeviceDoesNotSupportVmeWhenCapsAreCreatedThenDeviceDoesNotReportVmeExtensionAndBuiltins) {
+    DebugManager.flags.EnableIntelVme.set(false);
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsVme = false;
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_motion_estimation"))));
+    EXPECT_FALSE(caps.vmeExtension);
+
+    EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_motion_estimate_intel")));
+
+    DebugManager.flags.EnableIntelVme.set(false);
+}
+
+TEST(Device_GetCaps, givenEnableVmeSetToFalseAndDeviceSupportsVmeWhenCapsAreCreatedThenDeviceDoesNotReportVmeExtensionAndBuiltins) {
+    DebugManager.flags.EnableIntelVme.set(false);
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsVme = true;
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_motion_estimation"))));
+    EXPECT_FALSE(caps.vmeExtension);
+
+    EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_motion_estimate_intel")));
+
+    DebugManager.flags.EnableIntelVme.set(false);
+}
+
+TEST(Device_GetCaps, givenEnableAdvancedVmeSetToTrueAndDeviceSupportsVmeWhenCapsAreCreatedThenDeviceReportsAdvancedVmeExtensionAndBuiltins) {
     DebugManager.flags.EnableIntelAdvancedVme.set(true);
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsVme = true;
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_advanced_motion_estimation")));
@@ -464,9 +500,41 @@ TEST(Device_GetCaps, givenEnableAdvancedVmeSetToTrueWhenCapsAreCreatedThenDevice
     DebugManager.flags.EnableIntelAdvancedVme.set(false);
 }
 
-TEST(Device_GetCaps, givenEnableAdvancedVmeSetToFalseWhenCapsAreCreatedThenDeviceDoesNotReportsAdvancedVmeExtensionAndBuiltins) {
+TEST(Device_GetCaps, givenEnableAdvancedVmeSetToTrueAndDeviceDoesNotSupportVmeWhenCapsAreCreatedThenDeviceDoesNotReportAdvancedVmeExtensionAndBuiltins) {
+    DebugManager.flags.EnableIntelAdvancedVme.set(true);
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsVme = false;
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_advanced_motion_estimation"))));
+
+    EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_advanced_motion_estimate_check_intel")));
+    EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_advanced_motion_estimate_bidirectional_check_intel")));
+
     DebugManager.flags.EnableIntelAdvancedVme.set(false);
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+}
+
+TEST(Device_GetCaps, givenEnableAdvancedVmeSetToFalseAndDeviceDoesNotSupportVmeWhenCapsAreCreatedThenDeviceDoesNotReportAdvancedVmeExtensionAndBuiltins) {
+    DebugManager.flags.EnableIntelAdvancedVme.set(false);
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsVme = false;
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_advanced_motion_estimation"))));
+
+    EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_advanced_motion_estimate_check_intel")));
+    EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_advanced_motion_estimate_bidirectional_check_intel")));
+
+    DebugManager.flags.EnableIntelAdvancedVme.set(false);
+}
+
+TEST(Device_GetCaps, givenEnableAdvancedVmeSetToFalseAndDeviceSupportsVmeWhenCapsAreCreatedThenDeviceDoesNotReportAdvancedVmeExtensionAndBuiltins) {
+    DebugManager.flags.EnableIntelAdvancedVme.set(false);
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.supportsVme = true;
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_advanced_motion_estimation"))));

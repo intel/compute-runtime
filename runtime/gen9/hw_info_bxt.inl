@@ -60,6 +60,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{0,
                                                   true,                           // sourceLevelDebuggerSupported
                                                   CmdServicesMemTraceVersion::DeviceValues::Bxt,
                                                   0,                                 // extraQuantityThreadsPerEU
+                                                  true,                              // SupportsVme
                                                   MemoryConstants::max48BitAddress}; // gpuAddressSpace
 
 const HardwareInfo BXT_1x2x6::hwInfo = {
