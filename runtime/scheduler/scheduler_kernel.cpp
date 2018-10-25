@@ -8,6 +8,8 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/scheduler/scheduler_kernel.h"
 
+#include <cinttypes>
+
 namespace OCLRT {
 
 void SchedulerKernel::setArgs(GraphicsAllocation *queue,
@@ -56,6 +58,6 @@ void SchedulerKernel::computeGws() {
     }
 
     DBG_LOG(PrintEMDebugInformation, "Scheduler GWS: ", gws);
-    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Scheduler GWS: ", gws);
+    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Scheduler GWS: %" PRIu64, static_cast<uint64_t>(gws));
 }
 } // namespace OCLRT
