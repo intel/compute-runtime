@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -50,6 +50,11 @@ if(UNIX)
   install(FILES ${IGDRCL_BINARY_DIR}/libintelopencl.conf DESTINATION ${_dir_etc}/ld.so.conf.d COMPONENT opencl)
   install(FILES ${IGDRCL_BINARY_DIR}/intel.icd DESTINATION ${_dir_etc}/OpenCL/vendors/ COMPONENT opencl)
 
+  install(FILES $<TARGET_FILE:ocloc>
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+    COMPONENT ocloc)
+
   if(NEO_CPACK_GENERATOR)
     set(CPACK_GENERATOR "${NEO_CPACK_GENERATOR}")
   else()
@@ -92,7 +97,7 @@ if(UNIX)
   set(CPACK_DEB_COMPONENT_INSTALL ON)
   set(CPACK_RPM_COMPONENT_INSTALL ON)
   set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-  set(CPACK_COMPONENTS_ALL opencl)
+  set(CPACK_COMPONENTS_ALL opencl ocloc)
   set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
     /etc/ld.so.conf.d
     /usr/local
@@ -101,11 +106,14 @@ if(UNIX)
 
   if(CMAKE_VERSION VERSION_GREATER 3.6 OR CMAKE_VERSION VERSION_EQUAL 3.6)
     set(CPACK_DEBIAN_OPENCL_FILE_NAME "intel-opencl_${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-1_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
+    set(CPACK_DEBIAN_OCLOC_FILE_NAME "intel-opencl-ocloc_${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-1_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
     set(CPACK_RPM_OPENCL_FILE_NAME "intel-opencl-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_RPM_PACKAGE_RELEASE}%{?dist}.${CPACK_RPM_PACKAGE_ARCHITECTURE}.rpm")
+    set(CPACK_RPM_OCLOC_FILE_NAME "intel-opencl-ocloc-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_RPM_PACKAGE_RELEASE}%{?dist}.${CPACK_RPM_PACKAGE_ARCHITECTURE}.rpm")
     set(CPACK_ARCHIVE_OPENCL_FILE_NAME "intel-opencl-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_PACKAGE_ARCHITECTURE}")
+    set(CPACK_ARCHIVE_OCLOC_FILE_NAME "intel-opencl-ocloc-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_PACKAGE_ARCHITECTURE}")
   else()
     if(CPACK_GENERATOR STREQUAL "DEB")
-      set(CPACK_PACKAGE_FILE_NAME "intel-opencl_${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}-${NEO_VERSION_BUILD}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
+      set(CPACK_PACKAGE_FILE_NAME "intel-opencl_${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
     elseif(CPACK_GENERATOR STREQUAL "RPM")
       set(CPACK_PACKAGE_FILE_NAME "intel-opencl-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_RPM_PACKAGE_RELEASE}%{?dist}.${CPACK_RPM_PACKAGE_ARCHITECTURE}.rpm")
     else()
@@ -114,19 +122,23 @@ if(UNIX)
   endif()
 
   if(IGDRCL__GMM_FOUND)
-      list(APPEND _external_package_dependencies "intel-gmmlib(=${IGDRCL__GMM_VERSION})")
+    list(APPEND _external_package_dependencies "intel-gmmlib(=${IGDRCL__GMM_VERSION})")
   else()
-      list(APPEND _external_package_dependencies "intel-gmmlib")
+    list(APPEND _external_package_dependencies "intel-gmmlib")
   endif()
 
   if(IGDRCL__IGC_FOUND)
-      list(APPEND _external_package_dependencies "intel-igc-opencl(=${IGDRCL__IGC_VERSION})")
+    list(APPEND _external_package_dependencies "intel-igc-opencl(=${IGDRCL__IGC_VERSION})")
+    list(APPEND _igc_package_dependencies "intel-igc-opencl(=${IGDRCL__IGC_VERSION})")
   else()
-      list(APPEND _external_package_dependencies "intel-igc-opencl")
+    list(APPEND _external_package_dependencies "intel-igc-opencl")
+    list(APPEND _igc_package_dependencies "intel-igc-opencl")
   endif()
 
   string(REPLACE ";" ", " CPACK_DEBIAN_OPENCL_PACKAGE_DEPENDS "${_external_package_dependencies}")
+  string(REPLACE ";" ", " CPACK_DEBIAN_OCLOC_PACKAGE_DEPENDS "${_igc_package_dependencies}")
   string(REPLACE ";" ", " CPACK_RPM_OPENCL_PACKAGE_REQUIRES "${_external_package_dependencies}")
+  string(REPLACE ";" ", " CPACK_RPM_OCLOC_PACKAGE_REQUIRES "${_igc_package_dependencies}")
 
   include(CPack)
 
