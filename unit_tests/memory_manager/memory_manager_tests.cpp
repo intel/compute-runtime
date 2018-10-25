@@ -1878,3 +1878,19 @@ TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenIt
     EXPECT_EQ(lastFenceValue3, residency.lastFenceValues[1]);
     EXPECT_EQ(lastFenceValue3, residency.getFenceValueForContextId(osContext2.getContextId()));
 }
+
+TEST(Heap32AllocationTests, givenDebugModeWhenMallocIsUsedToCreateAllocationWhenAllocationIsCreatedThenItDoesntRequireCpuPointerCleanup) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.UseMallocToObtainHeap32Base.set(true);
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.incRefInternal();
+    OsAgnosticMemoryManager memoryManager(true, true, executionEnvironment);
+    auto internalBase = memoryManager.allocator32Bit->getBase();
+    EXPECT_NE(0x40000000000ul, internalBase);
+    EXPECT_NE(0x80000000000ul, internalBase);
+    EXPECT_NE(0x0ul, internalBase);
+
+    auto allocation = static_cast<MemoryAllocation *>(memoryManager.allocate32BitGraphicsMemory(4096u, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION));
+    EXPECT_FALSE(allocation->cpuPtrAllocated);
+    memoryManager.freeGraphicsMemory(allocation);
+}

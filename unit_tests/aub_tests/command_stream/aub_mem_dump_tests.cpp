@@ -26,10 +26,10 @@ std::string getAubFileName(const OCLRT::Device *pDevice, const std::string baseN
 }
 
 TEST(PageTableTraits, when48BitTraitsAreUsedThenPageTableAddressesAreCorrect) {
-    EXPECT_EQ(BIT(34), AubMemDump::PageTableTraits<48>::ptBaseAddress);
-    EXPECT_EQ(BIT(33), AubMemDump::PageTableTraits<48>::pdBaseAddress);
-    EXPECT_EQ(BIT(32), AubMemDump::PageTableTraits<48>::pdpBaseAddress);
-    EXPECT_EQ(BIT(31), AubMemDump::PageTableTraits<48>::pml4BaseAddress);
+    EXPECT_EQ(BIT(32), AubMemDump::PageTableTraits<48>::ptBaseAddress);
+    EXPECT_EQ(BIT(31), AubMemDump::PageTableTraits<48>::pdBaseAddress);
+    EXPECT_EQ(BIT(30), AubMemDump::PageTableTraits<48>::pdpBaseAddress);
+    EXPECT_EQ(BIT(29), AubMemDump::PageTableTraits<48>::pml4BaseAddress);
 }
 
 TEST(PageTableTraits, when32BitTraitsAreUsedThenPageTableAddressesAreCorrect) {

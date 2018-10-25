@@ -19,6 +19,9 @@
 namespace OCLRT {
 
 OsAgnosticMemoryManager::~OsAgnosticMemoryManager() {
+    if (DebugManager.flags.UseMallocToObtainHeap32Base.get()) {
+        alignedFreeWrapper(reinterpret_cast<void *>(allocator32Bit->getBase()));
+    }
     applyCommonCleanup();
 }
 
@@ -92,8 +95,15 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
     void *ptrAlloc = nullptr;
     auto gpuAddress = allocator32Bit->allocate(allocationSize);
 
-    if (size < 0xfffff000) {
-        ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
+    auto freeCpuPointer = true;
+
+    if (DebugManager.flags.UseMallocToObtainHeap32Base.get()) {
+        ptrAlloc = reinterpret_cast<void *>(gpuAddress);
+        freeCpuPointer = false;
+    } else {
+        if (size < 0xfffff000) {
+            ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
+        }
     }
 
     MemoryAllocation *memoryAllocation = nullptr;
@@ -102,7 +112,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
         memoryAllocation->is32BitAllocation = true;
         memoryAllocation->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());
         memoryAllocation->sizeToFree = allocationSize;
-        memoryAllocation->cpuPtrAllocated = true;
+        memoryAllocation->cpuPtrAllocated = freeCpuPointer;
     }
     counter++;
     return memoryAllocation;
@@ -242,6 +252,13 @@ Allocator32bit *OsAgnosticMemoryManager::create32BitAllocator(bool aubUsage) {
     if (is32bit) {
         heap32Base = 0x0;
     }
+
+    if (DebugManager.flags.UseMallocToObtainHeap32Base.get()) {
+        size_t allocationSize = 40 * 1024 * 1024u;
+        allocatorSize = static_cast<uint64_t>(allocationSize);
+        heap32Base = castToUint64(alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment));
+    }
+
     return new Allocator32bit(heap32Base, allocatorSize);
 }
 } // namespace OCLRT
