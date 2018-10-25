@@ -9,7 +9,7 @@
 Example:
 
 ```shell
-sudo apt-get ccache cmake g++ git pkg-config
+sudo apt-get install ccache cmake g++ git pkg-config
 ```
 
 See [LIMITATIONS.md](https://github.com/intel/compute-runtime/blob/master/documentation/LIMITATIONS.md) for other requirements and dependencies, when building and installing NEO.
