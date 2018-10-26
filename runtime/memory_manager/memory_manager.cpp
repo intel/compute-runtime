@@ -148,10 +148,6 @@ void MemoryManager::freeSystemMemory(void *ptr) {
     ::alignedFree(ptr);
 }
 
-std::unique_ptr<GraphicsAllocation> MemoryManager::obtainReusableAllocation(size_t requiredSize, bool internalAllocation) {
-    return getCommandStreamReceiver(0)->getInternalAllocationStorage()->obtainReusableAllocation(requiredSize, internalAllocation);
-}
-
 void MemoryManager::setForce32BitAllocations(bool newValue) {
     if (newValue && !this->allocator32Bit) {
         this->allocator32Bit.reset(new Allocator32bit);

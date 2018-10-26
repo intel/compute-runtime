@@ -223,7 +223,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
     DEBUG_BREAK_IF(nullptr == memoryManager);
 
     auto commandStreamReceieverOwnership = device->getCommandStreamReceiver().obtainUniqueOwnership();
-    auto patternAllocation = memoryManager->obtainReusableAllocation(patternSize, false).release();
+    auto storageWithAllocations = device->getCommandStreamReceiver().getInternalAllocationStorage();
+    auto patternAllocation = storageWithAllocations->obtainReusableAllocation(patternSize, false).release();
     commandStreamReceieverOwnership.unlock();
 
     if (!patternAllocation) {
@@ -271,8 +272,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
         eventWaitList,
         event);
 
-    auto storageForAllocation = device->getCommandStreamReceiver().getInternalAllocationStorage();
-    storageForAllocation->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION, taskCount);
+    storageWithAllocations->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION, taskCount);
 
     return CL_SUCCESS;
 }

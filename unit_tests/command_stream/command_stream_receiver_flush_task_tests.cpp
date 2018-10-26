@@ -1663,7 +1663,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, InForced32BitAllocationsModeDoNotS
     auto newScratchAllocation = commandStreamReceiver->getScratchAllocation();
     EXPECT_NE(scratchAllocation, newScratchAllocation); // Allocation changed
 
-    std::unique_ptr<GraphicsAllocation> allocationReusable = pDevice->getMemoryManager()->obtainReusableAllocation(4096, false);
+    std::unique_ptr<GraphicsAllocation> allocationReusable = commandStreamReceiver->getInternalAllocationStorage()->obtainReusableAllocation(4096, false);
 
     if (allocationReusable.get() != nullptr) {
         if (is64bit) {

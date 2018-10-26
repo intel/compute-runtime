@@ -214,7 +214,7 @@ LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
 
         auto requiredSize = minRequiredSize + CSRequirements::csOverfetchSize;
 
-        GraphicsAllocation *allocation = memoryManager->obtainReusableAllocation(requiredSize, false).release();
+        GraphicsAllocation *allocation = storageForAllocation->obtainReusableAllocation(requiredSize, false).release();
 
         if (!allocation) {
             allocation = memoryManager->allocateGraphicsMemory(requiredSize);

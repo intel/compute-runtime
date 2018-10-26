@@ -134,7 +134,7 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
 
         auto requiredSize = minRequiredSize + CSRequirements::csOverfetchSize;
 
-        auto allocation = getMemoryManager()->obtainReusableAllocation(requiredSize, false).release();
+        auto allocation = internalAllocationStorage->obtainReusableAllocation(requiredSize, false).release();
         if (!allocation) {
             allocation = getMemoryManager()->allocateGraphicsMemory(requiredSize);
         }
@@ -287,7 +287,7 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
 
     finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);
 
-    auto heapMemory = getMemoryManager()->obtainReusableAllocation(finalHeapSize, requireInternalHeap).release();
+    auto heapMemory = internalAllocationStorage->obtainReusableAllocation(finalHeapSize, requireInternalHeap).release();
 
     if (!heapMemory) {
         if (requireInternalHeap) {
