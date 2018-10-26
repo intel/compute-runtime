@@ -76,7 +76,7 @@ class Wddm {
     MOCKABLE_VIRTUAL bool queryAdapterInfo();
 
     MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext);
-    MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext);
+    MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence);
 
     NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
     VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmMemoryManager *memoryManager);

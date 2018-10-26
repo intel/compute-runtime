@@ -670,7 +670,7 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
     gdi->getWaitFromCpuArg().ObjectCount = 0;
     gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    auto status = wddm->waitFromCpu(10, *osContextWin);
+    auto status = wddm->waitFromCpu(10, osContextWin->getResidencyController().getMonitoredFence());
 
     EXPECT_TRUE(status);
 
@@ -693,7 +693,7 @@ TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     gdi->getWaitFromCpuArg().ObjectCount = 0;
     gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    auto status = wddm->waitFromCpu(20, *osContextWin);
+    auto status = wddm->waitFromCpu(20, osContextWin->getResidencyController().getMonitoredFence());
 
     EXPECT_TRUE(status);
 
@@ -708,7 +708,7 @@ TEST_F(Wddm20Tests, createMonitoredFenceIsInitializedWithFenceValueZeroAndCurren
 
     gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue = 300;
 
-    wddm->wddmInterface->createMonitoredFence(*osContextWin);
+    wddm->wddmInterface->createMonitoredFence(osContextWin->getResidencyController());
 
     EXPECT_EQ(0u, gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue);
     EXPECT_EQ(1u, osContextWin->getResidencyController().getMonitoredFence().currentFenceValue);

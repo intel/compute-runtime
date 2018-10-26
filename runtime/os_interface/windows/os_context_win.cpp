@@ -23,7 +23,7 @@ OsContextWin::OsContextImpl(Wddm &wddm, uint32_t osContextId) : wddm(wddm), resi
             return;
         }
     }
-    initialized = wddmInterface->createMonitoredFence(*this);
+    initialized = wddmInterface->createMonitoredFence(this->residencyController);
 };
 OsContextWin::~OsContextImpl() {
     wddm.getWddmInterface()->destroyHwQueue(hwQueueHandle);

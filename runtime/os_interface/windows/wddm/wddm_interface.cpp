@@ -18,7 +18,7 @@ bool WddmInterface20::createHwQueue(PreemptionMode preemptionMode, OsContextWin 
 }
 void WddmInterface20::destroyHwQueue(D3DKMT_HANDLE hwQueue) {}
 
-bool WddmInterface::createMonitoredFence(OsContextWin &osContext) {
+bool WddmInterface::createMonitoredFence(WddmResidencyController &residencyController) {
     NTSTATUS Status;
     D3DKMT_CREATESYNCHRONIZATIONOBJECT2 CreateSynchronizationObject = {0};
     CreateSynchronizationObject.hDevice = wddm.getDevice();
@@ -29,9 +29,9 @@ bool WddmInterface::createMonitoredFence(OsContextWin &osContext) {
 
     DEBUG_BREAK_IF(STATUS_SUCCESS != Status);
 
-    osContext.getResidencyController().resetMonitoredFenceParams(CreateSynchronizationObject.hSyncObject,
-                                                                 reinterpret_cast<uint64_t *>(CreateSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress),
-                                                                 CreateSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress);
+    residencyController.resetMonitoredFenceParams(CreateSynchronizationObject.hSyncObject,
+                                                  reinterpret_cast<uint64_t *>(CreateSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress),
+                                                  CreateSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress);
 
     return Status == STATUS_SUCCESS;
 }

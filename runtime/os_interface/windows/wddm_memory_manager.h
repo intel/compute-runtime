@@ -79,8 +79,6 @@ class WddmMemoryManager : public MemoryManager {
     AlignedMallocRestrictions *getAlignedMallocRestrictions() override;
 
   protected:
-    void trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint64_t bytes);
-    bool trimResidencyToBudget(uint64_t bytes);
     VOID *trimCallbackHandle = nullptr;
 
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle);

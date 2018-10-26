@@ -158,7 +158,7 @@ MemoryManager *WddmCommandStreamReceiver<GfxFamily>::createMemoryManager(bool en
 
 template <typename GfxFamily>
 bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStampToWait, OsContext &osContext) {
-    return wddm->waitFromCpu(flushStampToWait, *osContext.get());
+    return wddm->waitFromCpu(flushStampToWait, osContext.get()->getResidencyController().getMonitoredFence());
 }
 
 template <typename GfxFamily>

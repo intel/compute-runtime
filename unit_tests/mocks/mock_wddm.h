@@ -73,7 +73,7 @@ class WddmMock : public Wddm {
     bool openAdapter() override;
     void setHeap32(uint64_t base, uint64_t size);
     GMM_GFX_PARTITIONING *getGfxPartitionPtr();
-    bool waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext) override;
+    bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence) override;
     void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) override;
     int virtualFree(void *ptr, size_t size, unsigned long flags) override;
     void releaseReservedAddress(void *reservedAddress) override;

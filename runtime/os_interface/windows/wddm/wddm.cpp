@@ -768,13 +768,13 @@ bool Wddm::waitOnGPU(D3DKMT_HANDLE context) {
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext) {
+bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence) {
     NTSTATUS status = STATUS_SUCCESS;
 
-    if (lastFenceValue > *osContext.getResidencyController().getMonitoredFence().cpuAddress) {
+    if (lastFenceValue > *monitoredFence.cpuAddress) {
         D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {0};
         waitFromCpu.ObjectCount = 1;
-        waitFromCpu.ObjectHandleArray = &osContext.getResidencyController().getMonitoredFence().fenceHandle;
+        waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
         waitFromCpu.FenceValueArray = &lastFenceValue;
         waitFromCpu.hDevice = device;
         waitFromCpu.hAsyncEvent = NULL;

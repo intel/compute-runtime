@@ -46,9 +46,13 @@ class WddmResidencyController {
     MonitoredFence &getMonitoredFence() { return monitoredFence; }
     void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
 
+    void trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint64_t bytes);
+    bool trimResidencyToBudget(uint64_t bytes);
+
   protected:
     Wddm &wddm;
     uint32_t osContextId;
+    MonitoredFence monitoredFence = {};
 
     std::atomic<bool> lock = false;
     std::atomic_flag trimCallbackLock = ATOMIC_FLAG_INIT;
@@ -56,6 +60,5 @@ class WddmResidencyController {
     uint64_t lastTrimFenceValue = 0u;
     ResidencyContainer trimCandidateList;
     uint32_t trimCandidatesCount = 0;
-    MonitoredFence monitoredFence = {};
 };
 } // namespace OCLRT

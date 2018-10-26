@@ -15,6 +15,7 @@
 namespace OCLRT {
 class Gdi;
 class Wddm;
+class WddmResidencyController;
 
 using OsContextWin = OsContext::OsContextImpl;
 
@@ -25,7 +26,7 @@ class WddmInterface {
     WddmInterface() = delete;
     virtual bool createHwQueue(PreemptionMode preemptionMode, OsContextWin &osContext) = 0;
     virtual void destroyHwQueue(D3DKMT_HANDLE hwQueue) = 0;
-    bool createMonitoredFence(OsContextWin &osContext);
+    bool createMonitoredFence(WddmResidencyController &residencyController);
     virtual const bool hwQueuesSupported() = 0;
     virtual bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) = 0;
     Wddm &wddm;

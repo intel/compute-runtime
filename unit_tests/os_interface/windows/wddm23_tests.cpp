@@ -118,7 +118,7 @@ TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpd
 }
 
 TEST_F(Wddm23Tests, whenMonitoredFenceIsCreatedThenSetupAllRequiredFields) {
-    wddm->wddmInterface->createMonitoredFence(*osContextWin);
+    wddm->wddmInterface->createMonitoredFence(osContextWin->getResidencyController());
 
     EXPECT_NE(nullptr, osContextWin->getResidencyController().getMonitoredFence().cpuAddress);
     EXPECT_EQ(1u, osContextWin->getResidencyController().getMonitoredFence().currentFenceValue);
