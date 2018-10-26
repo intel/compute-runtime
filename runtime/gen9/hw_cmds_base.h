@@ -23,7 +23,7 @@ struct GEN9 {
 };
 
 struct SKLFamily : public GEN9 {
-    using PARSE = CmdParse<SKL>;
+    using PARSE = CmdParse<SKLFamily>;
     using GfxFamily = SKLFamily;
     using WALKER_TYPE = GPGPU_WALKER;
     static const GPGPU_WALKER cmdInitGpgpuWalker;

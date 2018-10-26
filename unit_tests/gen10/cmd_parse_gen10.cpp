@@ -8,7 +8,7 @@
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "gtest/gtest.h"
 using GenStruct = OCLRT::GEN10;
-using GenGfxFamily = OCLRT::CNL;
+using GenGfxFamily = OCLRT::CNLFamily;
 #include "unit_tests/gen_common/cmd_parse_base.inl"
 #include "unit_tests/gen_common/cmd_parse_base_mi_arb.inl"
 #include "unit_tests/gen_common/cmd_parse_gpgpu_walker.inl"

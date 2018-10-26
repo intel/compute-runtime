@@ -22,7 +22,7 @@ struct GEN8 {
 #include "runtime/gen8/hw_cmds_generated_patched.h"
 };
 struct BDWFamily : public GEN8 {
-    using PARSE = CmdParse<BDW>;
+    using PARSE = CmdParse<BDWFamily>;
     using GfxFamily = BDWFamily;
     using WALKER_TYPE = GPGPU_WALKER;
     static const GPGPU_WALKER cmdInitGpgpuWalker;

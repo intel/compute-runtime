@@ -23,7 +23,7 @@ struct GEN10 {
 };
 
 struct CNLFamily : public GEN10 {
-    using PARSE = CmdParse<CNL>;
+    using PARSE = CmdParse<CNLFamily>;
     using GfxFamily = CNLFamily;
     using WALKER_TYPE = GPGPU_WALKER;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
