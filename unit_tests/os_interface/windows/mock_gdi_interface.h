@@ -41,7 +41,7 @@ class MockGdi : public Gdi {
         return 0;
     }
 
-    static NTSTATUS __stdcall registerTimNotificationMock(IN D3DKMT_REGISTERTRIMNOTIFICATION *arg) {
+    static NTSTATUS __stdcall registerTrimNotificationMock(IN D3DKMT_REGISTERTRIMNOTIFICATION *arg) {
         getRegisterTrimNotificationArg() = *arg;
         arg->Handle = reinterpret_cast<VOID *>(1);
         return 0;
@@ -92,7 +92,7 @@ class MockGdi : public Gdi {
         } else {
             evict = reinterpret_cast<PFND3DKMT_EVICT>(evictMock);
         }
-        registerTrimNotification = reinterpret_cast<PFND3DKMT_REGISTERTRIMNOTIFICATION>(registerTimNotificationMock);
+        registerTrimNotification = reinterpret_cast<PFND3DKMT_REGISTERTRIMNOTIFICATION>(registerTrimNotificationMock);
         unregisterTrimNotification = reinterpret_cast<PFND3DKMT_UNREGISTERTRIMNOTIFICATION>(unregisterTrimNotificationMock);
         destroyAllocation2 = reinterpret_cast<PFND3DKMT_DESTROYALLOCATION2>(destroyAllocation2Mock);
         waitForSynchronizationObjectFromCpu = reinterpret_cast<PFND3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU>(waitFromCpuMock);
