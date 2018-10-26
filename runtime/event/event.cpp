@@ -8,7 +8,7 @@
 #include "public/cl_ext_private.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/memory_manager/memory_manager.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/event/event.h"
@@ -310,8 +310,8 @@ inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {
 
     DEBUG_BREAK_IF(this->taskLevel == Event::eventNotReady && this->executionStatus >= 0);
 
-    auto *memoryManager = cmdQueue->getDevice().getMemoryManager();
-    memoryManager->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
+    auto *allocationStorage = cmdQueue->getDevice().getCommandStreamReceiver().getInternalAllocationStorage();
+    allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
 
     return true;
 }
@@ -346,7 +346,8 @@ void Event::updateExecutionStatus() {
         transitionExecutionStatus(CL_COMPLETE);
         executeCallbacks(CL_COMPLETE);
         unblockEventsBlockedByThis(CL_COMPLETE);
-        cmdQueue->getDevice().getMemoryManager()->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
+        auto *allocationStorage = cmdQueue->getDevice().getCommandStreamReceiver().getInternalAllocationStorage();
+        allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
         return;
     }
 

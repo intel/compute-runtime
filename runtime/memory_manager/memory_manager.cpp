@@ -171,15 +171,6 @@ void MemoryManager::applyCommonCleanup() {
     }
 }
 
-bool MemoryManager::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
-    getCommandStreamReceiver(0)->getInternalAllocationStorage()->cleanAllocationList(waitTaskCount, allocationUsage);
-    return false;
-}
-
-void MemoryManager::freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList) {
-    getCommandStreamReceiver(0)->getInternalAllocationStorage()->freeAllocationsList(waitTaskCount, allocationsList);
-}
-
 TagAllocator<HwTimeStamps> *MemoryManager::getEventTsAllocator() {
     if (profilingTimeStampAllocator.get() == nullptr) {
         profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(this, TagCount, MemoryConstants::cacheLineSize);

@@ -209,6 +209,7 @@ class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
 class MockCommandStreamReceiver : public CommandStreamReceiver {
   public:
     using CommandStreamReceiver::CommandStreamReceiver;
+    using CommandStreamReceiver::internalAllocationStorage;
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::tagAddress;

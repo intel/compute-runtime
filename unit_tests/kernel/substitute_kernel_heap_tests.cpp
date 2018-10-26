@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "test.h"
@@ -108,6 +109,7 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     MockKernelWithInternals kernel(*pDevice);
     auto pHeader = const_cast<SKernelBinaryHeaderCommon *>(kernel.kernelInfo.heapInfo.pKernelHeader);
     auto memoryManager = pDevice->getMemoryManager();
+    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
 
     const size_t initialHeapSize = 0x40;
     pHeader->KernelHeapSize = initialHeapSize;
@@ -120,13 +122,13 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     const size_t newHeapSize = initialHeapSize + 1;
     char newHeap[newHeapSize];
 
-    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());
 
     kernel.mockKernel->substituteKernelHeap(newHeap, newHeapSize);
     auto secondAllocation = kernel.kernelInfo.kernelAllocation;
 
-    EXPECT_FALSE(memoryManager->getCommandStreamReceiver(0)->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_EQ(memoryManager->getCommandStreamReceiver(0)->getTemporaryAllocations().peekHead(), firstAllocation);
+    EXPECT_FALSE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_EQ(commandStreamReceiver.getTemporaryAllocations().peekHead(), firstAllocation);
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(secondAllocation);
-    memoryManager->cleanAllocationList(firstAllocation->taskCount, TEMPORARY_ALLOCATION);
+    commandStreamReceiver.getInternalAllocationStorage()->cleanAllocationList(firstAllocation->taskCount, TEMPORARY_ALLOCATION);
 }

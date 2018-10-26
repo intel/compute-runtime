@@ -6,19 +6,19 @@
  */
 
 #pragma once
-#include "unit_tests/mocks/mock_csr.h"
+#include "runtime/execution_environment/execution_environment.h"
+#include "runtime/helpers/options.h"
 
 using namespace OCLRT;
 
+class MockCommandStreamReceiver;
 namespace OCLRT {
-class MemoryManager;
-class GMockMemoryManager;
+class MockMemoryManager;
 }; // namespace OCLRT
 
 class MemoryManagerWithCsrFixture {
   public:
-    MemoryManager *memoryManager;
-    GMockMemoryManager *gmockMemoryManager;
+    MockMemoryManager *memoryManager;
     ExecutionEnvironment executionEnvironment;
     MockCommandStreamReceiver *csr;
     uint32_t taskCount = 0;

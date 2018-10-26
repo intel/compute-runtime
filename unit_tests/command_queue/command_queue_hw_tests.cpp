@@ -1053,7 +1053,7 @@ HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfac
     EXPECT_NE(memory, allocation->getUnderlyingBuffer());
     EXPECT_THAT(allocation->getUnderlyingBuffer(), MemCompare(memory, size));
 
-    gmockMemoryManager->cleanAllocationList(-1, TEMPORARY_ALLOCATION);
+    allocation->taskCount = device->getCommandStreamReceiver().peekLatestFlushedTaskCount();
     mockCmdQ->release();
     mockContext->release();
 }
@@ -1091,7 +1091,6 @@ HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfac
     auto allocation = surface.getAllocation();
     EXPECT_EQ(nullptr, allocation);
 
-    gmockMemoryManager->cleanAllocationList(-1, TEMPORARY_ALLOCATION);
     mockCmdQ->release();
     mockContext->release();
 }
@@ -1117,7 +1116,6 @@ struct ReducedAddrSpaceCommandQueueHwTest : public CommandQueueHwTest {
 
     void TearDown() override {
         CommandQueueHwTest::TearDown();
-        gmockMemoryManager->cleanAllocationList(-1, TEMPORARY_ALLOCATION);
         mockContext->release();
     }
 };

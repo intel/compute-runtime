@@ -51,10 +51,10 @@ CommandStreamReceiver::~CommandStreamReceiver() {
     cleanupResources();
 
     if (!allocationsForReuse.peekIsEmpty()) {
-        getMemoryManager()->freeAllocationsList(-1, allocationsForReuse);
+        internalAllocationStorage->freeAllocationsList(-1, allocationsForReuse);
     }
     if (!temporaryAllocations.peekIsEmpty()) {
-        getMemoryManager()->freeAllocationsList(-1, temporaryAllocations);
+        internalAllocationStorage->freeAllocationsList(-1, temporaryAllocations);
     }
 }
 
@@ -115,7 +115,7 @@ void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requ
     if (allocationList.peekIsEmpty()) {
         return;
     }
-    getMemoryManager()->freeAllocationsList(requiredTaskCount, allocationList);
+    internalAllocationStorage->freeAllocationsList(requiredTaskCount, allocationList);
 }
 
 MemoryManager *CommandStreamReceiver::getMemoryManager() const {

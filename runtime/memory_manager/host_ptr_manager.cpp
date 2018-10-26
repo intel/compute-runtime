@@ -7,6 +7,7 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 using namespace OCLRT;
@@ -282,8 +283,9 @@ RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager 
             // clean temporary allocations
 
             auto commandStreamReceiver = memoryManager.getCommandStreamReceiver(0);
+            auto allocationStorage = commandStreamReceiver->getInternalAllocationStorage();
             uint32_t taskCount = *commandStreamReceiver->getTagAddress();
-            memoryManager.cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
+            allocationStorage->cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
 
             // check overlapping again
             checkedFragments->fragments[i] = getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
@@ -294,7 +296,7 @@ RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager 
                     ;
 
                 taskCount = *commandStreamReceiver->getTagAddress();
-                memoryManager.cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
+                allocationStorage->cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
 
                 // check overlapping last time
                 checkedFragments->fragments[i] = getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
