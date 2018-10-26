@@ -24,7 +24,7 @@ TEST(SettingsFileReader, givenTestFileWithDefaultValuesWhenTheyAreQueriedThenDef
     compareSuccessful = (defaultValue == reader->getSetting(#variableName, defaultValue)); \
     EXPECT_TRUE(compareSuccessful) << #variableName;                                       \
     debugVariableCount++;
-#include "DebugVariables.inl"
+#include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 
     size_t mapCount = reader->getValueSettingsCount() + reader->getStringSettingsCount();
@@ -47,6 +47,6 @@ TEST(SettingsFileReader, GetSetting) {
             EXPECT_TRUE(true);                                                    \
         }                                                                         \
     }
-#include "DebugVariables.inl"
+#include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 }

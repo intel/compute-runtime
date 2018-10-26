@@ -719,7 +719,7 @@ TEST(DebugSettingsManager, WithoutDebugFunctionality) {
         bool isEqual = TestDebugFlagsChecker::isEqual(debugManager.flags.variableName.get(), defaultValue); \
         EXPECT_TRUE(isEqual);                                                                               \
     }
-#include "DebugVariables.inl"
+#include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 
     // test kernel dumping

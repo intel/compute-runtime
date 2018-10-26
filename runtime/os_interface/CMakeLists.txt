@@ -7,8 +7,8 @@
 set(RUNTIME_SRCS_OS_INTERFACE_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/32bit_memory.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/DebugVariables_base.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/DebugVariables.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_variables_base.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/debug_variables.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.cpp

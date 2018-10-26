@@ -5,4 +5,4 @@
  *
  */
 
-#include "runtime/os_interface/DebugVariables_base.inl"
+#include "runtime/os_interface/debug_variables_base.inl"

@@ -62,7 +62,7 @@ private:                                                                        
         dataType value;                                                           \
 };
 
-#include "DebugVariables.inl"
+#include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 // clang-format on
 
@@ -72,7 +72,7 @@ class DebugSettingsManager {
     struct DebugVariables {
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     DebugVar##variableName variableName;
-#include "DebugVariables.inl"
+#include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
     };
 

@@ -37,7 +37,7 @@ DebugSettingsManager<DebugLevel>::DebugSettingsManager() {
         dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get()); \
         flags.variableName.set(tempData);                                                    \
     }
-#include "DebugVariables.inl"
+#include "debug_variables.inl"
     }
 
     std::remove(logFileName.c_str());

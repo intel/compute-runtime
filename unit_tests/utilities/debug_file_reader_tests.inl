@@ -62,7 +62,7 @@ TEST(SettingsFileReader, GetStringSettingFromFile) {
     ASSERT_NE(nullptr, reader);
 
     string retValue;
-    // StringTestKey is defined in file: unit_tests\helpers\TestDebugVariables.inl
+    // StringTestKey is defined in file: unit_tests\helpers\test_debug_variables.inl
     string returnedStringValue = reader->getSetting("StringTestKey", retValue);
 
     // "Test Value" is a value that should be read from file defined in stringTestPath member
@@ -76,7 +76,7 @@ TEST(SettingsFileReader, GetStringSettingFromFile) {
             EXPECT_TRUE(true);                                                    \
         }                                                                         \
     }
-#include "unit_tests/helpers/TestDebugVariables.inl"
+#include "unit_tests/helpers/test_debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 }
 
