@@ -43,6 +43,7 @@ class MockGdi : public Gdi {
 
     static NTSTATUS __stdcall registerTimNotificationMock(IN D3DKMT_REGISTERTRIMNOTIFICATION *arg) {
         getRegisterTrimNotificationArg() = *arg;
+        arg->Handle = reinterpret_cast<VOID *>(1);
         return 0;
     }
 
