@@ -255,7 +255,7 @@ Allocator32bit *OsAgnosticMemoryManager::create32BitAllocator(bool aubUsage) {
     }
 
     if (DebugManager.flags.UseMallocToObtainHeap32Base.get()) {
-        size_t allocationSize = 40 * 1024 * 1024u;
+        size_t allocationSize = 40 * MemoryConstants::megaByte;
         allocatorSize = static_cast<uint64_t>(allocationSize);
         heap32Base = castToUint64(alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment));
     }
