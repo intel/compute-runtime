@@ -201,6 +201,11 @@ class GpgpuWalkerHelper {
 
     static void dispatchOnDeviceWaitlistSemaphores(LinearStream *commandStream, Device &currentDevice,
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList);
+
+    static void adjustWalkerData(LinearStream *commandStream,
+                                 WALKER_TYPE<GfxFamily> *walkerCmd,
+                                 const Kernel &kernel,
+                                 const DispatchInfo &dispatchInfo);
 };
 
 template <typename GfxFamily>

@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 #include "CL/cl.h"
 #include "runtime/device/device.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/program.h"
@@ -187,7 +188,7 @@ class SimpleKernelFixture : public ProgramFixture {
   public:
     using ProgramFixture::SetUp;
     SimpleKernelFixture() {
-        kernelsCount = sizeof(kernels) / sizeof(Kernel *);
+        kernelsCount = arrayCount(kernels);
     }
 
   protected:
@@ -212,14 +213,14 @@ class SimpleKernelFixture : public ProgramFixture {
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        for (uint32_t i = 0; i < kernelsCount; i++) {
+        for (size_t i = 0; i < kernelsCount; i++) {
             if ((1 << i) & kernelIds) {
                 std::string kernelName("simple_kernel_");
                 kernelName.append(std::to_string(i));
-                kernels[i] = Kernel::create<MockKernel>(
+                kernels[i].reset(Kernel::create<MockKernel>(
                     pProgram,
                     *pProgram->getKernelInfo(kernelName.c_str()),
-                    &retVal);
+                    &retVal));
                 ASSERT_NE(nullptr, kernels[i]);
                 ASSERT_EQ(CL_SUCCESS, retVal);
             }
@@ -227,19 +228,18 @@ class SimpleKernelFixture : public ProgramFixture {
     }
 
     virtual void TearDown() {
-        for (uint32_t i = 0; i < kernelsCount; i++) {
+        for (size_t i = 0; i < kernelsCount; i++) {
             if (kernels[i]) {
-                delete kernels[i];
-                kernels[i] = nullptr;
+                kernels[i].reset(nullptr);
             }
         }
 
         ProgramFixture::TearDown();
     }
 
-    uint32_t kernelsCount;
+    size_t kernelsCount;
     cl_int retVal = CL_SUCCESS;
-    Kernel *kernels[5] = {};
+    std::unique_ptr<Kernel> kernels[6] = {};
     uint32_t kernelIds = 0;
 };
 

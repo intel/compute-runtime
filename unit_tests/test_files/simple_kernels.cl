@@ -5,6 +5,8 @@
  *
  */
 
+#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
+
 __kernel void simple_kernel_0(
     const uint arg0,
     const float arg1,
@@ -41,4 +43,8 @@ __kernel void simple_kernel_3(
 }
 
 __kernel void simple_kernel_4() {
+}
+
+__kernel void simple_kernel_5(__global uint *dst) {
+    atomic_inc(dst);
 }

@@ -189,4 +189,11 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     }
 }
 
+template <typename GfxFamily>
+void GpgpuWalkerHelper<GfxFamily>::adjustWalkerData(LinearStream *commandStream,
+                                                    WALKER_TYPE<GfxFamily> *walkerCmd,
+                                                    const Kernel &kernel,
+                                                    const DispatchInfo &dispatchInfo) {
+}
+
 } // namespace OCLRT

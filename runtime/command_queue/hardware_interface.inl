@@ -226,6 +226,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                                                localIdsGenerationByRuntime, inlineDataProgrammingRequired,
                                                                *kernel.getKernelInfo().patchInfo.threadPayload);
 
+        GpgpuWalkerHelper<GfxFamily>::adjustWalkerData(commandStream, walkerCmd, kernel, dispatchInfo);
+
         dispatchWorkarounds(commandStream, commandQueue, kernel, false);
         currentDispatchIndex++;
     }
