@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/helpers/engine_node.h"
+#include "engine_node.h"
 #include <cstdint>
 
 namespace OCLRT {

@@ -5,10 +5,10 @@
  *
  */
 
+#include "engine_node.h"
 #include "hw_cmds.h"
 #include "hw_info_kbl.h"
 #include "runtime/aub_mem_dump/aub_services.h"
-#include "runtime/helpers/engine_node.h"
 #include "runtime/memory_manager/memory_constants.h"
 
 namespace OCLRT {

@@ -6,12 +6,12 @@
  */
 
 #pragma once
+#include "engine_node.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/device/device_info_map.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/engine_node.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/performance_counters.h"
 #include <vector>
