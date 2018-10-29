@@ -5,9 +5,8 @@
  *
  */
 
-#include "../mocks/mock_program.h"
-#include "../mocks/mock_csr.h"
 #include "runtime/helpers/string.h"
+#include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
@@ -15,6 +14,8 @@
 #include "unit_tests/gen_common/test.h"
 #include "unit_tests/program/program_with_source.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_program.h"
+#include "unit_tests/mocks/mock_csr.h"
 
 using namespace OCLRT;
 

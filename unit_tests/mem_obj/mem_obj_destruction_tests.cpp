@@ -6,6 +6,7 @@
  */
 
 #include "runtime/mem_obj/mem_obj.h"
+#include "runtime/memory_manager/allocations_list.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -103,13 +104,14 @@ TEST_P(MemObjAsyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyn
     } else {
         makeMemObjNotReady();
     }
-    EXPECT_TRUE(memoryManager->isAllocationListEmpty());
+    auto &allocationList = memoryManager->getCommandStreamReceiver(0)->getTemporaryAllocations();
+    EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;
 
-    EXPECT_EQ(!expectedDeferration, memoryManager->isAllocationListEmpty());
+    EXPECT_EQ(!expectedDeferration, allocationList.peekIsEmpty());
     if (expectedDeferration) {
-        EXPECT_EQ(allocation, memoryManager->peekAllocationListHead());
+        EXPECT_EQ(allocation, allocationList.peekHead());
     }
 }
 
@@ -262,7 +264,8 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
 
     delete memObj;
-    EXPECT_TRUE(memoryManager->isAllocationListEmpty());
+    auto &allocationList = memoryManager->getCommandStreamReceiver(0)->getTemporaryAllocations();
+    EXPECT_TRUE(allocationList.peekIsEmpty());
 }
 
 INSTANTIATE_TEST_CASE_P(

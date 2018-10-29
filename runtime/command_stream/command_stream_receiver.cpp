@@ -50,12 +50,8 @@ CommandStreamReceiver::~CommandStreamReceiver() {
     }
     cleanupResources();
 
-    if (!allocationsForReuse.peekIsEmpty()) {
-        internalAllocationStorage->freeAllocationsList(-1, allocationsForReuse);
-    }
-    if (!temporaryAllocations.peekIsEmpty()) {
-        internalAllocationStorage->freeAllocationsList(-1, temporaryAllocations);
-    }
+    internalAllocationStorage->cleanAllocationList(-1, REUSABLE_ALLOCATION);
+    internalAllocationStorage->cleanAllocationList(-1, TEMPORARY_ALLOCATION);
 }
 
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
@@ -110,12 +106,7 @@ void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requ
         while (*address < requiredTaskCount)
             ;
     }
-
-    auto &allocationList = (allocationType == TEMPORARY_ALLOCATION) ? temporaryAllocations : allocationsForReuse;
-    if (allocationList.peekIsEmpty()) {
-        return;
-    }
-    internalAllocationStorage->freeAllocationsList(requiredTaskCount, allocationList);
+    internalAllocationStorage->cleanAllocationList(requiredTaskCount, allocationType);
 }
 
 MemoryManager *CommandStreamReceiver::getMemoryManager() const {
@@ -347,5 +338,7 @@ bool CommandStreamReceiver::initializeTagAllocation() {
 std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainUniqueOwnership() {
     return std::unique_lock<CommandStreamReceiver::MutexType>(this->ownershipMutex);
 }
+AllocationsList &CommandStreamReceiver::getTemporaryAllocations() { return internalAllocationStorage->getTemporaryAllocations(); }
+AllocationsList &CommandStreamReceiver::getAllocationsForReuse() { return internalAllocationStorage->getAllocationsForReuse(); }
 
 } // namespace OCLRT

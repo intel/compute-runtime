@@ -18,6 +18,7 @@
 #include "runtime/helpers/string.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/program/create.inl"

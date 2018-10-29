@@ -17,11 +17,11 @@
 #include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/grf_config.h"
-#include "runtime/memory_manager/allocations_list.h"
 #include <cstddef>
 #include <cstdint>
 
 namespace OCLRT {
+class AllocationsList;
 class Device;
 class EventBuilder;
 class ExecutionEnvironment;
@@ -148,8 +148,8 @@ class CommandStreamReceiver {
     size_t defaultSshSize;
 
     void setDeviceIndex(uint32_t deviceIndex) { this->deviceIndex = deviceIndex; }
-    AllocationsList &getTemporaryAllocations() { return temporaryAllocations; }
-    AllocationsList &getAllocationsForReuse() { return allocationsForReuse; }
+    AllocationsList &getTemporaryAllocations();
+    AllocationsList &getAllocationsForReuse();
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }
 
   protected:
@@ -214,9 +214,6 @@ class CommandStreamReceiver {
     ExecutionEnvironment &executionEnvironment;
     uint32_t deviceIndex = 0u;
     std::unique_ptr<InternalAllocationStorage> internalAllocationStorage;
-
-    AllocationsList temporaryAllocations;
-    AllocationsList allocationsForReuse;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);

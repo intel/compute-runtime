@@ -36,8 +36,6 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     void overrideAsyncDeleterFlag(bool newValue);
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;
     int redundancyRatio = 1;
-    bool isAllocationListEmpty();
-    GraphicsAllocation *peekAllocationListHead();
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;

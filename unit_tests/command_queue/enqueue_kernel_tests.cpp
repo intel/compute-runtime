@@ -10,6 +10,7 @@
 #include "runtime/command_queue/command_queue_hw.h"
 #include "reg_configs_common.h"
 #include "runtime/helpers/preamble.h"
+#include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/utilities/tag_allocator.h"

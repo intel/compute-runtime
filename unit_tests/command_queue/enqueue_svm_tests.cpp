@@ -10,6 +10,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"

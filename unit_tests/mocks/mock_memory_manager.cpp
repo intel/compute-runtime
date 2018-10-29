@@ -34,14 +34,6 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
     return allocation;
 }
 
-bool MockMemoryManager::isAllocationListEmpty() {
-    return getCommandStreamReceiver(0)->getTemporaryAllocations().peekIsEmpty();
-}
-
-GraphicsAllocation *MockMemoryManager::peekAllocationListHead() {
-    return getCommandStreamReceiver(0)->getTemporaryAllocations().peekHead();
-}
-
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {
     allocation64kbPageCreated = true;
     preferRenderCompressedFlagPassed = preferRenderCompressed;

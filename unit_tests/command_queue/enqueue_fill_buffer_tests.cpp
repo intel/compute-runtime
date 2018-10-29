@@ -13,6 +13,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/dispatch_info.h"
+#include "runtime/memory_manager/allocations_list.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/command_queue/enqueue_fill_buffer_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"

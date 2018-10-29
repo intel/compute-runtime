@@ -10,6 +10,7 @@
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/properties_helper.h"
+#include "runtime/memory_manager/allocations_list.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
@@ -165,11 +166,11 @@ TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThe
     *(memoryManager.getCommandStreamReceiver(0)->getTagAddress()) = 1;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
-
-    EXPECT_TRUE(memoryManager.isAllocationListEmpty());
+    auto &allocationList = memoryManager.getCommandStreamReceiver(0)->getTemporaryAllocations();
+    EXPECT_TRUE(allocationList.peekIsEmpty());
     memObj.destroyGraphicsAllocation(allocation, true);
 
-    EXPECT_FALSE(memoryManager.isAllocationListEmpty());
+    EXPECT_FALSE(allocationList.peekIsEmpty());
 }
 
 TEST(MemObj, givenReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAllocationIsNotAddedToMemoryManagerAllocationList) {
@@ -184,10 +185,11 @@ TEST(MemObj, givenReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAl
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
 
-    EXPECT_TRUE(memoryManager.isAllocationListEmpty());
+    auto &allocationList = memoryManager.getCommandStreamReceiver(0)->getTemporaryAllocations();
+    EXPECT_TRUE(allocationList.peekIsEmpty());
     memObj.destroyGraphicsAllocation(allocation, true);
 
-    EXPECT_TRUE(memoryManager.isAllocationListEmpty());
+    EXPECT_TRUE(allocationList.peekIsEmpty());
 }
 
 TEST(MemObj, givenNotUsedGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAllocationIsNotAddedToMemoryManagerAllocationList) {
@@ -201,10 +203,11 @@ TEST(MemObj, givenNotUsedGraphicsAllocationWhenMemObjDestroysAllocationAsyncThen
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
 
-    EXPECT_TRUE(memoryManager.isAllocationListEmpty());
+    auto &allocationList = memoryManager.getCommandStreamReceiver(0)->getTemporaryAllocations();
+    EXPECT_TRUE(allocationList.peekIsEmpty());
     memObj.destroyGraphicsAllocation(allocation, true);
 
-    EXPECT_TRUE(memoryManager.isAllocationListEmpty());
+    EXPECT_TRUE(allocationList.peekIsEmpty());
 }
 
 TEST(MemObj, givenMemoryManagerWithoutDeviceWhenMemObjDestroysAllocationAsyncThenAllocationIsNotAddedToMemoryManagerAllocationList) {
@@ -218,10 +221,11 @@ TEST(MemObj, givenMemoryManagerWithoutDeviceWhenMemObjDestroysAllocationAsyncThe
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
 
-    EXPECT_TRUE(memoryManager.isAllocationListEmpty());
+    auto &allocationList = memoryManager.getCommandStreamReceiver(0)->getTemporaryAllocations();
+    EXPECT_TRUE(allocationList.peekIsEmpty());
     memObj.destroyGraphicsAllocation(allocation, true);
 
-    EXPECT_TRUE(memoryManager.isAllocationListEmpty());
+    EXPECT_TRUE(allocationList.peekIsEmpty());
 }
 
 TEST(MemObj, givenMemObjWhenItDoesntHaveGraphicsAllocationThenWaitForCsrCompletionDoesntCrash) {

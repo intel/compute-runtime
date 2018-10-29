@@ -30,14 +30,14 @@ void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<Gra
             return;
         }
     }
-    auto &allocationsList = (allocationUsage == TEMPORARY_ALLOCATION) ? commandStreamReceiver.getTemporaryAllocations() : commandStreamReceiver.getAllocationsForReuse();
+    auto &allocationsList = (allocationUsage == TEMPORARY_ALLOCATION) ? temporaryAllocations : allocationsForReuse;
     gfxAllocation->taskCount = taskCount;
     allocationsList.pushTailOne(*gfxAllocation.release());
 }
 
 void InternalAllocationStorage::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
     std::lock_guard<decltype(mutex)> lock(mutex);
-    freeAllocationsList(waitTaskCount, (allocationUsage == TEMPORARY_ALLOCATION) ? commandStreamReceiver.getTemporaryAllocations() : commandStreamReceiver.getAllocationsForReuse());
+    freeAllocationsList(waitTaskCount, (allocationUsage == TEMPORARY_ALLOCATION) ? temporaryAllocations : allocationsForReuse);
 }
 
 void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList) {
@@ -63,7 +63,7 @@ void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, Allo
 
 std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAllocation(size_t requiredSize, bool internalAllocation) {
     std::lock_guard<decltype(mutex)> lock(mutex);
-    auto allocation = commandStreamReceiver.getAllocationsForReuse().detachAllocation(requiredSize, commandStreamReceiver.getTagAddress(), internalAllocation);
+    auto allocation = allocationsForReuse.detachAllocation(requiredSize, commandStreamReceiver.getTagAddress(), internalAllocation);
     return allocation;
 }
 
