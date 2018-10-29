@@ -8,6 +8,7 @@
 #include "cl_api_tests.h"
 #include "runtime/context/context.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/event/event.h"
 
 using namespace OCLRT;
 

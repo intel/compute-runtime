@@ -5,17 +5,20 @@
  *
  */
 
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
+#include "runtime/event/event.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/flush_stamp.h"
+#include "runtime/helpers/string.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/os_interface.h"
 
 namespace OCLRT {
@@ -340,5 +343,26 @@ std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtain
 }
 AllocationsList &CommandStreamReceiver::getTemporaryAllocations() { return internalAllocationStorage->getTemporaryAllocations(); }
 AllocationsList &CommandStreamReceiver::getAllocationsForReuse() { return internalAllocationStorage->getAllocationsForReuse(); }
+
+bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surface, Device &device) {
+    auto memoryManager = getMemoryManager();
+    GraphicsAllocation *allocation = nullptr;
+    allocation = memoryManager->allocateGraphicsMemoryForHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), device.isFullRangeSvm());
+    if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
+        // Try with no host pointer allocation and copy
+        allocation = memoryManager->allocateGraphicsMemory(surface.getSurfaceSize(), MemoryConstants::pageSize, false, false);
+
+        if (allocation) {
+            memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), surface.getMemoryPointer(), surface.getSurfaceSize());
+        }
+    }
+    if (allocation == nullptr) {
+        return false;
+    }
+    allocation->taskCount = Event::eventNotReady;
+    surface.setAllocation(allocation);
+    internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+    return true;
+}
 
 } // namespace OCLRT

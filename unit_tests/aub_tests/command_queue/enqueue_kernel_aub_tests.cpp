@@ -6,6 +6,8 @@
  */
 
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/event/event.h"
+#include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/ptr_math.h"
 #include "gen_cmd_parse.h"
 #include "unit_tests/aub_tests/fixtures/aub_fixture.h"

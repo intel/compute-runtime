@@ -8,7 +8,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "runtime/device/device.h"
-#include "runtime/event/event.h"
+#include "runtime/event/user_event.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"

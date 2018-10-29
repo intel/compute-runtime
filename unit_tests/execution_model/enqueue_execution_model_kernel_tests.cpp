@@ -8,6 +8,7 @@
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/local_id_gen.h"
 #include "runtime/device_queue/device_queue_hw.h"
+#include "runtime/event/user_event.h"
 #include "runtime/helpers/per_thread_data.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"

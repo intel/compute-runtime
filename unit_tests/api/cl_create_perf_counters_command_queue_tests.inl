@@ -8,6 +8,7 @@
 #include "cl_api_tests.h"
 #include "runtime/context/context.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/event/event.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 
 using namespace OCLRT;

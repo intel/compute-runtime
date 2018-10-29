@@ -7,6 +7,7 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/event/event.h"
 #include "reg_configs_common.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "unit_tests/command_queue/enqueue_write_buffer_rect_fixture.h"

@@ -6,7 +6,7 @@
  */
 
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/event/event.h"
+#include "runtime/event/user_event.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"

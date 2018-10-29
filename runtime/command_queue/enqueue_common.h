@@ -14,6 +14,7 @@
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/hardware_interface.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/event/user_event.h"
 #include "runtime/event/event_builder.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
@@ -30,7 +31,6 @@
 #include "runtime/program/block_kernel_manager.h"
 #include "runtime/utilities/range.h"
 #include "runtime/utilities/tag_allocator.h"
-#include <memory>
 #include <new>
 
 namespace OCLRT {
@@ -720,30 +720,6 @@ void CommandQueueHw<GfxFamily>::computeOffsetsValueForRectCommands(size_t *buffe
     size_t computedHostSlicePitch = hostSlicePitch ? hostSlicePitch : region[1] * computedHostRowPitch;
     *bufferOffset = bufferOrigin[2] * computedBufferSlicePitch + bufferOrigin[1] * computedBufferRowPitch + bufferOrigin[0];
     *hostOffset = hostOrigin[2] * computedHostSlicePitch + hostOrigin[1] * computedHostRowPitch + hostOrigin[0];
-}
-
-template <typename GfxFamily>
-bool CommandQueueHw<GfxFamily>::createAllocationForHostSurface(HostPtrSurface &surface) {
-    auto memoryManager = device->getCommandStreamReceiver().getMemoryManager();
-    GraphicsAllocation *allocation = nullptr;
-
-    allocation = memoryManager->allocateGraphicsMemoryForHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), device->isFullRangeSvm());
-    if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
-        // Try with no host pointer allocation and copy
-        allocation = memoryManager->allocateGraphicsMemory(surface.getSurfaceSize(), MemoryConstants::pageSize, false, false);
-
-        if (allocation) {
-            memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), surface.getMemoryPointer(), surface.getSurfaceSize());
-        }
-    }
-    if (allocation == nullptr) {
-        return false;
-    }
-    allocation->taskCount = Event::eventNotReady;
-    surface.setAllocation(allocation);
-    auto storageForAllocation = device->getCommandStreamReceiver().getInternalAllocationStorage();
-    storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
-    return true;
 }
 
 template <typename GfxFamily>

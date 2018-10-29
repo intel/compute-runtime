@@ -7,6 +7,7 @@
 
 #include "test.h"
 #include "runtime/command_queue/command_queue_hw.h"
+#include "runtime/event/user_event.h"
 #include "runtime/mem_obj/image.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_context.h"

@@ -17,6 +17,7 @@
 #include "runtime/context/driver_diagnostics.h"
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
+#include "runtime/event/user_event.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/get_info.h"

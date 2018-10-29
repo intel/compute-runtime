@@ -5,23 +5,16 @@
  *
  */
 
-#include "hw_cmds.h"
-#include "runtime/command_stream/device_command_stream.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
-#include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/options.h"
+#include "runtime/helpers/flush_stamp.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/os_context.h"
-#include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
-#include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
@@ -30,9 +23,6 @@
 #include "test.h"
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include <iostream>
-#include <memory>
 
 using namespace OCLRT;
 

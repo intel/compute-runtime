@@ -28,6 +28,7 @@ class ExecutionEnvironment;
 class ExperimentalCommandBuffer;
 class GmmPageTableMngr;
 class GraphicsAllocation;
+class HostPtrSurface;
 class IndirectHeap;
 class InternalAllocationStorage;
 class LinearStream;
@@ -151,6 +152,7 @@ class CommandStreamReceiver {
     AllocationsList &getTemporaryAllocations();
     AllocationsList &getAllocationsForReuse();
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }
+    bool createAllocationForHostSurface(HostPtrSurface &surface, Device &device);
 
   protected:
     void cleanupResources();

@@ -6,13 +6,9 @@
  */
 
 #pragma once
-#include "runtime/api/cl_types.h"
-#include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/helpers/properties_helper.h"
-#include "runtime/helpers/timestamp_packet.h"
-#include "runtime/event/user_event.h"
-#include "runtime/os_interface/performance_counters.h"
+#include "runtime/helpers/task_information.h"
+#include "instrumentation.h"
 #include <atomic>
 #include <cstdint>
 
@@ -21,11 +17,14 @@ class Buffer;
 class LinearStream;
 class Context;
 class Device;
+class Event;
 class EventBuilder;
+class FlushStampTracker;
 class Image;
 class IndirectHeap;
 class Kernel;
 class MemObj;
+class PerformanceCounters;
 struct CompletionStamp;
 
 enum class QueuePriority {

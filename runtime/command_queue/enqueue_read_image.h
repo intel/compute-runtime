@@ -10,6 +10,7 @@
 #include "hw_cmds.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/event/event.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/kernel_commands.h"
@@ -81,7 +82,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     if (region[0] != 0 &&
         region[1] != 0 &&
         region[2] != 0) {
-        bool status = createAllocationForHostSurface(hostPtrSurf);
+        bool status = getDevice().getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, getDevice());
         if (!status) {
             return CL_OUT_OF_RESOURCES;
         }

@@ -9,6 +9,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
+#include "runtime/event/user_event.h"
 
 using namespace OCLRT;
 

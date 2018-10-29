@@ -5,35 +5,19 @@
  *
  */
 
-#include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_queue/enqueue_kernel.h"
-#include "runtime/command_queue/enqueue_marker.h"
-#include "runtime/command_queue/enqueue_common.h"
-#include "runtime/event/event.h"
-#include "runtime/event/event_builder.h"
-#include "runtime/helpers/queue_helpers.h"
-#include "runtime/memory_manager/memory_manager.h"
-#include "runtime/memory_manager/surface.h"
+#include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/helpers/dispatch_info_builder.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
-#include "gmock/gmock.h"
-#include <memory>
 
 using namespace OCLRT;
 
@@ -1015,124 +999,4 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
         }
         EXPECT_EQ(expected, it->second);
     }
-}
-
-HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyAllowedIsCreatedThenCopyAllocationIsCreatedAndMemoryCopied) {
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ASSERT_NE(nullptr, device.get());
-    ::testing::NiceMock<GMockMemoryManager> *gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*device->getExecutionEnvironment());
-    ASSERT_NE(nullptr, gmockMemoryManager);
-
-    device->injectMemoryManager(gmockMemoryManager);
-    MockContext *mockContext = new MockContext(device.get());
-    ASSERT_NE(nullptr, mockContext);
-
-    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(mockContext, device.get(), 0);
-    ASSERT_NE(nullptr, mockCmdQ);
-
-    const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
-    size_t size = sizeof(memory);
-    HostPtrSurface surface(const_cast<char *>(memory), size, true);
-
-    if (device->isFullRangeSvm()) {
-        EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
-            .Times(1)
-            .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
-    } else {
-        EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_, ::testing::_))
-            .Times(1)
-            .WillOnce(::testing::Return(nullptr));
-    }
-
-    bool result = mockCmdQ->createAllocationForHostSurface(surface);
-    EXPECT_TRUE(result);
-
-    auto allocation = surface.getAllocation();
-    ASSERT_NE(nullptr, allocation);
-
-    EXPECT_NE(memory, allocation->getUnderlyingBuffer());
-    EXPECT_THAT(allocation->getUnderlyingBuffer(), MemCompare(memory, size));
-
-    allocation->taskCount = device->getCommandStreamReceiver().peekLatestFlushedTaskCount();
-    mockCmdQ->release();
-    mockContext->release();
-}
-
-HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyNotAllowedIsCreatedThenCopyAllocationIsNotCreated) {
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ASSERT_NE(nullptr, device.get());
-    ::testing::NiceMock<GMockMemoryManager> *gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*device->getExecutionEnvironment());
-    ASSERT_NE(nullptr, gmockMemoryManager);
-
-    device->injectMemoryManager(gmockMemoryManager);
-    MockContext *mockContext = new MockContext(device.get());
-    ASSERT_NE(nullptr, mockContext);
-
-    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(mockContext, device.get(), 0);
-    ASSERT_NE(nullptr, mockCmdQ);
-
-    const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
-    size_t size = sizeof(memory);
-    HostPtrSurface surface(const_cast<char *>(memory), size, false);
-
-    if (device->isFullRangeSvm()) {
-        EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
-            .Times(1)
-            .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
-    } else {
-        EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_, ::testing::_))
-            .Times(1)
-            .WillOnce(::testing::Return(nullptr));
-    }
-
-    bool result = mockCmdQ->createAllocationForHostSurface(surface);
-    EXPECT_FALSE(result);
-
-    auto allocation = surface.getAllocation();
-    EXPECT_EQ(nullptr, allocation);
-
-    mockCmdQ->release();
-    mockContext->release();
-}
-
-struct ReducedAddrSpaceCommandQueueHwTest : public CommandQueueHwTest {
-    HardwareInfo hwInfoToModify;
-    std::unique_ptr<MockDevice> device;
-    MockContext *mockContext = nullptr;
-    ::testing::NiceMock<GMockMemoryManager> *gmockMemoryManager = nullptr;
-
-    void SetUp() override {
-        CommandQueueHwTest::SetUp();
-        hwInfoToModify = *platformDevices[0];
-        hwInfoToModify.capabilityTable.gpuAddressSpace = MemoryConstants::max32BitAddress;
-        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoToModify));
-        ASSERT_NE(nullptr, device.get());
-        gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*device->getExecutionEnvironment());
-        ASSERT_NE(nullptr, gmockMemoryManager);
-        device->injectMemoryManager(gmockMemoryManager);
-        mockContext = new MockContext(device.get());
-        ASSERT_NE(nullptr, mockContext);
-    }
-
-    void TearDown() override {
-        CommandQueueHwTest::TearDown();
-        mockContext->release();
-    }
-};
-
-HWTEST_F(ReducedAddrSpaceCommandQueueHwTest,
-         givenReducedGpuAddressSpaceWhenAllocationForHostSurfaceIsCreatedThenAllocateGraphicsMemoryForNonSvmHostPtrIsCalled) {
-
-    std::unique_ptr<MockCommandQueueHw<FamilyType>, std::function<void(MockCommandQueueHw<FamilyType> *)>> mockCmdQ(
-        new MockCommandQueueHw<FamilyType>(mockContext, device.get(), 0), [](MockCommandQueueHw<FamilyType> *ptr) { ptr->release(); });
-
-    char memory[8] = {};
-    HostPtrSurface surface(const_cast<char *>(memory), sizeof(memory), false);
-
-    EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_, ::testing::_))
-        .Times(1)
-        .WillOnce(::testing::Return(nullptr));
-
-    bool result = mockCmdQ->createAllocationForHostSurface(surface);
-    EXPECT_FALSE(result);
 }

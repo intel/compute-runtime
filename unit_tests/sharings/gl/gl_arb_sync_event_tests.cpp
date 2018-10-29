@@ -6,7 +6,7 @@
  */
 
 #include "runtime/context/context.h"
-#include "runtime/event/event.h"
+#include "runtime/event/user_event.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/sharings/sharing.h"

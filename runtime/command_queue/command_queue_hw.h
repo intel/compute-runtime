@@ -331,7 +331,6 @@ class CommandQueueHw : public CommandQueue {
 
   protected:
     MOCKABLE_VIRTUAL void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo){};
-    MOCKABLE_VIRTUAL bool createAllocationForHostSurface(HostPtrSurface &surface);
     size_t calculateHostPtrSizeForImage(size_t *region, size_t rowPitch, size_t slicePitch, Image *image);
 
   private:

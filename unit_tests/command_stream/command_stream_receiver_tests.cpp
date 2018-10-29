@@ -13,14 +13,17 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/memory_manager/surface.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gmock/gmock.h"
@@ -372,4 +375,89 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
     EXPECT_EQ(1u, commandStreamReceiver1.getEvictionAllocations().size());
 
     executionEnvironment->memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
+    void SetUp() override {
+        executionEnvironment = new ExecutionEnvironment;
+        gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(gmockMemoryManager);
+        device.reset(Device::create<Device>(&hwInfo, executionEnvironment, 0u));
+        commandStreamReceiver = &device->getCommandStreamReceiver();
+    }
+    HardwareInfo hwInfo = *platformDevices[0];
+    ExecutionEnvironment *executionEnvironment = nullptr;
+    GMockMemoryManager *gmockMemoryManager = nullptr;
+    std::unique_ptr<Device> device;
+    CommandStreamReceiver *commandStreamReceiver = nullptr;
+};
+
+TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyAllowedIsCreatedThenCopyAllocationIsCreatedAndMemoryCopied) {
+    const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    size_t size = sizeof(memory);
+    HostPtrSurface surface(const_cast<char *>(memory), size, true);
+
+    if (device->isFullRangeSvm()) {
+        EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
+            .Times(1)
+            .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
+    } else {
+        EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_, ::testing::_))
+            .Times(1)
+            .WillOnce(::testing::Return(nullptr));
+    }
+
+    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device);
+    EXPECT_TRUE(result);
+
+    auto allocation = surface.getAllocation();
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_NE(memory, allocation->getUnderlyingBuffer());
+    EXPECT_THAT(allocation->getUnderlyingBuffer(), MemCompare(memory, size));
+
+    allocation->taskCount = commandStreamReceiver->peekLatestFlushedTaskCount();
+}
+
+TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyNotAllowedIsCreatedThenCopyAllocationIsNotCreated) {
+    const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    size_t size = sizeof(memory);
+    HostPtrSurface surface(const_cast<char *>(memory), size, false);
+
+    if (device->isFullRangeSvm()) {
+        EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
+            .Times(1)
+            .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
+    } else {
+        EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_, ::testing::_))
+            .Times(1)
+            .WillOnce(::testing::Return(nullptr));
+    }
+
+    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device);
+    EXPECT_FALSE(result);
+
+    auto allocation = surface.getAllocation();
+    EXPECT_EQ(nullptr, allocation);
+}
+
+struct ReducedAddrSpaceCommandStreamReceiverTest : public CreateAllocationForHostSurfaceTest {
+    void SetUp() override {
+        hwInfo.capabilityTable.gpuAddressSpace = MemoryConstants::max32BitAddress;
+        CreateAllocationForHostSurfaceTest::SetUp();
+    }
+};
+
+TEST_F(ReducedAddrSpaceCommandStreamReceiverTest,
+       givenReducedGpuAddressSpaceWhenAllocationForHostSurfaceIsCreatedThenAllocateGraphicsMemoryForNonSvmHostPtrIsCalled) {
+
+    char memory[8] = {};
+    HostPtrSurface surface(const_cast<char *>(memory), sizeof(memory), false);
+
+    EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_, ::testing::_))
+        .Times(1)
+        .WillOnce(::testing::Return(nullptr));
+
+    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device);
+    EXPECT_FALSE(result);
 }

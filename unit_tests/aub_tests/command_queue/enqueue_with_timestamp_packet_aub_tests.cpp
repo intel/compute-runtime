@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/event/event.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"
