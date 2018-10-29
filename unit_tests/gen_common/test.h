@@ -292,65 +292,145 @@ extern GFXCORE_FAMILY renderCoreFamily;
     template <typename FamilyType>                                                                                      \
     void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::testBodyHw()
 
+#define FAMILYTEST_TEST_P(test_case_name, test_name, match_core, match_product)                                         \
+    class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public test_case_name {                                   \
+      public:                                                                                                           \
+        GTEST_TEST_CLASS_NAME_(test_case_name, test_name)                                                               \
+        () {}                                                                                                           \
+        template <typename FamilyType>                                                                                  \
+        void testBodyHw();                                                                                              \
+                                                                                                                        \
+        virtual void TestBody() {                                                                                       \
+            CALL_IF_MATCH(match_core, match_product,                                                                    \
+                          testBodyHw<typename OCLRT::GfxFamilyMapper<match_core>::GfxFamily>())                         \
+        }                                                                                                               \
+        void SetUp() override {                                                                                         \
+            CALL_IF_MATCH(match_core, match_product, test_case_name::SetUp())                                           \
+        }                                                                                                               \
+        void TearDown() override {                                                                                      \
+            CALL_IF_MATCH(match_core, match_product, test_case_name::TearDown())                                        \
+        }                                                                                                               \
+                                                                                                                        \
+      private:                                                                                                          \
+        static int AddToRegistry() {                                                                                    \
+            ::testing::UnitTest::GetInstance()->parameterized_test_registry().GetTestCasePatternHolder<test_case_name>( \
+                                                                                 #test_case_name, __FILE__, __LINE__)   \
+                ->AddTestPattern(                                                                                       \
+                    #test_case_name,                                                                                    \
+                    #test_name,                                                                                         \
+                    new ::testing::internal::TestMetaFactory<                                                           \
+                        GTEST_TEST_CLASS_NAME_(test_case_name, test_name)>());                                          \
+            return 0;                                                                                                   \
+        }                                                                                                               \
+        static int gtest_registering_dummy_;                                                                            \
+        GTEST_DISALLOW_COPY_AND_ASSIGN_(                                                                                \
+            GTEST_TEST_CLASS_NAME_(test_case_name, test_name));                                                         \
+    };                                                                                                                  \
+    int GTEST_TEST_CLASS_NAME_(test_case_name,                                                                          \
+                               test_name)::gtest_registering_dummy_ =                                                   \
+        GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::AddToRegistry();                                             \
+    template <typename FamilyType>                                                                                      \
+    void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::testBodyHw()
+
 #ifdef TESTS_GEN8
 #define GEN8TEST_F(test_fixture, test_name)                          \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
                      IGFX_GEN8_CORE, IGFX_MAX_PRODUCT)
+#define GEN8TEST_P(test_case_name, test_name)    \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN8_CORE,            \
+                      IGFX_MAX_PRODUCT)
 #endif
 #ifdef TESTS_GEN9
 #define GEN9TEST_F(test_fixture, test_name)                          \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
                      IGFX_GEN9_CORE, IGFX_MAX_PRODUCT)
+#define GEN9TEST_P(test_case_name, test_name)    \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN9_CORE,            \
+                      IGFX_MAX_PRODUCT)
 #endif
 #ifdef TESTS_GEN10
 #define GEN10TEST_F(test_fixture, test_name)                         \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
                      IGFX_GEN10_CORE, IGFX_MAX_PRODUCT)
+#define GEN10TEST_P(test_case_name, test_name)   \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN10_CORE,           \
+                      IGFX_MAX_PRODUCT)
 #endif
 #ifdef TESTS_GEN8
 #define BDWTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
-                     IGFX_GEN8_CORE, IGFX_MAX_PRODUCT)
+                     IGFX_GEN8_CORE, IGFX_BROADWELL)
+#define BDWTEST_P(test_case_name, test_name)     \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN8_CORE,            \
+                      IGFX_BROADWELL)
 #endif
 #ifdef TESTS_SKL
 #define SKLTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
                      IGFX_GEN9_CORE, IGFX_SKYLAKE)
+#define SKLTEST_P(test_case_name, test_name)     \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN9_CORE,            \
+                      IGFX_SKYLAKE)
 #endif
 #ifdef TESTS_KBL
 #define KBLTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
                      IGFX_GEN9_CORE, IGFX_KABYLAKE)
+#define KBLTEST_P(test_case_name, test_name)     \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN9_CORE,            \
+                      IGFX_KABYLAKE)
 #endif
 #ifdef TESTS_GLK
 #define GLKTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
                      IGFX_GEN9_CORE, IGFX_GEMINILAKE)
+#define GLKTEST_P(test_case_name, test_name)     \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN9_CORE,            \
+                      IGFX_GEMINILAKE)
 #endif
 #ifdef TESTS_BXT
 #define BXTTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
                      IGFX_GEN9_CORE, IGFX_BROXTON)
+#define BXTTEST_P(test_case_name, test_name)     \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN9_CORE,            \
+                      IGFX_BROXTON)
 #endif
 #ifdef TESTS_CFL
 #define CFLTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
                      IGFX_GEN9_CORE, IGFX_COFFEELAKE)
+#define CFLTEST_P(test_case_name, test_name)     \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN9_CORE,            \
+                      IGFX_COFFEELAKE)
 #endif
 #ifdef TESTS_GEN10
 #define CNLTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
                      IGFX_GEN10_CORE, IGFX_CANNONLAKE)
+#define CNLTEST_P(test_case_name, test_name)     \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN10_CORE,           \
+                      IGFX_CANNONLAKE)
 #endif
 #define HWTEST_TYPED_TEST(CaseName, TestName)                                              \
     template <typename gtest_TypeParam_>                                                   \
