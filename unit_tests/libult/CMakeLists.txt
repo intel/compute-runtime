@@ -32,6 +32,7 @@ set(IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp
 )
 
 if(SOURCE_LEVEL_DEBUGGER_HEADERS_DIR)

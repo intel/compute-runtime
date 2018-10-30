@@ -34,10 +34,12 @@ set(RUNTIME_SRCS_DLL_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/allocator_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_neo_create.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/options.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/linux/os_interface.cpp
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/options.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/os_interface.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/sys_calls.cpp

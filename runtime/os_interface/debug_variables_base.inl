@@ -84,6 +84,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableComputeWorkSizeSquared, false, "Enables algor
 DECLARE_DEBUG_VARIABLE(bool, EnableVaLibCalls, true, "Enable cl-va sharing lib calls")
 DECLARE_DEBUG_VARIABLE(bool, AddClGlSharing, false, "Add cl-gl extension")
 DECLARE_DEBUG_VARIABLE(bool, EnablePassInlineData, false, "Enable passing of inline data")
+DECLARE_DEBUG_VARIABLE(bool, EnableLocalMemory, false, "Allows allocating graphics memory in Local Memory")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStatelessToStatefulBufferOffsetOpt, -1, "-1: dont override, 0: disable, 1: enable, Enables buffer-offset improvement of the stateless to stateful optimization")
 DECLARE_DEBUG_VARIABLE(int32_t, CreateMultipleDevices, 0, "0: default - disable, 1+: Driver will create multiple (N) devices during initialization.")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitAmountOfReturnedDevices, 0, "0: default - disable, 1+: Driver will limit the number of devices returned from clGetDeviceIds to N.")

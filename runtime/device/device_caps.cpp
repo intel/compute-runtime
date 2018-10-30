@@ -53,7 +53,11 @@ bool Device::getEnabled64kbPages() {
 };
 
 bool Device::getEnableLocalMemory() {
-    return OSInterface::osEnableLocalMemory && getHardwareCapabilities().localMemorySupported;
+    if (DebugManager.flags.EnableLocalMemory.get() == true) {
+        return true;
+    } else {
+        return OSInterface::osEnableLocalMemory && getHardwareCapabilities().localMemorySupported;
+    }
 };
 
 void Device::setupFp64Flags() {
