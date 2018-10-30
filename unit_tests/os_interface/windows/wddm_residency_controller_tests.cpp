@@ -28,6 +28,13 @@ class MockWddmResidencyController : public WddmResidencyController {
     using WddmResidencyController::trimResidency;
     using WddmResidencyController::trimResidencyToBudget;
     using WddmResidencyController::WddmResidencyController;
+
+    uint32_t acquireLockCallCount = 0u;
+
+    std::unique_lock<SpinLock> acquireLock() override {
+        acquireLockCallCount++;
+        return WddmResidencyController::acquireLock();
+    }
 };
 
 struct WddmResidencyControllerTest : ::testing::Test {
@@ -689,4 +696,34 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
     EXPECT_FALSE(allocation1.getResidencyData().resident);
     EXPECT_FALSE(allocation2.getResidencyData().resident);
     EXPECT_TRUE(allocation3.getResidencyData().resident);
+}
+
+using WddmResidencyControllerLockTest = WddmResidencyControllerWithGdiTest;
+
+TEST_F(WddmResidencyControllerLockTest, givenPeriodicTrimWhenTrimmingResidencyThenLockOnce) {
+    D3DKMT_TRIMNOTIFICATION trimNotification = {0};
+    trimNotification.Flags.PeriodicTrim = 1;
+    trimNotification.NumBytesToTrim = 0;
+
+    residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    EXPECT_EQ(1, residencyController->acquireLockCallCount);
+}
+
+TEST_F(WddmResidencyControllerLockTest, givenTrimToBudgetWhenTrimmingResidencyThenLockOnce) {
+    D3DKMT_TRIMNOTIFICATION trimNotification = {0};
+    trimNotification.Flags.TrimToBudget = 1;
+    trimNotification.NumBytesToTrim = 0;
+
+    residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    EXPECT_EQ(1, residencyController->acquireLockCallCount);
+}
+
+TEST_F(WddmResidencyControllerLockTest, givenPeriodicTrimAndTrimToBudgetWhenTrimmingResidencyThenLockTwice) {
+    D3DKMT_TRIMNOTIFICATION trimNotification = {0};
+    trimNotification.Flags.PeriodicTrim = 1;
+    trimNotification.Flags.TrimToBudget = 1;
+    trimNotification.NumBytesToTrim = 0;
+
+    residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    EXPECT_EQ(2, residencyController->acquireLockCallCount);
 }

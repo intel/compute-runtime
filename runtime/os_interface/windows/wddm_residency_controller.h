@@ -25,7 +25,7 @@ class WddmResidencyController {
   public:
     WddmResidencyController(Wddm &wddm, uint32_t osContextId);
 
-    std::unique_lock<SpinLock> acquireLock();
+    MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock();
     std::unique_lock<SpinLock> acquireTrimCallbackLock();
 
     WddmAllocation *getTrimCandidateHead();
