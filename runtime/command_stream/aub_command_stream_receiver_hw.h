@@ -49,6 +49,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void initGlobalMMIO();
     void initEngineMMIO(EngineInstanceT engineInstance);
 
+    uint32_t getDumpHandle();
     MOCKABLE_VIRTUAL void addContextToken(uint32_t dumpHandle);
 
     static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment);
@@ -74,6 +75,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
 
     static const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance);
+    size_t getEngineIndexFromInstance(EngineInstanceT engineInstance);
     size_t getEngineIndex(EngineType engineType);
 
     struct EngineInfo {

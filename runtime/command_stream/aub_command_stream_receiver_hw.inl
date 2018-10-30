@@ -90,14 +90,19 @@ const AubMemDump::LrcaHelper &AUBCommandStreamReceiverHw<GfxFamily>::getCsTraits
 }
 
 template <typename GfxFamily>
-size_t AUBCommandStreamReceiverHw<GfxFamily>::getEngineIndex(EngineType engineType) {
+size_t AUBCommandStreamReceiverHw<GfxFamily>::getEngineIndexFromInstance(EngineInstanceT engineInstance) {
     constexpr auto numAllEngines = arrayCount(allEngineInstances);
     constexpr auto findBegin = allEngineInstances;
     constexpr auto findEnd = findBegin + numAllEngines;
-    auto findCriteria = [&](const auto &it) { return it.type == engineType; };
-    auto engineInstance = std::find_if(findBegin, findEnd, findCriteria);
-    UNRECOVERABLE_IF(engineInstance == findEnd);
-    return engineInstance - findBegin;
+    auto findCriteria = [&](const auto &it) { return it.type == engineInstance.type && it.id == engineInstance.id; };
+    auto findResult = std::find_if(findBegin, findEnd, findCriteria);
+    UNRECOVERABLE_IF(findResult == findEnd);
+    return findResult - findBegin;
+}
+
+template <typename GfxFamily>
+size_t AUBCommandStreamReceiverHw<GfxFamily>::getEngineIndex(EngineType engineType) {
+    return getEngineIndexFromInstance(engineType);
 }
 
 template <typename GfxFamily>
@@ -266,7 +271,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex)
     }
 
     // Create a context to facilitate AUB dumping of memory using PPGTT
-    addContextToken(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(engineInfo.pLRCA)));
+    addContextToken(getDumpHandle());
 }
 
 template <typename GfxFamily>
@@ -728,6 +733,11 @@ void AUBCommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(const MultiDis
             this->initProgrammingFlags();
         }
     }
+}
+
+template <typename GfxFamily>
+uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getDumpHandle() {
+    return static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
 }
 
 template <typename GfxFamily>
