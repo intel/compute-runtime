@@ -16,6 +16,7 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/hash.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
@@ -737,7 +738,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(const MultiDis
 
 template <typename GfxFamily>
 uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getDumpHandle() {
-    return static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
+    return hashPtrToU32(this);
 }
 
 template <typename GfxFamily>

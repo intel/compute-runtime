@@ -104,4 +104,13 @@ class Hash {
   protected:
     uint32_t a, hi, lo;
 };
+
+template <typename T>
+uint32_t hashPtrToU32(const T *src) {
+    auto asInt = reinterpret_cast<uintptr_t>(src);
+    constexpr auto m = sizeof(uintptr_t) / 8;
+    asInt = asInt ^ ((asInt & ~(m - 1)) >> (m * 32));
+
+    return static_cast<uint32_t>(asInt);
+}
 } // namespace OCLRT
