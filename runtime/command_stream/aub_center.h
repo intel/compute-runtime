@@ -10,11 +10,18 @@
 #include "runtime/memory_manager/address_mapper.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
 
+#include "third_party/aub_stream/headers/aub_manager.h"
+#include "third_party/aub_stream/headers/aub_streamer.h"
+
 namespace OCLRT {
 
 class AubCenter {
   public:
     AubCenter() {
+        if (DebugManager.flags.UseAubStream.get()) {
+            std::string filename("aub.aub");
+            aubManager = std::make_unique<AubDump::AubManager>(1, false, filename);
+        }
         addressMapper = std::make_unique<AddressMapper>();
         streamProvider = std::make_unique<AubFileStreamProvider>();
     }
@@ -40,5 +47,7 @@ class AubCenter {
     std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;
     std::unique_ptr<AddressMapper> addressMapper;
     std::unique_ptr<AubStreamProvider> streamProvider;
+
+    std::unique_ptr<AubDump::AubManager> aubManager;
 };
 } // namespace OCLRT

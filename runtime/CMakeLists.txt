@@ -48,6 +48,9 @@ if(WIN32)
 endif()
 
 target_link_libraries(${NEO_STATIC_LIB_NAME} elflib)
+if(DEFINED AUB_STREAM_DIR)
+  target_link_libraries(${NEO_STATIC_LIB_NAME} ${AUB_STREAM_LIB_NAME})
+endif()
 
 target_include_directories(${NEO_STATIC_LIB_NAME} PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}

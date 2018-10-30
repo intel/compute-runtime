@@ -105,6 +105,21 @@ if(NOT SOURCE_LEVEL_DEBUGGER_HEADERS_DIR)
     endif()
 endif(NOT SOURCE_LEVEL_DEBUGGER_HEADERS_DIR)
 
+get_filename_component(AUB_STREAM_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/aub_stream/headers" ABSOLUTE)
+if(IS_DIRECTORY ${AUB_STREAM_HEADERS_DIR})
+    message(STATUS "Aub Stream Headers dir: ${AUB_STREAM_HEADERS_DIR}")
+else()
+    message(FATAL_ERROR "Aub Stream headers not available!")
+endif()
+
+if(NOT DEFINED AUB_STREAM_DIR)
+    get_filename_component(TEMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/aub_stream/aub_mem_dump" ABSOLUTE)
+    if(IS_DIRECTORY ${TEMP_DIR})
+        set(AUB_STREAM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/aub_stream/aub_mem_dump")
+        message(STATUS "Aub Stream dir: ${AUB_STREAM_DIR}")
+    endif()
+endif(NOT DEFINED AUB_STREAM_DIR)
+
 if(LIBDRM_DIR)
   get_filename_component(I915_INCLUDES_DIR "${LIBDRM_DIR}/include" ABSOLUTE)
 else()
@@ -344,7 +359,11 @@ if(NEO_BITS STREQUAL "64")
   set(SLD_LIBRARY_NAME "${SLD_LIBRARY_NAME}${NEO_BITS}")
 endif()
 
+
 add_subdirectory(third_party/gtest)
+if(DEFINED AUB_STREAM_DIR)
+    add_subdirectory(${AUB_STREAM_DIR})
+endif()
 
 add_definitions(-DGMM_OCL)
 
