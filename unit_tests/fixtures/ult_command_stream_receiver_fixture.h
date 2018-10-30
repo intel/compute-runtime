@@ -14,6 +14,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 
 namespace OCLRT {
 
@@ -38,20 +39,20 @@ struct UltCommandStreamReceiverTest
         ASSERT_NE(nullptr, sshBuffer);
 
         commandStream.replaceBuffer(cmdBuffer, sizeStream);
-        auto graphicsAllocation = new GraphicsAllocation(cmdBuffer, sizeStream);
+        auto graphicsAllocation = new MockGraphicsAllocation(cmdBuffer, sizeStream);
         commandStream.replaceGraphicsAllocation(graphicsAllocation);
 
         dsh.replaceBuffer(dshBuffer, sizeStream);
-        graphicsAllocation = new GraphicsAllocation(dshBuffer, sizeStream);
+        graphicsAllocation = new MockGraphicsAllocation(dshBuffer, sizeStream);
         dsh.replaceGraphicsAllocation(graphicsAllocation);
 
         ioh.replaceBuffer(iohBuffer, sizeStream);
 
-        graphicsAllocation = new GraphicsAllocation(iohBuffer, sizeStream);
+        graphicsAllocation = new MockGraphicsAllocation(iohBuffer, sizeStream);
         ioh.replaceGraphicsAllocation(graphicsAllocation);
 
         ssh.replaceBuffer(sshBuffer, sizeStream);
-        graphicsAllocation = new GraphicsAllocation(sshBuffer, sizeStream);
+        graphicsAllocation = new MockGraphicsAllocation(sshBuffer, sizeStream);
         ssh.replaceGraphicsAllocation(graphicsAllocation);
     }
 

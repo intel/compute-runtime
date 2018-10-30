@@ -472,7 +472,7 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
     auto &csr = pDevice->getCommandStreamReceiver();
     std::vector<Surface *> v;
     SurfaceMock *surface = new SurfaceMock;
-    surface->graphicsAllocation = new GraphicsAllocation((void *)0x1234, 100u);
+    surface->graphicsAllocation = new MockGraphicsAllocation((void *)0x1234, 100u);
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     v.push_back(surface);
     auto cmd = new CommandComputeKernel(cmdQ, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode, pKernel, 1);

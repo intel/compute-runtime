@@ -23,6 +23,7 @@
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_program.h"
 
@@ -279,21 +280,21 @@ HWTEST_F(CommandStreamReceiverTest, whenCsrIsCreatedThenUseTimestampPacketWriteI
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllocationIsCalledThenCorrectAllocationIsReturned) {
     ExecutionEnvironment executionEnvironment;
     MockCommandStreamReceiver csr(executionEnvironment);
-    GraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     csr.setTagAllocation(&allocation);
     EXPECT_EQ(&allocation, csr.getTagAllocation());
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroyedThenItDestroysTagAllocation) {
-    struct MockGraphicsAllocation : public GraphicsAllocation {
+    struct MockGraphicsAllocationWithDestructorTracing : public GraphicsAllocation {
         using GraphicsAllocation::GraphicsAllocation;
-        ~MockGraphicsAllocation() override { *destructorCalled = true; }
+        ~MockGraphicsAllocationWithDestructorTracing() override { *destructorCalled = true; }
         bool *destructorCalled = nullptr;
     };
 
     bool destructorCalled = false;
 
-    auto mockGraphicsAllocation = new MockGraphicsAllocation(nullptr, 1u);
+    auto mockGraphicsAllocation = new MockGraphicsAllocationWithDestructorTracing(nullptr, 0llu, 0llu, 1u);
     mockGraphicsAllocation->destructorCalled = &destructorCalled;
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.commandStreamReceivers.push_back(std::make_unique<MockCommandStreamReceiver>(executionEnvironment));
@@ -337,7 +338,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhe
     ExecutionEnvironment executionEnvironment;
     MockCommandStreamReceiver csr(executionEnvironment);
     uint32_t tag = 0;
-    GraphicsAllocation allocation(&tag, sizeof(tag));
+    MockGraphicsAllocation allocation(&tag, sizeof(tag));
     csr.latestFlushedTaskCount = 3;
     csr.setTagAllocation(&allocation);
     csr.waitBeforeMakingNonResidentWhenRequired();

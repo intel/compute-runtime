@@ -65,7 +65,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     UltCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : BaseClass(hwInfoIn, executionEnvironment) {
         this->storeMakeResidentAllocations = false;
         if (hwInfoIn.capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
-            tempPreemptionLocation = new GraphicsAllocation(nullptr, 0);
+            tempPreemptionLocation = new GraphicsAllocation(nullptr, 0llu, 0, 0llu);
             this->preemptionCsrAllocation = tempPreemptionLocation;
         }
     }

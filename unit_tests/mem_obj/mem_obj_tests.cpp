@@ -488,7 +488,7 @@ TEST(MemObj, givenNotSharedMemObjectWhenChangingGfxAllocationThenOldAllocationIs
 }
 
 TEST(MemObj, givenGraphicsAllocationWhenCallingIsAllocDumpableThenItReturnsTheCorrectValue) {
-    GraphicsAllocation gfxAllocation(nullptr, 0);
+    MockGraphicsAllocation gfxAllocation(nullptr, 0);
     EXPECT_FALSE(gfxAllocation.isAllocDumpable());
     gfxAllocation.setAllocDumpable(true);
     EXPECT_TRUE(gfxAllocation.isAllocDumpable());

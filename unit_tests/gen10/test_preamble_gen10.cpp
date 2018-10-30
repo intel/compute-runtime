@@ -50,7 +50,7 @@ struct CnlPreambleWaCmds : public PreambleFixture {
         DeviceFixture::SetUpImpl(pHwInfo);
         HardwareParse::SetUp();
         if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
-            preemptionLocation.reset(new GraphicsAllocation(nullptr, 0));
+            preemptionLocation.reset(new GraphicsAllocation(nullptr, 0llu, 0llu, 0));
         }
     }
 

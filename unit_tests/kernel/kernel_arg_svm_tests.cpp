@@ -131,7 +131,7 @@ HWTEST_F(KernelArgSvmTest, SetKernelArgValidSvmPtrStateful) {
 TEST_F(KernelArgSvmTest, SetKernelArgValidSvmAlloc) {
     char *svmPtr = new char[256];
 
-    GraphicsAllocation svmAlloc(svmPtr, 256);
+    MockGraphicsAllocation svmAlloc(svmPtr, 256);
 
     auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -146,7 +146,7 @@ TEST_F(KernelArgSvmTest, SetKernelArgValidSvmAlloc) {
 TEST_F(KernelArgSvmTest, SetKernelArgValidSvmAllocStateless) {
     char *svmPtr = new char[256];
 
-    GraphicsAllocation svmAlloc(svmPtr, 256);
+    MockGraphicsAllocation svmAlloc(svmPtr, 256);
 
     pKernelInfo->usesSsh = false;
     pKernelInfo->requiresSshForBuffers = false;
@@ -162,7 +162,7 @@ TEST_F(KernelArgSvmTest, SetKernelArgValidSvmAllocStateless) {
 HWTEST_F(KernelArgSvmTest, SetKernelArgValidSvmAllocStateful) {
     char *svmPtr = new char[256];
 
-    GraphicsAllocation svmAlloc(svmPtr, 256);
+    MockGraphicsAllocation svmAlloc(svmPtr, 256);
 
     pKernelInfo->usesSsh = true;
     pKernelInfo->requiresSshForBuffers = true;
@@ -188,7 +188,7 @@ HWTEST_F(KernelArgSvmTest, givenOffsetedSvmPointerWhenSetArgSvmAllocIsCalledThen
 
     auto offsetedPtr = svmPtr.get() + 4;
 
-    GraphicsAllocation svmAlloc(svmPtr.get(), 256);
+    MockGraphicsAllocation svmAlloc(svmPtr.get(), 256);
     pKernelInfo->usesSsh = true;
     pKernelInfo->requiresSshForBuffers = true;
 
@@ -220,7 +220,7 @@ HWTEST_F(KernelArgSvmTest, PatchWithImplicitSurface) {
     pKernelInfo->requiresSshForBuffers = true;
     pKernelInfo->usesSsh = true;
     {
-        GraphicsAllocation svmAlloc(svmPtr.data(), svmPtr.size());
+        MockGraphicsAllocation svmAlloc(svmPtr.data(), svmPtr.size());
 
         SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization patch;
         memset(&patch, 0, sizeof(patch));
@@ -270,7 +270,7 @@ TEST_F(KernelArgSvmTest, patchBufferOffset) {
         constexpr uint32_t initVal = 7U;
         constexpr uint32_t svmOffset = 13U;
 
-        GraphicsAllocation svmAlloc(svmPtr.data(), 256);
+        MockGraphicsAllocation svmAlloc(svmPtr.data(), 256);
         uint32_t *expectedPatchPtr = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
 
         KernelArgInfo kai;
@@ -371,7 +371,7 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
     this->pKernelInfo->requiresSshForBuffers = true;
     this->pKernelInfo->usesSsh = true;
     {
-        GraphicsAllocation svmAlloc(svmPtr, svmSize);
+        MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
 
         constexpr size_t patchOffset = 16;
         void *ptrToPatch = svmPtr + patchOffset;

@@ -48,7 +48,7 @@ class SurfaceTest : public ::testing::Test {
   public:
     char data[10];
     MockBuffer buffer;
-    GraphicsAllocation gfxAllocation{nullptr, 0};
+    MockGraphicsAllocation gfxAllocation{nullptr, 0};
 };
 
 TYPED_TEST_CASE(SurfaceTest, SurfaceTypes);

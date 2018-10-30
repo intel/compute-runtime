@@ -1,36 +1,22 @@
 /*
-* Copyright (c) 2017, Intel Corporation
-*
-* Permission is hereby granted, free of charge, to any person obtaining a
-* copy of this software and associated documentation files (the "Software"),
-* to deal in the Software without restriction, including without limitation
-* the rights to use, copy, modify, merge, publish, distribute, sublicense,
-* and/or sell copies of the Software, and to permit persons to whom the
-* Software is furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included
-* in all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-* OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-* ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-* OTHER DEALINGS IN THE SOFTWARE.
-*/
+ * Copyright (C) 2017-2018 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
 
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/program/kernel_info.h"
 
 #include "unit_tests/mocks/mock_block_kernel_manager.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
 
 TEST(BlockKernelManagerTest, pushPrivateSurfaceResizesArray) {
-    GraphicsAllocation allocation(0, 0);
+    MockGraphicsAllocation allocation(0, 0);
     KernelInfo *blockInfo = new KernelInfo;
     MockBlockKernelManager blockManager;
 
@@ -44,8 +30,8 @@ TEST(BlockKernelManagerTest, pushPrivateSurfaceResizesArray) {
 }
 
 TEST(BlockKernelManagerTest, pushPrivateSurfacePlacesAllocationInCorrectPosition) {
-    GraphicsAllocation allocation1(0, 0);
-    GraphicsAllocation allocation2(0, 0);
+    MockGraphicsAllocation allocation1(0, 0);
+    MockGraphicsAllocation allocation2(0, 0);
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo *blockInfo2 = new KernelInfo;
     MockBlockKernelManager blockManager;
@@ -63,7 +49,7 @@ TEST(BlockKernelManagerTest, pushPrivateSurfacePlacesAllocationInCorrectPosition
 }
 
 TEST(BlockKernelManagerTest, pushPrivateSurfaceSetsPrivateSurfaceArrayToNullptrOnFirstCall) {
-    GraphicsAllocation allocation(0, 0);
+    MockGraphicsAllocation allocation(0, 0);
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo *blockInfo2 = new KernelInfo;
     KernelInfo *blockInfo3 = new KernelInfo;
@@ -82,7 +68,7 @@ TEST(BlockKernelManagerTest, pushPrivateSurfaceSetsPrivateSurfaceArrayToNullptrO
 }
 
 TEST(BlockKernelManagerTest, getPrivateSurface) {
-    GraphicsAllocation allocation(0, 0);
+    MockGraphicsAllocation allocation(0, 0);
     KernelInfo *blockInfo = new KernelInfo;
 
     MockBlockKernelManager blockManager;

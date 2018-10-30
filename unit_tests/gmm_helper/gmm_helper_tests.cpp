@@ -19,6 +19,7 @@
 #include "unit_tests/libult/mock_gfx_family.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "runtime/platform/platform.h"
 
 #include "GL/gl.h"
@@ -253,7 +254,7 @@ TEST_F(GmmTests, givenTilableImageWhenEnableForceLinearImagesThenYTilingIsDisabl
 }
 
 TEST_F(GmmTests, givenZeroRowPitchWhenQueryImgFromBufferParamsThenCalculate) {
-    GraphicsAllocation bufferAllocation(nullptr, 4096);
+    MockGraphicsAllocation bufferAllocation(nullptr, 4096);
 
     cl_image_desc imgDesc{};
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -269,7 +270,7 @@ TEST_F(GmmTests, givenZeroRowPitchWhenQueryImgFromBufferParamsThenCalculate) {
 }
 
 TEST_F(GmmTests, givenNonZeroRowPitchWhenQueryImgFromBufferParamsThenUseUserValue) {
-    GraphicsAllocation bufferAllocation(nullptr, 4096);
+    MockGraphicsAllocation bufferAllocation(nullptr, 4096);
 
     cl_image_desc imgDesc{};
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;

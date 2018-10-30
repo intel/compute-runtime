@@ -449,7 +449,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgSvm) {
 
 TEST_F(CloneKernelTest, cloneKernelWithArgSvmAlloc) {
     char *svmPtr = new char[256];
-    GraphicsAllocation svmAlloc(svmPtr, 256);
+    MockGraphicsAllocation svmAlloc(svmPtr, 256);
 
     retVal = pSourceKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
     ASSERT_EQ(CL_SUCCESS, retVal);

@@ -10,6 +10,7 @@
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "gtest/gtest.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include <memory>
 
 namespace DirtyStateHelpers {
@@ -33,7 +34,7 @@ struct HeapDirtyStateTests : ::testing::Test {
         ASSERT_EQ(heapAllocation.getUnderlyingBufferSize(), stream->getMaxAvailableSpace());
     }
 
-    GraphicsAllocation heapAllocation = {buffer, bufferSize};
+    MockGraphicsAllocation heapAllocation = {buffer, bufferSize};
 
     std::unique_ptr<IndirectHeap> stream;
     MockHeapDirtyState mockHeapDirtyState;
@@ -109,8 +110,8 @@ TEST_F(HeapDirtyStateTests, givenNonDirtyObjectWhenSizeAndBufferChangedThenRetur
 }
 
 TEST(DirtyStateHelpers, givenDirtyStateHelperWhenTwoDifferentIndirectHeapsAreCheckedButWithTheSame4GBbaseThenStateIsNotDirty) {
-    GraphicsAllocation firstHeapAllocation(reinterpret_cast<void *>(0x1234), 4192);
-    GraphicsAllocation secondHeapAllocation(reinterpret_cast<void *>(0x9345), 1234);
+    MockGraphicsAllocation firstHeapAllocation(reinterpret_cast<void *>(0x1234), 4192);
+    MockGraphicsAllocation secondHeapAllocation(reinterpret_cast<void *>(0x9345), 1234);
     uint64_t commonBase = 0x8123456;
     firstHeapAllocation.gpuBaseAddress = commonBase;
     secondHeapAllocation.gpuBaseAddress = commonBase;

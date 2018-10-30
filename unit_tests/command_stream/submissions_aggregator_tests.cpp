@@ -14,6 +14,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 
 using namespace OCLRT;
 
@@ -49,12 +50,12 @@ TEST(SubmissionsAggregator, givenTwoCommandBuffersWhenMergeResourcesIsCalledThen
     CommandBuffer *cmdBuffer = new CommandBuffer(*device);
     CommandBuffer *cmdBuffer2 = new CommandBuffer(*device);
 
-    GraphicsAllocation alloc1(nullptr, 1);
-    GraphicsAllocation alloc2(nullptr, 2);
-    GraphicsAllocation alloc3(nullptr, 3);
-    GraphicsAllocation alloc4(nullptr, 4);
-    GraphicsAllocation alloc5(nullptr, 5);
-    GraphicsAllocation alloc6(nullptr, 6);
+    MockGraphicsAllocation alloc1(nullptr, 1);
+    MockGraphicsAllocation alloc2(nullptr, 2);
+    MockGraphicsAllocation alloc3(nullptr, 3);
+    MockGraphicsAllocation alloc4(nullptr, 4);
+    MockGraphicsAllocation alloc5(nullptr, 5);
+    MockGraphicsAllocation alloc6(nullptr, 6);
 
     cmdBuffer->surfaces.push_back(&alloc1);
     cmdBuffer->surfaces.push_back(&alloc6);
@@ -109,13 +110,13 @@ TEST(SubmissionsAggregator, givenSubmissionAggregatorWhenThreeCommandBuffersAreS
     CommandBuffer *cmdBuffer2 = new CommandBuffer(*device);
     CommandBuffer *cmdBuffer3 = new CommandBuffer(*device);
 
-    GraphicsAllocation alloc1(nullptr, 1);
-    GraphicsAllocation alloc2(nullptr, 2);
-    GraphicsAllocation alloc3(nullptr, 3);
-    GraphicsAllocation alloc4(nullptr, 4);
-    GraphicsAllocation alloc5(nullptr, 5);
-    GraphicsAllocation alloc6(nullptr, 6);
-    GraphicsAllocation alloc7(nullptr, 7);
+    MockGraphicsAllocation alloc1(nullptr, 1);
+    MockGraphicsAllocation alloc2(nullptr, 2);
+    MockGraphicsAllocation alloc3(nullptr, 3);
+    MockGraphicsAllocation alloc4(nullptr, 4);
+    MockGraphicsAllocation alloc5(nullptr, 5);
+    MockGraphicsAllocation alloc6(nullptr, 6);
+    MockGraphicsAllocation alloc7(nullptr, 7);
 
     cmdBuffer->surfaces.push_back(&alloc5);
     cmdBuffer->surfaces.push_back(&alloc6);
@@ -173,13 +174,13 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWhenTheyAreAggreagateWith
     CommandBuffer *cmdBuffer2 = new CommandBuffer(*device);
     CommandBuffer *cmdBuffer3 = new CommandBuffer(*device);
 
-    GraphicsAllocation alloc1(nullptr, 1);
-    GraphicsAllocation alloc2(nullptr, 2);
-    GraphicsAllocation alloc3(nullptr, 3);
-    GraphicsAllocation alloc4(nullptr, 4);
-    GraphicsAllocation alloc5(nullptr, 5);
-    GraphicsAllocation alloc6(nullptr, 6);
-    GraphicsAllocation alloc7(nullptr, 7);
+    MockGraphicsAllocation alloc1(nullptr, 1);
+    MockGraphicsAllocation alloc2(nullptr, 2);
+    MockGraphicsAllocation alloc3(nullptr, 3);
+    MockGraphicsAllocation alloc4(nullptr, 4);
+    MockGraphicsAllocation alloc5(nullptr, 5);
+    MockGraphicsAllocation alloc6(nullptr, 6);
+    MockGraphicsAllocation alloc7(nullptr, 7);
 
     //14 bytes consumed
     cmdBuffer->surfaces.push_back(&alloc5);
@@ -229,13 +230,13 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWhenAggregateIsCalledMult
     CommandBuffer *cmdBuffer2 = new CommandBuffer(*device);
     CommandBuffer *cmdBuffer3 = new CommandBuffer(*device);
 
-    GraphicsAllocation alloc1(nullptr, 1);
-    GraphicsAllocation alloc2(nullptr, 2);
-    GraphicsAllocation alloc3(nullptr, 3);
-    GraphicsAllocation alloc4(nullptr, 4);
-    GraphicsAllocation alloc5(nullptr, 5);
-    GraphicsAllocation alloc6(nullptr, 6);
-    GraphicsAllocation alloc7(nullptr, 7);
+    MockGraphicsAllocation alloc1(nullptr, 1);
+    MockGraphicsAllocation alloc2(nullptr, 2);
+    MockGraphicsAllocation alloc3(nullptr, 3);
+    MockGraphicsAllocation alloc4(nullptr, 4);
+    MockGraphicsAllocation alloc5(nullptr, 5);
+    MockGraphicsAllocation alloc6(nullptr, 6);
+    MockGraphicsAllocation alloc7(nullptr, 7);
 
     //14 bytes consumed
     cmdBuffer->surfaces.push_back(&alloc5);
@@ -292,10 +293,10 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWithDifferentGraphicsAllo
     CommandBuffer *cmdBuffer = new CommandBuffer(*device);
     CommandBuffer *cmdBuffer2 = new CommandBuffer(*device);
 
-    GraphicsAllocation alloc1(nullptr, 1);
-    GraphicsAllocation alloc2(nullptr, 2);
-    GraphicsAllocation alloc5(nullptr, 5);
-    GraphicsAllocation alloc7(nullptr, 7);
+    MockGraphicsAllocation alloc1(nullptr, 1);
+    MockGraphicsAllocation alloc2(nullptr, 2);
+    MockGraphicsAllocation alloc5(nullptr, 5);
+    MockGraphicsAllocation alloc7(nullptr, 7);
 
     //5 bytes consumed
     cmdBuffer->surfaces.push_back(&alloc5);
@@ -325,10 +326,10 @@ TEST(SubmissionsAggregator, givenTwoCommandBufferWhereSecondContainsFirstOnResou
     CommandBuffer *cmdBuffer = new CommandBuffer(*device);
     CommandBuffer *cmdBuffer2 = new CommandBuffer(*device);
 
-    GraphicsAllocation cmdBufferAllocation1(nullptr, 1);
-    GraphicsAllocation cmdBufferAllocation2(nullptr, 2);
-    GraphicsAllocation alloc5(nullptr, 5);
-    GraphicsAllocation alloc7(nullptr, 7);
+    MockGraphicsAllocation cmdBufferAllocation1(nullptr, 1);
+    MockGraphicsAllocation cmdBufferAllocation2(nullptr, 2);
+    MockGraphicsAllocation alloc5(nullptr, 5);
+    MockGraphicsAllocation alloc7(nullptr, 7);
 
     cmdBuffer->batchBuffer.commandBufferAllocation = &cmdBufferAllocation1;
     cmdBuffer2->batchBuffer.commandBufferAllocation = &cmdBufferAllocation2;
@@ -360,9 +361,9 @@ TEST(SubmissionsAggregator, givenTwoCommandBufferWhereSecondContainsTheFirstComm
     CommandBuffer *cmdBuffer = new CommandBuffer(*device);
     CommandBuffer *cmdBuffer2 = new CommandBuffer(*device);
 
-    GraphicsAllocation cmdBufferAllocation1(nullptr, 1);
-    GraphicsAllocation alloc5(nullptr, 5);
-    GraphicsAllocation alloc7(nullptr, 7);
+    MockGraphicsAllocation cmdBufferAllocation1(nullptr, 1);
+    MockGraphicsAllocation alloc5(nullptr, 5);
+    MockGraphicsAllocation alloc7(nullptr, 7);
 
     cmdBuffer->batchBuffer.commandBufferAllocation = &cmdBufferAllocation1;
     cmdBuffer2->batchBuffer.commandBufferAllocation = &cmdBufferAllocation1;
@@ -392,8 +393,8 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentCoherencySettin
     CommandBuffer *cmdBuffer = new CommandBuffer(*device);
     CommandBuffer *cmdBuffer2 = new CommandBuffer(*device);
 
-    GraphicsAllocation alloc1(nullptr, 1);
-    GraphicsAllocation alloc7(nullptr, 7);
+    MockGraphicsAllocation alloc1(nullptr, 1);
+    MockGraphicsAllocation alloc7(nullptr, 7);
 
     cmdBuffer->batchBuffer.requiresCoherency = true;
     cmdBuffer2->batchBuffer.requiresCoherency = false;
@@ -421,8 +422,8 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentThrottleSetting
     CommandBuffer *cmdBuffer = new CommandBuffer(*device);
     CommandBuffer *cmdBuffer2 = new CommandBuffer(*device);
 
-    GraphicsAllocation alloc1(nullptr, 1);
-    GraphicsAllocation alloc7(nullptr, 7);
+    MockGraphicsAllocation alloc1(nullptr, 1);
+    MockGraphicsAllocation alloc7(nullptr, 7);
 
     cmdBuffer->batchBuffer.throttle = QueueThrottle::LOW;
     cmdBuffer2->batchBuffer.throttle = QueueThrottle::MEDIUM;
@@ -450,8 +451,8 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentPrioritySetting
     CommandBuffer *cmdBuffer = new CommandBuffer(*device);
     CommandBuffer *cmdBuffer2 = new CommandBuffer(*device);
 
-    GraphicsAllocation alloc1(nullptr, 1);
-    GraphicsAllocation alloc7(nullptr, 7);
+    MockGraphicsAllocation alloc1(nullptr, 1);
+    MockGraphicsAllocation alloc7(nullptr, 7);
 
     cmdBuffer->batchBuffer.low_priority = true;
     cmdBuffer2->batchBuffer.low_priority = false;

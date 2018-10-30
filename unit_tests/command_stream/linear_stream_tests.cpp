@@ -8,6 +8,7 @@
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "unit_tests/command_stream/linear_stream_fixture.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 
 using namespace OCLRT;
 
@@ -93,7 +94,7 @@ TEST_F(LinearStreamTest, givenNewGraphicsAllocationWhenReplaceIsCalledThenLinear
     auto graphicsAllocation = linearStream.getGraphicsAllocation();
     EXPECT_NE(nullptr, graphicsAllocation);
     auto address = (void *)0x100000;
-    GraphicsAllocation newGraphicsAllocation(address, 4096);
+    MockGraphicsAllocation newGraphicsAllocation(address, 4096);
     EXPECT_NE(&newGraphicsAllocation, graphicsAllocation);
     linearStream.replaceGraphicsAllocation(&newGraphicsAllocation);
     EXPECT_EQ(&newGraphicsAllocation, linearStream.getGraphicsAllocation());

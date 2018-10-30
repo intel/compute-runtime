@@ -879,7 +879,7 @@ TEST_F(DispatchInfoBuilderTest, setKernelArg) {
     char data[128];
     void *svmPtr = &data;
     EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvm(1, sizeof(svmPtr), svmPtr));
-    GraphicsAllocation svmAlloc(svmPtr, 128);
+    MockGraphicsAllocation svmAlloc(svmPtr, 128);
     EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvmAlloc(2, svmPtr, &svmAlloc));
 
     for (auto &dispatchInfo : multiDispatchInfo) {
@@ -990,7 +990,7 @@ TEST_F(DispatchInfoBuilderTest, setKernelArgNullKernel) {
     auto pVal = &val;
     char data[128];
     void *svmPtr = &data;
-    GraphicsAllocation svmAlloc(svmPtr, 128);
+    MockGraphicsAllocation svmAlloc(svmPtr, 128);
 
     DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>();
     ASSERT_NE(nullptr, diBuilder);

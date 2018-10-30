@@ -21,6 +21,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/gtest_helpers.h"
 #include "test.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -744,7 +745,7 @@ TEST_F(KernelPrivateSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenPriv
 
     // setup global memory
     char buffer[16];
-    GraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
+    MockGraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
 
     MockContext context;
     MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
@@ -942,7 +943,7 @@ HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlob
     pKernelInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization = &AllocateStatelessGlobalMemorySurfaceWithInitialization;
 
     char buffer[16];
-    GraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
+    MockGraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
     void *bufferAddress = gfxAlloc.getUnderlyingBuffer();
 
     MockContext context;
@@ -993,7 +994,7 @@ TEST_F(KernelGlobalSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenGloba
 
     // setup global memory
     char buffer[16];
-    GraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
+    MockGraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
 
     MockProgram program(*pDevice->getExecutionEnvironment());
     program.setGlobalSurface(&gfxAlloc);
@@ -1116,7 +1117,7 @@ HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenCo
     pKernelInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization = &AllocateStatelessConstantMemorySurfaceWithInitialization;
 
     char buffer[16];
-    GraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
+    MockGraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
     void *bufferAddress = gfxAlloc.getUnderlyingBuffer();
 
     MockContext context;
@@ -1167,7 +1168,7 @@ TEST_F(KernelConstantSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenCon
 
     // setup global memory
     char buffer[16];
-    GraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
+    MockGraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
 
     MockProgram program(*pDevice->getExecutionEnvironment());
     program.setConstantSurface(&gfxAlloc);

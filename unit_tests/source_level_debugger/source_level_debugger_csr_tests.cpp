@@ -11,6 +11,7 @@
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 
 #include "test.h"
 #include <memory>
@@ -33,7 +34,7 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
 
     void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
 
-    std::unique_ptr<GraphicsAllocation> allocation(new GraphicsAllocation(buffer, MemoryConstants::pageSize));
+    std::unique_ptr<MockGraphicsAllocation> allocation(new MockGraphicsAllocation(buffer, MemoryConstants::pageSize));
     std::unique_ptr<IndirectHeap> heap(new IndirectHeap(allocation.get()));
 
     mockCsr->flushTask(commandStream,

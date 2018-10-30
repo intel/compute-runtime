@@ -16,6 +16,7 @@
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "test.h"
 #include <cstdint>
 
@@ -79,7 +80,7 @@ TEST_F(TbxCommandStreamTests, DISABLED_makeResident) {
 }
 
 TEST_F(TbxCommandStreamTests, DISABLED_makeResidentOnZeroSizedBufferShouldDoNothing) {
-    GraphicsAllocation graphicsAllocation(nullptr, 0);
+    MockGraphicsAllocation graphicsAllocation(nullptr, 0);
 
     pCommandStreamReceiver->makeResident(graphicsAllocation);
     pCommandStreamReceiver->makeNonResident(graphicsAllocation);
@@ -213,7 +214,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCa
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCalledForGraphicsAllocationWithZeroSizeThenItShouldReturnFalse) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
-    GraphicsAllocation graphicsAllocation((void *)0x1234, 0);
+    MockGraphicsAllocation graphicsAllocation((void *)0x1234, 0);
 
     EXPECT_FALSE(tbxCsr->writeMemory(graphicsAllocation));
 }

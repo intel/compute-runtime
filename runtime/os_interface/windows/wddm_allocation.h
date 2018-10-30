@@ -32,7 +32,7 @@ class WddmAllocation : public GraphicsAllocation {
 
     D3DGPU_VIRTUAL_ADDRESS gpuPtr; // set by mapGpuVA
     WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *alignedCpuPtr, void *reservedAddr, MemoryPool::Type pool, size_t osContextsCount)
-        : GraphicsAllocation(cpuPtrIn, sizeIn),
+        : GraphicsAllocation(cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn),
           handle(0),
           gpuPtr(0),
           alignedCpuPtr(alignedCpuPtr),

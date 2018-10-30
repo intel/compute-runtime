@@ -821,7 +821,7 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSi
     EXPECT_GE(commandStream.getAvailableSpace(), sizeRequested);
     commandStream.getSpace(sizeRequested - sizeCQReserves);
 
-    GraphicsAllocation allocation((void *)MemoryConstants::pageSize, 1);
+    MockGraphicsAllocation allocation((void *)MemoryConstants::pageSize, 1);
     IndirectHeap linear(&allocation);
 
     auto blocking = true;
@@ -2136,7 +2136,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeReco
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     auto memorySize = (size_t)pDevice->getDeviceInfo().globalMemSize;
-    GraphicsAllocation largeAllocation(nullptr, memorySize);
+    MockGraphicsAllocation largeAllocation(nullptr, memorySize);
 
     DispatchFlags dispatchFlags;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
@@ -2565,7 +2565,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenSusbsequ
 
     auto additionalSize = 1234;
 
-    GraphicsAllocation graphicsAllocation(nullptr, additionalSize);
+    MockGraphicsAllocation graphicsAllocation(nullptr, additionalSize);
     mockCsr->makeResident(graphicsAllocation);
 
     mockCsr->flushTask(commandStream,
@@ -2627,7 +2627,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
     EXPECT_EQ(expectedUsed, mockCsr->peekTotalMemoryUsed());
 
     auto budgetSize = (size_t)pDevice->getDeviceInfo().globalMemSize;
-    GraphicsAllocation hugeAllocation(nullptr, budgetSize / 4);
+    MockGraphicsAllocation hugeAllocation(nullptr, budgetSize / 4);
     mockCsr->makeResident(hugeAllocation);
 
     mockCsr->flushTask(commandStream,

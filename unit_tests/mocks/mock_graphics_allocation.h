@@ -13,7 +13,7 @@ class MockGraphicsAllocation : public GraphicsAllocation {
     using GraphicsAllocation::GraphicsAllocation;
 
   public:
-    MockGraphicsAllocation(void *buffer, size_t sizeIn) : GraphicsAllocation(buffer, sizeIn) {
+    MockGraphicsAllocation(void *buffer, size_t sizeIn) : GraphicsAllocation(buffer, castToUint64(buffer), 0llu, sizeIn) {
     }
     void resetInspectionId() {
         this->inspectionId = 0;

@@ -62,7 +62,7 @@ TEST(GraphicsAllocationTest, Ctor) {
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
 
-    GraphicsAllocation gfxAllocation(cpuPtr, size);
+    MockGraphicsAllocation gfxAllocation(cpuPtr, size);
     uint64_t expectedGpuAddr = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(gfxAllocation.getUnderlyingBuffer()));
 
     EXPECT_EQ(expectedGpuAddr, gfxAllocation.getGpuAddress());
@@ -153,7 +153,7 @@ TEST_F(MemoryAllocatorTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationToH
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
 
-    GraphicsAllocation gfxAllocation(cpuPtr, size);
+    MockGraphicsAllocation gfxAllocation(cpuPtr, size);
     memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
     auto fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
     EXPECT_NE(fragment, nullptr);
@@ -1369,7 +1369,7 @@ TEST(GraphicsAllocation, givenCpuPointerBasedConstructorWhenGraphicsAllocationIs
     uintptr_t address = 0xf0000000;
     void *addressWithTrailingBitSet = reinterpret_cast<void *>(address);
     uint64_t expectedGpuAddress = 0xf0000000;
-    GraphicsAllocation graphicsAllocation(addressWithTrailingBitSet, 1u);
+    MockGraphicsAllocation graphicsAllocation(addressWithTrailingBitSet, 1u);
     EXPECT_EQ(expectedGpuAddress, graphicsAllocation.getGpuAddress());
 }
 
@@ -1383,7 +1383,7 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
 }
 
 TEST(GraphicsAllocation, givenGraphicsAllocationCreatedWithDefaultConstructorThenItIsNotResidentInAllContexts) {
-    GraphicsAllocation graphicsAllocation(nullptr, 1u);
+    MockGraphicsAllocation graphicsAllocation(nullptr, 1u);
     for (uint32_t index = 0u; index < maxOsContextCount; index++) {
         EXPECT_EQ(ObjectNotResident, graphicsAllocation.residencyTaskCount[index]);
     }

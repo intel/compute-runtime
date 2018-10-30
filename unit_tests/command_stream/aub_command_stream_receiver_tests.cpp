@@ -21,6 +21,7 @@
 #include "unit_tests/mocks/mock_aub_subcapture_manager.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_gmm.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 
@@ -728,7 +729,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationSizeIsZeroThenWriteMemoryIsNotAllowed) {
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true, *pDevice->executionEnvironment));
-    GraphicsAllocation gfxAllocation((void *)0x1234, 0);
+    MockGraphicsAllocation gfxAllocation((void *)0x1234, 0);
 
     EXPECT_FALSE(aubCsr->writeMemory(gfxAllocation));
 }
