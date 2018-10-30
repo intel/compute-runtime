@@ -86,7 +86,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, s
     size_t sizeAligned = alignUp(size, MemoryConstants::pageSize64k);
     Gmm *gmm = nullptr;
 
-    auto wddmAllocation = new WddmAllocation(nullptr, sizeAligned, nullptr, sizeAligned, nullptr, MemoryPool::System64KBPages, getOsContextCount());
+    auto wddmAllocation = new WddmAllocation(nullptr, sizeAligned, nullptr, nullptr, MemoryPool::System64KBPages, getOsContextCount());
 
     gmm = new Gmm(nullptr, sizeAligned, false, preferRenderCompressed, true);
     wddmAllocation->gmm = gmm;
@@ -117,7 +117,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
         return nullptr;
     }
 
-    auto wddmAllocation = new WddmAllocation(pSysMem, sizeAligned, pSysMem, sizeAligned, nullptr, MemoryPool::System4KBPages, getOsContextCount());
+    auto wddmAllocation = new WddmAllocation(pSysMem, sizeAligned, pSysMem, nullptr, MemoryPool::System4KBPages, getOsContextCount());
     wddmAllocation->cpuPtrAllocated = true;
 
     gmm = new Gmm(pSysMem, sizeAligned, uncacheable);
@@ -138,7 +138,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(si
     auto offsetInPage = ptrDiff(cpuPtr, alignedPtr);
     auto alignedSize = alignSizeWholePage(cpuPtr, size);
 
-    auto wddmAllocation = new WddmAllocation(cpuPtr, size, alignedPtr, alignedSize, nullptr, MemoryPool::System4KBPages, getOsContextCount());
+    auto wddmAllocation = new WddmAllocation(cpuPtr, size, alignedPtr, nullptr, MemoryPool::System4KBPages, getOsContextCount());
     wddmAllocation->allocationOffset = offsetInPage;
 
     auto gmm = new Gmm(alignedPtr, alignedSize, false);
@@ -171,7 +171,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const
             return nullptr;
         }
 
-        auto allocation = new WddmAllocation(ptr, size, ptrAligned, sizeAligned, reserve, MemoryPool::System4KBPages, getOsContextCount());
+        auto allocation = new WddmAllocation(ptr, size, ptrAligned, reserve, MemoryPool::System4KBPages, getOsContextCount());
         allocation->allocationOffset = offset;
 
         Gmm *gmm = new Gmm(ptrAligned, sizeAligned, false);
@@ -208,7 +208,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
         cpuPtrAllocated = true;
     }
 
-    auto wddmAllocation = new WddmAllocation(const_cast<void *>(ptrAligned), sizeAligned, const_cast<void *>(ptrAligned), sizeAligned, nullptr, MemoryPool::System4KBPagesWith32BitGpuAddressing, getOsContextCount());
+    auto wddmAllocation = new WddmAllocation(const_cast<void *>(ptrAligned), sizeAligned, const_cast<void *>(ptrAligned), nullptr, MemoryPool::System4KBPagesWith32BitGpuAddressing, getOsContextCount());
     wddmAllocation->cpuPtrAllocated = cpuPtrAllocated;
     wddmAllocation->is32BitAllocation = true;
     wddmAllocation->allocationOffset = offset;
@@ -456,7 +456,7 @@ void WddmMemoryManager::obtainGpuAddresFromFragments(WddmAllocation *allocation,
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
-    auto allocation = new WddmAllocation(const_cast<void *>(hostPtr), hostPtrSize, const_cast<void *>(hostPtr), hostPtrSize, nullptr, MemoryPool::System4KBPages, getOsContextCount());
+    auto allocation = new WddmAllocation(const_cast<void *>(hostPtr), hostPtrSize, const_cast<void *>(hostPtr), nullptr, MemoryPool::System4KBPages, getOsContextCount());
     allocation->fragmentsStorage = handleStorage;
     obtainGpuAddresFromFragments(allocation, handleStorage);
     return allocation;

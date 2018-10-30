@@ -56,7 +56,7 @@ TEST(WddmMemoryManager, NonAssignable) {
 }
 
 TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGettingTrimCandidatePositionThenReturnItsPositionAndUnusedPositionInOtherContexts) {
-    WddmAllocation allocation{nullptr, 0, nullptr, 0, nullptr, MemoryPool::MemoryNull, 3u};
+    WddmAllocation allocation{nullptr, 0, nullptr, nullptr, MemoryPool::MemoryNull, 3u};
     OsContext osContext{nullptr, 1u};
     allocation.setTrimCandidateListPosition(osContext.getContextId(), 700u);
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(0u));
@@ -65,7 +65,7 @@ TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGetting
 }
 
 TEST(WddmAllocationTest, givenRequestedContextIdTooLargeWhenGettingTrimCandidateListPositionThenReturnUnusedPosition) {
-    WddmAllocation allocation{nullptr, 0, nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u};
+    WddmAllocation allocation{nullptr, 0, nullptr, nullptr, MemoryPool::MemoryNull, 1u};
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(1u));
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(1000u));
 }
@@ -1213,7 +1213,7 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsSucceedsWhenMakeR
     MockWddmAllocation allocation1;
     void *cpuPtr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1000);
     size_t allocationSize = 0x1000;
-    WddmAllocation allocationToTrim(cpuPtr, allocationSize, cpuPtr, allocationSize, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount());
+    WddmAllocation allocationToTrim(cpuPtr, allocationSize, cpuPtr, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount());
 
     allocationToTrim.getResidencyData().updateCompletionData(osContext->get()->getResidencyController().getMonitoredFence().lastSubmittedFence, osContext->getContextId());
 
