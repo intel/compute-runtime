@@ -811,14 +811,14 @@ uint64_t Wddm::getHeap32Size() {
     return alignDown(gfxPartition.Heap32[0].Limit, MemoryConstants::pageSize);
 }
 
-VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmMemoryManager *memoryManager) {
+VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) {
     if (DebugManager.flags.DoNotRegisterTrimCallback.get()) {
         return nullptr;
     }
     D3DKMT_REGISTERTRIMNOTIFICATION registerTrimNotification;
     registerTrimNotification.Callback = callback;
     registerTrimNotification.AdapterLuid = this->adapterLuid;
-    registerTrimNotification.Context = memoryManager;
+    registerTrimNotification.Context = &residencyController;
     registerTrimNotification.hDevice = this->device;
 
     NTSTATUS status = gdi->registerTrimNotification(&registerTrimNotification);

@@ -113,13 +113,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhichDoesntRegisteredAnyOsContextWhenTrimCallbackIsCalledThenItReturnsWithoutDoingAnyWork) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
-    D3DKMT_TRIMNOTIFICATION trimNotification = {};
-    trimNotification.Context = memoryManager.get();
-    WddmMemoryManager::trimCallback(&trimNotification);
-}
-
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
     auto size = 4096u;
@@ -935,22 +928,6 @@ TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsSetsLastF
     }
 
     memoryManager->freeGraphicsMemory(allocationTriple);
-}
-
-TEST_F(WddmMemoryManagerResidencyTest, trimCallbackIsRegisteredInWddmMemoryManagerCtor) {
-    EXPECT_EQ((PFND3DKMT_TRIMNOTIFICATIONCALLBACK)memoryManager->trimCallback, gdi->getRegisterTrimNotificationArg().Callback);
-    EXPECT_EQ(reinterpret_cast<void *>(memoryManager.get()), gdi->getRegisterTrimNotificationArg().Context);
-    EXPECT_EQ(wddm->getDevice(), gdi->getRegisterTrimNotificationArg().hDevice);
-}
-
-TEST_F(WddmMemoryManagerResidencyTest, givenWddmMemoryManagerWhenCallingDestructorThenUnregisterTrimCallback) {
-    auto trimCallbackHandle = memoryManager->trimCallbackHandle;
-    auto trimCallbackAddress = reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(memoryManager->trimCallback);
-    memoryManager.reset();
-
-    auto &unregisterNotification = gdi->getUnregisterTrimNotificationArg();
-    EXPECT_EQ(trimCallbackAddress, unregisterNotification.Callback);
-    EXPECT_EQ(trimCallbackHandle, unregisterNotification.Handle);
 }
 
 TEST_F(BufferWithWddmMemory, ValidHostPtr) {

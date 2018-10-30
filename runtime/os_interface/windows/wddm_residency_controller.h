@@ -24,6 +24,7 @@ class Wddm;
 class WddmResidencyController {
   public:
     WddmResidencyController(Wddm &wddm, uint32_t osContextId);
+    MOCKABLE_VIRTUAL ~WddmResidencyController();
 
     MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock();
     std::unique_lock<SpinLock> acquireTrimCallbackLock();
@@ -59,5 +60,7 @@ class WddmResidencyController {
     uint64_t lastTrimFenceValue = 0u;
     ResidencyContainer trimCandidateList;
     uint32_t trimCandidatesCount = 0;
+
+    VOID *trimCallbackHandle = nullptr;
 };
 } // namespace OCLRT

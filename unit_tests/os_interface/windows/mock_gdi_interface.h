@@ -49,6 +49,7 @@ class MockGdi : public Gdi {
 
     static NTSTATUS __stdcall unregisterTrimNotificationMock(IN D3DKMT_UNREGISTERTRIMNOTIFICATION *arg) {
         getUnregisterTrimNotificationArg() = *arg;
+        arg->Handle = reinterpret_cast<VOID *>(1);
         return 0;
     }
 

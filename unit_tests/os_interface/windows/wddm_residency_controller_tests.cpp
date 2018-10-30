@@ -23,6 +23,7 @@ using namespace OCLRT;
 
 class MockWddmResidencyController : public WddmResidencyController {
   public:
+    using WddmResidencyController::trimCallbackHandle;
     using WddmResidencyController::trimCandidateList;
     using WddmResidencyController::trimCandidatesCount;
     using WddmResidencyController::trimResidency;
@@ -95,6 +96,32 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
     MockGdi *gdi = nullptr;
     WddmResidencyController *residencyController = nullptr;
 };
+
+TEST(WddmResidencyController, givenWddmResidencyControllerWhenItIsConstructedThenRegisterTrimCallback) {
+    ExecutionEnvironment executionEnvironment;
+    auto gdi = new MockGdi();
+    auto wddm = std::unique_ptr<WddmMock>{static_cast<WddmMock *>(Wddm::createWddm())};
+    wddm->gdi.reset(gdi);
+    wddm->init();
+
+    std::memset(&gdi->getRegisterTrimNotificationArg(), 0, sizeof(D3DKMT_REGISTERTRIMNOTIFICATION));
+    WddmResidencyController residencyController{*wddm, 0u};
+
+    EXPECT_EQ(reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(WddmMemoryManager::trimCallback), gdi->getRegisterTrimNotificationArg().Callback);
+    EXPECT_EQ(reinterpret_cast<void *>(&residencyController), gdi->getRegisterTrimNotificationArg().Context);
+    EXPECT_EQ(wddm->getDevice(), gdi->getRegisterTrimNotificationArg().hDevice);
+}
+
+TEST_F(WddmResidencyControllerWithGdiTest, givenWddmResidencyControllerWhenItIsDestructedThenUnregisterTrimCallback) {
+    auto trimCallbackHandle = residencyController->trimCallbackHandle;
+    auto trimCallbackAddress = reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(WddmMemoryManager::trimCallback);
+
+    std::memset(&gdi->getUnregisterTrimNotificationArg(), 0, sizeof(D3DKMT_UNREGISTERTRIMNOTIFICATION));
+    residencyController.reset();
+
+    EXPECT_EQ(trimCallbackAddress, gdi->getUnregisterTrimNotificationArg().Callback);
+    EXPECT_EQ(trimCallbackHandle, gdi->getUnregisterTrimNotificationArg().Handle);
+}
 
 TEST_F(WddmResidencyControllerTest, givenUsedAllocationWhenCallingRemoveFromTrimCandidateListIfUsedThenRemoveIt) {
     MockWddmAllocation allocation;

@@ -8,12 +8,25 @@
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/windows/wddm_memory_manager.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
+
 #include "runtime/utilities/spinlock.h"
 
 namespace OCLRT {
 
-WddmResidencyController::WddmResidencyController(Wddm &wddm, uint32_t osContextId) : wddm(wddm), osContextId(osContextId) {}
+WddmResidencyController::WddmResidencyController(Wddm &wddm, uint32_t osContextId) : wddm(wddm), osContextId(osContextId) {
+    this->trimCallbackHandle = wddm.registerTrimCallback(WddmMemoryManager::trimCallback, *this);
+}
+
+WddmResidencyController::~WddmResidencyController() {
+    auto lock = this->acquireTrimCallbackLock();
+    wddm.unregisterTrimCallback(WddmMemoryManager::trimCallback, this->trimCallbackHandle);
+    lock.unlock();
+
+    // Wait for lock to ensure trimCallback ended
+    lock.lock();
+}
 
 std::unique_lock<SpinLock> WddmResidencyController::acquireLock() {
     return std::unique_lock<SpinLock>{this->lock};

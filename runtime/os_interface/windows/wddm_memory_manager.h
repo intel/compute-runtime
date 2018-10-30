@@ -79,8 +79,6 @@ class WddmMemoryManager : public MemoryManager {
     AlignedMallocRestrictions *getAlignedMallocRestrictions() override;
 
   protected:
-    VOID *trimCallbackHandle = nullptr;
-
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle);
     static bool validateAllocation(WddmAllocation *alloc);
     bool createWddmAllocation(WddmAllocation *allocation, AllocationOrigin origin);

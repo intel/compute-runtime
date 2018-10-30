@@ -16,7 +16,6 @@ class MockWddmMemoryManager : public WddmMemoryManager {
 
   public:
     using BaseClass::createWddmAllocation;
-    using BaseClass::trimCallbackHandle;
     using BaseClass::WddmMemoryManager;
 
     MockWddmMemoryManager(Wddm *wddm, ExecutionEnvironment &executionEnvironment) : WddmMemoryManager(false, false, wddm, executionEnvironment) {

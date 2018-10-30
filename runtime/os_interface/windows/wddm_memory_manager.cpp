@@ -28,26 +28,12 @@ namespace OCLRT {
 
 WddmMemoryManager::~WddmMemoryManager() {
     applyCommonCleanup();
-
-    for (auto osContext : this->registeredOsContexts) {
-        if (osContext) {
-            auto &residencyController = osContext->get()->getResidencyController();
-
-            auto lock = residencyController.acquireTrimCallbackLock();
-            wddm->unregisterTrimCallback(trimCallback, this->trimCallbackHandle);
-            lock.unlock();
-
-            // Wait for lock to ensure trimCallback ended
-            lock.lock();
-        }
-    }
 }
 
 WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemory, Wddm *wddm, ExecutionEnvironment &executionEnvironment) : MemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment) {
     DEBUG_BREAK_IF(wddm == nullptr);
     this->wddm = wddm;
     allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(wddm->getHeap32Base(), wddm->getHeap32Size()));
-    this->trimCallbackHandle = wddm->registerTrimCallback(trimCallback, this);
     asyncDeleterEnabled = DebugManager.flags.EnableDeferredDeleter.get();
     if (asyncDeleterEnabled)
         deferredDeleter = createDeferredDeleter();
@@ -55,15 +41,11 @@ WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemor
 }
 
 void APIENTRY WddmMemoryManager::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification) {
-    WddmMemoryManager *wddmMemMngr = (WddmMemoryManager *)trimNotification->Context;
-    DEBUG_BREAK_IF(wddmMemMngr == nullptr);
+    auto residencyController = static_cast<WddmResidencyController *>(trimNotification->Context);
+    DEBUG_BREAK_IF(residencyController == nullptr);
 
-    if (wddmMemMngr->getOsContextCount() == 0) {
-        return;
-    }
-
-    auto lock = wddmMemMngr->getRegisteredOsContext(0)->get()->getResidencyController().acquireTrimCallbackLock();
-    wddmMemMngr->getRegisteredOsContext(0)->get()->getResidencyController().trimResidency(trimNotification->Flags, trimNotification->NumBytesToTrim);
+    auto lock = residencyController->acquireTrimCallbackLock();
+    residencyController->trimResidency(trimNotification->Flags, trimNotification->NumBytesToTrim);
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {

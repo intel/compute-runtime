@@ -26,7 +26,6 @@
 namespace OCLRT {
 
 class WddmAllocation;
-class WddmMemoryManager;
 class Gdi;
 class Gmm;
 class LinearStream;
@@ -79,7 +78,7 @@ class Wddm {
     MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence);
 
     NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
-    VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmMemoryManager *memoryManager);
+    VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController);
     void unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, VOID *trimCallbackHandle);
     MOCKABLE_VIRTUAL void releaseReservedAddress(void *reservedAddress);
     MOCKABLE_VIRTUAL bool reserveValidAddressRange(size_t size, void *&reservedMem);
