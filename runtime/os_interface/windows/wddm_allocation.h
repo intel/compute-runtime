@@ -60,11 +60,6 @@ class WddmAllocation : public GraphicsAllocation {
         return this->alignedCpuPtr;
     }
 
-    void setAlignedCpuPtr(void *ptr) {
-        this->alignedCpuPtr = ptr;
-        this->cpuPtr = ptr;
-    }
-
     size_t getAlignedSize() const {
         return this->alignedSize;
     }

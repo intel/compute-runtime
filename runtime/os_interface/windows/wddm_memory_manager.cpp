@@ -99,8 +99,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, s
 
     auto cpuPtr = lockResource(wddmAllocation);
     wddmAllocation->setLocked(true);
-
-    wddmAllocation->setAlignedCpuPtr(cpuPtr);
     // 64kb map is not needed
     auto status = wddm->mapGpuVirtualAddress(wddmAllocation, cpuPtr, false, false, false);
     DEBUG_BREAK_IF(!status);
