@@ -21,9 +21,9 @@ class MemoryAllocation : public GraphicsAllocation {
 
     void setSharedHandle(osHandle handle) { this->sharedHandle = handle; }
 
-    MemoryAllocation(bool cpuPtrAllocated, void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count, MemoryPool::Type pool) : GraphicsAllocation(pMem, gpuAddress, 0u, memSize),
-                                                                                                                                     id(count) {
-        this->cpuPtrAllocated = cpuPtrAllocated;
+    MemoryAllocation(void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count, MemoryPool::Type pool) : GraphicsAllocation(pMem, gpuAddress, 0u, memSize),
+                                                                                                                                                id(count) {
+        this->driverAllocatedCpuPointer = driverAllocatedCpuPointer;
         overrideMemoryPool(pool);
     }
 

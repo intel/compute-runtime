@@ -35,14 +35,14 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size,
     MemoryAllocation *memoryAllocation = nullptr;
 
     if (fakeBigAllocations && size > bigAllocation) {
-        memoryAllocation = new MemoryAllocation(true, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), size, counter, MemoryPool::System4KBPages);
+        memoryAllocation = new MemoryAllocation(nullptr, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), size, counter, MemoryPool::System4KBPages);
         counter++;
         memoryAllocation->uncacheable = uncacheable;
         return memoryAllocation;
     }
     auto ptr = allocateSystemMemory(sizeAligned, alignment ? alignUp(alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize);
     if (ptr != nullptr) {
-        memoryAllocation = new MemoryAllocation(true, ptr, reinterpret_cast<uint64_t>(ptr), size, counter, MemoryPool::System4KBPages);
+        memoryAllocation = new MemoryAllocation(ptr, ptr, reinterpret_cast<uint64_t>(ptr), size, counter, MemoryPool::System4KBPages);
         if (!memoryAllocation) {
             alignedFreeWrapper(ptr);
             return nullptr;
@@ -58,7 +58,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHost
     auto alignedPtr = alignDown(reinterpret_cast<char *>(cpuPtr), MemoryConstants::pageSize);
     auto offsetInPage = reinterpret_cast<char *>(cpuPtr) - alignedPtr;
 
-    memoryAllocation = new MemoryAllocation(false, cpuPtr, reinterpret_cast<uint64_t>(alignedPtr), size, counter, MemoryPool::System4KBPages);
+    memoryAllocation = new MemoryAllocation(nullptr, cpuPtr, reinterpret_cast<uint64_t>(alignedPtr), size, counter, MemoryPool::System4KBPages);
 
     memoryAllocation->allocationOffset = offsetInPage;
     memoryAllocation->uncacheable = false;
@@ -83,7 +83,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
             return nullptr;
         }
         uint64_t offset = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(ptr) & MemoryConstants::pageMask);
-        MemoryAllocation *memAlloc = new MemoryAllocation(false, const_cast<void *>(ptr), GmmHelper::canonize(gpuVirtualAddress + offset), size, counter, MemoryPool::System4KBPagesWith32BitGpuAddressing);
+        MemoryAllocation *memAlloc = new MemoryAllocation(nullptr, const_cast<void *>(ptr), GmmHelper::canonize(gpuVirtualAddress + offset), size, counter, MemoryPool::System4KBPagesWith32BitGpuAddressing);
         memAlloc->is32BitAllocation = true;
         memAlloc->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());
         memAlloc->sizeToFree = allocationSize;
@@ -109,18 +109,17 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
 
     MemoryAllocation *memoryAllocation = nullptr;
     if (ptrAlloc != nullptr) {
-        memoryAllocation = new MemoryAllocation(true, ptrAlloc, GmmHelper::canonize(gpuAddress), size, counter, MemoryPool::System4KBPagesWith32BitGpuAddressing);
+        memoryAllocation = new MemoryAllocation(freeCpuPointer ? ptrAlloc : nullptr, ptrAlloc, GmmHelper::canonize(gpuAddress), size, counter, MemoryPool::System4KBPagesWith32BitGpuAddressing);
         memoryAllocation->is32BitAllocation = true;
         memoryAllocation->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());
         memoryAllocation->sizeToFree = allocationSize;
-        memoryAllocation->cpuPtrAllocated = freeCpuPointer;
     }
     counter++;
     return memoryAllocation;
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) {
-    auto graphicsAllocation = new MemoryAllocation(false, reinterpret_cast<void *>(1), 1, 4096u, static_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible);
+    auto graphicsAllocation = new MemoryAllocation(nullptr, reinterpret_cast<void *>(1), 1, 4096u, static_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible);
     graphicsAllocation->setSharedHandle(handle);
     graphicsAllocation->is32BitAllocation = requireSpecificBitness;
     return graphicsAllocation;
@@ -166,15 +165,12 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
         return;
     }
 
-    void *ptr = gfxAllocation->getUnderlyingBuffer();
-
     if (gfxAllocation->is32BitAllocation) {
         auto gpuAddressToFree = gfxAllocation->getGpuAddress() & ~MemoryConstants::pageMask;
         allocator32Bit->free(gpuAddressToFree, static_cast<MemoryAllocation *>(gfxAllocation)->sizeToFree);
     }
-    if (gfxAllocation->cpuPtrAllocated) {
-        alignedFreeWrapper(ptr);
-    }
+
+    alignedFreeWrapper(gfxAllocation->driverAllocatedCpuPointer);
     delete gfxAllocation;
 }
 
@@ -191,7 +187,7 @@ uint64_t OsAgnosticMemoryManager::getInternalHeapBaseAddress() {
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
-    auto allocation = new MemoryAllocation(false, const_cast<void *>(hostPtr), reinterpret_cast<uint64_t>(hostPtr), hostPtrSize, counter++, MemoryPool::System4KBPages);
+    auto allocation = new MemoryAllocation(nullptr, const_cast<void *>(hostPtr), reinterpret_cast<uint64_t>(hostPtr), hostPtrSize, counter++, MemoryPool::System4KBPages);
     allocation->fragmentsStorage = handleStorage;
     return allocation;
 }
@@ -231,7 +227,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(Imag
     } else {
         auto ptr = allocateSystemMemory(alignUp(imgInfo.size, MemoryConstants::pageSize), MemoryConstants::pageSize);
         if (ptr != nullptr) {
-            alloc = new MemoryAllocation(true, ptr, reinterpret_cast<uint64_t>(ptr), imgInfo.size, counter, MemoryPool::SystemCpuInaccessible);
+            alloc = new MemoryAllocation(ptr, ptr, reinterpret_cast<uint64_t>(ptr), imgInfo.size, counter, MemoryPool::SystemCpuInaccessible);
             counter++;
         }
     }

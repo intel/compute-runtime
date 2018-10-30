@@ -53,7 +53,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     Gmm *gmm = nullptr;
     uint64_t allocationOffset = 0u;
     int residencyTaskCount[maxOsContextCount] = {ObjectNotResident, ObjectNotResident, ObjectNotResident, ObjectNotResident};
-    bool cpuPtrAllocated = false; // flag indicating if cpuPtr is driver-allocated
+    void *driverAllocatedCpuPointer = nullptr;
     DevicesBitfield devicesBitfield = 0;
     bool flushL3Required = false;
 

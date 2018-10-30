@@ -852,7 +852,7 @@ TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocatio
     EXPECT_GE(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
     EXPECT_LE(wddmAllocation->getGpuAddress(), cannonizedHeapEnd);
 
-    EXPECT_TRUE(wddmAllocation->cpuPtrAllocated);
+    EXPECT_NE(nullptr, wddmAllocation->driverAllocatedCpuPointer);
     EXPECT_TRUE(wddmAllocation->is32BitAllocation);
     memoryManager->freeGraphicsMemory(wddmAllocation);
 }
@@ -871,7 +871,7 @@ TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhe
     EXPECT_GE(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
     EXPECT_LE(wddmAllocation->getGpuAddress(), cannonizedHeapEnd);
 
-    EXPECT_FALSE(wddmAllocation->cpuPtrAllocated);
+    EXPECT_EQ(nullptr, wddmAllocation->driverAllocatedCpuPointer);
     EXPECT_TRUE(wddmAllocation->is32BitAllocation);
     memoryManager->freeGraphicsMemory(wddmAllocation);
 }

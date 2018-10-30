@@ -117,7 +117,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
     }
 
     auto wddmAllocation = new WddmAllocation(pSysMem, sizeAligned, pSysMem, nullptr, MemoryPool::System4KBPages, getOsContextCount());
-    wddmAllocation->cpuPtrAllocated = true;
+    wddmAllocation->driverAllocatedCpuPointer = pSysMem;
 
     gmm = new Gmm(pSysMem, sizeAligned, uncacheable);
 
@@ -191,7 +191,6 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     size_t sizeAligned = size;
     void *pSysMem = nullptr;
     size_t offset = 0;
-    bool cpuPtrAllocated = false;
 
     if (ptr) {
         ptrAligned = alignDown(ptr, MemoryConstants::allocationAlignment);
@@ -204,11 +203,10 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
             return nullptr;
         }
         ptrAligned = pSysMem;
-        cpuPtrAllocated = true;
     }
 
     auto wddmAllocation = new WddmAllocation(const_cast<void *>(ptrAligned), sizeAligned, const_cast<void *>(ptrAligned), nullptr, MemoryPool::System4KBPagesWith32BitGpuAddressing, getOsContextCount());
-    wddmAllocation->cpuPtrAllocated = cpuPtrAllocated;
+    wddmAllocation->driverAllocatedCpuPointer = pSysMem;
     wddmAllocation->is32BitAllocation = true;
     wddmAllocation->allocationOffset = offset;
 
@@ -333,22 +331,18 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     }
 
     if (input->peekSharedHandle() == false &&
-        input->cpuPtrAllocated == false &&
+        input->driverAllocatedCpuPointer == nullptr &&
         input->fragmentsStorage.fragmentCount > 0) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
     } else {
         D3DKMT_HANDLE *allocationHandles = nullptr;
         uint32_t allocationCount = 0;
         D3DKMT_HANDLE resourceHandle = 0;
-        void *cpuPtr = nullptr;
         if (input->peekSharedHandle()) {
             resourceHandle = input->resourceHandle;
         } else {
             allocationHandles = &input->handle;
             allocationCount = 1;
-            if (input->cpuPtrAllocated) {
-                cpuPtr = input->getAlignedCpuPtr();
-            }
         }
         if (input->isLocked()) {
             unlockResource(input);
@@ -356,7 +350,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         }
         auto status = tryDeferDeletions(allocationHandles, allocationCount, resourceHandle);
         DEBUG_BREAK_IF(!status);
-        alignedFreeWrapper(cpuPtr);
+        alignedFreeWrapper(input->driverAllocatedCpuPointer);
     }
     wddm->releaseReservedAddress(input->getReservedAddress());
     delete gfxAllocation;

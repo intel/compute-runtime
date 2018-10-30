@@ -1454,6 +1454,6 @@ TEST(Heap32AllocationTests, givenDebugModeWhenMallocIsUsedToCreateAllocationWhen
     EXPECT_NE(0x0ul, internalBase);
 
     auto allocation = static_cast<MemoryAllocation *>(memoryManager.allocate32BitGraphicsMemory(4096u, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION));
-    EXPECT_FALSE(allocation->cpuPtrAllocated);
+    EXPECT_EQ(nullptr, allocation->driverAllocatedCpuPointer);
     memoryManager.freeGraphicsMemory(allocation);
 }
