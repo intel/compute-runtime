@@ -9,12 +9,12 @@
 #include "runtime/event/event.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/ptr_math.h"
-#include "gen_cmd_parse.h"
 #include "unit_tests/aub_tests/fixtures/aub_fixture.h"
 #include "unit_tests/aub_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/simple_arg_fixture.h"
 #include "unit_tests/fixtures/two_walker_fixture.h"
+#include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
 

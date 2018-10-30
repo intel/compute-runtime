@@ -9,11 +9,11 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "unit_tests/fixtures/memory_manager_fixture.h"
-#include "unit_tests/gen_common/test.h"
+#include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
 #include "unit_tests/mocks/mock_internal_allocation_storage.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/mocks/mock_csr.h"
+#include "test.h"
 
 using namespace OCLRT;
 

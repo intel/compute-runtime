@@ -300,7 +300,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
         template <typename FamilyType>                                                                                  \
         void testBodyHw();                                                                                              \
                                                                                                                         \
-        virtual void TestBody() {                                                                                       \
+        void TestBody() override {                                                                                      \
             CALL_IF_MATCH(match_core, match_product,                                                                    \
                           testBodyHw<typename OCLRT::GfxFamilyMapper<match_core>::GfxFamily>())                         \
         }                                                                                                               \

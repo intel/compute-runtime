@@ -75,7 +75,7 @@ function(run_mt_tests target slices subslices eu_per_ss)
   )
 endfunction()
 
-target_include_directories(igdrcl_mt_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common ${IGDRCL_SOURCE_DIR}/runtime/gen_common)
+target_include_directories(igdrcl_mt_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX} ${IGDRCL_SOURCE_DIR}/runtime/gen_common)
 
 macro(macro_for_each_test_config)
   run_mt_tests(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})

@@ -12,7 +12,7 @@
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/unit_test_helper.h"
-#include "test.h"
+#include "gtest/gtest.h"
 
 namespace OCLRT {
 template <typename FamilyType>

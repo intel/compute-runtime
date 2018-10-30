@@ -45,7 +45,7 @@ foreach(target_name linux_tests linux_dll_tests)
 
   set_property(TARGET igdrcl_${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
   target_include_directories(igdrcl_${target_name} PRIVATE
-    ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common
+    ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX}
     ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/devices${BRANCH_DIR_SUFFIX}
   )
   add_dependencies(unit_tests igdrcl_${target_name})

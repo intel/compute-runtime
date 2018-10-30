@@ -8,11 +8,11 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/utilities/stackvec.h"
-#include "unit_tests/gen_common/test.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/libult/mock_gfx_family.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "unit_tests/libult/mock_gfx_family.h"
+#include "test.h"
 
 #include <gtest/gtest.h>
 

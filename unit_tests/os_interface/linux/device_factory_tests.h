@@ -13,7 +13,7 @@
 #include "runtime/os_interface/device_factory.h"
 #include "unit_tests/mocks/mock_device_factory.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
-#include "unit_tests/gen_common/test.h"
+#include "test.h"
 #include "gtest/gtest.h"
 
 namespace OCLRT {

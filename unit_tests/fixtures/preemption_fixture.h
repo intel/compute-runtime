@@ -9,7 +9,7 @@
 
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
-#include "unit_tests/gen_common/test.h"
+#include "test.h"
 
 #include "gtest/gtest.h"
 

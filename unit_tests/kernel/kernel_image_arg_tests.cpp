@@ -8,14 +8,13 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/kernel/kernel.h"
 #include "unit_tests/fixtures/kernel_arg_fixture.h"
-#include "unit_tests/gen_common/test.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_image.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
-
+#include "test.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

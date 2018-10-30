@@ -10,10 +10,8 @@
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/hw_helper.h"
-
-#include "gen_cmd_parse.h"
-
 #include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
+#include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/tests_configuration.h"

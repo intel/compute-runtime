@@ -14,13 +14,13 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/gen_common/test.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "test.h"
 
 using namespace OCLRT;
 

@@ -7,7 +7,7 @@
 
 #include "runtime/execution_environment/execution_environment.h"
 #include "unit_tests/os_interface/windows/os_interface_win_tests.h"
-#include "unit_tests/gen_common/test.h"
+#include "test.h"
 
 typedef OsInterfaceTest OsInterfaceTestSkl;
 

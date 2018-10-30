@@ -8,7 +8,7 @@
 #pragma once
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
-#include "gen_cmd_parse.h"
+#include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/mocks/mock_context.h"
 
 namespace OCLRT {

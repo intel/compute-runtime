@@ -62,6 +62,8 @@ add_executable(igdrcl_tests
   ${NEO_IGDRCL_TESTS__TARGET_OBJECTS}
   ${IGDRCL_SRCS_tests_local}
 )
+hide_subdir(gen_common)
+add_subdirectory(gen_common)
 
 if(NOT GTEST_REPEAT)
   set(GTEST_REPEAT 1 CACHE STRING "Google test iterations")
@@ -140,7 +142,7 @@ endif()
 set_target_properties(unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 set_target_properties(run_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
-target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common)
+target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX})
 
 if(WIN32)
   set(cloc_cmd_prefix cloc)

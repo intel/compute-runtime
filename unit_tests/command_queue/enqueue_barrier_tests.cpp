@@ -9,7 +9,7 @@
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/event/user_event.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "gen_cmd_parse.h"
+#include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "test.h"
 
 using namespace OCLRT;

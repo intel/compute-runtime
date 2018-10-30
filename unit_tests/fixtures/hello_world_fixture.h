@@ -12,10 +12,10 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/indirect_heap/indirect_heap_fixture.h"
-#include "unit_tests/fixtures/hello_world_kernel_fixture.h"
-#include "gen_cmd_parse.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
+#include "unit_tests/fixtures/hello_world_kernel_fixture.h"
+#include "unit_tests/gen_common/gen_cmd_parse.h"
+#include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 
 namespace OCLRT {
 

@@ -8,9 +8,9 @@
 #pragma once
 #include "gtest/gtest.h"
 #include "runtime/helpers/ptr_math.h"
-#include "gen_cmd_parse.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
+#include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/mocks/mock_context.h"
 
 namespace OCLRT {

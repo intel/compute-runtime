@@ -13,7 +13,7 @@ set(IGDRCL_SRCS_tests_gen_common
   ${CMAKE_CURRENT_SOURCE_DIR}/gen_cmd_parse.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gen_commands_common_validation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/matchers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/test.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/test.h
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen_common})
 

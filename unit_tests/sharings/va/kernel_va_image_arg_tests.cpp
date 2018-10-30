@@ -7,10 +7,10 @@
 
 #include "runtime/sharings/va/va_surface.h"
 #include "unit_tests/fixtures/kernel_arg_fixture.h"
-#include "unit_tests/gen_common/test.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/sharings/va/mock_va_sharing.h"
+#include "test.h"
 
 #include "gtest/gtest.h"
 
