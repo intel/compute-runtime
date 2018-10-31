@@ -12,8 +12,6 @@
 namespace OCLRT {
 InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver) : commandStreamReceiver(commandStreamReceiver){};
 void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage) {
-    std::lock_guard<decltype(mutex)> lock(mutex);
-
     uint32_t taskCount = gfxAllocation->taskCount;
 
     if (allocationUsage == REUSABLE_ALLOCATION) {
@@ -23,7 +21,6 @@ void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocati
     storeAllocationWithTaskCount(std::move(gfxAllocation), allocationUsage, taskCount);
 }
 void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount) {
-    std::lock_guard<decltype(mutex)> lock(mutex);
     if (allocationUsage == REUSABLE_ALLOCATION) {
         if (DebugManager.flags.DisableResourceRecycling.get()) {
             commandStreamReceiver.getMemoryManager()->freeGraphicsMemory(gfxAllocation.release());
@@ -36,12 +33,10 @@ void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<Gra
 }
 
 void InternalAllocationStorage::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
-    std::lock_guard<decltype(mutex)> lock(mutex);
     freeAllocationsList(waitTaskCount, (allocationUsage == TEMPORARY_ALLOCATION) ? temporaryAllocations : allocationsForReuse);
 }
 
 void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList) {
-    std::lock_guard<decltype(mutex)> lock(mutex);
     auto memoryManager = commandStreamReceiver.getMemoryManager();
     GraphicsAllocation *curr = allocationsList.detachNodes();
 
@@ -62,7 +57,6 @@ void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, Allo
 }
 
 std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAllocation(size_t requiredSize, bool internalAllocation) {
-    std::lock_guard<decltype(mutex)> lock(mutex);
     auto allocation = allocationsForReuse.detachAllocation(requiredSize, commandStreamReceiver.getTagAddress(), internalAllocation);
     return allocation;
 }

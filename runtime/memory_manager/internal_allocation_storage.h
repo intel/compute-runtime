@@ -8,8 +8,6 @@
 #pragma once
 #include "runtime/memory_manager/allocations_list.h"
 #include <cstdint>
-#include <memory>
-#include <mutex>
 
 namespace OCLRT {
 class CommandStreamReceiver;
@@ -28,7 +26,6 @@ class InternalAllocationStorage {
 
   protected:
     void freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList);
-    std::recursive_mutex mutex;
     CommandStreamReceiver &commandStreamReceiver;
 
     AllocationsList temporaryAllocations;
