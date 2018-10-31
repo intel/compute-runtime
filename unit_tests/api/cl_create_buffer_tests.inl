@@ -35,10 +35,26 @@ struct clCreateBufferValidFlagsTests : public clCreateBufferTemplateTests {
     cl_uchar pHostPtr[64];
 };
 
-TEST_P(clCreateBufferValidFlagsTests, validFlags) {
+TEST_P(clCreateBufferValidFlagsTests, GivenValidFlagsWhenCreatingBufferThenBufferIsCreated) {
     cl_mem_flags flags = GetParam() | CL_MEM_USE_HOST_PTR;
 
     auto buffer = clCreateBuffer(pContext, flags, 64, pHostPtr, &retVal);
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    clReleaseMemObject(buffer);
+};
+
+struct clCreateBufferWithPropertiesINTELValidFlagsTests : public clCreateBufferTemplateTests {
+    cl_uchar pHostPtr[64];
+};
+
+TEST_P(clCreateBufferWithPropertiesINTELValidFlagsTests, GivenValidPropertiesWhenCreatingBufferThenBufferIsCreated) {
+    cl_mem_properties_intel properties[] = {
+        CL_MEM_FLAGS, GetParam() | CL_MEM_USE_HOST_PTR,
+        0};
+
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, pHostPtr, &retVal);
     EXPECT_NE(nullptr, buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -59,10 +75,15 @@ INSTANTIATE_TEST_CASE_P(
     clCreateBufferValidFlagsTests,
     testing::ValuesIn(validFlags));
 
-struct clCreateBufferInValidFlagsTests : public clCreateBufferTemplateTests {
+INSTANTIATE_TEST_CASE_P(
+    CreateBufferCheckFlags,
+    clCreateBufferWithPropertiesINTELValidFlagsTests,
+    testing::ValuesIn(validFlags));
+
+struct clCreateBufferInvalidFlagsTests : public clCreateBufferTemplateTests {
 };
 
-TEST_P(clCreateBufferInValidFlagsTests, inValidFlags) {
+TEST_P(clCreateBufferInvalidFlagsTests, GivenInvalidFlagsWhenCreatingBufferThenBufferIsNotCreated) {
     cl_mem_flags flags = GetParam();
 
     auto buffer = clCreateBuffer(pContext, flags, 64, nullptr, &retVal);
@@ -70,7 +91,19 @@ TEST_P(clCreateBufferInValidFlagsTests, inValidFlags) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 };
 
-cl_mem_flags inValidFlags[] = {
+struct clCreateBufferWithPropertiesINTELInvalidPropertiesTests : public clCreateBufferTemplateTests {
+};
+
+TEST_P(clCreateBufferWithPropertiesINTELInvalidPropertiesTests, GivenInvalidPropertiesWhenCreatingBufferThenBufferIsNotCreated) {
+    cl_mem_properties_intel properties[] = {
+        (1 << 30), CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR};
+
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
+    EXPECT_EQ(nullptr, buffer);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+};
+
+cl_mem_flags invalidFlags[] = {
     CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY,
     CL_MEM_READ_WRITE | CL_MEM_READ_ONLY,
     CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY,
@@ -84,16 +117,20 @@ cl_mem_flags inValidFlags[] = {
 
 INSTANTIATE_TEST_CASE_P(
     CreateBufferCheckFlags,
-    clCreateBufferInValidFlagsTests,
-    testing::ValuesIn(inValidFlags));
+    clCreateBufferInvalidFlagsTests,
+    testing::ValuesIn(invalidFlags));
+
+INSTANTIATE_TEST_CASE_P(
+    CreateBufferCheckFlags,
+    clCreateBufferWithPropertiesINTELInvalidPropertiesTests,
+    testing::ValuesIn(invalidFlags));
 
 TEST_F(clCreateBufferTests, GivenValidParametersWhenCreatingBufferThenSuccessIsReturned) {
-    unsigned char *pHostMem = nullptr;
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     static const unsigned int bufferSize = 16;
     cl_mem buffer = nullptr;
 
-    pHostMem = new unsigned char[bufferSize];
+    unsigned char pHostMem[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
 
     buffer = clCreateBuffer(pContext, flags, bufferSize, pHostMem, &retVal);
@@ -103,8 +140,6 @@ TEST_F(clCreateBufferTests, GivenValidParametersWhenCreatingBufferThenSuccessIsR
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    delete[] pHostMem;
 }
 
 TEST_F(clCreateBufferTests, GivenNullContextWhenCreatingBufferThenInvalidContextErrorIsReturned) {
@@ -148,12 +183,11 @@ TEST_F(clCreateBufferTests, GivenMemWriteOnlyFlagAndMemReadWriteFlagWhenCreating
 }
 
 TEST_F(clCreateBufferTests, GivenNullHostPointerAndMemCopyHostPtrFlagWhenCreatingBufferThenNullIsReturned) {
-    unsigned char *pHostMem = nullptr;
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     static const unsigned int bufferSize = 16;
     cl_mem buffer = nullptr;
 
-    pHostMem = new unsigned char[bufferSize];
+    unsigned char pHostMem[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
 
     buffer = clCreateBuffer(pContext, flags, bufferSize, pHostMem, nullptr);
@@ -162,8 +196,6 @@ TEST_F(clCreateBufferTests, GivenNullHostPointerAndMemCopyHostPtrFlagWhenCreatin
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    delete[] pHostMem;
 }
 
 using clCreateBufferTestsWithRestrictions = api_test_using_aligned_memory_manager;

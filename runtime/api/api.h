@@ -7,6 +7,7 @@
 
 #include "CL/cl.h"
 #include "CL/cl_gl.h"
+#include "public/cl_ext_private.h"
 #include "runtime/api/dispatch.h"
 
 #ifdef __cplusplus
@@ -116,6 +117,13 @@ cl_int CL_API_CALL clSetCommandQueueProperty(
 cl_mem CL_API_CALL clCreateBuffer(
     cl_context context,
     cl_mem_flags flags,
+    size_t size,
+    void *hostPtr,
+    cl_int *errcodeRet);
+
+cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(
+    cl_context context,
+    const cl_mem_properties_intel *properties,
     size_t size,
     void *hostPtr,
     cl_int *errcodeRet);

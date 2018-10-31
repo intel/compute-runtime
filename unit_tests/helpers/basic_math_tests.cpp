@@ -175,24 +175,21 @@ TEST_P(ComputeTotalElementsCount, givenVariousInputVectorsWhenComputeTotalElemen
 }
 
 TEST(isPow2Test, WhenArgZeroThenReturnFalse) {
-    bool ret = isPow2<uint32_t>(0u);
-    EXPECT_FALSE(ret);
+    EXPECT_FALSE(isPow2(0u));
 }
 
 TEST(isPow2Test, WhenArgNonPow2ThenReturnFalse) {
-    bool ret = true;
-    uint32_t args[5] = {3, 5, 6, 7, 10};
-    for (uint32_t i = 0; i < 5; i++) {
-        ret = isPow2<uint32_t>(args[i]);
-        EXPECT_FALSE(ret);
-    }
+    EXPECT_FALSE(isPow2(3u));
+    EXPECT_FALSE(isPow2(5u));
+    EXPECT_FALSE(isPow2(6u));
+    EXPECT_FALSE(isPow2(7u));
+    EXPECT_FALSE(isPow2(10u));
 }
 
 TEST(isPow2Test, WhenArgPow2ThenReturnTrue) {
-    bool ret = false;
-    size_t args[5] = {1, 4, 8, 128, 4096};
-    for (uint32_t i = 0; i < 5; i++) {
-        ret = isPow2<size_t>(args[i]);
-        EXPECT_TRUE(ret);
-    }
+    EXPECT_TRUE(isPow2(1u));
+    EXPECT_TRUE(isPow2(4u));
+    EXPECT_TRUE(isPow2(8u));
+    EXPECT_TRUE(isPow2(128u));
+    EXPECT_TRUE(isPow2(4096u));
 }

@@ -220,15 +220,15 @@ TEST(Context, givenMockSharingBuilderWhenContextWithInvalidPropertiesThenContext
     cl_platform_id platformId[] = {platform()};
 
     cl_context_properties validProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platformId[0], clContextPropertyMock, mockContextPassFinalize, 0};
-    cl_context_properties inValidProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platformId[0], clContextPropertyMock, 0, 0};
-    cl_context_properties inValidPropertiesFailFinalize[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platformId[0], clContextPropertyMock, mockContextFailFinalize, 0};
+    cl_context_properties invalidProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platformId[0], clContextPropertyMock, 0, 0};
+    cl_context_properties invalidPropertiesFailFinalize[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platformId[0], clContextPropertyMock, mockContextFailFinalize, 0};
 
     std::unique_ptr<Context> context;
 
-    context.reset(Context::create<Context>(inValidProperties, deviceVector, nullptr, nullptr, retVal));
+    context.reset(Context::create<Context>(invalidProperties, deviceVector, nullptr, nullptr, retVal));
     EXPECT_EQ(nullptr, context.get());
 
-    context.reset(Context::create<Context>(inValidPropertiesFailFinalize, deviceVector, nullptr, nullptr, retVal));
+    context.reset(Context::create<Context>(invalidPropertiesFailFinalize, deviceVector, nullptr, nullptr, retVal));
     EXPECT_EQ(nullptr, context.get());
 
     context.reset(Context::create<Context>(validProperties, deviceVector, nullptr, nullptr, retVal));

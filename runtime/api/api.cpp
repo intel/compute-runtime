@@ -536,59 +536,49 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
                                   size_t size,
                                   void *hostPtr,
                                   cl_int *errcodeRet) {
-    cl_int retVal = CL_SUCCESS;
-    API_ENTER(&retVal);
     DBG_LOG_INPUTS("cl_context", context,
                    "cl_mem_flags", flags,
                    "size", size,
                    "hostPtr", DebugManager.infoPointerToString(hostPtr, size));
+
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
     cl_mem buffer = nullptr;
+    ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
-    do {
-        if (size == 0) {
-            retVal = CL_INVALID_BUFFER_SIZE;
-            break;
-        }
+    MemoryProperties propertiesStruct;
+    propertiesStruct.flags = flags;
+    Buffer::validateInputAndCreateBuffer(context, propertiesStruct, size, hostPtr, retVal, buffer);
 
-        /* Are there some invalid flag bits? */
-        if (!MemObjHelper::checkMemFlagsForBuffer(flags)) {
-            retVal = CL_INVALID_VALUE;
-            break;
-        }
+    err.set(retVal);
+    DBG_LOG_INPUTS("buffer", buffer);
+    return buffer;
+}
 
-        /* Check all the invalid flags combination. */
-        if (((flags & CL_MEM_READ_WRITE) && (flags & (CL_MEM_READ_ONLY | CL_MEM_WRITE_ONLY))) ||
-            ((flags & CL_MEM_READ_ONLY) && (flags & (CL_MEM_WRITE_ONLY))) ||
-            ((flags & CL_MEM_ALLOC_HOST_PTR) && (flags & CL_MEM_USE_HOST_PTR)) ||
-            ((flags & CL_MEM_COPY_HOST_PTR) && (flags & CL_MEM_USE_HOST_PTR)) ||
-            ((flags & CL_MEM_HOST_READ_ONLY) && (flags & CL_MEM_HOST_NO_ACCESS)) ||
-            ((flags & CL_MEM_HOST_READ_ONLY) && (flags & CL_MEM_HOST_WRITE_ONLY)) ||
-            ((flags & CL_MEM_HOST_WRITE_ONLY) && (flags & CL_MEM_HOST_NO_ACCESS))) {
-            retVal = CL_INVALID_VALUE;
-            break;
-        }
+cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
+                                                     const cl_mem_properties_intel *properties,
+                                                     size_t size,
+                                                     void *hostPtr,
+                                                     cl_int *errcodeRet) {
 
-        /* Check the host ptr and data */
-        if ((((flags & CL_MEM_COPY_HOST_PTR) || (flags & CL_MEM_USE_HOST_PTR)) && hostPtr == nullptr) ||
-            (!(flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) && (hostPtr != nullptr))) {
-            retVal = CL_INVALID_HOST_PTR;
-            break;
-        }
+    DBG_LOG_INPUTS("cl_context", context,
+                   "cl_mem_properties_intel", properties,
+                   "size", size,
+                   "hostPtr", DebugManager.infoPointerToString(hostPtr, size));
 
-        Context *pContext = nullptr;
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    cl_mem buffer = nullptr;
+    ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
-        retVal = validateObjects(WithCastToInternal(context, &pContext));
-        if (retVal != CL_SUCCESS) {
-            break;
-        }
-
-        // create the buffer
-        buffer = Buffer::create(pContext, flags, size, hostPtr, retVal);
-    } while (false);
-
-    if (errcodeRet) {
-        *errcodeRet = retVal;
+    MemoryProperties propertiesStruct;
+    if (!MemObjHelper::parseMemoryProperties(properties, propertiesStruct)) {
+        retVal = CL_INVALID_VALUE;
+    } else {
+        Buffer::validateInputAndCreateBuffer(context, propertiesStruct, size, hostPtr, retVal, buffer);
     }
+
+    err.set(retVal);
     DBG_LOG_INPUTS("buffer", buffer);
     return buffer;
 }

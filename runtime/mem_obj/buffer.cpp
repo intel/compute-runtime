@@ -68,8 +68,51 @@ bool Buffer::isValidSubBufferOffset(size_t offset) {
     return false;
 }
 
+void Buffer::validateInputAndCreateBuffer(cl_context &context,
+                                          MemoryProperties properties,
+                                          size_t size,
+                                          void *hostPtr,
+                                          cl_int &retVal,
+                                          cl_mem &buffer) {
+    if (size == 0) {
+        retVal = CL_INVALID_BUFFER_SIZE;
+        return;
+    }
+
+    if (!MemObjHelper::validateMemoryProperties(properties)) {
+        retVal = CL_INVALID_VALUE;
+        return;
+    }
+
+    /* Check the host ptr and data */
+    bool expectHostPtr = (properties.flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) != 0;
+    if ((hostPtr == nullptr) == expectHostPtr) {
+        retVal = CL_INVALID_HOST_PTR;
+        return;
+    }
+
+    Context *pContext = nullptr;
+    retVal = validateObjects(WithCastToInternal(context, &pContext));
+    if (retVal != CL_SUCCESS) {
+        return;
+    }
+
+    // create the buffer
+    buffer = create(pContext, properties, size, hostPtr, retVal);
+}
+
 Buffer *Buffer::create(Context *context,
                        cl_mem_flags flags,
+                       size_t size,
+                       void *hostPtr,
+                       cl_int &errcodeRet) {
+    MemoryProperties properties;
+    properties.flags = flags;
+    return create(context, properties, size, hostPtr, errcodeRet);
+}
+
+Buffer *Buffer::create(Context *context,
+                       MemoryProperties properties,
                        size_t size,
                        void *hostPtr,
                        cl_int &errcodeRet) {
@@ -84,14 +127,14 @@ Buffer *Buffer::create(Context *context,
     bool allocateMemory = true;
     bool copyMemoryFromHostPtr = false;
     GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(
-        flags,
+        properties.flags,
         context->isSharedContext,
         context->getDevice(0)->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
 
     MemoryManager *memoryManager = context->getMemoryManager();
     UNRECOVERABLE_IF(!memoryManager);
 
-    checkMemory(flags, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager);
+    checkMemory(properties.flags, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager);
 
     if (errcodeRet != CL_SUCCESS) {
         return nullptr;
@@ -100,16 +143,16 @@ Buffer *Buffer::create(Context *context,
     if (allocationType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
         zeroCopyAllowed = false;
         allocateMemory = true;
-        if (flags & CL_MEM_USE_HOST_PTR) {
+        if (properties.flags & CL_MEM_USE_HOST_PTR) {
             copyMemoryFromHostPtr = true;
         }
     }
 
     if (allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
-        if (flags & CL_MEM_ALLOC_HOST_PTR) {
+        if (properties.flags & CL_MEM_ALLOC_HOST_PTR) {
             zeroCopyAllowed = true;
             allocateMemory = true;
-        } else if (flags & CL_MEM_USE_HOST_PTR) {
+        } else if (properties.flags & CL_MEM_USE_HOST_PTR) {
             allocateMemory = false;
             if (!alignementSatisfied || DebugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
                 zeroCopyAllowed = false;
@@ -124,7 +167,7 @@ Buffer *Buffer::create(Context *context,
         allocateMemory = false;
     }
 
-    if (flags & CL_MEM_USE_HOST_PTR) {
+    if (properties.flags & CL_MEM_USE_HOST_PTR) {
         memory = context->getSVMAllocsManager()->getSVMAlloc(hostPtr);
         if (memory) {
             allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
@@ -152,8 +195,8 @@ Buffer *Buffer::create(Context *context,
     }
 
     if (!memory) {
-        AllocationFlags allocFlags = MemObjHelper::getAllocationFlags(flags, allocateMemory);
-        DevicesBitfield devices = MemObjHelper::getDevicesBitfield(flags);
+        AllocationFlags allocFlags = MemObjHelper::getAllocationFlags(properties.flags, allocateMemory);
+        DevicesBitfield devices = MemObjHelper::getDevicesBitfield(properties.flags_intel);
         memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocFlags, devices, hostPtr, static_cast<size_t>(size), allocationType);
     }
 
@@ -163,12 +206,12 @@ Buffer *Buffer::create(Context *context,
 
     // if memory pointer should not be allcoated and graphics allocation is nullptr
     // and cl_mem flags allow, create non-zerocopy buffer
-    if (!allocateMemory && !memory && Buffer::isReadOnlyMemoryPermittedByFlags(flags)) {
+    if (!allocateMemory && !memory && Buffer::isReadOnlyMemoryPermittedByFlags(properties.flags)) {
         allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
         zeroCopyAllowed = false;
         copyMemoryFromHostPtr = true;
-        AllocationFlags allocFlags = MemObjHelper::getAllocationFlags(flags, true);
-        DevicesBitfield devices = MemObjHelper::getDevicesBitfield(flags);
+        AllocationFlags allocFlags = MemObjHelper::getAllocationFlags(properties.flags, true);
+        DevicesBitfield devices = MemObjHelper::getDevicesBitfield(properties.flags_intel);
         memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocFlags, devices, nullptr, static_cast<size_t>(size), allocationType);
     }
 
@@ -184,12 +227,12 @@ Buffer *Buffer::create(Context *context,
     }
 
     memory->setAllocationType(allocationType);
-    memory->setMemObjectsAllocationWithWritableFlags(!(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)));
+    memory->setMemObjectsAllocationWithWritableFlags(!(properties.flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)));
 
     DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", size, "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
 
     pBuffer = createBufferHw(context,
-                             flags,
+                             properties.flags,
                              size,
                              memory->getUnderlyingBuffer(),
                              const_cast<void *>(hostPtr),

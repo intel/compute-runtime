@@ -141,17 +141,17 @@ TEST_P(clSVMAllocFtrFlagsTests, SVMAllocValidFlags) {
     clSVMFree(pContext, SVMPtr);
 };
 
-struct clSVMAllocInValidFlagsTests : public clSVMAllocTemplateTests {
+struct clSVMAllocInvalidFlagsTests : public clSVMAllocTemplateTests {
 };
 
-TEST_P(clSVMAllocInValidFlagsTests, SVMAllocInValidFlags) {
+TEST_P(clSVMAllocInvalidFlagsTests, SVMAllocInvalidFlags) {
     cl_mem_flags flags = GetParam();
 
     auto SVMPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
     EXPECT_EQ(nullptr, SVMPtr);
 };
 
-cl_mem_flags SVMAllocInValidFlags[] = {
+cl_mem_flags SVMAllocInvalidFlags[] = {
     CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY,
     CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY,
     CL_MEM_SVM_ATOMICS,
@@ -159,8 +159,8 @@ cl_mem_flags SVMAllocInValidFlags[] = {
 
 INSTANTIATE_TEST_CASE_P(
     SVMAllocCheckFlags,
-    clSVMAllocInValidFlagsTests,
-    testing::ValuesIn(SVMAllocInValidFlags));
+    clSVMAllocInvalidFlagsTests,
+    testing::ValuesIn(SVMAllocInvalidFlags));
 
 TEST_F(clSVMAllocTests, nullContextReturnsNull) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;

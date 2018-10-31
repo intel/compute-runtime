@@ -9,6 +9,7 @@
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/helpers/basic_math.h"
+#include "public/cl_ext_private.h"
 #include "igfxfmid.h"
 
 namespace OCLRT {
@@ -40,8 +41,22 @@ class Buffer : public MemObj {
     bool forceDisallowCPUCopy = false;
 
     ~Buffer() override;
+
+    static void validateInputAndCreateBuffer(cl_context &context,
+                                             MemoryProperties properties,
+                                             size_t size,
+                                             void *hostPtr,
+                                             cl_int &retVal,
+                                             cl_mem &buffer);
+
     static Buffer *create(Context *context,
                           cl_mem_flags flags,
+                          size_t size,
+                          void *hostPtr,
+                          cl_int &errcodeRet);
+
+    static Buffer *create(Context *context,
+                          MemoryProperties properties,
                           size_t size,
                           void *hostPtr,
                           cl_int &errcodeRet);
