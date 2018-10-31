@@ -76,7 +76,7 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMapp
     mockGmmRes->setUnifiedAuxTranslationCapable();
 
     void *fakePtr = reinterpret_cast<void *>(0x100);
-    WddmAllocation allocation(fakePtr, 0x2100, fakePtr, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(fakePtr, 0x2100, nullptr, MemoryPool::MemoryNull, 1u);
     allocation.gmm = gmm.get();
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -194,7 +194,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
     size_t underlyingPages = underlyingSize / MemoryConstants::pageSize;
     size_t alignedPages = alignedSize / MemoryConstants::pageSize;
 
-    WddmAllocation allocation(ptr, 0x2100, ptr, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(ptr, 0x2100, nullptr, MemoryPool::MemoryNull, 1u);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize());
 
     allocation.gmm = gmm;
@@ -217,7 +217,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
 
 TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmSize) {
     void *fakePtr = reinterpret_cast<void *>(0x123);
-    WddmAllocation allocation(fakePtr, 100, fakePtr, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(fakePtr, 100, nullptr, MemoryPool::MemoryNull, 1u);
     std::unique_ptr<Gmm> gmm(GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize()));
 
     allocation.gmm = gmm.get();
@@ -739,7 +739,7 @@ TEST_F(Wddm20Tests, whenCreateAllocation64kFailsThenReturnFalse) {
 
     void *fakePtr = reinterpret_cast<void *>(0x123);
     auto gmm = std::make_unique<Gmm>(fakePtr, 100, false);
-    WddmAllocation allocation(fakePtr, 100, fakePtr, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(fakePtr, 100, nullptr, MemoryPool::MemoryNull, 1u);
     allocation.gmm = gmm.get();
 
     EXPECT_FALSE(wddm->createAllocation64k(&allocation));
