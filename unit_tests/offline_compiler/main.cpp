@@ -17,7 +17,6 @@ const char *fSeparator = "\\";
 #elif defined(__linux__)
 const char *fSeparator = "/";
 #endif
-std::string cwd;
 
 Environment *gEnvironment;
 
@@ -28,19 +27,13 @@ std::string getRunPath() {
 #if defined(__linux__)
     res = getcwd(nullptr, 0);
 #else
-    res = cwd;
+    res = _getcwd(nullptr, 0);
 #endif
     return res;
 }
 
 int main(int argc, char **argv) {
     int retVal = 0;
-    std::string execPath(argv[0]);
-    char separator = '/';
-    if (execPath.find_last_of("\\") != std::string::npos)
-        separator = '\\';
-    cwd = execPath.substr(0, execPath.find_last_of(separator));
-
     bool useDefaultListener = false;
     std::string devicePrefix("skl");
     std::string familyNameWithType("Gen9core");
