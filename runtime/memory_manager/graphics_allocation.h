@@ -17,6 +17,7 @@
 #include "runtime/memory_manager/memory_pool.h"
 #include "runtime/memory_manager/residency_container.h"
 #include "runtime/utilities/idlist.h"
+#include "runtime/utilities/stackvec.h"
 
 namespace OCLRT {
 
@@ -34,19 +35,7 @@ const uint32_t ObjectNotUsed = (uint32_t)-1;
 class Gmm;
 
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {
-  protected:
-    size_t size = 0;
-    void *cpuPtr = nullptr;
-    uint64_t gpuAddress = 0;
-    bool coherent = false;
-    osHandle sharedHandle;
-    bool locked = false;
-    uint32_t reuseCount = 0; // GraphicsAllocation can be reused by shared resources
-    bool evictable = true;
-    MemoryPool::Type memoryPool = MemoryPool::MemoryNull;
-
   public:
-    uint32_t taskCount = ObjectNotUsed;
     OsHandleStorage fragmentsStorage;
     bool is32BitAllocation = false;
     uint64_t gpuBaseAddress = 0;
@@ -81,20 +70,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         SHARED_RESOURCE,
     };
 
-    virtual ~GraphicsAllocation() = default;
+    virtual ~GraphicsAllocation();
     GraphicsAllocation &operator=(const GraphicsAllocation &) = delete;
     GraphicsAllocation(const GraphicsAllocation &) = delete;
 
-    GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn) : size(sizeIn),
-                                                                                                   cpuPtr(cpuPtrIn),
-                                                                                                   gpuAddress(gpuAddress),
-                                                                                                   sharedHandle(Sharing::nonSharedResource),
-                                                                                                   gpuBaseAddress(baseAddress) {}
+    GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn);
 
-    GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn) : size(sizeIn),
-                                                                                 cpuPtr(cpuPtrIn),
-                                                                                 gpuAddress(castToUint64(cpuPtrIn)),
-                                                                                 sharedHandle(sharedHandleIn) {}
+    GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn);
 
     void *getUnderlyingBuffer() const { return cpuPtr; }
     void setCpuPtrAndGpuAddress(void *cpuPtr, uint64_t gpuAddress) {
@@ -141,14 +123,30 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     MemoryPool::Type getMemoryPool() {
         return memoryPool;
     }
+    bool peekWasUsed() const;
+    void updateTaskCount(uint32_t newTaskCount, uint32_t contextId);
+    uint32_t getTaskCount(uint32_t contextId) const;
 
   protected:
+    void initTaskCounts();
+
     //this variable can only be modified from SubmissionAggregator
     friend class SubmissionAggregator;
+    size_t size = 0;
+    void *cpuPtr = nullptr;
+    uint64_t gpuAddress = 0;
+    bool coherent = false;
+    osHandle sharedHandle = Sharing::nonSharedResource;
+    bool locked = false;
+    uint32_t reuseCount = 0; // GraphicsAllocation can be reused by shared resources
+    bool evictable = true;
+    MemoryPool::Type memoryPool = MemoryPool::MemoryNull;
     uint32_t inspectionId = 0;
     AllocationType allocationType = AllocationType::UNKNOWN;
     bool aubWritable = true;
     bool allocDumpable = false;
     bool memObjectsAllocationWithWritableFlags = false;
+    StackVec<uint32_t, maxOsContextCount> taskCounts;
+    std::atomic<uint32_t> registeredContextsNum{0};
 };
 } // namespace OCLRT

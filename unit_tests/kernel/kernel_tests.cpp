@@ -586,7 +586,7 @@ TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWh
     auto privateSurface = pKernel->getPrivateSurface();
     auto tagAddress = context.getDevice(0)->getTagAddress();
 
-    privateSurface->taskCount = *tagAddress + 1;
+    privateSurface->updateTaskCount(*tagAddress + 1, 0u);
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     pKernel.reset(nullptr);

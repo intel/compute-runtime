@@ -11,10 +11,11 @@
 
 namespace OCLRT {
 class GraphicsAllocation;
+class CommandStreamReceiver;
 
 class AllocationsList : public IDList<GraphicsAllocation, true, true> {
   public:
-    std::unique_ptr<GraphicsAllocation> detachAllocation(size_t requiredMinimalSize, volatile uint32_t *csrTagAddress, bool internalAllocationRequired);
+    std::unique_ptr<GraphicsAllocation> detachAllocation(size_t requiredMinimalSize, CommandStreamReceiver &commandStreamReceiver, bool internalAllocationRequired);
 
   private:
     GraphicsAllocation *detachAllocationImpl(GraphicsAllocation *, void *);

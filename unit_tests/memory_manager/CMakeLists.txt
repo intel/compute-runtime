@@ -8,6 +8,7 @@ set(IGDRCL_SRCS_tests_memory_manager
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_mt_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests.cpp

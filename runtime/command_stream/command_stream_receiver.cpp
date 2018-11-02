@@ -61,7 +61,7 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     auto submissionTaskCount = this->taskCount + 1;
     if (gfxAllocation.residencyTaskCount[deviceIndex] < (int)submissionTaskCount) {
         this->getResidencyAllocations().push_back(&gfxAllocation);
-        gfxAllocation.taskCount = submissionTaskCount;
+        gfxAllocation.updateTaskCount(submissionTaskCount, deviceIndex);
         if (gfxAllocation.residencyTaskCount[deviceIndex] == ObjectNotResident) {
             this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
         }
@@ -103,13 +103,13 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
     }
 }
 
-void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType) {
+void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
     auto address = getTagAddress();
     if (address && requiredTaskCount != ObjectNotUsed) {
         while (*address < requiredTaskCount)
             ;
     }
-    internalAllocationStorage->cleanAllocationList(requiredTaskCount, allocationType);
+    internalAllocationStorage->cleanAllocationList(requiredTaskCount, allocationUsage);
 }
 
 MemoryManager *CommandStreamReceiver::getMemoryManager() const {
@@ -359,7 +359,7 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
     if (allocation == nullptr) {
         return false;
     }
-    allocation->taskCount = Event::eventNotReady;
+    allocation->updateTaskCount(Event::eventNotReady, deviceIndex);
     surface.setAllocation(allocation);
     internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
     return true;

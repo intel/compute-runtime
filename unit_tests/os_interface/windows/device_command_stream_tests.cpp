@@ -638,8 +638,8 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION);
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation2), TEMPORARY_ALLOCATION);
 
-    graphicsAllocation->taskCount = 1;
-    graphicsAllocation2->taskCount = 100;
+    graphicsAllocation->updateTaskCount(1, 0u);
+    graphicsAllocation2->updateTaskCount(100, 0u);
 
     csr->waitForTaskCountAndCleanAllocationList(1, TEMPORARY_ALLOCATION);
     // graphicsAllocation2 still lives

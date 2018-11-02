@@ -82,7 +82,7 @@ class CommandStreamReceiver {
 
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
 
-    MOCKABLE_VIRTUAL void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType);
+    MOCKABLE_VIRTUAL void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage);
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
     OSInterface *getOSInterface() { return osInterface; };
@@ -149,6 +149,7 @@ class CommandStreamReceiver {
     size_t defaultSshSize;
 
     void setDeviceIndex(uint32_t deviceIndex) { this->deviceIndex = deviceIndex; }
+    uint32_t getDeviceIndex() const { return this->deviceIndex; }
     AllocationsList &getTemporaryAllocations();
     AllocationsList &getAllocationsForReuse();
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }

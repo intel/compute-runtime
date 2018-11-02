@@ -410,7 +410,7 @@ TEST_F(UpdateEventTest, givenEventContainingCommandQueueWhenItsStatusIsUpdatedTo
     void *ptr = (void *)0x1000;
     size_t size = 4096;
     auto temporary = memoryManager->allocateGraphicsMemory(size, ptr);
-    temporary->taskCount = 3;
+    temporary->updateTaskCount(3, 0);
     device->getCommandStreamReceiver().getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporary), TEMPORARY_ALLOCATION);
     Event event(commandQueue.get(), CL_COMMAND_NDRANGE_KERNEL, 3, 3);
 

@@ -117,7 +117,9 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     kernel.kernelInfo.createKernelAllocation(memoryManager);
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
 
-    firstAllocation->taskCount = ObjectNotUsed - 1;
+    uint32_t notReadyTaskCount = *commandStreamReceiver.getTagAddress() + 1u;
+
+    firstAllocation->updateTaskCount(notReadyTaskCount, 0u);
 
     const size_t newHeapSize = initialHeapSize + 1;
     char newHeap[newHeapSize];
@@ -130,5 +132,5 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     EXPECT_FALSE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());
     EXPECT_EQ(commandStreamReceiver.getTemporaryAllocations().peekHead(), firstAllocation);
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(secondAllocation);
-    commandStreamReceiver.getInternalAllocationStorage()->cleanAllocationList(firstAllocation->taskCount, TEMPORARY_ALLOCATION);
+    commandStreamReceiver.getInternalAllocationStorage()->cleanAllocationList(notReadyTaskCount, TEMPORARY_ALLOCATION);
 }

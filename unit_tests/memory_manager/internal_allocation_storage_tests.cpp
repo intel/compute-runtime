@@ -41,9 +41,9 @@ TEST_F(InternalAllocationStorageTest, whenCleanAllocationListThenRemoveOnlyCompl
     auto allocation2 = memoryManager->allocateGraphicsMemory(1, host_ptr);
     auto allocation3 = memoryManager->allocateGraphicsMemory(1, host_ptr);
 
-    allocation->taskCount = 10;
-    allocation2->taskCount = 5;
-    allocation3->taskCount = 15;
+    allocation->updateTaskCount(10, 0);
+    allocation2->updateTaskCount(5, 0);
+    allocation3->updateTaskCount(15, 0);
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation2), TEMPORARY_ALLOCATION);

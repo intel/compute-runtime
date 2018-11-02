@@ -1602,7 +1602,7 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
     EXPECT_EQ(executionEnvironment.commandStreamReceivers[0].get(), executionEnvironment.memoryManager->getCommandStreamReceiver(0));
     auto tagAllocator = executionEnvironment.memoryManager->getEventPerfCountAllocator();
     auto allocation = tagAllocator->getTag()->getGraphicsAllocation();
-    allocation->taskCount = 1;
+    allocation->updateTaskCount(1, 0);
     executionEnvironment.commandStreamReceivers.clear();
     EXPECT_THROW(executionEnvironment.memoryManager->getCommandStreamReceiver(0), std::exception);
     EXPECT_NO_THROW(executionEnvironment.memoryManager.reset());

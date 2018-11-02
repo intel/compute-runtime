@@ -27,37 +27,6 @@
 namespace OCLRT {
 constexpr size_t TagCount = 512;
 
-struct ReusableAllocationRequirements {
-    size_t requiredMinimalSize;
-    volatile uint32_t *csrTagAddress;
-    bool internalAllocationRequired;
-};
-
-std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, volatile uint32_t *csrTagAddress, bool internalAllocationRequired) {
-    ReusableAllocationRequirements req;
-    req.requiredMinimalSize = requiredMinimalSize;
-    req.csrTagAddress = csrTagAddress;
-    req.internalAllocationRequired = internalAllocationRequired;
-    GraphicsAllocation *a = nullptr;
-    GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));
-    return std::unique_ptr<GraphicsAllocation>(retAlloc);
-}
-
-GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, void *data) {
-    ReusableAllocationRequirements *req = static_cast<ReusableAllocationRequirements *>(data);
-    auto *curr = head;
-    while (curr != nullptr) {
-        auto currentTagValue = req->csrTagAddress ? *req->csrTagAddress : -1;
-        if ((req->internalAllocationRequired == curr->is32BitAllocation) &&
-            (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize) &&
-            ((currentTagValue > curr->taskCount) || (curr->taskCount == 0))) {
-            return removeOneImpl(curr, nullptr);
-        }
-        curr = curr->next;
-    }
-    return nullptr;
-}
-
 MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory,
                              ExecutionEnvironment &executionEnvironment) : allocator32Bit(nullptr), enable64kbpages(enable64kbpages),
                                                                            localMemorySupported(enableLocalMemory),
@@ -198,7 +167,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
 //if not in use destroy in place
 //if in use pass to temporary allocation list that is cleaned on blocking calls
 void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation) {
-    if (gfxAllocation->taskCount == ObjectNotUsed || gfxAllocation->taskCount <= *getCommandStreamReceiver(0)->getTagAddress()) {
+    if (!gfxAllocation->peekWasUsed() || gfxAllocation->getTaskCount(0u) <= *getCommandStreamReceiver(0)->getTagAddress()) {
         freeGraphicsMemory(gfxAllocation);
     } else {
         getCommandStreamReceiver(0)->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation), TEMPORARY_ALLOCATION);

@@ -904,7 +904,7 @@ TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
 
     EXPECT_EQ(temporaryAllocation, csr.getTemporaryAllocations().peekHead());
 
-    temporaryAllocation->taskCount = 10;
+    temporaryAllocation->updateTaskCount(10, 0u);
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, 11);
 

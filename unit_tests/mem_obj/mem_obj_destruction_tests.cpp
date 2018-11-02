@@ -46,19 +46,20 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
     }
 
     void makeMemObjUsed() {
-        memObj->getGraphicsAllocation()->taskCount = 3;
+        memObj->getGraphicsAllocation()->updateTaskCount(taskCountReady, 0u);
     }
 
     void makeMemObjNotReady() {
         makeMemObjUsed();
-        *context->getDevice(0)->getTagAddress() = memObj->getGraphicsAllocation()->taskCount - 1;
+        *context->getDevice(0)->getTagAddress() = taskCountReady - 1;
     }
 
     void makeMemObjReady() {
         makeMemObjUsed();
-        *context->getDevice(0)->getTagAddress() = memObj->getGraphicsAllocation()->taskCount;
+        *context->getDevice(0)->getTagAddress() = taskCountReady;
     }
 
+    constexpr static uint32_t taskCountReady = 3u;
     MockDevice *device;
     MockMemoryManager *memoryManager;
     std::unique_ptr<MockContext> context;
@@ -135,7 +136,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
 
     if (hasCallbacks) {
-        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount))
+        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->getTaskCount(0)))
             .Times(1);
     } else {
         EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
@@ -165,7 +166,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
 
     if (hasAllocatedMappedPtr) {
-        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount))
+        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->getTaskCount(0)))
             .Times(1);
     } else {
         EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
@@ -206,7 +207,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
 
     if (hasAllocatedMappedPtr) {
-        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount))
+        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->getTaskCount(0)))
             .Times(1);
     } else {
         EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
@@ -238,7 +239,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
 
-    EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount))
+    EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->getTaskCount(0)))
         .Times(1);
 
     delete memObj;

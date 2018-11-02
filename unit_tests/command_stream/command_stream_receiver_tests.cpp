@@ -177,13 +177,13 @@ HWTEST_F(CommandStreamReceiverTest, whenStoreAllocationThenStoredAllocationHasTa
     void *host_ptr = (void *)0x1234;
     auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
 
-    EXPECT_EQ(ObjectNotUsed, allocation->taskCount);
+    EXPECT_EQ(ObjectNotUsed, allocation->getTaskCount(0));
 
     csr.taskCount = 2u;
 
     csr.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
-    EXPECT_EQ(csr.peekTaskCount(), allocation->taskCount);
+    EXPECT_EQ(csr.peekTaskCount(), allocation->getTaskCount(0));
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCheckedForInitialStatusOfStatelessMocsIndexThenUnknownMocsIsReturend) {
@@ -417,7 +417,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     EXPECT_NE(memory, allocation->getUnderlyingBuffer());
     EXPECT_THAT(allocation->getUnderlyingBuffer(), MemCompare(memory, size));
 
-    allocation->taskCount = commandStreamReceiver->peekLatestFlushedTaskCount();
+    allocation->updateTaskCount(commandStreamReceiver->peekLatestFlushedTaskCount(), 0u);
 }
 
 TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyNotAllowedIsCreatedThenCopyAllocationIsNotCreated) {

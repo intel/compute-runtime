@@ -664,7 +664,7 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButG
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     pProgram->build(1, &device, nullptr, nullptr, nullptr, true);
     auto kernelAllocation = pProgram->getKernelInfo(size_t(0))->getGraphicsAllocation();
-    kernelAllocation->taskCount = 100;
+    kernelAllocation->updateTaskCount(100, 0);
     *pDevice->getTagAddress() = 0;
     pProgram->cleanCurrentKernelInfo();
     EXPECT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());

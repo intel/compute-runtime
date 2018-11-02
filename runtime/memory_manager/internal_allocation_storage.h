@@ -27,6 +27,7 @@ class InternalAllocationStorage {
   protected:
     void freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList);
     CommandStreamReceiver &commandStreamReceiver;
+    const uint32_t contextId;
 
     AllocationsList temporaryAllocations;
     AllocationsList allocationsForReuse;

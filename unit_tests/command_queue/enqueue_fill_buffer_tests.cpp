@@ -376,7 +376,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeCopied) {
         if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
             (allocation->getUnderlyingBuffer() != nullptr) &&
             (*(static_cast<float *>(allocation->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
-            (pCmdQ->taskCount == allocation->taskCount)) {
+            (pCmdQ->taskCount == allocation->getTaskCount(0))) {
             break;
         }
         allocation = allocation->next;
@@ -397,7 +397,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeAligned) {
         if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
             (allocation->getUnderlyingBuffer() != nullptr) &&
             (*(static_cast<float *>(allocation->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
-            (pCmdQ->taskCount == allocation->taskCount)) {
+            (pCmdQ->taskCount == allocation->getTaskCount(0))) {
             break;
         }
         allocation = allocation->next;

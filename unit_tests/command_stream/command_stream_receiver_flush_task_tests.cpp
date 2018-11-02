@@ -1697,7 +1697,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, InForced32BitAllocationsModeStore3
         auto newScratchAllocation = commandStreamReceiver->getScratchAllocation();
         EXPECT_NE(scratchAllocation, newScratchAllocation); // Allocation changed
 
-        std::unique_ptr<GraphicsAllocation> allocationTemporary = commandStreamReceiver->getTemporaryAllocations().detachAllocation(0, nullptr, true);
+        std::unique_ptr<GraphicsAllocation> allocationTemporary = commandStreamReceiver->getTemporaryAllocations().detachAllocation(0, *commandStreamReceiver, true);
 
         EXPECT_EQ(scratchAllocation, allocationTemporary.get());
         pDevice->getMemoryManager()->freeGraphicsMemory(allocationTemporary.release());
@@ -3125,11 +3125,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenTemporaryAndReusableAl
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(reusableToClean), REUSABLE_ALLOCATION);
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(reusableToHold), REUSABLE_ALLOCATION);
 
-    temporaryToClean->taskCount = 1;
-    reusableToClean->taskCount = 1;
+    temporaryToClean->updateTaskCount(1, 0u);
+    reusableToClean->updateTaskCount(1, 0u);
 
-    temporaryToHold->taskCount = 10;
-    reusableToHold->taskCount = 10;
+    temporaryToHold->updateTaskCount(10, 0u);
+    reusableToHold->updateTaskCount(10, 0u);
 
     commandStreamReceiver.latestFlushedTaskCount = 9;
     commandStreamReceiver.cleanupResources();

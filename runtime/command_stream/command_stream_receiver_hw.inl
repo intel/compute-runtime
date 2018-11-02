@@ -248,7 +248,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (requiredScratchSize && (!scratchAllocation || scratchAllocation->getUnderlyingBufferSize() < requiredScratchSizeInBytes)) {
         if (scratchAllocation) {
-            scratchAllocation->taskCount = this->taskCount;
+            scratchAllocation->updateTaskCount(this->taskCount, this->deviceIndex);
             internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchAllocation), TEMPORARY_ALLOCATION);
         }
         createScratchSpaceAllocation(requiredScratchSizeInBytes);

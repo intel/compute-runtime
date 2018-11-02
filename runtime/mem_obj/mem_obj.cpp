@@ -7,6 +7,7 @@
 
 #include "runtime/context/context.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/deferred_deleter.h"
@@ -15,7 +16,6 @@
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/get_info.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include <algorithm>
 
 namespace OCLRT {
@@ -64,7 +64,7 @@ MemObj::~MemObj() {
             if (!doAsyncDestrucions) {
                 needWait = true;
             }
-            if (needWait && graphicsAllocation->taskCount != ObjectNotUsed) {
+            if (needWait && graphicsAllocation->peekWasUsed()) {
                 waitForCsrCompletion();
             }
             destroyGraphicsAllocation(graphicsAllocation, doAsyncDestrucions);
@@ -288,22 +288,15 @@ void MemObj::releaseAllocatedMapPtr() {
 }
 
 void MemObj::waitForCsrCompletion() {
-    if (graphicsAllocation) {
-        memoryManager->getCommandStreamReceiver(0)->waitForCompletionWithTimeout(false, TimeoutControls::maxTimeout, graphicsAllocation->taskCount);
-    }
+    memoryManager->getCommandStreamReceiver(0)->waitForCompletionWithTimeout(false, TimeoutControls::maxTimeout, graphicsAllocation->getTaskCount(0u));
 }
 
 void MemObj::destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy) {
-    if (asyncDestroy && allocation->taskCount != ObjectNotUsed) {
-        auto commandStreamReceiver = memoryManager->getCommandStreamReceiver(0);
-        auto currentTag = *commandStreamReceiver->getTagAddress();
-        if (currentTag < allocation->taskCount) {
-            auto storageForAllocation = commandStreamReceiver->getInternalAllocationStorage();
-            storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
-            return;
-        }
+    if (asyncDestroy) {
+        memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
+    } else {
+        memoryManager->freeGraphicsMemory(allocation);
     }
-    memoryManager->freeGraphicsMemory(allocation);
 }
 
 bool MemObj::checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t offsetInHostPtr, const void *hostPtr, cl_command_type cmdType) {

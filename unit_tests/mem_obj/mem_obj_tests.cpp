@@ -162,7 +162,7 @@ TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThe
     context.setMemoryManager(&memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
-    allocation->taskCount = 2;
+    allocation->updateTaskCount(2, 0);
     *(memoryManager.getCommandStreamReceiver(0)->getTagAddress()) = 1;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
@@ -180,7 +180,7 @@ TEST(MemObj, givenReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAl
     context.setMemoryManager(&memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
-    allocation->taskCount = 1;
+    allocation->updateTaskCount(1, 0);
     *context.getDevice(0)->getTagAddress() = 1;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
@@ -199,7 +199,6 @@ TEST(MemObj, givenNotUsedGraphicsAllocationWhenMemObjDestroysAllocationAsyncThen
     context.setMemoryManager(&memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
-    allocation->taskCount = ObjectNotUsed;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
 
@@ -228,21 +227,6 @@ TEST(MemObj, givenMemoryManagerWithoutDeviceWhenMemObjDestroysAllocationAsyncThe
     EXPECT_TRUE(allocationList.peekIsEmpty());
 }
 
-TEST(MemObj, givenMemObjWhenItDoesntHaveGraphicsAllocationThenWaitForCsrCompletionDoesntCrash) {
-    MockContext context;
-    MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-
-    context.setMemoryManager(&memoryManager);
-
-    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
-                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
-
-    EXPECT_EQ(nullptr, memObj.getGraphicsAllocation());
-    memObj.waitForCsrCompletion();
-
-    EXPECT_EQ(nullptr, memObj.getGraphicsAllocation());
-    memObj.waitForCsrCompletion();
-}
 TEST(MemObj, givenMemObjAndPointerToObjStorageWithProperCommandWhenCheckIfMemTransferRequiredThenReturnFalse) {
     MockMemoryManager memoryManager;
     MockContext context;

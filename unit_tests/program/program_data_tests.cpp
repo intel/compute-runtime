@@ -179,7 +179,7 @@ TEST_F(ProgramDataTest, givenConstantAllocationThatIsInUseByGpuWhenProgramIsBein
     auto &csr = pPlatform->getDevice(0)->getCommandStreamReceiver();
     auto tagAddress = csr.getTagAddress();
     auto constantSurface = pProgram->getConstantSurface();
-    constantSurface->taskCount = *tagAddress + 1;
+    constantSurface->updateTaskCount(*tagAddress + 1, 0);
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     delete pProgram;
@@ -196,7 +196,7 @@ TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingD
     auto &csr = pPlatform->getDevice(0)->getCommandStreamReceiver();
     auto tagAddress = csr.getTagAddress();
     auto globalSurface = pProgram->getGlobalSurface();
-    globalSurface->taskCount = *tagAddress + 1;
+    globalSurface->updateTaskCount(*tagAddress + 1, 0);
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     delete pProgram;

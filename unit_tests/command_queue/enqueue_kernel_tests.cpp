@@ -1485,7 +1485,7 @@ HWTEST_F(EnqueueKernelTest, givenKernelWhenItIsEnqueuedThenAllResourceGraphicsAl
     auto csrTaskCount = mockCsr->peekTaskCount();
     auto &passedAllocationPack = mockCsr->copyOfAllocations;
     for (auto &allocation : passedAllocationPack) {
-        EXPECT_EQ(csrTaskCount, allocation->taskCount);
+        EXPECT_EQ(csrTaskCount, allocation->getTaskCount(0u));
     }
 }
 
