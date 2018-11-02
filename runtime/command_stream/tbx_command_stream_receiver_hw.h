@@ -15,6 +15,8 @@
 
 namespace OCLRT {
 
+class TbxStream;
+
 class TbxMemoryManager : public OsAgnosticMemoryManager {
   public:
     TbxMemoryManager(bool enable64kbPages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment) {}
@@ -30,6 +32,9 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
 
   public:
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::stream;
+
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
     void makeCoherent(GraphicsAllocation &gfxAllocation) override;
 
@@ -73,7 +78,8 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void getGTTData(void *memory, AubGTTData &data);
     uint32_t getMemoryBankForGtt() const;
 
-    TbxCommandStreamReceiver::TbxStream stream;
+    TbxStream tbxStream;
+
     uint32_t aubDeviceId;
     bool streamInitialized = false;
 

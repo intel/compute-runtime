@@ -1686,3 +1686,37 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineI
     aubCsr->initializeEngine(engineIndex);
     EXPECT_NE(0u, aubCsr->handle);
 }
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAddMmioKeySetToZeroWhenInitAdditionalMmioCalledThenDoNotWriteMmio) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AubDumpAddMmioRegister.set(0);
+
+    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    EXPECT_NE(nullptr, aubCsr);
+
+    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
+    aubCsr->stream = stream.get();
+    EXPECT_EQ(0u, stream->mmioList.size());
+    aubCsr->initAdditionalMMIO();
+    EXPECT_EQ(0u, stream->mmioList.size());
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAddMmioKeySetToNonZeroWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
+    uint32_t offset = 0xdead;
+    uint32_t value = 0xbeef;
+    MMIOPair mmioPair(offset, value);
+
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AubDumpAddMmioRegister.set(offset);
+    DebugManager.flags.AubDumpAddMmioRegisterValue.set(value);
+
+    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    EXPECT_NE(nullptr, aubCsr);
+
+    auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
+    aubCsr->stream = stream.get();
+    EXPECT_EQ(0u, stream->mmioList.size());
+    aubCsr->initAdditionalMMIO();
+    EXPECT_EQ(1u, stream->mmioList.size());
+    EXPECT_TRUE(stream->isOnMmioList(mmioPair));
+};

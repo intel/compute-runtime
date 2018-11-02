@@ -21,7 +21,7 @@
 namespace OCLRT {
 
 struct MockAubFileStreamMockMmioWrite : public AubMemDump::AubFileStream {
-    void writeMMIO(uint32_t offset, uint32_t value) override {
+    void writeMMIOImpl(uint32_t offset, uint32_t value) override {
         mmioList.push_back(std::make_pair(offset, value));
     }
     bool isOnMmioList(const MMIOPair &mmio) {

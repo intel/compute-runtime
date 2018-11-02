@@ -8,6 +8,7 @@
 #include "aub_mem_dump.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 
 namespace AubMemDump {
 
@@ -172,5 +173,16 @@ void LrcaHelper::initialize(void *pLRCIn) const {
     setPDP1(pLRCIn, 0);
     setPDP2(pLRCIn, 0);
     setPDP3(pLRCIn, 0);
+}
+
+void AubStream::writeMMIO(uint32_t offset, uint32_t value) {
+    auto dbgOffset = OCLRT::DebugManager.flags.AubDumpOverrideMmioRegister.get();
+    if (dbgOffset > 0) {
+        if (offset == static_cast<uint32_t>(dbgOffset)) {
+            offset = static_cast<uint32_t>(dbgOffset);
+            value = static_cast<uint32_t>(OCLRT::DebugManager.flags.AubDumpOverrideMmioRegisterValue.get());
+        }
+    }
+    writeMMIOImpl(offset, value);
 }
 } // namespace AubMemDump

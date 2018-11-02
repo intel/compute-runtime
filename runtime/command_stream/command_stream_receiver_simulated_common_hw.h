@@ -10,6 +10,10 @@
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
 
+namespace AubMemDump {
+struct AubStream;
+}
+
 namespace OCLRT {
 class GraphicsAllocation;
 template <typename GfxFamily>
@@ -20,6 +24,9 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     uint64_t getGTTBits() const {
         return 0u;
     }
+    void initAdditionalMMIO();
+
+    AubMemDump::AubStream *stream;
 
   protected:
     PhysicalAddressAllocator *createPhysicalAddressAllocator();

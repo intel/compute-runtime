@@ -26,6 +26,7 @@ set(RUNTIME_SRCS_COMMAND_STREAM
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/command_stream_receiver_simulated_hw.h
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/engine_node.h
   ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.h
   ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer.h

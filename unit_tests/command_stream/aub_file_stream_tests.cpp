@@ -182,7 +182,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMMIOIsCalled
 
     aubCsr->expectMMIO(5, 10);
 
-    aubCsr->stream->fileHandle.flush();
+    aubCsr->getAubStream()->fileHandle.flush();
 
     std::ifstream aubFile(fileName);
     EXPECT_TRUE(aubFile.is_open());

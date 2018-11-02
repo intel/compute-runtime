@@ -72,10 +72,10 @@ class AUBFixture : public CommandQueueHwFixture {
             if (offset > length)
                 abort();
 
-            aubCsr->stream->expectMemory(physAddress,
-                                         reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
-                                         size,
-                                         aubCsr->getAddressSpaceFromPTEBits(entryBits));
+            aubCsr->getAubStream()->expectMemory(physAddress,
+                                                 reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
+                                                 size,
+                                                 aubCsr->getAddressSpaceFromPTEBits(entryBits));
         };
 
         aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);

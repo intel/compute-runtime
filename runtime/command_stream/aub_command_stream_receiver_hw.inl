@@ -125,13 +125,13 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineInstanceT engin
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::openFile(const std::string &fileName) {
-    auto streamLocked = stream->lockStream();
+    auto streamLocked = getAubStream()->lockStream();
     initFile(fileName);
 }
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::reopenFile(const std::string &fileName) {
-    auto streamLocked = stream->lockStream();
+    auto streamLocked = getAubStream()->lockStream();
     if (isFileOpen()) {
         if (fileName != getFileName()) {
             closeFile();
@@ -147,11 +147,11 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::reopenFile(const std::string &fileNa
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName) {
-    if (!stream->isOpen()) {
+    if (!getAubStream()->isOpen()) {
         // Open our file
         stream->open(fileName.c_str());
 
-        if (!stream->isOpen()) {
+        if (!getAubStream()->isOpen()) {
             // This DEBUG_BREAK_IF most probably means you are not executing aub tests with correct current directory (containing aub_out folder)
             // try adding <familycodename>_aub
             DEBUG_BREAK_IF(true);
@@ -168,12 +168,12 @@ void AUBCommandStreamReceiverHw<GfxFamily>::closeFile() {
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::isFileOpen() const {
-    return stream->isOpen();
+    return getAubStream()->isOpen();
 }
 
 template <typename GfxFamily>
 const std::string &AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
-    return stream->getFileName();
+    return getAubStream()->getFileName();
 }
 
 template <typename GfxFamily>
@@ -184,6 +184,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex)
 
     initGlobalMMIO();
     initEngineMMIO(engineInstance);
+    this->initAdditionalMMIO();
 
     // Global HW Status Page
     {
@@ -198,7 +199,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex)
         {
             std::ostringstream str;
             str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttHWSP;
-            stream->addComment(str.str().c_str());
+            getAubStream()->addComment(str.str().c_str());
         }
 
         AubGTTData data = {0};
@@ -228,7 +229,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex)
         {
             std::ostringstream str;
             str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttRingBuffer;
-            stream->addComment(str.str().c_str());
+            getAubStream()->addComment(str.str().c_str());
         }
 
         AubGTTData data = {0};
@@ -256,7 +257,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex)
         {
             std::ostringstream str;
             str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttLRCA;
-            stream->addComment(str.str().c_str());
+            getAubStream()->addComment(str.str().c_str());
         }
 
         AubGTTData data = {0};
@@ -315,7 +316,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         }
     }
 
-    auto streamLocked = stream->lockStream();
+    auto streamLocked = getAubStream()->lockStream();
     auto engineIndex = getEngineIndex(engineType);
     auto engineInstance = allEngineInstances[engineIndex];
     engineType = engineInstance.type;
@@ -349,7 +350,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         {
             std::ostringstream str;
             str << "ppgtt: " << std::hex << std::showbase << pBatchBuffer;
-            stream->addComment(str.str().c_str());
+            getAubStream()->addComment(str.str().c_str());
         }
 
         auto physBatchBuffer = ppgtt->map(static_cast<uintptr_t>(batchBufferGpuAddress), sizeBatchBuffer,
@@ -455,7 +456,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         {
             std::ostringstream str;
             str << "ggtt: " << std::hex << std::showbase << ggttDumpStart;
-            stream->addComment(str.str().c_str());
+            getAubStream()->addComment(str.str().c_str());
         }
 
         auto physDumpStart = ggtt->map(ggttDumpStart, dumpLength, this->getGTTBits(), getMemoryBankForGtt());
@@ -471,7 +472,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         {
             std::ostringstream str;
             str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttLRCA + 0x101c;
-            stream->addComment(str.str().c_str());
+            getAubStream()->addComment(str.str().c_str());
         }
 
         auto physLRCA = ggtt->map(engineInfo.ggttLRCA, sizeof(engineInfo.tailRingBuffer), this->getGTTBits(), getMemoryBankForGtt());
@@ -513,7 +514,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         subCaptureManager->disableSubCapture();
     }
 
-    stream->flush();
+    getAubStream()->flush();
     return 0;
 }
 
@@ -542,7 +543,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
                                                                  ppgtt->map(static_cast<uintptr_t>(patchInfoData.targetAllocation), 1, 0, MemoryBanks::MainBank)));
         }
     }
-    bool result = stream->addComment(str.str().c_str());
+    bool result = getAubStream()->addComment(str.str().c_str());
     this->flatBatchBufferHelper->getPatchInfoCollection().clear();
     if (!result) {
         return false;
@@ -553,7 +554,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
     for (auto &element : allocationsMap) {
         allocationStr << std::hex << element.first << ";" << element.second << std::endl;
     }
-    result = stream->addComment(allocationStr.str().c_str());
+    result = getAubStream()->addComment(allocationStr.str().c_str());
     if (!result) {
         return false;
     }
@@ -575,7 +576,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineInstanceT en
 
     auto mmioBase = getCsTraits(engineInstance).mmioBase;
     bool pollNotEqual = false;
-    this->stream->registerPoll(
+    stream->registerPoll(
         mmioBase + 0x2234, //EXECLIST_STATUS
         0x100,
         0x100,
@@ -613,7 +614,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     {
         std::ostringstream str;
         str << "ppgtt: " << std::hex << std::showbase << gpuAddress << " end address: " << gpuAddress + size << " cpu address: " << cpuAddress << " device mask: " << gfxAllocation.devicesBitfield << " size: " << std::dec << size;
-        stream->addComment(str.str().c_str());
+        getAubStream()->addComment(str.str().c_str());
     }
 
     if (cpuAddress == nullptr) {
@@ -664,7 +665,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMMIO(uint32_t mmioRegister, ui
     header.readMaskHigh = 0xffffffff;
     header.dwordCount = (sizeof(header) / sizeof(uint32_t)) - 1;
 
-    this->stream->fileHandle.write(reinterpret_cast<char *>(&header), sizeof(header));
+    this->getAubStream()->fileHandle.write(reinterpret_cast<char *>(&header), sizeof(header));
 }
 
 template <typename GfxFamily>
@@ -672,10 +673,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(void *gfxAddress, const
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
         UNRECOVERABLE_IF(offset > length);
 
-        this->stream->expectMemory(physAddress,
-                                   reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
-                                   size,
-                                   this->getAddressSpaceFromPTEBits(entryBits));
+        this->getAubStream()->expectMemory(physAddress,
+                                           reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
+                                           size,
+                                           this->getAddressSpaceFromPTEBits(entryBits));
     };
 
     this->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);

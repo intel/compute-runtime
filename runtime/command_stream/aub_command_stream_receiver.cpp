@@ -144,7 +144,7 @@ void AubFileStream::writePTE(uint64_t physAddress, uint64_t entry) {
     write(reinterpret_cast<char *>(&entry), sizeof(entry));
 }
 
-void AubFileStream::writeMMIO(uint32_t offset, uint32_t value) {
+void AubFileStream::writeMMIOImpl(uint32_t offset, uint32_t value) {
     CmdServicesMemTraceRegisterWrite header = {};
     header.setHeader();
     header.dwordCount = (sizeof(header) / sizeof(uint32_t)) - 1;

@@ -9,6 +9,8 @@
 #include "runtime/aub/aub_helper.h"
 #include "runtime/helpers/hw_helper.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_aub_csr.h"
 
 using OCLRT::AUBCommandStreamReceiver;
 using OCLRT::AUBCommandStreamReceiverHw;
@@ -192,4 +194,40 @@ HWTEST_F(AubMemDumpTests, simpleVCS) {
 
 HWTEST_F(AubMemDumpTests, simpleVECS) {
     setupAUB<FamilyType>(pDevice, EngineType::ENGINE_VECS);
+}
+
+TEST(AubMemDumpBasic, givenDebugOverrideMmioWhenMmioNotMatchThenDoNotAlterValue) {
+    DebugManagerStateRestore dbgRestore;
+
+    uint32_t dbgOffset = 0x1000;
+    uint32_t dbgValue = 0xDEAD;
+    DebugManager.flags.AubDumpOverrideMmioRegister.set(static_cast<int32_t>(dbgOffset));
+    DebugManager.flags.AubDumpOverrideMmioRegisterValue.set(static_cast<int32_t>(dbgValue));
+
+    uint32_t offset = 0x2000;
+    uint32_t value = 0x3000;
+    MMIOPair mmio = std::make_pair(offset, value);
+
+    MockAubFileStreamMockMmioWrite mockAubStream;
+    mockAubStream.writeMMIO(offset, value);
+    EXPECT_EQ(1u, mockAubStream.mmioList.size());
+    EXPECT_TRUE(mockAubStream.isOnMmioList(mmio));
+}
+
+TEST(AubMemDumpBasic, givenDebugOverrideMmioWhenMmioMatchThenAlterValue) {
+    DebugManagerStateRestore dbgRestore;
+    uint32_t dbgOffset = 0x2000;
+    uint32_t dbgValue = 0xDEAD;
+    MMIOPair dbgMmio = std::make_pair(dbgOffset, dbgValue);
+
+    DebugManager.flags.AubDumpOverrideMmioRegister.set(static_cast<int32_t>(dbgOffset));
+    DebugManager.flags.AubDumpOverrideMmioRegisterValue.set(static_cast<int32_t>(dbgValue));
+
+    uint32_t offset = 0x2000;
+    uint32_t value = 0x3000;
+
+    MockAubFileStreamMockMmioWrite mockAubStream;
+    mockAubStream.writeMMIO(offset, value);
+    EXPECT_EQ(1u, mockAubStream.mmioList.size());
+    EXPECT_TRUE(mockAubStream.isOnMmioList(dbgMmio));
 }

@@ -106,9 +106,12 @@ struct AubStream {
     }
     virtual void writePTE(uint64_t physAddress, uint64_t entry) = 0;
     virtual void writeGTT(uint32_t offset, uint64_t entry) = 0;
-    virtual void writeMMIO(uint32_t offset, uint32_t value) = 0;
+    void writeMMIO(uint32_t offset, uint32_t value);
     virtual void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) = 0;
     virtual ~AubStream() = default;
+
+  protected:
+    virtual void writeMMIOImpl(uint32_t offset, uint32_t value) = 0;
 };
 
 struct AubFileStream : public AubStream {
@@ -120,7 +123,7 @@ struct AubFileStream : public AubStream {
     void writeMemoryWriteHeader(uint64_t physAddress, size_t size, uint32_t addressSpace, uint32_t hint) override;
     void writePTE(uint64_t physAddress, uint64_t entry) override;
     void writeGTT(uint32_t offset, uint64_t entry) override;
-    void writeMMIO(uint32_t offset, uint32_t value) override;
+    void writeMMIOImpl(uint32_t offset, uint32_t value) override;
     void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) override;
     bool isOpen() const { return fileHandle.is_open(); }
     const std::string &getFileName() const { return fileName; }

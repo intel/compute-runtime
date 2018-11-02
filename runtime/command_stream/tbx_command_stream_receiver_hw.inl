@@ -45,12 +45,13 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const Hardware
     this->aubDeviceId = debugDeviceId == -1
                             ? hwInfoIn.capabilityTable.aubDeviceId
                             : static_cast<uint32_t>(debugDeviceId);
+    this->stream = &tbxStream;
 }
 
 template <typename GfxFamily>
 TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
     if (streamInitialized) {
-        stream.close();
+        tbxStream.close();
     }
 
     for (auto &engineInfo : engineInfoTable) {
@@ -76,7 +77,7 @@ const AubMemDump::LrcaHelper &TbxCommandStreamReceiverHw<GfxFamily>::getCsTraits
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::initGlobalMMIO() {
     for (auto &mmioPair : AUBFamilyMapper<GfxFamily>::globalMMIO) {
-        stream.writeMMIO(mmioPair.first, mmioPair.second);
+        tbxStream.writeMMIO(mmioPair.first, mmioPair.second);
     }
 }
 
@@ -86,7 +87,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineType engineType
 
     DEBUG_BREAK_IF(!mmioList);
     for (auto &mmioPair : *mmioList) {
-        stream.writeMMIO(mmioPair.first, mmioPair.second);
+        tbxStream.writeMMIO(mmioPair.first, mmioPair.second);
     }
 }
 
@@ -97,6 +98,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
 
     initGlobalMMIO();
     initEngineMMIO(engineType);
+    this->initAdditionalMMIO();
 
     // Global HW Status Page
     {
@@ -109,8 +111,8 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
         // Write our GHWSP
         AubGTTData data = {0};
         getGTTData(reinterpret_cast<void *>(physHWSP), data);
-        AUB::reserveAddressGGTT(stream, engineInfo.ggttHWSP, sizeHWSP, physHWSP, data);
-        stream.writeMMIO(mmioBase + 0x2080, engineInfo.ggttHWSP);
+        AUB::reserveAddressGGTT(tbxStream, engineInfo.ggttHWSP, sizeHWSP, physHWSP, data);
+        tbxStream.writeMMIO(mmioBase + 0x2080, engineInfo.ggttHWSP);
     }
 
     // Allocate the LRCA
@@ -133,7 +135,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
 
         AubGTTData data = {0};
         getGTTData(reinterpret_cast<void *>(physRCS), data);
-        AUB::reserveAddressGGTT(stream, engineInfo.ggttRCS, engineInfo.sizeRCS, physRCS, data);
+        AUB::reserveAddressGGTT(tbxStream, engineInfo.ggttRCS, engineInfo.sizeRCS, physRCS, data);
     }
 
     // Initialize the ring MMIO registers
@@ -155,9 +157,9 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
 
         AubGTTData data = {0};
         getGTTData(reinterpret_cast<void *>(lrcAddressPhys), data);
-        AUB::reserveAddressGGTT(stream, engineInfo.ggttLRCA, sizeLRCA, lrcAddressPhys, data);
+        AUB::reserveAddressGGTT(tbxStream, engineInfo.ggttLRCA, sizeLRCA, lrcAddressPhys, data);
         AUB::addMemoryWrite(
-            stream,
+            tbxStream,
             lrcAddressPhys,
             pLRCABase,
             sizeLRCA,
@@ -176,10 +178,10 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
     }
 
     // Open our stream
-    csr->stream.open(nullptr);
+    csr->stream->open(nullptr);
 
     // Add the file header.
-    bool streamInitialized = csr->stream.init(AubMemDump::SteppingValues::A, csr->aubDeviceId);
+    bool streamInitialized = csr->stream->init(AubMemDump::SteppingValues::A, csr->aubDeviceId);
     csr->streamInitialized = streamInitialized;
 
     return csr;
@@ -206,12 +208,12 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
                                           this->getMemoryBank(batchBuffer.commandBufferAllocation));
 
         AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
-        AUB::reserveAddressPPGTT(stream, reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer, physBatchBuffer,
+        AUB::reserveAddressPPGTT(tbxStream, reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer, physBatchBuffer,
                                  getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation),
                                  aubHelperHw);
 
         AUB::addMemoryWrite(
-            stream,
+            tbxStream,
             physBatchBuffer,
             pBatchBuffer,
             sizeBatchBuffer,
@@ -243,7 +245,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             // write remaining ring
             auto physDumpStart = ggtt->map(ggttTail, sizeToWrap, this->getGTTBits(), getMemoryBankForGtt());
             AUB::addMemoryWrite(
-                stream,
+                tbxStream,
                 physDumpStart,
                 pTail,
                 sizeToWrap,
@@ -283,7 +285,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         // write RCS
         auto physDumpStart = ggtt->map(ggttDumpStart, dumpLength, this->getGTTBits(), getMemoryBankForGtt());
         AUB::addMemoryWrite(
-            stream,
+            tbxStream,
             physDumpStart,
             dumpStart,
             dumpLength,
@@ -293,7 +295,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         // update the RCS mmio tail in the LRCA
         auto physLRCA = ggtt->map(engineInfo.ggttLRCA, sizeof(engineInfo.tailRCS), this->getGTTBits(), getMemoryBankForGtt());
         AUB::addMemoryWrite(
-            stream,
+            tbxStream,
             physLRCA + 0x101c,
             &engineInfo.tailRCS,
             sizeof(engineInfo.tailRCS),
@@ -328,10 +330,10 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor) {
     auto mmioBase = getCsTraits(engineType).mmioBase;
-    stream.writeMMIO(mmioBase + 0x2230, 0);
-    stream.writeMMIO(mmioBase + 0x2230, 0);
-    stream.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[1]);
-    stream.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[0]);
+    tbxStream.writeMMIO(mmioBase + 0x2230, 0);
+    tbxStream.writeMMIO(mmioBase + 0x2230, 0);
+    tbxStream.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[1]);
+    tbxStream.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[0]);
 }
 
 template <typename GfxFamily>
@@ -340,7 +342,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineType engineT
 
     auto mmioBase = getCsTraits(engineType).mmioBase;
     bool pollNotEqual = false;
-    stream.registerPoll(
+    tbxStream.registerPoll(
         mmioBase + 0x2234, //EXECLIST_STATUS
         0x100,
         0x100,
@@ -360,7 +362,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
 
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
-        AUB::reserveAddressGGTTAndWriteMmeory(stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, getPPGTTAdditionalBits(&gfxAllocation),
+        AUB::reserveAddressGGTTAndWriteMmeory(tbxStream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, getPPGTTAdditionalBits(&gfxAllocation),
                                               aubHelperHw);
     };
 
@@ -387,7 +389,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::makeCoherent(GraphicsAllocation &gfx
     if (length) {
         PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
             DEBUG_BREAK_IF(offset > length);
-            stream.readMemory(physAddress, ptrOffset(cpuAddress, offset), size);
+            tbxStream.readMemory(physAddress, ptrOffset(cpuAddress, offset), size);
         };
         ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), length, 0, 0, walker, this->getMemoryBank(&gfxAllocation));
     }
