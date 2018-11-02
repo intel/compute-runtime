@@ -377,7 +377,7 @@ void KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &comma
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
     auto miSemaphoreCmd = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-    *miSemaphoreCmd = MI_SEMAPHORE_WAIT::sInit();
+    *miSemaphoreCmd = GfxFamily::cmdInitMiSemaphoreWait;
     miSemaphoreCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
     miSemaphoreCmd->setSemaphoreDataDword(compareData);
     miSemaphoreCmd->setSemaphoreGraphicsAddress(compareAddress);

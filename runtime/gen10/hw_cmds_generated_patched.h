@@ -434,7 +434,7 @@ typedef struct tagMI_SEMAPHORE_WAIT {
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.CompareOperation = COMPARE_OPERATION_SAD_GREATER_THAN_SDD;
         TheStructure.Common.WaitMode = WAIT_MODE_SIGNAL_MODE;
-        TheStructure.Common.RegisterPollMode = REGISTER_POLL_MODE_REGISTER_POLL;
+        TheStructure.Common.RegisterPollMode = REGISTER_POLL_MODE_MEMORY_POLL;
         TheStructure.Common.MemoryType = MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;

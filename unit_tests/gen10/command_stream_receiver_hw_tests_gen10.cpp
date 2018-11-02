@@ -34,3 +34,9 @@ GEN10TEST_F(CommandStreamReceiverHwTestGen10, GivenKernelWithSlmWhenPreviousNOSL
 GEN10TEST_F(CommandStreamReceiverHwTestGen10, GivenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigAfterUnblocking) {
     givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigAfterUnblockingImpl();
 }
+
+GEN10TEST_F(CommandStreamReceiverHwTestGen10, whenProgrammingMiSemaphoreWaitThenSetRegisterPollModeMemoryPoll) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    MI_SEMAPHORE_WAIT miSemaphoreWait = FamilyType::cmdInitMiSemaphoreWait;
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL, miSemaphoreWait.getRegisterPollMode());
+}

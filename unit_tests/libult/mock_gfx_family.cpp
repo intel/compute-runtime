@@ -38,6 +38,7 @@ GENX::GPGPU_WALKER GENX::cmdInitGpgpuWalker = GENX::GPGPU_WALKER::sInit();
 GENX::INTERFACE_DESCRIPTOR_DATA GENX::cmdInitInterfaceDescriptorData = GENX::INTERFACE_DESCRIPTOR_DATA::sInit();
 GENX::MEDIA_STATE_FLUSH GENX::cmdInitMediaStateFlush = GENX::MEDIA_STATE_FLUSH::sInit();
 GENX::MEDIA_INTERFACE_DESCRIPTOR_LOAD GENX::cmdInitMediaInterfaceDescriptorLoad = GENX::MEDIA_INTERFACE_DESCRIPTOR_LOAD::sInit();
+GENX::MI_SEMAPHORE_WAIT GENX::cmdInitMiSemaphoreWait = GENX::MI_SEMAPHORE_WAIT::sInit();
 bool GENX::enabledYTiling = true;
 
 template <>

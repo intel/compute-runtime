@@ -377,6 +377,7 @@ struct GENX {
     static INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static MEDIA_STATE_FLUSH cmdInitMediaStateFlush;
     static MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;
+    static MI_SEMAPHORE_WAIT cmdInitMiSemaphoreWait;
 };
 
 template <>

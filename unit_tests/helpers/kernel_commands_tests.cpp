@@ -1095,7 +1095,7 @@ HWTEST_F(KernelCommandsHelperTests, givenCompareAddressAndDataWhenProgrammingSem
     uint8_t buffer[1024] = {};
     LinearStream cmdStream(buffer, 1024);
 
-    MI_SEMAPHORE_WAIT referenceCommand = MI_SEMAPHORE_WAIT::sInit();
+    MI_SEMAPHORE_WAIT referenceCommand = FamilyType::cmdInitMiSemaphoreWait;
     referenceCommand.setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
     referenceCommand.setSemaphoreDataDword(compareData);
     referenceCommand.setSemaphoreGraphicsAddress(compareAddress);
