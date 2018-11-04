@@ -1,9 +1,0 @@
-components:
-  libva:
-    branch: libva
-    revision: c9bb65b
-    clean_on_sync: true
-    dest_dir: libva
-    type: git
-converter: 1
-version: '1'

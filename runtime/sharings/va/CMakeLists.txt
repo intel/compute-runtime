@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(LIBVA_FOUND)
+if(IGDRCL__LIBVA_FOUND)
   set(RUNTIME_SRCS_SHARINGS_VA
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_va_api.cpp
@@ -17,4 +17,4 @@ if(LIBVA_FOUND)
     ${CMAKE_CURRENT_SOURCE_DIR}/va_surface.h
   )
   target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_SHARINGS_VA})
-endif(LIBVA_FOUND)
+endif(IGDRCL__LIBVA_FOUND)

@@ -17,7 +17,7 @@ components:
     branch: infra
     clean_on_sync: true
     dest_dir: infra
-    revision: 2086eef58c8fd828e10667e546c58467f87a76a3
+    revision: d427f430b72c723ff0ed922d0c16765470e0c68a
     type: git
   internal:
     branch: master
@@ -29,6 +29,13 @@ components:
     clean_on_sync: true
     dest_dir: kmdaf
     revision: 41563bc133da6e2fc81dc4c59468e050897d4654
+    type: git
+  libva:
+    branch: libva
+    clean_on_sync: true
+    dest_dir: libva
+    repository: https://github.com/intel/libva.git
+    revision: c9bb65b
     type: git
   wdk:
     branch: wdk
