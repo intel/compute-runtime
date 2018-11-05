@@ -31,6 +31,7 @@
 #include "runtime/program/block_kernel_manager.h"
 #include "runtime/utilities/range.h"
 #include "runtime/utilities/tag_allocator.h"
+#include <algorithm>
 #include <new>
 
 namespace OCLRT {
@@ -568,9 +569,16 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     commandStreamReceiver.requestThreadArbitrationPolicy(multiDispatchInfo.peekMainKernel()->getThreadArbitrationPolicy<GfxFamily>());
 
+    auto allocNeedsFlushDC = false;
+    if (!device->isFullRangeSvm()) {
+        if (std::any_of(commandStreamReceiver.getResidencyAllocations().begin(), commandStreamReceiver.getResidencyAllocations().end(), [](const auto allocation) { return allocation->flushL3Required; })) {
+            allocNeedsFlushDC = true;
+        }
+    }
+
     DispatchFlags dispatchFlags;
     dispatchFlags.blocking = blocking;
-    dispatchFlags.dcFlush = shouldFlushDC(commandType, printfHandler);
+    dispatchFlags.dcFlush = shouldFlushDC(commandType, printfHandler) || allocNeedsFlushDC;
     dispatchFlags.useSLM = slmUsed;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.GSBA32BitRequired = commandType == CL_COMMAND_NDRANGE_KERNEL;

@@ -1009,6 +1009,81 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     EXPECT_EQ(5u + csrSurfaceCount, cmdBuffer->surfaces.size());
 }
 
+HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtrWithL3FlushRequiredWhenEnqueueKernelIsCalledThenFlushIsCalledForReducedAddressSpacePlatforms) {
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<CommandQueue> cmdQ;
+    auto hwInfoToModify = *platformDevices[0];
+    hwInfoToModify.capabilityTable.gpuAddressSpace = MemoryConstants::max32BitAddress;
+    device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoToModify));
+    auto mockCsr = new MockCsrHw2<FamilyType>(device->getHardwareInfo(), *device->executionEnvironment);
+    device->resetCommandStreamReceiver(mockCsr);
+    auto memoryManager = mockCsr->getMemoryManager();
+    uint32_t hostPtr[10]{};
+
+    auto allocation = memoryManager->allocateGraphicsMemoryForHostPtr(1, hostPtr, device->isFullRangeSvm(), true);
+    MockKernelWithInternals mockKernel(*device, context);
+    size_t gws[3] = {1, 0, 0};
+    mockCsr->makeResident(*allocation);
+    cmdQ.reset(createCommandQueue(device.get(), 0));
+    auto ret = cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, ret);
+    EXPECT_TRUE(mockCsr->passedDispatchFlags.dcFlush);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtrWithL3FlushUnrequiredWhenEnqueueKernelIsCalledThenFlushIsNotForcedByGraphicsAllocation) {
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<CommandQueue> cmdQ;
+    auto hwInfoToModify = *platformDevices[0];
+    hwInfoToModify.capabilityTable.gpuAddressSpace = MemoryConstants::max32BitAddress;
+    device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoToModify));
+    auto mockCsr = new MockCsrHw2<FamilyType>(device->getHardwareInfo(), *device->executionEnvironment);
+    device->resetCommandStreamReceiver(mockCsr);
+    auto memoryManager = mockCsr->getMemoryManager();
+    uint32_t hostPtr[10]{};
+
+    auto allocation = memoryManager->allocateGraphicsMemoryForHostPtr(1, hostPtr, device->isFullRangeSvm(), false);
+    MockKernelWithInternals mockKernel(*device, context);
+    size_t gws[3] = {1, 0, 0};
+    mockCsr->makeResident(*allocation);
+    cmdQ.reset(createCommandQueue(device.get(), 0));
+    auto ret = cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, ret);
+    EXPECT_FALSE(mockCsr->passedDispatchFlags.dcFlush);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_F(EnqueueKernelTest, givenFullAddressSpaceGraphicsAllocationWhenEnqueueKernelIsCalledThenFlushIsNotForcedByGraphicsAllocation) {
+    HardwareInfo hwInfoToModify;
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<CommandQueue> cmdQ;
+    hwInfoToModify = *platformDevices[0];
+    hwInfoToModify.capabilityTable.gpuAddressSpace = MemoryConstants::max48BitAddress;
+    device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoToModify));
+    auto mockCsr = new MockCsrHw2<FamilyType>(device->getHardwareInfo(), *device->executionEnvironment);
+    device->resetCommandStreamReceiver(mockCsr);
+    auto memoryManager = mockCsr->getMemoryManager();
+    uint32_t hostPtr[10]{};
+
+    auto allocation = memoryManager->allocateGraphicsMemoryForHostPtr(1, hostPtr, device->isFullRangeSvm(), false);
+    MockKernelWithInternals mockKernel(*device, context);
+    size_t gws[3] = {1, 0, 0};
+    mockCsr->makeResident(*allocation);
+    cmdQ.reset(createCommandQueue(device.get(), 0));
+    auto ret = cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, ret);
+    EXPECT_FALSE(mockCsr->passedDispatchFlags.dcFlush);
+    memoryManager->freeGraphicsMemory(allocation);
+
+    allocation = (memoryManager->allocateGraphicsMemoryForHostPtr(1, hostPtr, device->isFullRangeSvm(), true));
+    mockCsr->makeResident(*allocation);
+    cmdQ.reset(createCommandQueue(device.get(), 0));
+    ret = cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, ret);
+    EXPECT_FALSE(mockCsr->passedDispatchFlags.dcFlush);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 HWTEST_F(EnqueueKernelTest, givenDefaultCommandStreamReceiverWhenClFlushIsCalledThenSuccessIsReturned) {
     MockKernelWithInternals mockKernel(*pDevice);
     size_t gws[3] = {1, 0, 0};

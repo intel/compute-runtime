@@ -344,10 +344,10 @@ std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtain
 AllocationsList &CommandStreamReceiver::getTemporaryAllocations() { return internalAllocationStorage->getTemporaryAllocations(); }
 AllocationsList &CommandStreamReceiver::getAllocationsForReuse() { return internalAllocationStorage->getAllocationsForReuse(); }
 
-bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surface, Device &device) {
+bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surface, Device &device, bool requiresL3Flush) {
     auto memoryManager = getMemoryManager();
     GraphicsAllocation *allocation = nullptr;
-    allocation = memoryManager->allocateGraphicsMemoryForHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), device.isFullRangeSvm());
+    allocation = memoryManager->allocateGraphicsMemoryForHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), device.isFullRangeSvm(), requiresL3Flush);
     if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
         // Try with no host pointer allocation and copy
         allocation = memoryManager->allocateGraphicsMemory(surface.getSurfaceSize(), MemoryConstants::pageSize, false, false);

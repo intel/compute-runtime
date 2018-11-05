@@ -139,11 +139,15 @@ class MemoryManager {
     }
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin);
 
-    GraphicsAllocation *allocateGraphicsMemoryForHostPtr(size_t size, void *ptr, bool fullRangeSvm) {
+    GraphicsAllocation *allocateGraphicsMemoryForHostPtr(size_t size, void *ptr, bool fullRangeSvm, bool requiresL3Flush) {
         if (fullRangeSvm) {
             return allocateGraphicsMemory(size, ptr);
         } else {
-            return allocateGraphicsMemoryForNonSvmHostPtr(size, ptr);
+            auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(size, ptr);
+            if (allocation) {
+                allocation->flushL3Required = requiresL3Flush;
+            }
+            return allocation;
         }
     }
 

@@ -1033,29 +1033,39 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenAllocateGraphicsMe
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(OsAgnosticMemoryManager, givenReducedGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithoutFragmentsIsCreated) {
+using OsAgnosticMemoryManagerWithParams = ::testing::TestWithParam<bool>;
+
+TEST_P(OsAgnosticMemoryManagerWithParams, givenReducedGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithoutFragmentsIsCreated) {
+    bool requiresL3Flush = GetParam();
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto hostPtr = reinterpret_cast<void *>(0x5001);
 
-    auto allocation = memoryManager.allocateGraphicsMemoryForHostPtr(13, hostPtr, false);
+    auto allocation = memoryManager.allocateGraphicsMemoryForHostPtr(13, hostPtr, false, requiresL3Flush);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(0u, allocation->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(requiresL3Flush, allocation->flushL3Required);
 
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(OsAgnosticMemoryManager, givenFullGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithFragmentsIsCreated) {
+TEST_P(OsAgnosticMemoryManagerWithParams, givenFullGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithFragmentsIsCreated) {
+    bool requiresL3Flush = GetParam();
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto hostPtr = reinterpret_cast<void *>(0x5001);
 
-    auto allocation = memoryManager.allocateGraphicsMemoryForHostPtr(13, hostPtr, true);
+    auto allocation = memoryManager.allocateGraphicsMemoryForHostPtr(13, hostPtr, true, requiresL3Flush);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(1u, allocation->fragmentsStorage.fragmentCount);
+    EXPECT_FALSE(allocation->flushL3Required);
 
     memoryManager.freeGraphicsMemory(allocation);
 }
+
+INSTANTIATE_TEST_CASE_P(OsAgnosticMemoryManagerWithParams,
+                        OsAgnosticMemoryManagerWithParams,
+                        ::testing::Values(false, true));
 
 TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
     ExecutionEnvironment executionEnvironment;

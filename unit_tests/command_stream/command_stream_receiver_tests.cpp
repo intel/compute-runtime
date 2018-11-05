@@ -408,7 +408,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
             .WillOnce(::testing::Return(nullptr));
     }
 
-    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device);
+    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device, false);
     EXPECT_TRUE(result);
 
     auto allocation = surface.getAllocation();
@@ -435,7 +435,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
             .WillOnce(::testing::Return(nullptr));
     }
 
-    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device);
+    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device, false);
     EXPECT_FALSE(result);
 
     auto allocation = surface.getAllocation();
@@ -459,6 +459,6 @@ TEST_F(ReducedAddrSpaceCommandStreamReceiverTest,
         .Times(1)
         .WillOnce(::testing::Return(nullptr));
 
-    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device);
+    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device, false);
     EXPECT_FALSE(result);
 }

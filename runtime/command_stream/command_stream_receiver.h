@@ -153,7 +153,7 @@ class CommandStreamReceiver {
     AllocationsList &getTemporaryAllocations();
     AllocationsList &getAllocationsForReuse();
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }
-    bool createAllocationForHostSurface(HostPtrSurface &surface, Device &device);
+    bool createAllocationForHostSurface(HostPtrSurface &surface, Device &device, bool requiresL3Flush);
 
   protected:
     void cleanupResources();
