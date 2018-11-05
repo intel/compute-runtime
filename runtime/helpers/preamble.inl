@@ -37,7 +37,8 @@ void PreambleHelper<GfxFamily>::programGenSpecificPreambleWorkArounds(LinearStre
 
 template <typename GfxFamily>
 size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device) {
-    size_t totalSize = getKernelDebuggingCommandsSize(device.isSourceLevelDebuggerActive());
+    size_t totalSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
+    totalSize += getKernelDebuggingCommandsSize(device.isSourceLevelDebuggerActive());
     return totalSize;
 }
 
@@ -83,7 +84,7 @@ void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, De
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr) {
-    PreemptionHelper::programPreamble<GfxFamily>(*pCommandStream, device, preemptionCsr);
+    PreemptionHelper::programCsrBaseAddress<GfxFamily>(*pCommandStream, device, preemptionCsr);
 }
 
 template <typename GfxFamily>

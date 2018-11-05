@@ -28,9 +28,14 @@ class PreemptionHelper {
 
     template <typename GfxFamily>
     static size_t getRequiredPreambleSize(const Device &device);
+    template <typename GfxFamily>
+    static size_t getRequiredStateSipCmdSize(const Device &device);
 
     template <typename GfxFamily>
-    static void programPreamble(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr);
+    static void programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr);
+
+    template <typename GfxFamily>
+    static void programStateSip(LinearStream &preambleCmdStream, Device &device);
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSize(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);

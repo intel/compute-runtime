@@ -8,22 +8,19 @@
 using namespace OCLRT;
 
 template <typename GfxFamily>
-void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebuggingActiveWhenPreambleIsPrograamedThenCorrectSipKernelIsUsedTest() {
+void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebuggingActiveWhenStateSipIsProgrammedThenCorrectSipKernelIsUsedTest() {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     mockDevice->setSourceLevelDebuggerActive(true);
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*mockDevice);
+    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice);
 
     StackVec<char, 4096> preambleBuffer;
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    uintptr_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
-    MockGraphicsAllocation csrSurface(reinterpret_cast<void *>(minCsrAlignment), 1024);
-
-    PreemptionHelper::programPreamble<GfxFamily>(preambleStream, *mockDevice, &csrSurface);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);
@@ -37,22 +34,19 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
 }
 
 template <typename GfxFamily>
-void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisabledDebuggingWhenPreambleIsPrograamedThenCorrectSipKernelIsUsedTest() {
+void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisabledDebuggingWhenPreambleIsProgrammedThenCorrectSipKernelIsUsedTest() {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     mockDevice->setSourceLevelDebuggerActive(false);
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*mockDevice);
+    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice);
 
     StackVec<char, 4096> preambleBuffer;
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    uintptr_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
-    MockGraphicsAllocation csrSurface(reinterpret_cast<void *>(minCsrAlignment), 1024);
-
-    PreemptionHelper::programPreamble<GfxFamily>(preambleStream, *mockDevice, &csrSurface);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);
@@ -72,16 +66,13 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
 
     mockDevice->setSourceLevelDebuggerActive(true);
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
-    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*mockDevice);
+    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice);
 
     StackVec<char, 4096> preambleBuffer;
     preambleBuffer.resize(cmdSizePreemptionMidThread);
     LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    uintptr_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
-    MockGraphicsAllocation csrSurface(reinterpret_cast<void *>(minCsrAlignment), 1024);
-
-    PreemptionHelper::programPreamble<GfxFamily>(preambleStream, *mockDevice, &csrSurface);
+    PreemptionHelper::programStateSip<GfxFamily>(preambleStream, *mockDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<GfxFamily>(preambleStream);
@@ -99,8 +90,8 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setSourceLevelDebuggerActive(true);
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-    size_t requiredPreambleSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*mockDevice);
-    auto sizeExpected = sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS) + sizeof(typename GfxFamily::STATE_SIP);
+    size_t requiredPreambleSize = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice);
+    auto sizeExpected = sizeof(typename GfxFamily::STATE_SIP);
     EXPECT_EQ(sizeExpected, requiredPreambleSize);
 }
 
@@ -109,7 +100,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setSourceLevelDebuggerActive(true);
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
-    size_t requiredPreambleSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*mockDevice);
+    size_t requiredPreambleSize = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*mockDevice);
     auto sizeExpected = sizeof(typename GfxFamily::STATE_SIP);
     EXPECT_EQ(sizeExpected, requiredPreambleSize);
 }
@@ -120,7 +111,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisa
     mockDevice->setSourceLevelDebuggerActive(false);
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
     size_t requiredPreambleSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*mockDevice);
-    auto sizeExpected = sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS) + sizeof(typename GfxFamily::STATE_SIP);
+    auto sizeExpected = sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS);
     EXPECT_EQ(sizeExpected, requiredPreambleSize);
 }
 
@@ -132,6 +123,23 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenDisabledPreemptionAndDisab
     size_t requiredPreambleSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*mockDevice);
     size_t sizeExpected = 0u;
     EXPECT_EQ(sizeExpected, requiredPreambleSize);
+}
+
+template <typename GfxFamily>
+void SourceLevelDebuggerPreambleTest<GfxFamily>::givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreInlcudedTest() {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    mockDevice->setSourceLevelDebuggerActive(false);
+    size_t withoutDebugging = PreambleHelper<GfxFamily>::getAdditionalCommandsSize(*mockDevice);
+    mockDevice->setSourceLevelDebuggerActive(true);
+    size_t withDebugging = PreambleHelper<GfxFamily>::getAdditionalCommandsSize(*mockDevice);
+    EXPECT_LT(withoutDebugging, withDebugging);
+
+    size_t diff = withDebugging - withoutDebugging;
+    size_t sizeExpected = 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    EXPECT_EQ(sizeExpected, diff);
 }
 
 template class SourceLevelDebuggerPreambleTest<GfxFamily>;

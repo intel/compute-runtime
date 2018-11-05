@@ -12,6 +12,7 @@ using GenGfxFamily = OCLRT::BDWFamily;
 #include "unit_tests/gen_common/cmd_parse_base.inl"
 #include "unit_tests/gen_common/cmd_parse_base_mi_arb.inl"
 #include "unit_tests/gen_common/cmd_parse_gpgpu_walker.inl"
+#include "unit_tests/gen_common/cmd_parse_sip.inl"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/hw_parse.inl"
 

@@ -35,12 +35,12 @@ GEN8TEST_F(Gen8PreemptionTests, allowThreadGroupPreemptionReturnsTrue) {
     EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
 }
 
-GEN8TEST_F(Gen8PreemptionTests, doesNotProgramPreamble) {
-    size_t requiredSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*device);
+GEN8TEST_F(Gen8PreemptionTests, whenProgramStateSipIsCalledThenNoCmdsAreProgrammed) {
+    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
     EXPECT_EQ(0U, requiredSize);
 
     LinearStream cmdStream{nullptr, 0};
-    PreemptionHelper::programPreamble<FamilyType>(cmdStream, *device, nullptr);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device);
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 

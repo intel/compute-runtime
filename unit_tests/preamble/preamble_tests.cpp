@@ -22,25 +22,43 @@ using PreambleTest = ::testing::Test;
 
 using namespace OCLRT;
 
-HWTEST_F(PreambleTest, PreemptionIsTakenIntoAccountWhenProgrammingPreamble) {
+HWTEST_F(PreambleTest, givenDisabledPreemptioWhenPreambleAdditionalCommandsSizeIsQueriedThenZeroIsReturned) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
-    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-    auto cmdSizePreambleMidThread = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
-    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice);
-
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
-    auto cmdSizePreambleDisabled = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
-    auto cmdSizePreemptionDisabled = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice);
 
-    EXPECT_LE(cmdSizePreemptionMidThread, cmdSizePreambleMidThread);
-    EXPECT_LE(cmdSizePreemptionDisabled, cmdSizePreambleDisabled);
+    auto cmdSize = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
+    EXPECT_EQ(PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice), cmdSize);
+    EXPECT_EQ(0u, cmdSize);
+}
 
-    EXPECT_LE(cmdSizePreemptionDisabled, cmdSizePreemptionMidThread);
-    EXPECT_LE((cmdSizePreemptionMidThread - cmdSizePreemptionDisabled), (cmdSizePreambleMidThread - cmdSizePreambleDisabled));
+HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidthreadPreemptionWhenPreambleAdditionalCommandsSizeIsQueriedThenSizeForPreemptionPreambleIsReturned) {
+    using GPGPU_CSR_BASE_ADDRESS = typename FamilyType::GPGPU_CSR_BASE_ADDRESS;
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     if (mockDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
         mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+
+        auto cmdSize = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
+        EXPECT_EQ(PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice), cmdSize);
+        EXPECT_EQ(sizeof(GPGPU_CSR_BASE_ADDRESS), cmdSize);
+    }
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidThreadPreemptionWhenPreambleIsProgrammedThenStateSipAndCsrBaseAddressCmdsAreAdded) {
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    using GPGPU_CSR_BASE_ADDRESS = typename FamilyType::GPGPU_CSR_BASE_ADDRESS;
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    mockDevice->setPreemptionMode(PreemptionMode::Disabled);
+    auto cmdSizePreemptionDisabled = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+    EXPECT_EQ(0u, cmdSizePreemptionDisabled);
+
+    if (mockDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
+        mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+        auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+        EXPECT_LT(cmdSizePreemptionDisabled, cmdSizePreemptionMidThread);
+
         StackVec<char, 8192> preambleBuffer(8192);
         LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
@@ -54,13 +72,20 @@ HWTEST_F(PreambleTest, PreemptionIsTakenIntoAccountWhenProgrammingPreamble) {
         PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
                                                     ThreadArbitrationPolicy::RoundRobin, &csrSurface);
 
-        PreemptionHelper::programPreamble<FamilyType>(preemptionStream, *mockDevice, &csrSurface);
+        PreemptionHelper::programStateSip<FamilyType>(preemptionStream, *mockDevice);
 
-        ASSERT_LE(preemptionStream.getUsed(), preambleStream.getUsed());
+        HardwareParse hwParserPreamble;
+        hwParserPreamble.parseCommands<FamilyType>(preambleStream, 0);
 
-        auto it = std::search(&preambleBuffer[0], &preambleBuffer[preambleStream.getUsed()],
-                              &preemptionBuffer[0], &preemptionBuffer[preemptionStream.getUsed()]);
-        EXPECT_NE(&preambleBuffer[preambleStream.getUsed()], it);
+        auto csrCmd = hwParserPreamble.getCommand<GPGPU_CSR_BASE_ADDRESS>();
+        EXPECT_NE(nullptr, csrCmd);
+        EXPECT_EQ(csrSurface.getGpuAddress(), csrCmd->getGpgpuCsrBaseAddress());
+
+        HardwareParse hwParserPreemption;
+        hwParserPreemption.parseCommands<FamilyType>(preemptionStream, 0);
+
+        auto stateSipCmd = hwParserPreemption.getCommand<STATE_SIP>();
+        EXPECT_NE(nullptr, stateSipCmd);
     }
 }
 

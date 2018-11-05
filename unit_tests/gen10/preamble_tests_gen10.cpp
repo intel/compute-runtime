@@ -16,8 +16,8 @@ typedef CNLFamily GfxFamily;
 
 using PreambleTestGen10 = ::testing::Test;
 
-GEN10TEST_F(PreambleTestGen10, givenMidThreadPreemptionAndDebuggingActiveWhenPreambleIsPrograamedThenCorrectSipKernelIsUsed) {
-    SourceLevelDebuggerPreambleTest<FamilyType>::givenMidThreadPreemptionAndDebuggingActiveWhenPreambleIsPrograamedThenCorrectSipKernelIsUsedTest();
+GEN10TEST_F(PreambleTestGen10, givenMidThreadPreemptionAndDebuggingActiveWhenStateSipIsProgrammedThenCorrectSipKernelIsUsed) {
+    SourceLevelDebuggerPreambleTest<FamilyType>::givenMidThreadPreemptionAndDebuggingActiveWhenStateSipIsProgrammedThenCorrectSipKernelIsUsedTest();
 }
 
 GEN10TEST_F(PreambleTestGen10, givenMidThreadPreemptionAndDebuggingActiveWhenPreambleSizeIsQueriedThenCorrecrSizeIsReturned) {
@@ -32,8 +32,8 @@ GEN10TEST_F(PreambleTestGen10, givenPreemptionDisabledAndDebuggingActiveWhenPrea
     SourceLevelDebuggerPreambleTest<FamilyType>::givenPreemptionDisabledAndDebuggingActiveWhenPreambleSizeIsQueriedThenCorrecrSizeIsReturnedTest();
 }
 
-GEN10TEST_F(PreambleTestGen10, givenMidThreadPreemptionAndDisabledDebuggingWhenPreambleIsPrograamedThenCorrectSipKernelIsUsed) {
-    SourceLevelDebuggerPreambleTest<FamilyType>::givenMidThreadPreemptionAndDisabledDebuggingWhenPreambleIsPrograamedThenCorrectSipKernelIsUsedTest();
+GEN10TEST_F(PreambleTestGen10, givenMidThreadPreemptionAndDisabledDebuggingWhenPreambleIsProgrammedThenCorrectSipKernelIsUsed) {
+    SourceLevelDebuggerPreambleTest<FamilyType>::givenMidThreadPreemptionAndDisabledDebuggingWhenPreambleIsProgrammedThenCorrectSipKernelIsUsedTest();
 }
 
 GEN10TEST_F(PreambleTestGen10, givenMidThreadPreemptionAndDisabledDebuggingWhenPreambleSizeIsQueriedThenCorrecrSizeIsReturned) {
@@ -45,17 +45,5 @@ GEN10TEST_F(PreambleTestGen10, givenDisabledPreemptionAndDisabledDebuggingWhenPr
 }
 
 GEN10TEST_F(PreambleTestGen10, givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAndStateSipAreInlcuded) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
-    mockDevice->setSourceLevelDebuggerActive(false);
-    size_t withoutDebugging = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
-    mockDevice->setSourceLevelDebuggerActive(true);
-    size_t withDebugging = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
-    EXPECT_LT(withoutDebugging, withDebugging);
-
-    size_t diff = withDebugging - withoutDebugging;
-    size_t sizeExpected = sizeof(typename FamilyType::STATE_SIP) + 2 * sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM);
-    EXPECT_EQ(sizeExpected, diff);
+    SourceLevelDebuggerPreambleTest<FamilyType>::givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreInlcudedTest();
 }

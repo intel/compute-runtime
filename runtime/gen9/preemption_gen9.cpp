@@ -32,8 +32,11 @@ template void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStr
                                                             PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
                                                             GraphicsAllocation *preemptionCsr,
                                                             Device &device);
-template void PreemptionHelper::programPreamble<GfxFamily>(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr);
+
 template size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device);
+template void PreemptionHelper::programCsrBaseAddress<GfxFamily>(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr);
+template void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStream, Device &device);
+template size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(const Device &device);
 template size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);
 template size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device);
 template void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pCommandStream, const Device &device);

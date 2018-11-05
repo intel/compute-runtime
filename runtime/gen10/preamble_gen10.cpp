@@ -50,13 +50,6 @@ size_t PreambleHelper<CNLFamily>::getThreadArbitrationCommandsSize() {
 }
 
 template <>
-size_t PreambleHelper<CNLFamily>::getAdditionalCommandsSize(const Device &device) {
-    size_t size = PreemptionHelper::getRequiredPreambleSize<CNLFamily>(device);
-    size += getKernelDebuggingCommandsSize(device.isSourceLevelDebuggerActive());
-    return size;
-}
-
-template <>
 uint32_t PreambleHelper<CNLFamily>::getUrbEntryAllocationSize() {
     return 1024;
 }

@@ -335,6 +335,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                                                               device.getGmmHelper());
         }
 
+        programStateSip(commandStreamCSR, device);
+
         latestSentStatelessMocsConfig = requiredL3Index;
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
@@ -641,6 +643,9 @@ template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags, Device &device) {
     size_t size = getRequiredCmdSizeForPreamble(device);
     size += getRequiredStateBaseAddressSize();
+    if (!this->isStateSipSent) {
+        size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device);
+    }
     size += getRequiredPipeControlSize();
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
@@ -702,6 +707,14 @@ inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPreemption(const DispatchFlags &dispatchFlags) const {
     return PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.preemptionMode, this->lastPreemptionMode);
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cmdStream, Device &device) {
+    if (!this->isStateSipSent) {
+        PreemptionHelper::programStateSip<GfxFamily>(cmdStream, device);
+        this->isStateSipSent = true;
+    }
 }
 
 template <typename GfxFamily>

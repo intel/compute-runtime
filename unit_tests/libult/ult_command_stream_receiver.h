@@ -27,6 +27,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::indirectHeap;
     using BaseClass::iohState;
     using BaseClass::programPreamble;
+    using BaseClass::programStateSip;
     using BaseClass::sshState;
     using BaseClass::CommandStreamReceiver::cleanupResources;
     using BaseClass::CommandStreamReceiver::commandStream;
@@ -36,6 +37,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::experimentalCmdBuffer;
     using BaseClass::CommandStreamReceiver::flushStamp;
     using BaseClass::CommandStreamReceiver::isPreambleSent;
+    using BaseClass::CommandStreamReceiver::isStateSipSent;
     using BaseClass::CommandStreamReceiver::lastMediaSamplerConfig;
     using BaseClass::CommandStreamReceiver::lastPreemptionMode;
     using BaseClass::CommandStreamReceiver::lastSentCoherencyRequest;

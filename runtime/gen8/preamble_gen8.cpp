@@ -40,5 +40,10 @@ void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStre
     pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 }
 
+template <>
+size_t PreambleHelper<BDWFamily>::getAdditionalCommandsSize(const Device &device) {
+    return getKernelDebuggingCommandsSize(device.isSourceLevelDebuggerActive());
+}
+
 template struct PreambleHelper<BDWFamily>;
 } // namespace OCLRT

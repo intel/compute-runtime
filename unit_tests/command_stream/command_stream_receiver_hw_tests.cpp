@@ -50,6 +50,74 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenPreambleSentAndTh
     EXPECT_EQ(expectedCmdSize, commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice));
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenNotSentStateSipWhenFirstTaskIsFlushedThenStateSipCmdIsAddedAndIsStateSipSentSetToTrue) {
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    if (mockDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
+        mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+
+        auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+        csr.isPreambleSent = true;
+
+        CommandQueueHw<FamilyType> commandQueue(nullptr, mockDevice.get(), 0);
+        auto &commandStream = commandQueue.getCS(4096u);
+
+        DispatchFlags dispatchFlags;
+        dispatchFlags.preemptionMode = PreemptionMode::MidThread;
+
+        void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
+
+        std::unique_ptr<MockGraphicsAllocation> allocation(new MockGraphicsAllocation(buffer, MemoryConstants::pageSize));
+        std::unique_ptr<IndirectHeap> heap(new IndirectHeap(allocation.get()));
+
+        csr.flushTask(commandStream,
+                      0,
+                      *heap.get(),
+                      *heap.get(),
+                      *heap.get(),
+                      0,
+                      dispatchFlags,
+                      *mockDevice);
+
+        EXPECT_TRUE(csr.isStateSipSent);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(csr.getCS(0));
+
+        auto stateSipItor = find<STATE_SIP *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        EXPECT_NE(hwParser.cmdList.end(), stateSipItor);
+
+        alignedFree(buffer);
+    }
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenCsrWhenProgramStateSipIsCalledThenIsStateSipCalledIsSetToTrue) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice);
+    StackVec<char, 4096> buffer(requiredSize);
+    LinearStream cmdStream(buffer.begin(), buffer.size());
+
+    commandStreamReceiver.programStateSip(cmdStream, *pDevice);
+    EXPECT_TRUE(commandStreamReceiver.isStateSipSent);
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenSentStateSipFlagSetWhenGetRequiredStateSipCmdSizeIsCalledThenStateSipCmdSizeIsNotIncluded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    DispatchFlags dispatchFlags;
+
+    commandStreamReceiver.isStateSipSent = false;
+    auto sizeWithStateSipIsNotSent = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
+
+    commandStreamReceiver.isStateSipSent = true;
+    auto sizeWhenSipIsSent = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
+
+    auto sizeForStateSip = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*pDevice);
+    EXPECT_EQ(sizeForStateSip, sizeWithStateSipIsNotSent - sizeWhenSipIsSent);
+}
+
 HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPolicyChangedWhenEstimatingPreambleCmdSizeThenResultDependsOnPolicyProgrammingCmdSize) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;

@@ -6,6 +6,7 @@
  */
 
 #include "runtime/command_stream/preemption.h"
+#include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "unit_tests/fixtures/preemption_fixture.h"
@@ -389,6 +390,58 @@ INSTANTIATE_TEST_CASE_P(
     PreemptionHwTest,
     ::testing::Values(PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup, PreemptionMode::MidThread));
 
+struct PreemptionTest : ::testing::Test, ::testing::WithParamInterface<PreemptionMode> {
+};
+
+HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenSizeForStateSipIsZero) {
+    PreemptionMode mode = GetParam();
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    mockDevice->setPreemptionMode(mode);
+
+    auto size = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+    EXPECT_EQ(0u, size);
+}
+
+HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenStateSipIsNotProgrammed) {
+    PreemptionMode mode = GetParam();
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    mockDevice->setPreemptionMode(mode);
+
+    auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+    StackVec<char, 4096> buffer(requiredSize);
+    LinearStream cmdStream(buffer.begin(), buffer.size());
+
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *mockDevice);
+    EXPECT_EQ(0u, cmdStream.getUsed());
+}
+
+HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenSizeForCsrBaseAddressIsZero) {
+    PreemptionMode mode = GetParam();
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    mockDevice->setPreemptionMode(mode);
+
+    auto size = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice);
+    EXPECT_EQ(0u, size);
+}
+
+HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenCsrBaseAddressIsNotProgrammed) {
+    PreemptionMode mode = GetParam();
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    mockDevice->setPreemptionMode(mode);
+
+    auto requiredSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice);
+    StackVec<char, 4096> buffer(requiredSize);
+    LinearStream cmdStream(buffer.begin(), buffer.size());
+
+    PreemptionHelper::programCsrBaseAddress<FamilyType>(cmdStream, *mockDevice, nullptr);
+    EXPECT_EQ(0u, cmdStream.getUsed());
+}
+
+INSTANTIATE_TEST_CASE_P(
+    NonMidThread,
+    PreemptionTest,
+    ::testing::Values(PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup));
+
 HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceNoWa) {
     const WorkaroundTable *waTable = platformDevices[0]->pWaTable;
     WorkaroundTable tmpWaTable;
@@ -427,4 +480,52 @@ HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceWa) {
     EXPECT_EQ(csrSurface, devCsrSurface);
 
     const_cast<HardwareInfo *>(platformDevices[0])->pWaTable = waTable;
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, givenDirtyCsrStateWhenStateBaseAddressIsProgrammedThenStateSipIsAdded) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    if (mockDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
+        mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+
+        auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+        csr.isPreambleSent = true;
+
+        CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0);
+        auto &commandStream = commandQueue.getCS(4096u);
+
+        DispatchFlags dispatchFlags;
+        dispatchFlags.preemptionMode = PreemptionMode::MidThread;
+
+        void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
+
+        std::unique_ptr<MockGraphicsAllocation> allocation(new MockGraphicsAllocation(buffer, MemoryConstants::pageSize));
+        std::unique_ptr<IndirectHeap> heap(new IndirectHeap(allocation.get()));
+
+        csr.flushTask(commandStream,
+                      0,
+                      *heap.get(),
+                      *heap.get(),
+                      *heap.get(),
+                      0,
+                      dispatchFlags,
+                      *mockDevice);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(csr.getCS(0));
+
+        auto stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        EXPECT_NE(hwParser.cmdList.end(), stateBaseAddressItor);
+
+        auto stateSipItor = find<STATE_SIP *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        EXPECT_NE(hwParser.cmdList.end(), stateSipItor);
+
+        auto stateSipAfterSBA = ++stateBaseAddressItor;
+        EXPECT_EQ(*stateSipAfterSBA, *stateSipItor);
+
+        alignedFree(buffer);
+    }
 }

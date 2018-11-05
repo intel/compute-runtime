@@ -30,71 +30,27 @@ using namespace OCLRT;
 
 using CommandStreamReceiverHwTestGen9 = CommandStreamReceiverHwTest<SKLFamily>;
 
-GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndMidThreadPreemptionWhenPreambleIsProgrammedThenCorrectSipKernelGpuAddressIsProgrammed) {
+GEN9TEST_F(UltCommandStreamReceiverTest, whenPreambleIsProgrammedThenStateSipCmdIsNotPresentInPreambleCmdStream) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = false;
-
-    size_t minCsrSize = pDevice->getHardwareInfo().pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
-    uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
-    MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
-    commandStreamReceiver.setPreemptionCsrAllocation(&csrSurface);
-
-    pDevice->setPreemptionMode(PreemptionMode::MidThread);
-    uint32_t newL3Config;
-    DispatchFlags dispatchFlags;
-
-    auto cmdSizePreambleMidThread = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
-    StackVec<char, 4096> preemptionBuffer;
-    preemptionBuffer.resize(cmdSizePreambleMidThread);
-    LinearStream preambleStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
-    auto sipAllocation = pDevice->getExecutionEnvironment()->getBuiltIns()->getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
-    commandStreamReceiver.programPreamble(preambleStream, *pDevice, dispatchFlags, newL3Config);
-
-    this->parseCommands<FamilyType>(preambleStream);
-    auto itorStateSip = find<STATE_SIP *>(this->cmdList.begin(), this->cmdList.end());
-    ASSERT_NE(this->cmdList.end(), itorStateSip);
-
-    STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
-    auto sipAddress = stateSipCmd->getSystemInstructionPointer();
-    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipAddress);
-}
-
-GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndKernelDebuggingActiveWhenPreambleIsProgrammedThenCorrectSipKernelGpuAddressIsProgrammed) {
-    using STATE_SIP = typename FamilyType::STATE_SIP;
-    auto &builtIns = *pDevice->getExecutionEnvironment()->getBuiltIns();
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.isPreambleSent = false;
-    size_t minCsrSize = pDevice->getHardwareInfo().pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
-    uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
-    MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
-    commandStreamReceiver.setPreemptionCsrAllocation(&csrSurface);
 
     pDevice->setPreemptionMode(PreemptionMode::Disabled);
     pDevice->setSourceLevelDebuggerActive(true);
     uint32_t newL3Config;
     DispatchFlags dispatchFlags;
 
-    auto cmdSizePreambleMidThread = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
-    StackVec<char, 4096> preemptionBuffer;
-    preemptionBuffer.resize(cmdSizePreambleMidThread);
-    LinearStream preambleStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
-    auto dbgLocalSipAllocation = builtIns.getSipKernel(SipKernelType::DbgCsrLocal, *pDevice).getSipAllocation();
-    auto sipAllocation = builtIns.getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
+    auto cmdSizePreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
+    StackVec<char, 4096> preambleBuffer;
+    preambleBuffer.resize(cmdSizePreamble);
 
-    ASSERT_NE(builtIns.getSipKernel(SipKernelType::DbgCsrLocal, *pDevice).getType(), builtIns.getSipKernel(SipKernelType::Csr, *pDevice).getType());
-    ASSERT_NE(dbgLocalSipAllocation, nullptr);
-    ASSERT_NE(sipAllocation, nullptr);
+    LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
     commandStreamReceiver.programPreamble(preambleStream, *pDevice, dispatchFlags, newL3Config);
 
     this->parseCommands<FamilyType>(preambleStream);
     auto itorStateSip = find<STATE_SIP *>(this->cmdList.begin(), this->cmdList.end());
-    ASSERT_NE(this->cmdList.end(), itorStateSip);
-
-    STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
-    auto sipAddress = stateSipCmd->getSystemInstructionPointer();
-    EXPECT_EQ(dbgLocalSipAllocation->getGpuAddressToPatch(), sipAddress);
+    EXPECT_EQ(this->cmdList.end(), itorStateSip);
 }
 
 GEN9TEST_F(CommandStreamReceiverHwTestGen9, GivenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3Config) {

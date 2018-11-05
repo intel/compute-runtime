@@ -161,62 +161,63 @@ class CommandStreamReceiver {
         disableL3Cache = val;
     }
 
-    bool timestampPacketWriteEnabled = false;
-
-    // taskCount - # of tasks submitted
-    uint32_t taskCount = 0;
-    // current taskLevel.  Used for determining if a PIPE_CONTROL is needed.
-    std::atomic<uint32_t> taskLevel{0};
-
-    std::atomic<uint32_t> latestSentTaskCount{0};
-    std::atomic<uint32_t> latestFlushedTaskCount{0};
-
     std::unique_ptr<FlushStampTracker> flushStamp;
+    std::unique_ptr<SubmissionAggregator> submissionAggregator;
+    std::unique_ptr<FlatBatchBufferHelper> flatBatchBufferHelper;
+    std::unique_ptr<ExperimentalCommandBuffer> experimentalCmdBuffer;
+    std::unique_ptr<InternalAllocationStorage> internalAllocationStorage;
+    std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
 
-    volatile uint32_t *tagAddress = nullptr;
-    GraphicsAllocation *tagAllocation = nullptr;
-
-    bool isPreambleSent = false;
-    bool GSBAFor32BitProgrammed = false;
-    bool mediaVfeStateDirty = true;
-    bool lastVmeSubslicesConfig = false;
-
-    uint32_t lastSentL3Config = 0;
-    int8_t lastSentCoherencyRequest = -1;
-    int8_t lastMediaSamplerConfig = -1;
-    PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
-    uint32_t latestSentStatelessMocsConfig = 0;
-    uint32_t lastSentNumGrfRequired = GrfConfig::DefaultGrfNumber;
+    ResidencyContainer residencyAllocations;
+    ResidencyContainer evictionAllocations;
+    MutexType ownershipMutex;
+    ExecutionEnvironment &executionEnvironment;
 
     LinearStream commandStream;
 
-    bool stallingPipeControlOnNextFlushRequired = false;
-    uint32_t requiredThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
-    uint32_t lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+    volatile uint32_t *tagAddress = nullptr;
 
+    GraphicsAllocation *tagAllocation = nullptr;
     GraphicsAllocation *scratchAllocation = nullptr;
     GraphicsAllocation *preemptionCsrAllocation = nullptr;
     GraphicsAllocation *debugSurface = nullptr;
     OSInterface *osInterface = nullptr;
-    std::unique_ptr<SubmissionAggregator> submissionAggregator;
 
-    ResidencyContainer residencyAllocations;
-    ResidencyContainer evictionAllocations;
-
-    bool nTo1SubmissionModelEnabled = false;
-    DispatchMode dispatchMode = DispatchMode::ImmediateDispatch;
-    bool disableL3Cache = false;
-    uint32_t requiredScratchSize = 0;
-    uint64_t totalMemoryUsed = 0u;
-    SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     IndirectHeap *indirectHeap[IndirectHeap::NUM_TYPES];
-    std::unique_ptr<FlatBatchBufferHelper> flatBatchBufferHelper;
-    std::unique_ptr<ExperimentalCommandBuffer> experimentalCmdBuffer;
-    MutexType ownershipMutex;
-    std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
-    ExecutionEnvironment &executionEnvironment;
+
+    // current taskLevel.  Used for determining if a PIPE_CONTROL is needed.
+    std::atomic<uint32_t> taskLevel{0};
+    std::atomic<uint32_t> latestSentTaskCount{0};
+    std::atomic<uint32_t> latestFlushedTaskCount{0};
+
+    DispatchMode dispatchMode = DispatchMode::ImmediateDispatch;
+    SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
+    PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
+    uint64_t totalMemoryUsed = 0u;
+
     uint32_t deviceIndex = 0u;
-    std::unique_ptr<InternalAllocationStorage> internalAllocationStorage;
+    // taskCount - # of tasks submitted
+    uint32_t taskCount = 0;
+    uint32_t lastSentL3Config = 0;
+    uint32_t latestSentStatelessMocsConfig = 0;
+    uint32_t lastSentNumGrfRequired = GrfConfig::DefaultGrfNumber;
+    uint32_t requiredThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
+    uint32_t lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+
+    uint32_t requiredScratchSize = 0;
+
+    int8_t lastSentCoherencyRequest = -1;
+    int8_t lastMediaSamplerConfig = -1;
+
+    bool isPreambleSent = false;
+    bool isStateSipSent = false;
+    bool GSBAFor32BitProgrammed = false;
+    bool mediaVfeStateDirty = true;
+    bool lastVmeSubslicesConfig = false;
+    bool disableL3Cache = false;
+    bool stallingPipeControlOnNextFlushRequired = false;
+    bool timestampPacketWriteEnabled = false;
+    bool nTo1SubmissionModelEnabled = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);

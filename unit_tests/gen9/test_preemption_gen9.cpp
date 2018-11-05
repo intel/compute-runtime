@@ -49,16 +49,15 @@ PreemptionTestHwDetails GetPreemptionTestHwDetails<SKLFamily>() {
 GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsNotAvailableThenDoesNotProgramPreamble) {
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
 
-    size_t requiredSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*device);
+    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
     EXPECT_EQ(0U, requiredSize);
 
     LinearStream cmdStream{nullptr, 0};
-    PreemptionHelper::programPreamble<FamilyType>(cmdStream, *device, nullptr);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device);
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 
-GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsAvailableThenProgramsPreamble) {
-    using GPGPU_CSR_BASE_ADDRESS = typename FamilyType::GPGPU_CSR_BASE_ADDRESS;
+GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsAvailableThenStateSipIsProgrammed) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     device->setPreemptionMode(PreemptionMode::MidThread);
@@ -68,22 +67,18 @@ GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsAvailableThenProgramsPr
     uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
     MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
 
-    // verify preamble programming
-    size_t requiredPreambleSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*device);
-    size_t expectedPreambleSize = sizeof(GPGPU_CSR_BASE_ADDRESS) + sizeof(STATE_SIP);
-    EXPECT_EQ(expectedPreambleSize, requiredPreambleSize);
+    size_t requiredCmdStreamSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
+    size_t expectedPreambleSize = sizeof(STATE_SIP);
+    EXPECT_EQ(expectedPreambleSize, requiredCmdStreamSize);
 
-    StackVec<char, 8192> preambleStorage(requiredPreambleSize);
-    ASSERT_LE(requiredPreambleSize, preambleStorage.size());
-    LinearStream preambleCmdStream{preambleStorage.begin(), preambleStorage.size()};
-    PreemptionHelper::programPreamble<FamilyType>(preambleCmdStream, *device, &csrSurface);
+    StackVec<char, 8192> streamStorage(requiredCmdStreamSize);
+    ASSERT_LE(requiredCmdStreamSize, streamStorage.size());
+
+    LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device);
 
     HardwareParse hwParsePreamble;
-    hwParsePreamble.parseCommands<FamilyType>(preambleCmdStream);
-
-    auto csrBaseAddressCmd = hwParsePreamble.getCommand<GPGPU_CSR_BASE_ADDRESS>();
-    ASSERT_NE(nullptr, csrBaseAddressCmd);
-    EXPECT_EQ(csrSurface.getGpuAddressToPatch(), csrBaseAddressCmd->getGpgpuCsrBaseAddress());
+    hwParsePreamble.parseCommands<FamilyType>(cmdStream);
 
     auto stateSipCmd = hwParsePreamble.getCommand<STATE_SIP>();
     ASSERT_NE(nullptr, stateSipCmd);
@@ -526,4 +521,26 @@ GEN9TEST_F(Gen9PreemptionTests, givenInterfaceDescriptorDataWhenAnyPreemptionMod
     PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::MidThread);
     ret = memcmp(&idd, &iddArg, sizeof(INTERFACE_DESCRIPTOR_DATA));
     EXPECT_EQ(0, ret);
+}
+
+GEN9TEST_F(Gen9PreemptionTests, givenMidThreadPreemptionModeWhenStateSipIsProgrammedThenSipEqualsSipAllocationGpuAddressToPatch) {
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*mockDevice);
+
+    StackVec<char, 4096> preemptionBuffer;
+    preemptionBuffer.resize(cmdSizePreemptionMidThread);
+    LinearStream preemptionStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
+
+    PreemptionHelper::programStateSip<FamilyType>(preemptionStream, *mockDevice);
+
+    HardwareParse hwParserOnlyPreemption;
+    hwParserOnlyPreemption.parseCommands<FamilyType>(preemptionStream, 0);
+    auto cmd = hwParserOnlyPreemption.getCommand<STATE_SIP>();
+    EXPECT_NE(nullptr, cmd);
+
+    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform->eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
+    EXPECT_EQ(mockDevice->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), cmd->getSystemInstructionPointer());
 }
