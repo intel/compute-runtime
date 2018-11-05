@@ -19,7 +19,7 @@ struct KernelSubGroupInfoFixture : HelloWorldFixture<HelloWorldFixtureFactory> {
         maxWorkDim = static_cast<size_t>(pDevice->getDeviceInfo().maxWorkItemDimensions);
         ASSERT_EQ(3u, maxWorkDim);
         maxWorkGroupSize = static_cast<size_t>(pDevice->getDeviceInfo().maxWorkGroupSize);
-        ASSERT_EQ(256u, maxWorkGroupSize);
+        ASSERT_GE(1024u, maxWorkGroupSize);
         largestCompiledSIMDSize = static_cast<size_t>(pKernel->getKernelInfo().patchInfo.executionEnvironment->LargestCompiledSIMDSize);
         ASSERT_EQ(32u, largestCompiledSIMDSize);
 

@@ -662,7 +662,7 @@ TEST(DeviceGetCaps, givenDeviceThatDoesHaveFp64WhenDbgFlagDisablesFp64ThenDontRe
     EXPECT_NE(notExpectedSingleFp, actualSingleFp);
 }
 
-TEST(Device_GetCaps, givenOclVersionLessThan21WhenCapsAreCreatedThenDeviceReportsNoSupportedIlVersions) {
+TEST(DeviceGetCaps, givenOclVersionLessThan21WhenCapsAreCreatedThenDeviceReportsNoSupportedIlVersions) {
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.ForceOCLVersion.set(12);
@@ -673,7 +673,7 @@ TEST(Device_GetCaps, givenOclVersionLessThan21WhenCapsAreCreatedThenDeviceReport
     }
 }
 
-TEST(Device_GetCaps, givenOclVersion21WhenCapsAreCreatedThenDeviceReportsSpirvAsSupportedIl) {
+TEST(DeviceGetCaps, givenOclVersion21WhenCapsAreCreatedThenDeviceReportsSpirvAsSupportedIl) {
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.ForceOCLVersion.set(21);
@@ -684,7 +684,7 @@ TEST(Device_GetCaps, givenOclVersion21WhenCapsAreCreatedThenDeviceReportsSpirvAs
     }
 }
 
-TEST(Device_GetCaps, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThenIgnoreEuCountPerPoolMin) {
+TEST(DeviceGetCaps, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThenIgnoreEuCountPerPoolMin) {
     GT_SYSTEM_INFO mySysInfo = *platformDevices[0]->pSysInfo;
     FeatureTable mySkuTable = *platformDevices[0]->pSkuTable;
     HardwareInfo myHwInfo = {platformDevices[0]->pPlatform, &mySkuTable, platformDevices[0]->pWaTable,
@@ -698,12 +698,12 @@ TEST(Device_GetCaps, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThenIgnore
 
     auto expectedMaxWGS = (mySysInfo.EUCount / mySysInfo.SubSliceCount) *
                           (mySysInfo.ThreadCount / mySysInfo.EUCount) * 8;
-    expectedMaxWGS = std::min(Math::prevPowerOfTwo(expectedMaxWGS), 256u);
+    expectedMaxWGS = std::min(Math::prevPowerOfTwo(expectedMaxWGS), 1024u);
 
     EXPECT_EQ(expectedMaxWGS, device->getDeviceInfo().maxWorkGroupSize);
 }
 
-TEST(Device_GetCaps, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin) {
+TEST(DeviceGetCaps, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin) {
     GT_SYSTEM_INFO mySysInfo = *platformDevices[0]->pSysInfo;
     FeatureTable mySkuTable = *platformDevices[0]->pSkuTable;
     HardwareInfo myHwInfo = {platformDevices[0]->pPlatform, &mySkuTable, platformDevices[0]->pWaTable,
@@ -716,12 +716,12 @@ TEST(Device_GetCaps, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThenDontIgn
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     auto expectedMaxWGS = mySysInfo.EuCountPerPoolMin * (mySysInfo.ThreadCount / mySysInfo.EUCount) * 8;
-    expectedMaxWGS = std::min(Math::prevPowerOfTwo(expectedMaxWGS), 256u);
+    expectedMaxWGS = std::min(Math::prevPowerOfTwo(expectedMaxWGS), 1024u);
 
     EXPECT_EQ(expectedMaxWGS, device->getDeviceInfo().maxWorkGroupSize);
 }
 
-TEST(Device_GetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCapsAreCreatedThen1024WorkgroupSizeIsReturned) {
+TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCapsAreCreatedThen1024WorkgroupSizeIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.set(true);
 
@@ -737,6 +737,21 @@ TEST(Device_GetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCa
 
     EXPECT_EQ(1024u, device->getDeviceInfo().maxWorkGroupSize);
     EXPECT_EQ(device->getDeviceInfo().maxWorkGroupSize / 32, device->getDeviceInfo().maxNumOfSubGroups);
+}
+
+TEST(DeviceGetCaps, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedItIsLimitedTo1024) {
+    GT_SYSTEM_INFO mySysInfo = *platformDevices[0]->pSysInfo;
+    FeatureTable mySkuTable = *platformDevices[0]->pSkuTable;
+    HardwareInfo myHwInfo = {platformDevices[0]->pPlatform, &mySkuTable, platformDevices[0]->pWaTable,
+                             &mySysInfo, platformDevices[0]->capabilityTable};
+
+    mySysInfo.EUCount = 32;
+    mySysInfo.SubSliceCount = 2;
+    mySysInfo.ThreadCount = 32 * 8; // 128 threads per subslice, in simd 8 gives 1024
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
+
+    EXPECT_EQ(1024u, device->getDeviceInfo().maxWorkGroupSize);
+    EXPECT_EQ(device->getDeviceInfo().maxWorkGroupSize / 8, device->getDeviceInfo().maxNumOfSubGroups);
 }
 
 class DriverInfoMock : public DriverInfo {

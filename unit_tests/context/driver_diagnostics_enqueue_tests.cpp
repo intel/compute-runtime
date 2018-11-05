@@ -731,23 +731,17 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
 }
 
 TEST_P(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {
-
-    size_t preferredWorkGroupSize[3];
     size_t localWorkGroupSize[3];
     int badSizeDimension;
     uint32_t workDim = globalWorkGroupSize[1] == 1 ? 1 : globalWorkGroupSize[2] == 1 ? 2 : 3;
-    auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getDevice(0)->getDeviceInfo().maxWorkGroupSize);
-    uint32_t simdSize = 32;
-    if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
-        WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, simdSize, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
-        computeWorkgroupSizeND(wsInfo, preferredWorkGroupSize, globalWorkGroupSize, workDim);
-    } else if (DebugManager.flags.EnableComputeWorkSizeSquared.get() && workDim == 2) {
-        computeWorkgroupSizeSquared(maxWorkGroupSize, preferredWorkGroupSize, globalWorkGroupSize, simdSize, workDim);
-    } else
-        computeWorkgroupSize2D(maxWorkGroupSize, preferredWorkGroupSize, globalWorkGroupSize, simdSize);
-    for (auto i = 0; i < 3; i++) {
-        localWorkGroupSize[i] = preferredWorkGroupSize[i];
-    }
+
+    DispatchInfo dispatchInfo(kernel, workDim, Vec3<size_t>(globalWorkGroupSize), Vec3<size_t>(0u, 0u, 0u), Vec3<size_t>(0u, 0u, 0u));
+
+    auto computedLocalWorkgroupSize = computeWorkgroupSize(dispatchInfo);
+
+    localWorkGroupSize[0] = computedLocalWorkgroupSize.x;
+    localWorkGroupSize[1] = computedLocalWorkgroupSize.y;
+    localWorkGroupSize[2] = computedLocalWorkgroupSize.z;
 
     badSizeDimension = GetParam();
     if (localWorkGroupSize[badSizeDimension] > 1) {
@@ -761,7 +755,7 @@ TEST_P(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEn
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BAD_LOCAL_WORKGROUP_SIZE],
              localWorkGroupSize[0], localWorkGroupSize[1], localWorkGroupSize[2], kernel->getKernelInfo().name.c_str(),
-             preferredWorkGroupSize[0], preferredWorkGroupSize[1], preferredWorkGroupSize[2]);
+             computedLocalWorkgroupSize.x, computedLocalWorkgroupSize.y, computedLocalWorkgroupSize.z);
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
