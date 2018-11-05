@@ -129,13 +129,13 @@ void WddmCommandStreamReceiver<GfxFamily>::makeResident(GraphicsAllocation &gfxA
 
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) {
-    bool success = getMemoryManager()->makeResidentResidencyAllocations(allocationsForResidency, osContext);
+    bool success = osContext.get()->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency);
     DEBUG_BREAK_IF(!success);
 }
 
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::processEviction(OsContext &osContext) {
-    getMemoryManager()->makeNonResidentEvictionAllocations(this->getEvictionAllocations(), osContext);
+    osContext.get()->getResidencyController().makeNonResidentEvictionAllocations(this->getEvictionAllocations());
     this->getEvictionAllocations().clear();
 }
 
