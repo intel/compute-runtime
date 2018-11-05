@@ -342,6 +342,15 @@ bool WddmMemoryManager::tryDeferDeletions(D3DKMT_HANDLE *handles, uint32_t alloc
     return status;
 }
 
+bool WddmMemoryManager::isMemoryBudgetExhausted() const {
+    for (auto osContext : this->registeredOsContexts) {
+        if (osContext != nullptr && osContext->get()->getResidencyController().isMemoryBudgetExhausted()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
     if (alloc == nullptr)
         return false;
@@ -491,7 +500,7 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer &all
     if (totalHandlesCount) {
         uint64_t bytesToTrim = 0;
         while ((result = wddm->makeResident(handlesForResidency.get(), totalHandlesCount, false, &bytesToTrim)) == false) {
-            this->memoryBudgetExhausted = true;
+            osContext.get()->getResidencyController().setMemoryBudgetExhausted();
             bool trimmingDone = this->getRegisteredOsContext(0u)->get()->getResidencyController().trimResidencyToBudget(bytesToTrim);
             bool cantTrimFurther = !trimmingDone;
             if (cantTrimFurther) {

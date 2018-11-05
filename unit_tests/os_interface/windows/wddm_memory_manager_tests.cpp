@@ -21,6 +21,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/os_interface/windows/wddm_memory_manager_tests.h"
+#include "unit_tests/utilities/base_object_utils.h"
 
 using namespace OCLRT;
 using namespace ::testing;
@@ -1373,10 +1374,24 @@ TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenAs
     EXPECT_NE(nullptr, memoryManager.getDeferredDeleter());
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenItIsCreatedThenMemoryBudgetIsNotExhausted) {
-    auto wddm = std::make_unique<WddmMock>();
-    WddmMemoryManager memoryManager(false, false, wddm.get(), executionEnvironment);
-    EXPECT_FALSE(memoryManager.isMemoryBudgetExhausted());
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithNoRegisteredOsContextsWhenCallingIsMemoryBudgetExhaustedThenReturnFalse) {
+    ASSERT_EQ(0u, memoryManager->getOsContextCount());
+    EXPECT_FALSE(memoryManager->isMemoryBudgetExhausted());
+}
+
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenCallingIsMemoryBudgetExhaustedThenReturnFalse) {
+    memoryManager->registerOsContext(new OsContext(osInterface.get(), 0u));
+    memoryManager->registerOsContext(new OsContext(osInterface.get(), 1u));
+    memoryManager->registerOsContext(new OsContext(osInterface.get(), 2u));
+    EXPECT_FALSE(memoryManager->isMemoryBudgetExhausted());
+}
+
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithExhaustedMemoryBudgetWhenCallingIsMemoryBudgetExhaustedThenReturnTrue) {
+    memoryManager->registerOsContext(new OsContext(osInterface.get(), 0u));
+    memoryManager->registerOsContext(new OsContext(osInterface.get(), 1u));
+    memoryManager->registerOsContext(new OsContext(osInterface.get(), 2u));
+    memoryManager->getRegisteredOsContext(1)->get()->getResidencyController().setMemoryBudgetExhausted();
+    EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsTrueAndDeleterIsNotNullptr) {

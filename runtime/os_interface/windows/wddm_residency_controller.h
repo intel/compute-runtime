@@ -49,6 +49,9 @@ class WddmResidencyController {
     void trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint64_t bytes);
     bool trimResidencyToBudget(uint64_t bytes);
 
+    bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
+    void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }
+
   protected:
     Wddm &wddm;
     uint32_t osContextId;
@@ -57,6 +60,7 @@ class WddmResidencyController {
     SpinLock lock;
     SpinLock trimCallbackLock;
 
+    bool memoryBudgetExhausted = false;
     uint64_t lastTrimFenceValue = 0u;
     ResidencyContainer trimCandidateList;
     uint32_t trimCandidatesCount = 0;

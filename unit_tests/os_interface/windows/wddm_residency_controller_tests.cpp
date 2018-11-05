@@ -130,6 +130,12 @@ TEST_F(WddmResidencyControllerTest, givenUsedAllocationWhenCallingRemoveFromTrim
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContextId));
 }
 
+TEST_F(WddmResidencyControllerTest, givenWddmResidencyControllerWhenIsMemoryExhaustedIsCalledThenReturnCorrectResult) {
+    EXPECT_FALSE(residencyController->isMemoryBudgetExhausted());
+    residencyController->setMemoryBudgetExhausted();
+    EXPECT_TRUE(residencyController->isMemoryBudgetExhausted());
+}
+
 TEST_F(WddmResidencyControllerTest, givenUnusedAllocationWhenCallingRemoveFromTrimCandidateListIfUsedThenIgnore) {
     MockWddmAllocation allocation;
     residencyController->removeFromTrimCandidateListIfUsed(&allocation, false);
