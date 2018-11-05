@@ -364,68 +364,83 @@ TEST(Device_GetCaps, DISABLED_givenDeviceWhenCapsAreCreateThenClGLSharingIsRepor
 }
 
 TEST(Device_GetCaps, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReportsClKhrSubgroupsExtension) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(21);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_subgroups")));
-
-    DebugManager.flags.ForceOCLVersion.set(0);
 }
 
 TEST(Device_GetCaps, givenOpenCLVersion20WhenCapsAreCreatedThenDeviceDoesntReportClKhrSubgroupsExtension) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(20);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_subgroups"))));
-
-    DebugManager.flags.ForceOCLVersion.set(0);
 }
 
 TEST(Device_GetCaps, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReportsClKhrIlProgramExtension) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(21);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_il_program")));
-
-    DebugManager.flags.ForceOCLVersion.set(0);
 }
 
 TEST(Device_GetCaps, givenOpenCLVersion20WhenCapsAreCreatedThenDeviceDoesntReportClKhrIlProgramExtension) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(20);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_il_program"))));
-
-    DebugManager.flags.ForceOCLVersion.set(0);
 }
 
 TEST(Device_GetCaps, givenEnableNV12setToTrueWhenCapsAreCreatedThenDeviceReportsNV12Extension) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableNV12.set(true);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_planar_yuv")));
     EXPECT_TRUE(caps.nv12Extension);
-
-    DebugManager.flags.EnableNV12.set(false);
 }
 
 TEST(Device_GetCaps, givenEnablePackedYuvsetToTrueWhenCapsAreCreatedThenDeviceReportsPackedYuvExtension) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnablePackedYuv.set(true);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_packed_yuv")));
     EXPECT_TRUE(caps.packedYuvExtension);
+}
 
+TEST(Device_GetCaps, givenEnableNV12setToFalseWhenCapsAreCreatedThenDeviceDoesNotReportNV12Extension) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableNV12.set(false);
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_planar_yuv"))));
+    EXPECT_FALSE(caps.nv12Extension);
+}
+
+TEST(Device_GetCaps, givenEnablePackedYuvsetToFalseWhenCapsAreCreatedThenDeviceDoesNotReportPackedYuvExtension) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnablePackedYuv.set(false);
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_packed_yuv"))));
+    EXPECT_FALSE(caps.packedYuvExtension);
 }
 
 TEST(Device_GetCaps, givenEnableVmeSetToTrueAndDeviceSupportsVmeWhenCapsAreCreatedThenDeviceReportsVmeExtensionAndBuiltins) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableIntelVme.set(true);
     auto hwInfo = *platformDevices[0];
     hwInfo.capabilityTable.supportsVme = true;
@@ -436,11 +451,10 @@ TEST(Device_GetCaps, givenEnableVmeSetToTrueAndDeviceSupportsVmeWhenCapsAreCreat
     EXPECT_TRUE(caps.vmeExtension);
 
     EXPECT_THAT(caps.builtInKernels, testing::HasSubstr("block_motion_estimate_intel"));
-
-    DebugManager.flags.EnableIntelVme.set(false);
 }
 
 TEST(Device_GetCaps, givenEnableVmeSetToTrueAndDeviceDoesNotSupportVmeWhenCapsAreCreatedThenDeviceDoesNotReportVmeExtensionAndBuiltins) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableIntelVme.set(true);
     auto hwInfo = *platformDevices[0];
     hwInfo.capabilityTable.supportsVme = false;
@@ -451,11 +465,10 @@ TEST(Device_GetCaps, givenEnableVmeSetToTrueAndDeviceDoesNotSupportVmeWhenCapsAr
     EXPECT_FALSE(caps.vmeExtension);
 
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_motion_estimate_intel")));
-
-    DebugManager.flags.EnableIntelVme.set(false);
 }
 
 TEST(Device_GetCaps, givenEnableVmeSetToFalseAndDeviceDoesNotSupportVmeWhenCapsAreCreatedThenDeviceDoesNotReportVmeExtensionAndBuiltins) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableIntelVme.set(false);
     auto hwInfo = *platformDevices[0];
     hwInfo.capabilityTable.supportsVme = false;
@@ -466,11 +479,10 @@ TEST(Device_GetCaps, givenEnableVmeSetToFalseAndDeviceDoesNotSupportVmeWhenCapsA
     EXPECT_FALSE(caps.vmeExtension);
 
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_motion_estimate_intel")));
-
-    DebugManager.flags.EnableIntelVme.set(false);
 }
 
 TEST(Device_GetCaps, givenEnableVmeSetToFalseAndDeviceSupportsVmeWhenCapsAreCreatedThenDeviceDoesNotReportVmeExtensionAndBuiltins) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableIntelVme.set(false);
     auto hwInfo = *platformDevices[0];
     hwInfo.capabilityTable.supportsVme = true;
@@ -481,11 +493,10 @@ TEST(Device_GetCaps, givenEnableVmeSetToFalseAndDeviceSupportsVmeWhenCapsAreCrea
     EXPECT_FALSE(caps.vmeExtension);
 
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_motion_estimate_intel")));
-
-    DebugManager.flags.EnableIntelVme.set(false);
 }
 
 TEST(Device_GetCaps, givenEnableAdvancedVmeSetToTrueAndDeviceSupportsVmeWhenCapsAreCreatedThenDeviceReportsAdvancedVmeExtensionAndBuiltins) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableIntelAdvancedVme.set(true);
     auto hwInfo = *platformDevices[0];
     hwInfo.capabilityTable.supportsVme = true;
@@ -496,11 +507,10 @@ TEST(Device_GetCaps, givenEnableAdvancedVmeSetToTrueAndDeviceSupportsVmeWhenCaps
 
     EXPECT_THAT(caps.builtInKernels, testing::HasSubstr("block_advanced_motion_estimate_check_intel"));
     EXPECT_THAT(caps.builtInKernels, testing::HasSubstr("block_advanced_motion_estimate_bidirectional_check_intel"));
-
-    DebugManager.flags.EnableIntelAdvancedVme.set(false);
 }
 
 TEST(Device_GetCaps, givenEnableAdvancedVmeSetToTrueAndDeviceDoesNotSupportVmeWhenCapsAreCreatedThenDeviceDoesNotReportAdvancedVmeExtensionAndBuiltins) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableIntelAdvancedVme.set(true);
     auto hwInfo = *platformDevices[0];
     hwInfo.capabilityTable.supportsVme = false;
@@ -511,11 +521,10 @@ TEST(Device_GetCaps, givenEnableAdvancedVmeSetToTrueAndDeviceDoesNotSupportVmeWh
 
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_advanced_motion_estimate_check_intel")));
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_advanced_motion_estimate_bidirectional_check_intel")));
-
-    DebugManager.flags.EnableIntelAdvancedVme.set(false);
 }
 
 TEST(Device_GetCaps, givenEnableAdvancedVmeSetToFalseAndDeviceDoesNotSupportVmeWhenCapsAreCreatedThenDeviceDoesNotReportAdvancedVmeExtensionAndBuiltins) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableIntelAdvancedVme.set(false);
     auto hwInfo = *platformDevices[0];
     hwInfo.capabilityTable.supportsVme = false;
@@ -526,11 +535,10 @@ TEST(Device_GetCaps, givenEnableAdvancedVmeSetToFalseAndDeviceDoesNotSupportVmeW
 
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_advanced_motion_estimate_check_intel")));
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_advanced_motion_estimate_bidirectional_check_intel")));
-
-    DebugManager.flags.EnableIntelAdvancedVme.set(false);
 }
 
 TEST(Device_GetCaps, givenEnableAdvancedVmeSetToFalseAndDeviceSupportsVmeWhenCapsAreCreatedThenDeviceDoesNotReportAdvancedVmeExtensionAndBuiltins) {
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableIntelAdvancedVme.set(false);
     auto hwInfo = *platformDevices[0];
     hwInfo.capabilityTable.supportsVme = true;
@@ -541,8 +549,6 @@ TEST(Device_GetCaps, givenEnableAdvancedVmeSetToFalseAndDeviceSupportsVmeWhenCap
 
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_advanced_motion_estimate_check_intel")));
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_advanced_motion_estimate_bidirectional_check_intel")));
-
-    DebugManager.flags.EnableIntelAdvancedVme.set(false);
 }
 
 TEST(Device_GetCaps, byDefaultVmeIsTurnedOn) {
