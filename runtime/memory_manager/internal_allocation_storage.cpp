@@ -86,7 +86,7 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
         auto currentTagValue = *req->csrTagAddress;
         if ((req->internalAllocationRequired == curr->is32BitAllocation) &&
             (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize) &&
-            ((currentTagValue > curr->getTaskCount(req->contextId)) || (curr->getTaskCount(req->contextId) == 0))) {
+            (currentTagValue >= curr->getTaskCount(req->contextId))) {
             return removeOneImpl(curr, nullptr);
         }
         curr = curr->next;

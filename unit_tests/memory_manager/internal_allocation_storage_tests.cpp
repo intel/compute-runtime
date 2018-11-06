@@ -92,7 +92,7 @@ TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromEmptyReuseListThen
     EXPECT_EQ(nullptr, allocation2);
 }
 
-TEST_F(InternalAllocationStorageTest, whenAllocationIsStoredAsReusableAndNotUsedThenCanBeObtained) {
+TEST_F(InternalAllocationStorageTest, whenCompletedAllocationIsStoredAsReusableAndThenCanBeObtained) {
     void *host_ptr = (void *)0x1234;
     auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
     EXPECT_NE(nullptr, allocation);
@@ -102,7 +102,26 @@ TEST_F(InternalAllocationStorageTest, whenAllocationIsStoredAsReusableAndNotUsed
 
     auto *hwTag = csr->getTagAddress();
 
-    *hwTag = 3u;
+    *hwTag = 2u;
+    auto reusedAllocation = storage->obtainReusableAllocation(1, false).release();
+
+    EXPECT_EQ(allocation, reusedAllocation);
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(InternalAllocationStorageTest, whenNotUsedAllocationIsStoredAsReusableAndThenCanBeObtained) {
+    void *host_ptr = (void *)0x1234;
+    auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_FALSE(allocation->peekWasUsed());
+    EXPECT_EQ(0u, csr->peekTaskCount());
+    *csr->getTagAddress() = 0; // initial hw tag for dll
+
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    EXPECT_EQ(0u, allocation->getTaskCount(0u));
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
+
     auto reusedAllocation = storage->obtainReusableAllocation(1, false).release();
 
     EXPECT_EQ(allocation, reusedAllocation);
