@@ -1,5 +1,5 @@
 %global neo_commit_id __NEO_COMMIT_ID__
-%global gmmlib_commit_id __GMMLIB_COMMIT_ID__
+%global gmmlib_version_required 18.4.348
 %global igc_version_required 18.44.1060
 
 Name: intel-opencl
@@ -11,7 +11,6 @@ Group: System Environment/Libraries
 License: MIT
 URL: https://github.com/intel/compute-runtime
 Source0: https://github.com/intel/compute-runtime/archive/%{neo_commit_id}.tar.gz
-Source1: https://github.com/intel/gmmlib/archive/%{gmmlib_commit_id}.tar.gz
 
 %if 0%{?el7}
 BuildRequires: centos-release-scl epel-release
@@ -20,6 +19,9 @@ BuildRequires: gcc-c++ ninja-build make procps python2 libva-devel
 %else
 BuildRequires: cmake clang gcc-c++ ninja-build make procps python2 sed libva-devel
 %endif
+
+BuildRequires: intel-gmmlib-devel >= %{gmmlib_version_required}
+Requires: intel-gmmlib >= %{gmmlib_version_required}
 
 BuildRequires: intel-igc-opencl-devel >= %{igc_version_required}
 Requires: intel-igc-opencl >= %{igc_version_required}
@@ -36,7 +38,6 @@ rm -rf *
 
 mkdir neo gmmlib
 tar xzf $RPM_SOURCE_DIR/%{neo_commit_id}.tar.gz -C neo --strip-components=1
-tar xzf $RPM_SOURCE_DIR/%{gmmlib_commit_id}.tar.gz -C gmmlib --strip-components=1
 
 mkdir build
 cd build
@@ -57,9 +58,7 @@ echo "==== INSTALL ===="
 mkdir -p $RPM_BUILD_ROOT/usr/lib64
 mkdir -p $RPM_BUILD_ROOT/etc/OpenCL/vendors
 cp $RPM_BUILD_DIR/build/bin/libigdrcl.so $RPM_BUILD_ROOT/usr/lib64/
-cp $RPM_BUILD_DIR/build/bin/libigdgmm.so $RPM_BUILD_ROOT/usr/lib64/
 strip $RPM_BUILD_ROOT/usr/lib64/libigdrcl.so
-strip $RPM_BUILD_ROOT/usr/lib64/libigdgmm.so
 echo "/usr/lib64/libigdrcl.so" > $RPM_BUILD_ROOT/etc/OpenCL/vendors/intel.icd
 echo "==== DONE ===="
 
@@ -67,7 +66,6 @@ echo "==== DONE ===="
 %files
 %defattr(-,root,root)
 /usr/lib64/libigdrcl.so
-/usr/lib64/libigdgmm.so
 
 %config(noreplace)
 /etc/OpenCL/vendors/intel.icd
