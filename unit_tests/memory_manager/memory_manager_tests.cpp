@@ -1392,13 +1392,6 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
     EXPECT_EQ(expectedGpuAddress, graphicsAllocation.getGpuAddress());
 }
 
-TEST(GraphicsAllocation, givenGraphicsAllocationCreatedWithDefaultConstructorThenItIsNotResidentInAllContexts) {
-    MockGraphicsAllocation graphicsAllocation(nullptr, 1u);
-    for (uint32_t index = 0u; index < maxOsContextCount; index++) {
-        EXPECT_EQ(ObjectNotResident, graphicsAllocation.residencyTaskCount[index]);
-    }
-}
-
 TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCountIncreases) {
     auto osContext = new OsContext(nullptr, 0u);
     ExecutionEnvironment executionEnvironment;

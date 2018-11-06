@@ -1606,7 +1606,7 @@ TEST_F(DrmCommandStreamLeaksTest, BufferResidency) {
     std::unique_ptr<Buffer> buffer(DrmMockBuffer::create());
 
     ASSERT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
-    ASSERT_EQ(ObjectNotResident, buffer->getGraphicsAllocation()->residencyTaskCount[0u]);
+    ASSERT_EQ(ObjectNotResident, buffer->getGraphicsAllocation()->getResidencyTaskCount(0u));
     ASSERT_GT(buffer->getSize(), 0u);
 
     //make it resident 8 times
@@ -1614,7 +1614,7 @@ TEST_F(DrmCommandStreamLeaksTest, BufferResidency) {
         csr->makeResident(*buffer->getGraphicsAllocation());
         csr->processResidency(csr->getResidencyAllocations(), *osContext);
         EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident(0u));
-        EXPECT_EQ(buffer->getGraphicsAllocation()->residencyTaskCount[0u], (int)csr->peekTaskCount() + 1);
+        EXPECT_EQ(buffer->getGraphicsAllocation()->getResidencyTaskCount(0u), (int)csr->peekTaskCount() + 1);
     }
 
     csr->makeNonResident(*buffer->getGraphicsAllocation());
@@ -1622,7 +1622,7 @@ TEST_F(DrmCommandStreamLeaksTest, BufferResidency) {
 
     csr->makeNonResident(*buffer->getGraphicsAllocation());
     EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
-    EXPECT_EQ(ObjectNotResident, buffer->getGraphicsAllocation()->residencyTaskCount[0u]);
+    EXPECT_EQ(ObjectNotResident, buffer->getGraphicsAllocation()->getResidencyTaskCount(0u));
 }
 
 typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamMemoryManagerTest;

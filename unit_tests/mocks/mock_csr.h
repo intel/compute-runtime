@@ -44,7 +44,7 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
         if (this->getMemoryManager()) {
             this->getResidencyAllocations().push_back(&gfxAllocation);
         }
-        gfxAllocation.residencyTaskCount[this->deviceIndex] = this->taskCount;
+        gfxAllocation.updateResidencyTaskCount(this->taskCount, this->deviceIndex);
     }
     void makeNonResident(GraphicsAllocation &gfxAllocation) override {
         madeNonResidentGfxAllocations.push_back(&gfxAllocation);

@@ -503,17 +503,6 @@ TEST_P(CreateImageHostPtr, isResidentDefaultsToFalseAfterCreate) {
     EXPECT_FALSE(image->getGraphicsAllocation()->isResident(0u));
 }
 
-TEST_P(CreateImageHostPtr, isResidentReturnsValueFromSetResident) {
-    image = createImage(retVal);
-    ASSERT_NE(nullptr, image);
-
-    image->getGraphicsAllocation()->residencyTaskCount[0u] = 1;
-    EXPECT_TRUE(image->getGraphicsAllocation()->isResident(0u));
-
-    image->getGraphicsAllocation()->residencyTaskCount[0u] = ObjectNotResident;
-    EXPECT_FALSE(image->getGraphicsAllocation()->isResident(0u));
-}
-
 TEST_P(CreateImageHostPtr, getAddress) {
     image = createImage(retVal);
     ASSERT_NE(nullptr, image);

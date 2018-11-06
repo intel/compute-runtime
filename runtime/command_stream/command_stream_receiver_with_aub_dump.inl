@@ -34,9 +34,9 @@ FlushStamp CommandStreamReceiverWithAUBDump<BaseCSR>::flush(BatchBuffer &batchBu
 
 template <typename BaseCSR>
 void CommandStreamReceiverWithAUBDump<BaseCSR>::makeNonResident(GraphicsAllocation &gfxAllocation) {
-    int residencyTaskCount = gfxAllocation.residencyTaskCount[this->deviceIndex];
+    int residencyTaskCount = gfxAllocation.getResidencyTaskCount(this->deviceIndex);
     BaseCSR::makeNonResident(gfxAllocation);
-    gfxAllocation.residencyTaskCount[this->deviceIndex] = residencyTaskCount;
+    gfxAllocation.updateResidencyTaskCount(residencyTaskCount, this->deviceIndex);
     if (aubCSR) {
         aubCSR->makeNonResident(gfxAllocation);
     }

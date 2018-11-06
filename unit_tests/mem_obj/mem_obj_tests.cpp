@@ -51,21 +51,6 @@ struct MySharingHandler : public SharingHandler {
     GraphicsAllocation *allocation = nullptr;
 };
 
-TEST(MemObj, useCount) {
-    char buffer[64];
-    MockContext context;
-    MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(buffer, sizeof(buffer));
-
-    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
-                  sizeof(buffer), buffer, buffer, mockAllocation, true, false, false);
-
-    EXPECT_EQ(ObjectNotResident, memObj.getGraphicsAllocation()->residencyTaskCount[0u]);
-    memObj.getGraphicsAllocation()->residencyTaskCount[0u] = 1;
-    EXPECT_EQ(1, memObj.getGraphicsAllocation()->residencyTaskCount[0u]);
-    memObj.getGraphicsAllocation()->residencyTaskCount[0u]--;
-    EXPECT_EQ(0, memObj.getGraphicsAllocation()->residencyTaskCount[0u]);
-}
-
 TEST(MemObj, GivenMemObjWhenInititalizedFromHostPtrThenInitializeFields) {
     const size_t size = 64;
     char buffer[size];

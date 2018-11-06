@@ -1853,8 +1853,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     // This simulates enqueuing blocked kernels
     kernelExecQueue[0].isResourceResident = false;
     kernelExecQueue[1].isResourceResident = false;
-    pGfxAlloc0->residencyTaskCount[0u] = ObjectNotResident;
-    pGfxAlloc1->residencyTaskCount[0u] = ObjectNotResident;
+    pGfxAlloc0->resetResidencyTaskCount(0u);
+    pGfxAlloc1->resetResidencyTaskCount(0u);
     EXPECT_FALSE(pGfxAlloc0->isResident(0u));
     EXPECT_FALSE(pGfxAlloc1->isResident(0u));
     std::vector<Surface *> residencyVector;

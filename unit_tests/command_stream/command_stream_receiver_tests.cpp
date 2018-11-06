@@ -363,14 +363,14 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
     EXPECT_EQ(1u, commandStreamReceiver0.getResidencyAllocations().size());
     EXPECT_EQ(1u, commandStreamReceiver1.getResidencyAllocations().size());
 
-    EXPECT_EQ(1, graphicsAllocation->residencyTaskCount[0u]);
-    EXPECT_EQ(1, graphicsAllocation->residencyTaskCount[1u]);
+    EXPECT_EQ(1, graphicsAllocation->getResidencyTaskCount(0u));
+    EXPECT_EQ(1, graphicsAllocation->getResidencyTaskCount(1u));
 
     commandStreamReceiver0.makeNonResident(*graphicsAllocation);
     commandStreamReceiver1.makeNonResident(*graphicsAllocation);
 
-    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount[0u]);
-    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount[1u]);
+    EXPECT_EQ(ObjectNotResident, graphicsAllocation->getResidencyTaskCount(0u));
+    EXPECT_EQ(ObjectNotResident, graphicsAllocation->getResidencyTaskCount(1u));
 
     EXPECT_EQ(1u, commandStreamReceiver0.getEvictionAllocations().size());
     EXPECT_EQ(1u, commandStreamReceiver1.getEvictionAllocations().size());

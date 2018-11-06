@@ -696,17 +696,6 @@ TEST_P(ValidHostPtr, isResident_defaultsToFalseAfterCreate) {
     EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
 }
 
-TEST_P(ValidHostPtr, isResident_returnsValueFromSetResident) {
-    buffer = createBuffer();
-    ASSERT_NE(nullptr, buffer);
-
-    buffer->getGraphicsAllocation()->residencyTaskCount[0u] = 1;
-    EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident(0u));
-
-    buffer->getGraphicsAllocation()->residencyTaskCount[0u] = ObjectNotResident;
-    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
-}
-
 TEST_P(ValidHostPtr, getAddress) {
     buffer = createBuffer();
     ASSERT_NE(nullptr, buffer);

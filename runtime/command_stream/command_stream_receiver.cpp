@@ -58,15 +58,15 @@ CommandStreamReceiver::~CommandStreamReceiver() {
 }
 
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
-    auto submissionTaskCount = this->taskCount + 1;
-    if (gfxAllocation.residencyTaskCount[deviceIndex] < (int)submissionTaskCount) {
+    int submissionTaskCount = this->taskCount + 1;
+    if (gfxAllocation.getResidencyTaskCount(deviceIndex) < submissionTaskCount) {
         this->getResidencyAllocations().push_back(&gfxAllocation);
         gfxAllocation.updateTaskCount(submissionTaskCount, deviceIndex);
-        if (gfxAllocation.residencyTaskCount[deviceIndex] == ObjectNotResident) {
+        if (!gfxAllocation.isResident(deviceIndex)) {
             this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
         }
     }
-    gfxAllocation.residencyTaskCount[deviceIndex] = submissionTaskCount;
+    gfxAllocation.updateResidencyTaskCount(submissionTaskCount, deviceIndex);
 }
 
 void CommandStreamReceiver::processEviction(OsContext &osContext) {
@@ -74,7 +74,7 @@ void CommandStreamReceiver::processEviction(OsContext &osContext) {
 }
 
 void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
-    if (gfxAllocation.residencyTaskCount[deviceIndex] != ObjectNotResident) {
+    if (gfxAllocation.isResident(deviceIndex)) {
         makeCoherent(gfxAllocation);
         if (gfxAllocation.peekEvictable()) {
             this->getEvictionAllocations().push_back(&gfxAllocation);
@@ -83,7 +83,7 @@ void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
         }
     }
 
-    gfxAllocation.residencyTaskCount[deviceIndex] = ObjectNotResident;
+    gfxAllocation.resetResidencyTaskCount(this->deviceIndex);
 }
 
 void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency, OsContext &osContext) {

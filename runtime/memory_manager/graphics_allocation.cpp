@@ -19,40 +19,23 @@ bool GraphicsAllocation::isL3Capable() {
 GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn) : gpuBaseAddress(baseAddress),
                                                                                                                    size(sizeIn),
                                                                                                                    cpuPtr(cpuPtrIn),
-                                                                                                                   gpuAddress(gpuAddress),
-                                                                                                                   taskCounts(maxOsContextCount) {
-    initTaskCounts();
+                                                                                                                   gpuAddress(gpuAddress) {
 }
 
 GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn) : size(sizeIn),
                                                                                                  cpuPtr(cpuPtrIn),
                                                                                                  gpuAddress(castToUint64(cpuPtrIn)),
-                                                                                                 sharedHandle(sharedHandleIn),
-                                                                                                 taskCounts(maxOsContextCount) {
-    initTaskCounts();
+                                                                                                 sharedHandle(sharedHandleIn) {
 }
 GraphicsAllocation::~GraphicsAllocation() = default;
 
-bool GraphicsAllocation::peekWasUsed() const { return registeredContextsNum > 0; }
-
 void GraphicsAllocation::updateTaskCount(uint32_t newTaskCount, uint32_t contextId) {
-    UNRECOVERABLE_IF(contextId >= taskCounts.size());
-    if (taskCounts[contextId] == ObjectNotUsed) {
+    if (usageInfos[contextId].taskCount == ObjectNotUsed) {
         registeredContextsNum++;
     }
     if (newTaskCount == ObjectNotUsed) {
         registeredContextsNum--;
     }
-    taskCounts[contextId] = newTaskCount;
-}
-
-uint32_t GraphicsAllocation::getTaskCount(uint32_t contextId) const {
-    UNRECOVERABLE_IF(contextId >= taskCounts.size());
-    return taskCounts[contextId];
-}
-void GraphicsAllocation::initTaskCounts() {
-    for (auto i = 0u; i < taskCounts.size(); i++) {
-        taskCounts[i] = ObjectNotUsed;
-    }
+    usageInfos[contextId].taskCount = newTaskCount;
 }
 } // namespace OCLRT

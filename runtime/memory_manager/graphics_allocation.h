@@ -34,6 +34,11 @@ const uint32_t ObjectNotUsed = (uint32_t)-1;
 
 class Gmm;
 
+struct UsageInfo {
+    uint32_t taskCount = ObjectNotUsed;
+    int residencyTaskCount = ObjectNotResident;
+};
+
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {
   public:
     OsHandleStorage fragmentsStorage;
@@ -41,7 +46,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint64_t gpuBaseAddress = 0;
     Gmm *gmm = nullptr;
     uint64_t allocationOffset = 0u;
-    int residencyTaskCount[maxOsContextCount] = {ObjectNotResident, ObjectNotResident, ObjectNotResident, ObjectNotResident};
     void *driverAllocatedCpuPointer = nullptr;
     DevicesBitfield devicesBitfield = 0;
     bool flushL3Required = false;
@@ -113,7 +117,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void setEvictable(bool evictable) { this->evictable = evictable; }
     bool peekEvictable() const { return evictable; }
 
-    bool isResident(uint32_t contextId) const { return residencyTaskCount[contextId] != ObjectNotResident; }
+    bool isResident(uint32_t contextId) const { return ObjectNotResident != getResidencyTaskCount(contextId); }
     void setLocked(bool locked) { this->locked = locked; }
     bool isLocked() const { return locked; }
 
@@ -123,13 +127,15 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     MemoryPool::Type getMemoryPool() {
         return memoryPool;
     }
-    bool peekWasUsed() const;
+    bool peekWasUsed() const { return registeredContextsNum > 0; }
     void updateTaskCount(uint32_t newTaskCount, uint32_t contextId);
-    uint32_t getTaskCount(uint32_t contextId) const;
+    uint32_t getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
+
+    void updateResidencyTaskCount(int newTaskCount, uint32_t contextId) { usageInfos[contextId].residencyTaskCount = newTaskCount; }
+    int getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
+    void resetResidencyTaskCount(uint32_t contextId) { updateResidencyTaskCount(ObjectNotResident, contextId); }
 
   protected:
-    void initTaskCounts();
-
     //this variable can only be modified from SubmissionAggregator
     friend class SubmissionAggregator;
     size_t size = 0;
@@ -146,7 +152,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool aubWritable = true;
     bool allocDumpable = false;
     bool memObjectsAllocationWithWritableFlags = false;
-    StackVec<uint32_t, maxOsContextCount> taskCounts;
+    StackVec<UsageInfo, maxOsContextCount> usageInfos{maxOsContextCount};
     std::atomic<uint32_t> registeredContextsNum{0};
 };
 } // namespace OCLRT

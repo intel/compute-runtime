@@ -16,16 +16,11 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenTaskCountsA
     for (auto i = 0u; i < maxOsContextCount; i++) {
         EXPECT_EQ(ObjectNotUsed, graphicsAllocation1.getTaskCount(i));
         EXPECT_EQ(ObjectNotUsed, graphicsAllocation2.getTaskCount(i));
+        EXPECT_EQ(ObjectNotResident, graphicsAllocation1.getResidencyTaskCount(i));
+        EXPECT_EQ(ObjectNotResident, graphicsAllocation2.getResidencyTaskCount(i));
     }
 }
-TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenAccessTaskCountForInvalidContextThenAbort) {
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0u);
-    EXPECT_THROW(graphicsAllocation.getTaskCount(maxOsContextCount), std::exception);
-}
-TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdateTaskCountForInvalidContextThenAbort) {
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0u);
-    EXPECT_THROW(graphicsAllocation.updateTaskCount(0u, maxOsContextCount), std::exception);
-}
+
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountThenAllocationWasUsed) {
     GraphicsAllocation graphicsAllocation(nullptr, 0u, 0u);
     EXPECT_FALSE(graphicsAllocation.peekWasUsed());
@@ -66,4 +61,25 @@ TEST(GraphicsAllocationTest, whenTwoContextsUpdatedTaskCountAndOneOfThemUnregist
     EXPECT_TRUE(graphicsAllocation.peekWasUsed());
     graphicsAllocation.updateTaskCount(ObjectNotUsed, 1u);
     EXPECT_FALSE(graphicsAllocation.peekWasUsed());
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedResidencyTaskCountToNonDefaultValueThenAllocationIsResident) {
+    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0u);
+    EXPECT_FALSE(graphicsAllocation.isResident(0u));
+    int residencyTaskCount = 1;
+    graphicsAllocation.updateResidencyTaskCount(residencyTaskCount, 0u);
+    EXPECT_EQ(residencyTaskCount, graphicsAllocation.getResidencyTaskCount(0u));
+    EXPECT_TRUE(graphicsAllocation.isResident(0u));
+    graphicsAllocation.updateResidencyTaskCount(ObjectNotResident, 0u);
+    EXPECT_EQ(ObjectNotResident, graphicsAllocation.getResidencyTaskCount(0u));
+    EXPECT_FALSE(graphicsAllocation.isResident(0u));
+}
+
+TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenResetResidencyTaskCountThenAllocationIsNotResident) {
+    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0u);
+    graphicsAllocation.updateResidencyTaskCount(1, 0u);
+    EXPECT_TRUE(graphicsAllocation.isResident(0u));
+
+    graphicsAllocation.resetResidencyTaskCount(0u);
+    EXPECT_FALSE(graphicsAllocation.isResident(0u));
 }
