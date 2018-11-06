@@ -12,6 +12,7 @@
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/buffer.h"
+#include "mem_obj_types.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"

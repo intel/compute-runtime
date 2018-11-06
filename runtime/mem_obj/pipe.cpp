@@ -47,9 +47,11 @@ Pipe *Pipe::create(Context *context,
     MemoryManager *memoryManager = context->getMemoryManager();
     DEBUG_BREAK_IF(!memoryManager);
 
+    MemoryProperties memoryProperties;
+    memoryProperties.flags = flags;
     while (true) {
         AllocationFlags allocFlags = MemObjHelper::getAllocationFlags(flags, true);
-        DevicesBitfield devices = MemObjHelper::getDevicesBitfield(flags);
+        DevicesBitfield devices = MemObjHelper::getDevicesBitfield(memoryProperties);
         auto size = static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace);
         GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocFlags, devices, nullptr, size, GraphicsAllocation::AllocationType::PIPE);
         if (!memory) {

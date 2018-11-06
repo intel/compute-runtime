@@ -7,6 +7,7 @@
 
 #pragma once
 #include "CL/cl.h"
+#include "mem_obj_types.h"
 #include "public/cl_ext_private.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -49,9 +50,9 @@ class MemObjHelper {
 
     static bool validateExtraMemoryProperties(const MemoryProperties &properties);
 
-    static AllocationFlags getAllocationFlags(cl_mem_flags flags, bool allocateMemory);
+    static AllocationFlags getAllocationFlags(cl_mem_flags_intel flags, bool allocateMemory);
 
-    static DevicesBitfield getDevicesBitfield(cl_mem_flags flags);
+    static DevicesBitfield getDevicesBitfield(const MemoryProperties &properties);
 
     static bool checkMemFlagsForSubBuffer(cl_mem_flags flags) {
         const cl_mem_flags allValidFlags =

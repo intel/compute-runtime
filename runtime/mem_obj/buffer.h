@@ -16,6 +16,7 @@ namespace OCLRT {
 class Buffer;
 class Device;
 class MemoryManager;
+struct MemoryProperties;
 
 typedef Buffer *(*BufferCreatFunc)(Context *context,
                                    cl_mem_flags flags,

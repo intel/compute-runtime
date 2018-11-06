@@ -43,11 +43,6 @@
 using cl_mem_properties_intel = cl_bitfield;
 using cl_mem_flags_intel = cl_mem_flags;
 
-struct MemoryProperties {
-    cl_mem_flags flags = 0;
-    cl_mem_flags_intel flags_intel = 0;
-};
-
 /******************************
  * Internal only cl_mem_flags *
  ******************************/
