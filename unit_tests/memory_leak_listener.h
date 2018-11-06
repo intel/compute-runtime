@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 
 namespace OCLRT {
+
 // capture allocations call stacks to print them during memory leak in ULTs
 constexpr bool captureCallStacks = false;
 
