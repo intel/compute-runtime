@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
@@ -35,14 +36,16 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size,
     MemoryAllocation *memoryAllocation = nullptr;
 
     if (fakeBigAllocations && size > bigAllocation) {
-        memoryAllocation = new MemoryAllocation(nullptr, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), size, counter, MemoryPool::System4KBPages);
+        memoryAllocation = new MemoryAllocation(nullptr, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), size, counter,
+                                                MemoryPool::System4KBPages, this->getOsContextCount(), false);
         counter++;
         memoryAllocation->uncacheable = uncacheable;
         return memoryAllocation;
     }
     auto ptr = allocateSystemMemory(sizeAligned, alignment ? alignUp(alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize);
     if (ptr != nullptr) {
-        memoryAllocation = new MemoryAllocation(ptr, ptr, reinterpret_cast<uint64_t>(ptr), size, counter, MemoryPool::System4KBPages);
+        memoryAllocation = new MemoryAllocation(ptr, ptr, reinterpret_cast<uint64_t>(ptr), size, counter, MemoryPool::System4KBPages,
+                                                this->getOsContextCount(), false);
         if (!memoryAllocation) {
             alignedFreeWrapper(ptr);
             return nullptr;
@@ -58,7 +61,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHost
     auto alignedPtr = alignDown(reinterpret_cast<char *>(cpuPtr), MemoryConstants::pageSize);
     auto offsetInPage = reinterpret_cast<char *>(cpuPtr) - alignedPtr;
 
-    memoryAllocation = new MemoryAllocation(nullptr, cpuPtr, reinterpret_cast<uint64_t>(alignedPtr), size, counter, MemoryPool::System4KBPages);
+    memoryAllocation = new MemoryAllocation(nullptr, cpuPtr, reinterpret_cast<uint64_t>(alignedPtr), size, counter, MemoryPool::System4KBPages,
+                                            this->getOsContextCount(), false);
 
     memoryAllocation->allocationOffset = offsetInPage;
     memoryAllocation->uncacheable = false;
@@ -83,7 +87,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
             return nullptr;
         }
         uint64_t offset = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(ptr) & MemoryConstants::pageMask);
-        MemoryAllocation *memAlloc = new MemoryAllocation(nullptr, const_cast<void *>(ptr), GmmHelper::canonize(gpuVirtualAddress + offset), size, counter, MemoryPool::System4KBPagesWith32BitGpuAddressing);
+        MemoryAllocation *memAlloc = new MemoryAllocation(nullptr, const_cast<void *>(ptr), GmmHelper::canonize(gpuVirtualAddress + offset), size,
+                                                          counter, MemoryPool::System4KBPagesWith32BitGpuAddressing, this->getOsContextCount(), false);
         memAlloc->is32BitAllocation = true;
         memAlloc->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());
         memAlloc->sizeToFree = allocationSize;
@@ -109,7 +114,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
 
     MemoryAllocation *memoryAllocation = nullptr;
     if (ptrAlloc != nullptr) {
-        memoryAllocation = new MemoryAllocation(freeCpuPointer ? ptrAlloc : nullptr, ptrAlloc, GmmHelper::canonize(gpuAddress), size, counter, MemoryPool::System4KBPagesWith32BitGpuAddressing);
+        memoryAllocation = new MemoryAllocation(freeCpuPointer ? ptrAlloc : nullptr, ptrAlloc, GmmHelper::canonize(gpuAddress), size, counter,
+                                                MemoryPool::System4KBPagesWith32BitGpuAddressing, this->getOsContextCount(), false);
         memoryAllocation->is32BitAllocation = true;
         memoryAllocation->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());
         memoryAllocation->sizeToFree = allocationSize;
@@ -119,7 +125,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) {
-    auto graphicsAllocation = new MemoryAllocation(nullptr, reinterpret_cast<void *>(1), 1, 4096u, static_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible);
+    auto graphicsAllocation = new MemoryAllocation(nullptr, reinterpret_cast<void *>(1), 1, 4096u, static_cast<uint64_t>(handle),
+                                                   MemoryPool::SystemCpuInaccessible, this->getOsContextCount(), false);
     graphicsAllocation->setSharedHandle(handle);
     graphicsAllocation->is32BitAllocation = requireSpecificBitness;
     return graphicsAllocation;
@@ -187,7 +194,8 @@ uint64_t OsAgnosticMemoryManager::getInternalHeapBaseAddress() {
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
-    auto allocation = new MemoryAllocation(nullptr, const_cast<void *>(hostPtr), reinterpret_cast<uint64_t>(hostPtr), hostPtrSize, counter++, MemoryPool::System4KBPages);
+    auto allocation = new MemoryAllocation(nullptr, const_cast<void *>(hostPtr), reinterpret_cast<uint64_t>(hostPtr),
+                                           hostPtrSize, counter++, MemoryPool::System4KBPages, this->getOsContextCount(), false);
     allocation->fragmentsStorage = handleStorage;
     return allocation;
 }
@@ -227,7 +235,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(Imag
     } else {
         auto ptr = allocateSystemMemory(alignUp(imgInfo.size, MemoryConstants::pageSize), MemoryConstants::pageSize);
         if (ptr != nullptr) {
-            alloc = new MemoryAllocation(ptr, ptr, reinterpret_cast<uint64_t>(ptr), imgInfo.size, counter, MemoryPool::SystemCpuInaccessible);
+            alloc = new MemoryAllocation(ptr, ptr, reinterpret_cast<uint64_t>(ptr), imgInfo.size, counter,
+                                         MemoryPool::SystemCpuInaccessible, this->getOsContextCount(), false);
             counter++;
         }
     }

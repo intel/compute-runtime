@@ -70,9 +70,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     GraphicsAllocation &operator=(const GraphicsAllocation &) = delete;
     GraphicsAllocation(const GraphicsAllocation &) = delete;
 
-    GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn);
+    GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, uint32_t osContextCount, bool isShareable);
 
-    GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn);
+    GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, uint32_t osContextCount, bool isShareable);
 
     void *getUnderlyingBuffer() const { return cpuPtr; }
     void setCpuPtrAndGpuAddress(void *cpuPtr, uint64_t gpuAddress) {
@@ -152,7 +152,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool aubWritable = true;
     bool allocDumpable = false;
     bool memObjectsAllocationWithWritableFlags = false;
-    StackVec<UsageInfo, maxOsContextCount> usageInfos{maxOsContextCount};
+    StackVec<UsageInfo, maxOsContextCount> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};
+    bool isShareable = false;
 };
 } // namespace OCLRT

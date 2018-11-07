@@ -45,7 +45,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
         delete gmm;
         return allocateGraphicsMemory(imgInfo.size);
     }
-    auto allocation = std::make_unique<WddmAllocation>(nullptr, imgInfo.size, nullptr, MemoryPool::SystemCpuInaccessible, getOsContextCount());
+    auto allocation = std::make_unique<WddmAllocation>(nullptr, imgInfo.size, nullptr, MemoryPool::SystemCpuInaccessible, getOsContextCount(), false);
     allocation->gmm = gmm;
 
     if (!WddmMemoryManager::createWddmAllocation(allocation.get(), AllocationOrigin::EXTERNAL_ALLOCATION)) {
@@ -58,7 +58,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, s
     size_t sizeAligned = alignUp(size, MemoryConstants::pageSize64k);
     Gmm *gmm = nullptr;
 
-    auto wddmAllocation = std::make_unique<WddmAllocation>(nullptr, sizeAligned, nullptr, MemoryPool::System64KBPages, getOsContextCount());
+    auto wddmAllocation = std::make_unique<WddmAllocation>(nullptr, sizeAligned, nullptr, MemoryPool::System64KBPages, getOsContextCount(), false);
 
     gmm = new Gmm(nullptr, sizeAligned, false, preferRenderCompressed, true);
     wddmAllocation->gmm = gmm;
@@ -89,7 +89,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
         return nullptr;
     }
 
-    auto wddmAllocation = std::make_unique<WddmAllocation>(pSysMem, sizeAligned, nullptr, MemoryPool::System4KBPages, getOsContextCount());
+    auto wddmAllocation = std::make_unique<WddmAllocation>(pSysMem, sizeAligned, nullptr, MemoryPool::System4KBPages, getOsContextCount(), false);
     wddmAllocation->driverAllocatedCpuPointer = pSysMem;
 
     gmm = new Gmm(pSysMem, sizeAligned, uncacheable);
@@ -109,7 +109,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(si
     auto offsetInPage = ptrDiff(cpuPtr, alignedPtr);
     auto alignedSize = alignSizeWholePage(cpuPtr, size);
 
-    auto wddmAllocation = std::make_unique<WddmAllocation>(cpuPtr, size, nullptr, MemoryPool::System4KBPages, getOsContextCount());
+    auto wddmAllocation = std::make_unique<WddmAllocation>(cpuPtr, size, nullptr, MemoryPool::System4KBPages, getOsContextCount(), false);
     wddmAllocation->allocationOffset = offsetInPage;
 
     auto gmm = new Gmm(alignedPtr, alignedSize, false);
@@ -141,7 +141,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const
             return nullptr;
         }
 
-        auto allocation = new WddmAllocation(ptr, size, reserve, MemoryPool::System4KBPages, getOsContextCount());
+        auto allocation = new WddmAllocation(ptr, size, reserve, MemoryPool::System4KBPages, getOsContextCount(), false);
         allocation->allocationOffset = offset;
 
         Gmm *gmm = new Gmm(ptrAligned, sizeAligned, false);
@@ -176,7 +176,8 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
         ptrAligned = pSysMem;
     }
 
-    auto wddmAllocation = std::make_unique<WddmAllocation>(const_cast<void *>(ptrAligned), sizeAligned, nullptr, MemoryPool::System4KBPagesWith32BitGpuAddressing, getOsContextCount());
+    auto wddmAllocation = std::make_unique<WddmAllocation>(const_cast<void *>(ptrAligned), sizeAligned, nullptr,
+                                                           MemoryPool::System4KBPagesWith32BitGpuAddressing, getOsContextCount(), false);
     wddmAllocation->driverAllocatedCpuPointer = pSysMem;
     wddmAllocation->is32BitAllocation = true;
     wddmAllocation->allocationOffset = offset;
@@ -198,7 +199,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
 }
 
 GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle) {
-    auto allocation = std::make_unique<WddmAllocation>(nullptr, 0, handle, MemoryPool::SystemCpuInaccessible, getOsContextCount());
+    auto allocation = std::make_unique<WddmAllocation>(nullptr, 0, handle, MemoryPool::SystemCpuInaccessible, getOsContextCount(), false);
     bool is32BitAllocation = false;
 
     bool status = ntHandle ? wddm->openNTHandle((HANDLE)((UINT_PTR)handle), allocation.get())
@@ -425,7 +426,7 @@ void WddmMemoryManager::obtainGpuAddresFromFragments(WddmAllocation *allocation,
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
-    auto allocation = new WddmAllocation(const_cast<void *>(hostPtr), hostPtrSize, nullptr, MemoryPool::System4KBPages, getOsContextCount());
+    auto allocation = new WddmAllocation(const_cast<void *>(hostPtr), hostPtrSize, nullptr, MemoryPool::System4KBPages, getOsContextCount(), false);
     allocation->fragmentsStorage = handleStorage;
     obtainGpuAddresFromFragments(allocation, handleStorage);
     return allocation;

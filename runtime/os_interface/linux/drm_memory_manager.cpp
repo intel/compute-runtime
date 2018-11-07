@@ -198,7 +198,7 @@ OCLRT::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t si
 }
 
 DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
-    auto allocation = new DrmAllocation(nullptr, const_cast<void *>(hostPtr), hostPtrSize, MemoryPool::System4KBPages);
+    auto allocation = new DrmAllocation(nullptr, const_cast<void *>(hostPtr), hostPtrSize, MemoryPool::System4KBPages, getOsContextCount(), false);
     allocation->fragmentsStorage = handleStorage;
     return allocation;
 }
@@ -226,7 +226,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, size_t alig
     if (forcePinEnabled && pinBB != nullptr && forcePin && size >= this->pinThreshold) {
         pinBB->pin(&bo, 1);
     }
-    return new DrmAllocation(bo, res, cSize, MemoryPool::System4KBPages);
+    return new DrmAllocation(bo, res, cSize, MemoryPool::System4KBPages, getOsContextCount(), false);
 }
 
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) {
@@ -267,7 +267,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(size_t s
     bo->softPin((uint64_t)offset);
     bo->setAllocationType(allocType);
 
-    auto allocation = new DrmAllocation(bo, cpuPtr, reinterpret_cast<uint64_t>(alignedPtr), size, MemoryPool::System4KBPages);
+    auto allocation = new DrmAllocation(bo, cpuPtr, reinterpret_cast<uint64_t>(alignedPtr), size, MemoryPool::System4KBPages, getOsContextCount(), false);
     allocation->allocationOffset = offsetInPage;
     allocation->gpuBaseAddress = limitedGpuAddressRangeAllocator->getBase();
 
@@ -312,7 +312,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &
 
     bo->setUnmapSize(imgInfo.size);
 
-    auto allocation = new DrmAllocation(bo, nullptr, (uint64_t)gpuRange, imgInfo.size, MemoryPool::SystemCpuInaccessible);
+    auto allocation = new DrmAllocation(bo, nullptr, (uint64_t)gpuRange, imgInfo.size, MemoryPool::SystemCpuInaccessible, getOsContextCount(), false);
     bo->setAllocationType(allocatorType);
     allocation->gmm = gmm;
     return allocation;
@@ -345,7 +345,8 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, const 
         uintptr_t offset = (uintptr_t)bo->address;
         bo->softPin((uint64_t)offset);
         bo->setAllocationType(allocatorType);
-        auto drmAllocation = new DrmAllocation(bo, (void *)ptr, (uint64_t)ptrOffset(gpuVirtualAddress, inputPointerOffset), allocationSize, MemoryPool::System4KBPagesWith32BitGpuAddressing);
+        auto drmAllocation = new DrmAllocation(bo, (void *)ptr, (uint64_t)ptrOffset(gpuVirtualAddress, inputPointerOffset),
+                                               allocationSize, MemoryPool::System4KBPagesWith32BitGpuAddressing, getOsContextCount(), false);
         drmAllocation->is32BitAllocation = true;
         drmAllocation->gpuBaseAddress = allocatorToUse->getBase();
         return drmAllocation;
@@ -371,7 +372,8 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, const 
 
     bo->setAllocationType(allocatorType);
 
-    auto drmAllocation = new DrmAllocation(bo, reinterpret_cast<void *>(res), alignedAllocationSize, MemoryPool::System4KBPagesWith32BitGpuAddressing);
+    auto drmAllocation = new DrmAllocation(bo, reinterpret_cast<void *>(res), alignedAllocationSize,
+                                           MemoryPool::System4KBPagesWith32BitGpuAddressing, getOsContextCount(), false);
     drmAllocation->is32BitAllocation = true;
     drmAllocation->gpuBaseAddress = allocatorToUse->getBase();
     return drmAllocation;
@@ -442,7 +444,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
     lock.unlock();
 
-    auto drmAllocation = new DrmAllocation(bo, bo->address, bo->size, handle, MemoryPool::SystemCpuInaccessible);
+    auto drmAllocation = new DrmAllocation(bo, bo->address, bo->size, handle, MemoryPool::SystemCpuInaccessible, getOsContextCount(), false);
 
     if (requireSpecificBitness && this->force32bitAllocations) {
         drmAllocation->is32BitAllocation = true;
@@ -473,7 +475,8 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
     bo->softPin(gpuRange);
     bo->setUnmapSize(sizeWithPadding);
     bo->setAllocationType(storageType);
-    return new DrmAllocation(bo, (void *)srcPtr, (uint64_t)ptrOffset(gpuRange, offset), sizeWithPadding, inputGraphicsAllocation->getMemoryPool());
+    return new DrmAllocation(bo, (void *)srcPtr, (uint64_t)ptrOffset(gpuRange, offset), sizeWithPadding,
+                             inputGraphicsAllocation->getMemoryPool(), getOsContextCount(), false);
 }
 
 void DrmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) {

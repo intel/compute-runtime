@@ -57,7 +57,7 @@ TEST(WddmMemoryManager, NonAssignable) {
 }
 
 TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGettingTrimCandidatePositionThenReturnItsPositionAndUnusedPositionInOtherContexts) {
-    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 3u};
+    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 3u, false};
     OsContext osContext{nullptr, 1u};
     allocation.setTrimCandidateListPosition(osContext.getContextId(), 700u);
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(0u));
@@ -66,14 +66,14 @@ TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGetting
 }
 
 TEST(WddmAllocationTest, givenAllocationCreatedWithOsContextCountOneWhenItIsCreatedThenMaxOsContextCountIsUsedInstead) {
-    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u};
+    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u, false};
     allocation.setTrimCandidateListPosition(3u, 700u);
     EXPECT_EQ(700u, allocation.getTrimCandidateListPosition(3u));
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(2u));
 }
 
 TEST(WddmAllocationTest, givenRequestedContextIdTooLargeWhenGettingTrimCandidateListPositionThenReturnUnusedPosition) {
-    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u};
+    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u, false};
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(1u));
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(1000u));
 }
@@ -236,7 +236,7 @@ TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationT
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
 
-    WddmAllocation gfxAllocation(cpuPtr, size, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount());
+    WddmAllocation gfxAllocation(cpuPtr, size, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount(), false);
     memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
     auto fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
     EXPECT_NE(fragment, nullptr);
@@ -802,7 +802,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuV
     memoryManager->setDeferredDeleter(nullptr);
     setMapGpuVaFailConfigFcn(0, 1);
 
-    WddmAllocation allocation(ptr, size, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount());
+    WddmAllocation allocation(ptr, size, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount(), false);
     allocation.gmm = gmm.get();
     bool ret = memoryManager->createWddmAllocation(&allocation, AllocationOrigin::EXTERNAL_ALLOCATION);
     EXPECT_FALSE(ret);
@@ -818,7 +818,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMap
 
     setMapGpuVaFailConfigFcn(0, 1);
 
-    WddmAllocation allocation(ptr, size, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount());
+    WddmAllocation allocation(ptr, size, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount(), false);
     allocation.gmm = gmm.get();
     bool ret = memoryManager->createWddmAllocation(&allocation, AllocationOrigin::EXTERNAL_ALLOCATION);
     EXPECT_TRUE(ret);
@@ -834,7 +834,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
 
     setMapGpuVaFailConfigFcn(0, 2);
 
-    WddmAllocation allocation(ptr, size, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount());
+    WddmAllocation allocation(ptr, size, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount(), false);
     allocation.gmm = gmm.get();
     bool ret = memoryManager->createWddmAllocation(&allocation, AllocationOrigin::EXTERNAL_ALLOCATION);
     EXPECT_FALSE(ret);
@@ -1191,7 +1191,6 @@ TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenAs
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithNoRegisteredOsContextsWhenCallingIsMemoryBudgetExhaustedThenReturnFalse) {
-    ASSERT_EQ(0u, memoryManager->getOsContextCount());
     EXPECT_FALSE(memoryManager->isMemoryBudgetExhausted());
 }
 

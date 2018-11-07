@@ -15,7 +15,9 @@ class MockGraphicsAllocation : public GraphicsAllocation {
     using GraphicsAllocation::objectNotResident;
     using GraphicsAllocation::objectNotUsed;
 
-    MockGraphicsAllocation(void *buffer, size_t sizeIn) : GraphicsAllocation(buffer, castToUint64(buffer), 0llu, sizeIn) {
+    MockGraphicsAllocation() : MockGraphicsAllocation(true) {}
+    MockGraphicsAllocation(bool shareable) : GraphicsAllocation(nullptr, 0u, 0, maxOsContextCount, shareable) {}
+    MockGraphicsAllocation(void *buffer, size_t sizeIn) : GraphicsAllocation(buffer, castToUint64(buffer), 0llu, sizeIn, maxOsContextCount, false) {
     }
     void resetInspectionId() {
         this->inspectionId = 0;

@@ -86,7 +86,7 @@ class DrmGemCloseWorkerFixture {
     };
     class DrmAllocationWrapper : public DrmAllocation {
       public:
-        DrmAllocationWrapper(BufferObject *bo) : DrmAllocation(bo, nullptr, 0, MemoryPool::MemoryNull) {
+        DrmAllocationWrapper(BufferObject *bo) : DrmAllocation(bo, nullptr, 0, MemoryPool::MemoryNull, 1u, false) {
         }
     };
     ExecutionEnvironment executionEnvironment;

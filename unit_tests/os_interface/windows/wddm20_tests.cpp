@@ -76,7 +76,7 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMapp
     mockGmmRes->setUnifiedAuxTranslationCapable();
 
     void *fakePtr = reinterpret_cast<void *>(0x100);
-    WddmAllocation allocation(fakePtr, 0x2100, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(fakePtr, 0x2100, nullptr, MemoryPool::MemoryNull, 1u, false);
     allocation.gmm = gmm.get();
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -170,7 +170,7 @@ TEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
 
 TEST_F(Wddm20Tests, allocation) {
     OsAgnosticMemoryManager mm(false, false, executionEnvironment);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 1u, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
     allocation.gmm = gmm;
@@ -194,7 +194,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
     size_t underlyingPages = underlyingSize / MemoryConstants::pageSize;
     size_t alignedPages = alignedSize / MemoryConstants::pageSize;
 
-    WddmAllocation allocation(ptr, 0x2100, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(ptr, 0x2100, nullptr, MemoryPool::MemoryNull, 1u, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize());
 
     allocation.gmm = gmm;
@@ -217,7 +217,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
 
 TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmSize) {
     void *fakePtr = reinterpret_cast<void *>(0x123);
-    WddmAllocation allocation(fakePtr, 100, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(fakePtr, 100, nullptr, MemoryPool::MemoryNull, 1u, false);
     std::unique_ptr<Gmm> gmm(GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize()));
 
     allocation.gmm = gmm.get();
@@ -240,7 +240,7 @@ TEST_F(Wddm20Tests, createAllocation32bit) {
     void *alignedPtr = (void *)0x12000;
     size_t alignedSize = 0x2000;
 
-    WddmAllocation allocation(alignedPtr, alignedSize, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(alignedPtr, alignedSize, nullptr, MemoryPool::MemoryNull, 1u, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
     allocation.gmm = gmm;
@@ -268,7 +268,7 @@ TEST_F(Wddm20Tests, createAllocation32bit) {
 TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap1ThenItHasGpuAddressWithingHeap1Limits) {
     void *alignedPtr = (void *)0x12000;
     size_t alignedSize = 0x2000;
-    WddmAllocation allocation(alignedPtr, alignedSize, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(alignedPtr, alignedSize, nullptr, MemoryPool::MemoryNull, 1u, false);
 
     allocation.handle = ALLOCATION_HANDLE;
     allocation.gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -318,7 +318,7 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocati
 
 TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
     OsAgnosticMemoryManager mm(false, false, executionEnvironment);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 1u, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
     allocation.gmm = gmm;
@@ -344,7 +344,7 @@ TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
 TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
     OsAgnosticMemoryManager mm(false, false, executionEnvironment);
 
-    WddmAllocation allocation(nullptr, 100, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(nullptr, 100, nullptr, MemoryPool::MemoryNull, 1u, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
     allocation.gmm = gmm;
@@ -363,7 +363,7 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
 
 TEST_F(Wddm20Tests, makeResidentNonResident) {
     OsAgnosticMemoryManager mm(false, false, executionEnvironment);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 1u, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
     allocation.gmm = gmm;
@@ -568,7 +568,7 @@ TEST(DebugFlagTest, givenDebugManagerWhenGetForUseNoRingFlushesKmdModeIsCalledTh
 
 TEST_F(Wddm20Tests, makeResidentMultipleHandles) {
     OsAgnosticMemoryManager mm(false, false, executionEnvironment);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 1u, false);
     allocation.handle = ALLOCATION_HANDLE;
 
     D3DKMT_HANDLE handles[2] = {0};
@@ -590,7 +590,7 @@ TEST_F(Wddm20Tests, makeResidentMultipleHandles) {
 
 TEST_F(Wddm20Tests, makeResidentMultipleHandlesWithReturnBytesToTrim) {
     OsAgnosticMemoryManager mm(false, false, executionEnvironment);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, 1u, false);
     allocation.handle = ALLOCATION_HANDLE;
 
     D3DKMT_HANDLE handles[2] = {0};
@@ -630,7 +630,7 @@ TEST_F(Wddm20Tests, makeNonResidentCallsEvict) {
 }
 
 TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedToDestroyAllocation) {
-    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, 1u, false);
     allocation.getResidencyData().updateCompletionData(10, osContext.get()->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -658,7 +658,7 @@ TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedTo
 }
 
 TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalled) {
-    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, 1u, false);
     allocation.getResidencyData().updateCompletionData(10, osContext.get()->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -681,7 +681,7 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
 }
 
 TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
-    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, 1u, false);
     allocation.getResidencyData().updateCompletionData(10, osContext.get()->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -739,7 +739,7 @@ TEST_F(Wddm20Tests, whenCreateAllocation64kFailsThenReturnFalse) {
 
     void *fakePtr = reinterpret_cast<void *>(0x123);
     auto gmm = std::make_unique<Gmm>(fakePtr, 100, false);
-    WddmAllocation allocation(fakePtr, 100, nullptr, MemoryPool::MemoryNull, 1u);
+    WddmAllocation allocation(fakePtr, 100, nullptr, MemoryPool::MemoryNull, 1u, false);
     allocation.gmm = gmm.get();
 
     EXPECT_FALSE(wddm->createAllocation64k(&allocation));

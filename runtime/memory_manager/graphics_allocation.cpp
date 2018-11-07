@@ -16,16 +16,20 @@ bool GraphicsAllocation::isL3Capable() {
     }
     return false;
 }
-GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn) : gpuBaseAddress(baseAddress),
-                                                                                                                   size(sizeIn),
-                                                                                                                   cpuPtr(cpuPtrIn),
-                                                                                                                   gpuAddress(gpuAddress) {
+GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, uint32_t osContextCount, bool isShareable) : gpuBaseAddress(baseAddress),
+                                                                                                                                                              size(sizeIn),
+                                                                                                                                                              cpuPtr(cpuPtrIn),
+                                                                                                                                                              gpuAddress(gpuAddress),
+                                                                                                                                                              usageInfos(osContextCount),
+                                                                                                                                                              isShareable(isShareable) {
 }
 
-GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn) : size(sizeIn),
-                                                                                                 cpuPtr(cpuPtrIn),
-                                                                                                 gpuAddress(castToUint64(cpuPtrIn)),
-                                                                                                 sharedHandle(sharedHandleIn) {
+GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, uint32_t osContextCount, bool isShareable) : size(sizeIn),
+                                                                                                                                            cpuPtr(cpuPtrIn),
+                                                                                                                                            gpuAddress(castToUint64(cpuPtrIn)),
+                                                                                                                                            sharedHandle(sharedHandleIn),
+                                                                                                                                            usageInfos(osContextCount),
+                                                                                                                                            isShareable(isShareable) {
 }
 GraphicsAllocation::~GraphicsAllocation() = default;
 

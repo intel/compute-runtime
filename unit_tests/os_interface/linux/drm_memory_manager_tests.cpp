@@ -118,7 +118,7 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
 
-    DrmAllocation gfxAllocation(nullptr, cpuPtr, size, MemoryPool::MemoryNull);
+    DrmAllocation gfxAllocation(nullptr, cpuPtr, size, MemoryPool::MemoryNull, 1u, false);
     memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
     auto fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
     EXPECT_NE(fragment, nullptr);
@@ -1763,7 +1763,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnNullAl
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationWithoutBufferObjectThenReturnNullPtr) {
-    DrmAllocation drmAllocation(nullptr, nullptr, 0u, 0u);
+    DrmAllocation drmAllocation(nullptr, nullptr, 0u, 0u, 1u, false);
     EXPECT_EQ(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -1782,7 +1782,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledButFails
         BufferObjectMock(Drm *drm) : BufferObject(drm, 1, true) {}
     };
     BufferObjectMock bo(&drmMock);
-    DrmAllocation drmAllocation(&bo, nullptr, 0u, 0u);
+    DrmAllocation drmAllocation(&bo, nullptr, 0u, 0u, 1u, false);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -1793,7 +1793,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledButFails
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllocationWithoutBufferObjectThenReturnFalse) {
-    DrmAllocation drmAllocation(nullptr, nullptr, 0u, 0u);
+    DrmAllocation drmAllocation(nullptr, nullptr, 0u, 0u, 1u, false);
     EXPECT_EQ(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, false);
@@ -1810,7 +1810,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledButFai
         BufferObjectMock(Drm *drm) : BufferObject(drm, 1, true) {}
     };
     BufferObjectMock bo(&drmMock);
-    DrmAllocation drmAllocation(&bo, nullptr, 0u, 0u);
+    DrmAllocation drmAllocation(&bo, nullptr, 0u, 0u, 1u, false);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, false);
@@ -1826,7 +1826,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllo
         BufferObjectMock(Drm *drm) : BufferObject(drm, 1, true) {}
     };
     BufferObjectMock bo(&drmMock);
-    DrmAllocation drmAllocation(&bo, nullptr, 0u, 0u);
+    DrmAllocation drmAllocation(&bo, nullptr, 0u, 0u, 1u, false);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto success = memoryManager->setDomainCpu(drmAllocation, true);

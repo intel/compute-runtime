@@ -247,7 +247,7 @@ class MemoryManager {
     }
 
     void registerOsContext(OsContext *contextToRegister);
-    size_t getOsContextCount() { return registeredOsContexts.size(); }
+    uint32_t getOsContextCount() { return static_cast<uint32_t>(registeredOsContexts.size()); }
     CommandStreamReceiver *getCommandStreamReceiver(uint32_t contextId);
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
 

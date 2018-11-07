@@ -11,8 +11,8 @@
 using namespace OCLRT;
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenTaskCountsAreInitializedProperly) {
-    GraphicsAllocation graphicsAllocation1(nullptr, 0u, 0u, 0u);
-    GraphicsAllocation graphicsAllocation2(nullptr, 0u, 0u);
+    GraphicsAllocation graphicsAllocation1(nullptr, 0u, 0u, 0u, maxOsContextCount, true);
+    GraphicsAllocation graphicsAllocation2(nullptr, 0u, 0u, maxOsContextCount, true);
     for (auto i = 0u; i < maxOsContextCount; i++) {
         EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation1.getTaskCount(i));
         EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation2.getTaskCount(i));
@@ -22,13 +22,13 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenTaskCountsA
 }
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountThenAllocationWasUsed) {
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0u);
+    MockGraphicsAllocation graphicsAllocation;
     EXPECT_FALSE(graphicsAllocation.isUsed());
     graphicsAllocation.updateTaskCount(0u, 0u);
     EXPECT_TRUE(graphicsAllocation.isUsed());
 }
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountThenOnlyOneTaskCountIsUpdated) {
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0u);
+    MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.updateTaskCount(1u, 0u);
     EXPECT_EQ(1u, graphicsAllocation.getTaskCount(0u));
     for (auto i = 1u; i < maxOsContextCount; i++) {
@@ -42,7 +42,7 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountThenOnly
     }
 }
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountToobjectNotUsedValueThenUnregisterContext) {
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0u);
+    MockGraphicsAllocation graphicsAllocation;
     EXPECT_FALSE(graphicsAllocation.isUsed());
     graphicsAllocation.updateTaskCount(0u, 0u);
     EXPECT_TRUE(graphicsAllocation.isUsed());
@@ -50,7 +50,7 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountToobject
     EXPECT_FALSE(graphicsAllocation.isUsed());
 }
 TEST(GraphicsAllocationTest, whenTwoContextsUpdatedTaskCountAndOneOfThemUnregisteredThenOneContextUsageRemains) {
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0u);
+    MockGraphicsAllocation graphicsAllocation;
     EXPECT_FALSE(graphicsAllocation.isUsed());
     graphicsAllocation.updateTaskCount(0u, 0u);
     graphicsAllocation.updateTaskCount(0u, 1u);
@@ -64,7 +64,7 @@ TEST(GraphicsAllocationTest, whenTwoContextsUpdatedTaskCountAndOneOfThemUnregist
 }
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedResidencyTaskCountToNonDefaultValueThenAllocationIsResident) {
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0u);
+    MockGraphicsAllocation graphicsAllocation;
     EXPECT_FALSE(graphicsAllocation.isResident(0u));
     uint32_t residencyTaskCount = 1u;
     graphicsAllocation.updateResidencyTaskCount(residencyTaskCount, 0u);
@@ -76,7 +76,7 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedResidencyTaskCoun
 }
 
 TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenResetResidencyTaskCountThenAllocationIsNotResident) {
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0u);
+    MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.updateResidencyTaskCount(1, 0u);
     EXPECT_TRUE(graphicsAllocation.isResident(0u));
 

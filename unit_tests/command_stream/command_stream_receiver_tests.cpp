@@ -294,7 +294,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
 
     bool destructorCalled = false;
 
-    auto mockGraphicsAllocation = new MockGraphicsAllocationWithDestructorTracing(nullptr, 0llu, 0llu, 1u);
+    auto mockGraphicsAllocation = new MockGraphicsAllocationWithDestructorTracing(nullptr, 0llu, 0llu, 1u, 1u, false);
     mockGraphicsAllocation->destructorCalled = &destructorCalled;
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.commandStreamReceivers.resize(1);
@@ -358,27 +358,29 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
     auto &commandStreamReceiver0 = device0->getCommandStreamReceiver();
     auto &commandStreamReceiver1 = device1->getCommandStreamReceiver();
 
-    auto graphicsAllocation = executionEnvironment->memoryManager->allocateGraphicsMemory(4096u);
+    MockGraphicsAllocation graphicsAllocation;
 
-    commandStreamReceiver0.makeResident(*graphicsAllocation);
-    commandStreamReceiver1.makeResident(*graphicsAllocation);
+    commandStreamReceiver0.makeResident(graphicsAllocation);
+    EXPECT_EQ(1u, commandStreamReceiver0.getResidencyAllocations().size());
+    EXPECT_EQ(0u, commandStreamReceiver1.getResidencyAllocations().size());
 
+    commandStreamReceiver1.makeResident(graphicsAllocation);
     EXPECT_EQ(1u, commandStreamReceiver0.getResidencyAllocations().size());
     EXPECT_EQ(1u, commandStreamReceiver1.getResidencyAllocations().size());
 
-    EXPECT_EQ(1u, graphicsAllocation->getResidencyTaskCount(0u));
-    EXPECT_EQ(1u, graphicsAllocation->getResidencyTaskCount(1u));
+    EXPECT_EQ(1u, graphicsAllocation.getResidencyTaskCount(0u));
+    EXPECT_EQ(1u, graphicsAllocation.getResidencyTaskCount(1u));
 
-    commandStreamReceiver0.makeNonResident(*graphicsAllocation);
-    commandStreamReceiver1.makeNonResident(*graphicsAllocation);
+    commandStreamReceiver0.makeNonResident(graphicsAllocation);
+    EXPECT_FALSE(graphicsAllocation.isResident(0u));
+    EXPECT_TRUE(graphicsAllocation.isResident(1u));
 
-    EXPECT_FALSE(graphicsAllocation->isResident(0u));
-    EXPECT_FALSE(graphicsAllocation->isResident(1u));
+    commandStreamReceiver1.makeNonResident(graphicsAllocation);
+    EXPECT_FALSE(graphicsAllocation.isResident(0u));
+    EXPECT_FALSE(graphicsAllocation.isResident(1u));
 
     EXPECT_EQ(1u, commandStreamReceiver0.getEvictionAllocations().size());
     EXPECT_EQ(1u, commandStreamReceiver1.getEvictionAllocations().size());
-
-    executionEnvironment->memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
 struct CreateAllocationForHostSurfaceTest : public ::testing::Test {

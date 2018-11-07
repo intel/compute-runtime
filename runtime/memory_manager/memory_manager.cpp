@@ -29,11 +29,15 @@ MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory,
                              ExecutionEnvironment &executionEnvironment) : allocator32Bit(nullptr), enable64kbpages(enable64kbpages),
                                                                            localMemorySupported(enableLocalMemory),
                                                                            executionEnvironment(executionEnvironment),
-                                                                           hostPtrManager(std::make_unique<HostPtrManager>()){};
+                                                                           hostPtrManager(std::make_unique<HostPtrManager>()) {
+    registeredOsContexts.resize(1);
+};
 
 MemoryManager::~MemoryManager() {
     for (auto osContext : registeredOsContexts) {
-        osContext->decRefInternal();
+        if (osContext) {
+            osContext->decRefInternal();
+        }
     }
 }
 
