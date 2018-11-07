@@ -51,14 +51,21 @@ struct WddmResidencyControllerTest : ::testing::Test {
     std::unique_ptr<MockWddmResidencyController> residencyController;
 };
 
-struct WddmResidencyControllerWithGdiTest : public WddmResidencyControllerTest {
+struct WddmResidencyControllerWithGdiTest : ::testing::Test {
+    const uint32_t osContextId = 0u;
+
     void SetUp() {
-        WddmResidencyControllerTest::SetUp();
+        wddm = std::unique_ptr<WddmMock>(static_cast<WddmMock *>(Wddm::createWddm()));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
+        wddm->init();
+
+        residencyController = std::make_unique<MockWddmResidencyController>(*wddm, osContextId);
         wddm->getWddmInterface()->createMonitoredFence(*residencyController);
     }
 
+    std::unique_ptr<WddmMock> wddm;
+    std::unique_ptr<MockWddmResidencyController> residencyController;
     MockGdi *gdi;
 };
 
