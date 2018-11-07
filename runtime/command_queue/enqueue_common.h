@@ -221,7 +221,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
 
         if (eventBuilder.getEvent()) {
-            if (timestampPacketContainer.get()) {
+            if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
                 eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
             }
             if (this->isProfilingEnabled()) {
