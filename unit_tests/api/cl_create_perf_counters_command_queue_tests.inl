@@ -10,6 +10,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/event/event.h"
 #include "unit_tests/fixtures/device_instrumentation_fixture.h"
+#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 
 using namespace OCLRT;

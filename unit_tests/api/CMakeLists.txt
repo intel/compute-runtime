@@ -14,7 +14,7 @@ set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_build_program_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_clone_kernel_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_compile_program_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_buffer_tests.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_buffer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_command_queue_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_command_queue_with_properties_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_context_from_type_tests.inl
@@ -25,7 +25,7 @@ set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_perf_counters_command_queue_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_pipe_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_program_with_binary_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_program_with_built_in_kernels_tests.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_program_with_built_in_kernels_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_sampler_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_sampler_with_properties_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_sub_buffer_tests.inl
@@ -55,7 +55,7 @@ set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_svm_map_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_svm_mem_fill_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_svm_memcpy_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_svm_migrate_mem_tests.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_svm_migrate_mem_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_svm_unmap_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_task_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_unmap_mem_object_tests.inl
@@ -89,7 +89,7 @@ set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_supported_image_formats_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_icd_get_platform_ids_khr_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_intel_accelerator_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_intel_motion_estimation.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_intel_motion_estimation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_link_program_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_release_command_queue_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_release_context_tests.inl

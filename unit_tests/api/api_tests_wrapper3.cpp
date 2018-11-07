@@ -15,7 +15,6 @@
 #include "unit_tests/api/cl_get_supported_image_formats_tests.inl"
 #include "unit_tests/api/cl_icd_get_platform_ids_khr_tests.inl"
 #include "unit_tests/api/cl_intel_accelerator_tests.inl"
-#include "unit_tests/api/cl_intel_motion_estimation.inl"
 #include "unit_tests/api/cl_link_program_tests.inl"
 #include "unit_tests/api/cl_release_command_queue_tests.inl"
 #include "unit_tests/api/cl_release_context_tests.inl"

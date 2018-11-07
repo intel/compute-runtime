@@ -15,7 +15,6 @@
 #include "unit_tests/api/cl_enqueue_svm_map_tests.inl"
 #include "unit_tests/api/cl_enqueue_svm_mem_fill_tests.inl"
 #include "unit_tests/api/cl_enqueue_svm_memcpy_tests.inl"
-#include "unit_tests/api/cl_enqueue_svm_migrate_mem_tests.inl"
 #include "unit_tests/api/cl_enqueue_svm_unmap_tests.inl"
 #include "unit_tests/api/cl_enqueue_task_tests.inl"
 #include "unit_tests/api/cl_enqueue_unmap_mem_object_tests.inl"

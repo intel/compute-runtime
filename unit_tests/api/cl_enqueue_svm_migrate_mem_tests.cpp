@@ -9,6 +9,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/device/device.h"
+#include "runtime/event/user_event.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 
