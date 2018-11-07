@@ -22,11 +22,11 @@ then
 	apt-get -y update
 fi
 
-apt-get install -y --allow-unauthenticated cmake ninja-build intel-igc-opencl-dev
+apt-get install -y --allow-unauthenticated cmake ninja-build intel-igc-opencl-dev intel-gmmlib-dev
 if [ $? -ne 0 ]
 then
 	wait_apt
-	apt-get install -y --allow-unauthenticated cmake ninja-build intel-igc-opencl-dev
+	apt-get install -y --allow-unauthenticated cmake ninja-build intel-igc-opencl-dev intel-gmmlib-dev
 fi
 
 dpkg -r ccache
