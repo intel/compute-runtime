@@ -5,7 +5,6 @@ build:
     ci:
     - sudo scripts/install-deps.sh
     - mkdir workspace; cd workspace
-    - git clone --depth 1 https://github.com/intel/gmmlib gmmlib
     - git clone ../../compute-runtime neo
     - mkdir build; cd build
     - cmake -G Ninja -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release ../neo
@@ -15,4 +14,3 @@ integrations:
         - integrationName: email
           type: email
           recipients: compute-runtime@intel.com
-
