@@ -114,7 +114,7 @@ TEST_F(InternalAllocationStorageTest, whenNotUsedAllocationIsStoredAsReusableAnd
     void *host_ptr = (void *)0x1234;
     auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_FALSE(allocation->peekWasUsed());
+    EXPECT_FALSE(allocation->isUsed());
     EXPECT_EQ(0u, csr->peekTaskCount());
     *csr->getTagAddress() = 0; // initial hw tag for dll
 
@@ -179,7 +179,8 @@ TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromMidlleOfReusableLi
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation3));
 
     memoryManager->freeGraphicsMemory(allocation2);
-    storage->cleanAllocationList(ObjectNotUsed, REUSABLE_ALLOCATION);
+    allocation->updateTaskCount(0u, 0u);
+    allocation3->updateTaskCount(0u, 0u);
 }
 
 TEST_F(InternalAllocationStorageTest, givenNonInternalAllocationWhenItIsPutOnReusableListWhenInternalAllocationIsRequestedThenNullIsReturned) {

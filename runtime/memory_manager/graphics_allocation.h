@@ -29,15 +29,7 @@ constexpr auto nonSharedResource = 0u;
 }
 
 constexpr uint32_t maxOsContextCount = 4u;
-const int ObjectNotResident = -1;
-const uint32_t ObjectNotUsed = (uint32_t)-1;
-
 class Gmm;
-
-struct UsageInfo {
-    uint32_t taskCount = ObjectNotUsed;
-    int residencyTaskCount = ObjectNotResident;
-};
 
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {
   public:
@@ -117,7 +109,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void setEvictable(bool evictable) { this->evictable = evictable; }
     bool peekEvictable() const { return evictable; }
 
-    bool isResident(uint32_t contextId) const { return ObjectNotResident != getResidencyTaskCount(contextId); }
+    bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
     void setLocked(bool locked) { this->locked = locked; }
     bool isLocked() const { return locked; }
 
@@ -127,15 +119,23 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     MemoryPool::Type getMemoryPool() {
         return memoryPool;
     }
-    bool peekWasUsed() const { return registeredContextsNum > 0; }
+    bool isUsed() const { return registeredContextsNum > 0; }
     void updateTaskCount(uint32_t newTaskCount, uint32_t contextId);
     uint32_t getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
 
-    void updateResidencyTaskCount(int newTaskCount, uint32_t contextId) { usageInfos[contextId].residencyTaskCount = newTaskCount; }
-    int getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
-    void resetResidencyTaskCount(uint32_t contextId) { updateResidencyTaskCount(ObjectNotResident, contextId); }
+    void updateResidencyTaskCount(uint32_t newTaskCount, uint32_t contextId) { usageInfos[contextId].residencyTaskCount = newTaskCount; }
+    uint32_t getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
+    void resetResidencyTaskCount(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }
 
   protected:
+    constexpr static uint32_t objectNotResident = (uint32_t)-1;
+    constexpr static uint32_t objectNotUsed = (uint32_t)-1;
+
+    struct UsageInfo {
+        uint32_t taskCount = objectNotUsed;
+        uint32_t residencyTaskCount = objectNotResident;
+    };
+
     //this variable can only be modified from SubmissionAggregator
     friend class SubmissionAggregator;
     size_t size = 0;

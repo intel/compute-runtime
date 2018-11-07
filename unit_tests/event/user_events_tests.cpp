@@ -894,9 +894,6 @@ TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
     auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
     auto memoryManager = pCmdQ->getDevice().getMemoryManager();
 
-    //kill some temporary objects that fixture creates.
-    csr.waitForTaskCountAndCleanAllocationList(-1, TEMPORARY_ALLOCATION);
-
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
     GraphicsAllocation *temporaryAllocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);

@@ -379,7 +379,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenRecorded
 
     for (auto &graphicsAllocation : residentSurfaces) {
         EXPECT_TRUE(graphicsAllocation->isResident(0u));
-        EXPECT_EQ(1, graphicsAllocation->getResidencyTaskCount(0u));
+        EXPECT_EQ(1u, graphicsAllocation->getResidencyTaskCount(0u));
     }
 
     mockCsr->flushBatchedSubmissions();

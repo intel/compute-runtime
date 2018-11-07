@@ -58,7 +58,7 @@ HWTEST_F(AsyncGPUoperations, MapBufferAfterWriteBuffer) {
     }
     t.join();
 
-    srcBuffer->getGraphicsAllocation()->updateTaskCount(ObjectNotUsed, 0);
+    srcBuffer->getGraphicsAllocation()->updateTaskCount(0u, 0u);
 
     alignedFree(ptrMemory);
 }

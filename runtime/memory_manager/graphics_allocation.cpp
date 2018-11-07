@@ -30,12 +30,14 @@ GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle s
 GraphicsAllocation::~GraphicsAllocation() = default;
 
 void GraphicsAllocation::updateTaskCount(uint32_t newTaskCount, uint32_t contextId) {
-    if (usageInfos[contextId].taskCount == ObjectNotUsed) {
+    if (usageInfos[contextId].taskCount == objectNotUsed) {
         registeredContextsNum++;
     }
-    if (newTaskCount == ObjectNotUsed) {
+    if (newTaskCount == objectNotUsed) {
         registeredContextsNum--;
     }
     usageInfos[contextId].taskCount = newTaskCount;
 }
+constexpr uint32_t GraphicsAllocation::objectNotUsed;
+constexpr uint32_t GraphicsAllocation::objectNotResident;
 } // namespace OCLRT

@@ -1235,7 +1235,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhen
     EXPECT_EQ(csr->getTemporaryAllocations().peekHead(), usedAllocationAndNotGpuCompleted);
 
     //change task count so cleanup will not clear alloc in use
-    usedAllocationAndNotGpuCompleted->updateTaskCount(ObjectNotUsed, 0);
+    usedAllocationAndNotGpuCompleted->updateTaskCount(csr->peekLatestFlushedTaskCount(), 0);
 }
 
 class MockAlignMallocMemoryManager : public MockMemoryManager {

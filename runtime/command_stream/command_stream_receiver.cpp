@@ -58,11 +58,12 @@ CommandStreamReceiver::~CommandStreamReceiver() {
 }
 
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
-    int submissionTaskCount = this->taskCount + 1;
-    if (gfxAllocation.getResidencyTaskCount(deviceIndex) < submissionTaskCount) {
+    auto submissionTaskCount = this->taskCount + 1;
+    bool isNotResident = !gfxAllocation.isResident(deviceIndex);
+    if (isNotResident || gfxAllocation.getResidencyTaskCount(deviceIndex) < submissionTaskCount) {
         this->getResidencyAllocations().push_back(&gfxAllocation);
         gfxAllocation.updateTaskCount(submissionTaskCount, deviceIndex);
-        if (!gfxAllocation.isResident(deviceIndex)) {
+        if (isNotResident) {
             this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
         }
     }
@@ -105,7 +106,7 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 
 void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
     auto address = getTagAddress();
-    if (address && requiredTaskCount != ObjectNotUsed) {
+    if (address) {
         while (*address < requiredTaskCount)
             ;
     }

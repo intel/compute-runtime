@@ -10,9 +10,11 @@
 
 namespace OCLRT {
 class MockGraphicsAllocation : public GraphicsAllocation {
-    using GraphicsAllocation::GraphicsAllocation;
-
   public:
+    using GraphicsAllocation::GraphicsAllocation;
+    using GraphicsAllocation::objectNotResident;
+    using GraphicsAllocation::objectNotUsed;
+
     MockGraphicsAllocation(void *buffer, size_t sizeIn) : GraphicsAllocation(buffer, castToUint64(buffer), 0llu, sizeIn) {
     }
     void resetInspectionId() {

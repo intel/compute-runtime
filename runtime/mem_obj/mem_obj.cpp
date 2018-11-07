@@ -64,7 +64,7 @@ MemObj::~MemObj() {
             if (!doAsyncDestrucions) {
                 needWait = true;
             }
-            if (needWait && graphicsAllocation->peekWasUsed()) {
+            if (needWait && graphicsAllocation->isUsed()) {
                 waitForCsrCompletion();
             }
             destroyGraphicsAllocation(graphicsAllocation, doAsyncDestrucions);

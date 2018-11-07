@@ -115,7 +115,7 @@ HWTEST_P(ParentKernelEnqueueTest, GivenParentKernelWithPrivateSurfaceWhenEnqueue
         pKernel->getProgram()->getBlockKernelManager()->pushPrivateSurface(privateSurface, 0);
         pCmdQ->enqueueKernel(pKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
 
-        EXPECT_NE(ObjectNotResident, privateSurface->getResidencyTaskCount(0u));
+        EXPECT_TRUE(privateSurface->isResident(0u));
     }
 }
 
