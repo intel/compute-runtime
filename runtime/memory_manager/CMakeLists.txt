@@ -9,6 +9,8 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/allocations_list.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_allocation_deletion.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_allocation_deletion.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion.h
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter.h
