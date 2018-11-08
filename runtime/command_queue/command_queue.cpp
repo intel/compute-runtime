@@ -92,9 +92,8 @@ CommandQueue::~CommandQueue() {
     if (device) {
         auto storageForAllocation = device->getCommandStreamReceiver().getInternalAllocationStorage();
 
-        if (commandStream && commandStream->getGraphicsAllocation()) {
+        if (commandStream) {
             storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream->getGraphicsAllocation()), REUSABLE_ALLOCATION);
-            commandStream->replaceGraphicsAllocation(nullptr);
         }
         delete commandStream;
 
