@@ -18,7 +18,7 @@ typedef api_tests clCreateProgramWithILKHRTests;
 
 namespace ULT {
 
-TEST_F(clCreateProgramWithBinaryTests, returnsSuccess) {
+TEST_F(clCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgramWithBinaryThenProgramIsCreatedAndSuccessIsReturned) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
     void *pBinary = nullptr;
@@ -63,7 +63,7 @@ TEST_F(clCreateProgramWithBinaryTests, returnsSuccess) {
     EXPECT_EQ(nullptr, pProgram);
 }
 
-TEST_F(clCreateProgramWithILTests, whenContextIsInvalidThenReturnsInvalidValue) {
+TEST_F(clCreateProgramWithILTests, GivenInvalidContextWhenCreatingProgramWithIlThenInvalidContextErrorIsReturned) {
     const uint32_t spirv[16] = {0x03022307};
 
     cl_int err = CL_SUCCESS;
@@ -72,24 +72,23 @@ TEST_F(clCreateProgramWithILTests, whenContextIsInvalidThenReturnsInvalidValue) 
     EXPECT_EQ(nullptr, prog);
 }
 
-TEST_F(clCreateProgramWithILTests, whenIntermediateRepresentationIsEmptyThenReturnsInvalidValue) {
-    const uint32_t spirv[16] = {0x03022307};
-
+TEST_F(clCreateProgramWithILTests, GivenNullIlWhenCreatingProgramWithIlThenInvalidValueErrorIsReturned) {
     cl_int err = CL_SUCCESS;
     cl_program prog = clCreateProgramWithIL(pContext, nullptr, 0, &err);
     EXPECT_EQ(CL_INVALID_VALUE, err);
     EXPECT_EQ(nullptr, prog);
+}
 
-    err = CL_SUCCESS;
-    prog = clCreateProgramWithIL(pContext, spirv, 0, &err);
+TEST_F(clCreateProgramWithILTests, GivenIncorrectIlSizeWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
+    const uint32_t spirv[16] = {0x03022307};
+
+    cl_int err = CL_SUCCESS;
+    cl_program prog = clCreateProgramWithIL(pContext, spirv, 0, &err);
     EXPECT_EQ(CL_INVALID_BINARY, err);
-    EXPECT_EQ(nullptr, prog);
-
-    prog = clCreateProgramWithIL(pContext, spirv, 0, nullptr);
     EXPECT_EQ(nullptr, prog);
 }
 
-TEST_F(clCreateProgramWithILTests, whenIntermediateRepresentationIsNotSpirvOrLlvmBCThenReturnsInvalidValue) {
+TEST_F(clCreateProgramWithILTests, GivenIncorrectIlWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
     const uint32_t notSpirv[16] = {0xDEADBEEF};
 
     cl_int err = CL_SUCCESS;
@@ -98,7 +97,14 @@ TEST_F(clCreateProgramWithILTests, whenIntermediateRepresentationIsNotSpirvOrLlv
     EXPECT_EQ(nullptr, prog);
 }
 
-TEST_F(clCreateProgramWithILKHRTests, whenValidInputParametersThenReturnsSuccessAndProgram) {
+TEST_F(clCreateProgramWithILTests, GivenIncorrectIlAndNoErrorPointerWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
+    const uint32_t notSpirv[16] = {0xDEADBEEF};
+
+    cl_program prog = clCreateProgramWithIL(pContext, notSpirv, sizeof(notSpirv), nullptr);
+    EXPECT_EQ(nullptr, prog);
+}
+
+TEST_F(clCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramWithIlkhrThenProgramIsCreatedAndSuccessIsReturned) {
     const uint32_t spirv[16] = {0x03022307};
 
     cl_int err = CL_INVALID_VALUE;
@@ -110,7 +116,7 @@ TEST_F(clCreateProgramWithILKHRTests, whenValidInputParametersThenReturnsSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateProgramWithILKHRTests, whenInvalidInputParameterThenReturnsNull) {
+TEST_F(clCreateProgramWithILKHRTests, GivenNullIlWhenCreatingProgramWithIlkhrThenNullProgramIsReturned) {
     cl_program program = clCreateProgramWithILKHR(pContext, nullptr, 0, nullptr);
     EXPECT_EQ(nullptr, program);
 }
