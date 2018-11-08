@@ -141,7 +141,6 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
     int res;
     va_list vl;
     va_start(vl, request);
-	
     if (fd == fakeFd) {
         res = ioctlSeq[ioctlCnt % (sizeof(ioctlSeq) / sizeof(int))];
         ioctlCnt++;
