@@ -73,11 +73,9 @@ class BufferObject {
     ResidencyVector *getResidency() { return &residency; }
     StorageAllocatorType peekAllocationType() const { return storageAllocatorType; }
     void setAllocationType(StorageAllocatorType allocatorType) { this->storageAllocatorType = allocatorType; }
-    bool peekIsResident() const { return isResident; }
-    void setIsResident(bool isResident) { this->isResident = isResident; }
+    bool peekIsReusableAllocation() { return this->isReused; }
 
   protected:
-    bool isResident;
     BufferObject(Drm *drm, int handle, bool isAllocated);
 
     Drm *drm;

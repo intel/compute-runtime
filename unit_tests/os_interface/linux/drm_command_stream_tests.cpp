@@ -17,6 +17,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
@@ -688,7 +689,7 @@ class DrmCommandStreamEnhancedFixture
     }
 
     bool isResident(BufferObject *bo) {
-        return tCsr->isResident(bo) && bo->peekIsResident();
+        return tCsr->isResident(bo);
     }
 
     const BufferObject *getResident(BufferObject *bo) {
@@ -696,73 +697,6 @@ class DrmCommandStreamEnhancedFixture
     }
 
   protected:
-    template <typename GfxFamily>
-    class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily> {
-      public:
-        using CommandStreamReceiver::commandStream;
-
-        TestedDrmCommandStreamReceiver(gemCloseWorkerMode mode, ExecutionEnvironment &executionEnvironment)
-            : DrmCommandStreamReceiver<GfxFamily>(*platformDevices[0], executionEnvironment, mode) {
-        }
-        TestedDrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment)
-            : DrmCommandStreamReceiver<GfxFamily>(*platformDevices[0], executionEnvironment,
-                                                  gemCloseWorkerMode::gemCloseWorkerInactive) {
-        }
-
-        void overrideGemCloseWorkerOperationMode(gemCloseWorkerMode overrideValue) {
-            this->gemCloseWorkerOperationMode = overrideValue;
-        }
-
-        void overrideDispatchPolicy(DispatchMode overrideValue) {
-            this->dispatchMode = overrideValue;
-        }
-
-        bool isResident(BufferObject *bo) {
-            bool resident = false;
-            for (auto it : this->residency) {
-                if (it == bo) {
-                    resident = true;
-                    break;
-                }
-            }
-            return resident;
-        }
-
-        void makeNonResident(GraphicsAllocation &gfxAllocation) override {
-            makeNonResidentResult.called = true;
-            makeNonResidentResult.allocation = &gfxAllocation;
-            DrmCommandStreamReceiver<GfxFamily>::makeNonResident(gfxAllocation);
-        }
-
-        const BufferObject *getResident(BufferObject *bo) {
-            BufferObject *ret = nullptr;
-            for (auto it : this->residency) {
-                if (it == bo) {
-                    ret = it;
-                    break;
-                }
-            }
-            return ret;
-        }
-
-        struct MakeResidentNonResidentResult {
-            bool called;
-            GraphicsAllocation *allocation;
-        };
-
-        MakeResidentNonResidentResult makeNonResidentResult;
-        std::vector<BufferObject *> *getResidencyVector() { return &this->residency; }
-
-        SubmissionAggregator *peekSubmissionAggregator() {
-            return this->submissionAggregator.get();
-        }
-        void overrideSubmissionAggregator(SubmissionAggregator *newSubmissionsAggregator) {
-            this->submissionAggregator.reset(newSubmissionsAggregator);
-        }
-        std::vector<drm_i915_gem_exec_object2> &getExecStorage() {
-            return this->execObjectsStorage;
-        }
-    };
     TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *tCsr = nullptr;
 
     class MockBufferObject : public BufferObject {
@@ -779,6 +713,7 @@ class DrmCommandStreamEnhancedFixture
         return new MockBufferObject(this->mock, size);
     }
 };
+
 typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamGemWorkerTests;
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenDefaultDrmCSRWhenItIsCreatedThenGemCloseWorkerModeIsInactive) {
@@ -835,8 +770,6 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWh
     EXPECT_EQ(11u, this->mock->execBuffer.buffer_count);
     mm->freeGraphicsMemory(commandBuffer);
     for (auto graphicsAllocation : graphicsAllocations) {
-        DrmAllocation *drmAlloc = static_cast<DrmAllocation *>(graphicsAllocation);
-        EXPECT_FALSE(drmAlloc->getBO()->peekIsResident());
         mm->freeGraphicsMemory(graphicsAllocation);
     }
     EXPECT_EQ(11u, execStorage.size());
@@ -863,24 +796,24 @@ TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDi
     auto allocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
     auto allocation2 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
 
-    auto bo1 = allocation->getBO();
-    auto bo2 = allocation2->getBO();
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);
 
-    EXPECT_FALSE(bo1->peekIsResident());
-    EXPECT_FALSE(bo2->peekIsResident());
+    EXPECT_TRUE(allocation->isResident(0u));
+    EXPECT_TRUE(allocation2->isResident(0u));
 
     csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
-    EXPECT_TRUE(bo1->peekIsResident());
-    EXPECT_TRUE(bo2->peekIsResident());
+    EXPECT_TRUE(allocation->isResident(0u));
+    EXPECT_TRUE(allocation2->isResident(0u));
+
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 2u);
 
     csr->makeNonResident(*allocation);
     csr->makeNonResident(*allocation2);
-    EXPECT_FALSE(bo1->peekIsResident());
-    EXPECT_FALSE(bo2->peekIsResident());
+
+    EXPECT_FALSE(allocation->isResident(0u));
+    EXPECT_FALSE(allocation2->isResident(0u));
 
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 0u);
     mm->freeGraphicsMemory(allocation);

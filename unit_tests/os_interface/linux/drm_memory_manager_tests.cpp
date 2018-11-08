@@ -20,7 +20,9 @@
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/32bit_memory.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/tag_allocator.h"
 
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -30,6 +32,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm.h"
+#include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
@@ -1557,6 +1560,61 @@ TEST_F(DrmMemoryManagerTest, givenSharedHandleWhenAllocationIsCreatedAndIoctlPri
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareTheSameBufferObjectWhenTheyAreMadeResidentThenOnlyOneBoIsPassedToExec) {
+    mock->ioctl_expected.primeFdToHandle = 2;
+    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemWait = 2;
+
+    osHandle sharedHandle = 1u;
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false);
+    auto graphicsAllocation2 = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false);
+
+    executionEnvironment->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->osInterface->get()->setDrm(mock);
+    auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
+    executionEnvironment->commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(testedCsr));
+
+    testedCsr->makeResident(*graphicsAllocation);
+    testedCsr->makeResident(*graphicsAllocation2);
+    EXPECT_EQ(2u, testedCsr->getResidencyAllocations().size());
+
+    OsContext osContext(executionEnvironment->osInterface.get(), 0u);
+    testedCsr->processResidency(testedCsr->getResidencyAllocations(), osContext);
+
+    EXPECT_EQ(1u, testedCsr->residency.size());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+    memoryManager->freeGraphicsMemory(graphicsAllocation2);
+}
+
+TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBufferObjectWhenTheyAreMadeResidentThenTwoBoIsPassedToExec) {
+    mock->ioctl_expected.primeFdToHandle = 2;
+    mock->ioctl_expected.gemClose = 2;
+    mock->ioctl_expected.gemWait = 2;
+
+    osHandle sharedHandle = 1u;
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false);
+    mock->outputHandle++;
+    auto graphicsAllocation2 = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false);
+
+    executionEnvironment->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->osInterface->get()->setDrm(mock);
+    auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
+    executionEnvironment->commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(testedCsr));
+
+    testedCsr->makeResident(*graphicsAllocation);
+    testedCsr->makeResident(*graphicsAllocation2);
+    EXPECT_EQ(2u, testedCsr->getResidencyAllocations().size());
+
+    OsContext osContext(executionEnvironment->osInterface.get(), 0u);
+    testedCsr->processResidency(testedCsr->getResidencyAllocations(), osContext);
+
+    EXPECT_EQ(2u, testedCsr->residency.size());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+    memoryManager->freeGraphicsMemory(graphicsAllocation2);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCreateAllocationFromNtHandleIsCalledThenReturnNullptr) {
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1));
     EXPECT_EQ(nullptr, graphicsAllocation);
@@ -1808,6 +1866,7 @@ TEST_F(DrmMemoryManagerTest, givenSharedAllocationWithSmallerThenRealSizeWhenCre
     EXPECT_EQ(1, lseekCalledCount);
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
+
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenItIsRequiredThenNewGraphicsAllocationIsCreated) {
     mock->ioctl_expected.gemUserptr = 3;
     mock->ioctl_expected.gemWait = 3;
