@@ -7,10 +7,24 @@
 
 #include "mock/mock_decoder.h"
 #include "runtime/helpers/array_count.h"
+#include "unit_tests/test_files/patch_list.h"
 
 #include "gmock/gmock.h"
 
 #include <fstream>
+
+SProgramBinaryHeader createProgramBinaryHeader(const uint32_t numberOfKernels, const uint32_t patchListSize) {
+    return SProgramBinaryHeader{MAGIC_CL, 0, 0, 0, numberOfKernels, 0, patchListSize};
+}
+
+SKernelBinaryHeaderCommon createKernelBinaryHeaderCommon(const uint32_t kernelNameSize, const uint32_t patchListSize) {
+    SKernelBinaryHeaderCommon kernelHeader = {};
+    kernelHeader.CheckSum = 0xFFFFFFFF;
+    kernelHeader.ShaderHashCode = 0xFFFFFFFFFFFFFFFF;
+    kernelHeader.KernelNameSize = kernelNameSize;
+    kernelHeader.PatchListSize = patchListSize;
+    return kernelHeader;
+}
 
 namespace OCLRT {
 TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
@@ -203,100 +217,67 @@ TEST(DecoderTests, GivenValidBinaryWhenReadingPatchTokensFromBinaryThenBinaryIsR
     EXPECT_EQ(s, out.str());
 }
 
-TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPatchTokensAreReadCorrectly) {
-    std::string binaryString;
+TEST(DecoderTests, GivenValidBinaryWithoutPatchTokensWhenProcessingBinaryThenBinaryIsReadCorrectly) {
+
+    auto programHeader = createProgramBinaryHeader(1, 0);
+    std::string kernelName("ExampleKernel");
+    auto kernelHeader = createKernelBinaryHeaderCommon(static_cast<uint32_t>(kernelName.size() + 1), 0);
 
     std::stringstream binarySS;
-    uint8_t byte;
-    uint32_t byte4;
-    uint64_t byte8;
+    binarySS.write(reinterpret_cast<char *>(&programHeader), sizeof(SProgramBinaryHeader));
+    binarySS.write(reinterpret_cast<char *>(&kernelHeader), sizeof(SKernelBinaryHeaderCommon));
+    binarySS.write(kernelName.c_str(), kernelHeader.KernelNameSize);
+
+    std::stringstream ptmFile;
+    MockDecoder decoder;
+    decoder.pathToPatch = "test_files/";
+    decoder.pathToDump = "non_existing_folder/";
+    decoder.parseTokens();
+
+    std::string binaryString = binarySS.str();
+    std::vector<unsigned char> binary(binaryString.begin(), binaryString.end());
+    auto ptr = reinterpret_cast<void *>(binary.data());
+    int retVal = decoder.processBinary(ptr, ptmFile);
+    EXPECT_EQ(0, retVal);
+
+    std::string expectedOutput = "ProgramBinaryHeader:\n\t4 Magic 1229870147\n\t4 Version 0\n\t4 Device 0\n\t4 GPUPointerSizeInBytes 0\n\t4 NumberOfKernels 1\n\t4 SteppingId 0\n\t4 PatchListSize 0\nKernel #0\nKernelBinaryHeader:\n\t4 CheckSum 4294967295\n\t8 ShaderHashCode 18446744073709551615\n\t4 KernelNameSize 14\n\t4 PatchListSize 0\n\t4 KernelHeapSize 0\n\t4 GeneralStateHeapSize 0\n\t4 DynamicStateHeapSize 0\n\t4 SurfaceStateHeapSize 0\n\t4 KernelUnpaddedSize 0\n\tKernelName ExampleKernel\n";
+    EXPECT_EQ(expectedOutput, ptmFile.str());
+}
+
+TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPatchTokensAreReadCorrectly) {
+    std::stringstream binarySS;
 
     //ProgramBinaryHeader
-    byte4 = 1229870147;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 1042;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 12;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 4;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 1;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 2;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 30;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    auto programHeader = createProgramBinaryHeader(1, 30);
+    binarySS.write(reinterpret_cast<const char *>(&programHeader), sizeof(SProgramBinaryHeader));
 
     //PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO
-    byte4 = 42;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 16;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 0;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 14;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte = 0x48;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x65;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x6c;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x6c;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x6f;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x20;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x77;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x6f;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x72;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x6c;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x64;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x21;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0xa;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte = 0x0;
-    binarySS.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
+    SPatchAllocateConstantMemorySurfaceProgramBinaryInfo patchAllocateConstantMemory;
+    patchAllocateConstantMemory.Token = 42;
+    patchAllocateConstantMemory.Size = 16;
+    patchAllocateConstantMemory.ConstantBufferIndex = 0;
+    patchAllocateConstantMemory.InlineDataSize = 14;
+    binarySS.write(reinterpret_cast<const char *>(&patchAllocateConstantMemory), sizeof(patchAllocateConstantMemory));
+    //InlineData
+    for (uint8_t i = 0; i < 14; ++i) {
+        binarySS.write(reinterpret_cast<char *>(&i), sizeof(uint8_t));
+    }
 
     //KernelBinaryHeader
-    byte4 = 242806820;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte8 = 2860607076011376830;
-    binarySS.write(reinterpret_cast<char *>(&byte8), sizeof(uint64_t));
-    byte4 = 12;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 12;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 0;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 0;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 0;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 0;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 0;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    std::string kernelName("ExampleKernel");
+    auto kernelHeader = createKernelBinaryHeaderCommon(static_cast<uint32_t>(kernelName.size() + 1), 12);
 
-    std::string kernelName("HelloWorld");
-    binarySS.write(kernelName.c_str(), 12);
+    binarySS.write(reinterpret_cast<const char *>(&kernelHeader), sizeof(SKernelBinaryHeaderCommon));
+    binarySS.write(kernelName.c_str(), kernelHeader.KernelNameSize);
 
     //PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD
-    byte4 = 19;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 12;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 0;
-    binarySS.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    binaryString = binarySS.str();
+    SPatchMediaInterfaceDescriptorLoad patchMediaInterfaceDescriptorLoad;
+    patchMediaInterfaceDescriptorLoad.Token = 19;
+    patchMediaInterfaceDescriptorLoad.Size = 12;
+    patchMediaInterfaceDescriptorLoad.InterfaceDescriptorDataOffset = 0;
+    binarySS.write(reinterpret_cast<const char *>(&patchMediaInterfaceDescriptorLoad), sizeof(SPatchMediaInterfaceDescriptorLoad));
 
+    std::string binaryString = binarySS.str();
     std::vector<char> binary(binaryString.begin(), binaryString.end());
     std::stringstream ptmFile;
     MockDecoder decoder;
@@ -308,7 +289,7 @@ TEST(DecoderTests, GivenValidBinaryWhenProcessingBinaryThenProgramAndKernelAndPa
     int retVal = decoder.processBinary(ptr, ptmFile);
     EXPECT_EQ(0, retVal);
 
-    std::string expectedOutput = "ProgramBinaryHeader:\n\t4 Magic 1229870147\n\t4 Version 1042\n\t4 Device 12\n\t4 GPUPointerSizeInBytes 4\n\t4 NumberOfKernels 1\n\t4 SteppingId 2\n\t4 PatchListSize 30\nPATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO:\n\t4 Token 42\n\t4 Size 16\n\t4 ConstantBufferIndex 0\n\t4 InlineDataSize 14\n\tHex 48 65 6c 6c 6f 20 77 6f 72 6c 64 21 a 0\nKernel #0\nKernelBinaryHeader:\n\t4 CheckSum 242806820\n\t8 ShaderHashCode 2860607076011376830\n\t4 KernelNameSize 12\n\t4 PatchListSize 12\n\t4 KernelHeapSize 0\n\t4 GeneralStateHeapSize 0\n\t4 DynamicStateHeapSize 0\n\t4 SurfaceStateHeapSize 0\n\t4 KernelUnpaddedSize 0\n\tKernelName HelloWorld\nPATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD:\n\t4 Token 19\n\t4 Size 12\n\t4 InterfaceDescriptorDataOffset 0\n";
+    std::string expectedOutput = "ProgramBinaryHeader:\n\t4 Magic 1229870147\n\t4 Version 0\n\t4 Device 0\n\t4 GPUPointerSizeInBytes 0\n\t4 NumberOfKernels 1\n\t4 SteppingId 0\n\t4 PatchListSize 30\nPATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO:\n\t4 Token 42\n\t4 Size 16\n\t4 ConstantBufferIndex 0\n\t4 InlineDataSize 14\n\tHex 0 1 2 3 4 5 6 7 8 9 a b c d\nKernel #0\nKernelBinaryHeader:\n\t4 CheckSum 4294967295\n\t8 ShaderHashCode 18446744073709551615\n\t4 KernelNameSize 14\n\t4 PatchListSize 12\n\t4 KernelHeapSize 0\n\t4 GeneralStateHeapSize 0\n\t4 DynamicStateHeapSize 0\n\t4 SurfaceStateHeapSize 0\n\t4 KernelUnpaddedSize 0\n\tKernelName ExampleKernel\nPATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD:\n\t4 Token 19\n\t4 Size 12\n\t4 InterfaceDescriptorDataOffset 0\n";
     EXPECT_EQ(expectedOutput, ptmFile.str());
 }
 } // namespace OCLRT

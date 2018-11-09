@@ -213,9 +213,11 @@ int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {
         }
         dumpField(ptr, v, ptmFile);
     }
-    if (patchListSize == 0 || numberOfKernels == 0) {
-        printf("Error! Couldn't process program header.\n");
-        return -1;
+    if (patchListSize == 0) {
+        printf("Warning! Program's patch list size is 0.\n");
+    }
+    if (numberOfKernels == 0) {
+        printf("Warning! Number of Kernels is 0.\n");
     }
 
     readPatchTokens(ptr, patchListSize, ptmFile);
@@ -249,10 +251,7 @@ void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
         dumpField(ptr, v, ptmFile);
     }
 
-    if (KernelPatchListSize == 0) {
-        printf("Error! KernelPatchListSize was 0.\n");
-        exit(1);
-    } else if (KernelNameSize == 0) {
+    if (KernelNameSize == 0) {
         printf("Error! KernelNameSize was 0.\n");
         exit(1);
     }
@@ -281,6 +280,9 @@ void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
     writeDataToFile(fileName.c_str(), ptr, SurfaceStateHeapSize);
     ptr = ptrOffset(ptr, SurfaceStateHeapSize);
 
+    if (KernelPatchListSize == 0) {
+        printf("Warning! Kernel's patch list size was 0.\n");
+    }
     readPatchTokens(ptr, KernelPatchListSize, ptmFile);
 }
 

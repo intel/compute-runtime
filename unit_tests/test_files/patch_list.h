@@ -6,7 +6,10 @@
  */
 
 // clang-format off
+#pragma once
+#pragma pack( push, 1 )
 
+const uint32_t MAGIC_CL = 0x494E5443; 
 struct SProgramBinaryHeader
 {
 	uint32_t   Magic;
@@ -21,6 +24,7 @@ struct SProgramBinaryHeader
 
     uint32_t   PatchListSize;
 };
+static_assert( sizeof( SProgramBinaryHeader ) == 28 , "The size of SProgramBinaryHeader is not what is expected" );
 
 struct SKernelBinaryHeader
 {
@@ -29,6 +33,7 @@ struct SKernelBinaryHeader
     uint32_t   KernelNameSize;
     uint32_t   PatchListSize;
 };
+static_assert( sizeof( SKernelBinaryHeader ) == 20 , "The size of SKernelBinaryHeader is not what is expected" );
 
 struct SKernelBinaryHeaderCommon :
        SKernelBinaryHeader
@@ -39,6 +44,7 @@ struct SKernelBinaryHeaderCommon :
     uint32_t   SurfaceStateHeapSize;
     uint32_t   KernelUnpaddedSize;
 };
+static_assert( sizeof( SKernelBinaryHeaderCommon ) == ( 20 + sizeof( SKernelBinaryHeader ) ) , "The size of SKernelBinaryHeaderCommon is not what is expected" );
 
 enum PATCH_TOKEN
 {  
@@ -53,7 +59,7 @@ enum PATCH_TOKEN
     PATCH_TOKEN_BINDING_TABLE_STATE,                            // 8	@SPatchBindingTableState@
     PATCH_TOKEN_ALLOCATE_SCRATCH_SURFACE,                       // 9	- (Unused)
     PATCH_TOKEN_ALLOCATE_SIP_SURFACE,                           // 10	@SPatchAllocateSystemThreadSurface@
-    PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT,           // 11   @SPatchGlobalMemoryObjectKernelArgument@ - OpenCL
+    PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT,          // 11   @SPatchGlobalMemoryObjectKernelArgument@ - OpenCL
     PATCH_TOKEN_IMAGE_MEMORY_OBJECT_KERNEL_ARGUMENT,            // 12   @SPatchImageMemoryObjectKernelArgument@	- OpenCL
     PATCH_TOKEN_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT,         // 13   - (Unused)	- OpenCL
     PATCH_TOKEN_ALLOCATE_SURFACE_WITH_INITIALIZATION,           // 14	- (Unused)
@@ -123,7 +129,7 @@ struct SPatchMediaInterfaceDescriptorLoad :
 {
     uint32_t   InterfaceDescriptorDataOffset;
 };
-
+static_assert( sizeof( SPatchMediaInterfaceDescriptorLoad ) == ( 4 + sizeof( SPatchItemHeader ) ) , "The size of SPatchMediaInterfaceDescriptorLoad is not what is expected" );
 struct SPatchStateSIP :
        SPatchItemHeader
 {
@@ -144,4 +150,6 @@ struct SPatchAllocateConstantMemorySurfaceProgramBinaryInfo :
     uint32_t   ConstantBufferIndex;
     uint32_t   InlineDataSize;
 };
+static_assert( sizeof( SPatchAllocateConstantMemorySurfaceProgramBinaryInfo ) == ( 8 + sizeof( SPatchItemHeader ) ) , "The size of SPatchAllocateConstantMemorySurfaceProgramBinaryInfo is not what is expected" );
+#pragma pack( pop )
 // clang-format on
