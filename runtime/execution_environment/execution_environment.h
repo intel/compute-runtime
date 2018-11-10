@@ -35,7 +35,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     ExecutionEnvironment();
     ~ExecutionEnvironment() override;
 
-    void initAubCenter();
+    MOCKABLE_VIRTUAL void initAubCenter(const HardwareInfo *hwInfo, bool localMemoryEnabled);
     void initGmm(const HardwareInfo *hwInfo);
     bool initializeCommandStreamReceiver(const HardwareInfo *pHwInfo, uint32_t deviceIndex);
     void initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory, uint32_t deviceIndex);

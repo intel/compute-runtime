@@ -6,6 +6,8 @@
 
 set(RUNTIME_SRCS_AUB
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_center.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_center.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/aub_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper.inl

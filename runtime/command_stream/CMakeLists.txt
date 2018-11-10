@@ -6,7 +6,6 @@
 
 set(RUNTIME_SRCS_COMMAND_STREAM
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/aub_center.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw.h

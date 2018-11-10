@@ -7,6 +7,7 @@
 
 #include "platform.h"
 #include "runtime/api/api.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "CL/cl_ext.h"
 #include "runtime/device/device.h"
@@ -163,6 +164,11 @@ bool Platform::initialize() {
         } else {
             return false;
         }
+    }
+
+    CommandStreamReceiverType csrType = this->devices[0]->getCommandStreamReceiver().getType();
+    if (csrType != CommandStreamReceiverType::CSR_HW) {
+        executionEnvironment->initAubCenter(&hwInfo[0], this->devices[0]->getEnableLocalMemory());
     }
 
     this->fillGlobalDispatchTable();

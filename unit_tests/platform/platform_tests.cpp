@@ -13,6 +13,7 @@
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/mocks/mock_async_event_handler.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -23,6 +24,17 @@ struct PlatformTest : public ::testing::Test {
     void SetUp() override { pPlatform.reset(new Platform()); }
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Platform> pPlatform;
+};
+
+struct MockPlatformWithMockExecutionEnvironment : public Platform {
+    MockExecutionEnvironment *mockExecutionEnvironment = nullptr;
+
+    MockPlatformWithMockExecutionEnvironment() {
+        this->executionEnvironment->decRefInternal();
+        mockExecutionEnvironment = new MockExecutionEnvironment;
+        executionEnvironment = mockExecutionEnvironment;
+        executionEnvironment->incRefInternal();
+    }
 };
 
 TEST_F(PlatformTest, getDevices) {
@@ -65,6 +77,25 @@ TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
 
 TEST_F(PlatformTest, hasAsyncEventsHandler) {
     EXPECT_NE(nullptr, pPlatform->getAsyncEventsHandler());
+}
+
+TEST(PlatformTestSimple, givenCsrHwTypeWhenPlatformIsInitializedThenInitAubCenterIsNotCalled) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.SetCommandStreamReceiver.set(0);
+    MockPlatformWithMockExecutionEnvironment platform;
+    bool ret = platform.initialize();
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(platform.mockExecutionEnvironment->initAubCenterCalled);
+}
+
+TEST(PlatformTestSimple, givenNotCsrHwTypeWhenPlatformIsInitializedThenInitAubCenterIsCalled) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    overrideCommandStreamReceiverCreation = true;
+    MockPlatformWithMockExecutionEnvironment platform;
+    bool ret = platform.initialize();
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(platform.mockExecutionEnvironment->initAubCenterCalled);
 }
 
 TEST(PlatformTestSimple, shutdownClosesAsyncEventHandlerThread) {

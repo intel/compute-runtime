@@ -35,7 +35,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
       subCaptureManager(std::make_unique<AubSubCaptureManager>(fileName)),
       standalone(standalone) {
 
-    executionEnvironment.initAubCenter();
+    executionEnvironment.initAubCenter(&this->peekHwInfo(), this->localMemoryEnabled);
     auto aubCenter = executionEnvironment.aubCenter.get();
     UNRECOVERABLE_IF(nullptr == aubCenter);
 

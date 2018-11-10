@@ -5,8 +5,8 @@
  *
  */
 
+#include "runtime/aub/aub_center.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/command_stream/aub_center.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
@@ -125,14 +125,14 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledMultip
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
     ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initAubCenter();
+    executionEnvironment.initAubCenter(platformDevices[0], false);
     auto currentAubCenter = executionEnvironment.aubCenter.get();
     EXPECT_NE(nullptr, currentAubCenter);
     auto currentAubStreamProvider = currentAubCenter->getStreamProvider();
     EXPECT_NE(nullptr, currentAubStreamProvider);
     auto currentAubFileStream = currentAubStreamProvider->getStream();
     EXPECT_NE(nullptr, currentAubFileStream);
-    executionEnvironment.initAubCenter();
+    executionEnvironment.initAubCenter(platformDevices[0], false);
     EXPECT_EQ(currentAubCenter, executionEnvironment.aubCenter.get());
     EXPECT_EQ(currentAubStreamProvider, executionEnvironment.aubCenter->getStreamProvider());
     EXPECT_EQ(currentAubFileStream, executionEnvironment.aubCenter->getStreamProvider()->getStream());
@@ -170,7 +170,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         MemoryMangerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct AubCenterMock : public DestructorCounted<AubCenter, 4> {
-        AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
+        AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false) {}
     };
     struct CommandStreamReceiverMock : public DestructorCounted<MockCommandStreamReceiver, 3> {
         CommandStreamReceiverMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}

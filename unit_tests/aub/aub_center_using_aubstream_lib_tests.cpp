@@ -14,10 +14,11 @@
 #include "gtest/gtest.h"
 using namespace OCLRT;
 
-TEST(AubCenter, GivenUseAubStreamDebugVariableNotSetWhenAubCenterIsCreatedThenAubCenterDoesNotCreateAubManager) {
+TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenAubCenterCreatesAubManager) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseAubStream.set(false);
+    DebugManager.flags.UseAubStream.set(true);
 
     MockAubCenter aubCenter(platformDevices[0], false);
-    EXPECT_EQ(nullptr, aubCenter.aubManager.get());
+
+    EXPECT_NE(nullptr, aubCenter.aubManager.get());
 }

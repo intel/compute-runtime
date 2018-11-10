@@ -11,20 +11,13 @@
 #include "runtime/memory_manager/physical_address_allocator.h"
 
 #include "third_party/aub_stream/headers/aub_manager.h"
-#include "third_party/aub_stream/headers/aub_streamer.h"
 
 namespace OCLRT {
+struct HardwareInfo;
 
 class AubCenter {
   public:
-    AubCenter() {
-        if (DebugManager.flags.UseAubStream.get()) {
-            std::string filename("aub.aub");
-            aubManager = std::make_unique<AubDump::AubManager>(1, false, filename);
-        }
-        addressMapper = std::make_unique<AddressMapper>();
-        streamProvider = std::make_unique<AubFileStreamProvider>();
-    }
+    AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled);
     virtual ~AubCenter() = default;
 
     void initPhysicalAddressAllocator(PhysicalAddressAllocator *pPhysicalAddressAllocator) {
