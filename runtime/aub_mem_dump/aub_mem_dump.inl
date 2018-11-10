@@ -157,19 +157,20 @@ uint64_t AubPageTableHelper32<Traits>::reserveAddressPPGTT(typename Traits::Stre
     // Process the PD entries
     bool writePDE = true;
     if (writePDE) {
-        auto start_address = BaseClass::getPDEAddress(startPDE);
+        auto startAddress = BaseClass::getPDEAddress(startPDE);
+        auto addressSpace = aubHelper.getMemTraceForPdEntry();
+        auto hint = aubHelper.getDataHintForPdEntry();
 
-        stream.writeMemoryWriteHeader(start_address, numPDEs * sizeof(uint64_t),
-                                      aubHelper.getMemTraceForPdEntry(),
-                                      aubHelper.getDataHintForPdEntry());
+        stream.writeMemoryWriteHeader(startAddress, numPDEs * sizeof(uint64_t),
+                                      addressSpace, hint);
 
         auto currPDE = startPDE;
         auto physPage = BaseClass::getPTEAddress(startPTE) & g_pageMask;
         while (currPDE <= endPDE) {
             auto pde = physPage | OCLRT::AubHelper::getPTEntryBits(additionalBits);
 
-            stream.writePTE(start_address, pde);
-            start_address += sizeof(pde);
+            stream.writePTE(startAddress, pde, addressSpace);
+            startAddress += sizeof(pde);
 
             physPage += 4096;
             currPDE++;
@@ -179,19 +180,20 @@ uint64_t AubPageTableHelper32<Traits>::reserveAddressPPGTT(typename Traits::Stre
     // Process the PT entries
     bool writePTE = true;
     if (writePTE) {
-        auto start_address = BaseClass::getPTEAddress(startPTE);
+        auto startAddress = BaseClass::getPTEAddress(startPTE);
+        auto addressSpace = aubHelper.getMemTraceForPtEntry();
+        auto hint = aubHelper.getDataHintForPtEntry();
 
-        stream.writeMemoryWriteHeader(start_address, numPTEs * sizeof(uint64_t),
-                                      aubHelper.getMemTraceForPtEntry(),
-                                      aubHelper.getDataHintForPtEntry());
+        stream.writeMemoryWriteHeader(startAddress, numPTEs * sizeof(uint64_t),
+                                      addressSpace, hint);
 
         auto currPTE = startPTE;
         auto physPage = physAddress & g_pageMask;
         while (currPTE <= endPTE) {
             auto pte = physPage | additionalBits;
 
-            stream.writePTE(start_address, pte);
-            start_address += sizeof(pte);
+            stream.writePTE(startAddress, pte, addressSpace);
+            startAddress += sizeof(pte);
 
             physPage += 4096;
             currPTE++;
@@ -227,19 +229,20 @@ uint64_t AubPageTableHelper64<Traits>::reserveAddressPPGTT(typename Traits::Stre
     // Process the PML4 entries
     bool writePML4 = true;
     if (writePML4) {
-        auto start_address = getPML4Address(startPML4);
+        auto startAddress = getPML4Address(startPML4);
+        auto addressSpace = aubHelper.getMemTraceForPml4Entry();
+        auto hint = aubHelper.getDataHintForPml4Entry();
 
-        stream.writeMemoryWriteHeader(start_address, numPML4s * sizeof(uint64_t),
-                                      aubHelper.getMemTraceForPml4Entry(),
-                                      aubHelper.getDataHintForPml4Entry());
+        stream.writeMemoryWriteHeader(startAddress, numPML4s * sizeof(uint64_t),
+                                      addressSpace, hint);
 
         auto currPML4 = startPML4;
         auto physPage = BaseClass::getPDPAddress(startPDP) & g_pageMask;
         while (currPML4 <= endPML4) {
             auto pml4 = physPage | OCLRT::AubHelper::getPTEntryBits(additionalBits);
 
-            stream.writePTE(start_address, pml4);
-            start_address += sizeof(pml4);
+            stream.writePTE(startAddress, pml4, addressSpace);
+            startAddress += sizeof(pml4);
 
             physPage += 4096;
             currPML4++;
@@ -249,19 +252,20 @@ uint64_t AubPageTableHelper64<Traits>::reserveAddressPPGTT(typename Traits::Stre
     // Process the PDP entries
     bool writePDPE = true;
     if (writePDPE) {
-        auto start_address = BaseClass::getPDPAddress(startPDP);
+        auto startAddress = BaseClass::getPDPAddress(startPDP);
+        auto addressSpace = aubHelper.getMemTraceForPdpEntry();
+        auto hint = aubHelper.getDataHintForPdpEntry();
 
-        stream.writeMemoryWriteHeader(start_address, numPDPs * sizeof(uint64_t),
-                                      aubHelper.getMemTraceForPdpEntry(),
-                                      aubHelper.getDataHintForPdpEntry());
+        stream.writeMemoryWriteHeader(startAddress, numPDPs * sizeof(uint64_t),
+                                      addressSpace, hint);
 
         auto currPDP = startPDP;
         auto physPage = BaseClass::getPDEAddress(startPDE) & g_pageMask;
         while (currPDP <= endPDP) {
             auto pdp = physPage | OCLRT::AubHelper::getPTEntryBits(additionalBits);
 
-            stream.writePTE(start_address, pdp);
-            start_address += sizeof(pdp);
+            stream.writePTE(startAddress, pdp, addressSpace);
+            startAddress += sizeof(pdp);
 
             physPage += 4096;
             currPDP++;
@@ -271,19 +275,20 @@ uint64_t AubPageTableHelper64<Traits>::reserveAddressPPGTT(typename Traits::Stre
     // Process the PD entries
     bool writePDE = true;
     if (writePDE) {
-        auto start_address = BaseClass::getPDEAddress(startPDE);
+        auto startAddress = BaseClass::getPDEAddress(startPDE);
+        auto addressSpace = aubHelper.getMemTraceForPdEntry();
+        auto hint = aubHelper.getDataHintForPdEntry();
 
-        stream.writeMemoryWriteHeader(start_address, numPDEs * sizeof(uint64_t),
-                                      aubHelper.getMemTraceForPdEntry(),
-                                      aubHelper.getDataHintForPdEntry());
+        stream.writeMemoryWriteHeader(startAddress, numPDEs * sizeof(uint64_t),
+                                      addressSpace, hint);
 
         auto currPDE = startPDE;
         auto physPage = BaseClass::getPTEAddress(startPTE) & g_pageMask;
         while (currPDE <= endPDE) {
             auto pde = physPage | OCLRT::AubHelper::getPTEntryBits(additionalBits);
 
-            stream.writePTE(start_address, pde);
-            start_address += sizeof(pde);
+            stream.writePTE(startAddress, pde, addressSpace);
+            startAddress += sizeof(pde);
 
             physPage += 4096;
             currPDE++;
@@ -293,20 +298,21 @@ uint64_t AubPageTableHelper64<Traits>::reserveAddressPPGTT(typename Traits::Stre
     // Process the PT entries
     bool writePTE = true;
     if (writePTE) {
-        auto start_address = BaseClass::getPTEAddress(startPTE);
+        auto startAddress = BaseClass::getPTEAddress(startPTE);
+        auto addressSpace = aubHelper.getMemTraceForPtEntry();
+        auto hint = aubHelper.getDataHintForPtEntry();
 
-        stream.writeMemoryWriteHeader(start_address, numPTEs * sizeof(uint64_t),
-                                      aubHelper.getMemTraceForPtEntry(),
-                                      aubHelper.getDataHintForPtEntry());
+        stream.writeMemoryWriteHeader(startAddress, numPTEs * sizeof(uint64_t),
+                                      addressSpace, hint);
 
         auto currPTE = startPTE;
         auto physPage = physAddress & g_pageMask;
         while (currPTE <= endPTE) {
             auto pte = physPage | additionalBits;
 
-            stream.writePTE(start_address, pte);
-            start_address += sizeof(pte);
-            OCLRT::AubHelper::checkPTEAddress(start_address);
+            stream.writePTE(startAddress, pte, addressSpace);
+            startAddress += sizeof(pte);
+            OCLRT::AubHelper::checkPTEAddress(startAddress);
 
             physPage += 4096;
             currPTE++;

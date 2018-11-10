@@ -140,7 +140,7 @@ void AubFileStream::writeGTT(uint32_t gttOffset, uint64_t entry) {
     write(reinterpret_cast<char *>(&entry), sizeof(entry));
 }
 
-void AubFileStream::writePTE(uint64_t physAddress, uint64_t entry) {
+void AubFileStream::writePTE(uint64_t physAddress, uint64_t entry, uint32_t addressSpace) {
     write(reinterpret_cast<char *>(&entry), sizeof(entry));
 }
 

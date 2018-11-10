@@ -224,7 +224,7 @@ bool TbxSocketsImp::readMemory(uint64_t addrOffset, void *data, size_t size) {
     return success;
 }
 
-bool TbxSocketsImp::writeMemory(uint64_t physAddr, const void *data, size_t size) {
+bool TbxSocketsImp::writeMemory(uint64_t physAddr, const void *data, size_t size, uint32_t type) {
     HAS_MSG cmd;
     memset(&cmd, 0, sizeof(cmd));
     cmd.hdr.msg_type = HAS_WRITE_DATA_REQ_TYPE;
@@ -238,6 +238,7 @@ bool TbxSocketsImp::writeMemory(uint64_t physAddr, const void *data, size_t size
     cmd.u.write_req.take_ownership = 0;
     cmd.u.write_req.frontdoor = 0;
     cmd.u.write_req.cacheline_disable = cmd.u.write_req.frontdoor;
+    cmd.u.write_req.memory_type = type;
 
     bool success;
     do {

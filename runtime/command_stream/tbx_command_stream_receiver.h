@@ -22,6 +22,7 @@ class TbxSockets;
 class ExecutionEnvironment;
 
 class TbxStream : public AubMemDump::AubStream {
+  protected:
     TbxSockets *socket = nullptr;
 
   public:
@@ -37,7 +38,7 @@ class TbxStream : public AubMemDump::AubStream {
     void writeMemory(uint64_t physAddress, const void *memory, size_t size, uint32_t addressSpace, uint32_t hint) override;
     void writeMemoryWriteHeader(uint64_t physAddress, size_t size, uint32_t addressSpace, uint32_t hint) override;
     void writeGTT(uint32_t gttOffset, uint64_t entry) override;
-    void writePTE(uint64_t physAddress, uint64_t entry) override;
+    void writePTE(uint64_t physAddress, uint64_t entry, uint32_t addressSpace) override;
     void writeMMIOImpl(uint32_t offset, uint32_t value) override;
     void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) override;
     void readMemory(uint64_t physAddress, void *memory, size_t size);

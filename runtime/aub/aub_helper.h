@@ -27,6 +27,7 @@ class AubHelper : public NonCopyableOrMovableClass {
     static int getMemTrace(uint64_t pdEntryBits);
     static uint64_t getPTEntryBits(uint64_t pdEntryBits);
     static void checkPTEAddress(uint64_t address);
+    static uint32_t getMemType(uint32_t addressSpace);
 
     virtual int getDataHintForPml4Entry() const = 0;
     virtual int getDataHintForPdpEntry() const = 0;

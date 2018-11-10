@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/aub/aub_helper.h"
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -36,15 +37,17 @@ bool TbxStream::init(uint32_t stepping, uint32_t device) {
 }
 
 void TbxStream::writeMemory(uint64_t addr, const void *memory, size_t size, uint32_t addressSpace, uint32_t hint) {
-    socket->writeMemory(addr, memory, size);
+    uint32_t type = AubHelper::getMemType(addressSpace);
+    socket->writeMemory(addr, memory, size, type);
 }
 
 void TbxStream::writeGTT(uint32_t gttOffset, uint64_t entry) {
     socket->writeGTT(gttOffset, entry);
 }
 
-void TbxStream::writePTE(uint64_t physAddress, uint64_t entry) {
-    socket->writeMemory(physAddress, &entry, sizeof(entry));
+void TbxStream::writePTE(uint64_t physAddress, uint64_t entry, uint32_t addressSpace) {
+    uint32_t type = AubHelper::getMemType(addressSpace);
+    socket->writeMemory(physAddress, &entry, sizeof(entry), type);
 }
 
 void TbxStream::writeMemoryWriteHeader(uint64_t physAddress, size_t size, uint32_t addressSpace, uint32_t hint) {

@@ -75,13 +75,6 @@ const AubMemDump::LrcaHelper &TbxCommandStreamReceiverHw<GfxFamily>::getCsTraits
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::initGlobalMMIO() {
-    for (auto &mmioPair : AUBFamilyMapper<GfxFamily>::globalMMIO) {
-        tbxStream.writeMMIO(mmioPair.first, mmioPair.second);
-    }
-}
-
-template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineType engineType) {
     auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[engineType];
 
@@ -96,7 +89,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
     auto mmioBase = getCsTraits(engineType).mmioBase;
     auto &engineInfo = engineInfoTable[engineType];
 
-    initGlobalMMIO();
+    this->initGlobalMMIO();
     initEngineMMIO(engineType);
     this->initAdditionalMMIO();
 

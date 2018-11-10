@@ -107,13 +107,6 @@ size_t AUBCommandStreamReceiverHw<GfxFamily>::getEngineIndex(EngineType engineTy
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::initGlobalMMIO() {
-    for (auto &mmioPair : AUBFamilyMapper<GfxFamily>::globalMMIO) {
-        stream->writeMMIO(mmioPair.first, mmioPair.second);
-    }
-}
-
-template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineInstanceT engineInstance) {
     auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[engineInstance.type];
 
@@ -182,7 +175,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex)
     auto mmioBase = getCsTraits(engineInstance).mmioBase;
     auto &engineInfo = engineInfoTable[engineIndex];
 
-    initGlobalMMIO();
+    this->initGlobalMMIO();
     initEngineMMIO(engineInstance);
     this->initAdditionalMMIO();
 
@@ -811,10 +804,5 @@ int AUBCommandStreamReceiverHw<GfxFamily>::getAddressSpaceFromPTEBits(uint64_t e
 template <typename GfxFamily>
 uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getMemoryBankForGtt() const {
     return MemoryBanks::getBank(this->deviceIndex);
-}
-
-template <typename GfxFamily>
-PhysicalAddressAllocator *CommandStreamReceiverSimulatedCommonHw<GfxFamily>::createPhysicalAddressAllocator() {
-    return new PhysicalAddressAllocator();
 }
 } // namespace OCLRT

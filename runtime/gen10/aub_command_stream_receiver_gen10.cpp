@@ -7,7 +7,6 @@
 
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.inl"
-#include "runtime/command_stream/command_stream_receiver_simulated_common_hw.inl"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/array_count.h"
 
@@ -24,5 +23,4 @@ void populateFactoryTable<AUBCommandStreamReceiverHw<Family>>() {
 }
 
 template class AUBCommandStreamReceiverHw<Family>;
-template class CommandStreamReceiverSimulatedCommonHw<Family>;
 } // namespace OCLRT

@@ -23,7 +23,7 @@ class TbxSocketsImp : public TbxSockets {
     bool writeGTT(uint32_t gttOffset, uint64_t entry) override;
 
     bool readMemory(uint64_t offset, void *data, size_t size) override;
-    bool writeMemory(uint64_t offset, const void *data, size_t size) override;
+    bool writeMemory(uint64_t offset, const void *data, size_t size, uint32_t type) override;
 
     bool readMMIO(uint32_t offset, uint32_t *data) override;
     bool writeMMIO(uint32_t offset, uint32_t data) override;

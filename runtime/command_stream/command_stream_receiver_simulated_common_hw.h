@@ -24,6 +24,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     uint64_t getGTTBits() const {
         return 0u;
     }
+    void initGlobalMMIO();
     void initAdditionalMMIO();
 
     AubMemDump::AubStream *stream;

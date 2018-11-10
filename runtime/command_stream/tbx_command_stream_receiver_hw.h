@@ -45,7 +45,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     // Family specific version
     void submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor);
     void pollForCompletion(EngineType engineType);
-    void initGlobalMMIO();
     void initEngineMMIO(EngineType engineType);
 
     static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);
