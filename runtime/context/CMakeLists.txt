@@ -7,6 +7,7 @@
 set(RUNTIME_SRCS_CONTEXT
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/context.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/context_extra.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/context.h
   ${CMAKE_CURRENT_SOURCE_DIR}/context.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics.cpp

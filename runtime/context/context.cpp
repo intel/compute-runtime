@@ -110,6 +110,7 @@ bool Context::createImpl(const cl_context_properties *properties,
             cl_platform_id pid = platform();
             if (reinterpret_cast<cl_platform_id>(propertyValue) != pid) {
                 errcodeRet = CL_INVALID_PLATFORM;
+                return false;
             }
         } break;
         case CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL:
@@ -120,12 +121,12 @@ bool Context::createImpl(const cl_context_properties *properties,
             break;
         default:
             if (!sharingBuilder->processProperties(propertyType, propertyValue, errcodeRet)) {
-                errcodeRet = CL_INVALID_PROPERTY;
+                errcodeRet = processExtraProperties(propertyType, propertyValue);
+            }
+            if (errcodeRet != CL_SUCCESS) {
+                return false;
             }
             break;
-        }
-        if (errcodeRet != CL_SUCCESS) {
-            return false;
         }
     }
 
