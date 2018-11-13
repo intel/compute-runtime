@@ -83,8 +83,15 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     void *srcPtr = const_cast<void *>(ptr);
+    void *alignedSrcPtr = srcPtr;
+    size_t srcPtrOffset = 0;
 
-    HostPtrSurface hostPtrSurf(srcPtr, size, true);
+    if (!isAligned<4>(srcPtr)) {
+        alignedSrcPtr = alignDown(srcPtr, 4);
+        srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
+    }
+
+    HostPtrSurface hostPtrSurf(alignedSrcPtr, size + srcPtrOffset, true);
     MemObjSurface bufferSurf(buffer);
     Surface *surfaces[] = {&bufferSurf, &hostPtrSurf};
 
@@ -93,11 +100,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
         if (!status) {
             return CL_OUT_OF_RESOURCES;
         }
-        srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddressToPatch());
+
+        hostPtrSurf.getAllocation()->allocationOffset = srcPtrOffset;
     }
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
-    dc.srcPtr = srcPtr;
+    dc.srcPtr = alignedSrcPtr;
+    dc.srcOffset = {srcPtrOffset, 0, 0};
     dc.dstMemObj = buffer;
     dc.dstOffset = {offset, 0, 0};
     dc.size = {size, 0, 0};

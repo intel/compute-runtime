@@ -243,14 +243,14 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispa
         } else if (operationParams.srcMemObj) {
             kernelSplit1DBuilder.setArg(0, operationParams.srcMemObj);
         } else {
-            kernelSplit1DBuilder.setArgSvm(0, operationParams.size.x, operationParams.srcPtr, nullptr, CL_MEM_READ_ONLY);
+            kernelSplit1DBuilder.setArgSvm(0, operationParams.size.x + operationParams.srcOffset.x, operationParams.srcPtr, nullptr, CL_MEM_READ_ONLY);
         }
         if (operationParams.dstSvmAlloc) {
             kernelSplit1DBuilder.setArgSvmAlloc(1, operationParams.dstPtr, operationParams.dstSvmAlloc);
         } else if (operationParams.dstMemObj) {
             kernelSplit1DBuilder.setArg(1, operationParams.dstMemObj);
         } else {
-            kernelSplit1DBuilder.setArgSvm(1, operationParams.size.x, operationParams.dstPtr);
+            kernelSplit1DBuilder.setArgSvm(1, operationParams.size.x + operationParams.dstOffset.x, operationParams.dstPtr);
         }
 
         // Set-up srcOffset

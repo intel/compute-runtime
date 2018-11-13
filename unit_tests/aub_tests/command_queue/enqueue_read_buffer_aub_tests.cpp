@@ -143,3 +143,70 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(dstGpuAddress, srcMemory, sizeof(dstMemory));
 }
+
+struct ReadBufferUnalignedHw
+    : public CommandEnqueueAUBFixture,
+      public ::testing::WithParamInterface<std::tuple<size_t, size_t>>,
+      public ::testing::Test {
+
+    void SetUp() override {
+        CommandEnqueueAUBFixture::SetUp();
+    }
+
+    void TearDown() override {
+        CommandEnqueueAUBFixture::TearDown();
+    }
+};
+
+typedef ReadBufferUnalignedHw AUBReadBufferUnalignedBytes;
+
+HWTEST_P(AUBReadBufferUnalignedBytes, simple) {
+    MockContext context(&pCmdQ->getDevice());
+
+    char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const auto bufferSize = sizeof(srcMemory);
+    char dstMemory[bufferSize] = {0};
+
+    auto retVal = CL_INVALID_VALUE;
+
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(
+        &context,
+        CL_MEM_USE_HOST_PTR,
+        bufferSize,
+        srcMemory,
+        retVal));
+    ASSERT_NE(nullptr, buffer);
+
+    buffer->forceDisallowCPUCopy = true;
+
+    // Get test params
+    size_t offset = std::get<0>(GetParam());
+    size_t size = std::get<1>(GetParam());
+
+    // Map destination memory to GPU
+    GraphicsAllocation *allocation = createResidentAllocationAndStoreItInCsr(dstMemory, bufferSize);
+    auto dstMemoryGPUPtr = reinterpret_cast<char *>(allocation->getGpuAddress());
+
+    // Do unaligned read
+    retVal = pCmdQ->enqueueReadBuffer(
+        buffer.get(),
+        CL_TRUE,
+        offset,
+        size,
+        ptrOffset(dstMemory, offset),
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    // Check the memory
+    AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), ptrOffset(srcMemory, offset), size);
+}
+
+INSTANTIATE_TEST_CASE_P(AUBReadBufferUnalignedBytes_simple,
+                        AUBReadBufferUnalignedBytes,
+                        ::testing::Combine(
+                            ::testing::Values( // offset
+                                0, 1, 2, 3),
+                            ::testing::Values( // size
+                                4, 3, 2, 1)));
