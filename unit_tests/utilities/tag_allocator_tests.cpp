@@ -335,3 +335,8 @@ TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTags
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
     EXPECT_FALSE(tagAllocator.getFreeTags().peekIsEmpty());
 }
+
+TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetTimestampTagBufferAllocationType) {
+    MockTagAllocator mockAllocator(memoryManager, 1, 1);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER, mockAllocator.getGraphicsAllocation()->getAllocationType());
+}

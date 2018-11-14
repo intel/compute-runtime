@@ -126,6 +126,7 @@ class TagAllocator {
         size_t allocationSizeRequired = tagCount * tagSize;
 
         GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(allocationSizeRequired);
+        graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER);
         gfxAllocations.push_back(graphicsAllocation);
 
         uintptr_t Size = graphicsAllocation->getUnderlyingBufferSize();

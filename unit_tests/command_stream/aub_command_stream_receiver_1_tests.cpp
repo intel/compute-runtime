@@ -601,7 +601,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
         GraphicsAllocation::AllocationType::BUFFER,
         GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
         GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
-        GraphicsAllocation::AllocationType::IMAGE};
+        GraphicsAllocation::AllocationType::IMAGE,
+        GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER};
 
     for (size_t i = 0; i < arrayCount(onlyOneTimeAubWritableTypes); i++) {
         gfxAllocation->setAubWritable(true);

@@ -158,7 +158,7 @@ INSTANTIATE_TEST_CASE_P(Allow32BitAnd64kbPagesTypes,
 
 static const GraphicsAllocation::AllocationType allocationTypesWith32BitAnd64KbPagesNotAllowed[] = {GraphicsAllocation::AllocationType::COMMAND_BUFFER,
                                                                                                     GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP,
-                                                                                                    GraphicsAllocation::AllocationType::EVENT_TAG_BUFFER,
+                                                                                                    GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER,
                                                                                                     GraphicsAllocation::AllocationType::IMAGE,
                                                                                                     GraphicsAllocation::AllocationType::INSTRUCTION_HEAP,
                                                                                                     GraphicsAllocation::AllocationType::SHARED_RESOURCE};

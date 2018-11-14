@@ -60,7 +60,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         LINEAR_STREAM,
         FILL_PATTERN,
         PIPE,
-        EVENT_TAG_BUFFER,
+        TIMESTAMP_TAG_BUFFER,
         COMMAND_BUFFER,
         PRINTF_SURFACE,
         GLOBAL_SURFACE,

@@ -19,6 +19,7 @@ class AubHelper : public NonCopyableOrMovableClass {
         case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
         case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
         case GraphicsAllocation::AllocationType::IMAGE:
+        case GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER:
             return true;
         default:
             return false;
