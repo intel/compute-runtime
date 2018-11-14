@@ -45,6 +45,7 @@ struct DispatchFlags {
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
     EventsRequest *outOfDeviceDependencies = nullptr;
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
+    bool specialPipelineSelectMode = false;
 };
 
 struct CsrSizeRequestFlags {
@@ -54,5 +55,6 @@ struct CsrSizeRequestFlags {
     bool mediaSamplerConfigChanged = false;
     bool hasSharedHandles = false;
     bool numGrfRequiredChanged = false;
+    bool specialPipelineSelectModeChanged = false;
 };
 } // namespace OCLRT

@@ -32,7 +32,7 @@ uint32_t PreambleHelper<BDWFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 }
 
 template <>
-void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStream, bool mediaSamplerRequired) {
+void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStream, const DispatchFlags &dispatchFlags) {
     typedef typename BDWFamily::PIPELINE_SELECT PIPELINE_SELECT;
     auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
     *pCmd = PIPELINE_SELECT::sInit();

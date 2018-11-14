@@ -158,7 +158,7 @@ uint32_t PreambleHelper<GENX>::getL3Config(const HardwareInfo &hwInfo, bool useS
 }
 
 template <>
-void PreambleHelper<GENX>::programPipelineSelect(LinearStream *pCommandStream, bool mediaSamplerRequired) {
+void PreambleHelper<GENX>::programPipelineSelect(LinearStream *pCommandStream, const DispatchFlags &dispatchFlags) {
 }
 
 template <>

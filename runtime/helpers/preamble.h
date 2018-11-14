@@ -7,14 +7,15 @@
 
 #pragma once
 #include "igfxfmid.h"
-#include "stdint.h"
 #include "runtime/helpers/pipeline_select_helper.h"
 #include <cstddef>
+#include <cstdint>
 
 namespace OCLRT {
 
 struct HardwareInfo;
 class Device;
+struct DispatchFlags;
 class GraphicsAllocation;
 class LinearStream;
 
@@ -26,7 +27,7 @@ struct PreambleHelper {
     static constexpr size_t getScratchSpaceOffsetFor64bit() { return 4096; }
 
     static void programL3(LinearStream *pCommandStream, uint32_t l3Config);
-    static void programPipelineSelect(LinearStream *pCommandStream, bool mediaSamplerRequired);
+    static void programPipelineSelect(LinearStream *pCommandStream, const DispatchFlags &dispatchFlags);
     static uint32_t getDefaultThreadArbitrationPolicy();
     static void programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy);
     static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr);

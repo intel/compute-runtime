@@ -276,15 +276,16 @@ class Kernel : public BaseObject<_cl_kernel> {
     const void *getKernelArg(uint32_t argIndex) const;
     const SimpleKernelArgInfo &getKernelArgInfo(uint32_t argIndex) const;
 
-    bool getAllowNonUniform() { return program->getAllowNonUniform(); }
-    bool isVmeKernel() { return kernelInfo.isVmeWorkload; };
+    bool getAllowNonUniform() const { return program->getAllowNonUniform(); }
+    bool isVmeKernel() const { return kernelInfo.isVmeWorkload; }
+    bool requiresSpecialPipelineSelectMode() const { return specialPipelineSelectMode; }
 
     //residency for kernel surfaces
     MOCKABLE_VIRTUAL void makeResident(CommandStreamReceiver &commandStreamReceiver);
     MOCKABLE_VIRTUAL void getResidency(std::vector<Surface *> &dst);
     bool requiresCoherency();
     void resetSharedObjectsPatchAddresses();
-    bool isUsingSharedObjArgs() { return usingSharedObjArgs; }
+    bool isUsingSharedObjArgs() const { return usingSharedObjArgs; }
 
     bool hasPrintfOutput() const;
 
@@ -490,5 +491,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     std::vector<PatchInfoData> patchInfoDataList;
     std::unique_ptr<ImageTransformer> imageTransformer;
+
+    bool specialPipelineSelectMode = false;
 };
 } // namespace OCLRT

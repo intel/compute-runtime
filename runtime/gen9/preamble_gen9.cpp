@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/command_stream/csr_definitions.h"
 #include "runtime/helpers/preamble.inl"
 
 namespace OCLRT {
@@ -27,7 +28,7 @@ uint32_t PreambleHelper<SKLFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 }
 
 template <>
-void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStream, bool mediaSamplerRequired) {
+void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStream, const DispatchFlags &dispatchFlags) {
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
 
     auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
@@ -36,7 +37,7 @@ void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStre
     auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
     pCmd->setMaskBits(mask);
     pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-    pCmd->setMediaSamplerDopClockGateEnable(!mediaSamplerRequired);
+    pCmd->setMediaSamplerDopClockGateEnable(!dispatchFlags.mediaSamplerRequired);
 }
 
 template <>

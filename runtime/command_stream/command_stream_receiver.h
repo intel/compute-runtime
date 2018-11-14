@@ -218,6 +218,7 @@ class CommandStreamReceiver {
     bool stallingPipeControlOnNextFlushRequired = false;
     bool timestampPacketWriteEnabled = false;
     bool nTo1SubmissionModelEnabled = false;
+    bool lastSpecialPipelineSelectMode = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);

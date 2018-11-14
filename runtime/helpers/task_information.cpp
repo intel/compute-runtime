@@ -206,6 +206,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         dispatchFlags.outOfDeviceDependencies = &eventsRequest;
     }
+    dispatchFlags.specialPipelineSelectMode = kernel->requiresSpecialPipelineSelectMode();
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 

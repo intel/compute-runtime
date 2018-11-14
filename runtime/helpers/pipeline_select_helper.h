@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "stdint.h"
+#include <cstdint>
 
 namespace OCLRT {
 const uint32_t pipelineSelectEnablePipelineSelectMaskBits = 0x3;

@@ -526,6 +526,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     auto mediaSamplerRequired = false;
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
+    auto specialPipelineSelectMode = false;
     Kernel *kernel = nullptr;
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {
@@ -538,6 +539,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         mediaSamplerRequired |= kernel->isVmeKernel();
         auto numGrfRequiredByKernel = kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired;
         numGrfRequired = std::max(numGrfRequired, numGrfRequiredByKernel);
+        specialPipelineSelectMode |= kernel->requiresSpecialPipelineSelectMode();
     }
 
     if (mediaSamplerRequired) {
@@ -595,6 +597,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         dispatchFlags.outOfDeviceDependencies = &eventsRequest;
     }
     dispatchFlags.numGrfRequired = numGrfRequired;
+    dispatchFlags.specialPipelineSelectMode = specialPipelineSelectMode;
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
     if (gtpinIsGTPinInitialized()) {

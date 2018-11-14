@@ -5,8 +5,9 @@
  *
  */
 
-#include "runtime/helpers/preamble.inl"
 #include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/command_stream/csr_definitions.h"
+#include "runtime/helpers/preamble.inl"
 
 namespace OCLRT {
 
@@ -67,7 +68,7 @@ void PreambleHelper<CNLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComman
 }
 
 template <>
-void PreambleHelper<CNLFamily>::programPipelineSelect(LinearStream *pCommandStream, bool mediaSamplerRequired) {
+void PreambleHelper<CNLFamily>::programPipelineSelect(LinearStream *pCommandStream, const DispatchFlags &dispatchFlags) {
     typedef typename CNLFamily::PIPELINE_SELECT PIPELINE_SELECT;
 
     auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
@@ -76,7 +77,7 @@ void PreambleHelper<CNLFamily>::programPipelineSelect(LinearStream *pCommandStre
     auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
     pCmd->setMaskBits(mask);
     pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-    pCmd->setMediaSamplerDopClockGateEnable(!mediaSamplerRequired);
+    pCmd->setMediaSamplerDopClockGateEnable(!dispatchFlags.mediaSamplerRequired);
 }
 
 template struct PreambleHelper<CNLFamily>;
