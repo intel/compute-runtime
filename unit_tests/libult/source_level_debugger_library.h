@@ -11,6 +11,8 @@
 
 #include <string>
 
+#define IGFXDBG_CURRENT_VERSION 4
+
 struct DebuggerLibraryInterceptor {
     GfxDbgNewDeviceData newDeviceArgIn;
     GfxDbgSourceCode sourceCodeArgIn;

@@ -4,19 +4,11 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(SOURCE_LEVEL_DEBUGGER_HEADERS_DIR)
-  set(RUNTIME_SRCS_SOURCE_LEVEL_DEBUGGER
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger.h
-  )
-else()
-  set(RUNTIME_SRCS_SOURCE_LEVEL_DEBUGGER
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger_stubs.cpp
-  )
-endif()
+set(RUNTIME_SRCS_SOURCE_LEVEL_DEBUGGER
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger.h
+)
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_SOURCE_LEVEL_DEBUGGER})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_SOURCE_LEVEL_DEBUGGER ${RUNTIME_SRCS_SOURCE_LEVEL_DEBUGGER})

@@ -36,5 +36,10 @@ _Currently no plan to implement. If interested in these features, please use SRB
 * CL_MEM_SVM_FINE_GRAIN_BUFFER (if using unpatched i915) - _patch is WIP_
 * Creation of OpenCL context spanning both CPU and GPU devices is currently not supported
 
+### External components
+
+* Driver contains header used in Source Level Debugger from Intel SDK for OpenCL version - 7.0.0.2568x64,
+from: https://software.intel.com/en-us/intel-opencl , path to header in SDK: "include/"
+
 ___(*) Other names and brands my be claimed as property of others.___
 

@@ -13,6 +13,8 @@
 #include "runtime/os_interface/os_interface.h"
 #include "lib_names.h"
 
+#define IGFXDBG_CURRENT_VERSION 4
+
 namespace OCLRT {
 const char *SourceLevelDebugger::notifyNewDeviceSymbol = "notifyNewDevice";
 const char *SourceLevelDebugger::notifySourceCodeSymbol = "notifySourceCode";

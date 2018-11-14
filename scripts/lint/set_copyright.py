@@ -50,7 +50,8 @@ allowed_files = [
 
 banned_paths = [
     'scripts/tests/copyright/in',
-    'scripts/tests/copyright/out'
+    'scripts/tests/copyright/out',
+    'third_party'
 ]
 
 cpp_sharp_lines = [

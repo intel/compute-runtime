@@ -30,19 +30,14 @@ set(IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp
 )
-
-if(SOURCE_LEVEL_DEBUGGER_HEADERS_DIR)
-  list(APPEND IGDRCL_SRCS_LIB_ULT
-    ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.h
-  )
-endif()
 
 add_library (igdrcl_libult OBJECT
   ${IGDRCL_SRCS_LIB_ULT}
