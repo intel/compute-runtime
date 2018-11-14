@@ -513,7 +513,7 @@ struct DrmCsrVfeTests : ::testing::Test {
     void SetUp() override {
         HardwareInfo *hwInfo = nullptr;
         ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
-        device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(hwInfo, executionEnvironment, 0));
+        device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(platformDevices[0], executionEnvironment, 0));
     }
 
     HardwareParse hwParser;

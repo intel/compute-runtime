@@ -59,9 +59,6 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
     }
-
-    bool success = this->wddm->init();
-    DEBUG_BREAK_IF(!success);
 }
 
 template <typename GfxFamily>

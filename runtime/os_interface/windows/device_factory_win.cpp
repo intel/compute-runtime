@@ -49,6 +49,11 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, Exec
     DeviceFactory::numDevices = numDevices;
     DeviceFactory::hwInfos = tempHwInfos.get();
     tempHwInfos.release();
+
+    executionEnvironment.initGmm(*pHWInfos);
+    bool success = executionEnvironment.osInterface->get()->getWddm()->init();
+    DEBUG_BREAK_IF(!success);
+
     return true;
 }
 
