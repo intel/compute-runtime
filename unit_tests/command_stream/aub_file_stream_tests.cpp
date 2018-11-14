@@ -11,6 +11,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
 #include "unit_tests/mocks/mock_aub_file_stream.h"
+#include "driver_version.h"
 
 #include <fstream>
 #include <memory>
@@ -194,6 +195,34 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMMIOIsCalled
         EXPECT_EQ(10u, header.data[0]);
         aubFile.close();
     }
+}
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitializeEngineIsCalledThenMemTraceCommentWithDriverVersionIsPutIntoAubStream) {
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
+    GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    aubCsr->stream = mockAubFileStreamPtr;
+
+    std::vector<std::string> comments;
+
+    EXPECT_CALL(*mockAubFileStreamPtr, addComment(_)).WillRepeatedly(::testing::Invoke([&](const char *str) -> bool {
+        comments.push_back(std::string(str));
+        return true;
+    }));
+    auto engineIndex = aubCsr->getEngineIndex(OCLRT::ENGINE_RCS);
+    aubCsr->initializeEngine(engineIndex);
+
+#define QTR(a) #a
+#define TOSTR(b) QTR(b)
+    const std::string expectedVersion = TOSTR(NEO_DRIVER_VERSION);
+#undef QTR
+#undef TOSTR
+
+    std::string commentWithDriverVersion = "driver version: " + expectedVersion;
+    EXPECT_EQ(commentWithDriverVersion, comments[0]);
 }
 
 HWTEST_F(AubFileStreamTests, givenAddPatchInfoCommentsCalledWhenNoPatchInfoDataObjectsThenCommentsAreEmpty) {

@@ -23,6 +23,7 @@
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "driver_version.h"
 
 #include <algorithm>
 #include <cstring>
@@ -178,6 +179,18 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex)
     this->initGlobalMMIO();
     initEngineMMIO(engineInstance);
     this->initAdditionalMMIO();
+
+    // Write driver version
+    {
+#define QTR(a) #a
+#define TOSTR(b) QTR(b)
+        const std::string driverVersion = TOSTR(NEO_DRIVER_VERSION);
+#undef QTR
+#undef TOSTR
+        std::ostringstream str;
+        str << "driver version: " << driverVersion;
+        getAubStream()->addComment(str.str().c_str());
+    }
 
     // Global HW Status Page
     {
