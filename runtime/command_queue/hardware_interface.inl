@@ -86,7 +86,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                                                          numEventsInWaitList, eventWaitList);
         if (previousTimestampPacketNodes) {
             for (auto &node : previousTimestampPacketNodes->peekNodes()) {
-                TimestmapPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *node->tag);
+                TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *node->tag);
             }
         }
     }

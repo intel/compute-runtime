@@ -274,7 +274,7 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugVariableEnabledWhenCreatingCsrThen
 
 HWTEST_F(CommandStreamReceiverTest, whenCsrIsCreatedThenUseTimestampPacketWriteIfPossible) {
     CommandStreamReceiverHw<FamilyType> csr(*platformDevices[0], executionEnvironment);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::isTimestmapPacketWriteSupported(), csr.peekTimestampPacketWriteEnabled());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::isTimestampPacketWriteSupported(), csr.peekTimestampPacketWriteEnabled());
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllocationIsCalledThenCorrectAllocationIsReturned) {

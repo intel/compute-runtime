@@ -814,12 +814,12 @@ void CommandStreamReceiverHw<GfxFamily>::handleEventsTimestampPacketTags(LinearS
             continue;
         }
 
-        auto timestmapPacketContainer = event->getTimestampPacketNodes();
-        timestmapPacketContainer->makeResident(*this);
+        auto timestampPacketContainer = event->getTimestampPacketNodes();
+        timestampPacketContainer->makeResident(*this);
 
         if (&event->getCommandQueue()->getDevice() != &currentDevice) {
-            for (auto &node : timestmapPacketContainer->peekNodes()) {
-                TimestmapPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(csr, *node->tag);
+            for (auto &node : timestampPacketContainer->peekNodes()) {
+                TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(csr, *node->tag);
             }
         }
     }

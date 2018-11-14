@@ -26,7 +26,7 @@ bool UnitTestHelper<GfxFamily>::isPageTableManagerSupported(const HardwareInfo &
 }
 
 template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::isTimestmapPacketWriteSupported() {
+bool UnitTestHelper<GfxFamily>::isTimestampPacketWriteSupported() {
     return false;
 }
 } // namespace OCLRT

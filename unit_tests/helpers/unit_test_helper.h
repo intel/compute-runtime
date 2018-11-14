@@ -20,6 +20,6 @@ struct UnitTestHelper {
 
     static bool isPageTableManagerSupported(const HardwareInfo &hwInfo);
 
-    static bool isTimestmapPacketWriteSupported();
+    static bool isTimestampPacketWriteSupported();
 };
 } // namespace OCLRT

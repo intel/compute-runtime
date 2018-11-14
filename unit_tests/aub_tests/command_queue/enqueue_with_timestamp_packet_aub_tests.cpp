@@ -78,13 +78,13 @@ HWTEST_F(TimestampPacketAubTests, givenMultipleWalkersWhenEnqueueingThenWriteAll
 
     pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 1, writeSize, writeData, 0, nullptr, &outEvent);
 
-    auto &timestmapNodes = castToObject<Event>(outEvent)->getTimestampPacketNodes()->peekNodes();
+    auto &timestampNodes = castToObject<Event>(outEvent)->getTimestampPacketNodes()->peekNodes();
 
-    EXPECT_EQ(2u, timestmapNodes.size());
+    EXPECT_EQ(2u, timestampNodes.size());
 
     uint32_t expectedEndTimestamp[2] = {0, 0};
-    auto endTimestampAddress1 = reinterpret_cast<void *>(timestmapNodes.at(0)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd));
-    auto endTimestampAddress2 = reinterpret_cast<void *>(timestmapNodes.at(1)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd));
+    auto endTimestampAddress1 = reinterpret_cast<void *>(timestampNodes.at(0)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd));
+    auto endTimestampAddress2 = reinterpret_cast<void *>(timestampNodes.at(1)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd));
     expectMemory<FamilyType>(endTimestampAddress1, expectedEndTimestamp, 2 * sizeof(uint32_t));
     expectMemory<FamilyType>(endTimestampAddress2, expectedEndTimestamp, 2 * sizeof(uint32_t));
 

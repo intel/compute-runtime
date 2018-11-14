@@ -107,8 +107,8 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
         EXPECT_EQ(static_cast<uint32_t>(writeAddress >> 32), miAtomicCmd->getMemoryAddressHigh());
     };
 
-    void verifyDependencyCounterValues(TimestampPacketContainer *timestmapPacketContainer, uint32_t expectedValue) {
-        auto &nodes = timestmapPacketContainer->peekNodes();
+    void verifyDependencyCounterValues(TimestampPacketContainer *timestampPacketContainer, uint32_t expectedValue) {
+        auto &nodes = timestampPacketContainer->peekNodes();
         EXPECT_NE(0u, nodes.size());
         for (auto &node : nodes) {
             auto dependenciesCount = reinterpret_cast<std::atomic<uint32_t> *>(reinterpret_cast<void *>(node->tag->pickImplicitDependenciesCountWriteAddress()));
@@ -828,7 +828,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
     MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
 
     MockKernelWithInternals mockKernel(*device, context.get());
-    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestmapPacket
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestampPacket
 
     TimestampPacketContainer cmdQNodes(device->getMemoryManager());
     cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ.timestampPacketContainer);
@@ -881,7 +881,7 @@ HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenRequestPipeControlOnCsrF
     MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
 
     MockKernelWithInternals mockKernel(*device, context.get());
-    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestmapPacket
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestampPacket
 
     TimestampPacketContainer cmdQNodes(device->getMemoryManager());
     cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ.timestampPacketContainer);

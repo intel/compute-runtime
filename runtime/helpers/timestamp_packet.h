@@ -66,16 +66,16 @@ class TimestampPacket {
 static_assert(((static_cast<uint32_t>(TimestampPacket::DataIndex::Max) + 1) * sizeof(uint32_t)) == sizeof(TimestampPacket),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
-struct TimestmapPacketHelper {
+struct TimestampPacketHelper {
     template <typename GfxFamily>
-    static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TimestampPacket &timestmapPacket) {
+    static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TimestampPacket &timestampPacket) {
         using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
-        auto compareAddress = timestmapPacket.pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
-        auto dependenciesCountAddress = timestmapPacket.pickImplicitDependenciesCountWriteAddress();
+        auto compareAddress = timestampPacket.pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+        auto dependenciesCountAddress = timestampPacket.pickImplicitDependenciesCountWriteAddress();
 
         KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress, 1);
 
-        timestmapPacket.incImplicitDependenciesCount();
+        timestampPacket.incImplicitDependenciesCount();
 
         KernelCommandsHelper<GfxFamily>::programMiAtomic(cmdStream, dependenciesCountAddress,
                                                          MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
