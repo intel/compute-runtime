@@ -77,6 +77,7 @@ class WddmMock : public Wddm {
     void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) override;
     int virtualFree(void *ptr, size_t size, unsigned long flags) override;
     void releaseReservedAddress(void *reservedAddress) override;
+    VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) override;
     bool reserveValidAddressRange(size_t size, void *&reservedMem);
     GmmMemory *getGmmMemory() const;
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
@@ -110,6 +111,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult waitFromCpuResult;
     WddmMockHelpers::CallResult releaseReservedAddressResult;
     WddmMockHelpers::CallResult reserveValidAddressRangeResult;
+    WddmMockHelpers::CallResult registerTrimCallbackResult;
 
     NTSTATUS createAllocationStatus;
     bool mapGpuVaStatus;

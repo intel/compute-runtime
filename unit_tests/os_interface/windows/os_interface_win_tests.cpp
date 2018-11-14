@@ -32,15 +32,17 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextBeforeInitWddmThenOsContextIsNot
     EXPECT_THROW(auto osContext = std::make_unique<OsContext>(&osInterface, 0u), std::exception);
 }
 
-TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInitialized) {
+TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInitializedAndTrimCallbackIsRegistered) {
     auto wddm = new WddmMock;
     OSInterface osInterface;
     osInterface.get()->setWddm(wddm);
     wddm->init();
+    EXPECT_EQ(0u, wddm->registerTrimCallbackResult.called);
     auto osContext = std::make_unique<OsContext>(&osInterface, 0u);
     EXPECT_NE(nullptr, osContext->get());
     EXPECT_TRUE(osContext->get()->isInitialized());
     EXPECT_EQ(osContext->get()->getWddm(), wddm);
+    EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);
 }
 
 TEST(OsContextTest, whenCreateOsContextWithoutOsInterfaceThenOsContextImplIsNotAvailable) {

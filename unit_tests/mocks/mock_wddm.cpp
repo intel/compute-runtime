@@ -220,6 +220,10 @@ bool WddmMock::reserveValidAddressRange(size_t size, void *&reservedMem) {
     }
     return ret;
 }
+VOID *WddmMock::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) {
+    registerTrimCallbackResult.called++;
+    return Wddm::registerTrimCallback(callback, residencyController);
+}
 
 GmmMemory *WddmMock::getGmmMemory() const {
     return gmmMemory.get();

@@ -63,6 +63,7 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
 
         residencyController = std::make_unique<MockWddmResidencyController>(*wddm, osContextId);
         wddm->getWddmInterface()->createMonitoredFence(*residencyController);
+        residencyController->registerCallback();
     }
 
     std::unique_ptr<WddmMock> wddm;
@@ -142,7 +143,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
     WddmResidencyController *residencyController = nullptr;
 };
 
-TEST(WddmResidencyController, givenWddmResidencyControllerWhenItIsConstructedThenRegisterTrimCallback) {
+TEST(WddmResidencyController, givenWddmResidencyControllerWhenItIsConstructedThenDoNotRegisterTrimCallback) {
     ExecutionEnvironment executionEnvironment;
     auto gdi = new MockGdi();
     auto wddm = std::unique_ptr<WddmMock>{static_cast<WddmMock *>(Wddm::createWddm())};
@@ -150,8 +151,29 @@ TEST(WddmResidencyController, givenWddmResidencyControllerWhenItIsConstructedThe
     wddm->init();
 
     std::memset(&gdi->getRegisterTrimNotificationArg(), 0, sizeof(D3DKMT_REGISTERTRIMNOTIFICATION));
-    WddmResidencyController residencyController{*wddm, 0u};
+    MockWddmResidencyController residencyController{*wddm, 0u};
 
+    EXPECT_EQ(0u, wddm->registerTrimCallbackResult.called);
+    EXPECT_EQ(nullptr, residencyController.trimCallbackHandle);
+
+    EXPECT_EQ(nullptr, gdi->getRegisterTrimNotificationArg().Callback);
+    EXPECT_EQ(nullptr, gdi->getRegisterTrimNotificationArg().Context);
+    EXPECT_EQ(0u, gdi->getRegisterTrimNotificationArg().hDevice);
+}
+
+TEST(WddmResidencyController, givenWddmResidencyControllerWhenRegisterCallbackThenCallbackIsSetUpProperly) {
+    ExecutionEnvironment executionEnvironment;
+    auto gdi = new MockGdi();
+    auto wddm = std::unique_ptr<WddmMock>{static_cast<WddmMock *>(Wddm::createWddm())};
+    wddm->gdi.reset(gdi);
+    wddm->init();
+
+    std::memset(&gdi->getRegisterTrimNotificationArg(), 0, sizeof(D3DKMT_REGISTERTRIMNOTIFICATION));
+
+    WddmResidencyController residencyController{*wddm, 0u};
+    residencyController.registerCallback();
+
+    EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);
     EXPECT_EQ(reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(WddmMemoryManager::trimCallback), gdi->getRegisterTrimNotificationArg().Callback);
     EXPECT_EQ(reinterpret_cast<void *>(&residencyController), gdi->getRegisterTrimNotificationArg().Context);
     EXPECT_EQ(wddm->getDevice(), gdi->getRegisterTrimNotificationArg().hDevice);

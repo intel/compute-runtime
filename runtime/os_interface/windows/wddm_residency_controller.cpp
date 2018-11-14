@@ -16,6 +16,9 @@
 namespace OCLRT {
 
 WddmResidencyController::WddmResidencyController(Wddm &wddm, uint32_t osContextId) : wddm(wddm), osContextId(osContextId) {
+}
+
+void WddmResidencyController::registerCallback() {
     this->trimCallbackHandle = wddm.registerTrimCallback(WddmMemoryManager::trimCallback, *this);
 }
 
