@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include "runtime/helpers/kmd_notify_properties.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 
 using namespace OCLRT;
 
@@ -15,6 +16,15 @@ bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
                                           uint32_t currentHwTag,
                                           uint32_t taskCountToWait,
                                           FlushStamp flushStampToWait) {
+    if (flushStampToWait == 0) {
+        return false;
+    }
+
+    if (DebugManager.flags.PowerSavingMode.get()) {
+        timeoutValueOutput = 1;
+        return true;
+    }
+
     int64_t multiplier = (currentHwTag < taskCountToWait) ? static_cast<int64_t>(taskCountToWait - currentHwTag) : 1;
     if (!properties->enableKmdNotify && multiplier > KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine) {
         updateAcLineStatus();
@@ -32,7 +42,7 @@ bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
         timeoutValueOutput = getBaseTimeout(multiplier);
     }
 
-    return flushStampToWait != 0 && (properties->enableKmdNotify || !acLineConnected);
+    return (properties->enableKmdNotify || !acLineConnected);
 }
 
 bool KmdNotifyHelper::applyQuickKmdSleepForSporadicWait() const {

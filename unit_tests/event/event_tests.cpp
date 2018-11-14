@@ -1389,6 +1389,7 @@ HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWa
     pDevice->resetCommandStreamReceiver(csr);
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    event.updateCompletionStamp(1u, 1u, 1u);
 
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_,
                                                    localHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds, ::testing::_))
@@ -1414,6 +1415,7 @@ HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestT
     pDevice->resetCommandStreamReceiver(csr);
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    event.updateCompletionStamp(1u, 1u, 1u);
 
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_,
                                                    localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, ::testing::_))

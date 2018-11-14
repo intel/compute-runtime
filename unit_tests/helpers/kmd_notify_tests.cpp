@@ -8,6 +8,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/os_interface/os_context.h"
 
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "test.h"
@@ -364,6 +365,34 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismAndFlushStampIsZeroWhenAcL
     bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait);
 
     EXPECT_FALSE(timeoutEnabled);
+}
+
+TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsSetThenKmdNotifyMechanismIsUsedAndReturnsShortestWaitingTimePossible) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PowerSavingMode.set(1u);
+    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
+    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    helper.acLineConnected = false;
+
+    int64_t timeout = 0;
+    FlushStamp flushStampToWait = 1;
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait);
+    EXPECT_TRUE(timeoutEnabled);
+    EXPECT_EQ(1, timeout);
+}
+
+TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenPowerSavingModeIsSetAndNoFlushStampProvidedWhenParametersAreObtainedThenFalseIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PowerSavingMode.set(1u);
+    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
+    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    helper.acLineConnected = false;
+
+    int64_t timeout = 0;
+    FlushStamp flushStampToWait = 0;
+    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, flushStampToWait);
+    EXPECT_FALSE(timeoutEnabled);
+    EXPECT_EQ(0, timeout);
 }
 
 #if defined(__clang__)
