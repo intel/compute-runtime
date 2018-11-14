@@ -462,7 +462,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
 
 using AUBSimpleArgNonUniformTest = Test<AUBSimpleArgNonUniformFixture>;
 
-HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingWork1DimNonUniformGroupThenExpectTwoWalkers) {
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork1DimNonUniformGroupThenExpectTwoWalkers) {
     using WALKER_TYPE = WALKER_TYPE<FamilyType>;
     if (deviceClVersionSupport >= 20) {
         cl_uint workDim = 1;
@@ -496,7 +496,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingW
     }
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
     using WALKER_TYPE = WALKER_TYPE<FamilyType>;
     if (deviceClVersionSupport >= 20) {
         cl_uint workDim = 2;
@@ -530,7 +530,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingW
     }
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
     using WALKER_TYPE = WALKER_TYPE<FamilyType>;
     if (deviceClVersionSupport >= 20) {
         cl_uint workDim = 2;
@@ -564,7 +564,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingW
     }
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork2DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
     using WALKER_TYPE = WALKER_TYPE<FamilyType>;
     if (deviceClVersionSupport >= 20) {
         cl_uint workDim = 2;
@@ -598,7 +598,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingW
     }
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
     using WALKER_TYPE = WALKER_TYPE<FamilyType>;
     if (deviceClVersionSupport >= 20) {
         cl_uint workDim = 3;
@@ -632,7 +632,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingW
     }
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
     using WALKER_TYPE = WALKER_TYPE<FamilyType>;
     if (deviceClVersionSupport >= 20) {
         cl_uint workDim = 3;
@@ -666,7 +666,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingW
     }
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInZDimensionThenExpectTwoWalkers) {
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInZDimensionThenExpectTwoWalkers) {
     using WALKER_TYPE = WALKER_TYPE<FamilyType>;
     if (deviceClVersionSupport >= 20) {
         cl_uint workDim = 3;
@@ -700,7 +700,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingW
     }
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
     using WALKER_TYPE = WALKER_TYPE<FamilyType>;
     if (deviceClVersionSupport >= 20) {
         cl_uint workDim = 3;
@@ -734,7 +734,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingW
     }
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandZDimensionThenExpectFourWalkers) {
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandZDimensionThenExpectFourWalkers) {
     using WALKER_TYPE = WALKER_TYPE<FamilyType>;
     if (deviceClVersionSupport >= 20) {
         cl_uint workDim = 3;
@@ -768,7 +768,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingW
     }
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYandZDimensionThenExpectFourWalkers) {
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInYandZDimensionThenExpectFourWalkers) {
     using WALKER_TYPE = WALKER_TYPE<FamilyType>;
     if (deviceClVersionSupport >= 20) {
         cl_uint workDim = 3;
@@ -802,7 +802,7 @@ HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingW
     }
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTest, DISABLED_givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYandZDimensionThenExpectEightWalkers) {
+HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNonUniformGroupInXandYandZDimensionThenExpectEightWalkers) {
     using WALKER_TYPE = WALKER_TYPE<FamilyType>;
     if (deviceClVersionSupport >= 20) {
         cl_uint workDim = 3;
