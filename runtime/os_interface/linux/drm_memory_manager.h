@@ -9,7 +9,9 @@
 #include "drm_gem_close_worker.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/linux/drm_allocation.h"
+#include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_neo.h"
+#include "runtime/os_interface/linux/drm_limited_range.h"
 #include <map>
 #include <sys/mman.h>
 
@@ -31,7 +33,7 @@ class DrmMemoryManager : public MemoryManager {
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
     DrmAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;
     DrmAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override;
-    DrmAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override { return nullptr; };
+    DrmAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override;
     DrmAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override {
         return allocateGraphicsMemory(size, ptr, false);
     }
@@ -68,6 +70,9 @@ class DrmMemoryManager : public MemoryManager {
     void pushSharedBufferObject(BufferObject *bo);
     BufferObject *allocUserptr(uintptr_t address, size_t size, uint64_t flags, bool softpin);
     bool setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable);
+    uint64_t acquireGpuRange(size_t &size, StorageAllocatorType &allocType, bool requireSpecificBitness);
+    void releaseGpuRange(void *address, size_t unmapSize, StorageAllocatorType allocatorType);
+    void initInternalRangeAllocator(size_t range);
 
     Drm *drm;
     BufferObject *pinBB;
@@ -82,5 +87,6 @@ class DrmMemoryManager : public MemoryManager {
     std::vector<BufferObject *> sharingBufferObjects;
     std::mutex mtx;
     std::unique_ptr<Allocator32bit> internal32bitAllocator;
+    std::unique_ptr<AllocatorLimitedRange> limitedGpuAddressRangeAllocator;
 };
 } // namespace OCLRT

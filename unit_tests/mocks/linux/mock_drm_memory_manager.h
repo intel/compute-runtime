@@ -74,7 +74,9 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
     }
 
     DrmGemCloseWorker *getgemCloseWorker() { return this->gemCloseWorker.get(); }
+    void forceLimitedRangeAllocator(uint64_t range) { initInternalRangeAllocator(range); }
 
-    Allocator32bit *getDrmInternal32BitAllocator() { return internal32bitAllocator.get(); }
+    Allocator32bit *getDrmInternal32BitAllocator() const { return internal32bitAllocator.get(); }
+    AllocatorLimitedRange *getDrmLimitedRangeAllocator() const { return limitedGpuAddressRangeAllocator.get(); }
 };
 } // namespace OCLRT

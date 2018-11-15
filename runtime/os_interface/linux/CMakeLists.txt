@@ -23,6 +23,8 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_mapper.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_limited_range.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_limited_range.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.cpp
