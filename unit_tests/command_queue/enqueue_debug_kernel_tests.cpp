@@ -33,6 +33,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
         pDevice->executionEnvironment->sourceLevelDebugger.reset(new SourceLevelDebugger(nullptr));
 
         if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
+            pDevice->getMutableDeviceInfo()->sourceLevelDebuggerActive = true;
             std::string filename;
             std::string kernelOption(CompilerOptions::debugKernelEnable);
             KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);
@@ -85,7 +86,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
 };
 
 HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSSHAndBtiAreCorrectlySet) {
-    if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->isSourceLevelDebuggerActive()) {
         using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
         std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
@@ -103,6 +104,7 @@ HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSSHAndBtiAreCor
 
         auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
         auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
+        EXPECT_EQ(1u, debugSurface->getTaskCount(0u));
 
         EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
     }
