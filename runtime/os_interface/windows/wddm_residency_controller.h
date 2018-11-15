@@ -40,7 +40,7 @@ class WddmResidencyController {
     bool checkTrimCandidateListCompaction();
     void compactTrimCandidateList();
 
-    bool wasAllocationNotUsedSinceLastTrim(uint64_t fenceValue) { return fenceValue <= lastTrimFenceValue; }
+    bool wasAllocationUsedSinceLastTrim(uint64_t fenceValue) { return fenceValue > lastTrimFenceValue; }
     void updateLastTrimFenceValue() { lastTrimFenceValue = *this->getMonitoredFence().cpuAddress; }
     const ResidencyContainer &peekTrimCandidateList() const { return trimCandidateList; }
     uint32_t peekTrimCandidatesCount() const { return trimCandidatesCount; }

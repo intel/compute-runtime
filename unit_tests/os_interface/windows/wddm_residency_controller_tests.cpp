@@ -181,11 +181,11 @@ TEST(WddmResidencyController, givenWddmResidencyControllerWhenRegisterCallbackTh
     EXPECT_EQ(wddm->getDevice(), gdi->getRegisterTrimNotificationArg().hDevice);
 }
 
-TEST_F(WddmResidencyControllerTest, givenWddmResidencyControllerWhenCallingWasAllocationNotUsedSinceLastTrimThenReturnCorrectValues) {
+TEST_F(WddmResidencyControllerTest, givenWddmResidencyControllerWhenCallingWasAllocationUsedSinceLastTrimThenReturnCorrectValues) {
     residencyController->lastTrimFenceValue = 100;
-    EXPECT_TRUE(residencyController->wasAllocationNotUsedSinceLastTrim(99));
-    EXPECT_TRUE(residencyController->wasAllocationNotUsedSinceLastTrim(99));
-    EXPECT_FALSE(residencyController->wasAllocationNotUsedSinceLastTrim(101));
+    EXPECT_FALSE(residencyController->wasAllocationUsedSinceLastTrim(99));
+    EXPECT_FALSE(residencyController->wasAllocationUsedSinceLastTrim(99));
+    EXPECT_TRUE(residencyController->wasAllocationUsedSinceLastTrim(101));
 }
 
 TEST_F(WddmResidencyControllerTest, givenWddmResidencyControllerThenUpdateLastTrimFenceValueUsesMonitoredFence) {
