@@ -25,8 +25,6 @@
 #include <algorithm>
 
 namespace OCLRT {
-constexpr size_t TagCount = 512;
-
 MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory,
                              ExecutionEnvironment &executionEnvironment) : allocator32Bit(nullptr), enable64kbpages(enable64kbpages),
                                                                            localMemorySupported(enableLocalMemory),
@@ -140,26 +138,32 @@ void MemoryManager::applyCommonCleanup() {
     }
 }
 
-TagAllocator<HwTimeStamps> *MemoryManager::getEventTsAllocator() {
+TagAllocator<HwTimeStamps> *MemoryManager::obtainEventTsAllocator(size_t poolSize) {
     if (profilingTimeStampAllocator.get() == nullptr) {
-        profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(this, TagCount, MemoryConstants::cacheLineSize);
+        profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(this, poolSize, MemoryConstants::cacheLineSize);
     }
     return profilingTimeStampAllocator.get();
 }
 
-TagAllocator<HwPerfCounter> *MemoryManager::getEventPerfCountAllocator() {
+TagAllocator<HwPerfCounter> *MemoryManager::obtainEventPerfCountAllocator(size_t poolSize) {
     if (perfCounterAllocator.get() == nullptr) {
-        perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(this, TagCount, MemoryConstants::cacheLineSize);
+        perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(this, poolSize, MemoryConstants::cacheLineSize);
     }
     return perfCounterAllocator.get();
 }
 
-TagAllocator<TimestampPacket> *MemoryManager::getTimestampPacketAllocator() {
+TagAllocator<TimestampPacket> *MemoryManager::obtainTimestampPacketAllocator(size_t poolSize) {
     if (timestampPacketAllocator.get() == nullptr) {
-        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacket>>(this, TagCount, MemoryConstants::cacheLineSize);
+        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacket>>(this, poolSize, MemoryConstants::cacheLineSize);
     }
     return timestampPacketAllocator.get();
 }
+
+TagAllocator<HwTimeStamps> *MemoryManager::peekEventTsAllocator() const { return profilingTimeStampAllocator.get(); }
+
+TagAllocator<HwPerfCounter> *MemoryManager::peekEventPerfCountAllocator() const { return perfCounterAllocator.get(); }
+
+TagAllocator<TimestampPacket> *MemoryManager::peekTimestampPacketAllocator() const { return timestampPacketAllocator.get(); }
 
 void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
     freeGraphicsMemoryImpl(gfxAllocation);

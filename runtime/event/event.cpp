@@ -123,18 +123,18 @@ Event::~Event() {
     }
 
     if (cmdQueue != nullptr) {
+        if (timeStampNode != nullptr) {
+            TagAllocator<HwTimeStamps> *allocator = cmdQueue->getDevice().getMemoryManager()->peekEventTsAllocator();
+            allocator->returnTag(timeStampNode);
+        }
+        if (perfCounterNode != nullptr) {
+            TagAllocator<HwPerfCounter> *allocator = cmdQueue->getDevice().getMemoryManager()->peekEventPerfCountAllocator();
+            allocator->returnTag(perfCounterNode);
+        }
         cmdQueue->decRefInternal();
     }
 
     if (ctx != nullptr) {
-        if (timeStampNode != nullptr) {
-            TagAllocator<HwTimeStamps> *allocator = ctx->getDevice(0)->getMemoryManager()->getEventTsAllocator();
-            allocator->returnTag(timeStampNode);
-        }
-        if (perfCounterNode != nullptr) {
-            TagAllocator<HwPerfCounter> *allocator = ctx->getDevice(0)->getMemoryManager()->getEventPerfCountAllocator();
-            allocator->returnTag(perfCounterNode);
-        }
         ctx->decRefInternal();
     }
     if (perfConfigurationData) {
@@ -205,7 +205,7 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
         if (!cmdQueue->getPerfCounters()->processEventReport(paramValueSize,
                                                              paramValue,
                                                              paramValueSizeRet,
-                                                             getHwPerfCounter(),
+                                                             getHwPerfCounterNode()->tag,
                                                              perfConfigurationData,
                                                              updateStatusAndCheckCompletion())) {
             return CL_PROFILING_INFO_NOT_AVAILABLE;
@@ -667,46 +667,24 @@ void Event::setEndTimeStamp() {
     }
 }
 
-HwTimeStamps *Event::getHwTimeStamp() {
-    TagNode<HwTimeStamps> *node = nullptr;
+TagNode<HwTimeStamps> *Event::getHwTimeStampNode() {
     if (!timeStampNode) {
-        TagAllocator<HwTimeStamps> *allocator = getCommandQueue()->getDevice().getMemoryManager()->getEventTsAllocator();
-        timeStampNode = allocator->getTag();
+        auto &device = getCommandQueue()->getDevice();
+        auto preferredPoolSize = device.getCommandStreamReceiver().getPreferredTagPoolSize();
+
+        timeStampNode = device.getMemoryManager()->obtainEventTsAllocator(preferredPoolSize)->getTag();
     }
-    node = timeStampNode;
-    return node->tag;
+    return timeStampNode;
 }
 
-GraphicsAllocation *Event::getHwTimeStampAllocation() {
-    GraphicsAllocation *gfxalloc = nullptr;
-    if (!timeStampNode) {
-        TagAllocator<HwTimeStamps> *allocator = getCommandQueue()->getDevice().getMemoryManager()->getEventTsAllocator();
-        timeStampNode = allocator->getTag();
-    }
-    gfxalloc = timeStampNode->getGraphicsAllocation();
-
-    return gfxalloc;
-}
-
-HwPerfCounter *Event::getHwPerfCounter() {
-    TagNode<HwPerfCounter> *node = nullptr;
+TagNode<HwPerfCounter> *Event::getHwPerfCounterNode() {
     if (!perfCounterNode) {
-        TagAllocator<HwPerfCounter> *allocator = getCommandQueue()->getDevice().getMemoryManager()->getEventPerfCountAllocator();
-        perfCounterNode = allocator->getTag();
-    }
-    node = perfCounterNode;
-    return node->tag;
-}
+        auto &device = getCommandQueue()->getDevice();
+        auto preferredPoolSize = device.getCommandStreamReceiver().getPreferredTagPoolSize();
 
-GraphicsAllocation *Event::getHwPerfCounterAllocation() {
-    GraphicsAllocation *gfxalloc = nullptr;
-    if (!perfCounterNode) {
-        TagAllocator<HwPerfCounter> *allocator = getCommandQueue()->getDevice().getMemoryManager()->getEventPerfCountAllocator();
-        perfCounterNode = allocator->getTag();
+        perfCounterNode = device.getMemoryManager()->obtainEventPerfCountAllocator(preferredPoolSize)->getTag();
     }
-    gfxalloc = perfCounterNode->getGraphicsAllocation();
-
-    return gfxalloc;
+    return perfCounterNode;
 }
 
 void Event::copyPerfCounters(InstrPmRegsCfg *config) {

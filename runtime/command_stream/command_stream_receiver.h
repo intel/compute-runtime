@@ -154,6 +154,7 @@ class CommandStreamReceiver {
     AllocationsList &getAllocationsForReuse();
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }
     bool createAllocationForHostSurface(HostPtrSurface &surface, Device &device, bool requiresL3Flush);
+    virtual size_t getPreferredTagPoolSize() const { return 512; }
 
   protected:
     void cleanupResources();

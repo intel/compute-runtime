@@ -680,7 +680,7 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, testProfilingAllocatorCleanup) {
     MemoryManager *memMngr = memoryManager;
-    TagAllocator<HwTimeStamps> *allocator = memMngr->getEventTsAllocator();
+    TagAllocator<HwTimeStamps> *allocator = memMngr->obtainEventTsAllocator(2);
     EXPECT_NE(nullptr, allocator);
 }
 

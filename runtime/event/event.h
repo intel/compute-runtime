@@ -108,8 +108,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     void setProfilingEnabled(bool profilingEnabled) { this->profilingEnabled = profilingEnabled; }
 
-    HwTimeStamps *getHwTimeStamp();
-    GraphicsAllocation *getHwTimeStampAllocation();
+    TagNode<HwTimeStamps> *getHwTimeStampNode();
 
     void addTimestampPacketNodes(TimestampPacketContainer &inputTimestampPacketContainer);
     TimestampPacketContainer *getTimestampPacketNodes() const;
@@ -124,8 +123,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     void copyPerfCounters(InstrPmRegsCfg *config);
 
-    HwPerfCounter *getHwPerfCounter();
-    GraphicsAllocation *getHwPerfCounterAllocation();
+    TagNode<HwPerfCounter> *getHwPerfCounterNode();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::atomic<uint32_t> taskLevel;

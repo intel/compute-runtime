@@ -446,6 +446,7 @@ TEST(EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEn
 
     EXPECT_EQ(timestamp.ContextEndTS, timestamp.ContextCompleteTS);
     cmdQ.device = nullptr;
+    event.timeStampNode = nullptr;
 }
 
 TEST(EventProfilingTest, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawDataIsReturned) {
@@ -498,6 +499,7 @@ TEST(EventProfilingTest, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawData
     EXPECT_EQ(timestamp.ContextStartTS, start);
     EXPECT_EQ(event.submitTimeStamp.GPUTimeStamp, submited);
     EXPECT_EQ(event.queueTimeStamp.GPUTimeStamp, queued);
+    event.timeStampNode = nullptr;
 }
 
 struct ProfilingWithPerfCountersTests : public ProfilingTests,

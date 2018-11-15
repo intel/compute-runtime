@@ -575,7 +575,9 @@ void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, 
 }
 
 void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes) {
-    auto allocator = device->getMemoryManager()->getTimestampPacketAllocator();
+    auto preferredPoolSize = device->getCommandStreamReceiver().getPreferredTagPoolSize();
+
+    auto allocator = device->getMemoryManager()->obtainTimestampPacketAllocator(preferredPoolSize);
 
     previousNodes.swapNodes(*timestampPacketContainer);
     previousNodes.resolveDependencies(isOOQEnabled());

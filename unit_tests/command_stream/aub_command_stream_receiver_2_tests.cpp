@@ -12,6 +12,7 @@
 #include "unit_tests/mocks/mock_aub_csr.h"
 #include "unit_tests/mocks/mock_aub_file_stream.h"
 #include "unit_tests/mocks/mock_aub_subcapture_manager.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -771,4 +772,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenAskedForMemoryExpectation
     myMockCsr.expectMemoryEqual(mockAddress, mockAddress, 1);
     EXPECT_EQ(compareEqual, myMockCsr.inputCompareOperation);
     EXPECT_EQ(compareEqual, mockStream->compareOperationFromExpectMemory);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenObtainingPreferredTagPoolSizeThenReturnOne) {
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    EXPECT_EQ(1u, aubCsr->getPreferredTagPoolSize());
 }

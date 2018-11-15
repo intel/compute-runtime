@@ -85,6 +85,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return nullptr;
     }
 
+    size_t getPreferredTagPoolSize() const override {
+        return BaseClass::getPreferredTagPoolSize() + 1;
+    }
+
     void overrideCsrSizeReqFlags(CsrSizeRequestFlags &flags) { this->csrSizeRequestFlags = flags; }
     GraphicsAllocation *getPreemptionCsrAllocation() { return this->preemptionCsrAllocation; }
 

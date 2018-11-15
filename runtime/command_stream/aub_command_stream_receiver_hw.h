@@ -121,6 +121,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     int getAddressSpaceFromPTEBits(uint64_t entryBits) const;
 
+    size_t getPreferredTagPoolSize() const override { return 1; }
+
   protected:
     MOCKABLE_VIRTUAL void expectMemory(void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
     bool dumpAubNonWritable = false;

@@ -61,7 +61,7 @@ struct TimestampPacketSimpleTests : public ::testing::Test {
 
         MockTimestampPacketContainer(MemoryManager *memoryManager, size_t numberOfPreallocatedTags) : TimestampPacketContainer(memoryManager) {
             for (size_t i = 0; i < numberOfPreallocatedTags; i++) {
-                add(memoryManager->getTimestampPacketAllocator()->getTag());
+                add(memoryManager->obtainTimestampPacketAllocator(3)->getTag());
             }
         }
 
@@ -198,6 +198,29 @@ TEST_F(TimestampPacketSimpleTests, whenAskedForStampAddressThenReturnWithValidOf
         auto address = timestampPacket.pickAddressForDataWrite(static_cast<TimestampPacket::DataIndex>(i));
         EXPECT_EQ(address, reinterpret_cast<uint64_t>(&timestampPacket.data[i]));
     }
+}
+
+HWTEST_F(TimestampPacketTests, asd) {
+    class MyMockMemoryManager : public OsAgnosticMemoryManager {
+      public:
+        MyMockMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment){};
+        TagAllocator<TimestampPacket> *obtainTimestampPacketAllocator(size_t poolSize) override {
+            requestedPoolSize = poolSize;
+            return OsAgnosticMemoryManager::obtainTimestampPacketAllocator(poolSize);
+        }
+
+        size_t requestedPoolSize = 0;
+    };
+
+    auto myMockMemoryManager = new MyMockMemoryManager(executionEnvironment);
+    device->injectMemoryManager(myMockMemoryManager);
+    context->setMemoryManager(myMockMemoryManager);
+
+    TimestampPacketContainer previousNodes(device->getMemoryManager());
+    mockCmdQ->timestampPacketContainer = std::make_unique<MockTimestampPacketContainer>(myMockMemoryManager, 0);
+    mockCmdQ->obtainNewTimestampPacketNodes(1, previousNodes);
+
+    EXPECT_EQ(device->getUltCommandStreamReceiver<FamilyType>().getPreferredTagPoolSize(), myMockMemoryManager->requestedPoolSize);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddPipeControl) {

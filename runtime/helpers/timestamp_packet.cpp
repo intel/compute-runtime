@@ -23,7 +23,7 @@ void TimestampPacketContainer::add(Node *timestampPacketNode) {
 
 TimestampPacketContainer::~TimestampPacketContainer() {
     for (auto &node : timestampPacketNodes) {
-        memoryManager->getTimestampPacketAllocator()->returnTag(node);
+        memoryManager->peekTimestampPacketAllocator()->returnTag(node);
     }
 }
 
@@ -36,7 +36,7 @@ void TimestampPacketContainer::resolveDependencies(bool clearAllDependencies) {
 
     for (auto &node : timestampPacketNodes) {
         if (node->tag->canBeReleased() || clearAllDependencies) {
-            memoryManager->getTimestampPacketAllocator()->returnTag(node);
+            memoryManager->peekTimestampPacketAllocator()->returnTag(node);
         } else {
             pendingNodes.push_back(node);
         }

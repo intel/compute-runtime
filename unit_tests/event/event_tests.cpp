@@ -14,6 +14,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/utilities/tag_allocator.h"
 #include "test.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -839,9 +840,9 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
     pCmdQ->setPerfCountersEnabled(true, 1);
     MockEvent<Event> *event = new MockEvent<Event>(pCmdQ, CL_COMMAND_MARKER, 0, 0);
     event->setCPUProfilingPath(true);
-    HwPerfCounter *perfCounter = event->getHwPerfCounter();
+    HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tag;
     ASSERT_NE(nullptr, perfCounter);
-    HwTimeStamps *timeStamps = event->getHwTimeStamp();
+    HwTimeStamps *timeStamps = event->getHwTimeStampNode()->tag;
     ASSERT_NE(nullptr, timeStamps);
     auto &csr = pDevice->getCommandStreamReceiver();
 
@@ -1034,7 +1035,7 @@ TEST_F(EventTest, getHwTimeStampsReturnsValidPointer) {
     std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    HwTimeStamps *timeStamps = event->getHwTimeStamp();
+    HwTimeStamps *timeStamps = event->getHwTimeStampNode()->tag;
     ASSERT_NE(nullptr, timeStamps);
 
     //this should not cause any heap corruptions
@@ -1047,7 +1048,7 @@ TEST_F(EventTest, getHwTimeStampsReturnsValidPointer) {
 
     EXPECT_TRUE(timeStamps->canBeReleased());
 
-    HwTimeStamps *timeStamps2 = event->getHwTimeStamp();
+    HwTimeStamps *timeStamps2 = event->getHwTimeStampNode()->tag;
     ASSERT_EQ(timeStamps, timeStamps2);
 }
 
@@ -1055,7 +1056,7 @@ TEST_F(EventTest, getHwTimeStampsAllocationReturnsValidPointer) {
     std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    GraphicsAllocation *allocation = event->getHwTimeStampAllocation();
+    GraphicsAllocation *allocation = event->getHwTimeStampNode()->getGraphicsAllocation();
     ASSERT_NE(nullptr, allocation);
 
     void *memoryStorage = allocation->getUnderlyingBuffer();
@@ -1069,10 +1070,10 @@ TEST_F(EventTest, hwTimeStampsMemoryIsPlacedInGraphicsAllocation) {
     std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    HwTimeStamps *timeStamps = event->getHwTimeStamp();
+    HwTimeStamps *timeStamps = event->getHwTimeStampNode()->tag;
     ASSERT_NE(nullptr, timeStamps);
 
-    GraphicsAllocation *allocation = event->getHwTimeStampAllocation();
+    GraphicsAllocation *allocation = event->getHwTimeStampNode()->getGraphicsAllocation();
     ASSERT_NE(nullptr, allocation);
 
     void *memoryStorage = allocation->getUnderlyingBuffer();
@@ -1091,7 +1092,7 @@ TEST_F(EventTest, getHwPerfCounterReturnsValidPointer) {
     std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    HwPerfCounter *perfCounter = event->getHwPerfCounter();
+    HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tag;
     ASSERT_NE(nullptr, perfCounter);
 
     ASSERT_EQ(0ULL, perfCounter->HWTimeStamp.GlobalStartTS);
@@ -1103,7 +1104,7 @@ TEST_F(EventTest, getHwPerfCounterReturnsValidPointer) {
 
     EXPECT_TRUE(perfCounter->canBeReleased());
 
-    HwPerfCounter *perfCounter2 = event->getHwPerfCounter();
+    HwPerfCounter *perfCounter2 = event->getHwPerfCounterNode()->tag;
     ASSERT_EQ(perfCounter, perfCounter2);
 }
 
@@ -1111,7 +1112,7 @@ TEST_F(EventTest, getHwPerfCounterAllocationReturnsValidPointer) {
     std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    GraphicsAllocation *allocation = event->getHwPerfCounterAllocation();
+    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getGraphicsAllocation();
     ASSERT_NE(nullptr, allocation);
 
     void *memoryStorage = allocation->getUnderlyingBuffer();
@@ -1125,10 +1126,10 @@ TEST_F(EventTest, hwPerfCounterMemoryIsPlacedInGraphicsAllocation) {
     std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
-    HwPerfCounter *perfCounter = event->getHwPerfCounter();
+    HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tag;
     ASSERT_NE(nullptr, perfCounter);
 
-    GraphicsAllocation *allocation = event->getHwPerfCounterAllocation();
+    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getGraphicsAllocation();
     ASSERT_NE(nullptr, allocation);
 
     void *memoryStorage = allocation->getUnderlyingBuffer();

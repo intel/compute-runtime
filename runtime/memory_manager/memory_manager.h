@@ -204,9 +204,13 @@ class MemoryManager {
 
     virtual uint64_t getInternalHeapBaseAddress() = 0;
 
-    TagAllocator<HwTimeStamps> *getEventTsAllocator();
-    TagAllocator<HwPerfCounter> *getEventPerfCountAllocator();
-    TagAllocator<TimestampPacket> *getTimestampPacketAllocator();
+    TagAllocator<HwTimeStamps> *obtainEventTsAllocator(size_t poolSize);
+    TagAllocator<HwPerfCounter> *obtainEventPerfCountAllocator(size_t poolSize);
+    MOCKABLE_VIRTUAL TagAllocator<TimestampPacket> *obtainTimestampPacketAllocator(size_t poolSize);
+
+    TagAllocator<HwTimeStamps> *peekEventTsAllocator() const;
+    TagAllocator<HwPerfCounter> *peekEventPerfCountAllocator() const;
+    TagAllocator<TimestampPacket> *peekTimestampPacketAllocator() const;
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) = 0;
 

@@ -358,16 +358,16 @@ TEST_F(MemoryAllocatorTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocatio
 }
 
 TEST_F(MemoryAllocatorTest, getEventTsAllocator) {
-    TagAllocator<HwTimeStamps> *allocator = memoryManager->getEventTsAllocator();
+    TagAllocator<HwTimeStamps> *allocator = memoryManager->obtainEventTsAllocator(1);
     EXPECT_NE(nullptr, allocator);
-    TagAllocator<HwTimeStamps> *allocator2 = memoryManager->getEventTsAllocator();
+    TagAllocator<HwTimeStamps> *allocator2 = memoryManager->obtainEventTsAllocator(1);
     EXPECT_EQ(allocator2, allocator);
 }
 
 TEST_F(MemoryAllocatorTest, getEventPerfCountAllocator) {
-    TagAllocator<HwPerfCounter> *allocator = memoryManager->getEventPerfCountAllocator();
+    TagAllocator<HwPerfCounter> *allocator = memoryManager->obtainEventPerfCountAllocator(1);
     EXPECT_NE(nullptr, allocator);
-    TagAllocator<HwPerfCounter> *allocator2 = memoryManager->getEventPerfCountAllocator();
+    TagAllocator<HwPerfCounter> *allocator2 = memoryManager->obtainEventPerfCountAllocator(1);
     EXPECT_EQ(allocator2, allocator);
 }
 
@@ -381,11 +381,11 @@ TEST_F(MemoryAllocatorTest, givenTimestampPacketAllocatorWhenAskingForTagThenRet
 
     EXPECT_EQ(nullptr, myMockMemoryManager.timestampPacketAllocator.get());
 
-    TagAllocator<TimestampPacket> *allocator = myMockMemoryManager.getTimestampPacketAllocator();
+    TagAllocator<TimestampPacket> *allocator = myMockMemoryManager.obtainTimestampPacketAllocator(1);
     EXPECT_NE(nullptr, myMockMemoryManager.timestampPacketAllocator.get());
     EXPECT_EQ(allocator, myMockMemoryManager.timestampPacketAllocator.get());
 
-    TagAllocator<TimestampPacket> *allocator2 = myMockMemoryManager.getTimestampPacketAllocator();
+    TagAllocator<TimestampPacket> *allocator2 = myMockMemoryManager.obtainTimestampPacketAllocator(1);
     EXPECT_EQ(allocator, allocator2);
 
     auto node1 = allocator->getTag();
