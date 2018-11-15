@@ -7,12 +7,13 @@
 
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
+#include <atomic>
 
 namespace OCLRT {
 static off_t lseekReturn = 4096u;
-static int lseekCalledCount = 0;
-static int mmapMockCallCount = 0;
-static int munmapMockCallCount = 0;
+static std::atomic<int> lseekCalledCount(0);
+static std::atomic<int> mmapMockCallCount(0);
+static std::atomic<int> munmapMockCallCount(0);
 
 off_t lseekMock(int fd, off_t offset, int whence) noexcept {
     lseekCalledCount++;
