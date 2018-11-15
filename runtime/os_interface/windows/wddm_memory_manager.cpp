@@ -40,14 +40,6 @@ WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemor
     mallocRestrictions.minAddress = wddm->getWddmMinAddress();
 }
 
-void APIENTRY WddmMemoryManager::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification) {
-    auto residencyController = static_cast<WddmResidencyController *>(trimNotification->Context);
-    DEBUG_BREAK_IF(residencyController == nullptr);
-
-    auto lock = residencyController->acquireTrimCallbackLock();
-    residencyController->trimResidency(trimNotification->Flags, trimNotification->NumBytesToTrim);
-}
-
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
     if (!GmmHelper::allowTiling(*imgInfo.imgDesc) && imgInfo.mipCount == 0) {
         delete gmm;

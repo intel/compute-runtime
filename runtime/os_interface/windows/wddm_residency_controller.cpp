@@ -19,16 +19,24 @@ WddmResidencyController::WddmResidencyController(Wddm &wddm, uint32_t osContextI
 }
 
 void WddmResidencyController::registerCallback() {
-    this->trimCallbackHandle = wddm.registerTrimCallback(WddmMemoryManager::trimCallback, *this);
+    this->trimCallbackHandle = wddm.registerTrimCallback(WddmResidencyController::trimCallback, *this);
 }
 
 WddmResidencyController::~WddmResidencyController() {
     auto lock = this->acquireTrimCallbackLock();
-    wddm.unregisterTrimCallback(WddmMemoryManager::trimCallback, this->trimCallbackHandle);
+    wddm.unregisterTrimCallback(WddmResidencyController::trimCallback, this->trimCallbackHandle);
     lock.unlock();
 
     // Wait for lock to ensure trimCallback ended
     lock.lock();
+}
+
+void APIENTRY WddmResidencyController::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification) {
+    auto residencyController = static_cast<WddmResidencyController *>(trimNotification->Context);
+    DEBUG_BREAK_IF(residencyController == nullptr);
+
+    auto lock = residencyController->acquireTrimCallbackLock();
+    residencyController->trimResidency(trimNotification->Flags, trimNotification->NumBytesToTrim);
 }
 
 std::unique_lock<SpinLock> WddmResidencyController::acquireLock() {
@@ -186,10 +194,10 @@ void WddmResidencyController::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags,
         WddmAllocation *wddmAllocation = nullptr;
         while ((wddmAllocation = this->getTrimCandidateHead()) != nullptr) {
 
-            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "lastPeriodicTrimFenceValue = ", this->getLastTrimFenceValue());
+            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "lastPeriodicTrimFenceValue = ", lastTrimFenceValue);
 
             // allocation was not used from last periodic trim
-            if (wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId) <= this->getLastTrimFenceValue()) {
+            if (wasAllocationNotUsedSinceLastTrim(wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId))) {
 
                 DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation: handle =", wddmAllocation->handle, "lastFence =", (wddmAllocation)->getResidencyData().getFenceValueForContextId(osContextId));
 
@@ -201,12 +209,11 @@ void WddmResidencyController::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags,
                 }
 
                 for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
-                    if (wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId) <= this->getLastTrimFenceValue()) {
-
+                    AllocationStorageData &fragmentStorageData = wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId];
+                    if (wasAllocationNotUsedSinceLastTrim(fragmentStorageData.residency->getFenceValueForContextId(osContextId))) {
                         DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict fragment: handle =", wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle, "lastFence =", wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId));
-
-                        fragmentEvictHandles[fragmentsToEvict++] = wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle;
-                        wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->resident = false;
+                        fragmentEvictHandles[fragmentsToEvict++] = fragmentStorageData.osHandleStorage->handle;
+                        fragmentStorageData.residency->resident = false;
                     }
                 }
 
@@ -234,9 +241,8 @@ void WddmResidencyController::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags,
     }
 
     if (flags.PeriodicTrim || flags.RestartPeriodicTrim) {
-        const auto newPeriodicTrimFenceValue = *this->getMonitoredFence().cpuAddress;
-        this->setLastTrimFenceValue(newPeriodicTrimFenceValue);
-        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "updated lastPeriodicTrimFenceValue =", newPeriodicTrimFenceValue);
+        this->updateLastTrimFenceValue();
+        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "updated lastPeriodicTrimFenceValue =", lastTrimFenceValue);
     }
 }
 

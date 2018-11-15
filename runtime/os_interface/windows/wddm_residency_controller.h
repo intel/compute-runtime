@@ -26,6 +26,8 @@ class WddmResidencyController {
     WddmResidencyController(Wddm &wddm, uint32_t osContextId);
     MOCKABLE_VIRTUAL ~WddmResidencyController();
 
+    static void APIENTRY trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification);
+
     MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock();
     std::unique_lock<SpinLock> acquireTrimCallbackLock();
 
@@ -38,8 +40,8 @@ class WddmResidencyController {
     bool checkTrimCandidateListCompaction();
     void compactTrimCandidateList();
 
-    uint64_t getLastTrimFenceValue() { return lastTrimFenceValue; }
-    void setLastTrimFenceValue(uint64_t value) { lastTrimFenceValue = value; }
+    bool wasAllocationNotUsedSinceLastTrim(uint64_t fenceValue) { return fenceValue <= lastTrimFenceValue; }
+    void updateLastTrimFenceValue() { lastTrimFenceValue = *this->getMonitoredFence().cpuAddress; }
     const ResidencyContainer &peekTrimCandidateList() const { return trimCandidateList; }
     uint32_t peekTrimCandidatesCount() const { return trimCandidatesCount; }
 

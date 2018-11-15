@@ -24,6 +24,7 @@ using namespace OCLRT;
 
 class MockWddmResidencyController : public WddmResidencyController {
   public:
+    using WddmResidencyController::lastTrimFenceValue;
     using WddmResidencyController::trimCallbackHandle;
     using WddmResidencyController::trimCandidateList;
     using WddmResidencyController::trimCandidatesCount;
@@ -46,6 +47,7 @@ struct WddmResidencyControllerTest : ::testing::Test {
         wddm = std::unique_ptr<WddmMock>(static_cast<WddmMock *>(Wddm::createWddm()));
         wddm->init();
         residencyController = std::make_unique<MockWddmResidencyController>(*wddm, osContextId);
+        wddm->getWddmInterface()->createMonitoredFence(*residencyController);
     }
 
     std::unique_ptr<WddmMock> wddm;
@@ -174,14 +176,31 @@ TEST(WddmResidencyController, givenWddmResidencyControllerWhenRegisterCallbackTh
     residencyController.registerCallback();
 
     EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);
-    EXPECT_EQ(reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(WddmMemoryManager::trimCallback), gdi->getRegisterTrimNotificationArg().Callback);
+    EXPECT_EQ(reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(WddmResidencyController::trimCallback), gdi->getRegisterTrimNotificationArg().Callback);
     EXPECT_EQ(reinterpret_cast<void *>(&residencyController), gdi->getRegisterTrimNotificationArg().Context);
     EXPECT_EQ(wddm->getDevice(), gdi->getRegisterTrimNotificationArg().hDevice);
 }
 
+TEST_F(WddmResidencyControllerTest, givenWddmResidencyControllerWhenCallingWasAllocationNotUsedSinceLastTrimThenReturnCorrectValues) {
+    residencyController->lastTrimFenceValue = 100;
+    EXPECT_TRUE(residencyController->wasAllocationNotUsedSinceLastTrim(99));
+    EXPECT_TRUE(residencyController->wasAllocationNotUsedSinceLastTrim(99));
+    EXPECT_FALSE(residencyController->wasAllocationNotUsedSinceLastTrim(101));
+}
+
+TEST_F(WddmResidencyControllerTest, givenWddmResidencyControllerThenUpdateLastTrimFenceValueUsesMonitoredFence) {
+    *residencyController->getMonitoredFence().cpuAddress = 1234;
+    residencyController->updateLastTrimFenceValue();
+    EXPECT_EQ(1234, residencyController->lastTrimFenceValue);
+
+    *residencyController->getMonitoredFence().cpuAddress = 12345;
+    residencyController->updateLastTrimFenceValue();
+    EXPECT_EQ(12345, residencyController->lastTrimFenceValue);
+}
+
 TEST_F(WddmResidencyControllerWithGdiTest, givenWddmResidencyControllerWhenItIsDestructedThenUnregisterTrimCallback) {
     auto trimCallbackHandle = residencyController->trimCallbackHandle;
-    auto trimCallbackAddress = reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(WddmMemoryManager::trimCallback);
+    auto trimCallbackAddress = reinterpret_cast<PFND3DKMT_TRIMNOTIFICATIONCALLBACK>(WddmResidencyController::trimCallback);
 
     std::memset(&gdi->getUnregisterTrimNotificationArg(), 0, sizeof(D3DKMT_UNREGISTERTRIMNOTIFICATION));
     residencyController.reset();
@@ -416,8 +435,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenNotUsedAllocationsFromPreviousPe
     allocation2.getResidencyData().resident = true;
 
     // Set last periodic fence value
-    residencyController->setLastTrimFenceValue(10);
-    residencyController->setLastTrimFenceValue(10);
+    residencyController->lastTrimFenceValue = 10;
     // Set current fence value to greater value
     residencyController->getMonitoredFence().currentFenceValue = 20;
 
@@ -451,7 +469,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenOneUsedAllocationFromPreviousPer
     allocation2.getResidencyData().resident = true;
 
     // Set last periodic fence value
-    residencyController->setLastTrimFenceValue(10);
+    residencyController->lastTrimFenceValue = 10;
     // Set current fence value to greater value
     residencyController->getMonitoredFence().currentFenceValue = 20;
 
@@ -497,7 +515,8 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
     allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident = true;
 
     // Set last periodic fence value
-    residencyController->setLastTrimFenceValue(10);
+    *residencyController->getMonitoredFence().cpuAddress = 10;
+    residencyController->updateLastTrimFenceValue();
     // Set current fence value to greater value
     residencyController->getMonitoredFence().currentFenceValue = 20;
 
@@ -522,13 +541,13 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenPeriodicTrimWhenTrimCallbackCall
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    residencyController->setLastTrimFenceValue(10);
+    residencyController->lastTrimFenceValue = 10;
     // Set current fence value to greater value
     *residencyController->getMonitoredFence().cpuAddress = 20;
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, residencyController->getLastTrimFenceValue());
+    EXPECT_EQ(20u, residencyController->lastTrimFenceValue);
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, givenRestartPeriodicTrimWhenTrimCallbackCalledThenLastPeriodicTrimFenceIsSetToCurrentFenceValue) {
@@ -537,13 +556,13 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenRestartPeriodicTrimWhenTrimCallb
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    residencyController->setLastTrimFenceValue(10);
+    residencyController->lastTrimFenceValue = 10;
     // Set current fence value to greater value
     *residencyController->getMonitoredFence().cpuAddress = 20;
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, residencyController->getLastTrimFenceValue());
+    EXPECT_EQ(20u, residencyController->lastTrimFenceValue);
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetWithZeroSizeReturnsTrue) {
