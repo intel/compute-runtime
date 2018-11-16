@@ -29,11 +29,12 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
         lockStreamCalled = true;
         return AUBCommandStreamReceiver::AubFileStream::lockStream();
     }
-    void expectMemory(uint64_t physAddress, const void *memory, size_t size, uint32_t addressSpace) override {
+    void expectMemory(uint64_t physAddress, const void *memory, size_t size, uint32_t addressSpace, uint32_t compareOperation) override {
         physAddressCapturedFromExpectMemory = physAddress;
         memoryCapturedFromExpectMemory = reinterpret_cast<uintptr_t>(memory);
         sizeCapturedFromExpectMemory = size;
         addressSpaceCapturedFromExpectMemory = addressSpace;
+        compareOperationFromExpectMemory = compareOperation;
     }
     uint32_t initCalledCnt = 0;
     bool flushCalled = false;
@@ -42,6 +43,7 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     uintptr_t memoryCapturedFromExpectMemory = 0;
     size_t sizeCapturedFromExpectMemory = 0;
     uint32_t addressSpaceCapturedFromExpectMemory = 0;
+    uint32_t compareOperationFromExpectMemory = 0;
 };
 
 struct GmockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {

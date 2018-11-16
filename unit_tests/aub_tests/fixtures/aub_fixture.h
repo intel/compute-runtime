@@ -68,17 +68,7 @@ class AUBFixture : public CommandQueueHwFixture {
     template <typename FamilyType>
     void expectMemory(void *gfxAddress, const void *srcAddress, size_t length) {
         auto aubCsr = getAubCsr<FamilyType>();
-        PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
-            if (offset > length)
-                abort();
-
-            aubCsr->getAubStream()->expectMemory(physAddress,
-                                                 reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
-                                                 size,
-                                                 aubCsr->getAddressSpaceFromPTEBits(entryBits));
-        };
-
-        aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);
+        aubCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
     }
 
     static void *getGpuPointer(GraphicsAllocation *allocation) {

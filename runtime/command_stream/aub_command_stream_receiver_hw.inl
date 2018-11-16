@@ -675,14 +675,28 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMMIO(uint32_t mmioRegister, ui
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(void *gfxAddress, const void *srcAddress, size_t length) {
+void AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length) {
+    expectMemory(gfxAddress, srcAddress, length,
+                 AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) {
+    expectMemory(gfxAddress, srcAddress, length,
+                 AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual);
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(void *gfxAddress, const void *srcAddress,
+                                                         size_t length, uint32_t compareOperation) {
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
         UNRECOVERABLE_IF(offset > length);
 
         this->getAubStream()->expectMemory(physAddress,
                                            reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
                                            size,
-                                           this->getAddressSpaceFromPTEBits(entryBits));
+                                           this->getAddressSpaceFromPTEBits(entryBits),
+                                           compareOperation);
     };
 
     this->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);

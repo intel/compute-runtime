@@ -10,6 +10,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
+#include "unit_tests/mocks/mock_aub_file_stream.h"
 #include "unit_tests/mocks/mock_aub_subcapture_manager.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_gmm.h"
@@ -743,3 +744,31 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddMmioKeySetToNonZeroWhenInitAddit
     EXPECT_EQ(1u, stream->mmioList.size());
     EXPECT_TRUE(stream->isOnMmioList(mmioPair));
 };
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenAskedForMemoryExpectationThenPassValidCompareOperationType) {
+    class MyMockAubCsr : public AUBCommandStreamReceiverHw<FamilyType> {
+      public:
+        using AUBCommandStreamReceiverHw<FamilyType>::AUBCommandStreamReceiverHw;
+
+        void expectMemory(void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override {
+            inputCompareOperation = compareOperation;
+            AUBCommandStreamReceiverHw<FamilyType>::expectMemory(gfxAddress, srcAddress, length, compareOperation);
+        }
+        uint32_t inputCompareOperation = 0;
+    };
+    void *mockAddress = reinterpret_cast<void *>(1);
+    uint32_t compareNotEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual;
+    uint32_t compareEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+
+    MyMockAubCsr myMockCsr(**platformDevices, std::string(), true, *pDevice->getExecutionEnvironment());
+    auto mockStream = std::make_unique<MockAubFileStream>();
+    myMockCsr.stream = mockStream.get();
+
+    myMockCsr.expectMemoryNotEqual(mockAddress, mockAddress, 1);
+    EXPECT_EQ(compareNotEqual, myMockCsr.inputCompareOperation);
+    EXPECT_EQ(compareNotEqual, mockStream->compareOperationFromExpectMemory);
+
+    myMockCsr.expectMemoryEqual(mockAddress, mockAddress, 1);
+    EXPECT_EQ(compareEqual, myMockCsr.inputCompareOperation);
+    EXPECT_EQ(compareEqual, mockStream->compareOperationFromExpectMemory);
+}

@@ -107,7 +107,7 @@ HWTEST_F(AubMemDumpTests, writeVerifyOneBytePPGTT) {
     OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
     AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(byte), physAddress, 7, aubHelperHw);
     AUB::addMemoryWrite(aubFile, physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal);
-    aubFile.expectMemory(physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal);
+    aubFile.expectMemory(physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal, 0);
 
     aubFile.fileHandle.close();
 }
@@ -129,7 +129,7 @@ HWTEST_F(AubMemDumpTests, writeVerifyOneByteGGTT) {
     AubGTTData data = {true, false};
     AUB::reserveAddressGGTT(aubFile, &byte, sizeof(byte), physAddress, data);
     AUB::addMemoryWrite(aubFile, physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal);
-    aubFile.expectMemory(physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal);
+    aubFile.expectMemory(physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal, 0);
 
     aubFile.fileHandle.close();
 }
@@ -153,7 +153,7 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesPPGTT) {
     OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
     AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(bytes), physAddress, 7, aubHelperHw);
     AUB::addMemoryWrite(aubFile, physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal);
-    aubFile.expectMemory(physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal);
+    aubFile.expectMemory(physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal, 0);
 
     aubFile.fileHandle.close();
 }
@@ -175,7 +175,7 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesGGTT) {
     AubGTTData data = {true, false};
     AUB::reserveAddressGGTT(aubFile, bytes, sizeof(bytes), physAddress, data);
     AUB::addMemoryWrite(aubFile, physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal);
-    aubFile.expectMemory(physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal);
+    aubFile.expectMemory(physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal, 0);
 
     aubFile.fileHandle.close();
 }

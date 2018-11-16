@@ -129,7 +129,8 @@ struct AubFileStream : public AubStream {
     const std::string &getFileName() const { return fileName; }
     MOCKABLE_VIRTUAL void write(const char *data, size_t size);
     MOCKABLE_VIRTUAL void flush();
-    MOCKABLE_VIRTUAL void expectMemory(uint64_t physAddress, const void *memory, size_t size, uint32_t addressSpace);
+    MOCKABLE_VIRTUAL void expectMemory(uint64_t physAddress, const void *memory, size_t size,
+                                       uint32_t addressSpace, uint32_t compareOperation);
     MOCKABLE_VIRTUAL bool addComment(const char *message);
     MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lockStream();
 

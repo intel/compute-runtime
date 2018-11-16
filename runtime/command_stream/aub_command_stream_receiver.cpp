@@ -175,7 +175,8 @@ void AubFileStream::registerPoll(uint32_t registerOffset, uint32_t mask, uint32_
     write(reinterpret_cast<char *>(&header), sizeof(header));
 }
 
-void AubFileStream::expectMemory(uint64_t physAddress, const void *memory, size_t sizeRemaining, uint32_t addressSpace) {
+void AubFileStream::expectMemory(uint64_t physAddress, const void *memory, size_t sizeRemaining,
+                                 uint32_t addressSpace, uint32_t compareOperation) {
     using CmdServicesMemTraceMemoryCompare = AubMemDump::CmdServicesMemTraceMemoryCompare;
     CmdServicesMemTraceMemoryCompare header = {};
     header.setHeader();
@@ -184,7 +185,7 @@ void AubFileStream::expectMemory(uint64_t physAddress, const void *memory, size_
     header.repeatMemory = CmdServicesMemTraceMemoryCompare::RepeatMemoryValues::NoRepeat;
     header.tiling = CmdServicesMemTraceMemoryCompare::TilingValues::NoTiling;
     header.crcCompare = CmdServicesMemTraceMemoryCompare::CrcCompareValues::NoCrc;
-    header.compareOperation = CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+    header.compareOperation = compareOperation;
     header.dataTypeHint = CmdServicesMemTraceMemoryCompare::DataTypeHintValues::TraceNotype;
     header.addressSpace = addressSpace;
 

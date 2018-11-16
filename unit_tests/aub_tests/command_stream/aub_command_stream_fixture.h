@@ -60,17 +60,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
         }
 
         auto aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
-        PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
-            if (offset > length)
-                abort();
-
-            aubCsr->getAubStream()->expectMemory(physAddress,
-                                                 reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
-                                                 size,
-                                                 aubCsr->getAddressSpaceFromPTEBits(entryBits));
-        };
-
-        aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);
+        aubCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
     }
 
     GraphicsAllocation *createResidentAllocationAndStoreItInCsr(const void *address, size_t size) {

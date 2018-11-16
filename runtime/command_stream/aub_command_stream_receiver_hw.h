@@ -46,7 +46,9 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL bool writeMemory(GraphicsAllocation &gfxAllocation);
     MOCKABLE_VIRTUAL bool writeMemory(AllocationView &allocationView);
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue);
-    void expectMemory(void *gfxAddress, const void *srcAddress, size_t length);
+
+    void expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length);
+    void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);
 
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
 
@@ -120,6 +122,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     int getAddressSpaceFromPTEBits(uint64_t entryBits) const;
 
   protected:
+    MOCKABLE_VIRTUAL void expectMemory(void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
     bool dumpAubNonWritable = false;
     ExternalAllocationsContainer externalAllocations;
 };
