@@ -293,7 +293,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushNotRequiredTh
     flushTask(commandStreamReceiver);
 
     EXPECT_EQ(commandStreamReceiver.commandStream.getUsed(), 0u);
-    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushNotRequired, commandStreamReceiver.peekSamplerCacheFlushRequired());
+    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushNotRequired, commandStreamReceiver.samplerCacheFlushRequired);
 
     parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
 
@@ -317,7 +317,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeThenSen
     flushTask(commandStreamReceiver);
 
     EXPECT_GT(commandStreamReceiver.commandStream.getUsed(), 0u);
-    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushAfter, commandStreamReceiver.peekSamplerCacheFlushRequired());
+    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushAfter, commandStreamReceiver.samplerCacheFlushRequired);
 
     parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
 
@@ -343,7 +343,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeAndWaSa
     flushTask(commandStreamReceiver);
 
     EXPECT_EQ(commandStreamReceiver.commandStream.getUsed(), 0u);
-    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore, commandStreamReceiver.peekSamplerCacheFlushRequired());
+    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore, commandStreamReceiver.samplerCacheFlushRequired);
 
     parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
 
@@ -367,7 +367,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushAfterThenSend
     flushTask(commandStreamReceiver);
 
     EXPECT_GT(commandStreamReceiver.commandStream.getUsed(), 0u);
-    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushNotRequired, commandStreamReceiver.peekSamplerCacheFlushRequired());
+    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushNotRequired, commandStreamReceiver.samplerCacheFlushRequired);
 
     parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
 

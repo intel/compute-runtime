@@ -57,15 +57,15 @@ HWTEST_F(CommandStreamReceiverTest, testCtor) {
 HWTEST_F(CommandStreamReceiverTest, testInitProgrammingFlags) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.initProgrammingFlags();
-    EXPECT_FALSE(csr.isPreambleProgrammed());
-    EXPECT_FALSE(csr.isGSBAFor32BitProgrammed());
-    EXPECT_TRUE(csr.isMediaVfeStateDirty());
-    EXPECT_FALSE(csr.isLastVmeSubslicesConfig());
-    EXPECT_EQ(0u, csr.getLastSentL3Config());
-    EXPECT_EQ(-1, csr.getLastSentCoherencyRequest());
-    EXPECT_EQ(-1, csr.getLastMediaSamplerConfig());
-    EXPECT_EQ(PreemptionMode::Initial, csr.getLastPreemptionMode());
-    EXPECT_EQ(0u, csr.getLatestSentStatelessMocsConfig());
+    EXPECT_FALSE(csr.isPreambleSent);
+    EXPECT_FALSE(csr.GSBAFor32BitProgrammed);
+    EXPECT_TRUE(csr.mediaVfeStateDirty);
+    EXPECT_FALSE(csr.lastVmeSubslicesConfig);
+    EXPECT_EQ(0u, csr.lastSentL3Config);
+    EXPECT_EQ(-1, csr.lastSentCoherencyRequest);
+    EXPECT_EQ(-1, csr.lastMediaSamplerConfig);
+    EXPECT_EQ(PreemptionMode::Initial, csr.lastPreemptionMode);
+    EXPECT_EQ(0u, csr.latestSentStatelessMocsConfig);
 }
 
 TEST_F(CommandStreamReceiverTest, makeResident_setsBufferResidencyFlag) {

@@ -1744,7 +1744,7 @@ HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {
     EXPECT_TRUE(imageY->isImageFromImage());
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore, commandStreamReceiver.peekSamplerCacheFlushRequired());
+    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore, commandStreamReceiver.samplerCacheFlushRequired);
 }
 
 struct KernelExecutionEnvironmentTest : public Test<DeviceFixture> {
