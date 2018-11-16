@@ -432,3 +432,25 @@ endmacro()
 apply_macro_for_each_gen("TESTED")
 add_subdirectories()
 create_project_source_tree(igdrcl_tests ${IGDRCL_SOURCE_DIR}/runtime)
+
+if(MSVC)
+  set(UltPchHeader "${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_tests_pch.h")
+  set(UltPchSource "${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_tests_pch.cpp")
+  set(UltPchBinary "${CMAKE_CURRENT_BINARY_DIR}/igdrcl_tests_pch.pch")
+
+  set(IGDRCL_SRCS_ult_pch ${UltPchSource} ${UltPchHeader})
+
+  get_target_property(UltSources igdrcl_tests SOURCES)
+
+  set_source_files_properties(${UltSources}
+    PROPERTIES COMPILE_FLAGS "/Yu${UltPchHeader} /FI${UltPchHeader} /Fp${UltPchBinary}"
+    OBJECT_DEPENDS "${UltPchBinary}")
+
+  set_source_files_properties(${UltPchSource}
+    PROPERTIES COMPILE_FLAGS "/Yc${UltPchHeader} /FI${UltPchHeader} /Fp${UltPchBinary}"
+    OBJECT_OUTPUTS "${UltPchBinary}")
+
+  target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_ult_pch})
+endif()
+
+# Dont add any sources below PCH logic. This is to keep PCH dependencies correctly without creating new target
