@@ -250,7 +250,7 @@ TEST(Context, GivenVaContextWhenItIsCreatedItInitializesPowerSavingMode) {
     auto kmdNotifyHelper = commandStreamReceiver.peekKmdNotifyHelper();
 
     int64_t timeout = 0;
-    kmdNotifyHelper->obtainTimeoutParams(timeout, true, 1, 10, 2);
+    kmdNotifyHelper->obtainTimeoutParams(timeout, true, 1, 10, 2, false);
     EXPECT_NE(1, timeout);
 
     cl_context_properties validProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platformId[0],
@@ -259,7 +259,7 @@ TEST(Context, GivenVaContextWhenItIsCreatedItInitializesPowerSavingMode) {
     std::unique_ptr<MockContext> ctx(Context::create<MockContext>(validProperties, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, ctx);
-    kmdNotifyHelper->obtainTimeoutParams(timeout, true, 1, 10, 2);
+    kmdNotifyHelper->obtainTimeoutParams(timeout, true, 1, 10, 2, false);
     EXPECT_EQ(1, timeout);
 }
 
@@ -278,7 +278,7 @@ TEST(Context, GivenNonVaContextWhenItIsCreatedItInitializesPowerSavingMode) {
     auto kmdNotifyHelper = commandStreamReceiver.peekKmdNotifyHelper();
 
     int64_t timeout = 0;
-    kmdNotifyHelper->obtainTimeoutParams(timeout, true, 1, 10, 2);
+    kmdNotifyHelper->obtainTimeoutParams(timeout, true, 1, 10, 2, false);
     EXPECT_NE(1, timeout);
 
     cl_context_properties validProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platformId[0],
@@ -287,6 +287,6 @@ TEST(Context, GivenNonVaContextWhenItIsCreatedItInitializesPowerSavingMode) {
     std::unique_ptr<MockContext> ctx(Context::create<MockContext>(validProperties, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, ctx);
-    kmdNotifyHelper->obtainTimeoutParams(timeout, true, 1, 10, 2);
+    kmdNotifyHelper->obtainTimeoutParams(timeout, true, 1, 10, 2, false);
     EXPECT_NE(1, timeout);
 }

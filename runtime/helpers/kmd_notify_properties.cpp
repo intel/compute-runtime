@@ -15,12 +15,13 @@ bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
                                           bool quickKmdSleepRequest,
                                           uint32_t currentHwTag,
                                           uint32_t taskCountToWait,
-                                          FlushStamp flushStampToWait) {
+                                          FlushStamp flushStampToWait,
+                                          bool forcePowerSavingMode) {
     if (flushStampToWait == 0) {
         return false;
     }
 
-    if (DebugManager.flags.PowerSavingMode.get()) {
+    if (DebugManager.flags.PowerSavingMode.get() || forcePowerSavingMode) {
         timeoutValueOutput = 1;
         return true;
     }
