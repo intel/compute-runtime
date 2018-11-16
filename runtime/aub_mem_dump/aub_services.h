@@ -385,7 +385,8 @@ struct CmdServicesMemTraceMemoryCompare {
         uint32_t tiling : 2;
         uint32_t : 2;
         uint32_t crcCompare : 1;
-        uint32_t : 13;
+        uint32_t compareOperation : 1;
+        uint32_t : 12;
         uint32_t dataTypeHint : 8;
         uint32_t addressSpace : 4;
     };
@@ -501,6 +502,12 @@ struct CmdServicesMemTraceMemoryCompare {
             TracePpgttGfx = 5,
             TracePpgttPdEntry = 9,
             TracePhysicalPdpEntry = 8
+        };
+    };
+    struct CompareOperationValues {
+        enum {
+            CompareNotEqual = 1,
+            CompareEqual = 0
         };
     };
 };

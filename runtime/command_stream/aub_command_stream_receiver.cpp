@@ -184,6 +184,7 @@ void AubFileStream::expectMemory(uint64_t physAddress, const void *memory, size_
     header.repeatMemory = CmdServicesMemTraceMemoryCompare::RepeatMemoryValues::NoRepeat;
     header.tiling = CmdServicesMemTraceMemoryCompare::TilingValues::NoTiling;
     header.crcCompare = CmdServicesMemTraceMemoryCompare::CrcCompareValues::NoCrc;
+    header.compareOperation = CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
     header.dataTypeHint = CmdServicesMemTraceMemoryCompare::DataTypeHintValues::TraceNotype;
     header.addressSpace = addressSpace;
 
