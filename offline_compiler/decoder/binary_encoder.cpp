@@ -6,6 +6,7 @@
  */
 
 #include "binary_encoder.h"
+#include "CL/cl.h"
 #include "elf/writer.h"
 #include "helper.h"
 #include "runtime/helpers/file_io.h"
@@ -137,10 +138,11 @@ int BinaryEncoder::encode() {
         printf("Error! Couldn't create device_binary.bin.\n");
         return -1;
     }
-    if (!processBinary(ptmFile, deviceBinary)) {
-        return -1;
-    }
+    int retVal = processBinary(ptmFile, deviceBinary);
     deviceBinary.close();
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
 
     return createElf();
 }
