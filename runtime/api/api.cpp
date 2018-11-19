@@ -3326,6 +3326,8 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *func_name) {
     RETURN_FUNC_PTR_IF_EXIST(clRetainAcceleratorINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clReleaseAcceleratorINTEL);
 
+    RETURN_FUNC_PTR_IF_EXIST(clCreateBufferWithPropertiesINTEL);
+
     void *ret = sharingFactory.getExtensionFunctionAddress(func_name);
     if (ret != nullptr)
         return ret;

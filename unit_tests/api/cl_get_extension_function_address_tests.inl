@@ -51,4 +51,9 @@ TEST_F(clGetExtensionFunctionAddressTests, clSetPerformanceConfigurationINTEL) {
     auto retVal = clGetExtensionFunctionAddress("clSetPerformanceConfigurationINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clSetPerformanceConfigurationINTEL));
 }
+TEST_F(clGetExtensionFunctionAddressTests, givenClCreateBufferWithPropertiesIntelAsInputWhenFunctionIsCalledThenProperPointerIsReturned) {
+    auto functionPointer = clGetExtensionFunctionAddress("clCreateBufferWithPropertiesINTEL");
+    EXPECT_EQ(functionPointer, reinterpret_cast<void *>(clCreateBufferWithPropertiesINTEL));
+}
+
 } // namespace ULT
