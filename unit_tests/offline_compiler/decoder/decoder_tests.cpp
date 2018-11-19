@@ -29,7 +29,7 @@ SKernelBinaryHeaderCommon createKernelBinaryHeaderCommon(const uint32_t kernelNa
 namespace OCLRT {
 TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
     const char *argv[] = {
-        "cloc",
+        "ocloc",
         "decoder",
         "-file",
         "test_files/binary.bin",
@@ -44,7 +44,7 @@ TEST(DecoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
 
 TEST(DecoderTests, WhenMissingParametersThenValidateInputReturnsErrorCode) {
     const char *argv[] = {
-        "cloc",
+        "ocloc",
         "decoder",
         "-file",
         "test_files/binary.bin",

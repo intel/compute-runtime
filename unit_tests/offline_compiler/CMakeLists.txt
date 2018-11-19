@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-project(cloc_tests)
+project(ocloc_tests)
 
 set(IGDRCL_SRCS_cloc
 ${IGDRCL_SOURCE_DIR}/offline_compiler/decoder/binary_decoder.cpp
@@ -48,38 +48,38 @@ endif()
 
 link_directories(${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
-add_executable(cloc_tests ${IGDRCL_SRCS_offline_compiler_tests})
+add_executable(ocloc_tests ${IGDRCL_SRCS_offline_compiler_tests})
 
-target_include_directories(cloc_tests PRIVATE
-  $<TARGET_PROPERTY:cloc,INCLUDE_DIRECTORIES>
+target_include_directories(ocloc_tests PRIVATE
+  $<TARGET_PROPERTY:ocloc,INCLUDE_DIRECTORIES>
 )
-target_compile_definitions(cloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:cloc,INTERFACE_COMPILE_DEFINITIONS>)
+target_compile_definitions(ocloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:ocloc,INTERFACE_COMPILE_DEFINITIONS>)
 
-target_link_libraries(cloc_tests igdrcl_mocks gmock-gtest elflib)
+target_link_libraries(ocloc_tests igdrcl_mocks gmock-gtest elflib)
 
 if(UNIX)
-  target_link_libraries(cloc_tests dl pthread)
+  target_link_libraries(ocloc_tests dl pthread)
 endif()
 
-get_property(CLOC_FOLDER TARGET cloc PROPERTY FOLDER)
-get_property(CLOC_COMPILE_FLAGS TARGET cloc PROPERTY COMPILE_FLAGS)
-set_property(TARGET cloc_tests PROPERTY FOLDER ${CLOC_FOLDER})
-set_property(TARGET cloc_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${CLOC_COMPILE_FLAGS})
+get_property(CLOC_FOLDER TARGET ocloc PROPERTY FOLDER)
+get_property(CLOC_COMPILE_FLAGS TARGET ocloc PROPERTY COMPILE_FLAGS)
+set_property(TARGET ocloc_tests PROPERTY FOLDER ${CLOC_FOLDER})
+set_property(TARGET ocloc_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${CLOC_COMPILE_FLAGS})
 
 string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_DEFAULT_DEVICE)
 
-add_custom_target(run_cloc_tests ALL
-  DEPENDS cloc_tests
+add_custom_target(run_ocloc_tests ALL
+  DEPENDS ocloc_tests
 )
 macro(macro_for_each_platform)
   if("${PLATFORM_IT_LOWER}" STREQUAL "${CLOC_DEFAULT_DEVICE}")
     foreach(PLATFORM_TYPE "CORE" "LP")
       if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
         get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
-        add_dependencies(run_cloc_tests test_kernels_${family_name_with_type})
+        add_dependencies(run_ocloc_tests test_kernels_${family_name_with_type})
         neo_copy_test_files(copy_test_files_${family_name_with_type} ${family_name_with_type})	
-        add_dependencies(run_cloc_tests copy_test_files_${family_name_with_type})
-        set(run_tests_cmd cloc_tests --device ${CLOC_DEFAULT_DEVICE} --family_type ${family_name_with_type})
+        add_dependencies(run_ocloc_tests copy_test_files_${family_name_with_type})
+        set(run_tests_cmd ocloc_tests --device ${CLOC_DEFAULT_DEVICE} --family_type ${family_name_with_type})
       endif()
     endforeach()
   endif()
@@ -89,11 +89,11 @@ macro(macro_for_each_gen)
 endmacro()
 apply_macro_for_each_gen("TESTED")
 
-set_property(TARGET run_cloc_tests PROPERTY FOLDER ${CLOC_FOLDER})
+set_property(TARGET run_ocloc_tests PROPERTY FOLDER ${CLOC_FOLDER})
 
 if(WIN32)
   add_custom_command(
-    TARGET run_cloc_tests
+    TARGET run_ocloc_tests
     POST_BUILD
     COMMAND echo deleting offline compiler files and directories...
     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_DEFAULT_DEVICE}/copybuffer_${CLOC_DEFAULT_DEVICE}.bc
@@ -105,7 +105,7 @@ if(WIN32)
   )
 else()
   add_custom_command(
-    TARGET run_cloc_tests
+    TARGET run_ocloc_tests
     POST_BUILD
     COMMAND echo deleting offline compiler files and directories...
     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_DEFAULT_DEVICE}/*.bc
@@ -119,4 +119,4 @@ else()
 endif()
 
 add_subdirectories()
-create_project_source_tree(cloc_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests ${IGDRCL_SOURCE_DIR})
+create_project_source_tree(ocloc_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests ${IGDRCL_SOURCE_DIR})

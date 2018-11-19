@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-project(cloc)
+project(ocloc)
 
 set(CLOC_SRCS_LIB
 ${IGDRCL_SOURCE_DIR}/offline_compiler/decoder/binary_decoder.cpp
@@ -69,10 +69,10 @@ set(CLOC_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
-add_executable(cloc ${CLOC_SRCS})
+add_executable(ocloc ${CLOC_SRCS})
 add_subdirectories()
 
-create_project_source_tree(cloc ${IGDRCL_SOURCE_DIR}/runtime)
+create_project_source_tree(ocloc ${IGDRCL_SOURCE_DIR}/runtime)
 
 set(CLOC_INCLUDES
   ${IGC_OCL_ADAPTOR_DIR}
@@ -85,22 +85,22 @@ set(CLOC_INCLUDES
   ${THIRD_PARTY_DIR}
 )
 
-target_include_directories(cloc BEFORE PRIVATE ${CLOC_INCLUDES})
+target_include_directories(ocloc BEFORE PRIVATE ${CLOC_INCLUDES})
 
-target_compile_definitions(cloc PUBLIC ${CLOC_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM})
+target_compile_definitions(ocloc PUBLIC ${CLOC_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM})
 
 if(MSVC)
-  target_link_libraries(cloc dbghelp)
+  target_link_libraries(ocloc dbghelp)
 endif()
 
 if(UNIX)
-  target_link_libraries(cloc dl pthread)
+  target_link_libraries(ocloc dl pthread)
 endif()
 
-target_link_libraries(cloc elflib)
+target_link_libraries(ocloc elflib)
 
-set_target_properties(cloc PROPERTIES FOLDER "offline_compiler")
-set_property(TARGET cloc APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
+set_target_properties(ocloc PROPERTIES FOLDER "offline_compiler")
+set_property(TARGET ocloc APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
 
 add_custom_target(copy_compiler_files DEPENDS ${IGDRCL__IGC_TARGETS})
 set_target_properties(copy_compiler_files PROPERTIES FOLDER "opencl runtime")
@@ -109,7 +109,7 @@ foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
   add_custom_command(
     TARGET copy_compiler_files
     PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:cloc>
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:ocloc>
 )
 endforeach()
 

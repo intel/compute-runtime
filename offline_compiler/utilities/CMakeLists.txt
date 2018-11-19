@@ -22,4 +22,4 @@ else()
   )
 endif()
 
-target_sources(cloc PRIVATE ${CLOC_SRCS_UTILITIES})
+target_sources(ocloc PRIVATE ${CLOC_SRCS_UTILITIES})

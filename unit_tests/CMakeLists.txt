@@ -162,13 +162,13 @@ set_target_properties(run_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX})
 
 if(WIN32)
-  set(cloc_cmd_prefix cloc)
+  set(cloc_cmd_prefix ocloc)
   set(ir_extension ".spv")
 else()
   if(DEFINED IGDRCL__IGC_LIBRARY_PATH)
-    set(cloc_cmd_prefix LD_LIBRARY_PATH=${IGDRCL__IGC_LIBRARY_PATH} $<TARGET_FILE:cloc>)
+    set(cloc_cmd_prefix LD_LIBRARY_PATH=${IGDRCL__IGC_LIBRARY_PATH} $<TARGET_FILE:ocloc>)
   else()
-    set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
+    set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc> $<TARGET_FILE:ocloc>)
   endif()
   set(ir_extension ".bc")
 endif()
@@ -193,7 +193,7 @@ function(neo_gen_kernels target platform_name suffix)
       OUTPUT ${output_files}
       COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir}
       WORKING_DIRECTORY ${workdir}
-      DEPENDS ${filepath} cloc
+      DEPENDS ${filepath} ocloc
     )
 
     list(APPEND results ${output_files})
@@ -226,7 +226,7 @@ function(neo_gen_kernels_with_options target platform_name suffix filepath)
         OUTPUT ${output_files}
         COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -options ${arg} -options_name
         WORKING_DIRECTORY ${workdir}
-        DEPENDS ${filearg} cloc
+        DEPENDS ${filearg} ocloc
       )
 
       list(APPEND results ${output_files})
@@ -263,7 +263,7 @@ function(neo_gen_kernel_with_kernel_debug_options target platform_name suffix fi
     OUTPUT ${output_files}
     COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -output ${argwospaces} -internal_options ${TEST_KERNEL_kernel_debug_enable} -options "-g"
     WORKING_DIRECTORY ${workdir}
-    DEPENDS ${filepath} cloc
+    DEPENDS ${filepath} ocloc
   )
 
   list(APPEND results ${output_files})
@@ -290,7 +290,7 @@ function(neo_gen_kernel_from_ll target platform_name suffix filepath output_name
     OUTPUT ${output_files}
     COMMAND ${cloc_cmd_prefix} -q -file ${filename} -output ${output_name} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input
     WORKING_DIRECTORY ${workdir}
-    DEPENDS ${filepath} cloc
+    DEPENDS ${filepath} ocloc
   )
 
   list(APPEND results ${output_files})

@@ -22,7 +22,7 @@ endif()
 set(BUILTINS_INCLUDE_DIR ${TargetDir} PARENT_SCOPE)
 set(BUILTIN_CPP "")
 
-# Define function for compiling built-ins (with cloc)
+# Define function for compiling built-ins (with ocloc)
 function(compile_builtin gen_type platform_type builtin)
   string(TOLOWER ${gen_type} gen_type_lower)
   get_family_name_with_type(${gen_type} ${platform_type})
@@ -51,12 +51,12 @@ function(compile_builtin gen_type platform_type builtin)
   # set variable outside function
   set(BUILTIN_CPP built_ins/${NEO_ARCH}/${gen_type_lower}/${BASENAME}_${family_name_with_type}.cpp PARENT_SCOPE)
   if(WIN32)
-    set(cloc_cmd_prefix cloc)
+    set(cloc_cmd_prefix ocloc)
   else()
     if(DEFINED IGDRCL__IGC_LIBRARY_PATH)
-      set(cloc_cmd_prefix LD_LIBRARY_PATH=${IGDRCL__IGC_LIBRARY_PATH} $<TARGET_FILE:cloc>)
+      set(cloc_cmd_prefix LD_LIBRARY_PATH=${IGDRCL__IGC_LIBRARY_PATH} $<TARGET_FILE:ocloc>)
     else()
-      set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
+      set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc> $<TARGET_FILE:ocloc>)
     endif()
   endif()
   list(APPEND __cloc__options__ "-cl-kernel-arg-info")
@@ -64,7 +64,7 @@ function(compile_builtin gen_type platform_type builtin)
     OUTPUT ${OUTPUT_FILES}
     COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${BUILTIN_OPTIONS} -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "$<JOIN:${__cloc__options__}, >"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    DEPENDS ${builtin} cloc copy_compiler_files
+    DEPENDS ${builtin} ocloc copy_compiler_files
   )
 endfunction()
 

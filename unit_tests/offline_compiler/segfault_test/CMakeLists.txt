@@ -28,15 +28,15 @@ else()
   )
 endif()
 
-add_executable(cloc_segfault_test ${CLOC_SEGFAULT_TEST_SOURCES})
-target_link_libraries(cloc_segfault_test gmock-gtest)
+add_executable(ocloc_segfault_test ${CLOC_SEGFAULT_TEST_SOURCES})
+target_link_libraries(ocloc_segfault_test gmock-gtest)
 if(MSVC)
-  target_compile_options(cloc_segfault_test PRIVATE /Zi)
-  set_property(TARGET cloc_segfault_test APPEND PROPERTY LINK_FLAGS /DEBUG)
-  target_link_libraries(cloc_segfault_test dbghelp)
+  target_compile_options(ocloc_segfault_test PRIVATE /Zi)
+  set_property(TARGET ocloc_segfault_test APPEND PROPERTY LINK_FLAGS /DEBUG)
+  target_link_libraries(ocloc_segfault_test dbghelp)
 endif()
 if(UNIX)
-  target_link_libraries(cloc_segfault_test dl pthread)
+  target_link_libraries(ocloc_segfault_test dl pthread)
 endif()
 
 set(CLOC_SEGFAULT_TEST_INCLUDES
@@ -45,25 +45,25 @@ set(CLOC_SEGFAULT_TEST_INCLUDES
 )
 
 if(CMAKE_COMPILER_IS_GNUCC)
-  target_compile_definitions(cloc_segfault_test PRIVATE SKIP_SEGFAULT_TEST=1)
+  target_compile_definitions(ocloc_segfault_test PRIVATE SKIP_SEGFAULT_TEST=1)
 endif()
 
-get_property(CLOC_FOLDER TARGET cloc PROPERTY FOLDER)
-set_property(TARGET cloc_segfault_test PROPERTY FOLDER ${CLOC_FOLDER})
+get_property(CLOC_FOLDER TARGET ocloc PROPERTY FOLDER)
+set_property(TARGET ocloc_segfault_test PROPERTY FOLDER ${CLOC_FOLDER})
 
-target_include_directories(cloc_segfault_test BEFORE PRIVATE ${CLOC_SEGFAULT_TEST_INCLUDES})
-create_project_source_tree(cloc_segfault_test ${IGDRCL_SOURCE_DIR}/offline_compiler ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
+target_include_directories(ocloc_segfault_test BEFORE PRIVATE ${CLOC_SEGFAULT_TEST_INCLUDES})
+create_project_source_tree(ocloc_segfault_test ${IGDRCL_SOURCE_DIR}/offline_compiler ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
 
-add_custom_target(run_cloc_segfault_test ALL
-  DEPENDS cloc_segfault_test
+add_custom_target(run_ocloc_segfault_test ALL
+  DEPENDS ocloc_segfault_test
 )
 
 add_custom_command(
-  TARGET run_cloc_segfault_test
+  TARGET run_ocloc_segfault_test
   POST_BUILD
-  COMMAND echo Running cloc_segfault_test
-  COMMAND cloc_segfault_test
+  COMMAND echo Running ocloc_segfault_test
+  COMMAND ocloc_segfault_test
   WORKING_DIRECTORY ${TargetDir}
 )
 
-set_property(TARGET run_cloc_segfault_test PROPERTY FOLDER ${CLOC_FOLDER})
+set_property(TARGET run_ocloc_segfault_test PROPERTY FOLDER ${CLOC_FOLDER})

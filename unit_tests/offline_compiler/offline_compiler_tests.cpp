@@ -41,7 +41,7 @@ void compilerOutputRemove(const std::string &fileName, const std::string &type) 
 
 TEST_F(OfflineCompilerTests, GoodArgTest) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
@@ -57,7 +57,7 @@ TEST_F(OfflineCompilerTests, GoodArgTest) {
 
 TEST_F(OfflineCompilerTests, TestExtensions) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
@@ -72,7 +72,7 @@ TEST_F(OfflineCompilerTests, TestExtensions) {
 
 TEST_F(OfflineCompilerTests, GoodBuildTest) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
@@ -99,7 +99,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTest) {
 
 TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
@@ -122,7 +122,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
 
 TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
@@ -169,7 +169,7 @@ TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
 
 TEST_F(OfflineCompilerTests, GoodBuildTestWithCppFile) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
@@ -193,7 +193,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithCppFile) {
 
 TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
@@ -217,7 +217,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
 
 TEST_F(OfflineCompilerTests, PrintUsage) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-?"};
 
     testing::internal::CaptureStdout();
@@ -233,7 +233,7 @@ TEST_F(OfflineCompilerTests, PrintUsage) {
 TEST_F(OfflineCompilerTests, NaughtyArgTest_File) {
     DebugManager.flags.PrintDebugMessages.set(true);
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/ImANaughtyFile.cl",
         "-device",
@@ -251,7 +251,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_File) {
 
 TEST_F(OfflineCompilerTests, NaughtyArgTest_Flag) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-n",
         "test_files/ImANaughtyFile.cl",
         "-device",
@@ -269,7 +269,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_Flag) {
 
 TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
     auto argvA = {
-        "cloc",
+        "ocloc",
         "-file",
     };
 
@@ -284,7 +284,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
     delete pOfflineCompiler;
 
     auto argvB = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/ImANaughtyFile.cl",
         "-device"};
@@ -300,7 +300,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
 
 TEST_F(OfflineCompilerTests, GivenNonexistantDeviceWhenCompilingThenExitWithErrorMsg) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
@@ -316,7 +316,7 @@ TEST_F(OfflineCompilerTests, GivenNonexistantDeviceWhenCompilingThenExitWithErro
 
 TEST_F(OfflineCompilerTests, NaughtyKernelTest) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/shouldfail.cl",
         "-device",
@@ -346,7 +346,7 @@ TEST_F(OfflineCompilerTests, NaughtyKernelTest) {
 
 TEST(OfflineCompilerTest, parseCmdLine) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-cl-intel-greater-than-4GB-buffer-required"};
 
     MockOfflineCompiler *mockOfflineCompiler = new MockOfflineCompiler();
@@ -466,7 +466,7 @@ TEST(OfflineCompilerTest, buildSourceCode) {
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
@@ -493,7 +493,7 @@ TEST(OfflineCompilerTest, GivenKernelWhenNoCharAfterKernelSourceThenBuildWithSuc
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/emptykernel.cl",
         "-device",
@@ -538,7 +538,7 @@ TEST(OfflineCompilerTest, generateElfBinary) {
 
 TEST(OfflineCompilerTest, givenLlvmInputOptionPassedWhenCmdLineParsedThenInputFileLlvmIsSetTrue) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-llvm_input"};
 
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
@@ -563,7 +563,7 @@ TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChang
 }
 
 TEST(OfflineCompilerTest, givenSpirvInputOptionPassedWhenCmdLineParsedThenInputFileSpirvIsSetTrue) {
-    auto argv = {"cloc", "-spirv_input"};
+    auto argv = {"ocloc", "-spirv_input"};
 
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
 
@@ -583,7 +583,7 @@ TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChang
 TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUed) {
     MockOfflineCompiler mockOfflineCompiler;
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/emptykernel.cl",
         "-device",
@@ -612,13 +612,13 @@ TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCo
 }
 
 TEST(OfflineCompilerTest, givenBinaryInputThenDontTruncateSourceAtFirstZero) {
-    auto argvLlvm = {"cloc", "-llvm_input", "-file", "test_files/binary_with_zeroes",
+    auto argvLlvm = {"ocloc", "-llvm_input", "-file", "test_files/binary_with_zeroes",
                      "-device", gEnvironment->devicePrefix.c_str()};
     auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
     mockOfflineCompiler->initialize(argvLlvm.size(), argvLlvm.begin());
     EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
 
-    auto argvSpirV = {"cloc", "-spirv_input", "-file", "test_files/binary_with_zeroes",
+    auto argvSpirV = {"ocloc", "-spirv_input", "-file", "test_files/binary_with_zeroes",
                       "-device", gEnvironment->devicePrefix.c_str()};
     mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
     mockOfflineCompiler->initialize(argvSpirV.size(), argvSpirV.begin());
@@ -627,7 +627,7 @@ TEST(OfflineCompilerTest, givenBinaryInputThenDontTruncateSourceAtFirstZero) {
 
 TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFileHasCorrectName) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-output",
@@ -660,7 +660,7 @@ TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFil
 
 TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataFileIsCreated) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-file",
         "test_files/copybuffer.cl",
         "-output",
@@ -705,7 +705,7 @@ TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataF
 
 TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreAppendedToInternalOptionsString) {
     auto argv = {
-        "cloc",
+        "ocloc",
         "-internal_options",
         "myInternalOptions"};
 
@@ -730,7 +730,7 @@ TEST(OfflineCompilerTest, givenInputOtpionsAndInternalOptionsFilesWhenOfflineCom
     ASSERT_TRUE(fileExists("test_files/shouldfail_internal_options.txt"));
 
     auto argv = {
-        "cloc",
+        "ocloc",
         "-q",
         "-file",
         "test_files/shouldfail.cl",

@@ -17,7 +17,7 @@
 namespace OCLRT {
 TEST(EncoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
     const char *argv[] = {
-        "cloc",
+        "ocloc",
         "asm",
         "-dump",
         "test_files/dump",
@@ -30,7 +30,7 @@ TEST(EncoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
 
 TEST(EncoderTests, WhenMissingParametersThenErrorCodeIsReturned) {
     const char *argv[] = {
-        "cloc",
+        "ocloc",
         "asm",
         "-dump",
         "test_files/dump",
@@ -42,7 +42,7 @@ TEST(EncoderTests, WhenMissingParametersThenErrorCodeIsReturned) {
 
 TEST(EncoderTests, GivenWrongParametersWhenParsingParametersThenErrorCodeIsReturne) {
     const char *argv[] = {
-        "cloc",
+        "ocloc",
         "asm",
         "-dump",
         "",

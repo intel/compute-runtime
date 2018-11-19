@@ -620,7 +620,7 @@ std::string getDevicesTypes() {
 void OfflineCompiler::printUsage() {
 
     printf("Compiles CL files into llvm (.bc or .ll), gen isa (.gen), and binary files (.bin)\n\n");
-    printf("cloc -file <filename> -device <device_type> [OPTIONS]\n\n");
+    printf("ocloc -file <filename> -device <device_type> [OPTIONS]\n\n");
     printf("  -file <filename>             Indicates the CL kernel file to be compiled.\n");
     printf("  -device <device_type>        Indicates which device for which we will compile.\n");
     printf("                               <device_type> can be: %s\n", getDevicesTypes().c_str());
