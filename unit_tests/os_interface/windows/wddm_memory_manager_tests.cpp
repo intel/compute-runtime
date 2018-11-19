@@ -65,6 +65,13 @@ TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGetting
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(2u));
 }
 
+TEST(WddmAllocationTest, givenAllocationCreatedWithOsContextCountOneWhenItIsCreatedThenMaxOsContextCountIsUsedInstead) {
+    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u};
+    allocation.setTrimCandidateListPosition(3u, 700u);
+    EXPECT_EQ(700u, allocation.getTrimCandidateListPosition(3u));
+    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(2u));
+}
+
 TEST(WddmAllocationTest, givenRequestedContextIdTooLargeWhenGettingTrimCandidateListPositionThenReturnUnusedPosition) {
     WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u};
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(1u));

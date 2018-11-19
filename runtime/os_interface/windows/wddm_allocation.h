@@ -35,7 +35,7 @@ class WddmAllocation : public GraphicsAllocation {
         : GraphicsAllocation(cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn),
           handle(0),
           gpuPtr(0),
-          trimCandidateListPositions(osContextsCount, trimListUnusedPosition) {
+          trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
         reservedAddressSpace = reservedAddr;
         this->memoryPool = pool;
     }
