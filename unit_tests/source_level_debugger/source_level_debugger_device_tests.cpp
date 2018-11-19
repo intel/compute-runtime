@@ -36,43 +36,6 @@ class MockDeviceWithDebuggerActive : public MockDevice {
     }
 };
 
-TEST(DeviceCreation, givenDeviceWithMidThreadPreemptionAndDebuggingActiveWhenDeviceIsCreatedThenCorrectSipKernelIsCreated) {
-    DebugManagerStateRestore dbgRestorer;
-    {
-        auto builtIns = new MockBuiltins();
-        ASSERT_FALSE(builtIns->getSipKernelCalled);
-
-        DebugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::MidThread);
-        auto exeEnv = new ExecutionEnvironment;
-        exeEnv->sourceLevelDebugger.reset(new SourceLevelDebugger(new MockOsLibrary));
-        exeEnv->builtins.reset(builtIns);
-        auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, exeEnv, 0u));
-
-        ASSERT_EQ(builtIns, device->getExecutionEnvironment()->getBuiltIns());
-        EXPECT_TRUE(builtIns->getSipKernelCalled);
-        EXPECT_LE(SipKernelType::DbgCsr, builtIns->getSipKernelType);
-    }
-}
-
-TEST(DeviceCreation, givenDeviceWithDisabledPreemptionAndDebuggingActiveWhenDeviceIsCreatedThenCorrectSipKernelIsCreated) {
-    DebugManagerStateRestore dbgRestorer;
-    {
-        auto builtIns = new MockBuiltins();
-        ASSERT_FALSE(builtIns->getSipKernelCalled);
-
-        DebugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::Disabled);
-
-        auto exeEnv = new ExecutionEnvironment;
-        exeEnv->sourceLevelDebugger.reset(new SourceLevelDebugger(new MockOsLibrary));
-        exeEnv->builtins.reset(builtIns);
-        auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, exeEnv, 0u));
-
-        ASSERT_EQ(builtIns, device->getExecutionEnvironment()->getBuiltIns());
-        EXPECT_TRUE(builtIns->getSipKernelCalled);
-        EXPECT_LE(SipKernelType::DbgCsr, builtIns->getSipKernelType);
-    }
-}
-
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsDestructedThenSourceLevelDebuggerIsNotified) {
     auto exeEnv = new ExecutionEnvironment;
     auto gmock = new ::testing::NiceMock<GMockSourceLevelDebugger>(new MockOsLibrary);

@@ -12,8 +12,10 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/mocks/mock_async_event_handler.h"
+#include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
+#include "unit_tests/mocks/mock_source_level_debugger.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -77,6 +79,63 @@ TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
 
 TEST_F(PlatformTest, hasAsyncEventsHandler) {
     EXPECT_NE(nullptr, pPlatform->getAsyncEventsHandler());
+}
+
+TEST_F(PlatformTest, givenMidThreadPreemptionWhenInitializingPlatformThenCallGetSipKernel) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+
+    auto builtIns = new MockBuiltins();
+    pPlatform->peekExecutionEnvironment()->builtins.reset(builtIns);
+
+    ASSERT_FALSE(builtIns->getSipKernelCalled);
+    pPlatform->initialize();
+    EXPECT_TRUE(builtIns->getSipKernelCalled);
+    EXPECT_EQ(SipKernelType::Csr, builtIns->getSipKernelType);
+}
+
+TEST_F(PlatformTest, givenDisabledPreemptionAndNoSourceLevelDebuggerWhenInitializingPlatformThenDoNotCallGetSipKernel) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+
+    auto builtIns = new MockBuiltins();
+    pPlatform->peekExecutionEnvironment()->builtins.reset(builtIns);
+
+    ASSERT_FALSE(builtIns->getSipKernelCalled);
+    pPlatform->initialize();
+    EXPECT_FALSE(builtIns->getSipKernelCalled);
+    EXPECT_EQ(SipKernelType::COUNT, builtIns->getSipKernelType);
+}
+
+TEST_F(PlatformTest, givenDisabledPreemptionInactiveSourceLevelDebuggerWhenInitializingPlatformThenDoNotCallGetSipKernel) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+
+    auto builtIns = new MockBuiltins();
+    pPlatform->peekExecutionEnvironment()->builtins.reset(builtIns);
+    auto sourceLevelDebugger = new MockSourceLevelDebugger();
+    sourceLevelDebugger->setActive(false);
+    pPlatform->peekExecutionEnvironment()->sourceLevelDebugger.reset(sourceLevelDebugger);
+
+    ASSERT_FALSE(builtIns->getSipKernelCalled);
+    pPlatform->initialize();
+    EXPECT_FALSE(builtIns->getSipKernelCalled);
+    EXPECT_EQ(SipKernelType::COUNT, builtIns->getSipKernelType);
+}
+
+TEST_F(PlatformTest, givenDisabledPreemptionActiveSourceLevelDebuggerWhenInitializingPlatformThenCallGetSipKernel) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
+
+    auto builtIns = new MockBuiltins();
+    pPlatform->peekExecutionEnvironment()->builtins.reset(builtIns);
+    pPlatform->peekExecutionEnvironment()->sourceLevelDebugger.reset(new MockActiveSourceLevelDebugger());
+
+    ASSERT_FALSE(builtIns->getSipKernelCalled);
+    pPlatform->initialize();
+    EXPECT_TRUE(builtIns->getSipKernelCalled);
+    EXPECT_LE(SipKernelType::DbgCsr, builtIns->getSipKernelType);
+    EXPECT_GE(SipKernelType::DbgCsrLocal, builtIns->getSipKernelType);
 }
 
 TEST(PlatformTestSimple, givenCsrHwTypeWhenPlatformIsInitializedThenInitAubCenterIsNotCalled) {

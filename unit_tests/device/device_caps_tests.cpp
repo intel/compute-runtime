@@ -224,7 +224,7 @@ TEST(Device_GetCaps, givenForcePreemptionModeDebugVariableWhenCreateDeviceThenSe
     }
 }
 
-TEST(Device_GetCaps, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedThenSipKernelIsCreated) {
+TEST(Device_GetCaps, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedThenSipKernelIsNotCreated) {
     DebugManagerStateRestore dbgRestorer;
     {
         auto builtIns = new MockBuiltins();
@@ -236,7 +236,7 @@ TEST(Device_GetCaps, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedThenSi
         executionEnvironment->builtins.reset(builtIns);
         auto device = std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(platformDevices[0], executionEnvironment, 0u));
         ASSERT_EQ(builtIns, device->getExecutionEnvironment()->getBuiltIns());
-        EXPECT_TRUE(builtIns->getSipKernelCalled);
+        EXPECT_FALSE(builtIns->getSipKernelCalled);
     }
 }
 
