@@ -16,7 +16,8 @@ void MemoryManagerWithCsrFixture::SetUp() {
     memoryManager = new MockMemoryManager(executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
     csr->tagAddress = &currentGpuTag;
-    executionEnvironment.commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(csr));
+    executionEnvironment.commandStreamReceivers.resize(1);
+    executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
 }
 
 void MemoryManagerWithCsrFixture::TearDown() {

@@ -191,10 +191,12 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperate
     auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 1u));
 
     EXPECT_EQ(2u, executionEnvironment.commandStreamReceivers.size());
-    EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[0]);
-    EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[1]);
-    EXPECT_EQ(&device->getCommandStreamReceiver(), executionEnvironment.commandStreamReceivers[0].get());
-    EXPECT_EQ(&device2->getCommandStreamReceiver(), executionEnvironment.commandStreamReceivers[1].get());
+    EXPECT_EQ(1u, executionEnvironment.commandStreamReceivers[0].size());
+    EXPECT_EQ(1u, executionEnvironment.commandStreamReceivers[1].size());
+    EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[0][0]);
+    EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[1][0]);
+    EXPECT_EQ(&device->getCommandStreamReceiver(), executionEnvironment.commandStreamReceivers[0][0].get());
+    EXPECT_EQ(&device2->getCommandStreamReceiver(), executionEnvironment.commandStreamReceivers[1][0].get());
 }
 
 TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsArePresentThenIsSimulationReturnsTrue) {

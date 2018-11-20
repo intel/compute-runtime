@@ -44,7 +44,7 @@ class AUBFixture : public CommandQueueHwFixture {
         }
 
         executionEnvironment->commandStreamReceivers.resize(deviceIndex + 1);
-        executionEnvironment->commandStreamReceivers[deviceIndex] = std::unique_ptr<CommandStreamReceiver>(this->csr);
+        executionEnvironment->commandStreamReceivers[deviceIndex].push_back(std::unique_ptr<CommandStreamReceiver>(this->csr));
         device.reset(MockDevice::create<MockDevice>(&hwInfo, executionEnvironment, deviceIndex));
 
         CommandQueueHwFixture::SetUp(AUBFixture::device.get(), cl_command_queue_properties(0));

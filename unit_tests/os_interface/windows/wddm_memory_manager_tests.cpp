@@ -1428,9 +1428,10 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
     auto wddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(wddm->init());
     ExecutionEnvironment executionEnvironment;
-    executionEnvironment.commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(createCommandStream(*platformDevices, executionEnvironment)));
+    executionEnvironment.commandStreamReceivers.resize(1);
+    executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(createCommandStream(*platformDevices, executionEnvironment)));
     executionEnvironment.memoryManager = std::make_unique<WddmMemoryManager>(false, false, wddm.get(), executionEnvironment);
-    EXPECT_EQ(executionEnvironment.commandStreamReceivers[0].get(), executionEnvironment.memoryManager->getCommandStreamReceiver(0));
+    EXPECT_EQ(executionEnvironment.commandStreamReceivers[0][0].get(), executionEnvironment.memoryManager->getCommandStreamReceiver(0));
     auto tagAllocator = executionEnvironment.memoryManager->obtainEventPerfCountAllocator(1);
     auto allocation = tagAllocator->getTag()->getGraphicsAllocation();
     allocation->updateTaskCount(1, 0);

@@ -307,7 +307,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
 }
 CommandStreamReceiver *MemoryManager::getCommandStreamReceiver(uint32_t contextId) {
     UNRECOVERABLE_IF(executionEnvironment.commandStreamReceivers.size() < 1);
-    return executionEnvironment.commandStreamReceivers[contextId].get();
+    return executionEnvironment.commandStreamReceivers[contextId][0].get();
 }
 
 } // namespace OCLRT

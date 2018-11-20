@@ -33,12 +33,15 @@ void ExecutionEnvironment::initGmm(const HardwareInfo *hwInfo) {
         gmmHelper.reset(new GmmHelper(hwInfo));
     }
 }
-bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *pHwInfo, uint32_t deviceIndex) {
+bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *pHwInfo, uint32_t deviceIndex, uint32_t deviceCsrIndex) {
     if (deviceIndex + 1 > commandStreamReceivers.size()) {
         commandStreamReceivers.resize(deviceIndex + 1);
     }
+    if (deviceCsrIndex + 1 > commandStreamReceivers[deviceIndex].size()) {
+        commandStreamReceivers[deviceIndex].resize(deviceCsrIndex + 1);
+    }
 
-    if (this->commandStreamReceivers[deviceIndex]) {
+    if (this->commandStreamReceivers[deviceIndex][deviceCsrIndex]) {
         return true;
     }
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver(createCommandStream(pHwInfo, *this));
@@ -49,15 +52,15 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *p
         commandStreamReceiver->createPageTableManager();
     }
     commandStreamReceiver->setDeviceIndex(deviceIndex);
-    this->commandStreamReceivers[deviceIndex] = std::move(commandStreamReceiver);
+    this->commandStreamReceivers[deviceIndex][deviceCsrIndex] = std::move(commandStreamReceiver);
     return true;
 }
-void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory, uint32_t deviceIndex) {
+void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory, uint32_t deviceIndex, uint32_t deviceCsrIndex) {
     if (this->memoryManager) {
         return;
     }
 
-    memoryManager.reset(commandStreamReceivers[deviceIndex]->createMemoryManager(enable64KBpages, enableLocalMemory));
+    memoryManager.reset(commandStreamReceivers[deviceIndex][deviceCsrIndex]->createMemoryManager(enable64KBpages, enableLocalMemory));
     DEBUG_BREAK_IF(!this->memoryManager);
 }
 void ExecutionEnvironment::initSourceLevelDebugger(const HardwareInfo &hwInfo) {

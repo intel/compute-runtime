@@ -1615,7 +1615,8 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareTheSameBufferOb
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
     executionEnvironment->osInterface->get()->setDrm(mock);
     auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
-    executionEnvironment->commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(testedCsr));
+    executionEnvironment->commandStreamReceivers.resize(1);
+    executionEnvironment->commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(testedCsr));
 
     testedCsr->makeResident(*graphicsAllocation);
     testedCsr->makeResident(*graphicsAllocation2);
@@ -1643,7 +1644,8 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBuf
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
     executionEnvironment->osInterface->get()->setDrm(mock);
     auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
-    executionEnvironment->commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(testedCsr));
+    executionEnvironment->commandStreamReceivers.resize(1);
+    executionEnvironment->commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(testedCsr));
 
     testedCsr->makeResident(*graphicsAllocation);
     testedCsr->makeResident(*graphicsAllocation2);

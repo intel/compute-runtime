@@ -99,7 +99,7 @@ class MockDevice : public Device {
                 size_t alignment = 256 * MemoryConstants::kiloByte;
                 bool uncacheable = getWaTable()->waCSRUncachable;
                 this->preemptionAllocation = executionEnvironment->memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
-                this->commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
+                this->commandStreamReceiver[0]->setPreemptionCsrAllocation(preemptionAllocation);
             }
         }
     }

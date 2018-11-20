@@ -165,7 +165,7 @@ class Device : public BaseObject<_cl_device_id> {
     EngineType engineType;
     ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t deviceIndex = 0u;
-    CommandStreamReceiver *commandStreamReceiver = nullptr;
+    std::vector<CommandStreamReceiver *> commandStreamReceiver;
 };
 
 template <cl_device_info Param>
@@ -177,7 +177,7 @@ inline void Device::getCap(const void *&src,
 }
 
 inline CommandStreamReceiver &Device::getCommandStreamReceiver() {
-    return *this->commandStreamReceiver;
+    return *this->commandStreamReceiver[0];
 }
 
 inline volatile uint32_t *Device::getTagAddress() const {

@@ -17,9 +17,9 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
     : MockDevice(hwInfo, new ExecutionEnvironment, 0u) {
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(&hwInfo, *this->executionEnvironment);
     executionEnvironment->commandStreamReceivers.resize(getDeviceIndex() + 1);
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()].reset(commandStreamReceiver);
+    executionEnvironment->commandStreamReceivers[getDeviceIndex()].push_back(std::unique_ptr<CommandStreamReceiver>(commandStreamReceiver));
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
-    this->commandStreamReceiver = commandStreamReceiver;
+    this->commandStreamReceiver.push_back(commandStreamReceiver);
 }
 MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : Device(hwInfo, executionEnvironment, deviceIndex) {
@@ -46,12 +46,12 @@ void MockDevice::injectMemoryManager(MemoryManager *memoryManager) {
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()].reset(newCsr);
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()]->initializeTagAllocation();
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()]->setPreemptionCsrAllocation(preemptionAllocation);
-    this->commandStreamReceiver = newCsr;
+    executionEnvironment->commandStreamReceivers[getDeviceIndex()][0].reset(newCsr);
+    executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->initializeTagAllocation();
+    executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->setPreemptionCsrAllocation(preemptionAllocation);
+    this->commandStreamReceiver[0] = newCsr;
     UNRECOVERABLE_IF(getDeviceIndex() != 0u);
-    this->tagAddress = executionEnvironment->commandStreamReceivers[getDeviceIndex()]->getTagAddress();
+    this->tagAddress = executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->getTagAddress();
 }
 
 MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(hwInfo, executionEnvironment, deviceIndex) {
