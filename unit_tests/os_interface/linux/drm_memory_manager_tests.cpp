@@ -1079,6 +1079,12 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
     EXPECT_EQ(imgInfo.size, drmAllocation->getBO()->peekUnmapSize());
 
+    if (memoryManager->getDrmLimitedRangeAllocator() != nullptr) {
+        EXPECT_EQ(INTERNAL_ALLOCATOR_WITH_DYNAMIC_BITRANGE, drmAllocation->getBO()->peekAllocationType());
+    } else {
+        EXPECT_EQ(MMAP_ALLOCATOR, drmAllocation->getBO()->peekAllocationType());
+    }
+
     EXPECT_EQ(1u, this->mock->createParamsHandle);
     EXPECT_EQ(imgInfo.size, this->mock->createParamsSize);
     __u32 tilingMode = I915_TILING_Y;
@@ -1087,6 +1093,11 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     EXPECT_EQ(1u, this->mock->setTilingHandle);
 
     memoryManager->freeGraphicsMemory(imageGraphicsAllocation);
+
+    if (memoryManager->getDrmLimitedRangeAllocator() == nullptr) {
+        EXPECT_EQ(1, mmapMockCallCount);
+        EXPECT_EQ(1, munmapMockCallCount);
+    }
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
@@ -1518,9 +1529,23 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleIsCre
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false);
+    auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
+
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation);
     EXPECT_EQ(1, lseekCalledCount);
+
+    if (memoryManager->getDrmLimitedRangeAllocator() != nullptr) {
+        EXPECT_EQ(INTERNAL_ALLOCATOR_WITH_DYNAMIC_BITRANGE, drmAllocation->getBO()->peekAllocationType());
+    } else {
+        EXPECT_EQ(MMAP_ALLOCATOR, drmAllocation->getBO()->peekAllocationType());
+    }
+
     memoryManager->freeGraphicsMemory(graphicsAllocation);
+
+    if (memoryManager->getDrmLimitedRangeAllocator() == nullptr) {
+        EXPECT_EQ(1, mmapMockCallCount);
+        EXPECT_EQ(1, munmapMockCallCount);
+    }
 }
 
 TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenBufferFromSharedHandleIsCreatedThenItIsLimitedRangeAllocation) {
@@ -1548,9 +1573,22 @@ TEST_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSharedHandleIs
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, true);
+    auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation);
     EXPECT_EQ(1, lseekCalledCount);
+
+    if (memoryManager->getDrmLimitedRangeAllocator() != nullptr) {
+        EXPECT_EQ(INTERNAL_ALLOCATOR_WITH_DYNAMIC_BITRANGE, drmAllocation->getBO()->peekAllocationType());
+    } else {
+        EXPECT_EQ(MMAP_ALLOCATOR, drmAllocation->getBO()->peekAllocationType());
+    }
+
     memoryManager->freeGraphicsMemory(graphicsAllocation);
+
+    if (memoryManager->getDrmLimitedRangeAllocator() == nullptr) {
+        EXPECT_EQ(1, mmapMockCallCount);
+        EXPECT_EQ(1, munmapMockCallCount);
+    }
 }
 
 TEST_F(DrmMemoryManagerTest, givenSharedHandleWhenAllocationIsCreatedAndIoctlPrimeFdToHandleFailsThenNullPtrIsReturned) {
