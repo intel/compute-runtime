@@ -89,6 +89,5 @@ TEST_F(clGetKernelInfoTests, success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     deleteDataReadFromFile(pSource);
-    CompilerInterface::shutdown();
 }
 } // namespace ULT

@@ -94,7 +94,6 @@ TEST_F(clGetProgramInfoTests, SuccessfulProgramWithSource) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     deleteDataReadFromFile(pSource);
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clGetProgramInfoTests, SuccessfulProgramWithIL) {

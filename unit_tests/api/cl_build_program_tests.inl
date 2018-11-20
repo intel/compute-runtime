@@ -61,7 +61,6 @@ TEST_F(clBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenP
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     deleteDataReadFromFile(pSource);
-    CompilerInterface::shutdown();
 
     pProgram = clCreateProgramWithSource(
         nullptr,
@@ -113,8 +112,6 @@ TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenP
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOptionsIsCalledThenStoredOptionsAreUsed) {
@@ -167,8 +164,6 @@ TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOpt
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenProgramBuildSucceeds) {
@@ -212,8 +207,6 @@ TEST_F(clBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenPro
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clBuildProgramTests, GivenNullAsInputWhenCreatingProgramThenInvalidProgramErrorIsReturned) {

@@ -50,9 +50,6 @@ class CompilerInterface {
         return instance;
     }
 
-    static void shutdown() {
-    }
-
     MOCKABLE_VIRTUAL cl_int build(Program &program, const TranslationArgs &pInputArgs, bool enableCaching);
 
     MOCKABLE_VIRTUAL cl_int compile(Program &program, const TranslationArgs &pInputArgs);

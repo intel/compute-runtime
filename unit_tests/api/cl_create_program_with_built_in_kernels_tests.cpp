@@ -109,8 +109,6 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, mediaKernels) {
 
     retVal = clReleaseProgram(program);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clCreateProgramWithBuiltInKernelsTests, mediaKernelsOptions) {
@@ -137,8 +135,6 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, mediaKernelsOptions) {
     EXPECT_EQ(std::string::npos, it);
 
     clReleaseProgram(program);
-
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockMotionEstimateKernelHasCorrectDispatchBuilderAndFrontendKernel) {
@@ -178,8 +174,6 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockMotionEstimateKernelHasCo
 
     clReleaseKernel(kernel);
     clReleaseProgram(program);
-
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockAdvancedMotionEstimateCheckKernelHasCorrectDispatchBuilderAndFrontendKernel) {
@@ -219,8 +213,6 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockAdvancedMotionEstimateChe
 
     clReleaseKernel(kernel);
     clReleaseProgram(program);
-
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockAdvancedMotionEstimateBidirectionalCheckKernelHasCorrectDispatchBuilderAndFrontendKernel) {
@@ -260,7 +252,5 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockAdvancedMotionEstimateBid
 
     clReleaseKernel(kernel);
     clReleaseProgram(program);
-
-    CompilerInterface::shutdown();
 }
 } // namespace ULT

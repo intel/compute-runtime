@@ -75,6 +75,5 @@ TEST_F(clGetKernelArgInfoTests, success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     deleteDataReadFromFile(pSource);
-    CompilerInterface::shutdown();
 }
 } // namespace ULT

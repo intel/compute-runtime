@@ -60,8 +60,6 @@ struct clGetKernelWorkGroupInfoTests : public api_fixture,
 
         kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
         ASSERT_EQ(CL_SUCCESS, retVal);
-
-        CompilerInterface::shutdown();
     }
 
     void TearDown() override {

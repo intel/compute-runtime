@@ -64,7 +64,6 @@ TEST_F(clCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenS
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     deleteDataReadFromFile(pSource);
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramThenSuccessIsReturned) {
@@ -136,8 +135,6 @@ TEST_F(clCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramT
     retVal = clReleaseProgram(pHeader);
     EXPECT_EQ(CL_SUCCESS, retVal);
     deleteDataReadFromFile(pHeaderSource);
-
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clCompileProgramTests, GivenNullProgramWhenCompilingProgramThenInvalidProgramErrorIsReturned) {

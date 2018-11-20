@@ -79,7 +79,6 @@ TEST_F(clLinkProgramTests, linkSingleSource) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     deleteDataReadFromFile(pSource);
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clLinkProgramTests, createLibrarySingleSource) {
@@ -142,7 +141,6 @@ TEST_F(clLinkProgramTests, createLibrarySingleSource) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     deleteDataReadFromFile(pSource);
-    CompilerInterface::shutdown();
 }
 
 TEST_F(clLinkProgramTests, nullContext) {

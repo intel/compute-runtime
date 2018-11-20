@@ -474,7 +474,6 @@ struct CreateImageHostPtr
 
     void TearDown() override {
         delete image;
-        CompilerInterface::shutdown();
         BaseClass::TearDown();
         MemoryManagementFixture::TearDown();
     }

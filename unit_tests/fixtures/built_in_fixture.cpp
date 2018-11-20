@@ -36,6 +36,4 @@ void BuiltInFixture::SetUp(Device *pDevice) {
 void BuiltInFixture::TearDown() {
     gEnvironment->igcPopDebugVars();
     gEnvironment->fclPopDebugVars();
-
-    CompilerInterface::shutdown();
 }

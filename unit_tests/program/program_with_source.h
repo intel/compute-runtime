@@ -55,7 +55,6 @@ class ProgramFromSourceTest : public ContextFixture,
         ContextFixture::TearDown();
         PlatformFixture::TearDown();
         delete kbHelper;
-        CompilerInterface::shutdown();
     }
 
     KernelBinaryHelper *kbHelper;

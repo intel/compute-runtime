@@ -185,7 +185,6 @@ class ProgramNonUniformTest : public ContextFixture,
         ProgramFixture::TearDown();
         ContextFixture::TearDown();
         PlatformFixture::TearDown();
-        CompilerInterface::shutdown();
     }
     cl_device_id device;
     cl_int retVal = CL_SUCCESS;

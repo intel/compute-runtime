@@ -184,7 +184,6 @@ TEST_F(CompilerInterfaceTest, BuildWithDebugData) {
     retVal = pProgram->getInfo(CL_PROGRAM_DEBUG_INFO_INTEL, debugDataSize, nullptr, &retData);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(numDevices * sizeof(debugData), retData);
-    cip->shutdown();
 
     delete[] debugData;
     delete cip;

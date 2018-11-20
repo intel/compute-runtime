@@ -1532,7 +1532,6 @@ TEST_F(ProgramPatchTokenTests, DISABLED_ConstantMemorySurface) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0u, pProgram->getProgramScopePatchListSize());
-    CompilerInterface::shutdown();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2178,7 +2177,6 @@ TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
 
     // Cleanup
     deleteDataReadFromFile(pBinary);
-    CompilerInterface::shutdown();
 }
 
 TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
@@ -2338,7 +2336,6 @@ TEST_F(ProgramTests, RebuildBinaryWithProcessGenBinaryError) {
 
     // Cleanup
     deleteDataReadFromFile(pBinary);
-    CompilerInterface::shutdown();
 }
 
 TEST_F(ProgramTests, GetProgramCompilerVersion) {

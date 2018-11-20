@@ -60,7 +60,6 @@ class ProgramDataTest : public testing::Test,
         ProgramFixture::TearDown();
         ContextFixture::TearDown();
         PlatformFixture::TearDown();
-        CompilerInterface::shutdown();
     }
 
     size_t setupConstantAllocation() {
