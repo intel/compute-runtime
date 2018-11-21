@@ -71,6 +71,12 @@ class AUBFixture : public CommandQueueHwFixture {
         aubCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
     }
 
+    template <typename FamilyType>
+    void expectNotEqualMemory(void *gfxAddress, const void *srcAddress, size_t length) {
+        auto aubCsr = getAubCsr<FamilyType>();
+        aubCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length);
+    }
+
     static void *getGpuPointer(GraphicsAllocation *allocation) {
         return reinterpret_cast<void *>(allocation->getGpuAddress());
     }
