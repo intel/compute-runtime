@@ -163,7 +163,10 @@ TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
     MockTagAllocator<MockTimestampPacket> allocator(&memoryManager, 1);
 
     auto firstNode = allocator.getTag();
-    firstNode->tag->data = {{5, 6, 7, 8}};
+    for (uint32_t i = 0; i < static_cast<uint32_t>(TimestampPacket::DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount; i++) {
+        firstNode->tag->data[i] = i;
+    }
+
     auto dependenciesCount = reinterpret_cast<std::atomic<uint32_t> *>(reinterpret_cast<void *>(firstNode->tag->pickImplicitDependenciesCountWriteAddress()));
 
     setTagToReadyState(firstNode->tag);
@@ -174,19 +177,21 @@ TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
     EXPECT_EQ(secondNode, firstNode);
 
     EXPECT_EQ(0u, dependenciesCount->load());
-    for (uint32_t i = 0; i < static_cast<uint32_t>(TimestampPacket::DataIndex::Max); i++) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(TimestampPacket::DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount; i++) {
         EXPECT_EQ(1u, secondNode->tag->data[i]);
     }
 }
 
 TEST_F(TimestampPacketSimpleTests, whenObjectIsCreatedThenInitializeAllStamps) {
     MockTimestampPacket timestampPacket;
-    auto maxElements = static_cast<uint32_t>(TimestampPacket::DataIndex::Max);
-    EXPECT_EQ(4u, maxElements);
+    auto entityElements = static_cast<uint32_t>(TimestampPacket::DataIndex::Max);
+    auto allElements = entityElements * TimestampPacketSizeControl::preferedChunkCount;
+    EXPECT_EQ(4u, entityElements);
+    EXPECT_EQ(64u, allElements);
 
-    EXPECT_EQ(maxElements, timestampPacket.data.size());
+    EXPECT_EQ(allElements, timestampPacket.data.size());
 
-    for (uint32_t i = 0; i < maxElements; i++) {
+    for (uint32_t i = 0; i < allElements; i++) {
         EXPECT_EQ(1u, timestampPacket.data[i]);
     }
 }

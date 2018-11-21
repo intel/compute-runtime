@@ -22,9 +22,17 @@ class MemoryManager;
 template <typename TagType>
 struct TagNode;
 
+namespace TimestampPacketSizeControl {
+constexpr uint32_t preferedChunkCount = 16u;
+}
+
 #pragma pack(1)
 class TimestampPacket {
   public:
+    TimestampPacket() {
+        initialize();
+    }
+
     enum class DataIndex : uint32_t {
         ContextStart = 0,
         GlobalStart,
@@ -50,7 +58,9 @@ class TimestampPacket {
     }
 
     void initialize() {
-        data = {{1, 1, 1, 1}};
+        for (auto index = 0u; index < data.size(); index++) {
+            data[index] = 1;
+        }
         implicitDependenciesCount.store(0);
     }
 
@@ -58,12 +68,12 @@ class TimestampPacket {
     uint64_t pickImplicitDependenciesCountWriteAddress() const { return reinterpret_cast<uint64_t>(&implicitDependenciesCount); }
 
   protected:
-    std::array<uint32_t, static_cast<uint32_t>(DataIndex::Max)> data = {{1, 1, 1, 1}};
-    std::atomic<uint32_t> implicitDependenciesCount{0};
+    std::array<uint32_t, static_cast<uint32_t>(DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount> data;
+    std::atomic<uint32_t> implicitDependenciesCount;
 };
 #pragma pack()
 
-static_assert(((static_cast<uint32_t>(TimestampPacket::DataIndex::Max) + 1) * sizeof(uint32_t)) == sizeof(TimestampPacket),
+static_assert(((static_cast<uint32_t>(TimestampPacket::DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount + 1) * sizeof(uint32_t)) == sizeof(TimestampPacket),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 struct TimestampPacketHelper {
