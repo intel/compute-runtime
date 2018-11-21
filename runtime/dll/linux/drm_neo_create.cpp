@@ -170,7 +170,7 @@ Drm *Drm::create(int32_t deviceOrdinal) {
                                   const_cast<FeatureTable *>(platformDevices[0]->pSkuTable), true);
         drmObject->setGtType(eGtType);
     } else {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr,
                          "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", drmObject->deviceId, drmObject->revisionId);
         delete drmObject;
         return nullptr;

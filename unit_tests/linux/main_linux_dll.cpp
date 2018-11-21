@@ -10,7 +10,13 @@
 #include "runtime/helpers/basic_math.h"
 #include "runtime/os_interface/linux/allocator_helper.h"
 #include "unit_tests/custom_event_listener.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+
+#include "gtest/gtest.h"
+#include "gmock/gmock.h"
+
 #include "test.h"
+#include <string>
 
 using namespace OCLRT;
 
@@ -148,10 +154,16 @@ TEST_F(DrmTests, createNoOverrun) {
 }
 
 TEST_F(DrmTests, createUnknownDevice) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
     deviceId = -1;
 
+    ::testing::internal::CaptureStderr();
     auto drm = DrmWrap::createDrm(0);
     EXPECT_EQ(drm, nullptr);
+    std::string errStr = ::testing::internal::GetCapturedStderr();
+    EXPECT_THAT(errStr, ::testing::HasSubstr(std::string("FATAL: Unknown device: deviceId: ffffffff, revisionId: 0000")));
 }
 
 TEST_F(DrmTests, createNoSoftPin) {
