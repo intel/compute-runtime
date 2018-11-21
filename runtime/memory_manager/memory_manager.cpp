@@ -19,6 +19,7 @@
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/os_context.h"
+#include "runtime/os_interface/os_interface.h"
 #include "runtime/utilities/stackvec.h"
 #include "runtime/utilities/tag_allocator.h"
 
@@ -200,13 +201,16 @@ bool MemoryManager::isMemoryBudgetExhausted() const {
     return false;
 }
 
-void MemoryManager::registerOsContext(OsContext *contextToRegister) {
-    auto contextId = contextToRegister->getContextId();
+OsContext *MemoryManager::createAndRegisterOsContext() {
+    auto contextId = ++latestContextId;
     if (contextId + 1 > registeredOsContexts.size()) {
         registeredOsContexts.resize(contextId + 1);
     }
-    contextToRegister->incRefInternal();
-    registeredOsContexts[contextToRegister->getContextId()] = contextToRegister;
+    auto osContext = new OsContext(executionEnvironment.osInterface.get(), contextId);
+    osContext->incRefInternal();
+    registeredOsContexts[contextId] = osContext;
+
+    return osContext;
 }
 
 bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationFlags &flags, const DevicesBitfield devicesBitfield,

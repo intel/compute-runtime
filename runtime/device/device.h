@@ -11,6 +11,7 @@
 #include "runtime/device/device_info_map.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/base_object.h"
+#include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/performance_counters.h"
@@ -118,7 +119,7 @@ class Device : public BaseObject<_cl_device_id> {
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
-    OsContext *getOsContext() const { return osContext; }
+    OsContext *getOsContext() const { return engines[0].osContext; }
     uint32_t getDeviceIndex() { return deviceIndex; }
     bool isFullRangeSvm() {
         return getHardwareInfo().capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
@@ -155,7 +156,7 @@ class Device : public BaseObject<_cl_device_id> {
     std::unique_ptr<DriverInfo> driverInfo;
     std::unique_ptr<PerformanceCounters> performanceCounters;
 
-    OsContext *osContext = nullptr;
+    std::vector<EngineControl> engines;
 
     void *slmWindowStartAddress = nullptr;
 
@@ -165,7 +166,6 @@ class Device : public BaseObject<_cl_device_id> {
     EngineType engineType;
     ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t deviceIndex = 0u;
-    std::vector<CommandStreamReceiver *> commandStreamReceiver;
 };
 
 template <cl_device_info Param>
@@ -177,7 +177,7 @@ inline void Device::getCap(const void *&src,
 }
 
 inline CommandStreamReceiver &Device::getCommandStreamReceiver() {
-    return *this->commandStreamReceiver[0];
+    return *engines[0].commandStreamReceiver;
 }
 
 inline volatile uint32_t *Device::getTagAddress() const {

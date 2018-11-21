@@ -24,6 +24,7 @@ class GraphicsAllocation;
 class HostPtrManager;
 class CommandStreamReceiver;
 class OsContext;
+class OSInterface;
 class TimestampPacket;
 
 struct HwPerfCounter;
@@ -246,7 +247,7 @@ class MemoryManager {
         ::alignedFree(ptr);
     }
 
-    void registerOsContext(OsContext *contextToRegister);
+    OsContext *createAndRegisterOsContext();
     uint32_t getOsContextCount() { return static_cast<uint32_t>(registeredOsContexts.size()); }
     CommandStreamReceiver *getCommandStreamReceiver(uint32_t contextId);
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
@@ -270,6 +271,7 @@ class MemoryManager {
     ExecutionEnvironment &executionEnvironment;
     std::vector<OsContext *> registeredOsContexts;
     std::unique_ptr<HostPtrManager> hostPtrManager;
+    uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

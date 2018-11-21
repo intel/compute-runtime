@@ -20,16 +20,16 @@ GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint
                                                                                                                                                               size(sizeIn),
                                                                                                                                                               cpuPtr(cpuPtrIn),
                                                                                                                                                               gpuAddress(gpuAddress),
-                                                                                                                                                              usageInfos(osContextCount),
                                                                                                                                                               isShareable(isShareable) {
+    usageInfos.resize(maxOsContextCount);
 }
 
 GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, uint32_t osContextCount, bool isShareable) : size(sizeIn),
                                                                                                                                             cpuPtr(cpuPtrIn),
                                                                                                                                             gpuAddress(castToUint64(cpuPtrIn)),
                                                                                                                                             sharedHandle(sharedHandleIn),
-                                                                                                                                            usageInfos(osContextCount),
                                                                                                                                             isShareable(isShareable) {
+    usageInfos.resize(maxOsContextCount);
 }
 GraphicsAllocation::~GraphicsAllocation() = default;
 

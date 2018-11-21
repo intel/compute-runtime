@@ -80,21 +80,20 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
     };
 
     void SetUp() {
-        osInterface = std::make_unique<OSInterface>();
-
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->initGmm(*platformDevices);
 
         wddm = new ::testing::NiceMock<GmockWddm>();
         wddm->gdi = std::make_unique<MockGdi>();
         ASSERT_TRUE(wddm->init());
-        osInterface->get()->setWddm(wddm);
 
+        executionEnvironment->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->osInterface->get()->setWddm(wddm);
         memoryManager = std::make_unique<MockWddmMemoryManager>(wddm, *executionEnvironment);
 
-        osContext = new OsContext(osInterface.get(), 0u);
+        memoryManager->createAndRegisterOsContext();
+        osContext = memoryManager->getRegisteredOsContext(0);
         osContext->incRefInternal();
-        memoryManager->registerOsContext(osContext);
         residencyController = &osContext->get()->getResidencyController();
     }
 
@@ -102,7 +101,6 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
         osContext->decRefInternal();
     }
 
-    std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     ::testing::NiceMock<GmockWddm> *wddm = nullptr;
@@ -119,23 +117,23 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
 
-        osInterface = std::make_unique<OSInterface>();
-        osInterface->get()->setWddm(wddm);
-        osContext = new OsContext(osInterface.get(), osContextId);
-        osContext->incRefInternal();
-        residencyController = &osContext->get()->getResidencyController();
-
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
+        executionEnvironment->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->osInterface->get()->setWddm(wddm);
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(wddm, *executionEnvironment);
-        memoryManager->registerOsContext(osContext);
+        memoryManager->createAndRegisterOsContext();
+
+        osContext = memoryManager->getRegisteredOsContext(0);
+        osContext->incRefInternal();
+
+        residencyController = &osContext->get()->getResidencyController();
     }
 
     void TearDown() {
         osContext->decRefInternal();
     }
 
-    std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
 

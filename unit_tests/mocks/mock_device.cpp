@@ -19,7 +19,7 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
     executionEnvironment->commandStreamReceivers.resize(getDeviceIndex() + 1);
     executionEnvironment->commandStreamReceivers[getDeviceIndex()].push_back(std::unique_ptr<CommandStreamReceiver>(commandStreamReceiver));
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
-    this->commandStreamReceiver.push_back(commandStreamReceiver);
+    this->engines.emplace_back(commandStreamReceiver, nullptr);
 }
 MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : Device(hwInfo, executionEnvironment, deviceIndex) {
@@ -49,7 +49,7 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][0].reset(newCsr);
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->initializeTagAllocation();
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->setPreemptionCsrAllocation(preemptionAllocation);
-    this->commandStreamReceiver[0] = newCsr;
+    this->engines[0].commandStreamReceiver = newCsr;
     UNRECOVERABLE_IF(getDeviceIndex() != 0u);
     this->tagAddress = executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->getTagAddress();
 }

@@ -152,7 +152,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool aubWritable = true;
     bool allocDumpable = false;
     bool memObjectsAllocationWithWritableFlags = false;
-    StackVec<UsageInfo, maxOsContextCount> usageInfos;
+    std::vector<UsageInfo> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};
     bool isShareable = false;
 };

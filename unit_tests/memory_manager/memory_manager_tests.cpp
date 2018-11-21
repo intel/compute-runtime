@@ -197,7 +197,9 @@ TEST_F(MemoryAllocatorTest, allocateSystemAligned) {
 TEST_F(MemoryAllocatorTest, allocateGraphics) {
     unsigned int alignment = 4096;
 
+    memoryManager->createAndRegisterOsContext();
     auto allocation = memoryManager->allocateGraphicsMemory(sizeof(char));
+
     ASSERT_NE(nullptr, allocation);
     // initial taskCount must be -1. if not, we may kill allocation before it will be used
     EXPECT_EQ((uint32_t)-1, allocation->getTaskCount(0));
@@ -1224,6 +1226,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhenche
 }
 
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsAddedToTemporaryAllocationList) {
+    memoryManager->createAndRegisterOsContext();
     auto usedAllocationAndNotGpuCompleted = memoryManager->allocateGraphicsMemory(4096);
 
     auto tagAddress = csr->getTagAddress();
@@ -1393,24 +1396,21 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
 }
 
 TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCountIncreases) {
-    auto osContext = new OsContext(nullptr, 0u);
     ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
-    memoryManager.registerOsContext(osContext);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    memoryManager.createAndRegisterOsContext();
     EXPECT_EQ(1u, memoryManager.getOsContextCount());
-    EXPECT_EQ(1, osContext->getRefInternalCount());
+    EXPECT_EQ(1, memoryManager.registeredOsContexts[0]->getRefInternalCount());
 }
 
 TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegistredFromHigherToLowerThenProperSizeIsReturned) {
-    auto osContext2 = new OsContext(nullptr, 1u);
-    auto osContext = new OsContext(nullptr, 0u);
     ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
-    memoryManager.registerOsContext(osContext2);
-    memoryManager.registerOsContext(osContext);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    memoryManager.createAndRegisterOsContext();
+    memoryManager.createAndRegisterOsContext();
     EXPECT_EQ(2u, memoryManager.getOsContextCount());
-    EXPECT_EQ(1, osContext->getRefInternalCount());
-    EXPECT_EQ(1, osContext2->getRefInternalCount());
+    EXPECT_EQ(1, memoryManager.registeredOsContexts[0]->getRefInternalCount());
+    EXPECT_EQ(1, memoryManager.registeredOsContexts[1]->getRefInternalCount());
 }
 
 TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenItIsProperlyUpdated) {

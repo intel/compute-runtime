@@ -40,8 +40,8 @@ void WddmMemoryManagerFixture::SetUp() {
     constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
     wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
 
-    osInterface = std::make_unique<OSInterface>();
-    osInterface->get()->setWddm(wddm);
+    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.osInterface->get()->setWddm(wddm);
 
     memoryManager = std::make_unique<MockWddmMemoryManager>(wddm, executionEnvironment);
 }
@@ -1195,16 +1195,16 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithNoRegisteredOsContextsWh
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenCallingIsMemoryBudgetExhaustedThenReturnFalse) {
-    memoryManager->registerOsContext(new OsContext(osInterface.get(), 0u));
-    memoryManager->registerOsContext(new OsContext(osInterface.get(), 1u));
-    memoryManager->registerOsContext(new OsContext(osInterface.get(), 2u));
+    memoryManager->createAndRegisterOsContext();
+    memoryManager->createAndRegisterOsContext();
+    memoryManager->createAndRegisterOsContext();
     EXPECT_FALSE(memoryManager->isMemoryBudgetExhausted());
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithExhaustedMemoryBudgetWhenCallingIsMemoryBudgetExhaustedThenReturnTrue) {
-    memoryManager->registerOsContext(new OsContext(osInterface.get(), 0u));
-    memoryManager->registerOsContext(new OsContext(osInterface.get(), 1u));
-    memoryManager->registerOsContext(new OsContext(osInterface.get(), 2u));
+    memoryManager->createAndRegisterOsContext();
+    memoryManager->createAndRegisterOsContext();
+    memoryManager->createAndRegisterOsContext();
     memoryManager->getRegisteredOsContext(1)->get()->getResidencyController().setMemoryBudgetExhausted();
     EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());
 }
