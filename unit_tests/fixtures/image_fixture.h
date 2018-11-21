@@ -12,6 +12,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/platform/platform.h"
+#include "unit_tests/helpers/hw_info_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "CL/cl.h"
 #include <cassert>
@@ -108,18 +109,16 @@ class ImageClearColorFixture {
   public:
     using GmmHelper = OCLRT::GmmHelper;
     using MockContext = OCLRT::MockContext;
-    using HardwareInfo = OCLRT::HardwareInfo;
     using Image = OCLRT::Image;
     using ImageHw = OCLRT::ImageHw<FamilyType>;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     void SetUp() {
-        localHwInfo = *OCLRT::platformDevices[0];
-        localHwInfo.capabilityTable.ftrRenderCompressedImages = true;
+        hwInfoHelper.hwInfo.capabilityTable.ftrRenderCompressedImages = true;
 
         OCLRT::platformImpl.reset();
-        OCLRT::constructPlatform()->peekExecutionEnvironment()->initGmm(&localHwInfo);
+        OCLRT::constructPlatform()->peekExecutionEnvironment()->initGmm(&hwInfoHelper.hwInfo);
 
         surfaceState = RENDER_SURFACE_STATE::sInit();
         surfaceState.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
@@ -133,7 +132,7 @@ class ImageClearColorFixture {
     }
 
     RENDER_SURFACE_STATE surfaceState;
-    HardwareInfo localHwInfo = {};
+    HwInfoHelper hwInfoHelper;
 
   protected:
     MockContext context;

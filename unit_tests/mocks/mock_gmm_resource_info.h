@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/gmm_helper/resource_info.h"
+#include "runtime/helpers/surface_formats.h"
 #include "gmock/gmock.h"
 
 #if defined(__clang__)
@@ -83,6 +84,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     uint32_t getOffsetCalled = 0u;
     uint32_t arrayIndexPassedToGetOffset = 0;
+    SurfaceFormatInfo tempSurface{};
 
   protected:
     MockGmmResourceInfo();

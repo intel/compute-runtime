@@ -18,8 +18,8 @@ GEN10TEST_F(HwHelperTestCnl, whenCnlRevIdForStepCThenSetCapabilityCoherencyFlagF
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = true;
-    HardwareInfo testHwInfo = hwInfo;
-    PLATFORM testPlatform = *hwInfo.pPlatform;
+    HardwareInfo testHwInfo = hwInfoHelper.hwInfo;
+    PLATFORM testPlatform = *hwInfoHelper.hwInfo.pPlatform;
     testHwInfo.pPlatform = &testPlatform;
     testPlatform.usRevId = 0x3;
     helper.setCapabilityCoherencyFlag(&testHwInfo, coherency);
@@ -30,8 +30,8 @@ GEN10TEST_F(HwHelperTestCnl, whenCnlRevIdForStepDThenSetCapabilityCoherencyFlagT
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = false;
-    HardwareInfo testHwInfo = hwInfo;
-    PLATFORM testPlatform = *hwInfo.pPlatform;
+    HardwareInfo testHwInfo = hwInfoHelper.hwInfo;
+    PLATFORM testPlatform = *hwInfoHelper.hwInfo.pPlatform;
     testHwInfo.pPlatform = &testPlatform;
     testPlatform.usRevId = 0x4;
     helper.setCapabilityCoherencyFlag(&testHwInfo, coherency);
@@ -42,28 +42,28 @@ GEN10TEST_F(HwHelperTestCnl, setupPreemptionRegisters) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool preemption = false;
-    preemption = helper.setupPreemptionRegisters(&hwInfo, preemption);
+    preemption = helper.setupPreemptionRegisters(&hwInfoHelper.hwInfo, preemption);
     EXPECT_FALSE(preemption);
-    EXPECT_FALSE(hwInfo.capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+    EXPECT_FALSE(hwInfoHelper.hwInfo.capabilityTable.whitelistedRegisters.csChicken1_0x2580);
 
     preemption = true;
-    preemption = helper.setupPreemptionRegisters(&hwInfo, preemption);
+    preemption = helper.setupPreemptionRegisters(&hwInfoHelper.hwInfo, preemption);
     EXPECT_TRUE(preemption);
-    EXPECT_TRUE(hwInfo.capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+    EXPECT_TRUE(hwInfoHelper.hwInfo.capabilityTable.whitelistedRegisters.csChicken1_0x2580);
 }
 
 GEN10TEST_F(HwHelperTestCnl, adjustDefaultEngineType) {
-    auto engineType = hwInfo.capabilityTable.defaultEngineType;
+    auto engineType = hwInfoHelper.hwInfo.capabilityTable.defaultEngineType;
     auto &helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hwInfo);
-    EXPECT_EQ(engineType, hwInfo.capabilityTable.defaultEngineType);
+    helper.adjustDefaultEngineType(&hwInfoHelper.hwInfo);
+    EXPECT_EQ(engineType, hwInfoHelper.hwInfo.capabilityTable.defaultEngineType);
 }
 
 GEN10TEST_F(HwHelperTestCnl, givenGen10PlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     // Test default method implementation
-    testDefaultImplementationOfSetupHardwareCapabilities(helper, hwInfo);
+    testDefaultImplementationOfSetupHardwareCapabilities(helper, hwInfoHelper.hwInfo);
 }
 
 GEN10TEST_F(HwHelperTestCnl, whenGetConfigureAddressSpaceModeThenReturnZero) {

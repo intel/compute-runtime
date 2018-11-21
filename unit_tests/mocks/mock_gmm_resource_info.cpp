@@ -87,6 +87,11 @@ void MockGmmResourceInfo::setSurfaceFormat() {
         }
     };
 
+    if (mockResourceCreateParams.Format == GMM_RESOURCE_FORMAT::GMM_FORMAT_P010) {
+        tempSurface.GMMSurfaceFormat = GMM_RESOURCE_FORMAT::GMM_FORMAT_P010;
+        surfaceFormatInfo = &tempSurface;
+    }
+
     iterate(SurfaceFormats::readOnly());
     iterate(SurfaceFormats::writeOnly());
     iterate(SurfaceFormats::readWrite());

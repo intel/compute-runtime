@@ -18,7 +18,7 @@ GEN9TEST_F(HwHelperTestSkl, setCapabilityCoherencyFlag) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = false;
-    helper.setCapabilityCoherencyFlag(&hwInfo, coherency);
+    helper.setCapabilityCoherencyFlag(&hwInfoHelper.hwInfo, coherency);
     EXPECT_TRUE(coherency);
 }
 
@@ -26,28 +26,28 @@ GEN9TEST_F(HwHelperTestSkl, setupPreemptionRegisters) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool preemption = false;
-    preemption = helper.setupPreemptionRegisters(&hwInfo, preemption);
+    preemption = helper.setupPreemptionRegisters(&hwInfoHelper.hwInfo, preemption);
     EXPECT_FALSE(preemption);
-    EXPECT_FALSE(hwInfo.capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+    EXPECT_FALSE(hwInfoHelper.hwInfo.capabilityTable.whitelistedRegisters.csChicken1_0x2580);
 
     preemption = true;
-    preemption = helper.setupPreemptionRegisters(&hwInfo, preemption);
+    preemption = helper.setupPreemptionRegisters(&hwInfoHelper.hwInfo, preemption);
     EXPECT_TRUE(preemption);
-    EXPECT_TRUE(hwInfo.capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+    EXPECT_TRUE(hwInfoHelper.hwInfo.capabilityTable.whitelistedRegisters.csChicken1_0x2580);
 }
 
 GEN9TEST_F(HwHelperTestSkl, adjustDefaultEngineType) {
-    auto engineType = hwInfo.capabilityTable.defaultEngineType;
+    auto engineType = hwInfoHelper.hwInfo.capabilityTable.defaultEngineType;
     auto &helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hwInfo);
-    EXPECT_EQ(engineType, hwInfo.capabilityTable.defaultEngineType);
+    helper.adjustDefaultEngineType(&hwInfoHelper.hwInfo);
+    EXPECT_EQ(engineType, hwInfoHelper.hwInfo.capabilityTable.defaultEngineType);
 }
 
 GEN9TEST_F(HwHelperTestSkl, givenGen9PlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     // Test default method implementation
-    testDefaultImplementationOfSetupHardwareCapabilities(helper, hwInfo);
+    testDefaultImplementationOfSetupHardwareCapabilities(helper, hwInfoHelper.hwInfo);
 }
 
 GEN9TEST_F(HwHelperTestSkl, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenDbgCsrLocalTypeIsReturned) {

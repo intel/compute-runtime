@@ -860,7 +860,7 @@ typedef HwHelperTest DeviceCapsWithModifiedHwInfoTest;
 TEST_F(DeviceCapsWithModifiedHwInfoTest, GivenLocalMemorySupportedAndOsEnableLocalMemoryAndEnableLocalMemoryDebugVarWhenSetThenGetEnableLocalMemoryReturnCorrectValue) {
     DebugManagerStateRestore dbgRestore;
     VariableBackup<bool> orgOsEnableLocalMemory(&OSInterface::osEnableLocalMemory);
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper.hwInfo));
     bool orgHwCapsLocalMemorySupported = device->getHardwareCapabilities().localMemorySupported;
 
     DebugManager.flags.EnableLocalMemory.set(false);
@@ -889,9 +889,9 @@ TEST_F(DeviceCapsWithModifiedHwInfoTest, GivenLocalMemorySupportedAndOsEnableLoc
 
 TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNotSupportedWhenDeviceIsCreatedThenSourceLevelDebuggerActiveIsSetToFalse) {
 
-    hwInfo.capabilityTable.sourceLevelDebuggerSupported = false;
+    hwInfoHelper.hwInfo.capabilityTable.sourceLevelDebuggerSupported = false;
 
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper.hwInfo));
 
     const auto &caps = device->getDeviceInfo();
     EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
