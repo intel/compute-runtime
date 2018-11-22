@@ -21,19 +21,19 @@ typedef api_tests clCreateProgramWithBuiltInKernelsTests;
 
 namespace ULT {
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, invalidArgs) {
+TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenInvalidContextWhenCreatingProgramWithBuiltInKernelsThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto program = clCreateProgramWithBuiltInKernels(
         nullptr, // context
-        0,       // num_devices
+        1,       // num_devices
         nullptr, // device_list
         nullptr, // kernel_names
         &retVal);
     EXPECT_EQ(nullptr, program);
-    EXPECT_NE(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, noKernels) {
+TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoKernelsWhenCreatingProgramWithBuiltInKernelsThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto program = clCreateProgramWithBuiltInKernels(
         pContext, // context
@@ -42,10 +42,10 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, noKernels) {
         "",       // kernel_names
         &retVal);
     EXPECT_EQ(nullptr, program);
-    EXPECT_NE(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, noDevice) {
+TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoDeviceWhenCreatingProgramWithBuiltInKernelsThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto program = clCreateProgramWithBuiltInKernels(
         pContext, // context
@@ -57,7 +57,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, noDevice) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, noRet) {
+TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenNoKernelsAndNoReturnWhenCreatingProgramWithBuiltInKernelsThenProgramIsNotCreated) {
     auto program = clCreateProgramWithBuiltInKernels(
         pContext, // context
         1,        // num_devices
@@ -67,7 +67,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, noRet) {
     EXPECT_EQ(nullptr, program);
 }
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, mediaKernels) {
+TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenValidMediaKernelsWhenCreatingProgramWithBuiltInKernelsThenProgramIsSuccessfullyCreated) {
     cl_int retVal = CL_SUCCESS;
 
     auto pDev = castToObject<Device>(*devices);
@@ -111,7 +111,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, mediaKernels) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, mediaKernelsOptions) {
+TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenValidMediaKernelsWithOptionsWhenCreatingProgramWithBuiltInKernelsThenProgramIsSuccessfullyCreatedWithThoseOptions) {
     cl_int retVal = CL_SUCCESS;
 
     auto pDev = castToObject<Device>(*devices);
@@ -137,7 +137,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, mediaKernelsOptions) {
     clReleaseProgram(program);
 }
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockMotionEstimateKernelHasCorrectDispatchBuilderAndFrontendKernel) {
+TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenVmeBlockMotionEstimateKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
     cl_int retVal = CL_SUCCESS;
 
     auto pDev = castToObject<Device>(*devices);
@@ -176,7 +176,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockMotionEstimateKernelHasCo
     clReleaseProgram(program);
 }
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockAdvancedMotionEstimateCheckKernelHasCorrectDispatchBuilderAndFrontendKernel) {
+TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenVmeBlockAdvancedMotionEstimateKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
     cl_int retVal = CL_SUCCESS;
 
     auto pDev = castToObject<Device>(*devices);
@@ -215,7 +215,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockAdvancedMotionEstimateChe
     clReleaseProgram(program);
 }
 
-TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockAdvancedMotionEstimateBidirectionalCheckKernelHasCorrectDispatchBuilderAndFrontendKernel) {
+TEST_F(clCreateProgramWithBuiltInKernelsTests, GivenVmeBlockAdvancedMotionEstimateBidirectionalCheckKernelWhenCreatingProgramWithBuiltInKernelsThenCorrectDispatchBuilderAndFrontendKernelIsCreated) {
     cl_int retVal = CL_SUCCESS;
 
     auto pDev = castToObject<Device>(*devices);
