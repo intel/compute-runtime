@@ -34,6 +34,7 @@ MockContext::MockContext(Device *device, bool noSpecialQueue) {
 MockContext::MockContext(
     void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
     void *data) {
+    device = nullptr;
     properties = nullptr;
     numProperties = 0;
     contextCallback = funcNotify;

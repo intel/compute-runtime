@@ -81,7 +81,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void handleEventsTimestampPacketTags(LinearStream &csr, DispatchFlags &dispatchFlags, Device &currentDevice);
     virtual void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags);
     virtual void initPageTableManagerRegisters(LinearStream &csr){};
-    void createScratchSpaceAllocation(size_t requiredScratchSizeInBytes);
 
     void addPipeControlWA(LinearStream &commandStream, bool flushDC);
     void addDcFlushToPipeControl(typename GfxFamily::PIPE_CONTROL *pCmd, bool flushDC);
@@ -90,6 +89,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getSshHeapSize();
 
     uint64_t getScratchPatchAddress();
+    void createScratchSpaceController(const HardwareInfo &hwInfoIn);
 
     static void emitNoop(LinearStream &commandStream, size_t bytesToUpdate);
 

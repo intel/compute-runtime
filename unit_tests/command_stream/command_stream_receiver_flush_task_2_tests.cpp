@@ -6,6 +6,7 @@
  */
 
 #include "reg_configs_common.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
@@ -498,7 +499,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     uint64_t scratchBaseHighPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointerHigh();
 
     if (is64bit && !pDevice->getDeviceInfo().force32BitAddressess) {
-        uint64_t expectedAddress = PreambleHelper<FamilyType>::getScratchSpaceOffsetFor64bit();
+        uint64_t expectedAddress = HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit();
         EXPECT_EQ(expectedAddress, scratchBaseLowPart);
         EXPECT_EQ(0u, scratchBaseHighPart);
     } else {
@@ -510,7 +511,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
         EXPECT_EQ(pDevice->getMemoryManager()->allocator32Bit->getBase(), GSHaddress);
     } else {
         if (is64bit) {
-            EXPECT_EQ(graphicsAddress - PreambleHelper<FamilyType>::getScratchSpaceOffsetFor64bit(), GSHaddress);
+            EXPECT_EQ(graphicsAddress - HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), GSHaddress);
         } else {
             EXPECT_EQ(0u, GSHaddress);
         }
@@ -608,7 +609,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
     uint64_t scratchBaseHighPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointerHigh();
 
     if (is64bit && !pDevice->getDeviceInfo().force32BitAddressess) {
-        lowPartGraphicsAddress = PreambleHelper<FamilyType>::getScratchSpaceOffsetFor64bit();
+        lowPartGraphicsAddress = HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit();
         highPartGraphicsAddress = 0u;
     }
 
@@ -619,7 +620,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
         EXPECT_EQ(pDevice->getMemoryManager()->allocator32Bit->getBase(), GSHaddress);
     } else {
         if (is64bit) {
-            EXPECT_EQ(graphicsAddress - PreambleHelper<FamilyType>::getScratchSpaceOffsetFor64bit(), GSHaddress);
+            EXPECT_EQ(graphicsAddress - HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), GSHaddress);
         } else {
             EXPECT_EQ(0u, GSHaddress);
         }

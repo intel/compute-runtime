@@ -24,7 +24,8 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const HardwareInfo &hwIn
     // Generate the full filename
     const auto &gtSystemInfo = *hwInfo.pSysInfo;
     std::stringstream strfilename;
-    strfilename << hwPrefix << "_" << gtSystemInfo.SliceCount << "x" << gtSystemInfo.SubSliceCount << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << baseName << ".aub";
+    uint32_t subSlicesPerSlice = gtSystemInfo.SubSliceCount / gtSystemInfo.SliceCount;
+    strfilename << hwPrefix << "_" << gtSystemInfo.SliceCount << "x" << subSlicesPerSlice << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << baseName << ".aub";
 
     // clean-up any fileName issues because of the file system incompatibilities
     auto fileName = strfilename.str();

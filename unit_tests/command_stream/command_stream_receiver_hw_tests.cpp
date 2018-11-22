@@ -10,6 +10,7 @@
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/event/user_event.h"
 #include "runtime/helpers/aligned_memory.h"
@@ -209,4 +210,16 @@ HWTEST_F(CommandStreamReceiverHwTest, givenCsrHwWhenTypeIsCheckedThenCsrHwIsRetu
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverHwTest, WhenCommandStreamReceiverHwIsCreatedThenDefaultSshSizeIs64KB) {
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
     EXPECT_EQ(64 * KB, commandStreamReceiver.defaultSshSize);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenScratchAllocationIsNotCreated) {
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*platformDevices[0], *pDevice->executionEnvironment);
+    auto scratchController = commandStreamReceiver->scratchSpaceController.get();
+
+    bool stateBaseAddressDirty = false;
+    bool cfeStateDirty = false;
+    scratchController->setRequiredScratchSpace(reinterpret_cast<void *>(0x2000), 0u, 0u, 0u, stateBaseAddressDirty, cfeStateDirty);
+    EXPECT_FALSE(cfeStateDirty);
+    EXPECT_FALSE(stateBaseAddressDirty);
+    EXPECT_EQ(nullptr, scratchController->getScratchSpaceAllocation());
 }

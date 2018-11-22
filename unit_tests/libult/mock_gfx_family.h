@@ -287,6 +287,64 @@ struct GENX {
     } MI_BATCH_BUFFER_END;
 
     typedef struct tagRENDER_SURFACE_STATE {
+        typedef enum tagSURFACE_VERTICAL_ALIGNMENT {
+            SURFACE_VERTICAL_ALIGNMENT_VALIGN_4 = 0x1,
+        } SURFACE_VERTICAL_ALIGNMENT;
+        typedef enum tagSURFACE_HORIZONTAL_ALIGNMENT {
+            SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4 = 0x1,
+        } SURFACE_HORIZONTAL_ALIGNMENT;
+        typedef enum tagTILE_MODE {
+            TILE_MODE_LINEAR = 0x0,
+        } TILE_MODE;
+        typedef enum tagSURFACE_TYPE {
+            SURFACE_TYPE_SURFTYPE_BUFFER = 0x4,
+            SURFACE_TYPE_SURFTYPE_NULL = 0x7
+        } SURFACE_TYPE;
+        typedef enum tagSURFACE_FORMAT {
+            SURFACE_FORMAT_RAW = 0x1ff,
+        } SURFACE_FORMAT;
+        typedef enum tagAUXILIARY_SURFACE_MODE {
+            AUXILIARY_SURFACE_MODE_AUX_NONE = 0x0,
+            AUXILIARY_SURFACE_MODE_AUX_CCS_E = 0x5,
+        } AUXILIARY_SURFACE_MODE;
+        typedef enum tagCOHERENCY_TYPE {
+            COHERENCY_TYPE_GPU_COHERENT = 0x0,
+            COHERENCY_TYPE_IA_COHERENT = 0x1,
+        } COHERENCY_TYPE;
+        static tagRENDER_SURFACE_STATE sInit(void) {
+            RENDER_SURFACE_STATE state;
+            return state;
+        }
+        inline void setWidth(const uint32_t value) {
+        }
+        inline void setHeight(const uint32_t value) {
+        }
+        inline void setDepth(const uint32_t value) {
+        }
+        inline void setSurfacePitch(const uint32_t value) {
+        }
+        inline void setSurfaceType(const SURFACE_TYPE value) {
+        }
+        inline void setSurfaceFormat(const SURFACE_FORMAT value) {
+        }
+        inline void setSurfaceVerticalAlignment(const SURFACE_VERTICAL_ALIGNMENT value) {
+        }
+        inline void setSurfaceHorizontalAlignment(const SURFACE_HORIZONTAL_ALIGNMENT value) {
+        }
+        inline void setTileMode(const TILE_MODE value) {
+        }
+        inline void setVerticalLineStride(const uint32_t value) {
+        }
+        inline void setVerticalLineStrideOffset(const uint32_t value) {
+        }
+        inline void setMemoryObjectControlState(const uint32_t value) {
+        }
+        inline void setSurfaceBaseAddress(const uint64_t value) {
+        }
+        inline void setCoherencyType(const COHERENCY_TYPE value) {
+        }
+        inline void setAuxiliarySurfaceMode(const AUXILIARY_SURFACE_MODE value) {
+        }
     } RENDER_SURFACE_STATE;
 
     typedef struct tagMEDIA_VFE_STATE {
@@ -379,6 +437,7 @@ struct GENX {
     static MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;
     static MI_SEMAPHORE_WAIT cmdInitMiSemaphoreWait;
     static PIPE_CONTROL cmdInitPipeControl;
+    static RENDER_SURFACE_STATE cmdRenderSurfaceState;
 };
 
 template <>

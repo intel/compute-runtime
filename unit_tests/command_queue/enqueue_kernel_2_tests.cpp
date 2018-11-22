@@ -6,6 +6,7 @@
  */
 
 #include "reg_configs_common.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
@@ -325,8 +326,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
         EXPECT_NE(0u, cmd->getScratchSpaceBasePointer());
         EXPECT_EQ(0u, GSHaddress);
     } else {
-        EXPECT_EQ(PreambleHelper<FamilyType>::getScratchSpaceOffsetFor64bit(), cmd->getScratchSpaceBasePointer());
-        EXPECT_EQ(GSHaddress + PreambleHelper<FamilyType>::getScratchSpaceOffsetFor64bit(), (uintptr_t)graphicsAllocation->getUnderlyingBuffer());
+        EXPECT_EQ(HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), cmd->getScratchSpaceBasePointer());
+        EXPECT_EQ(GSHaddress + HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), (uintptr_t)graphicsAllocation->getUnderlyingBuffer());
     }
 
     auto allocationSize = scratchSize * pDevice->getDeviceInfo().computeUnitsUsedForScratch;
@@ -378,7 +379,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
         auto *sba2 = (STATE_BASE_ADDRESS *)*itorCmdForStateBase;
         auto GSHaddress2 = sba2->getGeneralStateBaseAddress();
         EXPECT_NE(0u, GSHaddress2);
-        EXPECT_EQ(PreambleHelper<FamilyType>::getScratchSpaceOffsetFor64bit(), cmd2->getScratchSpaceBasePointer());
+        EXPECT_EQ(HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), cmd2->getScratchSpaceBasePointer());
         EXPECT_NE(GSHaddress2, GSHaddress);
     }
     EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), allocationSize);
@@ -399,7 +400,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     if (is32bit) {
         EXPECT_EQ(0u, GSBaddress);
     } else if (is64bit) {
-        EXPECT_EQ((uintptr_t)graphicsAllocation2->getUnderlyingBuffer(), GSBaddress + PreambleHelper<FamilyType>::getScratchSpaceOffsetFor64bit());
+        EXPECT_EQ((uintptr_t)graphicsAllocation2->getUnderlyingBuffer(), GSBaddress + HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit());
     }
 
     EXPECT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());

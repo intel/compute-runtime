@@ -6,6 +6,7 @@
 
 target_sources(igdrcl_aub_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_fixture.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_parent_kernel_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/fixture_tests.cpp

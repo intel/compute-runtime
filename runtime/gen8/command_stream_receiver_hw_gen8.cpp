@@ -59,4 +59,5 @@ const Family::MI_BATCH_BUFFER_START Family::cmdInitBatchBufferStart = Family::MI
 const Family::MI_BATCH_BUFFER_END Family::cmdInitBatchBufferEnd = Family::MI_BATCH_BUFFER_END::sInit();
 const Family::PIPE_CONTROL Family::cmdInitPipeControl = Family::PIPE_CONTROL::sInit();
 const Family::MI_SEMAPHORE_WAIT Family::cmdInitMiSemaphoreWait = Family::MI_SEMAPHORE_WAIT::sInit();
+const Family::RENDER_SURFACE_STATE Family::cmdRenderSurfaceState = Family::RENDER_SURFACE_STATE::sInit();
 } // namespace OCLRT

@@ -24,8 +24,6 @@ struct PreambleHelper {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    static constexpr size_t getScratchSpaceOffsetFor64bit() { return 4096; }
-
     static void programL3(LinearStream *pCommandStream, uint32_t l3Config);
     static void programPipelineSelect(LinearStream *pCommandStream, const DispatchFlags &dispatchFlags);
     static uint32_t getDefaultThreadArbitrationPolicy();

@@ -53,6 +53,8 @@ class AUBFixture : public CommandQueueHwFixture {
         CommandQueueHwFixture::TearDown();
     }
 
+    GraphicsAllocation *createHostPtrAllocationFromSvmPtr(void *svmPtr, size_t size);
+
     template <typename FamilyType>
     AUBCommandStreamReceiverHw<FamilyType> *getAubCsr() {
         AUBCommandStreamReceiverHw<FamilyType> *aubCsr = nullptr;

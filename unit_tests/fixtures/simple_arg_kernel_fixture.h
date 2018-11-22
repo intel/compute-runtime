@@ -239,7 +239,7 @@ class SimpleKernelFixture : public ProgramFixture {
 
     size_t kernelsCount;
     cl_int retVal = CL_SUCCESS;
-    std::unique_ptr<Kernel> kernels[6] = {};
+    std::unique_ptr<Kernel> kernels[8] = {};
     uint32_t kernelIds = 0;
 };
 

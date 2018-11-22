@@ -30,25 +30,25 @@ TEST(CnlHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorr
     strConfig = "2x4x8";
     hardwareInfoSetup[productFamily](&gInfo, &fTable, false, strConfig);
     EXPECT_EQ(gInfo.SliceCount, 2u);
-    EXPECT_EQ(gInfo.SubSliceCount, 4u);
+    EXPECT_EQ(gInfo.SubSliceCount, 8u);
     EXPECT_EQ(gInfo.EUCount, 31u);
 
     strConfig = "2x5x8";
     hardwareInfoSetup[productFamily](&gInfo, &fTable, false, strConfig);
     EXPECT_EQ(gInfo.SliceCount, 2u);
-    EXPECT_EQ(gInfo.SubSliceCount, 5u);
+    EXPECT_EQ(gInfo.SubSliceCount, 10u);
     EXPECT_EQ(gInfo.EUCount, 39u);
 
     strConfig = "4x9x8";
     hardwareInfoSetup[productFamily](&gInfo, &fTable, false, strConfig);
     EXPECT_EQ(gInfo.SliceCount, 4u);
-    EXPECT_EQ(gInfo.SubSliceCount, 9u);
+    EXPECT_EQ(gInfo.SubSliceCount, 36u);
     EXPECT_EQ(gInfo.EUCount, 71u);
 
     strConfig = "default";
     hardwareInfoSetup[productFamily](&gInfo, &fTable, false, strConfig);
     EXPECT_EQ(gInfo.SliceCount, 2u);
-    EXPECT_EQ(gInfo.SubSliceCount, 5u);
+    EXPECT_EQ(gInfo.SubSliceCount, 10u);
     EXPECT_EQ(gInfo.EUCount, 39u);
 
     strConfig = "erroneous";

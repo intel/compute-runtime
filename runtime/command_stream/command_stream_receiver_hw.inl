@@ -8,6 +8,7 @@
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/command_stream/scratch_space_controller_base.h"
 #include "runtime/device/device.h"
 #include "runtime/event/event.h"
 #include "runtime/gtpin/gtpin_notify.h"
@@ -51,6 +52,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &
     if (DebugManager.flags.EnableTimestampPacket.get() != -1) {
         timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
     }
+    createScratchSpaceController(hwInfoIn);
 }
 
 template <typename GfxFamily>
@@ -237,22 +239,21 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.numGrfRequiredChanged = this->lastSentNumGrfRequired != dispatchFlags.numGrfRequired;
     csrSizeRequestFlags.specialPipelineSelectModeChanged = this->lastSpecialPipelineSelectMode != dispatchFlags.specialPipelineSelectMode;
 
-    size_t requiredScratchSizeInBytes = requiredScratchSize * device.getDeviceInfo().computeUnitsUsedForScratch;
-
     auto force32BitAllocations = getMemoryManager()->peekForce32BitAllocations();
-
     bool stateBaseAddressDirty = false;
 
-    if (requiredScratchSize && (!scratchAllocation || scratchAllocation->getUnderlyingBufferSize() < requiredScratchSizeInBytes)) {
-        if (scratchAllocation) {
-            scratchAllocation->updateTaskCount(this->taskCount, this->deviceIndex);
-            internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchAllocation), TEMPORARY_ALLOCATION);
+    bool checkVfeStateDirty = false;
+    if (requiredScratchSize) {
+        scratchSpaceController->setRequiredScratchSpace(ssh.getCpuBase(),
+                                                        requiredScratchSize,
+                                                        this->taskCount,
+                                                        this->deviceIndex,
+                                                        stateBaseAddressDirty,
+                                                        checkVfeStateDirty);
+        if (checkVfeStateDirty) {
+            overrideMediaVFEStateDirty(true);
         }
-        createScratchSpaceAllocation(requiredScratchSizeInBytes);
-        overrideMediaVFEStateDirty(true);
-        if (is64bit && !force32BitAllocations) {
-            stateBaseAddressDirty = true;
-        }
+        makeResident(*scratchSpaceController->getScratchSpaceAllocation());
     }
 
     auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags, device));
@@ -308,8 +309,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         uint64_t newGSHbase = 0;
         GSBAFor32BitProgrammed = false;
-        if (is64bit && scratchAllocation && !force32BitAllocations) {
-            newGSHbase = (uint64_t)scratchAllocation->getUnderlyingBuffer() - PreambleHelper<GfxFamily>::getScratchSpaceOffsetFor64bit();
+        if (is64bit && scratchSpaceController->getScratchSpaceAllocation() && !force32BitAllocations) {
+            newGSHbase = scratchSpaceController->calculateNewGSH();
         } else if (is64bit && force32BitAllocations && dispatchFlags.GSBA32BitRequired) {
             newGSHbase = getMemoryManager()->allocator32Bit->getBase();
             GSBAFor32BitProgrammed = true;
@@ -380,9 +381,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     iohAllocation->setEvictable(false);
 
     this->makeResident(*tagAllocation);
-
-    if (requiredScratchSize)
-        makeResident(*scratchAllocation);
 
     if (preemptionCsrAllocation)
         makeResident(*preemptionCsrAllocation);
@@ -609,22 +607,6 @@ void CommandStreamReceiverHw<GfxFamily>::addPipeControl(LinearStream &commandStr
 }
 
 template <typename GfxFamily>
-uint64_t CommandStreamReceiverHw<GfxFamily>::getScratchPatchAddress() {
-    //for 32 bit scratch space pointer is being programmed in Media VFE State and is relative to 0 as General State Base Address
-    //for 64 bit, scratch space pointer is being programmed as "General State Base Address - scratchSpaceOffsetFor64bit"
-    //            and "0 + scratchSpaceOffsetFor64bit" is being programmed in Media VFE state
-
-    uint64_t scratchAddress = 0;
-    if (requiredScratchSize) {
-        scratchAddress = scratchAllocation->getGpuAddressToPatch();
-        if (is64bit && !getMemoryManager()->peekForce32BitAllocations()) {
-            //this is to avoid scractch allocation offset "0"
-            scratchAddress = PreambleHelper<GfxFamily>::getScratchSpaceOffsetFor64bit();
-        }
-    }
-    return scratchAddress;
-}
-template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSizeAligned(const DispatchFlags &dispatchFlags, Device &device) {
     size_t size = getRequiredCmdStreamSize(dispatchFlags, device);
     return alignUp(size, MemoryConstants::cacheLineSize);
@@ -821,7 +803,12 @@ void CommandStreamReceiverHw<GfxFamily>::handleEventsTimestampPacketTags(LinearS
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceAllocation(size_t requiredScratchSizeInBytes) {
-    scratchAllocation = getMemoryManager()->allocateGraphicsMemoryInPreferredPool(AllocationFlags(true), 0, nullptr, requiredScratchSizeInBytes, GraphicsAllocation::AllocationType::SCRATCH_SURFACE);
+void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceController(const HardwareInfo &hwInfoIn) {
+    scratchSpaceController = std::make_unique<ScratchSpaceControllerBase>(hwInfoIn, executionEnvironment, *internalAllocationStorage.get());
+}
+
+template <typename GfxFamily>
+uint64_t CommandStreamReceiverHw<GfxFamily>::getScratchPatchAddress() {
+    return scratchSpaceController->getScratchPatchAddress();
 }
 } // namespace OCLRT

@@ -39,6 +39,7 @@ GENX::INTERFACE_DESCRIPTOR_DATA GENX::cmdInitInterfaceDescriptorData = GENX::INT
 GENX::MEDIA_STATE_FLUSH GENX::cmdInitMediaStateFlush = GENX::MEDIA_STATE_FLUSH::sInit();
 GENX::MEDIA_INTERFACE_DESCRIPTOR_LOAD GENX::cmdInitMediaInterfaceDescriptorLoad = GENX::MEDIA_INTERFACE_DESCRIPTOR_LOAD::sInit();
 GENX::MI_SEMAPHORE_WAIT GENX::cmdInitMiSemaphoreWait = GENX::MI_SEMAPHORE_WAIT::sInit();
+GENX::RENDER_SURFACE_STATE GENX::cmdRenderSurfaceState = GENX::RENDER_SURFACE_STATE::sInit();
 bool GENX::enabledYTiling = true;
 
 template <>
@@ -66,17 +67,18 @@ const AubMemDump::LrcaHelper &HwHelperHw<GENX>::getCsTraits(EngineInstanceT engi
     return *AUBFamilyMapper<GENX>::csTraits[engineInstance.type];
 }
 
-struct hw_helper_static_init {
-    hw_helper_static_init() {
-        hwHelperFactory[IGFX_UNKNOWN_CORE] = &HwHelperHw<GENX>::get();
-    }
-};
 template <>
 bool HwHelperHw<GENX>::supportsYTiling() const {
     return GENX::enabledYTiling;
 }
 
 template class HwHelperHw<GENX>;
+
+struct hw_helper_static_init {
+    hw_helper_static_init() {
+        hwHelperFactory[IGFX_UNKNOWN_CORE] = &HwHelperHw<GENX>::get();
+    }
+};
 
 hw_helper_static_init si;
 

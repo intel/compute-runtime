@@ -18,6 +18,7 @@
 #include "unit_tests/tests_configuration.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/hw_info_config.h"
 #include "External/Common/GmmLibDllName.h"
 #include "mock_gmm_client_context.h"
 #include "gmock/gmock.h"
@@ -185,9 +186,10 @@ int main(int argc, char **argv) {
 #endif
 
     ::testing::InitGoogleMock(&argc, argv);
-
+    std::string hwInfoConfig = "default";
     auto numDevices = numPlatformDevices;
     HardwareInfo device = DEFAULT_TEST_PLATFORM::hwInfo;
+    hardwareInfoSetup[device.pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(device.pSysInfo), const_cast<FeatureTable *>(device.pSkuTable), setupFeatureTable, hwInfoConfig);
     GT_SYSTEM_INFO gtSystemInfo = *device.pSysInfo;
     FeatureTable featureTable = *device.pSkuTable;
 
@@ -195,7 +197,7 @@ int main(int argc, char **argv) {
     uint32_t euPerSubSlice = 0;
     uint32_t sliceCount = 0;
     uint32_t subSliceCount = 0;
-    int dieRecovery = 1;
+    int dieRecovery = 0;
     ::productFamily = device.pPlatform->eProductFamily;
 
     for (int i = 1; i < argc; ++i) {
@@ -277,7 +279,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    uint32_t threadsPerEu = 7;
+    uint32_t threadsPerEu = hwInfoConfigFactory[productFamily]->threadsPerEu;
     PLATFORM platform;
     auto hardwareInfo = hardwareInfoTable[productFamily];
     if (!hardwareInfo) {
@@ -288,7 +290,6 @@ int main(int argc, char **argv) {
     platform.usRevId = (uint16_t)revisionId;
 
     // set Gt and FeatureTable to initial state
-    std::string hwInfoConfig = "default";
     hardwareInfoSetup[productFamily](&gtSystemInfo, &featureTable, setupFeatureTable, hwInfoConfig);
     // and adjust dynamic values if not secified
     sliceCount = sliceCount > 0 ? sliceCount : gtSystemInfo.SliceCount;
@@ -296,7 +297,7 @@ int main(int argc, char **argv) {
     euPerSubSlice = euPerSubSlice > 0 ? euPerSubSlice : gtSystemInfo.MaxEuPerSubSlice;
     // clang-format off
     gtSystemInfo.SliceCount             = sliceCount;
-    gtSystemInfo.SubSliceCount          = subSliceCount;
+    gtSystemInfo.SubSliceCount          = gtSystemInfo.SliceCount * subSliceCount;
     gtSystemInfo.EUCount                = gtSystemInfo.SubSliceCount * euPerSubSlice - dieRecovery;
     gtSystemInfo.ThreadCount            = gtSystemInfo.EUCount * threadsPerEu;
     gtSystemInfo.MaxEuPerSubSlice       = std::max(gtSystemInfo.MaxEuPerSubSlice, euPerSubSlice);

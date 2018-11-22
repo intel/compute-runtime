@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "runtime/api/cl_types.h"
 #include "runtime/gen_common/aub_mapper.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/command_stream/linear_stream.h"
@@ -15,6 +16,8 @@
 #include <type_traits>
 
 namespace OCLRT {
+class ExecutionEnvironment;
+class GraphicsAllocation;
 struct HardwareCapabilities;
 
 class HwHelper {
@@ -37,6 +40,18 @@ class HwHelper {
     virtual const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance) const = 0;
     virtual bool supportsYTiling() const = 0;
     virtual bool timestampPacketWriteSupported() const = 0;
+    virtual size_t getRenderSurfaceStateSize() const = 0;
+    virtual void setRenderSurfaceStateForBuffer(ExecutionEnvironment &executionEnvironment,
+                                                void *surfaceStateBuffer,
+                                                size_t bufferSize,
+                                                uint64_t gpuVa,
+                                                size_t offset,
+                                                uint32_t pitch,
+                                                GraphicsAllocation *gfxAlloc,
+                                                cl_mem_flags flags,
+                                                uint32_t surfaceType,
+                                                bool forceNonAuxMode) = 0;
+    virtual size_t getScratchSpaceOffsetFor64bit() = 0;
 
   protected:
     HwHelper() = default;
@@ -72,6 +87,11 @@ class HwHelperHw : public HwHelper {
         return sizeof(INTERFACE_DESCRIPTOR_DATA);
     }
 
+    size_t getRenderSurfaceStateSize() const override {
+        using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+        return sizeof(RENDER_SURFACE_STATE);
+    }
+
     const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance) const override;
 
     size_t getMaxBarrierRegisterPerSlice() const override;
@@ -97,6 +117,19 @@ class HwHelperHw : public HwHelper {
     bool timestampPacketWriteSupported() const override;
 
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
+
+    void setRenderSurfaceStateForBuffer(ExecutionEnvironment &executionEnvironment,
+                                        void *surfaceStateBuffer,
+                                        size_t bufferSize,
+                                        uint64_t gpuVa,
+                                        size_t offset,
+                                        uint32_t pitch,
+                                        GraphicsAllocation *gfxAlloc,
+                                        cl_mem_flags flags,
+                                        uint32_t surfaceType,
+                                        bool forceNonAuxMode) override;
+
+    size_t getScratchSpaceOffsetFor64bit() override;
 
   protected:
     HwHelperHw() = default;
@@ -147,6 +180,15 @@ struct PipeControlHelper {
         }
         return pipeControl;
     }
+};
+
+union SURFACE_STATE_BUFFER_LENGTH {
+    uint32_t Length;
+    struct SurfaceState {
+        uint32_t Width : BITFIELD_RANGE(0, 6);
+        uint32_t Height : BITFIELD_RANGE(7, 20);
+        uint32_t Depth : BITFIELD_RANGE(21, 31);
+    } SurfaceState;
 };
 
 } // namespace OCLRT

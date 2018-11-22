@@ -26,7 +26,7 @@ struct UltCommandStreamReceiverTest
         DeviceFixture::SetUp();
         HardwareParse::SetUp();
 
-        size_t sizeStream = 256;
+        size_t sizeStream = 512;
         size_t alignmentStream = 0x1000;
         cmdBuffer = alignedMalloc(sizeStream, alignmentStream);
         dshBuffer = alignedMalloc(sizeStream, alignmentStream);

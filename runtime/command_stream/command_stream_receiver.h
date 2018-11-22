@@ -35,6 +35,7 @@ class LinearStream;
 class MemoryManager;
 class OsContext;
 class OSInterface;
+class ScratchSpaceController;
 class TimestampPacket;
 struct HwPerfCounter;
 struct HwTimeStamps;
@@ -116,7 +117,7 @@ class CommandStreamReceiver {
     virtual void overrideMediaVFEStateDirty(bool dirty) { mediaVfeStateDirty = dirty; }
 
     void setRequiredScratchSize(uint32_t newRequiredScratchSize);
-    GraphicsAllocation *getScratchAllocation() const { return scratchAllocation; }
+    GraphicsAllocation *getScratchAllocation();
     GraphicsAllocation *getDebugSurfaceAllocation() const { return debugSurface; }
     GraphicsAllocation *allocateDebugSurface(size_t size);
 
@@ -180,6 +181,7 @@ class CommandStreamReceiver {
     std::unique_ptr<ExperimentalCommandBuffer> experimentalCmdBuffer;
     std::unique_ptr<InternalAllocationStorage> internalAllocationStorage;
     std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
+    std::unique_ptr<ScratchSpaceController> scratchSpaceController;
     std::unique_ptr<TagAllocator<HwTimeStamps>> profilingTimeStampAllocator;
     std::unique_ptr<TagAllocator<HwPerfCounter>> perfCounterAllocator;
     std::unique_ptr<TagAllocator<TimestampPacket>> timestampPacketAllocator;
@@ -194,7 +196,6 @@ class CommandStreamReceiver {
     volatile uint32_t *tagAddress = nullptr;
 
     GraphicsAllocation *tagAllocation = nullptr;
-    GraphicsAllocation *scratchAllocation = nullptr;
     GraphicsAllocation *preemptionCsrAllocation = nullptr;
     GraphicsAllocation *debugSurface = nullptr;
     OSInterface *osInterface = nullptr;

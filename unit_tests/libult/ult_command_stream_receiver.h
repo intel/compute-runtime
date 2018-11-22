@@ -7,7 +7,9 @@
 
 #pragma once
 #include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "unit_tests/mocks/mock_experimental_command_buffer.h"
 #include <map>
 #include <memory>
 
@@ -20,7 +22,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass = CommandStreamReceiverHw<GfxFamily>;
 
   public:
-    using BaseClass::createScratchSpaceAllocation;
+    using BaseClass::deviceIndex;
     using BaseClass::dshState;
     using BaseClass::getScratchPatchAddress;
     using BaseClass::hwInfo;
@@ -51,7 +53,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::requiredScratchSize;
     using BaseClass::CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::samplerCacheFlushRequired;
-    using BaseClass::CommandStreamReceiver::scratchAllocation;
+    using BaseClass::CommandStreamReceiver::scratchSpaceController;
     using BaseClass::CommandStreamReceiver::stallingPipeControlOnNextFlushRequired;
     using BaseClass::CommandStreamReceiver::submissionAggregator;
     using BaseClass::CommandStreamReceiver::taskCount;

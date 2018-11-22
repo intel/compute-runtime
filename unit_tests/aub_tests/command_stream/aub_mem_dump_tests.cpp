@@ -22,7 +22,8 @@ using OCLRT::folderAUB;
 std::string getAubFileName(const OCLRT::Device *pDevice, const std::string baseName) {
     const auto pGtSystemInfo = pDevice->getHardwareInfo().pSysInfo;
     std::stringstream strfilename;
-    strfilename << pDevice->getProductAbbrev() << "_" << pGtSystemInfo->SliceCount << "x" << pGtSystemInfo->SubSliceCount << "x" << pGtSystemInfo->MaxEuPerSubSlice << "_" << baseName;
+    uint32_t subSlicesPerSlice = pGtSystemInfo->SubSliceCount / pGtSystemInfo->SliceCount;
+    strfilename << pDevice->getProductAbbrev() << "_" << pGtSystemInfo->SliceCount << "x" << subSlicesPerSlice << "x" << pGtSystemInfo->MaxEuPerSubSlice << "_" << baseName;
 
     return strfilename.str();
 }

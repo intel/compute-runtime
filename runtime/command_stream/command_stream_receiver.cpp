@@ -9,6 +9,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/preemption.h"
+#include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/device/device.h"
 #include "runtime/event/event.h"
 #include "runtime/gtpin/gtpin_notify.h"
@@ -157,11 +158,6 @@ void CommandStreamReceiver::cleanupResources() {
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, TEMPORARY_ALLOCATION);
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, REUSABLE_ALLOCATION);
 
-    if (scratchAllocation) {
-        getMemoryManager()->freeGraphicsMemory(scratchAllocation);
-        scratchAllocation = nullptr;
-    }
-
     if (debugSurface) {
         getMemoryManager()->freeGraphicsMemory(debugSurface);
         debugSurface = nullptr;
@@ -215,6 +211,10 @@ void CommandStreamReceiver::setRequiredScratchSize(uint32_t newRequiredScratchSi
     if (newRequiredScratchSize > requiredScratchSize) {
         requiredScratchSize = newRequiredScratchSize;
     }
+}
+
+GraphicsAllocation *CommandStreamReceiver::getScratchAllocation() {
+    return scratchSpaceController->getScratchSpaceAllocation();
 }
 
 void CommandStreamReceiver::initProgrammingFlags() {
@@ -310,6 +310,7 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
         indirectHeap = new IndirectHeap(heapMemory, requireInternalHeap);
         indirectHeap->overrideMaxSize(finalHeapSize);
     }
+    scratchSpaceController->reserveHeap(heapType, indirectHeap);
 }
 
 void CommandStreamReceiver::releaseIndirectHeap(IndirectHeap::Type heapType) {
