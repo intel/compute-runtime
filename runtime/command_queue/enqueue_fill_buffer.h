@@ -73,7 +73,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         eventWaitList,
         event);
 
-    auto storageForAllocation = device->getCommandStreamReceiver().getInternalAllocationStorage();
+    auto storageForAllocation = getCommandStreamReceiver().getInternalAllocationStorage();
     storageForAllocation->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), TEMPORARY_ALLOCATION, taskCount);
 
     return CL_SUCCESS;

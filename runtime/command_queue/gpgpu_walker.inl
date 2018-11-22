@@ -409,7 +409,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         SchedulerKernel &scheduler = commandQueue.getDevice().getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(parentKernel->getContext());
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, &scheduler);
     }
-    if (commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         auto semaphoreSize = sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
         auto atomicSize = sizeof(typename GfxFamily::MI_ATOMIC);
 

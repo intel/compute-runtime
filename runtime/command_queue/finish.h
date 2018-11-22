@@ -15,8 +15,7 @@ namespace OCLRT {
 
 template <typename GfxFamily>
 cl_int CommandQueueHw<GfxFamily>::finish(bool dcFlush) {
-    auto &commandStreamReceiver = device->getCommandStreamReceiver();
-    commandStreamReceiver.flushBatchedSubmissions();
+    getCommandStreamReceiver().flushBatchedSubmissions();
 
     //as long as queue is blocked we need to stall.
     while (isQueueBlocked())
@@ -28,7 +27,7 @@ cl_int CommandQueueHw<GfxFamily>::finish(bool dcFlush) {
     // Stall until HW reaches CQ taskCount
     waitUntilComplete(taskCountToWaitFor, flushStampToWaitFor, false);
 
-    commandStreamReceiver.waitForTaskCountAndCleanAllocationList(taskCountToWaitFor, TEMPORARY_ALLOCATION);
+    getCommandStreamReceiver().waitForTaskCountAndCleanAllocationList(taskCountToWaitFor, TEMPORARY_ALLOCATION);
 
     return CL_SUCCESS;
 }

@@ -67,7 +67,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         using UniqueIH = std::unique_ptr<IndirectHeap>;
         *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh), UniqueIH(ioh),
-                                                   UniqueIH(ssh), *commandQueue.getDevice().getCommandStreamReceiver().getInternalAllocationStorage());
+                                                   UniqueIH(ssh), *commandQueue.getCommandStreamReceiver().getInternalAllocationStorage());
         if (parentKernel) {
             (*blockedCommandsData)->doNotFreeISH = true;
         }
@@ -81,7 +81,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         ssh = &getIndirectHeap<GfxFamily, IndirectHeap::SURFACE_STATE>(commandQueue, multiDispatchInfo);
     }
 
-    if (commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(commandStream, commandQueue.getDevice(),
                                                                          numEventsInWaitList, eventWaitList);
         if (previousTimestampPacketNodes) {
@@ -183,7 +183,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, true);
 
-        if (currentTimestampPacketNodes && commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        if (currentTimestampPacketNodes && commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex)->tag;
             GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacket, TimestampPacket::WriteOperationType::BeforeWalker);
         }
@@ -191,7 +191,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         // Program the walker.  Invokes execution so all state should already be programmed
         auto walkerCmd = allocateWalkerSpace(*commandStream, kernel);
 
-        if (currentTimestampPacketNodes && commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        if (currentTimestampPacketNodes && commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex)->tag;
             GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, walkerCmd, timestampPacket, TimestampPacket::WriteOperationType::AfterWalker);
         }

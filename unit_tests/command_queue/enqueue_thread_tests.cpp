@@ -418,7 +418,7 @@ HWTEST_F(EnqueueThreading, finish) {
     // set something to finish
     pCmdQ->taskCount = 1;
     pCmdQ->taskLevel = 1;
-    auto csr = (CommandStreamReceiverMock<FamilyType> *)&this->pDevice->getCommandStreamReceiver();
+    auto csr = (CommandStreamReceiverMock<FamilyType> *)&this->pCmdQ->getCommandStreamReceiver();
     csr->expectedToFreeCount = 0u;
 
     pCmdQ->finish(false);

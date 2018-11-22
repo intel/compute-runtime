@@ -1797,7 +1797,7 @@ cl_int CL_API_CALL clSetUserEventStatus(cl_event event,
         return retVal;
     }
 
-    auto commandStreamReceiverOwnership = userEvent->getContext()->getDevice(0)->getCommandStreamReceiver().obtainUniqueOwnership();
+    auto commandStreamReceiverOwnership = userEvent->getContext()->getDevice(0)->getEngine(0).commandStreamReceiver->obtainUniqueOwnership();
     userEvent->setStatus(executionStatus);
     return retVal;
 }

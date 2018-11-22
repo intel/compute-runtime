@@ -352,8 +352,8 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhe
 TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {
     auto executionEnvironment = new ExecutionEnvironment;
 
-    std::unique_ptr<Device> device0(Device::create<Device>(nullptr, executionEnvironment, 0u));
-    std::unique_ptr<Device> device1(Device::create<Device>(nullptr, executionEnvironment, 1u));
+    std::unique_ptr<MockDevice> device0(Device::create<MockDevice>(nullptr, executionEnvironment, 0u));
+    std::unique_ptr<MockDevice> device1(Device::create<MockDevice>(nullptr, executionEnvironment, 1u));
 
     auto &commandStreamReceiver0 = device0->getCommandStreamReceiver();
     auto &commandStreamReceiver1 = device1->getCommandStreamReceiver();
@@ -388,13 +388,13 @@ struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
         executionEnvironment = new ExecutionEnvironment;
         gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*executionEnvironment);
         executionEnvironment->memoryManager.reset(gmockMemoryManager);
-        device.reset(Device::create<Device>(&hwInfo, executionEnvironment, 0u));
+        device.reset(MockDevice::create<MockDevice>(&hwInfo, executionEnvironment, 0u));
         commandStreamReceiver = &device->getCommandStreamReceiver();
     }
     HardwareInfo hwInfo = *platformDevices[0];
     ExecutionEnvironment *executionEnvironment = nullptr;
     GMockMemoryManager *gmockMemoryManager = nullptr;
-    std::unique_ptr<Device> device;
+    std::unique_ptr<MockDevice> device;
     CommandStreamReceiver *commandStreamReceiver = nullptr;
 };
 

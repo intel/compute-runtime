@@ -69,7 +69,7 @@ TEST_F(EventTests, eventWaitShouldntSendPC) {
     cl_event *eventWaitList = nullptr;
     cl_event event = nullptr;
 
-    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    auto &csr = pCmdQ->getCommandStreamReceiver();
 
     auto retVal = callOneWorkItemNDRKernel(eventWaitList, numEventsInWaitList, &event);
 
@@ -108,7 +108,7 @@ TEST_F(EventTests, waitForArray) {
     cl_event *eventWaitList = nullptr;
     cl_event event[2] = {};
 
-    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    auto &csr = pCmdQ->getCommandStreamReceiver();
 
     auto retVal = callOneWorkItemNDRKernel(eventWaitList, numEventsInWaitList, &event[0]);
 
@@ -152,7 +152,7 @@ TEST_F(EventTests, event_NDR_Wait_NDR_Finish) {
     cl_event *eventWaitList = nullptr;
     cl_event event = nullptr;
 
-    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    auto &csr = pCmdQ->getCommandStreamReceiver();
 
     auto retVal = callOneWorkItemNDRKernel(eventWaitList, numEventsInWaitList, &event);
 
@@ -191,7 +191,7 @@ TEST_F(EventTests, eventPassedToEnqueueMarkerHasTheSameLevelAsPreviousCommand) {
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event event = nullptr;
-    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    auto &csr = pCmdQ->getCommandStreamReceiver();
 
     auto retVal = callOneWorkItemNDRKernel(eventWaitList, numEventsInWaitList, &event);
 

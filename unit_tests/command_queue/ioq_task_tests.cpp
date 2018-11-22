@@ -39,7 +39,7 @@ TEST_F(IOQ, enqueueReadBuffer_increasesTaskLevel) {
 }
 
 TEST_F(IOQ, enqueueKernel_changesTaskCount) {
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    auto &commandStreamReceiver = pCmdQ->getCommandStreamReceiver();
     auto previousTaskCount = commandStreamReceiver.peekTaskCount();
 
     EnqueueKernelHelper<>::enqueueKernel(pCmdQ,
@@ -49,7 +49,7 @@ TEST_F(IOQ, enqueueKernel_changesTaskCount) {
 }
 
 TEST_F(IOQ, enqueueFillBuffer_changesTaskCount) {
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    auto &commandStreamReceiver = pCmdQ->getCommandStreamReceiver();
     auto previousTaskCount = commandStreamReceiver.peekTaskCount();
 
     EnqueueFillBufferHelper<>::enqueue(pCmdQ);
@@ -58,7 +58,7 @@ TEST_F(IOQ, enqueueFillBuffer_changesTaskCount) {
 }
 
 TEST_F(IOQ, enqueueReadBuffer_changesTaskCount) {
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    auto &commandStreamReceiver = pCmdQ->getCommandStreamReceiver();
     auto previousTaskCount = commandStreamReceiver.peekTaskCount();
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 

@@ -117,7 +117,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     if (terminated) {
         return completionStamp;
     }
-    auto &commandStreamReceiver = commandQueue.getDevice().getCommandStreamReceiver();
+    auto &commandStreamReceiver = commandQueue.getCommandStreamReceiver();
     bool executionModelKernel = kernel->isParentKernel;
     auto devQueue = commandQueue.getContext().getDefaultDeviceQueue();
 

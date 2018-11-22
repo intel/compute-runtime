@@ -35,8 +35,8 @@ uint32_t UserEvent::getTaskLevel() {
     uint32_t taskLevel = 0;
     if (ctx != nullptr) {
         Device *pDevice = ctx->getDevice(0);
-        auto &csr = pDevice->getCommandStreamReceiver();
-        taskLevel = csr.peekTaskLevel();
+        auto csr = pDevice->getEngine(0).commandStreamReceiver;
+        taskLevel = csr->peekTaskLevel();
     }
     return taskLevel;
 }
@@ -68,9 +68,8 @@ bool VirtualEvent::wait(bool blocking, bool useQuickKmdSleep) {
 
 uint32_t VirtualEvent::getTaskLevel() {
     uint32_t taskLevel = 0;
-    if (ctx != nullptr) {
-        Device *pDevice = ctx->getDevice(0);
-        auto &csr = pDevice->getCommandStreamReceiver();
+    if (cmdQueue != nullptr) {
+        auto &csr = cmdQueue->getCommandStreamReceiver();
         taskLevel = csr.peekTaskLevel();
     }
     return taskLevel;

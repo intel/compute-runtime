@@ -9,6 +9,7 @@
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -62,7 +63,8 @@ TEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenQueueIs
 HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToBatchingMode) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-    auto &csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(pContext->getDevice(0)->getCommandStreamReceiver());
+    auto mockDevice = castToObject<MockDevice>(devices[0]);
+    auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
 
     auto cmdq = clCreateCommandQueue(pContext, devices[0], ooq, &retVal);
@@ -73,7 +75,8 @@ HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenComma
 HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToNTo1SubmissionModel) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-    auto &csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(pContext->getDevice(0)->getCommandStreamReceiver());
+    auto mockDevice = castToObject<MockDevice>(devices[0]);
+    auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_FALSE(csr.isNTo1SubmissionModelEnabled());
 
     auto cmdq = clCreateCommandQueue(pContext, devices[0], ooq, &retVal);

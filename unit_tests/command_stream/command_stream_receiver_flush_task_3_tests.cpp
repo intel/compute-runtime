@@ -502,7 +502,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTask
     DispatchFlags dispatchFlags;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
-    auto &csr = pDevice->getCommandStreamReceiver();
+    auto &csr = commandQueue.getCommandStreamReceiver();
 
     csr.flushTask(commandStream,
                   0,

@@ -75,8 +75,7 @@ struct HardwareParse {
 
     template <typename FamilyType>
     void parseCommands(OCLRT::CommandQueue &commandQueue) {
-        auto &device = commandQueue.getDevice();
-        auto &commandStreamReceiver = device.getCommandStreamReceiver();
+        auto &commandStreamReceiver = commandQueue.getCommandStreamReceiver();
         auto &commandStreamCSR = commandStreamReceiver.getCS();
 
         parseCommands<FamilyType>(commandStreamCSR, startCSRCS);

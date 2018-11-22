@@ -68,12 +68,14 @@ class MockDevice : public Device {
 
     template <typename T>
     UltCommandStreamReceiver<T> &getUltCommandStreamReceiver() {
-        return reinterpret_cast<UltCommandStreamReceiver<T> &>(getCommandStreamReceiver());
+        return reinterpret_cast<UltCommandStreamReceiver<T> &>(*engines[0].commandStreamReceiver);
     }
+
+    CommandStreamReceiver &getCommandStreamReceiver() const { return *engines[0].commandStreamReceiver; }
 
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
 
-    GraphicsAllocation *getTagAllocation() { return this->getCommandStreamReceiver().getTagAllocation(); }
+    GraphicsAllocation *getTagAllocation() { return this->engines[0].commandStreamReceiver->getTagAllocation(); }
 
     void setSourceLevelDebuggerActive(bool active) {
         this->deviceInfo.sourceLevelDebuggerActive = active;

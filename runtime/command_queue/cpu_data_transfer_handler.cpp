@@ -51,7 +51,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         *eventsRequest.outEvent = outEventObj;
     }
 
-    auto commandStreamReceieverOwnership = device->getCommandStreamReceiver().obtainUniqueOwnership();
+    auto commandStreamReceieverOwnership = getCommandStreamReceiver().obtainUniqueOwnership();
     TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
 
     auto blockQueue = false;

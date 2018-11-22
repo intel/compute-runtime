@@ -328,7 +328,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllo
     auto memoryManager = pDevice->getMemoryManager();
     size_t requiredSize = alignUp(100, MemoryConstants::pageSize) + CSRequirements::csOverfetchSize;
     auto allocation = memoryManager->allocateGraphicsMemory(requiredSize);
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
@@ -425,7 +425,7 @@ TEST_P(CommandQueueIndirectHeapTest, IndirectHeapContainsAtLeast64KB) {
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), sizeof(uint32_t));
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
-        EXPECT_EQ(pDevice->getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize, indirectHeap.getAvailableSpace());
+        EXPECT_EQ(cmdQ.getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize, indirectHeap.getAvailableSpace());
     } else {
         EXPECT_EQ(64 * KB, indirectHeap.getAvailableSpace());
     }
@@ -452,7 +452,7 @@ TEST_P(CommandQueueIndirectHeapTest, getIndirectHeapCanRecycle) {
     ASSERT_NE(nullptr, &indirectHeap);
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
         //no matter what SSH is always capped
-        EXPECT_EQ(cmdQ.getDevice().getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize,
+        EXPECT_EQ(cmdQ.getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize,
                   indirectHeap.getMaxAvailableSpace());
     } else {
         EXPECT_LE(requiredSize, indirectHeap.getMaxAvailableSpace());
@@ -486,16 +486,17 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAlloc
 
     GraphicsAllocation *allocation = nullptr;
 
+    auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
+
     if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT) {
         allocation = memoryManager->allocate32BitGraphicsMemory(allocationSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
     } else {
         allocation = memoryManager->allocateGraphicsMemory(allocationSize);
     }
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
-        allocation->setSize(cmdQ.getDevice().getCommandStreamReceiver().defaultSshSize * 2);
+        allocation->setSize(commandStreamReceiver.defaultSshSize * 2);
     }
 
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
@@ -922,7 +923,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsC
 
     kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + kernel->getAllocatedKernelInfo()->patchInfo.pAllocateSystemThreadSurface->Offset);
     kernel->getAllocatedKernelInfo()->usesSsh = true;
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
 
     cmdQ.setupDebugSurface(kernel.get());
 
@@ -941,7 +942,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCsrWithDebugSurfaceAllocatedWhenSet
 
     kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + kernel->getAllocatedKernelInfo()->patchInfo.pAllocateSystemThreadSurface->Offset);
     kernel->getAllocatedKernelInfo()->usesSsh = true;
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
     commandStreamReceiver.allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
     auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
     ASSERT_NE(nullptr, debugSurface);

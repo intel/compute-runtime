@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/helpers/base_object.h"
+#include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/task_information.h"
 #include "instrumentation.h"
 #include <atomic>
@@ -324,6 +325,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                              cl_uint numEventsInWaitList,
                                              const cl_event *eventWaitList);
 
+    CommandStreamReceiver &getCommandStreamReceiver() const;
     Device &getDevice() { return *device; }
     Context &getContext() { return *context; }
     Context *getContextPtr() { return context; }
@@ -417,13 +419,15 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes);
 
-    Context *context;
-    Device *device;
+    Context *context = nullptr;
+    Device *device = nullptr;
+    EngineControl *engine = nullptr;
 
     cl_command_queue_properties commandQueueProperties;
 
     QueuePriority priority;
     QueueThrottle throttle;
+    size_t engineId = 0;
 
     bool perfCountersEnabled;
     cl_uint perfCountersConfig;

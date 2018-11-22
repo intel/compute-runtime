@@ -202,11 +202,11 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
 
 TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {
     auto executionEnvironment = new ExecutionEnvironment;
-    std::unique_ptr<Device> device(Device::create<OCLRT::Device>(nullptr, executionEnvironment, 0u));
+    std::unique_ptr<MockDevice> device(Device::create<OCLRT::MockDevice>(nullptr, executionEnvironment, 0u));
     auto &commandStreamReceiver = device->getCommandStreamReceiver();
     auto memoryManager = device->getMemoryManager();
 
-    std::unique_ptr<Device> device2(Device::create<OCLRT::Device>(nullptr, executionEnvironment, 1u));
+    std::unique_ptr<MockDevice> device2(Device::create<OCLRT::MockDevice>(nullptr, executionEnvironment, 1u));
     EXPECT_NE(&commandStreamReceiver, &device2->getCommandStreamReceiver());
     EXPECT_EQ(memoryManager, device2->getMemoryManager());
 }

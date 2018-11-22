@@ -77,8 +77,11 @@ CommandQueue::CommandQueue(Context *context,
     commandQueueProperties = getCmdQueueProperties<cl_command_queue_properties>(properties);
     flushStamp.reset(new FlushStampTracker(true));
 
-    if (device && device->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        timestampPacketContainer = std::make_unique<TimestampPacketContainer>(device->getMemoryManager());
+    if (device) {
+        engine = &device->getEngine(engineId);
+        if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+            timestampPacketContainer = std::make_unique<TimestampPacketContainer>(device->getMemoryManager());
+        }
     }
 }
 
@@ -90,7 +93,7 @@ CommandQueue::~CommandQueue() {
     }
 
     if (device) {
-        auto storageForAllocation = device->getCommandStreamReceiver().getInternalAllocationStorage();
+        auto storageForAllocation = getCommandStreamReceiver().getInternalAllocationStorage();
 
         if (commandStream) {
             storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream->getGraphicsAllocation()), REUSABLE_ALLOCATION);
@@ -112,13 +115,17 @@ CommandQueue::~CommandQueue() {
     }
 }
 
+CommandStreamReceiver &CommandQueue::getCommandStreamReceiver() const {
+    return *engine->commandStreamReceiver;
+}
+
 uint32_t CommandQueue::getHwTag() const {
     uint32_t tag = *getHwTagAddress();
     return tag;
 }
 
 volatile uint32_t *CommandQueue::getHwTagAddress() const {
-    return device->getCommandStreamReceiver().getTagAddress();
+    return getCommandStreamReceiver().getTagAddress();
 }
 
 bool CommandQueue::isCompleted(uint32_t taskCount) const {
@@ -135,7 +142,7 @@ void CommandQueue::waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushS
 
     bool forcePowerSavingMode = this->throttle == QueueThrottle::LOW;
 
-    device->getCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, *device->getOsContext(), forcePowerSavingMode);
+    getCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, *device->getOsContext(), forcePowerSavingMode);
 
     DEBUG_BREAK_IF(getHwTag() < taskCountToWait);
     latestTaskCountWaited = taskCountToWait;
@@ -161,7 +168,7 @@ bool CommandQueue::isQueueBlocked() {
                 //at this point we may reset queue TaskCount, since all command previous to this were aborted
                 taskCount = 0;
                 flushStamp->setStamp(0);
-                taskLevel = getDevice().getCommandStreamReceiver().peekTaskLevel();
+                taskLevel = getCommandStreamReceiver().peekTaskLevel();
             }
 
             DebugManager.log(DebugManager.flags.EventsDebugEnable.get(), "isQueueBlocked taskLevel change from", taskLevel, "to new from virtualEvent", this->virtualEvent, "new tasklevel", this->virtualEvent->taskLevel.load());
@@ -196,9 +203,8 @@ uint32_t CommandQueue::getTaskLevelFromWaitList(uint32_t taskLevel,
 
 LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
     DEBUG_BREAK_IF(nullptr == device);
-    auto &commandStreamReceiver = device->getCommandStreamReceiver();
-    auto storageForAllocation = commandStreamReceiver.getInternalAllocationStorage();
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
+    auto storageForAllocation = getCommandStreamReceiver().getInternalAllocationStorage();
+    auto memoryManager = getCommandStreamReceiver().getMemoryManager();
     DEBUG_BREAK_IF(nullptr == memoryManager);
 
     if (!commandStream) {
@@ -503,8 +509,6 @@ void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList
                                                    MemObjOffsetArray &copyOffset,
                                                    bool readOnly,
                                                    EventBuilder &externalEventBuilder) {
-    auto &commandStreamReceiver = device->getCommandStreamReceiver();
-
     EventBuilder internalEventBuilder;
     EventBuilder *eventBuilder;
     // check if event will be exposed externally
@@ -518,7 +522,7 @@ void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList
     }
 
     //store task data in event
-    auto cmd = std::unique_ptr<Command>(new CommandMapUnmap(opType, *memObj, copySize, copyOffset, readOnly, commandStreamReceiver, *this));
+    auto cmd = std::unique_ptr<Command>(new CommandMapUnmap(opType, *memObj, copySize, copyOffset, readOnly, getCommandStreamReceiver(), *this));
     eventBuilder->getEvent()->setCommand(std::move(cmd));
 
     //bind output event with input events
@@ -534,11 +538,10 @@ void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList
 }
 
 bool CommandQueue::setupDebugSurface(Kernel *kernel) {
-    auto &commandStreamReceiver = device->getCommandStreamReceiver();
-    auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
+    auto debugSurface = getCommandStreamReceiver().getDebugSurfaceAllocation();
 
     if (!debugSurface) {
-        debugSurface = commandStreamReceiver.allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
+        debugSurface = getCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
     }
 
     DEBUG_BREAK_IF(!kernel->requiresSshForBuffers());
@@ -552,15 +555,15 @@ bool CommandQueue::setupDebugSurface(Kernel *kernel) {
 }
 
 IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize) {
-    return this->getDevice().getCommandStreamReceiver().getIndirectHeap(heapType, minRequiredSize);
+    return getCommandStreamReceiver().getIndirectHeap(heapType, minRequiredSize);
 }
 
 void CommandQueue::allocateHeapMemory(IndirectHeap::Type heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap) {
-    this->getDevice().getCommandStreamReceiver().allocateHeapMemory(heapType, minRequiredSize, indirectHeap);
+    getCommandStreamReceiver().allocateHeapMemory(heapType, minRequiredSize, indirectHeap);
 }
 
 void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
-    this->getDevice().getCommandStreamReceiver().releaseIndirectHeap(heapType);
+    getCommandStreamReceiver().releaseIndirectHeap(heapType);
 }
 
 void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation,
@@ -575,7 +578,7 @@ void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, 
 }
 
 void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes) {
-    auto preferredPoolSize = device->getCommandStreamReceiver().getPreferredTagPoolSize();
+    auto preferredPoolSize = getCommandStreamReceiver().getPreferredTagPoolSize();
 
     auto allocator = device->getMemoryManager()->obtainTimestampPacketAllocator(preferredPoolSize);
 

@@ -250,4 +250,10 @@ GFXCORE_FAMILY Device::getRenderCoreFamily() const {
 bool Device::isSourceLevelDebuggerActive() const {
     return deviceInfo.sourceLevelDebuggerActive;
 }
+
+void Device::initMaxPowerSavingMode() {
+    for (auto &engine : engines) {
+        engine.commandStreamReceiver->peekKmdNotifyHelper()->initMaxPowerSavingMode();
+    }
+}
 } // namespace OCLRT

@@ -277,7 +277,7 @@ HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIs
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
-    pCmdQ->getDevice().getCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+    pCmdQ->getCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
     auto retVal = pCmdQ->enqueueKernel(
         pKernel,

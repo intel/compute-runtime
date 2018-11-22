@@ -29,7 +29,7 @@ bool GlArbSyncEvent::setBaseEvent(Event &ev) {
     UNRECOVERABLE_IF(ev.getContext() == nullptr);
     UNRECOVERABLE_IF(ev.getCommandQueue() == nullptr);
     auto cmdQueue = ev.getCommandQueue();
-    auto osInterface = cmdQueue->getDevice().getCommandStreamReceiver().getOSInterface();
+    auto osInterface = cmdQueue->getCommandStreamReceiver().getOSInterface();
     UNRECOVERABLE_IF(osInterface == nullptr);
     if (false == ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectSetup(*osInterface, *glSyncInfo)) {
         return false;

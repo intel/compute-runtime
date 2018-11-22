@@ -69,7 +69,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     commandStream = &commandQueue.getCS(0);
 
     bool dcFlush = false;
-    commandQueue.getDevice().getCommandStreamReceiver().addPipeControl(*commandStream, dcFlush);
+    commandQueue.getCommandStreamReceiver().addPipeControl(*commandStream, dcFlush);
 
     uint32_t interfaceDescriptorIndex = devQueueHw.schedulerIDIndex;
     const size_t offsetInterfaceDescriptorTable = devQueueHw.colorCalcStateSize;
@@ -164,7 +164,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     // Do not put BB_START only when returning in first Scheduler run
     if (devQueueHw.getSchedulerReturnInstance() != 1) {
 
-        commandQueue.getDevice().getCommandStreamReceiver().addPipeControl(*commandStream, true);
+        commandQueue.getCommandStreamReceiver().addPipeControl(*commandStream, true);
 
         // Add BB Start Cmd to the SLB in the Primary Batch Buffer
         auto *bbStart = (MI_BATCH_BUFFER_START *)commandStream->getSpace(sizeof(MI_BATCH_BUFFER_START));

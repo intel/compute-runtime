@@ -27,7 +27,7 @@ struct KmdNotifyTests : public ::testing::Test {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
         cmdQ.reset(new MockCommandQueue(&context, device.get(), nullptr));
         *device->getTagAddress() = taskCountToWait;
-        device->getCommandStreamReceiver().waitForFlushStamp(flushStampToWait, *device->getOsContext());
+        cmdQ->getCommandStreamReceiver().waitForFlushStamp(flushStampToWait, *device->getOsContext());
         overrideKmdNotifyParams(true, 2, true, 1, false, 0);
     }
 
@@ -167,7 +167,7 @@ HWTEST_F(KmdNotifyTests, givenDisabledQuickSleepWhenWaitUntilCompleteWithQuickSl
 
 HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenPollForCompletionCalledThenTimeout) {
     *device->getTagAddress() = taskCountToWait - 1;
-    auto success = device->getCommandStreamReceiver().waitForCompletionWithTimeout(true, 1, taskCountToWait);
+    auto success = device->getUltCommandStreamReceiver<FamilyType>().waitForCompletionWithTimeout(true, 1, taskCountToWait);
     EXPECT_FALSE(success);
 }
 

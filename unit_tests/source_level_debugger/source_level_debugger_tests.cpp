@@ -434,7 +434,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
         ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
 
         hwInfo->capabilityTable.instrumentationEnabled = true;
-        unique_ptr<Device> device(Device::create<Device>(&hwInfo[0], executionEnvironment, 0));
+        unique_ptr<MockDevice> device(Device::create<MockDevice>(&hwInfo[0], executionEnvironment, 0));
 
         ASSERT_NE(nullptr, device->getCommandStreamReceiver().getOSInterface());
 

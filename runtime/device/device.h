@@ -67,13 +67,14 @@ class Device : public BaseObject<_cl_device_id> {
         return engineType;
     }
 
+    void initMaxPowerSavingMode();
     void *getSLMWindowStartAddress();
     void prepareSLMWindow();
     void setForce32BitAddressing(bool value) {
         deviceInfo.force32BitAddressess = value;
     }
 
-    CommandStreamReceiver &getCommandStreamReceiver();
+    EngineControl &getEngine(size_t engineId);
 
     volatile uint32_t *getTagAddress() const;
 
@@ -176,8 +177,8 @@ inline void Device::getCap(const void *&src,
     retSize = size = DeviceInfoTable::Map<Param>::size;
 }
 
-inline CommandStreamReceiver &Device::getCommandStreamReceiver() {
-    return *engines[0].commandStreamReceiver;
+inline EngineControl &Device::getEngine(size_t engineId) {
+    return engines[engineId];
 }
 
 inline volatile uint32_t *Device::getTagAddress() const {

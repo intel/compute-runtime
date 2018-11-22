@@ -222,8 +222,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
     auto memoryManager = getDevice().getMemoryManager();
     DEBUG_BREAK_IF(nullptr == memoryManager);
 
-    auto commandStreamReceieverOwnership = device->getCommandStreamReceiver().obtainUniqueOwnership();
-    auto storageWithAllocations = device->getCommandStreamReceiver().getInternalAllocationStorage();
+    auto commandStreamReceieverOwnership = getCommandStreamReceiver().obtainUniqueOwnership();
+    auto storageWithAllocations = getCommandStreamReceiver().getInternalAllocationStorage();
     auto patternAllocation = storageWithAllocations->obtainReusableAllocation(patternSize, false).release();
     commandStreamReceieverOwnership.unlock();
 

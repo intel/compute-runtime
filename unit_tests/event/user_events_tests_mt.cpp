@@ -23,7 +23,7 @@ TEST_F(EventTests, eventCreatedFromUserEventsThatIsNotSignaledDoesntFlushToCSR) 
     //call NDR
     auto retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
 
-    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    auto &csr = pCmdQ->getCommandStreamReceiver();
     *csr.getTagAddress() = (unsigned int)-1;
     auto taskLevelBeforeWaitForEvents = csr.peekTaskLevel();
 

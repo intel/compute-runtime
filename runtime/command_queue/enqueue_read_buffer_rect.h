@@ -76,7 +76,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     if (region[0] != 0 &&
         region[1] != 0 &&
         region[2] != 0) {
-        bool status = getDevice().getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, getDevice(), true);
+        bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, getDevice(), true);
         if (!status) {
             return CL_OUT_OF_RESOURCES;
         }
