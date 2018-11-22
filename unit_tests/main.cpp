@@ -211,6 +211,7 @@ int main(int argc, char **argv) {
             if (testMode == TestMode::AubTests) {
                 testMode = TestMode::AubTestsWithTbx;
             }
+            initialHardwareTag = 0;
         } else if (!strcmp("--devices", argv[i])) {
             ++i;
             if (i < argc) {
