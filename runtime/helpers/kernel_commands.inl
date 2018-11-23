@@ -398,12 +398,6 @@ typename GfxFamily::MI_ATOMIC *KernelCommandsHelper<GfxFamily>::programMiAtomic(
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::programPipeControlDataWriteWithCsStall(LinearStream &commandStream, uint64_t writeAddress, uint64_t data) {
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, writeAddress, data);
-}
-
-template <typename GfxFamily>
 bool KernelCommandsHelper<GfxFamily>::doBindingTablePrefetch() {
     return true;
 }

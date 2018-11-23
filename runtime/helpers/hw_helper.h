@@ -137,7 +137,7 @@ struct PipeControlHelper {
                                                                       uint64_t gpuAddress,
                                                                       uint64_t immediateData) {
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
-        *pipeControl = PIPE_CONTROL::sInit();
+        *pipeControl = GfxFamily::cmdInitPipeControl;
         pipeControl->setCommandStreamerStallEnable(true);
         pipeControl->setPostSyncOperation(operation);
         pipeControl->setAddress(static_cast<uint32_t>(gpuAddress & 0x0000FFFFFFFFULL));

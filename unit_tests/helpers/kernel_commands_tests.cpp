@@ -1127,26 +1127,6 @@ HWTEST_F(KernelCommandsHelperTests, whenProgrammingMiAtomicThenSetupAllFields) {
     EXPECT_EQ(0, memcmp(&referenceCommand, miAtomic, sizeof(MI_ATOMIC)));
 }
 
-HWTEST_F(KernelCommandsHelperTests, givenWriteAddressAndDataWhenProgrammingPipeControlThenSetupAllFields) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    uint64_t writeAddress = 0x10000;
-    uint64_t writeData = 1234;
-
-    uint8_t buffer[1024] = {};
-    LinearStream cmdStream(buffer, 1024);
-
-    PIPE_CONTROL referenceCommand = PIPE_CONTROL::sInit();
-    referenceCommand.setCommandStreamerStallEnable(true);
-    referenceCommand.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
-    referenceCommand.setAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
-    referenceCommand.setAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
-    referenceCommand.setImmediateData(writeData);
-
-    KernelCommandsHelper<FamilyType>::programPipeControlDataWriteWithCsStall(cmdStream, writeAddress, writeData);
-    EXPECT_EQ(sizeof(PIPE_CONTROL), cmdStream.getUsed());
-    EXPECT_EQ(0, memcmp(&referenceCommand, buffer, sizeof(PIPE_CONTROL)));
-}
-
 typedef ExecutionModelKernelFixture ParentKernelCommandsFromBinaryTest;
 
 HWTEST_P(ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelForSurfaceStatesReturnsSizeOfBlocksPlusMaxBindingTableSizeForAllIDTEntriesAndSchedulerSSHSize) {
