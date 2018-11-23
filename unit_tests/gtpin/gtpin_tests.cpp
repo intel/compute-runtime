@@ -2327,11 +2327,11 @@ TEST_F(ProgramTests, givenGenBinaryWithGtpinInfoWhenProcessGenBinaryCalledThenGt
     pPatch->Token = iOpenCL::PATCH_TOKEN_GTPIN_INFO;
     pPatch->Size = sizeof(iOpenCL::SPatchItemHeader);
     binSize += sizeof(iOpenCL::SPatchItemHeader);
-
     // Decode prepared program binary
     pProgram->storeGenBinary(&genBin[0], binSize);
     retVal = pProgram->processGenBinary();
-    EXPECT_NE(gtpinGetIgcInfo(), nullptr);
+    auto kernelInfo = pProgram->getKernelInfo("TstCopy");
+    EXPECT_NE(kernelInfo->igcInfoForGtpin, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 } // namespace ULT

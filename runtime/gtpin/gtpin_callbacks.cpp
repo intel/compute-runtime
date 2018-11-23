@@ -31,7 +31,6 @@ namespace OCLRT {
 extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
 
 igc_init_t *pIgcInit = nullptr;
-const igc_info_t *pIgcInfo = nullptr;
 std::atomic<int> sequenceCount(1);
 CommandQueue *pCmdQueueForFlushTask = nullptr;
 std::deque<gtpinkexec_t> kernelExecQueue;
@@ -87,7 +86,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         paramsIn.buffer_desc.BTI = static_cast<uint32_t>(gtpinBTI);
         paramsIn.igc_hash_id = kernelInfo.heapInfo.pKernelHeader->ShaderHashCode;
         paramsIn.kernel_name = (char *)kernelInfo.name.c_str();
-        paramsIn.igc_info = pIgcInfo;
+        paramsIn.igc_info = kernelInfo.igcInfoForGtpin;
         paramsIn.debug_data = pKernel->getProgram()->getDebugData();
         paramsIn.debug_data_size = static_cast<uint32_t>(pKernel->getProgram()->getDebugDataSize());
         instrument_params_out_t paramsOut = {0};
@@ -228,13 +227,5 @@ void gtpinNotifyPlatformShutdown() {
 }
 void *gtpinGetIgcInit() {
     return pIgcInit;
-}
-
-void setIgcInfo(const void *igcInfo) {
-    pIgcInfo = reinterpret_cast<const igc_info_t *>(igcInfo);
-}
-
-const void *gtpinGetIgcInfo() {
-    return pIgcInfo;
 }
 } // namespace OCLRT

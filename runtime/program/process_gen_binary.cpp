@@ -14,7 +14,6 @@
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
-#include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/gtpin/gtpin_notify.h"
 
@@ -779,7 +778,8 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
                     "\n  .PerThreadSystemThreadSurfaceSize", pPatchToken->PerThreadSystemThreadSurfaceSize);
         } break;
         case PATCH_TOKEN_GTPIN_INFO: {
-            setIgcInfo(ptrOffset(pCurPatchListPtr, sizeof(SPatchItemHeader)));
+            auto igcInfo = ptrOffset(pCurPatchListPtr, sizeof(SPatchItemHeader));
+            kernelInfo.igcInfoForGtpin = static_cast<const gtpin::igc_info_t *>(igcInfo);
             DBG_LOG(LogPatchTokens,
                     "\n.PATCH_TOKEN_GTPIN_INFO", pPatch->Token,
                     "\n  .Size", pPatch->Size);

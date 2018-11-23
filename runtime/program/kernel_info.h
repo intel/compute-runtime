@@ -9,6 +9,7 @@
 #include "CL/cl.h"
 #include "heap_info.h"
 #include "kernel_arg_info.h"
+#include "ocl_igc_shared/gtpin/gtpin_driver_common.h"
 #include "patch_info.h"
 #include "runtime/helpers/hw_info.h"
 
@@ -240,5 +241,6 @@ struct KernelInfo {
     GraphicsAllocation *kernelAllocation = nullptr;
     DebugData debugData;
     bool computeMode = false;
+    const gtpin::igc_info_t *igcInfoForGtpin = nullptr;
 };
 } // namespace OCLRT
