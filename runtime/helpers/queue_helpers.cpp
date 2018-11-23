@@ -11,4 +11,6 @@ namespace OCLRT {
 bool processExtraTokens(Device *&device, const cl_queue_properties *property) {
     return false;
 }
+
+void CommandQueue::processProperties() {}
 } // namespace OCLRT

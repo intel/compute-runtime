@@ -77,6 +77,8 @@ CommandQueue::CommandQueue(Context *context,
     commandQueueProperties = getCmdQueueProperties<cl_command_queue_properties>(properties);
     flushStamp.reset(new FlushStampTracker(true));
 
+    processProperties();
+
     if (device) {
         engine = &device->getEngine(engineId);
         if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {

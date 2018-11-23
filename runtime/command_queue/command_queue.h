@@ -418,6 +418,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                                  AuxTranslationDirection auxTranslationDirection);
 
     void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes);
+    void processProperties();
 
     Context *context = nullptr;
     Device *device = nullptr;
