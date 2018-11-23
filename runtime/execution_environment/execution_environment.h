@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "engine_node.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/utilities/reference_tracked_object.h"
 
@@ -23,7 +24,7 @@ class BuiltIns;
 struct HardwareInfo;
 class OSInterface;
 
-using CsrContainer = std::vector<std::unique_ptr<CommandStreamReceiver>>;
+using CsrContainer = std::array<std::unique_ptr<CommandStreamReceiver>, gpgpuEngineInstances.size()>;
 
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   private:

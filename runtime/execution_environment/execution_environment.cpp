@@ -37,9 +37,6 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *p
     if (deviceIndex + 1 > commandStreamReceivers.size()) {
         commandStreamReceivers.resize(deviceIndex + 1);
     }
-    if (deviceCsrIndex + 1 > commandStreamReceivers[deviceIndex].size()) {
-        commandStreamReceivers[deviceIndex].resize(deviceCsrIndex + 1);
-    }
 
     if (this->commandStreamReceivers[deviceIndex][deviceCsrIndex]) {
         return true;

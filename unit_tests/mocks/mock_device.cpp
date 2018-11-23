@@ -17,9 +17,9 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
     : MockDevice(hwInfo, new ExecutionEnvironment, 0u) {
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(&hwInfo, *this->executionEnvironment);
     executionEnvironment->commandStreamReceivers.resize(getDeviceIndex() + 1);
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()].push_back(std::unique_ptr<CommandStreamReceiver>(commandStreamReceiver));
+    executionEnvironment->commandStreamReceivers[getDeviceIndex()][0].reset(commandStreamReceiver);
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
-    this->engines.emplace_back(commandStreamReceiver, nullptr);
+    this->engines[0] = {commandStreamReceiver, nullptr};
 }
 MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : Device(hwInfo, executionEnvironment, deviceIndex) {

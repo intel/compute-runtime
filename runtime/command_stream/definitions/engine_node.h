@@ -6,7 +6,9 @@
  */
 
 #pragma once
+#include <array>
 #include <cstdint>
+
 namespace OCLRT {
 
 enum EngineType : uint32_t {
@@ -25,14 +27,16 @@ struct EngineInstanceT {
     int id;
 };
 
-static constexpr EngineInstanceT allEngineInstances[] = {
-    {ENGINE_RCS},
+static constexpr std::array<EngineInstanceT, 5> allEngineInstances = {{
+    {ENGINE_RCS, 0},
+    {ENGINE_RCS, 1},
     {ENGINE_BCS},
     {ENGINE_VCS},
     {ENGINE_VECS},
-};
+}};
 
-static constexpr EngineInstanceT gpgpuEngineInstances[] = {
-    {ENGINE_RCS},
-};
+static constexpr std::array<EngineInstanceT, 2> gpgpuEngineInstances = {{
+    {ENGINE_RCS, 0},
+    {ENGINE_RCS, 1},
+}};
 } // namespace OCLRT

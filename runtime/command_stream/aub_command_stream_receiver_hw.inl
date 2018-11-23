@@ -93,13 +93,10 @@ const AubMemDump::LrcaHelper &AUBCommandStreamReceiverHw<GfxFamily>::getCsTraits
 
 template <typename GfxFamily>
 size_t AUBCommandStreamReceiverHw<GfxFamily>::getEngineIndexFromInstance(EngineInstanceT engineInstance) {
-    constexpr auto numAllEngines = arrayCount(allEngineInstances);
-    constexpr auto findBegin = allEngineInstances;
-    constexpr auto findEnd = findBegin + numAllEngines;
     auto findCriteria = [&](const auto &it) { return it.type == engineInstance.type && it.id == engineInstance.id; };
-    auto findResult = std::find_if(findBegin, findEnd, findCriteria);
-    UNRECOVERABLE_IF(findResult == findEnd);
-    return findResult - findBegin;
+    auto findResult = std::find_if(allEngineInstances.begin(), allEngineInstances.end(), findCriteria);
+    UNRECOVERABLE_IF(findResult == allEngineInstances.end());
+    return findResult - allEngineInstances.begin();
 }
 
 template <typename GfxFamily>

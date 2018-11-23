@@ -17,7 +17,7 @@ void MemoryManagerWithCsrFixture::SetUp() {
     executionEnvironment.memoryManager.reset(memoryManager);
     csr->tagAddress = &currentGpuTag;
     executionEnvironment.commandStreamReceivers.resize(1);
-    executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
+    executionEnvironment.commandStreamReceivers[0][0].reset(csr);
 }
 
 void MemoryManagerWithCsrFixture::TearDown() {

@@ -342,7 +342,7 @@ HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenCommandIsBlokingThenCom
     auto executionEnvironment = new ExecutionEnvironment;
     auto mockCsr = new MockCsrBase<FamilyType>(tag, *executionEnvironment);
     executionEnvironment->commandStreamReceivers.resize(1);
-    executionEnvironment->commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(mockCsr));
+    executionEnvironment->commandStreamReceivers[0][0].reset(mockCsr);
     std::unique_ptr<MockDevice> pDevice(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
     auto context = std::make_unique<MockContext>(pDevice.get());
     MockKernelWithInternals kernelInternals(*pDevice, context.get());

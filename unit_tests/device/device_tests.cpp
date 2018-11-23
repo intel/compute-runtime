@@ -191,12 +191,19 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperate
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
 
     EXPECT_EQ(2u, executionEnvironment.commandStreamReceivers.size());
-    EXPECT_EQ(1u, executionEnvironment.commandStreamReceivers[0].size());
-    EXPECT_EQ(1u, executionEnvironment.commandStreamReceivers[1].size());
+    EXPECT_EQ(gpgpuEngineInstances.size(), executionEnvironment.commandStreamReceivers[0].size());
+    EXPECT_EQ(gpgpuEngineInstances.size(), executionEnvironment.commandStreamReceivers[1].size());
     EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[0][0]);
     EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[1][0]);
-    EXPECT_EQ(&device->getCommandStreamReceiver(), executionEnvironment.commandStreamReceivers[0][0].get());
-    EXPECT_EQ(&device2->getCommandStreamReceiver(), executionEnvironment.commandStreamReceivers[1][0].get());
+    EXPECT_EQ(device->getEngine(0).commandStreamReceiver, executionEnvironment.commandStreamReceivers[0][0].get());
+    EXPECT_EQ(device2->getEngine(0).commandStreamReceiver, executionEnvironment.commandStreamReceivers[1][0].get());
+
+    for (size_t i = 1; i < gpgpuEngineInstances.size(); i++) {
+        EXPECT_EQ(nullptr, executionEnvironment.commandStreamReceivers[0][i]);
+        EXPECT_EQ(nullptr, executionEnvironment.commandStreamReceivers[1][i]);
+        EXPECT_EQ(nullptr, device->getEngine(i).commandStreamReceiver);
+        EXPECT_EQ(nullptr, device2->getEngine(i).commandStreamReceiver);
+    }
 }
 
 TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsArePresentThenIsSimulationReturnsTrue) {

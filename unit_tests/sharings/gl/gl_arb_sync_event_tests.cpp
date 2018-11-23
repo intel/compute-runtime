@@ -66,7 +66,7 @@ struct GlArbSyncEventTest : public ::testing::Test {
         executionEnvironment = new ExecutionEnvironment;
         auto mockCsr = new MockCommandStreamReceiver(*executionEnvironment);
         executionEnvironment->commandStreamReceivers.resize(1);
-        executionEnvironment->commandStreamReceivers[0].push_back(std::unique_ptr<MockCommandStreamReceiver>(mockCsr));
+        executionEnvironment->commandStreamReceivers[0][0].reset(mockCsr);
         executionEnvironment->memoryManager = std::make_unique<OsAgnosticMemoryManager>(false, false, *executionEnvironment);
         device.reset(MockDevice::create<MockDevice>(nullptr, executionEnvironment, 0u));
         ctx.reset(new MockContext);

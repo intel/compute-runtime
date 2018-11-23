@@ -123,7 +123,7 @@ template <typename CsrType>
 std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation, bool allocateCommandBuffer, bool standalone) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
     executionEnvironment->commandStreamReceivers.resize(1);
-    executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<CsrType>(*platformDevices[0], "", standalone, *executionEnvironment));
+    executionEnvironment->commandStreamReceivers[0][0] = std::make_unique<CsrType>(*platformDevices[0], "", standalone, *executionEnvironment);
     executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceivers[0][0]->createMemoryManager(false, false));
     if (createTagAllocation) {
         executionEnvironment->commandStreamReceivers[0][0]->initializeTagAllocation();

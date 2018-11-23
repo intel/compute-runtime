@@ -59,7 +59,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.commandStreamReceivers.resize(1);
     MockCsr<FamilyType> *csr = new MockCsr<FamilyType>(execStamp, executionEnvironment);
-    executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
+    executionEnvironment.commandStreamReceivers[0][0].reset(csr);
     executionEnvironment.memoryManager.reset(csr->createMemoryManager(false, false));
 
     Surface *surface = createSurface::Create<TypeParam>(this->data,

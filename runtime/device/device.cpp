@@ -87,7 +87,9 @@ Device::~Device() {
     }
 
     for (auto &engine : engines) {
-        engine.commandStreamReceiver->flushBatchedSubmissions();
+        if (engine.commandStreamReceiver) {
+            engine.commandStreamReceiver->flushBatchedSubmissions();
+        }
     }
 
     if (deviceInfo.sourceLevelDebuggerActive && executionEnvironment->sourceLevelDebugger) {
@@ -122,7 +124,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
         return false;
     }
 
-    outDevice.engines.emplace_back(commandStreamReceiver, osContext);
+    outDevice.engines[0] = {commandStreamReceiver, osContext};
 
     auto pDevice = &outDevice;
     if (!pDevice->osTime) {
@@ -253,7 +255,9 @@ bool Device::isSourceLevelDebuggerActive() const {
 
 void Device::initMaxPowerSavingMode() {
     for (auto &engine : engines) {
-        engine.commandStreamReceiver->peekKmdNotifyHelper()->initMaxPowerSavingMode();
+        if (engine.commandStreamReceiver) {
+            engine.commandStreamReceiver->peekKmdNotifyHelper()->initMaxPowerSavingMode();
+        }
     }
 }
 } // namespace OCLRT

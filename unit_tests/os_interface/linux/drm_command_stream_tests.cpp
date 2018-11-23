@@ -44,7 +44,7 @@ class DrmCommandStreamFixture {
                                                                      gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
         executionEnvironment.commandStreamReceivers.resize(1);
-        executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
+        executionEnvironment.commandStreamReceivers[0][0].reset(csr);
 
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
