@@ -120,10 +120,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         return memoryPool;
     }
     bool isUsed() const { return registeredContextsNum > 0; }
-    bool isUsedByContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
     void updateTaskCount(uint32_t newTaskCount, uint32_t contextId);
     uint32_t getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
-    void resetTaskCount(uint32_t contextId) { updateTaskCount(objectNotUsed, contextId); }
 
     void updateResidencyTaskCount(uint32_t newTaskCount, uint32_t contextId) { usageInfos[contextId].residencyTaskCount = newTaskCount; }
     uint32_t getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
