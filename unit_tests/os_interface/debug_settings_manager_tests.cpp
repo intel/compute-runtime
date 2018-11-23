@@ -10,6 +10,7 @@
 #include "gmock/gmock.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/string_helpers.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/utilities/directory.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -940,4 +941,9 @@ TEST(DebugSettingsManager, givenTwoPossibleVariantsOfHardwareInfoOverrideStringT
     EXPECT_EQ(str2, hwInfoConfig);
     debugManager.getHardwareInfoOverride(hwInfoConfig);
     EXPECT_EQ(str1, hwInfoConfig);
+}
+
+TEST(DebugSettingsManager, givenStringDebugVariableWhenLongValueExeedingSmallStringOptimizationIsAssignedThenMemoryLeakIsNotReported) {
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.AUBDumpCaptureFileName.set("ThisIsVeryLongStringValueThatExceedSizeSpecifiedBySmallStringOptimizationAndCausesInternalStringBufferResize");
 }

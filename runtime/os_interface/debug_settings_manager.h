@@ -49,17 +49,20 @@ class SettingsReader;
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
 struct DebugVar##variableName                                                     \
 {                                                                                 \
-        DebugVar##variableName() {                                                \
-            value = (dataType)defaultValue;                                       \
-        }                                                                         \
-        dataType get() const {                                                    \
-            return value;                                                         \
-        }                                                                         \
-        void set(dataType data) {                                                 \
-            value = data;                                                         \
-        }                                                                         \
-private:                                                                          \
-        dataType value;                                                           \
+     DebugVar##variableName() {                                                   \
+         value = (dataType)defaultValue;                                          \
+     }                                                                            \
+     dataType get() const {                                                       \
+         return value;                                                            \
+     }                                                                            \
+     void set(dataType data) {                                                    \
+         value = data;                                                            \
+     }                                                                            \
+     dataType& getRef() {                                                \
+         return value;                                                            \
+     }                                                                            \
+  private:                                                                        \
+     dataType value;                                                              \
 };
 
 #include "debug_variables.inl"
