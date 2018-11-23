@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,10 @@ MockContext::MockContext() {
 
 void MockContext::setSharingFunctions(SharingFunctions *sharingFunctions) {
     this->sharingFunctions[sharingFunctions->getId()].reset(sharingFunctions);
+}
+
+void MockContext::setContextType(ContextType contextType) {
+    this->contextType = contextType;
 }
 
 void MockContext::releaseSharingFunctions(SharingType sharing) {

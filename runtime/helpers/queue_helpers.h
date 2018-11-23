@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,5 +102,5 @@ returnType getCmdQueueProperties(const cl_queue_properties *properties,
     }
     return retVal;
 }
-bool processExtraTokens(Device *&device, const cl_queue_properties *property);
+bool processExtraTokens(Device *&device, Context &context, const cl_queue_properties *property);
 } // namespace OCLRT

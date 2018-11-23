@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "runtime/helpers/queue_helpers.h"
 
 namespace OCLRT {
-bool processExtraTokens(Device *&device, const cl_queue_properties *property) {
+bool processExtraTokens(Device *&device, Context &context, const cl_queue_properties *property) {
     return false;
 }
 

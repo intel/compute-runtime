@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3867,7 +3867,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             tokenValue != CL_QUEUE_SIZE &&
             tokenValue != CL_QUEUE_PRIORITY_KHR &&
             tokenValue != CL_QUEUE_THROTTLE_KHR &&
-            !processExtraTokens(pDevice, propertiesAddress)) {
+            !processExtraTokens(pDevice, *pContext, propertiesAddress)) {
             err.set(CL_INVALID_VALUE);
             return commandQueue;
         }
