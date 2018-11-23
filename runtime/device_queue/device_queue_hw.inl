@@ -228,25 +228,13 @@ void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKer
 
     addPipeControlCmdWa();
 
-    auto pipeControl = slbCS.getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = PIPE_CONTROL::sInit();
-    pipeControl->setCommandStreamerStallEnable(true);
-    pipeControl->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
-    pipeControl->setAddressHigh(criticalSectionAddress >> 32);
-    pipeControl->setAddress(criticalSectionAddress & (0xffffffff));
-    pipeControl->setImmediateData(ExecutionModelCriticalSection::Free);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&slbCS, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, criticalSectionAddress, ExecutionModelCriticalSection::Free);
 
     uint64_t tagAddress = (uint64_t)device->getTagAddress();
 
     addPipeControlCmdWa();
 
-    auto pipeControl2 = slbCS.getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl2 = PIPE_CONTROL::sInit();
-    pipeControl2->setCommandStreamerStallEnable(true);
-    pipeControl2->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
-    pipeControl2->setAddressHigh(tagAddress >> 32);
-    pipeControl2->setAddress(tagAddress & (0xffffffff));
-    pipeControl2->setImmediateData(taskCount);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&slbCS, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, tagAddress, taskCount);
 
     addMediaStateClearCmds();
 

@@ -108,12 +108,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     // PIPE_CONTROL for global timestamp
     uint64_t TimeStampAddress = reinterpret_cast<uint64_t>(&(hwTimeStamps.GlobalStartTS));
 
-    auto pPipeControlCmd = (PIPE_CONTROL *)commandStream->getSpace(sizeof(PIPE_CONTROL));
-    *pPipeControlCmd = PIPE_CONTROL::sInit();
-    pPipeControlCmd->setCommandStreamerStallEnable(true);
-    pPipeControlCmd->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP);
-    pPipeControlCmd->setAddress(static_cast<uint32_t>(TimeStampAddress & 0x0000FFFFFFFFULL));
-    pPipeControlCmd->setAddressHigh(static_cast<uint32_t>(TimeStampAddress >> 32));
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, TimeStampAddress, 0llu);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
     TimeStampAddress = reinterpret_cast<uint64_t>(&(hwTimeStamps.ContextStartTS));
@@ -311,14 +306,9 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.HwPerfReportBegin.Oa));
     pReportPerfCount->setMemoryAddress(address);
 
-    //Timestamp: Global Start
-    pPipeControlCmd = (PIPE_CONTROL *)commandStream->getSpace(sizeof(PIPE_CONTROL));
-    *pPipeControlCmd = PIPE_CONTROL::sInit();
-    pPipeControlCmd->setCommandStreamerStallEnable(true);
-    pPipeControlCmd->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP);
     address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWTimeStamp.GlobalStartTS));
-    pPipeControlCmd->setAddress(static_cast<uint32_t>(address & ((uint64_t)UINT32_MAX)));
-    pPipeControlCmd->setAddressHigh(static_cast<uint32_t>(address >> 32));
+
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, 0llu);
 
     GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(commandQueue, hwPerfCounter, commandStream, true);
 
@@ -347,13 +337,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersOABufferStateCommands(commandQueue, hwPerfCounter, commandStream);
 
     //Timestamp: Global End
-    pPipeControlCmd = (PIPE_CONTROL *)commandStream->getSpace(sizeof(PIPE_CONTROL));
-    *pPipeControlCmd = PIPE_CONTROL::sInit();
-    pPipeControlCmd->setCommandStreamerStallEnable(true);
-    pPipeControlCmd->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP);
     address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWTimeStamp.GlobalEndTS));
-    pPipeControlCmd->setAddress(static_cast<uint32_t>(address & ((uint64_t)UINT32_MAX)));
-    pPipeControlCmd->setAddressHigh(static_cast<uint32_t>(address >> 32));
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, 0llu);
 
     auto pReportPerfCount = (MI_REPORT_PERF_COUNT *)commandStream->getSpace(sizeof(MI_REPORT_PERF_COUNT));
     *pReportPerfCount = MI_REPORT_PERF_COUNT::sInit();

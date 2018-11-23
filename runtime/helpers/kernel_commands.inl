@@ -400,14 +400,7 @@ typename GfxFamily::MI_ATOMIC *KernelCommandsHelper<GfxFamily>::programMiAtomic(
 template <typename GfxFamily>
 void KernelCommandsHelper<GfxFamily>::programPipeControlDataWriteWithCsStall(LinearStream &commandStream, uint64_t writeAddress, uint64_t data) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-
-    auto pipeControlCmd = commandStream.getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControlCmd = PIPE_CONTROL::sInit();
-    pipeControlCmd->setCommandStreamerStallEnable(true);
-    pipeControlCmd->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
-    pipeControlCmd->setAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
-    pipeControlCmd->setAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
-    pipeControlCmd->setImmediateData(data);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, writeAddress, data);
 }
 
 template <typename GfxFamily>

@@ -147,6 +147,51 @@ HWTEST_F(LriHelperTests, givenAddressAndOffsetWhenHelperIsUsedThenProgramCmdStre
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }
 
+using PipeControlHelperTests = ::testing::Test;
+
+HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsedThenProperFieldsAreProgrammed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    uint64_t address = 0x1234567887654321;
+    uint64_t immediateData = 0x1234;
+
+    auto expectedPipeControl = PIPE_CONTROL::sInit();
+    expectedPipeControl.setCommandStreamerStallEnable(true);
+    expectedPipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP);
+    expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
+    expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
+
+    auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(&stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData);
+
+    EXPECT_EQ(sizeof(PIPE_CONTROL), stream.getUsed());
+    EXPECT_EQ(pipeControl, stream.getCpuBase());
+    EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
+}
+
+HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIsUsedThenProperFieldsAreProgrammed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    uint64_t address = 0x1234567887654321;
+    uint64_t immediateData = 0x1234;
+
+    auto expectedPipeControl = PIPE_CONTROL::sInit();
+    expectedPipeControl.setCommandStreamerStallEnable(true);
+    expectedPipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
+    expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
+    expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
+    expectedPipeControl.setImmediateData(immediateData);
+
+    auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(&stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData);
+
+    EXPECT_EQ(sizeof(PIPE_CONTROL), stream.getUsed());
+    EXPECT_EQ(pipeControl, stream.getCpuBase());
+    EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
+}
+
 TEST(HwInfoTest, givenHwInfoWhenIsCoreThenPlatformTypeIsCore) {
     HardwareInfo hwInfo;
     hwInfo.capabilityTable.isCore = true;

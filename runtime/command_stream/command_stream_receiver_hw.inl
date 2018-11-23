@@ -187,8 +187,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         //Some architectures (SKL) requires to have pipe control prior to pipe control with tag write, add it here
         addPipeControlWA(commandStreamTask, dispatchFlags.dcFlush);
 
-        auto pCmd = addPipeControlCmd(commandStreamTask);
-        pCmd->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
+        auto address = getTagAllocation()->getGpuAddress();
+        auto pCmd = PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&commandStreamTask, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, taskCount + 1);
 
         //Some architectures (BDW) requires to have at least one flush bit set
         addDcFlushToPipeControl(pCmd, dispatchFlags.dcFlush);
@@ -203,11 +203,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             pCmd->setConstantCacheInvalidationEnable(true);
             pCmd->setStateCacheInvalidationEnable(true);
         }
-
-        auto address = getTagAllocation()->getGpuAddress();
-        pCmd->setAddressHigh(address >> 32);
-        pCmd->setAddress(address & (0xffffffff));
-        pCmd->setImmediateData(taskCount + 1);
 
         this->latestSentTaskCount = taskCount + 1;
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", taskCount);

@@ -8,6 +8,7 @@
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
 namespace OCLRT {
@@ -75,12 +76,7 @@ void ExperimentalCommandBuffer::addTimeStampPipeControl() {
 
     uint64_t timeStampAddress = timestamps->getGpuAddress() + timestampsOffset;
 
-    pCmd = static_cast<PIPE_CONTROL *>(currentStream->getSpace(sizeof(PIPE_CONTROL)));
-    *pCmd = GfxFamily::cmdInitPipeControl;
-    pCmd->setCommandStreamerStallEnable(true);
-    pCmd->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP);
-    pCmd->setAddress(static_cast<uint32_t>(timeStampAddress & 0x0000FFFFFFFFULL));
-    pCmd->setAddressHigh(static_cast<uint32_t>(timeStampAddress >> 32));
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(currentStream.get(), PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, timeStampAddress, 0llu);
 
     //moving to next chunk
     timestampsOffset += sizeof(uint64_t);
