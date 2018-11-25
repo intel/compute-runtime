@@ -18,6 +18,6 @@ TEST(AubCenter, GivenUseAubStreamDebugVariableNotSetWhenAubCenterIsCreatedThenAu
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(false);
 
-    MockAubCenter aubCenter(platformDevices[0], false);
+    MockAubCenter aubCenter(platformDevices[0], false, "");
     EXPECT_EQ(nullptr, aubCenter.aubManager.get());
 }

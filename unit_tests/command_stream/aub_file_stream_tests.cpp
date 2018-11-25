@@ -118,6 +118,19 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenF
     EXPECT_TRUE(mockAubFileStreamPtr->lockStreamCalled);
 }
 
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldCallSubmitBatchBuffer) {
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(false, true, false);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto engineType = OCLRT::ENGINE_RCS;
+    ResidencyContainer allocationsForResidency = {};
+
+    aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+    EXPECT_TRUE(aubCsr->submitBatchBufferCalled);
+}
+
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldCallPollForCompletion) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(false, true, false);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();

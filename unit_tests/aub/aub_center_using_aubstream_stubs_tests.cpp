@@ -18,7 +18,7 @@ TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenAubMa
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(true);
 
-    MockAubCenter aubCenter(platformDevices[0], false);
+    MockAubCenter aubCenter(platformDevices[0], false, "");
 
     EXPECT_EQ(nullptr, aubCenter.aubManager.get());
 }

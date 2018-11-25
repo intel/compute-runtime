@@ -20,6 +20,7 @@
 #include "test.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/utilities/destructor_counted.h"
 #include "unit_tests/helpers/unit_test_helper.h"
@@ -123,16 +124,24 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledMultip
     EXPECT_EQ(nullptr, executionEnvironment->commandStreamReceivers[0][0].get());
 }
 
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsReceivesCorrectInputParams) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.initAubCenter(platformDevices[0], true, "test.aub");
+    EXPECT_TRUE(executionEnvironment.initAubCenterCalled);
+    EXPECT_TRUE(executionEnvironment.localMemoryEnabledReceived);
+    EXPECT_STREQ(executionEnvironment.aubFileNameReceived.c_str(), "test.aub");
+}
+
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
     ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initAubCenter(platformDevices[0], false);
+    executionEnvironment.initAubCenter(platformDevices[0], false, "");
     auto currentAubCenter = executionEnvironment.aubCenter.get();
     EXPECT_NE(nullptr, currentAubCenter);
     auto currentAubStreamProvider = currentAubCenter->getStreamProvider();
     EXPECT_NE(nullptr, currentAubStreamProvider);
     auto currentAubFileStream = currentAubStreamProvider->getStream();
     EXPECT_NE(nullptr, currentAubFileStream);
-    executionEnvironment.initAubCenter(platformDevices[0], false);
+    executionEnvironment.initAubCenter(platformDevices[0], false, "");
     EXPECT_EQ(currentAubCenter, executionEnvironment.aubCenter.get());
     EXPECT_EQ(currentAubStreamProvider, executionEnvironment.aubCenter->getStreamProvider());
     EXPECT_EQ(currentAubFileStream, executionEnvironment.aubCenter->getStreamProvider()->getStream());
@@ -170,7 +179,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         MemoryMangerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct AubCenterMock : public DestructorCounted<AubCenter, 4> {
-        AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false) {}
+        AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false, "") {}
     };
     struct CommandStreamReceiverMock : public DestructorCounted<MockCommandStreamReceiver, 3> {
         CommandStreamReceiverMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}

@@ -7,6 +7,7 @@
 
 #pragma once
 #include <cstdint>
+#include <cstddef>
 
 namespace AubDump {
 
@@ -16,6 +17,7 @@ struct HardwareContext {
     virtual void submit(uint64_t gfxAddress, const void *batchBuffer, size_t size, uint32_t memoryBank) = 0;
     virtual void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 4096) = 0;
     virtual void freeMemory(uint64_t gfxAddress, size_t size) = 0;
+    virtual ~HardwareContext() = default;
 };
 
 } // namespace AubDump

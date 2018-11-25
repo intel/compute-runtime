@@ -17,7 +17,7 @@ struct HardwareInfo;
 
 class AubCenter {
   public:
-    AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled);
+    AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName);
     virtual ~AubCenter() = default;
 
     void initPhysicalAddressAllocator(PhysicalAddressAllocator *pPhysicalAddressAllocator) {

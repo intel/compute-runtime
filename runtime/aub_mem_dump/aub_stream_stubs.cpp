@@ -9,7 +9,7 @@
 
 namespace AubDump {
 
-AubManager *AubManager::create(uint32_t gfxFamily, uint32_t devicesCount, size_t memoryBankSizeInGB, bool localMemorySupported, std::string &aubFileName) {
+AubManager *AubManager::create(uint32_t gfxFamily, uint32_t devicesCount, size_t memoryBankSizeInGB, bool localMemorySupported, uint32_t deviceId, const std::string &aubFileName) {
     return nullptr;
 }
 

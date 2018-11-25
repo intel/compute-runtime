@@ -10,10 +10,9 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 
 namespace OCLRT {
-AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled) {
+AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName) {
     if (DebugManager.flags.UseAubStream.get()) {
-        std::string filename("aub.aub");
-        aubManager.reset(AubDump::AubManager::create(pHwInfo->pPlatform->eRenderCoreFamily, 1, 1, localMemoryEnabled, filename));
+        aubManager.reset(AubDump::AubManager::create(pHwInfo->pPlatform->eRenderCoreFamily, 1, 1, localMemoryEnabled, pHwInfo->capabilityTable.aubDeviceId, aubFileName));
     }
     addressMapper = std::make_unique<AddressMapper>();
     streamProvider = std::make_unique<AubFileStreamProvider>();

@@ -53,6 +53,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
 
     // Family specific version
+    MOCKABLE_VIRTUAL void submitBatchBuffer(size_t engineIndex, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits);
     void submitLRCA(EngineInstanceT engineInstance, const MiContextDescriptorReg &contextDescriptor);
     MOCKABLE_VIRTUAL void pollForCompletion(EngineInstanceT engineInstance);
     void initEngineMMIO(EngineInstanceT engineInstance);
