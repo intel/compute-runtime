@@ -106,7 +106,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
         AubGTTData data = {0};
         getGTTData(reinterpret_cast<void *>(physHWSP), data);
         AUB::reserveAddressGGTT(tbxStream, engineInfo.ggttHWSP, sizeHWSP, physHWSP, data);
-        tbxStream.writeMMIO(mmioBase + 0x2080, engineInfo.ggttHWSP);
+        tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2080), engineInfo.ggttHWSP);
     }
 
     // Allocate the LRCA
@@ -252,7 +252,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         } else if (engineInfo.tailRCS == 0) {
             // Add a LRI if this is our first submission
             auto lri = MI_LOAD_REGISTER_IMM::sInit();
-            lri.setRegisterOffset(mmioBase + 0x2244);
+            lri.setRegisterOffset(AubMemDump::computeRegisterOffset(mmioBase, 0x2244));
             lri.setDataDword(0x00010000);
             *(MI_LOAD_REGISTER_IMM *)pTail = lri;
             pTail = ((MI_LOAD_REGISTER_IMM *)pTail) + 1;
@@ -325,10 +325,10 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor) {
     auto mmioBase = getCsTraits(engineType).mmioBase;
-    tbxStream.writeMMIO(mmioBase + 0x2230, 0);
-    tbxStream.writeMMIO(mmioBase + 0x2230, 0);
-    tbxStream.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[1]);
-    tbxStream.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[0]);
+    tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
+    tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
+    tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[1]);
+    tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[0]);
 }
 
 template <typename GfxFamily>
@@ -338,7 +338,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineType engineT
     auto mmioBase = getCsTraits(engineType).mmioBase;
     bool pollNotEqual = false;
     tbxStream.registerPoll(
-        mmioBase + 0x2234, //EXECLIST_STATUS
+        AubMemDump::computeRegisterOffset(mmioBase, 0x2234), //EXECLIST_STATUS
         0x100,
         0x100,
         pollNotEqual,

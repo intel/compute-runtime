@@ -25,10 +25,10 @@ template struct AubPageTableHelper64<Traits<device, 48>>;
 namespace OCLRT {
 using Family = SKLFamily;
 
-static AubMemDump::LrcaHelperRcs rcs(0x000000);
-static AubMemDump::LrcaHelperBcs bcs(0x020000);
-static AubMemDump::LrcaHelperVcs vcs(0x010000);
-static AubMemDump::LrcaHelperVecs vecs(0x018000);
+static AubMemDump::LrcaHelperRcs rcs(0x002000);
+static AubMemDump::LrcaHelperBcs bcs(0x022000);
+static AubMemDump::LrcaHelperVcs vcs(0x012000);
+static AubMemDump::LrcaHelperVecs vecs(0x01a000);
 
 const AubMemDump::LrcaHelper *AUBFamilyMapper<Family>::csTraits[EngineType::NUM_ENGINES] = {
     &rcs,
@@ -40,7 +40,7 @@ const MMIOList AUBFamilyMapper<Family>::globalMMIO;
 
 static const MMIOList mmioListRCS = {
     MMIOPair(0x000020d8, 0x00020000),
-    MMIOPair(rcs.mmioBase + 0x229c, 0xffff8280),
+    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x229c), 0xffff8280),
     MMIOPair(0x0000C800, 0x00000009),
     MMIOPair(0x0000C804, 0x00000038),
     MMIOPair(0x0000C808, 0x0000003B),
@@ -56,15 +56,15 @@ static const MMIOList mmioListRCS = {
 };
 
 static const MMIOList mmioListBCS = {
-    MMIOPair(bcs.mmioBase + 0x229c, 0xffff8280),
+    MMIOPair(AubMemDump::computeRegisterOffset(bcs.mmioBase, 0x229c), 0xffff8280),
 };
 
 static const MMIOList mmioListVCS = {
-    MMIOPair(vcs.mmioBase + 0x229c, 0xffff8280),
+    MMIOPair(AubMemDump::computeRegisterOffset(vcs.mmioBase, 0x229c), 0xffff8280),
 };
 
 static const MMIOList mmioListVECS = {
-    MMIOPair(vecs.mmioBase + 0x229c, 0xffff8280),
+    MMIOPair(AubMemDump::computeRegisterOffset(vecs.mmioBase, 0x229c), 0xffff8280),
 };
 
 const MMIOList *AUBFamilyMapper<Family>::perEngineMMIO[EngineType::NUM_ENGINES] = {

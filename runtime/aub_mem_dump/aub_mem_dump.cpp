@@ -55,28 +55,28 @@ const uint64_t PageTableTraits<48>::pml4BaseAddress = BIT(29);
 void LrcaHelper::setRingTail(void *pLRCIn, uint32_t ringTail) const {
     auto pLRCA = ptrOffset(reinterpret_cast<uint32_t *>(pLRCIn),
                            offsetContext + offsetRingRegisters + offsetRingTail);
-    *pLRCA++ = mmioBase + 0x2030;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x2030);
     *pLRCA++ = ringTail;
 }
 
 void LrcaHelper::setRingHead(void *pLRCIn, uint32_t ringHead) const {
     auto pLRCA = ptrOffset(reinterpret_cast<uint32_t *>(pLRCIn),
                            offsetContext + offsetRingRegisters + offsetRingHead);
-    *pLRCA++ = mmioBase + 0x2034;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x2034);
     *pLRCA++ = ringHead;
 }
 
 void LrcaHelper::setRingBase(void *pLRCIn, uint32_t ringBase) const {
     auto pLRCA = ptrOffset(reinterpret_cast<uint32_t *>(pLRCIn),
                            offsetContext + offsetRingRegisters + offsetRingBase);
-    *pLRCA++ = mmioBase + 0x2038;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x2038);
     *pLRCA++ = ringBase;
 }
 
 void LrcaHelper::setRingCtrl(void *pLRCIn, uint32_t ringCtrl) const {
     auto pLRCA = ptrOffset(reinterpret_cast<uint32_t *>(pLRCIn),
                            offsetContext + offsetRingRegisters + offsetRingCtrl);
-    *pLRCA++ = mmioBase + 0x203c;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x203c);
     *pLRCA++ = ringCtrl;
 }
 
@@ -84,9 +84,9 @@ void LrcaHelper::setPDP0(void *pLRCIn, uint64_t address) const {
     auto pLRCA = ptrOffset(reinterpret_cast<uint32_t *>(pLRCIn),
                            offsetContext + offsetPageTableRegisters + offsetPDP0);
 
-    *pLRCA++ = mmioBase + 0x2274;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x2274);
     *pLRCA++ = address >> 32;
-    *pLRCA++ = mmioBase + 0x2270;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x2270);
     *pLRCA++ = address & 0xffffffff;
 }
 
@@ -94,9 +94,9 @@ void LrcaHelper::setPDP1(void *pLRCIn, uint64_t address) const {
     auto pLRCA = ptrOffset(reinterpret_cast<uint32_t *>(pLRCIn),
                            offsetContext + offsetPageTableRegisters + offsetPDP1);
 
-    *pLRCA++ = mmioBase + 0x227c;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x227c);
     *pLRCA++ = address >> 32;
-    *pLRCA++ = mmioBase + 0x2278;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x2278);
     *pLRCA++ = address & 0xffffffff;
 }
 
@@ -104,9 +104,9 @@ void LrcaHelper::setPDP2(void *pLRCIn, uint64_t address) const {
     auto pLRCA = ptrOffset(reinterpret_cast<uint32_t *>(pLRCIn),
                            offsetContext + offsetPageTableRegisters + offsetPDP2);
 
-    *pLRCA++ = mmioBase + 0x2284;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x2284);
     *pLRCA++ = address >> 32;
-    *pLRCA++ = mmioBase + 0x2280;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x2280);
     *pLRCA++ = address & 0xffffffff;
 }
 
@@ -114,9 +114,9 @@ void LrcaHelper::setPDP3(void *pLRCIn, uint64_t address) const {
     auto pLRCA = ptrOffset(reinterpret_cast<uint32_t *>(pLRCIn),
                            offsetContext + offsetPageTableRegisters + offsetPDP3);
 
-    *pLRCA++ = mmioBase + 0x228c;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x228c);
     *pLRCA++ = address >> 32;
-    *pLRCA++ = mmioBase + 0x2288;
+    *pLRCA++ = AubMemDump::computeRegisterOffset(mmioBase, 0x2288);
     *pLRCA++ = address & 0xffffffff;
 }
 
@@ -141,7 +141,7 @@ void LrcaHelper::initialize(void *pLRCIn) const {
     uint32_t ctxSrCtlValue = 0x00010001; // Inhibit context-restore
     setContextSaveRestoreFlags(ctxSrCtlValue);
     while (numRegs-- > 0) {
-        *pLRI++ = mmioBase + 0x2244; // CTXT_SR_CTL
+        *pLRI++ = AubMemDump::computeRegisterOffset(mmioBase, 0x2244); // CTXT_SR_CTL
         *pLRI++ = ctxSrCtlValue;
     }
 
@@ -151,7 +151,7 @@ void LrcaHelper::initialize(void *pLRCIn) const {
     numRegs = numRegsLRI1;
     *pLRI++ = 0x11001000 | (2 * numRegs - 1);
     while (numRegs-- > 0) {
-        *pLRI++ = mmioBase + 0x20d8; // DEBUG
+        *pLRI++ = AubMemDump::computeRegisterOffset(mmioBase, 0x20d8); // DEBUG
         *pLRI++ = 0x00200020;
     }
 
@@ -160,7 +160,7 @@ void LrcaHelper::initialize(void *pLRCIn) const {
     numRegs = numRegsLRI2;
     *pLRI++ = 0x11000000 | (2 * numRegs - 1);
     while (numRegs-- > 0) {
-        *pLRI++ = mmioBase + 0x2094; // NOP ID
+        *pLRI++ = AubMemDump::computeRegisterOffset(mmioBase, 0x2094); // NOP ID
         *pLRI++ = 0x00000000;
     }
 

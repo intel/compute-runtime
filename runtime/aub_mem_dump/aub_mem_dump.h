@@ -24,6 +24,12 @@ class AubHelper;
 namespace AubMemDump {
 #include "aub_services.h"
 
+constexpr uint32_t rcsRegisterBase = 0x2000;
+
+inline uint32_t computeRegisterOffset(uint32_t mmioBase, uint32_t rcsRegisterOffset) {
+    return mmioBase + rcsRegisterOffset - rcsRegisterBase;
+}
+
 template <typename Cmd>
 inline void setAddress(Cmd &cmd, uint64_t address) {
     cmd.address = address;

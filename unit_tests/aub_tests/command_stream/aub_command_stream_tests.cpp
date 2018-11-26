@@ -60,7 +60,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
 
         auto engineType = pCommandStreamReceiver->getOsContext().getEngineType();
         auto mmioBase = AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineType.type).mmioBase;
-        AUBCommandStreamFixture::expectMMIO<FamilyType>(mmioBase + 0x2094, noopId);
+        AUBCommandStreamFixture::expectMMIO<FamilyType>(AubMemDump::computeRegisterOffset(mmioBase, 0x2094), noopId);
     }
 };
 

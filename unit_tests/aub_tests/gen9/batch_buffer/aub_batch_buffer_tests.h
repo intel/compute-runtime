@@ -31,7 +31,7 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
     auto deviceId = pDevice->getHardwareInfo().capabilityTable.aubDeviceId;
     aubFile.init(AubMemDump::SteppingValues::A, deviceId);
 
-    aubFile.writeMMIO(mmioBase + 0x229c, 0xffff8280);
+    aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x229c), 0xffff8280);
 
     const size_t sizeHWSP = 0x1000;
     const size_t alignHWSP = 0x1000;
@@ -42,7 +42,7 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
     AUB::reserveAddressGGTT(aubFile, ggttGlobalHardwareStatusPage, sizeHWSP, physAddress, data);
     physAddress += sizeHWSP;
 
-    aubFile.writeMMIO(mmioBase + 0x2080, ggttGlobalHardwareStatusPage);
+    aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2080), ggttGlobalHardwareStatusPage);
 
     using MI_NOOP = typename FamilyType::MI_NOOP;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -137,15 +137,15 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
     contextDescriptor.sData.ContextID = 0;
 
     // Submit our exec-list
-    aubFile.writeMMIO(mmioBase + 0x2230, 0);
-    aubFile.writeMMIO(mmioBase + 0x2230, 0);
-    aubFile.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[1]);
-    aubFile.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[0]);
+    aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
+    aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
+    aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[1]);
+    aubFile.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[0]);
 
     // Poll until HW complete
     using AubMemDump::CmdServicesMemTraceRegisterPoll;
     aubFile.registerPoll(
-        mmioBase + 0x2234, //EXECLIST_STATUS
+        AubMemDump::computeRegisterOffset(mmioBase, 0x2234), //EXECLIST_STATUS
         0x100,
         0x100,
         false,
