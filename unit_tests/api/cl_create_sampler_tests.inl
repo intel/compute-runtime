@@ -14,7 +14,7 @@ typedef api_tests clCreateSamplerTests;
 
 namespace ULT {
 
-TEST_F(clCreateSamplerTests, returnsSuccess) {
+TEST_F(clCreateSamplerTests, GivenCorrectParametersWhenCreatingSamplerThenSamplerIsCreatedAndSuccessReturned) {
     auto sampler = clCreateSampler(
         pContext,
         CL_TRUE,
@@ -28,7 +28,7 @@ TEST_F(clCreateSamplerTests, returnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateSamplerTests, noRet) {
+TEST_F(clCreateSamplerTests, GivenCorrectParametersAndNullReturnPointerWhenCreatingSamplerThenSamplerIsCreated) {
     auto sampler = clCreateSampler(
         pContext,
         CL_TRUE,
@@ -41,7 +41,7 @@ TEST_F(clCreateSamplerTests, noRet) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateSamplerTests, nullContextReturnsError) {
+TEST_F(clCreateSamplerTests, GivenInvalidContextWhenCreatingSamplerThenInvalidContextErrorIsReturned) {
     auto sampler = clCreateSampler(
         nullptr,
         CL_FALSE,
