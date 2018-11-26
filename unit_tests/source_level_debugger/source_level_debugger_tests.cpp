@@ -313,6 +313,64 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugD
     EXPECT_STREQ(info.name.c_str(), interceptor.kernelDebugDataArgIn.kernelName);
 }
 
+TEST(SourceLevelDebugger, givenNoVisaWhenNotifyKernelDebugDataIsCalledThenDebuggerLibraryFunctionIsNotCalled) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    MockSourceLevelDebugger debugger;
+    char isa[8];
+    char dbgIsa[10];
+
+    KernelInfo info;
+    info.debugData.genIsa = dbgIsa;
+    info.debugData.vIsa = nullptr;
+    info.debugData.genIsaSize = sizeof(dbgIsa);
+    info.debugData.vIsaSize = 0;
+
+    info.name = "debugKernel";
+
+    SKernelBinaryHeaderCommon kernelHeader;
+    kernelHeader.KernelHeapSize = sizeof(isa);
+    info.heapInfo.pKernelHeader = &kernelHeader;
+    info.heapInfo.pKernelHeap = isa;
+
+    debugger.notifyKernelDebugData(&info);
+    EXPECT_FALSE(interceptor.kernelDebugDataCalled);
+}
+
+TEST(SourceLevelDebugger, givenNoGenIsaWhenNotifyKernelDebugDataIsCalledThenDebuggerLibraryFunctionIsNotCalled) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    MockSourceLevelDebugger debugger;
+    char isa[8];
+    char visa[12];
+
+    KernelInfo info;
+    info.debugData.genIsa = nullptr;
+    info.debugData.vIsa = visa;
+    info.debugData.genIsaSize = 0;
+    info.debugData.vIsaSize = sizeof(visa);
+
+    info.name = "debugKernel";
+
+    SKernelBinaryHeaderCommon kernelHeader;
+    kernelHeader.KernelHeapSize = sizeof(isa);
+    info.heapInfo.pKernelHeader = &kernelHeader;
+    info.heapInfo.pKernelHeap = isa;
+
+    debugger.notifyKernelDebugData(&info);
+    EXPECT_FALSE(interceptor.kernelDebugDataCalled);
+}
+
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifyKernelDebugDataIsCalledThenDebuggerLibraryFunctionIsNotCalled) {
     DebuggerLibraryRestorer restorer;
 

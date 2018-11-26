@@ -176,7 +176,7 @@ bool SourceLevelDebugger::isOptimizationDisabled() const {
 }
 
 bool SourceLevelDebugger::notifyKernelDebugData(const KernelInfo *kernelInfo) const {
-    if (isActive) {
+    if (isActive && kernelInfo->debugData.vIsa && kernelInfo->debugData.genIsa) {
         GfxDbgKernelDebugData kernelDebugData;
         kernelDebugData.hDevice = reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(this->deviceHandle));
         kernelDebugData.version = IGFXDBG_CURRENT_VERSION;
