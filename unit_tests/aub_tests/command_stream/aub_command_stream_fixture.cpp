@@ -10,6 +10,7 @@
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/hw_helper.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/memory_management.h"
@@ -28,7 +29,8 @@ void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
 
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
     std::stringstream strfilename;
-    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(device.getEngineType()).name;
+    auto engineType = pCmdQ->getCommandStreamReceiver().getOsContext().getEngineType();
+    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType.type).name;
 
     if (testMode == TestMode::AubTestsWithTbx) {
         pCommandStreamReceiver = TbxCommandStreamReceiver::create(hwInfo, true, *device.executionEnvironment);

@@ -26,7 +26,7 @@ struct WddmFixture : public GmmEnvironmentFixture {
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
         wddm->init();
-        osContext = std::make_unique<OsContext>(osInterface.get(), 0u);
+        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0]);
         osContextWin = osContext->get();
         ASSERT_TRUE(wddm->isInitialized());
     }
@@ -54,7 +54,7 @@ struct WddmFixtureWithMockGdiDll : public GmmEnvironmentFixture, public GdiDllFi
 
     void init() {
         EXPECT_TRUE(wddm->init());
-        osContext = std::make_unique<OsContext>(osInterface.get(), 0u);
+        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0]);
         osContextWin = osContext->get();
         ASSERT_TRUE(wddm->isInitialized());
     }

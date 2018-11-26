@@ -144,7 +144,7 @@ void CommandQueue::waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushS
 
     bool forcePowerSavingMode = this->throttle == QueueThrottle::LOW;
 
-    getCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, *device->getOsContext(), forcePowerSavingMode);
+    getCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
 
     DEBUG_BREAK_IF(getHwTag() < taskCountToWait);
     latestTaskCountWaited = taskCountToWait;

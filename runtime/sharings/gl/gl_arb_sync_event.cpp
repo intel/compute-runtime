@@ -70,7 +70,7 @@ void GlArbSyncEvent::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tr
         return;
     }
 
-    ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectSignal(*event.getCommandQueue()->getDevice().getOsContext(), *glSyncInfo);
+    ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectSignal(event.getCommandQueue()->getCommandStreamReceiver().getOsContext(), *glSyncInfo);
     ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectWaitServer(*osInterface, *glSyncInfo);
 }
 } // namespace OCLRT

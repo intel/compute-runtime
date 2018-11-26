@@ -26,7 +26,7 @@ TEST(OsContextTest, givenDrmWhenOsContextIsCreatedThenImplIsAvailable) {
     OSInterface osInterface;
     osInterface.get()->setDrm(&drmMock);
 
-    auto osContext = std::make_unique<OsContext>(&osInterface, 0u);
+    auto osContext = std::make_unique<OsContext>(&osInterface, 0u, gpgpuEngineInstances[0]);
     EXPECT_NE(nullptr, osContext->get());
 }
 } // namespace OCLRT

@@ -18,6 +18,7 @@
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
+#include "runtime/os_interface/windows/wddm_engine_mapper.h"
 #include "runtime/os_interface/windows/registry_reader.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_info.h"
@@ -661,7 +662,7 @@ void Wddm::kmDafLock(WddmAllocation *wddmAllocation) {
     kmDafListener->notifyLock(featureTable->ftrKmdDaf, adapter, device, wddmAllocation->handle, 0, gdi->escape);
 }
 
-bool Wddm::createContext(D3DKMT_HANDLE &context) {
+bool Wddm::createContext(D3DKMT_HANDLE &context, EngineInstanceT engineType) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_CREATECONTEXTVIRTUAL CreateContext = {0};
     CREATECONTEXT_PVTDATA PrivateData = {{0}};
@@ -684,7 +685,7 @@ bool Wddm::createContext(D3DKMT_HANDLE &context) {
     }
 
     CreateContext.PrivateDriverDataSize = sizeof(PrivateData);
-    CreateContext.NodeOrdinal = node;
+    CreateContext.NodeOrdinal = WddmEngineMapper::engineNodeMap(engineType.type);
     CreateContext.pPrivateDriverData = &PrivateData;
     CreateContext.ClientHint = D3DKMT_CLIENTHINT_OPENGL;
     CreateContext.hDevice = device;

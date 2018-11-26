@@ -17,6 +17,7 @@
 #include "runtime/memory_manager/physical_address_allocator.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/os_context.h"
 #include <cstring>
 
 namespace OCLRT {
@@ -181,7 +182,8 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
 }
 
 template <typename GfxFamily>
-FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
+FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+    auto engineType = osContext->getEngineType().type;
     uint32_t mmioBase = getCsTraits(engineType).mmioBase;
     auto &engineInfo = engineInfoTable[engineType];
 
@@ -215,7 +217,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     // Write allocations for residency
-    processResidency(allocationsForResidency, osContext);
+    processResidency(allocationsForResidency);
 
     // Add a batch buffer start to the RCS
     auto previousTail = engineInfo.tailRCS;
@@ -364,7 +366,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) {
+void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency) {
     for (auto &gfxAllocation : allocationsForResidency) {
         if (!writeMemory(*gfxAllocation)) {
             DEBUG_BREAK_IF(!(gfxAllocation->getUnderlyingBufferSize() == 0));

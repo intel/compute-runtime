@@ -30,15 +30,16 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
     typedef typename OCLRT::AUBFamilyMapper<GfxFamily>::AUB AUB;
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
+    using BaseClass::osContext;
 
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::stream;
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
     void makeCoherent(GraphicsAllocation &gfxAllocation) override;
 
-    void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
+    void processResidency(ResidencyContainer &allocationsForResidency) override;
     void waitBeforeMakingNonResidentWhenRequired() override;
     bool writeMemory(GraphicsAllocation &gfxAllocation);
 

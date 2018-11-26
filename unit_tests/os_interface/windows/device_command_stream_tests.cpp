@@ -179,7 +179,7 @@ TEST_F(DeviceCommandStreamTest, CreateWddmCSRWithAubDump) {
 
 TEST_F(WddmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedMonitoredFence) {
     uint64_t stampToWait = 123;
-    csr->waitForFlushStamp(stampToWait, *device->getOsContext());
+    csr->waitForFlushStamp(stampToWait);
     EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
     EXPECT_TRUE(wddm->waitFromCpuResult.success);
     EXPECT_EQ(stampToWait, wddm->waitFromCpuResult.uint64ParamPassed);
@@ -190,11 +190,11 @@ TEST_F(WddmCommandStreamTest, Flush) {
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *device->getOsContext());
+    auto flushStamp = csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     EXPECT_EQ(1u, wddm->submitResult.called);
     EXPECT_TRUE(wddm->submitResult.success);
-    EXPECT_EQ(flushStamp, device->getOsContext()->get()->getResidencyController().getMonitoredFence().lastSubmittedFence);
+    EXPECT_EQ(flushStamp, csr->getOsContext().get()->getResidencyController().getMonitoredFence().lastSubmittedFence);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -208,7 +208,7 @@ TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWithDifferentGpuAddressThen
 
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *device->getOsContext());
+    auto flushStamp = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(mockGpuAddres, wddm->submitResult.commandBufferSubmitted);
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -219,7 +219,7 @@ TEST_F(WddmCommandStreamTest, FlushWithOffset) {
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), offset, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *device->getOsContext());
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(1u, wddm->submitResult.called);
     EXPECT_TRUE(wddm->submitResult.success);
     EXPECT_EQ(wddm->submitResult.commandBufferSubmitted, commandBuffer->getGpuAddress() + offset);
@@ -233,7 +233,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledThenCoherencyRequiredFl
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *device->getOsContext());
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
@@ -253,20 +253,19 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
         std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(hwInfo[0], *executionEnvironment);
     executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceivers[0][0]->createMemoryManager(false, false));
     executionEnvironment->commandStreamReceivers[0][0]->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+    OsContext osContext(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0]);
+    executionEnvironment->commandStreamReceivers[0][0]->setOsContext(&osContext);
 
     auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemory(4096);
     LinearStream cs(commandBuffer);
-    OsContext *osContext = new OsContext(executionEnvironment->osInterface.get(), 0u);
-    osContext->incRefInternal();
+
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    executionEnvironment->commandStreamReceivers[0][0]->flush(batchBuffer, EngineType::ENGINE_RCS,
-                                                              executionEnvironment->commandStreamReceivers[0][0]->getResidencyAllocations(), *osContext);
+    executionEnvironment->commandStreamReceivers[0][0]->flush(batchBuffer, executionEnvironment->commandStreamReceivers[0][0]->getResidencyAllocations());
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
 
     EXPECT_FALSE(pHeader->NeedsMidBatchPreEmptionSupport);
     executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
-    osContext->decRefInternal();
 }
 
 TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOnWhenWorkloadIsSubmittedThenHeaderDoesHavePreemptionFieldSet) {
@@ -279,20 +278,20 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
                                                                                                                  *executionEnvironment);
     executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceivers[0][0]->createMemoryManager(false, false));
     executionEnvironment->commandStreamReceivers[0][0]->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+    OsContext osContext(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0]);
+    executionEnvironment->commandStreamReceivers[0][0]->setOsContext(&osContext);
 
     auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemory(4096);
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    OsContext *osContext = new OsContext(executionEnvironment->osInterface.get(), 0u);
-    osContext->incRefInternal();
-    executionEnvironment->commandStreamReceivers[0][0]->flush(batchBuffer, EngineType::ENGINE_RCS, executionEnvironment->commandStreamReceivers[0][0]->getResidencyAllocations(), *osContext);
+
+    executionEnvironment->commandStreamReceivers[0][0]->flush(batchBuffer, executionEnvironment->commandStreamReceivers[0][0]->getResidencyAllocations());
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
 
     EXPECT_TRUE(pHeader->NeedsMidBatchPreEmptionSupport);
     executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
-    osContext->decRefInternal();
 }
 
 TEST(WddmPreemptionHeaderTests, givenDeviceSupportingPreemptionWhenCommandStreamReceiverIsCreatedThenHeaderContainsPreemptionFieldSet) {
@@ -321,7 +320,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToLowThenS
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::LOW, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *device->getOsContext());
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
@@ -339,7 +338,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToMediumTh
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *device->getOsContext());
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
@@ -357,7 +356,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToHighThen
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::HIGH, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *device->getOsContext());
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
@@ -381,7 +380,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafDisabledWhenFlushIsCalledWithAll
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
 
     EXPECT_FALSE(wddm->isKmDafEnabled());
-    auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, allocationsForResidency, *device->getOsContext());
+    auto flushStamp = csr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_EQ(0u, wddm->kmDafLockResult.called);
     EXPECT_EQ(0u, wddm->kmDafLockResult.lockedAllocations.size());
@@ -397,7 +396,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithoutA
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
     wddm->setKmDafEnabled(true);
-    auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *device->getOsContext());
+    auto flushStamp = csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     EXPECT_EQ(0u, wddm->kmDafLockResult.called);
     EXPECT_EQ(0u, wddm->kmDafLockResult.lockedAllocations.size());
@@ -420,7 +419,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithResi
     EXPECT_EQ(linearStreamAllocation, csr->getResidencyAllocations()[0]);
 
     wddm->setKmDafEnabled(true);
-    auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *device->getOsContext());
+    auto flushStamp = csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     EXPECT_EQ(1u, wddm->kmDafLockResult.called);
     EXPECT_EQ(1u, wddm->kmDafLockResult.lockedAllocations.size());
@@ -442,7 +441,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
 
     wddm->setKmDafEnabled(true);
-    auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, allocationsForResidency, *device->getOsContext());
+    auto flushStamp = csr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_EQ(1u, wddm->kmDafLockResult.called);
     EXPECT_EQ(1u, wddm->kmDafLockResult.lockedAllocations.size());
@@ -464,7 +463,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     ResidencyContainer allocationsForResidency = {fillPatternAllocation};
 
     wddm->setKmDafEnabled(true);
-    auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, allocationsForResidency, *device->getOsContext());
+    auto flushStamp = csr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_EQ(1u, wddm->kmDafLockResult.called);
     EXPECT_EQ(1u, wddm->kmDafLockResult.lockedAllocations.size());
@@ -485,7 +484,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     ResidencyContainer allocationsForResidency = {nonLinearStreamAllocation};
 
     wddm->setKmDafEnabled(true);
-    auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, allocationsForResidency, *device->getOsContext());
+    auto flushStamp = csr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_EQ(0u, wddm->kmDafLockResult.called);
     EXPECT_EQ(0u, wddm->kmDafLockResult.lockedAllocations.size());
@@ -539,9 +538,9 @@ TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidate
 
     EXPECT_EQ(2u, csr->getEvictionAllocations().size());
 
-    csr->processEviction(*device->getOsContext());
+    csr->processEviction();
 
-    EXPECT_EQ(2u, device->getOsContext()->get()->getResidencyController().peekTrimCandidateList().size());
+    EXPECT_EQ(2u, csr->getOsContext().get()->getResidencyController().peekTrimCandidateList().size());
 
     memoryManager->freeGraphicsMemory(allocation);
     memoryManager->freeGraphicsMemory(allocation2);
@@ -557,7 +556,7 @@ TEST_F(WddmCommandStreamTest, processEvictionClearsEvictionAllocations) {
 
     EXPECT_EQ(1u, csr->getEvictionAllocations().size());
 
-    csr->processEviction(*device->getOsContext());
+    csr->processEviction();
 
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 
@@ -661,7 +660,7 @@ TEST_F(WddmCommandStreamMockGdiTest, FlushCallsWddmMakeResidentForResidencyAlloc
     gdi->getMakeResidentArg().NumAllocations = 0;
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *device->getOsContext());
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     EXPECT_NE(0u, gdi->getMakeResidentArg().NumAllocations);
 
@@ -678,16 +677,16 @@ TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 
-    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
 
-    csr->processResidency(csr->getResidencyAllocations(), *device->getOsContext());
+    csr->processResidency(csr->getResidencyAllocations());
 
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), *device->getOsContext());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 
-    EXPECT_EQ(0u, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
+    EXPECT_EQ(0u, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -761,12 +760,12 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
         EXPECT_TRUE(found);
     }
 
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)tagAllocation)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
-    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)dshAlloc)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
-    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)iohAlloc)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)sshAlloc)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)csrCommandStream)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
+    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)tagAllocation)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)dshAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)iohAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)sshAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)csrCommandStream)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
 
     memoryManager->freeGraphicsMemory(dshAlloc);
     memoryManager->freeGraphicsMemory(iohAlloc);

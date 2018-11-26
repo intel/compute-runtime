@@ -13,9 +13,11 @@ using OsContextLinux = OsContext::OsContextImpl;
 
 class OsContext::OsContextImpl {
   public:
-    OsContextImpl(Drm &drm);
+    OsContextImpl(Drm &drm, EngineInstanceT engineType);
+    unsigned int getEngineFlag() const { return engineFlag; }
 
   protected:
+    unsigned int engineFlag = 0;
     Drm &drm;
 };
 } // namespace OCLRT

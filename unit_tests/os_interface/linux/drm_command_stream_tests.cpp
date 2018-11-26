@@ -12,6 +12,7 @@
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
+#include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -31,7 +32,7 @@ using namespace OCLRT;
 class DrmCommandStreamFixture {
   public:
     void SetUp() {
-        osContext = std::make_unique<OsContext>(nullptr, 0u);
+
         //make sure this is disabled, we don't want test this now
         DebugManager.flags.EnableForcePin.set(false);
 
@@ -40,11 +41,14 @@ class DrmCommandStreamFixture {
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         executionEnvironment.osInterface->get()->setDrm(mock.get());
 
+        osContext = std::make_unique<OsContext>(executionEnvironment.osInterface.get(), 0u, gpgpuEngineInstances[0]);
+
         csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], executionEnvironment,
                                                                      gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
         executionEnvironment.commandStreamReceivers.resize(1);
         executionEnvironment.commandStreamReceivers[0][0].reset(csr);
+        csr->setOsContext(osContext.get());
 
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
@@ -94,7 +98,7 @@ TEST_F(DrmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedBo
         .Times(1)
         .WillRepeatedly(copyIoctlParam(&calledWait));
 
-    csr->waitForFlushStamp(handleToWait, *osContext);
+    csr->waitForFlushStamp(handleToWait);
     EXPECT_TRUE(memcmp(&expectedWait, &calledWait, sizeof(drm_i915_gem_wait)) == 0);
 }
 
@@ -201,7 +205,7 @@ TEST_F(DrmCommandStreamTest, Flush) {
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto availableSpacePriorToFlush = cs.getAvailableSpace();
-    auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    auto flushStamp = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(static_cast<uint64_t>(boHandle), flushStamp);
     EXPECT_NE(cs.getCpuBase(), nullptr);
     EXPECT_EQ(availableSpacePriorToFlush, cs.getAvailableSpace());
@@ -236,7 +240,7 @@ TEST_F(DrmCommandStreamTest, FlushWithLowPriorityContext) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, true, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_NE(cs.getCpuBase(), nullptr);
 }
 
@@ -265,7 +269,7 @@ TEST_F(DrmCommandStreamTest, FlushInvalidAddress) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
     delete[] commandBuffer;
 }
 
@@ -296,7 +300,7 @@ TEST_F(DrmCommandStreamTest, FlushNotEmptyBB) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
 TEST_F(DrmCommandStreamTest, FlushNotEmptyNotPaddedBB) {
@@ -325,7 +329,7 @@ TEST_F(DrmCommandStreamTest, FlushNotEmptyNotPaddedBB) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
 TEST_F(DrmCommandStreamTest, FlushNotAligned) {
@@ -356,7 +360,7 @@ TEST_F(DrmCommandStreamTest, FlushNotAligned) {
     csr->alignToCacheLine(cs);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
 ACTION_P(UserptrSetHandle, _set_handle) {
@@ -408,7 +412,7 @@ TEST_F(DrmCommandStreamTest, FlushCheckFlags) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
 TEST_F(DrmCommandStreamTest, CheckDrmFree) {
@@ -441,7 +445,7 @@ TEST_F(DrmCommandStreamTest, CheckDrmFree) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
 TEST_F(DrmCommandStreamTest, GIVENCSRWHENgetDMTHENNotNull) {
@@ -482,7 +486,7 @@ TEST_F(DrmCommandStreamTest, CheckDrmFreeCloseFailed) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
 struct DrmCsrVfeTests : ::testing::Test {
@@ -495,7 +499,7 @@ struct DrmCsrVfeTests : ::testing::Test {
         MyCsr(ExecutionEnvironment &executionEnvironment)
             : DrmCommandStreamReceiver<FamilyType>(*platformDevices[0], executionEnvironment,
                                                    gemCloseWorkerMode::gemCloseWorkerInactive) {}
-        FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override {
+        FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
             return (FlushStamp)0;
         }
         bool peekDefaultMediaVfeStateDirty() {
@@ -655,9 +659,9 @@ class DrmCommandStreamEnhancedFixture
     DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
     DrmMemoryManager *mm = nullptr;
     MockDevice *device = nullptr;
-    OsContext *osContext;
     DebugManagerStateRestore *dbgState;
     ExecutionEnvironment *executionEnvironment;
+    std::unique_ptr<OsContext> osContext;
 
     void SetUp() {
         executionEnvironment = new ExecutionEnvironment;
@@ -669,16 +673,17 @@ class DrmCommandStreamEnhancedFixture
         mock = new DrmMockCustom();
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setDrm(mock);
+        osContext = std::make_unique<OsContext>(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0]);
 
         tCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
         csr = tCsr;
+        csr->setOsContext(osContext.get());
         ASSERT_NE(nullptr, csr);
         mm = reinterpret_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
         device = Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u);
         ASSERT_NE(nullptr, device);
-        osContext = device->getOsContext();
     }
 
     void TearDown() {
@@ -731,7 +736,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWhenItIsFlushedWithGemC
     auto storedBase = cs.getCpuBase();
     auto storedGraphicsAllocation = cs.getGraphicsAllocation();
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(cs.getCpuBase(), storedBase);
     EXPECT_EQ(cs.getGraphicsAllocation(), storedGraphicsAllocation);
 
@@ -766,7 +771,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWh
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     EXPECT_EQ(11u, this->mock->execBuffer.buffer_count);
     mm->freeGraphicsMemory(commandBuffer);
@@ -785,7 +790,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenGemCloseWorkerInactiveModeWhenMakeRe
     csr->makeResident(*dummyAllocation);
     EXPECT_EQ(1u, bo->getRefCount());
 
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     csr->makeNonResident(*dummyAllocation);
     EXPECT_EQ(1u, bo->getRefCount());
@@ -803,7 +808,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDi
     EXPECT_TRUE(allocation->isResident(0u));
     EXPECT_TRUE(allocation2->isResident(0u));
 
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(allocation->isResident(0u));
     EXPECT_TRUE(allocation2->isResident(0u));
@@ -836,7 +841,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsF
     auto storedBase = cs.getCpuBase();
     auto storedGraphicsAllocation = cs.getGraphicsAllocation();
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(cs.getCpuBase(), storedBase);
     EXPECT_EQ(cs.getGraphicsAllocation(), storedGraphicsAllocation);
 
@@ -893,13 +898,15 @@ TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsAr
     csr->alignToCacheLine(cs);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     //preemption allocation + Sip Kernel
     int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
 
+    auto engineFlag = csr->getOsContext().get()->getEngineFlag();
+
     EXPECT_EQ(6 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
-    uint64_t flags = I915_EXEC_RENDER | I915_EXEC_NO_RELOC;
+    uint64_t flags = engineFlag | I915_EXEC_NO_RELOC;
     EXPECT_EQ(flags, this->mock->execBuffer.flags);
 
     mm->freeGraphicsMemory(dummyAllocation);
@@ -1041,7 +1048,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResident) {
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
 
     csr->makeResident(*allocation);
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(isResident(buffer));
     auto bo = getResident(buffer);
@@ -1066,7 +1073,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentOnly) {
 
     csr->makeResident(*allocation1);
     csr->makeResident(*allocation2);
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(isResident(buffer1));
     EXPECT_TRUE(isResident(buffer2));
@@ -1090,7 +1097,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwice) {
     auto allocation = new DrmAllocation(buffer, nullptr, buffer->peekSize(), MemoryPool::MemoryNull, 1u, false);
 
     csr->makeResident(*allocation);
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(isResident(buffer));
     auto bo1 = getResident(buffer);
@@ -1099,7 +1106,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwice) {
 
     csr->getResidencyAllocations().clear();
     csr->makeResident(*allocation);
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(isResident(buffer));
     auto bo2 = getResident(buffer);
@@ -1126,7 +1133,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwiceWhenFragmentStorage) {
     csr->makeResident(*allocation);
     csr->makeResident(*allocation);
 
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
     for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
                   reqs.AllocationFragments[i].allocationPtr);
@@ -1166,7 +1173,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
     tCsr->makeResident(*graphicsAllocation);
     tCsr->makeResident(*graphicsAllocation2);
 
-    tCsr->processResidency(csr->getResidencyAllocations(), *osContext);
+    tCsr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident);
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident);
@@ -1177,7 +1184,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
 
     EXPECT_EQ(3u, residency->size());
 
-    tCsr->makeSurfacePackNonResident(tCsr->getResidencyAllocations(), *osContext);
+    tCsr->makeSurfacePackNonResident(tCsr->getResidencyAllocations());
 
     //check that each packet is not resident
     EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident);
@@ -1190,7 +1197,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
     tCsr->makeResident(*graphicsAllocation);
     tCsr->makeResident(*graphicsAllocation2);
 
-    tCsr->processResidency(csr->getResidencyAllocations(), *osContext);
+    tCsr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident);
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident);
@@ -1199,7 +1206,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
 
     EXPECT_EQ(3u, residency->size());
 
-    tCsr->makeSurfacePackNonResident(tCsr->getResidencyAllocations(), *osContext);
+    tCsr->makeSurfacePackNonResident(tCsr->getResidencyAllocations());
 
     EXPECT_EQ(0u, residency->size());
 
@@ -1223,7 +1230,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationCreatedFromThreeFragmentsWhenMa
     ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
 
     csr->makeResident(*allocation);
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
@@ -1258,7 +1265,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
     ASSERT_EQ(2u, reqs.requiredFragmentsCount);
 
     csr->makeResident(*allocation);
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
@@ -1287,7 +1294,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
     ASSERT_EQ(1u, reqs.requiredFragmentsCount);
 
     csr->makeResident(*allocation2);
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         ASSERT_EQ(allocation2->fragmentsStorage.fragmentStorageData[i].cpuPtr,
@@ -1320,7 +1327,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsTheSame
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);
 
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 1u);
 
@@ -1343,7 +1350,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsDiffere
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);
 
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 2u);
 
@@ -1362,7 +1369,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentSizeZero) {
     EXPECT_EQ(buffer->peekSize(), allocation.getUnderlyingBufferSize());
 
     csr->makeResident(allocation);
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_FALSE(isResident(buffer.get()));
     auto bo = getResident(buffer.get());
@@ -1377,7 +1384,7 @@ TEST_F(DrmCommandStreamLeaksTest, Flush) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_NE(cs.getCpuBase(), nullptr);
     EXPECT_NE(cs.getGraphicsAllocation(), nullptr);
 }
@@ -1391,7 +1398,7 @@ TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushNotCalled) {
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 0u);
     csr->makeResident(*allocation1);
     csr->makeResident(*allocation2);
-    csr->processResidency(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
 
     EXPECT_TRUE(isResident(allocation1->getBO()));
     EXPECT_TRUE(isResident(allocation2->getBO()));
@@ -1421,14 +1428,14 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     cs.replaceBuffer(commandBuffer->getUnderlyingBuffer(), commandBuffer->getUnderlyingBufferSize());
     cs.replaceGraphicsAllocation(commandBuffer);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer2{cs.getGraphicsAllocation(), 8, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer2, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer2, csr->getResidencyAllocations());
 
     auto allocation = mm->allocateGraphicsMemory(1024);
     ASSERT_NE(nullptr, allocation);
@@ -1447,8 +1454,8 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer3{cs.getGraphicsAllocation(), 16, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer3, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer3, csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(allocation2);
 
@@ -1460,7 +1467,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer4{cs.getGraphicsAllocation(), 24, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer4, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer4, csr->getResidencyAllocations());
 }
 
 TEST_F(DrmCommandStreamLeaksTest, FlushNotEmptyBB) {
@@ -1473,7 +1480,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushNotEmptyBB) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
 TEST_F(DrmCommandStreamLeaksTest, FlushNotEmptyNotPaddedBB) {
@@ -1486,7 +1493,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushNotEmptyNotPaddedBB) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
 TEST_F(DrmCommandStreamLeaksTest, FlushNotAligned) {
@@ -1500,7 +1507,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushNotAligned) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
 TEST_F(DrmCommandStreamLeaksTest, CheckDrmFree) {
@@ -1517,7 +1524,7 @@ TEST_F(DrmCommandStreamLeaksTest, CheckDrmFree) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
     csr->makeNonResident(*allocation);
     mm->freeGraphicsMemory(allocation);
 }
@@ -1533,8 +1540,8 @@ TEST_F(DrmCommandStreamLeaksTest, MakeResidentClearResidencyAllocationsInCommand
     csr->makeResident(*allocation2);
     EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
-    csr->processResidency(csr->getResidencyAllocations(), *device->getOsContext());
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
 
     mm->freeGraphicsMemory(allocation1);
@@ -1551,8 +1558,8 @@ TEST_F(DrmCommandStreamLeaksTest, givenMultipleMakeResidentWhenMakeNonResidentIs
 
     EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
-    csr->processResidency(csr->getResidencyAllocations(), *device->getOsContext());
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_FALSE(allocation1->isResident(0u));
@@ -1612,7 +1619,7 @@ TEST_F(DrmCommandStreamLeaksTest, BufferResidency) {
     //make it resident 8 times
     for (int c = 0; c < 8; c++) {
         csr->makeResident(*buffer->getGraphicsAllocation());
-        csr->processResidency(csr->getResidencyAllocations(), *osContext);
+        csr->processResidency(csr->getResidencyAllocations());
         EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident(0u));
         EXPECT_EQ(buffer->getGraphicsAllocation()->getResidencyTaskCount(0u), csr->peekTaskCount() + 1);
     }

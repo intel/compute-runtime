@@ -480,14 +480,14 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         CommandStreamReceiver::makeNonResident(graphicsAllocation);
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override {
+    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         return flushStamp->peekStamp();
     }
 
     void addPipeControl(LinearStream &commandStream, bool dcFlush) override {
     }
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, OsContext &osContext, bool forcePowerSavingMode) override {
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
     }
 
     CompletionStamp flushTask(
@@ -553,7 +553,7 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
     pKernel->makeResident(*csr.get());
     EXPECT_EQ(1u, csr->residency.size());
 
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), *pDevice->getOsContext());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
     EXPECT_EQ(0u, csr->residency.size());
 
     delete pKernel;

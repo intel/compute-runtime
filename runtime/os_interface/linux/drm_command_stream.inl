@@ -17,6 +17,7 @@
 #include "runtime/os_interface/linux/drm_engine_mapper.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
+#include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/platform/platform.h"
 #include <cstdlib>
@@ -41,10 +42,8 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo
 }
 
 template <typename GfxFamily>
-FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
-    unsigned int engineFlag = 0xFF;
-    bool ret = DrmEngineMapper<GfxFamily>::engineNodeMap(engineType, engineFlag);
-    UNRECOVERABLE_IF(!(ret));
+FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+    unsigned int engineFlag = osContext->get()->getEngineFlag();
 
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
     DEBUG_BREAK_IF(!alloc);
@@ -55,7 +54,7 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
 
     if (bb) {
         flushStamp = bb->peekHandle();
-        this->processResidency(allocationsForResidency, osContext);
+        this->processResidency(allocationsForResidency);
         // Residency hold all allocation except command buffer, hence + 1
         auto requiredSize = this->residency.size() + 1;
         if (requiredSize > this->execObjectsStorage.size()) {
@@ -107,7 +106,7 @@ void DrmCommandStreamReceiver<GfxFamily>::makeResident(BufferObject *bo) {
 }
 
 template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &inputAllocationsForResidency, OsContext &osContext) {
+void DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &inputAllocationsForResidency) {
     for (auto &alloc : inputAllocationsForResidency) {
         auto drmAlloc = static_cast<DrmAllocation *>(alloc);
         if (drmAlloc->fragmentsStorage.fragmentCount) {
@@ -153,7 +152,7 @@ MemoryManager *DrmCommandStreamReceiver<GfxFamily>::createMemoryManager(bool ena
 }
 
 template <typename GfxFamily>
-bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp, OsContext &osContext) {
+bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp) {
     drm_i915_gem_wait wait = {};
     wait.bo_handle = static_cast<uint32_t>(flushStamp);
     wait.timeout_ns = -1;

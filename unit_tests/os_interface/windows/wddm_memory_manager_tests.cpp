@@ -58,7 +58,7 @@ TEST(WddmMemoryManager, NonAssignable) {
 
 TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGettingTrimCandidatePositionThenReturnItsPositionAndUnusedPositionInOtherContexts) {
     WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 3u, false};
-    OsContext osContext{nullptr, 1u};
+    OsContext osContext(nullptr, 1u, gpgpuEngineInstances[0]);
     allocation.setTrimCandidateListPosition(osContext.getContextId(), 700u);
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(0u));
     EXPECT_EQ(700u, allocation.getTrimCandidateListPosition(1u));
@@ -1195,16 +1195,16 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithNoRegisteredOsContextsWh
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenCallingIsMemoryBudgetExhaustedThenReturnFalse) {
-    memoryManager->createAndRegisterOsContext();
-    memoryManager->createAndRegisterOsContext();
-    memoryManager->createAndRegisterOsContext();
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
     EXPECT_FALSE(memoryManager->isMemoryBudgetExhausted());
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithExhaustedMemoryBudgetWhenCallingIsMemoryBudgetExhaustedThenReturnTrue) {
-    memoryManager->createAndRegisterOsContext();
-    memoryManager->createAndRegisterOsContext();
-    memoryManager->createAndRegisterOsContext();
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
     memoryManager->getRegisteredOsContext(1)->get()->getResidencyController().setMemoryBudgetExhausted();
     EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());
 }

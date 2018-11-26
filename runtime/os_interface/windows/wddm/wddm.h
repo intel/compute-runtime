@@ -57,7 +57,7 @@ class Wddm {
     MOCKABLE_VIRTUAL bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim);
     bool mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1);
     bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData, bool allocation32bit, bool use64kbPages);
-    MOCKABLE_VIRTUAL bool createContext(D3DKMT_HANDLE &context);
+    MOCKABLE_VIRTUAL bool createContext(D3DKMT_HANDLE &context, EngineInstanceT engineType);
     MOCKABLE_VIRTUAL void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData);
     MOCKABLE_VIRTUAL bool freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
     MOCKABLE_VIRTUAL NTSTATUS createAllocation(WddmAllocation *alloc);
@@ -128,10 +128,6 @@ class Wddm {
 
     std::unique_ptr<SettingsReader> registryReader;
 
-    void setNode(GPUNODE_ORDINAL node) {
-        this->node = node;
-    }
-
     void setPreemptionMode(PreemptionMode mode) {
         this->preemptionMode = mode;
     }
@@ -177,7 +173,6 @@ class Wddm {
     unsigned long hwContextId = 0;
     LUID adapterLuid;
     uintptr_t maximumApplicationAddress = 0;
-    GPUNODE_ORDINAL node = GPUNODE_3D;
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
     std::unique_ptr<GmmMemory> gmmMemory;
     uintptr_t minAddress = 0;

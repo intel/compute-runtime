@@ -26,7 +26,6 @@
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
-#include "runtime/os_interface/windows/wddm_engine_mapper.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 namespace OCLRT {
 
@@ -41,9 +40,6 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
     this->wddm = executionEnvironment.osInterface->get()->getWddm();
     this->osInterface = executionEnvironment.osInterface.get();
 
-    GPUNODE_ORDINAL nodeOrdinal = GPUNODE_3D;
-    UNRECOVERABLE_IF(!WddmEngineMapper<GfxFamily>::engineNodeMap(hwInfoIn.capabilityTable.defaultEngineType, nodeOrdinal));
-    this->wddm->setNode(nodeOrdinal);
     PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoIn);
     this->wddm->setPreemptionMode(preemptionMode);
 
@@ -68,8 +64,7 @@ WddmCommandStreamReceiver<GfxFamily>::~WddmCommandStreamReceiver() {
 }
 
 template <typename GfxFamily>
-FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
-                                                       EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
+FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     auto commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
 
     if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
@@ -79,7 +74,7 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
         batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->deviceIndex);
     }
 
-    this->processResidency(allocationsForResidency, osContext);
+    this->processResidency(allocationsForResidency);
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader);
     pHeader->RequiresCoherency = batchBuffer.requiresCoherency;
@@ -104,9 +99,9 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
         this->kmDafLockAllocations(allocationsForResidency);
     }
 
-    wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader, *osContext.get());
+    wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader, *osContext->get());
 
-    return osContext.get()->getResidencyController().getMonitoredFence().lastSubmittedFence;
+    return osContext->get()->getResidencyController().getMonitoredFence().lastSubmittedFence;
 }
 
 template <typename GfxFamily>
@@ -125,14 +120,14 @@ void WddmCommandStreamReceiver<GfxFamily>::makeResident(GraphicsAllocation &gfxA
 }
 
 template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) {
-    bool success = osContext.get()->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency);
+void WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency) {
+    bool success = osContext->get()->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency);
     DEBUG_BREAK_IF(!success);
 }
 
 template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::processEviction(OsContext &osContext) {
-    osContext.get()->getResidencyController().makeNonResidentEvictionAllocations(this->getEvictionAllocations());
+void WddmCommandStreamReceiver<GfxFamily>::processEviction() {
+    osContext->get()->getResidencyController().makeNonResidentEvictionAllocations(this->getEvictionAllocations());
     this->getEvictionAllocations().clear();
 }
 
@@ -147,8 +142,8 @@ MemoryManager *WddmCommandStreamReceiver<GfxFamily>::createMemoryManager(bool en
 }
 
 template <typename GfxFamily>
-bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStampToWait, OsContext &osContext) {
-    return wddm->waitFromCpu(flushStampToWait, osContext.get()->getResidencyController().getMonitoredFence());
+bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStampToWait) {
+    return wddm->waitFromCpu(flushStampToWait, osContext->get()->getResidencyController().getMonitoredFence());
 }
 
 template <typename GfxFamily>

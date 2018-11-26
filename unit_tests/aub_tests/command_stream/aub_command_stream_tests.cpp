@@ -9,6 +9,7 @@
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
@@ -37,7 +38,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
     }
 
     template <typename FamilyType>
-    void testNoopIdXcs(EngineType engineType) {
+    void testNoopIdXcs() {
         typedef typename FamilyType::MI_NOOP MI_NOOP;
 
         auto pCmd = (MI_NOOP *)pCS->getSpace(sizeof(MI_NOOP) * 4);
@@ -55,9 +56,10 @@ struct AUBFixture : public AUBCommandStreamFixture,
         CommandStreamReceiverHw<FamilyType>::alignToCacheLine(*pCS);
         BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, pCS->getUsed(), pCS};
         ResidencyContainer allocationsForResidency;
-        pCommandStreamReceiver->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+        pCommandStreamReceiver->flush(batchBuffer, allocationsForResidency);
 
-        auto mmioBase = AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineType).mmioBase;
+        auto engineType = pCommandStreamReceiver->getOsContext().getEngineType();
+        auto mmioBase = AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineType.type).mmioBase;
         AUBCommandStreamFixture::expectMMIO<FamilyType>(mmioBase + 0x2094, noopId);
     }
 };
@@ -69,26 +71,30 @@ HWTEST_F(AUBcommandstreamTests, testFlushTwice) {
     CommandStreamReceiverHw<FamilyType>::alignToCacheLine(*pCS);
     BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, pCS->getUsed(), pCS};
     ResidencyContainer allocationsForResidency;
-    pCommandStreamReceiver->flush(batchBuffer, EngineType::ENGINE_RCS, allocationsForResidency, *pDevice->getOsContext());
+    pCommandStreamReceiver->flush(batchBuffer, allocationsForResidency);
     BatchBuffer batchBuffer2{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, pCS->getUsed(), pCS};
     ResidencyContainer allocationsForResidency2;
-    pCommandStreamReceiver->flush(batchBuffer2, EngineType::ENGINE_RCS, allocationsForResidency, *pDevice->getOsContext());
+    pCommandStreamReceiver->flush(batchBuffer2, allocationsForResidency);
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdRcs) {
-    testNoopIdXcs<FamilyType>(EngineType::ENGINE_RCS);
+    pCommandStreamReceiver->getOsContext().getEngineType().type = EngineType::ENGINE_RCS;
+    testNoopIdXcs<FamilyType>();
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdBcs) {
-    testNoopIdXcs<FamilyType>(EngineType::ENGINE_BCS);
+    pCommandStreamReceiver->getOsContext().getEngineType().type = EngineType::ENGINE_BCS;
+    testNoopIdXcs<FamilyType>();
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdVcs) {
-    testNoopIdXcs<FamilyType>(EngineType::ENGINE_VCS);
+    pCommandStreamReceiver->getOsContext().getEngineType().type = EngineType::ENGINE_VCS;
+    testNoopIdXcs<FamilyType>();
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdVecs) {
-    testNoopIdXcs<FamilyType>(EngineType::ENGINE_VECS);
+    pCommandStreamReceiver->getOsContext().getEngineType().type = EngineType::ENGINE_VECS;
+    testNoopIdXcs<FamilyType>();
 }
 
 TEST_F(AUBcommandstreamTests, makeResident) {
@@ -97,7 +103,7 @@ TEST_F(AUBcommandstreamTests, makeResident) {
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    commandStreamReceiver.processResidency(allocationsForResidency, *pDevice->getOsContext());
+    commandStreamReceiver.processResidency(allocationsForResidency);
 }
 
 HWTEST_F(AUBcommandstreamTests, expectMemorySingle) {
@@ -105,7 +111,7 @@ HWTEST_F(AUBcommandstreamTests, expectMemorySingle) {
     size_t size = sizeof(buffer);
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(&buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    pCommandStreamReceiver->processResidency(allocationsForResidency, *pDevice->getOsContext());
+    pCommandStreamReceiver->processResidency(allocationsForResidency);
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(&buffer, &buffer, size);
 }
@@ -120,7 +126,7 @@ HWTEST_F(AUBcommandstreamTests, expectMemoryLarge) {
 
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, sizeBuffer);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    pCommandStreamReceiver->processResidency(allocationsForResidency, *pDevice->getOsContext());
+    pCommandStreamReceiver->processResidency(allocationsForResidency);
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(buffer, buffer, sizeBuffer);
     delete[] buffer;

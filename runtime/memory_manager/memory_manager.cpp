@@ -201,12 +201,12 @@ bool MemoryManager::isMemoryBudgetExhausted() const {
     return false;
 }
 
-OsContext *MemoryManager::createAndRegisterOsContext() {
+OsContext *MemoryManager::createAndRegisterOsContext(EngineInstanceT engineType) {
     auto contextId = ++latestContextId;
     if (contextId + 1 > registeredOsContexts.size()) {
         registeredOsContexts.resize(contextId + 1);
     }
-    auto osContext = new OsContext(executionEnvironment.osInterface.get(), contextId);
+    auto osContext = new OsContext(executionEnvironment.osInterface.get(), contextId, engineType);
     osContext->incRefInternal();
     registeredOsContexts[contextId] = osContext;
 

@@ -10,6 +10,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/os_interface/32bit_memory.h"
+#include "engine_node.h"
 
 #include <cstdint>
 #include <mutex>
@@ -247,7 +248,7 @@ class MemoryManager {
         ::alignedFree(ptr);
     }
 
-    OsContext *createAndRegisterOsContext();
+    OsContext *createAndRegisterOsContext(EngineInstanceT engineType);
     uint32_t getOsContextCount() { return static_cast<uint32_t>(registeredOsContexts.size()); }
     CommandStreamReceiver *getCommandStreamReceiver(uint32_t contextId);
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }

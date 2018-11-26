@@ -55,7 +55,7 @@ class CommandStreamReceiver {
     CommandStreamReceiver(ExecutionEnvironment &executionEnvironment);
     virtual ~CommandStreamReceiver();
 
-    virtual FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) = 0;
+    virtual FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) = 0;
 
     virtual CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                                       const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
@@ -66,9 +66,9 @@ class CommandStreamReceiver {
     virtual void makeCoherent(GraphicsAllocation &gfxAllocation){};
     virtual void makeResident(GraphicsAllocation &gfxAllocation);
     virtual void makeNonResident(GraphicsAllocation &gfxAllocation);
-    void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency, OsContext &osContext);
-    virtual void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) {}
-    virtual void processEviction(OsContext &osContext);
+    void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency);
+    virtual void processResidency(ResidencyContainer &allocationsForResidency) {}
+    virtual void processEviction();
     void makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation);
     virtual void waitBeforeMakingNonResidentWhenRequired() {}
 
@@ -93,7 +93,7 @@ class CommandStreamReceiver {
     }
     volatile uint32_t *getTagAddress() const { return tagAddress; }
 
-    virtual bool waitForFlushStamp(FlushStamp &flushStampToWait, OsContext &osContext) { return true; };
+    virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; };
 
     uint32_t peekTaskCount() const { return taskCount; }
 
@@ -119,7 +119,7 @@ class CommandStreamReceiver {
     void requestThreadArbitrationPolicy(uint32_t requiredPolicy) { this->requiredThreadArbitrationPolicy = requiredPolicy; }
     void requestStallingPipeControlOnNextFlush() { stallingPipeControlOnNextFlushRequired = true; }
 
-    virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, OsContext &osContext, bool forcePowerSavingMode) = 0;
+    virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) = 0;
     MOCKABLE_VIRTUAL bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
 
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
@@ -155,6 +155,8 @@ class CommandStreamReceiver {
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }
     bool createAllocationForHostSurface(HostPtrSurface &surface, Device &device, bool requiresL3Flush);
     virtual size_t getPreferredTagPoolSize() const { return 512; }
+    void setOsContext(OsContext *osContext) { this->osContext = osContext; }
+    OsContext &getOsContext() const { return *osContext; }
 
   protected:
     void cleanupResources();
@@ -191,6 +193,7 @@ class CommandStreamReceiver {
     std::atomic<uint32_t> latestSentTaskCount{0};
     std::atomic<uint32_t> latestFlushedTaskCount{0};
 
+    OsContext *osContext = nullptr;
     DispatchMode dispatchMode = DispatchMode::ImmediateDispatch;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;

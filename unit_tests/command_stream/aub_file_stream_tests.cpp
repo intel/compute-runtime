@@ -111,10 +111,9 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenF
     aubCsr->stream = mockAubFileStreamPtr;
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {};
 
-    aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->flush(batchBuffer, allocationsForResidency);
     EXPECT_TRUE(mockAubFileStreamPtr->lockStreamCalled);
 }
 
@@ -124,10 +123,9 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {};
 
-    aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_TRUE(aubCsr->writeMemoryCalled);
     EXPECT_TRUE(aubCsr->submitBatchBufferCalled);
@@ -145,10 +143,9 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenF
     aubCsr->stream = mockAubFileStreamPtr;
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {};
 
-    aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->flush(batchBuffer, allocationsForResidency);
     EXPECT_TRUE(mockAubFileStreamPtr->flushCalled);
 }
 

@@ -23,6 +23,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/utilities/tag_allocator.h"
@@ -53,7 +54,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &
 }
 
 template <typename GfxFamily>
-FlushStamp CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
+FlushStamp CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     return flushStamp->peekStamp();
 }
 
@@ -445,13 +446,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     size_t startOffset = submitCommandStreamFromCsr ? commandStreamStartCSR : commandStreamStartTask;
     auto &streamToSubmit = submitCommandStreamFromCsr ? commandStreamCSR : commandStreamTask;
     BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, chainedBatchBuffer, dispatchFlags.requiresCoherency, dispatchFlags.lowPriority, dispatchFlags.throttle, streamToSubmit.getUsed(), &streamToSubmit};
-    EngineType engineType = device.getEngineType();
 
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-            flushStamp->setStamp(this->flush(batchBuffer, engineType, this->getResidencyAllocations(), *device.getOsContext()));
+            flushStamp->setStamp(this->flush(batchBuffer, this->getResidencyAllocations()));
             this->latestFlushedTaskCount = this->taskCount + 1;
-            this->makeSurfacePackNonResident(this->getResidencyAllocations(), *device.getOsContext());
+            this->makeSurfacePackNonResident(this->getResidencyAllocations());
         } else {
             auto commandBuffer = new CommandBuffer(device);
             commandBuffer->batchBuffer = batchBuffer;
@@ -464,7 +464,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             this->submissionAggregator->recordCommandBuffer(commandBuffer);
         }
     } else {
-        this->makeSurfacePackNonResident(this->getResidencyAllocations(), *device.getOsContext());
+        this->makeSurfacePackNonResident(this->getResidencyAllocations());
     }
 
     //check if we are not over the budget, if we are do implicit flush
@@ -485,9 +485,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     CompletionStamp completionStamp = {
         taskCount,
         this->taskLevel,
-        flushStamp->peekStamp(),
-        0,
-        engineType};
+        flushStamp->peekStamp()};
 
     this->taskLevel += levelClosed ? 1 : 0;
 
@@ -510,7 +508,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
     auto &commandBufferList = this->submissionAggregator->peekCmdBufferList();
     if (!commandBufferList.peekIsEmpty()) {
         auto &device = commandBufferList.peekHead()->device;
-        EngineType engineType = device.getEngineType();
 
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
@@ -570,7 +567,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             if (epiloguePipeControlLocation) {
                 ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(true);
             }
-            auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, engineType, surfacesForSubmit, *device.getOsContext());
+            auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, surfacesForSubmit);
 
             //after flush task level is closed
             this->taskLevel++;
@@ -579,7 +576,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
             this->latestFlushedTaskCount = lastTaskCount;
             this->flushStamp->setStamp(flushStamp);
-            this->makeSurfacePackNonResident(surfacesForSubmit, *device.getOsContext());
+            this->makeSurfacePackNonResident(surfacesForSubmit);
             resourcePackage.clear();
         }
         this->totalMemoryUsed = 0;
@@ -680,13 +677,13 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, OsContext &osContext, bool forcePowerSavingMode) {
+inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
     int64_t waitTimeout = 0;
     bool enableTimeout = kmdNotifyHelper->obtainTimeoutParams(waitTimeout, useQuickKmdSleep, *getTagAddress(), taskCountToWait, flushStampToWait, forcePowerSavingMode);
 
     auto status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
     if (!status) {
-        waitForFlushStamp(flushStampToWait, osContext);
+        waitForFlushStamp(flushStampToWait);
         //now call blocking wait, this is to ensure that task count is reached
         waitForCompletionWithTimeout(false, 0, taskCountToWait);
     }

@@ -12,10 +12,10 @@
 
 namespace OCLRT {
 
-OsContextWin::OsContextImpl(Wddm &wddm, uint32_t osContextId) : wddm(wddm), residencyController(wddm, osContextId) {
+OsContextWin::OsContextImpl(Wddm &wddm, uint32_t osContextId, EngineInstanceT engineType) : wddm(wddm), residencyController(wddm, osContextId) {
     UNRECOVERABLE_IF(!wddm.isInitialized());
     auto wddmInterface = wddm.getWddmInterface();
-    if (!wddm.createContext(context)) {
+    if (!wddm.createContext(context, engineType)) {
         return;
     }
     if (wddmInterface->hwQueuesSupported()) {
@@ -31,9 +31,10 @@ OsContextWin::~OsContextImpl() {
     wddm.destroyContext(context);
 }
 
-OsContext::OsContext(OSInterface *osInterface, uint32_t contextId) : contextId(contextId) {
+OsContext::OsContext(OSInterface *osInterface, uint32_t contextId, EngineInstanceT engineType)
+    : contextId(contextId), engineType(engineType) {
     if (osInterface) {
-        osContextImpl = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), contextId);
+        osContextImpl = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), contextId, engineType);
     }
 }
 OsContext::~OsContext() = default;

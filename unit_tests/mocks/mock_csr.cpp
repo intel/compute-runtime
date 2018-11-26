@@ -8,7 +8,7 @@
 #include "unit_tests/mocks/mock_csr.h"
 #include "runtime/os_interface/os_interface.h"
 
-FlushStamp MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
+FlushStamp MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     FlushStamp stamp = 0;
     return stamp;
 }
@@ -23,7 +23,7 @@ CompletionStamp MockCommandStreamReceiver::flushTask(
     DispatchFlags &dispatchFlags,
     Device &device) {
     ++taskCount;
-    CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp(), 0, EngineType::ENGINE_RCS};
+    CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp()};
     return stamp;
 }
 

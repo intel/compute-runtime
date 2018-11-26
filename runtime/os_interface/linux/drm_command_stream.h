@@ -27,6 +27,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     using BaseClass::makeNonResident;
     using BaseClass::makeResident;
     using BaseClass::mediaVfeStateDirty;
+    using BaseClass::osContext;
     using BaseClass::requiredScratchSize;
 
   public:
@@ -35,11 +36,11 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     DrmCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment,
                              gemCloseWorkerMode mode = gemCloseWorkerMode::gemCloseWorkerActive);
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
     void makeResident(GraphicsAllocation &gfxAllocation) override;
-    void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
+    void processResidency(ResidencyContainer &allocationsForResidency) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
-    bool waitForFlushStamp(FlushStamp &flushStampToWait, OsContext &osContext) override;
+    bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
     void overrideMediaVFEStateDirty(bool dirty) override;
 
     DrmMemoryManager *getMemoryManager();

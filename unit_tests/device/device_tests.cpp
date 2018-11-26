@@ -84,9 +84,10 @@ TEST_F(DeviceTest, retainAndRelease) {
 TEST_F(DeviceTest, getEngineTypeDefault) {
     auto pTestDevice = std::unique_ptr<Device>(createWithUsDeviceId(0));
 
-    EngineType actualEngineType = pDevice->getEngineType();
+    EngineType actualEngineType = pDevice->getEngine(0).osContext->getEngineType().type;
     EngineType defaultEngineType = pDevice->getHardwareInfo().capabilityTable.defaultEngineType;
 
+    EXPECT_EQ(&pDevice->getEngine(0).commandStreamReceiver->getOsContext(), pDevice->getEngine(0).osContext);
     EXPECT_EQ(defaultEngineType, actualEngineType);
 }
 
@@ -96,7 +97,7 @@ TEST_F(DeviceTest, givenDebugVariableOverrideEngineTypeWhenDeviceIsCreatedThenUs
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(expectedEngine));
     auto pTestDevice = std::unique_ptr<Device>(createWithUsDeviceId(0));
 
-    EngineType actualEngineType = pTestDevice->getEngineType();
+    EngineType actualEngineType = pTestDevice->getEngine(0).osContext->getEngineType().type;
     EngineType defaultEngineType = pDevice->getHardwareInfo().capabilityTable.defaultEngineType;
 
     EXPECT_NE(defaultEngineType, actualEngineType);
@@ -166,12 +167,12 @@ TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryM
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqueId) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.incRefInternal();
-    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 0u));
+    auto device1 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 0u));
     auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 1u));
 
-    EXPECT_EQ(0u, device->getOsContext()->getContextId());
-    EXPECT_EQ(1u, device2->getOsContext()->getContextId());
-    EXPECT_EQ(2u, device->getMemoryManager()->getOsContextCount());
+    EXPECT_EQ(0u, device1->getEngine(0).osContext->getContextId());
+    EXPECT_EQ(1u, device2->getEngine(0).osContext->getContextId());
+    EXPECT_EQ(2u, executionEnvironment.memoryManager->getOsContextCount());
 }
 
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {

@@ -27,6 +27,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/program/printf_handler.h"
 #include "runtime/program/block_kernel_manager.h"
 #include "runtime/utilities/range.h"
@@ -170,7 +171,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     KernelOperation *blockedCommandsData = nullptr;
     std::unique_ptr<PrintfHandler> printfHandler;
     bool slmUsed = false;
-    EngineType engineType = device->getEngineType();
     auto preemption = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
@@ -394,11 +394,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
         }
     } else {
-        CompletionStamp cmplStamp = {
-            Event::eventNotReady,
-            taskLevel,
-            0,
-            engineType};
+        CompletionStamp cmplStamp = {Event::eventNotReady, taskLevel, 0};
         completionStamp = cmplStamp;
     }
     updateFromCompletionStamp(completionStamp);

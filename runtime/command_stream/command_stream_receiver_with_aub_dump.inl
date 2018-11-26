@@ -24,11 +24,11 @@ CommandStreamReceiverWithAUBDump<BaseCSR>::~CommandStreamReceiverWithAUBDump() {
 }
 
 template <typename BaseCSR>
-FlushStamp CommandStreamReceiverWithAUBDump<BaseCSR>::flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
+FlushStamp CommandStreamReceiverWithAUBDump<BaseCSR>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     if (aubCSR) {
-        aubCSR->flush(batchBuffer, engineOrdinal, allocationsForResidency, osContext);
+        aubCSR->flush(batchBuffer, allocationsForResidency);
     }
-    FlushStamp flushStamp = BaseCSR::flush(batchBuffer, engineOrdinal, allocationsForResidency, osContext);
+    FlushStamp flushStamp = BaseCSR::flush(batchBuffer, allocationsForResidency);
     return flushStamp;
 }
 

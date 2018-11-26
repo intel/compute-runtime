@@ -1622,8 +1622,7 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareTheSameBufferOb
     testedCsr->makeResident(*graphicsAllocation2);
     EXPECT_EQ(2u, testedCsr->getResidencyAllocations().size());
 
-    OsContext osContext(executionEnvironment->osInterface.get(), 0u);
-    testedCsr->processResidency(testedCsr->getResidencyAllocations(), osContext);
+    testedCsr->processResidency(testedCsr->getResidencyAllocations());
 
     EXPECT_EQ(1u, testedCsr->residency.size());
 
@@ -1651,8 +1650,7 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBuf
     testedCsr->makeResident(*graphicsAllocation2);
     EXPECT_EQ(2u, testedCsr->getResidencyAllocations().size());
 
-    OsContext osContext(executionEnvironment->osInterface.get(), 0u);
-    testedCsr->processResidency(testedCsr->getResidencyAllocations(), osContext);
+    testedCsr->processResidency(testedCsr->getResidencyAllocations());
 
     EXPECT_EQ(2u, testedCsr->residency.size());
 

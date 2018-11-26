@@ -92,7 +92,7 @@ TEST_F(TbxCommandStreamTests, DISABLED_flush) {
     LinearStream cs(buffer, 4096);
     size_t startOffset = 0;
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), startOffset, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    pCommandStreamReceiver->flush(batchBuffer, EngineType::ENGINE_RCS, pCommandStreamReceiver->getResidencyAllocations(), *pDevice->getOsContext());
+    pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
 }
 
 HWTEST_F(TbxCommandStreamTests, DISABLED_flushUntilTailRCSLargerThanSizeRCS) {
@@ -104,12 +104,12 @@ HWTEST_F(TbxCommandStreamTests, DISABLED_flushUntilTailRCSLargerThanSizeRCS) {
     auto &engineInfo = tbxCsr->engineInfoTable[EngineType::ENGINE_RCS];
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), startOffset, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    pCommandStreamReceiver->flush(batchBuffer, EngineType::ENGINE_RCS, pCommandStreamReceiver->getResidencyAllocations(), *pDevice->getOsContext());
+    pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
     auto size = engineInfo.sizeRCS;
     engineInfo.sizeRCS = 64;
-    pCommandStreamReceiver->flush(batchBuffer, EngineType::ENGINE_RCS, pCommandStreamReceiver->getResidencyAllocations(), *pDevice->getOsContext());
-    pCommandStreamReceiver->flush(batchBuffer, EngineType::ENGINE_RCS, pCommandStreamReceiver->getResidencyAllocations(), *pDevice->getOsContext());
-    pCommandStreamReceiver->flush(batchBuffer, EngineType::ENGINE_RCS, pCommandStreamReceiver->getResidencyAllocations(), *pDevice->getOsContext());
+    pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
+    pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
+    pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
     engineInfo.sizeRCS = size;
 }
 
@@ -230,7 +230,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     EXPECT_FALSE(graphicsAllocation->isResident(0u));
 
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    tbxCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
+    tbxCsr->processResidency(allocationsForResidency);
 
     EXPECT_TRUE(graphicsAllocation->isResident(0u));
     EXPECT_EQ(tbxCsr->peekTaskCount() + 1, graphicsAllocation->getResidencyTaskCount(0u));
@@ -249,7 +249,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     EXPECT_FALSE(graphicsAllocation->isResident(0u));
 
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    tbxCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
+    tbxCsr->processResidency(allocationsForResidency);
 
     EXPECT_TRUE(graphicsAllocation->isResident(0u));
     EXPECT_EQ(tbxCsr->peekTaskCount() + 1, graphicsAllocation->getResidencyTaskCount(0u));
@@ -270,12 +270,12 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
 
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = OCLRT::ENGINE_RCS;
+
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
 
     EXPECT_FALSE(graphicsAllocation->isResident(0u));
 
-    tbxCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+    tbxCsr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_TRUE(graphicsAllocation->isResident(0u));
     EXPECT_EQ(tbxCsr->peekTaskCount() + 1, graphicsAllocation->getResidencyTaskCount(0u));

@@ -7,6 +7,7 @@
 
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -392,14 +393,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, completionStampValid) {
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, completionStamp) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto deviceEngineType = pDevice->getEngineType();
     auto completionStamp = flushTask(commandStreamReceiver);
 
     EXPECT_EQ(1u, completionStamp.taskCount);
     EXPECT_EQ(taskLevel, completionStamp.taskLevel);
     EXPECT_EQ(commandStreamReceiver.flushStamp->peekStamp(), completionStamp.flushStamp);
-    EXPECT_EQ(0u, completionStamp.deviceOrdinal);
-    EXPECT_EQ(deviceEngineType, completionStamp.engineType);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressTracking) {
@@ -740,7 +738,7 @@ struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> 
                                                                                                            flushCount(0) {
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override {
+    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         ++flushCount;
         return 0;
     }

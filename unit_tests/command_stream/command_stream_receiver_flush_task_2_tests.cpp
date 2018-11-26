@@ -7,6 +7,7 @@
 
 #include "reg_configs_common.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
+#include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -66,7 +67,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskWithTaskCSPassedAsCommand
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto &commandStreamTask = commandQueue.getCS(1024);
-    auto deviceEngineType = pDevice->getEngineType();
 
     DispatchFlags dispatchFlags;
 
@@ -84,8 +84,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskWithTaskCSPassedAsCommand
     // Verify that flushTask returned a valid completion stamp
     EXPECT_EQ(commandStreamReceiver.peekTaskCount(), cs.taskCount);
     EXPECT_EQ(commandStreamReceiver.peekTaskLevel(), cs.taskLevel);
-    EXPECT_EQ(0u, cs.deviceOrdinal);
-    EXPECT_EQ(deviceEngineType, cs.engineType);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenEmptyQueue) {

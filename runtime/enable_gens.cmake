@@ -7,12 +7,10 @@
 set(RUNTIME_SRCS_GENX_CPP_WINDOWS
   windows/command_stream_receiver
   windows/gmm_callbacks
-  windows/wddm
 )
 
 set(RUNTIME_SRCS_GENX_CPP_LINUX
   linux/command_stream_receiver
-  linux/drm_engine_mapper
 )
 
 set(RUNTIME_SRCS_GENX_H_BASE

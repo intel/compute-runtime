@@ -58,7 +58,7 @@ class WddmMock : public Wddm {
     bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) override;
     bool destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext);
     bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) override;
-    bool createContext(D3DKMT_HANDLE &context) override;
+    bool createContext(D3DKMT_HANDLE &context, EngineInstanceT engineType) override;
     void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData) override;
     bool destroyContext(D3DKMT_HANDLE context) override;
     bool queryAdapterInfo() override;

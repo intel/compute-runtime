@@ -15,7 +15,5 @@ struct CompletionStamp {
     uint32_t taskCount;
     uint32_t taskLevel;
     FlushStamp flushStamp;
-    uint32_t deviceOrdinal;
-    EngineType engineType;
 };
 } // namespace OCLRT

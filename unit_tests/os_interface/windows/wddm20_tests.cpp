@@ -17,6 +17,7 @@
 #include "runtime/os_interface/os_library.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
+#include "runtime/os_interface/windows/wddm_engine_mapper.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -545,6 +546,13 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
     auto createContextParams = this->getCreateContextDataFcn();
     auto privateData = (CREATECONTEXT_PVTDATA *)createContextParams->pPrivateDriverData;
     EXPECT_TRUE(!!privateData->NoRingFlushes);
+}
+
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenEngineTypeWhenCreatingContextThenPassCorrectNodeOrdinal) {
+    init();
+    auto createContextParams = this->getCreateContextDataFcn();
+    UINT expected = WddmEngineMapper::engineNodeMap(gpgpuEngineInstances[0].type);
+    EXPECT_EQ(expected, createContextParams->NodeOrdinal);
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, whenCreateContextIsCalledThenDisableHwQueues) {

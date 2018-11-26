@@ -63,9 +63,6 @@ class Device : public BaseObject<_cl_device_id> {
     const DeviceInfo &getDeviceInfo() const;
     DeviceInfo *getMutableDeviceInfo();
     MOCKABLE_VIRTUAL const WorkaroundTable *getWaTable() const;
-    EngineType getEngineType() const {
-        return engineType;
-    }
 
     void initMaxPowerSavingMode();
     void *getSLMWindowStartAddress();
@@ -120,7 +117,6 @@ class Device : public BaseObject<_cl_device_id> {
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
-    OsContext *getOsContext() const { return engines[0].osContext; }
     uint32_t getDeviceIndex() { return deviceIndex; }
     bool isFullRangeSvm() {
         return getHardwareInfo().capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
@@ -164,7 +160,6 @@ class Device : public BaseObject<_cl_device_id> {
     std::string exposedBuiltinKernels = "";
 
     PreemptionMode preemptionMode;
-    EngineType engineType;
     ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t deviceIndex = 0u;
 };

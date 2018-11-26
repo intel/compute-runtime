@@ -135,6 +135,9 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
         executionEnvironment->commandStreamReceivers[0][0]->initializeTagAllocation();
     }
 
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(getChosenEngineType(*platformDevices[0]));
+    executionEnvironment->commandStreamReceivers[0][0]->setOsContext(osContext);
+
     std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);
     if (allocateCommandBuffer) {
         aubExecutionEnvironment->commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemory(4096);

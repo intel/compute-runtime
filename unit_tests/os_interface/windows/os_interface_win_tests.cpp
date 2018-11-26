@@ -29,7 +29,7 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextBeforeInitWddmThenOsContextIsNot
     auto wddm = new WddmMock;
     OSInterface osInterface;
     osInterface.get()->setWddm(wddm);
-    EXPECT_THROW(auto osContext = std::make_unique<OsContext>(&osInterface, 0u), std::exception);
+    EXPECT_THROW(auto osContext = std::make_unique<OsContext>(&osInterface, 0u, gpgpuEngineInstances[0]), std::exception);
 }
 
 TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInitializedAndTrimCallbackIsRegistered) {
@@ -38,7 +38,7 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
     osInterface.get()->setWddm(wddm);
     wddm->init();
     EXPECT_EQ(0u, wddm->registerTrimCallbackResult.called);
-    auto osContext = std::make_unique<OsContext>(&osInterface, 0u);
+    auto osContext = std::make_unique<OsContext>(&osInterface, 0u, gpgpuEngineInstances[0]);
     EXPECT_NE(nullptr, osContext->get());
     EXPECT_TRUE(osContext->get()->isInitialized());
     EXPECT_EQ(osContext->get()->getWddm(), wddm);
@@ -46,6 +46,6 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
 }
 
 TEST(OsContextTest, whenCreateOsContextWithoutOsInterfaceThenOsContextImplIsNotAvailable) {
-    auto osContext = std::make_unique<OsContext>(nullptr, 0u);
+    auto osContext = std::make_unique<OsContext>(nullptr, 0u, gpgpuEngineInstances[0]);
     EXPECT_EQ(nullptr, osContext->get());
 }

@@ -13,10 +13,9 @@
 
 namespace OCLRT {
 
-template <typename Family>
 class DrmEngineMapper {
   public:
-    static bool engineNodeMap(EngineType engineType, unsigned int &flag);
+    static unsigned int engineNodeMap(EngineType engineType);
 };
 
 } // namespace OCLRT

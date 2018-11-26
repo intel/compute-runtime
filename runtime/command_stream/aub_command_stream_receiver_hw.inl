@@ -23,6 +23,7 @@
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/os_context.h"
 #include "driver_version.h"
 
 #include <algorithm>
@@ -313,8 +314,7 @@ CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const Hardw
 }
 
 template <typename GfxFamily>
-FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer,
-                                                        EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
+FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             if (this->standalone) {
@@ -325,7 +325,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     auto streamLocked = getAubStream()->lockStream();
-    auto engineIndex = getEngineIndex(engineType);
+    auto engineIndex = getEngineIndex(osContext->getEngineType().type);
     auto engineInstance = allEngineInstances[engineIndex];
 
     initializeEngine(engineIndex);
@@ -358,7 +358,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->deviceIndex);
         }
     }
-    processResidency(allocationsForResidency, osContext);
+    processResidency(allocationsForResidency);
 
     submitBatchBuffer(engineIndex, batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
 
@@ -711,7 +711,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(void *gfxAddress, const
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) {
+void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             return;

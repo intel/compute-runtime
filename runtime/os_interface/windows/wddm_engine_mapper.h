@@ -15,10 +15,9 @@
 
 namespace OCLRT {
 
-template <typename Family>
 class WddmEngineMapper {
   public:
-    static bool engineNodeMap(EngineType engineType, GPUNODE_ORDINAL &gpuNode);
+    static GPUNODE_ORDINAL engineNodeMap(EngineType engineType);
 };
 
 } // namespace OCLRT

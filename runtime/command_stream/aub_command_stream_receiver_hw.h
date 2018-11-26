@@ -26,15 +26,16 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     typedef typename AUBFamilyMapper<GfxFamily>::AUB AUB;
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
     using ExternalAllocationsContainer = std::vector<AllocationView>;
+    using BaseClass::osContext;
 
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::stream;
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
-    void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
+    void processResidency(ResidencyContainer &allocationsForResidency) override;
 
     void makeResidentExternal(AllocationView &allocationView);
     void makeNonResidentExternal(uint64_t gpuAddress);

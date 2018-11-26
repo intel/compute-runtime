@@ -259,11 +259,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefault
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {};
 
     EXPECT_CALL(*mockHelper, flattenBatchBuffer(::testing::_, ::testing::_, ::testing::_)).Times(0);
-    aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->flush(batchBuffer, allocationsForResidency);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeThenExpectFlattenBatchBufferIsCalled) {
@@ -283,7 +282,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     ASSERT_NE(nullptr, chainedBatchBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, chainedBatchBuffer, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = OCLRT::ENGINE_RCS;
 
     aubCsr->makeResident(*chainedBatchBuffer);
 
@@ -293,7 +291,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 
     auto expectedAllocation = ptr.get();
     EXPECT_CALL(*mockHelper, flattenBatchBuffer(::testing::_, ::testing::_, ::testing::_)).WillOnce(::testing::Return(ptr.release()));
-    aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_EQ(batchBuffer.commandBufferAllocation, expectedAllocation);
 
@@ -314,10 +312,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = OCLRT::ENGINE_RCS;
 
     EXPECT_CALL(*mockHelper, flattenBatchBuffer(::testing::_, ::testing::_, ::testing::_)).Times(1);
-    aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->flush(batchBuffer, allocationsForResidency);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndBatchedDispatchModeThenExpectFlattenBatchBufferIsCalledAnyway) {
@@ -334,10 +331,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     ResidencyContainer allocationsForResidency;
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = OCLRT::ENGINE_RCS;
 
     EXPECT_CALL(*mockHelper, flattenBatchBuffer(::testing::_, ::testing::_, ::testing::_)).Times(1);
-    aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->flush(batchBuffer, allocationsForResidency);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoCommentsIsCalled) {
@@ -349,11 +345,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = OCLRT::ENGINE_RCS;
+
     ResidencyContainer allocationsForResidency;
 
     EXPECT_CALL(*aubCsr, addPatchInfoComments()).Times(1);
-    aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->flush(batchBuffer, allocationsForResidency);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoCommentsIsNotCalled) {
@@ -362,12 +358,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = OCLRT::ENGINE_RCS;
+
     ResidencyContainer allocationsForResidency;
 
     EXPECT_CALL(*aubCsr, addPatchInfoComments()).Times(0);
 
-    aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->flush(batchBuffer, allocationsForResidency);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledForEmptyPatchInfoListThenIndirectPatchCommandBufferIsNotCreated) {
@@ -626,7 +622,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 
     ASSERT_EQ(1u, aubCsr->externalAllocations.size());
     ResidencyContainer allocationsForResidency;
-    aubCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->processResidency(allocationsForResidency);
 
     EXPECT_TRUE(aubCsr->writeMemoryParametrization.wasCalled);
     EXPECT_EQ(addr, aubCsr->writeMemoryParametrization.receivedAllocationView.first);
@@ -641,7 +637,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 
     ASSERT_EQ(1u, aubCsr->externalAllocations.size());
     ResidencyContainer allocationsForResidency;
-    aubCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->processResidency(allocationsForResidency);
 
     EXPECT_TRUE(aubCsr->writeMemoryParametrization.wasCalled);
     EXPECT_EQ(0u, aubCsr->writeMemoryParametrization.receivedAllocationView.first);

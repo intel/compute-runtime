@@ -56,7 +56,7 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
         executionEnvironment.osInterface->get()->setWddm(wddm);
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(wddm, executionEnvironment);
-        memoryManager->createAndRegisterOsContext();
+        memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
 
         osContext = memoryManager->getRegisteredOsContext(0);
         osContext->incRefInternal();
@@ -120,7 +120,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public GmmEnvironmentFixture {
         memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm, executionEnvironment);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
-        memoryManager->createAndRegisterOsContext();
+        memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
 
         osContext = memoryManager->getRegisteredOsContext(0);
         osContext->incRefInternal();

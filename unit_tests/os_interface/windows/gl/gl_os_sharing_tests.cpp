@@ -323,7 +323,7 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
     };
     FailSignalSyncObjectMock::reset();
     wddm->init();
-    OsContext osContext(&osInterface, 0u);
+    OsContext osContext(&osInterface, 0u, gpgpuEngineInstances[0]);
 
     CL_GL_SYNC_INFO syncInfo = {};
     syncInfo.serverSynchronizationObject = 0x5cU;
@@ -381,7 +381,7 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
     };
     FailSignalSyncObjectMock::reset();
     wddm->init();
-    OsContext osContext(&osInterface, 0u);
+    OsContext osContext(&osInterface, 0u, gpgpuEngineInstances[0]);
 
     CL_GL_SYNC_INFO syncInfo = {};
     syncInfo.submissionSynchronizationObject = 0x7cU;

@@ -153,9 +153,7 @@ TEST(CommandQueue, IOQ_taskLevelFromCompletionStamp) {
     CompletionStamp cs = {
         cmdQ.taskCount + 100,
         cmdQ.taskLevel + 50,
-        5,
-        0,
-        EngineType::ENGINE_RCS};
+        5};
     cmdQ.updateFromCompletionStamp(cs);
 
     EXPECT_EQ(cs.taskLevel, cmdQ.taskLevel);
@@ -173,9 +171,7 @@ TEST(CommandQueue, givenTimeStampWithTaskCountNotReadyStatusWhenupdateFromComple
     CompletionStamp cs = {
         Event::eventNotReady,
         0,
-        0,
-        0,
-        EngineType::ENGINE_RCS};
+        0};
     cmdQ.updateFromCompletionStamp(cs);
     EXPECT_EQ(1u, cmdQ.taskCount);
 }
@@ -190,9 +186,7 @@ TEST(CommandQueue, GivenOOQwhenUpdateFromCompletionStampWithTrueIsCalledThenTask
     CompletionStamp cs = {
         cmdQ.taskCount + 100,
         cmdQ.taskLevel + 50,
-        5,
-        0,
-        EngineType::ENGINE_RCS};
+        5};
     cmdQ.updateFromCompletionStamp(cs);
 
     EXPECT_NE(oldTL, cmdQ.taskLevel);

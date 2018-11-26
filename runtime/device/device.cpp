@@ -70,7 +70,6 @@ Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnviro
     deviceExtensions.reserve(1000);
     name.reserve(100);
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
-    engineType = getChosenEngineType(hwInfo);
 
     if (!getSourceLevelDebugger()) {
         this->executionEnvironment->initSourceLevelDebugger(hwInfo);
@@ -118,8 +117,9 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages(), outDevice.getEnableLocalMemory(),
                                                   outDevice.getDeviceIndex(), deviceCsrIndex);
 
-    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext();
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext({getChosenEngineType(*pHwInfo), 0});
     auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[outDevice.getDeviceIndex()][deviceCsrIndex].get();
+    commandStreamReceiver->setOsContext(osContext);
     if (!commandStreamReceiver->initializeTagAllocation()) {
         return false;
     }
