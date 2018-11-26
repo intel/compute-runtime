@@ -88,6 +88,7 @@ TEST_F(ScenarioTest, givenAsyncHandlerDisabledAndUserEventBlockingEnqueueAndOutp
 TEST_F(ScenarioTest, givenAsyncHandlerEnabledAndUserEventBlockingEnqueueAndOutputEventWithCallbackWhenUserEventIsSetCompleteThanCallbackIsExecuted) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableAsyncEventsHandler.set(true);
+    DebugManager.flags.EnableTimestampPacket.set(false);
 
     cl_command_queue clCommandQ = nullptr;
     cl_queue_properties properties = 0;
@@ -112,9 +113,6 @@ TEST_F(ScenarioTest, givenAsyncHandlerEnabledAndUserEventBlockingEnqueueAndOutpu
     data.callbackCalled = false;
     data.signalCallbackDoneEvent = new UserEvent(context);
     cl_event callbackEvent = data.signalCallbackDoneEvent;
-
-    // This retain should not be needed, runtime shouldn't delete event before callbacks are finished
-    //clRetainEvent(callbackEvent);
 
     clSetEventCallback(eventOut, CL_COMPLETE, callback, &data);
     EXPECT_FALSE(data.callbackCalled);
