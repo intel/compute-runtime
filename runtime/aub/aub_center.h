@@ -36,6 +36,10 @@ class AubCenter {
         return streamProvider.get();
     }
 
+    AubDump::AubManager *getAubManager() const {
+        return aubManager.get();
+    }
+
   protected:
     std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;
     std::unique_ptr<AddressMapper> addressMapper;

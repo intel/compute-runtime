@@ -8,13 +8,21 @@ project(igdrcl_aub_tests)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/common.cmake)
 
-add_executable(igdrcl_aub_tests
+list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.cpp
   $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
   $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
   $<TARGET_OBJECTS:igdrcl_libult>
   $<TARGET_OBJECTS:igdrcl_libult_cs>
   $<TARGET_OBJECTS:igdrcl_libult_env>
+)
+
+if(DEFINED AUB_STREAM_DIR)
+  list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS $<TARGET_OBJECTS:${AUB_STREAM_ENABLE_LIB_NAME}>)
+endif()
+
+add_executable(igdrcl_aub_tests
+  ${IGDRCL_AUB_TESTS__TARGET_OBJECTS}
 )
 
 set_target_properties(igdrcl_aub_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})

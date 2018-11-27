@@ -409,6 +409,7 @@ endif()
 
 add_subdirectory(third_party/gtest)
 if(DEFINED AUB_STREAM_DIR)
+    set(AUB_STREAM_ENABLE_LIB_NAME "aub_mem_dump_enable")
     add_subdirectory(${AUB_STREAM_DIR} ${CMAKE_BINARY_DIR}/aub_stream)
 endif()
 

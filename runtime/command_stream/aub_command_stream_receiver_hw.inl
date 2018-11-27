@@ -609,6 +609,24 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResidentExternal(uint64_t gpu
 }
 
 template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) {
+    {
+        std::ostringstream str;
+        str << "ppgtt: " << std::hex << std::showbase << gpuAddress << " end address: " << gpuAddress + size << " cpu address: " << cpuAddress << " device mask: " << devicesBitfield << " size: " << std::dec << size;
+        getAubStream()->addComment(str.str().c_str());
+    }
+
+    AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
+
+    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
+        AUB::reserveAddressGGTTAndWriteMmeory(*stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, entryBits,
+                                              aubHelperHw);
+    };
+
+    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, entryBits, walker, memoryBank);
+}
+
+template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
     auto cpuAddress = ptrOffset(gfxAllocation.getUnderlyingBuffer(), static_cast<size_t>(gfxAllocation.allocationOffset));
     auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
@@ -625,20 +643,8 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         cpuAddress = this->getMemoryManager()->lockResource(&gfxAllocation);
         gfxAllocation.setLocked(true);
     }
-    {
-        std::ostringstream str;
-        str << "ppgtt: " << std::hex << std::showbase << gpuAddress << " end address: " << gpuAddress + size << " cpu address: " << cpuAddress << " device mask: " << gfxAllocation.devicesBitfield << " size: " << std::dec << size;
-        getAubStream()->addComment(str.str().c_str());
-    }
 
-    AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
-
-    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
-        AUB::reserveAddressGGTTAndWriteMmeory(*stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, getPPGTTAdditionalBits(&gfxAllocation),
-                                              aubHelperHw);
-    };
-
-    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, getPPGTTAdditionalBits(&gfxAllocation), walker, this->getMemoryBank(&gfxAllocation));
+    writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), getPPGTTAdditionalBits(&gfxAllocation), gfxAllocation.devicesBitfield);
 
     if (gfxAllocation.isLocked()) {
         this->getMemoryManager()->unlockResource(&gfxAllocation);

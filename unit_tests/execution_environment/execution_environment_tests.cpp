@@ -132,6 +132,13 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCal
     EXPECT_STREQ(executionEnvironment.aubFileNameReceived.c_str(), "test.aub");
 }
 
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenGetAubManagerIsCalledThenReturnNull) {
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.initAubCenter(platformDevices[0], false, "");
+    auto aubManager = executionEnvironment.aubCenter->getAubManager();
+    EXPECT_EQ(nullptr, aubManager);
+}
+
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initAubCenter(platformDevices[0], false, "");

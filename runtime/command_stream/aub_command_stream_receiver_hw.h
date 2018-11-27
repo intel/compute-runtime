@@ -43,6 +43,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
         return static_cast<AubMemDump::AubFileStream *>(this->stream);
     }
 
+    MOCKABLE_VIRTUAL void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield);
     MOCKABLE_VIRTUAL bool writeMemory(GraphicsAllocation &gfxAllocation);
     MOCKABLE_VIRTUAL bool writeMemory(AllocationView &allocationView);
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue);
