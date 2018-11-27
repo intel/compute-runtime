@@ -8,6 +8,7 @@
 #pragma once
 
 #include "unit_tests/fixtures/platform_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "runtime/helpers/options.h"
@@ -21,12 +22,9 @@ class ScenarioTest : public ::testing::Test,
                      public PlatformFixture {
     using PlatformFixture::SetUp;
 
-  public:
-    ScenarioTest() {
-    }
-
   protected:
     void SetUp() override {
+        DebugManager.flags.EnableTimestampPacket.set(false);
         PlatformFixture::SetUp();
 
         auto pDevice = pPlatform->getDevice(0);
@@ -52,7 +50,7 @@ class ScenarioTest : public ::testing::Test,
     }
 
     cl_int retVal;
-
+    DebugManagerStateRestore dbgRestorer;
     MockCommandQueue *commandQueue = nullptr;
     MockContext *context = nullptr;
     MockKernelWithInternals *kernelInternals = nullptr;

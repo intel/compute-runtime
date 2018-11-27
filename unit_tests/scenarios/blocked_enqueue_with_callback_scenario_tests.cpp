@@ -6,7 +6,6 @@
  */
 
 #include "unit_tests/fixtures/scenario_test_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "runtime/event/user_event.h"
@@ -45,7 +44,6 @@ void CL_CALLBACK callback(cl_event event, cl_int status, void *data) {
 }
 
 TEST_F(ScenarioTest, givenAsyncHandlerDisabledAndUserEventBlockingEnqueueAndOutputEventWithCallbackWhenUserEventIsSetCompleteThanCallbackIsExecuted) {
-    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
 
     cl_command_queue clCommandQ = nullptr;
@@ -86,9 +84,7 @@ TEST_F(ScenarioTest, givenAsyncHandlerDisabledAndUserEventBlockingEnqueueAndOutp
 }
 
 TEST_F(ScenarioTest, givenAsyncHandlerEnabledAndUserEventBlockingEnqueueAndOutputEventWithCallbackWhenUserEventIsSetCompleteThanCallbackIsExecuted) {
-    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableAsyncEventsHandler.set(true);
-    DebugManager.flags.EnableTimestampPacket.set(false);
 
     cl_command_queue clCommandQ = nullptr;
     cl_queue_properties properties = 0;
