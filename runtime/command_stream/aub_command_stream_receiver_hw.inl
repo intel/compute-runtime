@@ -628,7 +628,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
-    auto cpuAddress = ptrOffset(gfxAllocation.getUnderlyingBuffer(), static_cast<size_t>(gfxAllocation.allocationOffset));
+    auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
     auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
     auto size = gfxAllocation.getUnderlyingBufferSize();
     if (gfxAllocation.gmm && gfxAllocation.gmm->isRenderCompressed) {
