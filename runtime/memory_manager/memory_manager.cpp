@@ -14,14 +14,12 @@
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/options.h"
-#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/utilities/stackvec.h"
-#include "runtime/utilities/tag_allocator.h"
 
 #include <algorithm>
 
@@ -131,44 +129,7 @@ void MemoryManager::applyCommonCleanup() {
     if (this->paddingAllocation) {
         this->freeGraphicsMemory(this->paddingAllocation);
     }
-    if (profilingTimeStampAllocator) {
-        profilingTimeStampAllocator->cleanUpResources();
-    }
-    if (perfCounterAllocator) {
-        perfCounterAllocator->cleanUpResources();
-    }
-
-    if (timestampPacketAllocator) {
-        timestampPacketAllocator->cleanUpResources();
-    }
 }
-
-TagAllocator<HwTimeStamps> *MemoryManager::obtainEventTsAllocator(size_t poolSize) {
-    if (profilingTimeStampAllocator.get() == nullptr) {
-        profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(this, poolSize, MemoryConstants::cacheLineSize);
-    }
-    return profilingTimeStampAllocator.get();
-}
-
-TagAllocator<HwPerfCounter> *MemoryManager::obtainEventPerfCountAllocator(size_t poolSize) {
-    if (perfCounterAllocator.get() == nullptr) {
-        perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(this, poolSize, MemoryConstants::cacheLineSize);
-    }
-    return perfCounterAllocator.get();
-}
-
-TagAllocator<TimestampPacket> *MemoryManager::obtainTimestampPacketAllocator(size_t poolSize) {
-    if (timestampPacketAllocator.get() == nullptr) {
-        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacket>>(this, poolSize, MemoryConstants::cacheLineSize);
-    }
-    return timestampPacketAllocator.get();
-}
-
-TagAllocator<HwTimeStamps> *MemoryManager::peekEventTsAllocator() const { return profilingTimeStampAllocator.get(); }
-
-TagAllocator<HwPerfCounter> *MemoryManager::peekEventPerfCountAllocator() const { return perfCounterAllocator.get(); }
-
-TagAllocator<TimestampPacket> *MemoryManager::peekTimestampPacketAllocator() const { return timestampPacketAllocator.get(); }
 
 void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
     freeGraphicsMemoryImpl(gfxAllocation);

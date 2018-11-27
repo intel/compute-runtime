@@ -82,7 +82,7 @@ CommandQueue::CommandQueue(Context *context,
     if (device) {
         engine = &device->getEngine(engineId);
         if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-            timestampPacketContainer = std::make_unique<TimestampPacketContainer>(device->getMemoryManager());
+            timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
     }
 }
@@ -580,9 +580,7 @@ void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, 
 }
 
 void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes) {
-    auto preferredPoolSize = getCommandStreamReceiver().getPreferredTagPoolSize();
-
-    auto allocator = device->getMemoryManager()->obtainTimestampPacketAllocator(preferredPoolSize);
+    auto allocator = getCommandStreamReceiver().getTimestampPacketAllocator();
 
     previousNodes.swapNodes(*timestampPacketContainer);
     previousNodes.resolveDependencies(isOOQEnabled());

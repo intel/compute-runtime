@@ -18,7 +18,6 @@
 namespace OCLRT {
 class CommandStreamReceiver;
 class LinearStream;
-class MemoryManager;
 template <typename TagType>
 struct TagNode;
 
@@ -96,19 +95,17 @@ struct TimestampPacketHelper {
 class TimestampPacketContainer : public NonCopyableOrMovableClass {
   public:
     using Node = TagNode<TimestampPacket>;
-    TimestampPacketContainer() = delete;
-    TimestampPacketContainer(MemoryManager *memoryManager);
+    TimestampPacketContainer() = default;
     ~TimestampPacketContainer();
 
     const std::vector<Node *> &peekNodes() const { return timestampPacketNodes; }
     void add(Node *timestampPacketNode);
     void swapNodes(TimestampPacketContainer &timestampPacketContainer);
-    void assignAndIncrementNodesRefCounts(TimestampPacketContainer &inputTimestampPacketContainer);
+    void assignAndIncrementNodesRefCounts(const TimestampPacketContainer &inputTimestampPacketContainer);
     void resolveDependencies(bool clearAllDependencies);
     void makeResident(CommandStreamReceiver &commandStreamReceiver);
 
   protected:
     std::vector<Node *> timestampPacketNodes;
-    MemoryManager *memoryManager = nullptr;
 };
 } // namespace OCLRT

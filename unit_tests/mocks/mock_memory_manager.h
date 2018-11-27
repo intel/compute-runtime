@@ -21,7 +21,6 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
     using MemoryManager::getAllocationData;
     using MemoryManager::registeredOsContexts;
-    using MemoryManager::timestampPacketAllocator;
     using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
     MockMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment) {
         hostPtrManager.reset(new MockHostPtrManager);

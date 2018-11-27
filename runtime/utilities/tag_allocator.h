@@ -20,17 +20,24 @@ namespace OCLRT {
 class GraphicsAllocation;
 
 template <typename TagType>
+class TagAllocator;
+
+template <typename TagType>
 struct TagNode : public IDNode<TagNode<TagType>> {
   public:
     TagType *tag;
-    GraphicsAllocation *getGraphicsAllocation() {
-        return gfxAllocation;
-    }
+
+    GraphicsAllocation *getGraphicsAllocation() const { return gfxAllocation; }
 
     void incRefCount() { refCount++; }
 
+    void returnTag() {
+        allocator->returnTag(this);
+    }
+
   protected:
     TagNode() = default;
+    TagAllocator<TagType> *allocator;
     GraphicsAllocation *gfxAllocation;
     std::atomic<uint32_t> refCount{0};
 
@@ -54,16 +61,13 @@ class TagAllocator {
     }
 
     void cleanUpResources() {
-        size_t size = gfxAllocations.size();
-
-        for (uint32_t i = 0; i < size; ++i) {
-            memoryManager->freeGraphicsMemory(gfxAllocations[i]);
+        for (auto gfxAllocation : gfxAllocations) {
+            memoryManager->freeGraphicsMemory(gfxAllocation);
         }
         gfxAllocations.clear();
 
-        size = tagPoolMemory.size();
-        for (uint32_t i = 0; i < size; ++i) {
-            delete[] tagPoolMemory[i];
+        for (auto nodesMemory : tagPoolMemory) {
+            delete[] nodesMemory;
         }
         tagPoolMemory.clear();
     }
@@ -121,8 +125,7 @@ class TagAllocator {
     }
 
     void populateFreeTags() {
-        size_t tagSize = sizeof(TagType);
-        tagSize = alignUp(tagSize, tagAlignment);
+        size_t tagSize = alignUp(sizeof(TagType), tagAlignment);
         size_t allocationSizeRequired = tagCount * tagSize;
 
         GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(allocationSizeRequired);
@@ -137,6 +140,7 @@ class TagAllocator {
         NodeType *nodesMemory = new NodeType[nodeCount];
 
         for (size_t i = 0; i < nodeCount; ++i) {
+            nodesMemory[i].allocator = this;
             nodesMemory[i].gfxAllocation = graphicsAllocation;
             nodesMemory[i].tag = reinterpret_cast<TagType *>(Start);
             freeTags.pushTailOne(nodesMemory[i]);

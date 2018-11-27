@@ -56,6 +56,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::submissionAggregator;
     using BaseClass::CommandStreamReceiver::taskCount;
     using BaseClass::CommandStreamReceiver::taskLevel;
+    using BaseClass::CommandStreamReceiver::timestampPacketAllocator;
     using BaseClass::CommandStreamReceiver::timestampPacketWriteEnabled;
     using BaseClass::CommandStreamReceiver::waitForTaskCountAndCleanAllocationList;
 
@@ -90,7 +91,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
 
     void overrideCsrSizeReqFlags(CsrSizeRequestFlags &flags) { this->csrSizeRequestFlags = flags; }
-    GraphicsAllocation *getPreemptionCsrAllocation() { return this->preemptionCsrAllocation; }
+    GraphicsAllocation *getPreemptionCsrAllocation() const { return this->preemptionCsrAllocation; }
 
     void makeResident(GraphicsAllocation &gfxAllocation) override {
         if (storeMakeResidentAllocations) {
@@ -106,7 +107,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         BaseClass::makeResident(gfxAllocation);
     }
 
-    bool isMadeResident(GraphicsAllocation *graphicsAllocation) {
+    bool isMadeResident(GraphicsAllocation *graphicsAllocation) const {
         return makeResidentAllocations.find(graphicsAllocation) != makeResidentAllocations.end();
     }
 

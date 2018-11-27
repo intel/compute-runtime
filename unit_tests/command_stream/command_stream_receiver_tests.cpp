@@ -9,11 +9,13 @@
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/cache_policy.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
+#include "runtime/utilities/tag_allocator.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/gen_common/matchers.h"
@@ -275,6 +277,38 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugVariableEnabledWhenCreatingCsrThen
 HWTEST_F(CommandStreamReceiverTest, whenCsrIsCreatedThenUseTimestampPacketWriteIfPossible) {
     CommandStreamReceiverHw<FamilyType> csr(*platformDevices[0], executionEnvironment);
     EXPECT_EQ(UnitTestHelper<FamilyType>::isTimestampPacketWriteSupported(), csr.peekTimestampPacketWriteEnabled());
+}
+
+TEST_F(CommandStreamReceiverTest, whenGetEventTsAllocatorIsCalledItReturnsSameTagAllocator) {
+    TagAllocator<HwTimeStamps> *allocator = commandStreamReceiver->getEventTsAllocator();
+    EXPECT_NE(nullptr, allocator);
+    TagAllocator<HwTimeStamps> *allocator2 = commandStreamReceiver->getEventTsAllocator();
+    EXPECT_EQ(allocator2, allocator);
+}
+
+TEST_F(CommandStreamReceiverTest, whenGetEventPerfCountAllocatorIsCalledItReturnsSameTagAllocator) {
+    TagAllocator<HwPerfCounter> *allocator = commandStreamReceiver->getEventPerfCountAllocator();
+    EXPECT_NE(nullptr, allocator);
+    TagAllocator<HwPerfCounter> *allocator2 = commandStreamReceiver->getEventPerfCountAllocator();
+    EXPECT_EQ(allocator2, allocator);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenTimestampPacketAllocatorWhenAskingForTagThenReturnValidObject) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(nullptr, csr.timestampPacketAllocator.get());
+
+    TagAllocator<TimestampPacket> *allocator = csr.getTimestampPacketAllocator();
+    EXPECT_NE(nullptr, csr.timestampPacketAllocator.get());
+    EXPECT_EQ(allocator, csr.timestampPacketAllocator.get());
+
+    TagAllocator<TimestampPacket> *allocator2 = csr.getTimestampPacketAllocator();
+    EXPECT_EQ(allocator, allocator2);
+
+    auto node1 = allocator->getTag();
+    auto node2 = allocator->getTag();
+    EXPECT_NE(nullptr, node1);
+    EXPECT_NE(nullptr, node2);
+    EXPECT_NE(node1, node2);
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllocationIsCalledThenCorrectAllocationIsReturned) {

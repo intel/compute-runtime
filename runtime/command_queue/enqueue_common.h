@@ -198,7 +198,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         blocking = true;
     }
 
-    TimestampPacketContainer previousTimestampPacketNodes(device->getMemoryManager());
+    TimestampPacketContainer previousTimestampPacketNodes;
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
 
     if (multiDispatchInfo.empty() == false) {

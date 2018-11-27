@@ -64,7 +64,7 @@ Event::Event(
     if ((this->ctx == nullptr) && (cmdQueue != nullptr)) {
         this->ctx = &cmdQueue->getContext();
         if (cmdQueue->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-            timestampPacketContainer = std::make_unique<TimestampPacketContainer>(cmdQueue->getDevice().getMemoryManager());
+            timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
     }
 
@@ -124,12 +124,10 @@ Event::~Event() {
 
     if (cmdQueue != nullptr) {
         if (timeStampNode != nullptr) {
-            TagAllocator<HwTimeStamps> *allocator = cmdQueue->getDevice().getMemoryManager()->peekEventTsAllocator();
-            allocator->returnTag(timeStampNode);
+            timeStampNode->returnTag();
         }
         if (perfCounterNode != nullptr) {
-            TagAllocator<HwPerfCounter> *allocator = cmdQueue->getDevice().getMemoryManager()->peekEventPerfCountAllocator();
-            allocator->returnTag(perfCounterNode);
+            perfCounterNode->returnTag();
         }
         cmdQueue->decRefInternal();
     }
@@ -669,20 +667,14 @@ void Event::setEndTimeStamp() {
 
 TagNode<HwTimeStamps> *Event::getHwTimeStampNode() {
     if (!timeStampNode) {
-        auto &device = getCommandQueue()->getDevice();
-        auto preferredPoolSize = cmdQueue->getCommandStreamReceiver().getPreferredTagPoolSize();
-
-        timeStampNode = device.getMemoryManager()->obtainEventTsAllocator(preferredPoolSize)->getTag();
+        timeStampNode = cmdQueue->getCommandStreamReceiver().getEventTsAllocator()->getTag();
     }
     return timeStampNode;
 }
 
 TagNode<HwPerfCounter> *Event::getHwPerfCounterNode() {
     if (!perfCounterNode) {
-        auto &device = getCommandQueue()->getDevice();
-        auto preferredPoolSize = cmdQueue->getCommandStreamReceiver().getPreferredTagPoolSize();
-
-        perfCounterNode = device.getMemoryManager()->obtainEventPerfCountAllocator(preferredPoolSize)->getTag();
+        perfCounterNode = cmdQueue->getCommandStreamReceiver().getEventPerfCountAllocator()->getTag();
     }
     return perfCounterNode;
 }
@@ -692,7 +684,7 @@ void Event::copyPerfCounters(InstrPmRegsCfg *config) {
     memcpy_s(perfConfigurationData, sizeof(InstrPmRegsCfg), config, sizeof(InstrPmRegsCfg));
 }
 
-void Event::addTimestampPacketNodes(TimestampPacketContainer &inputTimestampPacketContainer) {
+void Event::addTimestampPacketNodes(const TimestampPacketContainer &inputTimestampPacketContainer) {
     timestampPacketContainer->assignAndIncrementNodesRefCounts(inputTimestampPacketContainer);
 }
 

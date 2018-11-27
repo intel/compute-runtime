@@ -16,10 +16,12 @@
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/string.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/utilities/tag_allocator.h"
 
 namespace OCLRT {
 // Global table of CommandStreamReceiver factories for HW and tests
@@ -364,6 +366,27 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
     surface.setAllocation(allocation);
     internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
     return true;
+}
+
+TagAllocator<HwTimeStamps> *CommandStreamReceiver::getEventTsAllocator() {
+    if (profilingTimeStampAllocator.get() == nullptr) {
+        profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize);
+    }
+    return profilingTimeStampAllocator.get();
+}
+
+TagAllocator<HwPerfCounter> *CommandStreamReceiver::getEventPerfCountAllocator() {
+    if (perfCounterAllocator.get() == nullptr) {
+        perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize);
+    }
+    return perfCounterAllocator.get();
+}
+
+TagAllocator<TimestampPacket> *CommandStreamReceiver::getTimestampPacketAllocator() {
+    if (timestampPacketAllocator.get() == nullptr) {
+        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacket>>(getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize);
+    }
+    return timestampPacketAllocator.get();
 }
 
 } // namespace OCLRT

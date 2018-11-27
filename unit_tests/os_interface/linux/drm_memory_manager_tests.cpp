@@ -678,12 +678,6 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
     EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
 }
 
-TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, testProfilingAllocatorCleanup) {
-    MemoryManager *memMngr = memoryManager;
-    TagAllocator<HwTimeStamps> *allocator = memMngr->obtainEventTsAllocator(2);
-    EXPECT_NE(nullptr, allocator);
-}
-
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32BitDrmAllocationIsBeingReturned) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemWait = 1;

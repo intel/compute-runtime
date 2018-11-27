@@ -8,7 +8,6 @@
 #include "runtime/event/event.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/kernel_commands.h"
-#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/mem_obj/image.h"
@@ -16,7 +15,6 @@
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/program/printf_handler.h"
 #include "runtime/program/program.h"
-#include "runtime/utilities/tag_allocator.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_allocator_fixture.h"
 #include "unit_tests/fixtures/memory_manager_fixture.h"
@@ -357,44 +355,6 @@ TEST_F(MemoryAllocatorTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocatio
     EXPECT_NE(&allocation->fragmentsStorage, &handleStorage);
 
     delete allocation;
-}
-
-TEST_F(MemoryAllocatorTest, getEventTsAllocator) {
-    TagAllocator<HwTimeStamps> *allocator = memoryManager->obtainEventTsAllocator(1);
-    EXPECT_NE(nullptr, allocator);
-    TagAllocator<HwTimeStamps> *allocator2 = memoryManager->obtainEventTsAllocator(1);
-    EXPECT_EQ(allocator2, allocator);
-}
-
-TEST_F(MemoryAllocatorTest, getEventPerfCountAllocator) {
-    TagAllocator<HwPerfCounter> *allocator = memoryManager->obtainEventPerfCountAllocator(1);
-    EXPECT_NE(nullptr, allocator);
-    TagAllocator<HwPerfCounter> *allocator2 = memoryManager->obtainEventPerfCountAllocator(1);
-    EXPECT_EQ(allocator2, allocator);
-}
-
-TEST_F(MemoryAllocatorTest, givenTimestampPacketAllocatorWhenAskingForTagThenReturnValidObject) {
-    ExecutionEnvironment executionEnvironment;
-    class MyMockMemoryManager : public OsAgnosticMemoryManager {
-      public:
-        using OsAgnosticMemoryManager::timestampPacketAllocator;
-        MyMockMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment){};
-    } myMockMemoryManager(executionEnvironment);
-
-    EXPECT_EQ(nullptr, myMockMemoryManager.timestampPacketAllocator.get());
-
-    TagAllocator<TimestampPacket> *allocator = myMockMemoryManager.obtainTimestampPacketAllocator(1);
-    EXPECT_NE(nullptr, myMockMemoryManager.timestampPacketAllocator.get());
-    EXPECT_EQ(allocator, myMockMemoryManager.timestampPacketAllocator.get());
-
-    TagAllocator<TimestampPacket> *allocator2 = myMockMemoryManager.obtainTimestampPacketAllocator(1);
-    EXPECT_EQ(allocator, allocator2);
-
-    auto node1 = allocator->getTag();
-    auto node2 = allocator->getTag();
-    EXPECT_NE(nullptr, node1);
-    EXPECT_NE(nullptr, node2);
-    EXPECT_NE(node1, node2);
 }
 
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithTrueMutlipleTimesThenAllocatorIsReused) {

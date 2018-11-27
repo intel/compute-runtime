@@ -95,7 +95,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
                       cl_ulong endTime);
     bool calcProfilingData();
     void setCPUProfilingPath(bool isCPUPath) { this->profilingCpuPath = isCPUPath; }
-    bool isCPUProfilingPath() {
+    bool isCPUProfilingPath() const {
         return profilingCpuPath;
     }
 
@@ -104,16 +104,16 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
                                  void *paramValue,
                                  size_t *paramValueSizeRet);
 
-    bool isProfilingEnabled() { return profilingEnabled; }
+    bool isProfilingEnabled() const { return profilingEnabled; }
 
     void setProfilingEnabled(bool profilingEnabled) { this->profilingEnabled = profilingEnabled; }
 
     TagNode<HwTimeStamps> *getHwTimeStampNode();
 
-    void addTimestampPacketNodes(TimestampPacketContainer &inputTimestampPacketContainer);
+    void addTimestampPacketNodes(const TimestampPacketContainer &inputTimestampPacketContainer);
     TimestampPacketContainer *getTimestampPacketNodes() const;
 
-    bool isPerfCountersEnabled() {
+    bool isPerfCountersEnabled() const {
         return perfCountersEnabled;
     }
 

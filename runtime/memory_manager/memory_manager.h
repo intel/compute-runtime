@@ -26,17 +26,6 @@ class HostPtrManager;
 class CommandStreamReceiver;
 class OsContext;
 class OSInterface;
-class TimestampPacket;
-
-struct HwPerfCounter;
-struct HwTimeStamps;
-
-template <typename T1>
-class TagAllocator;
-
-template <typename T1>
-struct TagNode;
-
 class AllocsTracker;
 class MapBaseAllocationTracker;
 class SVMAllocsManager;
@@ -206,14 +195,6 @@ class MemoryManager {
 
     virtual uint64_t getInternalHeapBaseAddress() = 0;
 
-    TagAllocator<HwTimeStamps> *obtainEventTsAllocator(size_t poolSize);
-    TagAllocator<HwPerfCounter> *obtainEventPerfCountAllocator(size_t poolSize);
-    MOCKABLE_VIRTUAL TagAllocator<TimestampPacket> *obtainTimestampPacketAllocator(size_t poolSize);
-
-    TagAllocator<HwTimeStamps> *peekEventTsAllocator() const;
-    TagAllocator<HwPerfCounter> *peekEventPerfCountAllocator() const;
-    TagAllocator<TimestampPacket> *peekTimestampPacketAllocator() const;
-
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) = 0;
 
     bool peek64kbPagesEnabled() const { return enable64kbpages; }
@@ -258,9 +239,6 @@ class MemoryManager {
                                   const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
 
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);
-    std::unique_ptr<TagAllocator<HwTimeStamps>> profilingTimeStampAllocator;
-    std::unique_ptr<TagAllocator<HwPerfCounter>> perfCounterAllocator;
-    std::unique_ptr<TagAllocator<TimestampPacket>> timestampPacketAllocator;
     bool force32bitAllocations = false;
     bool virtualPaddingAvailable = false;
     GraphicsAllocation *paddingAllocation = nullptr;

@@ -19,7 +19,6 @@
 
 namespace OCLRT {
 
-class CommandStreamReceiver;
 class GraphicsAllocation;
 class MemoryManager;
 class OSTime;

@@ -35,6 +35,12 @@ class LinearStream;
 class MemoryManager;
 class OsContext;
 class OSInterface;
+class TimestampPacket;
+struct HwPerfCounter;
+struct HwTimeStamps;
+
+template <typename T1>
+class TagAllocator;
 
 enum class DispatchMode {
     DeviceDefault = 0,          //default for given device
@@ -85,7 +91,7 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage);
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
-    OSInterface *getOSInterface() { return osInterface; };
+    OSInterface *getOSInterface() const { return osInterface; };
 
     MOCKABLE_VIRTUAL void setTagAllocation(GraphicsAllocation *allocation);
     GraphicsAllocation *getTagAllocation() const {
@@ -110,8 +116,8 @@ class CommandStreamReceiver {
     virtual void overrideMediaVFEStateDirty(bool dirty) { mediaVfeStateDirty = dirty; }
 
     void setRequiredScratchSize(uint32_t newRequiredScratchSize);
-    GraphicsAllocation *getScratchAllocation() { return scratchAllocation; }
-    GraphicsAllocation *getDebugSurfaceAllocation() { return debugSurface; }
+    GraphicsAllocation *getScratchAllocation() const { return scratchAllocation; }
+    GraphicsAllocation *getDebugSurfaceAllocation() const { return debugSurface; }
     GraphicsAllocation *allocateDebugSurface(size_t size);
 
     void setPreemptionCsrAllocation(GraphicsAllocation *allocation) { preemptionCsrAllocation = allocation; }
@@ -124,7 +130,7 @@ class CommandStreamReceiver {
 
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
 
-    FlatBatchBufferHelper &getFlatBatchBufferHelper() { return *flatBatchBufferHelper.get(); }
+    FlatBatchBufferHelper &getFlatBatchBufferHelper() const { return *flatBatchBufferHelper; }
     void overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper) { flatBatchBufferHelper.reset(newHelper); }
 
     MOCKABLE_VIRTUAL void initProgrammingFlags();
@@ -158,6 +164,10 @@ class CommandStreamReceiver {
     void setOsContext(OsContext *osContext) { this->osContext = osContext; }
     OsContext &getOsContext() const { return *osContext; }
 
+    TagAllocator<HwTimeStamps> *getEventTsAllocator();
+    TagAllocator<HwPerfCounter> *getEventPerfCountAllocator();
+    TagAllocator<TimestampPacket> *getTimestampPacketAllocator();
+
   protected:
     void cleanupResources();
     void setDisableL3Cache(bool val) {
@@ -170,6 +180,9 @@ class CommandStreamReceiver {
     std::unique_ptr<ExperimentalCommandBuffer> experimentalCmdBuffer;
     std::unique_ptr<InternalAllocationStorage> internalAllocationStorage;
     std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
+    std::unique_ptr<TagAllocator<HwTimeStamps>> profilingTimeStampAllocator;
+    std::unique_ptr<TagAllocator<HwPerfCounter>> perfCounterAllocator;
+    std::unique_ptr<TagAllocator<TimestampPacket>> timestampPacketAllocator;
 
     ResidencyContainer residencyAllocations;
     ResidencyContainer evictionAllocations;
