@@ -37,7 +37,7 @@ struct SamplerWithPropertiesTest : public api_fixture,
 typedef api_tests clCreateSamplerWithPropertiesTests;
 typedef SamplerWithPropertiesTest clCreateSamplerWithProperties_;
 
-TEST_F(clCreateSamplerWithPropertiesTests, givenSamplerPropertiesWhenReturnValueIsNotPassedThenSamplerIsCreated) {
+TEST_F(clCreateSamplerWithPropertiesTests, GivenSamplerPropertiesAndNoReturnPointerWhenCreatingSamplerWithPropertiesThenSamplerIsCreated) {
     cl_sampler sampler = nullptr;
     cl_queue_properties properties[] =
         {
@@ -56,7 +56,7 @@ TEST_F(clCreateSamplerWithPropertiesTests, givenSamplerPropertiesWhenReturnValue
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateSamplerWithPropertiesTests, nullContext) {
+TEST_F(clCreateSamplerWithPropertiesTests, GivenNullContextWhenCreatingSamplerWithPropertiesThenInvalidContextErrorIsReturned) {
     cl_sampler sampler = nullptr;
     cl_queue_properties properties[] =
         {
@@ -70,10 +70,10 @@ TEST_F(clCreateSamplerWithPropertiesTests, nullContext) {
         properties,
         &retVal);
     ASSERT_EQ(nullptr, sampler);
-    EXPECT_NE(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_P(clCreateSamplerWithProperties_, returnsSuccess) {
+TEST_P(clCreateSamplerWithProperties_, GivenCorrectParametersWhenCreatingSamplerWithPropertiesThenSamplerIsCreatedAndSuccessIsReturned) {
     cl_sampler sampler = nullptr;
     cl_queue_properties properties[] =
         {
@@ -111,7 +111,7 @@ TEST_P(clCreateSamplerWithProperties_, returnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(clCreateSamplerWithProperties_, returnsFailure) {
+TEST_P(clCreateSamplerWithProperties_, GivenInvalidPropertiesWhenCreatingSamplerWithPropertiesThenInvalidValueErrorIsReturned) {
     cl_sampler sampler = nullptr;
     cl_queue_properties properties[] =
         {
@@ -199,7 +199,7 @@ INSTANTIATE_TEST_CASE_P(api,
                             ::testing::ValuesIn(AddressingProperties),
                             ::testing::ValuesIn(FilterProperties)));
 
-TEST_F(clCreateSamplerWithPropertiesTests, whenCreatedWithMipMapDataThenSamplerIsProperlyPopulated) {
+TEST_F(clCreateSamplerWithPropertiesTests, GivenMipMapDataWhenCreatingSamplerWithPropertiesThenSamplerIsCreatedAndCorrectlyPopulated) {
     SamplerLodProperty minLodProperty;
     SamplerLodProperty maxLodProperty;
     minLodProperty.lod = 2.0f;
