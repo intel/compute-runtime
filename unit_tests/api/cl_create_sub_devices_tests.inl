@@ -13,7 +13,7 @@ typedef api_tests clCreateSubDevicesTests;
 
 namespace ULT {
 
-TEST_F(clCreateSubDevicesTests, invalidDevice) {
+TEST_F(clCreateSubDevicesTests, GivenInvalidDeviceWhenCreatingSubDevicesThenInvalidDeviceErrorIsReturned) {
     auto retVal = clCreateSubDevices(
         nullptr,
         nullptr,
