@@ -119,7 +119,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext({getChosenEngineType(*pHwInfo), 0});
     auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[outDevice.getDeviceIndex()][deviceCsrIndex].get();
-    commandStreamReceiver->setOsContext(osContext);
+    commandStreamReceiver->setOsContext(*osContext);
     if (!commandStreamReceiver->initializeTagAllocation()) {
         return false;
     }

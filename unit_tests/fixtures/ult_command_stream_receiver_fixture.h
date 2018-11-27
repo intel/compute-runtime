@@ -55,7 +55,7 @@ struct UltCommandStreamReceiverTest
         graphicsAllocation = new MockGraphicsAllocation(sshBuffer, sizeStream);
         ssh.replaceGraphicsAllocation(graphicsAllocation);
 
-        pDevice->getCommandStreamReceiver().setOsContext(pDevice->getEngine(0).osContext);
+        pDevice->getCommandStreamReceiver().setOsContext(*pDevice->getEngine(0).osContext);
     }
 
     void TearDown() override {

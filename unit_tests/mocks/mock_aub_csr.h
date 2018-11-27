@@ -136,7 +136,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
     }
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(getChosenEngineType(*platformDevices[0]));
-    executionEnvironment->commandStreamReceivers[0][0]->setOsContext(osContext);
+    executionEnvironment->commandStreamReceivers[0][0]->setOsContext(*osContext);
 
     std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);
     if (allocateCommandBuffer) {

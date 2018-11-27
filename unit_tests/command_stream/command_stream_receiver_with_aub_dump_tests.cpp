@@ -111,9 +111,9 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
         ASSERT_NE(nullptr, memoryManager);
 
         auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo));
-        csrWithAubDump->setOsContext(osContext);
+        csrWithAubDump->setOsContext(*osContext);
         if (csrWithAubDump->aubCSR) {
-            csrWithAubDump->aubCSR->setOsContext(osContext);
+            csrWithAubDump->aubCSR->setOsContext(*osContext);
         }
     }
 

@@ -9,8 +9,6 @@
 
 #include "engine_node.h"
 
-#include <cstdint>
-
 namespace OCLRT {
 
 class DrmEngineMapper {

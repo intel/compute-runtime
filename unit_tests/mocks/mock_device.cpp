@@ -50,7 +50,7 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->initializeTagAllocation();
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->setPreemptionCsrAllocation(preemptionAllocation);
     this->engines[0].commandStreamReceiver = newCsr;
-    this->engines[0].commandStreamReceiver->setOsContext(this->engines[0].osContext);
+    this->engines[0].commandStreamReceiver->setOsContext(*this->engines[0].osContext);
     UNRECOVERABLE_IF(getDeviceIndex() != 0u);
     this->tagAddress = executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->getTagAddress();
 }

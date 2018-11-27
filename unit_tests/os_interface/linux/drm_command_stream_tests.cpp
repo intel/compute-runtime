@@ -48,7 +48,7 @@ class DrmCommandStreamFixture {
         ASSERT_NE(nullptr, csr);
         executionEnvironment.commandStreamReceivers.resize(1);
         executionEnvironment.commandStreamReceivers[0][0].reset(csr);
-        csr->setOsContext(osContext.get());
+        csr->setOsContext(*osContext);
 
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
@@ -677,7 +677,7 @@ class DrmCommandStreamEnhancedFixture
 
         tCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
         csr = tCsr;
-        csr->setOsContext(osContext.get());
+        csr->setOsContext(*osContext);
         ASSERT_NE(nullptr, csr);
         mm = reinterpret_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
         ASSERT_NE(nullptr, mm);

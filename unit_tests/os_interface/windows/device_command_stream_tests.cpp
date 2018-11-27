@@ -254,7 +254,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
     executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceivers[0][0]->createMemoryManager(false, false));
     executionEnvironment->commandStreamReceivers[0][0]->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
     OsContext osContext(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0]);
-    executionEnvironment->commandStreamReceivers[0][0]->setOsContext(&osContext);
+    executionEnvironment->commandStreamReceivers[0][0]->setOsContext(osContext);
 
     auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemory(4096);
     LinearStream cs(commandBuffer);
@@ -279,7 +279,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
     executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceivers[0][0]->createMemoryManager(false, false));
     executionEnvironment->commandStreamReceivers[0][0]->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
     OsContext osContext(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0]);
-    executionEnvironment->commandStreamReceivers[0][0]->setOsContext(&osContext);
+    executionEnvironment->commandStreamReceivers[0][0]->setOsContext(osContext);
 
     auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemory(4096);
     LinearStream cs(commandBuffer);
