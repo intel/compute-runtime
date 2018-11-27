@@ -9,8 +9,10 @@
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
 #include "unit_tests/mocks/mock_aub_file_stream.h"
+#include "unit_tests/mocks/mock_aub_manager.h"
 #include "driver_version.h"
 
 #include <fstream>
@@ -127,9 +129,58 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
 
     aubCsr->flush(batchBuffer, allocationsForResidency);
 
+    EXPECT_TRUE(aubCsr->initializeEngineCalled);
     EXPECT_TRUE(aubCsr->writeMemoryCalled);
     EXPECT_TRUE(aubCsr->submitBatchBufferCalled);
     EXPECT_TRUE(aubCsr->pollForCompletionCalled);
+}
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCalledThenItShouldCallTheExpectedFunctions) {
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+    ResidencyContainer allocationsForResidency = {&allocation};
+    aubCsr->processResidency(allocationsForResidency);
+
+    EXPECT_TRUE(aubCsr->writeMemoryCalled);
+}
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
+    auto mockManager = std::make_unique<MockAubManager>();
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    aubCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    ResidencyContainer allocationsForResidency;
+
+    aubCsr->flush(batchBuffer, allocationsForResidency);
+
+    EXPECT_TRUE(mockHardwareContext->initializeCalled);
+    EXPECT_TRUE(mockHardwareContext->writeMemoryCalled);
+    EXPECT_TRUE(mockHardwareContext->submitCalled);
+    EXPECT_TRUE(mockHardwareContext->pollForCompletionCalled);
+}
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
+    auto mockManager = std::make_unique<MockAubManager>();
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    aubCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+    ResidencyContainer allocationsForResidency = {&allocation};
+    aubCsr->processResidency(allocationsForResidency);
+    aubCsr->makeNonResident(allocation);
+
+    EXPECT_TRUE(mockHardwareContext->writeMemoryCalled);
+    EXPECT_TRUE(mockHardwareContext->freeMemoryCalled);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenFileStreamShouldBeFlushed) {

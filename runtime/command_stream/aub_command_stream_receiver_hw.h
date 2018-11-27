@@ -15,6 +15,9 @@
 #include "runtime/memory_manager/page_table.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "third_party/aub_stream/headers/hardware_context.h"
+
+using namespace AubDump;
 
 namespace OCLRT {
 
@@ -78,7 +81,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL bool isFileOpen() const;
     MOCKABLE_VIRTUAL const std::string &getFileName();
 
-    void initializeEngine(size_t engineIndex);
+    MOCKABLE_VIRTUAL void initializeEngine(size_t engineIndex);
     void freeEngineInfoTable();
 
     MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
@@ -88,6 +91,10 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     static const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance);
     size_t getEngineIndexFromInstance(EngineInstanceT engineInstance);
     size_t getEngineIndex(EngineType engineType);
+
+    AubManager *aubManager = nullptr;
+    std::unique_ptr<HardwareContext> hardwareContext;
+    EngineType defaultEngineType;
 
     struct EngineInfo {
         void *pLRCA;

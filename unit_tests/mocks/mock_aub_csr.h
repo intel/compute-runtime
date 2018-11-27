@@ -71,6 +71,10 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     void initProgrammingFlags() override {
         initProgrammingFlagsCalled = true;
     }
+    void initializeEngine(size_t engineIndex) {
+        AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(engineIndex);
+        initializeEngineCalled = true;
+    }
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) {
         AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(gpuAddress, cpuAddress, size, memoryBank, entryBits, devicesBitfield);
         writeMemoryCalled = true;
@@ -85,6 +89,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     }
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;
+    bool initializeEngineCalled = false;
     bool writeMemoryCalled = false;
     bool submitBatchBufferCalled = false;
     bool pollForCompletionCalled = false;

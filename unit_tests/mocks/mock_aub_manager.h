@@ -1,0 +1,39 @@
+/*
+ * Copyright (C) 2018 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "third_party/aub_stream/headers/aub_manager.h"
+#include "third_party/aub_stream/headers/hardware_context.h"
+
+using namespace AubDump;
+
+struct MockHardwareContext : public HardwareContext {
+    MockHardwareContext(){};
+    ~MockHardwareContext() override{};
+
+    void initialize() override { initializeCalled = true; }
+    void pollForCompletion() override { pollForCompletionCalled = true; };
+    void submit(uint64_t gfxAddress, const void *batchBuffer, size_t size, uint32_t memoryBank) override { submitCalled = true; }
+    void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 4096) override { writeMemoryCalled = true; }
+    void freeMemory(uint64_t gfxAddress, size_t size) override { freeMemoryCalled = true; }
+
+    bool initializeCalled = false;
+    bool pollForCompletionCalled = false;
+    bool submitCalled = false;
+    bool writeMemoryCalled = false;
+    bool freeMemoryCalled = false;
+};
+
+class MockAubManager : public AubManager {
+  public:
+    MockAubManager(){};
+    ~MockAubManager() override {}
+
+    HardwareContext *createHardwareContext(uint32_t device, uint32_t engine) override { return new MockHardwareContext(); }
+
+  protected:
+    HardwareContext *hardwareContext = nullptr;
+};

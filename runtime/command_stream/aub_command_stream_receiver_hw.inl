@@ -25,6 +25,7 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
 #include "driver_version.h"
+#include "third_party/aub_stream/headers/aub_manager.h"
 
 #include <algorithm>
 #include <cstring>
@@ -34,12 +35,18 @@ namespace OCLRT {
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment)
     : BaseClass(hwInfoIn, executionEnvironment),
+      defaultEngineType(hwInfoIn.capabilityTable.defaultEngineType),
       subCaptureManager(std::make_unique<AubSubCaptureManager>(fileName)),
       standalone(standalone) {
 
     executionEnvironment.initAubCenter(&this->peekHwInfo(), this->localMemoryEnabled, fileName);
     auto aubCenter = executionEnvironment.aubCenter.get();
     UNRECOVERABLE_IF(nullptr == aubCenter);
+
+    aubManager = aubCenter->getAubManager();
+    if (aubManager) {
+        hardwareContext = std::unique_ptr<HardwareContext>(aubManager->createHardwareContext(0, defaultEngineType));
+    }
 
     if (!aubCenter->getPhysicalAddressAllocator()) {
         aubCenter->initPhysicalAddressAllocator(this->createPhysicalAddressAllocator());
@@ -170,6 +177,12 @@ const std::string &AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex) {
+    if (hardwareContext) {
+        DEBUG_BREAK_IF(allEngineInstances[engineIndex].type != defaultEngineType);
+        hardwareContext->initialize();
+        return;
+    }
+
     auto engineInstance = allEngineInstances[engineIndex];
     auto csTraits = getCsTraits(engineInstance);
     auto &engineInfo = engineInfoTable[engineIndex];
@@ -306,7 +319,7 @@ template <typename GfxFamily>
 CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment) {
     auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, fileName, standalone, executionEnvironment);
 
-    if (!csr->subCaptureManager->isSubCaptureMode()) {
+    if (!csr->aubManager && !csr->subCaptureManager->isSubCaptureMode()) {
         csr->openFile(fileName);
     }
 
@@ -420,6 +433,11 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
+    if (hardwareContext) {
+        hardwareContext->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank);
+        return;
+    }
+
     auto engineInstance = allEngineInstances[engineIndex];
     auto csTraits = getCsTraits(engineInstance);
     auto &engineInfo = engineInfoTable[engineIndex];
@@ -581,6 +599,11 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitLRCA(EngineInstanceT engineIns
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineInstanceT engineInstance) {
+    if (hardwareContext) {
+        hardwareContext->pollForCompletion();
+        return;
+    }
+
     typedef typename AubMemDump::CmdServicesMemTraceRegisterPoll CmdServicesMemTraceRegisterPoll;
 
     auto mmioBase = getCsTraits(engineInstance).mmioBase;
@@ -610,6 +633,12 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResidentExternal(uint64_t gpu
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) {
+    if (hardwareContext) {
+        int hint = AubMemDump::DataTypeHintValues::TraceNotype;
+        hardwareContext->writeMemory(gpuAddress, cpuAddress, size, memoryBank, hint);
+        return;
+    }
+
     {
         std::ostringstream str;
         str << "ppgtt: " << std::hex << std::showbase << gpuAddress << " end address: " << gpuAddress + size << " cpu address: " << cpuAddress << " device mask: " << devicesBitfield << " size: " << std::dec << size;
@@ -740,6 +769,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isResident(this->deviceIndex)) {
+        if (hardwareContext) {
+            hardwareContext->freeMemory(gfxAllocation.getGpuAddress(), gfxAllocation.getUnderlyingBufferSize());
+        }
         this->getEvictionAllocations().push_back(&gfxAllocation);
         gfxAllocation.resetResidencyTaskCount(this->deviceIndex);
     }
