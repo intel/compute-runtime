@@ -40,6 +40,12 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;
 
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override {
+        freeGraphicsMemoryCalled++;
+        OsAgnosticMemoryManager::freeGraphicsMemoryImpl(gfxAllocation);
+    };
+
+    uint32_t freeGraphicsMemoryCalled = 0u;
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;
     bool allocationInDevicePoolCreated = false;
