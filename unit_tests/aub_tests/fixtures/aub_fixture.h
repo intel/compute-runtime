@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,11 +36,10 @@ class AUBFixture : public CommandQueueHwFixture {
         strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
 
         executionEnvironment = new ExecutionEnvironment;
-
-        if (testMode == TestMode::AubTests) {
-            this->csr = AUBCommandStreamReceiver::create(hwInfo, strfilename.str(), true, *executionEnvironment);
-        } else if (testMode == TestMode::AubTestsWithTbx) {
+        if (testMode == TestMode::AubTestsWithTbx) {
             this->csr = TbxCommandStreamReceiver::create(hwInfo, true, *executionEnvironment);
+        } else {
+            this->csr = AUBCommandStreamReceiver::create(hwInfo, strfilename.str(), true, *executionEnvironment);
         }
 
         executionEnvironment->commandStreamReceivers.resize(deviceIndex + 1);

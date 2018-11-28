@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -839,6 +839,13 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(
     cl_context context,
     const cl_sampler_properties *samplerProperties,
     cl_int *errcodeRet);
+
+cl_int CL_API_CALL clEnqueueVerifyMemory(
+    cl_command_queue commandQueue,
+    const void *allocationPtr,
+    const void *expectedData,
+    size_t sizeOfComparison,
+    cl_uint comparisonMode);
 
 // OpenCL 2.1
 

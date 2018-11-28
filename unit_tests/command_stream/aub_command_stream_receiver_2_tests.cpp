@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -813,9 +813,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenAskedForMemoryExpectation
       public:
         using AUBCommandStreamReceiverHw<FamilyType>::AUBCommandStreamReceiverHw;
 
-        void expectMemory(void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override {
+        bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override {
             inputCompareOperation = compareOperation;
             AUBCommandStreamReceiverHw<FamilyType>::expectMemory(gfxAddress, srcAddress, length, compareOperation);
+            return true;
         }
         uint32_t inputCompareOperation = 0;
     };

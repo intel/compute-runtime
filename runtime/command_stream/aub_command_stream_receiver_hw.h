@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,6 +54,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     void expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length);
     void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);
+    bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
 
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
 
@@ -124,7 +125,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     size_t getPreferredTagPoolSize() const override { return 1; }
 
   protected:
-    MOCKABLE_VIRTUAL void expectMemory(void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
     bool dumpAubNonWritable = false;
     ExternalAllocationsContainer externalAllocations;
 };

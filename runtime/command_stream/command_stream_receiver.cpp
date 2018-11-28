@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -390,6 +390,11 @@ TagAllocator<TimestampPacket> *CommandStreamReceiver::getTimestampPacketAllocato
         timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacket>>(getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize);
     }
     return timestampPacketAllocator.get();
+}
+
+bool CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
+                                         size_t length, uint32_t compareOperation) {
+    return false;
 }
 
 } // namespace OCLRT

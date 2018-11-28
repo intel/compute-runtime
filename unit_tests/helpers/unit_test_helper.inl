@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,11 @@ bool UnitTestHelper<GfxFamily>::isPageTableManagerSupported(const HardwareInfo &
 
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isTimestampPacketWriteSupported() {
+    return false;
+}
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isExpectMemoryNotEqualSupported() {
     return false;
 }
 } // namespace OCLRT

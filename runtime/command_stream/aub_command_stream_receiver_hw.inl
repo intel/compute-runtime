@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -690,11 +690,11 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryNotEqual(void *gfxAddres
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(void *gfxAddress, const void *srcAddress,
+bool AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
                                                          size_t length, uint32_t compareOperation) {
     if (hardwareContext) {
         hardwareContext->expectMemory(reinterpret_cast<uint64_t>(gfxAddress), srcAddress, length, compareOperation);
-        return;
+        return true;
     }
 
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
@@ -708,6 +708,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(void *gfxAddress, const
     };
 
     this->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);
+
+    return true;
 }
 
 template <typename GfxFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,5 +21,7 @@ struct UnitTestHelper {
     static bool isPageTableManagerSupported(const HardwareInfo &hwInfo);
 
     static bool isTimestampPacketWriteSupported();
+
+    static bool isExpectMemoryNotEqualSupported();
 };
 } // namespace OCLRT

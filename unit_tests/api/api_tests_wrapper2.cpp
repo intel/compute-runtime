@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include "unit_tests/api/cl_enqueue_svm_unmap_tests.inl"
 #include "unit_tests/api/cl_enqueue_task_tests.inl"
 #include "unit_tests/api/cl_enqueue_unmap_mem_object_tests.inl"
+#include "unit_tests/api/cl_enqueue_verify_memory.inl"
 #include "unit_tests/api/cl_enqueue_wait_for_events_tests.inl"
 #include "unit_tests/api/cl_enqueue_write_buffer_rect_tests.inl"
 #include "unit_tests/api/cl_enqueue_write_buffer_tests.inl"

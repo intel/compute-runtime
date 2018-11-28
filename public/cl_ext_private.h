@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,3 +48,7 @@ using cl_mem_flags_intel = cl_mem_flags;
  ******************************/
 
 #define CL_MEM_FLAGS_INTEL 0x10001
+
+// Used with clEnqueueVerifyMemory
+#define CL_MEM_COMPARE_EQUAL 0u
+#define CL_MEM_COMPARE_NOT_EQUAL 1u

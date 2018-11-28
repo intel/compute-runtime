@@ -3325,8 +3325,8 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *func_name) {
     RETURN_FUNC_PTR_IF_EXIST(clGetAcceleratorInfoINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clRetainAcceleratorINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clReleaseAcceleratorINTEL);
-
     RETURN_FUNC_PTR_IF_EXIST(clCreateBufferWithPropertiesINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clEnqueueVerifyMemory);
 
     void *ret = sharingFactory.getExtensionFunctionAddress(func_name);
     if (ret != nullptr)
@@ -4246,4 +4246,38 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
     }
 
     return pClonedKernel;
+}
+
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemory(cl_command_queue commandQueue,
+                                                      const void *allocationPtr,
+                                                      const void *expectedData,
+                                                      size_t sizeOfComparison,
+                                                      cl_uint comparisonMode) {
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue,
+                   "allocationPtr", allocationPtr,
+                   "expectedData", expectedData,
+                   "sizeOfComparison", sizeOfComparison,
+                   "comparisonMode", comparisonMode);
+
+    if (sizeOfComparison == 0 || expectedData == nullptr || allocationPtr == nullptr) {
+        retVal = CL_INVALID_VALUE;
+        return retVal;
+    }
+
+    CommandQueue *pCommandQueue = nullptr;
+    retVal = validateObjects(WithCastToInternal(commandQueue, &pCommandQueue));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
+    auto &csr = pCommandQueue->getCommandStreamReceiver();
+    if (csr.expectMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode)) {
+        retVal = CL_SUCCESS;
+        return retVal;
+    }
+
+    retVal = CL_INVALID_VALUE;
+    return retVal;
 }
