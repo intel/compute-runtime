@@ -106,67 +106,87 @@ Device::~Device() {
 }
 
 bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
-    uint32_t deviceCsrIndex = 0;
     auto executionEnvironment = outDevice.executionEnvironment;
     executionEnvironment->initGmm(pHwInfo);
-    if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo, outDevice.getDeviceIndex(), deviceCsrIndex)) {
-        return false;
-    }
-    executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages(), outDevice.getEnableLocalMemory(),
-                                                  outDevice.getDeviceIndex(), deviceCsrIndex);
 
-    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext({getChosenEngineType(*pHwInfo), 0});
-    auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[outDevice.getDeviceIndex()][deviceCsrIndex].get();
-    commandStreamReceiver->setOsContext(*osContext);
-    if (!commandStreamReceiver->initializeTagAllocation()) {
+    if (!createEngines(pHwInfo, outDevice)) {
         return false;
     }
 
-    outDevice.engines[0] = {commandStreamReceiver, osContext};
+    executionEnvironment->memoryManager->setDefaultEngineIndex(outDevice.defaultEngineIndex);
 
-    auto pDevice = &outDevice;
-    if (!pDevice->osTime) {
-        pDevice->osTime = OSTime::create(commandStreamReceiver->getOSInterface());
+    auto osInterface = executionEnvironment->osInterface.get();
+
+    if (!outDevice.osTime) {
+        outDevice.osTime = OSTime::create(osInterface);
     }
-    pDevice->driverInfo.reset(DriverInfo::create(commandStreamReceiver->getOSInterface()));
+    outDevice.driverInfo.reset(DriverInfo::create(osInterface));
 
-    pDevice->initializeCaps();
+    outDevice.initializeCaps();
 
-    if (pDevice->osTime->getOSInterface()) {
+    if (outDevice.osTime->getOSInterface()) {
         if (pHwInfo->capabilityTable.instrumentationEnabled) {
-            pDevice->performanceCounters = createPerformanceCountersFunc(pDevice->osTime.get());
-            pDevice->performanceCounters->initialize(pHwInfo);
+            outDevice.performanceCounters = createPerformanceCountersFunc(outDevice.osTime.get());
+            outDevice.performanceCounters->initialize(pHwInfo);
         }
     }
 
     uint32_t deviceHandle = 0;
-    if (commandStreamReceiver->getOSInterface()) {
-        deviceHandle = commandStreamReceiver->getOSInterface()->getDeviceHandle();
+    if (osInterface) {
+        deviceHandle = osInterface->getDeviceHandle();
     }
 
-    if (pDevice->deviceInfo.sourceLevelDebuggerActive) {
-        pDevice->executionEnvironment->sourceLevelDebugger->notifyNewDevice(deviceHandle);
+    if (outDevice.deviceInfo.sourceLevelDebuggerActive) {
+        outDevice.executionEnvironment->sourceLevelDebugger->notifyNewDevice(deviceHandle);
     }
 
-    outDevice.executionEnvironment->memoryManager->setForce32BitAllocations(pDevice->getDeviceInfo().force32BitAddressess);
-    outDevice.executionEnvironment->memoryManager->setDefaultEngineIndex(deviceCsrIndex);
+    outDevice.executionEnvironment->memoryManager->setForce32BitAllocations(outDevice.getDeviceInfo().force32BitAddressess);
 
-    if (pDevice->preemptionMode == PreemptionMode::MidThread || pDevice->isSourceLevelDebuggerActive()) {
+    if (outDevice.preemptionMode == PreemptionMode::MidThread || outDevice.isSourceLevelDebuggerActive()) {
         size_t requiredSize = pHwInfo->capabilityTable.requiredPreemptionSurfaceSize;
         size_t alignment = 256 * MemoryConstants::kiloByte;
-        bool uncacheable = pDevice->getWaTable()->waCSRUncachable;
-        pDevice->preemptionAllocation = outDevice.executionEnvironment->memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
-        if (!pDevice->preemptionAllocation) {
+        bool uncacheable = outDevice.getWaTable()->waCSRUncachable;
+        outDevice.preemptionAllocation = outDevice.executionEnvironment->memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
+        if (!outDevice.preemptionAllocation) {
             return false;
         }
-        commandStreamReceiver->setPreemptionCsrAllocation(pDevice->preemptionAllocation);
     }
 
-    if (DebugManager.flags.EnableExperimentalCommandBuffer.get() > 0) {
-        commandStreamReceiver->setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer>(
-            new ExperimentalCommandBuffer(commandStreamReceiver, pDevice->getDeviceInfo().profilingTimerResolution)));
+    for (auto engine : outDevice.engines) {
+        auto csr = engine.commandStreamReceiver;
+        csr->setPreemptionCsrAllocation(outDevice.preemptionAllocation);
+        if (DebugManager.flags.EnableExperimentalCommandBuffer.get() > 0) {
+            csr->setExperimentalCmdBuffer(std::make_unique<ExperimentalCommandBuffer>(csr, outDevice.getDeviceInfo().profilingTimerResolution));
+        }
     }
 
+    return true;
+}
+
+bool Device::createEngines(const HardwareInfo *pHwInfo, Device &outDevice) {
+    auto executionEnvironment = outDevice.executionEnvironment;
+    EngineType defaultEngineType = getChosenEngineType(*pHwInfo);
+
+    for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngineInstances.size(); deviceCsrIndex++) {
+        if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo, outDevice.getDeviceIndex(), deviceCsrIndex)) {
+            return false;
+        }
+        executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages(), outDevice.getEnableLocalMemory(),
+                                                      outDevice.getDeviceIndex(), deviceCsrIndex);
+
+        auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[deviceCsrIndex]);
+        auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[outDevice.getDeviceIndex()][deviceCsrIndex].get();
+        commandStreamReceiver->setOsContext(*osContext);
+        if (!commandStreamReceiver->initializeTagAllocation()) {
+            return false;
+        }
+
+        if (gpgpuEngineInstances[deviceCsrIndex].type == defaultEngineType && gpgpuEngineInstances[deviceCsrIndex].id == 0) {
+            outDevice.defaultEngineIndex = deviceCsrIndex;
+        }
+
+        outDevice.engines[deviceCsrIndex] = {commandStreamReceiver, osContext};
+    }
     return true;
 }
 

@@ -126,15 +126,12 @@ class WddmCommandStreamWithMockGdiFixture {
         wddm->gdi.reset(gdi);
         ASSERT_NE(wddm, nullptr);
         DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
-        executionEnvironment->commandStreamReceivers.resize(1);
-        executionEnvironment->commandStreamReceivers[0][0] =
-            std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*platformDevices[0],
-                                                                    *executionEnvironment);
-        this->csr = static_cast<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME> *>(executionEnvironment->commandStreamReceivers[0][0].get());
+        this->csr = new MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], *executionEnvironment);
         memoryManager = csr->createMemoryManager(false, false);
         ASSERT_NE(nullptr, memoryManager);
         executionEnvironment->memoryManager.reset(memoryManager);
         device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
+        device->resetCommandStreamReceiver(this->csr);
         ASSERT_NE(nullptr, device);
         this->csr->overrideRecorededCommandBuffer(*device);
         if (device->getPreemptionMode() == PreemptionMode::MidThread) {
@@ -884,11 +881,11 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
         auto mockWddmCsr = new MockWddmCsr<FamilyType>(hwInfo[0], *executionEnvironment);
         mockWddmCsr->createPageTableManager();
         mockWddmCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-        executionEnvironment->commandStreamReceivers.resize(1);
-        executionEnvironment->commandStreamReceivers[0][0].reset(mockWddmCsr);
+        executionEnvironment->memoryManager.reset(mockWddmCsr->createMemoryManager(false, false));
 
         auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
         std::unique_ptr<MockDevice> device(Device::create<MockDevice>(hwInfo, executionEnvironment, 0u));
+        device->resetCommandStreamReceiver(mockWddmCsr);
 
         auto memoryManager = executionEnvironment->memoryManager.get();
 
@@ -925,11 +922,11 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     myMockWddm = static_cast<WddmMock *>(executionEnvironment->osInterface->get()->getWddm());
 
     auto mockWddmCsr = new MockWddmCsr<FamilyType>(hwInfo[0], *executionEnvironment);
-    executionEnvironment->commandStreamReceivers.resize(1);
-    executionEnvironment->commandStreamReceivers[0][0].reset(mockWddmCsr);
     mockWddmCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    executionEnvironment->memoryManager.reset(mockWddmCsr->createMemoryManager(false, false));
 
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(hwInfo, executionEnvironment, 0u));
+    device->resetCommandStreamReceiver(mockWddmCsr);
 
     auto memoryManager = executionEnvironment->memoryManager.get();
 

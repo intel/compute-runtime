@@ -195,6 +195,14 @@ TEST(CommandQueue, GivenOOQwhenUpdateFromCompletionStampWithTrueIsCalledThenTask
     EXPECT_EQ(cs.flushStamp, cmdQ.flushStamp->peekStamp());
 }
 
+TEST(CommandQueue, givenDeviceWhenCreatingCommandQueueThenPickCsrFromDefaultEngine) {
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    CommandQueue cmdQ(nullptr, mockDevice.get(), 0);
+
+    auto defaultCsr = mockDevice->getDefaultEngine().commandStreamReceiver;
+    EXPECT_EQ(defaultCsr, &cmdQ.getCommandStreamReceiver());
+}
+
 TEST(CommandQueue, givenCmdQueueBlockedByReadyVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
     std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = new MockContext;

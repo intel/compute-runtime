@@ -73,8 +73,6 @@ class Device : public BaseObject<_cl_device_id> {
     EngineControl &getEngine(uint32_t engineId);
     EngineControl &getDefaultEngine();
 
-    volatile uint32_t *getTagAddress() const;
-
     const char *getProductAbbrev() const;
     const std::string getFamilyNameWithType() const;
 
@@ -136,6 +134,7 @@ class Device : public BaseObject<_cl_device_id> {
     }
 
     static bool createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice);
+    static bool createEngines(const HardwareInfo *pHwInfo, Device &outDevice);
     static const HardwareInfo *getDeviceInitHwInfo(const HardwareInfo *pHwInfoIn);
     MOCKABLE_VIRTUAL void initializeCaps();
     void setupFp64Flags();
@@ -177,7 +176,7 @@ inline EngineControl &Device::getEngine(uint32_t engineId) {
 }
 
 inline EngineControl &Device::getDefaultEngine() {
-    return engines[defaultEngineIndex];
+    return getEngine(defaultEngineIndex);
 }
 
 inline MemoryManager *Device::getMemoryManager() const {

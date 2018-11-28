@@ -7,6 +7,7 @@
 
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/allocations_list.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -28,17 +29,20 @@ void CL_CALLBACK emptyDestructorCallback(cl_mem memObj, void *userData) {
 class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
   public:
     void SetUp() override {
-        context.reset(new MockContext());
-        memoryManager = new MockMemoryManager(*context->getDevice(0)->getExecutionEnvironment());
-        device = static_cast<MockDevice *>(context->getDevice(0));
-        device->injectMemoryManager(memoryManager);
-        context->setMemoryManager(memoryManager);
+        executionEnvironment = std::make_unique<ExecutionEnvironment>();
+        executionEnvironment->incRefInternal();
+        memoryManager = new MockMemoryManager(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+        device.reset(MockDevice::create<MockDevice>(*platformDevices, executionEnvironment.get(), 0));
+        context.reset(new MockContext(device.get()));
+
         allocation = memoryManager->allocateGraphicsMemory(size);
         memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
                             CL_MEM_READ_WRITE,
                             size,
                             nullptr, nullptr, allocation, true, false, false);
         *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = 0;
+        contextId = device->getDefaultEngine().osContext->getContextId();
     }
 
     void TearDown() override {
@@ -46,7 +50,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
     }
 
     void makeMemObjUsed() {
-        memObj->getGraphicsAllocation()->updateTaskCount(taskCountReady, 0u);
+        memObj->getGraphicsAllocation()->updateTaskCount(taskCountReady, contextId);
     }
 
     void makeMemObjNotReady() {
@@ -60,7 +64,9 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
     }
 
     constexpr static uint32_t taskCountReady = 3u;
-    MockDevice *device;
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<MockDevice> device;
+    uint32_t contextId = 0;
     MockMemoryManager *memoryManager;
     std::unique_ptr<MockContext> context;
     GraphicsAllocation *allocation;

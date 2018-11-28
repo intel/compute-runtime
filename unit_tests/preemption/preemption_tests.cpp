@@ -462,6 +462,28 @@ HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceNoWa) {
     const_cast<HardwareInfo *>(platformDevices[0])->pWaTable = waTable;
 }
 
+HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfaceAllocationThenFailToCreateDevice) {
+    class FailingMemoryManager : public OsAgnosticMemoryManager {
+      public:
+        FailingMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment) {}
+
+        GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
+            if (++allocateGraphicsMemoryCount > gpgpuEngineInstances.size()) {
+                return nullptr;
+            }
+            return OsAgnosticMemoryManager::allocateGraphicsMemory(size, alignment, forcePin, uncacheable);
+        }
+
+        uint32_t allocateGraphicsMemoryCount = 0;
+    };
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.incRefInternal();
+    executionEnvironment.memoryManager = std::make_unique<FailingMemoryManager>(executionEnvironment);
+
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::create<MockDevice>(platformDevices[0], &executionEnvironment, 0));
+    EXPECT_EQ(nullptr, mockDevice.get());
+}
+
 HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceWa) {
     const WorkaroundTable *waTable = platformDevices[0]->pWaTable;
     WorkaroundTable tmpWaTable;

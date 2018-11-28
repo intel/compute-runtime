@@ -174,7 +174,7 @@ bool Platform::initialize() {
         initSipKernel(sipType, *devices[0]);
     }
 
-    CommandStreamReceiverType csrType = this->devices[0]->getEngine(0).commandStreamReceiver->getType();
+    CommandStreamReceiverType csrType = this->devices[0]->getDefaultEngine().commandStreamReceiver->getType();
     if (csrType != CommandStreamReceiverType::CSR_HW) {
         executionEnvironment->initAubCenter(&hwInfo[0], this->devices[0]->getEnableLocalMemory(), "aubfile");
     }

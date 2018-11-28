@@ -19,13 +19,11 @@ void DeferrableAllocationDeletion::apply() {
 
         for (auto &deviceCsrs : memoryManager.getCommandStreamReceivers()) {
             for (auto &csr : deviceCsrs) {
-                if (csr) {
-                    auto contextId = csr->getOsContext().getContextId();
-                    if (graphicsAllocation.isUsedByContext(contextId)) {
-                        auto currentContextTaskCount = *csr->getTagAddress();
-                        if (graphicsAllocation.getTaskCount(contextId) <= currentContextTaskCount) {
-                            graphicsAllocation.resetTaskCount(contextId);
-                        }
+                auto contextId = csr->getOsContext().getContextId();
+                if (graphicsAllocation.isUsedByContext(contextId)) {
+                    auto currentContextTaskCount = *csr->getTagAddress();
+                    if (graphicsAllocation.getTaskCount(contextId) <= currentContextTaskCount) {
+                        graphicsAllocation.resetTaskCount(contextId);
                     }
                 }
             }

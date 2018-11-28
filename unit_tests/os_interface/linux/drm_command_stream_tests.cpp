@@ -901,11 +901,12 @@ TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsAr
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     //preemption allocation + Sip Kernel
-    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
+    int ioctlPreemptionCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
+    int ioctlTagAllocCnt = gpgpuEngineInstances.size();
 
     auto engineFlag = csr->getOsContext().get()->getEngineFlag();
 
-    EXPECT_EQ(6 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(5 + ioctlPreemptionCnt + ioctlTagAllocCnt, this->mock->ioctl_cnt.total);
     uint64_t flags = engineFlag | I915_EXEC_NO_RELOC;
     EXPECT_EQ(flags, this->mock->execBuffer.flags);
 
@@ -944,7 +945,8 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
 
     //preemption allocation + sipKernel
-    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
+    int ioctlPreemptionCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
+    int ioctlTagAllocCnt = gpgpuEngineInstances.size();
 
     auto recordedCmdBuffer = cmdBuffers.peekHead();
     EXPECT_EQ(3u + csrSurfaceCount, recordedCmdBuffer->surfaces.size());
@@ -961,7 +963,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
 
     EXPECT_EQ(tCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
 
-    EXPECT_EQ(6 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(5 + ioctlPreemptionCnt + ioctlTagAllocCnt, this->mock->ioctl_cnt.total);
 
     EXPECT_EQ(0u, this->mock->execBuffer.flags);
 
@@ -1010,7 +1012,8 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
 
     //preemption allocation +sip Kernel
-    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
+    int ioctlPreemptionCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
+    int ioctlTagAllocCnt = gpgpuEngineInstances.size();
 
     //validate that submited command buffer has what we want
     EXPECT_EQ(3u + csrSurfaceCount, this->mock->execBuffer.buffer_count);
@@ -1032,7 +1035,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
         EXPECT_TRUE(handleFound);
     }
 
-    EXPECT_EQ(7 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(6 + ioctlPreemptionCnt + ioctlTagAllocCnt, this->mock->ioctl_cnt.total);
 
     mm->freeGraphicsMemory(dummyAllocation);
     mm->freeGraphicsMemory(commandBuffer);

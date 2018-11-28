@@ -35,7 +35,7 @@ uint32_t UserEvent::getTaskLevel() {
     uint32_t taskLevel = 0;
     if (ctx != nullptr) {
         Device *pDevice = ctx->getDevice(0);
-        auto csr = pDevice->getEngine(0).commandStreamReceiver;
+        auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
         taskLevel = csr->peekTaskLevel();
     }
     return taskLevel;

@@ -137,7 +137,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
 //if not in use destroy in place
 //if in use pass to temporary allocation list that is cleaned on blocking calls
 void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation) {
-    if (!gfxAllocation->isUsed() || gfxAllocation->getTaskCount(0u) <= *getCommandStreamReceivers()[0][defaultEngineIndex]->getTagAddress()) {
+    if (!gfxAllocation->isUsed() || gfxAllocation->getTaskCount(defaultEngineIndex) <= *getCommandStreamReceivers()[0][defaultEngineIndex]->getTagAddress()) {
         freeGraphicsMemory(gfxAllocation);
     } else {
         getCommandStreamReceivers()[0][defaultEngineIndex]->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation), TEMPORARY_ALLOCATION);

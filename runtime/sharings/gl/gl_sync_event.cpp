@@ -53,7 +53,7 @@ void GlSyncEvent::updateExecutionStatus() {
 }
 
 uint32_t GlSyncEvent::getTaskLevel() {
-    auto csr = ctx->getDevice(0)->getEngine(0).commandStreamReceiver;
+    auto csr = ctx->getDevice(0)->getDefaultEngine().commandStreamReceiver;
     return csr->peekTaskLevel();
 }
 } // namespace OCLRT

@@ -65,10 +65,9 @@ struct GlArbSyncEventTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = new ExecutionEnvironment;
         auto mockCsr = new MockCommandStreamReceiver(*executionEnvironment);
-        executionEnvironment->commandStreamReceivers.resize(1);
-        executionEnvironment->commandStreamReceivers[0][0].reset(mockCsr);
         executionEnvironment->memoryManager = std::make_unique<OsAgnosticMemoryManager>(false, false, *executionEnvironment);
         device.reset(MockDevice::create<MockDevice>(nullptr, executionEnvironment, 0u));
+        device->resetCommandStreamReceiver(mockCsr);
         ctx.reset(new MockContext);
         cmdQ.reset(new MockCommandQueue(ctx.get(), device.get(), nullptr));
         sharing = new GlSharingFunctionsMock();
