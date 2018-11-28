@@ -429,8 +429,8 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenNotUsedAllocationsFromPreviousPe
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
     allocation2.getResidencyData().updateCompletionData(0, osContextId);
 
-    allocation1.getResidencyData().resident = true;
-    allocation2.getResidencyData().resident = true;
+    allocation1.getResidencyData().resident[osContextId] = true;
+    allocation2.getResidencyData().resident[osContextId] = true;
 
     // Set last periodic fence value
     residencyController->lastTrimFenceValue = 10;
@@ -449,8 +449,8 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenNotUsedAllocationsFromPreviousPe
     // removed from trim candidate list
     EXPECT_EQ(0u, residencyController->peekTrimCandidateList().size());
     // marked nonresident
-    EXPECT_FALSE(allocation1.getResidencyData().resident);
-    EXPECT_FALSE(allocation2.getResidencyData().resident);
+    EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
+    EXPECT_FALSE(allocation2.getResidencyData().resident[osContextId]);
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, givenOneUsedAllocationFromPreviousPeriodicTrimWhenTrimResidencyPeriodicTrimIsCalledThenOneAllocationIsTrimmed) {
@@ -460,11 +460,11 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenOneUsedAllocationFromPreviousPer
 
     // allocations have fence value == 0 by default
     MockWddmAllocation allocation1, allocation2;
-    allocation1.getResidencyData().resident = true;
+    allocation1.getResidencyData().resident[osContextId] = true;
     // mark allocation used from last periodic trim
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
     allocation2.getResidencyData().updateCompletionData(11, osContextId);
-    allocation2.getResidencyData().resident = true;
+    allocation2.getResidencyData().resident[osContextId] = true;
 
     // Set last periodic fence value
     residencyController->lastTrimFenceValue = 10;
@@ -484,9 +484,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenOneUsedAllocationFromPreviousPer
     EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition(osContextId));
 
     //marked nonresident
-    EXPECT_FALSE(allocation1.getResidencyData().resident);
+    EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
     // second stays resident
-    EXPECT_TRUE(allocation2.getResidencyData().resident);
+    EXPECT_TRUE(allocation2.getResidencyData().resident[osContextId]);
 }
 
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocationWithUsedAndUnusedFragmentsSincePreviousTrimWhenTrimResidencyPeriodicTrimIsCalledThenProperFragmentsAreEvictedAndMarked) {
@@ -504,13 +504,13 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
     EXPECT_EQ(3u, allocationTriple->fragmentsStorage.fragmentCount);
 
     allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->updateCompletionData(0, osContextId);
-    allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident = true;
+    allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId] = true;
     // this fragment was used
     allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->updateCompletionData(11, osContextId);
-    allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident = true;
+    allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId] = true;
 
     allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->updateCompletionData(0, osContextId);
-    allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident = true;
+    allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident[osContextId] = true;
 
     // Set last periodic fence value
     *residencyController->getMonitoredFence().cpuAddress = 10;
@@ -527,8 +527,8 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
     // 2 fragments evicted with one call
     EXPECT_EQ(1u, wddm->makeNonResidentResult.called);
     // marked nonresident
-    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident);
-    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident);
+    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId]);
+    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident[osContextId]);
 
     memoryManager->freeGraphicsMemory(allocationTriple);
 }
@@ -574,14 +574,14 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetAllDoneAllocations) {
 
     MockWddmAllocation allocation1, allocation2, allocation3;
 
-    allocation1.getResidencyData().resident = true;
+    allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
 
     allocation2.getResidencyData().updateCompletionData(1, osContextId);
-    allocation2.getResidencyData().resident = true;
+    allocation2.getResidencyData().resident[osContextId] = true;
 
     allocation3.getResidencyData().updateCompletionData(2, osContextId);
-    allocation3.getResidencyData().resident = true;
+    allocation3.getResidencyData().resident[osContextId] = true;
 
     *residencyController->getMonitoredFence().cpuAddress = 1;
     residencyController->getMonitoredFence().lastSubmittedFence = 1;
@@ -611,7 +611,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetReturnsFalseWhenNumBytesT
 
     MockWddmAllocation allocation1;
 
-    allocation1.getResidencyData().resident = true;
+    allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
 
     *residencyController->getMonitoredFence().cpuAddress = 1;
@@ -634,14 +634,14 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetStopsEvictingWhenNumBytes
         allocation2(reinterpret_cast<void *>(0x1000), 0x3000, nullptr, MemoryPool::MemoryNull, 1u, false),
         allocation3(reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull, 1u, false);
 
-    allocation1.getResidencyData().resident = true;
+    allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
 
     allocation2.getResidencyData().updateCompletionData(1, osContextId);
-    allocation2.getResidencyData().resident = true;
+    allocation2.getResidencyData().resident[osContextId] = true;
 
     allocation3.getResidencyData().updateCompletionData(2, osContextId);
-    allocation3.getResidencyData().resident = true;
+    allocation3.getResidencyData().resident[osContextId] = true;
 
     *residencyController->getMonitoredFence().cpuAddress = 1;
     residencyController->getMonitoredFence().lastSubmittedFence = 1;
@@ -669,14 +669,14 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetMarksEvictedAllocationNon
 
     MockWddmAllocation allocation1, allocation2, allocation3;
 
-    allocation1.getResidencyData().resident = true;
+    allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
 
     allocation2.getResidencyData().updateCompletionData(1, osContextId);
-    allocation2.getResidencyData().resident = true;
+    allocation2.getResidencyData().resident[osContextId] = true;
 
     allocation3.getResidencyData().updateCompletionData(2, osContextId);
-    allocation3.getResidencyData().resident = true;
+    allocation3.getResidencyData().resident[osContextId] = true;
 
     *residencyController->getMonitoredFence().cpuAddress = 1;
     residencyController->getMonitoredFence().lastSubmittedFence = 1;
@@ -690,9 +690,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetMarksEvictedAllocationNon
 
     bool status = residencyController->trimResidencyToBudget(3 * 4096);
 
-    EXPECT_FALSE(allocation1.getResidencyData().resident);
-    EXPECT_FALSE(allocation2.getResidencyData().resident);
-    EXPECT_TRUE(allocation3.getResidencyData().resident);
+    EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
+    EXPECT_FALSE(allocation2.getResidencyData().resident[osContextId]);
+    EXPECT_TRUE(allocation3.getResidencyData().resident[osContextId]);
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetWaitsFromCpuWhenLastFenceIsGreaterThanMonitored) {
@@ -700,7 +700,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetWaitsFromCpuWhenLastFence
 
     MockWddmAllocation allocation1;
 
-    allocation1.getResidencyData().resident = true;
+    allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(2, osContextId);
 
     *residencyController->getMonitoredFence().cpuAddress = 1;
@@ -717,7 +717,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetWaitsFromCpuWhenLastFence
     bool status = residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, wddm->makeNonResidentResult.called);
-    EXPECT_FALSE(allocation1.getResidencyData().resident);
+    EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
 
     EXPECT_EQ(wddm->getDevice(), gdi->getWaitFromCpuArg().hDevice);
 }
@@ -728,23 +728,23 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, trimToBudgetEvictsDon
     WddmAllocation allocation1(ptr, 0x1000, nullptr, MemoryPool::MemoryNull, 1u, false);
     WddmAllocation allocation2(ptr, 0x1000, nullptr, MemoryPool::MemoryNull, 1u, false);
 
-    allocation1.getResidencyData().resident = true;
+    allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
 
     allocation2.getResidencyData().updateCompletionData(1, osContextId);
-    allocation2.getResidencyData().resident = true;
+    allocation2.getResidencyData().resident[osContextId] = true;
 
     void *ptrTriple = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + 0x500);
     WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(8196, ptrTriple));
 
     allocationTriple->getResidencyData().updateCompletionData(1, osContextId);
-    allocationTriple->getResidencyData().resident = true;
+    allocationTriple->getResidencyData().resident[osContextId] = true;
 
     EXPECT_EQ(3u, allocationTriple->fragmentsStorage.fragmentCount);
 
     for (uint32_t i = 0; i < 3; i++) {
         allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->updateCompletionData(1, osContextId);
-        allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident = true;
+        allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident[osContextId] = true;
     }
 
     // This should not be evicted
@@ -764,9 +764,9 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, trimToBudgetEvictsDon
 
     EXPECT_EQ(2u, wddm->makeNonResidentResult.called);
 
-    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident);
-    EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->resident);
-    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident);
+    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId]);
+    EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->resident[osContextId]);
+    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident[osContextId]);
 
     memoryManager->freeGraphicsMemory(allocationTriple);
 }
@@ -788,14 +788,14 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
     WddmAllocation allocation2(ptr2, underlyingSize, nullptr, MemoryPool::MemoryNull, 1u, false);
     WddmAllocation allocation3(ptr3, underlyingSize, nullptr, MemoryPool::MemoryNull, 1u, false);
 
-    allocation1.getResidencyData().resident = true;
+    allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
 
     allocation2.getResidencyData().updateCompletionData(1, osContextId);
-    allocation2.getResidencyData().resident = true;
+    allocation2.getResidencyData().resident[osContextId] = true;
 
     allocation3.getResidencyData().updateCompletionData(1, osContextId);
-    allocation3.getResidencyData().resident = true;
+    allocation3.getResidencyData().resident[osContextId] = true;
 
     *residencyController->getMonitoredFence().cpuAddress = 1;
     residencyController->getMonitoredFence().lastSubmittedFence = 1;
@@ -810,9 +810,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
     bool status = residencyController->trimResidencyToBudget(budget);
     EXPECT_TRUE(status);
 
-    EXPECT_FALSE(allocation1.getResidencyData().resident);
-    EXPECT_FALSE(allocation2.getResidencyData().resident);
-    EXPECT_TRUE(allocation3.getResidencyData().resident);
+    EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
+    EXPECT_FALSE(allocation2.getResidencyData().resident[osContextId]);
+    EXPECT_TRUE(allocation3.getResidencyData().resident[osContextId]);
 }
 
 using WddmResidencyControllerLockTest = WddmResidencyControllerWithGdiTest;
@@ -851,10 +851,10 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidency
 
     residencyController->makeResidentResidencyAllocations(residencyPack);
 
-    EXPECT_TRUE(allocation1.getResidencyData().resident);
-    EXPECT_TRUE(allocation2.getResidencyData().resident);
-    EXPECT_TRUE(allocation3.getResidencyData().resident);
-    EXPECT_TRUE(allocation4.getResidencyData().resident);
+    EXPECT_TRUE(allocation1.getResidencyData().resident[osContextId]);
+    EXPECT_TRUE(allocation2.getResidencyData().resident[osContextId]);
+    EXPECT_TRUE(allocation3.getResidencyData().resident[osContextId]);
+    EXPECT_TRUE(allocation4.getResidencyData().resident[osContextId]);
 }
 
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidencyAllocationsUpdatesLastFence) {
@@ -881,7 +881,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidency
     residencyController->makeResidentResidencyAllocations(residencyPack);
 
     for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
-        EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident);
+        EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident[osContextId]);
     }
 
     EXPECT_EQ(5u, gdi->getMakeResidentArg().NumAllocations);
@@ -919,10 +919,10 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 
     EXPECT_FALSE(result);
 
-    EXPECT_FALSE(allocation1.getResidencyData().resident);
-    EXPECT_FALSE(allocation2.getResidencyData().resident);
-    EXPECT_FALSE(allocation3.getResidencyData().resident);
-    EXPECT_FALSE(allocation4.getResidencyData().resident);
+    EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
+    EXPECT_FALSE(allocation2.getResidencyData().resident[osContextId]);
+    EXPECT_FALSE(allocation3.getResidencyData().resident[osContextId]);
+    EXPECT_FALSE(allocation4.getResidencyData().resident[osContextId]);
 }
 
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenDontMarkTripleAllocationsAsResident) {
@@ -942,7 +942,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
     EXPECT_FALSE(result);
 
     for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
-        EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident);
+        EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident[osContextId]);
     }
 
     memoryManager->freeGraphicsMemory(allocationTriple);
@@ -1001,7 +1001,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
 
     EXPECT_TRUE(result);
 
-    EXPECT_TRUE(allocation1.getResidencyData().resident);
+    EXPECT_TRUE(allocation1.getResidencyData().resident[osContextId]);
 }
 
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenMemoryBudgetExhaustedIsSetToTrue) {

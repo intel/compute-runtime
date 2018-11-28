@@ -111,9 +111,10 @@ void DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &i
         auto drmAlloc = static_cast<DrmAllocation *>(alloc);
         if (drmAlloc->fragmentsStorage.fragmentCount) {
             for (unsigned int f = 0; f < drmAlloc->fragmentsStorage.fragmentCount; f++) {
-                if (!drmAlloc->fragmentsStorage.fragmentStorageData[f].residency->resident) {
+                const auto osContextId = osContext->getContextId();
+                if (!drmAlloc->fragmentsStorage.fragmentStorageData[f].residency->resident[osContextId]) {
                     makeResident(drmAlloc->fragmentsStorage.fragmentStorageData[f].osHandleStorage->bo);
-                    drmAlloc->fragmentsStorage.fragmentStorageData[f].residency->resident = true;
+                    drmAlloc->fragmentsStorage.fragmentStorageData[f].residency->resident[osContextId] = true;
                 }
             }
         } else {
@@ -134,7 +135,7 @@ void DrmCommandStreamReceiver<GfxFamily>::makeNonResident(GraphicsAllocation &gf
         }
         if (gfxAllocation.fragmentsStorage.fragmentCount) {
             for (auto fragmentId = 0u; fragmentId < gfxAllocation.fragmentsStorage.fragmentCount; fragmentId++) {
-                gfxAllocation.fragmentsStorage.fragmentStorageData[fragmentId].residency->resident = false;
+                gfxAllocation.fragmentsStorage.fragmentStorageData[fragmentId].residency->resident[osContext->getContextId()] = false;
             }
         }
     }

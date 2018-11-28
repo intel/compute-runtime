@@ -28,7 +28,6 @@ namespace Sharing {
 constexpr auto nonSharedResource = 0u;
 }
 
-constexpr uint32_t maxOsContextCount = 4u;
 class Gmm;
 
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {

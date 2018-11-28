@@ -10,10 +10,15 @@
 #include <vector>
 namespace OCLRT {
 
+constexpr uint32_t maxOsContextCount = 4u;
+
 struct ResidencyData {
-    ResidencyData() = default;
+    ResidencyData() {
+        std::fill_n(resident, sizeof(resident), false);
+    }
+
     ~ResidencyData() = default;
-    bool resident = false;
+    bool resident[maxOsContextCount];
 
     void updateCompletionData(uint64_t newFenceValue, uint32_t contextId);
     uint64_t getFenceValueForContextId(uint32_t contextId);

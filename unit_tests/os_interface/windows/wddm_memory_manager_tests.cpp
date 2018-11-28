@@ -46,6 +46,13 @@ void WddmMemoryManagerFixture::SetUp() {
     memoryManager = std::make_unique<MockWddmMemoryManager>(wddm, executionEnvironment);
 }
 
+TEST(ResidencyData, givenNewlyConstructedResidencyDataThenItIsNotResidentOnAnyOsContext) {
+    ResidencyData residencyData;
+    for (auto contextId = 0u; contextId < maxOsContextCount; contextId++) {
+        EXPECT_EQ(false, residencyData.resident[contextId]);
+    }
+}
+
 TEST(WddmMemoryManager, NonCopyable) {
     EXPECT_FALSE(std::is_move_constructible<WddmMemoryManager>::value);
     EXPECT_FALSE(std::is_copy_constructible<WddmMemoryManager>::value);

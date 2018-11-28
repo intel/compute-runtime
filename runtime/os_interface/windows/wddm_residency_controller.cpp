@@ -213,7 +213,7 @@ void WddmResidencyController::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags,
                 if (!wasAllocationUsedSinceLastTrim(fragmentStorageData.residency->getFenceValueForContextId(osContextId))) {
                     DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict fragment: handle =", wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle, "lastFence =", wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId));
                     fragmentEvictHandles[fragmentsToEvict++] = fragmentStorageData.osHandleStorage->handle;
-                    fragmentStorageData.residency->resident = false;
+                    fragmentStorageData.residency->resident[osContextId] = false;
                 }
             }
 
@@ -221,7 +221,7 @@ void WddmResidencyController::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags,
                 this->wddm.evict((D3DKMT_HANDLE *)fragmentEvictHandles, fragmentsToEvict, sizeToTrim);
             }
 
-            wddmAllocation->getResidencyData().resident = false;
+            wddmAllocation->getResidencyData().resident[osContextId] = false;
 
             this->removeFromTrimCandidateList(wddmAllocation, false);
         }
@@ -279,7 +279,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
 
                 for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
                     if (fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId) <= monitoredFence.lastSubmittedFence) {
-                        fragmentStorageData[allocationId].residency->resident = false;
+                        fragmentStorageData[allocationId].residency->resident[osContextId] = false;
                         sizeEvicted += fragmentStorageData[allocationId].fragmentSize;
                     }
                 }
@@ -292,7 +292,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
             numberOfBytesToTrim -= sizeEvicted;
         }
 
-        wddmAllocation->getResidencyData().resident = false;
+        wddmAllocation->getResidencyData().resident[osContextId] = false;
         this->removeFromTrimCandidateList(wddmAllocation, false);
     }
 
@@ -317,14 +317,14 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
         ResidencyData &residencyData = allocation->getResidencyData();
         bool fragmentResidency[3] = {false, false, false};
 
-        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, residencyData.resident ? "resident" : "not resident");
+        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, residencyData.resident[osContextId] ? "resident" : "not resident");
 
         if (allocation->getTrimCandidateListPosition(this->osContextId) != trimListUnusedPosition) {
             DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, "on trimCandidateList");
             this->removeFromTrimCandidateList(allocation, false);
         } else {
             for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
-                fragmentResidency[allocationId] = allocation->fragmentsStorage.fragmentStorageData[allocationId].residency->resident;
+                fragmentResidency[allocationId] = allocation->fragmentsStorage.fragmentStorageData[allocationId].residency->resident[osContextId];
                 DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "fragment handle =", allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle, fragmentResidency[allocationId] ? "resident" : "not resident");
             }
         }
@@ -334,7 +334,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
                 if (!fragmentResidency[allocationId])
                     handlesForResidency[totalHandlesCount++] = allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle;
             }
-        } else if (!residencyData.resident) {
+        } else if (!residencyData.resident[osContextId]) {
             handlesForResidency[totalHandlesCount++] = allocation->handle;
         }
     }
@@ -358,13 +358,13 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
             // Update fence value not to early destroy / evict allocation
             const auto currentFence = this->getMonitoredFence().currentFenceValue;
             allocation->getResidencyData().updateCompletionData(currentFence, this->osContextId);
-            allocation->getResidencyData().resident = true;
+            allocation->getResidencyData().resident[osContextId] = true;
 
             for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
                 auto residencyData = allocation->fragmentsStorage.fragmentStorageData[allocationId].residency;
                 // Update fence value not to remove the fragment referenced by different GA in trimming callback
                 residencyData->updateCompletionData(currentFence, this->osContextId);
-                residencyData->resident = true;
+                residencyData->resident[osContextId] = true;
             }
         }
     }

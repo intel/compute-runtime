@@ -388,9 +388,8 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
 
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
-            handles[allocationCount] = handleStorage.fragmentStorageData[i].osHandleStorage->handle;
-            handleStorage.fragmentStorageData[i].residency->resident = false;
-            allocationCount++;
+            handles[allocationCount++] = handleStorage.fragmentStorageData[i].osHandleStorage->handle;
+            std::fill_n(handleStorage.fragmentStorageData[i].residency->resident, maxOsContextCount, false);
         }
     }
 
