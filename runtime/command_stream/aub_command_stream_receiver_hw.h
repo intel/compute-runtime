@@ -105,8 +105,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
         uint32_t ggttRingBuffer;
         size_t sizeRingBuffer;
         uint32_t tailRingBuffer;
-    } engineInfoTable[allEngineInstances.size()] = {};
-    size_t gpgpuEngineIndex = gpgpuEngineInstances.size() - 1;
+    } engineInfoTable[EngineInstanceT::numAllEngineInstances] = {};
+    size_t gpgpuEngineIndex = EngineInstanceT::numGpgpuEngineInstances - 1;
 
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;
     uint32_t aubDeviceId;

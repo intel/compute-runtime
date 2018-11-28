@@ -24,7 +24,7 @@ class BuiltIns;
 struct HardwareInfo;
 class OSInterface;
 
-using CsrContainer = std::array<std::unique_ptr<CommandStreamReceiver>, gpgpuEngineInstances.size()>;
+using CsrContainer = std::array<std::unique_ptr<CommandStreamReceiver>, EngineInstanceT::numGpgpuEngineInstances>;
 
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   private:

@@ -20,6 +20,9 @@ enum EngineType : uint32_t {
 };
 
 struct EngineInstanceT {
+    static const size_t numAllEngineInstances = 5;
+    static const size_t numGpgpuEngineInstances = 2;
+
     constexpr EngineInstanceT(EngineType type) : type(type), id(0) {}
     constexpr EngineInstanceT(EngineType type, int id) : type(type), id(id) {}
 
@@ -27,7 +30,7 @@ struct EngineInstanceT {
     int id;
 };
 
-static constexpr std::array<EngineInstanceT, 5> allEngineInstances = {{
+static constexpr std::array<EngineInstanceT, EngineInstanceT::numAllEngineInstances> allEngineInstances = {{
     {ENGINE_RCS, 0},
     {ENGINE_RCS, 1},
     {ENGINE_BCS},
@@ -35,7 +38,7 @@ static constexpr std::array<EngineInstanceT, 5> allEngineInstances = {{
     {ENGINE_VECS},
 }};
 
-static constexpr std::array<EngineInstanceT, 2> gpgpuEngineInstances = {{
+static constexpr std::array<EngineInstanceT, EngineInstanceT::numGpgpuEngineInstances> gpgpuEngineInstances = {{
     {ENGINE_RCS, 0},
     {ENGINE_RCS, 1},
 }};
