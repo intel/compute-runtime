@@ -126,6 +126,19 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
     bool createAubCSR;
 };
 
+using CommandStreamReceiverWithAubDumpSimpleTest = ::testing::Test;
+
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenSettingOsContextThenReplicateItToAubCsr) {
+    ExecutionEnvironment executionEnvironment;
+
+    CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump(*platformDevices[0], executionEnvironment);
+    OsContext osContext(nullptr, 0, gpgpuEngineInstances[0]);
+
+    csrWithAubDump.setOsContext(osContext);
+    EXPECT_EQ(&osContext, &csrWithAubDump.getOsContext());
+    EXPECT_EQ(&osContext, &csrWithAubDump.aubCSR->getOsContext());
+}
+
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenCtorIsCalledThenAubCsrIsInitialized) {
     if (createAubCSR) {
         EXPECT_NE(nullptr, csrWithAubDump->aubCSR);

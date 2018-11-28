@@ -24,6 +24,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
+    void setOsContext(OsContext &osContext) override;
 
     CommandStreamReceiver *aubCSR = nullptr;
 };

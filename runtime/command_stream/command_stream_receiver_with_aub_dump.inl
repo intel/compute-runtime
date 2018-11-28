@@ -50,4 +50,11 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::activateAubSubCapture(const Mult
     }
 }
 
+template <typename BaseCSR>
+void CommandStreamReceiverWithAUBDump<BaseCSR>::setOsContext(OsContext &osContext) {
+    BaseCSR::setOsContext(osContext);
+    if (aubCSR) {
+        aubCSR->setOsContext(osContext);
+    }
+}
 } // namespace OCLRT
