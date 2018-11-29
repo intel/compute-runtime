@@ -22,7 +22,7 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         executionEnvironment->initializeCommandStreamReceiver(*platformDevices, 0, 0);
         memoryManager = new OsAgnosticMemoryManager(false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        csr = memoryManager->getCommandStreamReceiver(0);
+        csr = memoryManager->getDefaultCommandStreamReceiver(0);
     }
 
     void TearDown() override {

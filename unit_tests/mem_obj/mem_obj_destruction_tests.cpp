@@ -38,7 +38,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
                             CL_MEM_READ_WRITE,
                             size,
                             nullptr, nullptr, allocation, true, false, false);
-        *context->getDevice(0)->getTagAddress() = 0;
+        *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = 0;
     }
 
     void TearDown() override {
@@ -51,12 +51,12 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
 
     void makeMemObjNotReady() {
         makeMemObjUsed();
-        *context->getDevice(0)->getTagAddress() = taskCountReady - 1;
+        *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountReady - 1;
     }
 
     void makeMemObjReady() {
         makeMemObjUsed();
-        *context->getDevice(0)->getTagAddress() = taskCountReady;
+        *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountReady;
     }
 
     constexpr static uint32_t taskCountReady = 3u;
@@ -105,7 +105,7 @@ TEST_P(MemObjAsyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyn
     } else {
         makeMemObjNotReady();
     }
-    auto &allocationList = memoryManager->getCommandStreamReceiver(0)->getTemporaryAllocations();
+    auto &allocationList = memoryManager->getDefaultCommandStreamReceiver(0)->getTemporaryAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;
@@ -265,7 +265,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
 
     delete memObj;
-    auto &allocationList = memoryManager->getCommandStreamReceiver(0)->getTemporaryAllocations();
+    auto &allocationList = memoryManager->getDefaultCommandStreamReceiver(0)->getTemporaryAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
 }
 

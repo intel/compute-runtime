@@ -24,7 +24,7 @@ class BuiltIns;
 struct HardwareInfo;
 class OSInterface;
 
-using CsrContainer = std::array<std::unique_ptr<CommandStreamReceiver>, EngineInstanceT::numGpgpuEngineInstances>;
+using CsrContainer = std::vector<std::array<std::unique_ptr<CommandStreamReceiver>, EngineInstanceT::numGpgpuEngineInstances>>;
 
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   private:
@@ -51,7 +51,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<AubCenter> aubCenter;
-    std::vector<CsrContainer> commandStreamReceivers;
+    CsrContainer commandStreamReceivers;
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;

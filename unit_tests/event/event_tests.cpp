@@ -905,7 +905,7 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushe
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
     MockNonZeroCopyBuff buffer(executionStamp);
     MockCsr<FamilyType> csr(executionStamp, *pDevice->executionEnvironment);
-    csr.setTagAllocation(pDevice->getTagAllocation());
+    csr.setTagAllocation(pDevice->getDefaultEngine().commandStreamReceiver->getTagAllocation());
 
     MemObjSizeArray size = {{4, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
@@ -1207,9 +1207,9 @@ TEST_F(EventTest, GivenCL_SUBMITTEDWhenpeekIsSubmittedThenTrue) {
 
 TEST_F(EventTest, GivenCompletedEventWhenQueryingExecutionStatusAfterFlushThenCsrIsNotFlushed) {
     cl_int ret;
-    *pDevice->getTagAddress() = 3;
     Event ev(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 3);
     auto &csr = this->pCmdQ->getCommandStreamReceiver();
+    *csr.getTagAddress() = 3;
     auto previousTaskLevel = csr.peekTaskLevel();
     EXPECT_GT(3u, previousTaskLevel);
     ret = clFlush(this->pCmdQ);

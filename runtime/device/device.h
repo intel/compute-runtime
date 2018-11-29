@@ -70,7 +70,8 @@ class Device : public BaseObject<_cl_device_id> {
         deviceInfo.force32BitAddressess = value;
     }
 
-    EngineControl &getEngine(size_t engineId);
+    EngineControl &getEngine(uint32_t engineId);
+    EngineControl &getDefaultEngine();
 
     volatile uint32_t *getTagAddress() const;
 
@@ -146,7 +147,6 @@ class Device : public BaseObject<_cl_device_id> {
     HardwareCapabilities hardwareCapabilities = {};
     DeviceInfo deviceInfo;
 
-    volatile uint32_t *tagAddress = nullptr;
     GraphicsAllocation *preemptionAllocation = nullptr;
     std::unique_ptr<OSTime> osTime;
     std::unique_ptr<DriverInfo> driverInfo;
@@ -161,6 +161,7 @@ class Device : public BaseObject<_cl_device_id> {
     PreemptionMode preemptionMode;
     ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t deviceIndex = 0u;
+    uint32_t defaultEngineIndex = 0;
 };
 
 template <cl_device_info Param>
@@ -171,12 +172,12 @@ inline void Device::getCap(const void *&src,
     retSize = size = DeviceInfoTable::Map<Param>::size;
 }
 
-inline EngineControl &Device::getEngine(size_t engineId) {
+inline EngineControl &Device::getEngine(uint32_t engineId) {
     return engines[engineId];
 }
 
-inline volatile uint32_t *Device::getTagAddress() const {
-    return tagAddress;
+inline EngineControl &Device::getDefaultEngine() {
+    return engines[defaultEngineIndex];
 }
 
 inline MemoryManager *Device::getMemoryManager() const {

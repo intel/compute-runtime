@@ -428,7 +428,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     QueuePriority priority;
     QueueThrottle throttle;
-    size_t engineId = 0;
+    uint32_t engineId = 0;
 
     bool perfCountersEnabled;
     cl_uint perfCountersConfig;

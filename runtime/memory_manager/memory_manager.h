@@ -30,6 +30,8 @@ class AllocsTracker;
 class MapBaseAllocationTracker;
 class SVMAllocsManager;
 
+using CsrContainer = std::vector<std::array<std::unique_ptr<CommandStreamReceiver>, EngineInstanceT::numGpgpuEngineInstances>>;
+
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,
     REUSABLE_ALLOCATION
@@ -231,8 +233,10 @@ class MemoryManager {
 
     OsContext *createAndRegisterOsContext(EngineInstanceT engineType);
     uint32_t getOsContextCount() { return static_cast<uint32_t>(registeredOsContexts.size()); }
-    CommandStreamReceiver *getCommandStreamReceiver(uint32_t contextId);
+    CommandStreamReceiver *getDefaultCommandStreamReceiver(uint32_t deviceId) const;
+    const CsrContainer &getCommandStreamReceivers() const;
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
+    void setDefaultEngineIndex(uint32_t index) { defaultEngineIndex = index; }
 
   protected:
     static bool getAllocationData(AllocationData &allocationData, const AllocationFlags &flags, const DevicesBitfield devicesBitfield,
@@ -251,6 +255,7 @@ class MemoryManager {
     std::vector<OsContext *> registeredOsContexts;
     std::unique_ptr<HostPtrManager> hostPtrManager;
     uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
+    uint32_t defaultEngineIndex = 0;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

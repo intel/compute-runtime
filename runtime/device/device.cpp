@@ -129,7 +129,6 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
         pDevice->osTime = OSTime::create(commandStreamReceiver->getOSInterface());
     }
     pDevice->driverInfo.reset(DriverInfo::create(commandStreamReceiver->getOSInterface()));
-    pDevice->tagAddress = reinterpret_cast<uint32_t *>(commandStreamReceiver->getTagAllocation()->getUnderlyingBuffer());
 
     pDevice->initializeCaps();
 
@@ -150,6 +149,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     }
 
     outDevice.executionEnvironment->memoryManager->setForce32BitAllocations(pDevice->getDeviceInfo().force32BitAddressess);
+    outDevice.executionEnvironment->memoryManager->setDefaultEngineIndex(deviceCsrIndex);
 
     if (pDevice->preemptionMode == PreemptionMode::MidThread || pDevice->isSourceLevelDebuggerActive()) {
         size_t requiredSize = pHwInfo->capabilityTable.requiredPreemptionSurfaceSize;

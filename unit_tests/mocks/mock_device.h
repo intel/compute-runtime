@@ -68,14 +68,12 @@ class MockDevice : public Device {
 
     template <typename T>
     UltCommandStreamReceiver<T> &getUltCommandStreamReceiver() {
-        return reinterpret_cast<UltCommandStreamReceiver<T> &>(*engines[0].commandStreamReceiver);
+        return reinterpret_cast<UltCommandStreamReceiver<T> &>(*engines[defaultEngineIndex].commandStreamReceiver);
     }
 
-    CommandStreamReceiver &getCommandStreamReceiver() const { return *engines[0].commandStreamReceiver; }
+    CommandStreamReceiver &getCommandStreamReceiver() const { return *engines[defaultEngineIndex].commandStreamReceiver; }
 
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
-
-    GraphicsAllocation *getTagAllocation() { return this->engines[0].commandStreamReceiver->getTagAllocation(); }
 
     void setSourceLevelDebuggerActive(bool active) {
         this->deviceInfo.sourceLevelDebuggerActive = active;
@@ -101,7 +99,7 @@ class MockDevice : public Device {
                 size_t alignment = 256 * MemoryConstants::kiloByte;
                 bool uncacheable = getWaTable()->waCSRUncachable;
                 this->preemptionAllocation = executionEnvironment->memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
-                this->engines[0].commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
+                this->engines[defaultEngineIndex].commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
             }
         }
     }

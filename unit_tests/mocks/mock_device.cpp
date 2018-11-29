@@ -19,7 +19,7 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
     executionEnvironment->commandStreamReceivers.resize(getDeviceIndex() + 1);
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][0].reset(commandStreamReceiver);
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
-    this->engines[0] = {commandStreamReceiver, nullptr};
+    this->engines[defaultEngineIndex] = {commandStreamReceiver, nullptr};
 }
 MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : Device(hwInfo, executionEnvironment, deviceIndex) {
@@ -46,13 +46,12 @@ void MockDevice::injectMemoryManager(MemoryManager *memoryManager) {
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()][0].reset(newCsr);
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->initializeTagAllocation();
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->setPreemptionCsrAllocation(preemptionAllocation);
-    this->engines[0].commandStreamReceiver = newCsr;
-    this->engines[0].commandStreamReceiver->setOsContext(*this->engines[0].osContext);
+    executionEnvironment->commandStreamReceivers[getDeviceIndex()][defaultEngineIndex].reset(newCsr);
+    executionEnvironment->commandStreamReceivers[getDeviceIndex()][defaultEngineIndex]->initializeTagAllocation();
+    executionEnvironment->commandStreamReceivers[getDeviceIndex()][defaultEngineIndex]->setPreemptionCsrAllocation(preemptionAllocation);
+    this->engines[defaultEngineIndex].commandStreamReceiver = newCsr;
+    this->engines[defaultEngineIndex].commandStreamReceiver->setOsContext(*this->engines[defaultEngineIndex].osContext);
     UNRECOVERABLE_IF(getDeviceIndex() != 0u);
-    this->tagAddress = executionEnvironment->commandStreamReceivers[getDeviceIndex()][0]->getTagAddress();
 }
 
 MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(hwInfo, executionEnvironment, deviceIndex) {

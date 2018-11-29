@@ -619,7 +619,7 @@ TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWh
     auto &csr = pDevice->getCommandStreamReceiver();
 
     auto privateSurface = pKernel->getPrivateSurface();
-    auto tagAddress = context.getDevice(0)->getTagAddress();
+    auto tagAddress = csr.getTagAddress();
 
     privateSurface->updateTaskCount(*tagAddress + 1, 0u);
 

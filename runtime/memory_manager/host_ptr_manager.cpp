@@ -282,7 +282,7 @@ RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager 
         if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
             // clean temporary allocations
 
-            auto commandStreamReceiver = memoryManager.getCommandStreamReceiver(0);
+            auto commandStreamReceiver = memoryManager.getDefaultCommandStreamReceiver(0);
             auto allocationStorage = commandStreamReceiver->getInternalAllocationStorage();
             uint32_t taskCount = *commandStreamReceiver->getTagAddress();
             allocationStorage->cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);

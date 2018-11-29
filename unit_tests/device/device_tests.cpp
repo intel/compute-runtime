@@ -44,9 +44,9 @@ TEST_F(DeviceTest, getSupportedClVersion) {
 }
 
 TEST_F(DeviceTest, getTagAddress) {
-    auto pTagAddress = pDevice->getTagAddress();
-    ASSERT_NE(nullptr, const_cast<uint32_t *>(pTagAddress));
-    EXPECT_EQ(initialHardwareTag, *pTagAddress);
+    auto tagAddress = pDevice->getDefaultEngine().commandStreamReceiver->getTagAddress();
+    ASSERT_NE(nullptr, const_cast<uint32_t *>(tagAddress));
+    EXPECT_EQ(initialHardwareTag, *tagAddress);
 }
 
 TEST_F(DeviceTest, WhenGetOSTimeThenNotNull) {
@@ -199,7 +199,7 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperate
     EXPECT_EQ(device->getEngine(0).commandStreamReceiver, executionEnvironment.commandStreamReceivers[0][0].get());
     EXPECT_EQ(device2->getEngine(0).commandStreamReceiver, executionEnvironment.commandStreamReceivers[1][0].get());
 
-    for (size_t i = 1; i < gpgpuEngineInstances.size(); i++) {
+    for (uint32_t i = 1; i < gpgpuEngineInstances.size(); i++) {
         EXPECT_EQ(nullptr, executionEnvironment.commandStreamReceivers[0][i]);
         EXPECT_EQ(nullptr, executionEnvironment.commandStreamReceivers[1][i]);
         EXPECT_EQ(nullptr, device->getEngine(i).commandStreamReceiver);

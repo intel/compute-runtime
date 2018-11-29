@@ -8,6 +8,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/memory_manager/deferrable_allocation_deletion.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/os_interface/os_context.h"
 
 namespace OCLRT {
 
@@ -16,11 +17,16 @@ DeferrableAllocationDeletion::DeferrableAllocationDeletion(MemoryManager &memory
 void DeferrableAllocationDeletion::apply() {
     while (graphicsAllocation.isUsed()) {
 
-        for (auto contextId = 0u; contextId < memoryManager.getOsContextCount(); contextId++) {
-            if (graphicsAllocation.isUsedByContext(contextId)) {
-                auto currentContextTaskCount = *memoryManager.getCommandStreamReceiver(contextId)->getTagAddress();
-                if (graphicsAllocation.getTaskCount(contextId) <= currentContextTaskCount) {
-                    graphicsAllocation.resetTaskCount(contextId);
+        for (auto &deviceCsrs : memoryManager.getCommandStreamReceivers()) {
+            for (auto &csr : deviceCsrs) {
+                if (csr) {
+                    auto contextId = csr->getOsContext().getContextId();
+                    if (graphicsAllocation.isUsedByContext(contextId)) {
+                        auto currentContextTaskCount = *csr->getTagAddress();
+                        if (graphicsAllocation.getTaskCount(contextId) <= currentContextTaskCount) {
+                            graphicsAllocation.resetTaskCount(contextId);
+                        }
+                    }
                 }
             }
         }

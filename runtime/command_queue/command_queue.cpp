@@ -77,14 +77,14 @@ CommandQueue::CommandQueue(Context *context,
     commandQueueProperties = getCmdQueueProperties<cl_command_queue_properties>(properties);
     flushStamp.reset(new FlushStampTracker(true));
 
-    processProperties();
-
     if (device) {
-        engine = &device->getEngine(engineId);
+        engine = &device->getDefaultEngine();
         if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
     }
+
+    processProperties();
 }
 
 CommandQueue::~CommandQueue() {

@@ -137,10 +137,10 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
 //if not in use destroy in place
 //if in use pass to temporary allocation list that is cleaned on blocking calls
 void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation) {
-    if (!gfxAllocation->isUsed() || gfxAllocation->getTaskCount(0u) <= *getCommandStreamReceiver(0)->getTagAddress()) {
+    if (!gfxAllocation->isUsed() || gfxAllocation->getTaskCount(0u) <= *getCommandStreamReceivers()[0][defaultEngineIndex]->getTagAddress()) {
         freeGraphicsMemory(gfxAllocation);
     } else {
-        getCommandStreamReceiver(0)->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation), TEMPORARY_ALLOCATION);
+        getCommandStreamReceivers()[0][defaultEngineIndex]->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation), TEMPORARY_ALLOCATION);
     }
 }
 
@@ -274,9 +274,13 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     }
     return allocateGraphicsMemory(allocationData.size, MemoryConstants::pageSize, allocationData.flags.forcePin, allocationData.flags.uncacheable);
 }
-CommandStreamReceiver *MemoryManager::getCommandStreamReceiver(uint32_t contextId) {
-    UNRECOVERABLE_IF(executionEnvironment.commandStreamReceivers.size() < 1);
-    return executionEnvironment.commandStreamReceivers[contextId][0].get();
+
+const CsrContainer &MemoryManager::getCommandStreamReceivers() const {
+    return executionEnvironment.commandStreamReceivers;
+}
+
+CommandStreamReceiver *MemoryManager::getDefaultCommandStreamReceiver(uint32_t deviceId) const {
+    return executionEnvironment.commandStreamReceivers[deviceId][defaultEngineIndex].get();
 }
 
 } // namespace OCLRT
