@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
     size_t revisionId = device.pPlatform->usRevId;
     uint32_t euPerSubSlice = 0;
     uint32_t sliceCount = 0;
-    uint32_t subSliceCount = 0;
+    uint32_t subSlicePerSliceCount = 0;
     int dieRecovery = 0;
     ::productFamily = device.pPlatform->eProductFamily;
 
@@ -260,7 +260,7 @@ int main(int argc, char **argv) {
         } else if (!strcmp("--subslices", argv[i])) {
             ++i;
             if (i < argc) {
-                subSliceCount = atoi(argv[i]);
+                subSlicePerSliceCount = atoi(argv[i]);
             }
         } else if (!strcmp("--eu_per_ss", argv[i])) {
             ++i;
@@ -293,11 +293,11 @@ int main(int argc, char **argv) {
     hardwareInfoSetup[productFamily](&gtSystemInfo, &featureTable, setupFeatureTable, hwInfoConfig);
     // and adjust dynamic values if not secified
     sliceCount = sliceCount > 0 ? sliceCount : gtSystemInfo.SliceCount;
-    subSliceCount = subSliceCount > 0 ? subSliceCount : gtSystemInfo.SubSliceCount;
+    subSlicePerSliceCount = subSlicePerSliceCount > 0 ? subSlicePerSliceCount : (gtSystemInfo.SubSliceCount / sliceCount);
     euPerSubSlice = euPerSubSlice > 0 ? euPerSubSlice : gtSystemInfo.MaxEuPerSubSlice;
     // clang-format off
     gtSystemInfo.SliceCount             = sliceCount;
-    gtSystemInfo.SubSliceCount          = gtSystemInfo.SliceCount * subSliceCount;
+    gtSystemInfo.SubSliceCount          = gtSystemInfo.SliceCount * subSlicePerSliceCount;
     gtSystemInfo.EUCount                = gtSystemInfo.SubSliceCount * euPerSubSlice - dieRecovery;
     gtSystemInfo.ThreadCount            = gtSystemInfo.EUCount * threadsPerEu;
     gtSystemInfo.MaxEuPerSubSlice       = std::max(gtSystemInfo.MaxEuPerSubSlice, euPerSubSlice);
