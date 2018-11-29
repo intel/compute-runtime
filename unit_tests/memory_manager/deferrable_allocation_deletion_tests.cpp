@@ -24,6 +24,9 @@ struct DeferredDeleterPublic : DeferredDeleter {
     bool shouldStopReached = false;
     bool allowExit = false;
     bool shouldStop() override {
+        if (allowExit) {
+            EXPECT_TRUE(queue.peekIsEmpty());
+        }
         shouldStopReached = allowExit;
         return allowExit;
     }
@@ -41,6 +44,7 @@ struct DeferrableAllocationDeletionTest : ::testing::Test {
         asyncDeleter->addClient();
     }
     void TearDown() override {
+        asyncDeleter->allowExit = true;
         asyncDeleter->removeClient();
     }
     std::unique_ptr<DeferredDeleterPublic> asyncDeleter;
@@ -103,5 +107,44 @@ TEST_F(DeferrableAllocationDeletionTest, givenNotUsedAllocationWhenApplyDeletion
     asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation));
     while (!asyncDeleter->shouldStopReached) // wait async thread job end
         std::this_thread::yield();
+    EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
+}
+
+TEST_F(DeferrableAllocationDeletionTest, givenTwoAllocationsUsedByOneOsContextsEnqueuedToAsyncDeleterWhenOneAllocationIsCompletedThenReleaseThatAllocation) {
+    auto allocation1 = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto allocation2 = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    *hwTag = 1u;
+    allocation1->updateTaskCount(2u, device1ContextId);
+    allocation2->updateTaskCount(1u, device1ContextId);
+    EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
+    EXPECT_TRUE(allocation1->isUsed());
+    EXPECT_TRUE(allocation2->isUsed());
+    asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation1));
+    asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation2));
+    while (0u == memoryManager->freeGraphicsMemoryCalled) // wait for delete second allocation
+        std::this_thread::yield();
+    EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
+    asyncDeleter->allowExit = true;
+    *hwTag = 2u;
+}
+
+TEST_F(DeferrableAllocationDeletionTest, givenNotCompletedAllocationWhenDeletionIsAppliedThenReturnFalse) {
+    auto allocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    *hwTag = 0u;
+    allocation->updateTaskCount(1u, device1ContextId);
+    EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
+    DeferrableAllocationDeletion deletion{*memoryManager, *allocation};
+    EXPECT_FALSE(deletion.apply());
+    EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
+    *hwTag = 1u; // complete allocation
+    EXPECT_TRUE(deletion.apply());
+    EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
+}
+
+TEST_F(DeferrableAllocationDeletionTest, givenNotUsedAllocationWhenDeletionIsAppliedThenReturnTrue) {
+    auto allocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    EXPECT_FALSE(allocation->isUsed());
+    DeferrableAllocationDeletion deletion{*memoryManager, *allocation};
+    EXPECT_TRUE(deletion.apply());
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
 }

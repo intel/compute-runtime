@@ -8,8 +8,9 @@
 #include "unit_tests/mocks/mock_deferrable_deletion.h"
 
 namespace OCLRT {
-void MockDeferrableDeletion::apply() {
+bool MockDeferrableDeletion::apply() {
     applyCalled++;
+    return true;
 }
 MockDeferrableDeletion::~MockDeferrableDeletion() {
     EXPECT_EQ(1, applyCalled);

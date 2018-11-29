@@ -112,13 +112,15 @@ void DeferredDeleter::drain(bool blocking) {
 }
 
 void DeferredDeleter::clearQueue() {
-    std::unique_ptr<DeferrableDeletion> deletion(nullptr);
     do {
-        deletion.reset(queue.removeFrontOne().release());
+        auto deletion = queue.removeFrontOne();
         if (deletion) {
-            deletion->apply();
-            elementsToRelease--;
+            if (deletion->apply()) {
+                elementsToRelease--;
+            } else {
+                queue.pushTailOne(*deletion.release());
+            }
         }
-    } while (deletion);
+    } while (!queue.peekIsEmpty());
 }
 } // namespace OCLRT

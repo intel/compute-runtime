@@ -20,7 +20,7 @@ using OsContextWin = OsContext::OsContextImpl;
 class DeferrableDeletionImpl : public DeferrableDeletion {
   public:
     DeferrableDeletionImpl(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
-    void apply() override;
+    bool apply() override;
     ~DeferrableDeletionImpl();
 
     DeferrableDeletionImpl(const DeferrableDeletionImpl &) = delete;

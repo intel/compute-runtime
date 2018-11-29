@@ -16,7 +16,7 @@ class MemoryManager;
 class DeferrableAllocationDeletion : public DeferrableDeletion {
   public:
     DeferrableAllocationDeletion(MemoryManager &memoryManager, GraphicsAllocation &graphicsAllocation);
-    void apply() override;
+    bool apply() override;
 
   protected:
     MemoryManager &memoryManager;

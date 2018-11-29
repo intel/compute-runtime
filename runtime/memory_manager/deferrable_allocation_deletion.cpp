@@ -14,8 +14,8 @@ namespace OCLRT {
 
 DeferrableAllocationDeletion::DeferrableAllocationDeletion(MemoryManager &memoryManager, GraphicsAllocation &graphicsAllocation) : memoryManager(memoryManager),
                                                                                                                                    graphicsAllocation(graphicsAllocation) {}
-void DeferrableAllocationDeletion::apply() {
-    while (graphicsAllocation.isUsed()) {
+bool DeferrableAllocationDeletion::apply() {
+    if (graphicsAllocation.isUsed()) {
 
         for (auto &deviceCsrs : memoryManager.getCommandStreamReceivers()) {
             for (auto &csr : deviceCsrs) {
@@ -28,7 +28,11 @@ void DeferrableAllocationDeletion::apply() {
                 }
             }
         }
+        if (graphicsAllocation.isUsed()) {
+            return false;
+        }
     }
     memoryManager.freeGraphicsMemory(&graphicsAllocation);
+    return true;
 }
 } // namespace OCLRT

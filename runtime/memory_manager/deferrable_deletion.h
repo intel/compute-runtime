@@ -13,7 +13,7 @@ class DeferrableDeletion : public IDNode<DeferrableDeletion> {
   public:
     template <typename... Args>
     static DeferrableDeletion *create(Args... args);
-    virtual void apply() = 0;
+    virtual bool apply() = 0;
     virtual ~DeferrableDeletion() = default;
 };
 } // namespace OCLRT

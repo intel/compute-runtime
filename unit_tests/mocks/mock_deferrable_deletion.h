@@ -12,7 +12,7 @@
 namespace OCLRT {
 class MockDeferrableDeletion : public DeferrableDeletion {
   public:
-    void apply() override;
+    bool apply() override;
 
     virtual ~MockDeferrableDeletion();
     int applyCalled = 0;
