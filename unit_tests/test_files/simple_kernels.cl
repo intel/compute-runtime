@@ -47,6 +47,9 @@ __kernel void simple_kernel_4() {
 
 __kernel void simple_kernel_5(__global uint *dst) {
     atomic_inc(dst);
+    uint groupIdX = get_group_id(0);
+    __global uint* groupCounters = dst+1;
+    atomic_inc(&groupCounters[groupIdX]);
 }
 
 #define SIMPLE_KERNEL_6_ARRAY_SIZE 256
