@@ -177,10 +177,8 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCall
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
     aubCsr->processResidency(allocationsForResidency);
-    aubCsr->makeNonResident(allocation);
 
     EXPECT_TRUE(mockHardwareContext->writeMemoryCalled);
-    EXPECT_TRUE(mockHardwareContext->freeMemoryCalled);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenFileStreamShouldBeFlushed) {

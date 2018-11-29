@@ -769,9 +769,6 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isResident(this->deviceIndex)) {
-        if (hardwareContext) {
-            hardwareContext->freeMemory(gfxAllocation.getGpuAddress(), gfxAllocation.getUnderlyingBufferSize());
-        }
         this->getEvictionAllocations().push_back(&gfxAllocation);
         gfxAllocation.resetResidencyTaskCount(this->deviceIndex);
     }
