@@ -11,6 +11,7 @@ add_executable(igdrcl_windows_dll_tests
   ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/wddm/wddm_create.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/ult_configuration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_create_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.cpp
   $<TARGET_OBJECTS:igdrcl_libult>
   $<TARGET_OBJECTS:igdrcl_libult_cs>
   $<TARGET_OBJECTS:igdrcl_libult_env>

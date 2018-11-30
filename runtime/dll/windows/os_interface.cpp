@@ -9,6 +9,6 @@
 
 namespace OCLRT {
 
-bool OSInterface::osEnableLocalMemory = false;
+bool OSInterface::osEnableLocalMemory = true;
 
 } // namespace OCLRT
