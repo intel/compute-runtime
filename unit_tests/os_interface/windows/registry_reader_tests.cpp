@@ -55,8 +55,7 @@ TEST_F(RegistryReaderTest, givenRegistryReaderWhenRegKeyNotExistThenReturnDefaul
 }
 
 TEST_F(RegistryReaderTest, givenRegistryReaderWhenItIsCreatedWithRegKeySpecifiedThenRegKeyIsInitializedAccordingly) {
-    std::string regKey = "regKey";
-    std::string defaultKey = "Software\\Intel\\IGFX\\OCL";
+    std::string regKey = "Software\\Intel\\IGFX\\OCL\\regKey";
     TestedRegistryReader registryReader(regKey);
-    EXPECT_STREQ((defaultKey + "\\" + regKey).c_str(), registryReader.getRegKey());
+    EXPECT_STREQ(regKey.c_str(), registryReader.getRegKey());
 }

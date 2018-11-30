@@ -17,7 +17,15 @@ SettingsReader *SettingsReader::createOsReader(bool userScope) {
     return new RegistryReader(userScope);
 }
 SettingsReader *SettingsReader::createOsReader(const std::string &regKey) {
-    return new RegistryReader(regKey);
+    return new RegistryReader("Software\\Intel\\IGFX\\OCL\\" + regKey);
+}
+
+RegistryReader::RegistryReader(bool userScope) {
+    igdrclHkeyType = userScope ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
+    setUpProcessName();
+}
+RegistryReader::RegistryReader(const std::string &regKey) : registryReadRootKey(regKey) {
+    setUpProcessName();
 }
 void RegistryReader::setUpProcessName() {
     char buff[MAX_PATH];
@@ -75,7 +83,6 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
                             0,
                             KEY_READ,
                             &Key);
-
     if (ERROR_SUCCESS == success) {
         DWORD regType = REG_NONE;
         DWORD regSize = 0;
@@ -86,7 +93,6 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
                                    &regType,
                                    NULL,
                                    &regSize);
-
         if (success == ERROR_SUCCESS && regType == REG_SZ) {
             char *regData = new char[regSize];
             success = RegQueryValueExA(Key,

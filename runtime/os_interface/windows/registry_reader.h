@@ -19,14 +19,8 @@ class RegistryReader : public SettingsReader {
     int32_t getSetting(const char *settingName, int32_t defaultValue) override;
     bool getSetting(const char *settingName, bool defaultValue) override;
     std::string getSetting(const char *settingName, const std::string &value) override;
-    RegistryReader(bool userScope) {
-        igdrclHkeyType = userScope ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
-        setUpProcessName();
-    }
-    RegistryReader(std::string regKey) {
-        registryReadRootKey.append(std::string(1, PATH_SEPARATOR)).append(regKey);
-        setUpProcessName();
-    }
+    RegistryReader(bool userScope);
+    RegistryReader(const std::string &regKey);
     const char *appSpecificLocation(const std::string &name) override;
 
   protected:

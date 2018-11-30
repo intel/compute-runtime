@@ -53,8 +53,9 @@ const std::string BinaryCache::getCachedFileName(const HardwareInfo &hwInfo, con
 }
 
 BinaryCache::BinaryCache() {
-    std::unique_ptr<SettingsReader> settingsReader(SettingsReader::createOsReader(CL_CACHE_LOCATION));
-    clCacheLocation = settingsReader->getSetting(settingsReader->appSpecificLocation("cl_cache_dir"), static_cast<std::string>(CL_CACHE_LOCATION));
+    std::string keyName = "cl_cache_dir";
+    std::unique_ptr<SettingsReader> settingsReader(SettingsReader::createOsReader(keyName));
+    clCacheLocation = settingsReader->getSetting(settingsReader->appSpecificLocation(keyName), static_cast<std::string>(CL_CACHE_LOCATION));
 };
 
 BinaryCache::~BinaryCache(){};
@@ -64,7 +65,6 @@ bool BinaryCache::cacheBinary(const std::string kernelFileHash, const char *pBin
         return false;
     }
     std::string filePath = clCacheLocation + PATH_SEPARATOR + kernelFileHash + ".cl_cache";
-
     std::lock_guard<std::mutex> lock(cacheAccessMtx);
     if (writeDataToFile(
             filePath.c_str(),
