@@ -203,12 +203,12 @@ DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handl
     return allocation;
 }
 
-DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) {
+DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
     const size_t minAlignment = MemoryConstants::allocationAlignment;
-    size_t cAlignment = alignUp(std::max(alignment, minAlignment), minAlignment);
+    size_t cAlignment = alignUp(std::max(allocationData.alignment, minAlignment), minAlignment);
     // When size == 0 allocate allocationAlignment
     // It's needed to prevent overlapping pages with user pointers
-    size_t cSize = std::max(alignUp(size, minAlignment), minAlignment);
+    size_t cSize = std::max(alignUp(allocationData.size, minAlignment), minAlignment);
 
     auto res = alignedMallocWrapper(cSize, cAlignment);
 
@@ -223,16 +223,16 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, size_t alig
     }
 
     bo->isAllocated = true;
-    if (forcePinEnabled && pinBB != nullptr && forcePin && size >= this->pinThreshold) {
+    if (forcePinEnabled && pinBB != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
         pinBB->pin(&bo, 1);
     }
     return new DrmAllocation(bo, res, cSize, MemoryPool::System4KBPages, getOsContextCount(), false);
 }
 
-DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) {
-    auto res = static_cast<DrmAllocation *>(MemoryManager::allocateGraphicsMemory(size, const_cast<void *>(ptr), forcePin));
+DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
+    auto res = static_cast<DrmAllocation *>(MemoryManager::allocateGraphicsMemoryWithHostPtr(allocationData));
 
-    bool forcePinAllowed = res != nullptr && pinBB != nullptr && forcePinEnabled && forcePin && size >= this->pinThreshold;
+    bool forcePinAllowed = res != nullptr && pinBB != nullptr && forcePinEnabled && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold;
     if (!validateHostPtrMemory && forcePinAllowed) {
         BufferObject *boArray[] = {res->getBO()};
         pinBB->pin(boArray, 1);

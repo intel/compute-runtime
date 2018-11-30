@@ -21,24 +21,24 @@ using namespace OCLRT;
 class TestedMemoryManager : public OsAgnosticMemoryManager {
   public:
     using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
-    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
+    GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
         EXPECT_NE(0u, expectedSize);
-        if (expectedSize == size) {
-            EXPECT_TRUE(forcePin);
+        if (expectedSize == allocationData.size) {
+            EXPECT_TRUE(allocationData.flags.forcePin);
             allocCount++;
         }
-        return OsAgnosticMemoryManager::allocateGraphicsMemory(size, alignment, forcePin, uncacheable);
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
     };
     GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override {
         return nullptr;
     };
-    GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) override {
+    GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &properties) override {
         EXPECT_NE(0u, HPExpectedSize);
-        if (HPExpectedSize == size) {
-            EXPECT_TRUE(forcePin);
+        if (HPExpectedSize == properties.size) {
+            EXPECT_TRUE(properties.flags.forcePin);
             HPAllocCount++;
         }
-        return OsAgnosticMemoryManager::allocateGraphicsMemory(size, ptr, forcePin);
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryWithHostPtr(properties);
     }
 
     size_t expectedSize = 0;

@@ -263,7 +263,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
     ASSERT_NE(nullptr, graphicsAllocation);
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);

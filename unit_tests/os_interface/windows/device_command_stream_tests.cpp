@@ -370,7 +370,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafDisabledWhenFlushIsCalledWithAll
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
     ASSERT_NE(nullptr, linearStreamAllocation);
     linearStreamAllocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
@@ -406,7 +406,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithResi
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
     ASSERT_NE(nullptr, linearStreamAllocation);
     linearStreamAllocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
 
@@ -431,7 +431,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
     ASSERT_NE(nullptr, linearStreamAllocation);
     linearStreamAllocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
@@ -453,7 +453,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto fillPatternAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    auto fillPatternAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
     ASSERT_NE(nullptr, fillPatternAllocation);
     fillPatternAllocation->setAllocationType(GraphicsAllocation::AllocationType::FILL_PATTERN);
     ResidencyContainer allocationsForResidency = {fillPatternAllocation};
@@ -475,7 +475,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto nonLinearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    auto nonLinearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
     ASSERT_NE(nullptr, nonLinearStreamAllocation);
     ResidencyContainer allocationsForResidency = {nonLinearStreamAllocation};
 

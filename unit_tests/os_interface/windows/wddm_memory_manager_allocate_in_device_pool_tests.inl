@@ -15,7 +15,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenUseSystemMemorySetToTrueWhenAllocateInD
     memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
-    allocData.allFlags = 0;
     allocData.size = MemoryConstants::pageSize;
     allocData.flags.useSystemMemory = true;
     allocData.flags.allocateMemory = true;

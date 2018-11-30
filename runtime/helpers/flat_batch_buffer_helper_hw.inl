@@ -31,9 +31,11 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(Batch
             batchBuffer.chainedBatchBuffer->setAubWritable(false);
             auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
 
-            auto flatBatchBufferSize = alignUp(sizeMainBatchBuffer + indirectPatchCommandsSize + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);
+            AllocationProperties flatBatchBufferProperties;
+            flatBatchBufferProperties.alignment = MemoryConstants::pageSize;
+            flatBatchBufferProperties.size = alignUp(sizeMainBatchBuffer + indirectPatchCommandsSize + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);
             flatBatchBuffer =
-                getMemoryManager()->allocateGraphicsMemory(flatBatchBufferSize, MemoryConstants::pageSize, false, false);
+                getMemoryManager()->allocateGraphicsMemoryWithProperties(flatBatchBufferProperties);
             UNRECOVERABLE_IF(flatBatchBuffer == nullptr);
             // Copy main batchbuffer
             memcpy_s(flatBatchBuffer->getUnderlyingBuffer(), sizeMainBatchBuffer,
@@ -46,7 +48,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(Batch
             memcpy_s(ptrOffset(flatBatchBuffer->getUnderlyingBuffer(), sizeMainBatchBuffer + indirectPatchCommandsSize),
                      batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), batchBuffer.chainedBatchBuffer->getUnderlyingBuffer(),
                      batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize());
-            sizeBatchBuffer = flatBatchBufferSize;
+            sizeBatchBuffer = flatBatchBufferProperties.size;
             patchInfoCollection.insert(std::end(patchInfoCollection), std::begin(indirectPatchInfo), std::end(indirectPatchInfo));
         }
     } else if (dispatchMode == DispatchMode::BatchedDispatch) {
@@ -108,8 +110,10 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(Batch
 
         flatBatchBufferSize = alignUp(flatBatchBufferSize, MemoryConstants::pageSize);
         flatBatchBufferSize += CSRequirements::csOverfetchSize;
-        flatBatchBuffer = getMemoryManager()->allocateGraphicsMemory(static_cast<size_t>(flatBatchBufferSize),
-                                                                     MemoryConstants::pageSize, false, false);
+        AllocationProperties flatBatchBufferProperties;
+        flatBatchBufferProperties.size = static_cast<size_t>(flatBatchBufferSize);
+        flatBatchBufferProperties.alignment = MemoryConstants::pageSize;
+        flatBatchBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties(flatBatchBufferProperties);
         UNRECOVERABLE_IF(flatBatchBuffer == nullptr);
 
         char *ptr = reinterpret_cast<char *>(flatBatchBuffer->getUnderlyingBuffer());

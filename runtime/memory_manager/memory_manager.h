@@ -42,32 +42,37 @@ enum AllocationOrigin {
     INTERNAL_ALLOCATION
 };
 
-struct AllocationFlags {
+struct AllocationProperties {
     union {
         struct {
             uint32_t allocateMemory : 1;
             uint32_t flushL3RequiredForRead : 1;
             uint32_t flushL3RequiredForWrite : 1;
-            uint32_t reserved : 29;
+            uint32_t forcePin : 1;
+            uint32_t uncacheable : 1;
+            uint32_t reserved : 27;
         } flags;
-        uint32_t allFlags;
+        uint32_t allFlags = 0;
     };
+    static_assert(sizeof(AllocationProperties::flags) == sizeof(AllocationProperties::allFlags), "");
+    size_t size = 0;
+    size_t alignment = 0;
 
-    static_assert(sizeof(AllocationFlags::flags) == sizeof(AllocationFlags::allFlags), "");
-
-    AllocationFlags() {
+    AllocationProperties() {
         allFlags = 0;
         flags.flushL3RequiredForRead = 1;
         flags.flushL3RequiredForWrite = 1;
     }
 
-    AllocationFlags(bool allocateMemory) {
+    AllocationProperties(bool allocateMemory) {
         allFlags = 0;
         flags.flushL3RequiredForRead = 1;
         flags.flushL3RequiredForWrite = 1;
         flags.allocateMemory = allocateMemory;
     }
 };
+
+using AllocationFlags = AllocationProperties;
 
 struct AllocationData {
     union {
@@ -85,10 +90,10 @@ struct AllocationData {
         uint32_t allFlags = 0;
     };
     static_assert(sizeof(AllocationData::flags) == sizeof(AllocationData::allFlags), "");
-
     GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::UNKNOWN;
     const void *hostPtr = nullptr;
     size_t size = 0;
+    size_t alignment = 0;
     DevicesBitfield devicesBitfield = 0;
 };
 
@@ -119,18 +124,30 @@ class MemoryManager {
     virtual void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) = 0;
 
     GraphicsAllocation *allocateGraphicsMemory(size_t size) {
-        return allocateGraphicsMemory(size, MemoryConstants::preferredAlignment, false, false);
+        AllocationData allocationData;
+        allocationData.size = size;
+        allocationData.alignment = MemoryConstants::preferredAlignment;
+        return allocateGraphicsMemoryWithAlignment(allocationData);
     }
 
-    virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) = 0;
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
+        AllocationData allocationData;
+        allocationData.alignment = properties.alignment;
+        allocationData.size = properties.size;
+        allocationData.flags.uncacheable = properties.flags.uncacheable;
+        allocationData.flags.forcePin = properties.flags.forcePin;
+        return allocateGraphicsMemoryWithAlignment(allocationData);
+    }
 
     virtual GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) = 0;
     virtual GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) = 0;
 
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr) {
-        return MemoryManager::allocateGraphicsMemory(size, ptr, false);
+        AllocationData allocationData;
+        allocationData.hostPtr = ptr;
+        allocationData.size = size;
+        return MemoryManager::allocateGraphicsMemoryWithHostPtr(allocationData);
     }
-    virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin);
 
     GraphicsAllocation *allocateGraphicsMemoryForHostPtr(size_t size, void *ptr, bool fullRangeSvm, bool requiresL3Flush) {
         if (fullRangeSvm) {
@@ -243,6 +260,9 @@ class MemoryManager {
                                   const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
 
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);
+    virtual GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData);
+    virtual GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) = 0;
+
     bool force32bitAllocations = false;
     bool virtualPaddingAvailable = false;
     GraphicsAllocation *paddingAllocation = nullptr;

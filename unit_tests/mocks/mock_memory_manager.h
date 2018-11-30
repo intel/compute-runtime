@@ -38,7 +38,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     int redundancyRatio = 1;
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
-    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;
+    GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
 
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override {
         freeGraphicsMemoryCalled++;
@@ -98,12 +98,17 @@ class FailMemoryManager : public MockMemoryManager {
             delete agnostic;
         }
     };
-    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
+    GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
         if (fail <= 0) {
             return nullptr;
         }
         fail--;
-        GraphicsAllocation *alloc = agnostic->allocateGraphicsMemory(size, alignment, forcePin, uncacheable);
+        AllocationProperties properties;
+        properties.alignment = allocationData.alignment;
+        properties.size = allocationData.size;
+        properties.flags.forcePin = allocationData.flags.forcePin;
+        properties.flags.uncacheable = allocationData.flags.uncacheable;
+        GraphicsAllocation *alloc = agnostic->allocateGraphicsMemoryWithProperties(properties);
         allocations.push_back(alloc);
         return alloc;
     };

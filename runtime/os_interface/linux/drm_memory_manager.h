@@ -31,13 +31,14 @@ class DrmMemoryManager : public MemoryManager {
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
-    DrmAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;
     DrmAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override;
     DrmAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override;
     DrmAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override {
-        return allocateGraphicsMemory(size, ptr, false);
+        AllocationData allocationData;
+        allocationData.hostPtr = ptr;
+        allocationData.size = size;
+        return allocateGraphicsMemoryWithHostPtr(allocationData);
     }
-    DrmAllocation *allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) override;
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;
     DrmAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override;
@@ -73,6 +74,9 @@ class DrmMemoryManager : public MemoryManager {
     uint64_t acquireGpuRange(size_t &size, StorageAllocatorType &allocType, bool requireSpecificBitness);
     void releaseGpuRange(void *address, size_t unmapSize, StorageAllocatorType allocatorType);
     void initInternalRangeAllocator(size_t range);
+
+    DrmAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
+    DrmAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;
 
     Drm *drm;
     BufferObject *pinBB;

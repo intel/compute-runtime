@@ -86,14 +86,14 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, boo
     return graphicsAllocation;
 }
 
-GraphicsAllocation *MemoryManager::allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) {
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
     if (deferredDeleter) {
         deferredDeleter->drain(true);
     }
     GraphicsAllocation *graphicsAllocation = nullptr;
-    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, size, ptr);
+    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, allocationData.size, allocationData.hostPtr);
     if (osStorage.fragmentCount > 0) {
-        graphicsAllocation = createGraphicsAllocation(osStorage, size, ptr);
+        graphicsAllocation = createGraphicsAllocation(osStorage, allocationData.size, allocationData.hostPtr);
     }
     return graphicsAllocation;
 }
@@ -239,6 +239,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.size = size;
     allocationData.type = type;
     allocationData.devicesBitfield = devicesBitfield;
+    allocationData.alignment = MemoryConstants::pageSize;
 
     if (allocationData.flags.allocateMemory) {
         allocationData.hostPtr = nullptr;
@@ -266,13 +267,13 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         return allocate32BitGraphicsMemory(allocationData.size, allocationData.hostPtr, AllocationOrigin::EXTERNAL_ALLOCATION);
     }
     if (allocationData.hostPtr) {
-        return allocateGraphicsMemory(allocationData.size, allocationData.hostPtr, allocationData.flags.forcePin);
+        return allocateGraphicsMemoryWithHostPtr(allocationData);
     }
     if (peek64kbPagesEnabled() && allocationData.flags.allow64kbPages) {
         bool preferRenderCompressed = (allocationData.type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
         return allocateGraphicsMemory64kb(allocationData.size, MemoryConstants::pageSize64k, allocationData.flags.forcePin, preferRenderCompressed);
     }
-    return allocateGraphicsMemory(allocationData.size, MemoryConstants::pageSize, allocationData.flags.forcePin, allocationData.flags.uncacheable);
+    return allocateGraphicsMemoryWithAlignment(allocationData);
 }
 
 const CsrContainer &MemoryManager::getCommandStreamReceivers() const {

@@ -44,7 +44,6 @@ class OsAgnosticMemoryManager : public MemoryManager {
     };
 
     ~OsAgnosticMemoryManager() override;
-    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override;
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) override;
@@ -71,6 +70,9 @@ class OsAgnosticMemoryManager : public MemoryManager {
     void turnOnFakingBigAllocations();
 
     Allocator32bit *create32BitAllocator(bool enableLocalMemory);
+
+  protected:
+    GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
 
   private:
     unsigned long long counter = 0;

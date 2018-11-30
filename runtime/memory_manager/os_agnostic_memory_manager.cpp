@@ -30,27 +30,27 @@ OsAgnosticMemoryManager::~OsAgnosticMemoryManager() {
 struct OsHandle {
 };
 
-GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) {
+GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
 
-    auto sizeAligned = alignUp(size, MemoryConstants::pageSize);
+    auto sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize);
     MemoryAllocation *memoryAllocation = nullptr;
 
-    if (fakeBigAllocations && size > bigAllocation) {
-        memoryAllocation = new MemoryAllocation(nullptr, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), size, counter,
+    if (fakeBigAllocations && allocationData.size > bigAllocation) {
+        memoryAllocation = new MemoryAllocation(nullptr, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), allocationData.size, counter,
                                                 MemoryPool::System4KBPages, this->getOsContextCount(), false);
         counter++;
-        memoryAllocation->uncacheable = uncacheable;
+        memoryAllocation->uncacheable = allocationData.flags.uncacheable;
         return memoryAllocation;
     }
-    auto ptr = allocateSystemMemory(sizeAligned, alignment ? alignUp(alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize);
+    auto ptr = allocateSystemMemory(sizeAligned, allocationData.alignment ? alignUp(allocationData.alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize);
     if (ptr != nullptr) {
-        memoryAllocation = new MemoryAllocation(ptr, ptr, reinterpret_cast<uint64_t>(ptr), size, counter, MemoryPool::System4KBPages,
+        memoryAllocation = new MemoryAllocation(ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.size, counter, MemoryPool::System4KBPages,
                                                 this->getOsContextCount(), false);
         if (!memoryAllocation) {
             alignedFreeWrapper(ptr);
             return nullptr;
         }
-        memoryAllocation->uncacheable = uncacheable;
+        memoryAllocation->uncacheable = allocationData.flags.uncacheable;
     }
     counter++;
     return memoryAllocation;
@@ -72,7 +72,11 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHost
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {
-    auto memoryAllocation = allocateGraphicsMemory(alignUp(size, MemoryConstants::pageSize64k), MemoryConstants::pageSize64k, forcePin, false);
+    AllocationProperties properties;
+    properties.size = alignUp(size, MemoryConstants::pageSize64k);
+    properties.flags.forcePin = forcePin;
+    properties.alignment = MemoryConstants::pageSize64k;
+    auto memoryAllocation = allocateGraphicsMemoryWithProperties(properties);
     if (memoryAllocation) {
         reinterpret_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::System64KBPages);
     }

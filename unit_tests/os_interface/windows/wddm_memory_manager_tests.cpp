@@ -121,7 +121,10 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     EXPECT_TRUE(allocation->gmm->useSystemMemoryPool);
     memoryManager->freeGraphicsMemory(allocation);
 
-    allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::preferredAlignment, false, false);
+    AllocationProperties properties;
+    properties.size = size;
+    properties.alignment = sizeof(uint32_t);
+    allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     EXPECT_TRUE(allocation->gmm->useSystemMemoryPool);
@@ -142,7 +145,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = 4096u;
-    auto allocation = memoryManager->allocateGraphicsMemory(size, ptr, false);
+    auto allocation = memoryManager->allocateGraphicsMemory(size, ptr);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     for (size_t i = 0; i < allocation->fragmentsStorage.fragmentCount; i++) {

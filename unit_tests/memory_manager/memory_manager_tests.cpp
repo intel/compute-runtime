@@ -220,15 +220,6 @@ TEST_F(MemoryAllocatorTest, allocateGraphicsPageAligned) {
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(MemoryAllocatorTest, allocateGraphicsMoreThanPageAligned) {
-    unsigned int alignment = 6144;
-
-    auto allocation = memoryManager->allocateGraphicsMemory(sizeof(char), 6144, false, false);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(0u, reinterpret_cast<uintptr_t>(allocation->getUnderlyingBuffer()) & (alignment - 1));
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
 TEST_F(MemoryAllocatorTest, AlignedHostPtrWithAlignedSizeWhenAskedForGraphicsAllocationReturnsNullStorageFromHostPtrManager) {
     auto ptr = (void *)0x1000;
     MockMemoryManager mockMemoryManager(*executionEnvironment);
@@ -602,7 +593,10 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCall
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     memoryManager.freeGraphicsMemory(allocation);
 
-    allocation = memoryManager.allocateGraphicsMemory(size, MemoryConstants::preferredAlignment, false, false);
+    AllocationProperties properties;
+    properties.size = size;
+    properties.alignment = MemoryConstants::preferredAlignment;
+    allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     memoryManager.freeGraphicsMemory(allocation);
@@ -624,7 +618,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
       public:
         MockOsAgnosticManagerWithFailingAllocate(bool enable64kbPages, ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(enable64kbPages, false, executionEnvironment) {}
 
-        GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
+        GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
             return nullptr;
         }
     };
@@ -643,7 +637,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryWithPt
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
-    auto allocation = memoryManager.allocateGraphicsMemory(size, ptr, false);
+    auto allocation = memoryManager.allocateGraphicsMemory(size, ptr);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
@@ -843,11 +837,27 @@ TEST(OsAgnosticMemoryManager, pleaseDetectLeak) {
     MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::EXPECT_TO_LEAK;
 }
 
-TEST(OsAgnosticMemoryManager, alignmentIsCorrect) {
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateMemoryWithNoAlignmentProvidedThenAllocationIsAlignedToPageSize) {
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
-    const size_t alignment = 0;
-    auto ga = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize >> 1, alignment, false, false);
+    AllocationProperties properties;
+    properties.size = MemoryConstants::pageSize >> 1;
+    properties.alignment = 0;
+    auto ga = memoryManager.allocateGraphicsMemoryWithProperties(properties);
+    uintptr_t ptr = reinterpret_cast<uintptr_t>(ga->getUnderlyingBuffer());
+    ptr &= (MemoryConstants::allocationAlignment - 1);
+    EXPECT_EQ(ptr, 0u);
+
+    memoryManager.freeGraphicsMemory(ga);
+}
+
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateMemoryWithAlignmentNotAlignedToPageSizeThenAlignmentIsAlignedUp) {
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    AllocationProperties properties;
+    properties.size = MemoryConstants::pageSize >> 1;
+    properties.alignment = MemoryConstants::pageSize - 1;
+    auto ga = memoryManager.allocateGraphicsMemoryWithProperties(properties);
     uintptr_t ptr = reinterpret_cast<uintptr_t>(ga->getUnderlyingBuffer());
     ptr &= (MemoryConstants::allocationAlignment - 1);
     EXPECT_EQ(ptr, 0u);
