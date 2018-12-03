@@ -46,10 +46,20 @@ __kernel void simple_kernel_4() {
 }
 
 __kernel void simple_kernel_5(__global uint *dst) {
+    //first uint holds the total work item count
     atomic_inc(dst);
     uint groupIdX = get_group_id(0);
+    uint groupIdY = get_group_id(1);
+    uint groupIdZ = get_group_id(2);
+    
+    uint groupCountX = get_num_groups(0);
+    uint groupCountY = get_num_groups(1);
+    uint groupCountZ = get_num_groups(2);
+
     __global uint* groupCounters = dst+1;
-    atomic_inc(&groupCounters[groupIdX]);
+    //store current group position in 3D array
+    uint destination = groupIdZ * groupCountY * groupCountX + groupIdY * groupCountX + groupIdX;
+    atomic_inc(&groupCounters[destination]);
 }
 
 #define SIMPLE_KERNEL_6_ARRAY_SIZE 256
