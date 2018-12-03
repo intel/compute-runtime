@@ -25,6 +25,7 @@ class AubSubCaptureManager;
 
 template <typename GfxFamily>
 class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
+  protected:
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
     typedef typename AUBFamilyMapper<GfxFamily>::AUB AUB;
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;

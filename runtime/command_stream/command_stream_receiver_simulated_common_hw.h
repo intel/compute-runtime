@@ -19,7 +19,9 @@ namespace OCLRT {
 class GraphicsAllocation;
 template <typename GfxFamily>
 class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<GfxFamily> {
+  protected:
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
+    using CommandStreamReceiverHw<GfxFamily>::osContext;
 
   public:
     uint64_t getGTTBits() const {

@@ -72,6 +72,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     }
 
   protected:
+    using CommandStreamReceiver::osContext;
+
     void programPreemption(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programPreamble(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags, uint32_t &newL3Config);

@@ -16,6 +16,7 @@
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/get_info.h"
+#include "runtime/os_interface/os_context.h"
 #include <algorithm>
 
 namespace OCLRT {
@@ -288,7 +289,8 @@ void MemObj::releaseAllocatedMapPtr() {
 }
 
 void MemObj::waitForCsrCompletion() {
-    memoryManager->getDefaultCommandStreamReceiver(0)->waitForCompletionWithTimeout(false, TimeoutControls::maxTimeout, graphicsAllocation->getTaskCount(0u));
+    auto osContextId = context->getDevice(0)->getDefaultEngine().osContext->getContextId();
+    memoryManager->getDefaultCommandStreamReceiver(0)->waitForCompletionWithTimeout(false, TimeoutControls::maxTimeout, graphicsAllocation->getTaskCount(osContextId));
 }
 
 void MemObj::destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy) {

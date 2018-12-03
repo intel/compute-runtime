@@ -12,6 +12,9 @@ namespace OCLRT {
 
 template <typename BaseCSR>
 class CommandStreamReceiverWithAUBDump : public BaseCSR {
+  protected:
+    using BaseCSR::osContext;
+
   public:
     using BaseCSR::createMemoryManager;
     CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);

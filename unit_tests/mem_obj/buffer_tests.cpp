@@ -14,6 +14,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "mem_obj_types.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -352,10 +353,13 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndRenderCompressedBuffersDisabledWhen
 }
 
 TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteBuffer) {
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*device->getExecutionEnvironment());
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.incRefInternal();
 
-    device->injectMemoryManager(memoryManager);
+    auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(executionEnvironment);
+    executionEnvironment.memoryManager.reset(memoryManager);
+    std::unique_ptr<MockDevice> device(MockDevice::create<MockDevice>(*platformDevices, &executionEnvironment, 0));
+
     MockContext ctx(device.get());
 
     auto allocateNonSystemGraphicsAllocation = [memoryManager](AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) -> GraphicsAllocation * {
@@ -693,7 +697,7 @@ TEST_P(ValidHostPtr, isResident_defaultsToFalseAfterCreate) {
     buffer = createBuffer();
     ASSERT_NE(nullptr, buffer);
 
-    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
+    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
 }
 
 TEST_P(ValidHostPtr, getAddress) {

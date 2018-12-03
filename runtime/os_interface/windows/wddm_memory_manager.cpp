@@ -289,7 +289,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     UNRECOVERABLE_IF(DebugManager.flags.CreateMultipleDevices.get() == 0 &&
                      gfxAllocation->isUsed() && this->executionEnvironment.commandStreamReceivers.size() > 0 &&
                      this->getDefaultCommandStreamReceiver(0) && this->getDefaultCommandStreamReceiver(0)->getTagAddress() &&
-                     gfxAllocation->getTaskCount(0u) > *this->getDefaultCommandStreamReceiver(0)->getTagAddress());
+                     gfxAllocation->getTaskCount(defaultEngineIndex) > *this->getDefaultCommandStreamReceiver(0)->getTagAddress());
 
     if (input->gmm) {
         if (input->gmm->isRenderCompressed && wddm->getPageTableManager()) {

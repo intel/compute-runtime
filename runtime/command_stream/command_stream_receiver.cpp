@@ -21,6 +21,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/utilities/tag_allocator.h"
 
@@ -62,15 +63,15 @@ CommandStreamReceiver::~CommandStreamReceiver() {
 
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     auto submissionTaskCount = this->taskCount + 1;
-    bool isNotResident = !gfxAllocation.isResident(deviceIndex);
-    if (isNotResident || gfxAllocation.getResidencyTaskCount(deviceIndex) < submissionTaskCount) {
+    bool isNotResident = !gfxAllocation.isResident(osContext->getContextId());
+    if (isNotResident || gfxAllocation.getResidencyTaskCount(osContext->getContextId()) < submissionTaskCount) {
         this->getResidencyAllocations().push_back(&gfxAllocation);
-        gfxAllocation.updateTaskCount(submissionTaskCount, deviceIndex);
+        gfxAllocation.updateTaskCount(submissionTaskCount, osContext->getContextId());
         if (isNotResident) {
             this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
         }
     }
-    gfxAllocation.updateResidencyTaskCount(submissionTaskCount, deviceIndex);
+    gfxAllocation.updateResidencyTaskCount(submissionTaskCount, osContext->getContextId());
 }
 
 void CommandStreamReceiver::processEviction() {
@@ -78,7 +79,7 @@ void CommandStreamReceiver::processEviction() {
 }
 
 void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
-    if (gfxAllocation.isResident(deviceIndex)) {
+    if (gfxAllocation.isResident(osContext->getContextId())) {
         makeCoherent(gfxAllocation);
         if (gfxAllocation.peekEvictable()) {
             this->getEvictionAllocations().push_back(&gfxAllocation);
@@ -87,7 +88,7 @@ void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
         }
     }
 
-    gfxAllocation.resetResidencyTaskCount(this->deviceIndex);
+    gfxAllocation.resetResidencyTaskCount(this->osContext->getContextId());
 }
 
 void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency) {
@@ -363,7 +364,7 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
     if (allocation == nullptr) {
         return false;
     }
-    allocation->updateTaskCount(Event::eventNotReady, deviceIndex);
+    allocation->updateTaskCount(Event::eventNotReady, osContext->getContextId());
     surface.setAllocation(allocation);
     internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
     return true;

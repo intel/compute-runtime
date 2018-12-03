@@ -411,7 +411,7 @@ TEST_F(UpdateEventTest, givenEventContainingCommandQueueWhenItsStatusIsUpdatedTo
     void *ptr = (void *)0x1000;
     size_t size = 4096;
     auto temporary = memoryManager->allocateGraphicsMemory(size, ptr);
-    temporary->updateTaskCount(3, 0);
+    temporary->updateTaskCount(3, commandQueue->getCommandStreamReceiver().getOsContext().getContextId());
     commandQueue->getCommandStreamReceiver().getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporary), TEMPORARY_ALLOCATION);
     Event event(commandQueue.get(), CL_COMMAND_NDRANGE_KERNEL, 3, 3);
 
@@ -488,7 +488,7 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
 
     EXPECT_EQ(surface->resident, 1u);
-    EXPECT_FALSE(surface->graphicsAllocation->isResident(0u));
+    EXPECT_FALSE(surface->graphicsAllocation->isResident(csr.getOsContext().getContextId()));
     delete surface->graphicsAllocation;
 }
 
@@ -579,7 +579,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ("test", output.c_str());
-    EXPECT_FALSE(surface->isResident(0u));
+    EXPECT_FALSE(surface->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
 
     delete pPrintfSurface;
 }
@@ -906,6 +906,7 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushe
     MockNonZeroCopyBuff buffer(executionStamp);
     MockCsr<FamilyType> csr(executionStamp, *pDevice->executionEnvironment);
     csr.setTagAllocation(pDevice->getDefaultEngine().commandStreamReceiver->getTagAllocation());
+    csr.setOsContext(*pDevice->getDefaultEngine().osContext);
 
     MemObjSizeArray size = {{4, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};

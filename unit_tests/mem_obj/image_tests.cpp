@@ -10,6 +10,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
@@ -45,9 +46,6 @@ class CreateImageTest : public DeviceFixture,
   protected:
     void SetUp() override {
         DeviceFixture::SetUp();
-        memoryManager = new MockMemoryManager(*pDevice->getExecutionEnvironment());
-
-        pDevice->injectMemoryManager(memoryManager);
 
         CommandQueueFixture::SetUp(pDevice, 0);
         flags = GetParam();
@@ -74,7 +72,6 @@ class CreateImageTest : public DeviceFixture,
         DeviceFixture::TearDown();
     }
 
-    MockMemoryManager *memoryManager;
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
     cl_int retVal = CL_SUCCESS;
@@ -499,7 +496,7 @@ TEST_P(CreateImageHostPtr, isResidentDefaultsToFalseAfterCreate) {
     image = createImage(retVal);
     ASSERT_NE(nullptr, image);
 
-    EXPECT_FALSE(image->getGraphicsAllocation()->isResident(0u));
+    EXPECT_FALSE(image->getGraphicsAllocation()->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
 }
 
 TEST_P(CreateImageHostPtr, getAddress) {
@@ -610,7 +607,10 @@ TEST_P(CreateImageHostPtr, failedAllocationInjection) {
 }
 
 TEST_P(CreateImageHostPtr, checkWritingOutsideAllocatedMemoryWhileCreatingImage) {
-    memoryManager->redundancyRatio = 2;
+    auto mockMemoryManager = new MockMemoryManager(executionEnvironment);
+    pDevice->injectMemoryManager(mockMemoryManager);
+    context->setMemoryManager(mockMemoryManager);
+    mockMemoryManager->redundancyRatio = 2;
     memset(pHostPtr, 1, testImageDimensions * testImageDimensions * elementSize * 4);
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
     imageDesc.image_height = 1;
@@ -630,7 +630,7 @@ TEST_P(CreateImageHostPtr, checkWritingOutsideAllocatedMemoryWhileCreatingImage)
         EXPECT_EQ(0, memory[memorySize + i]);
     }
 
-    memoryManager->redundancyRatio = 1;
+    mockMemoryManager->redundancyRatio = 1;
 }
 
 struct ModifyableImage {

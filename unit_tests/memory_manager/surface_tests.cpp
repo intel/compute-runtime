@@ -61,6 +61,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     MockCsr<FamilyType> *csr = new MockCsr<FamilyType>(execStamp, executionEnvironment);
     executionEnvironment.commandStreamReceivers[0][0].reset(csr);
     executionEnvironment.memoryManager.reset(csr->createMemoryManager(false, false));
+    csr->setOsContext(*executionEnvironment.memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]));
 
     Surface *surface = createSurface::Create<TypeParam>(this->data,
                                                         &this->buffer,

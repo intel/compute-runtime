@@ -71,7 +71,7 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
         makeResident(*batchBuffer.commandBufferAllocation);
     } else {
         allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
-        batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->deviceIndex);
+        batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->osContext->getContextId());
     }
 
     this->processResidency(allocationsForResidency);

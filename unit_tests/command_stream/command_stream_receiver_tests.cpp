@@ -82,11 +82,11 @@ TEST_F(CommandStreamReceiverTest, makeResident_setsBufferResidencyFlag) {
         srcMemory,
         retVal);
     ASSERT_NE(nullptr, buffer);
-    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
+    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(commandStreamReceiver->getOsContext().getContextId()));
 
     commandStreamReceiver->makeResident(*buffer->getGraphicsAllocation());
 
-    EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident(0u));
+    EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident(commandStreamReceiver->getOsContext().getContextId()));
 
     delete buffer;
 }
@@ -185,7 +185,7 @@ HWTEST_F(CommandStreamReceiverTest, whenStoreAllocationThenStoredAllocationHasTa
 
     csr.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
-    EXPECT_EQ(csr.peekTaskCount(), allocation->getTaskCount(0));
+    EXPECT_EQ(csr.peekTaskCount(), allocation->getTaskCount(csr.getOsContext().getContextId()));
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCheckedForInitialStatusOfStatelessMocsIndexThenUnknownMocsIsReturend) {
@@ -392,6 +392,9 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
     auto &commandStreamReceiver0 = device0->getCommandStreamReceiver();
     auto &commandStreamReceiver1 = device1->getCommandStreamReceiver();
 
+    auto csr0ContextId = commandStreamReceiver0.getOsContext().getContextId();
+    auto csr1ContextId = commandStreamReceiver1.getOsContext().getContextId();
+
     MockGraphicsAllocation graphicsAllocation;
 
     commandStreamReceiver0.makeResident(graphicsAllocation);
@@ -402,16 +405,16 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
     EXPECT_EQ(1u, commandStreamReceiver0.getResidencyAllocations().size());
     EXPECT_EQ(1u, commandStreamReceiver1.getResidencyAllocations().size());
 
-    EXPECT_EQ(1u, graphicsAllocation.getResidencyTaskCount(0u));
-    EXPECT_EQ(1u, graphicsAllocation.getResidencyTaskCount(1u));
+    EXPECT_EQ(1u, graphicsAllocation.getResidencyTaskCount(csr0ContextId));
+    EXPECT_EQ(1u, graphicsAllocation.getResidencyTaskCount(csr1ContextId));
 
     commandStreamReceiver0.makeNonResident(graphicsAllocation);
-    EXPECT_FALSE(graphicsAllocation.isResident(0u));
-    EXPECT_TRUE(graphicsAllocation.isResident(1u));
+    EXPECT_FALSE(graphicsAllocation.isResident(csr0ContextId));
+    EXPECT_TRUE(graphicsAllocation.isResident(csr1ContextId));
 
     commandStreamReceiver1.makeNonResident(graphicsAllocation);
-    EXPECT_FALSE(graphicsAllocation.isResident(0u));
-    EXPECT_FALSE(graphicsAllocation.isResident(1u));
+    EXPECT_FALSE(graphicsAllocation.isResident(csr0ContextId));
+    EXPECT_FALSE(graphicsAllocation.isResident(csr1ContextId));
 
     EXPECT_EQ(1u, commandStreamReceiver0.getEvictionAllocations().size());
     EXPECT_EQ(1u, commandStreamReceiver1.getEvictionAllocations().size());
@@ -456,7 +459,7 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     EXPECT_NE(memory, allocation->getUnderlyingBuffer());
     EXPECT_THAT(allocation->getUnderlyingBuffer(), MemCompare(memory, size));
 
-    allocation->updateTaskCount(commandStreamReceiver->peekLatestFlushedTaskCount(), 0u);
+    allocation->updateTaskCount(commandStreamReceiver->peekLatestFlushedTaskCount(), commandStreamReceiver->getOsContext().getContextId());
 }
 
 TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyNotAllowedIsCreatedThenCopyAllocationIsNotCreated) {

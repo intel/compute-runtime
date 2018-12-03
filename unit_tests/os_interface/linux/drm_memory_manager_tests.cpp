@@ -1247,6 +1247,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFr
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
+    imageGraphicsAllocation->updateTaskCount(0, 0);
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
@@ -1611,6 +1612,7 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareTheSameBufferOb
     auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
     executionEnvironment->commandStreamReceivers.resize(1);
     executionEnvironment->commandStreamReceivers[0][0].reset(testedCsr);
+    testedCsr->setOsContext(*memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]));
 
     testedCsr->makeResident(*graphicsAllocation);
     testedCsr->makeResident(*graphicsAllocation2);
@@ -1639,6 +1641,7 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBuf
     auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
     executionEnvironment->commandStreamReceivers.resize(1);
     executionEnvironment->commandStreamReceivers[0][0].reset(testedCsr);
+    testedCsr->setOsContext(*memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]));
 
     testedCsr->makeResident(*graphicsAllocation);
     testedCsr->makeResident(*graphicsAllocation2);

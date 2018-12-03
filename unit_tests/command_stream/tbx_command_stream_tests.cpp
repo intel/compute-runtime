@@ -12,6 +12,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
@@ -227,13 +228,13 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, graphicsAllocation);
 
-    EXPECT_FALSE(graphicsAllocation->isResident(0u));
+    EXPECT_FALSE(graphicsAllocation->isResident(tbxCsr->getOsContext().getContextId()));
 
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
     tbxCsr->processResidency(allocationsForResidency);
 
-    EXPECT_TRUE(graphicsAllocation->isResident(0u));
-    EXPECT_EQ(tbxCsr->peekTaskCount() + 1, graphicsAllocation->getResidencyTaskCount(0u));
+    EXPECT_TRUE(graphicsAllocation->isResident(tbxCsr->getOsContext().getContextId()));
+    EXPECT_EQ(tbxCsr->peekTaskCount() + 1, graphicsAllocation->getResidencyTaskCount(tbxCsr->getOsContext().getContextId()));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -246,13 +247,13 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, graphicsAllocation);
 
-    EXPECT_FALSE(graphicsAllocation->isResident(0u));
+    EXPECT_FALSE(graphicsAllocation->isResident(tbxCsr->getOsContext().getContextId()));
 
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
     tbxCsr->processResidency(allocationsForResidency);
 
-    EXPECT_TRUE(graphicsAllocation->isResident(0u));
-    EXPECT_EQ(tbxCsr->peekTaskCount() + 1, graphicsAllocation->getResidencyTaskCount(0u));
+    EXPECT_TRUE(graphicsAllocation->isResident(tbxCsr->getOsContext().getContextId()));
+    EXPECT_EQ(tbxCsr->peekTaskCount() + 1, graphicsAllocation->getResidencyTaskCount(tbxCsr->getOsContext().getContextId()));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -273,12 +274,12 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
 
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
 
-    EXPECT_FALSE(graphicsAllocation->isResident(0u));
+    EXPECT_FALSE(graphicsAllocation->isResident(tbxCsr->getOsContext().getContextId()));
 
     tbxCsr->flush(batchBuffer, allocationsForResidency);
 
-    EXPECT_TRUE(graphicsAllocation->isResident(0u));
-    EXPECT_EQ(tbxCsr->peekTaskCount() + 1, graphicsAllocation->getResidencyTaskCount(0u));
+    EXPECT_TRUE(graphicsAllocation->isResident(tbxCsr->getOsContext().getContextId()));
+    EXPECT_EQ(tbxCsr->peekTaskCount() + 1, graphicsAllocation->getResidencyTaskCount(tbxCsr->getOsContext().getContextId()));
 
     memoryManager->freeGraphicsMemory(commandBuffer);
     memoryManager->freeGraphicsMemory(graphicsAllocation);

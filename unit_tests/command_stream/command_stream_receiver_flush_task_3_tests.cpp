@@ -378,8 +378,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenRecorded
     std::vector<GraphicsAllocation *> residentSurfaces = cmdBuffer->surfaces;
 
     for (auto &graphicsAllocation : residentSurfaces) {
-        EXPECT_TRUE(graphicsAllocation->isResident(0u));
-        EXPECT_EQ(1u, graphicsAllocation->getResidencyTaskCount(0u));
+        EXPECT_TRUE(graphicsAllocation->isResident(mockCsr->getOsContext().getContextId()));
+        EXPECT_EQ(1u, graphicsAllocation->getResidencyTaskCount(mockCsr->getOsContext().getContextId()));
     }
 
     mockCsr->flushBatchedSubmissions();
@@ -395,7 +395,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenRecorded
     EXPECT_EQ(0u, surfacesForResidency.size());
 
     for (auto &graphicsAllocation : residentSurfaces) {
-        EXPECT_FALSE(graphicsAllocation->isResident(0u));
+        EXPECT_FALSE(graphicsAllocation->isResident(mockCsr->getOsContext().getContextId()));
     }
 }
 
@@ -665,6 +665,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
     mockCsr->initializeTagAllocation();
     mockCsr->setPreemptionCsrAllocation(pDevice->getPreemptionAllocation());
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->setOsContext(*pDevice->getDefaultEngine().osContext);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -1193,11 +1194,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenTemporaryAndReusableAl
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(reusableToClean), REUSABLE_ALLOCATION);
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(reusableToHold), REUSABLE_ALLOCATION);
 
-    temporaryToClean->updateTaskCount(1, 0u);
-    reusableToClean->updateTaskCount(1, 0u);
+    auto osContextId = commandStreamReceiver.getOsContext().getContextId();
 
-    temporaryToHold->updateTaskCount(10, 0u);
-    reusableToHold->updateTaskCount(10, 0u);
+    temporaryToClean->updateTaskCount(1, osContextId);
+    reusableToClean->updateTaskCount(1, osContextId);
+
+    temporaryToHold->updateTaskCount(10, osContextId);
+    reusableToHold->updateTaskCount(10, osContextId);
 
     commandStreamReceiver.latestFlushedTaskCount = 9;
     commandStreamReceiver.cleanupResources();

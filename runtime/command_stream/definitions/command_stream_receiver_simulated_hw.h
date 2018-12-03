@@ -13,7 +13,9 @@ namespace OCLRT {
 class GraphicsAllocation;
 template <typename GfxFamily>
 class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCommonHw<GfxFamily> {
+  protected:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulatedCommonHw;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::osContext;
 
   public:
     uint32_t getMemoryBank(GraphicsAllocation *allocation) const {

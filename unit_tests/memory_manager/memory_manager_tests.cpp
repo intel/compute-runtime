@@ -200,7 +200,7 @@ TEST_F(MemoryAllocatorTest, allocateGraphics) {
 
     ASSERT_NE(nullptr, allocation);
     // initial taskCount must be -1. if not, we may kill allocation before it will be used
-    EXPECT_EQ((uint32_t)-1, allocation->getTaskCount(0));
+    EXPECT_EQ((uint32_t)-1, allocation->getTaskCount(csr->getOsContext().getContextId()));
     // We know we want graphics memory to be page aligned
     EXPECT_EQ(0u, reinterpret_cast<uintptr_t>(allocation->getUnderlyingBuffer()) & (alignment - 1));
     EXPECT_EQ(Sharing::nonSharedResource, allocation->peekSharedHandle());
@@ -1179,7 +1179,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhenche
     auto tagAddress = csr->getTagAddress();
     ASSERT_NE(0u, *tagAddress);
 
-    usedAllocationButGpuCompleted->updateTaskCount(*tagAddress - 1, 0);
+    usedAllocationButGpuCompleted->updateTaskCount(*tagAddress - 1, csr->getOsContext().getContextId());
 
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(usedAllocationButGpuCompleted);
     EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
@@ -1191,14 +1191,14 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhen
 
     auto tagAddress = csr->getTagAddress();
 
-    usedAllocationAndNotGpuCompleted->updateTaskCount(*tagAddress + 1, 0);
+    usedAllocationAndNotGpuCompleted->updateTaskCount(*tagAddress + 1, csr->getOsContext().getContextId());
 
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(usedAllocationAndNotGpuCompleted);
     EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
     EXPECT_EQ(csr->getTemporaryAllocations().peekHead(), usedAllocationAndNotGpuCompleted);
 
     //change task count so cleanup will not clear alloc in use
-    usedAllocationAndNotGpuCompleted->updateTaskCount(csr->peekLatestFlushedTaskCount(), 0);
+    usedAllocationAndNotGpuCompleted->updateTaskCount(csr->peekLatestFlushedTaskCount(), csr->getOsContext().getContextId());
 }
 
 class MockAlignMallocMemoryManager : public MockMemoryManager {

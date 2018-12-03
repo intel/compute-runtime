@@ -156,7 +156,6 @@ class CommandStreamReceiver {
     size_t defaultSshSize;
 
     void setDeviceIndex(uint32_t deviceIndex) { this->deviceIndex = deviceIndex; }
-    uint32_t getDeviceIndex() const { return this->deviceIndex; }
     AllocationsList &getTemporaryAllocations();
     AllocationsList &getAllocationsForReuse();
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }

@@ -129,7 +129,7 @@ void DrmCommandStreamReceiver<GfxFamily>::makeNonResident(GraphicsAllocation &gf
     // Vector is moved to command buffer inside flush.
     // If flush wasn't called we need to make all objects non-resident.
     // If makeNonResident is called before flush, vector will be cleared.
-    if (gfxAllocation.isResident(this->deviceIndex)) {
+    if (gfxAllocation.isResident(this->osContext->getContextId())) {
         if (this->residency.size() != 0) {
             this->residency.clear();
         }
@@ -139,7 +139,7 @@ void DrmCommandStreamReceiver<GfxFamily>::makeNonResident(GraphicsAllocation &gf
             }
         }
     }
-    gfxAllocation.resetResidencyTaskCount(this->deviceIndex);
+    gfxAllocation.resetResidencyTaskCount(this->osContext->getContextId());
 }
 
 template <typename GfxFamily>

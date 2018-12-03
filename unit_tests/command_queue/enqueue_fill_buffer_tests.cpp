@@ -9,6 +9,7 @@
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/os_interface/os_context.h"
 #include "reg_configs_common.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/aligned_memory.h"
@@ -376,7 +377,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeCopied) {
         if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
             (allocation->getUnderlyingBuffer() != nullptr) &&
             (*(static_cast<float *>(allocation->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
-            (pCmdQ->taskCount == allocation->getTaskCount(0))) {
+            (pCmdQ->taskCount == allocation->getTaskCount(csr.getOsContext().getContextId()))) {
             break;
         }
         allocation = allocation->next;
@@ -397,7 +398,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeAligned) {
         if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
             (allocation->getUnderlyingBuffer() != nullptr) &&
             (*(static_cast<float *>(allocation->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
-            (pCmdQ->taskCount == allocation->getTaskCount(0))) {
+            (pCmdQ->taskCount == allocation->getTaskCount(csr.getOsContext().getContextId()))) {
             break;
         }
         allocation = allocation->next;

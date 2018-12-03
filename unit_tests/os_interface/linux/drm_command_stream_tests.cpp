@@ -805,21 +805,23 @@ TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDi
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);
 
-    EXPECT_TRUE(allocation->isResident(0u));
-    EXPECT_TRUE(allocation2->isResident(0u));
+    auto osContextId = csr->getOsContext().getContextId();
+
+    EXPECT_TRUE(allocation->isResident(osContextId));
+    EXPECT_TRUE(allocation2->isResident(osContextId));
 
     csr->processResidency(csr->getResidencyAllocations());
 
-    EXPECT_TRUE(allocation->isResident(0u));
-    EXPECT_TRUE(allocation2->isResident(0u));
+    EXPECT_TRUE(allocation->isResident(osContextId));
+    EXPECT_TRUE(allocation2->isResident(osContextId));
 
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 2u);
 
     csr->makeNonResident(*allocation);
     csr->makeNonResident(*allocation2);
 
-    EXPECT_FALSE(allocation->isResident(0u));
-    EXPECT_FALSE(allocation2->isResident(0u));
+    EXPECT_FALSE(allocation->isResident(osContextId));
+    EXPECT_FALSE(allocation2->isResident(osContextId));
 
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 0u);
     mm->freeGraphicsMemory(allocation);
@@ -1006,7 +1008,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     EXPECT_TRUE(cmdBuffers.peekIsEmpty());
 
     auto commandBufferGraphicsAllocation = submittedCommandBuffer.getGraphicsAllocation();
-    EXPECT_FALSE(commandBufferGraphicsAllocation->isResident(0u));
+    EXPECT_FALSE(commandBufferGraphicsAllocation->isResident(tCsr->getOsContext().getContextId()));
 
     //preemption allocation
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
@@ -1565,7 +1567,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenMultipleMakeResidentWhenMakeNonResidentIs
     csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
-    EXPECT_FALSE(allocation1->isResident(0u));
+    EXPECT_FALSE(allocation1->isResident(csr->getOsContext().getContextId()));
 
     mm->freeGraphicsMemory(allocation1);
 }
@@ -1616,22 +1618,24 @@ class DrmMockBuffer : public Buffer {
 TEST_F(DrmCommandStreamLeaksTest, BufferResidency) {
     std::unique_ptr<Buffer> buffer(DrmMockBuffer::create());
 
-    ASSERT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
+    auto osContextId = csr->getOsContext().getContextId();
+
+    ASSERT_FALSE(buffer->getGraphicsAllocation()->isResident(osContextId));
     ASSERT_GT(buffer->getSize(), 0u);
 
     //make it resident 8 times
     for (int c = 0; c < 8; c++) {
         csr->makeResident(*buffer->getGraphicsAllocation());
         csr->processResidency(csr->getResidencyAllocations());
-        EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident(0u));
-        EXPECT_EQ(buffer->getGraphicsAllocation()->getResidencyTaskCount(0u), csr->peekTaskCount() + 1);
+        EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident(osContextId));
+        EXPECT_EQ(buffer->getGraphicsAllocation()->getResidencyTaskCount(osContextId), csr->peekTaskCount() + 1);
     }
 
     csr->makeNonResident(*buffer->getGraphicsAllocation());
-    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
+    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(osContextId));
 
     csr->makeNonResident(*buffer->getGraphicsAllocation());
-    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
+    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(osContextId));
 }
 
 typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamMemoryManagerTest;

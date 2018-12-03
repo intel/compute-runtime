@@ -8,11 +8,12 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/os_interface/os_context.h"
 
 namespace OCLRT {
-InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver) : commandStreamReceiver(commandStreamReceiver), contextId(commandStreamReceiver.getDeviceIndex()){};
+InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver) : commandStreamReceiver(commandStreamReceiver){};
 void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage) {
-    uint32_t taskCount = gfxAllocation->getTaskCount(contextId);
+    uint32_t taskCount = gfxAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId());
 
     if (allocationUsage == REUSABLE_ALLOCATION) {
         taskCount = commandStreamReceiver.peekTaskCount();
@@ -28,7 +29,7 @@ void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<Gra
         }
     }
     auto &allocationsList = (allocationUsage == TEMPORARY_ALLOCATION) ? temporaryAllocations : allocationsForReuse;
-    gfxAllocation->updateTaskCount(taskCount, contextId);
+    gfxAllocation->updateTaskCount(taskCount, commandStreamReceiver.getOsContext().getContextId());
     allocationsList.pushTailOne(*gfxAllocation.release());
 }
 
@@ -43,7 +44,7 @@ void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, Allo
     IDList<GraphicsAllocation, false, true> allocationsLeft;
     while (curr != nullptr) {
         auto *next = curr->next;
-        if (curr->getTaskCount(contextId) <= waitTaskCount) {
+        if (curr->getTaskCount(commandStreamReceiver.getOsContext().getContextId()) <= waitTaskCount) {
             memoryManager->freeGraphicsMemory(curr);
         } else {
             allocationsLeft.pushTailOne(*curr);
@@ -73,7 +74,7 @@ std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t req
     req.requiredMinimalSize = requiredMinimalSize;
     req.csrTagAddress = commandStreamReceiver.getTagAddress();
     req.internalAllocationRequired = internalAllocationRequired;
-    req.contextId = commandStreamReceiver.getDeviceIndex();
+    req.contextId = commandStreamReceiver.getOsContext().getContextId();
     GraphicsAllocation *a = nullptr;
     GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));
     return std::unique_ptr<GraphicsAllocation>(retAlloc);

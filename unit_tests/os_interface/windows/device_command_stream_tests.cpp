@@ -49,7 +49,7 @@ using namespace ::testing;
 
 class WddmCommandStreamFixture {
   public:
-    std::unique_ptr<Device> device;
+    std::unique_ptr<MockDevice> device;
     DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr;
     MockWddmMemoryManager *memoryManager = nullptr;
     WddmMock *wddm = nullptr;
@@ -62,13 +62,12 @@ class WddmCommandStreamFixture {
         wddm = static_cast<WddmMock *>(executionEnvironment->osInterface->get()->getWddm());
 
         csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], *executionEnvironment);
-        executionEnvironment->commandStreamReceivers.resize(1);
-        executionEnvironment->commandStreamReceivers[0][0].reset(csr);
 
         memoryManager = new MockWddmMemoryManager(wddm, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
 
-        device.reset(Device::create<Device>(platformDevices[0], executionEnvironment, 0u));
+        device.reset(MockDevice::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
+        device->resetCommandStreamReceiver(csr);
         ASSERT_NE(nullptr, device);
     }
 
@@ -622,8 +621,8 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION);
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation2), TEMPORARY_ALLOCATION);
 
-    graphicsAllocation->updateTaskCount(1, 0u);
-    graphicsAllocation2->updateTaskCount(100, 0u);
+    graphicsAllocation->updateTaskCount(1, csr->getOsContext().getContextId());
+    graphicsAllocation2->updateTaskCount(100, csr->getOsContext().getContextId());
 
     csr->waitForTaskCountAndCleanAllocationList(1, TEMPORARY_ALLOCATION);
     // graphicsAllocation2 still lives

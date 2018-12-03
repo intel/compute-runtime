@@ -6,6 +6,7 @@
  */
 
 #include "runtime/memory_manager/internal_allocation_storage.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/fixtures/memory_allocator_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/utilities/containers_tests_helpers.h"
@@ -41,9 +42,9 @@ TEST_F(InternalAllocationStorageTest, whenCleanAllocationListThenRemoveOnlyCompl
     auto allocation2 = memoryManager->allocateGraphicsMemory(1, host_ptr);
     auto allocation3 = memoryManager->allocateGraphicsMemory(1, host_ptr);
 
-    allocation->updateTaskCount(10, 0);
-    allocation2->updateTaskCount(5, 0);
-    allocation3->updateTaskCount(15, 0);
+    allocation->updateTaskCount(10, csr->getOsContext().getContextId());
+    allocation2->updateTaskCount(5, csr->getOsContext().getContextId());
+    allocation3->updateTaskCount(15, csr->getOsContext().getContextId());
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation2), TEMPORARY_ALLOCATION);
@@ -119,7 +120,7 @@ TEST_F(InternalAllocationStorageTest, whenNotUsedAllocationIsStoredAsReusableAnd
     *csr->getTagAddress() = 0; // initial hw tag for dll
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-    EXPECT_EQ(0u, allocation->getTaskCount(0u));
+    EXPECT_EQ(0u, allocation->getTaskCount(csr->getOsContext().getContextId()));
     EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
 
     auto reusedAllocation = storage->obtainReusableAllocation(1, false).release();
@@ -179,8 +180,8 @@ TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromMidlleOfReusableLi
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation3));
 
     memoryManager->freeGraphicsMemory(allocation2);
-    allocation->updateTaskCount(0u, 0u);
-    allocation3->updateTaskCount(0u, 0u);
+    allocation->updateTaskCount(0u, csr->getOsContext().getContextId());
+    allocation3->updateTaskCount(0u, csr->getOsContext().getContextId());
 }
 
 TEST_F(InternalAllocationStorageTest, givenNonInternalAllocationWhenItIsPutOnReusableListWhenInternalAllocationIsRequestedThenNullIsReturned) {

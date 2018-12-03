@@ -346,10 +346,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketDisabledWh
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenObtainNewStampAndPassToEvent) {
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
-    auto mockMemoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
-    device->injectMemoryManager(mockMemoryManager);
-    context->setMemoryManager(mockMemoryManager);
-    auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager);
+
+    auto mockTagAllocator = new MockTagAllocator<>(executionEnvironment.memoryManager.get());
     csr.timestampPacketAllocator.reset(mockTagAllocator);
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
@@ -609,10 +607,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
 }
 
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedThenMakeItResident) {
-    auto mockMemoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
-    device->injectMemoryManager(mockMemoryManager);
-    context->setMemoryManager(mockMemoryManager);
-    auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager, 1);
+    auto mockTagAllocator = new MockTagAllocator<>(executionEnvironment.memoryManager.get(), 1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketAllocator.reset(mockTagAllocator);
@@ -634,10 +629,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedT
 }
 
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThenMakeItResident) {
-    auto mockMemoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
-    device->injectMemoryManager(mockMemoryManager);
-    context->setMemoryManager(mockMemoryManager);
-    auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager, 1);
+    auto mockTagAllocator = new MockTagAllocator<>(executionEnvironment.memoryManager.get(), 1);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketAllocator.reset(mockTagAllocator);

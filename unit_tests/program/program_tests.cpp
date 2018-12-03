@@ -22,6 +22,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/program/create.inl"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/program_fixture.inl"
 #include "unit_tests/global_environment.h"
@@ -664,7 +665,7 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButG
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     pProgram->build(1, &device, nullptr, nullptr, nullptr, true);
     auto kernelAllocation = pProgram->getKernelInfo(size_t(0))->getGraphicsAllocation();
-    kernelAllocation->updateTaskCount(100, 0);
+    kernelAllocation->updateTaskCount(100, csr.getOsContext().getContextId());
     *csr.getTagAddress() = 0;
     pProgram->cleanCurrentKernelInfo();
     EXPECT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());

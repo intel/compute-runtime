@@ -17,7 +17,7 @@ class ScratchSpaceControllerBase : public ScratchSpaceController {
     void setRequiredScratchSpace(void *sshBaseAddress,
                                  uint32_t requiredPerThreadScratchSize,
                                  uint32_t currentTaskCount,
-                                 uint32_t deviceIdx,
+                                 uint32_t contextId,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override;
     uint64_t calculateNewGSH() override;

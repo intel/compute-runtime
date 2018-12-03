@@ -751,6 +751,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsFlushOnce)
     commandStreamReceiver.initializeTagAllocation();
     commandStream.getSpace(sizeof(typename FamilyType::MI_NOOP));
 
+    commandStreamReceiver.setOsContext(*pDevice->getDefaultEngine().osContext);
+
     flushTask(commandStreamReceiver);
     EXPECT_EQ(1, commandStreamReceiver.flushCount);
 }

@@ -12,6 +12,7 @@
 #include "unit_tests/mocks/mock_event.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/os_interface/os_context.h"
 
 TEST(UserEvent, testInitialStatusOfUserEventCmdQueue) {
     UserEvent uEvent;
@@ -900,7 +901,7 @@ TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
 
     EXPECT_EQ(temporaryAllocation, csr.getTemporaryAllocations().peekHead());
 
-    temporaryAllocation->updateTaskCount(10, 0u);
+    temporaryAllocation->updateTaskCount(10, csr.getOsContext().getContextId());
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, 11);
 

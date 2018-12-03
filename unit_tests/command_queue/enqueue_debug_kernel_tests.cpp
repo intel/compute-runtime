@@ -9,6 +9,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/program/program.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/kernel_filename_helper.h"
@@ -104,7 +105,7 @@ HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSSHAndBtiAreCor
 
         auto &commandStreamReceiver = mockCmdQ->getCommandStreamReceiver();
         auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
-        EXPECT_EQ(1u, debugSurface->getTaskCount(0u));
+        EXPECT_EQ(1u, debugSurface->getTaskCount(commandStreamReceiver.getOsContext().getContextId()));
 
         EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
     }

@@ -15,6 +15,7 @@
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -580,8 +581,8 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
 
     // Test it
     auto executionEnvironment = pDevice->getExecutionEnvironment();
-    executionEnvironment->memoryManager = std::make_unique<OsAgnosticMemoryManager>(false, false, *executionEnvironment);
     std::unique_ptr<CommandStreamReceiverMock> csr(new CommandStreamReceiverMock(*executionEnvironment));
+    csr->setOsContext(*pDevice->getDefaultEngine().osContext);
     csr->residency.clear();
     EXPECT_EQ(0u, csr->residency.size());
 
@@ -621,7 +622,7 @@ TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWh
     auto privateSurface = pKernel->getPrivateSurface();
     auto tagAddress = csr.getTagAddress();
 
-    privateSurface->updateTaskCount(*tagAddress + 1, 0u);
+    privateSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     pKernel.reset(nullptr);

@@ -23,6 +23,7 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         memoryManager = new OsAgnosticMemoryManager(false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         csr = memoryManager->getDefaultCommandStreamReceiver(0);
+        csr->setOsContext(*memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]));
     }
 
     void TearDown() override {

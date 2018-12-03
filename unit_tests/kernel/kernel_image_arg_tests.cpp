@@ -190,6 +190,7 @@ HWTEST_F(KernelImageArgTest, givenImgWithMcsAllocWhenMakeResidentThenMakeMcsAllo
     pKernel->setArg(0, sizeof(memObj), &memObj);
 
     std::unique_ptr<MockCsr<FamilyType>> csr(new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment));
+    csr->setOsContext(*pDevice->getDefaultEngine().osContext);
 
     pKernel->makeResident(*csr.get());
     EXPECT_TRUE(csr->isMadeResident(mcsAlloc));

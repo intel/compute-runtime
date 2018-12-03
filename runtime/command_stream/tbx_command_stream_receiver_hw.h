@@ -27,6 +27,7 @@ class TbxMemoryManager : public OsAgnosticMemoryManager {
 
 template <typename GfxFamily>
 class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
+  protected:
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
     typedef typename OCLRT::AUBFamilyMapper<GfxFamily>::AUB AUB;
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;

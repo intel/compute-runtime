@@ -247,7 +247,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         scratchSpaceController->setRequiredScratchSpace(ssh.getCpuBase(),
                                                         requiredScratchSize,
                                                         this->taskCount,
-                                                        this->deviceIndex,
+                                                        this->osContext->getContextId(),
                                                         stateBaseAddressDirty,
                                                         checkVfeStateDirty);
         if (checkVfeStateDirty) {

@@ -6,6 +6,7 @@
  */
 
 #include "runtime/memory_manager/internal_allocation_storage.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "test.h"
@@ -119,7 +120,7 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
 
     uint32_t notReadyTaskCount = *commandStreamReceiver.getTagAddress() + 1u;
 
-    firstAllocation->updateTaskCount(notReadyTaskCount, 0u);
+    firstAllocation->updateTaskCount(notReadyTaskCount, commandStreamReceiver.getOsContext().getContextId());
 
     const size_t newHeapSize = initialHeapSize + 1;
     char newHeap[newHeapSize];

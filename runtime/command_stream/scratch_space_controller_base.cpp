@@ -22,13 +22,13 @@ ScratchSpaceControllerBase::ScratchSpaceControllerBase(const HardwareInfo &info,
 void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
                                                          uint32_t requiredPerThreadScratchSize,
                                                          uint32_t currentTaskCount,
-                                                         uint32_t deviceIdx,
+                                                         uint32_t contextId,
                                                          bool &stateBaseAddressDirty,
                                                          bool &vfeStateDirty) {
     size_t requiredScratchSizeInBytes = requiredPerThreadScratchSize * computeUnitsUsedForScratch;
     if (requiredScratchSizeInBytes && (!scratchAllocation || scratchSizeBytes < requiredScratchSizeInBytes)) {
         if (scratchAllocation) {
-            scratchAllocation->updateTaskCount(currentTaskCount, deviceIdx);
+            scratchAllocation->updateTaskCount(currentTaskCount, contextId);
             csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchAllocation), TEMPORARY_ALLOCATION);
         }
         scratchSizeBytes = requiredScratchSizeInBytes;

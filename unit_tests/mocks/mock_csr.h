@@ -14,6 +14,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/string.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "gmock/gmock.h"
 #include <vector>
@@ -44,7 +45,7 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
         if (this->getMemoryManager()) {
             this->getResidencyAllocations().push_back(&gfxAllocation);
         }
-        gfxAllocation.updateResidencyTaskCount(this->taskCount, this->deviceIndex);
+        gfxAllocation.updateResidencyTaskCount(this->taskCount, this->osContext->getContextId());
     }
     void makeNonResident(GraphicsAllocation &gfxAllocation) override {
         madeNonResidentGfxAllocations.push_back(&gfxAllocation);

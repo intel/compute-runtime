@@ -1431,17 +1431,23 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
 }
 
 TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhenCleanupMemoryManagerThenDontAccessCsr) {
-    auto wddm = std::make_unique<WddmMock>();
-    EXPECT_TRUE(wddm->init());
     ExecutionEnvironment executionEnvironment;
+    auto csr = createCommandStream(*platformDevices, executionEnvironment);
+    auto wddm = new WddmMock();
+    EXPECT_TRUE(wddm->init());
+
+    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.osInterface->get()->setWddm(wddm);
     executionEnvironment.commandStreamReceivers.resize(1);
-    executionEnvironment.commandStreamReceivers[0][0] =
-        std::unique_ptr<CommandStreamReceiver>(createCommandStream(*platformDevices, executionEnvironment));
-    executionEnvironment.memoryManager = std::make_unique<WddmMemoryManager>(false, false, wddm.get(), executionEnvironment);
-    EXPECT_EQ(executionEnvironment.commandStreamReceivers[0][0].get(), executionEnvironment.memoryManager->getDefaultCommandStreamReceiver(0));
-    auto tagAllocator = executionEnvironment.commandStreamReceivers[0][0]->getEventPerfCountAllocator();
+    executionEnvironment.commandStreamReceivers[0][0] = std::unique_ptr<CommandStreamReceiver>(csr);
+
+    executionEnvironment.memoryManager = std::make_unique<WddmMemoryManager>(false, false, wddm, executionEnvironment);
+    csr->setOsContext(*executionEnvironment.memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]));
+    EXPECT_EQ(csr, executionEnvironment.memoryManager->getDefaultCommandStreamReceiver(0));
+
+    auto tagAllocator = csr->getEventPerfCountAllocator();
     auto allocation = tagAllocator->getTag()->getGraphicsAllocation();
-    allocation->updateTaskCount(1, 0);
+    allocation->updateTaskCount(1, csr->getOsContext().getContextId());
     executionEnvironment.commandStreamReceivers.clear();
     EXPECT_NO_THROW(executionEnvironment.memoryManager.reset());
 }

@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/fixtures/memory_manager_fixture.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -18,6 +19,8 @@ void MemoryManagerWithCsrFixture::SetUp() {
     csr->tagAddress = &currentGpuTag;
     executionEnvironment.commandStreamReceivers.resize(1);
     executionEnvironment.commandStreamReceivers[0][0].reset(csr);
+
+    csr->setOsContext(*memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]));
 }
 
 void MemoryManagerWithCsrFixture::TearDown() {
