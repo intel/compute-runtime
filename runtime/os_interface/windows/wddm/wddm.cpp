@@ -349,8 +349,8 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
         }
 
         if (allocation32bit) {
-            MapGPUVA.MinimumAddress = gfxPartition.Heap32[0].Base;
-            MapGPUVA.MaximumAddress = gfxPartition.Heap32[0].Limit;
+            MapGPUVA.MinimumAddress = gfxPartition.Heap32[3].Base;
+            MapGPUVA.MaximumAddress = gfxPartition.Heap32[3].Limit;
             MapGPUVA.BaseAddress = 0;
         }
     }
@@ -805,11 +805,11 @@ PFND3DKMT_ESCAPE Wddm::getEscapeHandle() const {
 }
 
 uint64_t Wddm::getHeap32Base() {
-    return alignUp(gfxPartition.Heap32[0].Base, MemoryConstants::pageSize);
+    return alignUp(gfxPartition.Heap32[3].Base, MemoryConstants::pageSize);
 }
 
 uint64_t Wddm::getHeap32Size() {
-    return alignDown(gfxPartition.Heap32[0].Limit, MemoryConstants::pageSize);
+    return alignDown(gfxPartition.Heap32[3].Limit, MemoryConstants::pageSize);
 }
 
 VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) {

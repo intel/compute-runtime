@@ -173,8 +173,8 @@ bool WddmMock::openAdapter() {
 }
 
 void WddmMock::setHeap32(uint64_t base, uint64_t size) {
-    gfxPartition.Heap32[0].Base = base;
-    gfxPartition.Heap32[0].Limit = size;
+    gfxPartition.Heap32[3].Base = base;
+    gfxPartition.Heap32[3].Limit = size;
 }
 
 GMM_GFX_PARTITIONING *WddmMock::getGfxPartitionPtr() {
