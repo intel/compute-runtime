@@ -726,6 +726,11 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryNotEqual(void *gfxAddres
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(void *gfxAddress, const void *srcAddress,
                                                          size_t length, uint32_t compareOperation) {
+    if (hardwareContext) {
+        hardwareContext->expectMemory(reinterpret_cast<uint64_t>(gfxAddress), srcAddress, length, compareOperation);
+        return;
+    }
+
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
         UNRECOVERABLE_IF(offset > length);
 

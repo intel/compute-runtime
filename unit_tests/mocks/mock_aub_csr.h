@@ -87,12 +87,22 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(engineInstance);
         pollForCompletionCalled = true;
     }
+    void expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length) {
+        AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryEqual(gfxAddress, srcAddress, length);
+        expectMemoryEqualCalled = true;
+    }
+    void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) {
+        AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryNotEqual(gfxAddress, srcAddress, length);
+        expectMemoryNotEqualCalled = true;
+    }
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;
     bool initializeEngineCalled = false;
     bool writeMemoryCalled = false;
     bool submitBatchBufferCalled = false;
     bool pollForCompletionCalled = false;
+    bool expectMemoryEqualCalled = false;
+    bool expectMemoryNotEqualCalled = false;
 
     void initFile(const std::string &fileName) override {
         fileIsOpen = true;

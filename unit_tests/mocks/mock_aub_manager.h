@@ -19,12 +19,14 @@ struct MockHardwareContext : public HardwareContext {
     void submit(uint64_t gfxAddress, const void *batchBuffer, size_t size, uint32_t memoryBank) override { submitCalled = true; }
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 4096) override { writeMemoryCalled = true; }
     void freeMemory(uint64_t gfxAddress, size_t size) override { freeMemoryCalled = true; }
+    void expectMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t compareOperation) override { expectMemoryCalled = true; }
 
     bool initializeCalled = false;
     bool pollForCompletionCalled = false;
     bool submitCalled = false;
     bool writeMemoryCalled = false;
     bool freeMemoryCalled = false;
+    bool expectMemoryCalled = false;
 };
 
 class MockAubManager : public AubManager {
