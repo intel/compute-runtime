@@ -7,6 +7,8 @@
 
 #include "reg_configs_common.h"
 #include "runtime/helpers/hw_helper.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/state_base_address.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
@@ -973,4 +975,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateAndBatching
     //surfaces are non resident
     auto &surfacesForResidency = mockCsr->getResidencyAllocations();
     EXPECT_EQ(0u, surfacesForResidency.size());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenGeneralStateBaseAddressIsProgrammedThenDecanonizedAddressIsWritten) {
+    uint64_t generalStateBaseAddress = 0xffff800400010000ull;
+    StateBaseAddressHelper<FamilyType> helper;
+
+    helper.programStateBaseAddress(commandStream, dsh, ioh, ssh, generalStateBaseAddress, 0, generalStateBaseAddress, pDevice->getGmmHelper());
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream);
+    auto cmd = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
+
+    EXPECT_NE(generalStateBaseAddress, cmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(GmmHelper::decanonize(generalStateBaseAddress), cmd->getGeneralStateBaseAddress());
 }

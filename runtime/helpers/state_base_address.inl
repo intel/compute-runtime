@@ -35,7 +35,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     pCmd->setDynamicStateBaseAddress(dsh.getHeapGpuBase());
     // GSH must be set to 0 for stateless
-    pCmd->setGeneralStateBaseAddress(generalStateBase);
+    pCmd->setGeneralStateBaseAddress(GmmHelper::decanonize(generalStateBase));
+
     pCmd->setSurfaceStateBaseAddress(ssh.getHeapGpuBase());
     pCmd->setInstructionBaseAddress(internalHeapBase);
 
