@@ -72,13 +72,13 @@ TEST(SubmissionsAggregator, givenTwoCommandBuffersWhenMergeResourcesIsCalledThen
     size_t totalMemoryBudget = -1;
     ResourcePackage resourcePackage;
 
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
     EXPECT_EQ(0u, totalUsedSize);
 
     submissionsAggregator.recordCommandBuffer(cmdBuffer);
 
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
     EXPECT_EQ(15u, totalUsedSize);
     totalUsedSize = 0;
@@ -92,7 +92,7 @@ TEST(SubmissionsAggregator, givenTwoCommandBuffersWhenMergeResourcesIsCalledThen
     EXPECT_EQ(5u, cmdBuffer->surfaces.size());
     EXPECT_EQ(4u, cmdBuffer2->surfaces.size());
 
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
     //command buffer 2 is aggregated to command buffer 1
     auto primaryBatchInstepctionId = submissionsAggregator.peekCommandBuffersList().peekHead()->inspectionId;
@@ -153,7 +153,7 @@ TEST(SubmissionsAggregator, givenSubmissionAggregatorWhenThreeCommandBuffersAreS
     EXPECT_EQ(4u, cmdBuffer2->surfaces.size());
     EXPECT_EQ(2u, cmdBuffer3->surfaces.size());
 
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
     //command buffer 3 and 2 is aggregated to command buffer 1
     auto primaryBatchInstepctionId = submissionsAggregator.peekCommandBuffersList().peekHead()->inspectionId;
@@ -207,7 +207,7 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWhenTheyAreAggreagateWith
     submissionsAggregator.recordCommandBuffer(cmdBuffer2);
     submissionsAggregator.recordCommandBuffer(cmdBuffer3);
 
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
     //command buffer 2 is aggregated to command buffer 1, comand buffer 3 becomes command buffer 2
     EXPECT_EQ(submissionsAggregator.peekCommandBuffersList().peekHead(), cmdBuffer);
@@ -263,7 +263,7 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWhenAggregateIsCalledMult
     submissionsAggregator.recordCommandBuffer(cmdBuffer2);
     submissionsAggregator.recordCommandBuffer(cmdBuffer3);
 
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
     //command buffers not aggregated due to too low limit
     EXPECT_EQ(submissionsAggregator.peekCommandBuffersList().peekHead(), cmdBuffer);
@@ -275,7 +275,7 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWhenAggregateIsCalledMult
     resourcePackage.clear();
     totalUsedSize = 0;
 
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
     //all cmd buffers are merged to 1
     EXPECT_EQ(cmdBuffer3->inspectionId, cmdBuffer2->inspectionId);
     EXPECT_EQ(cmdBuffer->inspectionId, cmdBuffer2->inspectionId);
@@ -313,7 +313,7 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWithDifferentGraphicsAllo
     submissionsAggregator.recordCommandBuffer(cmdBuffer);
     submissionsAggregator.recordCommandBuffer(cmdBuffer2);
 
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
     EXPECT_EQ(4u, resourcePackage.size());
     EXPECT_EQ(15u, totalUsedSize);
@@ -347,7 +347,7 @@ TEST(SubmissionsAggregator, givenTwoCommandBufferWhereSecondContainsFirstOnResou
     submissionsAggregator.recordCommandBuffer(cmdBuffer);
     submissionsAggregator.recordCommandBuffer(cmdBuffer2);
 
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
     //resource pack shuold have 3 surfaces
     EXPECT_EQ(3u, resourcePackage.size());
@@ -379,7 +379,7 @@ TEST(SubmissionsAggregator, givenTwoCommandBufferWhereSecondContainsTheFirstComm
     submissionsAggregator.recordCommandBuffer(cmdBuffer);
     submissionsAggregator.recordCommandBuffer(cmdBuffer2);
 
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
     //resource pack shuold have 3 surfaces
     EXPECT_EQ(2u, resourcePackage.size());
@@ -408,7 +408,7 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentCoherencySettin
     ResourcePackage resourcePackage;
     size_t totalUsedSize = 0;
     size_t totalMemoryBudget = 200;
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
     EXPECT_EQ(1u, totalUsedSize);
     EXPECT_EQ(1u, resourcePackage.size());
     EXPECT_NE(cmdBuffer->inspectionId, cmdBuffer2->inspectionId);
@@ -437,7 +437,7 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentThrottleSetting
     ResourcePackage resourcePackage;
     size_t totalUsedSize = 0;
     size_t totalMemoryBudget = 200;
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
     EXPECT_EQ(1u, totalUsedSize);
     EXPECT_EQ(1u, resourcePackage.size());
     EXPECT_NE(cmdBuffer->inspectionId, cmdBuffer2->inspectionId);
@@ -466,7 +466,7 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentPrioritySetting
     ResourcePackage resourcePackage;
     size_t totalUsedSize = 0;
     size_t totalMemoryBudget = 200;
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
     EXPECT_EQ(1u, totalUsedSize);
     EXPECT_EQ(1u, resourcePackage.size());
     EXPECT_NE(cmdBuffer->inspectionId, cmdBuffer2->inspectionId);
@@ -479,14 +479,72 @@ TEST(SubmissionsAggregator, dontAllocateFlushStamp) {
     EXPECT_EQ(nullptr, cmdBuffer.flushStamp->getStampReference());
 }
 
+TEST(SubmissionsAggregator, givenMultipleOsContextsWhenAggregatingGraphicsAllocationsThenUseInspectionIdCorrespondingWithOsContextId) {
+    SubmissionAggregator submissionsAggregator;
+    ResourcePackage resourcePackage;
+    const auto totalMemoryBudget = 3u;
+    size_t totalUsedSize = 0;
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    CommandBuffer *cmdBuffer0 = new CommandBuffer(*device);
+    CommandBuffer *cmdBuffer1 = new CommandBuffer(*device);
+
+    MockGraphicsAllocation alloc0(nullptr, 1);
+    MockGraphicsAllocation alloc1(nullptr, 1);
+    MockGraphicsAllocation alloc2(nullptr, 1);
+    MockGraphicsAllocation alloc3(nullptr, 1);
+
+    cmdBuffer0->surfaces.push_back(&alloc0);
+    cmdBuffer0->surfaces.push_back(&alloc1);
+    cmdBuffer1->surfaces.push_back(&alloc2);
+    cmdBuffer1->surfaces.push_back(&alloc3);
+
+    submissionsAggregator.recordCommandBuffer(cmdBuffer0);
+    submissionsAggregator.recordCommandBuffer(cmdBuffer1);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 3u);
+    EXPECT_EQ(1u, alloc0.getInspectionId(3u));
+    EXPECT_EQ(1u, alloc1.getInspectionId(3u));
+    EXPECT_EQ(1u, alloc2.getInspectionId(3u));
+    EXPECT_EQ(1u, alloc3.getInspectionId(3u));
+}
+
+TEST(SubmissionsAggregator, givenMultipleOsContextsWhenAggregatingGraphicsAllocationsThenDoNotUpdateInspectionIdsOfOtherContexts) {
+    SubmissionAggregator submissionsAggregator;
+    ResourcePackage resourcePackage;
+    const auto totalMemoryBudget = 2u;
+    size_t totalUsedSize = 0;
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    CommandBuffer *cmdBuffer0 = new CommandBuffer(*device);
+    CommandBuffer *cmdBuffer1 = new CommandBuffer(*device);
+
+    MockGraphicsAllocation alloc0(nullptr, 1);
+    MockGraphicsAllocation alloc1(nullptr, 1);
+
+    cmdBuffer0->surfaces.push_back(&alloc0);
+    cmdBuffer0->surfaces.push_back(&alloc1);
+
+    submissionsAggregator.recordCommandBuffer(cmdBuffer0);
+    submissionsAggregator.recordCommandBuffer(cmdBuffer1);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 3u);
+
+    for (auto osContextId = 0u; osContextId < alloc1.usageInfos.size(); osContextId++) {
+        if (osContextId != 3u) {
+            EXPECT_EQ(0u, alloc0.getInspectionId(osContextId));
+        }
+    }
+    for (auto osContextId = 0u; osContextId < alloc0.usageInfos.size(); osContextId++) {
+        if (osContextId != 3u) {
+            EXPECT_EQ(0u, alloc0.getInspectionId(osContextId));
+        }
+    }
+}
+
 struct SubmissionsAggregatorTests : public ::testing::Test {
     void SetUp() override {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
         context.reset(new MockContext(device.get()));
     }
 
-    template <typename T>
-    void overrideCsr(T *newCsr) {
+    void overrideCsr(CommandStreamReceiver *newCsr) {
         device->resetCommandStreamReceiver(newCsr);
         newCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     }

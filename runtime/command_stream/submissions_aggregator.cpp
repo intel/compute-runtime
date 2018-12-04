@@ -13,7 +13,7 @@ void OCLRT::SubmissionAggregator::recordCommandBuffer(CommandBuffer *commandBuff
     this->cmdBuffers.pushTailOne(*commandBuffer);
 }
 
-void OCLRT::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourcePackage, size_t &totalUsedSize, size_t totalMemoryBudget) {
+void OCLRT::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourcePackage, size_t &totalUsedSize, size_t totalMemoryBudget, uint32_t osContextId) {
     auto primaryCommandBuffer = this->cmdBuffers.peekHead();
     auto currentInspection = this->inspectionId;
 
@@ -27,8 +27,8 @@ void OCLRT::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resou
 
     //primary command buffers must fix to budget
     for (auto &graphicsAllocation : primaryCommandBuffer->surfaces) {
-        if (graphicsAllocation->inspectionId < currentInspection) {
-            graphicsAllocation->inspectionId = currentInspection;
+        if (graphicsAllocation->getInspectionId(osContextId) < currentInspection) {
+            graphicsAllocation->setInspectionId(currentInspection, osContextId);
             resourcePackage.push_back(graphicsAllocation);
             totalUsedSize += graphicsAllocation->getUnderlyingBufferSize();
         }
@@ -62,16 +62,16 @@ void OCLRT::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resou
             if (graphicsAllocation == primaryBatchGraphicsAllocation) {
                 continue;
             }
-            if (graphicsAllocation->inspectionId < currentInspection) {
-                graphicsAllocation->inspectionId = currentInspection;
+            if (graphicsAllocation->getInspectionId(osContextId) < currentInspection) {
+                graphicsAllocation->setInspectionId(currentInspection, osContextId);
                 newResources.push_back(graphicsAllocation);
                 nextCommandBufferNewResourcesSize += graphicsAllocation->getUnderlyingBufferSize();
             }
         }
 
         if (nextCommandBuffer->batchBuffer.commandBufferAllocation && (nextCommandBuffer->batchBuffer.commandBufferAllocation != primaryBatchGraphicsAllocation)) {
-            if (nextCommandBuffer->batchBuffer.commandBufferAllocation->inspectionId < currentInspection) {
-                nextCommandBuffer->batchBuffer.commandBufferAllocation->inspectionId = currentInspection;
+            if (nextCommandBuffer->batchBuffer.commandBufferAllocation->getInspectionId(osContextId) < currentInspection) {
+                nextCommandBuffer->batchBuffer.commandBufferAllocation->setInspectionId(currentInspection, osContextId);
                 newResources.push_back(nextCommandBuffer->batchBuffer.commandBufferAllocation);
                 nextCommandBufferNewResourcesSize += nextCommandBuffer->batchBuffer.commandBufferAllocation->getUnderlyingBufferSize();
             }

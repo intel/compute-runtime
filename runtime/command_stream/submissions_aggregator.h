@@ -43,7 +43,7 @@ struct BatchBuffer {
 };
 
 struct CommandBuffer : public IDNode<CommandBuffer> {
-    CommandBuffer(Device &);
+    CommandBuffer(Device &device);
     ResidencyContainer surfaces;
     BatchBuffer batchBuffer;
     void *batchBufferEndLocation = nullptr;
@@ -62,7 +62,7 @@ using ResourcePackage = StackVec<GraphicsAllocation *, 128>;
 class SubmissionAggregator {
   public:
     void recordCommandBuffer(CommandBuffer *commandBuffer);
-    void aggregateCommandBuffers(ResourcePackage &resourcePackage, size_t &totalUsedSize, size_t totalMemoryBudget);
+    void aggregateCommandBuffers(ResourcePackage &resourcePackage, size_t &totalUsedSize, size_t totalMemoryBudget, uint32_t osContextId);
     CommandBufferList &peekCmdBufferList() { return cmdBuffers; }
 
   protected:

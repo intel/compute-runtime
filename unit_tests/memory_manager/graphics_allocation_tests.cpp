@@ -10,6 +10,13 @@
 
 using namespace OCLRT;
 
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenAllInspectionIdsAreSetToZero) {
+    MockGraphicsAllocation graphicsAllocation(nullptr, 0u, 0u, maxOsContextCount, true);
+    for (auto i = 0u; i < maxOsContextCount; i++) {
+        EXPECT_EQ(0u, graphicsAllocation.getInspectionId(i));
+    }
+}
+
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenTaskCountsAreInitializedProperly) {
     GraphicsAllocation graphicsAllocation1(nullptr, 0u, 0u, 0u, maxOsContextCount, true);
     GraphicsAllocation graphicsAllocation2(nullptr, 0u, 0u, maxOsContextCount, true);

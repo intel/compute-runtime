@@ -123,6 +123,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void updateTaskCount(uint32_t newTaskCount, uint32_t contextId);
     uint32_t getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
     void resetTaskCount(uint32_t contextId) { updateTaskCount(objectNotUsed, contextId); }
+    uint32_t getInspectionId(uint32_t contextId) { return usageInfos[contextId].inspectionId; }
+    void setInspectionId(uint32_t newInspectionId, uint32_t contextId) { usageInfos[contextId].inspectionId = newInspectionId; }
 
     void updateResidencyTaskCount(uint32_t newTaskCount, uint32_t contextId) { usageInfos[contextId].residencyTaskCount = newTaskCount; }
     uint32_t getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
@@ -135,6 +137,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     struct UsageInfo {
         uint32_t taskCount = objectNotUsed;
         uint32_t residencyTaskCount = objectNotResident;
+        uint32_t inspectionId = 0u;
     };
 
     //this variable can only be modified from SubmissionAggregator
@@ -148,7 +151,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint32_t reuseCount = 0; // GraphicsAllocation can be reused by shared resources
     bool evictable = true;
     MemoryPool::Type memoryPool = MemoryPool::MemoryNull;
-    uint32_t inspectionId = 0;
     AllocationType allocationType = AllocationType::UNKNOWN;
     bool aubWritable = true;
     bool allocDumpable = false;

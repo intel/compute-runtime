@@ -505,7 +505,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
     auto &commandBufferList = this->submissionAggregator->peekCmdBufferList();
     if (!commandBufferList.peekIsEmpty()) {
-        auto &device = commandBufferList.peekHead()->device;
+        const auto totalMemoryBudget = static_cast<size_t>(commandBufferList.peekHead()->device.getDeviceInfo().globalMemSize / 2);
 
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
@@ -515,7 +515,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
         while (!commandBufferList.peekIsEmpty()) {
             size_t totalUsedSize = 0u;
-            this->submissionAggregator->aggregateCommandBuffers(resourcePackage, totalUsedSize, (size_t)device.getDeviceInfo().globalMemSize * 5 / 10);
+            this->submissionAggregator->aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, osContext->getContextId());
             auto primaryCmdBuffer = commandBufferList.removeFrontOne();
             auto nextCommandBuffer = commandBufferList.peekHead();
             auto currentBBendLocation = primaryCmdBuffer->batchBufferEndLocation;

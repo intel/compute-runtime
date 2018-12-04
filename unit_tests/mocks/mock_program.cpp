@@ -36,7 +36,7 @@ void GlobalMockSipProgram::resetAllocationState() {
     for (uint32_t index = 0u; index < maxOsContextCount; index++) {
         this->kernelInfoArray[0]->kernelAllocation->resetResidencyTaskCount(index);
     }
-    static_cast<MockGraphicsAllocation *>(this->kernelInfoArray[0]->kernelAllocation)->resetInspectionId();
+    static_cast<MockGraphicsAllocation *>(this->kernelInfoArray[0]->kernelAllocation)->resetInspectionIds();
 }
 void GlobalMockSipProgram::initSipProgram() {
     cl_int retVal = 0;
