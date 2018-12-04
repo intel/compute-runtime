@@ -291,7 +291,7 @@ TEST(EventsTracker, givenSubmittedUserEventThenDumpingWithProperLabel) {
     EventsTracker::dumpNode(&uEvent, stream, map);
 
     expected << "e0[label=\"{------USER_EVENT ptr=" << &uEvent
-             << "------||CL_SUBMITTED|task count=NOT_READY, level=0|CALLBACKS=FALSE}\",color=red];\n";
+             << "------||CL_SUBMITTED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\n";
 
     EXPECT_STREQ(expected.str().c_str(), stream.str().c_str());
 }
@@ -431,6 +431,9 @@ TEST(EventsTracker, givenTwoEventsWithCommonParentEventThenDumpingProperGraph) {
 
     EXPECT_STREQ(expected.str().c_str(), stream.str().c_str());
 
+    uEventChild1.updateCompletionStamp(0, 0, 0);
+    uEventChild2.updateCompletionStamp(0, 0, 0);
+    uEvent.updateCompletionStamp(0, 0, 0);
     uEvent.setStatus(0);
 }
 
@@ -605,6 +608,10 @@ TEST(EventsTracker, givenEventsWithDependenciesBetweenThemThenDumpingProperGraph
 
     EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 
+    uEventChild1.updateCompletionStamp(0, 0, 0);
+    uEventChild2.updateCompletionStamp(0, 0, 0);
+    uEvent2.updateCompletionStamp(0, 0, 0);
+    uEvent1.updateCompletionStamp(0, 0, 0);
     uEvent2.setStatus(0);
     uEvent1.setStatus(0);
 }

@@ -147,6 +147,22 @@ TEST(UserEvent, userEventAfterSetingStatusIsReadyForSubmission) {
     EXPECT_TRUE(uEvent.isReadyForSubmission());
 }
 
+TEST(UserEvent, givenUserEventWhenStatusIsCompletedThenReturnZeroTaskLevel) {
+    UserEvent uEvent;
+
+    uEvent.setStatus(CL_QUEUED);
+    EXPECT_EQ(Event::eventNotReady, uEvent.getTaskLevel());
+
+    uEvent.setStatus(CL_SUBMITTED);
+    EXPECT_EQ(Event::eventNotReady, uEvent.getTaskLevel());
+
+    uEvent.setStatus(CL_RUNNING);
+    EXPECT_EQ(Event::eventNotReady, uEvent.getTaskLevel());
+
+    uEvent.setStatus(CL_COMPLETE);
+    EXPECT_EQ(0u, uEvent.getTaskLevel());
+}
+
 typedef HelloWorldTest<HelloWorldFixtureFactory> EventTests;
 
 TEST_F(EventTests, blockedUserEventPassedToEnqueueNdRangeWithoutReturnEventIsNotSubmittedToCSR) {
@@ -519,7 +535,7 @@ TEST_F(EventTests, enqueueWithAbortedUserEventDoesntFlushToCSR) {
     EXPECT_EQ(taskCount, taskCountAfter);
 
     Event *pChildEvent = (Event *)retEvent;
-    EXPECT_EQ(Event::eventNotReady, pChildEvent->taskLevel);
+    EXPECT_EQ(Event::eventNotReady, pChildEvent->getTaskLevel());
 
     cl_int eventStatus = 0;
     retVal = clGetEventInfo(retEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &eventStatus, NULL);

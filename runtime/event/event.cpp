@@ -544,7 +544,7 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
     DBG_LOG(EventsDebugEnable, "Event", this, "is unblocked by", &event);
 
     if (this->taskLevel == Event::eventNotReady) {
-        this->taskLevel = taskLevel;
+        this->taskLevel = std::max(cmdQueue->getCommandStreamReceiver().peekTaskLevel(), taskLevel);
     } else {
         this->taskLevel = std::max(this->taskLevel.load(), taskLevel);
     }

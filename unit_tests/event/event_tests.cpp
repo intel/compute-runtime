@@ -1344,7 +1344,7 @@ TEST(EventCallback, GivenEventWithCallbacksOnPeekHasCallbacksReturnsTrue) {
 }
 
 TEST_F(EventTest, addChildForEventUncompleted) {
-    VirtualEvent virtualEvent;
+    VirtualEvent virtualEvent(pCmdQ, &mockContext);
     {
         Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
         event.addChild(virtualEvent);
@@ -1366,8 +1366,29 @@ TEST(Event, whenCreatingRegularEventsThenExternalSynchronizationIsNotRequired) {
     virtualEvent->release();
 }
 
+HWTEST_F(EventTest, givenEventWithNotReadyTaskLevelWhenUnblockedThenGetTaskLevelFromCsrIfGreaterThanParent) {
+    uint32_t initialTaskLevel = 10;
+    Event parentEventWithGreaterTaskLevel(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, initialTaskLevel + 5, 0);
+    Event parentEventWithLowerTaskLevel(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, initialTaskLevel - 5, 0);
+
+    Event childEvent0(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, Event::eventNotReady, Event::eventNotReady);
+    Event childEvent1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, Event::eventNotReady, Event::eventNotReady);
+
+    auto &csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ->getCommandStreamReceiver());
+    csr.taskLevel = initialTaskLevel;
+
+    parentEventWithGreaterTaskLevel.addChild(childEvent0);
+    parentEventWithLowerTaskLevel.addChild(childEvent1);
+
+    parentEventWithGreaterTaskLevel.setStatus(CL_COMPLETE);
+    parentEventWithLowerTaskLevel.setStatus(CL_COMPLETE);
+
+    EXPECT_EQ(parentEventWithGreaterTaskLevel.getTaskLevel() + 1, childEvent0.getTaskLevel());
+    EXPECT_EQ(csr.taskLevel, childEvent1.getTaskLevel());
+}
+
 TEST_F(EventTest, addChildForEventCompleted) {
-    VirtualEvent virtualEvent;
+    VirtualEvent virtualEvent(pCmdQ, &mockContext);
     {
         Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
         event.setStatus(CL_COMPLETE);

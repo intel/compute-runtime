@@ -32,13 +32,10 @@ bool UserEvent::wait(bool blocking, bool useQuickKmdSleep) {
 }
 
 uint32_t UserEvent::getTaskLevel() {
-    uint32_t taskLevel = 0;
-    if (ctx != nullptr) {
-        Device *pDevice = ctx->getDevice(0);
-        auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
-        taskLevel = csr->peekTaskLevel();
+    if (peekExecutionStatus() == CL_COMPLETE) {
+        return 0;
     }
-    return taskLevel;
+    return Event::eventNotReady;
 }
 
 bool UserEvent::isInitialEventStatus() const {

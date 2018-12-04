@@ -972,13 +972,15 @@ HWTEST_F(glSharingTests, givenSyncObjectWhenCreateEventIsCalledThenCreateGLSyncO
 
     auto &csr = reinterpret_cast<MockDevice *>(context.getDevice(0))->getUltCommandStreamReceiver<FamilyType>();
     csr.taskLevel = 123;
-    auto csrTaskLevel = csr.peekTaskLevel();
     auto eventObj = castToObject<Event>(event);
     EXPECT_TRUE(eventObj->getCommandType() == CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR);
     EXPECT_TRUE(eventObj->peekExecutionStatus() == CL_SUBMITTED);
     EXPECT_EQ(Event::eventNotReady, eventObj->taskLevel);
-    EXPECT_EQ(csrTaskLevel, eventObj->getTaskLevel());
+    EXPECT_EQ(Event::eventNotReady, eventObj->getTaskLevel());
     EXPECT_EQ(1, GLRetainSyncCalled);
+
+    eventObj->setStatus(CL_COMPLETE);
+    EXPECT_EQ(0u, eventObj->getTaskLevel());
     clReleaseEvent(event);
     EXPECT_EQ(1, GLReleaseSyncCalled);
 }
