@@ -111,6 +111,14 @@ CommandComputeKernel::~CommandComputeKernel() {
         kernelOperation->doNotFreeISH = true;
     }
     kernel->decRefInternal();
+
+    auto &commandStreamReceiver = commandQueue.getCommandStreamReceiver();
+    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        for (cl_event eventFromWaitList : eventsWaitlist) {
+            auto event = castToObjectOrAbort<Event>(eventFromWaitList);
+            event->decRefInternal();
+        }
+    }
 }
 
 CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminated) {
@@ -220,6 +228,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       taskLevel,
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
+
     commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
     if (printfHandler) {
         printfHandler.get()->printEnqueueOutput();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -810,6 +810,23 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenEnqueueingBlockedThenMake
     EXPECT_FALSE(csr.isMadeResident(timestampPacketNode->getGraphicsAllocation()));
     userEvent.setStatus(CL_COMPLETE);
     EXPECT_TRUE(csr.isMadeResident(timestampPacketNode->getGraphicsAllocation()));
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockedThenVirtualEventIncrementsRefInternalAndDecrementsAfterCompleteEvent) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    MockKernelWithInternals mockKernelWithInternals(*device, context.get());
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+    UserEvent userEvent;
+    cl_event waitlist = &userEvent;
+
+    auto internalCount = userEvent.getRefInternalCount();
+    cmdQ->enqueueKernel(mockKernel, 1, nullptr, gws, nullptr, 1, &waitlist, nullptr);
+    EXPECT_EQ(internalCount + 1, userEvent.getRefInternalCount());
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_EQ(internalCount, mockKernel->getRefInternalCount());
 }
 
 TEST_F(TimestampPacketTests, givenDispatchSizeWhenAskingForNewTimestampsThenObtainEnoughTags) {

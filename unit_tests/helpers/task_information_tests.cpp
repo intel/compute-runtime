@@ -110,11 +110,16 @@ TEST(CommandTest, givenWaitlistRequestWhenCommandComputeKernelIsCreatedThenMakeL
     std::vector<Surface *> surfaces;
     auto kernelOperation = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(ih1), UniqueIH(ih2), UniqueIH(ih3),
                                                *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
-    MockCommandComputeKernel command(cmdQ, kernelOperation, surfaces, kernel);
 
     UserEvent event1, event2, event3;
     cl_event waitlist[] = {&event1, &event2};
     EventsRequest eventsRequest(2, waitlist, nullptr);
+
+    MockCommandComputeKernel command(cmdQ, kernelOperation, surfaces, kernel);
+
+    event1.incRefInternal();
+    event2.incRefInternal();
+
     command.setEventsRequest(eventsRequest);
 
     waitlist[1] = &event3;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -697,6 +697,10 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             (uint32_t)multiDispatchInfo.size());
 
         if (timestampPacketContainer.get()) {
+            for (cl_uint i = 0; i < eventsRequest.numEventsInWaitList; i++) {
+                auto event = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
+                event->incRefInternal();
+            }
             cmd->setTimestampPacketNode(*timestampPacketContainer, *previousTimestampPacketNodes);
         }
         cmd->setEventsRequest(eventsRequest);
