@@ -29,6 +29,9 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     }
     void initGlobalMMIO();
     void initAdditionalMMIO();
+    uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
+    void getGTTData(void *memory, AubGTTData &data);
+    uint32_t getMemoryBankForGtt() const;
 
     AubMemDump::AubStream *stream;
 

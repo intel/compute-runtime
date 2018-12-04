@@ -122,9 +122,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL bool addPatchInfoComments();
     void addGUCStartMessage(uint64_t batchBufferAddress, EngineType engineType);
     uint32_t getGUCWorkQueueItemHeader(EngineType engineType);
-    uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
-    void getGTTData(void *memory, AubGTTData &data);
-    uint32_t getMemoryBankForGtt() const;
 
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_AUB;

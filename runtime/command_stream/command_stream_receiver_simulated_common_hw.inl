@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "aub_mapper.h"
@@ -70,4 +71,19 @@ PhysicalAddressAllocator *CommandStreamReceiverSimulatedCommonHw<GfxFamily>::cre
     return new PhysicalAddressAllocator();
 }
 
+template <typename GfxFamily>
+uint64_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation) {
+    return BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | BIT(PageTableEntry::userSupervisorBit);
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getGTTData(void *memory, AubGTTData &data) {
+    data.present = true;
+    data.localMemory = false;
+}
+
+template <typename GfxFamily>
+uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getMemoryBankForGtt() const {
+    return MemoryBanks::getBank(this->deviceIndex);
+}
 } // namespace OCLRT
