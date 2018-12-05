@@ -143,9 +143,6 @@ Buffer *Buffer::create(Context *context,
     if (allocationType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
         zeroCopyAllowed = false;
         allocateMemory = true;
-        if (properties.flags & CL_MEM_USE_HOST_PTR) {
-            copyMemoryFromHostPtr = true;
-        }
     }
 
     if (allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
@@ -322,9 +319,11 @@ void Buffer::checkMemory(cl_mem_flags flags,
 
 GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(cl_mem_flags flags, bool sharedContext, bool renderCompressedBuffers) {
     GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::BUFFER;
-    if (renderCompressedBuffers) {
+    if (flags & CL_MEM_USE_HOST_PTR) {
+        type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    } else if (renderCompressedBuffers) {
         type = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
-    } else if ((flags & CL_MEM_USE_HOST_PTR) || (flags & CL_MEM_ALLOC_HOST_PTR)) {
+    } else if (flags & CL_MEM_ALLOC_HOST_PTR) {
         type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
