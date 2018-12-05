@@ -706,6 +706,14 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithNullptr) {
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
+TEST_F(WddmMemoryManagerTest, given32BitAllocationWhenItIsCreatedThenItHasNonZeroGpuAddressToPatch) {
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+
+    ASSERT_NE(nullptr, gpuAllocation);
+    EXPECT_NE(0llu, gpuAllocation->getGpuAddressToPatch());
+    memoryManager->freeGraphicsMemory(gpuAllocation);
+}
+
 TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotDoTripleAlloc) {
     size_t misalignedSize = 0x2500;
     void *misalignedPtr = reinterpret_cast<void *>(0x12500);

@@ -349,7 +349,7 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
         }
 
         if (allocation32bit) {
-            MapGPUVA.MinimumAddress = gfxPartition.Heap32[3].Base;
+            MapGPUVA.MinimumAddress = gfxPartition.Heap32[3].Base + MemoryConstants::pageSize;
             MapGPUVA.MaximumAddress = gfxPartition.Heap32[3].Limit;
             MapGPUVA.BaseAddress = 0;
         }
