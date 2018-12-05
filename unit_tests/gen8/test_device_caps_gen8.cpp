@@ -42,3 +42,7 @@ GEN8TEST_F(Gen8DeviceCaps, image3DDimensions) {
     EXPECT_EQ(2048u, caps.image3DMaxDepth);
     EXPECT_EQ(2048u, caps.image3DMaxHeight);
 }
+
+GEN8TEST_F(Gen8DeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue) {
+    EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
+}

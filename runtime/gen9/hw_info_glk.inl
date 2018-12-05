@@ -56,6 +56,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{0,
                                                   CmdServicesMemTraceVersion::DeviceValues::Glk,
                                                   0,                                 // extraQuantityThreadsPerEU
                                                   true,                              // SupportsVme
+                                                  64,                                // slmSize
                                                   MemoryConstants::max48BitAddress}; // gpuAddressSpace
 
 const HardwareInfo GLK_1x3x6::hwInfo = {

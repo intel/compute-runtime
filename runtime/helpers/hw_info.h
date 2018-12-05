@@ -65,6 +65,7 @@ struct RuntimeCapabilityTable {
 
     uint32_t extraQuantityThreadsPerEU;
     bool supportsVme;
+    uint32_t slmSize;
     uint64_t gpuAddressSpace;
 };
 

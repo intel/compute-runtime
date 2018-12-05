@@ -64,6 +64,7 @@ const RuntimeCapabilityTable BDW::capabilityTable{0,
                                                   CmdServicesMemTraceVersion::DeviceValues::Bdw,
                                                   0,                                 // extraQuantityThreadsPerEU
                                                   true,                              // SupportsVme
+                                                  64,                                // slmSize
                                                   MemoryConstants::max48BitAddress}; // gpuAddressSpace
 
 const HardwareInfo BDW_1x2x6::hwInfo = {

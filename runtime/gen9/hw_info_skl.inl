@@ -64,6 +64,7 @@ const RuntimeCapabilityTable SKL::capabilityTable{0,
                                                   CmdServicesMemTraceVersion::DeviceValues::Skl,
                                                   0,                                 // extraQuantityThreadsPerEU
                                                   true,                              // SupportsVme
+                                                  64,                                // slmSize
                                                   MemoryConstants::max48BitAddress}; // gpuAddressSpace
 
 const HardwareInfo SKL_1x2x6::hwInfo = {

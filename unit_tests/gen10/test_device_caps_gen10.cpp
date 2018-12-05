@@ -62,6 +62,10 @@ GEN10TEST_F(Gen10DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchT
     EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
 }
 
+GEN10TEST_F(Gen10DeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue) {
+    EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
+}
+
 typedef Test<DeviceFixture> CnlUsDeviceIdTest;
 
 CNLTEST_F(CnlUsDeviceIdTest, isSimulationCap) {
