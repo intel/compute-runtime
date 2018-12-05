@@ -49,7 +49,7 @@ void ScratchSpaceControllerBase::createScratchSpaceAllocation() {
 uint64_t ScratchSpaceControllerBase::calculateNewGSH() {
     auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
     auto scratchSpaceOffsetFor64bit = hwHelper.getScratchSpaceOffsetFor64bit();
-    return reinterpret_cast<uint64_t>(scratchAllocation->getUnderlyingBuffer()) - scratchSpaceOffsetFor64bit;
+    return scratchAllocation->getGpuAddress() - scratchSpaceOffsetFor64bit;
 }
 uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
     //for 32 bit scratch space pointer is being programmed in Media VFE State and is relative to 0 as General State Base Address

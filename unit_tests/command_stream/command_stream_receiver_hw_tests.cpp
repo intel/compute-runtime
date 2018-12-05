@@ -219,3 +219,19 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenScratchAl
     EXPECT_FALSE(stateBaseAddressDirty);
     EXPECT_EQ(nullptr, scratchController->getScratchSpaceAllocation());
 }
+
+HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddressIsReturned) {
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*platformDevices[0], *pDevice->executionEnvironment);
+    auto scratchController = commandStreamReceiver->scratchSpaceController.get();
+
+    bool cfeStateDirty = false;
+    bool stateBaseAddressDirty = false;
+
+    std::unique_ptr<void, std::function<decltype(alignedFree)>> surfaceHeap(alignedMalloc(0x1000, 0x1000), alignedFree);
+    scratchController->setRequiredScratchSpace(surfaceHeap.get(), 0x1000u, 0u, 0u, stateBaseAddressDirty, cfeStateDirty);
+
+    uint64_t expectedScratchAddress = 0xAAABBBCCCDDD000ull;
+    scratchController->getScratchSpaceAllocation()->setCpuPtrAndGpuAddress(scratchController->getScratchSpaceAllocation()->getUnderlyingBuffer(), expectedScratchAddress);
+
+    EXPECT_EQ(expectedScratchAddress - MemoryConstants::pageSize, scratchController->calculateNewGSH());
+}
