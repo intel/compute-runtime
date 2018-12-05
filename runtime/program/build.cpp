@@ -65,24 +65,19 @@ cl_int Program::build(
             }
 
             TranslationArgs inputArgs = {};
+
             if (strcmp(sourceCode.c_str(), "") == 0) {
                 retVal = CL_INVALID_PROGRAM;
                 break;
             }
 
             if (isKernelDebugEnabled()) {
-                internalOptions.append(CompilerOptions::debugKernelEnable);
-                options.append(" -g ");
-                if (pDevice->getSourceLevelDebugger()) {
-                    if (pDevice->getSourceLevelDebugger()->isOptimizationDisabled()) {
-                        options.append("-cl-opt-disable ");
-                    }
-                    std::string filename;
-                    pDevice->getSourceLevelDebugger()->notifySourceCode(sourceCode.c_str(), sourceCode.size(), filename);
-                    if (!filename.empty()) {
-                        // Add "-s" flag first so it will be ignored by clang in case the options already have this flag set.
-                        options = std::string("-s ") + filename + " " + options;
-                    }
+                std::string filename;
+                appendKernelDebugOptions();
+                notifyDebuggerWithSourceCode(filename);
+                if (!filename.empty()) {
+                    // Add "-s" flag first so it will be ignored by clang in case the options already have this flag set.
+                    options = std::string("-s ") + filename + " " + options;
                 }
             }
 
@@ -141,6 +136,23 @@ cl_int Program::build(
     }
 
     return retVal;
+}
+
+bool Program::appendKernelDebugOptions() {
+    internalOptions.append(CompilerOptions::debugKernelEnable);
+    options.append(" -g ");
+    if (pDevice->getSourceLevelDebugger()) {
+        if (pDevice->getSourceLevelDebugger()->isOptimizationDisabled()) {
+            options.append("-cl-opt-disable ");
+        }
+    }
+    return true;
+}
+
+void Program::notifyDebuggerWithSourceCode(std::string &filename) {
+    if (pDevice->getSourceLevelDebugger()) {
+        pDevice->getSourceLevelDebugger()->notifySourceCode(sourceCode.c_str(), sourceCode.size(), filename);
+    }
 }
 
 cl_int Program::build(const cl_device_id device, const char *buildOptions, bool enableCaching,

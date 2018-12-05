@@ -174,6 +174,26 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
     }
 }
 
+TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinkedThenKernelDebugOptionsAreAppended) {
+    if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
+
+        MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
+        pDevice->executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebugger);
+
+        cl_int retVal = pProgram->compile(1, &device, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        auto program = std::unique_ptr<GMockProgram>(new GMockProgram(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false));
+        program->enableKernelDebug();
+
+        EXPECT_CALL(*program, appendKernelDebugOptions()).Times(1);
+
+        cl_program clProgramToLink = pProgram;
+        retVal = program->link(1, &device, nullptr, 1, &clProgramToLink, nullptr, nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
+}
+
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenDebuggerIsNotifiedWithKernelDebugData) {
     if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
 
@@ -200,7 +220,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
         ON_CALL(*sourceLevelDebugger, notifySourceCode(::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Return(false));
         ON_CALL(*sourceLevelDebugger, isOptimizationDisabled()).WillByDefault(::testing::Return(false));
 
-        EXPECT_CALL(*sourceLevelDebugger, isOptimizationDisabled()).Times(1);
+        EXPECT_CALL(*sourceLevelDebugger, isOptimizationDisabled()).Times(2);
         EXPECT_CALL(*sourceLevelDebugger, notifySourceCode(::testing::_, ::testing::_, ::testing::_)).Times(1);
         EXPECT_CALL(*sourceLevelDebugger, notifyKernelDebugData(::testing::_)).Times(1);
 

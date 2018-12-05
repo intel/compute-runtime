@@ -131,17 +131,11 @@ cl_int Program::compile(
         internalOptions.append(platform()->peekCompilerExtensions());
 
         if (isKernelDebugEnabled()) {
-            internalOptions.append(CompilerOptions::debugKernelEnable);
-            options.append(" -g ");
-            if (pDevice->getSourceLevelDebugger()) {
-                if (pDevice->getSourceLevelDebugger()->isOptimizationDisabled()) {
-                    options.append("-cl-opt-disable ");
-                }
-                std::string filename;
-                pDevice->getSourceLevelDebugger()->notifySourceCode(sourceCode.c_str(), sourceCode.size(), filename);
-                if (!filename.empty()) {
-                    options = std::string("-s ") + filename + " " + options;
-                }
+            std::string filename;
+            appendKernelDebugOptions();
+            notifyDebuggerWithSourceCode(filename);
+            if (!filename.empty()) {
+                options = std::string("-s ") + filename + " " + options;
             }
         }
 

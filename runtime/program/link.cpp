@@ -11,6 +11,9 @@
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "program.h"
 #include "elf/writer.h"
+
+#include "runtime/compiler_interface/compiler_options.h"
+
 #include <cstring>
 
 namespace OCLRT {
@@ -58,6 +61,10 @@ cl_int Program::link(
         }
 
         options = (buildOptions != nullptr) ? buildOptions : "";
+
+        if (isKernelDebugEnabled()) {
+            appendKernelDebugOptions();
+        }
 
         isCreateLibrary = (strstr(options.c_str(), "-create-library") != nullptr);
 

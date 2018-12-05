@@ -78,3 +78,19 @@ TEST_F(ProgramTests, GivenProgramWithDebugDataForTwoKernelsWhenPorcessedThenDebu
     EXPECT_EQ(ptrDiff(vIsa2, debugData.get()), ptrDiff(kernelInfo2->debugData.vIsa, program->getDebugDataBinary(programDebugDataSize)));
     EXPECT_EQ(ptrDiff(genIsa2, debugData.get()), ptrDiff(kernelInfo2->debugData.genIsa, program->getDebugDataBinary(programDebugDataSize)));
 }
+
+TEST_F(ProgramTests, GivenProgramWithoutDebugDataWhenPorcessedThenDebugDataIsNotSetInKernelInfo) {
+    const char kernelName1[] = "kernel1";
+
+    auto kernelInfo1 = new KernelInfo();
+    kernelInfo1->name = kernelName1;
+    auto program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+
+    program->addKernelInfo(kernelInfo1);
+    program->processDebugData();
+
+    size_t programDebugDataSize = 0;
+    EXPECT_EQ(0u, kernelInfo1->debugData.genIsaSize);
+    EXPECT_EQ(0u, kernelInfo1->debugData.vIsaSize);
+    EXPECT_EQ(nullptr, program->getDebugDataBinary(programDebugDataSize));
+}

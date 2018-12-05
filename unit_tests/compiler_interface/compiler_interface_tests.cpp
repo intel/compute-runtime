@@ -24,6 +24,7 @@
 #include "unit_tests/mocks/mock_program.h"
 
 #include "gmock/gmock.h"
+#include <memory>
 
 using namespace OCLRT;
 
@@ -93,43 +94,43 @@ class CompilerInterfaceTest : public DeviceFixture,
     cl_int retVal = CL_SUCCESS;
 };
 
+class MyCompilerInterface : public CompilerInterface {
+  public:
+    static MyCompilerInterface *allocate() {
+
+        auto compilerInterface = new MyCompilerInterface();
+        if (!compilerInterface->initializePub()) {
+            delete compilerInterface;
+            compilerInterface = nullptr;
+        }
+
+        for (size_t n = 0; n < sizeof(compilerInterface->mockDebugData); n++) {
+            compilerInterface->mockDebugData[n] = (char)n;
+        }
+
+        auto vars = OCLRT::getIgcDebugVars();
+        vars.debugDataToReturn = compilerInterface->mockDebugData;
+        vars.debugDataToReturnSize = sizeof(compilerInterface->mockDebugData);
+        OCLRT::setIgcDebugVars(vars);
+
+        return compilerInterface;
+    }
+
+    ~MyCompilerInterface() override {
+        auto vars = OCLRT::getIgcDebugVars();
+        vars.debugDataToReturn = nullptr;
+        vars.debugDataToReturnSize = 0;
+        OCLRT::setIgcDebugVars(vars);
+    }
+
+    bool initializePub() {
+        return initialize();
+    }
+
+    char mockDebugData[32];
+};
+
 TEST_F(CompilerInterfaceTest, BuildWithDebugData) {
-    class MyCompilerInterface : public CompilerInterface {
-      public:
-        static MyCompilerInterface *allocate() {
-
-            auto compilerInterface = new MyCompilerInterface();
-            if (!compilerInterface->initializePub()) {
-                delete compilerInterface;
-                compilerInterface = nullptr;
-            }
-
-            for (size_t n = 0; n < sizeof(compilerInterface->mockDebugData); n++) {
-                compilerInterface->mockDebugData[n] = (char)n;
-            }
-
-            auto vars = OCLRT::getIgcDebugVars();
-            vars.debugDataToReturn = compilerInterface->mockDebugData;
-            vars.debugDataToReturnSize = sizeof(compilerInterface->mockDebugData);
-            OCLRT::setIgcDebugVars(vars);
-
-            return compilerInterface;
-        }
-
-        ~MyCompilerInterface() override {
-            auto vars = OCLRT::getIgcDebugVars();
-            vars.debugDataToReturn = nullptr;
-            vars.debugDataToReturnSize = 0;
-            OCLRT::setIgcDebugVars(vars);
-        }
-
-        bool initializePub() {
-            return initialize();
-        }
-
-        char mockDebugData[32];
-    };
-
     // Build a regular program
     cl_device_id device = pDevice;
     char *kernel = (char *)"__kernel void\nCB(\n__global unsigned int* src, __global unsigned int* dst)\n{\nint id = (int)get_global_id(0);\ndst[id] = src[id];\n}\n";
@@ -138,7 +139,7 @@ TEST_F(CompilerInterfaceTest, BuildWithDebugData) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Inject DebugData during this build
-    class MyCompilerInterface *cip = MyCompilerInterface::allocate();
+    MyCompilerInterface *cip = MyCompilerInterface::allocate();
     EXPECT_NE(nullptr, cip);
     retVal = cip->build(*pProgram, inputArgs, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -187,6 +188,23 @@ TEST_F(CompilerInterfaceTest, BuildWithDebugData) {
 
     delete[] debugData;
     delete cip;
+}
+
+TEST_F(CompilerInterfaceTest, GivenDebugDataAvailableWhenLinkingProgramThenDebugDataIsStoredInProgram) {
+    cl_device_id device = pDevice;
+    char *kernel = (char *)"__kernel void\nCB(\n__global unsigned int* src, __global unsigned int* dst)\n{\nint id = (int)get_global_id(0);\ndst[id] = src[id];\n}\n";
+    pProgram->setSource(kernel);
+    retVal = pProgram->compile(1, &device, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    // Inject DebugData during this link
+    auto cip = std::unique_ptr<MyCompilerInterface>(MyCompilerInterface::allocate());
+    EXPECT_NE(nullptr, cip);
+    retVal = cip->link(*pProgram, inputArgs);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(sizeof(cip->mockDebugData), pProgram->getDebugDataSize());
+    EXPECT_NE(nullptr, pProgram->getDebugData());
 }
 
 TEST_F(CompilerInterfaceTest, CompileClToIsa) {

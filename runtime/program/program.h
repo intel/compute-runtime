@@ -267,6 +267,9 @@ class Program : public BaseObject<_cl_program> {
 
     void extractInternalOptions(std::string &options);
 
+    MOCKABLE_VIRTUAL bool appendKernelDebugOptions();
+    void notifyDebuggerWithSourceCode(std::string &filename);
+
     static const std::string clOptNameClVer;
     static const std::string clOptNameUniformWgs;
     // clang-format off

@@ -260,6 +260,10 @@ cl_int CompilerInterface::link(
 
         program.storeGenBinary(currOut->GetOutput()->GetMemory<char>(), currOut->GetOutput()->GetSizeRaw());
         program.updateBuildLog(&device, currOut->GetBuildLog()->GetMemory<char>(), currOut->GetBuildLog()->GetSizeRaw());
+
+        if (currOut->GetDebugData()->GetSizeRaw() != 0) {
+            program.storeDebugData(currOut->GetDebugData()->GetMemory<char>(), currOut->GetDebugData()->GetSizeRaw());
+        }
     }
 
     return CL_SUCCESS;

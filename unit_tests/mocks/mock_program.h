@@ -10,6 +10,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/string.h"
 #include "runtime/program/program.h"
+#include "gmock/gmock.h"
 
 #include <string>
 
@@ -151,6 +152,12 @@ class GlobalMockSipProgram : public Program {
   protected:
     void *sipAllocationStorage;
     static ExecutionEnvironment executionEnvironment;
+};
+
+class GMockProgram : public Program {
+  public:
+    using Program::Program;
+    MOCK_METHOD0(appendKernelDebugOptions, bool(void));
 };
 
 } // namespace OCLRT
