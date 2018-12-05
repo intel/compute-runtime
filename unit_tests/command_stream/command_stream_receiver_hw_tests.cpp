@@ -68,16 +68,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenNotSentStateSipWh
         DispatchFlags dispatchFlags;
         dispatchFlags.preemptionMode = PreemptionMode::MidThread;
 
-        void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
-
-        std::unique_ptr<MockGraphicsAllocation> allocation(new MockGraphicsAllocation(buffer, MemoryConstants::pageSize));
-        std::unique_ptr<IndirectHeap> heap(new IndirectHeap(allocation.get()));
+        MockGraphicsAllocation allocation(nullptr, 0);
+        IndirectHeap heap(&allocation);
 
         csr.flushTask(commandStream,
                       0,
-                      *heap.get(),
-                      *heap.get(),
-                      *heap.get(),
+                      heap,
+                      heap,
+                      heap,
                       0,
                       dispatchFlags,
                       *mockDevice);
@@ -89,8 +87,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenNotSentStateSipWh
 
         auto stateSipItor = find<STATE_SIP *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
         EXPECT_NE(hwParser.cmdList.end(), stateSipItor);
-
-        alignedFree(buffer);
     }
 }
 
