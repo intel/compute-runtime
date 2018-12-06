@@ -151,7 +151,7 @@ class Device : public BaseObject<_cl_device_id> {
     std::unique_ptr<DriverInfo> driverInfo;
     std::unique_ptr<PerformanceCounters> performanceCounters;
 
-    std::array<EngineControl, EngineInstanceT::numGpgpuEngineInstances> engines = {{}};
+    std::array<EngineControl, EngineInstanceConstants::numGpgpuEngineInstances> engines = {{}};
 
     void *slmWindowStartAddress = nullptr;
 

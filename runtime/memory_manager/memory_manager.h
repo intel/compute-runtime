@@ -30,7 +30,7 @@ class AllocsTracker;
 class MapBaseAllocationTracker;
 class SVMAllocsManager;
 
-using CsrContainer = std::vector<std::array<std::unique_ptr<CommandStreamReceiver>, EngineInstanceT::numGpgpuEngineInstances>>;
+using CsrContainer = std::vector<std::array<std::unique_ptr<CommandStreamReceiver>, EngineInstanceConstants::numGpgpuEngineInstances>>;
 
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,

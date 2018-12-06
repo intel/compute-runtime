@@ -13,6 +13,7 @@
 #include "runtime/program/printf_handler.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/command_stream/preemption.h"
+#include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/queue_helpers.h"
 #include <memory>
 
@@ -33,6 +34,7 @@ class CommandQueueHw : public CommandQueue {
 
         if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) {
             priority = QueuePriority::LOW;
+            this->engine = &device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex);
         } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_MED_KHR)) {
             priority = QueuePriority::MEDIUM;
         } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_HIGH_KHR)) {

@@ -8,10 +8,12 @@
 #include "cl_api_tests.h"
 #include "CL/cl_ext.h"
 #include "runtime/context/context.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/base_object.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 
@@ -350,6 +352,18 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingComman
     EXPECT_EQ(retVal, CL_SUCCESS);
     retVal = clReleaseCommandQueue(cmdqd);
     EXPECT_EQ(retVal, CL_SUCCESS);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingCommandQueueThenSelectRcs1Engine) {
+    cl_queue_properties preoperties[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+    auto cmdQ = clCreateCommandQueueWithProperties(pContext, devices[0], preoperties, nullptr);
+
+    auto commandQueueObj = castToObject<CommandQueue>(cmdQ);
+    auto &engine = commandQueueObj->getCommandStreamReceiver().getOsContext().getEngineType();
+    EXPECT_EQ(EngineType::ENGINE_RCS, engine.type);
+    EXPECT_EQ(1, engine.id);
+
+    clReleaseCommandQueue(cmdQ);
 }
 
 std::pair<uint32_t, QueuePriority> priorityParams[3]{
