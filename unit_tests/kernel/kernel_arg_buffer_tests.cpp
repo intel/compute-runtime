@@ -167,3 +167,42 @@ TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPassedIsNullThenOnly4BytesAre
     EXPECT_EQ(0u, *pKernelArg32bit);
     EXPECT_NE(expValue, *pKernelArg64bit);
 }
+
+TEST_F(KernelArgBufferTest, givenWritebleBufferWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
+    auto buffer = std::make_unique<MockBuffer>();
+    buffer->mockGfxAllocation.setMemObjectsAllocationWithWritableFlags(true);
+    buffer->mockGfxAllocation.flushL3Required = false;
+
+    auto val = static_cast<cl_mem>(buffer.get());
+    auto pVal = &val;
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(&buffer->mockGfxAllocation, pKernel->kernelArgRequiresCacheFlush[0]);
+}
+
+TEST_F(KernelArgBufferTest, givenCacheFlushBufferWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
+    auto buffer = std::make_unique<MockBuffer>();
+    buffer->mockGfxAllocation.setMemObjectsAllocationWithWritableFlags(false);
+    buffer->mockGfxAllocation.flushL3Required = true;
+
+    auto val = static_cast<cl_mem>(buffer.get());
+    auto pVal = &val;
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(&buffer->mockGfxAllocation, pKernel->kernelArgRequiresCacheFlush[0]);
+}
+
+TEST_F(KernelArgBufferTest, givenNoCacheFlushBufferWhenSettingAsArgThenNotExpectAllocationInCacheFlushVector) {
+    auto buffer = std::make_unique<MockBuffer>();
+    buffer->mockGfxAllocation.setMemObjectsAllocationWithWritableFlags(false);
+    buffer->mockGfxAllocation.flushL3Required = false;
+
+    auto val = static_cast<cl_mem>(buffer.get());
+    auto pVal = &val;
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
+}

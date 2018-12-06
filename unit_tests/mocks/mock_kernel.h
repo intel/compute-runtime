@@ -23,10 +23,14 @@ namespace OCLRT {
 ////////////////////////////////////////////////////////////////////////////////
 class MockKernel : public Kernel {
   public:
+    using Kernel::addAllocationToCacheFlushVector;
     using Kernel::auxTranslationRequired;
     using Kernel::isSchedulerKernel;
+    using Kernel::kernelArgRequiresCacheFlush;
     using Kernel::kernelArguments;
     using Kernel::numberOfBindingTableStates;
+    using Kernel::platformSupportCacheFlushAfterWalker;
+    using Kernel::svmAllocationsRequireCacheFlush;
 
     struct BlockPatchValues {
         uint64_t offset;
@@ -256,6 +260,7 @@ class MockKernelWithInternals {
         threadPayload.LocalIDZPresent = 1;
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.pSsh = sshLocal;
+        kernelInfo.heapInfo.pDsh = dshLocal;
         kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
         kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
         kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
@@ -298,6 +303,7 @@ class MockKernelWithInternals {
     uint32_t kernelIsa[32];
     char crossThreadData[256];
     char sshLocal[128];
+    char dshLocal[128];
 };
 
 class MockParentKernel : public Kernel {

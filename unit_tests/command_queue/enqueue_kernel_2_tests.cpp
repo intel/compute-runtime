@@ -10,7 +10,9 @@
 #include "runtime/memory_manager/allocations_list.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
+#include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -842,4 +844,31 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTrans
         cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(1u, cmdQ.waitCalled);
     }
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalker) {
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+
+    MockKernelWithInternals mockKernel(*pDevice, context);
+    CommandQueueHw<FamilyType> cmdQ(context, pDevice, nullptr);
+
+    size_t gws[3] = {1, 0, 0};
+
+    mockKernel.mockKernel->svmAllocationsRequireCacheFlush = true;
+
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(cmdQ.getCS(0), 0);
+    auto itorCmd = find<GPGPU_WALKER *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
+    ASSERT_NE(hwParse.cmdList.end(), itorCmd);
+    ++itorCmd;
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorCmd);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
 }

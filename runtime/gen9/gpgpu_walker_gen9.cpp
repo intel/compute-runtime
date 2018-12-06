@@ -43,7 +43,7 @@ size_t GpgpuWalkerHelper<SKLFamily>::getSizeForWADisableLSQCROPERFforOCL(const K
     typedef typename SKLFamily::MI_MATH MI_MATH;
     typedef typename SKLFamily::MI_MATH_ALU_INST_INLINE MI_MATH_ALU_INST_INLINE;
     size_t n = 0;
-    if ((pKernel != nullptr) && pKernel->getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages) {
+    if (pKernel->getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages) {
         n += sizeof(PIPE_CONTROL) +
              (2 * sizeof(MI_LOAD_REGISTER_REG) +
               sizeof(MI_LOAD_REGISTER_IMM) +

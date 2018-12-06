@@ -39,33 +39,36 @@ const PLATFORM BDW::platform = {
     0,             // usRevId_PCH
     GTTYPE_UNDEFINED};
 
-const RuntimeCapabilityTable BDW::capabilityTable{0,
-                                                  80,
-                                                  21,
-                                                  true,
-                                                  true,
-                                                  true,
-                                                  true,
-                                                  false, // ftrSupportsVmeAvcTextureSampler
-                                                  false, // ftrSupportsVmeAvcPreemption
-                                                  false, // ftrRenderCompressedBuffers
-                                                  false, // ftrRenderCompressedImages
-                                                  PreemptionMode::Disabled,
-                                                  {false, false},
-                                                  &isSimulationBDW,
-                                                  true,
-                                                  true,                                    // forceStatelessCompilationFor32Bit
-                                                  {true, 50000, true, 5000, true, 200000}, // KmdNotifyProperties
-                                                  false,                                   // ftr64KBpages
-                                                  EngineType::ENGINE_RCS,                  // defaultEngineType
-                                                  MemoryConstants::pageSize,               // requiredPreemptionSurfaceSize
-                                                  true,                                    // isCore
-                                                  false,                                   // sourceLevelDebuggerSupported
-                                                  CmdServicesMemTraceVersion::DeviceValues::Bdw,
-                                                  0,                                 // extraQuantityThreadsPerEU
-                                                  true,                              // SupportsVme
-                                                  64,                                // slmSize
-                                                  MemoryConstants::max48BitAddress}; // gpuAddressSpace
+const RuntimeCapabilityTable BDW::capabilityTable{
+    {50000, 5000, 200000, true, true, true},       // kmdNotifyProperties
+    {false, false},                                // whitelistedRegisters
+    MemoryConstants::max48BitAddress,              // gpuAddressSpace
+    80,                                            // defaultProfilingTimerResolution
+    MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
+    &isSimulationBDW,                              // isSimulation
+    PreemptionMode::Disabled,                      // defaultPreemptionMode
+    EngineType::ENGINE_RCS,                        // defaultEngineType
+    0,                                             // maxRenderFrequency
+    21,                                            // clVersionSupport
+    CmdServicesMemTraceVersion::DeviceValues::Bdw, // aubDeviceId
+    0,                                             // extraQuantityThreadsPerEU
+    64,                                            // slmSize
+    true,                                          // ftrSupportsFP64
+    true,                                          // ftrSupports64BitMath
+    true,                                          // ftrSvm
+    true,                                          // ftrSupportsCoherency
+    false,                                         // ftrSupportsVmeAvcTextureSampler
+    false,                                         // ftrSupportsVmeAvcPreemption
+    false,                                         // ftrRenderCompressedBuffers
+    false,                                         // ftrRenderCompressedImages
+    false,                                         // ftr64KBpages
+    true,                                          // instrumentationEnabled
+    true,                                          // forceStatelessCompilationFor32Bit
+    true,                                          // isCore
+    false,                                         // sourceLevelDebuggerSupported
+    true,                                          // supportsVme
+    false                                          // supportCacheFlushAfterWalker
+};
 
 const HardwareInfo BDW_1x2x6::hwInfo = {
     &BDW::platform,

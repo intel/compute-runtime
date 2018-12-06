@@ -30,6 +30,7 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_filename_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_management_tests.cpp

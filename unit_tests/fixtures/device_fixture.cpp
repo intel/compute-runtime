@@ -10,7 +10,8 @@
 
 namespace OCLRT {
 void DeviceFixture::SetUp() {
-    SetUpImpl(nullptr);
+    hwInfoHelper = *platformDevices[0];
+    SetUpImpl(&hwInfoHelper);
 }
 
 void DeviceFixture::SetUpImpl(const OCLRT::HardwareInfo *hardwareInfo) {

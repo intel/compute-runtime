@@ -259,3 +259,39 @@ TEST_F(KernelImageArgTest, givenKernelWithSharedImageWhenSetArgCalledThenUsingSh
     EXPECT_TRUE(pKernel->getKernelArguments()[0].isPatched);
     EXPECT_TRUE(pKernel->isUsingSharedObjArgs());
 }
+
+TEST_F(KernelImageArgTest, givenWritebleImageWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
+    MockImageBase image;
+    image.graphicsAllocation->setMemObjectsAllocationWithWritableFlags(true);
+    image.graphicsAllocation->flushL3Required = false;
+
+    cl_mem imageObj = &image;
+
+    pKernel->setArg(0, sizeof(imageObj), &imageObj);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(image.graphicsAllocation, pKernel->kernelArgRequiresCacheFlush[0]);
+}
+
+TEST_F(KernelImageArgTest, givenCacheFlushImageWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
+    MockImageBase image;
+    image.graphicsAllocation->setMemObjectsAllocationWithWritableFlags(false);
+    image.graphicsAllocation->flushL3Required = true;
+
+    cl_mem imageObj = &image;
+
+    pKernel->setArg(0, sizeof(imageObj), &imageObj);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(image.graphicsAllocation, pKernel->kernelArgRequiresCacheFlush[0]);
+}
+
+TEST_F(KernelImageArgTest, givenNoCacheFlushImageWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
+    MockImageBase image;
+    image.graphicsAllocation->setMemObjectsAllocationWithWritableFlags(false);
+    image.graphicsAllocation->flushL3Required = false;
+
+    cl_mem imageObj = &image;
+
+    pKernel->setArg(0, sizeof(imageObj), &imageObj);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
+}

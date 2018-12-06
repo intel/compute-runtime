@@ -46,3 +46,7 @@ GEN8TEST_F(Gen8DeviceCaps, image3DDimensions) {
 GEN8TEST_F(Gen8DeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
 }
+
+GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckSupportCacheFlushAfterWalkerThenFalse) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
+}

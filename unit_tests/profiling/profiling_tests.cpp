@@ -63,10 +63,10 @@ struct ProfilingTests : public CommandEnqueueFixture,
 
     std::unique_ptr<MockProgram> program;
 
-    SKernelBinaryHeaderCommon kernelHeader;
-    SPatchDataParameterStream dataParameterStream;
+    SKernelBinaryHeaderCommon kernelHeader = {};
+    SPatchDataParameterStream dataParameterStream = {};
     SPatchExecutionEnvironment executionEnvironment = {};
-    SPatchThreadPayload threadPayload;
+    SPatchThreadPayload threadPayload = {};
     KernelInfo kernelInfo;
 
     uint32_t kernelIsa[32];
@@ -78,15 +78,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GIVENCommandQueueWithProfilingAndFor
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
-    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
 
-    auto &commandStreamNDRangeKernel = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, true, false, nullptr);
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, true, false, *pCmdQ, nullptr);
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
+
+    auto &commandStreamNDRangeKernel = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, true, false, &kernel);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, true, false, *pCmdQ, &kernel);
     EXPECT_GE(expectedSizeCS, requiredSize);
     EXPECT_GE(commandStreamNDRangeKernel.getAvailableSpace(), requiredSize);
 
-    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, false, nullptr);
-    expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_TASK, true, false, *pCmdQ, nullptr);
+    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, false, &kernel);
+    expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_TASK, true, false, *pCmdQ, &kernel);
     EXPECT_GE(expectedSizeCS, requiredSize);
     EXPECT_GE(commandStreamTask.getAvailableSpace(), requiredSize);
 }
@@ -114,16 +116,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GIVENCommandQueueWithProfilingAndFor
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
-    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
     requiredSize += 2 * sizeof(GPGPU_WALKER);
 
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     DispatchInfo dispatchInfo;
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
     multiDispatchInfo.push(dispatchInfo);
-    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, false, nullptr);
+    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, false, &kernel);
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_TASK, 0, true, false, *pCmdQ, multiDispatchInfo);
     EXPECT_GE(expectedSizeCS, requiredSize);
     EXPECT_GE(commandStreamTask.getAvailableSpace(), requiredSize);
@@ -525,19 +528,21 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWit
 
     pCmdQ->setPerfCountersEnabled(true, 1);
 
-    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
     //begin perf cmds
     requiredSize += 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM) + OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(MI_STORE_REGISTER_MEM) + sizeof(MI_REPORT_PERF_COUNT) + pCmdQ->getPerfCountersUserRegistersNumber() * sizeof(MI_STORE_REGISTER_MEM);
     //end perf cmds
     requiredSize += 2 * sizeof(PIPE_CONTROL) + 3 * sizeof(MI_STORE_REGISTER_MEM) + OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(MI_STORE_REGISTER_MEM) + sizeof(MI_REPORT_PERF_COUNT) + pCmdQ->getPerfCountersUserRegistersNumber() * sizeof(MI_STORE_REGISTER_MEM);
 
-    auto &commandStreamNDRangeKernel = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, true, true, nullptr);
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, true, true, *pCmdQ, nullptr);
+    auto &commandStreamNDRangeKernel = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, true, true, &kernel);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, true, true, *pCmdQ, &kernel);
     EXPECT_GE(expectedSizeCS, requiredSize);
     EXPECT_GE(commandStreamNDRangeKernel.getAvailableSpace(), requiredSize);
 
-    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, true, nullptr);
-    expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_TASK, true, true, *pCmdQ, nullptr);
+    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, true, &kernel);
+    expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_TASK, true, true, *pCmdQ, &kernel);
     EXPECT_GE(expectedSizeCS, requiredSize);
     EXPECT_GE(commandStreamTask.getAvailableSpace(), requiredSize);
     bool retVal = false;
@@ -576,9 +581,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWit
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
 
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+
     pCmdQ->setPerfCountersEnabled(true, 1);
 
-    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
     requiredSize += 2 * sizeof(GPGPU_WALKER);
 
     //begin perf cmds
@@ -586,13 +593,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWit
     //end perf cmds
     requiredSize += 2 * sizeof(PIPE_CONTROL) + 3 * sizeof(MI_STORE_REGISTER_MEM) + OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(MI_STORE_REGISTER_MEM) + sizeof(MI_REPORT_PERF_COUNT) + pCmdQ->getPerfCountersUserRegistersNumber() * sizeof(MI_STORE_REGISTER_MEM);
 
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     DispatchInfo dispatchInfo;
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
     multiDispatchInfo.push(dispatchInfo);
-    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, true, nullptr);
+    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, true, &kernel);
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_TASK, 0, true, true, *pCmdQ, multiDispatchInfo);
     EXPECT_GE(expectedSizeCS, requiredSize);
     EXPECT_GE(commandStreamTask.getAvailableSpace(), requiredSize);

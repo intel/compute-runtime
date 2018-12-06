@@ -374,6 +374,8 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &buffersForAuxTranslation);
 
+    bool requiresCacheFlushCommand() const;
+
   protected:
     struct ObjectCounts {
         uint32_t imageCount;
@@ -461,6 +463,9 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void reconfigureKernel();
 
+    bool platformSupportCacheFlushAfterWalker() const;
+    void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
+    bool allocationForCacheFlush(GraphicsAllocation *argAllocation);
     Program *program;
     Context *context;
     const Device &device;
@@ -493,5 +498,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     std::unique_ptr<ImageTransformer> imageTransformer;
 
     bool specialPipelineSelectMode = false;
+    bool svmAllocationsRequireCacheFlush = false;
+    std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
 };
 } // namespace OCLRT

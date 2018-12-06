@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/helpers/kernel_commands.h"
+#include "runtime/kernel/kernel.h"
 
 namespace OCLRT {
 
@@ -43,9 +44,13 @@ uint32_t KernelCommandsHelper<GfxFamily>::additionalSizeRequiredDsh() {
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredCS() {
-    return 2 * sizeof(typename GfxFamily::MEDIA_STATE_FLUSH) +
-           sizeof(typename GfxFamily::MEDIA_INTERFACE_DESCRIPTOR_LOAD);
+size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredCS(const Kernel *kernel) {
+    size_t size = 2 * sizeof(typename GfxFamily::MEDIA_STATE_FLUSH) +
+                  sizeof(typename GfxFamily::MEDIA_INTERFACE_DESCRIPTOR_LOAD);
+    if (kernel->requiresCacheFlushCommand()) {
+        size += sizeof(typename GfxFamily::PIPE_CONTROL);
+    }
+    return size;
 }
 
 template <typename GfxFamily>
@@ -155,4 +160,14 @@ bool KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32
     return true;
 }
 
+template <typename GfxFamily>
+void KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const Kernel *kernel) {
+    if (kernel->requiresCacheFlushCommand()) {
+        using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
+        *pipeControl = GfxFamily::cmdInitPipeControl;
+        pipeControl->setCommandStreamerStallEnable(true);
+        pipeControl->setDcFlushEnable(true);
+    }
+}
 } // namespace OCLRT

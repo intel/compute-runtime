@@ -14,15 +14,15 @@
 
 namespace OCLRT {
 struct KmdNotifyProperties {
+    int64_t delayKmdNotifyMicroseconds;
+    int64_t delayQuickKmdSleepMicroseconds;
+    int64_t delayQuickKmdSleepForSporadicWaitsMicroseconds;
     // Main switch for KMD Notify optimization - if its disabled, all below are disabled too
     bool enableKmdNotify;
-    int64_t delayKmdNotifyMicroseconds;
     // Use smaller delay in specific situations (ie. from AsyncEventsHandler)
     bool enableQuickKmdSleep;
-    int64_t delayQuickKmdSleepMicroseconds;
     // If waits are called sporadically  use QuickKmdSleep mode, otherwise use standard delay
     bool enableQuickKmdSleepForSporadicWaits;
-    int64_t delayQuickKmdSleepForSporadicWaitsMicroseconds;
 };
 
 namespace KmdNotifyConstants {

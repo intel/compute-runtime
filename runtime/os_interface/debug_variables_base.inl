@@ -91,6 +91,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableComputeWorkSizeSquared, false, "Enables algor
 DECLARE_DEBUG_VARIABLE(bool, EnableVaLibCalls, true, "Enable cl-va sharing lib calls")
 DECLARE_DEBUG_VARIABLE(bool, AddClGlSharing, false, "Add cl-gl extension")
 DECLARE_DEBUG_VARIABLE(bool, EnablePassInlineData, false, "Enable passing of inline data")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableCacheFlushAfterWalker, 0, "-1: platform behavior, 0: disabled, 1: enabled. Adds dedicated cache flush command after WALKER command when surfaces used by kernel require to flush the cache")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableLocalMemory, -1, "-1: default behavior, 0: disabled, 1: enabled, Allows allocating graphics memory in Local Memory")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStatelessToStatefulBufferOffsetOpt, -1, "-1: dont override, 0: disable, 1: enable, Enables buffer-offset improvement of the stateless to stateful optimization")
 DECLARE_DEBUG_VARIABLE(int32_t, CreateMultipleDevices, 0, "0: default - disable, 1+: Driver will create multiple (N) devices during initialization.")

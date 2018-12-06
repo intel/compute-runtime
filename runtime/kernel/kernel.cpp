@@ -309,6 +309,7 @@ cl_int Kernel::initialize() {
         kernelArguments.resize(numArgs);
         slmSizes.resize(numArgs);
         kernelArgHandlers.resize(numArgs);
+        kernelArgRequiresCacheFlush.resize(numArgs);
 
         for (uint32_t i = 0; i < numArgs; ++i) {
             storeKernelArg(i, NONE_OBJ, nullptr, nullptr, 0);
@@ -849,6 +850,8 @@ cl_int Kernel::setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, G
         patchedArgumentsNum++;
         kernelArguments[argIndex].isPatched = true;
     }
+    addAllocationToCacheFlushVector(argIndex, svmAlloc);
+
     return CL_SUCCESS;
 }
 
@@ -884,6 +887,9 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
         patchedArgumentsNum++;
         kernelArguments[argIndex].isPatched = true;
     }
+
+    addAllocationToCacheFlushVector(argIndex, svmAlloc);
+
     return CL_SUCCESS;
 }
 
@@ -908,10 +914,14 @@ const Kernel::SimpleKernelArgInfo &Kernel::getKernelArgInfo(uint32_t argIndex) c
 
 void Kernel::setKernelExecInfo(GraphicsAllocation *argValue) {
     kernelSvmGfxAllocations.push_back(argValue);
+    if (allocationForCacheFlush(argValue)) {
+        svmAllocationsRequireCacheFlush = true;
+    }
 }
 
 void Kernel::clearKernelExecInfo() {
     kernelSvmGfxAllocations.clear();
+    svmAllocationsRequireCacheFlush = false;
 }
 
 inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceiver) {
@@ -1119,7 +1129,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
             auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
             buffer->setArgStateful(surfaceState, forceNonAuxMode);
         }
-
+        addAllocationToCacheFlushVector(argIndex, buffer->getGraphicsAllocation());
         return CL_SUCCESS;
     } else {
 
@@ -1243,7 +1253,7 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         patch<uint32_t, cl_channel_order>(imageFormat.image_channel_order, crossThreadData, kernelArgInfo.offsetChannelOrder);
         patch<uint32_t, uint32_t>(kernelArgInfo.offsetHeap, crossThreadData, kernelArgInfo.offsetObjectId);
         patch<uint32_t, cl_uint>(imageDesc.num_mip_levels, crossThreadData, kernelArgInfo.offsetNumMipLevels);
-
+        addAllocationToCacheFlushVector(argIndex, pImage->getGraphicsAllocation());
         retVal = CL_SUCCESS;
     }
 
@@ -2119,6 +2129,53 @@ void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsF
             if (buffer && buffer->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
                 memObjsForAuxTranslation.insert(buffer);
             }
+        }
+    }
+}
+
+bool Kernel::platformSupportCacheFlushAfterWalker() const {
+    int32_t dbgFlag = DebugManager.flags.EnableCacheFlushAfterWalker.get();
+    if (dbgFlag == 1) {
+        return true;
+    } else if (dbgFlag == 0) {
+        return false;
+    }
+    return device.getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker;
+}
+
+bool Kernel::requiresCacheFlushCommand() const {
+    if (platformSupportCacheFlushAfterWalker()) {
+        if (getProgram()->getGlobalSurface() != nullptr) {
+            return true;
+        }
+        if (svmAllocationsRequireCacheFlush) {
+            return true;
+        }
+        size_t args = kernelArgRequiresCacheFlush.size();
+        for (size_t i = 0; i < args; i++) {
+            if (kernelArgRequiresCacheFlush[i] != nullptr) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Kernel::allocationForCacheFlush(GraphicsAllocation *argAllocation) {
+    if (argAllocation->flushL3Required || argAllocation->isMemObjectsAllocationWithWritableFlags()) {
+        return true;
+    }
+    return false;
+}
+
+void Kernel::addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation) {
+    if (argAllocation == nullptr) {
+        kernelArgRequiresCacheFlush[argIndex] = nullptr;
+    } else {
+        if (allocationForCacheFlush(argAllocation)) {
+            kernelArgRequiresCacheFlush[argIndex] = argAllocation;
+        } else {
+            kernelArgRequiresCacheFlush[argIndex] = nullptr;
         }
     }
 }

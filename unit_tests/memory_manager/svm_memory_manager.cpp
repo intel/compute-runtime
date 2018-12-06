@@ -31,7 +31,7 @@ TEST_F(SVMMemoryAllocatorTest, SVMAllocCreateNullFreeNull) {
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     {
         SVMAllocsManager svmM(&memoryManager);
-        char *Ptr1 = (char *)svmM.createSVMAlloc(0);
+        char *Ptr1 = (char *)svmM.createSVMAlloc(0, false, false);
         EXPECT_EQ(Ptr1, nullptr);
         svmM.freeSVMAlloc(nullptr);
     }
@@ -42,7 +42,7 @@ TEST_F(SVMMemoryAllocatorTest, SVMAllocCreateFree) {
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     {
         SVMAllocsManager svmM(&memoryManager);
-        char *Ptr1 = (char *)svmM.createSVMAlloc(4096);
+        char *Ptr1 = (char *)svmM.createSVMAlloc(4096, false, false);
         EXPECT_NE(Ptr1, nullptr);
 
         svmM.freeSVMAlloc(Ptr1);
@@ -72,7 +72,7 @@ TEST_F(SVMMemoryAllocatorTest, SVMAllocGetBeforeAndInside) {
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     {
         SVMAllocsManager svmM(&memoryManager);
-        char *Ptr1 = (char *)svmM.createSVMAlloc(4096);
+        char *Ptr1 = (char *)svmM.createSVMAlloc(4096, false, false);
         EXPECT_NE(Ptr1, nullptr);
 
         char *Ptr2 = Ptr1 - 4;
@@ -93,7 +93,7 @@ TEST_F(SVMMemoryAllocatorTest, SVMAllocgetAfterSVM) {
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     {
         SVMAllocsManager svmM(&memoryManager);
-        char *Ptr1 = (char *)svmM.createSVMAlloc(4096);
+        char *Ptr1 = (char *)svmM.createSVMAlloc(4096, false, false);
         EXPECT_NE(Ptr1, nullptr);
 
         char *Ptr2 = Ptr1 + 4096 + 100;
@@ -129,7 +129,7 @@ TEST_F(SVMMemoryAllocatorTest, WhenCouldNotAllocateInMemoryManagerThenReturnsNul
     MockMemManager memoryManager(executionEnvironment);
     {
         MockSVMAllocsManager svmM{&memoryManager};
-        void *svmPtr = svmM.createSVMAlloc(512);
+        void *svmPtr = svmM.createSVMAlloc(512, false, false);
         EXPECT_EQ(nullptr, svmPtr);
 
         EXPECT_EQ(0U, svmM.GetSVMAllocs().getNumAllocs());
@@ -150,4 +150,29 @@ TEST_F(SVMMemoryAllocatorTest, given64kbAllowedwhenAllocatingSvmMemoryThenDontPr
     MyMemoryManager myMemoryManager(executionEnvironment);
     myMemoryManager.allocateGraphicsMemoryForSVM(1, false);
     EXPECT_FALSE(myMemoryManager.preferRenderCompressedFlag);
+}
+
+TEST_F(SVMMemoryAllocatorTest, whenReadOnlyFlagIsPresentThenReturnTrue) {
+    EXPECT_TRUE(SVMAllocsManager::memFlagIsReadOnly(CL_MEM_READ_ONLY));
+    EXPECT_TRUE(SVMAllocsManager::memFlagIsReadOnly(CL_MEM_HOST_READ_ONLY));
+    EXPECT_TRUE(SVMAllocsManager::memFlagIsReadOnly(CL_MEM_READ_ONLY));
+}
+
+TEST_F(SVMMemoryAllocatorTest, whenNoReadOnlyFlagIsPresentThenReturnFalse) {
+    EXPECT_FALSE(SVMAllocsManager::memFlagIsReadOnly(CL_MEM_READ_WRITE));
+    EXPECT_FALSE(SVMAllocsManager::memFlagIsReadOnly(CL_MEM_WRITE_ONLY));
+}
+
+TEST_F(SVMMemoryAllocatorTest, whenReadOnlySvmAllocationCreatedThenGraphicsAllocationHasWriteableFlagFalse) {
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    SVMAllocsManager svmM(&memoryManager);
+    void *svm = svmM.createSVMAlloc(4096, false, true);
+    EXPECT_NE(nullptr, svm);
+
+    GraphicsAllocation *svmAllocation = svmM.getSVMAlloc(svm);
+    EXPECT_NE(nullptr, svmAllocation);
+    EXPECT_FALSE(svmAllocation->isMemObjectsAllocationWithWritableFlags());
+
+    svmM.freeSVMAlloc(svm);
 }

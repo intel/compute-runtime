@@ -31,33 +31,36 @@ const PLATFORM CFL::platform = {
     0,             // usRevId_PCH
     GTTYPE_UNDEFINED};
 
-const RuntimeCapabilityTable CFL::capabilityTable{0,
-                                                  83.333,
-                                                  21,
-                                                  true,
-                                                  true,
-                                                  true,
-                                                  true,
-                                                  true,  // ftrSupportsVmeAvcTextureSampler
-                                                  false, // ftrSupportsVmeAvcPreemption
-                                                  false, // ftrRenderCompressedBuffers
-                                                  false, // ftrRenderCompressedImages
-                                                  PreemptionMode::MidThread,
-                                                  {true, false},
-                                                  &isSimulationCFL,
-                                                  true,
-                                                  true,                           // forceStatelessCompilationFor32Bit
-                                                  {false, 0, false, 0, false, 0}, // KmdNotifyProperties
-                                                  true,                           // ftr64KBpages
-                                                  EngineType::ENGINE_RCS,         // defaultEngineType
-                                                  MemoryConstants::pageSize,      // requiredPreemptionSurfaceSize
-                                                  true,                           // isCore
-                                                  true,                           // sourceLevelDebuggerSupported
-                                                  CmdServicesMemTraceVersion::DeviceValues::Cfl,
-                                                  0,                                 // extraQuantityThreadsPerEU
-                                                  true,                              // SupportsVme
-                                                  64,                                // slmSize
-                                                  MemoryConstants::max48BitAddress}; // gpuAddressSpace
+const RuntimeCapabilityTable CFL::capabilityTable{
+    {0, 0, 0, false, false, false},                // kmdNotifyProperties
+    {true, false},                                 // whitelistedRegisters
+    MemoryConstants::max48BitAddress,              // gpuAddressSpace
+    83.333,                                        // defaultProfilingTimerResolution
+    MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
+    &isSimulationCFL,                              // isSimulation
+    PreemptionMode::MidThread,                     // defaultPreemptionMode
+    EngineType::ENGINE_RCS,                        // defaultEngineType
+    0,                                             // maxRenderFrequency
+    21,                                            // clVersionSupport
+    CmdServicesMemTraceVersion::DeviceValues::Cfl, // aubDeviceId
+    0,                                             // extraQuantityThreadsPerEU
+    64,                                            // slmSize
+    true,                                          // ftrSupportsFP64
+    true,                                          // ftrSupports64BitMath
+    true,                                          // ftrSvm
+    true,                                          // ftrSupportsCoherency
+    true,                                          // ftrSupportsVmeAvcTextureSampler
+    false,                                         // ftrSupportsVmeAvcPreemption
+    false,                                         // ftrRenderCompressedBuffers
+    false,                                         // ftrRenderCompressedImages
+    true,                                          // ftr64KBpages
+    true,                                          // instrumentationEnabled
+    true,                                          // forceStatelessCompilationFor32Bit
+    true,                                          // isCore
+    true,                                          // sourceLevelDebuggerSupported
+    true,                                          // supportsVme
+    false                                          // supportCacheFlushAfterWalker
+};
 
 const HardwareInfo CFL_1x2x6::hwInfo = {
     &CFL::platform,

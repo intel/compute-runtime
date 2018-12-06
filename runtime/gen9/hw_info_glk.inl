@@ -31,33 +31,36 @@ const PLATFORM GLK::platform = {
     0,               // usRevId_PCH
     GTTYPE_UNDEFINED};
 
-const RuntimeCapabilityTable GLK::capabilityTable{0,
-                                                  52.083,
-                                                  12,
-                                                  true,
-                                                  true,
-                                                  false, // ftrSvm
-                                                  true,
-                                                  true,  // ftrSupportsVmeAvcTextureSampler
-                                                  false, // ftrSupportsVmeAvcPreemption
-                                                  false, // ftrRenderCompressedBuffers
-                                                  false, // ftrRenderCompressedImages
-                                                  PreemptionMode::MidThread,
-                                                  {true, false},
-                                                  &isSimulationGLK,
-                                                  true,
-                                                  false,                             // forceStatelessCompilationFor32Bit
-                                                  {true, 30000, false, 0, false, 0}, // KmdNotifyProperties
-                                                  false,                             // ftr64KBpages
-                                                  EngineType::ENGINE_RCS,            // defaultEngineType
-                                                  MemoryConstants::pageSize,         // requiredPreemptionSurfaceSize
-                                                  false,                             // isCore
-                                                  true,                              // sourceLevelDebuggerSupported
-                                                  CmdServicesMemTraceVersion::DeviceValues::Glk,
-                                                  0,                                 // extraQuantityThreadsPerEU
-                                                  true,                              // SupportsVme
-                                                  64,                                // slmSize
-                                                  MemoryConstants::max48BitAddress}; // gpuAddressSpace
+const RuntimeCapabilityTable GLK::capabilityTable{
+    {30000, 0, 0, true, false, false},             // kmdNotifyProperties
+    {true, false},                                 // whitelistedRegisters
+    MemoryConstants::max48BitAddress,              // gpuAddressSpace
+    52.083,                                        // defaultProfilingTimerResolution
+    MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
+    &isSimulationGLK,                              // isSimulation
+    PreemptionMode::MidThread,                     // defaultPreemptionMode
+    EngineType::ENGINE_RCS,                        // defaultEngineType
+    0,                                             // maxRenderFrequency
+    12,                                            // clVersionSupport
+    CmdServicesMemTraceVersion::DeviceValues::Glk, // aubDeviceId
+    0,                                             // extraQuantityThreadsPerEU
+    64,                                            // slmSize
+    true,                                          // ftrSupportsFP64
+    true,                                          // ftrSupports64BitMath
+    false,                                         // ftrSvm
+    true,                                          // ftrSupportsCoherency
+    true,                                          // ftrSupportsVmeAvcTextureSampler
+    false,                                         // ftrSupportsVmeAvcPreemption
+    false,                                         // ftrRenderCompressedBuffers
+    false,                                         // ftrRenderCompressedImages
+    false,                                         // ftr64KBpages
+    true,                                          // instrumentationEnabled
+    false,                                         // forceStatelessCompilationFor32Bit
+    false,                                         // isCore
+    true,                                          // sourceLevelDebuggerSupported
+    true,                                          // supportsVme
+    false                                          // supportCacheFlushAfterWalker
+};
 
 const HardwareInfo GLK_1x3x6::hwInfo = {
     &GLK::platform,

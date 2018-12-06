@@ -38,33 +38,36 @@ const PLATFORM CNL::platform = {
     0,             // usRevId_PCH
     GTTYPE_UNDEFINED};
 
-const RuntimeCapabilityTable CNL::capabilityTable{0,
-                                                  83.333,
-                                                  21,
-                                                  true,
-                                                  true,
-                                                  true,
-                                                  true,
-                                                  true,  // ftrSupportsVmeAvcTextureSampler
-                                                  true,  // ftrSupportsVmeAvcPreemption
-                                                  false, // ftrRenderCompressedBuffers
-                                                  false, // ftrRenderCompressedImages
-                                                  PreemptionMode::MidThread,
-                                                  {true, true},
-                                                  &isSimulationCNL,
-                                                  true,
-                                                  true,                           // forceStatelessCompilationFor32Bit
-                                                  {false, 0, false, 0, false, 0}, // KmdNotifyProperties
-                                                  true,                           // ftr64KBpages
-                                                  EngineType::ENGINE_RCS,         // defaultEngineType
-                                                  MemoryConstants::pageSize,      // requiredPreemptionSurfaceSize
-                                                  true,
-                                                  true, // sourceLevelDebuggerSupported
-                                                  CmdServicesMemTraceVersion::DeviceValues::Cnl,
-                                                  0,                                 // extraQuantityThreadsPerEU
-                                                  true,                              // SupportsVme
-                                                  64,                                // slmSize
-                                                  MemoryConstants::max48BitAddress}; // gpuAddressSpace
+const RuntimeCapabilityTable CNL::capabilityTable{
+    {0, 0, 0, false, false, false},                // kmdNotifyProperties
+    {true, true},                                  // whitelistedRegisters
+    MemoryConstants::max48BitAddress,              // gpuAddressSpace
+    83.333,                                        // defaultProfilingTimerResolution
+    MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
+    &isSimulationCNL,                              // isSimulation
+    PreemptionMode::MidThread,                     // defaultPreemptionMode
+    EngineType::ENGINE_RCS,                        // defaultEngineType
+    0,                                             // maxRenderFrequency
+    21,                                            // clVersionSupport
+    CmdServicesMemTraceVersion::DeviceValues::Cnl, // aubDeviceId
+    0,                                             // extraQuantityThreadsPerEU
+    64,                                            // slmSize
+    true,                                          // ftrSupportsFP64
+    true,                                          // ftrSupports64BitMath
+    true,                                          // ftrSvm
+    true,                                          // ftrSupportsCoherency
+    true,                                          // ftrSupportsVmeAvcTextureSampler
+    true,                                          // ftrSupportsVmeAvcPreemption
+    false,                                         // ftrRenderCompressedBuffers
+    false,                                         // ftrRenderCompressedImages
+    true,                                          // ftr64KBpages
+    true,                                          // instrumentationEnabled
+    true,                                          // forceStatelessCompilationFor32Bit
+    true,                                          // isCore
+    true,                                          // sourceLevelDebuggerSupported
+    true,                                          // supportsVme
+    false                                          // supportCacheFlushAfterWalker
+};
 
 const HardwareInfo CNL_2x5x8::hwInfo = {
     &CNL::platform,

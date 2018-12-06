@@ -32,10 +32,19 @@ struct WhitelistedRegisters {
 };
 
 struct RuntimeCapabilityTable {
-    uint32_t maxRenderFrequency;
+    KmdNotifyProperties kmdNotifyProperties;
+    WhitelistedRegisters whitelistedRegisters;
+    uint64_t gpuAddressSpace;
     double defaultProfilingTimerResolution;
-
+    size_t requiredPreemptionSurfaceSize;
+    bool (*isSimulation)(unsigned short);
+    PreemptionMode defaultPreemptionMode;
+    EngineType defaultEngineType;
+    uint32_t maxRenderFrequency;
     unsigned int clVersionSupport;
+    uint32_t aubDeviceId;
+    uint32_t extraQuantityThreadsPerEU;
+    uint32_t slmSize;
     bool ftrSupportsFP64;
     bool ftrSupports64BitMath;
     bool ftrSvm;
@@ -44,29 +53,13 @@ struct RuntimeCapabilityTable {
     bool ftrSupportsVmeAvcPreemption;
     bool ftrRenderCompressedBuffers;
     bool ftrRenderCompressedImages;
-    PreemptionMode defaultPreemptionMode;
-    WhitelistedRegisters whitelistedRegisters;
-
-    bool (*isSimulation)(unsigned short);
-    bool instrumentationEnabled;
-
-    bool forceStatelessCompilationFor32Bit;
-
-    KmdNotifyProperties kmdNotifyProperties;
-
     bool ftr64KBpages;
-
-    EngineType defaultEngineType;
-
-    size_t requiredPreemptionSurfaceSize;
+    bool instrumentationEnabled;
+    bool forceStatelessCompilationFor32Bit;
     bool isCore;
     bool sourceLevelDebuggerSupported;
-    uint32_t aubDeviceId;
-
-    uint32_t extraQuantityThreadsPerEU;
     bool supportsVme;
-    uint32_t slmSize;
-    uint64_t gpuAddressSpace;
+    bool supportCacheFlushAfterWalker;
 };
 
 struct HardwareCapabilities {

@@ -3405,7 +3405,8 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
         return pAlloc;
     }
 
-    pAlloc = pContext->getSVMAllocsManager()->createSVMAlloc(size, !!(flags & CL_MEM_SVM_FINE_GRAIN_BUFFER));
+    pAlloc = pContext->getSVMAllocsManager()->createSVMAlloc(size, !!(flags & CL_MEM_SVM_FINE_GRAIN_BUFFER),
+                                                             SVMAllocsManager::memFlagIsReadOnly(flags));
 
     if (pContext->isProvidingPerformanceHints()) {
         pContext->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_SVM_ALLOC_MEETS_ALIGNMENT_RESTRICTIONS, pAlloc, size);

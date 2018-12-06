@@ -78,11 +78,11 @@ struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, pu
 
     std::unique_ptr<MockProgram> program;
 
-    SKernelBinaryHeaderCommon kernelHeader;
-    SPatchDataParameterStream dataParameterStream;
-    SPatchExecutionEnvironment executionEnvironment;
-    SPatchThreadPayload threadPayload;
-    SPatchSamplerStateArray samplerArray;
+    SKernelBinaryHeaderCommon kernelHeader = {};
+    SPatchDataParameterStream dataParameterStream = {};
+    SPatchExecutionEnvironment executionEnvironment = {};
+    SPatchThreadPayload threadPayload = {};
+    SPatchSamplerStateArray samplerArray = {};
 
     KernelInfo kernelInfo;
     KernelInfo kernelInfoWithSampler;
@@ -111,7 +111,7 @@ HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
 
     // Consume all memory except what is needed for this enqueue
     auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::WALKER_TYPE) +
-                                   KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
+                                   KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
 
     //cs has a minimum required size
     auto sizeThatNeedsToBeSubstracted = sizeDispatchWalkerNeeds + CSRequirements::minCommandQueueCommandStreamSize;
@@ -160,7 +160,7 @@ HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
 
     // Consume all memory except what is needed for this enqueue
     auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::WALKER_TYPE) +
-                                   KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
+                                   KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
 
     //cs has a minimum required size
     auto sizeThatNeedsToBeSubstracted = sizeDispatchWalkerNeeds + CSRequirements::minCommandQueueCommandStreamSize;

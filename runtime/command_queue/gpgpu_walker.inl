@@ -418,7 +418,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCS(uint32_t cmdType, bool res
 
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
-    size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + KernelCommandsHelper<GfxFamily>::getSizeRequiredCS() +
+    size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + KernelCommandsHelper<GfxFamily>::getSizeRequiredCS(pKernel) +
                   sizeof(PIPE_CONTROL) * (KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2 : 1);
     size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(commandQueue.getDevice());
     if (reserveProfilingCmdsSpace) {

@@ -191,6 +191,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         // Program the walker.  Invokes execution so all state should already be programmed
         auto walkerCmd = allocateWalkerSpace(*commandStream, kernel);
 
+        KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, &kernel);
+
         if (currentTimestampPacketNodes && commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex)->tag;
             GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, walkerCmd, timestampPacket, TimestampPacket::WriteOperationType::AfterWalker);

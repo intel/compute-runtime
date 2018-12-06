@@ -412,3 +412,90 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
 
     alignedFree(svmPtr);
 }
+
+TEST_F(KernelArgSvmTest, givenWritebleSvmAllocationWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
+    size_t svmSize = 4096;
+    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
+    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
+
+    svmAlloc.setMemObjectsAllocationWithWritableFlags(true);
+    svmAlloc.flushL3Required = false;
+
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(&svmAlloc, pKernel->kernelArgRequiresCacheFlush[0]);
+
+    alignedFree(svmPtr);
+}
+
+TEST_F(KernelArgSvmTest, givenCacheFlushSvmAllocationWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
+    size_t svmSize = 4096;
+    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
+    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
+
+    svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
+    svmAlloc.flushL3Required = true;
+
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(&svmAlloc, pKernel->kernelArgRequiresCacheFlush[0]);
+
+    alignedFree(svmPtr);
+}
+
+TEST_F(KernelArgSvmTest, givenNoCacheFlushSvmAllocationWhenSettingAsArgThenNotExpectAllocationInCacheFlushVector) {
+    size_t svmSize = 4096;
+    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
+    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
+
+    svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
+    svmAlloc.flushL3Required = false;
+
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
+
+    alignedFree(svmPtr);
+}
+
+TEST_F(KernelArgSvmTest, givenWritableSvmAllocationWhenSettingKernelExecInfoThenExpectSvmFlushFlagTrue) {
+    size_t svmSize = 4096;
+    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
+    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
+
+    svmAlloc.setMemObjectsAllocationWithWritableFlags(true);
+    svmAlloc.flushL3Required = false;
+
+    pKernel->setKernelExecInfo(&svmAlloc);
+    EXPECT_TRUE(pKernel->svmAllocationsRequireCacheFlush);
+
+    alignedFree(svmPtr);
+}
+
+TEST_F(KernelArgSvmTest, givenCacheFlushSvmAllocationWhenSettingKernelExecInfoThenExpectSvmFlushFlagTrue) {
+    size_t svmSize = 4096;
+    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
+    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
+
+    svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
+    svmAlloc.flushL3Required = true;
+
+    pKernel->setKernelExecInfo(&svmAlloc);
+    EXPECT_TRUE(pKernel->svmAllocationsRequireCacheFlush);
+
+    alignedFree(svmPtr);
+}
+
+TEST_F(KernelArgSvmTest, givenNoCacheFlushReadOnlySvmAllocationWhenSettingKernelExecInfoThenExpectSvmFlushFlagFalse) {
+    size_t svmSize = 4096;
+    void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
+    MockGraphicsAllocation svmAlloc(svmPtr, svmSize);
+
+    svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
+    svmAlloc.flushL3Required = false;
+
+    pKernel->setKernelExecInfo(&svmAlloc);
+    EXPECT_FALSE(pKernel->svmAllocationsRequireCacheFlush);
+
+    alignedFree(svmPtr);
+}
