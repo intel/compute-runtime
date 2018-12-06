@@ -54,22 +54,8 @@ CommandQueue *CommandQueue::create(Context *context,
 CommandQueue::CommandQueue() : CommandQueue(nullptr, nullptr, 0) {
 }
 
-CommandQueue::CommandQueue(Context *context,
-                           Device *deviceId,
-                           const cl_queue_properties *properties) : taskCount(0),
-                                                                    taskLevel(0),
-                                                                    virtualEvent(nullptr),
-                                                                    context(context),
-                                                                    device(deviceId),
-                                                                    priority(QueuePriority::MEDIUM),
-                                                                    throttle(QueueThrottle::MEDIUM),
-                                                                    perfCountersEnabled(false),
-                                                                    perfCountersConfig(UINT32_MAX),
-                                                                    perfCountersUserRegistersNumber(0),
-                                                                    perfConfigurationData(nullptr),
-                                                                    perfCountersRegsCfgHandle(0),
-                                                                    perfCountersRegsCfgPending(false),
-                                                                    commandStream(nullptr) {
+CommandQueue::CommandQueue(Context *context, Device *deviceId, const cl_queue_properties *properties)
+    : context(context), device(deviceId) {
     if (context) {
         context->incRefInternal();
     }
@@ -84,7 +70,7 @@ CommandQueue::CommandQueue(Context *context,
         }
     }
 
-    processProperties();
+    processProperties(properties);
 }
 
 CommandQueue::~CommandQueue() {

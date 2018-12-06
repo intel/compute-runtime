@@ -393,17 +393,17 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL bool setupDebugSurface(Kernel *kernel);
 
     // taskCount of last task
-    uint32_t taskCount;
+    uint32_t taskCount = 0;
 
     // current taskLevel. Used for determining if a PIPE_CONTROL is needed.
-    uint32_t taskLevel;
+    uint32_t taskLevel = 0;
 
     std::unique_ptr<FlushStampTracker> flushStamp;
 
-    std::atomic<uint32_t> latestTaskCountWaited{(uint32_t)-1};
+    std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
 
     // virtual event that holds last Enqueue information
-    Event *virtualEvent;
+    Event *virtualEvent = nullptr;
 
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
@@ -418,26 +418,26 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                                  AuxTranslationDirection auxTranslationDirection);
 
     void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes);
-    void processProperties();
+    void processProperties(const cl_queue_properties *properties);
 
     Context *context = nullptr;
     Device *device = nullptr;
     EngineControl *engine = nullptr;
 
-    cl_command_queue_properties commandQueueProperties;
+    cl_command_queue_properties commandQueueProperties = 0;
 
-    QueuePriority priority;
-    QueueThrottle throttle;
+    QueuePriority priority = QueuePriority::MEDIUM;
+    QueueThrottle throttle = QueueThrottle::MEDIUM;
     uint32_t engineId = 0;
 
-    bool perfCountersEnabled;
-    cl_uint perfCountersConfig;
-    uint32_t perfCountersUserRegistersNumber;
-    InstrPmRegsCfg *perfConfigurationData;
-    uint32_t perfCountersRegsCfgHandle;
-    bool perfCountersRegsCfgPending;
+    bool perfCountersEnabled = false;
+    cl_uint perfCountersConfig = std::numeric_limits<uint32_t>::max();
+    uint32_t perfCountersUserRegistersNumber = 0;
+    InstrPmRegsCfg *perfConfigurationData = nullptr;
+    uint32_t perfCountersRegsCfgHandle = 0;
+    bool perfCountersRegsCfgPending = false;
 
-    LinearStream *commandStream;
+    LinearStream *commandStream = nullptr;
 
     bool mapDcFlushRequired = false;
     bool isSpecialCommandQueue = false;
