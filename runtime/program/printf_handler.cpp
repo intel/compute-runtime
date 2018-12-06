@@ -37,7 +37,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
         return;
     }
     kernel = multiDispatchInfo.peekMainKernel();
-    printfSurface = device.getMemoryManager()->allocateGraphicsMemoryInPreferredPool(AllocationFlags(true), 0, nullptr, printfSurfaceSize, GraphicsAllocation::AllocationType::PRINTF_SURFACE);
+    printfSurface = device.getMemoryManager()->allocateGraphicsMemoryInPreferredPool(AllocationProperties(true, printfSurfaceSize), 0, nullptr, GraphicsAllocation::AllocationType::PRINTF_SURFACE);
 
     *reinterpret_cast<uint32_t *>(printfSurface->getUnderlyingBuffer()) = printfSurfaceInitialDataSize;
 

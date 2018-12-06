@@ -31,7 +31,6 @@ class DrmMemoryManager : public MemoryManager {
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
-    DrmAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override;
     DrmAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override;
     DrmAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override {
         AllocationData allocationData;
@@ -77,6 +76,7 @@ class DrmMemoryManager : public MemoryManager {
 
     DrmAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;
+    DrmAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
 
     Drm *drm;
     BufferObject *pinBB;

@@ -95,8 +95,7 @@ class MockDevice : public Device {
     void allocatePreemptionAllocationIfNotPresent() {
         if (this->preemptionAllocation == nullptr) {
             if (preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) {
-                AllocationProperties allocationProperties;
-                allocationProperties.size = hwInfo.capabilityTable.requiredPreemptionSurfaceSize;
+                AllocationProperties allocationProperties(true, hwInfo.capabilityTable.requiredPreemptionSurfaceSize);
                 allocationProperties.flags.uncacheable = getWaTable()->waCSRUncachable;
                 allocationProperties.alignment = 256 * MemoryConstants::kiloByte;
                 this->preemptionAllocation = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);

@@ -121,14 +121,14 @@ class MockMemoryManagerWithFailures : public OsAgnosticMemoryManager {
   public:
     MockMemoryManagerWithFailures(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment){};
 
-    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) override {
-        if (failAllAllocationsInPreferredPool) {
-            failAllAllocationsInPreferredPool = false;
+    GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override {
+        if (failAllAllocationsInDevicePool) {
+            failAllAllocationsInDevicePool = false;
             return nullptr;
         }
-        return OsAgnosticMemoryManager::allocateGraphicsMemoryInPreferredPool(flags, devicesBitfield, hostPtr, size, type);
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
     }
-    bool failAllAllocationsInPreferredPool = false;
+    bool failAllAllocationsInDevicePool = false;
 };
 
 class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
@@ -1992,7 +1992,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
             cl_uint numCreatedKernels = 0;
 
             if (nonfailingAllocation != failureIndex) {
-                memoryManager->failAllAllocationsInPreferredPool = true;
+                memoryManager->failAllAllocationsInDevicePool = true;
             }
             retVal = clCreateKernelsInProgram(pProgram, 2, kernels, &numCreatedKernels);
 

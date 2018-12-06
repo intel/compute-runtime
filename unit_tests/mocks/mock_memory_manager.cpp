@@ -34,14 +34,14 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
     return allocation;
 }
 
-GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {
+GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(AllocationData allocationData) {
     allocation64kbPageCreated = true;
-    preferRenderCompressedFlagPassed = preferRenderCompressed;
+    preferRenderCompressedFlagPassed = allocationData.flags.preferRenderCompressed;
 
-    auto allocation = OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size, alignment, forcePin, preferRenderCompressed);
+    auto allocation = OsAgnosticMemoryManager::allocateGraphicsMemory64kb(allocationData);
     if (allocation) {
-        allocation->gmm = new Gmm(allocation->getUnderlyingBuffer(), size, false, preferRenderCompressed, true);
-        allocation->gmm->isRenderCompressed = preferRenderCompressed;
+        allocation->gmm = new Gmm(allocation->getUnderlyingBuffer(), allocationData.size, false, preferRenderCompressedFlagPassed, true);
+        allocation->gmm->isRenderCompressed = preferRenderCompressedFlagPassed;
     }
     return allocation;
 }
@@ -71,10 +71,8 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithAlignment(const
     return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
 }
 
-FailMemoryManager::FailMemoryManager(int32_t fail) {
-    allocations.reserve(fail);
-    agnostic = new OsAgnosticMemoryManager(false, false, executionEnvironment);
-    this->fail = fail;
+FailMemoryManager::FailMemoryManager(int32_t failedAllocationsCount) {
+    this->failedAllocationsCount = failedAllocationsCount;
 }
 
 } // namespace OCLRT

@@ -75,11 +75,7 @@ void *MemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, bool coherent) {
     GraphicsAllocation *graphicsAllocation = nullptr;
-    if (peek64kbPagesEnabled()) {
-        graphicsAllocation = allocateGraphicsMemory64kb(size, MemoryConstants::pageSize64k, false, false);
-    } else {
-        graphicsAllocation = allocateGraphicsMemory(size);
-    }
+    graphicsAllocation = allocateGraphicsMemoryInPreferredPool(AllocationProperties(true, size), 0u, nullptr, GraphicsAllocation::AllocationType::SVM);
     if (graphicsAllocation) {
         graphicsAllocation->setCoherent(coherent);
     }
@@ -187,14 +183,14 @@ OsContext *MemoryManager::createAndRegisterOsContext(EngineInstanceT engineType,
     return osContext;
 }
 
-bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationFlags &flags, const DevicesBitfield devicesBitfield,
-                                      const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
-    UNRECOVERABLE_IF(hostPtr == nullptr && !flags.flags.allocateMemory);
+bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const DevicesBitfield devicesBitfield,
+                                      const void *hostPtr, GraphicsAllocation::AllocationType type) {
+    UNRECOVERABLE_IF(hostPtr == nullptr && !properties.flags.allocateMemory);
 
     bool allow64KbPages = false;
     bool allow32Bit = false;
-    bool forcePin = false;
-    bool uncacheable = false;
+    bool forcePin = properties.flags.forcePin;
+    bool uncacheable = properties.flags.uncacheable;
     bool mustBeZeroCopy = false;
 
     switch (type) {
@@ -207,6 +203,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
+    case GraphicsAllocation::AllocationType::SVM:
         allow64KbPages = true;
         allow32Bit = true;
         break;
@@ -237,22 +234,23 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     allocationData.flags.mustBeZeroCopy = mustBeZeroCopy;
-    allocationData.flags.allocateMemory = flags.flags.allocateMemory;
+    allocationData.flags.allocateMemory = properties.flags.allocateMemory;
     allocationData.flags.allow32Bit = allow32Bit;
     allocationData.flags.allow64kbPages = allow64KbPages;
     allocationData.flags.forcePin = forcePin;
     allocationData.flags.uncacheable = uncacheable;
-    allocationData.flags.flushL3 = flags.flags.flushL3RequiredForRead | flags.flags.flushL3RequiredForWrite;
+    allocationData.flags.flushL3 = properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite;
+    allocationData.flags.preferRenderCompressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == type;
 
     if (allocationData.flags.mustBeZeroCopy) {
         allocationData.flags.useSystemMemory = true;
     }
 
     allocationData.hostPtr = hostPtr;
-    allocationData.size = size;
+    allocationData.size = properties.size;
     allocationData.type = type;
     allocationData.devicesBitfield = devicesBitfield;
-    allocationData.alignment = MemoryConstants::pageSize;
+    allocationData.alignment = properties.alignment ? properties.alignment : MemoryConstants::preferredAlignment;
 
     if (allocationData.flags.allocateMemory) {
         allocationData.hostPtr = nullptr;
@@ -260,11 +258,11 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     return true;
 }
 
-GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr, GraphicsAllocation::AllocationType type) {
     AllocationData allocationData;
     AllocationStatus status = AllocationStatus::Error;
 
-    getAllocationData(allocationData, flags, devicesBitfield, hostPtr, size, type);
+    getAllocationData(allocationData, properties, devicesBitfield, hostPtr, type);
     UNRECOVERABLE_IF(allocationData.type == GraphicsAllocation::AllocationType::IMAGE || allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE);
     GraphicsAllocation *allocation = nullptr;
 
@@ -283,8 +281,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         return allocateGraphicsMemoryWithHostPtr(allocationData);
     }
     if (peek64kbPagesEnabled() && allocationData.flags.allow64kbPages) {
-        bool preferRenderCompressed = (allocationData.type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-        return allocateGraphicsMemory64kb(allocationData.size, MemoryConstants::pageSize64k, allocationData.flags.forcePin, preferRenderCompressed);
+        return allocateGraphicsMemory64kb(allocationData);
     }
     return allocateGraphicsMemoryWithAlignment(allocationData);
 }

@@ -33,8 +33,8 @@ bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &propert
     return true;
 }
 
-AllocationFlags MemObjHelper::getAllocationFlags(cl_mem_flags_intel flags, bool allocateMemory) {
-    return AllocationFlags(allocateMemory);
+AllocationProperties MemObjHelper::getAllocationProperties(cl_mem_flags_intel flags, bool allocateMemory, size_t size) {
+    return AllocationProperties(allocateMemory, size);
 }
 
 DevicesBitfield MemObjHelper::getDevicesBitfield(const MemoryProperties &properties) {

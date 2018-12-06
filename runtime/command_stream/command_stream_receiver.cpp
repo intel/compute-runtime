@@ -355,9 +355,8 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
     allocation = memoryManager->allocateGraphicsMemoryForHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), device.isFullRangeSvm(), requiresL3Flush);
     if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
         // Try with no host pointer allocation and copy
-        AllocationProperties properties;
+        AllocationProperties properties(true, surface.getSurfaceSize());
         properties.alignment = MemoryConstants::pageSize;
-        properties.size = surface.getSurfaceSize();
         allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 
         if (allocation) {

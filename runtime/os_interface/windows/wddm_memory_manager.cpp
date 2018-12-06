@@ -54,13 +54,13 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
     return allocation.release();
 }
 
-GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {
-    size_t sizeAligned = alignUp(size, MemoryConstants::pageSize64k);
+GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(AllocationData allocationData) {
+    size_t sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
     Gmm *gmm = nullptr;
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(nullptr, sizeAligned, nullptr, MemoryPool::System64KBPages, getOsContextCount(), false);
 
-    gmm = new Gmm(nullptr, sizeAligned, false, preferRenderCompressed, true);
+    gmm = new Gmm(nullptr, sizeAligned, false, allocationData.flags.preferRenderCompressed, true);
     wddmAllocation->gmm = gmm;
 
     if (!wddm->createAllocation64k(wddmAllocation.get())) {

@@ -29,7 +29,7 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
         }
         return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
     };
-    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override {
+    GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override {
         return nullptr;
     };
     GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &properties) override {

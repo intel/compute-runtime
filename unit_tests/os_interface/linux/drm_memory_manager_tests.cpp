@@ -48,12 +48,13 @@
 using namespace OCLRT;
 
 AllocationProperties createAllocationProperties(size_t size, bool forcePin) {
-    AllocationProperties properties;
-    properties.size = size;
+    AllocationProperties properties(true, size);
     properties.alignment = MemoryConstants::preferredAlignment;
     properties.flags.forcePin = forcePin;
     return properties;
 }
+
+using AllocationData = TestedDrmMemoryManager::AllocationData;
 
 class DrmMemoryManagerFixture : public MemoryManagementFixture {
   public:
@@ -662,7 +663,8 @@ TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
 }
 
 TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocation64kThenNullPtr) {
-    auto allocation = memoryManager->allocateGraphicsMemory64kb(65536, 65536, false, false);
+    allocationData.size = MemoryConstants::pageSize64k;
+    auto allocation = memoryManager->allocateGraphicsMemory64kb(allocationData);
     EXPECT_EQ(nullptr, allocation);
 }
 
@@ -2464,8 +2466,9 @@ TEST(DrmMemoryManager, givenMemoryManagerWhenCreateAllocationFromHandleIsCalledT
 TEST(DrmMemoryManager, DISABLED_givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
     ExecutionEnvironment executionEnvironment;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, executionEnvironment));
-    auto size = 4096u;
-    auto allocation = memoryManager->allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
+    AllocationData allocationData;
+    allocationData.size = 4096u;
+    auto allocation = memoryManager->allocateGraphicsMemory64kb(allocationData);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);

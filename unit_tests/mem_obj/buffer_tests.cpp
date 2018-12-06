@@ -97,9 +97,18 @@ INSTANTIATE_TEST_CASE_P(
 class GMockMemoryManagerFailFirstAllocation : public MockMemoryManager {
   public:
     GMockMemoryManagerFailFirstAllocation(const ExecutionEnvironment &executionEnvironment) : MockMemoryManager(const_cast<ExecutionEnvironment &>(executionEnvironment)){};
-    MOCK_METHOD5(allocateGraphicsMemoryInPreferredPool, GraphicsAllocation *(AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type));
-    GraphicsAllocation *baseallocateGraphicsMemoryInPreferredPool(AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
-        return MockMemoryManager::allocateGraphicsMemoryInPreferredPool(flags, devicesBitfield, hostPtr, size, type);
+
+    MOCK_METHOD2(allocateGraphicsMemoryInDevicePool, GraphicsAllocation *(const AllocationData &, AllocationStatus &));
+    GraphicsAllocation *baseAllocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
+    }
+    GraphicsAllocation *allocateNonSystemGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
+        auto allocation = baseAllocateGraphicsMemoryInDevicePool(allocationData, status);
+        if (!allocation) {
+            allocation = allocateGraphicsMemory(allocationData);
+        }
+        static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+        return allocation;
     }
 };
 
@@ -116,9 +125,9 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsThenB
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr))
-        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseallocateGraphicsMemoryInPreferredPool));
+        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
 
     cl_int retVal;
     cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR;
@@ -147,7 +156,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsAndSe
 
     // First fail simulates error for read only memory allocation
     // Second fail returns nullptr
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
         .WillRepeatedly(::testing::Return(nullptr));
 
     cl_int retVal;
@@ -172,7 +181,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithKernelWriteFlagThe
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr));
 
     cl_int retVal;
@@ -192,7 +201,7 @@ TEST(Buffer, givenNullPtrWhenBufferIsCreatedWithKernelReadOnlyFlagsThenBufferAll
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr));
 
     cl_int retVal;
@@ -210,14 +219,8 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPool
     device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
-    auto allocateNonSystemGraphicsAllocation = [memoryManager](AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) -> GraphicsAllocation * {
-        auto allocation = memoryManager->allocateGraphicsMemory(size);
-        reinterpret_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
-        return allocation;
-    };
-
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
-        .WillOnce(::testing::Invoke(allocateNonSystemGraphicsAllocation));
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
+        .WillOnce(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::allocateNonSystemGraphicsMemoryInDevicePool));
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -235,14 +238,8 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPool
     device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
-    auto allocateNonSystemGraphicsAllocation = [memoryManager](AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) -> GraphicsAllocation * {
-        auto allocation = memoryManager->allocateGraphicsMemory(size);
-        reinterpret_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
-        return allocation;
-    };
-
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
-        .WillOnce(::testing::Invoke(allocateNonSystemGraphicsAllocation));
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
+        .WillOnce(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::allocateNonSystemGraphicsMemoryInDevicePool));
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -370,18 +367,15 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
 
     auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
+        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
+
     std::unique_ptr<MockDevice> device(MockDevice::create<MockDevice>(*platformDevices, &executionEnvironment, 0));
 
     MockContext ctx(device.get());
-
-    auto allocateNonSystemGraphicsAllocation = [memoryManager](AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) -> GraphicsAllocation * {
-        auto allocation = memoryManager->allocateGraphicsMemory(size);
-        reinterpret_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
-        return allocation;
-    };
-
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
-        .WillOnce(::testing::Invoke(allocateNonSystemGraphicsAllocation));
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
+        .WillOnce(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::allocateNonSystemGraphicsMemoryInDevicePool))
+        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;

@@ -594,8 +594,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCall
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     memoryManager.freeGraphicsMemory(allocation);
 
-    AllocationProperties properties;
-    properties.size = size;
+    AllocationProperties properties(true, size);
     properties.alignment = MemoryConstants::preferredAlignment;
     allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties);
     EXPECT_NE(nullptr, allocation);
@@ -605,10 +604,10 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCall
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
     ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(true, false, executionEnvironment);
-    auto size = 4096u;
-
-    auto allocation = memoryManager.allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
+    MockMemoryManager memoryManager(true, false, executionEnvironment);
+    AllocationData allocationData;
+    allocationData.size = 4096u;
+    auto allocation = memoryManager.allocateGraphicsMemory64kb(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
     memoryManager.freeGraphicsMemory(allocation);
@@ -617,6 +616,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryFailsThenNullptrIsReturned) {
     class MockOsAgnosticManagerWithFailingAllocate : public OsAgnosticMemoryManager {
       public:
+        using OsAgnosticMemoryManager::allocateGraphicsMemory64kb;
         MockOsAgnosticManagerWithFailingAllocate(bool enable64kbPages, ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(enable64kbPages, false, executionEnvironment) {}
 
         GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
@@ -625,9 +625,9 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
     };
     ExecutionEnvironment executionEnvironment;
     MockOsAgnosticManagerWithFailingAllocate memoryManager(true, executionEnvironment);
-    auto size = 4096u;
-
-    auto allocation = memoryManager.allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
+    AllocationData allocationData;
+    allocationData.size = 4096u;
+    auto allocation = memoryManager.allocateGraphicsMemory64kb(allocationData);
     EXPECT_EQ(nullptr, allocation);
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -841,8 +841,7 @@ TEST(OsAgnosticMemoryManager, pleaseDetectLeak) {
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateMemoryWithNoAlignmentProvidedThenAllocationIsAlignedToPageSize) {
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
-    AllocationProperties properties;
-    properties.size = MemoryConstants::pageSize >> 1;
+    AllocationProperties properties(true, MemoryConstants::pageSize >> 1);
     properties.alignment = 0;
     auto ga = memoryManager.allocateGraphicsMemoryWithProperties(properties);
     uintptr_t ptr = reinterpret_cast<uintptr_t>(ga->getUnderlyingBuffer());
@@ -855,8 +854,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateMemoryWithNoAlignmen
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateMemoryWithAlignmentNotAlignedToPageSizeThenAlignmentIsAlignedUp) {
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
-    AllocationProperties properties;
-    properties.size = MemoryConstants::pageSize >> 1;
+    AllocationProperties properties(true, MemoryConstants::pageSize >> 1);
     properties.alignment = MemoryConstants::pageSize - 1;
     auto ga = memoryManager.allocateGraphicsMemoryWithProperties(properties);
     uintptr_t ptr = reinterpret_cast<uintptr_t>(ga->getUnderlyingBuffer());
@@ -963,11 +961,11 @@ TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCre
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(true, false, executionEnvironment);
 
-    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryInPreferredPool(AllocationFlags(true), 0, nullptr, 64 * 1024, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryInPreferredPool(AllocationProperties(true, 64 * 1024), 0, nullptr, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_NE(nullptr, galloc);
     memoryManager.freeGraphicsMemory(galloc);
 
-    galloc = memoryManager.allocateGraphicsMemoryInPreferredPool(AllocationFlags(true), 0, nullptr, 64 * 1024, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    galloc = memoryManager.allocateGraphicsMemoryInPreferredPool(AllocationProperties(true, 64 * 1024), 0, nullptr, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_NE(nullptr, galloc);
     EXPECT_NE(nullptr, galloc->getUnderlyingBuffer());
     EXPECT_EQ(0u, (uintptr_t)galloc->getUnderlyingBuffer() % MemoryConstants::pageSize64k);

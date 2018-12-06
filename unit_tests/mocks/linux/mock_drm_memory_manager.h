@@ -36,7 +36,9 @@ int closeMock(int) {
 
 class TestedDrmMemoryManager : public DrmMemoryManager {
   public:
+    using DrmMemoryManager::allocateGraphicsMemory64kb;
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
+    using DrmMemoryManager::AllocationData;
     using DrmMemoryManager::allocUserptr;
     using DrmMemoryManager::setDomainCpu;
     using DrmMemoryManager::sharingBufferObjects;

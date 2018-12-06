@@ -140,8 +140,8 @@ TEST_F(SVMMemoryAllocatorTest, given64kbAllowedwhenAllocatingSvmMemoryThenDontPr
     class MyMemoryManager : public OsAgnosticMemoryManager {
       public:
         MyMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment) { enable64kbpages = true; }
-        GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override {
-            preferRenderCompressedFlag = preferRenderCompressed;
+        GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override {
+            preferRenderCompressedFlag = allocationData.flags.preferRenderCompressed;
             return nullptr;
         }
         bool preferRenderCompressedFlag = true;

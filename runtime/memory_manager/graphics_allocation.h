@@ -63,6 +63,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         SURFACE_STATE_HEAP,
         DYNAMIC_STATE_HEAP,
         SHARED_RESOURCE,
+        SVM,
+        UNDECIDED,
     };
 
     virtual ~GraphicsAllocation();

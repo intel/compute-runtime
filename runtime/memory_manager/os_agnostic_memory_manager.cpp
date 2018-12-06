@@ -71,12 +71,10 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHost
     return memoryAllocation;
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {
-    AllocationProperties properties;
-    properties.size = alignUp(size, MemoryConstants::pageSize64k);
-    properties.flags.forcePin = forcePin;
-    properties.alignment = MemoryConstants::pageSize64k;
-    auto memoryAllocation = allocateGraphicsMemoryWithProperties(properties);
+GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(AllocationData allocationData) {
+    allocationData.size = alignUp(allocationData.size, MemoryConstants::pageSize64k);
+    allocationData.alignment = MemoryConstants::pageSize64k;
+    auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationData);
     if (memoryAllocation) {
         reinterpret_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::System64KBPages);
     }

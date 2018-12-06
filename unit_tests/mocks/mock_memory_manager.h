@@ -19,6 +19,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
   public:
     using MemoryManager::allocateGraphicsMemory;
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
+    using MemoryManager::AllocationData;
     using MemoryManager::getAllocationData;
     using MemoryManager::registeredOsContexts;
     using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
@@ -31,7 +32,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     MockMemoryManager(bool enable64pages) : OsAgnosticMemoryManager(enable64pages, false, *(new ExecutionEnvironment)) {
         mockExecutionEnvironment.reset(&executionEnvironment);
     }
-    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override;
+    GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
     void setDeferredDeleter(DeferredDeleter *deleter);
     void overrideAsyncDeleterFlag(bool newValue);
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;
@@ -55,6 +56,8 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     bool preferRenderCompressedFlagPassed = false;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
 };
+
+using AllocationData = MockMemoryManager::AllocationData;
 
 class GMockMemoryManager : public MockMemoryManager {
   public:
@@ -89,31 +92,17 @@ class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {
 class FailMemoryManager : public MockMemoryManager {
   public:
     using MockMemoryManager::MockMemoryManager;
-    FailMemoryManager(int32_t fail);
-    virtual ~FailMemoryManager() override {
-        if (agnostic) {
-            for (auto alloc : allocations) {
-                agnostic->freeGraphicsMemory(alloc);
-            }
-            delete agnostic;
-        }
-    };
+    FailMemoryManager(int32_t failedAllocationsCount);
+
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
-        if (fail <= 0) {
+        if (failedAllocationsCount <= 0) {
             return nullptr;
         }
-        fail--;
-        AllocationProperties properties;
-        properties.alignment = allocationData.alignment;
-        properties.size = allocationData.size;
-        properties.flags.forcePin = allocationData.flags.forcePin;
-        properties.flags.uncacheable = allocationData.flags.uncacheable;
-        GraphicsAllocation *alloc = agnostic->allocateGraphicsMemoryWithProperties(properties);
-        allocations.push_back(alloc);
-        return alloc;
+        failedAllocationsCount--;
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
     };
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override { return nullptr; }
-    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override {
+    GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override {
         return nullptr;
     };
     GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override {
@@ -128,7 +117,6 @@ class FailMemoryManager : public MockMemoryManager {
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override {
         return nullptr;
     };
-    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override{};
     void *lockResource(GraphicsAllocation *gfxAllocation) override { return nullptr; };
     void unlockResource(GraphicsAllocation *gfxAllocation) override{};
 
@@ -151,8 +139,6 @@ class FailMemoryManager : public MockMemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override {
         return nullptr;
     }
-    int32_t fail = 0;
-    OsAgnosticMemoryManager *agnostic = nullptr;
-    std::vector<GraphicsAllocation *> allocations;
+    int32_t failedAllocationsCount = 0;
 };
 } // namespace OCLRT

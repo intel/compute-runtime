@@ -143,8 +143,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     outDevice.executionEnvironment->memoryManager->setForce32BitAllocations(outDevice.getDeviceInfo().force32BitAddressess);
 
     if (outDevice.preemptionMode == PreemptionMode::MidThread || outDevice.isSourceLevelDebuggerActive()) {
-        AllocationProperties properties;
-        properties.size = pHwInfo->capabilityTable.requiredPreemptionSurfaceSize;
+        AllocationProperties properties(true, pHwInfo->capabilityTable.requiredPreemptionSurfaceSize);
         properties.flags.uncacheable = outDevice.getWaTable()->waCSRUncachable;
         properties.alignment = 256 * MemoryConstants::kiloByte;
         outDevice.preemptionAllocation = outDevice.executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(properties);

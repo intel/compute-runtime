@@ -44,7 +44,6 @@ class OsAgnosticMemoryManager : public MemoryManager {
     };
 
     ~OsAgnosticMemoryManager() override;
-    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override;
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override;
@@ -73,6 +72,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
 
   protected:
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
 
   private:
     unsigned long long counter = 0;

@@ -19,6 +19,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/os_interface/windows/wddm_memory_manager_tests.h"
 #include "unit_tests/utilities/base_object_utils.h"
@@ -120,21 +121,13 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     EXPECT_TRUE(allocation->gmm->useSystemMemoryPool);
     memoryManager->freeGraphicsMemory(allocation);
-
-    AllocationProperties properties;
-    properties.size = size;
-    properties.alignment = sizeof(uint32_t);
-    allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
-    EXPECT_TRUE(allocation->gmm->useSystemMemoryPool);
-    memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
-    auto size = 4096u;
-    auto allocation = memoryManager->allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
+    AllocationData allocationData;
+    allocationData.size = 4096u;
+    auto allocation = memoryManager->allocateGraphicsMemory64kb(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
     EXPECT_TRUE(allocation->gmm->useSystemMemoryPool);
@@ -1158,7 +1151,7 @@ TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemor
     WddmMemoryManager memoryManager64k(true, false, wddm.get(), executionEnvironment);
     EXPECT_EQ(0, wddm->createAllocationResult.called);
 
-    GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemoryInPreferredPool(AllocationFlags(true), 0, nullptr, static_cast<size_t>(MemoryConstants::pageSize64k), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemoryInPreferredPool(AllocationProperties(true, MemoryConstants::pageSize64k), 0, nullptr, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_EQ(1, wddm->createAllocationResult.called);
     EXPECT_NE(nullptr, galloc);
     EXPECT_EQ(true, galloc->isLocked());
@@ -1173,8 +1166,10 @@ TEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocation
     auto wddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     DebugManager.flags.Enable64kbpages.set(true);
-    WddmMemoryManager memoryManager(true, false, wddm.get(), executionEnvironment);
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemory64kb(1, MemoryConstants::pageSize64k, false, false);
+    MockWddmMemoryManager memoryManager(true, false, wddm.get(), executionEnvironment);
+    AllocationData allocationData;
+    allocationData.size = 1u;
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemory64kb(allocationData);
 
     EXPECT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation->getUnderlyingBufferSize());
@@ -1194,7 +1189,9 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLoc
     MockWddmMemoryManager memoryManager64k(wddm.get(), executionEnvironment);
     uint32_t lockCount = wddm->lockResult.called;
     uint32_t mapGpuVirtualAddressResult = wddm->mapGpuVirtualAddressResult.called;
-    GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemory64kb(65536, 65536, true, false);
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+    GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemory64kb(allocationData);
     EXPECT_EQ(lockCount + 1, wddm->lockResult.called);
     EXPECT_EQ(mapGpuVirtualAddressResult + 1, wddm->mapGpuVirtualAddressResult.called);
     EXPECT_NE(wddm->mapGpuVirtualAddressResult.cpuPtrPassed, nullptr);
