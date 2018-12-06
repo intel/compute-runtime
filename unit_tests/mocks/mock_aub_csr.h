@@ -53,6 +53,8 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     MockAubCsr(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment)
         : AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, fileName, standalone, executionEnvironment){};
 
+    using CommandStreamReceiverHw<GfxFamily>::defaultSshSize;
+
     DispatchMode peekDispatchMode() const {
         return this->dispatchMode;
     }

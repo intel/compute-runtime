@@ -842,3 +842,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenObtaini
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_EQ(1u, aubCsr->getPreferredTagPoolSize());
 }
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenSshSizeIsObtainedItEqualsTo64KB) {
+    auto aubCsr = std::make_unique<MockAubCsr<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    EXPECT_EQ(64 * KB, aubCsr->defaultSshSize);
+}

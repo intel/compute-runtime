@@ -87,6 +87,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
     this->aubDeviceId = debugDeviceId == -1
                             ? hwInfoIn.capabilityTable.aubDeviceId
                             : static_cast<uint32_t>(debugDeviceId);
+    this->defaultSshSize = 64 * KB;
 }
 
 template <typename GfxFamily>
