@@ -61,6 +61,7 @@ PRODUCT_FAMILY defaultProductFamily = productFamily;
 
 extern bool printMemoryOpCallStack;
 extern std::string lastTest;
+bool generateRandomInput = false;
 
 void applyWorkarounds() {
     {
@@ -275,6 +276,8 @@ int main(int argc, char **argv) {
             if (i < argc) {
                 dieRecovery = atoi(argv[i]) ? 1 : 0;
             }
+        } else if (!strcmp("--generate_random_inputs", argv[i])) {
+            generateRandomInput = true;
         }
     }
 
