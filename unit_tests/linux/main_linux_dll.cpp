@@ -280,6 +280,35 @@ TEST_F(DrmTests, checkPreemption) {
     drm = DrmWrap::get(0);
     EXPECT_EQ(drm, nullptr);
 }
+
+TEST_F(DrmTests, failOnCheckPreemption) {
+    auto drm = DrmWrap::createDrm(0);
+    EXPECT_NE(drm, nullptr);
+    failOnContextCreate = 0;
+    failOnSetPriority = 0;
+    failOnPreemption = -1;
+    bool ret = drm->hasPreemption();
+    EXPECT_EQ(ret, false);
+    DrmWrap::closeDevice(0);
+
+    drm = DrmWrap::get(0);
+    EXPECT_EQ(drm, nullptr);
+}
+
+TEST_F(DrmTests, failOnCheckSchedulerCap) {
+    auto drm = DrmWrap::createDrm(0);
+    EXPECT_NE(drm, nullptr);
+    failOnContextCreate = 0;
+    failOnSetPriority = 0;
+    failOnPreemption = 0;
+    havePreemption = 0;
+    bool ret = drm->hasPreemption();
+    EXPECT_EQ(ret, false);
+    DrmWrap::closeDevice(0);
+
+    drm = DrmWrap::get(0);
+    EXPECT_EQ(drm, nullptr);
+}
 #endif
 
 TEST_F(DrmTests, failOnContextCreate) {
