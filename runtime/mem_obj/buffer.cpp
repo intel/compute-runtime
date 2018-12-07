@@ -319,7 +319,9 @@ void Buffer::checkMemory(cl_mem_flags flags,
 
 GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(cl_mem_flags flags, bool sharedContext, bool renderCompressedBuffers) {
     GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::BUFFER;
-    if (flags & CL_MEM_USE_HOST_PTR) {
+    if (is32bit) {
+        type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    } else if (flags & CL_MEM_USE_HOST_PTR) {
         type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     } else if (renderCompressedBuffers) {
         type = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
