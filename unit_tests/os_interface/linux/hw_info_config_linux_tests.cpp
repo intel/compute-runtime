@@ -249,81 +249,81 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyNegativeUnknownDeviceId) {
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidThreadOn) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->StoredPreemptionSupport = 1;
-    drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = hwConfigTestMidThreadBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::MidThread, outHwInfo.capabilityTable.defaultPreemptionMode);
+    EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledThreadGroupOn) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->StoredPreemptionSupport = 1;
-    drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = hwConfigTestThreadGroupBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::ThreadGroup, outHwInfo.capabilityTable.defaultPreemptionMode);
+    EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidBatchOn) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->StoredPreemptionSupport = 1;
-    drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::MidBatch, outHwInfo.capabilityTable.defaultPreemptionMode);
+    EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledNoPreemption) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->StoredPreemptionSupport = 1;
-    drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = 1;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::Disabled, outHwInfo.capabilityTable.defaultPreemptionMode);
+    EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmDisabledAllPreemption) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     drm->StoredPreemptionSupport = 0;
-    drm->StoredMockPreemptionSupport = 0;
     drm->StoredDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::Disabled, outHwInfo.capabilityTable.defaultPreemptionMode);
+    EXPECT_FALSE(drm->isPreemptionSupported());
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionDriverThreadGroup) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::ThreadGroup;
     drm->StoredPreemptionSupport = 1;
-    drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::ThreadGroup, outHwInfo.capabilityTable.defaultPreemptionMode);
+    EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionDriverMidBatch) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidBatch;
     drm->StoredPreemptionSupport = 1;
-    drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::MidBatch, outHwInfo.capabilityTable.defaultPreemptionMode);
+    EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionDriverDisabled) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     drm->StoredPreemptionSupport = 1;
-    drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(PreemptionMode::Disabled, outHwInfo.capabilityTable.defaultPreemptionMode);
+    EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, givenPlatformEnabledFtrCompressionWhenInitializingThenForceDisable) {

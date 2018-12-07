@@ -28,8 +28,9 @@ const DeviceDescriptor deviceDescriptorTable[] = {
 static std::array<Drm *, 1> drms = {{nullptr}};
 
 Drm::~Drm() {
-    if (lowPriorityContextId)
-        contextDestroy();
+    if (lowPriorityContextId != 0) {
+        destroyLowPriorityContext();
+    }
     close(fd);
     fd = -1;
 }

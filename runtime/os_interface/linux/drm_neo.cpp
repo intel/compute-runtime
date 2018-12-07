@@ -129,49 +129,34 @@ bool Drm::is48BitAddressRangeSupported() {
     return (ret == 0) && (value == 3);
 }
 
-bool Drm::hasPreemption() {
+void Drm::checkPreemptionSupport() {
 #if defined(I915_PARAM_HAS_PREEMPTION)
     int value = 0;
     auto ret = getParam(I915_PARAM_HAS_PREEMPTION, &value);
-    if (ret == 0 && value == 1) {
-        return contextCreate() && setLowPriority();
-    }
+    preemptionSupported = (ret == 0 && value == 1);
 #endif
-    return false;
 }
 
-bool Drm::setLowPriority() {
-#if defined(I915_PARAM_HAS_PREEMPTION)
-    struct drm_i915_gem_context_param gcp = {};
+void Drm::createLowPriorityContext() {
+    drm_i915_gem_context_create gcc = {};
+    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &gcc);
+    UNRECOVERABLE_IF(retVal != 0);
+    lowPriorityContextId = gcc.ctx_id;
+
+    drm_i915_gem_context_param gcp = {};
     gcp.ctx_id = lowPriorityContextId;
     gcp.param = I915_CONTEXT_PARAM_PRIORITY;
     gcp.value = -1023;
 
-    int ret = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &gcp);
-    if (ret == 0) {
-        return true;
-    }
-#endif
-    return false;
+    retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &gcp);
+    UNRECOVERABLE_IF(retVal != 0);
 }
 
-bool Drm::contextCreate() {
-#if defined(I915_PARAM_HAS_PREEMPTION)
-    drm_i915_gem_context_create gcc = {};
-    if (ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &gcc) == 0) {
-        lowPriorityContextId = gcc.ctx_id;
-        return true;
-    }
-#endif
-    return false;
-}
-
-void Drm::contextDestroy() {
-#if defined(I915_PARAM_HAS_PREEMPTION)
+void Drm::destroyLowPriorityContext() {
     drm_i915_gem_context_destroy destroy = {};
     destroy.ctx_id = lowPriorityContextId;
-    ioctl(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY, &destroy);
-#endif
+    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY, &destroy);
+    UNRECOVERABLE_IF(retVal != 0);
 }
 
 int Drm::getEuTotal(int &euTotal) {

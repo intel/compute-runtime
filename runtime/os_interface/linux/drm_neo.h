@@ -54,11 +54,11 @@ class Drm {
     int getMinEuInPool(int &minEUinPool);
 
     bool is48BitAddressRangeSupported();
-    MOCKABLE_VIRTUAL bool hasPreemption();
-    bool setLowPriority();
+    bool isPreemptionSupported() const { return preemptionSupported; }
+    MOCKABLE_VIRTUAL void checkPreemptionSupport();
     int getFileDescriptor() const { return fd; }
-    bool contextCreate();
-    void contextDestroy();
+    void createLowPriorityContext();
+    void destroyLowPriorityContext();
 
     void setGtType(GTTYPE eGtType) { this->eGtType = eGtType; }
     GTTYPE getGtType() const { return this->eGtType; }
@@ -68,6 +68,7 @@ class Drm {
 
   protected:
     bool useSimplifiedMocsTable = false;
+    bool preemptionSupported = false;
     int fd;
     int deviceId;
     int revisionId;

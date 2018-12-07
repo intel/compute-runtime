@@ -160,7 +160,11 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     outHwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
     outHwInfo->capabilityTable.ftrRenderCompressedImages = false;
 
-    bool preemption = drm->hasPreemption();
+    drm->checkPreemptionSupport();
+    bool preemption = drm->isPreemptionSupported();
+    if (preemption) {
+        drm->createLowPriorityContext();
+    }
     preemption = hwHelper.setupPreemptionRegisters(outHwInfo, preemption);
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
                                                   static_cast<bool>(outHwInfo->pSkuTable->ftrGpGpuMidThreadLevelPreempt) && preemption,

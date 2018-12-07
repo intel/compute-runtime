@@ -264,25 +264,26 @@ TEST_F(DrmTests, givenKernelSupportingTurboPatchWhenDeviceIsCreatedThenSimplifie
     EXPECT_FALSE(drm->getSimplifiedMocsTableUsage());
 }
 
-#if defined(I915_PARAM_HAS_PREEMPTION)
 TEST_F(DrmTests, checkPreemption) {
     auto drm = DrmWrap::createDrm(0);
     EXPECT_NE(drm, nullptr);
-    bool ret = drm->hasPreemption();
-    EXPECT_EQ(ret, true);
+    drm->checkPreemptionSupport();
+#if defined(I915_PARAM_HAS_PREEMPTION)
+    EXPECT_TRUE(drm->isPreemptionSupported());
+#else
+    EXPECT_FALSE(drm->isPreemptionSupported());
+#endif
     DrmWrap::closeDevice(0);
-
     drm = DrmWrap::get(0);
     EXPECT_EQ(drm, nullptr);
 }
-#endif
 
 TEST_F(DrmTests, failOnContextCreate) {
     auto drm = DrmWrap::createDrm(0);
     EXPECT_NE(drm, nullptr);
     failOnContextCreate = -1;
-    bool ret = drm->hasPreemption();
-    EXPECT_EQ(ret, false);
+    EXPECT_THROW(drm->createLowPriorityContext(), std::exception);
+    EXPECT_FALSE(drm->isPreemptionSupported());
     failOnContextCreate = 0;
     DrmWrap::closeDevice(0);
 
@@ -294,8 +295,8 @@ TEST_F(DrmTests, failOnSetPriority) {
     auto drm = DrmWrap::createDrm(0);
     EXPECT_NE(drm, nullptr);
     failOnSetPriority = -1;
-    bool ret = drm->hasPreemption();
-    EXPECT_EQ(ret, false);
+    EXPECT_THROW(drm->createLowPriorityContext(), std::exception);
+    EXPECT_FALSE(drm->isPreemptionSupported());
     failOnSetPriority = 0;
     DrmWrap::closeDevice(0);
 
