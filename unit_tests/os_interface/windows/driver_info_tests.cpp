@@ -11,11 +11,13 @@
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/helpers/options.h"
+#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_wddm.h"
-#include "unit_tests/libult/create_command_stream.h"
+#include "unit_tests/os_interface/windows/registry_reader_tests.h"
 #include "gtest/gtest.h"
+#include <memory>
 
 namespace OCLRT {
 
@@ -107,5 +109,52 @@ TEST(DriverInfo, GivenDriverInfoWhenThenReturnNonNullptr) {
 
     EXPECT_STREQ(defaultVersion.c_str(), driverVersion.c_str());
     EXPECT_TRUE(registryReaderMock->properVersionKey);
-}
+};
+
+TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoThenReturnDriverInfoWindowsNotNullptr) {
+
+    std::unique_ptr<OSInterface> osInterface(new OSInterface());
+    osInterface->get()->setWddm(Wddm::createWddm());
+    EXPECT_NE(nullptr, osInterface->get()->getWddm());
+
+    std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(osInterface.get()));
+
+    EXPECT_NE(nullptr, driverInfo);
+};
+
+TEST(DriverInfo, givenNotInitializedOsInterfaceWhenCreateDriverInfoThenReturnDriverInfoWindowsNullptr) {
+
+    std::unique_ptr<OSInterface> osInterface;
+
+    std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(osInterface.get()));
+
+    EXPECT_EQ(nullptr, driverInfo);
+};
+
+class MockDriverInfoWindows : public DriverInfoWindows {
+
+  public:
+    const char *getRegistryReaderRegKey() {
+        return reader->getRegKey();
+    }
+    TestedRegistryReader *reader;
+
+    static MockDriverInfoWindows *create(std::string path) {
+
+        auto result = new MockDriverInfoWindows();
+        result->reader = new TestedRegistryReader(path);
+        result->setRegistryReader(result->reader);
+
+        return result;
+    };
+};
+
+TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoWindowsThenSetRegistryReaderWithExpectRegKey) {
+    std::string path = "";
+    std::unique_ptr<MockDriverInfoWindows> driverInfo(MockDriverInfoWindows::create(path));
+    std::unique_ptr<TestedRegistryReader> reader(new TestedRegistryReader(path));
+    EXPECT_NE(nullptr, reader);
+    EXPECT_STREQ(driverInfo->getRegistryReaderRegKey(), reader->getRegKey());
+};
+
 } // namespace OCLRT
