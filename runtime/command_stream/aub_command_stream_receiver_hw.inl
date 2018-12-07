@@ -101,19 +101,6 @@ const AubMemDump::LrcaHelper &AUBCommandStreamReceiverHw<GfxFamily>::getCsTraits
 }
 
 template <typename GfxFamily>
-size_t AUBCommandStreamReceiverHw<GfxFamily>::getEngineIndexFromInstance(EngineInstanceT engineInstance) {
-    auto findCriteria = [&](const auto &it) { return it.type == engineInstance.type && it.id == engineInstance.id; };
-    auto findResult = std::find_if(allEngineInstances.begin(), allEngineInstances.end(), findCriteria);
-    UNRECOVERABLE_IF(findResult == allEngineInstances.end());
-    return findResult - allEngineInstances.begin();
-}
-
-template <typename GfxFamily>
-size_t AUBCommandStreamReceiverHw<GfxFamily>::getEngineIndex(EngineType engineType) {
-    return getEngineIndexFromInstance(engineType);
-}
-
-template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineInstanceT engineInstance) {
     auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[engineInstance.type];
 
@@ -339,7 +326,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     auto streamLocked = getAubStream()->lockStream();
-    auto engineIndex = getEngineIndex(osContext->getEngineType().type);
+    auto engineIndex = this->getEngineIndex(osContext->getEngineType().type);
     auto engineInstance = allEngineInstances[engineIndex];
 
     initializeEngine(engineIndex);

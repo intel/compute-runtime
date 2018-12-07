@@ -90,8 +90,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
 
     static const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance);
-    size_t getEngineIndexFromInstance(EngineInstanceT engineInstance);
-    size_t getEngineIndex(EngineType engineType);
 
     AubManager *aubManager = nullptr;
     std::unique_ptr<HardwareContext> hardwareContext;
@@ -107,7 +105,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
         size_t sizeRingBuffer;
         uint32_t tailRingBuffer;
     } engineInfoTable[EngineInstanceConstants::numAllEngineInstances] = {};
-    size_t gpgpuEngineIndex = EngineInstanceConstants::numGpgpuEngineInstances - 1;
 
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;
     uint32_t aubDeviceId;

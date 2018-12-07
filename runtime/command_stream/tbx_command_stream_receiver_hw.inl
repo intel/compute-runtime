@@ -71,13 +71,13 @@ TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
 }
 
 template <typename GfxFamily>
-const AubMemDump::LrcaHelper &TbxCommandStreamReceiverHw<GfxFamily>::getCsTraits(EngineType engineType) {
-    return *AUBFamilyMapper<GfxFamily>::csTraits[engineType];
+const AubMemDump::LrcaHelper &TbxCommandStreamReceiverHw<GfxFamily>::getCsTraits(EngineInstanceT engineInstance) {
+    return *AUBFamilyMapper<GfxFamily>::csTraits[engineInstance.type];
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineType engineType) {
-    auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[engineType];
+void TbxCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineInstanceT engineInstance) {
+    auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[engineInstance.type];
 
     DEBUG_BREAK_IF(!mmioList);
     for (auto &mmioPair : *mmioList) {
@@ -86,12 +86,12 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineType engineType
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineType) {
-    auto mmioBase = getCsTraits(engineType).mmioBase;
-    auto &engineInfo = engineInfoTable[engineType];
+void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineInstanceT engineInstance) {
+    auto mmioBase = getCsTraits(engineInstance).mmioBase;
+    auto &engineInfo = engineInfoTable[engineInstance.type];
 
     this->initGlobalMMIO();
-    initEngineMMIO(engineType);
+    initEngineMMIO(engineInstance);
     this->initAdditionalMMIO();
 
     // Global HW Status Page
@@ -110,7 +110,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
     }
 
     // Allocate the LRCA
-    auto csTraits = getCsTraits(engineType);
+    auto csTraits = getCsTraits(engineInstance);
     const size_t sizeLRCA = csTraits.sizeLRCA;
     const size_t alignLRCA = csTraits.alignLRCA;
     auto pLRCABase = alignedMalloc(sizeLRCA, alignLRCA);
@@ -184,11 +184,13 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
 template <typename GfxFamily>
 FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     auto engineType = osContext->getEngineType().type;
-    uint32_t mmioBase = getCsTraits(engineType).mmioBase;
+    auto engineIndex = this->getEngineIndex(osContext->getEngineType().type);
+    auto engineInstance = allEngineInstances[engineIndex];
+    uint32_t mmioBase = getCsTraits(engineInstance).mmioBase;
     auto &engineInfo = engineInfoTable[engineType];
 
     if (!engineInfo.pLRCA) {
-        initializeEngine(engineType);
+        initializeEngine(engineInstance);
         DEBUG_BREAK_IF(!engineInfo.pLRCA);
     }
 
@@ -315,16 +317,16 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         contextDescriptor.sData.LogicalRingCtxAddress = ggttLRCA / 4096;
         contextDescriptor.sData.ContextID = 0;
 
-        submitLRCA(engineType, contextDescriptor);
+        submitLRCA(engineInstance, contextDescriptor);
     }
 
-    pollForCompletion(engineType);
+    pollForCompletion(engineInstance);
     return 0;
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor) {
-    auto mmioBase = getCsTraits(engineType).mmioBase;
+void TbxCommandStreamReceiverHw<GfxFamily>::submitLRCA(EngineInstanceT engineInstance, const MiContextDescriptorReg &contextDescriptor) {
+    auto mmioBase = getCsTraits(engineInstance).mmioBase;
     tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
     tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
     tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[1]);
@@ -332,10 +334,10 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitLRCA(EngineType engineType, co
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineType engineType) {
+void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineInstanceT engineInstance) {
     typedef typename AubMemDump::CmdServicesMemTraceRegisterPoll CmdServicesMemTraceRegisterPoll;
 
-    auto mmioBase = getCsTraits(engineType).mmioBase;
+    auto mmioBase = getCsTraits(engineInstance).mmioBase;
     bool pollNotEqual = false;
     tbxStream.registerPoll(
         AubMemDump::computeRegisterOffset(mmioBase, 0x2234), //EXECLIST_STATUS

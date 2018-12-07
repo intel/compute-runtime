@@ -86,4 +86,17 @@ template <typename GfxFamily>
 uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getMemoryBankForGtt() const {
     return MemoryBanks::getBank(this->deviceIndex);
 }
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getEngineIndexFromInstance(EngineInstanceT engineInstance) {
+    auto findCriteria = [&](const auto &it) { return it.type == engineInstance.type && it.id == engineInstance.id; };
+    auto findResult = std::find_if(allEngineInstances.begin(), allEngineInstances.end(), findCriteria);
+    UNRECOVERABLE_IF(findResult == allEngineInstances.end());
+    return findResult - allEngineInstances.begin();
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getEngineIndex(EngineType engineType) {
+    return getEngineIndexFromInstance(engineType);
+}
 } // namespace OCLRT

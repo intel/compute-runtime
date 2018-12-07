@@ -45,18 +45,18 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     bool writeMemory(GraphicsAllocation &gfxAllocation);
 
     // Family specific version
-    void submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor);
-    void pollForCompletion(EngineType engineType);
-    void initEngineMMIO(EngineType engineType);
+    void submitLRCA(EngineInstanceT engineInstance, const MiContextDescriptorReg &contextDescriptor);
+    void pollForCompletion(EngineInstanceT engineInstance);
+    void initEngineMMIO(EngineInstanceT engineInstance);
 
     static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 
     TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);
     ~TbxCommandStreamReceiverHw() override;
 
-    void initializeEngine(EngineType engineType);
+    void initializeEngine(EngineInstanceT engineInstance);
 
-    static const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType);
+    static const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance);
 
     struct EngineInfo {
         void *pLRCA;

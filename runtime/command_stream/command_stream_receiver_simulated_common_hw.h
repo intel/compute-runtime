@@ -32,8 +32,11 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
     void getGTTData(void *memory, AubGTTData &data);
     uint32_t getMemoryBankForGtt() const;
+    size_t getEngineIndexFromInstance(EngineInstanceT engineInstance);
+    size_t getEngineIndex(EngineType engineType);
 
     AubMemDump::AubStream *stream;
+    size_t gpgpuEngineIndex = EngineInstanceConstants::numGpgpuEngineInstances - 1;
 
   protected:
     MMIOList splitMMIORegisters(const std::string &registers, char delimiter);
