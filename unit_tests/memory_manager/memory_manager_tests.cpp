@@ -1357,6 +1357,33 @@ TEST(GraphicsAllocation, givenCpuPointerBasedConstructorWhenGraphicsAllocationIs
     EXPECT_EQ(expectedGpuAddress, graphicsAllocation.getGpuAddress());
 }
 
+using GraphicsAllocationTests = ::testing::Test;
+
+HWTEST_F(GraphicsAllocationTests, givenAllocationUsedByNonDefaultCsrWhenCheckingUsageBeforeDestroyThenStoreIt) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto nonDefaultOsContext = device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).osContext;
+    auto nonDefaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).commandStreamReceiver);
+    auto defaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
+    auto defaultOsContext = device->getDefaultEngine().osContext;
+
+    EXPECT_FALSE(defaultOsContext->getEngineType().id == nonDefaultOsContext->getEngineType().id &&
+                 defaultOsContext->getEngineType().type == nonDefaultOsContext->getEngineType().type);
+
+    auto memoryManager = device->getExecutionEnvironment()->memoryManager.get();
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(1);
+
+    nonDefaultCsr->taskCount = *nonDefaultCsr->getTagAddress() + 1;
+    nonDefaultCsr->latestFlushedTaskCount = *nonDefaultCsr->getTagAddress() + 1;
+    graphicsAllocation->updateTaskCount(*nonDefaultCsr->getTagAddress() + 1, nonDefaultOsContext->getContextId());
+    graphicsAllocation->updateTaskCount(0, defaultOsContext->getContextId()); // used and ready
+
+    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
+    EXPECT_NE(nullptr, nonDefaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
+    EXPECT_EQ(nullptr, defaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
+    (*nonDefaultCsr->getTagAddress())++;
+    // no need to call freeGraphicsAllocation
+}
+
 TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocationIsCreatedThenGpuAddressHasCorrectValue) {
     uintptr_t address = 0xf0000000;
     void *addressWithTrailingBitSet = reinterpret_cast<void *>(address);

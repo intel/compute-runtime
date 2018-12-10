@@ -145,6 +145,7 @@ TEST(MemObj, givenMemObjWhenReleaseAllocatedPtrIsCalledTwiceThenItDoesntCrash) {
 TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAllocationIsAddedToMemoryManagerAllocationList) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
+    memoryManager.setDefaultEngineIndex(context.getDevice(0)->getDefaultEngine().osContext->getContextId());
 
     context.setMemoryManager(&memoryManager);
 
