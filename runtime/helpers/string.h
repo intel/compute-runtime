@@ -21,7 +21,7 @@ inline int strcpy_s(char *dst, size_t dstSize, const char *src) {
         return -ERANGE;
     }
 
-    strncpy(dst, src, length);
+    memcpy(dst, src, length);
     dst[length] = '\0';
 
     return 0;
@@ -39,7 +39,7 @@ inline int strncpy_s(char *dst, size_t numberOfElements, const char *src, size_t
     if (length > count) {
         length = count;
     }
-    strncpy(dst, src, length);
+    memcpy(dst, src, length);
 
     if (length < numberOfElements) {
         numberOfElements = length;
