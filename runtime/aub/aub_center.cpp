@@ -12,8 +12,13 @@
 namespace OCLRT {
 AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName) {
     if (DebugManager.flags.UseAubStream.get()) {
-        aubManager.reset(AubDump::AubManager::create(pHwInfo->pPlatform->eRenderCoreFamily, 1, 1, localMemoryEnabled, pHwInfo->capabilityTable.aubDeviceId, aubFileName));
+        aubManager.reset(createAubManager(pHwInfo->pPlatform->eRenderCoreFamily, 1, 1, localMemoryEnabled, pHwInfo->capabilityTable.aubDeviceId, aubFileName));
     }
+    addressMapper = std::make_unique<AddressMapper>();
+    streamProvider = std::make_unique<AubFileStreamProvider>();
+}
+
+AubCenter::AubCenter() {
     addressMapper = std::make_unique<AddressMapper>();
     streamProvider = std::make_unique<AubFileStreamProvider>();
 }

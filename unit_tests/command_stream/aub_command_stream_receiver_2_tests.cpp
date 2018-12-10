@@ -647,6 +647,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledThenGraphicsAllocationSizeIsReadCorrectly) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    pDevice->executionEnvironment->aubCenter.reset(new AubCenter());
+
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(*platformDevices[0], "", false, *pDevice->executionEnvironment);
     memoryManager.reset(aubCsr->createMemoryManager(false, false));
 
@@ -698,6 +700,7 @@ HWTEST_F(AubCommandStreamReceiverTests, whenAubCommandStreamReceiverIsCreatedThe
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineIsInitializedThenDumpHandleIsGenerated) {
+    executionEnvironment.aubCenter.reset(new AubCenter());
     auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
@@ -821,6 +824,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenAskedForMemoryExpectation
         }
         uint32_t inputCompareOperation = 0;
     };
+    pDevice->getExecutionEnvironment()->aubCenter.reset(new AubCenter());
+
     void *mockAddress = reinterpret_cast<void *>(1);
     uint32_t compareNotEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual;
     uint32_t compareEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;

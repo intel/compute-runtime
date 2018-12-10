@@ -269,6 +269,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesInitializeTheirEnginesThenUniqueGlobalGttAdressesAreGenerated) {
     ExecutionEnvironment executionEnvironment;
+    executionEnvironment.aubCenter.reset(new AubCenter());
+
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     auto engineType = OCLRT::ENGINE_RCS;
@@ -816,6 +818,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAllocat
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAUBDumpCaptureFileNameHasBeenSpecifiedThenItShouldBeUsedToOpenTheFileWithAubCapture) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AUBDumpCaptureFileName.set("file_name.aub");
+    pDevice->executionEnvironment->aubCenter.reset(new AubCenter());
 
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(static_cast<MockAubCsr<FamilyType> *>(AUBCommandStreamReceiver::create(*platformDevices[0], "", true, *pDevice->executionEnvironment)));
     EXPECT_NE(nullptr, aubCsr);

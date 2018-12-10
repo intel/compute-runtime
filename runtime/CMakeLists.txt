@@ -123,6 +123,7 @@ if(${GENERATE_EXECUTABLE})
 
   add_library(${NEO_DYNAMIC_LIB_NAME} SHARED
     ${NEO_DYNAMIC_LIB__TARGET_OBJECTS}
+    ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
   )
   if(TARGET ${GMMUMD_LIB_NAME})
     add_dependencies(${NEO_DYNAMIC_LIB_NAME} ${GMMUMD_LIB_NAME})

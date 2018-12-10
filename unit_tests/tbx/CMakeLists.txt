@@ -7,6 +7,7 @@
 add_executable(igdrcl_tbx_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/main_tbx.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_tests_configuration.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/dll/create_command_stream.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/options.cpp
   $<TARGET_OBJECTS:igdrcl_libult>

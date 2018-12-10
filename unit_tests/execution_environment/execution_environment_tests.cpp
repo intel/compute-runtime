@@ -23,6 +23,7 @@
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/utilities/destructor_counted.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 
 using namespace OCLRT;
@@ -132,7 +133,10 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCal
     EXPECT_STREQ(executionEnvironment.aubFileNameReceived.c_str(), "test.aub");
 }
 
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenGetAubManagerIsCalledThenReturnNull) {
+TEST(ExecutionEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenReturnNull) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.UseAubStream.set(false);
+
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initAubCenter(platformDevices[0], false, "");
     auto aubManager = executionEnvironment.aubCenter->getAubManager();

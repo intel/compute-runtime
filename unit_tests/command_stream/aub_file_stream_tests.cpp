@@ -264,6 +264,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenF
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryIsCalledThenPageWalkIsCallingStreamsExpectMemory) {
+    pDevice->executionEnvironment->aubCenter.reset(new AubCenter());
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
 
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(std::make_unique<MockAubFileStream>());

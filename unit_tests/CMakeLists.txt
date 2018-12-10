@@ -76,7 +76,15 @@ set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
 )
 
 if(DEFINED AUB_STREAM_DIR)
-  list(APPEND NEO_IGDRCL_TESTS__TARGET_OBJECTS $<TARGET_OBJECTS:${AUB_STREAM_ENABLE_LIB_NAME}>)
+  add_library (aub_stream_mock_lib OBJECT
+    ${IGDRCL_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
+  )
+  list(APPEND NEO_IGDRCL_TESTS__TARGET_OBJECTS 
+    $<TARGET_OBJECTS:${AUB_STREAM_ENABLE_LIB_NAME}>
+    $<TARGET_OBJECTS:aub_stream_mock_lib>
+  )
+else()
+   list(APPEND IGDRCL_SRCS_tests_local ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp)
 endif()
 
 add_executable(igdrcl_tests

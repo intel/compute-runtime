@@ -14,10 +14,12 @@
 
 namespace OCLRT {
 struct HardwareInfo;
+extern AubDump::AubManager *createAubManager(uint32_t gfxFamily, uint32_t devicesCount, size_t memoryBankSizeInGB, bool localMemorySupported, uint32_t deviceId, const std::string &aubFileName);
 
 class AubCenter {
   public:
     AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName);
+    AubCenter();
     virtual ~AubCenter() = default;
 
     void initPhysicalAddressAllocator(PhysicalAddressAllocator *pPhysicalAddressAllocator) {
