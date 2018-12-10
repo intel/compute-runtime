@@ -80,11 +80,15 @@ HWTEST_P(GetDevicesTest, givenGetDevicesWhenCsrIsSetToValidTypeThenTheFunctionRe
         EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
         ASSERT_NE(nullptr, hardwarePrefix[i]);
         if (hwPrefix != nullptr) {
-            EXPECT_EQ(*hardwareInfoTable[i], *hwInfo);
+            EXPECT_EQ(0, memcmp(hardwareInfoTable[i]->pPlatform, hwInfo->pPlatform, sizeof(PLATFORM)));
+            EXPECT_EQ(0, memcmp(&hardwareInfoTable[i]->capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
+            EXPECT_EQ(0, memcmp(hardwareInfoTable[i]->pWaTable, hwInfo->pWaTable, sizeof(WorkaroundTable)));
             EXPECT_STREQ(hardwarePrefix[i], productFamily.c_str());
         } else {
             auto defaultHwInfo = *platformDevices;
-            EXPECT_EQ(*defaultHwInfo, *hwInfo);
+            EXPECT_EQ(0, memcmp(defaultHwInfo->pPlatform, hwInfo->pPlatform, sizeof(PLATFORM)));
+            EXPECT_EQ(0, memcmp(&defaultHwInfo->capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
+            EXPECT_EQ(0, memcmp(defaultHwInfo->pWaTable, hwInfo->pWaTable, sizeof(WorkaroundTable)));
         }
         break;
     default:
