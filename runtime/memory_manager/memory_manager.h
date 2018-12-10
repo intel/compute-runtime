@@ -17,18 +17,13 @@
 #include <vector>
 
 namespace OCLRT {
-class AllocationsList;
-class Device;
 class DeferredDeleter;
 class ExecutionEnvironment;
 class GraphicsAllocation;
 class HostPtrManager;
 class CommandStreamReceiver;
 class OsContext;
-class OSInterface;
-class AllocsTracker;
-class MapBaseAllocationTracker;
-class SVMAllocsManager;
+enum class PreemptionMode : uint32_t;
 
 using CsrContainer = std::vector<std::array<std::unique_ptr<CommandStreamReceiver>, EngineInstanceConstants::numGpgpuEngineInstances>>;
 
@@ -248,7 +243,7 @@ class MemoryManager {
         ::alignedFree(ptr);
     }
 
-    OsContext *createAndRegisterOsContext(EngineInstanceT engineType);
+    OsContext *createAndRegisterOsContext(EngineInstanceT engineType, PreemptionMode preemptionMode);
     uint32_t getOsContextCount() { return static_cast<uint32_t>(registeredOsContexts.size()); }
     CommandStreamReceiver *getDefaultCommandStreamReceiver(uint32_t deviceId) const;
     const CsrContainer &getCommandStreamReceivers() const;

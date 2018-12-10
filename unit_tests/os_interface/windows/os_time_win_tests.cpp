@@ -84,7 +84,7 @@ TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuGpuTimeThenReturnsError) {
 
 TEST(OSTimeWinTests, givenOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
     auto wddm = new WddmMock;
-    wddm->init();
+    wddm->init(PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo));
     TimeStampData CPUGPUTime01 = {0};
     TimeStampData CPUGPUTime02 = {0};
     std::unique_ptr<OSInterface> osInterface(new OSInterface());

@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/command_stream/preemption.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
@@ -34,8 +35,9 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture, publi
     }
 
     void init() {
-        EXPECT_TRUE(wddm->init());
-        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0]);
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+        EXPECT_TRUE(wddm->init(preemptionMode));
+        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0], preemptionMode);
         osContextWin = osContext->get();
     }
 
@@ -65,12 +67,10 @@ TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
 }
 
 TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
-    wddm->setPreemptionMode(PreemptionMode::Disabled);
-    wddm->wddmInterface->createHwQueue(wddm->preemptionMode, *osContextWin);
+    wddm->wddmInterface->createHwQueue(PreemptionMode::Disabled, *osContextWin);
     EXPECT_EQ(0u, getCreateHwQueueDataFcn()->Flags.DisableGpuTimeout);
 
-    wddm->setPreemptionMode(PreemptionMode::MidBatch);
-    wddm->wddmInterface->createHwQueue(wddm->preemptionMode, *osContextWin);
+    wddm->wddmInterface->createHwQueue(PreemptionMode::MidBatch, *osContextWin);
     EXPECT_EQ(1u, getCreateHwQueueDataFcn()->Flags.DisableGpuTimeout);
 }
 

@@ -133,7 +133,7 @@ TEST_F(GlArbSyncEventOsTest, WhenCreateSynchronizationObjectSucceedsThenAllHAndl
     };
     CreateSyncObjectMock::reset();
 
-    wddm->init();
+    wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     gdi->createSynchronizationObject.mFunc = CreateSyncObjectMock::createSynchObject;
     gdi->createSynchronizationObject2.mFunc = CreateSyncObjectMock::createSynchObject2;
     auto ret = setupArbSyncObject(sharing, osInterface, syncInfo);
@@ -183,7 +183,7 @@ TEST_F(GlArbSyncEventOsTest, GivenNewGlSyncInfoWhenCreateSynchronizationObjectFa
         }
     };
     CreateSyncObjectMock::reset();
-    wddm->init();
+    wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     gdi->createSynchronizationObject.mFunc = CreateSyncObjectMock::createSynchObject;
     gdi->createSynchronizationObject2.mFunc = CreateSyncObjectMock::createSynchObject2;
 
@@ -207,7 +207,7 @@ TEST_F(GlArbSyncEventOsTest, GivenNewGlSyncInfoWhenCreateEventFailsThenSetupArbS
     auto wddm = new WddmMock();
     auto gdi = new MockGdi();
     wddm->gdi.reset(gdi);
-    wddm->init();
+    wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
     mockOsInterface.get()->setWddm(wddm);
 
@@ -235,7 +235,7 @@ TEST_F(GlArbSyncEventOsTest, GivenInvalidGlSyncInfoWhenCleanupArbSyncObjectIsCal
     auto wddm = new WddmMock();
     auto gdi = new MockGdi();
     wddm->gdi.reset(gdi);
-    wddm->init();
+    wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
     MockOSInterface mockOsInterface;
     MockOSInterfaceImpl *mockOsInterfaceImpl = static_cast<MockOSInterfaceImpl *>(mockOsInterface.get());
@@ -264,7 +264,7 @@ TEST_F(GlArbSyncEventOsTest, GivenValidGlSyncInfoWhenCleanupArbSyncObjectIsCalle
     auto wddm = new WddmMock();
     auto gdi = new MockGdi();
     wddm->gdi.reset(gdi);
-    wddm->init();
+    wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
     MockOSInterface mockOsInterface;
     MockOSInterfaceImpl *mockOsInterfaceImpl = static_cast<MockOSInterfaceImpl *>(mockOsInterface.get());
@@ -322,8 +322,9 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
         }
     };
     FailSignalSyncObjectMock::reset();
-    wddm->init();
-    OsContext osContext(&osInterface, 0u, gpgpuEngineInstances[0]);
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+    wddm->init(preemptionMode);
+    OsContext osContext(&osInterface, 0u, gpgpuEngineInstances[0], preemptionMode);
 
     CL_GL_SYNC_INFO syncInfo = {};
     syncInfo.serverSynchronizationObject = 0x5cU;
@@ -380,8 +381,9 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
         }
     };
     FailSignalSyncObjectMock::reset();
-    wddm->init();
-    OsContext osContext(&osInterface, 0u, gpgpuEngineInstances[0]);
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+    wddm->init(preemptionMode);
+    OsContext osContext(&osInterface, 0u, gpgpuEngineInstances[0], preemptionMode);
 
     CL_GL_SYNC_INFO syncInfo = {};
     syncInfo.submissionSynchronizationObject = 0x7cU;

@@ -249,7 +249,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
         std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(hwInfo[0], *executionEnvironment);
     executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceivers[0][0]->createMemoryManager(false, false));
     executionEnvironment->commandStreamReceivers[0][0]->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
-    OsContext osContext(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0]);
+    OsContext osContext(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*hwInfo));
     executionEnvironment->commandStreamReceivers[0][0]->setOsContext(osContext);
 
     auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemory(4096);
@@ -274,7 +274,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
                                                                                                                  *executionEnvironment);
     executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceivers[0][0]->createMemoryManager(false, false));
     executionEnvironment->commandStreamReceivers[0][0]->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
-    OsContext osContext(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0]);
+    OsContext osContext(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*hwInfo));
     executionEnvironment->commandStreamReceivers[0][0]->setOsContext(osContext);
 
     auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemory(4096);

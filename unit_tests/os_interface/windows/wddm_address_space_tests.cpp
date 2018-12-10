@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/command_stream/preemption.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/mocks/mock_wddm.h"
 #include "test.h"
@@ -60,7 +61,7 @@ TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAd
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init();
+    bool ret = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     EXPECT_TRUE(ret);
 
     wddm->returnGood = 1;
@@ -77,7 +78,7 @@ TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init();
+    bool ret = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     EXPECT_TRUE(ret);
     uintptr_t expectedReserve = 0;
     ret = wddm->reserveValidAddressRange(size, reserve);
@@ -90,7 +91,7 @@ TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenRe
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init();
+    bool ret = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     EXPECT_TRUE(ret);
 
     wddm->returnInvalidCount = 1;
@@ -107,7 +108,7 @@ TEST_F(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenRe
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init();
+    bool ret = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     EXPECT_TRUE(ret);
 
     wddm->returnInvalidCount = 2;
@@ -124,7 +125,7 @@ TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturnSe
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init();
+    bool ret = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     EXPECT_TRUE(ret);
 
     wddm->returnInvalidCount = 2;

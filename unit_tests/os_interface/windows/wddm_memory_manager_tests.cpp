@@ -36,7 +36,7 @@ void WddmMemoryManagerFixture::SetUp() {
         GMM_TRANSLATIONTABLE_CALLBACKS dummyTTCallbacks = {};
         wddm->resetPageTableManager(GmmPageTableMngr::create(&dummyDeviceCallbacks, 0, &dummyTTCallbacks));
     }
-    EXPECT_TRUE(wddm->init());
+    EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
     wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
 
@@ -65,7 +65,7 @@ TEST(WddmMemoryManager, NonAssignable) {
 
 TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGettingTrimCandidatePositionThenReturnItsPositionAndUnusedPositionInOtherContexts) {
     WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 3u, false};
-    OsContext osContext(nullptr, 1u, gpgpuEngineInstances[0]);
+    OsContext osContext(nullptr, 1u, gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     allocation.setTrimCandidateListPosition(osContext.getContextId(), 700u);
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(0u));
     EXPECT_EQ(700u, allocation.getTrimCandidateListPosition(1u));
@@ -1140,7 +1140,7 @@ TEST(WddmMemoryManagerDefaults, givenDefaultWddmMemoryManagerWhenItIsQueriedForI
 TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledWithTripleAllocationThenSuccessIsReturned) {
     ExecutionEnvironment executionEnvironment;
     auto wddm = std::make_unique<WddmMock>();
-    EXPECT_TRUE(wddm->init());
+    EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     MockWddmMemoryManager memoryManager(wddm.get(), executionEnvironment);
 
     auto wddmAlloc = (WddmAllocation *)memoryManager.allocateGraphicsMemory(4096u, reinterpret_cast<void *>(0x1000));
@@ -1153,7 +1153,7 @@ TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledW
 TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemoryForBufferWithoutHostPtrThen64kbAdressIsAllocated) {
     DebugManagerStateRestore dbgRestore;
     auto wddm = std::make_unique<WddmMock>();
-    EXPECT_TRUE(wddm->init());
+    EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     DebugManager.flags.Enable64kbpages.set(true);
     WddmMemoryManager memoryManager64k(true, false, wddm.get(), executionEnvironment);
     EXPECT_EQ(0, wddm->createAllocationResult.called);
@@ -1171,7 +1171,7 @@ TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemor
 TEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocationIsCreatedWithSizeSmallerThan64kbThenGraphicsAllocationsHas64kbAlignedUnderlyingSize) {
     DebugManagerStateRestore dbgRestore;
     auto wddm = std::make_unique<WddmMock>();
-    EXPECT_TRUE(wddm->init());
+    EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     DebugManager.flags.Enable64kbpages.set(true);
     WddmMemoryManager memoryManager(true, false, wddm.get(), executionEnvironment);
     auto graphicsAllocation = memoryManager.allocateGraphicsMemory64kb(1, MemoryConstants::pageSize64k, false, false);
@@ -1190,7 +1190,7 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLoc
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.Enable64kbpages.set(true);
     auto wddm = std::make_unique<WddmMock>();
-    EXPECT_TRUE(wddm->init());
+    EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     MockWddmMemoryManager memoryManager64k(wddm.get(), executionEnvironment);
     uint32_t lockCount = wddm->lockResult.called;
     uint32_t mapGpuVirtualAddressResult = wddm->mapGpuVirtualAddressResult.called;
@@ -1213,16 +1213,16 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithNoRegisteredOsContextsWh
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenCallingIsMemoryBudgetExhaustedThenReturnFalse) {
-    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
-    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
-    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     EXPECT_FALSE(memoryManager->isMemoryBudgetExhausted());
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithExhaustedMemoryBudgetWhenCallingIsMemoryBudgetExhaustedThenReturnTrue) {
-    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
-    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
-    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     memoryManager->getRegisteredOsContext(1)->get()->getResidencyController().setMemoryBudgetExhausted();
     EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());
 }
@@ -1249,7 +1249,7 @@ TEST_F(MockWddmMemoryManagerTest, givenDisabledAsyncDeleterFlagWhenMemoryManager
 
 TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThenUseWddmToMap) {
     auto myWddm = std::make_unique<WddmMock>();
-    EXPECT_TRUE(myWddm->init());
+    EXPECT_TRUE(myWddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     WddmMemoryManager memoryManager(false, false, myWddm.get(), executionEnvironment);
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
@@ -1277,7 +1277,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVa
     gmm->isRenderCompressed = true;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm;
-    EXPECT_TRUE(wddm.init());
+    EXPECT_TRUE(wddm.init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     wddm.resetPageTableManager(mockMngr);
@@ -1309,7 +1309,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVa
 
 TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenReleaseingThenUnmapAuxVa) {
     auto wddm = std::make_unique<WddmMock>();
-    EXPECT_TRUE(wddm->init());
+    EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     WddmMemoryManager memoryManager(false, false, wddm.get(), executionEnvironment);
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 123;
 
@@ -1335,7 +1335,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenReleaseingT
 
 TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenReleaseingThenDontUnmapAuxVa) {
     auto wddm = std::make_unique<WddmMock>();
-    EXPECT_TRUE(wddm->init());
+    EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     WddmMemoryManager memoryManager(false, false, wddm.get(), executionEnvironment);
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
@@ -1354,7 +1354,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMappedGp
     gmm->isRenderCompressed = false;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm;
-    EXPECT_TRUE(wddm.init());
+    EXPECT_TRUE(wddm.init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     wddm.resetPageTableManager(mockMngr);
@@ -1370,7 +1370,7 @@ TEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenRetur
     gmm->isRenderCompressed = false;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm;
-    EXPECT_TRUE(wddm.init());
+    EXPECT_TRUE(wddm.init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
 
     auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), 0, nullptr, gpuVa, false, false, false);
     ASSERT_FALSE(result);
@@ -1379,7 +1379,7 @@ TEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenRetur
 TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnsetThenDontUpdateAuxTable) {
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     auto wddm = std::make_unique<WddmMock>();
-    EXPECT_TRUE(wddm->init());
+    EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     WddmMemoryManager memoryManager(false, false, wddm.get(), executionEnvironment);
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
@@ -1445,7 +1445,8 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
     ExecutionEnvironment executionEnvironment;
     auto csr = createCommandStream(*platformDevices, executionEnvironment);
     auto wddm = new WddmMock();
-    EXPECT_TRUE(wddm->init());
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+    EXPECT_TRUE(wddm->init(preemptionMode));
 
     executionEnvironment.osInterface = std::make_unique<OSInterface>();
     executionEnvironment.osInterface->get()->setWddm(wddm);
@@ -1453,7 +1454,7 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
     executionEnvironment.commandStreamReceivers[0][0] = std::unique_ptr<CommandStreamReceiver>(csr);
 
     executionEnvironment.memoryManager = std::make_unique<WddmMemoryManager>(false, false, wddm, executionEnvironment);
-    csr->setOsContext(*executionEnvironment.memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]));
+    csr->setOsContext(*executionEnvironment.memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], preemptionMode));
     EXPECT_EQ(csr, executionEnvironment.memoryManager->getDefaultCommandStreamReceiver(0));
 
     auto tagAllocator = csr->getEventPerfCountAllocator();

@@ -62,7 +62,7 @@ TEST_F(Wddm20Tests, givenMinWindowsAddressWhenWddmIsInitializedThenWddmUseThisAd
 
 TEST_F(Wddm20Tests, doubleCreation) {
     EXPECT_EQ(1u, wddm->createContextResult.called);
-    auto error = wddm->init();
+    auto error = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     EXPECT_EQ(1u, wddm->createContextResult.called);
 
     EXPECT_TRUE(error);
@@ -480,7 +480,7 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
                                                      FtrL3IACoherency))
         .Times(1)
         .WillRepeatedly(::testing::Return(true));
-    wddm->init();
+    wddm->init(PreemptionHelper::getDefaultPreemptionMode(hwInfo));
 
     EXPECT_TRUE(wddm->isInitialized());
 }
@@ -561,7 +561,7 @@ TEST_F(Wddm20WithMockGdiDllTests, whenCreateContextIsCalledThenDisableHwQueues) 
 }
 
 TEST_F(Wddm20Tests, whenCreateHwQueueIsCalledThenAlwaysReturnFalse) {
-    EXPECT_FALSE(wddm->wddmInterface->createHwQueue(wddm->preemptionMode, *osContextWin));
+    EXPECT_FALSE(wddm->wddmInterface->createHwQueue(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), *osContextWin));
 }
 
 TEST_F(Wddm20Tests, whenWddmIsInitializedThenGdiDoesntHaveHwQueueDDIs) {
@@ -782,7 +782,7 @@ TEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemor
 }
 
 TEST_F(Wddm20Tests, whenContextIsInitializedThenApplyAdditionalContextFlagsIsCalled) {
-    auto result = wddm->init();
+    auto result = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     EXPECT_TRUE(result);
     EXPECT_EQ(1u, wddm->applyAdditionalContextFlagsResult.called);
 }

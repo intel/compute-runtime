@@ -13,7 +13,7 @@
 
 namespace OCLRT {
 
-OsContext::OsContext(OSInterface *osInterface, uint32_t contextId, EngineInstanceT engineType)
+OsContext::OsContext(OSInterface *osInterface, uint32_t contextId, EngineInstanceT engineType, PreemptionMode preemptionMode)
     : contextId(contextId), engineType(engineType) {
     if (osInterface) {
         osContextImpl = std::make_unique<OsContextLinux>(*osInterface->get()->getDrm(), engineType);

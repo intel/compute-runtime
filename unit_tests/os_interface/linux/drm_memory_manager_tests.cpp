@@ -6,8 +6,9 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/device_command_stream.h"
+#include "runtime/command_stream/linear_stream.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/ptr_math.h"
@@ -1624,7 +1625,7 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareTheSameBufferOb
     auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
     executionEnvironment->commandStreamReceivers.resize(1);
     executionEnvironment->commandStreamReceivers[0][0].reset(testedCsr);
-    testedCsr->setOsContext(*memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]));
+    testedCsr->setOsContext(*memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
 
     testedCsr->makeResident(*graphicsAllocation);
     testedCsr->makeResident(*graphicsAllocation2);
@@ -1653,7 +1654,7 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBuf
     auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
     executionEnvironment->commandStreamReceivers.resize(1);
     executionEnvironment->commandStreamReceivers[0][0].reset(testedCsr);
-    testedCsr->setOsContext(*memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]));
+    testedCsr->setOsContext(*memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
 
     testedCsr->makeResident(*graphicsAllocation);
     testedCsr->makeResident(*graphicsAllocation2);

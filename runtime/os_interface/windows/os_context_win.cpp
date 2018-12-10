@@ -12,14 +12,14 @@
 
 namespace OCLRT {
 
-OsContextWin::OsContextImpl(Wddm &wddm, uint32_t osContextId, EngineInstanceT engineType) : wddm(wddm), residencyController(wddm, osContextId) {
+OsContextWin::OsContextImpl(Wddm &wddm, uint32_t osContextId, EngineInstanceT engineType, PreemptionMode preemptionMode) : wddm(wddm), residencyController(wddm, osContextId) {
     UNRECOVERABLE_IF(!wddm.isInitialized());
     auto wddmInterface = wddm.getWddmInterface();
-    if (!wddm.createContext(context, engineType)) {
+    if (!wddm.createContext(context, engineType, preemptionMode)) {
         return;
     }
     if (wddmInterface->hwQueuesSupported()) {
-        if (!wddmInterface->createHwQueue(wddm.getPreemptionMode(), *this)) {
+        if (!wddmInterface->createHwQueue(preemptionMode, *this)) {
             return;
         }
     }
@@ -31,10 +31,10 @@ OsContextWin::~OsContextImpl() {
     wddm.destroyContext(context);
 }
 
-OsContext::OsContext(OSInterface *osInterface, uint32_t contextId, EngineInstanceT engineType)
+OsContext::OsContext(OSInterface *osInterface, uint32_t contextId, EngineInstanceT engineType, PreemptionMode preemptionMode)
     : contextId(contextId), engineType(engineType) {
     if (osInterface) {
-        osContextImpl = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), contextId, engineType);
+        osContextImpl = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), contextId, engineType, preemptionMode);
     }
 }
 OsContext::~OsContext() = default;

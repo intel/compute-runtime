@@ -7,6 +7,7 @@
 
 #ifdef _WIN32
 
+#include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/device_factory.h"
@@ -51,7 +52,8 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, Exec
     tempHwInfos.release();
 
     executionEnvironment.initGmm(*pHWInfos);
-    bool success = executionEnvironment.osInterface->get()->getWddm()->init();
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(**pHWInfos);
+    bool success = executionEnvironment.osInterface->get()->getWddm()->init(preemptionMode);
     DEBUG_BREAK_IF(!success);
 
     return true;

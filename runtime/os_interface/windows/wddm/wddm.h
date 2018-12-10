@@ -28,11 +28,10 @@ namespace OCLRT {
 class WddmAllocation;
 class Gdi;
 class Gmm;
-class LinearStream;
 class GmmPageTableMngr;
-struct FeatureTable;
 struct WorkaroundTable;
 struct KmDafListener;
+enum class PreemptionMode : uint32_t;
 
 using OsContextWin = OsContext::OsContextImpl;
 
@@ -57,7 +56,7 @@ class Wddm {
     MOCKABLE_VIRTUAL bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim);
     bool mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1);
     bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData, bool allocation32bit, bool use64kbPages);
-    MOCKABLE_VIRTUAL bool createContext(D3DKMT_HANDLE &context, EngineInstanceT engineType);
+    MOCKABLE_VIRTUAL bool createContext(D3DKMT_HANDLE &context, EngineInstanceT engineType, PreemptionMode preemptionMode);
     MOCKABLE_VIRTUAL void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData);
     MOCKABLE_VIRTUAL bool freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
     MOCKABLE_VIRTUAL NTSTATUS createAllocation(WddmAllocation *alloc);
@@ -88,7 +87,7 @@ class Wddm {
 
     bool configureDeviceAddressSpace();
 
-    bool init();
+    bool init(PreemptionMode preemptionMode);
 
     bool isInitialized() const {
         return initialized;
@@ -128,10 +127,6 @@ class Wddm {
 
     std::unique_ptr<SettingsReader> registryReader;
 
-    void setPreemptionMode(PreemptionMode mode) {
-        this->preemptionMode = mode;
-    }
-
     GmmPageTableMngr *getPageTableManager() const { return pageTableManager.get(); }
     void resetPageTableManager(GmmPageTableMngr *newPageTableManager);
     bool updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map);
@@ -141,9 +136,6 @@ class Wddm {
     }
     WddmInterface *getWddmInterface() const {
         return wddmInterface.get();
-    }
-    PreemptionMode getPreemptionMode() const {
-        return preemptionMode;
     }
 
     unsigned int readEnablePreemptionRegKey();
@@ -173,7 +165,6 @@ class Wddm {
     unsigned long hwContextId = 0;
     LUID adapterLuid;
     uintptr_t maximumApplicationAddress = 0;
-    PreemptionMode preemptionMode = PreemptionMode::Disabled;
     std::unique_ptr<GmmMemory> gmmMemory;
     uintptr_t minAddress = 0;
 
@@ -181,7 +172,7 @@ class Wddm {
     MOCKABLE_VIRTUAL bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1);
     MOCKABLE_VIRTUAL bool openAdapter();
     MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);
-    bool createDevice();
+    bool createDevice(PreemptionMode preemptionMode);
     bool createPagingQueue();
     bool destroyPagingQueue();
     bool destroyDevice();

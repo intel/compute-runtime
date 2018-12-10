@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/command_stream/preemption.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
@@ -45,7 +46,7 @@ class WddmKmDafListenerTest : public GmmEnvironmentFixture, public ::testing::Te
         GmmEnvironmentFixture::SetUp();
         wddmWithKmDafMock.reset(new WddmWithKmDafMock());
         wddmWithKmDafMock->gdi.reset(new MockGdi());
-        wddmWithKmDafMock->init();
+        wddmWithKmDafMock->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
         wddmWithKmDafMock->getFeatureTable()->ftrKmdDaf = true;
     }
     void TearDown() {

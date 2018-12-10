@@ -166,7 +166,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
 
 bool Device::createEngines(const HardwareInfo *pHwInfo, Device &outDevice) {
     auto executionEnvironment = outDevice.executionEnvironment;
-    EngineType defaultEngineType = getChosenEngineType(*pHwInfo);
+    auto defaultEngineType = getChosenEngineType(*pHwInfo);
 
     for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngineInstances.size(); deviceCsrIndex++) {
         if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo, outDevice.getDeviceIndex(), deviceCsrIndex)) {
@@ -175,7 +175,7 @@ bool Device::createEngines(const HardwareInfo *pHwInfo, Device &outDevice) {
         executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages(), outDevice.getEnableLocalMemory(),
                                                       outDevice.getDeviceIndex(), deviceCsrIndex);
 
-        auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[deviceCsrIndex]);
+        auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[deviceCsrIndex], outDevice.preemptionMode);
         auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[outDevice.getDeviceIndex()][deviceCsrIndex].get();
         commandStreamReceiver->setOsContext(*osContext);
         if (!commandStreamReceiver->initializeTagAllocation()) {

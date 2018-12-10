@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "runtime/command_stream/preemption.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
@@ -25,8 +26,9 @@ struct WddmFixture : public GmmEnvironmentFixture {
         osInterface->get()->setWddm(wddm);
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
-        wddm->init();
-        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0]);
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+        wddm->init(preemptionMode);
+        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0], preemptionMode);
         osContextWin = osContext->get();
         ASSERT_TRUE(wddm->isInitialized());
     }
@@ -53,8 +55,9 @@ struct WddmFixtureWithMockGdiDll : public GmmEnvironmentFixture, public GdiDllFi
     }
 
     void init() {
-        EXPECT_TRUE(wddm->init());
-        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0]);
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+        EXPECT_TRUE(wddm->init(preemptionMode));
+        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0], preemptionMode);
         osContextWin = osContext->get();
         ASSERT_TRUE(wddm->isInitialized());
     }

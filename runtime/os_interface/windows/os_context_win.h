@@ -17,7 +17,7 @@ using OsContextWin = OsContext::OsContextImpl;
 class OsContext::OsContextImpl {
   public:
     OsContextImpl() = delete;
-    OsContextImpl(Wddm &wddm, uint32_t osContextId, EngineInstanceT engineType);
+    OsContextImpl(Wddm &wddm, uint32_t osContextId, EngineInstanceT engineType, PreemptionMode preemptionMode);
     ~OsContextImpl();
     D3DKMT_HANDLE getContext() const {
         return context;

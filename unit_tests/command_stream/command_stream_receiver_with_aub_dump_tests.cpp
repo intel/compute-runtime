@@ -8,6 +8,7 @@
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/os_interface/os_context.h"
@@ -110,7 +111,8 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
         executionEnvironment.memoryManager.reset(memoryManager);
         ASSERT_NE(nullptr, memoryManager);
 
-        auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo));
+        auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(
+            getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo), PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo));
         csrWithAubDump->setOsContext(*osContext);
         if (csrWithAubDump->aubCSR) {
             csrWithAubDump->aubCSR->setOsContext(*osContext);
@@ -132,7 +134,7 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenSett
     ExecutionEnvironment executionEnvironment;
 
     CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump(*platformDevices[0], executionEnvironment);
-    OsContext osContext(nullptr, 0, gpgpuEngineInstances[0]);
+    OsContext osContext(nullptr, 0, gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
     csrWithAubDump.setOsContext(osContext);
     EXPECT_EQ(&osContext, &csrWithAubDump.getOsContext());

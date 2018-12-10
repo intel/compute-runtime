@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/command_stream/preemption.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/kernel_commands.h"
@@ -195,7 +196,7 @@ TEST_F(MemoryAllocatorTest, allocateSystemAligned) {
 TEST_F(MemoryAllocatorTest, allocateGraphics) {
     unsigned int alignment = 4096;
 
-    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     auto allocation = memoryManager->allocateGraphicsMemory(sizeof(char));
 
     ASSERT_NE(nullptr, allocation);
@@ -1196,7 +1197,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhenche
 }
 
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsAddedToTemporaryAllocationList) {
-    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
+    memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     auto usedAllocationAndNotGpuCompleted = memoryManager->allocateGraphicsMemory(4096);
 
     auto tagAddress = csr->getTagAddress();
@@ -1368,7 +1369,7 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
 TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCountIncreases) {
     ExecutionEnvironment executionEnvironment;
     MockMemoryManager memoryManager(false, false, executionEnvironment);
-    memoryManager.createAndRegisterOsContext(gpgpuEngineInstances[0]);
+    memoryManager.createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     EXPECT_EQ(1u, memoryManager.getOsContextCount());
     EXPECT_EQ(1, memoryManager.registeredOsContexts[0]->getRefInternalCount());
 }
@@ -1376,8 +1377,8 @@ TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCo
 TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegistredFromHigherToLowerThenProperSizeIsReturned) {
     ExecutionEnvironment executionEnvironment;
     MockMemoryManager memoryManager(false, false, executionEnvironment);
-    memoryManager.createAndRegisterOsContext(gpgpuEngineInstances[0]);
-    memoryManager.createAndRegisterOsContext(gpgpuEngineInstances[1]);
+    memoryManager.createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    memoryManager.createAndRegisterOsContext(gpgpuEngineInstances[1], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     EXPECT_EQ(2u, memoryManager.getOsContextCount());
     EXPECT_EQ(1, memoryManager.registeredOsContexts[0]->getRefInternalCount());
     EXPECT_EQ(1, memoryManager.registeredOsContexts[1]->getRefInternalCount());
@@ -1390,8 +1391,8 @@ TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenIt
 
     MockResidencyData residency;
 
-    OsContext osContext(nullptr, 0u, gpgpuEngineInstances[0]);
-    OsContext osContext2(nullptr, 1u, gpgpuEngineInstances[1]);
+    OsContext osContext(nullptr, 0u, gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    OsContext osContext2(nullptr, 1u, gpgpuEngineInstances[1], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
     auto lastFenceValue = 45llu;
     auto lastFenceValue2 = 23llu;

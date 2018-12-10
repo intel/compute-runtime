@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/command_stream/preemption.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/windows/os_context_win.h"
@@ -45,7 +46,7 @@ struct WddmResidencyControllerTest : ::testing::Test {
 
     void SetUp() {
         wddm = std::unique_ptr<WddmMock>(static_cast<WddmMock *>(Wddm::createWddm()));
-        wddm->init();
+        wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
         residencyController = std::make_unique<MockWddmResidencyController>(*wddm, osContextId);
         wddm->getWddmInterface()->createMonitoredFence(*residencyController);
     }
@@ -61,7 +62,7 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
         wddm = std::unique_ptr<WddmMock>(static_cast<WddmMock *>(Wddm::createWddm()));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
-        wddm->init();
+        wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
         residencyController = std::make_unique<MockWddmResidencyController>(*wddm, osContextId);
         wddm->getWddmInterface()->createMonitoredFence(*residencyController);
@@ -85,13 +86,14 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
 
         wddm = new ::testing::NiceMock<GmockWddm>();
         wddm->gdi = std::make_unique<MockGdi>();
-        ASSERT_TRUE(wddm->init());
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+        ASSERT_TRUE(wddm->init(preemptionMode));
 
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setWddm(wddm);
         memoryManager = std::make_unique<MockWddmMemoryManager>(wddm, *executionEnvironment);
 
-        memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
+        memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], preemptionMode);
         osContext = memoryManager->getRegisteredOsContext(0);
         osContext->incRefInternal();
         residencyController = &osContext->get()->getResidencyController();
@@ -113,7 +115,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
 
     void SetUp() {
         wddm = static_cast<WddmMock *>(Wddm::createWddm());
-        wddm->init();
+        wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
 
@@ -122,7 +124,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         executionEnvironment->osInterface->get()->setWddm(wddm);
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(wddm, *executionEnvironment);
-        memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0]);
+        memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
         osContext = memoryManager->getRegisteredOsContext(0);
         osContext->incRefInternal();
@@ -148,7 +150,7 @@ TEST(WddmResidencyController, givenWddmResidencyControllerWhenItIsConstructedThe
     auto gdi = new MockGdi();
     auto wddm = std::unique_ptr<WddmMock>{static_cast<WddmMock *>(Wddm::createWddm())};
     wddm->gdi.reset(gdi);
-    wddm->init();
+    wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
     std::memset(&gdi->getRegisterTrimNotificationArg(), 0, sizeof(D3DKMT_REGISTERTRIMNOTIFICATION));
     MockWddmResidencyController residencyController{*wddm, 0u};
@@ -166,7 +168,7 @@ TEST(WddmResidencyController, givenWddmResidencyControllerWhenRegisterCallbackTh
     auto gdi = new MockGdi();
     auto wddm = std::unique_ptr<WddmMock>{static_cast<WddmMock *>(Wddm::createWddm())};
     wddm->gdi.reset(gdi);
-    wddm->init();
+    wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
     std::memset(&gdi->getRegisterTrimNotificationArg(), 0, sizeof(D3DKMT_REGISTERTRIMNOTIFICATION));
 

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
 #include "gmock/gmock.h"
@@ -152,7 +153,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
         executionEnvironment->commandStreamReceivers[0][0]->initializeTagAllocation();
     }
 
-    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(getChosenEngineType(*platformDevices[0]));
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(getChosenEngineType(*platformDevices[0]), PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     executionEnvironment->commandStreamReceivers[0][0]->setOsContext(*osContext);
 
     std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);

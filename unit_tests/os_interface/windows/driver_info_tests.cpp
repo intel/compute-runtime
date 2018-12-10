@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/command_stream/preemption.h"
 #include "runtime/os_interface/windows/driver_info.h"
 #include "runtime/os_interface/windows/registry_reader.h"
 #include "runtime/os_interface/windows/os_interface.h"
@@ -43,7 +44,7 @@ CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInf
     OSInterface *osInterface = new OSInterface();
     executionEnvironment.osInterface.reset(osInterface);
     auto wddm = new WddmMock();
-    wddm->init();
+    wddm->init(PreemptionHelper::getDefaultPreemptionMode(hwInfoIn));
     osInterface->get()->setWddm(wddm);
     csr->setOSInterface(osInterface);
     return csr;

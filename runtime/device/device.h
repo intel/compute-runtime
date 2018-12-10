@@ -115,7 +115,7 @@ class Device : public BaseObject<_cl_device_id> {
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
-    uint32_t getDeviceIndex() { return deviceIndex; }
+    uint32_t getDeviceIndex() const { return deviceIndex; }
     bool isFullRangeSvm() {
         return getHardwareInfo().capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
     }

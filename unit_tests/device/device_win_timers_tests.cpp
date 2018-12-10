@@ -22,7 +22,7 @@ TEST_F(MockOSTimeWinTest, DynamicResolution) {
     auto wddmMock = std::unique_ptr<WddmMock>(new WddmMock());
     auto mDev = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    bool error = wddmMock->init();
+    bool error = wddmMock->init(mDev->getPreemptionMode());
     std::unique_ptr<MockOSTimeWin> timeWin(new MockOSTimeWin(wddmMock.get()));
 
     double res = 0.0;

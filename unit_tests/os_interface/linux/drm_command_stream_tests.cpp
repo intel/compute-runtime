@@ -41,7 +41,7 @@ class DrmCommandStreamFixture {
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         executionEnvironment.osInterface->get()->setDrm(mock.get());
 
-        osContext = std::make_unique<OsContext>(executionEnvironment.osInterface.get(), 0u, gpgpuEngineInstances[0]);
+        osContext = std::make_unique<OsContext>(executionEnvironment.osInterface.get(), 0u, gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
         csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], executionEnvironment,
                                                                      gemCloseWorkerMode::gemCloseWorkerActive);
@@ -673,7 +673,7 @@ class DrmCommandStreamEnhancedFixture
         mock = new DrmMockCustom();
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setDrm(mock);
-        osContext = std::make_unique<OsContext>(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0]);
+        osContext = std::make_unique<OsContext>(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
         tCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
         csr = tCsr;

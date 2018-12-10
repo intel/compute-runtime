@@ -156,7 +156,7 @@ bool Wddm::destroyPagingQueue() {
     return true;
 }
 
-bool Wddm::createDevice() {
+bool Wddm::createDevice(PreemptionMode preemptionMode) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_CREATEDEVICE CreateDevice = {{0}};
     if (adapter) {
@@ -662,7 +662,7 @@ void Wddm::kmDafLock(WddmAllocation *wddmAllocation) {
     kmDafListener->notifyLock(featureTable->ftrKmdDaf, adapter, device, wddmAllocation->handle, 0, gdi->escape);
 }
 
-bool Wddm::createContext(D3DKMT_HANDLE &context, EngineInstanceT engineType) {
+bool Wddm::createContext(D3DKMT_HANDLE &context, EngineInstanceT engineType, PreemptionMode preemptionMode) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_CREATECONTEXTVIRTUAL CreateContext = {0};
     CREATECONTEXT_PVTDATA PrivateData = {{0}};
@@ -911,7 +911,7 @@ bool Wddm::configureDeviceAddressSpace() {
     return gmmMemory->configureDevice(adapter, device, gdi->escape, svmSize, featureTable->ftrL3IACoherency, gfxPartition, minAddress);
 }
 
-bool Wddm::init() {
+bool Wddm::init(PreemptionMode preemptionMode) {
     if (gdi != nullptr && gdi->isInitialized() && !initialized) {
         if (!openAdapter()) {
             return false;
@@ -928,7 +928,7 @@ bool Wddm::init() {
             }
         }
 
-        if (!createDevice()) {
+        if (!createDevice(preemptionMode)) {
             return false;
         }
         if (!createPagingQueue()) {

@@ -33,10 +33,9 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         auto regReader = new RegistryReaderMock();
         wddm->registryReader.reset(regReader);
         regReader->forceRetValue = forceReturnPreemptionRegKeyValue;
-        PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
-        wddm->setPreemptionMode(preemptionMode);
-        wddm->init();
-        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0]);
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
+        wddm->init(preemptionMode);
+        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0], preemptionMode);
         osContextWin = osContext->get();
     }
 
