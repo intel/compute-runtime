@@ -139,11 +139,11 @@ class GpgpuWalkerHelper {
         const iOpenCL::SPatchThreadPayload &threadPayload);
 
     static void dispatchProfilingCommandsStart(
-        HwTimeStamps &hwTimeStamps,
+        TagNode<HwTimeStamps> &hwTimeStamps,
         OCLRT::LinearStream *commandStream);
 
     static void dispatchProfilingCommandsEnd(
-        HwTimeStamps &hwTimeStamps,
+        TagNode<HwTimeStamps> &hwTimeStamps,
         OCLRT::LinearStream *commandStream);
 
     static void dispatchPerfCountersNoopidRegisterCommands(

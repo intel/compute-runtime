@@ -101,17 +101,17 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
 
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
-    HwTimeStamps &hwTimeStamps,
+    TagNode<HwTimeStamps> &hwTimeStamps,
     OCLRT::LinearStream *commandStream) {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp
-    uint64_t TimeStampAddress = reinterpret_cast<uint64_t>(&(hwTimeStamps.GlobalStartTS));
+    uint64_t TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->GlobalStartTS, hwTimeStamps.tag);
 
     PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, TimeStampAddress, 0llu);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
-    TimeStampAddress = reinterpret_cast<uint64_t>(&(hwTimeStamps.ContextStartTS));
+    TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->ContextStartTS, hwTimeStamps.tag);
 
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
@@ -122,7 +122,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
 
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
-    HwTimeStamps &hwTimeStamps,
+    TagNode<HwTimeStamps> &hwTimeStamps,
     OCLRT::LinearStream *commandStream) {
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
@@ -133,7 +133,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     pPipeControlCmd->setCommandStreamerStallEnable(true);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
-    uint64_t TimeStampAddress = reinterpret_cast<uint64_t>(&(hwTimeStamps.ContextEndTS));
+    uint64_t TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->ContextEndTS, hwTimeStamps.tag);
 
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
