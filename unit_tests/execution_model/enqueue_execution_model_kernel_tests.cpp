@@ -110,7 +110,7 @@ HWTEST_P(ParentKernelEnqueueTest, GivenParentKernelWithPrivateSurfaceWhenEnqueue
         int32_t executionStamp = 0;
         auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment);
         pDevice->resetCommandStreamReceiver(mockCSR);
-        GraphicsAllocation *privateSurface = mockCSR->getMemoryManager()->allocateGraphicsMemory(10);
+        GraphicsAllocation *privateSurface = mockCSR->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
         pKernel->getProgram()->getBlockKernelManager()->pushPrivateSurface(privateSurface, 0);
         pCmdQ->enqueueKernel(pKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
@@ -128,7 +128,7 @@ HWTEST_P(ParentKernelEnqueueTest, GivenBlocksWithPrivateMemoryWhenEnqueueKernelT
         auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
         csr.storeMakeResidentAllocations = true;
 
-        auto privateAllocation = csr.getMemoryManager()->allocateGraphicsMemory(10);
+        auto privateAllocation = csr.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
         blockKernelManager->pushPrivateSurface(privateAllocation, 0);
 
         UserEvent uEvent(pContext);

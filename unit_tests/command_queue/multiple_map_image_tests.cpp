@@ -89,7 +89,7 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
     template <typename Traits, typename FamilyType>
     std::unique_ptr<MockImage<FamilyType>> createMockImage() {
         auto allocationSize = Traits::imageDesc.image_width * 4 * Traits::imageDesc.image_height * Traits::imageDesc.image_depth;
-        auto mockAlloc = pDevice->getMemoryManager()->allocateGraphicsMemory(allocationSize);
+        auto mockAlloc = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{allocationSize});
         auto tiledImage = GmmHelper::allowTiling(Traits::imageDesc);
 
         auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, &Traits::imageFormat);

@@ -114,9 +114,8 @@ TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWMMWhenAsyncDeleterIsEnabled
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
-    auto size = 4096u;
 
-    auto allocation = memoryManager->allocateGraphicsMemory(size);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     EXPECT_TRUE(allocation->gmm->useSystemMemoryPool);
@@ -225,12 +224,6 @@ TEST_F(WddmMemoryManagerTest,
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmMemoryManagerTest, AllocateAndFree) {
-    auto *ptr = memoryManager->allocateGraphicsMemory(0x1000);
-    EXPECT_NE(nullptr, ptr);
-    memoryManager->freeGraphicsMemory(ptr);
-}
-
 TEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForVirtualPaddingSupportThenFalseIsReturned) {
     EXPECT_FALSE(memoryManager->peekVirtualPaddingSupport());
 }
@@ -288,7 +281,7 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtr) {
 }
 
 TEST_F(WddmMemoryManagerTest, givenDefaultMemoryManagerWhenAllocateWithSizeIsCalledThenResourceHandleIsZero) {
-    auto *gpuAllocation = memoryManager->allocateGraphicsMemory(0x1000);
+    auto *gpuAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     auto wddmAllocation = static_cast<WddmAllocation *>(gpuAllocation);
 
@@ -331,7 +324,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCall
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenLockUnlockIsCalledThenReturnPtr) {
-    auto alloc = memoryManager->allocateGraphicsMemory(1);
+    auto alloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     auto ptr = memoryManager->lockResource(alloc);
     EXPECT_NE(nullptr, ptr);
@@ -1151,7 +1144,7 @@ TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemor
     WddmMemoryManager memoryManager64k(true, false, wddm.get(), executionEnvironment);
     EXPECT_EQ(0, wddm->createAllocationResult.called);
 
-    GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemoryInPreferredPool(AllocationProperties(true, MemoryConstants::pageSize64k), 0, nullptr, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY});
     EXPECT_EQ(1, wddm->createAllocationResult.called);
     EXPECT_NE(nullptr, galloc);
     EXPECT_EQ(true, galloc->isLocked());
@@ -1252,7 +1245,7 @@ TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThen
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     myWddm->resetPageTableManager(mockMngr);
 
-    auto allocation = memoryManager.allocateGraphicsMemory(4096);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
@@ -1313,7 +1306,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenReleaseingT
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     wddm->resetPageTableManager(mockMngr);
 
-    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemory(4096u));
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
     wddmAlloc->gpuPtr = gpuVa;
     wddmAlloc->gmm->isRenderCompressed = true;
 
@@ -1338,7 +1331,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenReleasei
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     wddm->resetPageTableManager(mockMngr);
 
-    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemory(4096u));
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
     wddmAlloc->gmm->isRenderCompressed = false;
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
@@ -1386,7 +1379,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnse
     myGmm->isRenderCompressed = false;
     myGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = 1;
 
-    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemory(4096u));
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
     delete wddmAlloc->gmm;
     wddmAlloc->gmm = myGmm;
 

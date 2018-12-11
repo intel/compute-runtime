@@ -1185,11 +1185,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenTemporaryAndReusableAl
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto memoryManager = pDevice->getMemoryManager();
 
-    auto temporaryToClean = memoryManager->allocateGraphicsMemory(4096u);
-    auto temporaryToHold = memoryManager->allocateGraphicsMemory(4096u);
+    auto temporaryToClean = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto temporaryToHold = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
-    auto reusableToClean = memoryManager->allocateGraphicsMemory(4096u);
-    auto reusableToHold = memoryManager->allocateGraphicsMemory(4096u);
+    auto reusableToClean = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto reusableToHold = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporaryToClean), TEMPORARY_ALLOCATION);
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporaryToHold), TEMPORARY_ALLOCATION);

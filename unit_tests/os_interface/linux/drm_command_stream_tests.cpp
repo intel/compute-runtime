@@ -621,7 +621,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenDefaultDrmCSRWhenItIsCreatedThenGemC
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWhenItIsFlushedWithGemCloseWorkerInDefaultModeThenWorkerDecreasesTheRefCount) {
-    auto commandBuffer = mm->allocateGraphicsMemory(static_cast<size_t>(1024));
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -654,11 +654,11 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWh
     execStorage.resize(0);
 
     for (auto id = 0; id < 10; id++) {
-        auto graphicsAllocation = mm->allocateGraphicsMemory(1);
+        auto graphicsAllocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
         csr->makeResident(*graphicsAllocation);
         graphicsAllocations.push_back(graphicsAllocation);
     }
-    auto commandBuffer = mm->allocateGraphicsMemory(1024);
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     LinearStream cs(commandBuffer);
 
@@ -676,7 +676,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWh
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenGemCloseWorkerInactiveModeWhenMakeResidentIsCalledThenRefCountsAreNotUpdated) {
-    auto dummyAllocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto dummyAllocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
 
     auto bo = dummyAllocation->getBO();
     EXPECT_EQ(1u, bo->getRefCount());
@@ -693,8 +693,8 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenGemCloseWorkerInactiveModeWhenMakeRe
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDifferentThenMakeResidentShouldAddTwoLocations) {
-    auto allocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
-    auto allocation2 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto allocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
+    auto allocation2 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
 
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);
@@ -723,8 +723,8 @@ TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDi
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsFlushedWithGemCloseWorkerInactiveModeThenCsIsNotNulled) {
-    auto commandBuffer = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
-    auto dummyAllocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto commandBuffer = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
+    auto dummyAllocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
     LinearStream cs(commandBuffer);
@@ -768,7 +768,7 @@ class DrmCommandStreamBatchingTests : public Test<DrmCommandStreamEnhancedFixtur
         DrmCommandStreamEnhancedFixture::SetUp();
         if (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) {
             tmpAllocation = GlobalMockSipProgram::sipProgram->getAllocation();
-            GlobalMockSipProgram::sipProgram->resetAllocation(device->getMemoryManager()->allocateGraphicsMemory(1024));
+            GlobalMockSipProgram::sipProgram->resetAllocation(device->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
         }
         tagAllocation = static_cast<DrmAllocation *>(device->getDefaultEngine().commandStreamReceiver->getTagAllocation());
         preemptionAllocation = static_cast<DrmAllocation *>(device->getPreemptionAllocation());
@@ -784,8 +784,8 @@ class DrmCommandStreamBatchingTests : public Test<DrmCommandStreamEnhancedFixtur
 
 TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsArePassed) {
     mock->reset();
-    auto commandBuffer = mm->allocateGraphicsMemory(1024);
-    auto dummyAllocation = mm->allocateGraphicsMemory(1024);
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto dummyAllocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
     LinearStream cs(commandBuffer);
@@ -819,8 +819,8 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     tCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    auto commandBuffer = mm->allocateGraphicsMemory(1024);
-    auto dummyAllocation = mm->allocateGraphicsMemory(1024);
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto dummyAllocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
     IndirectHeap cs(commandBuffer);
@@ -876,7 +876,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     tCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    auto commandBuffer = mm->allocateGraphicsMemory(1024);
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     IndirectHeap cs(commandBuffer);
 
     tCsr->setTagAllocation(tagAllocation);
@@ -1288,8 +1288,8 @@ TEST_F(DrmCommandStreamLeaksTest, Flush) {
 }
 
 TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushNotCalled) {
-    auto allocation1 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
-    auto allocation2 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto allocation1 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
+    auto allocation2 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
     ASSERT_NE(nullptr, allocation1);
     ASSERT_NE(nullptr, allocation2);
 
@@ -1335,9 +1335,9 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     BatchBuffer batchBuffer2{cs.getGraphicsAllocation(), 8, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer2, csr->getResidencyAllocations());
 
-    auto allocation = mm->allocateGraphicsMemory(1024);
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
-    auto allocation2 = mm->allocateGraphicsMemory(1024);
+    auto allocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation2);
 
     csr->makeResident(*allocation);
@@ -1345,7 +1345,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
 
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer), REUSABLE_ALLOCATION);
 
-    auto commandBuffer2 = mm->allocateGraphicsMemory(1024);
+    auto commandBuffer2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer2);
     cs.replaceBuffer(commandBuffer2->getUnderlyingBuffer(), commandBuffer2->getUnderlyingBufferSize());
     cs.replaceGraphicsAllocation(commandBuffer2);
@@ -1358,7 +1358,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     mm->freeGraphicsMemory(allocation2);
 
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer2), REUSABLE_ALLOCATION);
-    commandBuffer2 = mm->allocateGraphicsMemory(1024);
+    commandBuffer2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer2);
     cs.replaceBuffer(commandBuffer2->getUnderlyingBuffer(), commandBuffer2->getUnderlyingBufferSize());
     cs.replaceGraphicsAllocation(commandBuffer2);
@@ -1416,7 +1416,7 @@ TEST_F(DrmCommandStreamLeaksTest, CheckDrmFree) {
     ASSERT_NE(0u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0xFFF);
     ASSERT_EQ(4u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0x7F);
 
-    auto allocation = mm->allocateGraphicsMemory(1024);
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     csr->makeResident(*allocation);
     csr->addBatchBufferEnd(cs, nullptr);
@@ -1428,8 +1428,8 @@ TEST_F(DrmCommandStreamLeaksTest, CheckDrmFree) {
 }
 
 TEST_F(DrmCommandStreamLeaksTest, MakeResidentClearResidencyAllocationsInCommandStreamReceiver) {
-    auto allocation1 = mm->allocateGraphicsMemory(1024);
-    auto allocation2 = mm->allocateGraphicsMemory(1024);
+    auto allocation1 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     ASSERT_NE(nullptr, allocation1);
     ASSERT_NE(nullptr, allocation2);
@@ -1447,7 +1447,7 @@ TEST_F(DrmCommandStreamLeaksTest, MakeResidentClearResidencyAllocationsInCommand
 }
 
 TEST_F(DrmCommandStreamLeaksTest, givenMultipleMakeResidentWhenMakeNonResidentIsCalledOnlyOnceThenSurfaceIsMadeNonResident) {
-    auto allocation1 = mm->allocateGraphicsMemory(1024);
+    auto allocation1 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     ASSERT_NE(nullptr, allocation1);
 
@@ -1466,7 +1466,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenMultipleMakeResidentWhenMakeNonResidentIs
 }
 
 TEST_F(DrmCommandStreamLeaksTest, makeNonResidentOnMemObjectCallsDrmCSMakeNonResidentWithGraphicsAllocation) {
-    auto allocation1 = mm->allocateGraphicsMemory(0x1000);
+    auto allocation1 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0x1000});
     ASSERT_NE(nullptr, allocation1);
 
     tCsr->makeResident(*allocation1);

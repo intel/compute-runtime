@@ -330,7 +330,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllo
 
     auto memoryManager = pDevice->getMemoryManager();
     size_t requiredSize = alignUp(100, MemoryConstants::pageSize) + CSRequirements::csOverfetchSize;
-    auto allocation = memoryManager->allocateGraphicsMemory(requiredSize);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{requiredSize});
     auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
@@ -491,7 +491,7 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAlloc
     if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT) {
         allocation = memoryManager->allocate32BitGraphicsMemory(allocationSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
     } else {
-        allocation = memoryManager->allocateGraphicsMemory(allocationSize);
+        allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{allocationSize});
     }
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
         allocation->setSize(commandStreamReceiver.defaultSshSize * 2);

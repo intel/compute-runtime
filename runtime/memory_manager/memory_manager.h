@@ -52,14 +52,10 @@ struct AllocationProperties {
     static_assert(sizeof(AllocationProperties::flags) == sizeof(AllocationProperties::allFlags), "");
     size_t size = 0;
     size_t alignment = 0;
+    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
 
-    AllocationProperties() {
-        allFlags = 0;
-        flags.flushL3RequiredForRead = 1;
-        flags.flushL3RequiredForWrite = 1;
-    }
-
-    AllocationProperties(bool allocateMemory, size_t size) : size(size) {
+    AllocationProperties(size_t size, GraphicsAllocation::AllocationType allocationType) : AllocationProperties(true, size, allocationType) {}
+    AllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType) : size(size), allocationType(allocationType) {
         allFlags = 0;
         flags.flushL3RequiredForRead = 1;
         flags.flushL3RequiredForWrite = 1;
@@ -93,12 +89,8 @@ class MemoryManager {
     virtual void addAllocationToHostPtrManager(GraphicsAllocation *memory) = 0;
     virtual void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) = 0;
 
-    GraphicsAllocation *allocateGraphicsMemory(size_t size) {
-        return allocateGraphicsMemoryInPreferredPool(AllocationProperties(true, size), 0u, nullptr, GraphicsAllocation::AllocationType::UNDECIDED);
-    }
-
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
-        return allocateGraphicsMemoryInPreferredPool(properties, 0u, nullptr, GraphicsAllocation::AllocationType::UNDECIDED);
+        return allocateGraphicsMemoryInPreferredPool(properties, 0u, nullptr);
     }
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) = 0;
@@ -126,7 +118,7 @@ class MemoryManager {
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) = 0;
 
-    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr, GraphicsAllocation::AllocationType type);
+    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr);
 
     GraphicsAllocation *allocateGraphicsMemoryForSVM(size_t size, bool coherent);
 
@@ -227,7 +219,7 @@ class MemoryManager {
     };
 
     static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const DevicesBitfield devicesBitfield,
-                                  const void *hostPtr, GraphicsAllocation::AllocationType type);
+                                  const void *hostPtr);
 
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData);

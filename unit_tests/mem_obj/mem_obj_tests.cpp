@@ -149,7 +149,7 @@ TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThe
 
     context.setMemoryManager(&memoryManager);
 
-    auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     allocation->updateTaskCount(2, context.getDevice(0)->getDefaultEngine().osContext->getContextId());
     *(memoryManager.getDefaultCommandStreamReceiver(0)->getTagAddress()) = 1;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
@@ -168,7 +168,7 @@ TEST(MemObj, givenReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAl
     MockContext context(device.get());
     auto memoryManager = executionEnvironment.memoryManager.get();
 
-    auto allocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     allocation->updateTaskCount(1, device->getDefaultEngine().osContext->getContextId());
     *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = 1;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
@@ -187,7 +187,7 @@ TEST(MemObj, givenNotUsedGraphicsAllocationWhenMemObjDestroysAllocationAsyncThen
 
     context.setMemoryManager(&memoryManager);
 
-    auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
 
@@ -204,7 +204,7 @@ TEST(MemObj, givenMemoryManagerWithoutDeviceWhenMemObjDestroysAllocationAsyncThe
 
     context.setMemoryManager(&memoryManager);
 
-    auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
@@ -292,7 +292,7 @@ TEST(MemObj, givenRenderCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
 
     context.setMemoryManager(&memoryManager);
 
-    auto allocation = memoryManager.allocateGraphicsMemory(1);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     allocation->gmm = new Gmm(nullptr, 1, false);
 
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_READ_WRITE,
@@ -310,7 +310,7 @@ TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
 
     context.setMemoryManager(&memoryManager);
 
-    auto allocation = memoryManager.allocateGraphicsMemory(64);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   64, allocation->getUnderlyingBuffer(), nullptr, allocation, true, false, false);
@@ -326,7 +326,7 @@ TEST(MemObj, givenNonCpuAccessibleMemoryWhenAskingForMappingOnCpuThenDisallow) {
 
     context.setMemoryManager(&memoryManager);
 
-    auto allocation = memoryManager.allocateGraphicsMemory(1);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     allocation->gmm = new Gmm(nullptr, 1, false);
 
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_READ_WRITE,
@@ -343,7 +343,7 @@ TEST(MemObj, givenMultipleMemObjectsWithReusedGraphicsAllocationWhenDestroyedThe
     MockContext context;
     context.setMemoryManager(&memoryManager);
 
-    auto allocation = memoryManager.allocateGraphicsMemory(1);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     std::unique_ptr<MemObj> memObj1(new MemObj(&context, CL_MEM_OBJECT_BUFFER, 0, 1, nullptr, nullptr, allocation, true, false, false));
     memObj1->setSharingHandler(new MySharingHandler(allocation));

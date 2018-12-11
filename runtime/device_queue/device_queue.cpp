@@ -98,32 +98,32 @@ void DeviceQueue::allocateResources() {
     auto &caps = device->getDeviceInfo();
 
     uint32_t alignedQueueSize = alignUp(queueSize, MemoryConstants::pageSize);
-    queueBuffer = device->getMemoryManager()->allocateGraphicsMemory(alignedQueueSize);
+    queueBuffer = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({alignedQueueSize, GraphicsAllocation::AllocationType::UNDECIDED});
 
     auto eventPoolBufferSize = static_cast<size_t>(caps.maxOnDeviceEvents) * sizeof(IGIL_DeviceEvent) + sizeof(IGIL_EventPool);
     eventPoolBufferSize = alignUp(eventPoolBufferSize, MemoryConstants::pageSize);
-    eventPoolBuffer = device->getMemoryManager()->allocateGraphicsMemory(eventPoolBufferSize);
+    eventPoolBuffer = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({eventPoolBufferSize, GraphicsAllocation::AllocationType::UNDECIDED});
 
     auto maxEnqueue = static_cast<size_t>(alignedQueueSize) / sizeof(IGIL_CommandHeader);
     auto expectedStackSize = maxEnqueue * sizeof(uint32_t) * 3; // 3 full loads of commands
     expectedStackSize = alignUp(expectedStackSize, MemoryConstants::pageSize);
-    stackBuffer = device->getMemoryManager()->allocateGraphicsMemory(expectedStackSize);
+    stackBuffer = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({expectedStackSize, GraphicsAllocation::AllocationType::UNDECIDED});
     memset(stackBuffer->getUnderlyingBuffer(), 0, stackBuffer->getUnderlyingBufferSize());
 
     auto queueStorageSize = alignedQueueSize * 2; // place for 2 full loads of queue_t
     queueStorageSize = alignUp(queueStorageSize, MemoryConstants::pageSize);
-    queueStorageBuffer = device->getMemoryManager()->allocateGraphicsMemory(queueStorageSize);
+    queueStorageBuffer = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({queueStorageSize, GraphicsAllocation::AllocationType::UNDECIDED});
     memset(queueStorageBuffer->getUnderlyingBuffer(), 0, queueStorageBuffer->getUnderlyingBufferSize());
 
     auto &hwHelper = HwHelper::get(device->getHardwareInfo().pPlatform->eRenderCoreFamily);
     const size_t IDTSize = numberOfIDTables * interfaceDescriptorEntries * hwHelper.getInterfaceDescriptorDataSize();
 
     // Additional padding of PAGE_SIZE for PageFaults just after DSH to satisfy hw requirements
-    auto dshSize = (PARALLEL_SCHEDULER_HW_GROUPS + 2) * MAX_DSH_SIZE_PER_ENQUEUE * 8 + IDTSize + colorCalcStateSize + 4096;
+    auto dshSize = (PARALLEL_SCHEDULER_HW_GROUPS + 2) * MAX_DSH_SIZE_PER_ENQUEUE * 8 + IDTSize + colorCalcStateSize + MemoryConstants::pageSize;
     dshSize = alignUp(dshSize, MemoryConstants::pageSize);
-    dshBuffer = device->getMemoryManager()->allocateGraphicsMemory(dshSize);
+    dshBuffer = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({dshSize, GraphicsAllocation::AllocationType::UNDECIDED});
 
-    debugQueue = device->getMemoryManager()->allocateGraphicsMemory(4096);
+    debugQueue = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::UNDECIDED});
     debugData = (DebugDataBuffer *)debugQueue->getUnderlyingBuffer();
     memset(debugQueue->getUnderlyingBuffer(), 0, debugQueue->getUnderlyingBufferSize());
 }

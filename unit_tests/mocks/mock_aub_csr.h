@@ -160,7 +160,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
 
     std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);
     if (allocateCommandBuffer) {
-        aubExecutionEnvironment->commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemory(4096);
+        aubExecutionEnvironment->commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     }
     aubExecutionEnvironment->executionEnvironment = std::move(executionEnvironment);
     return aubExecutionEnvironment;

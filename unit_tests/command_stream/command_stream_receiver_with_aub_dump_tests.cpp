@@ -12,6 +12,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/os_interface/os_context.h"
+#include "unit_tests/mocks/mock_allocation_properties.h"
 
 #include "test.h"
 
@@ -150,7 +151,7 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
 }
 
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenFlushIsCalledThenBaseCsrFlushStampIsReturned) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -177,7 +178,7 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
 }
 
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenMakeResidentIsCalledThenBaseCsrMakeResidentIsCalled) {
-    auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, gfxAllocation);
 
     csrWithAubDump->makeResident(*gfxAllocation);
@@ -194,12 +195,12 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
 }
 
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenFlushIsCalledThenBothBaseAndAubCsrProcessResidencyIsCalled) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, gfxAllocation);
     ResidencyContainer allocationsForResidency = {gfxAllocation};
 
@@ -219,7 +220,7 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
 }
 
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenMakeNonResidentIsCalledThenBothBaseAndAubCsrMakeNonResidentIsCalled) {
-    auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, gfxAllocation);
     csrWithAubDump->makeResident(*gfxAllocation);
 

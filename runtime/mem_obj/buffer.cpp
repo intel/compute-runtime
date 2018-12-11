@@ -192,9 +192,9 @@ Buffer *Buffer::create(Context *context,
     }
 
     if (!memory) {
-        AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(properties.flags_intel, allocateMemory, size);
+        AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(properties.flags_intel, allocateMemory, size, allocationType);
         DevicesBitfield devices = MemObjHelper::getDevicesBitfield(properties);
-        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, hostPtr, allocationType);
+        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, hostPtr);
     }
 
     if (allocateMemory && memory && MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
@@ -207,9 +207,9 @@ Buffer *Buffer::create(Context *context,
         allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
         zeroCopyAllowed = false;
         copyMemoryFromHostPtr = true;
-        AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(properties.flags_intel, true, size);
+        AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(properties.flags_intel, true, size, allocationType);
         DevicesBitfield devices = MemObjHelper::getDevicesBitfield(properties);
-        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr, allocationType);
+        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
     }
 
     if (!memory) {

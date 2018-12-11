@@ -48,11 +48,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     auto flatBatchBufferHelper = new FlatBatchBufferHelperHw<FamilyType>(*pDevice->executionEnvironment);
     aubCsr->overwriteFlatBatchBufferHelper(flatBatchBufferHelper);
 
-    auto chainedBatchBuffer = memoryManager->allocateGraphicsMemory(128u);
-    auto otherAllocation = memoryManager->allocateGraphicsMemory(128u);
+    auto chainedBatchBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{128u});
+    auto otherAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{128u});
     ASSERT_NE(nullptr, chainedBatchBuffer);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{128u});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -64,7 +64,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
         aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(batchBuffer, sizeBatchBuffer, DispatchMode::ImmediateDispatch),
         [&](GraphicsAllocation *ptr) { memoryManager->freeGraphicsMemory(ptr); });
     EXPECT_NE(nullptr, flatBatchBuffer->getUnderlyingBuffer());
-    EXPECT_EQ(alignUp(128u + 128u, 0x1000), sizeBatchBuffer);
+    EXPECT_EQ(alignUp(128u + 128u, MemoryConstants::pageSize), sizeBatchBuffer);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
     memoryManager->freeGraphicsMemory(chainedBatchBuffer);
@@ -78,7 +78,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     auto flatBatchBufferHelper = new FlatBatchBufferHelperHw<FamilyType>(*pDevice->executionEnvironment);
     aubCsr->overwriteFlatBatchBufferHelper(flatBatchBufferHelper);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -102,11 +102,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     auto flatBatchBufferHelper = new FlatBatchBufferHelperHw<FamilyType>(*pDevice->executionEnvironment);
     aubCsr->overwriteFlatBatchBufferHelper(flatBatchBufferHelper);
 
-    auto chainedBatchBuffer = memoryManager->allocateGraphicsMemory(128u);
-    auto otherAllocation = memoryManager->allocateGraphicsMemory(128u);
+    auto chainedBatchBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto otherAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, chainedBatchBuffer);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -278,7 +278,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(*aubExecutionEnvironment->executionEnvironment);
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
-    auto chainedBatchBuffer = aubExecutionEnvironment->executionEnvironment->memoryManager->allocateGraphicsMemory(128u);
+    auto chainedBatchBuffer = aubExecutionEnvironment->executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, chainedBatchBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, chainedBatchBuffer, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -286,7 +286,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     aubCsr->makeResident(*chainedBatchBuffer);
 
     std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> ptr(
-        aubExecutionEnvironment->executionEnvironment->memoryManager->allocateGraphicsMemory(4096),
+        aubExecutionEnvironment->executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}),
         [&](GraphicsAllocation *ptr) { aubExecutionEnvironment->executionEnvironment->memoryManager->freeGraphicsMemory(ptr); });
 
     auto expectedAllocation = ptr.get();
@@ -665,7 +665,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
 
     aubCsr->ppgtt.reset(ppgttMock);
 
-    auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     gfxAllocation->setAubWritable(true);
 
     auto gmm = new Gmm(nullptr, 1, false);

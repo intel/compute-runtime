@@ -48,7 +48,7 @@
 using namespace OCLRT;
 
 AllocationProperties createAllocationProperties(size_t size, bool forcePin) {
-    AllocationProperties properties(true, size);
+    MockAllocationProperties properties(size);
     properties.alignment = MemoryConstants::preferredAlignment;
     properties.flags.forcePin = forcePin;
     return properties;
@@ -371,7 +371,7 @@ TEST_F(DrmMemoryManagerTest, AllocateThenFree) {
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(1024));
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -383,7 +383,7 @@ TEST_F(DrmMemoryManagerTest, AllocateNewFail) {
     mock->ioctl_expected.total = -1; //don't care
 
     InjectedFunction method = [this](size_t failureIndex) {
-        auto ptr = memoryManager->allocateGraphicsMemory(1024);
+        auto ptr = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
         if (nonfailingAllocation != failureIndex) {
             EXPECT_EQ(nullptr, ptr);
@@ -400,7 +400,7 @@ TEST_F(DrmMemoryManagerTest, Allocate0Bytes) {
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto ptr = memoryManager->allocateGraphicsMemory(static_cast<size_t>(0));
+    auto ptr = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u});
     ASSERT_NE(nullptr, ptr);
     EXPECT_NE(nullptr, ptr->getUnderlyingBuffer());
 
@@ -412,7 +412,7 @@ TEST_F(DrmMemoryManagerTest, Allocate3Bytes) {
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto ptr = memoryManager->allocateGraphicsMemory(3);
+    auto ptr = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, ptr);
     EXPECT_NE(nullptr, ptr->getUnderlyingBuffer());
 
@@ -423,7 +423,7 @@ TEST_F(DrmMemoryManagerTest, AllocateUserptrFail) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_res = -1;
 
-    auto ptr = memoryManager->allocateGraphicsMemory(3);
+    auto ptr = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     EXPECT_EQ(nullptr, ptr);
     mock->ioctl_res = 0;
 }
@@ -1693,7 +1693,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledThenRetu
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto allocation = memoryManager->allocateGraphicsMemory(1);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
 
     auto ptr = memoryManager->lockResource(allocation);
@@ -1709,7 +1709,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto allocation = memoryManager->allocateGraphicsMemory(1);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
 
@@ -1866,7 +1866,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndUnifiedAuxCapableAllocation
     mock->ioctl_expected.gemClose = 1;
 
     auto gmm = new Gmm(nullptr, 123, false);
-    auto allocation = memoryManager->allocateGraphicsMemory(123);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     allocation->gmm = gmm;
 
     auto mockGmmRes = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
@@ -1940,7 +1940,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenItIsR
     mock->ioctl_expected.gemClose = 3;
     //first let's create normal buffer
     auto bufferSize = MemoryConstants::pageSize;
-    auto buffer = memoryManager->allocateGraphicsMemory(bufferSize);
+    auto buffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{bufferSize});
 
     //buffer should have size 16
     EXPECT_EQ(bufferSize, buffer->getUnderlyingBufferSize());
@@ -2054,7 +2054,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenAlloc
 
     //first let's create normal buffer
     auto bufferSize = MemoryConstants::pageSize;
-    auto buffer = memoryManager->allocateGraphicsMemory(bufferSize);
+    auto buffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{bufferSize});
 
     //buffer should have size 16
     EXPECT_EQ(bufferSize, buffer->getUnderlyingBufferSize());
@@ -2414,14 +2414,8 @@ TEST(DrmMemoryManager, givenEnabledHostMemoryValidationAndForcePinWhenMemoryMana
 TEST(DrmMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
     ExecutionEnvironment executionEnvironment;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, executionEnvironment));
-    auto size = 4096u;
 
-    auto allocation = memoryManager->allocateGraphicsMemory(size);
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
-    memoryManager->freeGraphicsMemory(allocation);
-
-    allocation = memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(size, false));
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(MemoryConstants::pageSize, false));
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);

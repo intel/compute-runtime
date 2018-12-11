@@ -93,7 +93,7 @@ struct Gen10CoherencyProgramingTest : public Gen10CoherencyRequirements {
     void flushTask(bool coherencyRequired) {
         flags.requiresCoherency = coherencyRequired;
 
-        auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemory(MemoryConstants::pageSize);
+        auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
         IndirectHeap stream(graphicAlloc);
 
         startOffset = csr->commandStream.getUsed();

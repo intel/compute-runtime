@@ -75,7 +75,7 @@ void *MemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, bool coherent) {
     GraphicsAllocation *graphicsAllocation = nullptr;
-    graphicsAllocation = allocateGraphicsMemoryInPreferredPool(AllocationProperties(true, size), 0u, nullptr, GraphicsAllocation::AllocationType::SVM);
+    graphicsAllocation = allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::SVM});
     if (graphicsAllocation) {
         graphicsAllocation->setCoherent(coherent);
     }
@@ -101,13 +101,13 @@ void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *gr
 
 GraphicsAllocation *MemoryManager::createGraphicsAllocationWithPadding(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {
     if (!paddingAllocation) {
-        paddingAllocation = allocateGraphicsMemory(paddingBufferSize);
+        paddingAllocation = allocateGraphicsMemoryWithProperties({paddingBufferSize, GraphicsAllocation::AllocationType::UNDECIDED});
     }
     return createPaddedAllocation(inputGraphicsAllocation, sizeWithPadding);
 }
 
 GraphicsAllocation *MemoryManager::createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {
-    return allocateGraphicsMemory(sizeWithPadding);
+    return allocateGraphicsMemoryWithProperties({sizeWithPadding, GraphicsAllocation::AllocationType::UNDECIDED});
 }
 
 void MemoryManager::freeSystemMemory(void *ptr) {
@@ -184,7 +184,7 @@ OsContext *MemoryManager::createAndRegisterOsContext(EngineInstanceT engineType,
 }
 
 bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const DevicesBitfield devicesBitfield,
-                                      const void *hostPtr, GraphicsAllocation::AllocationType type) {
+                                      const void *hostPtr) {
     UNRECOVERABLE_IF(hostPtr == nullptr && !properties.flags.allocateMemory);
 
     bool allow64KbPages = false;
@@ -193,7 +193,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     bool uncacheable = properties.flags.uncacheable;
     bool mustBeZeroCopy = false;
 
-    switch (type) {
+    switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER:
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
@@ -211,7 +211,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
-    switch (type) {
+    switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER:
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
@@ -221,7 +221,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
-    switch (type) {
+    switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::PIPE:
     case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
@@ -234,6 +234,16 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
+    switch (properties.allocationType) {
+    case GraphicsAllocation::AllocationType::UNDECIDED:
+    case GraphicsAllocation::AllocationType::LINEAR_STREAM:
+    case GraphicsAllocation::AllocationType::FILL_PATTERN:
+        allocationData.flags.useSystemMemory = true;
+        break;
+    default:
+        break;
+    }
+
     allocationData.flags.mustBeZeroCopy = mustBeZeroCopy;
     allocationData.flags.allocateMemory = properties.flags.allocateMemory;
     allocationData.flags.allow32Bit = allow32Bit;
@@ -241,7 +251,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.forcePin = forcePin;
     allocationData.flags.uncacheable = uncacheable;
     allocationData.flags.flushL3 = properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite;
-    allocationData.flags.preferRenderCompressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == type;
+    allocationData.flags.preferRenderCompressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == properties.allocationType;
 
     if (allocationData.flags.mustBeZeroCopy) {
         allocationData.flags.useSystemMemory = true;
@@ -249,7 +259,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     allocationData.hostPtr = hostPtr;
     allocationData.size = properties.size;
-    allocationData.type = type;
+    allocationData.type = properties.allocationType;
     allocationData.devicesBitfield = devicesBitfield;
     allocationData.alignment = properties.alignment ? properties.alignment : MemoryConstants::preferredAlignment;
 
@@ -259,17 +269,20 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     return true;
 }
 
-GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr, GraphicsAllocation::AllocationType type) {
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr) {
     AllocationData allocationData;
     AllocationStatus status = AllocationStatus::Error;
 
-    getAllocationData(allocationData, properties, devicesBitfield, hostPtr, type);
+    getAllocationData(allocationData, properties, devicesBitfield, hostPtr);
     UNRECOVERABLE_IF(allocationData.type == GraphicsAllocation::AllocationType::IMAGE || allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE);
     GraphicsAllocation *allocation = nullptr;
 
     allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
     if (!allocation && status == AllocationStatus::RetryInNonDevicePool) {
         allocation = allocateGraphicsMemory(allocationData);
+    }
+    if (allocation) {
+        allocation->setAllocationType(properties.allocationType);
     }
     return allocation;
 }

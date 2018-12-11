@@ -1656,7 +1656,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIs
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
     auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     // setup kernel arg offsets
     KernelArgPatchInfo kernelArgPatchInfo;

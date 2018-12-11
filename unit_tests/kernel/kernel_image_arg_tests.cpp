@@ -184,7 +184,7 @@ HWTEST_F(KernelImageArgTest, givenImgWithMcsAllocWhenMakeResidentThenMakeMcsAllo
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
     auto img = Image::create(context.get(), 0, surfaceFormat, &imgDesc, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemory(4096);
+    auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     img->setMcsAllocation(mcsAlloc);
     cl_mem memObj = img;
     pKernel->setArg(0, sizeof(memObj), &memObj);

@@ -2469,7 +2469,7 @@ TEST_F(ProgramTests, givenProgramWithBlockKernelsWhenfreeBlockResourcesisCalledT
 
     program->addBlockKernel(infoBlock);
 
-    GraphicsAllocation *privateSurface = program->getDevice(0).getMemoryManager()->allocateGraphicsMemory(4096);
+    GraphicsAllocation *privateSurface = program->getDevice(0).getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     EXPECT_NE(nullptr, privateSurface);
 
     program->getBlockKernelManager()->pushPrivateSurface(privateSurface, 0);
@@ -2805,7 +2805,7 @@ TEST(ProgramDestructionTests, givenProgramUsingDeviceWhenItIsDestroyedAfterPlatf
     auto device = platformImpl->getDevice(0);
     MockContext *context = new MockContext(device, false);
     MockProgram *pProgram = new MockProgram(*device->getExecutionEnvironment(), context, false);
-    auto globalAllocation = device->getMemoryManager()->allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto globalAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     pProgram->setGlobalSurface(globalAllocation);
 
     platformImpl.reset(nullptr);

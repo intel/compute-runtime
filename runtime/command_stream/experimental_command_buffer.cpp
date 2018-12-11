@@ -22,9 +22,9 @@ ExperimentalCommandBuffer::ExperimentalCommandBuffer(CommandStreamReceiver *csr,
                                                                                                                     experimentalAllocationOffset(0),
                                                                                                                     defaultPrint(true),
                                                                                                                     timerResolution(profilingTimerResolution) {
-    timestamps = csr->getMemoryManager()->allocateGraphicsMemory(MemoryConstants::pageSize);
+    timestamps = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::UNDECIDED});
     memset(timestamps->getUnderlyingBuffer(), 0, timestamps->getUnderlyingBufferSize());
-    experimentalAllocation = csr->getMemoryManager()->allocateGraphicsMemory(MemoryConstants::pageSize);
+    experimentalAllocation = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::UNDECIDED});
     memset(experimentalAllocation->getUnderlyingBuffer(), 0, experimentalAllocation->getUnderlyingBufferSize());
 }
 
@@ -61,7 +61,7 @@ void ExperimentalCommandBuffer::getCS(size_t minRequiredSize) {
         auto storageWithAllocations = commandStreamReceiver->getInternalAllocationStorage();
         GraphicsAllocation *allocation = storageWithAllocations->obtainReusableAllocation(requiredSize, false).release();
         if (!allocation) {
-            allocation = memoryManager->allocateGraphicsMemory(requiredSize);
+            allocation = memoryManager->allocateGraphicsMemoryWithProperties({requiredSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
         }
         allocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
         // Deallocate the old block, if not null

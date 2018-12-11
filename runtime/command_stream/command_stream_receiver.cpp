@@ -135,7 +135,7 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
 
         auto allocation = internalAllocationStorage->obtainReusableAllocation(requiredSize, false).release();
         if (!allocation) {
-            allocation = getMemoryManager()->allocateGraphicsMemory(requiredSize);
+            allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({requiredSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
         }
 
         allocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
@@ -243,7 +243,7 @@ void CommandStreamReceiver::activateAubSubCapture(const MultiDispatchInfo &dispa
 
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
-    debugSurface = getMemoryManager()->allocateGraphicsMemory(size);
+    debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::UNDECIDED});
     return debugSurface;
 }
 
@@ -291,7 +291,7 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
         if (requireInternalHeap) {
             heapMemory = getMemoryManager()->allocate32BitGraphicsMemory(finalHeapSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
         } else {
-            heapMemory = getMemoryManager()->allocateGraphicsMemory(finalHeapSize);
+            heapMemory = getMemoryManager()->allocateGraphicsMemoryWithProperties({finalHeapSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
         }
     } else {
         finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
@@ -332,7 +332,7 @@ void CommandStreamReceiver::setExperimentalCmdBuffer(std::unique_ptr<Experimenta
 }
 
 bool CommandStreamReceiver::initializeTagAllocation() {
-    auto tagAllocation = getMemoryManager()->allocateGraphicsMemory(sizeof(uint32_t));
+    auto tagAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::UNDECIDED});
     if (!tagAllocation) {
         return false;
     }
@@ -355,7 +355,7 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
     allocation = memoryManager->allocateGraphicsMemoryForHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), device.isFullRangeSvm(), requiresL3Flush);
     if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
         // Try with no host pointer allocation and copy
-        AllocationProperties properties(true, surface.getSurfaceSize());
+        AllocationProperties properties(true, surface.getSurfaceSize(), GraphicsAllocation::AllocationType::UNDECIDED);
         properties.alignment = MemoryConstants::pageSize;
         allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
 

@@ -31,7 +31,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(Batch
             batchBuffer.chainedBatchBuffer->setAubWritable(false);
             auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
             auto alignedMainBatchBufferSize = alignUp(sizeMainBatchBuffer + indirectPatchCommandsSize + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);
-            AllocationProperties flatBatchBufferProperties(true, alignedMainBatchBufferSize);
+            AllocationProperties flatBatchBufferProperties(alignedMainBatchBufferSize, GraphicsAllocation::AllocationType::UNDECIDED);
             flatBatchBufferProperties.alignment = MemoryConstants::pageSize;
             flatBatchBuffer =
                 getMemoryManager()->allocateGraphicsMemoryWithProperties(flatBatchBufferProperties);
@@ -109,7 +109,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(Batch
 
         flatBatchBufferSize = alignUp(flatBatchBufferSize, MemoryConstants::pageSize);
         flatBatchBufferSize += CSRequirements::csOverfetchSize;
-        AllocationProperties flatBatchBufferProperties(true, static_cast<size_t>(flatBatchBufferSize));
+        AllocationProperties flatBatchBufferProperties(static_cast<size_t>(flatBatchBufferSize), GraphicsAllocation::AllocationType::UNDECIDED);
         flatBatchBufferProperties.alignment = MemoryConstants::pageSize;
         flatBatchBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties(flatBatchBufferProperties);
         UNRECOVERABLE_IF(flatBatchBuffer == nullptr);

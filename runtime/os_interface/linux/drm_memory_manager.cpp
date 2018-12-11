@@ -282,7 +282,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(AllocationData alloc
 
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
     if (!GmmHelper::allowTiling(*imgInfo.imgDesc)) {
-        auto alloc = MemoryManager::allocateGraphicsMemory(imgInfo.size);
+        auto alloc = MemoryManager::allocateGraphicsMemoryWithProperties({imgInfo.size, GraphicsAllocation::AllocationType::UNDECIDED});
         if (alloc) {
             alloc->gmm = gmm;
         }

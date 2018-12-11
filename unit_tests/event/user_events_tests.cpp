@@ -912,7 +912,7 @@ TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
-    GraphicsAllocation *temporaryAllocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    GraphicsAllocation *temporaryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     csr.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporaryAllocation), TEMPORARY_ALLOCATION);
 
     EXPECT_EQ(temporaryAllocation, csr.getTemporaryAllocations().peekHead());

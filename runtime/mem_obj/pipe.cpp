@@ -51,9 +51,9 @@ Pipe *Pipe::create(Context *context,
     memoryProperties.flags = flags;
     while (true) {
         auto size = static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace);
-        AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(flags, true, size);
+        AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(flags, true, size, GraphicsAllocation::AllocationType::PIPE);
         DevicesBitfield devices = MemObjHelper::getDevicesBitfield(memoryProperties);
-        GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr, GraphicsAllocation::AllocationType::PIPE);
+        GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
         if (!memory) {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;
             break;

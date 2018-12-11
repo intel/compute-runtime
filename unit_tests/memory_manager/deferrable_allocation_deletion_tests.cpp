@@ -11,6 +11,7 @@
 #include "runtime/memory_manager/deferrable_allocation_deletion.h"
 #include "runtime/os_interface/os_context.h"
 
+#include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "gtest/gtest.h"
 
@@ -56,7 +57,7 @@ struct DeferrableAllocationDeletionTest : ::testing::Test {
 
 TEST_F(DeferrableAllocationDeletionTest, givenDeferrableAllocationWhenApplyThenWaitForEachTaskCount) {
     EXPECT_EQ(gpgpuEngineInstances.size(), memoryManager->getOsContextCount());
-    auto allocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     allocation->updateTaskCount(1u, device1ContextId);
     *hwTag = 0u;
     asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation));
@@ -79,7 +80,7 @@ TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByTwoOsContextsWhenA
     std::unique_ptr<Device> device2(Device::create<Device>(nullptr, device1->getExecutionEnvironment(), 1u));
     auto device2ContextId = device2->getDefaultEngine().osContext->getContextId();
     EXPECT_EQ(gpgpuEngineInstances.size() * 2, memoryManager->getOsContextCount());
-    auto allocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     *hwTag = 0u;
     *device2->getDefaultEngine().commandStreamReceiver->getTagAddress() = 1u;
     allocation->updateTaskCount(1u, device1ContextId);
@@ -96,7 +97,7 @@ TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByTwoOsContextsWhenA
 }
 TEST_F(DeferrableAllocationDeletionTest, givenNotUsedAllocationWhenApplyDeletionThenDontWait) {
     EXPECT_EQ(gpgpuEngineInstances.size(), memoryManager->getOsContextCount());
-    auto allocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     EXPECT_FALSE(allocation->isUsed());
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
     while (!asyncDeleter->doWorkInBackground)
@@ -111,8 +112,8 @@ TEST_F(DeferrableAllocationDeletionTest, givenNotUsedAllocationWhenApplyDeletion
 }
 
 TEST_F(DeferrableAllocationDeletionTest, givenTwoAllocationsUsedByOneOsContextsEnqueuedToAsyncDeleterWhenOneAllocationIsCompletedThenReleaseThatAllocation) {
-    auto allocation1 = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
-    auto allocation2 = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto allocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     *hwTag = 1u;
     allocation1->updateTaskCount(2u, device1ContextId);
     allocation2->updateTaskCount(1u, device1ContextId);
@@ -129,7 +130,7 @@ TEST_F(DeferrableAllocationDeletionTest, givenTwoAllocationsUsedByOneOsContextsE
 }
 
 TEST_F(DeferrableAllocationDeletionTest, givenNotCompletedAllocationWhenDeletionIsAppliedThenReturnFalse) {
-    auto allocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     *hwTag = 0u;
     allocation->updateTaskCount(1u, device1ContextId);
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
@@ -142,7 +143,7 @@ TEST_F(DeferrableAllocationDeletionTest, givenNotCompletedAllocationWhenDeletion
 }
 
 TEST_F(DeferrableAllocationDeletionTest, givenNotUsedAllocationWhenDeletionIsAppliedThenReturnTrue) {
-    auto allocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     EXPECT_FALSE(allocation->isUsed());
     DeferrableAllocationDeletion deletion{*memoryManager, *allocation};
     EXPECT_TRUE(deletion.apply());

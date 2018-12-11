@@ -43,7 +43,7 @@ WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemor
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
     if (!GmmHelper::allowTiling(*imgInfo.imgDesc) && imgInfo.mipCount == 0) {
         delete gmm;
-        return allocateGraphicsMemory(imgInfo.size);
+        return allocateGraphicsMemoryWithProperties({imgInfo.size, GraphicsAllocation::AllocationType::UNDECIDED});
     }
     auto allocation = std::make_unique<WddmAllocation>(nullptr, imgInfo.size, nullptr, MemoryPool::SystemCpuInaccessible, getOsContextCount(), false);
     allocation->gmm = gmm;

@@ -199,7 +199,7 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
 }
 
 HWTEST_F(KernelCommandsTest, givenIndirectHeapNotAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenOffsetZeroIsReturned) {
-    auto nonInternalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemory(4096);
+    auto nonInternalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     IndirectHeap indirectHeap(nonInternalAllocation, false);
 
     MockKernelWithInternals mockKernelWithInternal(*pDevice);

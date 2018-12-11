@@ -338,11 +338,11 @@ HWTEST_F(CommandQueueHwTest, GivenNotCompleteUserEventPassedToEnqueueWhenEventIs
     size_t offset = 0;
     size_t size = 1;
 
-    GraphicsAllocation *constantSurface = mockCSR->getMemoryManager()->allocateGraphicsMemory(10);
+    GraphicsAllocation *constantSurface = mockCSR->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     mockProgram->setConstantSurface(constantSurface);
 
-    GraphicsAllocation *printfSurface = mockCSR->getMemoryManager()->allocateGraphicsMemory(10);
-    GraphicsAllocation *privateSurface = mockCSR->getMemoryManager()->allocateGraphicsMemory(10);
+    GraphicsAllocation *printfSurface = mockCSR->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    GraphicsAllocation *privateSurface = mockCSR->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     mockKernel->setPrivateSurface(privateSurface, 10);
 

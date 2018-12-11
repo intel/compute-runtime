@@ -8,6 +8,7 @@
 #pragma once
 #include "runtime/device/device.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "unit_tests/mocks/mock_allocation_properties.h"
 
 namespace OCLRT {
 class OSTime;
@@ -95,7 +96,7 @@ class MockDevice : public Device {
     void allocatePreemptionAllocationIfNotPresent() {
         if (this->preemptionAllocation == nullptr) {
             if (preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) {
-                AllocationProperties allocationProperties(true, hwInfo.capabilityTable.requiredPreemptionSurfaceSize);
+                MockAllocationProperties allocationProperties(hwInfo.capabilityTable.requiredPreemptionSurfaceSize);
                 allocationProperties.flags.uncacheable = getWaTable()->waCSRUncachable;
                 allocationProperties.alignment = 256 * MemoryConstants::kiloByte;
                 this->preemptionAllocation = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);

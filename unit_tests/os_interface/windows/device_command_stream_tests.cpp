@@ -134,7 +134,7 @@ class WddmCommandStreamWithMockGdiFixture {
         ASSERT_NE(nullptr, device);
         this->csr->overrideRecorededCommandBuffer(*device);
         if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-            preemptionAllocation = memoryManager->allocateGraphicsMemory(1024);
+            preemptionAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
         }
     }
 
@@ -182,7 +182,7 @@ TEST_F(WddmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedM
 }
 
 TEST_F(WddmCommandStreamTest, Flush) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -196,7 +196,7 @@ TEST_F(WddmCommandStreamTest, Flush) {
 }
 
 TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWithDifferentGpuAddressThenCpuAddressWhenSubmitIsCalledThenGpuAddressIsUsed) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     auto cpuAddress = commandBuffer->getUnderlyingBuffer();
     uint64_t mockGpuAddres = 1337;
@@ -210,7 +210,7 @@ TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWithDifferentGpuAddressThen
 }
 TEST_F(WddmCommandStreamTest, FlushWithOffset) {
     auto offset = 128u;
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -224,7 +224,7 @@ TEST_F(WddmCommandStreamTest, FlushWithOffset) {
 }
 
 TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledThenCoherencyRequiredFlagIsSetToFalse) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -252,7 +252,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
     OsContext osContext(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*hwInfo));
     executionEnvironment->commandStreamReceivers[0][0]->setOsContext(osContext);
 
-    auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemory(4096);
+    auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -277,7 +277,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
     OsContext osContext(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*hwInfo));
     executionEnvironment->commandStreamReceivers[0][0]->setOsContext(osContext);
 
-    auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemory(4096);
+    auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -311,7 +311,7 @@ TEST(WddmPreemptionHeaderTests, givenDevicenotSupportingPreemptionWhenCommandStr
 }
 
 TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToLowThenSetHeaderFieldsProperly) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -329,7 +329,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToLowThenS
 }
 
 TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToMediumThenSetHeaderFieldsProperly) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -347,7 +347,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToMediumTh
 }
 
 TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToHighThenSetHeaderFieldsProperly) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -365,12 +365,12 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToHighThen
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafDisabledWhenFlushIsCalledWithAllocationsForResidencyThenNoneAllocationShouldBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    auto linearStreamAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, linearStreamAllocation);
     linearStreamAllocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
@@ -386,7 +386,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafDisabledWhenFlushIsCalledWithAll
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithoutAllocationsForResidencyThenNoneAllocationShouldBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -401,12 +401,12 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithoutA
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithResidencyAllocationsInMemoryManagerThenLinearStreamAllocationsShouldBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    auto linearStreamAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, linearStreamAllocation);
     linearStreamAllocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
 
@@ -426,12 +426,12 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithResi
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllocationsForResidencyThenLinearStreamAllocationsShouldBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    auto linearStreamAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, linearStreamAllocation);
     linearStreamAllocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
@@ -448,12 +448,12 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllocationsForResidencyThenFillPatternAllocationsShouldBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto fillPatternAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    auto fillPatternAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, fillPatternAllocation);
     fillPatternAllocation->setAllocationType(GraphicsAllocation::AllocationType::FILL_PATTERN);
     ResidencyContainer allocationsForResidency = {fillPatternAllocation};
@@ -470,12 +470,12 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllocationsForResidencyThenNonLinearStreamAllocationShouldNotBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto nonLinearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    auto nonLinearStreamAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, nonLinearStreamAllocation);
     ResidencyContainer allocationsForResidency = {nonLinearStreamAllocation};
 
@@ -492,7 +492,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
 TEST_F(WddmCommandStreamTest, makeResident) {
     WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memoryManager);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -508,7 +508,7 @@ TEST_F(WddmCommandStreamTest, makeResident) {
 TEST_F(WddmCommandStreamTest, makeNonResidentPutsAllocationInEvictionAllocations) {
     WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memoryManager);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -524,8 +524,8 @@ TEST_F(WddmCommandStreamTest, makeNonResidentPutsAllocationInEvictionAllocations
 TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidateList) {
     WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memoryManager);
 
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemory(4096);
-    GraphicsAllocation *allocation2 = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    GraphicsAllocation *allocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
     ASSERT_NE(nullptr, allocation2);
 
@@ -545,7 +545,7 @@ TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidate
 TEST_F(WddmCommandStreamTest, processEvictionClearsEvictionAllocations) {
     WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memoryManager);
 
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
 
     csr->getEvictionAllocations().push_back(allocation);
@@ -560,7 +560,7 @@ TEST_F(WddmCommandStreamTest, processEvictionClearsEvictionAllocations) {
 }
 
 TEST_F(WddmCommandStreamTest, makeResidentNonResidentMemObj) {
-    GraphicsAllocation *gfxAllocation = memoryManager->allocateGraphicsMemory(256);
+    GraphicsAllocation *gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     Buffer *buffer = new AlignedBuffer(gfxAllocation);
     WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memoryManager);
 
@@ -645,7 +645,7 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
 }
 
 TEST_F(WddmCommandStreamMockGdiTest, FlushCallsWddmMakeResidentForResidencyAllocations) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -664,7 +664,7 @@ TEST_F(WddmCommandStreamMockGdiTest, FlushCallsWddmMakeResidentForResidencyAlloc
 }
 
 TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -694,7 +694,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     if (device->getPreemptionMode() == PreemptionMode::MidThread) {
         csrSurfaceCount = 2;
         tmpAllocation = GlobalMockSipProgram::sipProgram->getAllocation();
-        GlobalMockSipProgram::sipProgram->resetAllocation(memoryManager->allocateGraphicsMemory(1024));
+        GlobalMockSipProgram::sipProgram->resetAllocation(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
     }
 
     csr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
@@ -702,10 +702,10 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     csr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    auto commandBuffer = memoryManager->allocateGraphicsMemory(1024);
-    auto dshAlloc = memoryManager->allocateGraphicsMemory(1024);
-    auto iohAlloc = memoryManager->allocateGraphicsMemory(1024);
-    auto sshAlloc = memoryManager->allocateGraphicsMemory(1024);
+    auto commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto dshAlloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto iohAlloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto sshAlloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     auto tagAllocation = csr->getTagAllocation();
     csr->setPreemptionCsrAllocation(preemptionAllocation);
@@ -890,7 +890,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
 
         auto &csrCS = mockWddmCsr->getCS();
 
-        auto graphicsAllocation = memoryManager->allocateGraphicsMemory(1024);
+        auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
         IndirectHeap cs(graphicsAllocation);
 
         EXPECT_FALSE(mockWddmCsr->pageTableManagerInitialized);
@@ -931,7 +931,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
 
     EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(1024);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     IndirectHeap cs(graphicsAllocation);
 
     EXPECT_FALSE(mockWddmCsr->pageTableManagerInitialized);
