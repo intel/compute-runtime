@@ -66,6 +66,11 @@ class Drm {
     void setSimplifiedMocsTableUsage(bool value);
     bool getSimplifiedMocsTableUsage() const;
 
+    void obtainDataPortCoherencyPatchState();
+    void setContextDataPortCoherent(bool coherent);
+    bool peekDataPortCoherencyPatchActive() const { return dataPortCoherencyPatchActive; }
+    bool peekIsContextDataPortCoherent() const { return dataPortCoherentContext; }
+
   protected:
     bool useSimplifiedMocsTable = false;
     bool preemptionSupported = false;
@@ -73,6 +78,8 @@ class Drm {
     int deviceId;
     int revisionId;
     GTTYPE eGtType;
+    bool dataPortCoherencyPatchActive = false;
+    bool dataPortCoherentContext = true;
     Drm(int fd) : lowPriorityContextId(0), fd(fd), deviceId(0), revisionId(0), eGtType(GTTYPE_UNDEFINED) {}
     virtual ~Drm();
 
