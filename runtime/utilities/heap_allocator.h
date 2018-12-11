@@ -27,41 +27,31 @@ bool operator<(const HeapChunk &hc1, const HeapChunk &hc2);
 
 class HeapAllocator {
   public:
-    HeapAllocator(uint64_t address, uint64_t size) : address(address), size(size), availableSize(size), sizeThreshold(defaultSizeThreshold) {
+    HeapAllocator(uint64_t address, uint64_t size) : HeapAllocator(address, size, 4 * MemoryConstants::megaByte) {
+    }
+
+    HeapAllocator(uint64_t address, uint64_t size, size_t threshold) : size(size), availableSize(size), sizeThreshold(threshold) {
         pLeftBound = address;
         pRightBound = address + size;
         freedChunksBig.reserve(10);
         freedChunksSmall.reserve(50);
-    }
-
-    HeapAllocator(uint64_t address, uint64_t size, size_t threshold) : address(address), size(size), availableSize(size), sizeThreshold(threshold) {
-        pLeftBound = address;
-        pRightBound = address + size;
-        freedChunksBig.reserve(10);
-        freedChunksSmall.reserve(50);
-    }
-
-    ~HeapAllocator() {
     }
 
     uint64_t allocate(size_t &sizeToAllocate) {
-        std::lock_guard<std::mutex> lock(mtx);
         sizeToAllocate = alignUp(sizeToAllocate, allocationAlignment);
-        uint64_t ptrReturn = 0llu;
 
+        std::lock_guard<std::mutex> lock(mtx);
         DBG_LOG(PrintDebugMessages, __FUNCTION__, "Allocator usage == ", this->getUsage());
-
         if (availableSize < sizeToAllocate) {
             return 0llu;
         }
 
         std::vector<HeapChunk> &freedChunks = (sizeToAllocate > sizeThreshold) ? freedChunksBig : freedChunksSmall;
-        size_t sizeOfFreedChunk = 0;
         uint32_t defragmentCount = 0;
 
-        while (ptrReturn == 0llu) {
-
-            ptrReturn = getFromFreedChunks(sizeToAllocate, freedChunks, sizeOfFreedChunk);
+        for (;;) {
+            size_t sizeOfFreedChunk = 0;
+            uint64_t ptrReturn = getFromFreedChunks(sizeToAllocate, freedChunks, sizeOfFreedChunk);
 
             if (ptrReturn == 0llu) {
                 if (sizeToAllocate > sizeThreshold) {
@@ -84,63 +74,56 @@ class HeapAllocator {
                 } else {
                     availableSize -= sizeToAllocate;
                 }
+                return ptrReturn;
             }
 
-            if (ptrReturn == 0llu) {
-                if (defragmentCount == 1)
-                    break;
-                defragment();
-                defragmentCount++;
-            }
+            if (defragmentCount == 1)
+                return 0llu;
+            defragment();
+            defragmentCount++;
         }
-
-        return ptrReturn;
     }
 
     void free(uint64_t ptr, size_t size) {
-        std::lock_guard<std::mutex> lock(mtx);
-        auto ptrIn = ptr;
-        if (ptrIn == 0llu)
+        if (ptr == 0llu)
             return;
 
+        std::lock_guard<std::mutex> lock(mtx);
         DBG_LOG(PrintDebugMessages, __FUNCTION__, "Allocator usage == ", this->getUsage());
 
-        if (ptrIn == pRightBound) {
-            pRightBound = ptrIn + size;
+        if (ptr == pRightBound) {
+            pRightBound = ptr + size;
             mergeLastFreedSmall();
-        } else if (ptrIn == (pLeftBound - size)) {
-            pLeftBound = (pLeftBound - size);
+        } else if (ptr == pLeftBound - size) {
+            pLeftBound = ptr;
             mergeLastFreedBig();
+        } else if (ptr < pLeftBound) {
+            DEBUG_BREAK_IF(size <= sizeThreshold);
+            storeInFreedChunks(ptr, size, freedChunksBig);
         } else {
-            if (ptrIn < pLeftBound) {
-                DEBUG_BREAK_IF(size <= sizeThreshold);
-                storeInFreedChunks(ptr, size, freedChunksBig);
-            } else {
-                storeInFreedChunks(ptr, size, freedChunksSmall);
-            }
+            storeInFreedChunks(ptr, size, freedChunksSmall);
         }
         availableSize += size;
     }
 
-    uint64_t getLeftSize() {
+    uint64_t getLeftSize() const {
         return availableSize;
     }
 
-    uint64_t getUsedSize() {
+    uint64_t getUsedSize() const {
         return size - availableSize;
     }
 
     NO_SANITIZE
-    double getUsage() {
-        return 1.0 * (size - availableSize) / (size * 1.0);
+    double getUsage() const {
+        return static_cast<double>(size - availableSize) / size;
     }
 
   protected:
-    uint64_t address;
-    uint64_t size;
+    const uint64_t size;
     uint64_t availableSize;
-    uint64_t pLeftBound, pRightBound;
-    const size_t defaultSizeThreshold = 4 * MemoryConstants::megaByte;
+    uint64_t pLeftBound;
+    uint64_t pRightBound;
     const size_t sizeThreshold;
     size_t allocationAlignment = MemoryConstants::pageSize;
 
@@ -178,7 +161,7 @@ class HeapAllocator {
             } else {
                 size_t sizeDelta = freedChunks[bestFitIndex].size - size;
 
-                DEBUG_BREAK_IF(!((size <= sizeThreshold) || ((size > sizeThreshold) && (sizeDelta > sizeThreshold))));
+                DEBUG_BREAK_IF(!(size <= sizeThreshold || (size > sizeThreshold && sizeDelta > sizeThreshold)));
 
                 auto ptr = freedChunks[bestFitIndex].ptr + sizeDelta;
                 freedChunks[bestFitIndex].size = sizeDelta;
@@ -189,33 +172,22 @@ class HeapAllocator {
     }
 
     void storeInFreedChunks(uint64_t ptr, size_t size, std::vector<HeapChunk> &freedChunks) {
-        size_t elements = freedChunks.size();
-        uint64_t pLeft = ptr;
-        uint64_t pRight = ptr + size;
-        bool freedChunkStored = false;
-
-        for (size_t i = 0; i < elements; i++) {
-            if (freedChunks[i].ptr == pRight) {
-                freedChunks[i].ptr = pLeft;
-                freedChunks[i].size += size;
-                freedChunkStored = true;
-            } else if ((freedChunks[i].ptr + freedChunks[i].size) == pLeft) {
-                freedChunks[i].size += size;
-                freedChunkStored = true;
+        for (auto &freedChunk : freedChunks) {
+            if (freedChunk.ptr == ptr + size) {
+                freedChunk.ptr = ptr;
+                freedChunk.size += size;
+                return;
             }
-
-            if (freedChunkStored == true) {
-                break;
+            if (freedChunk.ptr + freedChunk.size == ptr) {
+                freedChunk.size += size;
+                return;
             }
         }
 
-        if (freedChunkStored == false) {
-            freedChunks.emplace_back(ptr, size);
-        }
+        freedChunks.emplace_back(ptr, size);
     }
 
     void mergeLastFreedSmall() {
-
         size_t maxSizeOfSmallChunks = freedChunksSmall.size();
 
         if (maxSizeOfSmallChunks > 0) {
@@ -234,9 +206,8 @@ class HeapAllocator {
         if (maxSizeOfBigChunks > 0) {
             auto ptr = freedChunksBig[maxSizeOfBigChunks - 1].ptr;
             size_t chunkSize = freedChunksBig[maxSizeOfBigChunks - 1].size;
-
-            if (ptr == (pLeftBound - chunkSize)) {
-                pLeftBound = (pLeftBound - chunkSize);
+            if (ptr == pLeftBound - chunkSize) {
+                pLeftBound = ptr;
                 freedChunksBig.pop_back();
             }
         }
