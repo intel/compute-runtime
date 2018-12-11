@@ -121,7 +121,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TwoOOQsTwoDependentWalkers, shouldHaveOneVFEState) {
     EXPECT_EQ(1u, numCommands);
 }
 
-HWTEST_F(TwoOOQsTwoDependentWalkers, shouldHaveAPipecontrolBetweenWalkers) {
+HWTEST_F(TwoOOQsTwoDependentWalkers, DISABLED_shouldHaveAPipecontrolBetweenWalkers) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
