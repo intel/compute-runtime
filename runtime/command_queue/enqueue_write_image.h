@@ -66,7 +66,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
 
     BuiltInOwnershipWrapper lock(builder, this->context);
 
-    size_t hostPtrSize = calculateHostPtrSizeForImage(const_cast<size_t *>(region), inputRowPitch, inputSlicePitch, dstImage);
+    size_t hostPtrSize = calculateHostPtrSizeForImage(region, inputRowPitch, inputSlicePitch, dstImage);
     void *srcPtr = const_cast<void *>(ptr);
 
     MemObjSurface dstImgSurf(dstImage);

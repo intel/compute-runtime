@@ -161,42 +161,42 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountWithNullReturnExpectPas
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCount1ExpectPass) {
-    cl_uint parm_value = static_cast<cl_uint>(-1);
+    cl_uint param_value = static_cast<cl_uint>(-1);
 
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
         sizeof(cl_uint),
-        reinterpret_cast<void *>(&parm_value),
+        &param_value,
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(1u, parm_value);
+    EXPECT_EQ(1u, param_value);
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountWithLongReturnExpectPass) {
-    cl_uint parm_value = static_cast<cl_uint>(-1);
+    cl_uint param_value = static_cast<cl_uint>(-1);
 
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
         sizeof(cl_uint) + 1,
-        reinterpret_cast<void *>(&parm_value),
+        &param_value,
         &param_value_size_ret);
 
     EXPECT_EQ(CL_SUCCESS, result);
     EXPECT_EQ(sizeof(cl_uint), param_value_size_ret);
-    EXPECT_EQ(1u, parm_value);
+    EXPECT_EQ(1u, param_value);
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountWithShortReturnExpectFail) {
-    cl_uint parm_value = static_cast<cl_uint>(-1);
+    cl_uint param_value = static_cast<cl_uint>(-1);
 
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
         sizeof(cl_uint) - 1,
-        reinterpret_cast<void *>(&parm_value),
+        &param_value,
         &param_value_size_ret);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
@@ -215,7 +215,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountSizeQueryExpectPass) {
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCount2ExpectPass) {
-    cl_uint parm_value = static_cast<cl_uint>(-1);
+    cl_uint param_value = static_cast<cl_uint>(-1);
 
     result = clRetainAcceleratorINTEL(accelerator);
     ASSERT_EQ(CL_SUCCESS, result);
@@ -224,11 +224,11 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCount2ExpectPass) {
         accelerator,
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
         sizeof(cl_uint),
-        reinterpret_cast<void *>(&parm_value),
+        &param_value,
         &param_value_size_ret);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(2u, parm_value);
+    EXPECT_EQ(2u, param_value);
 
     result = clReleaseAcceleratorINTEL(accelerator);
 
@@ -238,11 +238,11 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCount2ExpectPass) {
         accelerator,
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
         sizeof(cl_uint),
-        reinterpret_cast<void *>(&parm_value),
+        &param_value,
         &param_value_size_ret);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(1u, parm_value);
+    EXPECT_EQ(1u, param_value);
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextNullReturnExpectPass) {
@@ -258,13 +258,13 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextNullReturnExpectPass) {
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextLongExpectPass) {
-    cl_context parm_value = reinterpret_cast<cl_context>(-1);
+    cl_context param_value = reinterpret_cast<cl_context>(-1);
 
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_CONTEXT_INTEL,
         sizeof(cl_context) + 1,
-        reinterpret_cast<void *>(&parm_value),
+        &param_value,
         &param_value_size_ret);
 
     EXPECT_EQ(CL_SUCCESS, result);
@@ -272,30 +272,30 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextLongExpectPass) {
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextLongExpectRightContext) {
-    cl_context parm_value = reinterpret_cast<cl_context>(-1);
+    cl_context param_value = reinterpret_cast<cl_context>(-1);
 
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_CONTEXT_INTEL,
         sizeof(cl_context),
-        reinterpret_cast<void *>(&parm_value),
+        &param_value,
         &param_value_size_ret);
 
     EXPECT_EQ(CL_SUCCESS, result);
     EXPECT_EQ(sizeof(cl_context), param_value_size_ret);
 
     cl_context referenceContext = static_cast<cl_context>(pContext);
-    EXPECT_EQ(referenceContext, parm_value);
+    EXPECT_EQ(referenceContext, param_value);
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextShortExpectPass) {
-    cl_context parm_value = reinterpret_cast<cl_context>(-1);
+    cl_context param_value = reinterpret_cast<cl_context>(-1);
 
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_CONTEXT_INTEL,
         sizeof(cl_context) - 1,
-        reinterpret_cast<void *>(&parm_value),
+        &param_value,
         &param_value_size_ret);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);

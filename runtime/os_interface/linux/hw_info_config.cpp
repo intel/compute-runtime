@@ -78,10 +78,10 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     auto pWaTable = std::unique_ptr<WorkaroundTable>(new WorkaroundTable);
     *pWaTable = *(inHwInfo->pWaTable);
 
-    outHwInfo->pPlatform = const_cast<const PLATFORM *>(pPlatform.get());
-    outHwInfo->pSysInfo = const_cast<const GT_SYSTEM_INFO *>(pSysInfo.get());
-    outHwInfo->pSkuTable = const_cast<const FeatureTable *>(pSkuTable.get());
-    outHwInfo->pWaTable = const_cast<const WorkaroundTable *>(pWaTable.get());
+    outHwInfo->pPlatform = pPlatform.get();
+    outHwInfo->pSysInfo = pSysInfo.get();
+    outHwInfo->pSkuTable = pSkuTable.get();
+    outHwInfo->pWaTable = pWaTable.get();
     outHwInfo->capabilityTable = inHwInfo->capabilityTable;
 
     int val = 0;

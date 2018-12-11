@@ -1939,7 +1939,7 @@ void Kernel::ReflectionSurfaceHelper::setParentImageParams(void *reflectionSurfa
     uint32_t numArgs = (uint32_t)parentArguments.size();
     for (uint32_t i = 0; i < numArgs; i++) {
         if (parentArguments[i].type == Kernel::kernelArgType::IMAGE_OBJ) {
-            const Image *image = const_cast<const Image *>(castToObject<Image>((cl_mem)parentArguments[i].object));
+            const Image *image = castToObject<Image>((cl_mem)parentArguments[i].object);
             if (image) {
                 pImageParameters->m_ArraySize = (uint32_t)image->getImageDesc().image_array_size;
                 pImageParameters->m_Depth = (uint32_t)image->getImageDesc().image_depth;
@@ -1964,7 +1964,7 @@ void Kernel::ReflectionSurfaceHelper::setParentSamplerParams(void *reflectionSur
     uint32_t numArgs = (uint32_t)parentArguments.size();
     for (uint32_t i = 0; i < numArgs; i++) {
         if (parentArguments[i].type == Kernel::kernelArgType::SAMPLER_OBJ) {
-            const Sampler *sampler = const_cast<const Sampler *>(castToObject<Sampler>((cl_sampler)parentArguments[i].object));
+            const Sampler *sampler = castToObject<Sampler>((cl_sampler)parentArguments[i].object);
             if (sampler) {
                 pParentSamplerParams->CoordinateSnapRequired = (uint32_t)sampler->getSnapWaValue();
                 pParentSamplerParams->m_AddressingMode = (uint32_t)sampler->addressingMode;

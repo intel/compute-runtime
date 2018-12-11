@@ -573,7 +573,7 @@ cl_int Image::validateImageTraits(Context *context, cl_mem_flags flags, const cl
     return CL_SUCCESS;
 }
 
-size_t Image::calculateHostPtrSize(size_t *region, size_t rowPitch, size_t slicePitch, size_t pixelSize, uint32_t imageType) {
+size_t Image::calculateHostPtrSize(const size_t *region, size_t rowPitch, size_t slicePitch, size_t pixelSize, uint32_t imageType) {
     DEBUG_BREAK_IF(!((rowPitch != 0) && (slicePitch != 0)));
     size_t sizeToReturn = 0u;
 

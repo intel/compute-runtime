@@ -88,7 +88,7 @@ class Image : public MemObj {
 
     static cl_int validateImageTraits(Context *context, cl_mem_flags flags, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr);
 
-    static size_t calculateHostPtrSize(size_t *region, size_t rowPitch, size_t slicePitch, size_t pixelSize, uint32_t imageType);
+    static size_t calculateHostPtrSize(const size_t *region, size_t rowPitch, size_t slicePitch, size_t pixelSize, uint32_t imageType);
 
     static void calculateHostPtrOffset(size_t *imageOffset, const size_t *origin, const size_t *region, size_t rowPitch, size_t slicePitch, uint32_t imageType, size_t bytesPerPixel);
 

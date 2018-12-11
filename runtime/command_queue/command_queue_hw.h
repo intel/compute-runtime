@@ -333,7 +333,7 @@ class CommandQueueHw : public CommandQueue {
 
   protected:
     MOCKABLE_VIRTUAL void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo){};
-    size_t calculateHostPtrSizeForImage(size_t *region, size_t rowPitch, size_t slicePitch, Image *image);
+    size_t calculateHostPtrSizeForImage(const size_t *region, size_t rowPitch, size_t slicePitch, Image *image);
 
   private:
     bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);

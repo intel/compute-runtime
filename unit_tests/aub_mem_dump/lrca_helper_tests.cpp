@@ -17,7 +17,7 @@ TEST(LrcaHelper, WhenLrcaHelperIsInitializedThenLrcaIncludesDebugModeLri) {
 
     auto lrcaBufferSize = helper.sizeLRCA / sizeof(uint32_t);
     auto lrca = std::unique_ptr<uint32_t[]>(new uint32_t[lrcaBufferSize]);
-    helper.initialize(reinterpret_cast<void *>(lrca.get()));
+    helper.initialize(lrca.get());
 
     bool debugModeLriFound = false;
     for (uint32_t i = 0; i < lrcaBufferSize; i += 2) {

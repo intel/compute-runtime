@@ -59,7 +59,7 @@ inline DerivedType *castToObjectOrAbort(typename DerivedType::BaseType *object) 
 
 template <typename DerivedType>
 inline const DerivedType *castToObject(const typename DerivedType::BaseType *object) {
-    return const_cast<const DerivedType *>(castToObject<DerivedType>(const_cast<typename DerivedType::BaseType *>(object)));
+    return castToObject<DerivedType>(const_cast<typename DerivedType::BaseType *>(object));
 }
 
 template <typename DerivedType>

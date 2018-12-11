@@ -137,7 +137,7 @@ TEST(castToSamplerTest, GivenGenericPointerWhichHoldsSamplerObjectWhenCastToSamp
 TEST(castToSamplerTest, GivenGenericPointerWhichDoestNotHoldSamplerObjectWhenCastToSamplerIsCalledThenCastWithAFailure) {
     auto context = std::make_unique<MockContext>();
     auto notSamplerObj = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context.get()));
-    auto ptr = reinterpret_cast<void *>(notSamplerObj.get());
+    void *ptr = notSamplerObj.get();
     auto notSampler = castToObject<Sampler>(ptr);
 
     EXPECT_EQ(nullptr, notSampler);
