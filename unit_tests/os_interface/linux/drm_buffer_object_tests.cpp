@@ -24,8 +24,8 @@ class TestedBufferObject : public BufferObject {
         this->tiling_mode = mode;
     }
 
-    void fillExecObject(drm_i915_gem_exec_object2 &execObject) override {
-        BufferObject::fillExecObject(execObject);
+    void fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t drmContextId) override {
+        BufferObject::fillExecObject(execObject, drmContextId);
         execObjectPointerFilled = &execObject;
     }
 
@@ -63,7 +63,7 @@ TEST_F(DrmBufferObjectTest, exec) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = 0;
 
-    auto ret = bo->exec(0, 0, 0);
+    auto ret = bo->exec(0, 0, 0, false, 1);
     EXPECT_EQ(mock->ioctl_res, ret);
     EXPECT_EQ(0u, mock->execBuffer.flags);
 }
@@ -71,7 +71,7 @@ TEST_F(DrmBufferObjectTest, exec) {
 TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = -1;
-    EXPECT_THROW(bo->exec(0, 0, 0), std::exception);
+    EXPECT_THROW(bo->exec(0, 0, 0, false, 1), std::exception);
 }
 
 TEST_F(DrmBufferObjectTest, setTiling_success) {
@@ -100,13 +100,13 @@ TEST_F(DrmBufferObjectTest, testExecObjectFlags) {
 #ifdef __x86_64__
     memset(&execObject, 0, sizeof(execObject));
     bo->setAddress((void *)((uint64_t)1u << 34)); //anything above 4GB
-    bo->fillExecObject(execObject);
+    bo->fillExecObject(execObject, 1);
     EXPECT_TRUE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
 #endif
 
     memset(&execObject, 0, sizeof(execObject));
     bo->setAddress((void *)((uint64_t)1u << 31)); //anything below 4GB
-    bo->fillExecObject(execObject);
+    bo->fillExecObject(execObject, 1);
     EXPECT_FALSE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
 }
 
@@ -122,7 +122,7 @@ TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
 
     bo->setAddress(buff.get());
     BufferObject *boArray[1] = {boToPin.get()};
-    auto ret = bo->pin(boArray, 1);
+    auto ret = bo->pin(boArray, 1, 1);
     EXPECT_EQ(EINVAL, ret);
 }
 
@@ -145,7 +145,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
     mock->errnoValue = EFAULT;
 
     BufferObject *boArray[1] = {boToPin.get()};
-    auto ret = bo->pin(boArray, 1);
+    auto ret = bo->pin(boArray, 1, 1);
     EXPECT_EQ(EFAULT, ret);
 }
 
@@ -170,7 +170,7 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
     BufferObject *array[3] = {boToPin.get(), boToPin2.get(), boToPin3.get()};
 
     bo->setAddress(buff.get());
-    auto ret = bo->pin(array, 3);
+    auto ret = bo->pin(array, 3, 1);
     EXPECT_EQ(mock->ioctl_res, ret);
     uint32_t bb_end = 0x05000000;
     EXPECT_EQ(buff[0], bb_end);

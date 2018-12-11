@@ -37,7 +37,6 @@ class Drm {
     friend DeviceFactory;
 
   public:
-    uint32_t lowPriorityContextId;
     static Drm *get(int32_t deviceOrdinal);
 
     virtual int ioctl(unsigned long request, void *arg);
@@ -57,8 +56,9 @@ class Drm {
     bool isPreemptionSupported() const { return preemptionSupported; }
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
     int getFileDescriptor() const { return fd; }
-    void createLowPriorityContext();
-    void destroyLowPriorityContext();
+    uint32_t createDrmContext();
+    void destroyDrmContext(uint32_t drmContextId);
+    void setLowPriorityContextParam(uint32_t drmContextId);
 
     void setGtType(GTTYPE eGtType) { this->eGtType = eGtType; }
     GTTYPE getGtType() const { return this->eGtType; }
@@ -73,7 +73,7 @@ class Drm {
     int deviceId;
     int revisionId;
     GTTYPE eGtType;
-    Drm(int fd) : lowPriorityContextId(0), fd(fd), deviceId(0), revisionId(0), eGtType(GTTYPE_UNDEFINED) {}
+    Drm(int fd) : fd(fd), deviceId(0), revisionId(0), eGtType(GTTYPE_UNDEFINED) {}
     virtual ~Drm();
 
     static bool isi915Version(int fd);

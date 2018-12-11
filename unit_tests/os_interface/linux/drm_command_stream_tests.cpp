@@ -36,7 +36,7 @@ class DrmCommandStreamFixture {
         //make sure this is disabled, we don't want test this now
         DebugManager.flags.EnableForcePin.set(false);
 
-        mock = std::make_unique<DrmMockImpl>(mockFd);
+        mock = std::make_unique<::testing::NiceMock<DrmMockImpl>>(mockFd);
 
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         executionEnvironment.osInterface->get()->setDrm(mock.get());
@@ -73,7 +73,7 @@ class DrmCommandStreamFixture {
 
     DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
     DrmMemoryManager *memoryManager = nullptr;
-    std::unique_ptr<DrmMockImpl> mock;
+    std::unique_ptr<::testing::NiceMock<DrmMockImpl>> mock;
     const int mockFd = 33;
     static const uint64_t alignment = MemoryConstants::allocationAlignment;
     DebugManagerStateRestore dbgState;
@@ -170,6 +170,21 @@ MATCHER_P2(BoExecFlushEq, batch_start_offset, batch_len, "") {
     return (exec2->batch_start_offset == batch_start_offset) && (exec2->batch_len == batch_len);
 }
 
+// matcher to check DrmContextId
+MATCHER_P2(BoExecFlushContextEq, drmContextId, numExecs, "") {
+    auto execBuff2 = reinterpret_cast<drm_i915_gem_execbuffer2 *>(arg);
+
+    bool allExecsWithTheSameId = (execBuff2->buffer_count == numExecs);
+    allExecsWithTheSameId &= (execBuff2->rsvd1 == drmContextId);
+
+    auto execObjects = reinterpret_cast<drm_i915_gem_exec_object2 *>(execBuff2->buffers_ptr);
+    for (uint32_t i = 0; i < execBuff2->buffer_count - 1; i++) {
+        allExecsWithTheSameId &= (execObjects[i].rsvd1 == drmContextId);
+    }
+
+    return allExecsWithTheSameId;
+}
+
 TEST_F(DrmCommandStreamTest, Flush) {
     auto expectedSize = alignUp(8u, MemoryConstants::cacheLineSize); // bbEnd
     int boHandle = 123;
@@ -209,6 +224,48 @@ TEST_F(DrmCommandStreamTest, Flush) {
     EXPECT_EQ(static_cast<uint64_t>(boHandle), flushStamp);
     EXPECT_NE(cs.getCpuBase(), nullptr);
     EXPECT_EQ(availableSpacePriorToFlush, cs.getAvailableSpace());
+}
+
+TEST_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdToAllExecBuffersAndObjects) {
+    uint32_t expectedDrmContextId = 321;
+    uint32_t numAllocations = 3;
+
+    auto createdContextId = [&expectedDrmContextId](unsigned long request, void *arg) {
+        auto contextCreate = static_cast<drm_i915_gem_context_create *>(arg);
+        contextCreate->ctx_id = expectedDrmContextId;
+        return 0;
+    };
+
+    auto allocation1 = memoryManager->allocate32BitGraphicsMemory(1, reinterpret_cast<void *>(1), AllocationOrigin::INTERNAL_ALLOCATION);
+    auto allocation2 = memoryManager->allocate32BitGraphicsMemory(1, reinterpret_cast<void *>(2), AllocationOrigin::INTERNAL_ALLOCATION);
+    csr->makeResident(*allocation1);
+    csr->makeResident(*allocation2);
+
+    EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_)).WillRepeatedly(::testing::Return(0)).RetiresOnSaturation();
+
+    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE, ::testing::_))
+        .Times(1)
+        .WillRepeatedly(::testing::Invoke(createdContextId))
+        .RetiresOnSaturation();
+
+    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, BoExecFlushContextEq(expectedDrmContextId, numAllocations)))
+        .Times(1)
+        .WillRepeatedly(::testing::Return(0))
+        .RetiresOnSaturation();
+
+    osContext = std::make_unique<OsContext>(executionEnvironment.osInterface.get(), 1,
+                                            gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    csr->setOsContext(*osContext);
+
+    auto &cs = csr->getCS();
+
+    csr->addBatchBufferEnd(cs, nullptr);
+    csr->alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    memoryManager->freeGraphicsMemory(allocation1);
+    memoryManager->freeGraphicsMemory(allocation2);
 }
 
 TEST_F(DrmCommandStreamTest, FlushWithLowPriorityContext) {
@@ -655,43 +712,39 @@ class DrmCommandStreamEnhancedFixture
 
 {
   public:
-    DrmMockCustom *mock;
-    DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
-    DrmMemoryManager *mm = nullptr;
-    MockDevice *device = nullptr;
-    DebugManagerStateRestore *dbgState;
+    std::unique_ptr<DebugManagerStateRestore> dbgState;
     ExecutionEnvironment *executionEnvironment;
-    std::unique_ptr<OsContext> osContext;
+    std::unique_ptr<DrmMockCustom> mock;
+    DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
 
-    void SetUp() {
+    DrmMemoryManager *mm = nullptr;
+    std::unique_ptr<MockDevice> device;
+
+    virtual void SetUp() {
         executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment->incRefInternal();
         executionEnvironment->initGmm(*platformDevices);
-        this->dbgState = new DebugManagerStateRestore();
+        this->dbgState = std::make_unique<DebugManagerStateRestore>();
         //make sure this is disabled, we don't want test this now
         DebugManager.flags.EnableForcePin.set(false);
 
-        mock = new DrmMockCustom();
+        mock = std::make_unique<DrmMockCustom>();
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->osInterface->get()->setDrm(mock);
-        osContext = std::make_unique<OsContext>(executionEnvironment->osInterface.get(), 0u, gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+        executionEnvironment->osInterface->get()->setDrm(mock.get());
 
         tCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
         csr = tCsr;
-        csr->setOsContext(*osContext);
         ASSERT_NE(nullptr, csr);
         mm = reinterpret_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
-        device = Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u);
+        device.reset(MockDevice::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
+        device->resetCommandStreamReceiver(tCsr);
         ASSERT_NE(nullptr, device);
     }
 
-    void TearDown() {
-        //And close at destruction
-        delete csr;
-        delete device;
-        delete mock;
-        delete dbgState;
+    virtual void TearDown() {
+        executionEnvironment->decRefInternal();
     }
 
     bool isResident(BufferObject *bo) {
@@ -716,7 +769,7 @@ class DrmCommandStreamEnhancedFixture
     };
 
     MockBufferObject *createBO(size_t size) {
-        return new MockBufferObject(this->mock, size);
+        return new MockBufferObject(this->mock.get(), size);
     }
 };
 
@@ -859,7 +912,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsF
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenDrmCsrCreatedWithInactiveGemCloseWorkerPolicyThenThreadIsNotCreated) {
     this->executionEnvironment->osInterface = std::make_unique<OSInterface>();
-    this->executionEnvironment->osInterface->get()->setDrm(mock);
+    this->executionEnvironment->osInterface->get()->setDrm(mock.get());
     TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> testedCsr(gemCloseWorkerMode::gemCloseWorkerInactive,
                                                                        *this->executionEnvironment);
     EXPECT_EQ(gemCloseWorkerMode::gemCloseWorkerInactive, testedCsr.peekGemCloseWorkerOperationMode());
@@ -889,6 +942,7 @@ class DrmCommandStreamBatchingTests : public Test<DrmCommandStreamEnhancedFixtur
 };
 
 TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsArePassed) {
+    mock->reset();
     auto commandBuffer = mm->allocateGraphicsMemory(1024);
     auto dummyAllocation = mm->allocateGraphicsMemory(1024);
     ASSERT_NE(nullptr, commandBuffer);
@@ -902,13 +956,14 @@ TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsAr
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
-    //preemption allocation + Sip Kernel
-    int ioctlPreemptionCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
-    int ioctlTagAllocCnt = gpgpuEngineInstances.size();
+    int ioctlExecCnt = 1;
+    int ioctlUserPtrCnt = 2;
 
     auto engineFlag = csr->getOsContext().get()->getEngineFlag();
 
-    EXPECT_EQ(5 + ioctlPreemptionCnt + ioctlTagAllocCnt, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(ioctlExecCnt + ioctlUserPtrCnt, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(ioctlExecCnt, this->mock->ioctl_cnt.execbuffer2);
+    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.gemUserptr);
     uint64_t flags = engineFlag | I915_EXEC_NO_RELOC;
     EXPECT_EQ(flags, this->mock->execBuffer.flags);
 
@@ -917,6 +972,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsAr
 }
 
 TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingThenCommandBufferIsNotSubmitted) {
+    mock->reset();
     tCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
@@ -929,8 +985,6 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     IndirectHeap cs(commandBuffer);
 
     tCsr->makeResident(*dummyAllocation);
-
-    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     tCsr->setTagAllocation(tagAllocation);
     tCsr->setPreemptionCsrAllocation(preemptionAllocation);
@@ -945,10 +999,6 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
 
     //preemption allocation
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
-
-    //preemption allocation + sipKernel
-    int ioctlPreemptionCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
-    int ioctlTagAllocCnt = gpgpuEngineInstances.size();
 
     auto recordedCmdBuffer = cmdBuffers.peekHead();
     EXPECT_EQ(3u + csrSurfaceCount, recordedCmdBuffer->surfaces.size());
@@ -965,26 +1015,28 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
 
     EXPECT_EQ(tCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
 
-    EXPECT_EQ(5 + ioctlPreemptionCnt + ioctlTagAllocCnt, this->mock->ioctl_cnt.total);
+    int ioctlUserPtrCnt = 3;
+
+    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.gemUserptr);
 
     EXPECT_EQ(0u, this->mock->execBuffer.flags);
 
+    tCsr->flushBatchedSubmissions();
+
     mm->freeGraphicsMemory(dummyAllocation);
     mm->freeGraphicsMemory(commandBuffer);
-    tCsr->setTagAllocation(nullptr);
-    tCsr->setPreemptionCsrAllocation(nullptr);
 }
 
 TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
+    mock->reset();
     tCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     tCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     auto commandBuffer = mm->allocateGraphicsMemory(1024);
-    auto dummyAllocation = mm->allocateGraphicsMemory(1024);
     IndirectHeap cs(commandBuffer);
-    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     tCsr->setTagAllocation(tagAllocation);
     tCsr->setPreemptionCsrAllocation(preemptionAllocation);
@@ -1013,10 +1065,6 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     //preemption allocation
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
 
-    //preemption allocation +sip Kernel
-    int ioctlPreemptionCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
-    int ioctlTagAllocCnt = gpgpuEngineInstances.size();
-
     //validate that submited command buffer has what we want
     EXPECT_EQ(3u + csrSurfaceCount, this->mock->execBuffer.buffer_count);
     EXPECT_EQ(4u, this->mock->execBuffer.batch_start_offset);
@@ -1037,11 +1085,13 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
         EXPECT_TRUE(handleFound);
     }
 
-    EXPECT_EQ(6 + ioctlPreemptionCnt + ioctlTagAllocCnt, this->mock->ioctl_cnt.total);
+    int ioctlExecCnt = 1;
+    int ioctlUserPtrCnt = 2;
+    EXPECT_EQ(ioctlExecCnt, this->mock->ioctl_cnt.execbuffer2);
+    EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctl_cnt.gemUserptr);
+    EXPECT_EQ(ioctlExecCnt + ioctlUserPtrCnt, this->mock->ioctl_cnt.total);
 
-    mm->freeGraphicsMemory(dummyAllocation);
     mm->freeGraphicsMemory(commandBuffer);
-    tCsr->setTagAllocation(nullptr);
     tCsr->setPreemptionCsrAllocation(nullptr);
 }
 
@@ -1180,10 +1230,12 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
 
     tCsr->processResidency(csr->getResidencyAllocations());
 
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext->getContextId()]);
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext->getContextId()]);
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext->getContextId()]);
-    EXPECT_TRUE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext->getContextId()]);
+    auto &osContext = tCsr->getOsContext();
+
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
 
     auto residency = tCsr->getResidencyVector();
 
@@ -1192,10 +1244,10 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
     tCsr->makeSurfacePackNonResident(tCsr->getResidencyAllocations());
 
     //check that each packet is not resident
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext->getContextId()]);
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext->getContextId()]);
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext->getContextId()]);
-    EXPECT_FALSE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext->getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
 
     EXPECT_EQ(0u, residency->size());
 
@@ -1204,10 +1256,10 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
 
     tCsr->processResidency(csr->getResidencyAllocations());
 
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext->getContextId()]);
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext->getContextId()]);
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext->getContextId()]);
-    EXPECT_TRUE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext->getContextId()]);
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
 
     EXPECT_EQ(3u, residency->size());
 
@@ -1215,10 +1267,10 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
 
     EXPECT_EQ(0u, residency->size());
 
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext->getContextId()]);
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext->getContextId()]);
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext->getContextId()]);
-    EXPECT_FALSE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext->getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
 
     mm->freeGraphicsMemory(graphicsAllocation);
     mm->freeGraphicsMemory(graphicsAllocation2);

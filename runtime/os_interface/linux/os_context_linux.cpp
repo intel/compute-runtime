@@ -24,5 +24,15 @@ OsContext::~OsContext() = default;
 
 OsContextLinux::OsContextImpl(Drm &drm, EngineInstanceT engineType) : drm(drm) {
     engineFlag = DrmEngineMapper::engineNodeMap(engineType.type);
+    this->drmContextId = drm.createDrmContext();
+    if (drm.isPreemptionSupported() &&
+        engineType.type == gpgpuEngineInstances[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].type &&
+        engineType.id == gpgpuEngineInstances[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].id) {
+        drm.setLowPriorityContextParam(this->drmContextId);
+    }
+}
+
+OsContextLinux::~OsContextImpl() {
+    drm.destroyDrmContext(drmContextId);
 }
 } // namespace OCLRT

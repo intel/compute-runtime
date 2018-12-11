@@ -7,6 +7,7 @@
 
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
+#include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/helpers/file_io.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -137,30 +138,58 @@ TEST(DrmTest, GivenDrmWhenAskedForPreemptionCorrectValueReturned) {
     delete pDrm;
 }
 
-TEST(DrmTest, GivenDrmWhenAskedForContextThatPassedThenValidContextIdsReturned) {
-    DrmMock *pDrm = new DrmMock;
-    EXPECT_EQ(0u, pDrm->lowPriorityContextId);
-    pDrm->StoredRetVal = 0;
-    pDrm->StoredCtxId = 2;
-    pDrm->createLowPriorityContext();
-    EXPECT_EQ(2u, pDrm->lowPriorityContextId);
-    pDrm->StoredRetVal = 0;
-    pDrm->StoredCtxId = 1;
-    delete pDrm;
-}
-
 TEST(DrmTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
     DrmMock *pDrm = new DrmMock;
     pDrm->StoredRetVal = -1;
-    EXPECT_THROW(pDrm->createLowPriorityContext(), std::exception);
+    EXPECT_THROW(pDrm->createDrmContext(), std::exception);
     pDrm->StoredRetVal = 0;
     delete pDrm;
 }
 
-TEST(DrmTest, GivenDrmWhenContextDestroyIsCalledThenThereAreNoLeaksOrCrashes) {
+TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext) {
     DrmMock drmMock;
-    drmMock.createLowPriorityContext();
-    drmMock.destroyLowPriorityContext();
+    uint32_t drmContextId1 = 123;
+    uint32_t drmContextId2 = 456;
+
+    {
+        drmMock.StoredCtxId = drmContextId1;
+        OsContextLinux osContext1(drmMock, gpgpuEngineInstances[0]);
+        EXPECT_EQ(drmContextId1, osContext1.getDrmContextId());
+        EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
+
+        {
+            drmMock.StoredCtxId = drmContextId2;
+            OsContextLinux osContext2(drmMock, gpgpuEngineInstances[1]);
+            EXPECT_EQ(drmContextId2, osContext2.getDrmContextId());
+            EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
+        }
+        EXPECT_EQ(drmContextId2, drmMock.receivedDestroyContextId);
+    }
+
+    EXPECT_EQ(drmContextId1, drmMock.receivedDestroyContextId);
+    EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
+}
+
+TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContextThenCallSetContextPriorityIoctl) {
+    DrmMock drmMock;
+    drmMock.StoredCtxId = 123;
+    drmMock.preemptionSupported = false;
+
+    OsContextLinux osContext1(drmMock, gpgpuEngineInstances[0]);
+    OsContextLinux osContext2(drmMock, gpgpuEngineInstances[EngineInstanceConstants::lowPriorityGpgpuEngineIndex]);
+    EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
+
+    drmMock.preemptionSupported = true;
+
+    OsContextLinux osContext3(drmMock, gpgpuEngineInstances[0]);
+    EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
+
+    OsContextLinux osContext4(drmMock, gpgpuEngineInstances[EngineInstanceConstants::lowPriorityGpgpuEngineIndex]);
+    EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(drmMock.StoredCtxId, drmMock.receivedContextParamRequest.ctx_id);
+    EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);
+    EXPECT_EQ(static_cast<uint64_t>(-1023), drmMock.receivedContextParamRequest.value);
+    EXPECT_EQ(0u, drmMock.receivedContextParamRequest.size);
 }
 
 TEST(DrmTest, getExecSoftPin) {

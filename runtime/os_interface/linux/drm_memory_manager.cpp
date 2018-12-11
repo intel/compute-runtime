@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/options.h"
@@ -13,6 +14,7 @@
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/helpers/surface_formats.h"
 #include <cstring>
 #include <iostream>
@@ -224,7 +226,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
 
     bo->isAllocated = true;
     if (forcePinEnabled && pinBB != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
-        pinBB->pin(&bo, 1);
+        pinBB->pin(&bo, 1, getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId());
     }
     return new DrmAllocation(bo, res, cSize, MemoryPool::System4KBPages, getOsContextCount(), false);
 }
@@ -235,7 +237,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithHostPtr(const Allocat
     bool forcePinAllowed = res != nullptr && pinBB != nullptr && forcePinEnabled && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold;
     if (!validateHostPtrMemory && forcePinAllowed) {
         BufferObject *boArray[] = {res->getBO()};
-        pinBB->pin(boArray, 1);
+        pinBB->pin(boArray, 1, getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId());
     }
     return res;
 }
@@ -578,7 +580,7 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
     }
 
     if (validateHostPtrMemory) {
-        int result = pinBB->pin(allocatedBos, numberOfBosAllocated);
+        int result = pinBB->pin(allocatedBos, numberOfBosAllocated, getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId());
 
         if (result == EFAULT) {
             for (uint32_t i = 0; i < numberOfBosAllocated; i++) {

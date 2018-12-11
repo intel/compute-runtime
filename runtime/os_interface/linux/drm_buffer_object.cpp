@@ -106,7 +106,7 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
     return set_tiling.tiling_mode == mode;
 }
 
-void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject) {
+void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t drmContextId) {
     execObject.handle = this->handle;
     execObject.relocation_count = 0; //No relocations, we are SoftPinning
     execObject.relocs_ptr = 0ul;
@@ -116,23 +116,23 @@ void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject) {
 #ifdef __x86_64__
     execObject.flags |= reinterpret_cast<uint64_t>(this->address) & MemoryConstants::zoneHigh ? EXEC_OBJECT_SUPPORTS_48B_ADDRESS : 0;
 #endif
-    execObject.rsvd1 = this->drm->lowPriorityContextId;
+    execObject.rsvd1 = drmContextId;
     execObject.rsvd2 = 0;
 }
 
-void BufferObject::processRelocs(int &idx) {
+void BufferObject::processRelocs(int &idx, uint32_t drmContextId) {
     for (size_t i = 0; i < this->residency.size(); i++) {
-        residency[i]->fillExecObject(execObjectsStorage[idx]);
+        residency[i]->fillExecObject(execObjectsStorage[idx], drmContextId);
         idx++;
     }
 }
 
-int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, bool lowPriority) {
+int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId) {
     drm_i915_gem_execbuffer2 execbuf = {};
 
     int idx = 0;
-    processRelocs(idx);
-    this->fillExecObject(execObjectsStorage[idx]);
+    processRelocs(idx, drmContextId);
+    this->fillExecObject(execObjectsStorage[idx], drmContextId);
     idx++;
 
     execbuf.buffers_ptr = reinterpret_cast<uintptr_t>(execObjectsStorage);
@@ -140,10 +140,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     execbuf.batch_start_offset = static_cast<uint32_t>(startOffset);
     execbuf.batch_len = alignUp(used, 8);
     execbuf.flags = flags;
-
-    if (lowPriority) {
-        execbuf.rsvd1 = this->drm->lowPriorityContextId & I915_EXEC_CONTEXT_ID_MASK;
-    }
+    execbuf.rsvd1 = drmContextId;
 
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
     if (ret != 0) {
@@ -155,7 +152,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     return ret;
 }
 
-int BufferObject::pin(BufferObject *boToPin[], size_t numberOfBos) {
+int BufferObject::pin(BufferObject *boToPin[], size_t numberOfBos, uint32_t drmContextId) {
     drm_i915_gem_execbuffer2 execbuf = {};
     StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject;
 
@@ -166,10 +163,10 @@ int BufferObject::pin(BufferObject *boToPin[], size_t numberOfBos) {
 
     uint32_t boIndex = 0;
     for (boIndex = 0; boIndex < (uint32_t)numberOfBos; boIndex++) {
-        boToPin[boIndex]->fillExecObject(execObject[boIndex]);
+        boToPin[boIndex]->fillExecObject(execObject[boIndex], drmContextId);
     }
 
-    this->fillExecObject(execObject[boIndex]);
+    this->fillExecObject(execObject[boIndex], drmContextId);
 
     execbuf.buffers_ptr = reinterpret_cast<uintptr_t>(&execObject[0]);
     execbuf.buffer_count = boIndex + 1;

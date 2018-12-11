@@ -44,9 +44,9 @@ class BufferObject {
 
     bool setTiling(uint32_t mode, uint32_t stride);
 
-    MOCKABLE_VIRTUAL int pin(BufferObject *boToPin[], size_t numberOfBos);
+    MOCKABLE_VIRTUAL int pin(BufferObject *boToPin[], size_t numberOfBos, uint32_t drmContextId);
 
-    int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency = false, bool lowPriority = false);
+    int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId);
 
     int wait(int64_t timeoutNs);
     bool close();
@@ -94,8 +94,8 @@ class BufferObject {
     uint32_t tiling_mode;
     uint32_t stride;
 
-    MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject);
-    void processRelocs(int &idx);
+    MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t drmContextId);
+    void processRelocs(int &idx, uint32_t drmContextId);
 
     uint64_t offset64; // last-seen GPU offset
     size_t size;

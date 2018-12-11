@@ -137,24 +137,27 @@ void Drm::checkPreemptionSupport() {
 #endif
 }
 
-void Drm::createLowPriorityContext() {
-    drm_i915_gem_context_create gcc = {};
-    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &gcc);
-    UNRECOVERABLE_IF(retVal != 0);
-    lowPriorityContextId = gcc.ctx_id;
-
+void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
     drm_i915_gem_context_param gcp = {};
-    gcp.ctx_id = lowPriorityContextId;
+    gcp.ctx_id = drmContextId;
     gcp.param = I915_CONTEXT_PARAM_PRIORITY;
     gcp.value = -1023;
 
-    retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &gcp);
+    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &gcp);
     UNRECOVERABLE_IF(retVal != 0);
 }
 
-void Drm::destroyLowPriorityContext() {
+uint32_t Drm::createDrmContext() {
+    drm_i915_gem_context_create gcc = {};
+    auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &gcc);
+    UNRECOVERABLE_IF(retVal != 0);
+
+    return gcc.ctx_id;
+}
+
+void Drm::destroyDrmContext(uint32_t drmContextId) {
     drm_i915_gem_context_destroy destroy = {};
-    destroy.ctx_id = lowPriorityContextId;
+    destroy.ctx_id = drmContextId;
     auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY, &destroy);
     UNRECOVERABLE_IF(retVal != 0);
 }

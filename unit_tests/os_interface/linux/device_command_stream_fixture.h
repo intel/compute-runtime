@@ -10,6 +10,7 @@
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "engine_node.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
@@ -81,6 +82,8 @@ class DrmMockCustom : public Drm {
             gemClose = 0;
             regRead = 0;
             contextGetParam = 0;
+            contextCreate = 0;
+            contextDestroy = 0;
         }
 
         std::atomic<int32_t> total;
@@ -95,6 +98,8 @@ class DrmMockCustom : public Drm {
         std::atomic<int32_t> gemClose;
         std::atomic<int32_t> regRead;
         std::atomic<int32_t> contextGetParam;
+        std::atomic<int32_t> contextCreate;
+        std::atomic<int32_t> contextDestroy;
     };
 
     std::atomic<int> ioctl_res;
@@ -121,6 +126,8 @@ class DrmMockCustom : public Drm {
         NEO_IOCTL_EXPECT_EQ(gemClose);
         NEO_IOCTL_EXPECT_EQ(regRead);
         NEO_IOCTL_EXPECT_EQ(contextGetParam);
+        NEO_IOCTL_EXPECT_EQ(contextCreate);
+        NEO_IOCTL_EXPECT_EQ(contextDestroy);
 #undef NEO_IOCTL_EXPECT_EQ
     }
 
@@ -231,6 +238,13 @@ class DrmMockCustom : public Drm {
             getContextParam->value = getContextParamRetValue;
         } break;
 
+        case DRM_IOCTL_I915_GEM_CONTEXT_CREATE: {
+            ioctl_cnt.contextCreate++;
+        } break;
+        case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY: {
+            ioctl_cnt.contextDestroy++;
+        } break;
+
         default:
             std::cout << std::hex << DRM_IOCTL_I915_GEM_WAIT << std::endl;
             std::cout << "unexpected IOCTL: " << std::hex << request << std::endl;
@@ -255,6 +269,8 @@ class DrmMockCustom : public Drm {
 
     DrmMockCustom() : Drm(mockFd) {
         reset();
+        ioctl_expected.contextCreate = OCLRT::EngineInstanceConstants::numGpgpuEngineInstances;
+        ioctl_expected.contextDestroy = ioctl_expected.contextCreate.load();
     }
     int getErrno() override {
         return errnoValue;
