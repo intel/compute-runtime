@@ -128,11 +128,11 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
             }
             break;
         case CL_COMMAND_READ_BUFFER:
-            memcpy_s(transferProperties.ptr, transferProperties.size[0], ptrOffset(transferProperties.memObj->getCpuAddressForMemoryTransfer(), transferProperties.offset[0]), transferProperties.size[0]);
+            memcpy_s(transferProperties.ptr, transferProperties.size[0], transferProperties.getCpuPtrForReadWrite(), transferProperties.size[0]);
             eventCompleted = true;
             break;
         case CL_COMMAND_WRITE_BUFFER:
-            memcpy_s(ptrOffset(transferProperties.memObj->getCpuAddressForMemoryTransfer(), transferProperties.offset[0]), transferProperties.size[0], transferProperties.ptr, transferProperties.size[0]);
+            memcpy_s(transferProperties.getCpuPtrForReadWrite(), transferProperties.size[0], transferProperties.ptr, transferProperties.size[0]);
             eventCompleted = true;
             break;
         case CL_COMMAND_MARKER:

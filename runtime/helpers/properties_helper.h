@@ -57,6 +57,9 @@ struct TransferProperties {
     void *ptr = nullptr;
     uint32_t mipLevel = 0;
     uint32_t mipPtrOffset = 0;
+
+    void *lockedPtr = nullptr;
+    void *getCpuPtrForReadWrite();
 };
 
 struct MapInfo {

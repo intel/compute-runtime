@@ -73,6 +73,8 @@ DECLARE_DEBUG_VARIABLE(bool, UseNewHeapAllocator, true, "Custom 4GB heap allocat
 DECLARE_DEBUG_VARIABLE(bool, UseNoRingFlushesKmdMode, true, "Windows only, passes flag to KMD that informs KMD to not emit any ring buffer flushes.")
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForUseHostPtr, false, "When active all buffer allocations created with CL_MEM_USE_HOST_PTR flag will not share memory with CPU.")
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")
+DECLARE_DEBUG_VARIABLE(bool, ForceResourceLockOnTransferCalls, 0, "Forces resource locking on memory transfer calls")
+DECLARE_DEBUG_VARIABLE(bool, EnableMakeResidentOnMapGpuVa, 0, "Make allocations resident on call mapGpuVirtualAddress")
 
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")

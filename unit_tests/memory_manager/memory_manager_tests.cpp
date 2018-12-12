@@ -762,14 +762,14 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenCreateAllocationFromNtHandle
     EXPECT_EQ(nullptr, graphicsAllocation);
 }
 
-TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenLockUnlockCalledThenDoNothing) {
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenLockUnlockCalledThenReturnCpuPtr) {
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto allocation = memoryManager.allocateGraphicsMemory(1);
     ASSERT_NE(nullptr, allocation);
 
     auto ptr = memoryManager.lockResource(allocation);
-    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(ptrOffset(allocation->getUnderlyingBuffer(), static_cast<size_t>(allocation->allocationOffset)), ptr);
     memoryManager.unlockResource(allocation);
 
     memoryManager.freeGraphicsMemory(allocation);

@@ -54,7 +54,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
-    void *lockResource(GraphicsAllocation *graphicsAllocation) override { return nullptr; };
+    void *lockResource(GraphicsAllocation *graphicsAllocation) override { return ptrOffset(graphicsAllocation->getUnderlyingBuffer(), static_cast<size_t>(graphicsAllocation->allocationOffset)); };
     void unlockResource(GraphicsAllocation *graphicsAllocation) override{};
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;

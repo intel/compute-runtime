@@ -9,6 +9,7 @@
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj.h"
+#include "runtime/memory_manager/memory_manager.h"
 
 namespace OCLRT {
 TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking,
@@ -20,6 +21,11 @@ TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, 
         if (memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
             size[0] = *sizePtr;
             offset[0] = *offsetPtr;
+            if (DebugManager.flags.ForceResourceLockOnTransferCalls.get()) {
+                if ((false == MemoryPool::isSystemMemoryPool(memObj->getGraphicsAllocation()->getMemoryPool())) && (memObj->getMemoryManager() != nullptr)) {
+                    this->lockedPtr = memObj->getMemoryManager()->lockResource(memObj->getGraphicsAllocation());
+                }
+            }
         } else {
             size = {{sizePtr[0], sizePtr[1], sizePtr[2]}};
             offset = {{offsetPtr[0], offsetPtr[1], offsetPtr[2]}};
@@ -35,4 +41,9 @@ TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, 
         }
     }
 }
+
+void *TransferProperties::getCpuPtrForReadWrite() {
+    return ptrOffset(lockedPtr ? lockedPtr : memObj->getCpuAddressForMemoryTransfer(), offset[0]);
+}
+
 } // namespace OCLRT

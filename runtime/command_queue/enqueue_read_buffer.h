@@ -54,7 +54,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
         TransferProperties transferProperties(buffer, CL_COMMAND_READ_BUFFER, 0, true, &offset, &size, ptr);
         EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
         cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
-
+        if (DebugManager.flags.ForceResourceLockOnTransferCalls.get()) {
+            if (transferProperties.lockedPtr != nullptr) {
+                buffer->getMemoryManager()->unlockResource(buffer->getGraphicsAllocation());
+            }
+        }
         return retVal;
     }
     MultiDispatchInfo dispatchInfo;

@@ -14,6 +14,7 @@
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -359,6 +360,62 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopies
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 1u);
+}
+
+HWTEST_F(EnqueueWriteBufferTypeTest, givenEnqueueWriteBufferCalledWhenLockedPtrInTransferPropertisIsAvailableThenItIsUnlocked) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForceResourceLockOnTransferCalls.set(true);
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+    MockContext ctx;
+    cl_int retVal;
+    ctx.setMemoryManager(&memoryManager);
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, 0, 1, nullptr, retVal));
+    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+
+    retVal = mockCmdQ->enqueueWriteBuffer(buffer.get(),
+                                          CL_FALSE,
+                                          0,
+                                          MemoryConstants::cacheLineSize,
+                                          ptr,
+                                          0,
+                                          nullptr,
+                                          nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, memoryManager.unlockResourceCalled);
+}
+
+HWTEST_F(EnqueueWriteBufferTypeTest, givenEnqueueWriteBufferCalledWhenLockedPtrInTransferPropertisIsNotAvailableThenItIsNotUnlocked) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForceResourceLockOnTransferCalls.set(true);
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+    MockContext ctx;
+    cl_int retVal;
+    ctx.setMemoryManager(&memoryManager);
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, 0, 1, nullptr, retVal));
+    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::System4KBPages);
+    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+
+    retVal = mockCmdQ->enqueueWriteBuffer(buffer.get(),
+                                          CL_FALSE,
+                                          0,
+                                          MemoryConstants::cacheLineSize,
+                                          ptr,
+                                          0,
+                                          nullptr,
+                                          nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, memoryManager.unlockResourceCalled);
 }
 
 using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;

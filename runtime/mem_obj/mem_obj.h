@@ -105,6 +105,9 @@ class MemObj : public BaseObject<_cl_mem> {
     size_t calculateMappedPtrLength(const MemObjSizeArray &size) const { return calculateOffsetForMapping(size); }
     cl_mem_object_type peekClMemObjType() const { return memObjectType; }
     size_t getOffset() const { return offset; }
+    MemoryManager *getMemoryManager() const {
+        return memoryManager;
+    }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);

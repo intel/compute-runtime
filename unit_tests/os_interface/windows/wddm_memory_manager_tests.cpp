@@ -1460,3 +1460,20 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
     executionEnvironment.commandStreamReceivers.clear();
     EXPECT_NO_THROW(executionEnvironment.memoryManager.reset());
 }
+
+TEST_F(MockWddmMemoryManagerTest, givenWddmAllocationWhenEnableMakeResidentOnMapGpuVaIsSetThenMakeResidentIsCalledInMapVirtualAddress) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableMakeResidentOnMapGpuVa.set(true);
+
+    std::unique_ptr<Gmm> gmm(new Gmm(reinterpret_cast<void *>(123), 4096u, false));
+    D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
+    WddmMock wddm;
+    EXPECT_TRUE(wddm.init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
+
+    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    wddm.resetPageTableManager(mockMngr);
+
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, false, false, false);
+    EXPECT_EQ(1u, wddm.makeResidentResult.called);
+    ASSERT_TRUE(result);
+}
