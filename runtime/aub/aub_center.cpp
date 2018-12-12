@@ -13,7 +13,7 @@
 namespace OCLRT {
 AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName) {
     if (DebugManager.flags.UseAubStream.get()) {
-        auto devicesCount = DebugManager.flags.CreateMultipleDevices.get() > 0 ? DebugManager.flags.CreateMultipleDevices.get() : 1u;
+        auto devicesCount = AubHelper::getDevicesCount(pHwInfo);
         auto memoryBankSizeInGB = AubHelper::getMemBankSizeInGigabytes();
         aubManager.reset(createAubManager(pHwInfo->pPlatform->eRenderCoreFamily, devicesCount, memoryBankSizeInGB, localMemoryEnabled, pHwInfo->capabilityTable.aubDeviceId, aubFileName));
     }

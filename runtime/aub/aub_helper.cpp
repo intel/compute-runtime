@@ -7,6 +7,7 @@
 
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 
 namespace OCLRT {
 
@@ -27,6 +28,10 @@ uint32_t AubHelper::getMemType(uint32_t addressSpace) {
 
 uint32_t AubHelper::getMemBankSizeInGigabytes() {
     return 2;
+}
+
+uint32_t AubHelper::getDevicesCount(const HardwareInfo *pHwInfo) {
+    return DebugManager.flags.CreateMultipleDevices.get() > 0 ? DebugManager.flags.CreateMultipleDevices.get() : 1u;
 }
 
 } // namespace OCLRT

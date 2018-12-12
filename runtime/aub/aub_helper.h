@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
@@ -30,6 +31,7 @@ class AubHelper : public NonCopyableOrMovableClass {
     static void checkPTEAddress(uint64_t address);
     static uint32_t getMemType(uint32_t addressSpace);
     static uint32_t getMemBankSizeInGigabytes();
+    static uint32_t getDevicesCount(const HardwareInfo *pHwInfo);
 
     virtual int getDataHintForPml4Entry() const = 0;
     virtual int getDataHintForPdpEntry() const = 0;
