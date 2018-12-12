@@ -25,4 +25,8 @@ uint32_t AubHelper::getMemType(uint32_t addressSpace) {
     return 0;
 }
 
+uint32_t AubHelper::getMemBankSizeInGigabytes() {
+    return 2;
+}
+
 } // namespace OCLRT
