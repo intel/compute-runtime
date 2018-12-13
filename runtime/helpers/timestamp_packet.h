@@ -96,7 +96,7 @@ class TimestampPacketContainer : public NonCopyableOrMovableClass {
   public:
     using Node = TagNode<TimestampPacket>;
     TimestampPacketContainer() = default;
-    ~TimestampPacketContainer();
+    MOCKABLE_VIRTUAL ~TimestampPacketContainer();
 
     const std::vector<Node *> &peekNodes() const { return timestampPacketNodes; }
     void add(Node *timestampPacketNode);

@@ -96,6 +96,7 @@ CommandQueue::~CommandQueue() {
         }
     }
 
+    timestampPacketContainer.reset();
     //for normal queue, decrement ref count on context
     //special queue is owned by context so ref count doesn't have to be decremented
     if (context && !isSpecialCommandQueue) {

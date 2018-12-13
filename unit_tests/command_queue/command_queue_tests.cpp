@@ -13,6 +13,7 @@
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/options.h"
+#include "runtime/helpers/timestamp_packet.h"
 
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
@@ -948,4 +949,23 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCsrWithDebugSurfaceAllocatedWhenSet
     EXPECT_EQ(debugSurface, commandStreamReceiver.getDebugSurfaceAllocation());
     RENDER_SURFACE_STATE *surfaceState = (RENDER_SURFACE_STATE *)kernel->getSurfaceStateHeap();
     EXPECT_EQ(debugSurface->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
+}
+
+struct MockTimestampPacketContainer : TimestampPacketContainer {
+    MockTimestampPacketContainer(Context &context) : context(context) {
+    }
+    ~MockTimestampPacketContainer() override {
+        EXPECT_EQ(1, context.getRefInternalCount());
+    }
+    Context &context;
+};
+
+TEST(CommandQueueDestructorTest, whenCommandQueueIsDestroyedThenDestroysTimestampPacketContainerBeforeReleasingContext) {
+    auto context = new MockContext;
+    EXPECT_EQ(1, context->getRefInternalCount());
+    MockCommandQueue queue(context, context->getDevice(0), nullptr);
+    queue.timestampPacketContainer.reset(new MockTimestampPacketContainer(*context));
+    EXPECT_EQ(2, context->getRefInternalCount());
+    context->release();
+    EXPECT_EQ(1, context->getRefInternalCount());
 }
