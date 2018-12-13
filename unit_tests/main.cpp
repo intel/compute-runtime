@@ -19,6 +19,7 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/hw_info_config.h"
+#include "runtime/utilities/debug_settings_reader.h"
 #include "External/Common/GmmLibDllName.h"
 #include "mock_gmm_client_context.h"
 #include "gmock/gmock.h"
@@ -280,6 +281,11 @@ int main(int argc, char **argv) {
             }
         } else if (!strcmp("--generate_random_inputs", argv[i])) {
             generateRandomInput = true;
+        } else if (!strcmp("--read-config", argv[i]) && testMode == TestMode::AubTests) {
+            if (DebugManager.registryReadAvailable()) {
+                DebugManager.setReaderImpl(SettingsReader::create());
+                DebugManager.injectSettingsFromReader();
+            }
         }
     }
 

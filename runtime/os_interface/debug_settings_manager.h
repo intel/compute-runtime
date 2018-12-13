@@ -117,6 +117,7 @@ class DebugSettingsManager {
     void dumpBinaryProgram(int32_t numDevices, const size_t *lengths, const unsigned char **binaries);
     void dumpKernelArgs(const Kernel *kernel);
     void dumpKernelArgs(const MultiDispatchInfo *multiDispatchInfo);
+    void injectSettingsFromReader();
 
     const std::string getSizes(const uintptr_t *input, uint32_t workDim, bool local) {
         if (false == debugLoggingAvailable()) {
@@ -211,9 +212,15 @@ class DebugSettingsManager {
     void setLogFileName(std::string filename) {
         logFileName = filename;
     }
+    void setReaderImpl(SettingsReader *newReaderImpl) {
+        readerImpl.reset(newReaderImpl);
+    }
+    SettingsReader *getReaderImpl() {
+        return readerImpl.get();
+    }
 
   protected:
-    SettingsReader *readerImpl = nullptr;
+    std::unique_ptr<SettingsReader> readerImpl;
     std::mutex mtx;
     std::string logFileName;
 

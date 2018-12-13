@@ -34,6 +34,7 @@ set(IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/utilities/debug_settings_reader_creator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp

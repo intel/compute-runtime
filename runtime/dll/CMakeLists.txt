@@ -24,6 +24,7 @@ set(RUNTIME_SRCS_DLL_BASE
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/built_ins_helper.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/debug_helpers.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/program/evaluate_unhandled_token.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/utilities/debug_settings_reader_creator.cpp
 
   ${GTPIN_INIT_FILE}
   ${HW_SRC_LINK}

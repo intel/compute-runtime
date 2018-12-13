@@ -11,6 +11,7 @@ set(RUNTIME_SRCS_UTILITIES_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_file_reader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_file_reader.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader_creator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader.h
   ${CMAKE_CURRENT_SOURCE_DIR}/directory.h

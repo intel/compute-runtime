@@ -77,7 +77,7 @@ class TestDebugSettingsManager : public DebugSettingsManager<DebugLevel> {
         remove(DebugSettingsManager<DebugLevel>::logFileName.c_str());
     }
     SettingsReader *getSettingsReader() {
-        return DebugSettingsManager<DebugLevel>::readerImpl;
+        return DebugSettingsManager<DebugLevel>::readerImpl.get();
     }
 
     void useRealFiles(bool value) {
@@ -146,6 +146,10 @@ TEST(DebugSettingsManager, WithDebugFunctionalityCreatesAndDumpsToLogFile) {
     SettingsFileCreator settingsFile(settings);
 
     FullyEnabledTestDebugManager debugManager;
+    if (debugManager.registryReadAvailable()) {
+        debugManager.setReaderImpl(SettingsReader::create());
+        debugManager.injectSettingsFromReader();
+    }
     debugManager.logApiCall("searchString", true, 0);
     debugManager.logApiCall("searchString2", false, 0);
     debugManager.logInputs("searchString3", "any");
@@ -946,4 +950,20 @@ TEST(DebugSettingsManager, givenTwoPossibleVariantsOfHardwareInfoOverrideStringT
 TEST(DebugSettingsManager, givenStringDebugVariableWhenLongValueExeedingSmallStringOptimizationIsAssignedThenMemoryLeakIsNotReported) {
     DebugManagerStateRestore debugManagerStateRestore;
     DebugManager.flags.AUBDumpCaptureFileName.set("ThisIsVeryLongStringValueThatExceedSizeSpecifiedBySmallStringOptimizationAndCausesInternalStringBufferResize");
+}
+
+TEST(DebugSettingsManager, givenNullAsReaderImplInDebugManagerWhenSettingReaderImplThenItsSetProperly) {
+    FullyDisabledTestDebugManager debugManager;
+    auto readerImpl = SettingsReader::create();
+    debugManager.setReaderImpl(readerImpl);
+    EXPECT_EQ(readerImpl, debugManager.getReaderImpl());
+}
+TEST(DebugSettingsManager, givenReaderImplInDebugManagerWhenSettingDifferentReaderImplThenItsSetProperly) {
+    FullyDisabledTestDebugManager debugManager;
+    auto readerImpl = SettingsReader::create();
+    debugManager.setReaderImpl(readerImpl);
+
+    auto readerImpl2 = SettingsReader::create();
+    debugManager.setReaderImpl(readerImpl2);
+    EXPECT_EQ(readerImpl2, debugManager.getReaderImpl());
 }

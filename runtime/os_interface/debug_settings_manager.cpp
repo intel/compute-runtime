@@ -13,7 +13,7 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/timestamp_packet.h"
-#include "runtime/utilities/debug_settings_reader.h"
+#include "runtime/utilities/debug_settings_reader_creator.h"
 
 #include "CL/cl.h"
 
@@ -29,15 +29,8 @@ DebugSettingsManager<DebugLevel>::DebugSettingsManager() {
 
     logFileName = "igdrcl.log";
     if (registryReadAvailable()) {
-        readerImpl = SettingsReader::create();
-
-#undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)            \
-    {                                                                                        \
-        dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get()); \
-        flags.variableName.set(tempData);                                                    \
-    }
-#include "debug_variables.inl"
+        readerImpl = SettingsReaderCreator::create();
+        injectSettingsFromReader();
     }
 
     std::remove(logFileName.c_str());
@@ -53,11 +46,7 @@ void DebugSettingsManager<DebugLevel>::writeToFile(std::string filename, const c
 }
 
 template <DebugFunctionalityLevel DebugLevel>
-DebugSettingsManager<DebugLevel>::~DebugSettingsManager() {
-    if (readerImpl) {
-        delete readerImpl;
-    }
-}
+DebugSettingsManager<DebugLevel>::~DebugSettingsManager() = default;
 
 template <DebugFunctionalityLevel DebugLevel>
 void DebugSettingsManager<DebugLevel>::getHardwareInfoOverride(std::string &hwInfoConfig) {
@@ -238,6 +227,16 @@ void DebugSettingsManager<DebugLevel>::dumpKernelArgs(const MultiDispatchInfo *m
     for (auto &dispatchInfo : *multiDispatchInfo) {
         dumpKernelArgs(dispatchInfo.getKernel());
     }
+}
+template <DebugFunctionalityLevel DebugLevel>
+void DebugSettingsManager<DebugLevel>::injectSettingsFromReader() {
+#undef DECLARE_DEBUG_VARIABLE
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)            \
+    {                                                                                        \
+        dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get()); \
+        flags.variableName.set(tempData);                                                    \
+    }
+#include "debug_variables.inl"
 }
 
 template class DebugSettingsManager<DebugFunctionalityLevel::None>;
