@@ -216,6 +216,7 @@ int main(int argc, char **argv) {
         } else if (!strcmp("--tbx", argv[i])) {
             if (testMode == TestMode::AubTests) {
                 testMode = TestMode::AubTestsWithTbx;
+                DebugManager.flags.UseAubStream.set(false);
             }
             initialHardwareTag = 0;
         } else if (!strcmp("--devices", argv[i])) {
