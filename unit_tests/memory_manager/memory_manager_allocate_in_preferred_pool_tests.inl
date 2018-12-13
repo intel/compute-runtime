@@ -345,3 +345,12 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenBufferTypeIsPassedAndAllocateInDev
 
     memoryManager.freeGraphicsMemory(allocation);
 }
+
+TEST(MemoryManagerTest, givenSvmAllocationTypeWhenGetAllocationDataIsCalledThenZeroCopyIsRequested) {
+    MockMemoryManager memoryManager(false);
+    AllocationData allocData;
+    AllocationProperties properties(true, 1);
+    MockMemoryManager::getAllocationData(allocData, properties, 0, nullptr, GraphicsAllocation::AllocationType::SVM);
+    EXPECT_TRUE(allocData.flags.mustBeZeroCopy);
+    EXPECT_TRUE(allocData.flags.allocateMemory);
+}
