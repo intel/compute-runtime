@@ -81,7 +81,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programMediaSampler(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programStateSip(LinearStream &cmdStream, Device &device);
     void handleEventsTimestampPacketTags(LinearStream &csr, DispatchFlags &dispatchFlags, Device &currentDevice);
-    virtual void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags);
+    void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags);
     virtual void initPageTableManagerRegisters(LinearStream &csr){};
 
     void addPipeControlWA(LinearStream &commandStream, bool flushDC);

@@ -251,7 +251,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                                         stateBaseAddressDirty,
                                                         checkVfeStateDirty);
         if (checkVfeStateDirty) {
-            overrideMediaVFEStateDirty(true);
+            setMediaVFEStateDirty(true);
         }
         makeResident(*scratchSpaceController->getScratchSpaceAllocation());
     }
@@ -735,7 +735,7 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags) {
     if (mediaVfeStateDirty) {
         PreambleHelper<GfxFamily>::programVFEState(&csr, hwInfo, requiredScratchSize, getScratchPatchAddress());
-        overrideMediaVFEStateDirty(false);
+        setMediaVFEStateDirty(false);
     }
 }
 

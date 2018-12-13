@@ -779,7 +779,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenEnabledPre
     EXPECT_NE(nullptr, cmd);
 
     // program again
-    csr.overrideMediaVFEStateDirty(false);
+    csr.setMediaVFEStateDirty(false);
     auto offset = csr.commandStream.getUsed();
     flushTask(csr, false, commandStream.getUsed());
     hwParser.cmdList.clear();

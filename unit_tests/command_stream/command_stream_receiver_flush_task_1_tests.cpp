@@ -497,7 +497,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, pipelineSelectShouldBeSentIfSentPr
 HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressShouldBeSentIfNeverSent) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
-    commandStreamReceiver.overrideMediaVFEStateDirty(false);
+    commandStreamReceiver.setMediaVFEStateDirty(false);
     flushTask(commandStreamReceiver);
 
     EXPECT_GT(commandStreamReceiver.commandStream.getUsed(), 0u);
@@ -519,7 +519,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressShouldBeSentIfSize
     ssh.replaceBuffer(ssh.getCpuBase(), 0);
 
     commandStreamReceiver.isPreambleSent = true;
-    commandStreamReceiver.overrideMediaVFEStateDirty(false);
+    commandStreamReceiver.setMediaVFEStateDirty(false);
 
     configureCSRHeapStatesToNonDirty<FamilyType>();
 

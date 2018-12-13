@@ -578,7 +578,7 @@ HWTEST_F(ParentKernelEnqueueFixture, ParentKernelEnqueueMarksCSRMediaVFEStateDir
         auto mockCsr = new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment);
         pDevice->resetCommandStreamReceiver(mockCsr);
 
-        mockCsr->overrideMediaVFEStateDirty(false);
+        mockCsr->setMediaVFEStateDirty(false);
         pCmdQ->enqueueKernel(parentKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
 
         EXPECT_TRUE(mockCsr->peekMediaVfeStateDirty());

@@ -116,7 +116,7 @@ struct UltCommandStreamReceiverTest
         auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<GfxFamily>();
         commandStreamReceiver.isPreambleSent = true;
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
-        commandStreamReceiver.overrideMediaVFEStateDirty(false);
+        commandStreamReceiver.setMediaVFEStateDirty(false);
         commandStreamReceiver.latestSentStatelessMocsConfig = CacheSettings::l3CacheOn;
         commandStreamReceiver.lastSentL3Config = L3Config;
         configureCSRHeapStatesToNonDirty<GfxFamily>();

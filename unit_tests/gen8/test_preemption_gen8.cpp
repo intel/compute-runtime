@@ -48,7 +48,7 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreempt
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
-    csr.overrideMediaVFEStateDirty(false);
+    csr.setMediaVFEStateDirty(false);
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
 

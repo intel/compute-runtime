@@ -162,20 +162,4 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSta
     return true;
 }
 
-template <typename GfxFamily>
-inline void DrmCommandStreamReceiver<GfxFamily>::overrideMediaVFEStateDirty(bool dirty) {
-    this->mediaVfeStateDirty = dirty;
-    this->mediaVfeStateLowPriorityDirty = dirty;
-}
-
-template <typename GfxFamily>
-inline void DrmCommandStreamReceiver<GfxFamily>::programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags) {
-    bool &currentContextDirtyFlag = dispatchFlags.lowPriority ? mediaVfeStateLowPriorityDirty : mediaVfeStateDirty;
-
-    if (currentContextDirtyFlag) {
-        PreambleHelper<GfxFamily>::programVFEState(&csr, hwInfo, requiredScratchSize, getScratchPatchAddress());
-        currentContextDirtyFlag = false;
-    }
-}
-
 } // namespace OCLRT

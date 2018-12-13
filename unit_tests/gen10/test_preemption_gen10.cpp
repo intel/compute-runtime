@@ -87,7 +87,7 @@ GEN10TEST_F(Gen10ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithT
     pDevice->setForceWhitelistedRegs(true, &regs);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
-    csr.overrideMediaVFEStateDirty(false);
+    csr.setMediaVFEStateDirty(false);
     auto csrSurface = csr.getPreemptionCsrAllocation();
     EXPECT_EQ(nullptr, csrSurface);
     HardwareParse hwParser;
@@ -173,7 +173,7 @@ GEN10TEST_F(Gen10MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
-    csr.overrideMediaVFEStateDirty(false);
+    csr.setMediaVFEStateDirty(false);
     auto csrSurface = csr.getPreemptionCsrAllocation();
     ASSERT_NE(nullptr, csrSurface);
     HardwareParse hwParser;

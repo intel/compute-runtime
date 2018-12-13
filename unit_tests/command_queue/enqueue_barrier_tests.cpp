@@ -78,7 +78,7 @@ HWTEST_F(BarrierTest, CS_GT_CQ_ShouldNotAddPipeControl) {
     auto pCmdBuffer = this->pCmdBuffer;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.overrideMediaVFEStateDirty(false);
+    commandStreamReceiver.setMediaVFEStateDirty(false);
 
     // Set task levels to known values.
     commandStreamReceiver.taskLevel = 2;

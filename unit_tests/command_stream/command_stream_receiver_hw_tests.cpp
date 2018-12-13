@@ -151,10 +151,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenMediaVfeStateDirt
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    commandStreamReceiver.overrideMediaVFEStateDirty(false);
+    commandStreamReceiver.setMediaVFEStateDirty(false);
     auto notDirty = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
 
-    commandStreamReceiver.overrideMediaVFEStateDirty(true);
+    commandStreamReceiver.setMediaVFEStateDirty(true);
     auto dirty = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
 
     auto actualDifference = dirty - notDirty;

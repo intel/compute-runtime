@@ -41,7 +41,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     void processResidency(ResidencyContainer &allocationsForResidency) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
-    void overrideMediaVFEStateDirty(bool dirty) override;
 
     DrmMemoryManager *getMemoryManager();
     MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override;
@@ -52,12 +51,10 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
 
   protected:
     void makeResident(BufferObject *bo);
-    void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags) override;
 
     std::vector<BufferObject *> residency;
     std::vector<drm_i915_gem_exec_object2> execObjectsStorage;
     Drm *drm;
     gemCloseWorkerMode gemCloseWorkerOperationMode;
-    bool mediaVfeStateLowPriorityDirty = true;
 };
 } // namespace OCLRT

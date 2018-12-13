@@ -114,7 +114,7 @@ class CommandStreamReceiver {
     bool isNTo1SubmissionModelEnabled() const { return this->nTo1SubmissionModelEnabled; }
     void overrideDispatchPolicy(DispatchMode overrideValue) { this->dispatchMode = overrideValue; }
 
-    virtual void overrideMediaVFEStateDirty(bool dirty) { mediaVfeStateDirty = dirty; }
+    void setMediaVFEStateDirty(bool dirty) { mediaVfeStateDirty = dirty; }
 
     void setRequiredScratchSize(uint32_t newRequiredScratchSize);
     GraphicsAllocation *getScratchAllocation();
