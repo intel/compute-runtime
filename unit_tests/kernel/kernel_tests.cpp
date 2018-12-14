@@ -2337,3 +2337,21 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
     kernel.mockKernel->initialize();
     EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
 }
+
+TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkKernelForAuxTranslation) {
+    DebugManagerStateRestore restore;
+    HardwareInfo localHwInfo = *platformDevices[0];
+
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    MockKernelWithInternals kernel(*device);
+    kernel.kernelInfo.kernelArgInfo.resize(1);
+    kernel.kernelInfo.kernelArgInfo.at(0).typeStr = "char *";
+
+    kernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+
+    kernel.mockKernel->initialize();
+    EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
+}

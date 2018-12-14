@@ -39,6 +39,8 @@ class HwHelper {
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance) const = 0;
     virtual bool supportsYTiling() const = 0;
+    static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
+    static bool renderCompressedImagesSupported(const HardwareInfo &hwInfo);
     virtual bool timestampPacketWriteSupported() const = 0;
     virtual size_t getRenderSurfaceStateSize() const = 0;
     virtual void setRenderSurfaceStateForBuffer(ExecutionEnvironment &executionEnvironment,

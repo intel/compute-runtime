@@ -473,6 +473,24 @@ TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationWhenSharedCo
     EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 }
 
+TEST_F(RenderCompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThenSelectOptionFromDebugFlag) {
+    DebugManagerStateRestore restore;
+
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    buffer.reset(Buffer::create(context.get(), 0, sizeof(uint32_t), nullptr, retVal));
+    if (is32bit) {
+        EXPECT_NE(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    } else {
+        EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    }
+
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    buffer.reset(Buffer::create(context.get(), 0, sizeof(uint32_t), nullptr, retVal));
+    EXPECT_NE(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+}
+
 TEST_F(RenderCompressedBuffersTests, givenSvmAllocationWhenCreatingBufferThenForceDisableCompression) {
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
 

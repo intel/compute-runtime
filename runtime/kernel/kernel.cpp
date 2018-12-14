@@ -328,7 +328,7 @@ cl_int Kernel::initialize() {
                 kernelArguments[i].type = BUFFER_OBJ;
                 usingBuffers = true;
                 this->auxTranslationRequired |= !kernelInfo.kernelArgInfo[i].pureStatefulBufferAccess &&
-                                                getDevice().getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers;
+                                                HwHelper::renderCompressedBuffersSupported(getDevice().getHardwareInfo());
             } else if (argInfo.isImage) {
                 kernelArgHandlers[i] = &Kernel::setArgImage;
                 kernelArguments[i].type = IMAGE_OBJ;

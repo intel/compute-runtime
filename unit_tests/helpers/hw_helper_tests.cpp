@@ -28,6 +28,37 @@ void HwHelperFixture::TearDown() {
     DeviceFixture::TearDown();
 }
 
+TEST(HwHelperSimpleTest, givenDebugVariableWhenAskingForRenderCompressionThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+    HardwareInfo localHwInfo = **platformDevices;
+
+    // debug variable not set
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+    localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
+    EXPECT_FALSE(HwHelper::renderCompressedBuffersSupported(localHwInfo));
+    EXPECT_FALSE(HwHelper::renderCompressedImagesSupported(localHwInfo));
+
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    localHwInfo.capabilityTable.ftrRenderCompressedImages = true;
+    EXPECT_TRUE(HwHelper::renderCompressedBuffersSupported(localHwInfo));
+    EXPECT_TRUE(HwHelper::renderCompressedImagesSupported(localHwInfo));
+
+    // debug variable set
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    DebugManager.flags.RenderCompressedImagesEnabled.set(1);
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+    localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
+    EXPECT_TRUE(HwHelper::renderCompressedBuffersSupported(localHwInfo));
+    EXPECT_TRUE(HwHelper::renderCompressedImagesSupported(localHwInfo));
+
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
+    DebugManager.flags.RenderCompressedImagesEnabled.set(0);
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    localHwInfo.capabilityTable.ftrRenderCompressedImages = true;
+    EXPECT_FALSE(HwHelper::renderCompressedBuffersSupported(localHwInfo));
+    EXPECT_FALSE(HwHelper::renderCompressedImagesSupported(localHwInfo));
+}
+
 TEST_F(HwHelperTest, getReturnsValidHwHelperHw) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_NE(nullptr, &helper);

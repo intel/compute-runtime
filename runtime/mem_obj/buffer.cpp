@@ -13,6 +13,7 @@
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
@@ -129,7 +130,7 @@ Buffer *Buffer::create(Context *context,
     GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(
         properties.flags,
         context->isSharedContext,
-        context->getDevice(0)->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
+        HwHelper::renderCompressedBuffersSupported(context->getDevice(0)->getHardwareInfo()));
 
     MemoryManager *memoryManager = context->getMemoryManager();
     UNRECOVERABLE_IF(!memoryManager);
