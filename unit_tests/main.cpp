@@ -293,6 +293,8 @@ int main(int argc, char **argv) {
         return -1;
     }
     platform = *hardwareInfo->pPlatform;
+    featureTable = *hardwareInfo->pSkuTable;
+    gtSystemInfo = *hardwareInfo->pSysInfo;
 
     platform.usRevId = (uint16_t)revisionId;
 
