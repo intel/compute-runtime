@@ -2078,7 +2078,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManage
 }
 
 TEST(Allocator32BitUsingHeapAllocator, given32BitAllocatorWhenMMapFailsThenNullptrIsReturned) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(true);
 
     mockAllocator32Bit::resetState();
@@ -2092,11 +2092,10 @@ TEST(Allocator32BitUsingHeapAllocator, given32BitAllocatorWhenMMapFailsThenNullp
     EXPECT_EQ(0llu, ptr);
     EXPECT_EQ(2u, mmapCallCount);
     delete mock32BitAllocator;
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(Allocator32BitUsingHeapAllocator, given32BitAllocatorWhenFirstMMapFailsThenSecondIsCalledWithSmallerSize) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(true);
 
     mockAllocator32Bit::resetState();
@@ -2114,11 +2113,10 @@ TEST(Allocator32BitUsingHeapAllocator, given32BitAllocatorWhenFirstMMapFailsThen
     EXPECT_NE(0u, osInternals->heapSize);
 
     delete mock32BitAllocator;
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, allocateReturnsPointer) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
@@ -2127,35 +2125,30 @@ TEST(DrmAllocator32Bit, allocateReturnsPointer) {
     EXPECT_NE(0u, (uintptr_t)ptr);
     EXPECT_EQ(1u, mmapCallCount);
     mock32BitAllocator.free(ptr, size);
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, freeMapFailedPointer) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
     size_t size = 100u;
     int result = mock32BitAllocator.free(reinterpret_cast<uint64_t>(MAP_FAILED), size);
     EXPECT_EQ(0, result);
-
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, freeNullPtrPointer) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
     uint32_t size = 100u;
     int result = mock32BitAllocator.free(0llu, size);
     EXPECT_EQ(0, result);
-
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, freeLowerRangeAfterTwoMmapFails) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
@@ -2165,11 +2158,10 @@ TEST(DrmAllocator32Bit, freeLowerRangeAfterTwoMmapFails) {
     EXPECT_EQ(3u, mmapCallCount);
     int result = mock32BitAllocator.free(ptr, size);
     EXPECT_EQ(0, result);
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, given32BitAllocatorWhenMMapFailsThenUpperHeapIsBrowsedForAllocations) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
@@ -2178,11 +2170,10 @@ TEST(DrmAllocator32Bit, given32BitAllocatorWhenMMapFailsThenUpperHeapIsBrowsedFo
     auto ptr = mock32BitAllocator.allocate(size);
     EXPECT_EQ(maxMmap32BitAddress, (uintptr_t)ptr);
     EXPECT_EQ(2u, mmapCallCount);
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, given32BitAllocatorWith32AndUpperHeapsExhaustedThenPointerFromLowerHeapIsReturned) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
@@ -2192,11 +2183,10 @@ TEST(DrmAllocator32Bit, given32BitAllocatorWith32AndUpperHeapsExhaustedThenPoint
     auto ptr = mock32BitAllocator.allocate(size);
     EXPECT_EQ(lowerRangeStart, (uintptr_t)ptr);
     EXPECT_EQ(3u, mmapCallCount);
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, given32bitRegionExhaustedWhenTwoAllocationsAreCreatedThenSecondIsAfterFirst) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
@@ -2219,11 +2209,10 @@ TEST(DrmAllocator32Bit, given32bitRegionExhaustedWhenTwoAllocationsAreCreatedThe
     EXPECT_EQ(ptr, getInternals->upperRangeAddress);
 
     EXPECT_EQ(2u, unmapCallCount);
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, given32bitRegionAndUpperRegionExhaustedWhenTwoAllocationsAreCreatedThenSecondIsAfterFirst) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
@@ -2247,11 +2236,10 @@ TEST(DrmAllocator32Bit, given32bitRegionAndUpperRegionExhaustedWhenTwoAllocation
     EXPECT_EQ(ptr, getInternals->lowerRangeAddress);
 
     EXPECT_EQ(4u, unmapCallCount);
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, given32bitAllocatorWithAllHeapsExhaustedWhenAskedForAllocationThenNullptrIsReturned) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
@@ -2266,11 +2254,10 @@ TEST(DrmAllocator32Bit, given32bitAllocatorWithAllHeapsExhaustedWhenAskedForAllo
 
     EXPECT_EQ(3u, mmapCallCount);
     EXPECT_EQ(2u, unmapCallCount);
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, given32bitAllocatorWithUpperHeapCloseToFullWhenAskedForAllocationThenAllocationFromLowerHeapIsReturned) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
@@ -2282,27 +2269,24 @@ TEST(DrmAllocator32Bit, given32bitAllocatorWithUpperHeapCloseToFullWhenAskedForA
     EXPECT_EQ(lowerRangeHeapStart, (uintptr_t)ptr);
     EXPECT_EQ(3u, mmapCallCount);
     EXPECT_EQ(1u, unmapCallCount);
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, givenMapFailedAsInputToFreeFunctionWhenItIsCalledThenUnmapIsNotCalled) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
     mock32BitAllocator.free(reinterpret_cast<uint64_t>(MAP_FAILED), 100u);
     EXPECT_EQ(0u, unmapCallCount);
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 TEST(DrmAllocator32Bit, givenNullptrAsInputToFreeFunctionWhenItIsCalledThenUnmapIsNotCalled) {
-    bool flagToRestore = DebugManager.flags.UseNewHeapAllocator.get();
+    DebugManagerStateRestore restore;
     DebugManager.flags.UseNewHeapAllocator.set(false);
 
     mockAllocator32Bit mock32BitAllocator;
     mock32BitAllocator.free(0llu, 100u);
     EXPECT_EQ(0u, unmapCallCount);
-    DebugManager.flags.UseNewHeapAllocator.set(flagToRestore);
 }
 
 #include <chrono>
