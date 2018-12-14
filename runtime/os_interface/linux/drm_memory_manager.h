@@ -38,7 +38,7 @@ class DrmMemoryManager : public MemoryManager {
         allocationData.size = size;
         return allocateGraphicsMemoryWithHostPtr(allocationData);
     }
-    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;
+    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) override;
     DrmAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override;
     GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) override;

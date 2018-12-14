@@ -1089,9 +1089,7 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
 
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initGmm(*platformDevices);
-    auto queryGmm = MockGmm::queryImgParams(imgInfo);
-    auto imageGraphicsAllocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());
-    queryGmm.release();
+    auto imageGraphicsAllocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
 
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_NE(0u, imageGraphicsAllocation->getGpuAddress());
@@ -1429,6 +1427,40 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreated
     EXPECT_EQ(Sharing::nonSharedResource, imageGraphicsAllocation->peekSharedHandle());
 }
 
+TEST_F(DrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenAllocateGraphicsMemoryForImageIsCalledThenGraphicsAllocationIsReturned) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    cl_image_desc imgDesc = {};
+    imgDesc.image_width = MemoryConstants::pageSize;
+    imgDesc.image_height = 1;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
+    imgInfo.rowPitch = imgDesc.image_width * surfaceFormat->ImageElementSizeInBytes;
+    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.image_height;
+    imgInfo.size = imgInfo.slicePitch;
+
+    auto hostPtr = alignedMalloc(imgDesc.image_width * imgDesc.image_height * 4, MemoryConstants::pageSize);
+    bool copyRequired = Image::isCopyRequired(imgInfo, hostPtr);
+    EXPECT_FALSE(copyRequired);
+
+    auto imageAllocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, hostPtr);
+    ASSERT_NE(nullptr, imageAllocation);
+    EXPECT_EQ(hostPtr, imageAllocation->getUnderlyingBuffer());
+
+    memoryManager->freeGraphicsMemory(imageAllocation);
+    alignedFree(hostPtr);
+}
+
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledThenGraphicsAllocationIsReturned) {
     mock->ioctl_expected.primeFdToHandle = 1;
     mock->ioctl_expected.gemWait = 1;
@@ -1745,9 +1777,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
 
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initGmm(*platformDevices);
-    auto queryGmm = MockGmm::queryImgParams(imgInfo);
-    auto allocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());
-    queryGmm.release();
+    auto allocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
+
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
 

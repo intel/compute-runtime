@@ -280,11 +280,20 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(AllocationData alloc
     return nullptr;
 }
 
-GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
+GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) {
+    auto gmm = std::make_unique<Gmm>(imgInfo);
+
+    auto hostPtrAllocation = allocateGraphicsMemoryForImageFromHostPtr(imgInfo, hostPtr);
+
+    if (hostPtrAllocation) {
+        hostPtrAllocation->gmm = gmm.release();
+        return hostPtrAllocation;
+    }
+
     if (!GmmHelper::allowTiling(*imgInfo.imgDesc)) {
         auto alloc = MemoryManager::allocateGraphicsMemoryWithProperties({imgInfo.size, GraphicsAllocation::AllocationType::UNDECIDED});
         if (alloc) {
-            alloc->gmm = gmm;
+            alloc->gmm = gmm.release();
         }
         return alloc;
     }
@@ -316,7 +325,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &
 
     auto allocation = new DrmAllocation(bo, nullptr, (uint64_t)gpuRange, imgInfo.size, MemoryPool::SystemCpuInaccessible, getOsContextCount(), false);
     bo->setAllocationType(allocatorType);
-    allocation->gmm = gmm;
+    allocation->gmm = gmm.release();
     return allocation;
 }
 

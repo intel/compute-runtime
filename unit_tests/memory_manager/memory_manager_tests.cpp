@@ -558,14 +558,79 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     executionEnvironment.initGmm(*platformDevices);
-    auto queryGmm = MockGmm::queryImgParams(imgInfo);
-
-    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());
+    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
     ASSERT_NE(nullptr, imageAllocation);
     EXPECT_TRUE(imageAllocation->gmm->resourceParams.Usage == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
     EXPECT_TRUE(imageAllocation->gmm->useSystemMemoryPool);
-    queryGmm.release();
     memoryManager.freeGraphicsMemory(imageAllocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphicsMemoryForImageFromHostPtrIsCalledThenGraphicsAllocationIsReturned) {
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    executionEnvironment.initGmm(*platformDevices);
+
+    cl_image_desc imgDesc = {};
+    imgDesc.image_width = 4;
+    imgDesc.image_height = 1;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_RGBA;
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
+    imgInfo.rowPitch = imgDesc.image_width * 4;
+    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.image_height;
+    imgInfo.size = imgInfo.slicePitch;
+
+    auto hostPtr = alignedMalloc(imgDesc.image_width * imgDesc.image_height * 4, MemoryConstants::pageSize);
+
+    bool copyRequired = Image::isCopyRequired(imgInfo, hostPtr);
+    EXPECT_FALSE(copyRequired);
+
+    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImageFromHostPtr(imgInfo, hostPtr);
+    ASSERT_NE(nullptr, imageAllocation);
+    EXPECT_EQ(hostPtr, imageAllocation->getUnderlyingBuffer());
+
+    memoryManager.freeGraphicsMemory(imageAllocation);
+    alignedFree(hostPtr);
+}
+
+TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsMemoryForImageFromHostPtrIsCalledThenNullptrIsReturned) {
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    executionEnvironment.initGmm(*platformDevices);
+
+    cl_image_desc imgDesc = {};
+    imgDesc.image_width = 4;
+    imgDesc.image_height = 4;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_RGBA;
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
+    imgInfo.rowPitch = imgDesc.image_width * 4;
+    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.image_height;
+    imgInfo.size = imgInfo.slicePitch;
+
+    auto hostPtr = alignedMalloc(imgDesc.image_width * imgDesc.image_height * 4, MemoryConstants::pageSize);
+
+    bool copyRequired = Image::isCopyRequired(imgInfo, hostPtr);
+    EXPECT_TRUE(copyRequired);
+
+    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImageFromHostPtr(imgInfo, hostPtr);
+    EXPECT_EQ(nullptr, imageAllocation);
+
+    alignedFree(hostPtr);
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAllocationWhenMappingThenReturnFalse) {

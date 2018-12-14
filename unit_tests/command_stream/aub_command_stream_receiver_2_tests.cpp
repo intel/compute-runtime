@@ -426,8 +426,8 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
   public:
     OsAgnosticMemoryManagerForImagesWithNoHostPtr(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment) {}
 
-    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override {
-        auto imageAllocation = OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(imgInfo, gmm);
+    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) override {
+        auto imageAllocation = OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(imgInfo, hostPtr);
         cpuPtr = imageAllocation->getUnderlyingBuffer();
         imageAllocation->setCpuPtrAndGpuAddress(nullptr, imageAllocation->getGpuAddress());
         return imageAllocation;
@@ -478,9 +478,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    auto queryGmm = MockGmm::queryImgParams(imgInfo);
-
-    auto imageAllocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());
+    auto imageAllocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
     ASSERT_NE(nullptr, imageAllocation);
 
     EXPECT_TRUE(aubCsr->writeMemory(*imageAllocation));
@@ -491,8 +489,6 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
 
     EXPECT_TRUE(memoryManager->unlockResourceParam.wasCalled);
     EXPECT_EQ(imageAllocation, memoryManager->unlockResourceParam.inImageAllocation);
-
-    queryGmm.release();
     memoryManager->freeGraphicsMemory(imageAllocation);
 }
 

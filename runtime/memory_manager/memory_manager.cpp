@@ -17,6 +17,7 @@
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
+#include "runtime/mem_obj/image.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/utilities/stackvec.h"
@@ -92,6 +93,15 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const Alloc
         graphicsAllocation = createGraphicsAllocation(osStorage, allocationData.size, allocationData.hostPtr);
     }
     return graphicsAllocation;
+}
+
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImageFromHostPtr(ImageInfo &imgInfo, const void *hostPtr) {
+    bool copyRequired = Image::isCopyRequired(imgInfo, hostPtr);
+
+    if (hostPtr && !copyRequired) {
+        return allocateGraphicsMemory(imgInfo.size, hostPtr);
+    }
+    return nullptr;
 }
 
 void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *graphicsAllocation) {

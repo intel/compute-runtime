@@ -24,10 +24,17 @@ void MockMemoryManager::overrideAsyncDeleterFlag(bool newValue) {
         deferredDeleter = createDeferredDeleter();
     }
 }
-GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
-    imgInfo.size *= redundancyRatio;
-    auto *allocation = OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(imgInfo, gmm);
-    imgInfo.size /= redundancyRatio;
+
+void *MockMemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
+    return OsAgnosticMemoryManager::allocateSystemMemory(redundancyRatio * size, alignment);
+}
+
+GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
+    return OsAgnosticMemoryManager::allocateGraphicsMemoryWithProperties({redundancyRatio * properties.size, properties.allocationType});
+}
+
+GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) {
+    auto *allocation = OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(imgInfo, hostPtr);
     if (redundancyRatio != 1) {
         memset((unsigned char *)allocation->getUnderlyingBuffer(), 0, imgInfo.size * redundancyRatio);
     }

@@ -35,11 +35,14 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
     void setDeferredDeleter(DeferredDeleter *deleter);
     void overrideAsyncDeleterFlag(bool newValue);
-    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;
+    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) override;
     int redundancyRatio = 1;
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override;
+
+    void *allocateSystemMemory(size_t size, size_t alignment) override;
 
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override {
         freeGraphicsMemoryCalled++;
@@ -97,6 +100,7 @@ class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {
 
 class FailMemoryManager : public MockMemoryManager {
   public:
+    using MemoryManager::allocateGraphicsMemory;
     using MockMemoryManager::MockMemoryManager;
     FailMemoryManager(int32_t failedAllocationsCount);
 
@@ -123,6 +127,7 @@ class FailMemoryManager : public MockMemoryManager {
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override {
         return nullptr;
     };
+
     void *lockResource(GraphicsAllocation *gfxAllocation) override { return nullptr; };
     void unlockResource(GraphicsAllocation *gfxAllocation) override{};
 
@@ -142,7 +147,7 @@ class FailMemoryManager : public MockMemoryManager {
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override {
         return nullptr;
     };
-    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override {
+    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) override {
         return nullptr;
     }
     int32_t failedAllocationsCount = 0;

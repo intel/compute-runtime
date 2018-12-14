@@ -109,6 +109,8 @@ class Image : public MemObj {
         return (type == CL_MEM_OBJECT_IMAGE3D) || (type == CL_MEM_OBJECT_IMAGE1D_ARRAY) || (type == CL_MEM_OBJECT_IMAGE2D_ARRAY);
     }
 
+    static bool isCopyRequired(ImageInfo &imgInfo, const void *hostPtr);
+
     cl_int getImageInfo(cl_image_info paramName,
                         size_t paramValueSize,
                         void *paramValue,
