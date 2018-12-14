@@ -13,6 +13,8 @@
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/helpers/execution_environment_helper.h"
 
 #include "test.h"
 #include <memory>
@@ -120,14 +122,22 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    HardwareInfo *hwInfo = nullptr;
+    auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+    hwInfo->capabilityTable = platformDevices[0]->capabilityTable;
+    hwInfo->capabilityTable.sourceLevelDebuggerSupported = true;
 
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *executionEnvironment);
+
+    executionEnvironment->commandStreamReceivers.resize(1);
+    executionEnvironment->commandStreamReceivers[0][0].reset(mockCsr);
+    auto mockMemoryManager = new MockMemoryManager(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(mockMemoryManager);
+
+    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(&hwInfo[0], executionEnvironment, 0));
     if (device->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
         device->setSourceLevelDebuggerActive(true);
         device->allocatePreemptionAllocationIfNotPresent();
-        auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *device->executionEnvironment);
-
-        device->resetCommandStreamReceiver(mockCsr);
 
         mockCsr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
