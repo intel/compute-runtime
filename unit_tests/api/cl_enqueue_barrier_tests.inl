@@ -12,13 +12,13 @@ using namespace OCLRT;
 
 typedef api_tests clEnqueueBarrierTests;
 
-TEST_F(clEnqueueBarrierTests, NullCommandQueuereturnsError) {
+TEST_F(clEnqueueBarrierTests, GivenNullCommandQueueWhenEnqueuingThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueBarrier(
         nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueBarrierTests, returnsSuccess) {
+TEST_F(clEnqueueBarrierTests, GivenValidCommandQueueWhenEnqueuingThenSuccessIsReturned) {
     auto retVal = clEnqueueBarrier(
         pCommandQueue);
     EXPECT_EQ(CL_SUCCESS, retVal);
