@@ -55,6 +55,8 @@ bool Device::getEnabled64kbPages() {
 bool Device::getEnableLocalMemory() {
     if (DebugManager.flags.EnableLocalMemory.get() != -1) {
         return DebugManager.flags.EnableLocalMemory.get();
+    } else if (DebugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
+        return true;
     }
 
     return OSInterface::osEnableLocalMemory && getHardwareCapabilities().localMemorySupported;

@@ -28,6 +28,7 @@ DECLARE_DEBUG_VARIABLE(bool, FlattenBatchBufferForAUBDump, false, "Dump multi-le
 DECLARE_DEBUG_VARIABLE(bool, AddPatchInfoCommentsForAUBDump, false, "Dump comments containing allocations and patching information")
 DECLARE_DEBUG_VARIABLE(bool, UseMallocToObtainHeap32Base, false, "Instead of using dedicated ranges, use pointer from malloc as heap base.")
 DECLARE_DEBUG_VARIABLE(bool, UseAubStream, true, "Use aub_stream for aub dumping")
+DECLARE_DEBUG_VARIABLE(bool, AUBDumpForceAllToLocalMemory, false, "Force placing every allocation in local memory address space")
 
 /*DEBUG FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, SchedulerSimulationReturnInstance, 0, "prints execution model related debug information")

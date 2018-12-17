@@ -886,39 +886,38 @@ TEST_F(DeviceCapsWithModifiedHwInfoTest, GivenLocalMemorySupportedAndOsEnableLoc
     bool orgHwCapsLocalMemorySupported = device->getHardwareCapabilities().localMemorySupported;
 
     DebugManager.flags.EnableLocalMemory.set(0);
-
-    device->setHWCapsLocalMemorySupported(false);
-    OSInterface::osEnableLocalMemory = false;
-    EXPECT_FALSE(device->getEnableLocalMemory());
-
-    device->setHWCapsLocalMemorySupported(false);
-    OSInterface::osEnableLocalMemory = true;
-    EXPECT_FALSE(device->getEnableLocalMemory());
-
-    device->setHWCapsLocalMemorySupported(true);
-    OSInterface::osEnableLocalMemory = false;
-    EXPECT_FALSE(device->getEnableLocalMemory());
-
-    device->setHWCapsLocalMemorySupported(true);
-    OSInterface::osEnableLocalMemory = true;
-    EXPECT_FALSE(device->getEnableLocalMemory());
-
-    DebugManager.flags.EnableLocalMemory.set(-1);
-    EXPECT_TRUE(device->getEnableLocalMemory());
-
-    OSInterface::osEnableLocalMemory = false;
-    EXPECT_FALSE(device->getEnableLocalMemory());
-
-    device->setHWCapsLocalMemorySupported(false);
     EXPECT_FALSE(device->getEnableLocalMemory());
 
     DebugManager.flags.EnableLocalMemory.set(1);
+    EXPECT_TRUE(device->getEnableLocalMemory());
+
+    DebugManager.flags.EnableLocalMemory.set(-1);
+
     device->setHWCapsLocalMemorySupported(false);
     OSInterface::osEnableLocalMemory = false;
+    EXPECT_FALSE(device->getEnableLocalMemory());
 
+    device->setHWCapsLocalMemorySupported(false);
+    OSInterface::osEnableLocalMemory = true;
+    EXPECT_FALSE(device->getEnableLocalMemory());
+
+    device->setHWCapsLocalMemorySupported(true);
+    OSInterface::osEnableLocalMemory = false;
+    EXPECT_FALSE(device->getEnableLocalMemory());
+
+    device->setHWCapsLocalMemorySupported(true);
+    OSInterface::osEnableLocalMemory = true;
     EXPECT_TRUE(device->getEnableLocalMemory());
 
     device->setHWCapsLocalMemorySupported(orgHwCapsLocalMemorySupported);
+}
+
+TEST_F(DeviceCapsWithModifiedHwInfoTest, GivenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGetEnableLocalMemoryReturnCorrectValue) {
+    DebugManagerStateRestore dbgRestore;
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper.hwInfo));
+
+    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
+    EXPECT_TRUE(device->getEnableLocalMemory());
 }
 
 TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNotSupportedWhenDeviceIsCreatedThenSourceLevelDebuggerActiveIsSetToFalse) {

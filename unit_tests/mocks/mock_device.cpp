@@ -24,7 +24,7 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
 MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : Device(hwInfo, executionEnvironment, deviceIndex) {
     bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
-    this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, this->getHardwareCapabilities().localMemorySupported, aubUsage, *executionEnvironment));
+    this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, this->getEnableLocalMemory(), aubUsage, *executionEnvironment));
     this->osTime = MockOSTime::create();
     mockWaTable = *hwInfo.pWaTable;
 }

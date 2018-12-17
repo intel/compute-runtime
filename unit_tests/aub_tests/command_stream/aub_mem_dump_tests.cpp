@@ -83,7 +83,7 @@ HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
     auto gAddress = static_cast<uintptr_t>(-1) - 4096;
     auto pAddress = static_cast<uint64_t>(gAddress) & 0xFFFFFFFF;
 
-    OCLRT::AubHelperHw<FamilyType> aubHelperHw(pDevice->getHardwareCapabilities().localMemorySupported);
+    OCLRT::AubHelperHw<FamilyType> aubHelperHw(pDevice->getEnableLocalMemory());
     AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress, 7, aubHelperHw);
 
     aubFile.fileHandle.close();
