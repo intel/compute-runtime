@@ -327,7 +327,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitializeEngineIs
         comments.push_back(std::string(str));
         return true;
     }));
-    auto engineIndex = aubCsr->getEngineIndex(OCLRT::ENGINE_RCS);
+    auto engineIndex = aubCsr->getEngineIndex(gpgpuEngineInstances[0]);
     aubCsr->initializeEngine(engineIndex);
 
 #define QTR(a) #a

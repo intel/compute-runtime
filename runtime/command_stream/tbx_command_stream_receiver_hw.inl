@@ -183,11 +183,9 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
 
 template <typename GfxFamily>
 FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
-    auto engineType = osContext->getEngineType().type;
-    auto engineIndex = this->getEngineIndex(osContext->getEngineType().type);
-    auto engineInstance = allEngineInstances[engineIndex];
+    auto &engineInstance = osContext->getEngineType();
     uint32_t mmioBase = getCsTraits(engineInstance).mmioBase;
-    auto &engineInfo = engineInfoTable[engineType];
+    auto &engineInfo = engineInfoTable[engineInstance.type];
 
     if (!engineInfo.pLRCA) {
         initializeEngine(engineInstance);

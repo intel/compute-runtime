@@ -704,8 +704,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineI
     auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
-    auto engineType = OCLRT::ENGINE_RCS;
-    auto engineIndex = aubCsr->getEngineIndex(engineType);
+    auto engineIndex = aubCsr->getEngineIndex(gpgpuEngineInstances[0]);
 
     aubCsr->initializeEngine(engineIndex);
     EXPECT_NE(0u, aubCsr->handle);

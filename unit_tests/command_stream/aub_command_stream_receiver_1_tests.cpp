@@ -96,33 +96,25 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetEngi
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
-    EXPECT_TRUE(aubCsr->getEngineIndexFromInstance(EngineInstanceT(EngineType::ENGINE_RCS, 0)) < allEngineInstances.size());
-    EXPECT_TRUE(aubCsr->getEngineIndexFromInstance(EngineInstanceT(EngineType::ENGINE_RCS, 1)) < allEngineInstances.size());
-    EXPECT_TRUE(aubCsr->getEngineIndexFromInstance(EngineInstanceT(EngineType::ENGINE_BCS, 0)) < allEngineInstances.size());
-    EXPECT_TRUE(aubCsr->getEngineIndexFromInstance(EngineInstanceT(EngineType::ENGINE_VCS, 0)) < allEngineInstances.size());
-    EXPECT_TRUE(aubCsr->getEngineIndexFromInstance(EngineInstanceT(EngineType::ENGINE_VECS, 0)) < allEngineInstances.size());
+    EXPECT_TRUE(aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_RCS, 0)) < allEngineInstances.size());
+    EXPECT_TRUE(aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_RCS, 1)) < allEngineInstances.size());
+    EXPECT_TRUE(aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_BCS, 0)) < allEngineInstances.size());
+    EXPECT_TRUE(aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_VCS, 0)) < allEngineInstances.size());
+    EXPECT_TRUE(aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_VECS, 0)) < allEngineInstances.size());
 
-    EXPECT_THROW(aubCsr->getEngineIndexFromInstance(EngineInstanceT(EngineType::ENGINE_RCS, 2)), std::exception);
-    EXPECT_THROW(aubCsr->getEngineIndexFromInstance(EngineInstanceT(EngineType::ENGINE_BCS, 1)), std::exception);
-    EXPECT_THROW(aubCsr->getEngineIndexFromInstance(EngineInstanceT(EngineType::ENGINE_VCS, 1)), std::exception);
-    EXPECT_THROW(aubCsr->getEngineIndexFromInstance(EngineInstanceT(EngineType::ENGINE_VECS, 1)), std::exception);
+    EXPECT_THROW(aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_RCS, 2)), std::exception);
+    EXPECT_THROW(aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_BCS, 1)), std::exception);
+    EXPECT_THROW(aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_VCS, 1)), std::exception);
+    EXPECT_THROW(aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_VECS, 1)), std::exception);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetEngineIndexIsCalledForGivenEngineTypeThenEngineIndexForThatTypeIsReturned) {
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
-    auto engineIndex = aubCsr->getEngineIndex(EngineType::ENGINE_RCS);
+    auto engineIndex = aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_RCS, 1));
     EXPECT_EQ(EngineType::ENGINE_RCS, allEngineInstances[engineIndex].type);
-
-    engineIndex = aubCsr->getEngineIndex(EngineType::ENGINE_BCS);
-    EXPECT_EQ(EngineType::ENGINE_BCS, allEngineInstances[engineIndex].type);
-
-    engineIndex = aubCsr->getEngineIndex(EngineType::ENGINE_VCS);
-    EXPECT_EQ(EngineType::ENGINE_VCS, allEngineInstances[engineIndex].type);
-
-    engineIndex = aubCsr->getEngineIndex(EngineType::ENGINE_VECS);
-    EXPECT_EQ(EngineType::ENGINE_VECS, allEngineInstances[engineIndex].type);
+    EXPECT_EQ(1, allEngineInstances[engineIndex].id);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDefaultSettingsThenItHasBatchedDispatchModeEnabled) {
@@ -273,8 +265,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
 
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
-    auto engineType = OCLRT::ENGINE_RCS;
-    auto engineIndex = aubCsr1->getEngineIndex(engineType);
+    auto engineType = gpgpuEngineInstances[0].type;
+    auto engineIndex = aubCsr1->getEngineIndex(gpgpuEngineInstances[0]);
 
     aubCsr1->initializeEngine(engineIndex);
     EXPECT_NE(0u, aubCsr1->engineInfoTable[engineType].ggttLRCA);
@@ -294,7 +286,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     ResidencyContainer allocationsForResidency = {};
-    auto engineIndex = aubCsr->getEngineIndexFromInstance(aubCsr->getOsContext().getEngineType());
+    auto engineIndex = aubCsr->getEngineIndex(aubCsr->getOsContext().getEngineType());
     aubCsr->flush(batchBuffer, allocationsForResidency);
     EXPECT_NE(nullptr, aubCsr->engineInfoTable[engineIndex].pLRCA);
     EXPECT_NE(nullptr, aubCsr->engineInfoTable[engineIndex].pGlobalHWStatusPage);

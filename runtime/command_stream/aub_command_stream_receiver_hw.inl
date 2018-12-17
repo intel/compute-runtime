@@ -326,8 +326,8 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     auto streamLocked = getAubStream()->lockStream();
-    auto engineIndex = this->getEngineIndex(osContext->getEngineType().type);
-    auto engineInstance = allEngineInstances[engineIndex];
+
+    auto engineIndex = this->getEngineIndex(osContext->getEngineType());
 
     initializeEngine(engineIndex);
 
@@ -363,7 +363,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 
     submitBatchBuffer(engineIndex, batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
 
-    pollForCompletion(engineInstance);
+    pollForCompletion(osContext->getEngineType());
     if (this->standalone) {
         *this->tagAddress = this->peekLatestSentTaskCount();
     }
