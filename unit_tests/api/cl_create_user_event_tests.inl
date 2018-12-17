@@ -14,7 +14,7 @@ typedef api_tests clCreateUserEventTests;
 
 namespace ULT {
 
-TEST_F(clCreateUserEventTests, createUserEventReturnsSuccess) {
+TEST_F(clCreateUserEventTests, GivenValidContextWhenCreatingUserEventThenEventIsCreated) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
@@ -25,7 +25,7 @@ TEST_F(clCreateUserEventTests, createUserEventReturnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateUserEventTests, nullContext) {
+TEST_F(clCreateUserEventTests, GivenNullContextWhenCreatingUserEventThenInvalidContextErrorIsReturned) {
     auto userEvent = clCreateUserEvent(
         nullptr,
         &retVal);
@@ -33,7 +33,7 @@ TEST_F(clCreateUserEventTests, nullContext) {
     EXPECT_EQ(nullptr, userEvent);
 }
 
-TEST_F(clCreateUserEventTests, getEventInfoForUserEventsCmdQueue) {
+TEST_F(clCreateUserEventTests, GivenCorrectUserEventWhenGetingEventInfoThenClCommandUserCmdTypeIsReturned) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
@@ -57,7 +57,7 @@ TEST_F(clCreateUserEventTests, getEventInfoForUserEventsCmdQueue) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateUserEventTests, checkSetUserEventStatusReturnSuccessAndUpdatesStatus) {
+TEST_F(clCreateUserEventTests, GivenUserEventStatusSetToCompleteWhenGettingEventInfoThenStatusIsSetToCompleteAndSuccessReturned) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
@@ -78,7 +78,7 @@ TEST_F(clCreateUserEventTests, checkSetUserEventStatusReturnSuccessAndUpdatesSta
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateUserEventTests, userEventHasValidContext) {
+TEST_F(clCreateUserEventTests, GivenValidUserEventWhenGettingContextThenValidContextAndSuccessIsReturned) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
@@ -96,7 +96,7 @@ TEST_F(clCreateUserEventTests, userEventHasValidContext) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateUserEventTests, WaitForUserEventThatIsCLCompleteReturnsImmidietaly) {
+TEST_F(clCreateUserEventTests, GivenCompleteUserEventWhenWaitingForUserEventThenReturnIsImmediate) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
@@ -111,7 +111,7 @@ TEST_F(clCreateUserEventTests, WaitForUserEventThatIsCLCompleteReturnsImmidietal
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateUserEventTests, WaitForUserEventThatIsTerminatedReturnsImmidietaly) {
+TEST_F(clCreateUserEventTests, GivenUserEventWithErrorStatusWhenWaitingForUserEventThenClExecStatusErrorForEventsInWaitListErrorIsReturned) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
