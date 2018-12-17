@@ -665,6 +665,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
             Kernel *lastKernel = nullptr;
             for (const auto &dispatchInfo : multiDispatchInfo) {
                 lastKernel = dispatchInfo.getKernel();
+                dispatchInfos.emplace_back(dispatchInfo);
             }
             dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), memObjsForAuxTranslation, auxTranslationDirection);
         }
@@ -674,31 +675,20 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
             CommandQueueHw<FamilyType>::waitUntilComplete(taskCountToWait, flushStampToWait, useQuickKmdSleep);
         }
 
+        std::vector<DispatchInfo> dispatchInfos;
         std::vector<std::tuple<Kernel *, size_t, MemObjsForAuxTranslation, AuxTranslationDirection>> dispatchAuxTranslationInputs;
         uint32_t waitCalled = 0;
     };
 };
 
-HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenGuardKernelWithAuxTranslations) {
+HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationAndWithoutArgumentsWhenEnqueuedThenNoGuardKernelWithAuxTranslations) {
     MockKernelWithInternals mockKernel(*pDevice, context);
     MyCmdQ<FamilyType> cmdQ(context, pDevice);
     size_t gws[3] = {1, 0, 0};
 
     mockKernel.mockKernel->auxTranslationRequired = true;
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(2u, cmdQ.dispatchAuxTranslationInputs.size());
-
-    // before kernel
-    EXPECT_EQ(0u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(0)));
-    EXPECT_EQ(AuxTranslationDirection::AuxToNonAux, std::get<AuxTranslationDirection>(cmdQ.dispatchAuxTranslationInputs.at(0)));
-
-    // after kernel
-    EXPECT_EQ(1u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(1)));
-    EXPECT_EQ(AuxTranslationDirection::NonAuxToAux, std::get<AuxTranslationDirection>(cmdQ.dispatchAuxTranslationInputs.at(1)));
-
-    mockKernel.mockKernel->auxTranslationRequired = false;
-    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(2u, cmdQ.dispatchAuxTranslationInputs.size()); // not changed
+    EXPECT_EQ(0u, cmdQ.dispatchAuxTranslationInputs.size());
 }
 
 HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThenPickOnlyApplicableBuffers) {
@@ -738,11 +728,20 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
 
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(2u, cmdQ.dispatchAuxTranslationInputs.size());
+
     EXPECT_EQ(1u, std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).size()); // before kernel
     EXPECT_EQ(1u, std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).size()); // after kernel
 
     EXPECT_EQ(&buffer2, *std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).begin());
     EXPECT_EQ(&buffer2, *std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).begin());
+    uint32_t pipeControlCount = 0;
+    for (auto dispatchInfo : cmdQ.dispatchInfos) {
+        if (dispatchInfo.isPipeControlRequired()) {
+            ++pipeControlCount;
+        }
+    }
+
+    EXPECT_EQ(4u, pipeControlCount);
 }
 
 HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenDispatchAuxTranslationBuiltin) {
@@ -821,6 +820,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTrans
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, buffer0.getGraphicsAllocation()->getAllocationType());
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, buffer1.getGraphicsAllocation()->getAllocationType());
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, buffer2.getGraphicsAllocation()->getAllocationType());
+        uint32_t pipeControlCount = 0;
+        for (auto dispatchInfo : cmdQ.dispatchInfos) {
+            if (dispatchInfo.isPipeControlRequired()) {
+                ++pipeControlCount;
+            }
+        }
+
+        EXPECT_EQ(1u, pipeControlCount);
     }
 }
 

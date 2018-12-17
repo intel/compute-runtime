@@ -18,6 +18,8 @@ class StackVec {
   public:
     using iterator = DataType *;
     using const_iterator = const DataType *;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
     static const size_t onStackCaps = OnStackCapacity;
 
@@ -181,6 +183,14 @@ class StackVec {
         return onStackMem;
     }
 
+    reverse_iterator rbegin() {
+        return reverse_iterator(end());
+    }
+
+    const_reverse_iterator crbegin() const {
+        return const_reverse_iterator(end());
+    }
+
     const_iterator begin() const {
         if (dynamicMem) {
             return dynamicMem->data();
@@ -195,6 +205,14 @@ class StackVec {
         }
 
         return onStackMem + onStackSize;
+    }
+
+    reverse_iterator rend() {
+        return reverse_iterator(begin());
+    }
+
+    const_reverse_iterator crend() const {
+        return const_reverse_iterator(begin());
     }
 
     const_iterator end() const {

@@ -9,6 +9,7 @@
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/task_information.h"
+#include "runtime/helpers/dispatch_info.h"
 #include "instrumentation.h"
 #include <atomic>
 #include <cstdint>
@@ -27,6 +28,7 @@ class Kernel;
 class MemObj;
 class PerformanceCounters;
 struct CompletionStamp;
+struct MultiDispatchInfo;
 
 enum class QueuePriority {
     LOW,

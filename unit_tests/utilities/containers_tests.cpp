@@ -1429,6 +1429,17 @@ TEST(StackVec, Clear) {
     ASSERT_EQ(0U, v2.size());
 }
 
+TEST(StackVec, ReverseBeginningFunctions) {
+    using VecType = StackVec<int, 1>;
+    VecType v;
+    v.push_back(5);
+
+    ASSERT_EQ(v.begin(), v.rend().base());
+    ASSERT_EQ(v.end(), v.rbegin().base());
+    ASSERT_EQ(v.begin(), v.crend().base());
+    ASSERT_EQ(v.end(), v.crbegin().base());
+}
+
 TEST(StackVec, ConstMemberFunctions) {
     using VecType = StackVec<int, 3>;
     VecType v;

@@ -307,4 +307,21 @@ TEST_F(DispatchInfoTest, givenKernelWhenMultiDispatchInfoIsCreatedThenQueryParen
         EXPECT_EQ(nullptr, multiDispatchInfo.peekParentKernel());
         EXPECT_EQ(builtInKernel.get(), multiDispatchInfo.peekMainKernel());
     }
+
+    {
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.push(parentKernelDispatchInfo);
+        multiDispatchInfo.push(baseDispatchInfo);
+        multiDispatchInfo.push(builtInDispatchInfo);
+
+        std::reverse_iterator<DispatchInfo *> rend = multiDispatchInfo.rend();
+        std::reverse_iterator<const DispatchInfo *> crend = multiDispatchInfo.crend();
+        std::reverse_iterator<DispatchInfo *> rbegin = multiDispatchInfo.rbegin();
+        std::reverse_iterator<const DispatchInfo *> crbegin = multiDispatchInfo.crbegin();
+
+        EXPECT_EQ(rbegin.base(), multiDispatchInfo.end());
+        EXPECT_EQ(crbegin.base(), multiDispatchInfo.end());
+        EXPECT_EQ(rend.base(), multiDispatchInfo.begin());
+        EXPECT_EQ(crend.base(), multiDispatchInfo.begin());
+    }
 }

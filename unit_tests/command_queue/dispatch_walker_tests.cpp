@@ -1108,3 +1108,38 @@ HWTEST_F(DispatchWalkerTest, WhenCallingDefaultWaMethodsThenExpectNothing) {
     size_t actualSize = GpgpuWalkerHelper<GENX>::getSizeForWADisableLSQCROPERFforOCL(&kernel);
     EXPECT_EQ(expectedSize, actualSize);
 }
+
+HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxTranslationWithoutParentKernelThenPipeControlAdded) {
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    kernelInfo.workloadInfo.workDimOffset = 0;
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    auto &cmdStream = pCmdQ->getCS(0);
+    void *buffer = cmdStream.getCpuBase();
+    kernel.auxTranslationRequired = true;
+
+    MockMultiDispatchInfo multiDispatchInfo(&kernel);
+    DispatchInfo di1(&kernel, 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0));
+    di1.setPipeControlRequired(true);
+    multiDispatchInfo.push(di1);
+
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        pDevice->getPreemptionMode(),
+        false);
+
+    auto sizeUsed = cmdStream.getUsed();
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, buffer, sizeUsed));
+
+    auto itorCmd = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorCmd);
+}

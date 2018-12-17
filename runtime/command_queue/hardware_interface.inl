@@ -30,6 +30,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     LinearStream *commandStream = nullptr;
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
     auto parentKernel = multiDispatchInfo.peekParentKernel();
+    auto mainKernel = multiDispatchInfo.peekMainKernel();
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         // Compute local workgroup sizes
@@ -109,10 +110,16 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
     DEBUG_BREAK_IF(offsetInterfaceDescriptorTable % 64 != 0);
 
+    if (mainKernel->isAuxTranslationRequired()) {
+        using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+        auto pPipeControlCmd = static_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
+        *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
+        pPipeControlCmd->setCommandStreamerStallEnable(true);
+    }
+
     size_t currentDispatchIndex = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = *dispatchInfo.getKernel();
-
         DEBUG_BREAK_IF(!(dispatchInfo.getDim() >= 1 && dispatchInfo.getDim() <= 3));
         DEBUG_BREAK_IF(!(dispatchInfo.getGWS().z == 1 || dispatchInfo.getDim() == 3));
         DEBUG_BREAK_IF(!(dispatchInfo.getGWS().y == 1 || dispatchInfo.getDim() >= 2));
@@ -152,7 +159,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         *kernel.globalWorkSizeY = static_cast<uint32_t>(gws.y);
         *kernel.globalWorkSizeZ = static_cast<uint32_t>(gws.z);
 
-        if ((&kernel == multiDispatchInfo.peekMainKernel()) || (kernel.localWorkSizeX2 == &Kernel::dummyPatchLocation)) {
+        if ((&kernel == mainKernel) || (kernel.localWorkSizeX2 == &Kernel::dummyPatchLocation)) {
             *kernel.localWorkSizeX = static_cast<uint32_t>(lws.x);
             *kernel.localWorkSizeY = static_cast<uint32_t>(lws.y);
             *kernel.localWorkSizeZ = static_cast<uint32_t>(lws.z);
@@ -166,7 +173,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         *kernel.enqueuedLocalWorkSizeY = static_cast<uint32_t>(elws.y);
         *kernel.enqueuedLocalWorkSizeZ = static_cast<uint32_t>(elws.z);
 
-        if (&kernel == multiDispatchInfo.peekMainKernel()) {
+        if (&kernel == mainKernel) {
             *kernel.numWorkGroupsX = static_cast<uint32_t>(twgs.x);
             *kernel.numWorkGroupsY = static_cast<uint32_t>(twgs.y);
             *kernel.numWorkGroupsZ = static_cast<uint32_t>(twgs.z);
@@ -231,6 +238,12 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         GpgpuWalkerHelper<GfxFamily>::adjustWalkerData(commandStream, walkerCmd, kernel, dispatchInfo);
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, false);
+        if (dispatchInfo.isPipeControlRequired()) {
+            using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+            auto pPipeControlCmd = static_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
+            *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
+            pPipeControlCmd->setCommandStreamerStallEnable(true);
+        }
         currentDispatchIndex++;
     }
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);

@@ -372,7 +372,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         return usingImagesOnly;
     }
 
-    void fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &buffersForAuxTranslation);
+    void fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsForAuxTranslation);
 
     bool requiresCacheFlushCommand() const;
 

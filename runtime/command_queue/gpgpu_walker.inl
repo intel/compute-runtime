@@ -387,8 +387,14 @@ template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, cl_uint numEventsInWaitList, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
     size_t expectedSizeCS = 0;
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
+    if (multiDispatchInfo.peekMainKernel() && multiDispatchInfo.peekMainKernel()->isAuxTranslationRequired()) {
+        expectedSizeCS += sizeof(PIPE_CONTROL);
+    }
     for (auto &dispatchInfo : multiDispatchInfo) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, dispatchInfo.getKernel());
+        if (dispatchInfo.isPipeControlRequired()) {
+            expectedSizeCS += sizeof(PIPE_CONTROL);
+        }
     }
     if (parentKernel) {
         SchedulerKernel &scheduler = commandQueue.getDevice().getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(parentKernel->getContext());

@@ -557,6 +557,9 @@ void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
 
 void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
                                           AuxTranslationDirection auxTranslationDirection) {
+    if (!multiDispatchInfo.empty()) {
+        multiDispatchInfo.rbegin()->setPipeControlRequired(true);
+    }
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
     BuiltinDispatchInfoBuilder::BuiltinOpParams dispatchParams;
 
@@ -564,6 +567,8 @@ void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, 
     dispatchParams.auxTranslationDirection = auxTranslationDirection;
 
     builder.buildDispatchInfos(multiDispatchInfo, dispatchParams);
+
+    multiDispatchInfo.rbegin()->setPipeControlRequired(true);
 }
 
 void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes) {

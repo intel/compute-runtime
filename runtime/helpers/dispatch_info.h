@@ -25,6 +25,8 @@ class DispatchInfo {
         : kernel(k), dim(d), gws(gws), elws(elws), offset(offset), agws(0, 0, 0), lws(0, 0, 0), twgs(0, 0, 0), nwgs(0, 0, 0), swgs(0, 0, 0) {}
     DispatchInfo(Kernel *k, uint32_t d, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset, Vec3<size_t> agws, Vec3<size_t> lws, Vec3<size_t> twgs, Vec3<size_t> nwgs, Vec3<size_t> swgs)
         : kernel(k), dim(d), gws(gws), elws(elws), offset(offset), agws(agws), lws(lws), twgs(twgs), nwgs(nwgs), swgs(swgs) {}
+    bool isPipeControlRequired() const { return pipeControlRequired; }
+    void setPipeControlRequired(bool blocking) { this->pipeControlRequired = blocking; }
     bool usesSlm() const;
     bool usesStatelessPrintfSurface() const;
     uint32_t getRequiredScratchSize() const;
@@ -50,6 +52,7 @@ class DispatchInfo {
     void setStartOfWorkgroups(const Vec3<size_t> &swgs) { this->swgs = swgs; }
 
   protected:
+    bool pipeControlRequired = false;
     Kernel *kernel = nullptr;
     uint32_t dim = 0;
 
@@ -106,12 +109,36 @@ struct MultiDispatchInfo {
         return ret;
     }
 
+    DispatchInfo *begin() {
+        return dispatchInfos.begin();
+    }
+
     const DispatchInfo *begin() const {
         return dispatchInfos.begin();
     }
 
+    std::reverse_iterator<DispatchInfo *> rbegin() {
+        return dispatchInfos.rbegin();
+    }
+
+    std::reverse_iterator<const DispatchInfo *> crbegin() const {
+        return dispatchInfos.crbegin();
+    }
+
+    DispatchInfo *end() {
+        return dispatchInfos.end();
+    }
+
     const DispatchInfo *end() const {
         return dispatchInfos.end();
+    }
+
+    std::reverse_iterator<DispatchInfo *> rend() {
+        return dispatchInfos.rend();
+    }
+
+    std::reverse_iterator<const DispatchInfo *> crend() const {
+        return dispatchInfos.crend();
     }
 
     void push(const DispatchInfo &dispatchInfo) {

@@ -63,7 +63,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                 auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
                 builtInLock.takeOwnership(builder, this->context);
                 kernel->fillWithBuffersForAuxTranslation(memObjsForAuxTranslation);
-                dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
+                if (!memObjsForAuxTranslation.empty()) {
+                    dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
+                }
             }
 
             if (kernel->getKernelInfo().builtinDispatchBuilder == nullptr) {
@@ -85,7 +87,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                         buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
                     }
                 } else {
-                    dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
+                    if (!memObjsForAuxTranslation.empty()) {
+                        dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
+                    }
                 }
             }
         }
