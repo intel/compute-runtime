@@ -143,7 +143,7 @@ HWTEST_F(CommandStreamReceiverTest, givenPtrAndSizeThatMeetL3CriteriaWhenMakeRes
     auto size = 0x2000u;
 
     auto memoryManager = commandStreamReceiver->getMemoryManager();
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(size, hostPtr);
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, hostPtr);
     ASSERT_NE(nullptr, graphicsAllocation);
     commandStreamReceiver->makeResidentHostPtrAllocation(graphicsAllocation);
 
@@ -158,7 +158,7 @@ HWTEST_F(CommandStreamReceiverTest, givenPtrAndSizeThatDoNotMeetL3CriteriaWhenMa
     auto size = 0x2001u;
 
     auto memoryManager = commandStreamReceiver->getMemoryManager();
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(size, hostPtr);
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, hostPtr);
     ASSERT_NE(nullptr, graphicsAllocation);
     commandStreamReceiver->makeResidentHostPtrAllocation(graphicsAllocation);
 
@@ -176,8 +176,7 @@ TEST_F(CommandStreamReceiverTest, memoryManagerHasAccessToCSR) {
 HWTEST_F(CommandStreamReceiverTest, whenStoreAllocationThenStoredAllocationHasTaskCountFromCsr) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto *memoryManager = csr.getMemoryManager();
-    void *host_ptr = (void *)0x1234;
-    auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     EXPECT_FALSE(allocation->isUsed());
 

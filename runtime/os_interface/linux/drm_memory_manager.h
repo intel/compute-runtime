@@ -32,12 +32,6 @@ class DrmMemoryManager : public MemoryManager {
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
     DrmAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override;
-    DrmAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override {
-        AllocationData allocationData;
-        allocationData.hostPtr = ptr;
-        allocationData.size = size;
-        return allocateGraphicsMemoryWithHostPtr(allocationData);
-    }
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) override;
     DrmAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override;

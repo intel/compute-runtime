@@ -93,18 +93,13 @@ class MemoryManager {
         return allocateGraphicsMemoryInPreferredPool(properties, 0u, nullptr);
     }
 
-    virtual GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) = 0;
-
-    virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr) {
-        AllocationData allocationData;
-        allocationData.hostPtr = ptr;
-        allocationData.size = size;
-        return MemoryManager::allocateGraphicsMemoryWithHostPtr(allocationData);
+    virtual GraphicsAllocation *allocateGraphicsMemory(const AllocationProperties &properties, const void *ptr) {
+        return allocateGraphicsMemoryInPreferredPool(properties, 0u, ptr);
     }
 
     GraphicsAllocation *allocateGraphicsMemoryForHostPtr(size_t size, void *ptr, bool fullRangeSvm, bool requiresL3Flush) {
         if (fullRangeSvm) {
-            return allocateGraphicsMemory(size, ptr);
+            return allocateGraphicsMemory({false, size, GraphicsAllocation::AllocationType::UNDECIDED}, ptr);
         } else {
             auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(size, ptr);
             if (allocation) {
@@ -121,8 +116,6 @@ class MemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryForImageFromHostPtr(ImageInfo &imgInfo, const void *hostPtr);
 
     GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr);
-
-    GraphicsAllocation *allocateGraphicsMemoryForSVM(size_t size, bool coherent);
 
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) = 0;
 
@@ -223,6 +216,7 @@ class MemoryManager {
     static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const DevicesBitfield devicesBitfield,
                                   const void *hostPtr);
 
+    virtual GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) = 0;
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) = 0;

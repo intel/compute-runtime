@@ -74,15 +74,6 @@ void *MemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
     return ptr;
 }
 
-GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, bool coherent) {
-    GraphicsAllocation *graphicsAllocation = nullptr;
-    graphicsAllocation = allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::SVM});
-    if (graphicsAllocation) {
-        graphicsAllocation->setCoherent(coherent);
-    }
-    return graphicsAllocation;
-}
-
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
     if (deferredDeleter) {
         deferredDeleter->drain(true);
@@ -99,7 +90,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImageFromHostPtr(Ima
     bool copyRequired = Image::isCopyRequired(imgInfo, hostPtr);
 
     if (hostPtr && !copyRequired) {
-        return allocateGraphicsMemory(imgInfo.size, hostPtr);
+        return allocateGraphicsMemory({false, imgInfo.size, GraphicsAllocation::AllocationType::UNDECIDED}, hostPtr);
     }
     return nullptr;
 }

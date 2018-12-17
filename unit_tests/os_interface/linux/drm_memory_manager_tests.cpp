@@ -440,7 +440,7 @@ TEST_F(DrmMemoryManagerTest, Allocate_HostPtr) {
     void *ptr = ::alignedMalloc(1024, 4096);
     ASSERT_NE(nullptr, ptr);
 
-    auto alloc = memoryManager->allocateGraphicsMemory(1024, ptr);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 1024}, ptr));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getUnderlyingBuffer());
     EXPECT_EQ(ptr, alloc->getUnderlyingBuffer());
@@ -461,7 +461,9 @@ TEST_F(DrmMemoryManagerTest, Allocate_HostPtr_Nullptr) {
 
     void *ptr = nullptr;
 
-    auto alloc = memoryManager->allocateGraphicsMemory(1024, ptr);
+    allocationData.hostPtr = nullptr;
+    allocationData.size = MemoryConstants::pageSize;
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData));
     ASSERT_NE(nullptr, alloc);
     EXPECT_EQ(ptr, alloc->getUnderlyingBuffer());
 
@@ -484,7 +486,7 @@ TEST_F(DrmMemoryManagerTest, Allocate_HostPtr_MisAligned) {
 
     void *ptr = ptrOffset(ptrT, 128);
 
-    auto alloc = memoryManager->allocateGraphicsMemory(1024, ptr);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 1024}, ptr));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getUnderlyingBuffer());
     EXPECT_EQ(ptr, alloc->getUnderlyingBuffer());
@@ -505,7 +507,7 @@ TEST_F(DrmMemoryManagerTest, Allocate_HostPtr_UserptrFail) {
     void *ptrT = ::alignedMalloc(1024, 4096);
     ASSERT_NE(nullptr, ptrT);
 
-    auto alloc = memoryManager->allocateGraphicsMemory(1024, ptrT);
+    auto alloc = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 1024}, ptrT);
     EXPECT_EQ(nullptr, alloc);
 
     ::alignedFree(ptrT);
@@ -694,7 +696,7 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
 
     auto ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize * 10;
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(size, ptr);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, ptr);
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
 
@@ -2441,7 +2443,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMemoryManagerWhenAlloc
 
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = 4096u;
-    auto allocation = memoryManager->allocateGraphicsMemory(size, ptr);
+    auto allocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, ptr);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
@@ -2464,17 +2466,6 @@ TEST(DrmMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithPtrI
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST(DrmMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMIsCalledThen4KBGraphicsAllocationIsReturned) {
-    ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, executionEnvironment));
-    auto size = MemoryConstants::pageSize;
-
-    auto svmAllocation = memoryManager->allocateGraphicsMemoryForSVM(size, false);
-    EXPECT_NE(nullptr, svmAllocation);
-    EXPECT_EQ(MemoryPool::System4KBPages, svmAllocation->getMemoryPool());
-    memoryManager->freeGraphicsMemory(svmAllocation);
-}
-
 TEST(DrmMemoryManager, givenMemoryManagerWhenCreateAllocationFromHandleIsCalledThenMemoryPoolIsSystemCpuInaccessible) {
     ExecutionEnvironment executionEnvironment;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, executionEnvironment));
@@ -2494,17 +2485,6 @@ TEST(DrmMemoryManager, DISABLED_givenMemoryManagerWith64KBPagesEnabledWhenAlloca
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST(DrmMemoryManager, DISABLED_givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThenMemoryPoolIsSystem64KBPages) {
-    ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, executionEnvironment));
-    auto size = MemoryConstants::pageSize;
-
-    auto svmAllocation = memoryManager->allocateGraphicsMemoryForSVM(size, false);
-    EXPECT_NE(nullptr, svmAllocation);
-    EXPECT_EQ(MemoryPool::System64KBPages, svmAllocation->getMemoryPool());
-    memoryManager->freeGraphicsMemory(svmAllocation);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEnabledValidateHostMemoryWhenPinBBAllocationFailsThenUnrecoverableIsCalled) {
@@ -2617,7 +2597,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryE
 
     size_t size = 10 * 1024 * 1024;
     void *ptr = ::alignedMalloc(size, 4096);
-    auto alloc = memoryManager->allocateGraphicsMemory(size, ptr);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, ptr));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 

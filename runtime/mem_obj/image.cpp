@@ -221,7 +221,7 @@ Image *Image::create(Context *context,
                     }
                 } else {
                     gmm = new Gmm(imgInfo);
-                    memory = memoryManager->allocateGraphicsMemory(imgInfo.size, hostPtr);
+                    memory = memoryManager->allocateGraphicsMemory({false, imgInfo.size, GraphicsAllocation::AllocationType::UNDECIDED}, hostPtr);
                     memory->gmm = gmm;
                     zeroCopy = true;
                 }

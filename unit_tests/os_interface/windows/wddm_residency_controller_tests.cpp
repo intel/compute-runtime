@@ -12,6 +12,7 @@
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
+#include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
@@ -498,7 +499,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
 
     // 3-fragment Allocation
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1500);
-    auto allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(8196, ptr));
+    auto allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 2 * MemoryConstants::pageSize}, ptr));
 
     // whole allocation unused since previous trim
     allocationTriple->getResidencyData().updateCompletionData(0, osContextId);
@@ -737,7 +738,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, trimToBudgetEvictsDon
     allocation2.getResidencyData().resident[osContextId] = true;
 
     void *ptrTriple = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + 0x500);
-    WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(8196, ptrTriple));
+    WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 2 * MemoryConstants::pageSize}, ptrTriple));
 
     allocationTriple->getResidencyData().updateCompletionData(1, osContextId);
     allocationTriple->getResidencyData().resident[osContextId] = true;
@@ -877,7 +878,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidency
     MockWddmAllocation allocation1, allocation2;
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1500);
 
-    WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(8196, ptr);
+    WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 2 * MemoryConstants::pageSize}, ptr);
     ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
 
     residencyController->makeResidentResidencyAllocations(residencyPack);
@@ -894,7 +895,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidency
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidencyAllocationsSetsLastFencePLusOneForTripleAllocations) {
     MockWddmAllocation allocation1, allocation2;
 
-    WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(8196, reinterpret_cast<void *>(0x1500));
+    WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 2 * MemoryConstants::pageSize}, reinterpret_cast<void *>(0x1500));
 
     residencyController->getMonitoredFence().currentFenceValue = 20;
 
@@ -930,7 +931,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenDontMarkTripleAllocationsAsResident) {
     MockWddmAllocation allocation1, allocation2;
     void *ptr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1500);
-    WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(8196, ptr));
+    WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 2 * MemoryConstants::pageSize}, ptr));
     ASSERT_NE(nullptr, allocationTriple);
 
     auto makeResidentWithOutBytesToTrim = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = 4 * 4096;  return false; };

@@ -27,9 +27,8 @@ struct InternalAllocationStorageTest : public MemoryAllocatorFixture,
 TEST_F(InternalAllocationStorageTest, givenDebugFlagThatDisablesAllocationReuseWhenStoreReusableAllocationIsCalledThenAllocationIsReleased) {
     DebugManagerStateRestore stateRestorer;
     DebugManager.flags.DisableResourceRecycling.set(true);
-    void *host_ptr = (void *)0x1234;
 
-    auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
     EXPECT_NE(allocation, csr->getAllocationsForReuse().peekHead());
@@ -37,11 +36,10 @@ TEST_F(InternalAllocationStorageTest, givenDebugFlagThatDisablesAllocationReuseW
 }
 
 TEST_F(InternalAllocationStorageTest, whenCleanAllocationListThenRemoveOnlyCompletedAllocations) {
-    void *host_ptr = (void *)0x1234;
 
-    auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
-    auto allocation2 = memoryManager->allocateGraphicsMemory(1, host_ptr);
-    auto allocation3 = memoryManager->allocateGraphicsMemory(1, host_ptr);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation3 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     allocation->updateTaskCount(10, csr->getOsContext().getContextId());
     allocation2->updateTaskCount(5, csr->getOsContext().getContextId());
@@ -76,8 +74,7 @@ TEST_F(InternalAllocationStorageTest, whenCleanAllocationListThenRemoveOnlyCompl
 }
 
 TEST_F(InternalAllocationStorageTest, whenAllocationIsStoredAsReusableButIsStillUsedThenCannotBeObtained) {
-    void *host_ptr = (void *)0x1234;
-    auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION, 2u);
 
@@ -95,8 +92,7 @@ TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromEmptyReuseListThen
 }
 
 TEST_F(InternalAllocationStorageTest, whenCompletedAllocationIsStoredAsReusableAndThenCanBeObtained) {
-    void *host_ptr = (void *)0x1234;
-    auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     EXPECT_NE(nullptr, allocation);
 
     storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION, 2u);
@@ -113,8 +109,8 @@ TEST_F(InternalAllocationStorageTest, whenCompletedAllocationIsStoredAsReusableA
 }
 
 TEST_F(InternalAllocationStorageTest, whenNotUsedAllocationIsStoredAsReusableAndThenCanBeObtained) {
-    void *host_ptr = (void *)0x1234;
-    auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     EXPECT_NE(nullptr, allocation);
     EXPECT_FALSE(allocation->isUsed());
     EXPECT_EQ(0u, csr->peekTaskCount());

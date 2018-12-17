@@ -54,11 +54,12 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, bool coherent, bool readOnly
         return nullptr;
 
     std::unique_lock<std::mutex> lock(mtx);
-    GraphicsAllocation *GA = memoryManager->allocateGraphicsMemoryForSVM(size, coherent);
+    GraphicsAllocation *GA = memoryManager->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::SVM});
     if (!GA) {
         return nullptr;
     }
     GA->setMemObjectsAllocationWithWritableFlags(!readOnly);
+    GA->setCoherent(coherent);
     this->SVMAllocs.insert(*GA);
 
     return GA->getUnderlyingBuffer();

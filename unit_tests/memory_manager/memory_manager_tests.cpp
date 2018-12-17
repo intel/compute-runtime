@@ -225,7 +225,7 @@ TEST_F(MemoryAllocatorTest, AlignedHostPtrWithAlignedSizeWhenAskedForGraphicsAll
     auto ptr = (void *)0x1000;
     MockMemoryManager mockMemoryManager(*executionEnvironment);
     auto hostPtrManager = static_cast<MockHostPtrManager *>(mockMemoryManager.getHostPtrManager());
-    auto graphicsAllocation = mockMemoryManager.allocateGraphicsMemory(4096, ptr);
+    auto graphicsAllocation = mockMemoryManager.allocateGraphicsMemory(MockAllocationProperties{false, 4096}, ptr);
     EXPECT_NE(nullptr, graphicsAllocation);
 
     EXPECT_EQ(1u, hostPtrManager->getFragmentCount());
@@ -242,7 +242,7 @@ TEST_F(MemoryAllocatorTest, GivenAlignedHostPtrAndCacheAlignedSizeWhenAskedForL3
     auto ptr = (void *)0x1000;
     auto alignedSize = MemoryConstants::cacheLineSize;
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(alignedSize, ptr);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, alignedSize}, ptr);
 
     EXPECT_TRUE(graphicsAllocation->isL3Capable());
 
@@ -253,7 +253,7 @@ TEST_F(MemoryAllocatorTest, GivenAlignedHostPtrAndNotCacheAlignedSizeWhenAskedFo
     auto ptr = (void *)0x1000;
     auto alignedSize = MemoryConstants::cacheLineSize - 1;
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(alignedSize, ptr);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, alignedSize}, ptr);
 
     EXPECT_FALSE(graphicsAllocation->isL3Capable());
 
@@ -264,7 +264,7 @@ TEST_F(MemoryAllocatorTest, GivenMisAlignedHostPtrAndNotCacheAlignedSizeWhenAske
     auto ptr = (void *)0x1001;
     auto alignedSize = MemoryConstants::cacheLineSize - 1;
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(alignedSize, ptr);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, alignedSize}, ptr);
 
     EXPECT_FALSE(graphicsAllocation->isL3Capable());
 
@@ -275,7 +275,7 @@ TEST_F(MemoryAllocatorTest, GivenHostPtrAlignedToCacheLineWhenAskedForL3Allowanc
     auto ptr = (void *)0x1040;
     auto alignedSize = MemoryConstants::cacheLineSize;
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(alignedSize, ptr);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, alignedSize}, ptr);
 
     EXPECT_TRUE(graphicsAllocation->isL3Capable());
 
@@ -283,7 +283,6 @@ TEST_F(MemoryAllocatorTest, GivenHostPtrAlignedToCacheLineWhenAskedForL3Allowanc
 }
 
 TEST_F(MemoryAllocatorTest, NullOsHandleStorageAskedForPopulationReturnsFilledPointer) {
-
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
     memoryManager->populateOsHandles(storage);
@@ -304,7 +303,7 @@ TEST_F(MemoryAllocatorTest, GivenEmptyMemoryManagerAndMisalingedHostPtrWithHugeS
 
     ASSERT_EQ(3u, reqs.requiredFragmentsCount);
 
-    auto graphicsAllocation = mockMemoryManager.allocateGraphicsMemory(size, cpuPtr);
+    auto graphicsAllocation = mockMemoryManager.allocateGraphicsMemory(MockAllocationProperties{false, size}, cpuPtr);
     for (int i = 0; i < maxFragmentsCount; i++) {
         EXPECT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage);
         EXPECT_EQ(reqs.AllocationFragments[i].allocationPtr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].cpuPtr);
@@ -317,7 +316,6 @@ TEST_F(MemoryAllocatorTest, GivenEmptyMemoryManagerAndMisalingedHostPtrWithHugeS
 }
 
 TEST_F(MemoryAllocatorTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocationThenGraphicsAllocationIsCreated) {
-
     OsHandleStorage handleStorage;
     auto ptr = (void *)0x1000;
     auto ptr2 = (void *)0x1001;
@@ -696,7 +694,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryWithPt
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
-    auto allocation = memoryManager.allocateGraphicsMemory(size, ptr);
+    auto allocation = memoryManager.allocateGraphicsMemory(MockAllocationProperties{false, size}, ptr);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
@@ -731,32 +729,20 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThenMemoryPoolIsSystem64KBPages) {
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryThenMemoryPoolIsSystem64KBPages) {
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(true, false, executionEnvironment);
-    auto size = 4096u;
-
-    auto svmAllocation = memoryManager.allocateGraphicsMemoryForSVM(size, false);
+    auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SVM});
     EXPECT_NE(nullptr, svmAllocation);
     EXPECT_EQ(MemoryPool::System64KBPages, svmAllocation->getMemoryPool());
     memoryManager.freeGraphicsMemory(svmAllocation);
 }
 
-TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMIsCalledThen4KBGraphicsAllocationIsReturned) {
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryThen4KBGraphicsAllocationIsReturned) {
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
-    auto size = 4096u;
-    auto isCoherent = true;
-
-    auto svmAllocation = memoryManager.allocateGraphicsMemoryForSVM(size, isCoherent);
-    EXPECT_NE(nullptr, svmAllocation);
-    EXPECT_TRUE(svmAllocation->isCoherent());
+    auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SVM});
     EXPECT_EQ(MemoryPool::System4KBPages, svmAllocation->getMemoryPool());
-
-    EXPECT_EQ(size, svmAllocation->getUnderlyingBufferSize());
-
-    uintptr_t address = reinterpret_cast<uintptr_t>(svmAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(0u, (address & MemoryConstants::pageMask));
     memoryManager.freeGraphicsMemory(svmAllocation);
 }
 
@@ -778,24 +764,6 @@ TEST(OsAgnosticMemoryManager, givenDeviceWith64kbPagesDisbledWhenCreatingMemoryM
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<Device>(&localHwInfo));
     EXPECT_FALSE(device->getEnabled64kbPages());
     EXPECT_FALSE(device->getMemoryManager()->peek64kbPagesEnabled());
-}
-
-TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThen64KBGraphicsAllocationIsReturned) {
-    ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(true, false, executionEnvironment);
-    auto size = 4096u;
-    auto isCoherent = true;
-
-    auto svmAllocation = memoryManager.allocateGraphicsMemoryForSVM(size, isCoherent);
-    EXPECT_NE(nullptr, svmAllocation);
-    EXPECT_TRUE(svmAllocation->isCoherent());
-    EXPECT_EQ(MemoryPool::System64KBPages, svmAllocation->getMemoryPool());
-
-    EXPECT_EQ(MemoryConstants::pageSize64k, svmAllocation->getUnderlyingBufferSize());
-
-    uintptr_t address = reinterpret_cast<uintptr_t>(svmAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(0u, (address & MemoryConstants::page64kMask));
-    memoryManager.freeGraphicsMemory(svmAllocation);
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocationFromSharedObjectIsCalledThenGraphicsAllocationIsReturned) {
@@ -965,7 +933,7 @@ TEST_F(MemoryManagerWithAsyncDeleterTest, givenMemoryManagerWhenAllocateGraphics
     char ptr[128];
     EXPECT_EQ(0, deleter->drainCalled);
     deleter->expectDrainBlockingValue(true);
-    auto allocation = memoryManager.MemoryManager::allocateGraphicsMemory(sizeof(char), (void *)&ptr);
+    auto allocation = memoryManager.MemoryManager::allocateGraphicsMemory(MockAllocationProperties{false, sizeof(char)}, (void *)&ptr);
     EXPECT_TRUE(deleter->isQueueEmpty());
     memoryManager.freeGraphicsMemoryImpl(allocation);
 }
@@ -974,7 +942,7 @@ TEST_F(MemoryManagerWithAsyncDeleterTest, givenMemoryManagerWhenAllocateGraphics
     memoryManager.setDeferredDeleter(nullptr);
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
     char ptr[128];
-    auto allocation = memoryManager.MemoryManager::allocateGraphicsMemory(sizeof(char), (void *)&ptr);
+    auto allocation = memoryManager.MemoryManager::allocateGraphicsMemory(MockAllocationProperties{false, sizeof(char)}, (void *)&ptr);
     memoryManager.freeGraphicsMemoryImpl(allocation);
 }
 
@@ -1151,23 +1119,22 @@ TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenSuccess) {
 typedef Test<MemoryManagerWithCsrFixture> MemoryManagerWithCsrTest;
 
 TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerWhenBiggerOverllapingAllcoationIsCreatedAndNothingToCleanThenAbortExecution) {
-
     void *cpuPtr1 = (void *)0x100004;
     void *cpuPtr2 = (void *)0x101008;
     void *cpuPtr3 = (void *)0x100000;
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
-    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize, cpuPtr1);
+    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, MemoryConstants::pageSize}, cpuPtr1);
     EXPECT_EQ(2u, hostPtrManager->getFragmentCount());
 
-    auto graphicsAllocation2 = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize * 3, cpuPtr2);
+    auto graphicsAllocation2 = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, MemoryConstants::pageSize * 3}, cpuPtr2);
     EXPECT_EQ(4u, hostPtrManager->getFragmentCount());
 
     GraphicsAllocation *graphicsAllocation3 = nullptr;
 
     bool catchMe = false;
     try {
-        graphicsAllocation3 = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize * 10, cpuPtr3);
+        graphicsAllocation3 = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, MemoryConstants::pageSize * 10}, cpuPtr3);
     } catch (...) {
         catchMe = true;
     }
@@ -1194,10 +1161,10 @@ TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerReadyForCleanin
     void *cpuPtr3 = (void *)0x100000;
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
-    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize, cpuPtr1);
+    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, MemoryConstants::pageSize}, cpuPtr1);
     EXPECT_EQ(2u, hostPtrManager->getFragmentCount());
 
-    auto graphicsAllocation2 = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize * 3, cpuPtr2);
+    auto graphicsAllocation2 = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, MemoryConstants::pageSize * 3}, cpuPtr2);
     EXPECT_EQ(4u, hostPtrManager->getFragmentCount());
 
     EXPECT_NE(nullptr, graphicsAllocation1);
@@ -1223,7 +1190,7 @@ TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerReadyForCleanin
     taskCount = taskCountReady;
     csr->latestSentTaskCount = taskCountReady;
 
-    auto graphicsAllocation3 = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize * 10, cpuPtr3);
+    auto graphicsAllocation3 = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, MemoryConstants::pageSize * 10}, cpuPtr3);
 
     EXPECT_NE(nullptr, graphicsAllocation3);
 

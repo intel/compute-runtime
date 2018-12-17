@@ -132,7 +132,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(si
     return wddmAllocation.release();
 }
 
-GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const void *ptrArg) {
+GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(const AllocationProperties &properties, const void *ptrArg) {
     void *ptr = const_cast<void *>(ptrArg);
 
     if (ptr == nullptr) {
@@ -143,14 +143,14 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const
     if (mallocRestrictions.minAddress > reinterpret_cast<uintptr_t>(ptrArg)) {
         void *reserve = nullptr;
         void *ptrAligned = alignDown(ptr, MemoryConstants::allocationAlignment);
-        size_t sizeAligned = alignSizeWholePage(ptr, size);
+        size_t sizeAligned = alignSizeWholePage(ptr, properties.size);
         size_t offset = ptrDiff(ptr, ptrAligned);
 
         if (!wddm->reserveValidAddressRange(sizeAligned, reserve)) {
             return nullptr;
         }
 
-        auto allocation = new WddmAllocation(ptr, size, reserve, MemoryPool::System4KBPages, getOsContextCount(), false);
+        auto allocation = new WddmAllocation(ptr, properties.size, reserve, MemoryPool::System4KBPages, getOsContextCount(), false);
         allocation->allocationOffset = offset;
 
         Gmm *gmm = new Gmm(ptrAligned, sizeAligned, false);
@@ -162,7 +162,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const
         return nullptr;
     }
 
-    return MemoryManager::allocateGraphicsMemory(size, ptr);
+    return MemoryManager::allocateGraphicsMemory(properties, ptr);
 }
 
 GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) {

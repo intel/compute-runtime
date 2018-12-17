@@ -115,7 +115,7 @@ class FailMemoryManager : public MockMemoryManager {
     GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override {
         return nullptr;
     };
-    GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override {
+    GraphicsAllocation *allocateGraphicsMemory(const AllocationProperties &properties, const void *ptr) override {
         return nullptr;
     };
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) override {

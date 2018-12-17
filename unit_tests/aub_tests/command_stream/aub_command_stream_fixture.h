@@ -14,6 +14,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_banks.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
+#include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/tests_configuration.h"
 
 #include <cstdint>
@@ -64,7 +65,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
     }
 
     GraphicsAllocation *createResidentAllocationAndStoreItInCsr(const void *address, size_t size) {
-        GraphicsAllocation *graphicsAllocation = pCommandStreamReceiver->getMemoryManager()->allocateGraphicsMemory(size, address);
+        GraphicsAllocation *graphicsAllocation = pCommandStreamReceiver->getMemoryManager()->allocateGraphicsMemory(MockAllocationProperties{false, size}, address);
         pCommandStreamReceiver->makeResidentHostPtrAllocation(graphicsAllocation);
         pCommandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION);
         return graphicsAllocation;
