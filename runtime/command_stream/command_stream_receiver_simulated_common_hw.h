@@ -9,7 +9,6 @@
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/gen_common/aub_mapper.h"
 #include "runtime/memory_manager/memory_banks.h"
-#include "runtime/memory_manager/physical_address_allocator.h"
 
 namespace AubMemDump {
 struct AubStream;
@@ -39,6 +38,5 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
 
   protected:
     MMIOList splitMMIORegisters(const std::string &registers, char delimiter);
-    PhysicalAddressAllocator *createPhysicalAddressAllocator();
 };
 } // namespace OCLRT

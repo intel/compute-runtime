@@ -67,11 +67,6 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO() {
 }
 
 template <typename GfxFamily>
-PhysicalAddressAllocator *CommandStreamReceiverSimulatedCommonHw<GfxFamily>::createPhysicalAddressAllocator() {
-    return new PhysicalAddressAllocator();
-}
-
-template <typename GfxFamily>
 uint64_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation) {
     return BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | BIT(PageTableEntry::userSupervisorBit);
 }

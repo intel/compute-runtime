@@ -49,7 +49,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
     }
 
     if (!aubCenter->getPhysicalAddressAllocator()) {
-        aubCenter->initPhysicalAddressAllocator(this->createPhysicalAddressAllocator());
+        aubCenter->initPhysicalAddressAllocator(this->createPhysicalAddressAllocator(&hwInfoIn));
     }
     auto physicalAddressAllocator = aubCenter->getPhysicalAddressAllocator();
     UNRECOVERABLE_IF(nullptr == physicalAddressAllocator);

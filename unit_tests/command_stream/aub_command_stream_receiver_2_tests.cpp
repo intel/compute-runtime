@@ -851,3 +851,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenSshSize
     auto aubCsr = std::make_unique<MockAubCsr<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_EQ(64 * KB, aubCsr->defaultSshSize);
 }
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenPhysicalAddressAllocatorIsCreatedThenItIsNotNull) {
+    MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
+    auto oldSkuTable = hwInfoHelper.pSkuTable;
+    std::unique_ptr<FeatureTable, std::function<void(FeatureTable *)>> skuTable(new FeatureTable, [&](FeatureTable *ptr) { delete ptr;  hwInfoHelper.pSkuTable = oldSkuTable; });
+    hwInfoHelper.pSkuTable = skuTable.get();
+    std::unique_ptr<PhysicalAddressAllocator> allocator(aubCsr.createPhysicalAddressAllocator(&hwInfoHelper));
+    ASSERT_NE(nullptr, allocator);
+}

@@ -8,6 +8,7 @@
 #pragma once
 #include "runtime/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "runtime/memory_manager/memory_banks.h"
+#include "runtime/memory_manager/physical_address_allocator.h"
 
 namespace OCLRT {
 class GraphicsAllocation;
@@ -23,6 +24,9 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
     }
     int getAddressSpace(int hint) {
         return AubMemDump::AddressSpaceValues::TraceNonlocal;
+    }
+    PhysicalAddressAllocator *createPhysicalAddressAllocator(const HardwareInfo *hwInfo) {
+        return new PhysicalAddressAllocator();
     }
 };
 } // namespace OCLRT

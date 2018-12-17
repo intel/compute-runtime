@@ -333,3 +333,13 @@ HWTEST_F(TbxCommandSteamSimpleTest, whenTbxCommandStreamReceiverIsCreatedThenPPG
     physicalAddress = tbxCsr.ggtt->map(address, MemoryConstants::pageSize, 0, MemoryBanks::MainBank);
     EXPECT_NE(0u, physicalAddress);
 }
+
+HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCommandStreamReceiverWhenPhysicalAddressAllocatorIsCreatedThenItIsNotNull) {
+    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], *pDevice->executionEnvironment);
+    auto oldSkuTable = hwInfoHelper.pSkuTable;
+    std::unique_ptr<FeatureTable, std::function<void(FeatureTable *)>> skuTable(new FeatureTable, [&](FeatureTable *ptr) { delete ptr;  hwInfoHelper.pSkuTable = oldSkuTable; });
+    hwInfoHelper.pSkuTable = skuTable.get();
+    std::unique_ptr<PhysicalAddressAllocator> allocator(tbxCsr.createPhysicalAddressAllocator(&hwInfoHelper));
+    ASSERT_NE(nullptr, allocator);
+    hwInfoHelper.pSkuTable = nullptr;
+}
