@@ -371,3 +371,9 @@ TEST(MemoryManagerTest, givenLinearStreamTypeWhenGetAllocationDataIsCalledThenSy
     MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::LINEAR_STREAM}, 0, nullptr);
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
+
+TEST(MemoryManagerTest, givenTimestampTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
+    AllocationData allocData;
+    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER}, 0, nullptr);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+}
