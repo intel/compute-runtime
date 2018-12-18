@@ -114,6 +114,7 @@ Image *Image::create(Context *context,
     MemoryManager *memoryManager = context->getMemoryManager();
     Buffer *parentBuffer = castToObject<Buffer>(imageDesc->mem_object);
     Image *parentImage = castToObject<Image>(imageDesc->mem_object);
+    bool isImageFromBuffer = false;
 
     do {
         size_t imageWidth = imageDesc->image_width;
@@ -183,6 +184,7 @@ Image *Image::create(Context *context,
         bool imageRedescribed = false;
         bool copyRequired = false;
         if (((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) || (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) && (parentBuffer != nullptr)) {
+            isImageFromBuffer = true;
             imageRedescribed = true;
             memory = parentBuffer->getGraphicsAllocation();
             // Image from buffer - we never allocate memory, we use what buffer provides
@@ -275,7 +277,9 @@ Image *Image::create(Context *context,
             break;
         }
 
-        memory->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+        if (parentBuffer == nullptr) {
+            memory->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+        }
         memory->setMemObjectsAllocationWithWritableFlags(!(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)));
 
         DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", memory->getUnderlyingBufferSize(), "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
@@ -314,6 +318,7 @@ Image *Image::create(Context *context,
         image->setQPitch(imgInfo.qPitch);
         image->setSurfaceOffsets(imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane);
         image->setMipCount(imgInfo.mipCount);
+        image->setIsImageFromBuffer(isImageFromBuffer);
         if (parentImage) {
             image->setMediaPlaneType(static_cast<cl_uint>(imageDesc->image_depth));
             image->setParentSharingHandler(parentImage->getSharingHandler());
@@ -801,6 +806,7 @@ Image *Image::redescribeFillImage() {
                                 &this->surfaceOffsets);
     image->setQPitch(this->getQPitch());
     image->setCubeFaceIndex(this->getCubeFaceIndex());
+    image->setIsImageFromBuffer(this->isImageFromBuffer());
     return image;
 }
 
@@ -848,6 +854,7 @@ Image *Image::redescribe() {
                                 &this->surfaceOffsets);
     image->setQPitch(this->getQPitch());
     image->setCubeFaceIndex(this->getCubeFaceIndex());
+    image->setIsImageFromBuffer(this->isImageFromBuffer());
     return image;
 }
 

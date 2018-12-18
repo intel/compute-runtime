@@ -365,3 +365,20 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupporting1DImageFromBufferWhenN
 
     imageDesc.mem_object = storeMem;
 }
+
+TEST_F(Image2dFromBufferTest, givenBufferWhenImageFromBufferThenIsImageFromBufferSetAndAllocationTypeIsBuffer) {
+    cl_int errCode = 0;
+    auto buffer = Buffer::create(&context, 0, 1, nullptr, errCode);
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    auto memObj = imageDesc.mem_object;
+    imageDesc.mem_object = buffer;
+
+    std::unique_ptr<Image> imageFromBuffer(createImage());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(imageFromBuffer.get()->isImageFromBuffer());
+    EXPECT_TRUE(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY == imageFromBuffer.get()->getGraphicsAllocation()->getAllocationType());
+
+    buffer->release();
+    imageDesc.mem_object = memObj;
+}
