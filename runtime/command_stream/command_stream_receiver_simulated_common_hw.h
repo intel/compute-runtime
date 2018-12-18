@@ -21,6 +21,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
   protected:
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
     using CommandStreamReceiverHw<GfxFamily>::osContext;
+    typedef typename OCLRT::AUBFamilyMapper<GfxFamily>::AUB AUB;
+    typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
 
   public:
     uint64_t getGTTBits() const {
@@ -32,6 +34,9 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     void getGTTData(void *memory, AubGTTData &data);
     uint32_t getMemoryBankForGtt() const;
     size_t getEngineIndex(EngineInstanceT engineInstance);
+    static const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance);
+    void initEngineMMIO(EngineInstanceT engineInstance);
+    void submitLRCA(EngineInstanceT engineInstance, const MiContextDescriptorReg &contextDescriptor);
 
     AubMemDump::AubStream *stream;
     size_t gpgpuEngineIndex = EngineInstanceConstants::numGpgpuEngineInstances - 1;

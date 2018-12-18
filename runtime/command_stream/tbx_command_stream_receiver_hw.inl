@@ -71,27 +71,12 @@ TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
 }
 
 template <typename GfxFamily>
-const AubMemDump::LrcaHelper &TbxCommandStreamReceiverHw<GfxFamily>::getCsTraits(EngineInstanceT engineInstance) {
-    return *AUBFamilyMapper<GfxFamily>::csTraits[engineInstance.type];
-}
-
-template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineInstanceT engineInstance) {
-    auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[engineInstance.type];
-
-    DEBUG_BREAK_IF(!mmioList);
-    for (auto &mmioPair : *mmioList) {
-        tbxStream.writeMMIO(mmioPair.first, mmioPair.second);
-    }
-}
-
-template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineInstanceT engineInstance) {
-    auto mmioBase = getCsTraits(engineInstance).mmioBase;
+    auto mmioBase = this->getCsTraits(engineInstance).mmioBase;
     auto &engineInfo = engineInfoTable[engineInstance.type];
 
     this->initGlobalMMIO();
-    initEngineMMIO(engineInstance);
+    this->initEngineMMIO(engineInstance);
     this->initAdditionalMMIO();
 
     // Global HW Status Page
@@ -110,7 +95,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineInstanceT eng
     }
 
     // Allocate the LRCA
-    auto csTraits = getCsTraits(engineInstance);
+    auto csTraits = this->getCsTraits(engineInstance);
     const size_t sizeLRCA = csTraits.sizeLRCA;
     const size_t alignLRCA = csTraits.alignLRCA;
     auto pLRCABase = alignedMalloc(sizeLRCA, alignLRCA);
@@ -184,7 +169,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
 template <typename GfxFamily>
 FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     auto &engineInstance = osContext->getEngineType();
-    uint32_t mmioBase = getCsTraits(engineInstance).mmioBase;
+    uint32_t mmioBase = this->getCsTraits(engineInstance).mmioBase;
     auto &engineInfo = engineInfoTable[engineInstance.type];
 
     if (!engineInfo.pLRCA) {
@@ -315,7 +300,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         contextDescriptor.sData.LogicalRingCtxAddress = ggttLRCA / 4096;
         contextDescriptor.sData.ContextID = 0;
 
-        submitLRCA(engineInstance, contextDescriptor);
+        this->submitLRCA(engineInstance, contextDescriptor);
     }
 
     pollForCompletion(engineInstance);
@@ -323,19 +308,10 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::submitLRCA(EngineInstanceT engineInstance, const MiContextDescriptorReg &contextDescriptor) {
-    auto mmioBase = getCsTraits(engineInstance).mmioBase;
-    tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
-    tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
-    tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[1]);
-    tbxStream.writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[0]);
-}
-
-template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineInstanceT engineInstance) {
     typedef typename AubMemDump::CmdServicesMemTraceRegisterPoll CmdServicesMemTraceRegisterPoll;
 
-    auto mmioBase = getCsTraits(engineInstance).mmioBase;
+    auto mmioBase = this->getCsTraits(engineInstance).mmioBase;
     bool pollNotEqual = false;
     tbxStream.registerPoll(
         AubMemDump::computeRegisterOffset(mmioBase, 0x2234), //EXECLIST_STATUS

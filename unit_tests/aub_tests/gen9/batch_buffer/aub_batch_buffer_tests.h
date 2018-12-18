@@ -12,7 +12,7 @@
 template <typename FamilyType>
 void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType engineType, uint64_t gpuBatchBufferAddr) {
     typedef typename OCLRT::AUBFamilyMapper<FamilyType>::AUB AUB;
-    const auto &csTraits = OCLRT::AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineType);
+    const auto &csTraits = OCLRT::CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(engineType);
     auto mmioBase = csTraits.mmioBase;
     uint64_t physAddress = 0x10000;
 

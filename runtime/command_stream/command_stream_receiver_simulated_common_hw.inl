@@ -90,4 +90,27 @@ size_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getEngineIndex(EngineI
     return findResult - allEngineInstances.begin();
 }
 
+template <typename GfxFamily>
+const AubMemDump::LrcaHelper &CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getCsTraits(EngineInstanceT engineInstance) {
+    return *AUBFamilyMapper<GfxFamily>::csTraits[engineInstance.type];
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initEngineMMIO(EngineInstanceT engineInstance) {
+    auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[engineInstance.type];
+
+    DEBUG_BREAK_IF(!mmioList);
+    for (auto &mmioPair : *mmioList) {
+        stream->writeMMIO(mmioPair.first, mmioPair.second);
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::submitLRCA(EngineInstanceT engineInstance, const MiContextDescriptorReg &contextDescriptor) {
+    auto mmioBase = getCsTraits(engineInstance).mmioBase;
+    stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
+    stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
+    stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[1]);
+    stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[0]);
+}
 } // namespace OCLRT
