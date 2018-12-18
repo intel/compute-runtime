@@ -84,9 +84,31 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedResidencyTaskCoun
 
 TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenResetResidencyTaskCountThenAllocationIsNotResident) {
     MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.updateResidencyTaskCount(1, 0u);
+    graphicsAllocation.updateResidencyTaskCount(1u, 0u);
     EXPECT_TRUE(graphicsAllocation.isResident(0u));
 
     graphicsAllocation.resetResidencyTaskCount(0u);
     EXPECT_FALSE(graphicsAllocation.isResident(0u));
+}
+
+TEST(GraphicsAllocationTest, givenNonResidentGraphicsAllocationWhenCheckIfResidencyTaskCountIsBelowAnyValueThenReturnTrue) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_FALSE(graphicsAllocation.isResident(0u));
+    EXPECT_TRUE(graphicsAllocation.isResidencyTaskCountBelow(0u, 0u));
+}
+
+TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenCheckIfResidencyTaskCountIsBelowCurrentResidencyTaskCountThenReturnFalse) {
+    MockGraphicsAllocation graphicsAllocation;
+    auto currentResidencyTaskCount = 1u;
+    graphicsAllocation.updateResidencyTaskCount(currentResidencyTaskCount, 0u);
+    EXPECT_TRUE(graphicsAllocation.isResident(0u));
+    EXPECT_FALSE(graphicsAllocation.isResidencyTaskCountBelow(currentResidencyTaskCount, 0u));
+}
+
+TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenCheckIfResidencyTaskCountIsBelowHigherThanCurrentResidencyTaskCountThenReturnTrue) {
+    MockGraphicsAllocation graphicsAllocation;
+    auto currentResidencyTaskCount = 1u;
+    graphicsAllocation.updateResidencyTaskCount(currentResidencyTaskCount, 0u);
+    EXPECT_TRUE(graphicsAllocation.isResident(0u));
+    EXPECT_TRUE(graphicsAllocation.isResidencyTaskCountBelow(currentResidencyTaskCount + 1u, 0u));
 }

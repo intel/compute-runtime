@@ -131,6 +131,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void updateResidencyTaskCount(uint32_t newTaskCount, uint32_t contextId) { usageInfos[contextId].residencyTaskCount = newTaskCount; }
     uint32_t getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
     void resetResidencyTaskCount(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }
+    bool isResidencyTaskCountBelow(uint32_t taskCount, uint32_t contextId) { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
 
   protected:
     constexpr static uint32_t objectNotResident = (uint32_t)-1;

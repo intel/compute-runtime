@@ -63,11 +63,10 @@ CommandStreamReceiver::~CommandStreamReceiver() {
 
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     auto submissionTaskCount = this->taskCount + 1;
-    bool isNotResident = !gfxAllocation.isResident(osContext->getContextId());
-    if (isNotResident || gfxAllocation.getResidencyTaskCount(osContext->getContextId()) < submissionTaskCount) {
+    if (gfxAllocation.isResidencyTaskCountBelow(submissionTaskCount, osContext->getContextId())) {
         this->getResidencyAllocations().push_back(&gfxAllocation);
         gfxAllocation.updateTaskCount(submissionTaskCount, osContext->getContextId());
-        if (isNotResident) {
+        if (!gfxAllocation.isResident(osContext->getContextId())) {
             this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
         }
     }
