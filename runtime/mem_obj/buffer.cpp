@@ -352,7 +352,7 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
                                  ptrOffset(this->memoryStorage, region->origin),
                                  this->hostPtr ? ptrOffset(this->hostPtr, region->origin) : nullptr,
                                  this->graphicsAllocation,
-                                 this->isZeroCopy, this->isHostPtrSVM, true);
+                                 this->isZeroCopy, this->isHostPtrSVM, false);
 
     if (this->context->isProvidingPerformanceHints()) {
         this->context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, SUBBUFFER_SHARES_MEMORY, static_cast<cl_mem>(this));

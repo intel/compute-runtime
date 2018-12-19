@@ -177,6 +177,9 @@ class Image : public MemObj {
     bool hasSameDescriptor(const cl_image_desc &imageDesc) const;
     bool hasValidParentImageFormat(const cl_image_format &imageFormat) const;
 
+    bool isImageFromBuffer() const { return castToObject<Buffer>(static_cast<cl_mem>(associatedMemObject)) ? true : false; }
+    bool isImageFromImage() const { return castToObject<Image>(static_cast<cl_mem>(associatedMemObject)) ? true : false; }
+
   protected:
     Image(Context *context,
           cl_mem_flags flags,

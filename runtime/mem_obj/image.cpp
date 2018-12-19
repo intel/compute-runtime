@@ -114,7 +114,6 @@ Image *Image::create(Context *context,
     MemoryManager *memoryManager = context->getMemoryManager();
     Buffer *parentBuffer = castToObject<Buffer>(imageDesc->mem_object);
     Image *parentImage = castToObject<Image>(imageDesc->mem_object);
-    bool isImageFromBuffer = false;
 
     do {
         size_t imageWidth = imageDesc->image_width;
@@ -181,10 +180,7 @@ Image *Image::create(Context *context,
 
         bool zeroCopy = false;
         bool transferNeeded = false;
-        bool imageRedescribed = false;
         if (((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) || (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) && (parentBuffer != nullptr)) {
-            isImageFromBuffer = true;
-            imageRedescribed = true;
             memory = parentBuffer->getGraphicsAllocation();
             // Image from buffer - we never allocate memory, we use what buffer provides
             zeroCopy = true;
@@ -289,7 +285,7 @@ Image *Image::create(Context *context,
         }
 
         image = createImageHw(context, flags, imgInfo.size, hostPtrToSet, surfaceFormat->OCLImageFormat,
-                              imageDescriptor, zeroCopy, memory, imageRedescribed, isTilingAllowed, 0, 0, surfaceFormat);
+                              imageDescriptor, zeroCopy, memory, false, isTilingAllowed, 0, 0, surfaceFormat);
 
         if (imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_ARRAY && imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D_ARRAY) {
             image->imageDesc.image_array_size = 0;
@@ -297,9 +293,7 @@ Image *Image::create(Context *context,
         if ((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) || ((imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D) && (imageDesc->mem_object != nullptr))) {
             image->associatedMemObject = castToObject<MemObj>(imageDesc->mem_object);
         }
-        if (parentImage) {
-            image->isImageFromImageCreated = true;
-        }
+
         // Driver needs to store rowPitch passed by the app in order to synchronize the host_ptr later on map call
         image->setHostPtrRowPitch(imageDesc->image_row_pitch ? imageDesc->image_row_pitch : hostPtrRowPitch);
         image->setHostPtrSlicePitch(hostPtrSlicePitch);
@@ -310,7 +304,6 @@ Image *Image::create(Context *context,
         image->setQPitch(imgInfo.qPitch);
         image->setSurfaceOffsets(imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane);
         image->setMipCount(imgInfo.mipCount);
-        image->setIsImageFromBuffer(isImageFromBuffer);
         if (parentImage) {
             image->setMediaPlaneType(static_cast<cl_uint>(imageDesc->image_depth));
             image->setParentSharingHandler(parentImage->getSharingHandler());
@@ -838,7 +831,7 @@ Image *Image::redescribeFillImage() {
                                 &this->surfaceOffsets);
     image->setQPitch(this->getQPitch());
     image->setCubeFaceIndex(this->getCubeFaceIndex());
-    image->setIsImageFromBuffer(this->isImageFromBuffer());
+    image->associatedMemObject = this->associatedMemObject;
     return image;
 }
 
@@ -886,7 +879,7 @@ Image *Image::redescribe() {
                                 &this->surfaceOffsets);
     image->setQPitch(this->getQPitch());
     image->setCubeFaceIndex(this->getCubeFaceIndex());
-    image->setIsImageFromBuffer(this->isImageFromBuffer());
+    image->associatedMemObject = this->associatedMemObject;
     return image;
 }
 

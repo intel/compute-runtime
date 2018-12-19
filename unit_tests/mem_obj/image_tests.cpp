@@ -573,17 +573,11 @@ TEST_P(CreateImageHostPtr, getAddress) {
     }
 }
 
-TEST_P(CreateImageHostPtr, getSize) {
+TEST_P(CreateImageHostPtr, givenImageWhenItIsCreateItHasProperSizeAndGraphicsAllocation) {
     image = createImage(retVal);
     ASSERT_NE(nullptr, image);
 
     EXPECT_NE(0u, image->getSize());
-}
-
-TEST_P(CreateImageHostPtr, graphicsAllocationPresent) {
-    image = createImage(retVal);
-    ASSERT_NE(nullptr, image);
-
     EXPECT_NE(nullptr, image->getGraphicsAllocation());
 }
 

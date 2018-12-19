@@ -241,6 +241,15 @@ TEST_F(Image2dFromBufferTest, InterceptBuffersHostPtr) {
     delete imageFromBuffer;
 }
 
+TEST_F(Image2dFromBufferTest, givenImageFromBufferWhenItIsRedescribedThenItReturnsProperImageFromBufferValue) {
+    std::unique_ptr<Image> imageFromBuffer(createImage());
+    EXPECT_TRUE(imageFromBuffer->isImageFromBuffer());
+    std::unique_ptr<Image> redescribedImage(imageFromBuffer->redescribe());
+    EXPECT_TRUE(redescribedImage->isImageFromBuffer());
+    std::unique_ptr<Image> redescribedfillImage(imageFromBuffer->redescribeFillImage());
+    EXPECT_TRUE(redescribedfillImage->isImageFromBuffer());
+}
+
 TEST_F(Image2dFromBufferTest, givenMemoryManagerNotSupportingVirtualPaddingWhenImageIsCreatedThenPaddingIsNotApplied) {
     auto memoryManager = context.getMemoryManager();
     memoryManager->setVirtualPaddingSupport(false);

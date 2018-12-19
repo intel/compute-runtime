@@ -85,10 +85,6 @@ class MemObj : public BaseObject<_cl_mem> {
 
     virtual bool allowTiling() const { return false; }
 
-    bool isImageFromImage() const { return isImageFromImageCreated; }
-    void setIsImageFromBuffer(bool isImageFromBuffer) { isImageFromBufferCreated = isImageFromBuffer; }
-    bool isImageFromBuffer() const { return isImageFromBufferCreated; }
-
     void *getCpuAddressForMapping();
     void *getCpuAddressForMemoryTransfer();
 
@@ -130,8 +126,6 @@ class MemObj : public BaseObject<_cl_mem> {
     bool isZeroCopy;
     bool isHostPtrSVM;
     bool isObjectRedescribed;
-    bool isImageFromImageCreated = false;
-    bool isImageFromBufferCreated = false;
     MemoryManager *memoryManager = nullptr;
     GraphicsAllocation *graphicsAllocation;
     GraphicsAllocation *mcsAllocation = nullptr;

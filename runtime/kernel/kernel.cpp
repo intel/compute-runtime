@@ -935,8 +935,8 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
             } else if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
                 auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
                 auto memObj = castToObjectOrAbort<MemObj>(clMem);
-                DEBUG_BREAK_IF(memObj == nullptr);
-                if (memObj->isImageFromImage()) {
+                auto image = castToObject<Image>(clMem);
+                if (image && image->isImageFromImage()) {
                     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
                 }
                 commandStreamReceiver.makeResident(*memObj->getGraphicsAllocation());

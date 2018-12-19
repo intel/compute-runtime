@@ -209,6 +209,7 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
         region, nullptr, nullptr, 0,
         nullptr, nullptr, retVal);
     EXPECT_TRUE(mockImage.ownershipTaken);
+    mockImage.releaseAllocatedMapPtr();
 }
 
 TEST_F(EnqueueMapImageTest, checkPointer) {
