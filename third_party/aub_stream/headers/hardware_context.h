@@ -18,6 +18,7 @@ struct HardwareContext {
     virtual void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 65536) = 0;
     virtual void freeMemory(uint64_t gfxAddress, size_t size) = 0;
     virtual void expectMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t compareOperation) = 0;
+    virtual void readMemory(uint64_t gfxAddress, void *memory, size_t size) = 0;
     virtual ~HardwareContext() = default;
 };
 

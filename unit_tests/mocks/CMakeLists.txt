@@ -64,6 +64,7 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_source_level_debugger.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_submissions_aggregator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_svm_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
 )
 

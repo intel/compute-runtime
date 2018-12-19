@@ -12,6 +12,10 @@
 #include "runtime/memory_manager/address_mapper.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/memory_manager/page_table.h"
+#include "third_party/aub_stream/headers/aub_manager.h"
+#include "third_party/aub_stream/headers/hardware_context.h"
+
+using namespace AubDump;
 
 namespace OCLRT {
 
@@ -41,17 +45,22 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     void processResidency(ResidencyContainer &allocationsForResidency) override;
     void waitBeforeMakingNonResidentWhenRequired() override;
+    void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield);
     bool writeMemory(GraphicsAllocation &gfxAllocation);
 
     // Family specific version
-    void pollForCompletion(EngineInstanceT engineInstance);
+    MOCKABLE_VIRTUAL void submitBatchBuffer(size_t engineIndex, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits);
+    MOCKABLE_VIRTUAL void pollForCompletion(EngineInstanceT engineInstance);
 
     static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 
     TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);
     ~TbxCommandStreamReceiverHw() override;
 
-    void initializeEngine(EngineInstanceT engineInstance);
+    void initializeEngine(size_t engineIndex);
+
+    AubManager *aubManager = nullptr;
+    std::unique_ptr<HardwareContext> hardwareContext;
 
     struct EngineInfo {
         void *pLRCA;
@@ -62,7 +71,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
         uint32_t ggttRCS;
         size_t sizeRCS;
         uint32_t tailRCS;
-    } engineInfoTable[EngineType::NUM_ENGINES];
+    } engineInfoTable[EngineInstanceConstants::numAllEngineInstances] = {};
 
     MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
         return new TbxMemoryManager(enable64kbPages, enableLocalMemory, this->executionEnvironment);

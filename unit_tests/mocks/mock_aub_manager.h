@@ -20,6 +20,7 @@ struct MockHardwareContext : public HardwareContext {
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 4096) override { writeMemoryCalled = true; }
     void freeMemory(uint64_t gfxAddress, size_t size) override { freeMemoryCalled = true; }
     void expectMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t compareOperation) override { expectMemoryCalled = true; }
+    void readMemory(uint64_t gfxAddress, void *memory, size_t size) override { readMemoryCalled = true; };
 
     bool initializeCalled = false;
     bool pollForCompletionCalled = false;
@@ -27,6 +28,7 @@ struct MockHardwareContext : public HardwareContext {
     bool writeMemoryCalled = false;
     bool freeMemoryCalled = false;
     bool expectMemoryCalled = false;
+    bool readMemoryCalled = false;
 };
 
 class MockAubManager : public AubManager {

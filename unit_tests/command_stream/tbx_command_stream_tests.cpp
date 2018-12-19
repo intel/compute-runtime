@@ -17,7 +17,10 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_aub_center.h"
+#include "unit_tests/mocks/mock_aub_manager.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "unit_tests/mocks/mock_tbx_csr.h"
 #include "test.h"
 #include <cstdint>
 
@@ -40,21 +43,6 @@ struct TbxFixture : public TbxCommandStreamFixture,
         TbxCommandStreamFixture::TearDown();
         DeviceFixture::TearDown();
     }
-};
-
-template <typename GfxFamily>
-class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
-  public:
-    using CommandStreamReceiver::latestFlushedTaskCount;
-    MockTbxCsr(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
-        : TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment) {}
-
-    void makeCoherent(GraphicsAllocation &gfxAllocation) override {
-        auto tagAddress = reinterpret_cast<uint32_t *>(gfxAllocation.getUnderlyingBuffer());
-        *tagAddress = this->latestFlushedTaskCount;
-        makeCoherentCalled = true;
-    }
-    bool makeCoherentCalled = false;
 };
 
 typedef Test<TbxFixture> TbxCommandStreamTests;
@@ -308,7 +296,7 @@ HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThen
 
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenWaitBeforeMakeNonResidentWhenRequiredIsCalledWithBlockingFlagTrueThenFunctionStallsUntilMakeCoherentUpdatesTagAddress) {
     uint32_t tag = 0;
-    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], *pDevice->executionEnvironment);
+    MockTbxCsrToTestWaitBeforeMakingNonResident<FamilyType> tbxCsr(*platformDevices[0], *pDevice->executionEnvironment);
 
     tbxCsr.setTagAllocation(pDevice->getMemoryManager()->allocateGraphicsMemory(MockAllocationProperties{false, sizeof(tag)}, &tag));
 
@@ -342,4 +330,113 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCommandStreamReceiverWhenPhysicalAdd
     std::unique_ptr<PhysicalAddressAllocator> allocator(tbxCsr.createPhysicalAddressAllocator(&hwInfoHelper));
     ASSERT_NE(nullptr, allocator);
     hwInfoHelper.pSkuTable = nullptr;
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenItIsCreatedWithUseAubStreamFalseThenDontInitializeAubManager) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.UseAubStream.set(false);
+
+    const HardwareInfo &hwInfo = *platformDevices[0];
+    ExecutionEnvironment executionEnvironment;
+    auto tbxCsr = std::make_unique<TbxCommandStreamReceiverHw<FamilyType>>(hwInfo, executionEnvironment);
+    EXPECT_EQ(nullptr, executionEnvironment.aubCenter->getAubManager());
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenItIsCreatedWithAubManagerThenCreateHardwareContext) {
+    const HardwareInfo &hwInfo = *platformDevices[0];
+    MockAubManager *mockManager = new MockAubManager();
+    MockAubCenter *mockAubCenter = new MockAubCenter(&hwInfo, false, "");
+    mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+    auto tbxCsr = std::make_unique<TbxCommandStreamReceiverHw<FamilyType>>(hwInfo, executionEnvironment);
+    EXPECT_NE(nullptr, tbxCsr->hardwareContext);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
+    auto mockManager = std::make_unique<MockAubManager>();
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+
+    auto tbxExecutionEnvironment = getEnvironment<MockTbxCsr<FamilyType>>(true, true);
+    auto tbxCsr = tbxExecutionEnvironment->template getCsr<MockTbxCsr<FamilyType>>();
+    tbxCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+
+    LinearStream cs(tbxExecutionEnvironment->commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 1, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+    ResidencyContainer allocationsForResidency = {&allocation};
+
+    tbxCsr->flush(batchBuffer, allocationsForResidency);
+
+    EXPECT_TRUE(mockHardwareContext->initializeCalled);
+    EXPECT_TRUE(mockHardwareContext->writeMemoryCalled);
+    EXPECT_TRUE(mockHardwareContext->submitCalled);
+    EXPECT_TRUE(mockHardwareContext->pollForCompletionCalled);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverInBatchedModeWhenFlushIsCalledThenItShouldMakeCommandBufferResident) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
+
+    auto mockManager = std::make_unique<MockAubManager>();
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+
+    auto tbxExecutionEnvironment = getEnvironment<MockTbxCsr<FamilyType>>(true, true);
+    auto tbxCsr = tbxExecutionEnvironment->template getCsr<MockTbxCsr<FamilyType>>();
+    tbxCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+
+    LinearStream cs(tbxExecutionEnvironment->commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 1, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    ResidencyContainer allocationsForResidency;
+
+    tbxCsr->flush(batchBuffer, allocationsForResidency);
+
+    EXPECT_TRUE(mockHardwareContext->writeMemoryCalled);
+    EXPECT_EQ(1u, batchBuffer.commandBufferAllocation->getResidencyTaskCount(tbxCsr->getOsContext().getContextId()));
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledWithZeroSizedBufferThenSubmitIsNotCalledOnHwContext) {
+    auto mockManager = std::make_unique<MockAubManager>();
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+
+    auto tbxExecutionEnvironment = getEnvironment<MockTbxCsr<FamilyType>>(true, true);
+    auto tbxCsr = tbxExecutionEnvironment->template getCsr<MockTbxCsr<FamilyType>>();
+    tbxCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+
+    LinearStream cs(tbxExecutionEnvironment->commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    ResidencyContainer allocationsForResidency;
+
+    tbxCsr->flush(batchBuffer, allocationsForResidency);
+
+    EXPECT_FALSE(mockHardwareContext->submitCalled);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
+    auto mockManager = std::make_unique<MockAubManager>();
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+
+    auto tbxExecutionEnvironment = getEnvironment<MockTbxCsr<FamilyType>>(true, true);
+    auto tbxCsr = tbxExecutionEnvironment->template getCsr<MockTbxCsr<FamilyType>>();
+    tbxCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+    ResidencyContainer allocationsForResidency = {&allocation};
+    tbxCsr->processResidency(allocationsForResidency);
+
+    EXPECT_TRUE(mockHardwareContext->writeMemoryCalled);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeCoherentIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
+    auto mockManager = std::make_unique<MockAubManager>();
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+
+    auto tbxExecutionEnvironment = getEnvironment<MockTbxCsr<FamilyType>>(true, true);
+    auto tbxCsr = tbxExecutionEnvironment->template getCsr<MockTbxCsr<FamilyType>>();
+    tbxCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+    tbxCsr->makeCoherent(allocation);
+
+    EXPECT_TRUE(mockHardwareContext->readMemoryCalled);
 }
