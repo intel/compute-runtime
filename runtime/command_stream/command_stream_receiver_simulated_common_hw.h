@@ -21,8 +21,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
   protected:
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
     using CommandStreamReceiverHw<GfxFamily>::osContext;
-    typedef typename OCLRT::AUBFamilyMapper<GfxFamily>::AUB AUB;
-    typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
+    using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
+    using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;
 
   public:
     uint64_t getGTTBits() const {

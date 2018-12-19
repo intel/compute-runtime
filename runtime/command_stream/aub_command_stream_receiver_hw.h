@@ -27,8 +27,7 @@ template <typename GfxFamily>
 class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
   protected:
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
-    typedef typename AUBFamilyMapper<GfxFamily>::AUB AUB;
-    typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
+    using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using ExternalAllocationsContainer = std::vector<AllocationView>;
     using BaseClass::osContext;
 
