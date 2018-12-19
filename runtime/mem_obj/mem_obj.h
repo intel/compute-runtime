@@ -87,7 +87,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     bool isImageFromImage() const { return isImageFromImageCreated; }
     void setIsImageFromBuffer(bool isImageFromBuffer) { isImageFromBufferCreated = isImageFromBuffer; }
-    bool isImageFromBuffer() { return isImageFromBufferCreated; }
+    bool isImageFromBuffer() const { return isImageFromBufferCreated; }
 
     void *getCpuAddressForMapping();
     void *getCpuAddressForMemoryTransfer();
