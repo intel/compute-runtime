@@ -58,12 +58,12 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         if (DebugManager.flags.ForceDispatchScheduler.get()) {
             forceDispatchScheduler(multiDispatchInfo);
         } else {
-            BuffersForAuxTranslation buffersForAuxTranslation;
+            MemObjsForAuxTranslation memObjsForAuxTranslation;
             if (kernel->isAuxTranslationRequired()) {
                 auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
                 builtInLock.takeOwnership(builder, this->context);
-                kernel->fillWithBuffersForAuxTranslation(buffersForAuxTranslation);
-                dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
+                kernel->fillWithBuffersForAuxTranslation(memObjsForAuxTranslation);
+                dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
             }
 
             if (kernel->getKernelInfo().builtinDispatchBuilder == nullptr) {
@@ -81,11 +81,11 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
             }
             if (kernel->isAuxTranslationRequired()) {
                 if (kernel->isParentKernel) {
-                    for (auto &buffer : buffersForAuxTranslation) {
+                    for (auto &buffer : memObjsForAuxTranslation) {
                         buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
                     }
                 } else {
-                    dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
+                    dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
                 }
             }
         }

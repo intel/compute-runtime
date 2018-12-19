@@ -372,7 +372,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         return usingImagesOnly;
     }
 
-    void fillWithBuffersForAuxTranslation(BuffersForAuxTranslation &buffersForAuxTranslation);
+    void fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &buffersForAuxTranslation);
 
   protected:
     struct ObjectCounts {

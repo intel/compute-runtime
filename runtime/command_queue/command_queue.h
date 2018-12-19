@@ -414,7 +414,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     virtual void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueue, unsigned int commandType){};
 
-    MOCKABLE_VIRTUAL void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation,
+    MOCKABLE_VIRTUAL void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
                                                  AuxTranslationDirection auxTranslationDirection);
 
     void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes);

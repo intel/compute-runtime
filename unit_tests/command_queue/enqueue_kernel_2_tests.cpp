@@ -657,14 +657,14 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
     class MyCmdQ : public CommandQueueHw<FamilyType> {
       public:
         MyCmdQ(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
-        void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation,
+        void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
                                     AuxTranslationDirection auxTranslationDirection) override {
-            CommandQueueHw<FamilyType>::dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation, auxTranslationDirection);
+            CommandQueueHw<FamilyType>::dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, auxTranslationDirection);
             Kernel *lastKernel = nullptr;
             for (const auto &dispatchInfo : multiDispatchInfo) {
                 lastKernel = dispatchInfo.getKernel();
             }
-            dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), buffersForAuxTranslation, auxTranslationDirection);
+            dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), memObjsForAuxTranslation, auxTranslationDirection);
         }
 
         void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
@@ -672,7 +672,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
             CommandQueueHw<FamilyType>::waitUntilComplete(taskCountToWait, flushStampToWait, useQuickKmdSleep);
         }
 
-        std::vector<std::tuple<Kernel *, size_t, BuffersForAuxTranslation, AuxTranslationDirection>> dispatchAuxTranslationInputs;
+        std::vector<std::tuple<Kernel *, size_t, MemObjsForAuxTranslation, AuxTranslationDirection>> dispatchAuxTranslationInputs;
         uint32_t waitCalled = 0;
     };
 };
@@ -736,11 +736,11 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
 
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(2u, cmdQ.dispatchAuxTranslationInputs.size());
-    EXPECT_EQ(1u, std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).size()); // before kernel
-    EXPECT_EQ(1u, std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).size()); // after kernel
+    EXPECT_EQ(1u, std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).size()); // before kernel
+    EXPECT_EQ(1u, std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).size()); // after kernel
 
-    EXPECT_EQ(&buffer2, *std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).begin());
-    EXPECT_EQ(&buffer2, *std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).begin());
+    EXPECT_EQ(&buffer2, *std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).begin());
+    EXPECT_EQ(&buffer2, *std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).begin());
 }
 
 HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenDispatchAuxTranslationBuiltin) {
@@ -808,9 +808,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTrans
 
         cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(1u, cmdQ.dispatchAuxTranslationInputs.size());
-        EXPECT_EQ(2u, std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).size()); // before kernel
+        EXPECT_EQ(2u, std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).size()); // before kernel
 
-        auto &dispatchedBuffers = std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0));
+        auto &dispatchedBuffers = std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0));
 
         EXPECT_NE(dispatchedBuffers.end(), dispatchedBuffers.find(&buffer0));
         EXPECT_EQ(dispatchedBuffers.end(), dispatchedBuffers.find(&buffer1));

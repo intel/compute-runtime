@@ -34,7 +34,7 @@ struct EventsRequest {
 
 using MemObjSizeArray = std::array<size_t, 3>;
 using MemObjOffsetArray = std::array<size_t, 3>;
-using BuffersForAuxTranslation = std::unordered_set<Buffer *>;
+using MemObjsForAuxTranslation = std::unordered_set<MemObj *>;
 
 enum class AuxTranslationDirection {
     None,

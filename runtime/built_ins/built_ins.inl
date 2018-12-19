@@ -28,22 +28,22 @@ BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib
 template <typename HWFamily>
 bool BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
     size_t kernelInstanceNumber = 0;
-    resizeKernelInstances(operationParams.buffersForAuxTranslation->size());
+    resizeKernelInstances(operationParams.memObjsForAuxTranslation->size());
 
-    for (auto &buffer : *operationParams.buffersForAuxTranslation) {
+    for (auto &memObj : *operationParams.memObjsForAuxTranslation) {
         DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder;
-        auto graphicsAllocation = buffer->getGraphicsAllocation();
+        auto graphicsAllocation = memObj->getGraphicsAllocation();
         size_t allocationSize = graphicsAllocation->getUnderlyingBufferSize();
 
         if (AuxTranslationDirection::AuxToNonAux == operationParams.auxTranslationDirection) {
             builder.setKernel(convertToNonAuxKernel.at(kernelInstanceNumber++).get());
-            builder.setArg(0, buffer);
+            builder.setArg(0, memObj);
             builder.setArgSvm(1, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()));
         } else {
             UNRECOVERABLE_IF(AuxTranslationDirection::NonAuxToAux != operationParams.auxTranslationDirection);
             builder.setKernel(convertToAuxKernel.at(kernelInstanceNumber++).get());
             builder.setArgSvm(0, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()));
-            builder.setArg(1, buffer);
+            builder.setArg(1, memObj);
         }
 
         size_t elementSize = sizeof(uint32_t) * 4;

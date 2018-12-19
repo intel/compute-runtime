@@ -238,7 +238,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
 TEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels) {
     BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
 
-    BuffersForAuxTranslation buffersForAuxTranslation;
+    MemObjsForAuxTranslation memObjsForAuxTranslation;
     MultiDispatchInfo multiDispatchInfo;
     std::vector<Kernel *> builtinKernels;
     MockBuffer mockBuffer[3];
@@ -247,11 +247,11 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTransla
     mockBuffer[2].getGraphicsAllocation()->setSize(0x30000);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
     for (auto &buffer : mockBuffer) {
-        buffersForAuxTranslation.insert(&buffer);
+        memObjsForAuxTranslation.insert(&buffer);
     }
 
     EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
@@ -260,9 +260,9 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTransla
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto kernel = dispatchInfo.getKernel();
         builtinKernels.push_back(kernel);
-        Buffer *buffer = *buffersForAuxTranslation.find(castToObject<Buffer>(kernel->getKernelArguments().at(0).object));
+        MemObj *buffer = *memObjsForAuxTranslation.find(castToObject<Buffer>(kernel->getKernelArguments().at(0).object));
         EXPECT_NE(nullptr, buffer);
-        buffersForAuxTranslation.erase(buffer);
+        memObjsForAuxTranslation.erase(buffer);
 
         cl_mem clMem = buffer;
         void *gpuAddress = reinterpret_cast<void *>(buffer->getGraphicsAllocation()->getGpuAddress());
@@ -286,7 +286,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTransla
 TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels) {
     BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
 
-    BuffersForAuxTranslation buffersForAuxTranslation;
+    MemObjsForAuxTranslation memObjsForAuxTranslation;
     MultiDispatchInfo multiDispatchInfo;
     std::vector<Kernel *> builtinKernels;
     MockBuffer mockBuffer[3];
@@ -295,11 +295,11 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslatio
     mockBuffer[2].getGraphicsAllocation()->setSize(0x30000);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
 
     for (auto &buffer : mockBuffer) {
-        buffersForAuxTranslation.insert(&buffer);
+        memObjsForAuxTranslation.insert(&buffer);
     }
 
     EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
@@ -308,9 +308,9 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslatio
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto kernel = dispatchInfo.getKernel();
         builtinKernels.push_back(kernel);
-        Buffer *buffer = *buffersForAuxTranslation.find(castToObject<Buffer>(kernel->getKernelArguments().at(1).object));
+        MemObj *buffer = *memObjsForAuxTranslation.find(castToObject<Buffer>(kernel->getKernelArguments().at(1).object));
         EXPECT_NE(nullptr, buffer);
-        buffersForAuxTranslation.erase(buffer);
+        memObjsForAuxTranslation.erase(buffer);
 
         cl_mem clMem = buffer;
         void *gpuAddress = reinterpret_cast<void *>(buffer->getGraphicsAllocation()->getGpuAddress());
@@ -334,16 +334,16 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslatio
 TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickDifferentKernelsDependingOnRequest) {
     BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
 
-    BuffersForAuxTranslation buffersForAuxTranslation;
+    MemObjsForAuxTranslation memObjsForAuxTranslation;
     MockBuffer mockBuffer[3];
     std::vector<Kernel *> builtinKernels;
 
     MultiDispatchInfo multiDispatchInfo;
     BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
 
     for (auto &buffer : mockBuffer) {
-        buffersForAuxTranslation.insert(&buffer);
+        memObjsForAuxTranslation.insert(&buffer);
     }
 
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
@@ -368,14 +368,14 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickD
 TEST_F(BuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispatchInfosThenAbort) {
     BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
 
-    BuffersForAuxTranslation buffersForAuxTranslation;
+    MemObjsForAuxTranslation memObjsForAuxTranslation;
     MockBuffer mockBuffer;
 
     MultiDispatchInfo multiDispatchInfo;
     BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
-    builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
 
-    buffersForAuxTranslation.insert(&mockBuffer);
+    memObjsForAuxTranslation.insert(&mockBuffer);
 
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::None;
     EXPECT_THROW(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams), std::exception);
@@ -406,16 +406,16 @@ HWTEST_F(BuiltInTests, givenMoreBuffersForAuxTranslationThanKernelInstancesWhenD
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 
-    BuffersForAuxTranslation buffersForAuxTranslation;
+    MemObjsForAuxTranslation memObjsForAuxTranslation;
     BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
     MultiDispatchInfo multiDispatchInfo;
     MockBuffer mockBuffer[7];
 
-    builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
     for (auto &buffer : mockBuffer) {
-        buffersForAuxTranslation.insert(&buffer);
+        memObjsForAuxTranslation.insert(&buffer);
     }
 
     EXPECT_TRUE(mockAuxBuiltInOp.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));

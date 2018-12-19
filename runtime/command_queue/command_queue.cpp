@@ -555,12 +555,12 @@ void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
     getCommandStreamReceiver().releaseIndirectHeap(heapType);
 }
 
-void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation,
+void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
                                           AuxTranslationDirection auxTranslationDirection) {
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
     BuiltinDispatchInfoBuilder::BuiltinOpParams dispatchParams;
 
-    dispatchParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+    dispatchParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     dispatchParams.auxTranslationDirection = auxTranslationDirection;
 
     builder.buildDispatchInfos(multiDispatchInfo, dispatchParams);
