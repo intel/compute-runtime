@@ -12,7 +12,7 @@ using namespace OCLRT;
 
 typedef api_tests clEnqueueBarrierWithWaitListTests;
 
-TEST_F(clEnqueueBarrierWithWaitListTests, NullCommandQueue_returnsError) {
+TEST_F(clEnqueueBarrierWithWaitListTests, GivenNullCommandQueueWhenEnqueuingBarrierWithWaitListThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueBarrierWithWaitList(
         nullptr,
         0,
@@ -21,7 +21,7 @@ TEST_F(clEnqueueBarrierWithWaitListTests, NullCommandQueue_returnsError) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueBarrierWithWaitListTests, returnsSuccess) {
+TEST_F(clEnqueueBarrierWithWaitListTests, GivenValidCommandQueueWhenEnqueuingBarrierWithWaitListThenSuccessIsReturned) {
     auto retVal = clEnqueueBarrierWithWaitList(
         pCommandQueue,
         0,
