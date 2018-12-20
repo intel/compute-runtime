@@ -96,7 +96,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void setSize(size_t size) { this->size = size; }
     osHandle peekSharedHandle() { return sharedHandle; }
 
-    void setAllocationType(AllocationType allocationType) { this->allocationType = allocationType; }
+    void setAllocationType(AllocationType allocationType);
     AllocationType getAllocationType() const { return allocationType; }
 
     void setAubWritable(bool writable) { aubWritable = writable; }
@@ -117,7 +117,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void incReuseCount() { reuseCount++; }
     void decReuseCount() { reuseCount--; }
     uint32_t peekReuseCount() const { return reuseCount; }
-    MemoryPool::Type getMemoryPool() {
+    MemoryPool::Type getMemoryPool() const {
         return memoryPool;
     }
     bool isUsed() const { return registeredContextsNum > 0; }
@@ -135,6 +135,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     bool isMultiOsContextCapable() const { return multiOsContextCapable; }
     bool isUsedByManyOsContexts() const { return registeredContextsNum > 1u; }
+
+    virtual std::string getAllocationInfoString() const;
 
   protected:
     constexpr static uint32_t objectNotResident = (uint32_t)-1;

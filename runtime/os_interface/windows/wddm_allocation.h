@@ -81,6 +81,13 @@ class WddmAllocation : public GraphicsAllocation {
     }
     void setGpuAddress(uint64_t graphicsAddress) { this->gpuAddress = graphicsAddress; }
 
+    std::string getAllocationInfoString() const {
+        std::stringstream ss;
+        ss << " Handle: " << handle;
+        ss << std::endl;
+        return ss.str();
+    }
+
   protected:
     ResidencyData residency;
     std::vector<size_t> trimCandidateListPositions;

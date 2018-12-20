@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,6 +8,7 @@ set(IGDRCL_SRCS_tests_os_interface_linux
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/allocator_helper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager_linux_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests.h

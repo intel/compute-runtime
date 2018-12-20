@@ -59,7 +59,10 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
     if (!WddmMemoryManager::createWddmAllocation(allocation.get(), AllocationOrigin::EXTERNAL_ALLOCATION)) {
         return nullptr;
     }
+
     gmm.release();
+
+    DebugManager.logAllocation(allocation.get());
     return allocation.release();
 }
 
@@ -85,6 +88,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(AllocationData
     DEBUG_BREAK_IF(!status);
     wddmAllocation->setCpuPtrAndGpuAddress(cpuPtr, (uint64_t)wddmAllocation->gpuPtr);
 
+    DebugManager.logAllocation(wddmAllocation.get());
     return wddmAllocation.release();
 }
 
@@ -110,6 +114,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const
         freeSystemMemory(pSysMem);
         return nullptr;
     }
+
+    DebugManager.logAllocation(wddmAllocation.get());
     return wddmAllocation.release();
 }
 
@@ -129,6 +135,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(si
         delete gmm;
         return nullptr;
     }
+
+    DebugManager.logAllocation(wddmAllocation.get());
     return wddmAllocation.release();
 }
 
@@ -156,13 +164,16 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(const AllocationPr
         Gmm *gmm = new Gmm(ptrAligned, sizeAligned, false);
         allocation->gmm = gmm;
         if (createWddmAllocation(allocation, AllocationOrigin::EXTERNAL_ALLOCATION)) {
+            DebugManager.logAllocation(allocation);
             return allocation;
         }
         freeGraphicsMemory(allocation);
         return nullptr;
     }
 
-    return MemoryManager::allocateGraphicsMemory(properties, ptr);
+    auto allocation = MemoryManager::allocateGraphicsMemory(properties, ptr);
+    DebugManager.logAllocation(allocation);
+    return allocation;
 }
 
 GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) {
@@ -204,6 +215,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     auto baseAddress = allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit->getBase() : this->wddm->getGfxPartition().Heap32[1].Base;
     wddmAllocation->gpuBaseAddress = GmmHelper::canonize(baseAddress);
 
+    DebugManager.logAllocation(wddmAllocation.get());
     return wddmAllocation.release();
 }
 
@@ -236,6 +248,8 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
     status = wddm->mapGpuVirtualAddress(allocation.get(), ptr, is32BitAllocation, false, false);
     DEBUG_BREAK_IF(!status);
     allocation->setGpuAddress(allocation->gpuPtr);
+
+    DebugManager.logAllocation(allocation.get());
     return allocation.release();
 }
 

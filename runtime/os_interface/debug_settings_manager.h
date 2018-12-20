@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,7 @@ void printDebugString(bool showDebugLogs, Args &&... args) {
 #endif
 
 class Kernel;
+class GraphicsAllocation;
 struct MultiDispatchInfo;
 class SettingsReader;
 
@@ -108,6 +109,7 @@ class DebugSettingsManager {
     void getHardwareInfoOverride(std::string &hwInfoConfig);
     void dumpKernel(const std::string &name, const std::string &src);
     void logApiCall(const char *function, bool enter, int32_t errorCode);
+    void logAllocation(GraphicsAllocation const *graphicsAllocation);
     size_t getInput(const size_t *input, int32_t index);
     const std::string getEvents(const uintptr_t *input, uint32_t numOfEvents);
     const std::string getMemObjects(const uintptr_t *input, uint32_t numOfObjects);
@@ -218,6 +220,8 @@ class DebugSettingsManager {
     SettingsReader *getReaderImpl() {
         return readerImpl.get();
     }
+
+    const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation);
 
   protected:
     std::unique_ptr<SettingsReader> readerImpl;

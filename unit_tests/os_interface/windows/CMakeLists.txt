@@ -1,11 +1,12 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(IGDRCL_SRCS_tests_os_interface_windows
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager_win_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_os_tests.cpp

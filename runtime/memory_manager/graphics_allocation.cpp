@@ -7,8 +7,15 @@
 
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/memory_manager/graphics_allocation.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 
 namespace OCLRT {
+
+void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
+    DebugManager.logAllocation(this);
+    this->allocationType = allocationType;
+}
+
 bool GraphicsAllocation::isL3Capable() {
     auto ptr = ptrOffset(cpuPtr, static_cast<size_t>(this->allocationOffset));
     if (alignUp(ptr, MemoryConstants::cacheLineSize) == ptr && alignUp(this->size, MemoryConstants::cacheLineSize) == this->size) {
@@ -42,6 +49,11 @@ void GraphicsAllocation::updateTaskCount(uint32_t newTaskCount, uint32_t context
     }
     usageInfos[contextId].taskCount = newTaskCount;
 }
+
+std::string GraphicsAllocation::getAllocationInfoString() const {
+    return "";
+}
+
 constexpr uint32_t GraphicsAllocation::objectNotUsed;
 constexpr uint32_t GraphicsAllocation::objectNotResident;
 } // namespace OCLRT

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ DebugSettingsManager<DebugLevel>::DebugSettingsManager() {
     }
 
     std::remove(logFileName.c_str());
-} // namespace OCLRT
+}
 
 template <DebugFunctionalityLevel DebugLevel>
 void DebugSettingsManager<DebugLevel>::writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode) {
@@ -90,6 +90,29 @@ void DebugSettingsManager<DebugLevel>::logApiCall(const char *function, bool ent
         ss << function << std::endl;
 
         auto str = ss.str();
+        writeToFile(logFileName, str.c_str(), str.size(), std::ios::app);
+    }
+}
+
+template <DebugFunctionalityLevel DebugLevel>
+void DebugSettingsManager<DebugLevel>::logAllocation(GraphicsAllocation const *graphicsAllocation) {
+    if (false == debugLoggingAvailable()) {
+        return;
+    }
+
+    if (flags.LogAllocationMemoryPool.get()) {
+        std::thread::id thisThread = std::this_thread::get_id();
+
+        std::stringstream ss;
+        ss << " ThreadID: " << thisThread;
+        ss << " AllocationType: " << getAllocationTypeString(graphicsAllocation);
+        ss << " MemoryPool: " << graphicsAllocation->getMemoryPool();
+        ss << graphicsAllocation->getAllocationInfoString();
+        ss << std::endl;
+
+        auto str = ss.str();
+
+        std::unique_lock<std::mutex> theLock(mtx);
         writeToFile(logFileName, str.c_str(), str.size(), std::ios::app);
     }
 }
@@ -237,6 +260,66 @@ void DebugSettingsManager<DebugLevel>::injectSettingsFromReader() {
         flags.variableName.set(tempData);                                                    \
     }
 #include "debug_variables.inl"
+}
+
+template <DebugFunctionalityLevel DebugLevel>
+const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAllocation const *graphicsAllocation) {
+    if (false == debugLoggingAvailable()) {
+        return nullptr;
+    }
+
+    auto type = graphicsAllocation->getAllocationType();
+
+    switch (type) {
+    case OCLRT::GraphicsAllocation::AllocationType::UNKNOWN:
+        return "UNKNOWN";
+    case OCLRT::GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
+        return "BUFFER_COMPRESSED";
+    case OCLRT::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
+        return "BUFFER_HOST_MEMORY";
+    case OCLRT::GraphicsAllocation::AllocationType::BUFFER:
+        return "BUFFER";
+    case OCLRT::GraphicsAllocation::AllocationType::IMAGE:
+        return "IMAGE";
+    case OCLRT::GraphicsAllocation::AllocationType::TAG_BUFFER:
+        return "TAG_BUFFER";
+    case OCLRT::GraphicsAllocation::AllocationType::LINEAR_STREAM:
+        return "LINEAR_STREAM";
+    case OCLRT::GraphicsAllocation::AllocationType::FILL_PATTERN:
+        return "FILL_PATTERN";
+    case OCLRT::GraphicsAllocation::AllocationType::PIPE:
+        return "PIPE";
+    case OCLRT::GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER:
+        return "TIMESTAMP_TAG_BUFFER";
+    case OCLRT::GraphicsAllocation::AllocationType::COMMAND_BUFFER:
+        return "COMMAND_BUFFER";
+    case OCLRT::GraphicsAllocation::AllocationType::PRINTF_SURFACE:
+        return "PRINTF_SURFACE";
+    case OCLRT::GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
+        return "GLOBAL_SURFACE";
+    case OCLRT::GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
+        return "PRIVATE_SURFACE";
+    case OCLRT::GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
+        return "CONSTANT_SURFACE";
+    case OCLRT::GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
+        return "SCRATCH_SURFACE";
+    case OCLRT::GraphicsAllocation::AllocationType::INSTRUCTION_HEAP:
+        return "INSTRUCTION_HEAP";
+    case OCLRT::GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP:
+        return "INDIRECT_OBJECT_HEAP";
+    case OCLRT::GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP:
+        return "SURFACE_STATE_HEAP";
+    case OCLRT::GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP:
+        return "DYNAMIC_STATE_HEAP";
+    case OCLRT::GraphicsAllocation::AllocationType::SHARED_RESOURCE:
+        return "SHARED_RESOURCE";
+    case OCLRT::GraphicsAllocation::AllocationType::SVM:
+        return "SVM";
+    case OCLRT::GraphicsAllocation::AllocationType::UNDECIDED:
+        return "UNDECIDED";
+    default:
+        return "ILLEGAL_VALUE";
+    }
 }
 
 template class DebugSettingsManager<DebugFunctionalityLevel::None>;

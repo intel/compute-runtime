@@ -1,18 +1,10 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "test.h"
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
-#include "runtime/helpers/file_io.h"
-#include "runtime/helpers/string_helpers.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/utilities/directory.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -21,111 +13,12 @@
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/helpers/memory_management.h"
+#include "unit_tests/os_interface/debug_settings_manager_fixture.h"
 
 #include <memory>
 #include <string>
 #include <sstream>
 #include <cstdio>
-
-using namespace OCLRT;
-using namespace std;
-
-#undef DECLARE_DEBUG_VARIABLE
-
-class SettingsFileCreator {
-  public:
-    SettingsFileCreator(string &content) {
-        bool settingsFileExists = fileExists(fileName);
-        if (settingsFileExists) {
-            remove(fileName.c_str());
-        }
-
-        writeDataToFile(fileName.c_str(), content.c_str(), content.size());
-    };
-
-    ~SettingsFileCreator() {
-        remove(fileName.c_str());
-    };
-
-  private:
-    string fileName = "igdrcl.config";
-};
-
-class TestDebugFlagsChecker {
-  public:
-    static bool isEqual(int32_t returnedValue, bool defaultValue) {
-        if (returnedValue == 0) {
-            return !defaultValue;
-        } else {
-            return defaultValue;
-        }
-    }
-
-    static bool isEqual(int32_t returnedValue, int32_t defaultValue) {
-        return returnedValue == defaultValue;
-    }
-
-    static bool isEqual(string returnedValue, string defaultValue) {
-        return returnedValue == defaultValue;
-    }
-};
-
-template <DebugFunctionalityLevel DebugLevel>
-class TestDebugSettingsManager : public DebugSettingsManager<DebugLevel> {
-  public:
-    ~TestDebugSettingsManager() {
-        remove(DebugSettingsManager<DebugLevel>::logFileName.c_str());
-    }
-    SettingsReader *getSettingsReader() {
-        return DebugSettingsManager<DebugLevel>::readerImpl.get();
-    }
-
-    void useRealFiles(bool value) {
-        mockFileSystem = !value;
-    }
-
-    void writeToFile(std::string filename,
-                     const char *str,
-                     size_t length,
-                     std::ios_base::openmode mode) override {
-
-        savedFiles[filename] << std::string(str, str + length);
-        if (mockFileSystem == false) {
-            DebugSettingsManager<DebugLevel>::writeToFile(filename, str, length, mode);
-        }
-    };
-
-    int32_t createdFilesCount() {
-        return static_cast<int32_t>(savedFiles.size());
-    }
-
-    bool wasFileCreated(std::string filename) {
-        return savedFiles.find(filename) != savedFiles.end();
-    }
-
-    std::string getFileString(std::string filename) {
-        return savedFiles[filename].str();
-    }
-
-  protected:
-    bool mockFileSystem = true;
-    std::map<std::string, std::stringstream> savedFiles;
-};
-
-template <bool DebugFunctionality>
-class TestDebugSettingsApiEnterWrapper : public DebugSettingsApiEnterWrapper<DebugFunctionality> {
-  public:
-    TestDebugSettingsApiEnterWrapper(const char *functionName, int *errCode) : DebugSettingsApiEnterWrapper<DebugFunctionality>(functionName, errCode), loggedEnter(false) {
-        if (DebugFunctionality) {
-            loggedEnter = true;
-        }
-    }
-
-    bool loggedEnter;
-};
-
-using FullyEnabledTestDebugManager = TestDebugSettingsManager<DebugFunctionalityLevel::Full>;
-using FullyDisabledTestDebugManager = TestDebugSettingsManager<DebugFunctionalityLevel::None>;
 
 TEST(DebugSettingsManager, WithDebugFunctionality) {
     FullyEnabledTestDebugManager debugManager;
@@ -966,4 +859,74 @@ TEST(DebugSettingsManager, givenReaderImplInDebugManagerWhenSettingDifferentRead
     auto readerImpl2 = SettingsReader::create();
     debugManager.setReaderImpl(readerImpl2);
     EXPECT_EQ(readerImpl2, debugManager.getReaderImpl());
+}
+
+struct AllocationTypeTestCase {
+    OCLRT::GraphicsAllocation::AllocationType type;
+    const char *str;
+};
+
+AllocationTypeTestCase allocationTypeValues[] = {
+    {OCLRT::GraphicsAllocation::AllocationType::UNKNOWN, "UNKNOWN"},
+    {OCLRT::GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, "BUFFER_COMPRESSED"},
+    {OCLRT::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, "BUFFER_HOST_MEMORY"},
+    {OCLRT::GraphicsAllocation::AllocationType::BUFFER, "BUFFER"},
+    {OCLRT::GraphicsAllocation::AllocationType::IMAGE, "IMAGE"},
+    {OCLRT::GraphicsAllocation::AllocationType::TAG_BUFFER, "TAG_BUFFER"},
+    {OCLRT::GraphicsAllocation::AllocationType::LINEAR_STREAM, "LINEAR_STREAM"},
+    {OCLRT::GraphicsAllocation::AllocationType::FILL_PATTERN, "FILL_PATTERN"},
+    {OCLRT::GraphicsAllocation::AllocationType::PIPE, "PIPE"},
+    {OCLRT::GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER, "TIMESTAMP_TAG_BUFFER"},
+    {OCLRT::GraphicsAllocation::AllocationType::COMMAND_BUFFER, "COMMAND_BUFFER"},
+    {OCLRT::GraphicsAllocation::AllocationType::PRINTF_SURFACE, "PRINTF_SURFACE"},
+    {OCLRT::GraphicsAllocation::AllocationType::GLOBAL_SURFACE, "GLOBAL_SURFACE"},
+    {OCLRT::GraphicsAllocation::AllocationType::PRIVATE_SURFACE, "PRIVATE_SURFACE"},
+    {OCLRT::GraphicsAllocation::AllocationType::CONSTANT_SURFACE, "CONSTANT_SURFACE"},
+    {OCLRT::GraphicsAllocation::AllocationType::SCRATCH_SURFACE, "SCRATCH_SURFACE"},
+    {OCLRT::GraphicsAllocation::AllocationType::INSTRUCTION_HEAP, "INSTRUCTION_HEAP"},
+    {OCLRT::GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP, "INDIRECT_OBJECT_HEAP"},
+    {OCLRT::GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP, "SURFACE_STATE_HEAP"},
+    {OCLRT::GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP, "DYNAMIC_STATE_HEAP"},
+    {OCLRT::GraphicsAllocation::AllocationType::SHARED_RESOURCE, "SHARED_RESOURCE"},
+    {OCLRT::GraphicsAllocation::AllocationType::SVM, "SVM"},
+    {OCLRT::GraphicsAllocation::AllocationType::UNDECIDED, "UNDECIDED"}};
+
+class AllocationTypeLogging : public ::testing::TestWithParam<AllocationTypeTestCase> {};
+
+TEST_P(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThenCorrectStringIsReturned) {
+    FullyEnabledTestDebugManager debugManager;
+    auto input = GetParam();
+
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.setAllocationType(input.type);
+
+    auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
+
+    EXPECT_STREQ(result, input.str);
+}
+
+INSTANTIATE_TEST_CASE_P(AllAllocationTypes,
+                        AllocationTypeLogging,
+                        ::testing::ValuesIn(allocationTypeValues));
+
+TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStringIllegalValueThenILLEGAL_VALUEIsReturned) {
+    FullyEnabledTestDebugManager debugManager;
+
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.setAllocationType(static_cast<OCLRT::GraphicsAllocation::AllocationType>(999));
+
+    auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
+
+    EXPECT_STREQ(result, "ILLEGAL_VALUE");
+}
+
+TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenDebugManagerDisabledThennullptrReturned) {
+    FullyDisabledTestDebugManager debugManager;
+
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.setAllocationType(OCLRT::GraphicsAllocation::AllocationType::BUFFER);
+
+    auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
+
+    EXPECT_STREQ(result, nullptr);
 }

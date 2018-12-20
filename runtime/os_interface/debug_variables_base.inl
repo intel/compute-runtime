@@ -53,6 +53,7 @@ DECLARE_DEBUG_VARIABLE(bool, LogApiCalls, false, "Enables logging api function c
 DECLARE_DEBUG_VARIABLE(bool, LogPatchTokens, false, "Enables logging patch tokens, inputs and outputs to file")
 DECLARE_DEBUG_VARIABLE(bool, LogTaskCounts, false, "Enables logging taskCounts and taskLevels to file")
 DECLARE_DEBUG_VARIABLE(bool, LogAlignedAllocations, false, "Logs alignedMalloc and alignedFree allocations")
+DECLARE_DEBUG_VARIABLE(bool, LogAllocationMemoryPool, false, "Logs memory pool for allocations")
 DECLARE_DEBUG_VARIABLE(bool, LogMemoryObject, false, "Logs memory object ptrs, sizes and operations")
 DECLARE_DEBUG_VARIABLE(bool, ResidencyDebugEnable, 0, "enables debug messages and checks for Residency Model")
 DECLARE_DEBUG_VARIABLE(bool, EventsDebugEnable, 0, "enables debug messages for events, virtual events, blocked enqueues, events trees etc.")
