@@ -12,7 +12,6 @@
 #include "runtime/helpers/preamble.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/utilities/tag_allocator.h"
 
 namespace OCLRT {
 template <typename GfxFamily>
@@ -202,7 +201,7 @@ void DeviceQueueHw<GfxFamily>::buildSlbDummyCommands() {
 }
 
 template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint32_t taskCount) {
+void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKernel, HwTimeStamps *hwTimeStamp, uint32_t taskCount) {
     // CleanUp Section
     auto offset = slbCS.getUsed();
     auto alignmentSize = alignUp(offset, MemoryConstants::pageSize) - offset;
@@ -216,7 +215,7 @@ void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKer
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     if (hwTimeStamp != nullptr) {
-        uint64_t TimeStampAddress = hwTimeStamp->getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamp->tag->ContextCompleteTS, hwTimeStamp->tag);
+        uint64_t TimeStampAddress = (uint64_t)((uintptr_t) & (hwTimeStamp->ContextCompleteTS));
         igilQueue->m_controls.m_EventTimestampAddress = TimeStampAddress;
 
         addProfilingEndCmds(TimeStampAddress);

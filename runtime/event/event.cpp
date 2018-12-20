@@ -451,7 +451,7 @@ void Event::submitCommand(bool abortTasks) {
         if ((this->isProfilingEnabled()) && (this->cmdQueue != nullptr)) {
             if (timeStampNode) {
                 this->cmdQueue->getCommandStreamReceiver().makeResident(*timeStampNode->getGraphicsAllocation());
-                cmdToProcess->timestamp = timeStampNode;
+                cmdToProcess->timestamp = timeStampNode->tag;
             }
             if (profilingCpuPath) {
                 setSubmitTimeStamp();

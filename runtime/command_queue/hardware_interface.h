@@ -40,7 +40,7 @@ class HardwareInterface {
         cl_uint numEventsInWaitList,
         const cl_event *eventWaitList,
         KernelOperation **blockedCommandsData,
-        TagNode<HwTimeStamps> *hwTimeStamps,
+        HwTimeStamps *hwTimeStamps,
         HwPerfCounter *hwPerfCounter,
         TimestampPacketContainer *previousTimestampPacketNodes,
         TimestampPacketContainer *currentTimestampPacketNodes,
@@ -69,13 +69,13 @@ class HardwareInterface {
     static void dispatchProfilingPerfStartCommands(
         const DispatchInfo &dispatchInfo,
         const MultiDispatchInfo &multiDispatchInfo,
-        TagNode<HwTimeStamps> *hwTimeStamps,
+        HwTimeStamps *hwTimeStamps,
         HwPerfCounter *hwPerfCounter,
         LinearStream *commandStream,
         CommandQueue &commandQueue);
 
     static void dispatchProfilingPerfEndCommands(
-        TagNode<HwTimeStamps> *hwTimeStamps,
+        HwTimeStamps *hwTimeStamps,
         HwPerfCounter *hwPerfCounter,
         LinearStream *commandStream,
         CommandQueue &commandQueue);

@@ -22,8 +22,6 @@ class Event;
 struct MultiDispatchInfo;
 class SchedulerKernel;
 struct HwTimeStamps;
-template <class T>
-struct TagNode;
 
 template <>
 struct OpenCLObjectMapper<_device_queue> {
@@ -68,10 +66,10 @@ class DeviceQueue : public BaseObject<_device_queue> {
                                size_t paramValueSize, void *paramValue,
                                size_t *paramValueSizeRet);
 
-    void setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentCount, uint32_t taskCount, TagNode<HwTimeStamps> *hwTimeStamp);
+    void setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentCount, uint32_t taskCount, HwTimeStamps *hwTimeStamp);
 
     virtual void setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount);
-    virtual void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint32_t taskCount);
+    virtual void addExecutionModelCleanUpSection(Kernel *parentKernel, HwTimeStamps *hwTimeStamp, uint32_t taskCount);
 
     MOCKABLE_VIRTUAL bool isEMCriticalSectionFree() {
         auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(queueBuffer->getUnderlyingBuffer());

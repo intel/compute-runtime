@@ -26,8 +26,6 @@ class Surface;
 class PrintfHandler;
 struct HwTimeStamps;
 class TimestampPacketContainer;
-template <class T>
-struct TagNode;
 
 enum MapOperationType {
     MAP,
@@ -44,7 +42,7 @@ class Command : public IFNode<Command> {
     virtual LinearStream *getCommandStream() {
         return nullptr;
     }
-    TagNode<HwTimeStamps> *timestamp = nullptr;
+    HwTimeStamps *timestamp = nullptr;
     CompletionStamp completionStamp = {};
 };
 
