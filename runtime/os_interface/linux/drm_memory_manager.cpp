@@ -58,7 +58,9 @@ DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool force
 
 DrmMemoryManager::~DrmMemoryManager() {
     if (this->limitedGpuAddressRangeAllocator) {
-        this->limitedGpuAddressRangeAllocator->free(this->internal32bitAllocator->getBase(), (4 * MemoryConstants::gigaByte));
+        // internal 32bit allocator size is reserved 1 page (offset to 0x0) when the allocator created.
+        uint64_t size = 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize;
+        this->limitedGpuAddressRangeAllocator->free(this->internal32bitAllocator->getBase(), size);
     }
     applyCommonCleanup();
     if (gemCloseWorker) {
@@ -75,10 +77,12 @@ void DrmMemoryManager::initInternalRangeAllocator(size_t gpuRange) {
         // set the allocator with the whole reduced address space range
         this->limitedGpuAddressRangeAllocator.reset(new AllocatorLimitedRange(0, gpuRange));
 
-        // when reduced address space is available, set the internal32bitAllocator inside this range.
+        // reserve 4G range for internal 32bit allocator, leave 1 page (offset to 0x0) to avoid mistakenly
+        // treating 0x0 as null pointer.
         uint64_t size = 4 * MemoryConstants::gigaByte;
-        uint64_t alloc4GRange = this->limitedGpuAddressRangeAllocator->allocate(size);
-        internal32bitAllocator.reset(new Allocator32bit(alloc4GRange, size));
+        uint64_t internal32bitRange = size - MemoryConstants::pageSize;
+        uint64_t internal32bitBase = this->limitedGpuAddressRangeAllocator->allocate(size) - internal32bitRange;
+        internal32bitAllocator.reset(new Allocator32bit(internal32bitBase, internal32bitRange));
     } else {
         // when in full range space, set the internal32bitAllocator using 32bit addressing allocator.
         internal32bitAllocator.reset(new Allocator32bit);
@@ -371,9 +375,25 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, const 
         return nullptr;
     }
 
-    BufferObject *bo = allocUserptr(res, alignedAllocationSize, 0, true);
+    auto limitedRangeAllocation = false;
+    void *ptrAlloc = nullptr;
+
+    if (limitedGpuAddressRangeAllocator.get() && allocatorType == BIT32_ALLOCATOR_INTERNAL) {
+        limitedRangeAllocation = true;
+        ptrAlloc = alignedMallocWrapper(alignedAllocationSize, MemoryConstants::allocationAlignment);
+
+        if (!ptrAlloc) {
+            allocatorToUse->free(res, allocationSize);
+            return nullptr;
+        }
+    }
+
+    BufferObject *bo = allocUserptr(limitedRangeAllocation ? reinterpret_cast<uintptr_t>(ptrAlloc) : res, alignedAllocationSize, 0, true);
 
     if (!bo) {
+        if (ptrAlloc != nullptr) {
+            alignedFreeWrapper(ptrAlloc);
+        }
         allocatorToUse->free(res, allocationSize);
         return nullptr;
     }
@@ -383,10 +403,18 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, const 
 
     bo->setAllocationType(allocatorType);
 
-    auto drmAllocation = new DrmAllocation(bo, reinterpret_cast<void *>(res), alignedAllocationSize,
-                                           MemoryPool::System4KBPagesWith32BitGpuAddressing, getOsContextCount(), false);
+    DrmAllocation *drmAllocation = nullptr;
+    if (limitedRangeAllocation) {
+        drmAllocation = new DrmAllocation(bo, ptrAlloc, res, alignedAllocationSize,
+                                          MemoryPool::System4KBPagesWith32BitGpuAddressing, getOsContextCount(), false);
+    } else {
+        drmAllocation = new DrmAllocation(bo, reinterpret_cast<void *>(res), alignedAllocationSize,
+                                          MemoryPool::System4KBPagesWith32BitGpuAddressing, getOsContextCount(), false);
+    }
+
     drmAllocation->is32BitAllocation = true;
     drmAllocation->gpuBaseAddress = allocatorToUse->getBase();
+    drmAllocation->driverAllocatedCpuPointer = ptrAlloc;
     return drmAllocation;
 }
 
@@ -522,6 +550,8 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
         return;
     if (input->gmm)
         delete input->gmm;
+
+    alignedFreeWrapper(gfxAllocation->driverAllocatedCpuPointer);
 
     if (gfxAllocation->fragmentsStorage.fragmentCount) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);

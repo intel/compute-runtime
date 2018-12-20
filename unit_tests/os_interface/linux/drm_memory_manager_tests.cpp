@@ -983,6 +983,20 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationAndAll
     mock->ioctl_res_ext = &mock->NONE;
 }
 
+TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternal32BitAllocationAndAllocUserptrFailsThenFails) {
+    mock->ioctl_expected.gemUserptr = 1;
+
+    this->ioctlResExt = {mock->ioctl_cnt.total, -1};
+    mock->ioctl_res_ext = &ioctlResExt;
+
+    auto size = 10u;
+    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
+
+    EXPECT_EQ(nullptr, allocation);
+    mock->ioctl_res_ext = &mock->NONE;
+}
+
 TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCreatedThenFirstSucceedsAndSecondFails) {
     DebugManagerStateRestore dbgRestorer;
     mock->ioctl_expected.total = -1;
@@ -2060,6 +2074,74 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
     EXPECT_EQ(bo->peekUnmapSize(), bufferSize);
 
     memoryManager->freeGraphicsMemory(drmAllocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAllocationWithNoPointerThenAllocationFromInternalHeapIsReturned) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    auto bufferSize = MemoryConstants::pageSize;
+    void *ptr = nullptr;
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
+    ASSERT_NE(nullptr, drmAllocation);
+
+    auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();
+
+    EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(bufferSize, drmAllocation->getUnderlyingBufferSize());
+
+    ASSERT_NE(nullptr, drmAllocation->driverAllocatedCpuPointer);
+    EXPECT_EQ(drmAllocation->driverAllocatedCpuPointer, drmAllocation->getUnderlyingBuffer());
+
+    EXPECT_TRUE(drmAllocation->is32BitAllocation);
+
+    auto gpuPtr = drmAllocation->getGpuAddress();
+
+    auto heapBase = internalAllocator->getBase();
+    auto heapSize = 4 * GB;
+
+    EXPECT_GE(gpuPtr, heapBase);
+    EXPECT_LE(gpuPtr, heapBase + heapSize);
+
+    EXPECT_EQ(drmAllocation->gpuBaseAddress, heapBase);
+
+    auto bo = drmAllocation->getBO();
+    EXPECT_TRUE(bo->peekIsAllocated());
+    EXPECT_EQ(bo->peekAllocationType(), StorageAllocatorType::BIT32_ALLOCATOR_INTERNAL);
+    EXPECT_EQ(bo->peekUnmapSize(), bufferSize);
+
+    memoryManager->freeGraphicsMemory(drmAllocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForExternalAllocationWithNoPointerThenAllocationFromInternalHeapIsReturned) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    memoryManager->setForce32BitAllocations(true);
+    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    auto bufferSize = MemoryConstants::pageSize;
+    void *ptr = nullptr;
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, AllocationOrigin::EXTERNAL_ALLOCATION));
+    ASSERT_NE(nullptr, drmAllocation);
+
+    EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
+    EXPECT_TRUE(drmAllocation->is32BitAllocation);
+
+    memoryManager->freeGraphicsMemory(drmAllocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAllocationWithNoPointerandHugeBufferSizeThenAllocationFromInternalHeapFailed) {
+    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    auto bufferSize = 128 * MemoryConstants::megaByte + 4 * MemoryConstants::pageSize;
+    void *ptr = nullptr;
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
+    ASSERT_EQ(nullptr, drmAllocation);
 }
 
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWithPointerThenAllocationFromInternalHeapIsReturned) {
