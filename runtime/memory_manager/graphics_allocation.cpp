@@ -16,19 +16,19 @@ bool GraphicsAllocation::isL3Capable() {
     }
     return false;
 }
-GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, uint32_t osContextCount, bool isShareable) : gpuBaseAddress(baseAddress),
-                                                                                                                                                              size(sizeIn),
-                                                                                                                                                              cpuPtr(cpuPtrIn),
-                                                                                                                                                              gpuAddress(gpuAddress),
-                                                                                                                                                              isShareable(isShareable) {
+GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, uint32_t osContextCount, bool shareable) : gpuBaseAddress(baseAddress),
+                                                                                                                                                            size(sizeIn),
+                                                                                                                                                            cpuPtr(cpuPtrIn),
+                                                                                                                                                            gpuAddress(gpuAddress),
+                                                                                                                                                            shareable(shareable) {
     usageInfos.resize(maxOsContextCount);
 }
 
-GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, uint32_t osContextCount, bool isShareable) : size(sizeIn),
-                                                                                                                                            cpuPtr(cpuPtrIn),
-                                                                                                                                            gpuAddress(castToUint64(cpuPtrIn)),
-                                                                                                                                            sharedHandle(sharedHandleIn),
-                                                                                                                                            isShareable(isShareable) {
+GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, uint32_t osContextCount, bool shareable) : size(sizeIn),
+                                                                                                                                          cpuPtr(cpuPtrIn),
+                                                                                                                                          gpuAddress(castToUint64(cpuPtrIn)),
+                                                                                                                                          sharedHandle(sharedHandleIn),
+                                                                                                                                          shareable(shareable) {
     usageInfos.resize(maxOsContextCount);
 }
 GraphicsAllocation::~GraphicsAllocation() = default;

@@ -228,6 +228,24 @@ TEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForVirtualPa
     EXPECT_FALSE(memoryManager->peekVirtualPaddingSupport());
 }
 
+TEST_F(WddmMemoryManagerTest, givenAllocationPropertiesWithShareableFlagEnabledWhenAllocateMemoryThenAllocationIsShareable) {
+    AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER};
+    properties.flags.shareable = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    EXPECT_TRUE(allocation->isShareable());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerTest, givenAllocationPropertiesWithShareableFlagDisabledWhenAllocateMemoryThenAllocationIsNotShareable) {
+    AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER};
+    properties.flags.shareable = false;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    EXPECT_FALSE(allocation->isShareable());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationToHostPtrManagerThenfragmentHasCorrectValues) {
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;

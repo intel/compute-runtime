@@ -133,6 +133,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void resetResidencyTaskCount(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }
     bool isResidencyTaskCountBelow(uint32_t taskCount, uint32_t contextId) { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
 
+    bool isShareable() const { return shareable; }
+
   protected:
     constexpr static uint32_t objectNotResident = (uint32_t)-1;
     constexpr static uint32_t objectNotUsed = (uint32_t)-1;
@@ -160,6 +162,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool memObjectsAllocationWithWritableFlags = false;
     std::vector<UsageInfo> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};
-    bool isShareable = false;
+    bool shareable = false;
 };
 } // namespace OCLRT

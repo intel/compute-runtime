@@ -30,7 +30,9 @@ void *MockMemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
 }
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
-    return OsAgnosticMemoryManager::allocateGraphicsMemoryWithProperties({redundancyRatio * properties.size, properties.allocationType});
+    AllocationProperties adjustedProperties(properties);
+    adjustedProperties.size = redundancyRatio * properties.size;
+    return OsAgnosticMemoryManager::allocateGraphicsMemoryWithProperties(adjustedProperties);
 }
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) {

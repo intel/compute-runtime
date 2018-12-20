@@ -651,6 +651,26 @@ TEST_F(DrmMemoryManagerTest, GivenNoInputsWhenOsHandleIsCreatedThenAllBoHandlesA
     EXPECT_EQ(nullptr, boHandle2->bo);
 }
 
+TEST_F(DrmMemoryManagerTest, givenAllocationPropertiesWithShareableFlagEnabledWhenAllocateMemoryThenAllocationIsShareable) {
+    mock->ioctl_expected.total = -1;
+    AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER};
+    properties.flags.shareable = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    EXPECT_TRUE(allocation->isShareable());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenAllocationPropertiesWithShareableFlagDisabledWhenAllocateMemoryThenAllocationIsNotShareable) {
+    mock->ioctl_expected.total = -1;
+    AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER};
+    properties.flags.shareable = false;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    EXPECT_FALSE(allocation->isShareable());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocationThenGraphicsAllocationIsCreated) {
     OsHandleStorage handleStorage;
     auto ptr = reinterpret_cast<void *>(0x1000);

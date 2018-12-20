@@ -67,7 +67,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(AllocationData
     size_t sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
     Gmm *gmm = nullptr;
 
-    auto wddmAllocation = std::make_unique<WddmAllocation>(nullptr, sizeAligned, nullptr, MemoryPool::System64KBPages, getOsContextCount(), false);
+    auto wddmAllocation = std::make_unique<WddmAllocation>(nullptr, sizeAligned, nullptr, MemoryPool::System64KBPages, getOsContextCount(), !!allocationData.flags.shareable);
 
     gmm = new Gmm(nullptr, sizeAligned, false, allocationData.flags.preferRenderCompressed, true);
     wddmAllocation->gmm = gmm;
@@ -98,7 +98,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const
         return nullptr;
     }
 
-    auto wddmAllocation = std::make_unique<WddmAllocation>(pSysMem, sizeAligned, nullptr, MemoryPool::System4KBPages, getOsContextCount(), false);
+    auto wddmAllocation = std::make_unique<WddmAllocation>(pSysMem, sizeAligned, nullptr, MemoryPool::System4KBPages, getOsContextCount(), allocationData.flags.shareable);
     wddmAllocation->driverAllocatedCpuPointer = pSysMem;
 
     gmm = new Gmm(pSysMem, sizeAligned, allocationData.flags.uncacheable);

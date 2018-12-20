@@ -193,6 +193,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     bool forcePin = properties.flags.forcePin;
     bool uncacheable = properties.flags.uncacheable;
     bool mustBeZeroCopy = false;
+    bool shareable = properties.flags.shareable;
 
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER:
@@ -254,6 +255,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.uncacheable = uncacheable;
     allocationData.flags.flushL3 = properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite;
     allocationData.flags.preferRenderCompressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == properties.allocationType;
+    allocationData.flags.shareable = shareable;
 
     if (allocationData.flags.mustBeZeroCopy) {
         allocationData.flags.useSystemMemory = true;

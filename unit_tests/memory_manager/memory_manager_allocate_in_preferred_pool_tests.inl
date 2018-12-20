@@ -377,3 +377,31 @@ TEST(MemoryManagerTest, givenTimestampTagBufferTypeWhenGetAllocationDataIsCalled
     MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER}, 0, nullptr);
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
+
+TEST(MemoryManagerTest, givenAllocationPropertiesWithShareableFlagEnabledWhenAllocateMemoryThenAllocationIsShareable) {
+    MockMemoryManager memoryManager(false);
+    AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER};
+    properties.flags.shareable = true;
+
+    AllocationData allocData;
+    MockMemoryManager::getAllocationData(allocData, properties, 0, nullptr);
+    EXPECT_TRUE(allocData.flags.shareable);
+
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties);
+    EXPECT_TRUE(allocation->isShareable());
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(MemoryManagerTest, givenAllocationPropertiesWithShareableFlagDisabledWhenAllocateMemoryThenAllocationIsNotShareable) {
+    MockMemoryManager memoryManager(false);
+    AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER};
+    properties.flags.shareable = false;
+
+    AllocationData allocData;
+    MockMemoryManager::getAllocationData(allocData, properties, 0, nullptr);
+    EXPECT_FALSE(allocData.flags.shareable);
+
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties);
+    EXPECT_FALSE(allocation->isShareable());
+    memoryManager.freeGraphicsMemory(allocation);
+}

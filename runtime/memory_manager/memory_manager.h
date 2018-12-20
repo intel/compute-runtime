@@ -45,7 +45,8 @@ struct AllocationProperties {
             uint32_t flushL3RequiredForWrite : 1;
             uint32_t forcePin : 1;
             uint32_t uncacheable : 1;
-            uint32_t reserved : 27;
+            uint32_t shareable : 1;
+            uint32_t reserved : 26;
         } flags;
         uint32_t allFlags = 0;
     };
@@ -201,7 +202,8 @@ class MemoryManager {
                 uint32_t uncacheable : 1;
                 uint32_t flushL3 : 1;
                 uint32_t preferRenderCompressed : 1;
-                uint32_t reserved : 23;
+                uint32_t shareable : 1;
+                uint32_t reserved : 22;
             } flags;
             uint32_t allFlags = 0;
         };

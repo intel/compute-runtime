@@ -228,7 +228,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
     if (forcePinEnabled && pinBB != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
         pinBB->pin(&bo, 1, getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId());
     }
-    return new DrmAllocation(bo, res, cSize, MemoryPool::System4KBPages, getOsContextCount(), false);
+    return new DrmAllocation(bo, res, cSize, MemoryPool::System4KBPages, getOsContextCount(), allocationData.flags.shareable);
 }
 
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
