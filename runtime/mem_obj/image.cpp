@@ -23,6 +23,7 @@
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/buffer.h"
+#include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include <map>
@@ -227,7 +228,13 @@ Image *Image::create(Context *context,
                 }
 
             } else {
-                memory = memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
+                MemoryProperties properties = {};
+                properties.flags = flags;
+                AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo);
+                DevicesBitfield devices = MemObjHelper::getDevicesBitfield(properties);
+
+                memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
+
                 if (memory && MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
                     zeroCopy = true;
                 }
@@ -324,7 +331,7 @@ Image *Image::create(Context *context,
                 copyRegion = {{imageWidth, imageHeight, std::max(imageDepth, imageCount)}};
             }
 
-            if (isTilingAllowed) {
+            if (isTilingAllowed || !MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
                 auto cmdQ = context->getSpecialQueue();
 
                 if (IsNV12Image(&image->getImageFormat())) {

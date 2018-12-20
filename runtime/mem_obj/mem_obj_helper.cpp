@@ -37,6 +37,10 @@ AllocationProperties MemObjHelper::getAllocationProperties(cl_mem_flags_intel fl
     return AllocationProperties(allocateMemory, size, type);
 }
 
+AllocationProperties MemObjHelper::getAllocationProperties(ImageInfo *imgInfo) {
+    return AllocationProperties(imgInfo);
+}
+
 DevicesBitfield MemObjHelper::getDevicesBitfield(const MemoryProperties &properties) {
     return DevicesBitfield(0);
 }

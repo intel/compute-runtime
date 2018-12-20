@@ -581,7 +581,7 @@ TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocateGraphicsMemoryF
 
 TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphicsMemoryForImageFromHostPtrIsCalledThenGraphicsAllocationIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
     executionEnvironment.initGmm(*platformDevices);
 
     cl_image_desc imgDesc = {};
@@ -616,7 +616,7 @@ TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphi
 
 TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsMemoryForImageFromHostPtrIsCalledThenNullptrIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
     executionEnvironment.initGmm(*platformDevices);
 
     cl_image_desc imgDesc = {};

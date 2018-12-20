@@ -120,7 +120,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, given64kbAllow
     MockMemoryManager::getAllocationData(allocData, properties, 0, nullptr);
     bool bufferCompressedType = (allocType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     EXPECT_TRUE(allocData.flags.allow64kbPages);
-    MockMemoryManager mockMemoryManager(true);
+    MockMemoryManager mockMemoryManager(true, false);
     auto allocation = mockMemoryManager.allocateGraphicsMemory(allocData);
 
     EXPECT_TRUE(mockMemoryManager.allocation64kbPageCreated);
@@ -245,7 +245,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryA
 }
 
 TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryWithoutAllow64kbPagesFlagsIsAllocatedThenNon64kbAllocationIsReturned) {
-    MockMemoryManager memoryManager(true);
+    MockMemoryManager memoryManager(true, false);
     AllocationData allocData;
     AllocationProperties properties(true, 10, GraphicsAllocation::AllocationType::BUFFER);
 
@@ -261,7 +261,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryWithoutAllow64kbP
 }
 
 TEST(MemoryManagerTest, givenDisabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryAndIsAllocatedWithNullptrForBufferThenNon64kbAllocationIsReturned) {
-    MockMemoryManager memoryManager(false);
+    MockMemoryManager memoryManager(false, false);
     AllocationData allocData;
     AllocationProperties properties(true, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
@@ -315,7 +315,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHo
 }
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenGraphicsMemoryAllocationInDevicePoolFailsThenFallbackAllocationIsReturned) {
-    MockMemoryManager memoryManager(false);
+    MockMemoryManager memoryManager(false, true);
 
     memoryManager.failInDevicePool = true;
 
@@ -328,7 +328,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenGraphicsMemoryAllocationInDevicePo
 }
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenBufferTypeIsPassedThenAllocateGraphicsMemoryInPreferredPoolCanAllocateInDevicePool) {
-    MockMemoryManager memoryManager(false);
+    MockMemoryManager memoryManager(false, true);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
     EXPECT_NE(nullptr, allocation);
@@ -336,7 +336,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenBufferTypeIsPassedThenAllocateGrap
 }
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenBufferTypeIsPassedAndAllocateInDevicePoolFailsWithErrorThenAllocateGraphicsMemoryInPreferredPoolReturnsNullptr) {
-    MockMemoryManager memoryManager(false);
+    MockMemoryManager memoryManager(false, true);
 
     memoryManager.failInDevicePoolWithError = true;
 
@@ -386,7 +386,7 @@ TEST(MemoryManagerTest, givenTimestampTagBufferTypeWhenGetAllocationDataIsCalled
 }
 
 TEST(MemoryManagerTest, givenAllocationPropertiesWithShareableFlagEnabledWhenAllocateMemoryThenAllocationIsShareable) {
-    MockMemoryManager memoryManager(false);
+    MockMemoryManager memoryManager(false, false);
     AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER};
     properties.flags.shareable = true;
 
@@ -400,7 +400,7 @@ TEST(MemoryManagerTest, givenAllocationPropertiesWithShareableFlagEnabledWhenAll
 }
 
 TEST(MemoryManagerTest, givenAllocationPropertiesWithShareableFlagDisabledWhenAllocateMemoryThenAllocationIsNotShareable) {
-    MockMemoryManager memoryManager(false);
+    MockMemoryManager memoryManager(false, false);
     AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER};
     properties.flags.shareable = false;
 

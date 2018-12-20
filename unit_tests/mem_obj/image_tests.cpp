@@ -1292,6 +1292,47 @@ TEST(ImageTest, givenForcedLinearImages3DImageAndProperDescriptorValuesWhenIsCop
     alignedFree(hostPtr);
 }
 
+TEST(ImageTest, givenClMemCopyHostPointerPassedToImageCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteImage) {
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.incRefInternal();
+
+    auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(executionEnvironment);
+    executionEnvironment.memoryManager.reset(memoryManager);
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
+        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
+
+    std::unique_ptr<MockDevice> device(MockDevice::create<MockDevice>(*platformDevices, &executionEnvironment, 0));
+
+    MockContext ctx(device.get());
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
+        .WillOnce(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::allocateNonSystemGraphicsMemoryInDevicePool))
+        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
+
+    char memory[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    auto taskCount = device->getCommandStreamReceiver().peekLatestFlushedTaskCount();
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 1;
+    imageDesc.image_height = 1;
+    imageDesc.image_row_pitch = sizeof(memory);
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    std::unique_ptr<Image> image(Image::create(&ctx, flags, surfaceFormat, &imageDesc, memory, retVal));
+    EXPECT_NE(nullptr, image);
+
+    auto taskCountSent = device->getCommandStreamReceiver().peekLatestFlushedTaskCount();
+    EXPECT_LT(taskCount, taskCountSent);
+}
+
 typedef ::testing::TestWithParam<uint32_t> MipLevelCoordinateTest;
 
 TEST_P(MipLevelCoordinateTest, givenMipmappedImageWhenValidateRegionAndOriginIsCalledThenAdditionalOriginCoordinateIsAnalyzed) {

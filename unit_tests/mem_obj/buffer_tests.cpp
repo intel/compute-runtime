@@ -94,24 +94,6 @@ INSTANTIATE_TEST_CASE_P(
     BufferReadOnlyTest,
     testing::ValuesIn(nonReadOnlyFlags));
 
-class GMockMemoryManagerFailFirstAllocation : public MockMemoryManager {
-  public:
-    GMockMemoryManagerFailFirstAllocation(const ExecutionEnvironment &executionEnvironment) : MockMemoryManager(const_cast<ExecutionEnvironment &>(executionEnvironment)){};
-
-    MOCK_METHOD2(allocateGraphicsMemoryInDevicePool, GraphicsAllocation *(const AllocationData &, AllocationStatus &));
-    GraphicsAllocation *baseAllocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
-        return OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
-    }
-    GraphicsAllocation *allocateNonSystemGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
-        auto allocation = baseAllocateGraphicsMemoryInDevicePool(allocationData, status);
-        if (!allocation) {
-            allocation = allocateGraphicsMemory(allocationData);
-        }
-        static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
-        return allocation;
-    }
-};
-
 TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsThenBufferHasAllocatedNewMemoryStorageAndBufferIsNotZeroCopy) {
     void *memory = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
     ASSERT_NE(nullptr, memory);
@@ -505,7 +487,7 @@ TEST_F(RenderCompressedBuffersTests, givenSvmAllocationWhenCreatingBufferThenFor
 struct RenderCompressedBuffersCopyHostMemoryTests : public RenderCompressedBuffersTests {
     void SetUp() override {
         RenderCompressedBuffersTests::SetUp();
-        device->injectMemoryManager(new MockMemoryManager(true));
+        device->injectMemoryManager(new MockMemoryManager(true, false));
         context->setMemoryManager(device->getMemoryManager());
         mockCmdQ = new MockCommandQueue();
         context->setSpecialQueue(mockCmdQ);

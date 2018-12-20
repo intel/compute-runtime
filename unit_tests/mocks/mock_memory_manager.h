@@ -22,14 +22,19 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     using MemoryManager::AllocationData;
     using MemoryManager::getAllocationData;
     using MemoryManager::registeredOsContexts;
+    using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
     using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
-    MockMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment) {
+
+    MockMemoryManager(ExecutionEnvironment &executionEnvironment) : MockMemoryManager(false, executionEnvironment) {}
+
+    MockMemoryManager(bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, enableLocalMemory, executionEnvironment) {
         hostPtrManager.reset(new MockHostPtrManager);
     };
+
     MockMemoryManager() : MockMemoryManager(*(new ExecutionEnvironment)) {
         mockExecutionEnvironment.reset(&executionEnvironment);
     };
-    MockMemoryManager(bool enable64pages) : OsAgnosticMemoryManager(enable64pages, false, *(new ExecutionEnvironment)) {
+    MockMemoryManager(bool enable64pages, bool enableLocalMemory) : OsAgnosticMemoryManager(enable64pages, enableLocalMemory, *(new ExecutionEnvironment)) {
         mockExecutionEnvironment.reset(&executionEnvironment);
     }
     GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
@@ -152,4 +157,24 @@ class FailMemoryManager : public MockMemoryManager {
     }
     int32_t failedAllocationsCount = 0;
 };
+
+class GMockMemoryManagerFailFirstAllocation : public MockMemoryManager {
+  public:
+    GMockMemoryManagerFailFirstAllocation(bool enableLocalMemory, const ExecutionEnvironment &executionEnvironment) : MockMemoryManager(enableLocalMemory, const_cast<ExecutionEnvironment &>(executionEnvironment)){};
+    GMockMemoryManagerFailFirstAllocation(const ExecutionEnvironment &executionEnvironment) : GMockMemoryManagerFailFirstAllocation(false, executionEnvironment){};
+
+    MOCK_METHOD2(allocateGraphicsMemoryInDevicePool, GraphicsAllocation *(const AllocationData &, AllocationStatus &));
+    GraphicsAllocation *baseAllocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
+    }
+    GraphicsAllocation *allocateNonSystemGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
+        auto allocation = baseAllocateGraphicsMemoryInDevicePool(allocationData, status);
+        if (!allocation) {
+            allocation = allocateGraphicsMemory(allocationData);
+        }
+        static_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+        return allocation;
+    }
+};
+
 } // namespace OCLRT

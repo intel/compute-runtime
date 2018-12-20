@@ -10,6 +10,7 @@
 #include "runtime/event/event.h"
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/event/perf_counter.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/kernel_commands.h"
@@ -273,6 +274,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.type = properties.allocationType;
     allocationData.devicesBitfield = devicesBitfield;
     allocationData.alignment = properties.alignment ? properties.alignment : MemoryConstants::preferredAlignment;
+    allocationData.imgInfo = properties.imgInfo;
 
     if (allocationData.flags.allocateMemory) {
         allocationData.hostPtr = nullptr;
@@ -285,7 +287,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(Allocat
     AllocationStatus status = AllocationStatus::Error;
 
     getAllocationData(allocationData, properties, devicesBitfield, hostPtr);
-    UNRECOVERABLE_IF(allocationData.type == GraphicsAllocation::AllocationType::IMAGE || allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE);
+    UNRECOVERABLE_IF(allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE);
     GraphicsAllocation *allocation = nullptr;
 
     allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
@@ -295,10 +297,16 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(Allocat
     if (allocation) {
         allocation->setAllocationType(properties.allocationType);
     }
+
     return allocation;
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &allocationData) {
+    if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE) {
+        UNRECOVERABLE_IF(allocationData.imgInfo == nullptr);
+        return allocateGraphicsMemoryForImage(*allocationData.imgInfo, allocationData.hostPtr);
+    }
+
     if (force32bitAllocations && allocationData.flags.allow32Bit && is64bit) {
         return allocate32BitGraphicsMemory(allocationData.size, allocationData.hostPtr, AllocationOrigin::EXTERNAL_ALLOCATION);
     }

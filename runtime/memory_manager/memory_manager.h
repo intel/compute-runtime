@@ -17,12 +17,15 @@
 #include <vector>
 
 namespace OCLRT {
+class CommandStreamReceiver;
 class DeferredDeleter;
 class ExecutionEnvironment;
+class Gmm;
 class GraphicsAllocation;
 class HostPtrManager;
-class CommandStreamReceiver;
 class OsContext;
+struct ImageInfo;
+
 enum class PreemptionMode : uint32_t;
 
 using CsrContainer = std::vector<std::array<std::unique_ptr<CommandStreamReceiver>, EngineInstanceConstants::numGpgpuEngineInstances>>;
@@ -54,6 +57,7 @@ struct AllocationProperties {
     size_t size = 0;
     size_t alignment = 0;
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
+    ImageInfo *imgInfo = nullptr;
 
     AllocationProperties(size_t size, GraphicsAllocation::AllocationType allocationType) : AllocationProperties(true, size, allocationType) {}
     AllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType) : size(size), allocationType(allocationType) {
@@ -62,6 +66,13 @@ struct AllocationProperties {
         flags.flushL3RequiredForWrite = 1;
         flags.allocateMemory = allocateMemory;
     }
+    AllocationProperties(ImageInfo *imgInfo) : allocationType(GraphicsAllocation::AllocationType::IMAGE) {
+        allFlags = 0;
+        flags.flushL3RequiredForRead = 1;
+        flags.flushL3RequiredForWrite = 1;
+        flags.allocateMemory = 1;
+        this->imgInfo = imgInfo;
+    }
 };
 
 struct AlignedMallocRestrictions {
@@ -69,9 +80,6 @@ struct AlignedMallocRestrictions {
 };
 
 constexpr size_t paddingBufferSize = 2 * MemoryConstants::megaByte;
-
-class Gmm;
-struct ImageInfo;
 
 class MemoryManager {
   public:
@@ -113,8 +121,6 @@ class MemoryManager {
     virtual GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) = 0;
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) = 0;
-
-    GraphicsAllocation *allocateGraphicsMemoryForImageFromHostPtr(ImageInfo &imgInfo, const void *hostPtr);
 
     GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr);
 
@@ -213,6 +219,7 @@ class MemoryManager {
         size_t size = 0;
         size_t alignment = 0;
         DevicesBitfield devicesBitfield = 0;
+        ImageInfo *imgInfo = nullptr;
     };
 
     static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const DevicesBitfield devicesBitfield,
@@ -237,6 +244,7 @@ class MemoryManager {
         status = AllocationStatus::RetryInNonDevicePool;
         return nullptr;
     }
+    GraphicsAllocation *allocateGraphicsMemoryForImageFromHostPtr(ImageInfo &imgInfo, const void *hostPtr);
 
     bool force32bitAllocations = false;
     bool virtualPaddingAvailable = false;
