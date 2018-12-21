@@ -41,6 +41,7 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
     using DrmMemoryManager::AllocationData;
     using DrmMemoryManager::allocUserptr;
+    using DrmMemoryManager::pinThreshold;
     using DrmMemoryManager::setDomainCpu;
     using DrmMemoryManager::sharingBufferObjects;
 

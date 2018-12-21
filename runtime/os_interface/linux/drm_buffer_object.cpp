@@ -171,6 +171,7 @@ int BufferObject::pin(BufferObject *boToPin[], size_t numberOfBos, uint32_t drmC
     execbuf.buffers_ptr = reinterpret_cast<uintptr_t>(&execObject[0]);
     execbuf.buffer_count = boIndex + 1;
     execbuf.batch_len = alignUp(static_cast<uint32_t>(sizeof(uint32_t)), 8);
+    execbuf.rsvd1 = drmContextId;
 
     int err = 0;
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);

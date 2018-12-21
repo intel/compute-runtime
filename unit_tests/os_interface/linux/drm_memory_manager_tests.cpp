@@ -21,6 +21,7 @@
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/os_context.h"
@@ -215,6 +216,23 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(10 * MemoryConstants::megaByte, true)));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
+
+    memoryManager->freeGraphicsMemory(alloc);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmContextIdWhenAllocationIsCreatedThenPinWithPassedDrmContextId) {
+    mock->ioctl_expected.gemUserptr = 2;
+    mock->ioctl_expected.execbuffer2 = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 2;
+
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, true, false, *executionEnvironment);
+    auto drmContextId = memoryManager->getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId();
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
+    EXPECT_NE(0u, drmContextId);
+
+    auto alloc = memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(memoryManager->pinThreshold, true));
+    EXPECT_EQ(drmContextId, mock->execBuffer.rsvd1);
 
     memoryManager->freeGraphicsMemory(alloc);
 }
