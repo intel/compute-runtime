@@ -43,6 +43,7 @@ GLboolean GLSharingFunctions::initGLFunctions() {
         pfnWglCreateContext = (*glLibrary)["wglCreateContext"];
         pfnWglDeleteContext = (*glLibrary)["wglDeleteContext"];
         pfnWglShareLists = (*glLibrary)["wglShareLists"];
+        wglMakeCurrent = (*glLibrary)["wglMakeCurrent"];
 
         GLSetSharedOCLContextState = wglLibrary["wglSetSharedOCLContextStateINTEL"];
         GLAcquireSharedBuffer = wglLibrary["wglAcquireSharedBufferINTEL"];
@@ -55,7 +56,6 @@ GLboolean GLSharingFunctions::initGLFunctions() {
         GLReleaseSync = wglLibrary["wglReleaseSyncINTEL"];
         GLGetSynciv = wglLibrary["wglGetSyncivINTEL"];
         glGetStringi = wglLibrary["glGetStringi"];
-        wglMakeCurrent = wglLibrary["wglMakeCurrent"];
     }
     this->pfnGlArbSyncObjectCleanup = cleanupArbSyncObject;
     this->pfnGlArbSyncObjectSetup = setupArbSyncObject;
