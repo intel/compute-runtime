@@ -146,7 +146,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     auto devQueue = this->getContext().getDefaultDeviceQueue();
     DeviceQueueHw<GfxFamily> *devQueueHw = castToObject<DeviceQueueHw<GfxFamily>>(devQueue);
 
-    HwTimeStamps *hwTimeStamps = nullptr;
+    TagNode<HwTimeStamps> *hwTimeStamps = nullptr;
 
     auto commandStreamRecieverOwnership = getCommandStreamReceiver().obtainUniqueOwnership();
 
@@ -230,7 +230,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
             if (this->isProfilingEnabled()) {
                 // Get allocation for timestamps
-                hwTimeStamps = eventBuilder.getEvent()->getHwTimeStampNode()->tag;
+                hwTimeStamps = eventBuilder.getEvent()->getHwTimeStampNode();
                 if (this->isPerfCountersEnabled()) {
                     hwPerfCounter = eventBuilder.getEvent()->getHwPerfCounterNode()->tag;
                     // PERF COUNTER: copy current configuration from queue to event

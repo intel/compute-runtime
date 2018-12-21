@@ -19,7 +19,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     KernelOperation **blockedCommandsData,
-    HwTimeStamps *hwTimeStamps,
+    TagNode<HwTimeStamps> *hwTimeStamps,
     HwPerfCounter *hwPerfCounter,
     TimestampPacketContainer *previousTimestampPacketNodes,
     TimestampPacketContainer *currentTimestampPacketNodes,

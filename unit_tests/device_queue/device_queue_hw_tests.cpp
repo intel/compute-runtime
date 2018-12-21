@@ -7,6 +7,7 @@
 
 #include "hw_cmds.h"
 #include "runtime/helpers/options.h"
+#include "runtime/utilities/tag_allocator.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
@@ -352,18 +353,19 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
     MockParentKernel *mockParentKernel = MockParentKernel::create(*pContext);
     uint32_t taskCount = 7;
 
-    HwTimeStamps hwTimeStamp;
+    auto hwTimeStamp = pCommandQueue->getCommandStreamReceiver().getEventTsAllocator()->getTag();
     mockDeviceQueueHw->buildSlbDummyCommands();
-    mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel, &hwTimeStamp, taskCount);
+    mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel, hwTimeStamp, taskCount);
 
-    uint32_t eventTimestampLow = (uint32_t)(igilCmdQueue->m_controls.m_EventTimestampAddress & 0xFFFFFFFF);
-    uint32_t eventTimestampHigh = (uint32_t)((igilCmdQueue->m_controls.m_EventTimestampAddress & 0xFFFFFFFF00000000) >> 32);
+    uint32_t eventTimestampAddrLow = static_cast<uint32_t>(igilCmdQueue->m_controls.m_EventTimestampAddress & 0xFFFFFFFF);
+    uint32_t eventTimestampAddrHigh = static_cast<uint32_t>((igilCmdQueue->m_controls.m_EventTimestampAddress & 0xFFFFFFFF00000000) >> 32);
 
-    uint32_t contextCompleteLow = (uint32_t)((uint64_t)((uintptr_t)(&hwTimeStamp.ContextCompleteTS)) & 0xFFFFFFFF);
-    uint32_t contextCompleteHigh = (uint32_t)(((uint64_t)((uintptr_t)(&hwTimeStamp.ContextCompleteTS)) & 0xFFFFFFFF00000000) >> 32);
+    uint64_t contextCompleteAddr = hwTimeStamp->getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamp->tag->ContextCompleteTS, hwTimeStamp->tag);
+    uint32_t contextCompleteAddrLow = static_cast<uint32_t>(contextCompleteAddr & 0xFFFFFFFF);
+    uint32_t contextCompleteAddrHigh = static_cast<uint32_t>((contextCompleteAddr & 0xFFFFFFFF00000000) >> 32);
 
-    EXPECT_EQ(contextCompleteLow, eventTimestampLow);
-    EXPECT_EQ(contextCompleteHigh, eventTimestampHigh);
+    EXPECT_EQ(contextCompleteAddrLow, eventTimestampAddrLow);
+    EXPECT_EQ(contextCompleteAddrHigh, eventTimestampAddrHigh);
 
     HardwareParse hwParser;
     auto *slbCS = mockDeviceQueueHw->getSlbCS();
