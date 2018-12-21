@@ -78,15 +78,15 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(Allocati
     return memoryAllocation;
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) {
-    if (ptr) {
-        auto allocationSize = alignSizeWholePage(ptr, size);
+GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) {
+    if (allocationData.hostPtr) {
+        auto allocationSize = alignSizeWholePage(allocationData.hostPtr, allocationData.size);
         auto gpuVirtualAddress = allocator32Bit->allocate(allocationSize);
         if (!gpuVirtualAddress) {
             return nullptr;
         }
-        uint64_t offset = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(ptr) & MemoryConstants::pageMask);
-        MemoryAllocation *memAlloc = new MemoryAllocation(nullptr, const_cast<void *>(ptr), GmmHelper::canonize(gpuVirtualAddress + offset), size,
+        uint64_t offset = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(allocationData.hostPtr) & MemoryConstants::pageMask);
+        MemoryAllocation *memAlloc = new MemoryAllocation(nullptr, const_cast<void *>(allocationData.hostPtr), GmmHelper::canonize(gpuVirtualAddress + offset), allocationData.size,
                                                           counter, MemoryPool::System4KBPagesWith32BitGpuAddressing, this->getOsContextCount(), false);
         memAlloc->is32BitAllocation = true;
         memAlloc->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());
@@ -96,17 +96,17 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
         return memAlloc;
     }
 
-    auto allocationSize = alignUp(size, MemoryConstants::pageSize);
+    auto allocationSize = alignUp(allocationData.size, MemoryConstants::pageSize);
     void *ptrAlloc = nullptr;
     auto gpuAddress = allocator32Bit->allocate(allocationSize);
 
-    if (size < 0xfffff000) {
+    if (allocationData.size < 0xfffff000) {
         ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
     }
 
     MemoryAllocation *memoryAllocation = nullptr;
     if (ptrAlloc != nullptr) {
-        memoryAllocation = new MemoryAllocation(ptrAlloc, ptrAlloc, GmmHelper::canonize(gpuAddress), size, counter,
+        memoryAllocation = new MemoryAllocation(ptrAlloc, ptrAlloc, GmmHelper::canonize(gpuAddress), allocationData.size, counter,
                                                 MemoryPool::System4KBPagesWith32BitGpuAddressing, this->getOsContextCount(), false);
         memoryAllocation->is32BitAllocation = true;
         memoryAllocation->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());

@@ -167,19 +167,19 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(const AllocationPr
     return allocation;
 }
 
-GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) {
+GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) {
     Gmm *gmm = nullptr;
     const void *ptrAligned = nullptr;
-    size_t sizeAligned = size;
+    size_t sizeAligned = allocationData.size;
     void *pSysMem = nullptr;
     size_t offset = 0;
 
-    if (ptr) {
-        ptrAligned = alignDown(ptr, MemoryConstants::allocationAlignment);
-        sizeAligned = alignSizeWholePage(ptr, size);
-        offset = ptrDiff(ptr, ptrAligned);
+    if (allocationData.hostPtr) {
+        ptrAligned = alignDown(allocationData.hostPtr, MemoryConstants::allocationAlignment);
+        sizeAligned = alignSizeWholePage(allocationData.hostPtr, sizeAligned);
+        offset = ptrDiff(allocationData.hostPtr, ptrAligned);
     } else {
-        sizeAligned = alignUp(size, MemoryConstants::allocationAlignment);
+        sizeAligned = alignUp(sizeAligned, MemoryConstants::allocationAlignment);
         pSysMem = allocateSystemMemory(sizeAligned, MemoryConstants::allocationAlignment);
         if (pSysMem == nullptr) {
             return nullptr;
@@ -196,14 +196,14 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     gmm = new Gmm(ptrAligned, sizeAligned, false);
     wddmAllocation->gmm = gmm;
 
-    if (!createWddmAllocation(wddmAllocation.get(), allocationOrigin)) {
+    if (!createWddmAllocation(wddmAllocation.get(), allocationData.allocationOrigin)) {
         delete gmm;
         freeSystemMemory(pSysMem);
         return nullptr;
     }
 
     wddmAllocation->is32BitAllocation = true;
-    auto baseAddress = allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit->getBase() : this->wddm->getGfxPartition().Heap32[1].Base;
+    auto baseAddress = allocationData.allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit->getBase() : this->wddm->getGfxPartition().Heap32[1].Base;
     wddmAllocation->gpuBaseAddress = GmmHelper::canonize(baseAddress);
 
     DebugManager.logAllocation(wddmAllocation.get());

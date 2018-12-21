@@ -9,6 +9,7 @@
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/surface_formats.h"
+#include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include <cstring>
 
@@ -79,6 +80,16 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithAlignment(const
     }
     allocationCreated = true;
     return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
+}
+GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) {
+    bool allocateMemory = ptr == nullptr;
+    AllocationData allocationData;
+    if (allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION) {
+        getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitExternalAllocation(size, allocateMemory), 0u, ptr);
+    } else {
+        getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitInternalAllocation(size, allocateMemory), 0u, ptr);
+    }
+    return allocate32BitGraphicsMemoryImpl(allocationData);
 }
 
 FailMemoryManager::FailMemoryManager(int32_t failedAllocationsCount) {

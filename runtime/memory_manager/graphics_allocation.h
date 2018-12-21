@@ -64,6 +64,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         DYNAMIC_STATE_HEAP,
         SHARED_RESOURCE_COPY,
         SVM,
+        KERNEL_ISA,
+        INTERNAL_HEAP,
         UNDECIDED,
     };
 

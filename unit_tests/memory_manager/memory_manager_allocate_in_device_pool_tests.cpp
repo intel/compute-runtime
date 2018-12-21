@@ -10,7 +10,7 @@
 
 TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenAllocationIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
@@ -26,7 +26,7 @@ TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevice
 
 TEST(MemoryManagerTest, givenImageOrSharedResourceCopyWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;

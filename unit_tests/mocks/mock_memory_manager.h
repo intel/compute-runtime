@@ -64,6 +64,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
         unlockResourceCalled++;
         OsAgnosticMemoryManager::unlockResourceImpl(gfxAllocation);
     }
+    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin);
 
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
@@ -131,7 +132,7 @@ class FailMemoryManager : public MockMemoryManager {
     GraphicsAllocation *allocateGraphicsMemory(const AllocationProperties &properties, const void *ptr) override {
         return nullptr;
     };
-    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) override {
+    GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override {
         return nullptr;
     };
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {

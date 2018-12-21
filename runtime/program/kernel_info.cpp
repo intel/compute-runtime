@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -485,7 +485,7 @@ uint32_t KernelInfo::getConstantBufferSize() const {
 bool KernelInfo::createKernelAllocation(MemoryManager *memoryManager) {
     UNRECOVERABLE_IF(kernelAllocation);
     auto kernelIsaSize = heapInfo.pKernelHeader->KernelHeapSize;
-    kernelAllocation = memoryManager->allocate32BitGraphicsMemory(kernelIsaSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
+    kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties({kernelIsaSize, GraphicsAllocation::AllocationType::KERNEL_ISA});
     if (kernelAllocation) {
         memcpy_s(kernelAllocation->getUnderlyingBuffer(), kernelIsaSize, heapInfo.pKernelHeap, kernelIsaSize);
     } else {

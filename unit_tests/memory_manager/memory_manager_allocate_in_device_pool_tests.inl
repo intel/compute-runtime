@@ -18,7 +18,7 @@ using namespace OCLRT;
 
 TEST(MemoryManagerTest, givenSetUseSytemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
     allocData.size = MemoryConstants::pageSize;
@@ -32,7 +32,7 @@ TEST(MemoryManagerTest, givenSetUseSytemMemoryWhenGraphicsAllocationInDevicePool
 
 TEST(MemoryManagerTest, givenAllowed32BitAndFroce32BitWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
     memoryManager.setForce32BitAllocations(true);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;

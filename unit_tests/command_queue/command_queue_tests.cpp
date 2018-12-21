@@ -489,12 +489,11 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAlloc
     GraphicsAllocation *allocation = nullptr;
 
     auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
-
+    auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
     if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT) {
-        allocation = memoryManager->allocate32BitGraphicsMemory(allocationSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
-    } else {
-        allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{allocationSize});
+        allocationType = GraphicsAllocation::AllocationType::INTERNAL_HEAP;
     }
+    allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{allocationSize, allocationType});
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
         allocation->setSize(commandStreamReceiver.defaultSshSize * 2);
     }

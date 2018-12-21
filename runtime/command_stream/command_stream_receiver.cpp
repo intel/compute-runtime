@@ -287,11 +287,11 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
     auto heapMemory = internalAllocationStorage->obtainReusableAllocation(finalHeapSize, requireInternalHeap).release();
 
     if (!heapMemory) {
+        auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
         if (requireInternalHeap) {
-            heapMemory = getMemoryManager()->allocate32BitGraphicsMemory(finalHeapSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
-        } else {
-            heapMemory = getMemoryManager()->allocateGraphicsMemoryWithProperties({finalHeapSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
+            allocationType = GraphicsAllocation::AllocationType::INTERNAL_HEAP;
         }
+        heapMemory = getMemoryManager()->allocateGraphicsMemoryWithProperties({finalHeapSize, allocationType});
     } else {
         finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
     }

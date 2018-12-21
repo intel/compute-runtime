@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ class MockWddmMemoryManager : public WddmMemoryManager {
   public:
     using BaseClass::allocateGraphicsMemory;
     using BaseClass::allocateGraphicsMemory64kb;
+    using BaseClass::allocateGraphicsMemoryInDevicePool;
     using BaseClass::createWddmAllocation;
     using BaseClass::WddmMemoryManager;
 
@@ -31,6 +32,16 @@ class MockWddmMemoryManager : public WddmMemoryManager {
     }
     bool validateAllocationMock(WddmAllocation *graphicsAllocation) {
         return this->validateAllocation(graphicsAllocation);
+    }
+    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) {
+        bool allocateMemory = ptr == nullptr;
+        AllocationData allocationData;
+        if (allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION) {
+            getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitExternalAllocation(size, allocateMemory), 0u, ptr);
+        } else {
+            getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitInternalAllocation(size, allocateMemory), 0u, ptr);
+        }
+        return allocate32BitGraphicsMemoryImpl(allocationData);
     }
 };
 } // namespace OCLRT

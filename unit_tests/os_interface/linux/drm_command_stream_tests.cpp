@@ -236,8 +236,8 @@ TEST_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdToAllExecBuff
         return 0;
     };
 
-    auto allocation1 = memoryManager->allocate32BitGraphicsMemory(1, reinterpret_cast<void *>(1), AllocationOrigin::INTERNAL_ALLOCATION);
-    auto allocation2 = memoryManager->allocate32BitGraphicsMemory(1, reinterpret_cast<void *>(2), AllocationOrigin::INTERNAL_ALLOCATION);
+    auto allocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     csr->makeResident(*allocation1);
     csr->makeResident(*allocation2);
 

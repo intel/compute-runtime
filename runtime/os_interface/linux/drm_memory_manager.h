@@ -32,7 +32,6 @@ class DrmMemoryManager : public MemoryManager {
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
     DrmAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override;
-    DrmAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override;
     GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) override;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override { return nullptr; }
@@ -72,6 +71,7 @@ class DrmMemoryManager : public MemoryManager {
 
     void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
+    DrmAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
 
     Drm *drm;
     BufferObject *pinBB;

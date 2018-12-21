@@ -36,7 +36,7 @@ enum AllocationUsage {
     REUSABLE_ALLOCATION
 };
 
-enum AllocationOrigin {
+enum class AllocationOrigin {
     EXTERNAL_ALLOCATION,
     INTERNAL_ALLOCATION
 };
@@ -116,8 +116,6 @@ class MemoryManager {
             return allocation;
         }
     }
-
-    virtual GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) = 0;
 
     GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr);
 
@@ -212,6 +210,7 @@ class MemoryManager {
         };
         static_assert(sizeof(AllocationData::flags) == sizeof(AllocationData::allFlags), "");
         GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::UNKNOWN;
+        AllocationOrigin allocationOrigin = AllocationOrigin::EXTERNAL_ALLOCATION;
         const void *hostPtr = nullptr;
         size_t size = 0;
         size_t alignment = 0;
@@ -227,6 +226,7 @@ class MemoryManager {
     virtual GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) = 0;
     virtual GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) = 0;
+    virtual GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) = 0;
     virtual GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
         status = AllocationStatus::Error;
         switch (allocationData.type) {

@@ -12,6 +12,7 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/libult/create_command_stream.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 
 using namespace OCLRT;
 
@@ -21,7 +22,7 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         MemoryManagementFixture::SetUp();
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->initializeCommandStreamReceiver(*platformDevices, 0, 0);
-        memoryManager = new OsAgnosticMemoryManager(false, false, *executionEnvironment);
+        memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         csr = memoryManager->getDefaultCommandStreamReceiver(0);
         csr->setupContext(*memoryManager->createAndRegisterOsContext(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
@@ -34,6 +35,6 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
 
   protected:
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
-    MemoryManager *memoryManager;
+    MockMemoryManager *memoryManager;
     CommandStreamReceiver *csr;
 };

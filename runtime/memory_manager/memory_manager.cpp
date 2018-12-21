@@ -260,7 +260,18 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::LINEAR_STREAM:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
     case GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::KERNEL_ISA:
+    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
         allocationData.flags.useSystemMemory = true;
+        break;
+    default:
+        break;
+    }
+
+    switch (properties.allocationType) {
+    case GraphicsAllocation::AllocationType::KERNEL_ISA:
+    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
+        allocationData.allocationOrigin = AllocationOrigin::INTERNAL_ALLOCATION;
         break;
     default:
         break;
@@ -315,8 +326,9 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         return allocateGraphicsMemoryForImage(allocationData);
     }
 
-    if (force32bitAllocations && allocationData.flags.allow32Bit && is64bit) {
-        return allocate32BitGraphicsMemory(allocationData.size, allocationData.hostPtr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    if (allocationData.allocationOrigin == AllocationOrigin::INTERNAL_ALLOCATION ||
+        (force32bitAllocations && allocationData.flags.allow32Bit && is64bit)) {
+        return allocate32BitGraphicsMemoryImpl(allocationData);
     }
     if (allocationData.hostPtr) {
         return allocateGraphicsMemoryWithHostPtr(allocationData);
