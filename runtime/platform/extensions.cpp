@@ -42,7 +42,7 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
     if (hwInfo.capabilityTable.clVersionSupport >= 21) {
         allExtensionsList += "cl_khr_subgroups ";
         allExtensionsList += "cl_khr_il_program ";
-        allExtensionsList += "cl_intel_spirv_side_avc_motion_estimation ";
+        allExtensionsList += "cl_intel_spirv_device_side_avc_motion_estimation ";
         allExtensionsList += "cl_intel_spirv_media_block_io ";
         allExtensionsList += "cl_intel_spirv_subgroups ";
     }
