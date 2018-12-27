@@ -88,7 +88,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                     }
                 } else {
                     if (!memObjsForAuxTranslation.empty()) {
-                        dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
+                        dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
                     }
                 }
             }

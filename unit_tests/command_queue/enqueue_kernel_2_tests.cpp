@@ -662,6 +662,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
         void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
                                     AuxTranslationDirection auxTranslationDirection) override {
             CommandQueueHw<FamilyType>::dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, auxTranslationDirection);
+            auxTranslationDirections.push_back(auxTranslationDirection);
             Kernel *lastKernel = nullptr;
             for (const auto &dispatchInfo : multiDispatchInfo) {
                 lastKernel = dispatchInfo.getKernel();
@@ -675,6 +676,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
             CommandQueueHw<FamilyType>::waitUntilComplete(taskCountToWait, flushStampToWait, useQuickKmdSleep);
         }
 
+        std::vector<AuxTranslationDirection> auxTranslationDirections;
         std::vector<DispatchInfo> dispatchInfos;
         std::vector<std::tuple<Kernel *, size_t, MemObjsForAuxTranslation, AuxTranslationDirection>> dispatchAuxTranslationInputs;
         uint32_t waitCalled = 0;
@@ -742,6 +744,9 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     }
 
     EXPECT_EQ(4u, pipeControlCount);
+    ASSERT_EQ(2u, cmdQ.auxTranslationDirections.size());
+    EXPECT_EQ(AuxTranslationDirection::AuxToNonAux, cmdQ.auxTranslationDirections[0]);
+    EXPECT_EQ(AuxTranslationDirection::NonAuxToAux, cmdQ.auxTranslationDirections[1]);
 }
 
 HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenDispatchAuxTranslationBuiltin) {
