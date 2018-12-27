@@ -108,3 +108,63 @@ INSTANTIATE_TEST_CASE_P(AUBWriteBuffer_simple,
                             1 * sizeof(cl_float),
                             2 * sizeof(cl_float),
                             3 * sizeof(cl_float)));
+
+struct AUBWriteBufferUnaligned
+    : public CommandEnqueueAUBFixture,
+      public ::testing::Test {
+
+    void SetUp() override {
+        CommandEnqueueAUBFixture::SetUp();
+    }
+
+    void TearDown() override {
+        CommandEnqueueAUBFixture::TearDown();
+    }
+
+    template <typename FamilyType>
+    void testWriteBufferUnaligned(size_t offset, size_t size) {
+        MockContext context(&pCmdQ->getDevice());
+
+        char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const auto bufferSize = sizeof(srcMemory);
+        char dstMemory[bufferSize] = {0};
+
+        auto retVal = CL_INVALID_VALUE;
+
+        auto buffer = std::unique_ptr<Buffer>(Buffer::create(
+            &context,
+            CL_MEM_USE_HOST_PTR,
+            bufferSize,
+            dstMemory,
+            retVal));
+        ASSERT_NE(nullptr, buffer);
+
+        buffer->forceDisallowCPUCopy = true;
+
+        // Do unaligned write
+        retVal = pCmdQ->enqueueWriteBuffer(
+            buffer.get(),
+            CL_TRUE,
+            offset,
+            size,
+            ptrOffset(srcMemory, offset),
+            0,
+            nullptr,
+            nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        // Check the memory
+        auto bufferGPUPtr = reinterpret_cast<char *>((buffer->getGraphicsAllocation()->getGpuAddress()));
+        AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(bufferGPUPtr, offset), ptrOffset(srcMemory, offset), size);
+    }
+};
+
+HWTEST_F(AUBWriteBufferUnaligned, all) {
+    const std::vector<size_t> offsets = {0, 1, 2, 3};
+    const std::vector<size_t> sizes = {4, 3, 2, 1};
+    for (auto offset : offsets) {
+        for (auto size : sizes) {
+            testWriteBufferUnaligned<FamilyType>(offset, size);
+        }
+    }
+}

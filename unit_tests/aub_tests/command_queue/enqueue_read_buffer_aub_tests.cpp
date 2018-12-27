@@ -143,3 +143,66 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(dstGpuAddress, srcMemory, sizeof(dstMemory));
 }
+
+struct AUBReadBufferUnaligned
+    : public CommandEnqueueAUBFixture,
+      public ::testing::Test {
+
+    void SetUp() override {
+        CommandEnqueueAUBFixture::SetUp();
+    }
+
+    void TearDown() override {
+        CommandEnqueueAUBFixture::TearDown();
+    }
+
+    template <typename FamilyType>
+    void testReadBufferUnaligned(size_t offset, size_t size) {
+        MockContext context(&pCmdQ->getDevice());
+
+        char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const auto bufferSize = sizeof(srcMemory);
+        char dstMemory[bufferSize] = {0};
+
+        auto retVal = CL_INVALID_VALUE;
+
+        auto buffer = std::unique_ptr<Buffer>(Buffer::create(
+            &context,
+            CL_MEM_USE_HOST_PTR,
+            bufferSize,
+            srcMemory,
+            retVal));
+        ASSERT_NE(nullptr, buffer);
+
+        buffer->forceDisallowCPUCopy = true;
+
+        // Map destination memory to GPU
+        GraphicsAllocation *allocation = createResidentAllocationAndStoreItInCsr(dstMemory, bufferSize);
+        auto dstMemoryGPUPtr = reinterpret_cast<char *>(allocation->getGpuAddress());
+
+        // Do unaligned read
+        retVal = pCmdQ->enqueueReadBuffer(
+            buffer.get(),
+            CL_TRUE,
+            offset,
+            size,
+            ptrOffset(dstMemory, offset),
+            0,
+            nullptr,
+            nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        // Check the memory
+        AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), ptrOffset(srcMemory, offset), size);
+    }
+};
+
+HWTEST_F(AUBReadBufferUnaligned, all) {
+    const std::vector<size_t> offsets = {0, 1, 2, 3};
+    const std::vector<size_t> sizes = {4, 3, 2, 1};
+    for (auto offset : offsets) {
+        for (auto size : sizes) {
+            testReadBufferUnaligned<FamilyType>(offset, size);
+        }
+    }
+}

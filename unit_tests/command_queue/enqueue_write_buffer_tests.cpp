@@ -10,6 +10,7 @@
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "reg_configs_common.h"
 #include "runtime/helpers/dispatch_info.h"
+#include "runtime/memory_manager/allocations_list.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -432,4 +433,28 @@ HWTEST_F(NegativeFailAllocationTest, givenEnqueueWriteBufferWhenHostPtrAllocatio
                                        nullptr);
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+}
+
+HWTEST_F(EnqueueWriteBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenWriteBufferIsCalledThenHostGraphicsAllocationHasCorrectOffset) {
+    void *ptr = (void *)0x1039;
+
+    cl_int retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
+                                              CL_FALSE,
+                                              0,
+                                              MemoryConstants::cacheLineSize,
+                                              ptr,
+                                              0,
+                                              nullptr,
+                                              nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto allocation = csr.getTemporaryAllocations().peekHead();
+    while (allocation && allocation->getUnderlyingBuffer() != alignDown(ptr, 4)) {
+        allocation = allocation->next;
+    }
+
+    ASSERT_NE(allocation, nullptr);
+    EXPECT_EQ((void *)allocation->getGpuAddressToPatch(), ptr);
 }
