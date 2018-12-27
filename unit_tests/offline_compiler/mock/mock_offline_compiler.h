@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@ namespace OCLRT {
 
 class MockOfflineCompiler : public OfflineCompiler {
   public:
+    using OfflineCompiler::deviceName;
     using OfflineCompiler::generateFilePathForIr;
     using OfflineCompiler::generateOptsSuffix;
     using OfflineCompiler::igcDeviceCtx;

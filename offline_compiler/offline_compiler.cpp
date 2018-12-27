@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -517,13 +517,21 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const char *const *argv) {
     return retVal;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// ParseCommandLine
-////////////////////////////////////////////////////////////////////////////////
-void OfflineCompiler::parseDebugSettings() {
-    if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get()) {
+void OfflineCompiler::setStatelessToStatefullBufferOffsetFlag() {
+    bool isStatelessToStatefulBufferOffsetSupported = true;
+    if (deviceName == "bdw") {
+        isStatelessToStatefulBufferOffsetSupported = false;
+    }
+    if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
+        isStatelessToStatefulBufferOffsetSupported = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
+    }
+    if (isStatelessToStatefulBufferOffsetSupported) {
         internalOptions += "-cl-intel-has-buffer-offset-arg ";
     }
+}
+
+void OfflineCompiler::parseDebugSettings() {
+    setStatelessToStatefullBufferOffsetFlag();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

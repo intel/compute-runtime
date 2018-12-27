@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -373,6 +373,55 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugS
     std::string internalOptions = mockOfflineCompiler.getInternalOptions();
     size_t found = internalOptions.find("-cl-intel-has-buffer-offset-arg");
     EXPECT_NE(std::string::npos, found);
+}
+
+TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugSettingsAreParsedThenOptimizationStringIsSetToDefault) {
+    DebugManagerStateRestore stateRestore;
+    MockOfflineCompiler mockOfflineCompiler;
+    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(-1);
+
+    mockOfflineCompiler.parseDebugSettings();
+
+    std::string internalOptions = mockOfflineCompiler.getInternalOptions();
+    size_t found = internalOptions.find("-cl-intel-has-buffer-offset-arg");
+    EXPECT_NE(std::string::npos, found);
+}
+
+TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationDisableddWhenDeviceNameIsSetToBDW) {
+    DebugManagerStateRestore stateRestore;
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.deviceName = "bdw";
+
+    mockOfflineCompiler.parseDebugSettings();
+
+    std::string internalOptions = mockOfflineCompiler.getInternalOptions();
+    size_t found = internalOptions.find("-cl-intel-has-buffer-offset-arg");
+    EXPECT_EQ(std::string::npos, found);
+}
+
+TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDeviceNameIsSetToSKL) {
+    DebugManagerStateRestore stateRestore;
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.deviceName = "skl";
+
+    mockOfflineCompiler.parseDebugSettings();
+
+    std::string internalOptions = mockOfflineCompiler.getInternalOptions();
+    size_t found = internalOptions.find("-cl-intel-has-buffer-offset-arg");
+    EXPECT_NE(std::string::npos, found);
+}
+
+TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationDisabledWhenDeviceNameIsSetToSKLAndDebugSettingsAreDisabled) {
+    DebugManagerStateRestore stateRestore;
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.deviceName = "skl";
+    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
+
+    mockOfflineCompiler.parseDebugSettings();
+
+    std::string internalOptions = mockOfflineCompiler.getInternalOptions();
+    size_t found = internalOptions.find("-cl-intel-has-buffer-offset-arg");
+    EXPECT_EQ(std::string::npos, found);
 }
 
 TEST(OfflineCompilerTest, getStringWithinDelimiters) {

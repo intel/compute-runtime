@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,7 @@ class OfflineCompiler {
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const char *const *argv);
     int parseCommandLine(size_t numArgs, const char *const *argv);
+    void setStatelessToStatefullBufferOffsetFlag();
     void parseDebugSettings();
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
     int buildSourceCode();

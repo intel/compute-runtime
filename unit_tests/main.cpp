@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -386,8 +386,8 @@ int main(int argc, char **argv) {
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, "17246368129176860573_", ".bc");
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, "17246368129176860573_", ".gen");
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, "12523835541146349626_", ".bc");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, "12523835541146349626_", ".gen");
 
     gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, device);

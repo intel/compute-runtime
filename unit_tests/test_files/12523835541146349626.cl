@@ -1,9 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+__kernel void fullCopy(__global const uint* src, __global uint* dst) {
+    unsigned int gid = get_global_id(0);
+    uint4 loaded = vload4(gid, src);
+    vstore4(loaded, gid, dst);
+}
 
 __kernel void CopyBufferToBufferBytes(
     const __global uchar* pSrc,
@@ -218,9 +224,9 @@ __kernel void CopyBufferToImage3dBytes(__global uchar *src,
                                        int srcOffset,
                                        int4 dstOffset,
                                        uint2 Pitch) {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
-    const int z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -233,9 +239,9 @@ __kernel void CopyBufferToImage3d2Bytes(__global uchar *src,
                                         int srcOffset,
                                         int4 dstOffset,
                                         uint2 Pitch) {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
-    const int z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -259,9 +265,9 @@ __kernel void CopyBufferToImage3d4Bytes(__global uchar *src,
                                         int srcOffset,
                                         int4 dstOffset,
                                         uint2 Pitch) {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
-    const int z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -287,9 +293,9 @@ __kernel void CopyBufferToImage3d8Bytes(__global uchar *src,
                                         int srcOffset,
                                         int4 dstOffset,
                                         uint2 Pitch) {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
-    const int z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -322,9 +328,9 @@ __kernel void CopyBufferToImage3d16Bytes(__global uchar *src,
                                          int srcOffset,
                                          int4 dstOffset,
                                          uint2 Pitch) {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
-    const int z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -369,9 +375,9 @@ __kernel void CopyImage3dToBufferBytes(__read_only image3d_t input,
                                        int4 srcOffset,
                                        int dstOffset,
                                        uint2 Pitch) {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
-    const int z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     uint DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -385,9 +391,9 @@ __kernel void CopyImage3dToBuffer2Bytes(__read_only image3d_t input,
                                         int4 srcOffset,
                                         int dstOffset,
                                         uint2 Pitch) {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
-    const int z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     uint DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -408,9 +414,9 @@ __kernel void CopyImage3dToBuffer4Bytes(__read_only image3d_t input,
                                         int4 srcOffset,
                                         int dstOffset,
                                         uint2 Pitch) {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
-    const int z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     uint DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -433,9 +439,9 @@ __kernel void CopyImage3dToBuffer8Bytes(__read_only image3d_t input,
                                         int4 srcOffset,
                                         int dstOffset,
                                         uint2 Pitch) {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
-    const int z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     uint DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
@@ -463,9 +469,9 @@ __kernel void CopyImage3dToBuffer16Bytes(__read_only image3d_t input,
                                          int4 srcOffset,
                                          int dstOffset,
                                          uint2 Pitch) {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
-    const int z = get_global_id(2);
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
 
     const int4 srcCoord = (int4)(x, y, z, 0) + srcOffset;
     uint DstOffset = dstOffset + (y * Pitch.x) + (z * Pitch.y);
