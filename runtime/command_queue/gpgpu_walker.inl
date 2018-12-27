@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,6 +116,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
     *pMICmdLow = MI_STORE_REGISTER_MEM::sInit();
+    adjustMiStoreRegMemMode(pMICmdLow);
     pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
     pMICmdLow->setMemoryAddress(TimeStampAddress);
 }
@@ -138,6 +139,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
     *pMICmdLow = MI_STORE_REGISTER_MEM::sInit();
+    adjustMiStoreRegMemMode(pMICmdLow);
     pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
     pMICmdLow->setMemoryAddress(TimeStampAddress);
 }
@@ -381,6 +383,10 @@ void GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(OCLRT::LinearS
 template <typename GfxFamily>
 size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel) {
     return (size_t)0;
+}
+
+template <typename GfxFamily>
+void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxFamily> *storeCmd) {
 }
 
 template <typename GfxFamily>

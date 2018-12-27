@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,8 @@ namespace OCLRT {
 
 template <typename GfxFamily>
 using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
+template <typename GfxFamily>
+using MI_STORE_REG_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM_CMD;
 
 constexpr int32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
 
@@ -206,6 +208,8 @@ class GpgpuWalkerHelper {
                                  WALKER_TYPE<GfxFamily> *walkerCmd,
                                  const Kernel &kernel,
                                  const DispatchInfo &dispatchInfo);
+
+    static void adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxFamily> *storeCmd);
 };
 
 template <typename GfxFamily>

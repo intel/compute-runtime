@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -431,6 +431,7 @@ struct GENX {
     } MI_ATOMIC;
 
     using WALKER_TYPE = GPGPU_WALKER;
+    using MI_STORE_REGISTER_MEM_CMD = MI_STORE_REGISTER_MEM;
     static GPGPU_WALKER cmdInitGpgpuWalker;
     static INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static MEDIA_STATE_FLUSH cmdInitMediaStateFlush;
