@@ -16,7 +16,7 @@ typedef api_tests clEnqueueCopyBufferRectTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueCopyBufferRectTests, returnSuccess) {
+TEST_F(clEnqueueCopyBufferRectTests, GivenCorrectParametersWhenEnqueingCopyBufferRectThenSuccessIsReturned) {
     MockBuffer srcBuffer;
     MockBuffer dstBuffer;
     size_t srcOrigin[] = {0, 0, 0};
@@ -41,7 +41,7 @@ TEST_F(clEnqueueCopyBufferRectTests, returnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferRectTests, NullCommandQueue_returnsError) {
+TEST_F(clEnqueueCopyBufferRectTests, GivenNullCommandQueueWhenEnqueingCopyBufferRectThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueCopyBufferRect(
         nullptr, //command_queue
         nullptr, //srcBuffer
