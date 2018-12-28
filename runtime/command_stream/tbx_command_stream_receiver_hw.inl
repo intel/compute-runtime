@@ -177,13 +177,14 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
         csr = new TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment);
     }
 
-    // Open our stream
-    csr->stream->open(nullptr);
+    if (csr->hardwareContext == nullptr) {
+        // Open our stream
+        csr->stream->open(nullptr);
 
-    // Add the file header.
-    bool streamInitialized = csr->stream->init(AubMemDump::SteppingValues::A, csr->aubDeviceId);
-    csr->streamInitialized = streamInitialized;
-
+        // Add the file header.
+        bool streamInitialized = csr->stream->init(AubMemDump::SteppingValues::A, csr->aubDeviceId);
+        csr->streamInitialized = streamInitialized;
+    }
     return csr;
 }
 

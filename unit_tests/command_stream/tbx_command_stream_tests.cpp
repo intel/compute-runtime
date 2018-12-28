@@ -440,3 +440,16 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeCoherentIsC
 
     EXPECT_TRUE(mockHardwareContext->readMemoryCalled);
 }
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenHardwareContextIsCreatedThenTbxStreamInCsrIsNotInitialized) {
+    const HardwareInfo &hwInfo = *platformDevices[0];
+    MockAubManager *mockManager = new MockAubManager();
+    MockAubCenter *mockAubCenter = new MockAubCenter(&hwInfo, false, "");
+    mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+    auto tbxCsr = std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>>(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(
+        TbxCommandStreamReceiverHw<FamilyType>::create(hwInfo, false, executionEnvironment)));
+
+    EXPECT_FALSE(tbxCsr->streamInitialized);
+}
