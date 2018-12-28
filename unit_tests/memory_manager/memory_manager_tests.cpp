@@ -563,6 +563,22 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
     memoryManager.freeGraphicsMemory(imageAllocation);
 }
 
+TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocateGraphicsMemoryForImageIsCalledThenUseLocalMemoryIsNotSet) {
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+    cl_image_desc imgDesc = {};
+    imgDesc.image_width = 1;
+    imgDesc.image_height = 1;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+
+    executionEnvironment.initGmm(*platformDevices);
+    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
+    ASSERT_NE(nullptr, imageAllocation);
+    EXPECT_FALSE(imgInfo.useLocalMemory);
+    memoryManager.freeGraphicsMemory(imageAllocation);
+}
+
 TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphicsMemoryForImageFromHostPtrIsCalledThenGraphicsAllocationIsReturned) {
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);

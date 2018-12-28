@@ -220,6 +220,7 @@ struct ImageInfo {
     uint32_t baseMipLevel;
     uint32_t mipCount;
     bool preferRenderCompression;
+    bool useLocalMemory;
 };
 
 struct McsSurfaceInfo {
