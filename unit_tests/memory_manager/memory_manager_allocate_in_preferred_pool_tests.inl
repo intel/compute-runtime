@@ -354,6 +354,13 @@ TEST(MemoryManagerTest, givenSvmAllocationTypeWhenGetAllocationDataIsCalledThenZ
     EXPECT_TRUE(allocData.flags.allocateMemory);
 }
 
+TEST(MemoryManagerTest, givenSvmAllocationTypeWhenGetAllocationDataIsCalledThen64kbPagesAreAllowedAnd32BitAllocationIsDisallowed) {
+    AllocationData allocData;
+    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::SVM}, 0, nullptr);
+    EXPECT_TRUE(allocData.flags.allow64kbPages);
+    EXPECT_FALSE(allocData.flags.allow32Bit);
+}
+
 TEST(MemoryManagerTest, givenUndecidedTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::UNDECIDED}, 0, nullptr);

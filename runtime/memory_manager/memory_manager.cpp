@@ -205,9 +205,16 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
-    case GraphicsAllocation::AllocationType::SVM:
         allow64KbPages = true;
         allow32Bit = true;
+        break;
+    default:
+        break;
+    }
+
+    switch (properties.allocationType) {
+    case GraphicsAllocation::AllocationType::SVM:
+        allow64KbPages = true;
         break;
     default:
         break;
