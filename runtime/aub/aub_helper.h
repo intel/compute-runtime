@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ class AubHelper : public NonCopyableOrMovableClass {
     static uint64_t getPTEntryBits(uint64_t pdEntryBits);
     static void checkPTEAddress(uint64_t address);
     static uint32_t getMemType(uint32_t addressSpace);
-    static uint32_t getMemBankSizeInGigabytes();
+    static uint64_t getMemBankSize();
     static uint32_t getDevicesCount(const HardwareInfo *pHwInfo);
 
     virtual int getDataHintForPml4Entry() const = 0;

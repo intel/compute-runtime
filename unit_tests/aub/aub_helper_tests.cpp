@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
+#include "runtime/helpers/basic_math.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
@@ -45,6 +46,11 @@ TEST(AubHelper, WhenCreateMultipleDevicesIsSetThenGetDevicesCountReturnedCorrect
     DebugManager.flags.CreateMultipleDevices.set(0);
     devicesCount = AubHelper::getDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
+}
+
+TEST(AubHelper, WhenGetMemBankSizeIsCalledThenItReturnsCorrectValue) {
+    auto memBankSize = AubHelper::getMemBankSize();
+    EXPECT_EQ(memBankSize, 2 * GB);
 }
 
 typedef Test<DeviceFixture> AubHelperHwTest;

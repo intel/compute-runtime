@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,8 +14,8 @@ namespace OCLRT {
 AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName) {
     if (DebugManager.flags.UseAubStream.get()) {
         auto devicesCount = AubHelper::getDevicesCount(pHwInfo);
-        auto memoryBankSizeInGB = AubHelper::getMemBankSizeInGigabytes();
-        aubManager.reset(createAubManager(pHwInfo->pPlatform->eRenderCoreFamily, devicesCount, memoryBankSizeInGB, localMemoryEnabled, pHwInfo->capabilityTable.aubDeviceId, aubFileName));
+        auto memoryBankSize = AubHelper::getMemBankSize();
+        aubManager.reset(createAubManager(pHwInfo->pPlatform->eRenderCoreFamily, devicesCount, memoryBankSize, localMemoryEnabled, aubFileName));
     }
     addressMapper = std::make_unique<AddressMapper>();
     streamProvider = std::make_unique<AubFileStreamProvider>();
