@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ struct clEnqueueCopyBufferToImageTests : public api_fixture,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clEnqueueCopyBufferToImageTests, invalidCmdQueue) {
+TEST_F(clEnqueueCopyBufferToImageTests, GivenInvalidCmdQueueWhenCopyingBufferToImageThenInvalidCommandQueueErrorIsReturned) {
     size_t dstOrigin[] = {0, 0, 0};
     size_t region[] = {10, 10, 0};
 
@@ -64,7 +64,7 @@ TEST_F(clEnqueueCopyBufferToImageTests, invalidCmdQueue) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferToImageTests, invalidMemObject) {
+TEST_F(clEnqueueCopyBufferToImageTests, GivenInvalidSrcBufferWhenCopyingBufferToImageThenInvalidMemObjectErrorIsReturned) {
     size_t dstOrigin[] = {0, 0, 0};
     size_t region[] = {10, 10, 0};
 
@@ -82,7 +82,7 @@ TEST_F(clEnqueueCopyBufferToImageTests, invalidMemObject) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferToImageTests, success) {
+TEST_F(clEnqueueCopyBufferToImageTests, GivenValidParametersWhenCopyingBufferToImageThenSuccessIsReturned) {
 
     imageFormat.image_channel_order = CL_RGBA;
     auto dstImage = clCreateImage(
@@ -114,9 +114,9 @@ TEST_F(clEnqueueCopyBufferToImageTests, success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-typedef clEnqueueCopyBufferToImageTests clEnqueueCopyBufferToImageYUV_;
+typedef clEnqueueCopyBufferToImageTests clEnqueueCopyBufferToImageYUV;
 
-TEST_F(clEnqueueCopyBufferToImageYUV_, returnSuccess) {
+TEST_F(clEnqueueCopyBufferToImageYUV, GivenValidYuvDstImageWhenCopyingBufferToImageThenSuccessIsReturned) {
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
     auto dstImage = clCreateImage(
         pContext,
@@ -145,7 +145,7 @@ TEST_F(clEnqueueCopyBufferToImageYUV_, returnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferToImageYUV_, invalidOrigin) {
+TEST_F(clEnqueueCopyBufferToImageYUV, GivenInvalidOriginAndYuvDstImageWhenCopyingBufferToImageThenInvalidValueErrorIsReturned) {
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
     auto dstImage = clCreateImage(
         pContext,
@@ -174,7 +174,7 @@ TEST_F(clEnqueueCopyBufferToImageYUV_, invalidOrigin) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyBufferToImageYUV_, invalidRegion) {
+TEST_F(clEnqueueCopyBufferToImageYUV, GivenInvalidRegionAndValidYuvDstImageWhenCopyingBufferToImageThenInvalidValueErrorIsReturned) {
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
     auto dstImage = clCreateImage(
         pContext,
