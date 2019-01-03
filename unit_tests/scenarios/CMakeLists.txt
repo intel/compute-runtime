@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,3 +10,4 @@ set(IGDRCL_SRCS_tests_scenarios
   ${CMAKE_CURRENT_SOURCE_DIR}/blocked_enqueue_with_callback_scenario_tests.cpp
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_scenarios})
+add_subdirectories()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -325,30 +325,6 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
 
     EXPECT_EQ(CacheSettings::l3CacheOn, csr.latestSentStatelessMocsConfig);
     EXPECT_FALSE(csr.disableL3Cache);
-}
-
-HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenReadBufferIsCalledThenHostGraphicsAllocationHasCorrectOffset) {
-    void *ptr = (void *)0x1039;
-
-    cl_int retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
-                                             CL_FALSE,
-                                             0,
-                                             MemoryConstants::cacheLineSize,
-                                             ptr,
-                                             0,
-                                             nullptr,
-                                             nullptr);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    auto allocation = csr.getTemporaryAllocations().peekHead();
-    while (allocation && allocation->getUnderlyingBuffer() != alignDown(ptr, 4)) {
-        allocation = allocation->next;
-    }
-
-    ASSERT_NE(allocation, nullptr);
-    EXPECT_EQ((void *)allocation->getGpuAddressToPatch(), ptr);
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelNotIncreased) {

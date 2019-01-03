@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -433,28 +433,4 @@ HWTEST_F(NegativeFailAllocationTest, givenEnqueueWriteBufferWhenHostPtrAllocatio
                                        nullptr);
 
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
-}
-
-HWTEST_F(EnqueueWriteBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenWriteBufferIsCalledThenHostGraphicsAllocationHasCorrectOffset) {
-    void *ptr = (void *)0x1039;
-
-    cl_int retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
-                                              CL_FALSE,
-                                              0,
-                                              MemoryConstants::cacheLineSize,
-                                              ptr,
-                                              0,
-                                              nullptr,
-                                              nullptr);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    auto allocation = csr.getTemporaryAllocations().peekHead();
-    while (allocation && allocation->getUnderlyingBuffer() != alignDown(ptr, 4)) {
-        allocation = allocation->next;
-    }
-
-    ASSERT_NE(allocation, nullptr);
-    EXPECT_EQ((void *)allocation->getGpuAddressToPatch(), ptr);
 }

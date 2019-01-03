@@ -1345,6 +1345,29 @@ HWTEST_F(BufferSetSurfaceTests, givenNonRenderCompressedGmmResourceWhenSurfaceSt
     EXPECT_TRUE(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT == surfaceState.getCoherencyType());
 }
 
+HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgrammedThenBaseAddressAndLengthAreAlignedToDword) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+
+    RENDER_SURFACE_STATE surfaceState = {};
+    MockContext context;
+    void *svmPtr = reinterpret_cast<void *>(0x1005);
+
+    Buffer::setSurfaceState(device.get(),
+                            &surfaceState,
+                            5,
+                            svmPtr,
+                            nullptr,
+                            0);
+
+    EXPECT_EQ(0x1004u, surfaceState.getSurfaceBaseAddress());
+    SURFACE_STATE_BUFFER_LENGTH length = {};
+    length.SurfaceState.Width = surfaceState.getWidth() - 1;
+    length.SurfaceState.Height = surfaceState.getHeight() - 1;
+    length.SurfaceState.Depth = surfaceState.getDepth() - 1;
+    EXPECT_EQ(alignUp(5u, 4u), length.Length + 1);
+}
+
 struct BufferUnmapTest : public DeviceFixture, public ::testing::Test {
     void SetUp() override {
         DeviceFixture::SetUp();

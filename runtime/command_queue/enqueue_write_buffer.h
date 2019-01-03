@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,7 +97,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
         srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
     }
 
-    HostPtrSurface hostPtrSurf(alignedSrcPtr, size + srcPtrOffset, true);
+    HostPtrSurface hostPtrSurf(srcPtr, size, true);
     MemObjSurface bufferSurf(buffer);
     Surface *surfaces[] = {&bufferSurf, &hostPtrSurf};
 
@@ -106,8 +106,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
         if (!status) {
             return CL_OUT_OF_RESOURCES;
         }
-
-        hostPtrSurf.getAllocation()->allocationOffset += srcPtrOffset;
     }
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;

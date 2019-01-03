@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,15 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode) {
 
     auto gmmHelper = executionEnvironment->getGmmHelper();
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
-    auto surfaceSize = alignUp(getSize(), 4);
+
+    // The graphics allocation for Host Ptr surface will be created in makeResident call and GPU address is expected to be the same as CPU address
+    auto bufferAddress = (getGraphicsAllocation() != nullptr) ? getGraphicsAllocation()->getGpuAddress() : reinterpret_cast<uint64_t>(getHostPtr());
+    bufferAddress += this->offset;
+
+    auto bufferAddressAligned = alignDown(bufferAddress, 4);
+    auto bufferOffset = ptrDiff(bufferAddress, bufferAddressAligned);
+
+    auto surfaceSize = alignUp(getSize() + bufferOffset, 4);
 
     SURFACE_STATE_BUFFER_LENGTH Length = {0};
     Length.Length = static_cast<uint32_t>(surfaceSize - 1);
@@ -41,10 +49,6 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode) {
     surfaceState->setWidth(Length.SurfaceState.Width + 1);
     surfaceState->setHeight(Length.SurfaceState.Height + 1);
     surfaceState->setDepth(Length.SurfaceState.Depth + 1);
-
-    // The graphics allocation for Host Ptr surface will be created in makeResident call and GPU address is expected to be the same as CPU address
-    auto bufferAddress = (getGraphicsAllocation() != nullptr) ? getGraphicsAllocation()->getGpuAddress() : reinterpret_cast<uint64_t>(getHostPtr());
-    bufferAddress += this->offset;
 
     auto bufferSize = (getGraphicsAllocation() != nullptr) ? getGraphicsAllocation()->getUnderlyingBufferSize() : getSize();
 
@@ -67,7 +71,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode) {
         surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
 
-    surfaceState->setSurfaceBaseAddress(bufferAddress);
+    surfaceState->setSurfaceBaseAddress(bufferAddressAligned);
 
     Gmm *gmm = graphicsAllocation ? graphicsAllocation->gmm : nullptr;
 
