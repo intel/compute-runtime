@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "runtime/sampler/sampler.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -177,12 +178,14 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsBlockedThenSSHSiz
             true);
         ASSERT_NE(nullptr, blockedCommandsData);
 
-        size_t minRequiredSize = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
+        size_t minRequiredSize = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo) + UnitTestHelper<FamilyType>::getDefaultSshUsage();
         size_t minRequiredSizeForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*pKernel);
 
         size_t sshUsed = blockedCommandsData->ssh->getUsed();
 
-        size_t expectedSizeSSH = pKernel->getNumberOfBindingTableStates() * sizeof(RENDER_SURFACE_STATE) + pKernel->getKernelInfo().patchInfo.bindingTableState->Count * sizeof(BINDING_TABLE_STATE);
+        size_t expectedSizeSSH = pKernel->getNumberOfBindingTableStates() * sizeof(RENDER_SURFACE_STATE) +
+                                 pKernel->getKernelInfo().patchInfo.bindingTableState->Count * sizeof(BINDING_TABLE_STATE) +
+                                 UnitTestHelper<FamilyType>::getDefaultSshUsage();
 
         if ((pKernel->requiresSshForBuffers()) || (pKernel->getKernelInfo().patchInfo.imageMemObjKernelArgs.size() > 0)) {
             EXPECT_EQ(expectedSizeSSH, sshUsed);
@@ -343,9 +346,10 @@ HWTEST_F(MockParentKernelDispatch, GivenUsedSSHHeapWhenParentKernelIsDispatchedT
 
         auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 100);
 
-        ssh.getSpace(20);
-
-        EXPECT_EQ(20u, ssh.getUsed());
+        uint32_t testSshUse = 20u;
+        uint32_t expectedSshUse = testSshUse + UnitTestHelper<FamilyType>::getDefaultSshUsage();
+        ssh.getSpace(testSshUse);
+        EXPECT_EQ(expectedSshUse, ssh.getUsed());
 
         // Assuming parent is not using SSH, this is becuase storing allocation on reuse list and allocating
         // new one by obtaining from reuse list returns the same allocation and heap buffer does not differ
@@ -368,7 +372,7 @@ HWTEST_F(MockParentKernelDispatch, GivenUsedSSHHeapWhenParentKernelIsDispatchedT
             pDevice->getPreemptionMode(),
             false);
 
-        EXPECT_EQ(0u, ssh.getUsed());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::getDefaultSshUsage(), ssh.getUsed());
 
         delete mockParentKernel;
     }
@@ -384,8 +388,8 @@ HWTEST_F(MockParentKernelDispatch, GivenNotUsedSSHHeapWhenParentKernelIsDispatch
         const size_t workItems[3] = {1, 1, 1};
 
         auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 100);
-
-        EXPECT_EQ(0u, ssh.getUsed());
+        auto defaultSshUsage = UnitTestHelper<FamilyType>::getDefaultSshUsage();
+        EXPECT_EQ(defaultSshUsage, ssh.getUsed());
 
         auto *bufferMemory = ssh.getCpuBase();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -419,13 +420,14 @@ TEST_P(CommandQueueIndirectHeapTest, givenIndirectObjectHeapWhenItIsQueriedForIn
     }
 }
 
-TEST_P(CommandQueueIndirectHeapTest, IndirectHeapContainsAtLeast64KB) {
+HWTEST_P(CommandQueueIndirectHeapTest, IndirectHeapContainsAtLeast64KB) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     CommandQueue cmdQ(context.get(), pDevice, props);
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), sizeof(uint32_t));
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
-        EXPECT_EQ(cmdQ.getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize, indirectHeap.getAvailableSpace());
+        size_t expectedSshUse = cmdQ.getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize - UnitTestHelper<FamilyType>::getDefaultSshUsage();
+        EXPECT_EQ(expectedSshUse, indirectHeap.getAvailableSpace());
     } else {
         EXPECT_EQ(64 * KB, indirectHeap.getAvailableSpace());
     }

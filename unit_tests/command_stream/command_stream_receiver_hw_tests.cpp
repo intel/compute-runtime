@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -247,6 +248,5 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddre
 
     uint64_t expectedScratchAddress = 0xAAABBBCCCDDD000ull;
     scratchController->getScratchSpaceAllocation()->setCpuPtrAndGpuAddress(scratchController->getScratchSpaceAllocation()->getUnderlyingBuffer(), expectedScratchAddress);
-
-    EXPECT_EQ(expectedScratchAddress - MemoryConstants::pageSize, scratchController->calculateNewGSH());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateGshAddressForScratchSpace((expectedScratchAddress - MemoryConstants::pageSize), scratchController->calculateNewGSH()));
 }

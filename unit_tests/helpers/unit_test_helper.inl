@@ -34,4 +34,14 @@ template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isExpectMemoryNotEqualSupported() {
     return false;
 }
+
+template <typename GfxFamily>
+uint32_t UnitTestHelper<GfxFamily>::getDefaultSshUsage() {
+    return 0;
+}
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::evaluateGshAddressForScratchSpace(uint64_t usedScratchGpuAddress, uint64_t retrievedGshAddress) {
+    return usedScratchGpuAddress == retrievedGshAddress;
+}
 } // namespace OCLRT
