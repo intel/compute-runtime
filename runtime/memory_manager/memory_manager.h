@@ -259,6 +259,7 @@ class MemoryManager {
     std::unique_ptr<HostPtrManager> hostPtrManager;
     uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
     uint32_t defaultEngineIndex = 0;
+    std::unique_ptr<DeferredDeleter> multiContextResourceDestructor;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

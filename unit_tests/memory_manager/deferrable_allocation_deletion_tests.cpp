@@ -11,9 +11,11 @@
 #include "runtime/memory_manager/deferrable_allocation_deletion.h"
 #include "runtime/os_interface/os_context.h"
 
+#include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
-#include "gtest/gtest.h"
+#include "test.h"
 
 using namespace OCLRT;
 
@@ -38,7 +40,7 @@ struct DeferrableAllocationDeletionTest : ::testing::Test {
         auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
         memoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        device1.reset(Device::create<Device>(nullptr, executionEnvironment.release(), 0u));
+        device1.reset(Device::create<MockDevice>(nullptr, executionEnvironment.release(), 0u));
         hwTag = device1->getDefaultEngine().commandStreamReceiver->getTagAddress();
         device1ContextId = device1->getDefaultEngine().osContext->getContextId();
         asyncDeleter = std::make_unique<DeferredDeleterPublic>();
@@ -50,7 +52,7 @@ struct DeferrableAllocationDeletionTest : ::testing::Test {
     }
     std::unique_ptr<DeferredDeleterPublic> asyncDeleter;
     MockMemoryManager *memoryManager = nullptr;
-    std::unique_ptr<Device> device1;
+    std::unique_ptr<MockDevice> device1;
     uint32_t device1ContextId = 0;
     volatile uint32_t *hwTag = nullptr;
 };
@@ -76,8 +78,8 @@ TEST_F(DeferrableAllocationDeletionTest, givenDeferrableAllocationWhenApplyThenW
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryCalled);
 }
 
-TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByTwoOsContextsWhenApplyDeletionThenWaitForBothContexts) {
-    std::unique_ptr<Device> device2(Device::create<Device>(nullptr, device1->getExecutionEnvironment(), 1u));
+HWTEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByTwoOsContextsWhenApplyDeletionThenWaitForBothContextsAndFlushNotReadyCsr) {
+    std::unique_ptr<MockDevice> device2(Device::create<MockDevice>(nullptr, device1->getExecutionEnvironment(), 1u));
     auto device2ContextId = device2->getDefaultEngine().osContext->getContextId();
     EXPECT_EQ(gpgpuEngineInstances.size() * 2, memoryManager->getOsContextCount());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -88,10 +90,14 @@ TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByTwoOsContextsWhenA
     EXPECT_TRUE(allocation->isUsedByOsContext(device1ContextId));
     EXPECT_TRUE(allocation->isUsedByOsContext(device2ContextId));
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
+    EXPECT_FALSE(device1->getUltCommandStreamReceiver<FamilyType>().flushBatchedSubmissionsCalled);
+    EXPECT_FALSE(device2->getUltCommandStreamReceiver<FamilyType>().flushBatchedSubmissionsCalled);
     asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation));
     while (allocation->isUsedByOsContext(device2ContextId)) // wait for second context completion signal
         std::this_thread::yield();
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
+    EXPECT_TRUE(device1->getUltCommandStreamReceiver<FamilyType>().flushBatchedSubmissionsCalled);
+    EXPECT_FALSE(device2->getUltCommandStreamReceiver<FamilyType>().flushBatchedSubmissionsCalled);
     asyncDeleter->allowExit = true;
     *hwTag = 1u;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
     using MemoryManager::AllocationData;
     using MemoryManager::getAllocationData;
+    using MemoryManager::multiContextResourceDestructor;
     using MemoryManager::registeredOsContexts;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
     using OsAgnosticMemoryManager::OsAgnosticMemoryManager;

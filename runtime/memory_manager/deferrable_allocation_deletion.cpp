@@ -24,6 +24,8 @@ bool DeferrableAllocationDeletion::apply() {
                     auto currentContextTaskCount = *csr->getTagAddress();
                     if (graphicsAllocation.getTaskCount(contextId) <= currentContextTaskCount) {
                         graphicsAllocation.releaseUsageInOsContext(contextId);
+                    } else {
+                        csr->flushBatchedSubmissions();
                     }
                 }
             }

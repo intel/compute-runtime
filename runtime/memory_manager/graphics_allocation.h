@@ -134,6 +134,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool isResidencyTaskCountBelow(uint32_t taskCount, uint32_t contextId) { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
 
     bool isMultiOsContextCapable() const { return multiOsContextCapable; }
+    bool isUsedByManyOsContexts() const { return registeredContextsNum > 1u; }
 
   protected:
     constexpr static uint32_t objectNotResident = (uint32_t)-1;

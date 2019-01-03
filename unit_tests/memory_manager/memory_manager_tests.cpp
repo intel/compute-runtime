@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1398,8 +1398,60 @@ TEST(GraphicsAllocation, givenCpuPointerBasedConstructorWhenGraphicsAllocationIs
 
 using GraphicsAllocationTests = ::testing::Test;
 
-HWTEST_F(GraphicsAllocationTests, givenAllocationUsedByNonDefaultCsrWhenCheckingUsageBeforeDestroyThenStoreIt) {
+HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultCsrWhenCheckingUsageBeforeDestroyThenStoreItAsTemporaryAllocation) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto nonDefaultOsContext = device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).osContext;
+    auto nonDefaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).commandStreamReceiver);
+
+    auto memoryManager = device->getExecutionEnvironment()->memoryManager.get();
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+
+    nonDefaultCsr->taskCount = *nonDefaultCsr->getTagAddress() + 1;
+    nonDefaultCsr->latestFlushedTaskCount = *nonDefaultCsr->getTagAddress() + 1;
+    graphicsAllocation->updateTaskCount(*nonDefaultCsr->getTagAddress() + 1, nonDefaultOsContext->getContextId());
+
+    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
+    EXPECT_NE(nullptr, nonDefaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
+    (*nonDefaultCsr->getTagAddress())++;
+    // no need to call freeGraphicsAllocation
+}
+
+HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultDeviceWhenCheckingUsageBeforeDestroyThenStoreItAsTemporaryAllocation) {
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.incRefInternal();
+    auto defaultDevice = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], &executionEnvironment, 0u));
+    auto nonDefaultDevice = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], &executionEnvironment, 1u));
+    auto engine = nonDefaultDevice->getDefaultEngine();
+    auto commandStreamReceiver = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+    auto osContextId = engine.osContext->getContextId();
+    auto memoryManager = executionEnvironment.memoryManager.get();
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto notReadyTaskCount = *commandStreamReceiver->getTagAddress() + 1;
+
+    EXPECT_NE(defaultDevice->getDeviceIndex(), nonDefaultDevice->getDeviceIndex());
+    EXPECT_EQ(2u, memoryManager->getCommandStreamReceivers().size());
+
+    commandStreamReceiver->taskCount = notReadyTaskCount;
+    commandStreamReceiver->latestFlushedTaskCount = notReadyTaskCount;
+    graphicsAllocation->updateTaskCount(notReadyTaskCount, osContextId);
+
+    EXPECT_TRUE(commandStreamReceiver->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
+    EXPECT_FALSE(commandStreamReceiver->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    (*commandStreamReceiver->getTagAddress())++;
+    // no need to call freeGraphicsAllocation
+}
+
+HWTEST_F(GraphicsAllocationTests, givenAllocationUsedByManyOsContextsWhenCheckingUsageBeforeDestroyThenMultiContextDestructorIsUsedForWaitingForAllOsContexts) {
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.incRefInternal();
+    auto memoryManager = new MockMemoryManager(false, false, executionEnvironment);
+    executionEnvironment.memoryManager.reset(memoryManager);
+    auto multiContextDestructor = new MockDeferredDeleter();
+    multiContextDestructor->expectDrainBlockingValue(false);
+    memoryManager->multiContextResourceDestructor.reset(multiContextDestructor);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(platformDevices[0], &executionEnvironment, 0u));
     auto nonDefaultOsContext = device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).osContext;
     auto nonDefaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).commandStreamReceiver);
     auto defaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
@@ -1408,19 +1460,19 @@ HWTEST_F(GraphicsAllocationTests, givenAllocationUsedByNonDefaultCsrWhenChecking
     EXPECT_FALSE(defaultOsContext->getEngineType().id == nonDefaultOsContext->getEngineType().id &&
                  defaultOsContext->getEngineType().type == nonDefaultOsContext->getEngineType().type);
 
-    auto memoryManager = device->getExecutionEnvironment()->memoryManager.get();
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
-    nonDefaultCsr->taskCount = *nonDefaultCsr->getTagAddress() + 1;
-    nonDefaultCsr->latestFlushedTaskCount = *nonDefaultCsr->getTagAddress() + 1;
-    graphicsAllocation->updateTaskCount(*nonDefaultCsr->getTagAddress() + 1, nonDefaultOsContext->getContextId());
+    nonDefaultCsr->taskCount = *nonDefaultCsr->getTagAddress();
+    nonDefaultCsr->latestFlushedTaskCount = *nonDefaultCsr->getTagAddress();
+    graphicsAllocation->updateTaskCount(*nonDefaultCsr->getTagAddress(), nonDefaultOsContext->getContextId());
     graphicsAllocation->updateTaskCount(0, defaultOsContext->getContextId()); // used and ready
 
+    EXPECT_TRUE(graphicsAllocation->isUsedByManyOsContexts());
+
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
-    EXPECT_NE(nullptr, nonDefaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
-    EXPECT_EQ(nullptr, defaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
-    (*nonDefaultCsr->getTagAddress())++;
-    // no need to call freeGraphicsAllocation
+    EXPECT_EQ(1, multiContextDestructor->deferDeletionCalled);
+    EXPECT_TRUE(nonDefaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(defaultCsr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
 }
 
 TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocationIsCreatedThenGpuAddressHasCorrectValue) {
