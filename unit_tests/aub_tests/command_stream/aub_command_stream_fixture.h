@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_banks.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/tests_configuration.h"
@@ -62,6 +63,17 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
 
         auto aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
         aubCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
+    }
+
+    template <typename FamilyType>
+    void pollForCompletion() {
+        CommandStreamReceiver *csr = pCommandStreamReceiver;
+        if (testMode == TestMode::AubTestsWithTbx) {
+            csr = reinterpret_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR;
+        }
+
+        auto aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
+        aubCsr->pollForCompletion(csr->getOsContext().getEngineType());
     }
 
     GraphicsAllocation *createResidentAllocationAndStoreItInCsr(const void *address, size_t size) {

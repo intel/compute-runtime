@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -25,6 +10,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/mem_obj/buffer.h"
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "test.h"
@@ -105,6 +91,57 @@ HWTEST_P(AUBFillBuffer, simple) {
         AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, destMemoryRef, sizeRemaining);
     }
     delete destBuffer;
+}
+
+HWTEST_F(AUBFillBuffer, givenFillBufferWhenSeveralSubmissionsWithoutPollForCompletionBetweenThenTestConcurrentCS) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.AUBDumpConcurrentCS.set(true);
+
+    cl_float destMemory[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    auto pDestMemory = &destMemory[0];
+    MockContext context(&this->pCmdQ->getDevice());
+    auto retVal = CL_INVALID_VALUE;
+    std::unique_ptr<Buffer> destBuffer(Buffer::create(
+        &context,
+        CL_MEM_USE_HOST_PTR,
+        sizeof(destMemory),
+        pDestMemory,
+        retVal));
+    ASSERT_NE(nullptr, destBuffer);
+
+    float pattern[] = {1.0f};
+    size_t patternSize = sizeof(pattern);
+    size_t offset = 0;
+    size_t size = 2 * patternSize;
+    cl_uint numEventsInWaitList = 0;
+    cl_event *eventWaitList = nullptr;
+    cl_event *event = nullptr;
+    uint32_t numWrites = 4;
+
+    for (uint32_t id = 0; id < numWrites; id++) {
+        offset = id * size;
+        retVal = pCmdQ->enqueueFillBuffer(
+            destBuffer.get(),
+            pattern,
+            patternSize,
+            offset,
+            size,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+
+        pCmdQ->flush();
+    }
+
+    AUBCommandStreamFixture::pollForCompletion<FamilyType>();
+
+    pDestMemory = reinterpret_cast<decltype(pDestMemory)>((destBuffer->getGraphicsAllocation()->getGpuAddress()));
+    auto pEndMemory = ptrOffset(pDestMemory, numWrites * size);
+    while (pDestMemory < pEndMemory) {
+        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, pattern, patternSize);
+        pDestMemory = ptrOffset(pDestMemory, patternSize);
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(AUBFillBuffer_simple,
