@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,12 +90,12 @@ bool GLSharingFunctions::isOpenGlExtensionSupported(const char *pExtensionString
 bool GLSharingFunctions::isOpenGlSharingSupported() {
 
     const char *Vendor = reinterpret_cast<const char *>(glGetString(GL_VENDOR));
-    if ((Vendor == NULL) || (strcmp(Vendor, "Intel") != 0)) {
+    if ((Vendor == nullptr) || (strcmp(Vendor, "Intel") != 0)) {
         return false;
     }
 
     const char *Version = reinterpret_cast<const char *>(glGetString(GL_VERSION));
-    if (Version == NULL) {
+    if (Version == nullptr) {
         return false;
     }
 

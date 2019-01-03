@@ -5,4 +5,6 @@
  *
  */
 
-const char *realFunction();
+#include "mock_function.h"
+
+const char *realFunction() { return "value"; }

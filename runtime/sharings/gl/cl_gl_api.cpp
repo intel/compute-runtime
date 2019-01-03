@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/gl/gl_buffer.h"
+#include "runtime/sharings/gl/gl_sharing.h"
 #include "runtime/sharings/gl/gl_sync_event.h"
 #include "runtime/sharings/gl/gl_texture.h"
 #include "runtime/utilities/api_intercept.h"
@@ -297,10 +298,18 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
         return retVal;
     }
 
+    std::unique_ptr<GLSharingFunctions> glSharing(new GLSharingFunctions);
+    glSharing->initGLFunctions();
+    if (glSharing->isOpenGlSharingSupported() == false) {
+        retVal = CL_INVALID_CONTEXT;
+        return retVal;
+    }
+
     if (paramName == CL_DEVICES_FOR_GL_CONTEXT_KHR || paramName == CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR) {
         info.set<cl_device_id>(::platform()->getDevice(0));
         return retVal;
     }
+
     retVal = CL_INVALID_VALUE;
     return retVal;
 }

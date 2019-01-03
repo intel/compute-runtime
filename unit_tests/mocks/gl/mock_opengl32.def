@@ -20,5 +20,7 @@
 
 LIBRARY    "gdi32_mock"
 EXPORTS
+glGetString
 wglGetProcAddress
+glSetString
 mockLoader
