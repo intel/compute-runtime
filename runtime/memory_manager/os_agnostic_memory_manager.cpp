@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
 
     if (fakeBigAllocations && allocationData.size > bigAllocation) {
         memoryAllocation = new MemoryAllocation(nullptr, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), allocationData.size, counter,
-                                                MemoryPool::System4KBPages, this->getOsContextCount(), allocationData.flags.shareable);
+                                                MemoryPool::System4KBPages, this->getOsContextCount(), allocationData.flags.multiOsContextCapable);
         counter++;
         memoryAllocation->uncacheable = allocationData.flags.uncacheable;
         return memoryAllocation;
@@ -45,7 +45,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
     auto ptr = allocateSystemMemory(sizeAligned, allocationData.alignment ? alignUp(allocationData.alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize);
     if (ptr != nullptr) {
         memoryAllocation = new MemoryAllocation(ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.size, counter, MemoryPool::System4KBPages,
-                                                this->getOsContextCount(), allocationData.flags.shareable);
+                                                this->getOsContextCount(), allocationData.flags.multiOsContextCapable);
         if (!memoryAllocation) {
             alignedFreeWrapper(ptr);
             return nullptr;

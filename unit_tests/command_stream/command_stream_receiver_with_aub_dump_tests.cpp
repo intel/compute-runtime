@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         if (gfxAllocation.isResident(this->osContext->getContextId())) {
             makeNonResidentParameterization.wasCalled = true;
             makeNonResidentParameterization.receivedGfxAllocation = &gfxAllocation;
-            gfxAllocation.resetResidencyTaskCount(this->osContext->getContextId());
+            gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
         }
     }
 

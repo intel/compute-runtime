@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ cl_int GlobalMockSipProgram::processGenBinaryOnce() {
 }
 void GlobalMockSipProgram::resetAllocationState() {
     for (uint32_t index = 0u; index < maxOsContextCount; index++) {
-        this->kernelInfoArray[0]->kernelAllocation->resetResidencyTaskCount(index);
+        this->kernelInfoArray[0]->kernelAllocation->releaseResidencyInOsContext(index);
     }
     static_cast<MockGraphicsAllocation *>(this->kernelInfoArray[0]->kernelAllocation)->resetInspectionIds();
 }

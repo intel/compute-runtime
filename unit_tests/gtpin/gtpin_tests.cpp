@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1854,8 +1854,8 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     // This simulates enqueuing blocked kernels
     kernelExecQueue[0].isResourceResident = false;
     kernelExecQueue[1].isResourceResident = false;
-    pGfxAlloc0->resetResidencyTaskCount(csr.getOsContext().getContextId());
-    pGfxAlloc1->resetResidencyTaskCount(csr.getOsContext().getContextId());
+    pGfxAlloc0->releaseResidencyInOsContext(csr.getOsContext().getContextId());
+    pGfxAlloc1->releaseResidencyInOsContext(csr.getOsContext().getContextId());
     EXPECT_FALSE(pGfxAlloc0->isResident(csr.getOsContext().getContextId()));
     EXPECT_FALSE(pGfxAlloc1->isResident(csr.getOsContext().getContextId()));
     std::vector<Surface *> residencyVector;

@@ -746,7 +746,7 @@ template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isResident(this->osContext->getContextId())) {
         this->getEvictionAllocations().push_back(&gfxAllocation);
-        gfxAllocation.resetResidencyTaskCount(this->osContext->getContextId());
+        gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
     }
 }
 

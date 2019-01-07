@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,9 +71,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     GraphicsAllocation &operator=(const GraphicsAllocation &) = delete;
     GraphicsAllocation(const GraphicsAllocation &) = delete;
 
-    GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, uint32_t osContextCount, bool isShareable);
+    GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, uint32_t osContextCount, bool multiOsContextCapable);
 
-    GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, uint32_t osContextCount, bool isShareable);
+    GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, uint32_t osContextCount, bool multiOsContextCapable);
 
     void *getUnderlyingBuffer() const { return cpuPtr; }
     void setCpuPtrAndGpuAddress(void *cpuPtr, uint64_t gpuAddress) {
@@ -121,19 +121,19 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         return memoryPool;
     }
     bool isUsed() const { return registeredContextsNum > 0; }
-    bool isUsedByContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
+    bool isUsedByOsContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
     void updateTaskCount(uint32_t newTaskCount, uint32_t contextId);
     uint32_t getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
-    void resetTaskCount(uint32_t contextId) { updateTaskCount(objectNotUsed, contextId); }
+    void releaseUsageInOsContext(uint32_t contextId) { updateTaskCount(objectNotUsed, contextId); }
     uint32_t getInspectionId(uint32_t contextId) { return usageInfos[contextId].inspectionId; }
     void setInspectionId(uint32_t newInspectionId, uint32_t contextId) { usageInfos[contextId].inspectionId = newInspectionId; }
 
     void updateResidencyTaskCount(uint32_t newTaskCount, uint32_t contextId) { usageInfos[contextId].residencyTaskCount = newTaskCount; }
     uint32_t getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
-    void resetResidencyTaskCount(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }
+    void releaseResidencyInOsContext(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }
     bool isResidencyTaskCountBelow(uint32_t taskCount, uint32_t contextId) { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
 
-    bool isShareable() const { return shareable; }
+    bool isMultiOsContextCapable() const { return multiOsContextCapable; }
 
   protected:
     constexpr static uint32_t objectNotResident = (uint32_t)-1;
@@ -162,6 +162,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool memObjectsAllocationWithWritableFlags = false;
     std::vector<UsageInfo> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};
-    bool shareable = false;
+    bool multiOsContextCapable = false;
 };
 } // namespace OCLRT

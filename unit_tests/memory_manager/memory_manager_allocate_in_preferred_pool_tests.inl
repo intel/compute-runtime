@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -385,30 +385,30 @@ TEST(MemoryManagerTest, givenTimestampTagBufferTypeWhenGetAllocationDataIsCalled
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
 
-TEST(MemoryManagerTest, givenAllocationPropertiesWithShareableFlagEnabledWhenAllocateMemoryThenAllocationIsShareable) {
+TEST(MemoryManagerTest, givenAllocationPropertiesWithMultiOsContextCapableFlagEnabledWhenAllocateMemoryThenAllocationIsMultiOsContextCapable) {
     MockMemoryManager memoryManager(false, false);
     AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER};
-    properties.flags.shareable = true;
+    properties.flags.multiOsContextCapable = true;
 
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, properties, 0, nullptr);
-    EXPECT_TRUE(allocData.flags.shareable);
+    EXPECT_TRUE(allocData.flags.multiOsContextCapable);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties);
-    EXPECT_TRUE(allocation->isShareable());
+    EXPECT_TRUE(allocation->isMultiOsContextCapable());
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenAllocationPropertiesWithShareableFlagDisabledWhenAllocateMemoryThenAllocationIsNotShareable) {
+TEST(MemoryManagerTest, givenAllocationPropertiesWithMultiOsContextCapableFlagDisabledWhenAllocateMemoryThenAllocationIsNotMultiOsContextCapable) {
     MockMemoryManager memoryManager(false, false);
     AllocationProperties properties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER};
-    properties.flags.shareable = false;
+    properties.flags.multiOsContextCapable = false;
 
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, properties, 0, nullptr);
-    EXPECT_FALSE(allocData.flags.shareable);
+    EXPECT_FALSE(allocData.flags.multiOsContextCapable);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties);
-    EXPECT_FALSE(allocation->isShareable());
+    EXPECT_FALSE(allocation->isMultiOsContextCapable());
     memoryManager.freeGraphicsMemory(allocation);
 }

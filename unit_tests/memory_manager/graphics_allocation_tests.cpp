@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenResetResidencyTa
     graphicsAllocation.updateResidencyTaskCount(1u, 0u);
     EXPECT_TRUE(graphicsAllocation.isResident(0u));
 
-    graphicsAllocation.resetResidencyTaskCount(0u);
+    graphicsAllocation.releaseResidencyInOsContext(0u);
     EXPECT_FALSE(graphicsAllocation.isResident(0u));
 }
 

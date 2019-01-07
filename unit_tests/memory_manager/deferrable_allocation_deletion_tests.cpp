@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ TEST_F(DeferrableAllocationDeletionTest, givenDeferrableAllocationWhenApplyThenW
         std::this_thread::yield();
 
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
-    EXPECT_TRUE(allocation->isUsedByContext(device1ContextId));
+    EXPECT_TRUE(allocation->isUsedByOsContext(device1ContextId));
 
     // let async thread exit
     asyncDeleter->allowExit = true;
@@ -85,11 +85,11 @@ TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByTwoOsContextsWhenA
     *device2->getDefaultEngine().commandStreamReceiver->getTagAddress() = 1u;
     allocation->updateTaskCount(1u, device1ContextId);
     allocation->updateTaskCount(1u, device2ContextId);
-    EXPECT_TRUE(allocation->isUsedByContext(device1ContextId));
-    EXPECT_TRUE(allocation->isUsedByContext(device2ContextId));
+    EXPECT_TRUE(allocation->isUsedByOsContext(device1ContextId));
+    EXPECT_TRUE(allocation->isUsedByOsContext(device2ContextId));
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
     asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation));
-    while (allocation->isUsedByContext(device2ContextId)) // wait for second context completion signal
+    while (allocation->isUsedByOsContext(device2ContextId)) // wait for second context completion signal
         std::this_thread::yield();
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);
     asyncDeleter->allowExit = true;

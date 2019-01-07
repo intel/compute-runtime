@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,19 +16,19 @@ bool GraphicsAllocation::isL3Capable() {
     }
     return false;
 }
-GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, uint32_t osContextCount, bool shareable) : gpuBaseAddress(baseAddress),
-                                                                                                                                                            size(sizeIn),
-                                                                                                                                                            cpuPtr(cpuPtrIn),
-                                                                                                                                                            gpuAddress(gpuAddress),
-                                                                                                                                                            shareable(shareable) {
+GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, uint32_t osContextCount, bool multiOsContextCapable) : gpuBaseAddress(baseAddress),
+                                                                                                                                                                        size(sizeIn),
+                                                                                                                                                                        cpuPtr(cpuPtrIn),
+                                                                                                                                                                        gpuAddress(gpuAddress),
+                                                                                                                                                                        multiOsContextCapable(multiOsContextCapable) {
     usageInfos.resize(maxOsContextCount);
 }
 
-GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, uint32_t osContextCount, bool shareable) : size(sizeIn),
-                                                                                                                                          cpuPtr(cpuPtrIn),
-                                                                                                                                          gpuAddress(castToUint64(cpuPtrIn)),
-                                                                                                                                          sharedHandle(sharedHandleIn),
-                                                                                                                                          shareable(shareable) {
+GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, uint32_t osContextCount, bool multiOsContextCapable) : size(sizeIn),
+                                                                                                                                                      cpuPtr(cpuPtrIn),
+                                                                                                                                                      gpuAddress(castToUint64(cpuPtrIn)),
+                                                                                                                                                      sharedHandle(sharedHandleIn),
+                                                                                                                                                      multiOsContextCapable(multiOsContextCapable) {
     usageInfos.resize(maxOsContextCount);
 }
 GraphicsAllocation::~GraphicsAllocation() = default;

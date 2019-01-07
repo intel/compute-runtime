@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,13 +17,13 @@ struct OsHandle {
 
 class DrmAllocation : public GraphicsAllocation {
   public:
-    DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn, MemoryPool::Type pool, uint32_t osContextsCount, bool isShareable) : GraphicsAllocation(ptrIn, castToUint64(ptrIn), 0llu, sizeIn, osContextsCount, isShareable), bo(bo) {
+    DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn, MemoryPool::Type pool, uint32_t osContextsCount, bool multiOsContextCapable) : GraphicsAllocation(ptrIn, castToUint64(ptrIn), 0llu, sizeIn, osContextsCount, multiOsContextCapable), bo(bo) {
         this->memoryPool = pool;
     }
-    DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, uint32_t osContextsCount, bool isShareable) : GraphicsAllocation(ptrIn, sizeIn, sharedHandle, osContextsCount, isShareable), bo(bo) {
+    DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, uint32_t osContextsCount, bool multiOsContextCapable) : GraphicsAllocation(ptrIn, sizeIn, sharedHandle, osContextsCount, multiOsContextCapable), bo(bo) {
         this->memoryPool = pool;
     }
-    DrmAllocation(BufferObject *bo, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool, uint32_t osContextsCount, bool isShareable) : GraphicsAllocation(ptrIn, gpuAddress, 0, sizeIn, osContextsCount, isShareable), bo(bo) {
+    DrmAllocation(BufferObject *bo, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool, uint32_t osContextsCount, bool multiOsContextCapable) : GraphicsAllocation(ptrIn, gpuAddress, 0, sizeIn, osContextsCount, multiOsContextCapable), bo(bo) {
         this->memoryPool = pool;
     }
 

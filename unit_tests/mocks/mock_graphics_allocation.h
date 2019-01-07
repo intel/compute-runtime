@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ class MockGraphicsAllocation : public GraphicsAllocation {
     using GraphicsAllocation::usageInfos;
 
     MockGraphicsAllocation() : MockGraphicsAllocation(true) {}
-    MockGraphicsAllocation(bool shareable) : GraphicsAllocation(nullptr, 0u, 0, maxOsContextCount, shareable) {}
+    MockGraphicsAllocation(bool multiOsContextCapable) : GraphicsAllocation(nullptr, 0u, 0, maxOsContextCount, multiOsContextCapable) {}
     MockGraphicsAllocation(void *buffer, size_t sizeIn) : GraphicsAllocation(buffer, castToUint64(buffer), 0llu, sizeIn, maxOsContextCount, false) {
     }
 
