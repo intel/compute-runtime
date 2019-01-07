@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,7 +84,7 @@ TEST_F(TbxCommandStreamTests, DISABLED_flush) {
     pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
 }
 
-HWTEST_F(TbxCommandStreamTests, DISABLED_flushUntilTailRCSLargerThanSizeRCS) {
+HWTEST_F(TbxCommandStreamTests, DISABLED_flushUntilTailRingBufferLargerThanSizeRingBuffer) {
     char buffer[4096];
     memset(buffer, 0, 4096);
     LinearStream cs(buffer, 4096);
@@ -94,12 +94,12 @@ HWTEST_F(TbxCommandStreamTests, DISABLED_flushUntilTailRCSLargerThanSizeRCS) {
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), startOffset, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
-    auto size = engineInfo.sizeRCS;
-    engineInfo.sizeRCS = 64;
+    auto size = engineInfo.sizeRingBuffer;
+    engineInfo.sizeRingBuffer = 64;
     pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
     pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
     pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
-    engineInfo.sizeRCS = size;
+    engineInfo.sizeRingBuffer = size;
 }
 
 HWTEST_F(TbxCommandStreamTests, DISABLED_getCsTraits) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,6 @@
 #include "runtime/memory_manager/address_mapper.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/memory_manager/page_table.h"
-#include "third_party/aub_stream/headers/aub_manager.h"
-#include "third_party/aub_stream/headers/hardware_context.h"
-
-using namespace AubDump;
 
 namespace OCLRT {
 
@@ -38,6 +34,9 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContext;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::engineInfoTable;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::stream;
 
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
@@ -58,20 +57,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     ~TbxCommandStreamReceiverHw() override;
 
     void initializeEngine(size_t engineIndex);
-
-    AubManager *aubManager = nullptr;
-    std::unique_ptr<HardwareContext> hardwareContext;
-
-    struct EngineInfo {
-        void *pLRCA;
-        uint32_t ggttLRCA;
-        void *pGlobalHWStatusPage;
-        uint32_t ggttHWSP;
-        void *pRCS;
-        uint32_t ggttRCS;
-        size_t sizeRCS;
-        uint32_t tailRCS;
-    } engineInfoTable[EngineInstanceConstants::numAllEngineInstances] = {};
 
     MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
         return new TbxMemoryManager(enable64kbPages, enableLocalMemory, this->executionEnvironment);

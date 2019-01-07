@@ -15,9 +15,6 @@
 #include "runtime/memory_manager/page_table.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "third_party/aub_stream/headers/hardware_context.h"
-
-using namespace AubDump;
 
 namespace OCLRT {
 
@@ -33,6 +30,9 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContext;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::engineInfoTable;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::stream;
 
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
@@ -87,20 +87,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
         return new OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, true, this->executionEnvironment);
     }
 
-    AubManager *aubManager = nullptr;
-    std::unique_ptr<HardwareContext> hardwareContext;
     EngineType defaultEngineType;
-
-    struct EngineInfo {
-        void *pLRCA;
-        uint32_t ggttLRCA;
-        void *pGlobalHWStatusPage;
-        uint32_t ggttHWSP;
-        void *pRingBuffer;
-        uint32_t ggttRingBuffer;
-        size_t sizeRingBuffer;
-        uint32_t tailRingBuffer;
-    } engineInfoTable[EngineInstanceConstants::numAllEngineInstances] = {};
 
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;
     uint32_t aubDeviceId;
