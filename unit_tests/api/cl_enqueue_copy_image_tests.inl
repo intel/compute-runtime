@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ struct clEnqueueCopyImageTests : public api_fixture,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clEnqueueCopyImageTests, nullCommandQueueReturnsError) {
+TEST_F(clEnqueueCopyImageTests, GivenNullCommandQueueWhenCopyingImageThenInvalidCommandQueueErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
 
     retVal = clEnqueueCopyImage(
@@ -63,7 +63,7 @@ TEST_F(clEnqueueCopyImageTests, nullCommandQueueReturnsError) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueCopyImageTests, nullSrcBufferReturnsError) {
+TEST_F(clEnqueueCopyImageTests, GivenNullSrcBufferWhenCopyingImageThenInvalidMemObjectErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
 
     retVal = clEnqueueCopyImage(
@@ -79,7 +79,7 @@ TEST_F(clEnqueueCopyImageTests, nullSrcBufferReturnsError) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueCopyImageTests, nullDstBufferReturnsError) {
+TEST_F(clEnqueueCopyImageTests, GivenNullDstBufferWhenCopyingImageThenInvalidMemObjectErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
 
     retVal = clEnqueueCopyImage(
@@ -95,7 +95,7 @@ TEST_F(clEnqueueCopyImageTests, nullDstBufferReturnsError) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueCopyImageTests, copyingToInvalidFormatReturnsError) {
+TEST_F(clEnqueueCopyImageTests, GivenDifferentSrcAndDstImageFormatsWhenCopyingImageThenImageFormatMismatchErrorIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto srcImage = clCreateImage(
         pContext,
@@ -135,7 +135,7 @@ TEST_F(clEnqueueCopyImageTests, copyingToInvalidFormatReturnsError) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyImageTests, returnSuccess) {
+TEST_F(clEnqueueCopyImageTests, GivenValidParametersWhenCopyingImageThenSuccessIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto srcImage = clCreateImage(
         pContext,
@@ -176,7 +176,7 @@ TEST_F(clEnqueueCopyImageTests, returnSuccess) {
 
 typedef clEnqueueCopyImageTests clEnqueueCopyImageYUVTests;
 
-TEST_F(clEnqueueCopyImageYUVTests, returnSuccess) {
+TEST_F(clEnqueueCopyImageYUVTests, GivenValidParametersWhenCopyingYuvImageThenSuccessIsReturned) {
     auto srcImage = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
@@ -214,7 +214,7 @@ TEST_F(clEnqueueCopyImageYUVTests, returnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyImageYUVTests, invalidSrcOrigin) {
+TEST_F(clEnqueueCopyImageYUVTests, GivenInvalidSrcOriginWhenCopyingYuvImageThenInvalidValueErrorIsReturned) {
     auto srcImage = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
@@ -253,7 +253,7 @@ TEST_F(clEnqueueCopyImageYUVTests, invalidSrcOrigin) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyImageYUVTests, invalidDstOrigin) {
+TEST_F(clEnqueueCopyImageYUVTests, GivenInvalidDstOriginWhenCopyingYuvImageThenInvalidValueErrorIsReturned) {
     auto srcImage = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
@@ -292,7 +292,7 @@ TEST_F(clEnqueueCopyImageYUVTests, invalidDstOrigin) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueCopyImageYUVTests, invalidDstOriginImage2d) {
+TEST_F(clEnqueueCopyImageYUVTests, GivenInvalidDstOriginFor2dImageWhenCopyingYuvImageThenInvalidValueErrorIsReturned) {
     auto srcImage = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
