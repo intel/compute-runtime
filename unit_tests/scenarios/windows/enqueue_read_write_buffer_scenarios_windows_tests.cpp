@@ -111,6 +111,7 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
                                       kernel->getKernelInfo().kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset);
         EXPECT_EQ(ptrDiff(misalignedPtr, alignDown(misalignedPtr, 4)), *dstOffset);
     } else {
+        // dstOffset arg should be 4 bytes in size, if that changes, above if path should be modified
         EXPECT_TRUE(false);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,11 +83,15 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
         dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddressToPatch());
     }
 
+    void *alignedDstPtr = alignDown(dstPtr, 4);
+    size_t dstPtrOffset = ptrDiff(dstPtr, alignedDstPtr);
+
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
     dc.srcMemObj = buffer;
-    dc.dstPtr = dstPtr;
+    dc.dstPtr = alignedDstPtr;
     dc.srcOffset = bufferOrigin;
     dc.dstOffset = hostOrigin;
+    dc.dstOffset.x += dstPtrOffset;
     dc.size = region;
     dc.srcRowPitch = bufferRowPitch;
     dc.srcSlicePitch = bufferSlicePitch;

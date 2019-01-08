@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,3 +113,80 @@ INSTANTIATE_TEST_CASE_P(AUBWriteBufferRect_simple,
                         ::testing::Combine(
                             ::testing::Values(0, 1, 2, 3, 4),
                             ::testing::Values(0, 1, 2, 3, 4)));
+
+struct AUBWriteBufferRectUnaligned
+    : public CommandEnqueueAUBFixture,
+      public ::testing::Test {
+
+    void SetUp() override {
+        CommandEnqueueAUBFixture::SetUp();
+    }
+
+    void TearDown() override {
+        CommandEnqueueAUBFixture::TearDown();
+    }
+
+    template <typename FamilyType>
+    void testWriteBufferUnaligned(size_t offset, size_t size) {
+        MockContext context(&pCmdQ->getDevice());
+
+        char srcMemory[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const auto bufferSize = sizeof(srcMemory);
+        char dstMemory[bufferSize] = {0};
+        char referenceMemory[bufferSize] = {0};
+
+        auto retVal = CL_INVALID_VALUE;
+
+        auto buffer = std::unique_ptr<Buffer>(Buffer::create(
+            &context,
+            CL_MEM_COPY_HOST_PTR,
+            bufferSize,
+            dstMemory,
+            retVal));
+        ASSERT_NE(nullptr, buffer);
+
+        buffer->forceDisallowCPUCopy = true;
+
+        uint8_t *pDestMemory = (uint8_t *)buffer->getGraphicsAllocation()->getGpuAddress();
+
+        cl_bool blockingWrite = CL_TRUE;
+
+        size_t rowPitch = bufferSize / 4;
+        size_t slicePitch = 4 * rowPitch;
+        size_t bufferOrigin[] = {0, 1, 0};
+        size_t hostOrigin[] = {0, 0, 0};
+        size_t region[] = {size, 1, 1};
+
+        retVal = pCmdQ->enqueueWriteBufferRect(
+            buffer.get(),
+            blockingWrite,
+            bufferOrigin,
+            hostOrigin,
+            region,
+            rowPitch,
+            slicePitch,
+            rowPitch,
+            slicePitch,
+            ptrOffset(srcMemory, offset),
+            0,
+            nullptr,
+            nullptr);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        pCmdQ->finish(true);
+
+        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, referenceMemory, rowPitch);
+        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory + rowPitch * bufferOrigin[1], ptrOffset(srcMemory, offset), size);
+        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory + rowPitch * bufferOrigin[1] + size, referenceMemory, bufferSize - size - rowPitch);
+    }
+};
+
+HWTEST_F(AUBWriteBufferRectUnaligned, misalignedHostPtr) {
+    const std::vector<size_t> offsets = {0, 1, 2, 3};
+    const std::vector<size_t> sizes = {4, 3, 2, 1};
+    for (auto offset : offsets) {
+        for (auto size : sizes) {
+            testWriteBufferUnaligned<FamilyType>(offset, size);
+        }
+    }
+}
