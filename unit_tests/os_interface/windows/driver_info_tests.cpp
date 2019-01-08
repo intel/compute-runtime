@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/helpers/options.h"
 #include "unit_tests/libult/create_command_stream.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_wddm.h"
@@ -43,17 +44,20 @@ class DriverInfoDeviceTest : public ::testing::Test {
 
 CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
     auto csr = new MockCommandStreamReceiver(executionEnvironment);
-    OSInterface *osInterface = new OSInterface();
-    executionEnvironment.osInterface.reset(osInterface);
-    auto wddm = new WddmMock();
-    wddm->init(PreemptionHelper::getDefaultPreemptionMode(hwInfoIn));
-    osInterface->get()->setWddm(wddm);
-    csr->setOSInterface(osInterface);
+    if (!executionEnvironment.osInterface) {
+        executionEnvironment.osInterface = std::make_unique<OSInterface>();
+        auto wddm = new WddmMock();
+        wddm->init(PreemptionHelper::getDefaultPreemptionMode(hwInfoIn));
+        executionEnvironment.osInterface->get()->setWddm(wddm);
+    }
+
+    EXPECT_NE(nullptr, executionEnvironment.osInterface.get());
+    csr->setOSInterface(executionEnvironment.osInterface.get());
     return csr;
 }
 
 TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWhenCorrectOSInterfaceThenCreateDriverInfo) {
-    overrideCommandStreamReceiverCreation = true;
+    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
     auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo);
 
     EXPECT_TRUE(device->hasDriverInfo());
@@ -61,7 +65,7 @@ TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWhenCorrectOSInterfaceThenCreateD
 }
 
 TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWithoutCorrectOSInterfaceThenDontCreateDriverInfo) {
-    overrideCommandStreamReceiverCreation = false;
+    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, false);
     auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo);
 
     EXPECT_FALSE(device->hasDriverInfo());

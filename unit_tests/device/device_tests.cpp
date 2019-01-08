@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -108,7 +109,7 @@ TEST(DeviceCreation, givenSelectedAubCsrInDebugVarsWhenDeviceIsCreatedThenIsSimu
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
 
-    overrideCommandStreamReceiverCreation = true;
+    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
     auto mockDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     EXPECT_TRUE(mockDevice->isSimulation());
 }
@@ -117,7 +118,7 @@ TEST(DeviceCreation, givenSelectedTbxCsrInDebugVarsWhenDeviceIsCreatedThenIsSimu
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX);
 
-    overrideCommandStreamReceiverCreation = true;
+    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     EXPECT_TRUE(device->isSimulation());
 }
@@ -126,7 +127,7 @@ TEST(DeviceCreation, givenSelectedTbxWithAubCsrInDebugVarsWhenDeviceIsCreatedThe
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 
-    overrideCommandStreamReceiverCreation = true;
+    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     EXPECT_TRUE(device->isSimulation());
 }

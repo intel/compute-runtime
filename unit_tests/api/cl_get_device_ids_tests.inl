@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,7 +102,7 @@ extern bool overrideCommandStreamReceiverCreation;
 
 TEST(MultiDeviceTests, givenCreateMultipleDevicesAndLimitAmountOfReturnedDevicesFlagWhenClGetDeviceIdsIsCalledThenLowerValueIsReturned) {
     platformImpl.reset(nullptr);
-    overrideCommandStreamReceiverCreation = true;
+    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
     VariableBackup<bool> overrideHelper(&overrideDeviceWithDefaultHardwareInfo, false);
     DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/libult/source_level_debugger_library.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_source_level_debugger.h"
@@ -486,7 +487,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
         DebuggerLibrary::setDebuggerActive(true);
         DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
-        overrideCommandStreamReceiverCreation = true;
+        VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
 
         HardwareInfo *hwInfo = nullptr;
         ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,6 @@ CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, Executio
     CommandStreamReceiver *commandStreamReceiver = nullptr;
     assert(nullptr != pHwInfo->pPlatform);
     auto offset = !overrideCommandStreamReceiverCreation ? IGFX_MAX_CORE : 0;
-    overrideCommandStreamReceiverCreation = false;
     if (offset != 0) {
         auto funcCreate = commandStreamReceiverFactory[offset + pHwInfo->pPlatform->eRenderCoreFamily];
         if (funcCreate) {

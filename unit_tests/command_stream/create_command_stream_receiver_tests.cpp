@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -40,7 +41,7 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
 
     CommandStreamReceiverType csrType = GetParam();
 
-    overrideCommandStreamReceiverCreation = true;
+    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
     DebugManager.flags.SetCommandStreamReceiver.set(csrType);
     executionEnvironment->commandStreamReceivers.resize(1);
     executionEnvironment->commandStreamReceivers[0][0] = std::unique_ptr<CommandStreamReceiver>(createCommandStream(hwInfo,

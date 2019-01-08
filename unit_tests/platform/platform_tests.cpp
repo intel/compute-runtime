@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/mocks/mock_async_event_handler.h"
 #include "unit_tests/mocks/mock_builtins.h"
@@ -150,7 +151,7 @@ TEST(PlatformTestSimple, givenCsrHwTypeWhenPlatformIsInitializedThenInitAubCente
 TEST(PlatformTestSimple, givenNotCsrHwTypeWhenPlatformIsInitializedThenInitAubCenterIsCalled) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.SetCommandStreamReceiver.set(1);
-    overrideCommandStreamReceiverCreation = true;
+    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
     MockPlatformWithMockExecutionEnvironment platform;
     bool ret = platform.initialize();
     EXPECT_TRUE(ret);
@@ -185,7 +186,6 @@ class PlatformFailingTest : public PlatformTest {
         hwInfo = platformDevices[0];
         commandStreamReceiverCreateFunc = commandStreamReceiverFactory[hwInfo->pPlatform->eRenderCoreFamily];
         commandStreamReceiverFactory[hwInfo->pPlatform->eRenderCoreFamily] = createMockCommandStreamReceiver;
-        overrideCommandStreamReceiverCreation = true;
     }
 
     void TearDown() override {
@@ -193,6 +193,7 @@ class PlatformFailingTest : public PlatformTest {
         PlatformTest::TearDown();
     }
 
+    VariableBackup<bool> backup{&overrideCommandStreamReceiverCreation, true};
     CommandStreamReceiverCreateFunc commandStreamReceiverCreateFunc;
     const HardwareInfo *hwInfo;
 };
