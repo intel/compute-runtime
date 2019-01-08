@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,3 +14,4 @@ target_sources(igdrcl_aub_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/run_kernel_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/simple_arg_fixture.h
 )
+add_subdirectories()
