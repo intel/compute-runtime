@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -311,10 +311,14 @@ TEST(Buffer, givenUseHostPtrFlagWhenAllocationTypeIsQueriedThenBufferHostMemoryT
     EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
-TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
+TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
     cl_mem_flags flags = CL_MEM_ALLOC_HOST_PTR;
     auto type = MockPublicAccessBuffer::getGraphicsAllocationType(flags, false, false);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+    if (is64bit) {
+        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
+    } else {
+        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+    }
 }
 
 TEST(Buffer, givenUseHostPtrFlagAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,10 +147,7 @@ Buffer *Buffer::create(Context *context,
     }
 
     if (allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
-        if (properties.flags & CL_MEM_ALLOC_HOST_PTR) {
-            zeroCopyAllowed = true;
-            allocateMemory = true;
-        } else if (properties.flags & CL_MEM_USE_HOST_PTR) {
+        if (properties.flags & CL_MEM_USE_HOST_PTR) {
             allocateMemory = false;
             if (!alignementSatisfied || DebugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
                 zeroCopyAllowed = false;
@@ -326,8 +323,6 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(cl_mem_flag
         type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     } else if (renderCompressedBuffers) {
         type = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
-    } else if (flags & CL_MEM_ALLOC_HOST_PTR) {
-        type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
     if (sharedContext) {
