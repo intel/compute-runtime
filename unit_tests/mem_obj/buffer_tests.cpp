@@ -43,6 +43,14 @@ TEST(Buffer, giveBufferWhenAskedForPtrOffsetForMappingThenReturnCorrectValue) {
     EXPECT_EQ(offset[0], retOffset);
 }
 
+TEST(Buffer, giveBufferCreateWithHostPtrButWithoutProperFlagsWhenCreatedThenErrorIsReturned) {
+    MockContext ctx;
+    cl_int retVal;
+    auto hostPtr = reinterpret_cast<void *>(0x1774);
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, CL_MEM_READ_WRITE, 1, hostPtr, retVal));
+    EXPECT_EQ(retVal, CL_INVALID_HOST_PTR);
+}
+
 TEST(Buffer, givenBufferWhenAskedForPtrLengthThenReturnCorrectValue) {
     MockContext ctx;
     cl_int retVal;
@@ -273,14 +281,11 @@ TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrRende
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_ALLOC_HOST_PTR;
-    size_t size = MemoryConstants::pageSize;
-    void *hostPtr = alignedMalloc(size, MemoryConstants::pageSize);
 
-    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, hostPtr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
     EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation()->getAllocationType());
-    alignedFree(hostPtr);
 }
 
 TEST(Buffer, givenRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturned) {
@@ -448,14 +453,14 @@ TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationWhenSharedCo
 
     uint32_t hostPtr = 0;
 
-    buffer.reset(Buffer::create(context.get(), 0, sizeof(uint32_t), &hostPtr, retVal));
+    buffer.reset(Buffer::create(context.get(), CL_MEM_READ_WRITE, sizeof(uint32_t), nullptr, retVal));
     if (is32bit) {
         EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     } else {
         EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     }
     context->isSharedContext = true;
-    buffer.reset(Buffer::create(context.get(), 0, sizeof(uint32_t), &hostPtr, retVal));
+    buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, sizeof(uint32_t), &hostPtr, retVal));
     EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 }
 

@@ -287,6 +287,13 @@ void Buffer::checkMemory(cl_mem_flags flags,
         minAddress = memRestrictions->minAddress;
     }
 
+    if (hostPtr) {
+        if (!(flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR))) {
+            errcodeRet = CL_INVALID_HOST_PTR;
+            return;
+        }
+    }
+
     if (flags & CL_MEM_USE_HOST_PTR) {
         if (hostPtr) {
             auto fragment = memoryManager->getHostPtrManager()->getFragment(hostPtr);
