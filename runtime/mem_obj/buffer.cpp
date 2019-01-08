@@ -127,12 +127,14 @@ Buffer *Buffer::create(Context *context,
     bool alignementSatisfied = true;
     bool allocateMemory = true;
     bool copyMemoryFromHostPtr = false;
+    MemoryManager *memoryManager = context->getMemoryManager();
+
     GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(
         properties.flags,
         context->isSharedContext,
-        HwHelper::renderCompressedBuffersSupported(context->getDevice(0)->getHardwareInfo()));
+        HwHelper::renderCompressedBuffersSupported(context->getDevice(0)->getHardwareInfo()),
+        memoryManager->isLocalMemorySupported());
 
-    MemoryManager *memoryManager = context->getMemoryManager();
     UNRECOVERABLE_IF(!memoryManager);
 
     checkMemory(properties.flags, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager);
@@ -148,21 +150,22 @@ Buffer *Buffer::create(Context *context,
 
     if (allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
         if (properties.flags & CL_MEM_USE_HOST_PTR) {
-            allocateMemory = false;
-            if (!alignementSatisfied || DebugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
+            if (alignementSatisfied) {
+                allocateMemory = false;
+                zeroCopyAllowed = true;
+            } else {
                 zeroCopyAllowed = false;
                 allocateMemory = true;
             }
         }
     }
 
-    if (context->isSharedContext) {
-        zeroCopyAllowed = true;
-        copyMemoryFromHostPtr = false;
-        allocateMemory = false;
-    }
-
     if (properties.flags & CL_MEM_USE_HOST_PTR) {
+        if (DebugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
+            zeroCopyAllowed = false;
+            allocateMemory = true;
+        }
+
         memory = context->getSVMAllocsManager()->getSVMAlloc(hostPtr);
         if (memory) {
             allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
@@ -171,6 +174,12 @@ Buffer *Buffer::create(Context *context,
             copyMemoryFromHostPtr = false;
             allocateMemory = false;
         }
+    }
+
+    if (context->isSharedContext) {
+        zeroCopyAllowed = true;
+        copyMemoryFromHostPtr = false;
+        allocateMemory = false;
     }
 
     if (hostPtr && context->isProvidingPerformanceHints()) {
@@ -199,9 +208,8 @@ Buffer *Buffer::create(Context *context,
         memoryManager->addAllocationToHostPtrManager(memory);
     }
 
-    // if memory pointer should not be allcoated and graphics allocation is nullptr
-    // and cl_mem flags allow, create non-zerocopy buffer
-    if (!allocateMemory && !memory && Buffer::isReadOnlyMemoryPermittedByFlags(properties.flags)) {
+    //if allocation failed for CL_MEM_USE_HOST_PTR case retry with non zero copy path
+    if ((properties.flags & CL_MEM_USE_HOST_PTR) && !memory && Buffer::isReadOnlyMemoryPermittedByFlags(properties.flags)) {
         allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
         zeroCopyAllowed = false;
         copyMemoryFromHostPtr = true;
@@ -217,6 +225,9 @@ Buffer *Buffer::create(Context *context,
 
     if (!MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
         zeroCopyAllowed = false;
+        if (hostPtr) {
+            copyMemoryFromHostPtr = true;
+        }
     } else if (allocationType == GraphicsAllocation::AllocationType::BUFFER) {
         allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
@@ -322,19 +333,25 @@ void Buffer::checkMemory(cl_mem_flags flags,
     return;
 }
 
-GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(cl_mem_flags flags, bool sharedContext, bool renderCompressedBuffers) {
-    GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::BUFFER;
+GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(cl_mem_flags flags, bool sharedContext, bool renderCompressedBuffers, bool isLocalMemoryEnabled) {
     if (is32bit) {
-        type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
-    } else if (flags & CL_MEM_USE_HOST_PTR) {
-        type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+        return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    }
+
+    if (sharedContext) {
+        return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    }
+
+    GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::BUFFER;
+
+    if (flags & CL_MEM_USE_HOST_PTR) {
+        if (flags & CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL || !isLocalMemoryEnabled) {
+            type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+        }
     } else if (renderCompressedBuffers) {
         type = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
     }
 
-    if (sharedContext) {
-        type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
-    }
     return type;
 }
 

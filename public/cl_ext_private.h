@@ -52,3 +52,5 @@ using cl_mem_flags_intel = cl_mem_flags;
 // Used with clEnqueueVerifyMemory
 #define CL_MEM_COMPARE_EQUAL 0u
 #define CL_MEM_COMPARE_NOT_EQUAL 1u
+
+#define CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL (1 << 20)

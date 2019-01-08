@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,7 +86,7 @@ TEST(BufferTests, doPinIsSetForHostPtr) {
 
         auto buffer = Buffer::create(
             &context,
-            CL_MEM_USE_HOST_PTR,
+            CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL,
             size,
             bff,
             retVal);

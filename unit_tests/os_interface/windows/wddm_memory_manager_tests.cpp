@@ -900,7 +900,7 @@ TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhe
 }
 
 TEST_F(BufferWithWddmMemory, ValidHostPtr) {
-    flags = CL_MEM_USE_HOST_PTR;
+    flags = CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL;
 
     auto ptr = alignedMalloc(MemoryConstants::preferredAlignment, MemoryConstants::preferredAlignment);
 
@@ -915,7 +915,11 @@ TEST_F(BufferWithWddmMemory, ValidHostPtr) {
     ASSERT_NE(nullptr, buffer);
 
     auto address = buffer->getCpuAddress();
-    EXPECT_EQ(ptr, address);
+    if (buffer->isMemObjZeroCopy()) {
+        EXPECT_EQ(ptr, address);
+    } else {
+        EXPECT_NE(address, ptr);
+    }
     EXPECT_NE(nullptr, buffer->getGraphicsAllocation());
     EXPECT_NE(nullptr, buffer->getGraphicsAllocation()->getUnderlyingBuffer());
 
