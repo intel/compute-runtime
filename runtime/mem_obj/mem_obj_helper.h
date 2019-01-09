@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,21 +16,12 @@ namespace OCLRT {
 
 class MemObjHelper {
   public:
-    static bool checkMemFlagsForBuffer(cl_mem_flags flags) {
-        const cl_mem_flags allValidFlags =
-            CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
-            CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR |
-            CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS;
-
-        return (flags & (~allValidFlags)) == 0;
-    }
-
     static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &propertiesStruct);
 
     static bool validateMemoryProperties(const MemoryProperties &properties) {
 
         /* Are there some invalid flag bits? */
-        if (!MemObjHelper::checkMemFlagsForBuffer(properties.flags)) {
+        if (!MemObjHelper::checkMemFlagsForBuffer(properties)) {
             return false;
         }
 
@@ -48,8 +39,6 @@ class MemObjHelper {
         return validateExtraMemoryProperties(properties);
     }
 
-    static bool validateExtraMemoryProperties(const MemoryProperties &properties);
-
     static AllocationProperties getAllocationProperties(cl_mem_flags_intel flags, bool allocateMemory, size_t size, GraphicsAllocation::AllocationType type);
     static AllocationProperties getAllocationProperties(ImageInfo *imgInfo);
 
@@ -65,5 +54,27 @@ class MemObjHelper {
         }
         return true;
     }
+
+  protected:
+    static bool checkMemFlagsForBuffer(const MemoryProperties &properties) {
+        MemoryProperties additionalAcceptedProperties;
+        addExtraMemoryProperties(additionalAcceptedProperties);
+
+        const cl_mem_flags allValidFlags =
+            CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
+            CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR |
+            CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS |
+            additionalAcceptedProperties.flags;
+
+        const cl_mem_flags allValidFlagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE |
+                                                additionalAcceptedProperties.flags_intel;
+
+        return ((properties.flags & (~allValidFlags)) == 0) &&
+               ((properties.flags_intel & (~allValidFlagsIntel)) == 0);
+    }
+
+    static bool validateExtraMemoryProperties(const MemoryProperties &properties);
+
+    static void addExtraMemoryProperties(MemoryProperties &properties);
 };
 } // namespace OCLRT

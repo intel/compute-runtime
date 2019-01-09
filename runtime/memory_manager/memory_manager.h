@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "public/cl_ext_private.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
@@ -59,18 +60,16 @@ struct AllocationProperties {
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
     ImageInfo *imgInfo = nullptr;
 
-    AllocationProperties(size_t size, GraphicsAllocation::AllocationType allocationType) : AllocationProperties(true, size, allocationType) {}
-    AllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType) : size(size), allocationType(allocationType) {
+    AllocationProperties(size_t size, GraphicsAllocation::AllocationType allocationType)
+        : AllocationProperties(true, size, allocationType) {}
+    AllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType)
+        : size(size), allocationType(allocationType) {
         allFlags = 0;
         flags.flushL3RequiredForRead = 1;
         flags.flushL3RequiredForWrite = 1;
         flags.allocateMemory = allocateMemory;
     }
-    AllocationProperties(ImageInfo *imgInfo) : allocationType(GraphicsAllocation::AllocationType::IMAGE) {
-        allFlags = 0;
-        flags.flushL3RequiredForRead = 1;
-        flags.flushL3RequiredForWrite = 1;
-        flags.allocateMemory = 1;
+    AllocationProperties(ImageInfo *imgInfo) : AllocationProperties(true, 0, GraphicsAllocation::AllocationType::IMAGE) {
         this->imgInfo = imgInfo;
     }
 };

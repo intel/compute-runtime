@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,18 +43,10 @@ TEST_P(clCreateBufferValidFlagsTests, GivenValidFlagsWhenCreatingBufferThenBuffe
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     clReleaseMemObject(buffer);
-};
 
-struct clCreateBufferWithPropertiesINTELValidFlagsTests : public clCreateBufferTemplateTests {
-    cl_uchar pHostPtr[64];
-};
+    cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, flags, 0};
 
-TEST_P(clCreateBufferWithPropertiesINTELValidFlagsTests, GivenValidPropertiesWhenCreatingBufferThenBufferIsCreated) {
-    cl_mem_properties_intel properties[] = {
-        CL_MEM_FLAGS, GetParam() | CL_MEM_USE_HOST_PTR,
-        0};
-
-    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, pHostPtr, &retVal);
+    buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, pHostPtr, &retVal);
     EXPECT_NE(nullptr, buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -75,13 +67,7 @@ INSTANTIATE_TEST_CASE_P(
     clCreateBufferValidFlagsTests,
     testing::ValuesIn(validFlags));
 
-INSTANTIATE_TEST_CASE_P(
-    CreateBufferCheckFlags,
-    clCreateBufferWithPropertiesINTELValidFlagsTests,
-    testing::ValuesIn(validFlags));
-
-struct clCreateBufferInvalidFlagsTests : public clCreateBufferTemplateTests {
-};
+using clCreateBufferInvalidFlagsTests = clCreateBufferTemplateTests;
 
 TEST_P(clCreateBufferInvalidFlagsTests, GivenInvalidFlagsWhenCreatingBufferThenBufferIsNotCreated) {
     cl_mem_flags flags = GetParam();
@@ -89,16 +75,10 @@ TEST_P(clCreateBufferInvalidFlagsTests, GivenInvalidFlagsWhenCreatingBufferThenB
     auto buffer = clCreateBuffer(pContext, flags, 64, nullptr, &retVal);
     EXPECT_EQ(nullptr, buffer);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
-};
 
-struct clCreateBufferWithPropertiesINTELInvalidPropertiesTests : public clCreateBufferTemplateTests {
-};
+    cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, flags, 0};
 
-TEST_P(clCreateBufferWithPropertiesINTELInvalidPropertiesTests, GivenInvalidPropertiesWhenCreatingBufferThenBufferIsNotCreated) {
-    cl_mem_properties_intel properties[] = {
-        (1 << 30), CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR};
-
-    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
+    buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
     EXPECT_EQ(nullptr, buffer);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 };
@@ -120,10 +100,55 @@ INSTANTIATE_TEST_CASE_P(
     clCreateBufferInvalidFlagsTests,
     testing::ValuesIn(invalidFlags));
 
+using clCreateBufferValidFlagsIntelTests = clCreateBufferTemplateTests;
+
+TEST_P(clCreateBufferValidFlagsIntelTests, GivenValidFlagsIntelWhenCreatingBufferThenBufferIsCreated) {
+    cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, GetParam(), 0};
+
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    clReleaseMemObject(buffer);
+};
+
+static cl_mem_flags validFlagsIntel[] = {
+    CL_MEM_LOCALLY_UNCACHED_RESOURCE,
+};
+
 INSTANTIATE_TEST_CASE_P(
-    CreateBufferCheckFlags,
-    clCreateBufferWithPropertiesINTELInvalidPropertiesTests,
-    testing::ValuesIn(invalidFlags));
+    CreateBufferCheckFlagsIntel,
+    clCreateBufferValidFlagsIntelTests,
+    testing::ValuesIn(validFlagsIntel));
+
+using clCreateBufferInvalidFlagsIntelTests = clCreateBufferTemplateTests;
+
+TEST_P(clCreateBufferInvalidFlagsIntelTests, GivenInvalidFlagsIntelWhenCreatingBufferThenBufferIsNotCreated) {
+    cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, GetParam(), 0};
+
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
+    EXPECT_EQ(nullptr, buffer);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+};
+
+cl_mem_flags invalidFlagsIntel[] = {
+    0xffcc,
+};
+
+INSTANTIATE_TEST_CASE_P(
+    CreateBufferCheckFlagsIntel,
+    clCreateBufferInvalidFlagsIntelTests,
+    testing::ValuesIn(invalidFlagsIntel));
+
+using clCreateBufferInvalidProperties = clCreateBufferTemplateTests;
+
+TEST_F(clCreateBufferInvalidProperties, GivenInvalidPropertyKeyWhenCreatingBufferThenBufferIsNotCreated) {
+    cl_mem_properties_intel properties[] = {(cl_mem_properties_intel(1) << 31), 0, 0};
+
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
+    EXPECT_EQ(nullptr, buffer);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+};
 
 TEST_F(clCreateBufferTests, GivenValidParametersWhenCreatingBufferThenSuccessIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;

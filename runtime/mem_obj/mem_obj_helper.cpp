@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,12 +29,10 @@ bool MemObjHelper::parseMemoryProperties(const cl_mem_properties_intel *properti
     return true;
 }
 
-bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &properties) {
-    return true;
-}
-
 AllocationProperties MemObjHelper::getAllocationProperties(cl_mem_flags_intel flags, bool allocateMemory, size_t size, GraphicsAllocation::AllocationType type) {
-    return AllocationProperties(allocateMemory, size, type);
+    AllocationProperties allocationProperties(allocateMemory, size, type);
+    allocationProperties.flags.uncacheable = !!(flags & CL_MEM_LOCALLY_UNCACHED_RESOURCE);
+    return allocationProperties;
 }
 
 AllocationProperties MemObjHelper::getAllocationProperties(ImageInfo *imgInfo) {
@@ -43,6 +41,13 @@ AllocationProperties MemObjHelper::getAllocationProperties(ImageInfo *imgInfo) {
 
 DevicesBitfield MemObjHelper::getDevicesBitfield(const MemoryProperties &properties) {
     return DevicesBitfield(0);
+}
+
+bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &properties) {
+    return true;
+}
+
+void MemObjHelper::addExtraMemoryProperties(MemoryProperties &properties) {
 }
 
 } // namespace OCLRT

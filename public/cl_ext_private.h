@@ -48,6 +48,7 @@ using cl_mem_flags_intel = cl_mem_flags;
  ******************************/
 
 #define CL_MEM_FLAGS_INTEL 0x10001
+#define CL_MEM_LOCALLY_UNCACHED_RESOURCE (1 << 18)
 
 // Used with clEnqueueVerifyMemory
 #define CL_MEM_COMPARE_EQUAL 0u

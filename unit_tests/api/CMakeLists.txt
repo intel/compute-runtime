@@ -92,6 +92,7 @@ set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_intel_accelerator_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_intel_motion_estimation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_link_program_tests.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_mem_locally_uncached_resource_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_release_command_queue_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_release_context_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_release_event_tests.inl
