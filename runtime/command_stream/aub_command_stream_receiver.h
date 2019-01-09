@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ class ExecutionEnvironment;
 
 struct AUBCommandStreamReceiver {
     static CommandStreamReceiver *create(const HardwareInfo &hwInfo, const std::string &filename, bool standalone, ExecutionEnvironment &executionEnvironment);
+    static std::string createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename);
 
     using AubFileStream = AubMemDump::AubFileStream;
 };

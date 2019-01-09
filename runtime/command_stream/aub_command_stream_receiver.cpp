@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,14 +18,14 @@
 namespace OCLRT {
 AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[IGFX_MAX_CORE] = {};
 
-CommandStreamReceiver *AUBCommandStreamReceiver::create(const HardwareInfo &hwInfo, const std::string &baseName, bool standalone, ExecutionEnvironment &executionEnvironment) {
+std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename) {
     std::string hwPrefix = hardwarePrefix[hwInfo.pPlatform->eProductFamily];
 
     // Generate the full filename
     const auto &gtSystemInfo = *hwInfo.pSysInfo;
     std::stringstream strfilename;
     uint32_t subSlicesPerSlice = gtSystemInfo.SubSliceCount / gtSystemInfo.SliceCount;
-    strfilename << hwPrefix << "_" << gtSystemInfo.SliceCount << "x" << subSlicesPerSlice << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << baseName << ".aub";
+    strfilename << hwPrefix << "_" << gtSystemInfo.SliceCount << "x" << subSlicesPerSlice << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << filename << ".aub";
 
     // clean-up any fileName issues because of the file system incompatibilities
     auto fileName = strfilename.str();
@@ -37,6 +37,11 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const HardwareInfo &hwIn
     filePath.append(Os::fileSeparator);
     filePath.append(fileName);
 
+    return filePath;
+}
+
+CommandStreamReceiver *AUBCommandStreamReceiver::create(const HardwareInfo &hwInfo, const std::string &baseName, bool standalone, ExecutionEnvironment &executionEnvironment) {
+    std::string filePath = AUBCommandStreamReceiver::createFullFilePath(hwInfo, baseName);
     if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
         filePath.assign(DebugManager.flags.AUBDumpCaptureFileName.get());
     }
