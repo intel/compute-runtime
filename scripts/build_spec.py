@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -29,7 +29,7 @@ neo_revision = repo.head.commit
 c = repo.commit(neo_revision)
 cd = datetime.datetime.fromtimestamp(c.committed_date)
 
-pkg_version = "%s.%s.%s" %(str(cd.isocalendar()[0])[-2:], cd.isocalendar()[1], sys.argv[2])
+pkg_version = "%s.%02d.%s" %(str(cd.isocalendar()[0])[-2:], cd.isocalendar()[1], sys.argv[2])
 
 with open(sys.argv[1], 'r') as f:
     for line in f.readlines():
