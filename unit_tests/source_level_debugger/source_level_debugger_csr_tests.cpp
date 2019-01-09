@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,15 +19,36 @@
 #include "test.h"
 #include <memory>
 
-typedef ::testing::Test CommandStreamReceiverWithActiveDebuggerTest;
+class CommandStreamReceiverWithActiveDebuggerTest : public ::testing::Test {
+  protected:
+    template <typename FamilyType>
+    auto createCSR() {
+        hwInfo = nullptr;
+        executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+        hwInfo->capabilityTable = platformDevices[0]->capabilityTable;
+        hwInfo->capabilityTable.sourceLevelDebuggerSupported = true;
+
+        auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *executionEnvironment);
+
+        executionEnvironment->commandStreamReceivers.resize(1);
+        executionEnvironment->commandStreamReceivers[0][0].reset(mockCsr);
+        auto mockMemoryManager = new MockMemoryManager(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(mockMemoryManager);
+
+        device.reset(Device::create<MockDevice>(&hwInfo[0], executionEnvironment, 0));
+        device->setSourceLevelDebuggerActive(true);
+
+        return mockCsr;
+    }
+
+    std::unique_ptr<MockDevice> device;
+    ExecutionEnvironment *executionEnvironment = nullptr;
+    HardwareInfo *hwInfo = nullptr;
+};
 
 HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebuggerAndDisabledPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->setSourceLevelDebuggerActive(true);
-    device->allocatePreemptionAllocationIfNotPresent();
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *device->executionEnvironment);
 
-    device->resetCommandStreamReceiver(mockCsr);
+    auto mockCsr = createCSR<FamilyType>();
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0);
     auto &commandStream = commandQueue.getCS(4096u);
@@ -50,7 +71,7 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
                        *device);
 
     auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().pPlatform->eRenderCoreFamily, true);
-    auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *device.get()).getSipAllocation();
+    auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *device).getSipAllocation();
     bool found = false;
     for (auto allocation : mockCsr->copyOfAllocations) {
         if (allocation == sipAllocation) {
@@ -66,15 +87,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto mockCsr = createCSR<FamilyType>();
 
     if (device->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
-        device->setSourceLevelDebuggerActive(true);
-        device->allocatePreemptionAllocationIfNotPresent();
-        auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *device->executionEnvironment);
-
-        device->resetCommandStreamReceiver(mockCsr);
-
         CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0);
         auto &commandStream = commandQueue.getCS(4096u);
         auto &preambleStream = mockCsr->getCS(0);
@@ -97,7 +112,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
                            *device);
 
         auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().pPlatform->eRenderCoreFamily, true);
-        auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *device.get()).getSipAllocation();
+        auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *device).getSipAllocation();
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(preambleStream);
@@ -122,23 +137,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
-    HardwareInfo *hwInfo = nullptr;
-    auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
-    hwInfo->capabilityTable = platformDevices[0]->capabilityTable;
-    hwInfo->capabilityTable.sourceLevelDebuggerSupported = true;
+    auto mockCsr = createCSR<FamilyType>();
 
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *executionEnvironment);
-
-    executionEnvironment->commandStreamReceivers.resize(1);
-    executionEnvironment->commandStreamReceivers[0][0].reset(mockCsr);
-    auto mockMemoryManager = new MockMemoryManager(*executionEnvironment);
-    executionEnvironment->memoryManager.reset(mockMemoryManager);
-
-    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(&hwInfo[0], executionEnvironment, 0));
     if (device->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
-        device->setSourceLevelDebuggerActive(true);
-        device->allocatePreemptionAllocationIfNotPresent();
-
         mockCsr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
         CommandQueueHw<FamilyType> commandQueue(nullptr, device.get(), 0);
@@ -174,7 +175,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
                            *device);
 
         auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().pPlatform->eRenderCoreFamily, true);
-        auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *device.get()).getSipAllocation();
+        auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *device).getSipAllocation();
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(preambleStream);
