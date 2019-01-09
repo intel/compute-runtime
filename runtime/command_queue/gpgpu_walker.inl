@@ -106,12 +106,12 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp
-    uint64_t TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->GlobalStartTS, hwTimeStamps.tag);
+    uint64_t TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->GlobalStartTS, hwTimeStamps.getGraphicsAllocation()->getUnderlyingBuffer());
 
     PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, TimeStampAddress, 0llu);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
-    TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->ContextStartTS, hwTimeStamps.tag);
+    TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->ContextStartTS, hwTimeStamps.getGraphicsAllocation()->getUnderlyingBuffer());
 
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
@@ -134,7 +134,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     pPipeControlCmd->setCommandStreamerStallEnable(true);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
-    uint64_t TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->ContextEndTS, hwTimeStamps.tag);
+    uint64_t TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->ContextEndTS, hwTimeStamps.getGraphicsAllocation()->getUnderlyingBuffer());
 
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));

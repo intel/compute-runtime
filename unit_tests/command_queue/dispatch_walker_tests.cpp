@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/task_information.h"
+#include "runtime/utilities/tag_allocator.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/libult/mock_gfx_family.h"
@@ -1143,3 +1144,87 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxTranslationWithoutParentKernelThe
     auto itorCmd = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorCmd);
 }
+
+struct ProfilingCommandsTest : public DispatchWalkerTest, ::testing::WithParamInterface<bool> {
+    void SetUp() override {
+        DispatchWalkerTest::SetUp();
+    }
+    void TearDown() override {
+        DispatchWalkerTest::TearDown();
+    }
+};
+
+HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenTimeStampAddressIsProgrammedCorrectly) {
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    bool checkForStart = GetParam();
+
+    auto &cmdStream = pCmdQ->getCS(0);
+    TagAllocator<HwTimeStamps> timeStampAllocator(this->pDevice->getMemoryManager(), 10, MemoryConstants::cacheLineSize);
+
+    auto hwTimeStamp1 = timeStampAllocator.getTag();
+    ASSERT_NE(nullptr, hwTimeStamp1);
+    if (checkForStart) {
+        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream);
+    } else {
+        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp1, &cmdStream);
+    }
+
+    auto hwTimeStamp2 = timeStampAllocator.getTag();
+    ASSERT_NE(nullptr, hwTimeStamp2);
+    if (checkForStart) {
+        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp2, &cmdStream);
+    } else {
+        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp2, &cmdStream);
+    }
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
+
+    auto itorStoreReg = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorStoreReg);
+    auto storeReg = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorStoreReg);
+    ASSERT_NE(nullptr, storeReg);
+
+    uint64_t gpuAddress = storeReg->getMemoryAddress();
+    auto timestampFieldAddress = checkForStart ? &hwTimeStamp1->tag->ContextStartTS : &hwTimeStamp1->tag->ContextEndTS;
+    uint64_t expectedAddress = hwTimeStamp1->getGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp1->getGraphicsAllocation()->getUnderlyingBuffer());
+    EXPECT_EQ(expectedAddress, gpuAddress);
+
+    itorStoreReg++;
+    itorStoreReg = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(itorStoreReg, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorStoreReg);
+    storeReg = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorStoreReg);
+    ASSERT_NE(nullptr, storeReg);
+
+    gpuAddress = storeReg->getMemoryAddress();
+    timestampFieldAddress = checkForStart ? &hwTimeStamp2->tag->ContextStartTS : &hwTimeStamp2->tag->ContextEndTS;
+    expectedAddress = hwTimeStamp2->getGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp2->getGraphicsAllocation()->getUnderlyingBuffer());
+    EXPECT_EQ(expectedAddress, gpuAddress);
+
+    if (checkForStart) {
+        auto itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), itorPipeCtrl);
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
+        ASSERT_NE(nullptr, pipeControl);
+
+        gpuAddress = static_cast<uint64_t>(pipeControl->getAddress()) | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+        timestampFieldAddress = checkForStart ? &hwTimeStamp1->tag->GlobalStartTS : &hwTimeStamp1->tag->GlobalEndTS;
+        expectedAddress = hwTimeStamp1->getGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp1->getGraphicsAllocation()->getUnderlyingBuffer());
+        EXPECT_EQ(expectedAddress, gpuAddress);
+
+        itorPipeCtrl++;
+        itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(itorPipeCtrl, cmdList.end());
+        ASSERT_NE(cmdList.end(), itorPipeCtrl);
+        pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
+        ASSERT_NE(nullptr, pipeControl);
+
+        gpuAddress = static_cast<uint64_t>(pipeControl->getAddress()) | static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32;
+        timestampFieldAddress = checkForStart ? &hwTimeStamp2->tag->GlobalStartTS : &hwTimeStamp2->tag->GlobalEndTS;
+        expectedAddress = hwTimeStamp2->getGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp2->getGraphicsAllocation()->getUnderlyingBuffer());
+        EXPECT_EQ(expectedAddress, gpuAddress);
+    }
+}
+
+INSTANTIATE_TEST_CASE_P(StartEndFlag,
+                        ProfilingCommandsTest, ::testing::Values(true, false));
