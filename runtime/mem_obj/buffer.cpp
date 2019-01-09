@@ -128,14 +128,13 @@ Buffer *Buffer::create(Context *context,
     bool allocateMemory = true;
     bool copyMemoryFromHostPtr = false;
     MemoryManager *memoryManager = context->getMemoryManager();
+    UNRECOVERABLE_IF(!memoryManager);
 
     GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(
         properties.flags,
         context->isSharedContext,
         HwHelper::renderCompressedBuffersSupported(context->getDevice(0)->getHardwareInfo()),
         memoryManager->isLocalMemorySupported());
-
-    UNRECOVERABLE_IF(!memoryManager);
 
     checkMemory(properties.flags, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager);
 
