@@ -39,7 +39,7 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
         auto wddmCsr = new WddmCommandStreamReceiver<FamilyType>(*hwInfo, *executionEnvironment);
 
         executionEnvironment->commandStreamReceivers.resize(1);
-        executionEnvironment->commandStreamReceivers[0][0].reset(wddmCsr);
+        executionEnvironment->commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(wddmCsr));
 
         memoryManager = new MockWddmMemoryManager(executionEnvironment->osInterface->get()->getWddm(), *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);

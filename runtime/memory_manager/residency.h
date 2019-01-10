@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "engine_node.h"
 namespace OCLRT {
 
-constexpr uint32_t maxOsContextCount = 4u * static_cast<uint32_t>(gpgpuEngineInstances.size());
+constexpr uint32_t maxOsContextCount = 4u * static_cast<uint32_t>(EngineInstanceConstants::numGpgpuEngineInstances);
 
 struct ResidencyData {
     ResidencyData() {

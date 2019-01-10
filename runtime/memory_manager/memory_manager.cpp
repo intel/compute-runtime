@@ -145,14 +145,12 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
         }
         for (auto &deviceCsrs : getCommandStreamReceivers()) {
             for (auto &csr : deviceCsrs) {
-                if (csr) {
-                    auto osContextId = csr->getOsContext().getContextId();
-                    auto allocationTaskCount = gfxAllocation->getTaskCount(osContextId);
-                    if (gfxAllocation->isUsedByOsContext(osContextId) &&
-                        allocationTaskCount > *csr->getTagAddress()) {
-                        csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation), TEMPORARY_ALLOCATION);
-                        return;
-                    }
+                auto osContextId = csr->getOsContext().getContextId();
+                auto allocationTaskCount = gfxAllocation->getTaskCount(osContextId);
+                if (gfxAllocation->isUsedByOsContext(osContextId) &&
+                    allocationTaskCount > *csr->getTagAddress()) {
+                    csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation), TEMPORARY_ALLOCATION);
+                    return;
                 }
             }
         }

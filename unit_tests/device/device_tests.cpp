@@ -9,6 +9,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/os_interface/os_context.h"
+#include "runtime/helpers/hw_helper.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -45,7 +46,7 @@ TEST_F(DeviceTest, getSupportedClVersion) {
 }
 
 TEST_F(DeviceTest, getTagAddress) {
-    for (uint32_t i = 0; i < static_cast<uint32_t>(gpgpuEngineInstances.size()); i++) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size()); i++) {
         auto tagAddress = pDevice->getEngine(i).commandStreamReceiver->getTagAddress();
         ASSERT_NE(nullptr, const_cast<uint32_t *>(tagAddress));
         EXPECT_EQ(initialHardwareTag, *tagAddress);
@@ -151,22 +152,23 @@ TEST(DeviceCreation, givenDefaultHwCsrInDebugVarsWhenDeviceIsCreatedThenIsSimula
 TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryManager) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     auto memoryManager = device->getMemoryManager();
-    EXPECT_EQ(gpgpuEngineInstances.size(), memoryManager->getOsContextCount());
+    EXPECT_EQ(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size(), memoryManager->getOsContextCount());
 }
 
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqueId) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.incRefInternal();
     const size_t numDevices = 2;
+    const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size());
 
     auto device1 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 0u));
     auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 1u));
 
-    for (uint32_t i = 0; i < static_cast<uint32_t>(gpgpuEngineInstances.size()); i++) {
+    for (uint32_t i = 0; i < numGpgpuEngines; i++) {
         EXPECT_EQ(i, device1->getEngine(i).osContext->getContextId());
-        EXPECT_EQ(i + static_cast<uint32_t>(gpgpuEngineInstances.size()), device2->getEngine(i).osContext->getContextId());
+        EXPECT_EQ(i + numGpgpuEngines, device2->getEngine(i).osContext->getContextId());
     }
-    EXPECT_EQ(gpgpuEngineInstances.size() * numDevices, executionEnvironment.memoryManager->getOsContextCount());
+    EXPECT_EQ(numGpgpuEngines * numDevices, executionEnvironment.memoryManager->getOsContextCount());
 }
 
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {
@@ -183,14 +185,15 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperate
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.incRefInternal();
     const size_t numDevices = 2;
+    const auto &numGpgpuEngines = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size();
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
 
     EXPECT_EQ(numDevices, executionEnvironment.commandStreamReceivers.size());
-    EXPECT_EQ(gpgpuEngineInstances.size(), executionEnvironment.commandStreamReceivers[0].size());
-    EXPECT_EQ(gpgpuEngineInstances.size(), executionEnvironment.commandStreamReceivers[1].size());
+    EXPECT_EQ(numGpgpuEngines, executionEnvironment.commandStreamReceivers[0].size());
+    EXPECT_EQ(numGpgpuEngines, executionEnvironment.commandStreamReceivers[1].size());
 
-    for (uint32_t i = 0; i < static_cast<uint32_t>(gpgpuEngineInstances.size()); i++) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(numGpgpuEngines); i++) {
         EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[0][i]);
         EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[1][i]);
         EXPECT_EQ(executionEnvironment.commandStreamReceivers[0][i].get(), device1->getEngine(i).commandStreamReceiver);

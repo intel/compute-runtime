@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -146,6 +146,8 @@ TEST(DrmTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
     delete pDrm;
 }
 
+constexpr EngineInstanceT defaultEngine{ENGINE_RCS, 0};
+
 TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext) {
     DrmMock drmMock;
     uint32_t drmContextId1 = 123;
@@ -153,13 +155,13 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
 
     {
         drmMock.StoredCtxId = drmContextId1;
-        OsContextLinux osContext1(drmMock, gpgpuEngineInstances[0]);
+        OsContextLinux osContext1(drmMock, defaultEngine);
         EXPECT_EQ(drmContextId1, osContext1.getDrmContextId());
         EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
 
         {
             drmMock.StoredCtxId = drmContextId2;
-            OsContextLinux osContext2(drmMock, gpgpuEngineInstances[1]);
+            OsContextLinux osContext2(drmMock, defaultEngine);
             EXPECT_EQ(drmContextId2, osContext2.getDrmContextId());
             EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
         }
@@ -175,16 +177,16 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     drmMock.StoredCtxId = 123;
     drmMock.preemptionSupported = false;
 
-    OsContextLinux osContext1(drmMock, gpgpuEngineInstances[0]);
-    OsContextLinux osContext2(drmMock, gpgpuEngineInstances[EngineInstanceConstants::lowPriorityGpgpuEngineIndex]);
+    OsContextLinux osContext1(drmMock, defaultEngine);
+    OsContextLinux osContext2(drmMock, lowPriorityGpgpuEngine);
     EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
 
     drmMock.preemptionSupported = true;
 
-    OsContextLinux osContext3(drmMock, gpgpuEngineInstances[0]);
+    OsContextLinux osContext3(drmMock, defaultEngine);
     EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
 
-    OsContextLinux osContext4(drmMock, gpgpuEngineInstances[EngineInstanceConstants::lowPriorityGpgpuEngineIndex]);
+    OsContextLinux osContext4(drmMock, lowPriorityGpgpuEngine);
     EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
     EXPECT_EQ(drmMock.StoredCtxId, drmMock.receivedContextParamRequest.ctx_id);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);

@@ -28,7 +28,7 @@ struct ImageInfo;
 
 enum class PreemptionMode : uint32_t;
 
-using CsrContainer = std::vector<std::array<std::unique_ptr<CommandStreamReceiver>, EngineInstanceConstants::numGpgpuEngineInstances>>;
+using CsrContainer = std::vector<std::vector<std::unique_ptr<CommandStreamReceiver>>>;
 
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,

@@ -570,7 +570,7 @@ TEST_F(DrmMemoryManagerTest, getMinimumSystemSharedMemory) {
     mock->ioctl_expected.contextGetParam = 2;
     EXPECT_EQ(hostMemorySize, systemSharedMemorySize);
     mock->testIoctls();
-    mock->ioctl_expected.contextDestroy = OCLRT::EngineInstanceConstants::numGpgpuEngineInstances;
+    mock->ioctl_expected.contextDestroy = static_cast<int>(memoryManager->getCommandStreamReceivers()[0].size());
 }
 
 TEST_F(DrmMemoryManagerTest, BoWaitFailure) {
@@ -1298,7 +1298,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedAn
 
     injectFailures(method);
     mock->reset();
-    mock->ioctl_expected.contextDestroy = OCLRT::EngineInstanceConstants::numGpgpuEngineInstances;
+    mock->ioctl_expected.contextDestroy = static_cast<int>(memoryManager->getCommandStreamReceivers()[0].size());
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
@@ -1561,7 +1561,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenAllocationFails
 
     injectFailures(method);
     mock->reset();
-    mock->ioctl_expected.contextDestroy = OCLRT::EngineInstanceConstants::numGpgpuEngineInstances;
+    mock->ioctl_expected.contextDestroy = static_cast<int>(memoryManager->getCommandStreamReceivers()[0].size());
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndThreeOsHandlesWhenReuseCreatesAreCalledThenGraphicsAllocationsAreReturned) {

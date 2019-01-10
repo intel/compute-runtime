@@ -58,7 +58,6 @@ struct DeferrableAllocationDeletionTest : ::testing::Test {
 };
 
 TEST_F(DeferrableAllocationDeletionTest, givenDeferrableAllocationWhenApplyThenWaitForEachTaskCount) {
-    EXPECT_EQ(gpgpuEngineInstances.size(), memoryManager->getOsContextCount());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     allocation->updateTaskCount(1u, device1ContextId);
     *hwTag = 0u;
@@ -81,7 +80,6 @@ TEST_F(DeferrableAllocationDeletionTest, givenDeferrableAllocationWhenApplyThenW
 HWTEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByTwoOsContextsWhenApplyDeletionThenWaitForBothContextsAndFlushNotReadyCsr) {
     std::unique_ptr<MockDevice> device2(Device::create<MockDevice>(nullptr, device1->getExecutionEnvironment(), 1u));
     auto device2ContextId = device2->getDefaultEngine().osContext->getContextId();
-    EXPECT_EQ(gpgpuEngineInstances.size() * 2, memoryManager->getOsContextCount());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     *hwTag = 0u;
     *device2->getDefaultEngine().commandStreamReceiver->getTagAddress() = 1u;
@@ -102,7 +100,6 @@ HWTEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByTwoOsContextsWhe
     *hwTag = 1u;
 }
 TEST_F(DeferrableAllocationDeletionTest, givenNotUsedAllocationWhenApplyDeletionThenDontWait) {
-    EXPECT_EQ(gpgpuEngineInstances.size(), memoryManager->getOsContextCount());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     EXPECT_FALSE(allocation->isUsed());
     EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryCalled);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,8 @@ OsContextLinux::OsContextImpl(Drm &drm, EngineInstanceT engineType) : drm(drm) {
     engineFlag = DrmEngineMapper::engineNodeMap(engineType.type);
     this->drmContextId = drm.createDrmContext();
     if (drm.isPreemptionSupported() &&
-        engineType.type == gpgpuEngineInstances[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].type &&
-        engineType.id == gpgpuEngineInstances[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].id) {
+        engineType.type == lowPriorityGpgpuEngine.type &&
+        engineType.id == lowPriorityGpgpuEngine.id) {
         drm.setLowPriorityContextParam(this->drmContextId);
     }
 }

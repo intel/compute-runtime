@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,5 +161,12 @@ template <typename Family>
 size_t HwHelperHw<Family>::getScratchSpaceOffsetFor64bit() {
     return 4096;
 }
+
+template <typename Family>
+const std::vector<EngineInstanceT> HwHelperHw<Family>::getGpgpuEngineInstances() const {
+    constexpr std::array<EngineInstanceT, 2> gpgpuEngineInstances = {{{ENGINE_RCS, 0},
+                                                                      lowPriorityGpgpuEngine}};
+    return std::vector<EngineInstanceT>(gpgpuEngineInstances.begin(), gpgpuEngineInstances.end());
+};
 
 } // namespace OCLRT

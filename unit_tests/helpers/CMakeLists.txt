@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -20,6 +20,7 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/get_gpgpu_engines_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/get_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gtest_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hash_tests.cpp

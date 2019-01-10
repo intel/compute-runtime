@@ -344,7 +344,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitializeEngineIs
         comments.push_back(std::string(str));
         return true;
     }));
-    auto engineIndex = aubCsr->getEngineIndex(gpgpuEngineInstances[0]);
+    auto engineIndex = aubCsr->getEngineIndex(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0]);
     aubCsr->initializeEngine(engineIndex);
 
 #define QTR(a) #a

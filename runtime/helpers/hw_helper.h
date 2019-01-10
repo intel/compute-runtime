@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/api/cl_types.h"
+#include "CL/cl.h"
 #include "runtime/gen_common/aub_mapper.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/command_stream/linear_stream.h"
@@ -54,6 +54,7 @@ class HwHelper {
                                                 uint32_t surfaceType,
                                                 bool forceNonAuxMode) = 0;
     virtual size_t getScratchSpaceOffsetFor64bit() = 0;
+    virtual const std::vector<EngineInstanceT> getGpgpuEngineInstances() const = 0;
 
   protected:
     HwHelper() = default;
@@ -132,6 +133,8 @@ class HwHelperHw : public HwHelper {
                                         bool forceNonAuxMode) override;
 
     size_t getScratchSpaceOffsetFor64bit() override;
+
+    const std::vector<EngineInstanceT> getGpgpuEngineInstances() const override;
 
   protected:
     HwHelperHw() = default;

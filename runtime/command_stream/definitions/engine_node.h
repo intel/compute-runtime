@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,21 +33,13 @@ struct EngineInstanceT {
     int id;
 };
 
+constexpr EngineInstanceT lowPriorityGpgpuEngine{ENGINE_RCS, 1};
 static constexpr std::array<EngineInstanceT, EngineInstanceConstants::numAllEngineInstances> allEngineInstances = {{
     {ENGINE_RCS, 0},
-    {ENGINE_RCS, 1},
+    lowPriorityGpgpuEngine,
     {ENGINE_BCS},
     {ENGINE_VCS},
     {ENGINE_VECS},
 }};
-
-static constexpr std::array<EngineInstanceT, EngineInstanceConstants::numGpgpuEngineInstances> gpgpuEngineInstances = {{
-    {ENGINE_RCS, 0},
-    {ENGINE_RCS, 1},
-}};
-
-static_assert(gpgpuEngineInstances[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].type == EngineType::ENGINE_RCS &&
-                  gpgpuEngineInstances[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].id == 1,
-              "{RCS,1} is low priority engine");
 
 } // namespace OCLRT

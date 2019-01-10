@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ struct WddmFixture : public GmmEnvironmentFixture {
         wddm->gdi.reset(gdi);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
         wddm->init(preemptionMode);
-        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0], preemptionMode);
+        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
         osContextWin = osContext->get();
         ASSERT_TRUE(wddm->isInitialized());
     }
@@ -57,7 +57,7 @@ struct WddmFixtureWithMockGdiDll : public GmmEnvironmentFixture, public GdiDllFi
     void init() {
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
         EXPECT_TRUE(wddm->init(preemptionMode));
-        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, gpgpuEngineInstances[0], preemptionMode);
+        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
         osContextWin = osContext->get();
         ASSERT_TRUE(wddm->isInitialized());
     }

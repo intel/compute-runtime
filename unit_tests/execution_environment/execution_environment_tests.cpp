@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/os_interface.h"
@@ -121,7 +122,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledMultip
     executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 0, 1);
 
     EXPECT_EQ(currentCommandStreamReceiver, executionEnvironment->commandStreamReceivers[0][1].get());
-    EXPECT_EQ(gpgpuEngineInstances.size(), executionEnvironment->commandStreamReceivers[0].size());
+    EXPECT_EQ(2u, executionEnvironment->commandStreamReceivers[0].size());
     EXPECT_EQ(nullptr, executionEnvironment->commandStreamReceivers[0][0].get());
 }
 
@@ -211,7 +212,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId);
     executionEnvironment->aubCenter = std::make_unique<AubCenterMock>(destructorId);
-    executionEnvironment->commandStreamReceivers[0][0] = std::make_unique<CommandStreamReceiverMock>(destructorId, *executionEnvironment);
+    executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<CommandStreamReceiverMock>(destructorId, *executionEnvironment));
     executionEnvironment->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->sourceLevelDebugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);

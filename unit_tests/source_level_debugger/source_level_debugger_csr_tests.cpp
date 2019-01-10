@@ -31,7 +31,7 @@ class CommandStreamReceiverWithActiveDebuggerTest : public ::testing::Test {
         auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *executionEnvironment);
 
         executionEnvironment->commandStreamReceivers.resize(1);
-        executionEnvironment->commandStreamReceivers[0][0].reset(mockCsr);
+        executionEnvironment->commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(mockCsr));
         auto mockMemoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(mockMemoryManager);
 

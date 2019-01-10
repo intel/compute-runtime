@@ -84,9 +84,7 @@ Device::~Device() {
     }
 
     for (auto &engine : engines) {
-        if (engine.commandStreamReceiver) {
-            engine.commandStreamReceiver->flushBatchedSubmissions();
-        }
+        engine.commandStreamReceiver->flushBatchedSubmissions();
     }
 
     if (deviceInfo.sourceLevelDebuggerActive && executionEnvironment->sourceLevelDebugger) {
@@ -166,26 +164,27 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
 bool Device::createEngines(const HardwareInfo *pHwInfo, Device &outDevice) {
     auto executionEnvironment = outDevice.executionEnvironment;
     auto defaultEngineType = getChosenEngineType(*pHwInfo);
+    auto &gpgpuEngines = HwHelper::get(pHwInfo->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances();
 
-    for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngineInstances.size(); deviceCsrIndex++) {
+    for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngines.size(); deviceCsrIndex++) {
         if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo, outDevice.getDeviceIndex(), deviceCsrIndex)) {
             return false;
         }
         executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages(), outDevice.getEnableLocalMemory(),
                                                       outDevice.getDeviceIndex(), deviceCsrIndex);
 
-        auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[deviceCsrIndex], outDevice.preemptionMode);
+        auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(gpgpuEngines[deviceCsrIndex], outDevice.preemptionMode);
         auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[outDevice.getDeviceIndex()][deviceCsrIndex].get();
         commandStreamReceiver->setupContext(*osContext);
         if (!commandStreamReceiver->initializeTagAllocation()) {
             return false;
         }
 
-        if (gpgpuEngineInstances[deviceCsrIndex].type == defaultEngineType && gpgpuEngineInstances[deviceCsrIndex].id == 0) {
+        if (gpgpuEngines[deviceCsrIndex].type == defaultEngineType && gpgpuEngines[deviceCsrIndex].id == 0) {
             outDevice.defaultEngineIndex = deviceCsrIndex;
         }
 
-        outDevice.engines[deviceCsrIndex] = {commandStreamReceiver, osContext};
+        outDevice.engines.push_back({commandStreamReceiver, osContext});
     }
     return true;
 }
@@ -271,9 +270,7 @@ bool Device::isSourceLevelDebuggerActive() const {
 
 void Device::initMaxPowerSavingMode() {
     for (auto &engine : engines) {
-        if (engine.commandStreamReceiver) {
-            engine.commandStreamReceiver->peekKmdNotifyHelper()->initMaxPowerSavingMode();
-        }
+        engine.commandStreamReceiver->peekKmdNotifyHelper()->initMaxPowerSavingMode();
     }
 }
 } // namespace OCLRT

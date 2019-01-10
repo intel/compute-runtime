@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class BuiltIns;
 struct HardwareInfo;
 class OSInterface;
 
-using CsrContainer = std::vector<std::array<std::unique_ptr<CommandStreamReceiver>, EngineInstanceConstants::numGpgpuEngineInstances>>;
+using CsrContainer = std::vector<std::vector<std::unique_ptr<CommandStreamReceiver>>>;
 
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   private:
