@@ -35,9 +35,6 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const Hardware
     UNRECOVERABLE_IF(nullptr == aubCenter);
 
     aubManager = aubCenter->getAubManager();
-    if (aubManager) {
-        hardwareContext = std::unique_ptr<HardwareContext>(aubManager->createHardwareContext(0, hwInfoIn.capabilityTable.defaultEngineType));
-    }
 
     ppgtt = std::make_unique<std::conditional<is64bit, PML4, PDPE>::type>(physicalAddressAllocator.get());
     ggtt = std::make_unique<PDPE>(physicalAddressAllocator.get());
@@ -177,7 +174,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
         csr = new TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment);
     }
 
-    if (csr->hardwareContext == nullptr) {
+    if (!csr->aubManager) {
         // Open our stream
         csr->stream->open(nullptr);
 

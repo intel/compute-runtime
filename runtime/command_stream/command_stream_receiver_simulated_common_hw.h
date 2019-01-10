@@ -25,6 +25,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
   protected:
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
     using CommandStreamReceiverHw<GfxFamily>::osContext;
+    using CommandStreamReceiverHw<GfxFamily>::hwInfo;
     using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;
 
@@ -41,6 +42,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     static const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance);
     void initEngineMMIO(EngineInstanceT engineInstance);
     void submitLRCA(EngineInstanceT engineInstance, const MiContextDescriptorReg &contextDescriptor);
+    void setupContext(OsContext &osContext) override;
 
     AubManager *aubManager = nullptr;
     std::unique_ptr<HardwareContext> hardwareContext;

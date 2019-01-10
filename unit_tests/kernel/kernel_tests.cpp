@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -582,7 +582,7 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
     // Test it
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     std::unique_ptr<CommandStreamReceiverMock> csr(new CommandStreamReceiverMock(*executionEnvironment));
-    csr->setOsContext(*pDevice->getDefaultEngine().osContext);
+    csr->setupContext(*pDevice->getDefaultEngine().osContext);
     csr->residency.clear();
     EXPECT_EQ(0u, csr->residency.size());
 

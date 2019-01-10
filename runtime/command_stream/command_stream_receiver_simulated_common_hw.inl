@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,5 +112,13 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::submitLRCA(EngineInstanc
     stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
     stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[1]);
     stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[0]);
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &osContext) {
+    CommandStreamReceiverHw<GfxFamily>::setupContext(osContext);
+    if (aubManager) {
+        hardwareContext = std::unique_ptr<HardwareContext>(aubManager->createHardwareContext(0, hwInfo.capabilityTable.defaultEngineType));
+    }
 }
 } // namespace OCLRT

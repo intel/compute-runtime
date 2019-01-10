@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -751,7 +751,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsFlushOnce)
     commandStreamReceiver.initializeTagAllocation();
     commandStream.getSpace(sizeof(typename FamilyType::MI_NOOP));
 
-    commandStreamReceiver.setOsContext(*pDevice->getDefaultEngine().osContext);
+    commandStreamReceiver.setupContext(*pDevice->getDefaultEngine().osContext);
 
     flushTask(commandStreamReceiver);
     EXPECT_EQ(1, commandStreamReceiver.flushCount);

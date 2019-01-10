@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ struct UltCommandStreamReceiverTest
         graphicsAllocation = new MockGraphicsAllocation(sshBuffer, sizeStream);
         ssh.replaceGraphicsAllocation(graphicsAllocation);
 
-        pDevice->getCommandStreamReceiver().setOsContext(*pDevice->getDefaultEngine().osContext);
+        pDevice->getCommandStreamReceiver().setupContext(*pDevice->getDefaultEngine().osContext);
     }
 
     void TearDown() override {

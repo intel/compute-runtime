@@ -44,9 +44,6 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
     UNRECOVERABLE_IF(nullptr == aubCenter);
 
     aubManager = aubCenter->getAubManager();
-    if (aubManager) {
-        hardwareContext = std::unique_ptr<HardwareContext>(aubManager->createHardwareContext(0, defaultEngineType));
-    }
 
     if (!aubCenter->getPhysicalAddressAllocator()) {
         aubCenter->initPhysicalAddressAllocator(this->createPhysicalAddressAllocator(&hwInfoIn));

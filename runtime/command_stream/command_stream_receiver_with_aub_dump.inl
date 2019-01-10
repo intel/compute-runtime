@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,10 +51,10 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::activateAubSubCapture(const Mult
 }
 
 template <typename BaseCSR>
-void CommandStreamReceiverWithAUBDump<BaseCSR>::setOsContext(OsContext &osContext) {
-    BaseCSR::setOsContext(osContext);
+void CommandStreamReceiverWithAUBDump<BaseCSR>::setupContext(OsContext &osContext) {
+    BaseCSR::setupContext(osContext);
     if (aubCSR) {
-        aubCSR->setOsContext(osContext);
+        aubCSR->setupContext(osContext);
     }
 }
 } // namespace OCLRT

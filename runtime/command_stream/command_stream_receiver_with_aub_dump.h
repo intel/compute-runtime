@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
-    void setOsContext(OsContext &osContext) override;
+    void setupContext(OsContext &osContext) override;
 
     CommandStreamReceiver *aubCSR = nullptr;
 };

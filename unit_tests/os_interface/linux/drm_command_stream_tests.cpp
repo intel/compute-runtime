@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ class DrmCommandStreamFixture {
         ASSERT_NE(nullptr, csr);
         executionEnvironment.commandStreamReceivers.resize(1);
         executionEnvironment.commandStreamReceivers[0][0].reset(csr);
-        csr->setOsContext(*osContext);
+        csr->setupContext(*osContext);
 
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
@@ -255,7 +255,7 @@ TEST_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdToAllExecBuff
 
     osContext = std::make_unique<OsContext>(executionEnvironment.osInterface.get(), 1,
                                             gpgpuEngineInstances[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    csr->setOsContext(*osContext);
+    csr->setupContext(*osContext);
 
     auto &cs = csr->getCS();
 

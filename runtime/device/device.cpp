@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -176,7 +176,7 @@ bool Device::createEngines(const HardwareInfo *pHwInfo, Device &outDevice) {
 
         auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(gpgpuEngineInstances[deviceCsrIndex], outDevice.preemptionMode);
         auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[outDevice.getDeviceIndex()][deviceCsrIndex].get();
-        commandStreamReceiver->setOsContext(*osContext);
+        commandStreamReceiver->setupContext(*osContext);
         if (!commandStreamReceiver->initializeTagAllocation()) {
             return false;
         }

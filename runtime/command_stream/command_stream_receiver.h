@@ -161,7 +161,7 @@ class CommandStreamReceiver {
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }
     bool createAllocationForHostSurface(HostPtrSurface &surface, Device &device, bool requiresL3Flush);
     virtual size_t getPreferredTagPoolSize() const { return 512; }
-    virtual void setOsContext(OsContext &osContext) { this->osContext = &osContext; }
+    virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
     OsContext &getOsContext() const { return *osContext; }
 
     TagAllocator<HwTimeStamps> *getEventTsAllocator();
