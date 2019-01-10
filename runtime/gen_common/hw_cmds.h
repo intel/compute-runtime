@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,4 +14,7 @@
 #endif
 #ifdef SUPPORT_GEN10
 #include "runtime/gen10/hw_cmds.h"
+#endif
+#ifdef SUPPORT_GEN11
+#include "runtime/gen11/hw_cmds.h"
 #endif

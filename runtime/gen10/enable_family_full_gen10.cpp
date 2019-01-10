@@ -22,10 +22,6 @@
 
 namespace NEO {
 
-#ifdef HAVE_INSTRUMENTATION
-static_assert(std::is_same<SInstrQueryPerfCountersLayout, SInstrQueryPerfCountersLayout_Gen10>::value, "SInstrQueryPerfCountersLayout_Gen10 mismatch");
-#endif
-
 extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 
 typedef CNLFamily Family;

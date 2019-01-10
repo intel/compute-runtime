@@ -41,6 +41,14 @@ extern GFXCORE_FAMILY renderCoreFamily;
 #define CNL_TYPED_TEST_BODY
 #define CNL_TYPED_CMDTEST_BODY
 #endif
+#ifdef TESTS_GEN11
+#define ICL_TYPED_TEST_BODY testBodyHw<typename NEO::GfxFamilyMapper<IGFX_GEN11_CORE>::GfxFamily>();
+#define ICL_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename NEO::GfxFamilyMapper<IGFX_GEN11_CORE>::GfxFamily>();
+#else
+#define ICL_TYPED_TEST_BODY
+#define ICL_TYPED_CMDTEST_BODY
+#endif
+
 #define TO_STR2(x) #x
 #define TO_STR(x) TO_STR2(x)
 
@@ -153,6 +161,9 @@ extern GFXCORE_FAMILY renderCoreFamily;
                 case IGFX_GEN10_CORE:                                                          \
                     CNL_TYPED_TEST_BODY                                                        \
                     break;                                                                     \
+                case IGFX_GEN11_CORE:                                                          \
+                    ICL_TYPED_TEST_BODY                                                        \
+                    break;                                                                     \
                 default:                                                                       \
                     ASSERT_TRUE((false && "Unknown hardware family"));                         \
                     break;                                                                     \
@@ -241,6 +252,9 @@ extern GFXCORE_FAMILY renderCoreFamily;
                 break;                                                                                    \
             case IGFX_GEN10_CORE:                                                                         \
                 CNL_TYPED_CMDTEST_BODY                                                                    \
+                break;                                                                                    \
+            case IGFX_GEN11_CORE:                                                                         \
+                ICL_TYPED_CMDTEST_BODY                                                                    \
                 break;                                                                                    \
             default:                                                                                      \
                 ASSERT_TRUE((false && "Unknown hardware family"));                                        \
@@ -367,6 +381,9 @@ extern GFXCORE_FAMILY renderCoreFamily;
             case IGFX_GEN10_CORE:                                                                                       \
                 CNL_TYPED_TEST_BODY                                                                                     \
                 break;                                                                                                  \
+            case IGFX_GEN11_CORE:                                                                                       \
+                ICL_TYPED_TEST_BODY                                                                                     \
+                break;                                                                                                  \
             default:                                                                                                    \
                 ASSERT_TRUE((false && "Unknown hardware family"));                                                      \
                 break;                                                                                                  \
@@ -423,6 +440,9 @@ extern GFXCORE_FAMILY renderCoreFamily;
                 break;                                                                                                  \
             case IGFX_GEN10_CORE:                                                                                       \
                 CNL_TYPED_CMDTEST_BODY                                                                                  \
+                break;                                                                                                  \
+            case IGFX_GEN11_CORE:                                                                                       \
+                ICL_TYPED_CMDTEST_BODY                                                                                  \
                 break;                                                                                                  \
             default:                                                                                                    \
                 ASSERT_TRUE((false && "Unknown hardware family"));                                                      \
@@ -522,6 +542,17 @@ extern GFXCORE_FAMILY renderCoreFamily;
                       IGFX_GEN10_CORE,           \
                       IGFX_MAX_PRODUCT)
 #endif
+#ifdef TESTS_GEN11
+#define GEN11TEST_F(test_fixture, test_name)                         \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_GEN11_CORE, IGFX_MAX_PRODUCT)
+#define GEN11TEST_P(test_case_name, test_name)   \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN11_CORE,           \
+                      IGFX_MAX_PRODUCT)
+#endif
+
 #ifdef TESTS_GEN8
 #define BDWTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
@@ -592,6 +623,24 @@ extern GFXCORE_FAMILY renderCoreFamily;
                       IGFX_GEN10_CORE,           \
                       IGFX_CANNONLAKE)
 #endif
+#ifdef TESTS_GEN11
+#define ICLLPTEST_F(test_fixture, test_name)                         \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_GEN11_CORE, IGFX_ICELAKE_LP)
+#define ICLLPTEST_P(test_case_name, test_name)   \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN11_CORE,           \
+                      IGFX_ICELAKE_LP)
+#define LKFTEST_F(test_fixture, test_name)                           \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_GEN11_CORE, IGFX_LAKEFIELD)
+#define LKFTEST_P(test_case_name, test_name)     \
+    FAMILYTEST_TEST_P(test_case_name, test_name, \
+                      IGFX_GEN11_CORE,           \
+                      IGFX_LAKEFIELD)
+#endif
 #define HWTEST_TYPED_TEST(CaseName, TestName)                                              \
     CHECK_TEST_NAME_LENGTH(CaseName, TestName)                                             \
     template <typename gtest_TypeParam_>                                                   \
@@ -612,6 +661,9 @@ extern GFXCORE_FAMILY renderCoreFamily;
                 break;                                                                     \
             case IGFX_GEN10_CORE:                                                          \
                 CNL_TYPED_TEST_BODY                                                        \
+                break;                                                                     \
+            case IGFX_GEN11_CORE:                                                          \
+                ICL_TYPED_TEST_BODY                                                        \
                 break;                                                                     \
             default:                                                                       \
                 ASSERT_TRUE((false && "Unknown hardware family"));                         \
