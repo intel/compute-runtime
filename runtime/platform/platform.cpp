@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -180,7 +180,7 @@ bool Platform::initialize() {
     }
 
     this->fillGlobalDispatchTable();
-
+    DEBUG_BREAK_IF(DebugManager.flags.CreateMultipleDevices.get() > 1 && !this->devices[0]->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled());
     state = StateInited;
     return true;
 }
