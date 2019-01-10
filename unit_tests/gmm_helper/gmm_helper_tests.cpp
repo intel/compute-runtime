@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -175,6 +175,20 @@ TEST_F(GmmTests, validImageTypeQuery) {
     EXPECT_EQ(queryGmm->resourceParams.Depth, 17u);
     EXPECT_EQ(queryGmm->resourceParams.ArraySize, 1u);
     EXPECT_EQ(queryGmm->resourceParams.Flags.Wa.__ForceOtherHVALIGN4, 1u);
+}
+
+TEST_F(GmmTests, givenNullptrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperlySet) {
+    void *pSysMem = nullptr;
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096, false));
+
+    EXPECT_EQ(gmm->resourceParams.NoGfxMemory, 1u);
+}
+
+TEST_F(GmmTests, givenPtrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperlySet) {
+    void *pSysMem = reinterpret_cast<void *>(0x1111);
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096, false));
+
+    EXPECT_EQ(gmm->resourceParams.NoGfxMemory, 0u);
 }
 
 TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedThenItHasDesiredPitchAndSize) {

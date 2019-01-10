@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,8 @@ Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool pref
         resourceParams.Flags.Info.ExistingSysMem = 1;
         resourceParams.pExistingSysMem = reinterpret_cast<GMM_VOIDPTR64>(alignedPtr);
         resourceParams.ExistingSysMemSize = alignedSize;
+    } else {
+        resourceParams.NoGfxMemory = 1u;
     }
 
     if (resourceParams.BaseWidth >= GmmHelper::maxPossiblePitch) {
