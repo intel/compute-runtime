@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
+#include "unit_tests/aub_tests/command_queue/enqueue_read_write_image_aub_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "test.h"
 
@@ -214,3 +215,19 @@ INSTANTIATE_TEST_CASE_P(AUBWriteImage_simple, AUBWriteImage,
                                            ::testing::Values( // channels
                                                CL_R, CL_RG, CL_RGBA),
                                            ::testing::ValuesIn(writeImageParams)));
+
+using AUBWriteImageUnaligned = AUBImageUnaligned;
+
+HWTEST_F(AUBWriteImageUnaligned, misalignedHostPtr) {
+    const std::vector<size_t> pixelSizes = {1, 2, 4};
+    const std::vector<size_t> offsets = {0, 1, 2, 3};
+    const std::vector<size_t> sizes = {3, 2, 1};
+
+    for (auto pixelSize : pixelSizes) {
+        for (auto offset : offsets) {
+            for (auto size : sizes) {
+                testWriteImageUnaligned<FamilyType>(offset, size, pixelSize);
+            }
+        }
+    }
+}

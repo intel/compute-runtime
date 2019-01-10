@@ -88,13 +88,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     void *dstPtr = ptr;
-    void *alignedDstPtr = dstPtr;
-    size_t dstPtrOffset = 0;
-
-    if (!isAligned<4>(dstPtr)) {
-        alignedDstPtr = alignDown(dstPtr, 4);
-        dstPtrOffset = ptrDiff(dstPtr, alignedDstPtr);
-    }
 
     MemObjSurface bufferSurf(buffer);
     HostPtrSurface hostPtrSurf(dstPtr, size);
@@ -105,7 +98,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
         if (!status) {
             return CL_OUT_OF_RESOURCES;
         }
+        dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
     }
+
+    void *alignedDstPtr = alignDown(dstPtr, 4);
+    size_t dstPtrOffset = ptrDiff(dstPtr, alignedDstPtr);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
     dc.dstPtr = alignedDstPtr;

@@ -79,7 +79,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
         if (!status) {
             return CL_OUT_OF_RESOURCES;
         }
-        srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddressToPatch());
+        srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
     }
 
     void *alignedSrcPtr = alignDown(srcPtr, 4);

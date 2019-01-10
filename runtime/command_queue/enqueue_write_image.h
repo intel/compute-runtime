@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,11 +80,15 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
         if (!status) {
             return CL_OUT_OF_RESOURCES;
         }
-        srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddressToPatch());
+        srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
     }
 
+    void *alignedSrcPtr = alignDown(srcPtr, 4);
+    size_t srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
+
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
-    dc.srcPtr = srcPtr;
+    dc.srcPtr = alignedSrcPtr;
+    dc.srcOffset.x = srcPtrOffset;
     dc.dstMemObj = dstImage;
     dc.dstOffset = origin;
     dc.size = region;

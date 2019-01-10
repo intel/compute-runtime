@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -476,6 +476,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyBufferToImage3d> : public BuiltinDisp
 
         // Determine size of host ptr surface for residency purposes
         size_t hostPtrSize = operationParams.srcPtr ? Image::calculateHostPtrSize(region, srcRowPitch, srcSlicePitch, bytesPerPixel, dstImage->getImageDesc().image_type) : 0;
+        hostPtrSize += operationParams.srcOffset.x;
 
         // Set-up kernel
         auto bytesExponent = Math::log2(bytesPerPixel);
@@ -562,6 +563,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDisp
 
         // Determine size of host ptr surface for residency purposes
         size_t hostPtrSize = operationParams.dstPtr ? Image::calculateHostPtrSize(region, dstRowPitch, dstSlicePitch, bytesPerPixel, srcImage->getImageDesc().image_type) : 0;
+        hostPtrSize += operationParams.dstOffset.x;
 
         // Set-up ISA
         auto bytesExponent = Math::log2(bytesPerPixel);
