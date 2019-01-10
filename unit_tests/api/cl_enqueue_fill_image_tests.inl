@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ typedef api_tests clEnqueueFillImageTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueFillImageTests, nullCommandQueueReturnsError) {
+TEST_F(clEnqueueFillImageTests, GivenNullCommandQueueWhenFillingImageThenInvalidCommandQueueErrorIsReturned) {
     auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
     uint32_t fill_color[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
     size_t origin[3] = {0, 0, 0};
@@ -35,7 +35,7 @@ TEST_F(clEnqueueFillImageTests, nullCommandQueueReturnsError) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueFillImageTests, nullImageReturnsError) {
+TEST_F(clEnqueueFillImageTests, GivenNullImageWhenFillingImageThenInvalidMemObjectErrorIsReturned) {
     uint32_t fill_color[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {2, 2, 1};
@@ -53,7 +53,7 @@ TEST_F(clEnqueueFillImageTests, nullImageReturnsError) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueFillImageTests, nullFillColorReturnsError) {
+TEST_F(clEnqueueFillImageTests, GivenNullFillColorWhenFillingImageThenInvalidValueErrorIsReturned) {
     auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
     size_t origin[3] = {0, 0, 0};
     size_t region[3] = {2, 2, 1};

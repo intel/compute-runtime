@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ typedef api_tests clEnqueueFillBufferTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueFillBufferTests, nullCommandQueueReturnsError) {
+TEST_F(clEnqueueFillBufferTests, GivenNullCommandQueueWhenFillingBufferThenInvalidCommandQueueErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
     cl_float pattern = 1.0f;
 
@@ -33,7 +33,7 @@ TEST_F(clEnqueueFillBufferTests, nullCommandQueueReturnsError) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueFillBufferTests, nullBufferReturnsError) {
+TEST_F(clEnqueueFillBufferTests, GivenNullBufferWhenFillingBufferThenInvalidMemObjectErrorIsReturned) {
     cl_float pattern = 1.0f;
 
     retVal = clEnqueueFillBuffer(
