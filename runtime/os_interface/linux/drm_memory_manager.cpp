@@ -73,7 +73,7 @@ DrmMemoryManager::~DrmMemoryManager() {
 }
 
 void DrmMemoryManager::initInternalRangeAllocator(size_t gpuRange) {
-    if (gpuRange < MemoryConstants::max48BitAddress) {
+    if (gpuRange < MemoryConstants::max48BitAddress || !DebugManager.flags.EnableHostPtrTracking.get()) {
         // set the allocator with the whole reduced address space range
         this->limitedGpuAddressRangeAllocator.reset(new AllocatorLimitedRange(0, gpuRange));
 

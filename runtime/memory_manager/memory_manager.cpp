@@ -289,13 +289,11 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr) {
     AllocationData allocationData;
-    AllocationStatus status = AllocationStatus::Error;
-
     getAllocationData(allocationData, properties, devicesBitfield, hostPtr);
     UNRECOVERABLE_IF(allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE);
-    GraphicsAllocation *allocation = nullptr;
 
-    allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
+    AllocationStatus status = AllocationStatus::Error;
+    GraphicsAllocation *allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
     if (!allocation && status == AllocationStatus::RetryInNonDevicePool) {
         allocation = allocateGraphicsMemory(allocationData);
     }

@@ -70,13 +70,14 @@ DECLARE_DEBUG_VARIABLE(bool, Force32bitAddressing, false, "Forces 32 bit address
 DECLARE_DEBUG_VARIABLE(bool, ForceCsrFlushing, false, "Forces flushing of command stream receiver")
 DECLARE_DEBUG_VARIABLE(bool, ForceCsrReprogramming, false, "Forces reprogramming of command stream receiver")
 DECLARE_DEBUG_VARIABLE(bool, DisableStatelessToStatefulOptimization, false, "Disables stateless to stateful optimization for buffers")
-DECLARE_DEBUG_VARIABLE(bool, DisableConcurrentBlockExecution, 0, "disables concurrent block kernel execution")
+DECLARE_DEBUG_VARIABLE(bool, DisableConcurrentBlockExecution, false, "disables concurrent block kernel execution")
 DECLARE_DEBUG_VARIABLE(bool, UseNewHeapAllocator, true, "Custom 4GB heap allocator is used")
 DECLARE_DEBUG_VARIABLE(bool, UseNoRingFlushesKmdMode, true, "Windows only, passes flag to KMD that informs KMD to not emit any ring buffer flushes.")
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForUseHostPtr, false, "When active all buffer allocations created with CL_MEM_USE_HOST_PTR flag will not share memory with CPU.")
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")
-DECLARE_DEBUG_VARIABLE(bool, ForceResourceLockOnTransferCalls, 0, "Forces resource locking on memory transfer calls")
-DECLARE_DEBUG_VARIABLE(bool, EnableMakeResidentOnMapGpuVa, 0, "Make allocations resident on call mapGpuVirtualAddress")
+DECLARE_DEBUG_VARIABLE(bool, ForceResourceLockOnTransferCalls, false, "Forces resource locking on memory transfer calls")
+DECLARE_DEBUG_VARIABLE(bool, EnableMakeResidentOnMapGpuVa, false, "Make allocations resident on call mapGpuVirtualAddress")
+DECLARE_DEBUG_VARIABLE(bool, EnableHostPtrTracking, true, "Enable host ptr tracking")
 
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")

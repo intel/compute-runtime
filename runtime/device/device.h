@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,7 +116,7 @@ class Device : public BaseObject<_cl_device_id> {
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
     uint32_t getDeviceIndex() const { return deviceIndex; }
-    bool isFullRangeSvm() {
+    bool isFullRangeSvm() const {
         return getHardwareInfo().capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
     }
 

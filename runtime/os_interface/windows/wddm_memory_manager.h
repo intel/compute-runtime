@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ class WddmMemoryManager : public MemoryManager {
 
     OsContext *getRegisteredOsContext(uint32_t osContextId) { return registeredOsContexts[osContextId]; }
 
-    void obtainGpuAddresFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
+    void obtainGpuAddressFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
 
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override;
 

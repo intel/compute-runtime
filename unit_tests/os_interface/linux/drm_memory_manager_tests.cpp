@@ -16,6 +16,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/linux/allocator_helper.h"
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
@@ -2153,7 +2154,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForExternalAlloc
     memoryManager->freeGraphicsMemory(drmAllocation);
 }
 
-TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAllocationWithNoPointerandHugeBufferSizeThenAllocationFromInternalHeapFailed) {
+TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAllocationWithNoPointerAndHugeBufferSizeThenAllocationFromInternalHeapFailed) {
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
     auto bufferSize = 128 * MemoryConstants::megaByte + 4 * MemoryConstants::pageSize;
@@ -3042,4 +3043,24 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWithZeroBaseAndSizeWhenAs
     AllocatorLimitedRange allocator(base, size);
 
     EXPECT_EQ(base, allocator.getBase());
+}
+
+TEST_F(DrmMemoryManagerTest, givenDisabledHostPtrTrackingWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWithNotAlignedPtrIsPassedThenAllocationIsCreated) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableHostPtrTracking.set(false);
+
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, executionEnvironment));
+
+    memoryManager->forceLimitedRangeAllocator(MemoryConstants::max48BitAddress);
+
+    void *hostPtr = reinterpret_cast<void *>(0x5001);
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
+
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(reinterpret_cast<void *>(0x5001), allocation->getUnderlyingBuffer());
+    EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(1u, allocation->allocationOffset);
+
+    memoryManager->freeGraphicsMemory(allocation);
 }

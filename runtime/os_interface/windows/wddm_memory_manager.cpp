@@ -416,7 +416,7 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
     }
 }
 
-void WddmMemoryManager::obtainGpuAddresFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage) {
+void WddmMemoryManager::obtainGpuAddressFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage) {
     if (this->force32bitAllocations && (handleStorage.fragmentCount > 0)) {
         auto hostPtr = allocation->getUnderlyingBuffer();
         auto fragment = hostPtrManager->getFragment(hostPtr);
@@ -436,7 +436,7 @@ void WddmMemoryManager::obtainGpuAddresFromFragments(WddmAllocation *allocation,
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
     auto allocation = new WddmAllocation(const_cast<void *>(hostPtr), hostPtrSize, nullptr, MemoryPool::System4KBPages, getOsContextCount(), false);
     allocation->fragmentsStorage = handleStorage;
-    obtainGpuAddresFromFragments(allocation, handleStorage);
+    obtainGpuAddressFromFragments(allocation, handleStorage);
     return allocation;
 }
 
