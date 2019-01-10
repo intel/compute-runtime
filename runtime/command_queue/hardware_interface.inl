@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,14 @@
 #include "runtime/helpers/task_information.h"
 
 namespace OCLRT {
+
+template <typename GfxFamily>
+inline WALKER_TYPE<GfxFamily> *HardwareInterface<GfxFamily>::allocateWalkerSpace(LinearStream &commandStream,
+                                                                                 const Kernel &kernel) {
+    auto walkerCmd = static_cast<WALKER_TYPE<GfxFamily> *>(commandStream.getSpace(sizeof(WALKER_TYPE<GfxFamily>)));
+    *walkerCmd = GfxFamily::cmdInitGpgpuWalker;
+    return walkerCmd;
+}
 
 template <typename GfxFamily>
 void HardwareInterface<GfxFamily>::dispatchWalker(
@@ -126,9 +134,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         DEBUG_BREAK_IF(!(dispatchInfo.getOffset().z == 0 || dispatchInfo.getDim() == 3));
         DEBUG_BREAK_IF(!(dispatchInfo.getOffset().y == 0 || dispatchInfo.getDim() >= 2));
 
-        // Determine SIMD size
-        uint32_t simd = kernel.getKernelInfo().getMaxSimdSize();
-
         // If we don't have a required WGS, compute one opportunistically
         auto maxWorkGroupSize = static_cast<uint32_t>(commandQueue.getDevice().getDeviceInfo().maxWorkGroupSize);
         if (commandType == CL_COMMAND_NDRANGE_KERNEL) {
@@ -148,7 +153,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         // Compute number of work groups
         Vec3<size_t> twgs = (dispatchInfo.getTotalNumberOfWorkgroups().x > 0) ? dispatchInfo.getTotalNumberOfWorkgroups()
                                                                               : generateWorkgroupsNumber(gws, lws);
-        Vec3<size_t> nwgs = (dispatchInfo.getNumberOfWorkgroups().x > 0) ? dispatchInfo.getNumberOfWorkgroups() : twgs;
 
         // Patch our kernel constants
         *kernel.globalWorkOffsetX = static_cast<uint32_t>(offset.x);
@@ -183,7 +187,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         // Send our indirect object data
         size_t localWorkSizes[3] = {lws.x, lws.y, lws.z};
-        size_t globalWorkSizes[3] = {gws.x, gws.y, gws.z};
 
         dispatchProfilingPerfStartCommands(dispatchInfo, multiDispatchInfo, hwTimeStamps,
                                            hwPerfCounter, commandStream, commandQueue);
@@ -195,47 +198,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacket, TimestampPacket::WriteOperationType::BeforeWalker);
         }
 
-        // Program the walker.  Invokes execution so all state should already be programmed
-        auto walkerCmd = allocateWalkerSpace(*commandStream, kernel);
-
-        KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, &kernel);
-
-        if (currentTimestampPacketNodes && commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-            auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex)->tag;
-            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, walkerCmd, timestampPacket, TimestampPacket::WriteOperationType::AfterWalker);
-        }
-
-        auto idd = obtainInterfaceDescriptorData(walkerCmd);
-
-        bool localIdsGenerationByRuntime = KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(dim, globalWorkSizes, localWorkSizes);
-        bool inlineDataProgrammingRequired = KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
-        bool kernelUsesLocalIds = KernelCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
-        KernelCommandsHelper<GfxFamily>::sendIndirectState(
-            *commandStream,
-            *dsh,
-            *ioh,
-            *ssh,
-            kernel,
-            simd,
-            localWorkSizes,
-            offsetInterfaceDescriptorTable,
-            interfaceDescriptorIndex,
-            preemptionMode,
-            walkerCmd,
-            idd,
-            localIdsGenerationByRuntime,
-            kernelUsesLocalIds,
-            inlineDataProgrammingRequired);
-
-        size_t globalOffsets[3] = {offset.x, offset.y, offset.z};
-        size_t startWorkGroups[3] = {swgs.x, swgs.y, swgs.z};
-        size_t numWorkGroups[3] = {nwgs.x, nwgs.y, nwgs.z};
-        GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(walkerCmd, globalOffsets, startWorkGroups,
-                                                               numWorkGroups, localWorkSizes, simd, dim,
-                                                               localIdsGenerationByRuntime, inlineDataProgrammingRequired,
-                                                               *kernel.getKernelInfo().patchInfo.threadPayload);
-
-        GpgpuWalkerHelper<GfxFamily>::adjustWalkerData(commandStream, walkerCmd, kernel, dispatchInfo);
+        programWalker(*commandStream, kernel, commandQueue, currentTimestampPacketNodes, *dsh, *ioh, *ssh,
+                      localWorkSizes, preemptionMode, currentDispatchIndex, interfaceDescriptorIndex, dispatchInfo, offsetInterfaceDescriptorTable);
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, false);
         if (dispatchInfo.isPipeControlRequired()) {
@@ -244,6 +208,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
             pPipeControlCmd->setCommandStreamerStallEnable(true);
         }
+        KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, &kernel);
+
         currentDispatchIndex++;
     }
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);

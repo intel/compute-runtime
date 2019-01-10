@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,11 +92,70 @@ inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfEndCommands(
 }
 
 template <typename GfxFamily>
-inline WALKER_TYPE<GfxFamily> *HardwareInterface<GfxFamily>::allocateWalkerSpace(LinearStream &commandStream,
-                                                                                 const Kernel &kernel) {
-    auto walkerCmd = static_cast<WALKER_TYPE<GfxFamily> *>(commandStream.getSpace(sizeof(WALKER_TYPE<GfxFamily>)));
-    *walkerCmd = GfxFamily::cmdInitGpgpuWalker;
-    return walkerCmd;
+inline void HardwareInterface<GfxFamily>::programWalker(
+    LinearStream &commandStream,
+    Kernel &kernel,
+    CommandQueue &commandQueue,
+    TimestampPacketContainer *currentTimestampPacketNodes,
+    IndirectHeap &dsh,
+    IndirectHeap &ioh,
+    IndirectHeap &ssh,
+    size_t localWorkSizes[3],
+    PreemptionMode preemptionMode,
+    size_t currentDispatchIndex,
+    uint32_t &interfaceDescriptorIndex,
+    const DispatchInfo &dispatchInfo,
+    size_t offsetInterfaceDescriptorTable) {
+
+    auto walkerCmd = allocateWalkerSpace(commandStream, kernel);
+    uint32_t dim = dispatchInfo.getDim();
+    Vec3<size_t> lws = dispatchInfo.getLocalWorkgroupSize();
+    Vec3<size_t> gws = dispatchInfo.getGWS();
+    Vec3<size_t> swgs = dispatchInfo.getStartOfWorkgroups();
+    Vec3<size_t> twgs = (dispatchInfo.getTotalNumberOfWorkgroups().x > 0) ? dispatchInfo.getTotalNumberOfWorkgroups() : generateWorkgroupsNumber(gws, lws);
+    Vec3<size_t> nwgs = (dispatchInfo.getNumberOfWorkgroups().x > 0) ? dispatchInfo.getNumberOfWorkgroups() : twgs;
+    size_t globalWorkSizes[3] = {gws.x, gws.y, gws.z};
+
+    if (currentTimestampPacketNodes && commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex)->tag;
+        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, walkerCmd, timestampPacket, TimestampPacket::WriteOperationType::AfterWalker);
+    }
+
+    auto idd = obtainInterfaceDescriptorData(walkerCmd);
+
+    bool localIdsGenerationByRuntime = KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(dim, globalWorkSizes, localWorkSizes);
+    bool inlineDataProgrammingRequired = KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
+    bool kernelUsesLocalIds = KernelCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
+    uint32_t simd = kernel.getKernelInfo().getMaxSimdSize();
+
+    Vec3<size_t> offset = dispatchInfo.getOffset();
+
+    KernelCommandsHelper<GfxFamily>::sendIndirectState(
+        commandStream,
+        dsh,
+        ioh,
+        ssh,
+        kernel,
+        simd,
+        localWorkSizes,
+        offsetInterfaceDescriptorTable,
+        interfaceDescriptorIndex,
+        preemptionMode,
+        walkerCmd,
+        idd,
+        localIdsGenerationByRuntime,
+        kernelUsesLocalIds,
+        inlineDataProgrammingRequired);
+
+    size_t globalOffsets[3] = {offset.x, offset.y, offset.z};
+    size_t startWorkGroups[3] = {swgs.x, swgs.y, swgs.z};
+    size_t numWorkGroups[3] = {nwgs.x, nwgs.y, nwgs.z};
+    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(walkerCmd, globalOffsets, startWorkGroups,
+                                                           numWorkGroups, localWorkSizes, simd, dim,
+                                                           localIdsGenerationByRuntime, inlineDataProgrammingRequired,
+                                                           *kernel.getKernelInfo().patchInfo.threadPayload);
+
+    GpgpuWalkerHelper<GfxFamily>::adjustWalkerData(&commandStream, walkerCmd, kernel, dispatchInfo);
 }
 
 } // namespace OCLRT

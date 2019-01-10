@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -878,7 +878,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabled
     hwParse.parseCommands<FamilyType>(cmdQ.getCS(0), 0);
     auto itorCmd = find<GPGPU_WALKER *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
     ASSERT_NE(hwParse.cmdList.end(), itorCmd);
-    ++itorCmd;
+    itorCmd = find<PIPE_CONTROL *>(itorCmd, hwParse.cmdList.end());
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorCmd);
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
