@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,9 +98,9 @@ class CommandComputeKernel : public Command {
     LinearStream *getCommandStream() override { return kernelOperation->commandStream.get(); }
 
     void setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &previous);
-    void setEventsRequest(EventsRequest &eventsRequest) { this->eventsRequest = eventsRequest; }
+    void setEventsRequest(EventsRequest &eventsRequest);
 
-  private:
+  protected:
     CommandQueue &commandQueue;
     std::unique_ptr<KernelOperation> kernelOperation;
     std::vector<Surface *> surfaces;
@@ -114,6 +114,7 @@ class CommandComputeKernel : public Command {
     std::unique_ptr<TimestampPacketContainer> currentTimestampPacketNodes;
     std::unique_ptr<TimestampPacketContainer> previousTimestampPacketNodes;
     EventsRequest eventsRequest = {0, nullptr, nullptr};
+    std::vector<cl_event> eventsWaitlist;
 };
 
 class CommandMarker : public Command {

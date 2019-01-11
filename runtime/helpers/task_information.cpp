@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -226,6 +226,16 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     return completionStamp;
+}
+
+void CommandComputeKernel::setEventsRequest(EventsRequest &eventsRequest) {
+    this->eventsRequest = eventsRequest;
+    if (eventsRequest.numEventsInWaitList > 0) {
+        eventsWaitlist.resize(eventsRequest.numEventsInWaitList);
+        auto size = eventsRequest.numEventsInWaitList * sizeof(cl_event);
+        memcpy_s(&eventsWaitlist[0], size, eventsRequest.eventWaitList, size);
+        this->eventsRequest.eventWaitList = &eventsWaitlist[0];
+    }
 }
 
 void CommandComputeKernel::setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &previous) {
