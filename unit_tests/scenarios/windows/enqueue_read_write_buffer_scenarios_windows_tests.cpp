@@ -74,7 +74,7 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
     MockWddmMemoryManager *memoryManager = nullptr;
 };
 
-HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCalledThenStateBaseAddressAddressIsAlignedAndMatchesKernelDispatchInfoParams) {
+HWTEST_F(EnqueueBufferWindowsTest, DISABLED_givenMisalignedHostPtrWhenEnqueueReadBufferCalledThenStateBaseAddressAddressIsAlignedAndMatchesKernelDispatchInfoParams) {
     initializeFixture<FamilyType>();
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), &properties);
     uint32_t memory[2] = {};
