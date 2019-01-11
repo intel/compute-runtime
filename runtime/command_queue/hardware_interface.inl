@@ -144,15 +144,19 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         uint32_t dim = dispatchInfo.getDim();
         Vec3<size_t> gws = dispatchInfo.getGWS();
         Vec3<size_t> offset = dispatchInfo.getOffset();
-        Vec3<size_t> swgs = dispatchInfo.getStartOfWorkgroups();
+        Vec3<size_t> startOfWorkgroups = dispatchInfo.getStartOfWorkgroups();
 
         // Compute local workgroup sizes
         Vec3<size_t> lws = dispatchInfo.getLocalWorkgroupSize();
         Vec3<size_t> elws = (dispatchInfo.getEnqueuedWorkgroupSize().x > 0) ? dispatchInfo.getEnqueuedWorkgroupSize() : lws;
 
         // Compute number of work groups
-        Vec3<size_t> twgs = (dispatchInfo.getTotalNumberOfWorkgroups().x > 0) ? dispatchInfo.getTotalNumberOfWorkgroups()
-                                                                              : generateWorkgroupsNumber(gws, lws);
+        Vec3<size_t> totalNumberOfWorkgroups = (dispatchInfo.getTotalNumberOfWorkgroups().x > 0) ? dispatchInfo.getTotalNumberOfWorkgroups()
+                                                                                                 : generateWorkgroupsNumber(gws, lws);
+
+        Vec3<size_t> numberOfWorkgroups = (dispatchInfo.getNumberOfWorkgroups().x > 0) ? dispatchInfo.getNumberOfWorkgroups() : totalNumberOfWorkgroups;
+
+        size_t globalWorkSizes[3] = {gws.x, gws.y, gws.z};
 
         // Patch our kernel constants
         *kernel.globalWorkOffsetX = static_cast<uint32_t>(offset.x);
@@ -178,9 +182,9 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         *kernel.enqueuedLocalWorkSizeZ = static_cast<uint32_t>(elws.z);
 
         if (&kernel == mainKernel) {
-            *kernel.numWorkGroupsX = static_cast<uint32_t>(twgs.x);
-            *kernel.numWorkGroupsY = static_cast<uint32_t>(twgs.y);
-            *kernel.numWorkGroupsZ = static_cast<uint32_t>(twgs.z);
+            *kernel.numWorkGroupsX = static_cast<uint32_t>(totalNumberOfWorkgroups.x);
+            *kernel.numWorkGroupsY = static_cast<uint32_t>(totalNumberOfWorkgroups.y);
+            *kernel.numWorkGroupsZ = static_cast<uint32_t>(totalNumberOfWorkgroups.z);
         }
 
         *kernel.workDim = dim;
@@ -198,8 +202,9 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacket, TimestampPacket::WriteOperationType::BeforeWalker);
         }
 
-        programWalker(*commandStream, kernel, commandQueue, currentTimestampPacketNodes, *dsh, *ioh, *ssh,
-                      localWorkSizes, preemptionMode, currentDispatchIndex, interfaceDescriptorIndex, dispatchInfo, offsetInterfaceDescriptorTable);
+        programWalker(*commandStream, kernel, commandQueue, currentTimestampPacketNodes, *dsh, *ioh, *ssh, globalWorkSizes,
+                      localWorkSizes, preemptionMode, currentDispatchIndex, interfaceDescriptorIndex, dispatchInfo,
+                      offsetInterfaceDescriptorTable, numberOfWorkgroups, startOfWorkgroups);
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, false);
         if (dispatchInfo.isPipeControlRequired()) {
