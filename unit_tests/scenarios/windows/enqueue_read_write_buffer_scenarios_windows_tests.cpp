@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 
@@ -74,18 +75,30 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
     MockWddmMemoryManager *memoryManager = nullptr;
 };
 
-HWTEST_F(EnqueueBufferWindowsTest, DISABLED_givenMisalignedHostPtrWhenEnqueueReadBufferCalledThenStateBaseAddressAddressIsAlignedAndMatchesKernelDispatchInfoParams) {
+HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCalledThenStateBaseAddressAddressIsAlignedAndMatchesKernelDispatchInfoParams) {
     initializeFixture<FamilyType>();
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), &properties);
     uint32_t memory[2] = {};
     char *misalignedPtr = reinterpret_cast<char *>(memory) + 1;
 
     buffer->forceDisallowCPUCopy = true;
-    auto retVal = cmdQ->enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 4, misalignedPtr, 0, nullptr, nullptr);
-
+    auto retVal = cmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 4, misalignedPtr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(0, cmdQ->lastEnqueuedKernels.size());
     Kernel *kernel = cmdQ->lastEnqueuedKernels[0];
+
+    auto hostPtrAllcoation = cmdQ->getCommandStreamReceiver().getInternalAllocationStorage()->getTemporaryAllocations().peekHead();
+
+    while (hostPtrAllcoation != nullptr) {
+        if (hostPtrAllcoation->getUnderlyingBuffer() == misalignedPtr) {
+            break;
+        }
+        hostPtrAllcoation = hostPtrAllcoation->next;
+    }
+    ASSERT_NE(nullptr, hostPtrAllcoation);
+
+    uint64_t gpuVa = hostPtrAllcoation->getGpuAddress();
+    cmdQ->finish(true);
 
     parseCommands<FamilyType>(*cmdQ);
 
@@ -101,7 +114,7 @@ HWTEST_F(EnqueueBufferWindowsTest, DISABLED_givenMisalignedHostPtrWhenEnqueueRea
         } else if (kernel->getKernelInfo().kernelArgInfo[1].kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
             auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData() +
                                            kernel->getKernelInfo().kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
-            EXPECT_EQ(reinterpret_cast<uint64_t>(alignDown(misalignedPtr, 4)), static_cast<uint64_t>(*pKernelArg));
+            EXPECT_EQ(alignDown(gpuVa, 4), static_cast<uint64_t>(*pKernelArg));
             EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceStateDst.getSurfaceBaseAddress());
         }
     }
