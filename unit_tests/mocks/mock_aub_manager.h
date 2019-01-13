@@ -11,7 +11,8 @@
 using namespace AubDump;
 
 struct MockHardwareContext : public HardwareContext {
-    MockHardwareContext(){};
+    MockHardwareContext(uint32_t deviceIndex, uint32_t engineIndex)
+        : deviceIndex(deviceIndex), engineIndex(engineIndex){};
     ~MockHardwareContext() override{};
 
     void initialize() override { initializeCalled = true; }
@@ -29,6 +30,9 @@ struct MockHardwareContext : public HardwareContext {
     bool freeMemoryCalled = false;
     bool expectMemoryCalled = false;
     bool readMemoryCalled = false;
+
+    uint32_t deviceIndex = 0;
+    uint32_t engineIndex = 0;
 };
 
 class MockAubManager : public AubManager {
@@ -36,7 +40,7 @@ class MockAubManager : public AubManager {
     MockAubManager(){};
     ~MockAubManager() override {}
 
-    HardwareContext *createHardwareContext(uint32_t device, uint32_t engine) override { return new MockHardwareContext(); }
+    HardwareContext *createHardwareContext(uint32_t device, uint32_t engine) override { return new MockHardwareContext(device, engine); }
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 65536) override {}
 
   protected:

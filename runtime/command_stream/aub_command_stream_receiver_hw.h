@@ -87,8 +87,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
         return new OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, true, this->executionEnvironment);
     }
 
-    EngineType defaultEngineType;
-
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;
     uint32_t aubDeviceId;
     bool standalone;

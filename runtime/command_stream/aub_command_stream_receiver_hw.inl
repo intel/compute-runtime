@@ -35,7 +35,6 @@ namespace OCLRT {
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment)
     : BaseClass(hwInfoIn, executionEnvironment),
-      defaultEngineType(hwInfoIn.capabilityTable.defaultEngineType),
       subCaptureManager(std::make_unique<AubSubCaptureManager>(fileName)),
       standalone(standalone) {
 
@@ -148,7 +147,7 @@ const std::string &AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex) {
     if (hardwareContext) {
-        DEBUG_BREAK_IF(allEngineInstances[engineIndex].type != defaultEngineType);
+        DEBUG_BREAK_IF(allEngineInstances[engineIndex].type != osContext->getEngineType().type);
         hardwareContext->initialize();
         return;
     }
