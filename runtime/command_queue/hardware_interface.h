@@ -57,9 +57,6 @@ class HardwareInterface {
         IndirectHeap *dsh,
         LinearStream *commandStream);
 
-    static INTERFACE_DESCRIPTOR_DATA *obtainInterfaceDescriptorData(
-        WALKER_TYPE<GfxFamily> *walkerCmd);
-
     static void dispatchWorkarounds(
         LinearStream *commandStream,
         CommandQueue &commandQueue,

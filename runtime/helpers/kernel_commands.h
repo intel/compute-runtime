@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,9 +110,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         PreemptionMode preemptionMode,
         WALKER_TYPE<GfxFamily> *walkerCmd,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
-        bool localIdsGenerationByRuntime,
-        bool kernelUsesLocalIds,
-        bool inlineDataProgrammingRequired);
+        bool localIdsGenerationByRuntime);
 
     static void programPerThreadData(
         size_t &sizePerThreadData,

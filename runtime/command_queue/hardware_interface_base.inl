@@ -31,13 +31,6 @@ inline void HardwareInterface<GfxFamily>::getDefaultDshSpace(
 }
 
 template <typename GfxFamily>
-inline typename HardwareInterface<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *
-HardwareInterface<GfxFamily>::obtainInterfaceDescriptorData(
-    WALKER_TYPE<GfxFamily> *walkerCmd) {
-    return nullptr;
-}
-
-template <typename GfxFamily>
 inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
     LinearStream *commandStream,
     CommandQueue &commandQueue,
@@ -118,11 +111,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     size_t startWorkGroups[3] = {startOfWorkgroups.x, startOfWorkgroups.y, startOfWorkgroups.z};
     size_t numWorkGroups[3] = {numberOfWorkgroups.x, numberOfWorkgroups.y, numberOfWorkgroups.z};
 
-    bool localIdsGenerationByRuntime = KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(dim, globalWorkSizes, localWorkSizes);
-    bool inlineDataProgrammingRequired = KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
-    bool kernelUsesLocalIds = KernelCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
-    auto idd = obtainInterfaceDescriptorData(walkerCmd);
-
     if (currentTimestampPacketNodes && commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex)->tag;
         GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, walkerCmd, timestampPacket, TimestampPacket::WriteOperationType::AfterWalker);
@@ -140,17 +128,13 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         interfaceDescriptorIndex,
         preemptionMode,
         walkerCmd,
-        idd,
-        localIdsGenerationByRuntime,
-        kernelUsesLocalIds,
-        inlineDataProgrammingRequired);
+        nullptr,
+        true);
 
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(walkerCmd, globalOffsets, startWorkGroups,
                                                            numWorkGroups, localWorkSizes, simd, dim,
-                                                           localIdsGenerationByRuntime, inlineDataProgrammingRequired,
+                                                           false, false,
                                                            *kernel.getKernelInfo().patchInfo.threadPayload);
-
-    GpgpuWalkerHelper<GfxFamily>::adjustWalkerData(&commandStream, walkerCmd, kernel, dispatchInfo);
 }
 
 } // namespace OCLRT
