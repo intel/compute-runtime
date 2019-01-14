@@ -7,6 +7,7 @@
 
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "test.h"
+#include "third_party/aub_stream/headers/options.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
@@ -706,7 +707,23 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineI
     EXPECT_NE(0u, aubCsr->handle);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAddMmioKeySetToZeroWhenInitAdditionalMmioCalledThenDoNotWriteMmio) {
+struct InjectMmmioTest : public AubCommandStreamReceiverTests {
+    void SetUp() override {
+        AubCommandStreamReceiverTests::SetUp();
+        injectMmioListCopy = AubDump::injectMMIOList;
+    }
+
+    void TearDown() override {
+        AubCommandStreamReceiverTests::TearDown();
+        AubDump::injectMMIOList = injectMmioListCopy;
+        AubDump::injectMMIOList.shrink_to_fit();
+    }
+
+  private:
+    MMIOList injectMmioListCopy;
+};
+
+HWTEST_F(InjectMmmioTest, givenAddMmioKeySetToZeroWhenInitAdditionalMmioCalledThenDoNotWriteMmio) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AubDumpAddMmioRegistersList.set("");
 
@@ -720,8 +737,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddMmioKeySetToZeroWhenInitAddition
     EXPECT_EQ(0u, stream->mmioList.size());
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAddMmioRegistersListSetWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
-    std::string registers("0xdead;0xbeef");
+HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
+    std::string registers("0xdead;0xbeef;and another very long string");
     MMIOPair mmioPair(0xdead, 0xbeef);
 
     DebugManagerStateRestore stateRestore;
@@ -738,7 +755,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddMmioRegistersListSetWhenInitAddi
     EXPECT_TRUE(stream->isOnMmioList(mmioPair));
 };
 
-HWTEST_F(AubCommandStreamReceiverTests, givenLongSequenceOfAddMmioRegistersListSetWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
+HWTEST_F(InjectMmmioTest, givenLongSequenceOfAddMmioRegistersListSetWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
     std::string registers("1;1;2;2;3;3");
 
     DebugManagerStateRestore stateRestore;
@@ -754,7 +771,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenLongSequenceOfAddMmioRegistersListS
     EXPECT_EQ(3u, stream->mmioList.size());
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenSequenceWithIncompletePairOfAddMmioRegistersListSetWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
+HWTEST_F(InjectMmmioTest, givenSequenceWithIncompletePairOfAddMmioRegistersListSetWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
     std::string registers("0x1;0x1;0x2");
     MMIOPair mmioPair0(0x1, 0x1);
     MMIOPair mmioPair1(0x2, 0x2);
@@ -774,7 +791,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenSequenceWithIncompletePairOfAddMmio
     EXPECT_FALSE(stream->isOnMmioList(mmioPair1));
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAddMmioRegistersListSetWithSemicolonAtTheEndWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
+HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWithSemicolonAtTheEndWhenInitAdditionalMmioCalledThenWriteGivenMmio) {
     std::string registers("0xdead;0xbeef;");
     MMIOPair mmioPair(0xdead, 0xbeef);
 
@@ -792,7 +809,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddMmioRegistersListSetWithSemicolo
     EXPECT_TRUE(stream->isOnMmioList(mmioPair));
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAddMmioRegistersListSetWithInvalidValueWhenInitAdditionalMmioCalledThenMmioIsNotWritten) {
+HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWithInvalidValueWhenInitAdditionalMmioCalledThenMmioIsNotWritten) {
     std::string registers("0xdead;invalid");
 
     DebugManagerStateRestore stateRestore;

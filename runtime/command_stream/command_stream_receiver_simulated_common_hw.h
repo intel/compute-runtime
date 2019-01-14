@@ -61,8 +61,5 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
 
     AubMemDump::AubStream *stream;
     size_t gpgpuEngineIndex = EngineInstanceConstants::numGpgpuEngineInstances - 1;
-
-  protected:
-    MMIOList splitMMIORegisters(const std::string &registers, char delimiter);
 };
 } // namespace OCLRT

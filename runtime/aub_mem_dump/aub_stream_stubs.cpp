@@ -6,8 +6,11 @@
  */
 
 #include "third_party/aub_stream/headers/aub_manager.h"
+#include "third_party/aub_stream/headers/options.h"
 
 namespace AubDump {
+
+MMIOList injectMMIOList;
 
 AubManager *AubManager::create(uint32_t gfxFamily, uint32_t devicesCount, uint64_t memoryBankSizeInGB, bool localMemorySupported, const std::string &aubFileName) {
     return nullptr;

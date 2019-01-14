@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "runtime/gen_common/aub_mapper_base.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
@@ -32,6 +33,7 @@ class AubHelper : public NonCopyableOrMovableClass {
     static uint32_t getMemType(uint32_t addressSpace);
     static uint64_t getMemBankSize();
     static uint32_t getDevicesCount(const HardwareInfo *pHwInfo);
+    static MMIOList getAdditionalMmioList();
 
     virtual int getDataHintForPml4Entry() const = 0;
     virtual int getDataHintForPdpEntry() const = 0;
@@ -42,6 +44,9 @@ class AubHelper : public NonCopyableOrMovableClass {
     virtual int getMemTraceForPdpEntry() const = 0;
     virtual int getMemTraceForPdEntry() const = 0;
     virtual int getMemTraceForPtEntry() const = 0;
+
+  protected:
+    static MMIOList splitMMIORegisters(const std::string &registers, char delimiter);
 };
 
 template <typename GfxFamily>
