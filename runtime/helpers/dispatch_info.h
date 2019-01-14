@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,9 +50,12 @@ class DispatchInfo {
     void setNumberOfWorkgroups(const Vec3<size_t> &nwgs) { this->nwgs = nwgs; }
     const Vec3<size_t> &getStartOfWorkgroups() const { return swgs; };
     void setStartOfWorkgroups(const Vec3<size_t> &swgs) { this->swgs = swgs; }
+    bool peekCanBePartitioned() const { return canBePartitioned; }
+    void setCanBePartitioned(bool canBePartitioned) { this->canBePartitioned = canBePartitioned; }
 
   protected:
     bool pipeControlRequired = false;
+    bool canBePartitioned = false;
     Kernel *kernel = nullptr;
     uint32_t dim = 0;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -324,4 +324,15 @@ TEST_F(DispatchInfoTest, givenKernelWhenMultiDispatchInfoIsCreatedThenQueryParen
         EXPECT_EQ(rend.base(), multiDispatchInfo.begin());
         EXPECT_EQ(crend.base(), multiDispatchInfo.begin());
     }
+}
+
+TEST(DispatchInfoBasicTests, givenDispatchInfoWhenCreatedThenDefaultValueOfPartitionIsFalse) {
+    DispatchInfo dispatchInfo;
+    EXPECT_FALSE(dispatchInfo.peekCanBePartitioned());
+}
+
+TEST(DispatchInfoBasicTests, givenDispatchInfoWhenSetCanBePartitionIsCalledThenStateIsChangedAccordingly) {
+    DispatchInfo dispatchInfo;
+    dispatchInfo.setCanBePartitioned(true);
+    EXPECT_TRUE(dispatchInfo.peekCanBePartitioned());
 }
