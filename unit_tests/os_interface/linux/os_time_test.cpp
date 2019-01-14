@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -188,6 +188,7 @@ TEST_F(DrmTimeTest, detect) {
         osTime->timestampTypeDetect();
         void **p = (void **)&(osTime->getGpuTime);
         EXPECT_EQ(*p, *p2);
+        drm->ioctl_res_ext = &drm->NONE;
     }
     delete drm;
 }

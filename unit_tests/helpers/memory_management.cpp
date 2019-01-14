@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,6 @@ static void *allocate(size_t size) {
     onAllocationEvent();
 
     if (size > maxAllowedAllocationSize) {
-        std::cerr << "WARNING: Tried to allocate " << size << " bytes but " << maxAllowedAllocationSize << " is alowed!" << std::endl;
         return nullptr;
     }
 
@@ -132,7 +131,6 @@ static void *allocate(size_t size, const std::nothrow_t &) {
     onAllocationEvent();
 
     if (size > maxAllowedAllocationSize) {
-        std::cerr << "WARNING: Tried to allocate " << size << " bytes but " << maxAllowedAllocationSize << " is alowed!" << std::endl;
         return nullptr;
     }
 

@@ -21,9 +21,6 @@
 namespace OCLRT {
 
 OsAgnosticMemoryManager::~OsAgnosticMemoryManager() {
-    if (DebugManager.flags.UseMallocToObtainHeap32Base.get()) {
-        alignedFreeWrapper(reinterpret_cast<void *>(allocator32Bit->getBase()));
-    }
     applyCommonCleanup();
 }
 
@@ -103,20 +100,13 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
     void *ptrAlloc = nullptr;
     auto gpuAddress = allocator32Bit->allocate(allocationSize);
 
-    auto freeCpuPointer = true;
-
-    if (DebugManager.flags.UseMallocToObtainHeap32Base.get()) {
-        ptrAlloc = reinterpret_cast<void *>(gpuAddress);
-        freeCpuPointer = false;
-    } else {
-        if (size < 0xfffff000) {
-            ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
-        }
+    if (size < 0xfffff000) {
+        ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
     }
 
     MemoryAllocation *memoryAllocation = nullptr;
     if (ptrAlloc != nullptr) {
-        memoryAllocation = new MemoryAllocation(freeCpuPointer ? ptrAlloc : nullptr, ptrAlloc, GmmHelper::canonize(gpuAddress), size, counter,
+        memoryAllocation = new MemoryAllocation(ptrAlloc, ptrAlloc, GmmHelper::canonize(gpuAddress), size, counter,
                                                 MemoryPool::System4KBPagesWith32BitGpuAddressing, this->getOsContextCount(), false);
         memoryAllocation->is32BitAllocation = true;
         memoryAllocation->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());
@@ -266,12 +256,6 @@ Allocator32bit *OsAgnosticMemoryManager::create32BitAllocator(bool aubUsage) {
 
     if (is32bit) {
         heap32Base = 0x0;
-    }
-
-    if (DebugManager.flags.UseMallocToObtainHeap32Base.get()) {
-        size_t allocationSize = 40 * MemoryConstants::megaByte;
-        allocatorSize = static_cast<uint64_t>(allocationSize);
-        heap32Base = castToUint64(alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment));
     }
 
     return new Allocator32bit(heap32Base, allocatorSize);
