@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include <limits>
 #include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/linux/drm_32bit_memory.cpp"
 #include "runtime/helpers/aligned_memory.h"
@@ -16,6 +17,7 @@ static bool failMmap = false;
 static bool fail32BitMmap = false;
 static bool failUpperRange = false;
 static bool failLowerRanger = false;
+static size_t maxMmapLength = std::numeric_limits<size_t>::max();
 
 static uintptr_t startUpperHeap = maxMmap32BitAddress;
 static uintptr_t lowerRangeHeapStart = lowerRangeStart;
@@ -33,8 +35,9 @@ void *MockMmap(void *addr, size_t length, int prot, int flags,
     bool returnLowerRange = false;
     mmapCallCount++;
 
-    if (failMmap)
+    if (failMmap || length > maxMmapLength) {
         return MAP_FAILED;
+    }
 
     if (mmapFailCount > 0) {
         mmapFailCount--;
@@ -83,20 +86,20 @@ int MockMunmap(void *addr, size_t length) noexcept {
     return 0;
 }
 
-class mockAllocator32Bit : public Allocator32bit {
+class MockAllocator32Bit : public Allocator32bit {
   public:
     class OsInternalsPublic : public Allocator32bit::OsInternals {
     };
 
-    mockAllocator32Bit(Allocator32bit::OsInternals *osInternalsIn) : Allocator32bit(osInternalsIn) {
+    MockAllocator32Bit(Allocator32bit::OsInternals *osInternalsIn) : Allocator32bit(osInternalsIn) {
     }
 
-    mockAllocator32Bit() {
+    MockAllocator32Bit() {
         this->osInternals->mmapFunction = MockMmap;
         this->osInternals->munmapFunction = MockMunmap;
         resetState();
     }
-    ~mockAllocator32Bit() {
+    ~MockAllocator32Bit() {
         resetState();
     }
     static void resetState() {
@@ -104,6 +107,7 @@ class mockAllocator32Bit : public Allocator32bit {
         failUpperRange = false;
         failLowerRanger = false;
         failMmap = false;
+        maxMmapLength = std::numeric_limits<size_t>::max();
         startUpperHeap = maxMmap32BitAddress;
         lowerRangeHeapStart = lowerRangeStart;
         offsetIn32BitRange = 0u;
@@ -116,6 +120,6 @@ class mockAllocator32Bit : public Allocator32bit {
         return new OsInternalsPublic;
     }
 
-    OsInternals *getosInternal() { return this->osInternals.get(); }
+    OsInternals *getOsInternals() const { return this->osInternals.get(); }
 };
 } // namespace OCLRT

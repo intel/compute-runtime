@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,8 @@
 #include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/linux/allocator_helper.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/helpers/ptr_math.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 #include <sys/mman.h>
@@ -24,7 +24,7 @@ class Allocator32bit::OsInternals {
     uintptr_t lowerRangeAddress = lowerRangeStart;
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;
-    void *heapBasePtr = (void *)0;
+    void *heapBasePtr = nullptr;
     size_t heapSize = 0;
 
     class Drm32BitAllocator {
@@ -71,18 +71,14 @@ class Allocator32bit::OsInternals {
             }
             return outer.munmapFunction(ptr, size);
         }
-
-        ~Drm32BitAllocator() = default;
     };
     Drm32BitAllocator *drmAllocator = nullptr;
 };
 
 bool OCLRT::is32BitOsAllocatorAvailable = true;
 
-Allocator32bit::Allocator32bit(uint64_t base, uint64_t size) {
-    this->base = base;
-    this->size = size;
-    heapAllocator = std::unique_ptr<HeapAllocator>(new HeapAllocator(base, size));
+Allocator32bit::Allocator32bit(uint64_t base, uint64_t size) : base(base), size(size) {
+    heapAllocator = std::make_unique<HeapAllocator>(base, size);
 }
 
 OCLRT::Allocator32bit::Allocator32bit() : Allocator32bit(new OsInternals) {
@@ -92,31 +88,25 @@ OCLRT::Allocator32bit::Allocator32bit(Allocator32bit::OsInternals *osInternalsIn
 
     if (DebugManager.flags.UseNewHeapAllocator.get()) {
         size_t sizeToMap = getSizeToMap();
-        void *ptr = MAP_FAILED;
-
-        ptr = this->osInternals->mmapFunction(nullptr, sizeToMap, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
+        void *ptr = this->osInternals->mmapFunction(nullptr, sizeToMap, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
 
         if (ptr == MAP_FAILED) {
-            size_t sizeToMapRetry = sizeToMap - (sizeToMap / 4);
+            sizeToMap -= sizeToMap / 4;
             ptr = this->osInternals->mmapFunction(nullptr, sizeToMap, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
 
             DebugManager.log(DebugManager.flags.PrintDebugMessages.get(), __FUNCTION__, " Allocator RETRY ptr == ", ptr);
 
-            if (ptr != MAP_FAILED) {
-                sizeToMap = sizeToMapRetry;
+            if (ptr == MAP_FAILED) {
+                ptr = nullptr;
+                sizeToMap = 0;
             }
         }
 
-        DebugManager.log(DebugManager.flags.PrintDebugMessages.get(), __FUNCTION__, "Allocator ptr == \n", ptr);
+        DebugManager.log(DebugManager.flags.PrintDebugMessages.get(), __FUNCTION__, "Allocator ptr == ", ptr);
 
-        if (ptr == MAP_FAILED) {
-            ptr = nullptr;
-            sizeToMap = 0;
-        }
-
-        osInternals->heapBasePtr = (void *)ptr;
+        osInternals->heapBasePtr = ptr;
         osInternals->heapSize = sizeToMap;
-        base = (uint64_t)ptr;
+        base = reinterpret_cast<uint64_t>(ptr);
         size = sizeToMap;
 
         heapAllocator = std::unique_ptr<HeapAllocator>(new HeapAllocator(base, sizeToMap));
@@ -127,7 +117,7 @@ OCLRT::Allocator32bit::Allocator32bit(Allocator32bit::OsInternals *osInternalsIn
 
 OCLRT::Allocator32bit::~Allocator32bit() {
     if (this->osInternals.get() != nullptr) {
-        if (this->osInternals->heapBasePtr != (void *)0)
+        if (this->osInternals->heapBasePtr != nullptr)
             this->osInternals->munmapFunction(this->osInternals->heapBasePtr, this->osInternals->heapSize);
 
         if (this->osInternals->drmAllocator != nullptr)
@@ -146,7 +136,7 @@ uint64_t OCLRT::Allocator32bit::allocate(size_t &size) {
 }
 
 int Allocator32bit::free(uint64_t ptr, size_t size) {
-    if ((ptr == reinterpret_cast<uint64_t>(MAP_FAILED)) || (ptr == 0llu))
+    if (ptr == reinterpret_cast<uint64_t>(MAP_FAILED) || ptr == 0llu)
         return 0;
 
     if (DebugManager.flags.UseNewHeapAllocator.get()) {
@@ -157,6 +147,6 @@ int Allocator32bit::free(uint64_t ptr, size_t size) {
     return 0;
 }
 
-uintptr_t Allocator32bit::getBase() {
+uintptr_t Allocator32bit::getBase() const {
     return (uintptr_t)base;
 }
