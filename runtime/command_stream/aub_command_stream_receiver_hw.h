@@ -54,7 +54,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     void expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length);
     void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);
-    bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
+    void expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
 
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
 

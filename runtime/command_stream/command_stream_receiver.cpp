@@ -392,9 +392,8 @@ TagAllocator<TimestampPacket> *CommandStreamReceiver::getTimestampPacketAllocato
     return timestampPacketAllocator.get();
 }
 
-bool CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
+void CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
                                          size_t length, uint32_t compareOperation) {
-    return false;
 }
 
 } // namespace OCLRT

@@ -690,11 +690,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryNotEqual(void *gfxAddres
 }
 
 template <typename GfxFamily>
-bool AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
+void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
                                                          size_t length, uint32_t compareOperation) {
     if (hardwareContext) {
         hardwareContext->expectMemory(reinterpret_cast<uint64_t>(gfxAddress), srcAddress, length, compareOperation);
-        return true;
     }
 
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
@@ -708,8 +707,6 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
     };
 
     this->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);
-
-    return true;
 }
 
 template <typename GfxFamily>

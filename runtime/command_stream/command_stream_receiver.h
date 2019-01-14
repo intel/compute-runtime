@@ -168,7 +168,7 @@ class CommandStreamReceiver {
     TagAllocator<HwPerfCounter> *getEventPerfCountAllocator();
     TagAllocator<TimestampPacket> *getTimestampPacketAllocator();
 
-    virtual bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
+    virtual void expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
 
   protected:
     void cleanupResources();

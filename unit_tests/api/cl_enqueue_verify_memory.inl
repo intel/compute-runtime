@@ -51,30 +51,7 @@ TEST_F(clEnqueueVerifyMemoryTests, givenInvalidCommandQueueWhenCallingVerifyMemo
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retval);
 }
 
-TEST_F(clEnqueueVerifyMemoryTests, givenCommandQueueWithoutAubCsrWhenCallingVerifyMemoryThenErrorIsReturned) {
+TEST_F(clEnqueueVerifyMemoryTests, givenCommandQueueWithoutAubCsrWhenCallingVerifyMemoryThenSuccessIsReturned) {
     cl_int retval = clEnqueueVerifyMemory(pCommandQueue, gpuAddress, expected, expectedSize, comparisonMode);
-    EXPECT_EQ(CL_INVALID_VALUE, retval);
-}
-
-template <typename GfxFamily>
-struct MockCsrWithExpectMemory : MockCsr<GfxFamily> {
-    MockCsrWithExpectMemory() = delete;
-    MockCsrWithExpectMemory(const HardwareInfo &hwInfoIn) = delete;
-    MockCsrWithExpectMemory(int32_t &execStamp, ExecutionEnvironment &executionEnvironment)
-        : MockCsr<GfxFamily>(execStamp, executionEnvironment) {
-    }
-    bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override {
-        return true;
-    }
-};
-
-HWTEST_F(clEnqueueVerifyMemoryTests, givenCommandQueueWithMockAubCsrWhenCallingVerifyMemoryThenSuccessIsReturned) {
-    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    int32_t executionStamp = 0;
-    auto *mockCsr = new MockCsrWithExpectMemory<FamilyType>(executionStamp, *mockDevice.get()->executionEnvironment);
-    mockDevice.get()->resetCommandStreamReceiver(mockCsr);
-    CommandQueue cmdQ(nullptr, mockDevice.get(), 0);
-
-    cl_int retval = clEnqueueVerifyMemory(&cmdQ, gpuAddress, expected, expectedSize, comparisonMode);
     EXPECT_EQ(CL_SUCCESS, retval);
 }
