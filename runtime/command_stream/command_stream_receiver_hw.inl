@@ -407,7 +407,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     GraphicsAllocation *chainedBatchBuffer = nullptr;
 
     if (submitTask) {
-        programMediaSampler(commandStreamCSR, dispatchFlags);
+        programMediaSampler(commandStreamTask, dispatchFlags);
         this->addBatchBufferEnd(commandStreamTask, &bbEndLocation);
         this->emitNoop(commandStreamTask, bbEndPaddingSize);
         this->alignToCacheLine(commandStreamTask);
