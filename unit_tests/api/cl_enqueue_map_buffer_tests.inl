@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ using namespace OCLRT;
 
 typedef api_tests clEnqueueMapBufferTests;
 
-TEST_F(clEnqueueMapBufferTests, NullCommandQueue_returnsError) {
+TEST_F(clEnqueueMapBufferTests, GivenNullCommandQueueWhenMappingBufferThenInvalidCommandQueueErrorIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -51,7 +51,7 @@ TEST_F(clEnqueueMapBufferTests, NullCommandQueue_returnsError) {
     clReleaseEvent(eventReturned);
 }
 
-TEST_F(clEnqueueMapBufferTests, validInputs_returnsSuccess) {
+TEST_F(clEnqueueMapBufferTests, GivenValidParametersWhenMappingBufferThenSuccessIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -89,7 +89,7 @@ TEST_F(clEnqueueMapBufferTests, validInputs_returnsSuccess) {
     clReleaseEvent(eventReturned);
 }
 
-TEST_F(clEnqueueMapBufferTests, GivenMappedPointerWhenCreateBufferFormThisPointerThenReturnInvalidHostPointer) {
+TEST_F(clEnqueueMapBufferTests, GivenMappedPointerWhenCreatingBufferFromThisPointerThenInvalidHostPtrErrorIsReturned) {
     unsigned int bufferSize = 16;
 
     cl_mem buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
@@ -151,7 +151,7 @@ class EnqueueMapBufferFlagsTest : public api_fixture,
 
 typedef EnqueueMapBufferFlagsTest EnqueueMapReadBufferTests;
 
-TEST_P(EnqueueMapReadBufferTests, invalidFlags) {
+TEST_P(EnqueueMapReadBufferTests, GivenInvalidFlagsWhenMappingBufferForReadingThenInvalidOperationErrorIsReturned) {
     cl_event eventReturned = nullptr;
     auto ptrResult = clEnqueueMapBuffer(
         pCommandQueue,
@@ -169,18 +169,18 @@ TEST_P(EnqueueMapReadBufferTests, invalidFlags) {
     clReleaseEvent(eventReturned);
 }
 
-static cl_mem_flags read_buffer_flags[] = {
+static cl_mem_flags NoReadAccessFlags[] = {
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_WRITE_ONLY,
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS};
 
 INSTANTIATE_TEST_CASE_P(
     EnqueueMapBufferFlagsTests_Create,
     EnqueueMapReadBufferTests,
-    testing::ValuesIn(read_buffer_flags));
+    testing::ValuesIn(NoReadAccessFlags));
 
 typedef EnqueueMapBufferFlagsTest EnqueueMapWriteBufferTests;
 
-TEST_P(EnqueueMapWriteBufferTests, invalidFlags) {
+TEST_P(EnqueueMapWriteBufferTests, GivenInvalidFlagsWhenMappingBufferForWritingThenInvalidOperationErrorIsReturned) {
     cl_event eventReturned = nullptr;
     auto ptrResult = clEnqueueMapBuffer(
         pCommandQueue,
@@ -198,11 +198,11 @@ TEST_P(EnqueueMapWriteBufferTests, invalidFlags) {
     clReleaseEvent(eventReturned);
 }
 
-static cl_mem_flags write_buffer_flags[] = {
+static cl_mem_flags NoWriteAccessFlags[] = {
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_READ_ONLY,
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS};
 
 INSTANTIATE_TEST_CASE_P(
     EnqueueMapBufferFlagsTests_Create,
     EnqueueMapWriteBufferTests,
-    testing::ValuesIn(write_buffer_flags));
+    testing::ValuesIn(NoWriteAccessFlags));
