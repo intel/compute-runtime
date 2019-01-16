@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -168,7 +168,7 @@ static inline cl_int getSupportedDXTextureFormats(cl_context context, cl_mem_obj
     auto supported_formats = pSharing->retrieveTextureFormats(imageType);
 
     if (formats != nullptr) {
-        memcpy(formats, supported_formats.data(), std::min(static_cast<size_t>(numEntries), supported_formats.size()));
+        memcpy_s(formats, sizeof(DXGI_FORMAT) * numEntries, supported_formats.data(), std::min(static_cast<size_t>(numEntries), supported_formats.size()));
     }
 
     if (numImageFormats) {
