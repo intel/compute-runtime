@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ struct clEnqueueMapImageTests : public api_fixture,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clEnqueueMapImageTests, returnsSuccess) {
+TEST_F(clEnqueueMapImageTests, GivenValidParametersWhenMappingImageThenSuccessIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_WRITE,
@@ -110,7 +110,7 @@ struct clEnqueueMapImageYUVTests : public api_fixture,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clEnqueueMapImageYUVTests, returnSuccess) {
+TEST_F(clEnqueueMapImageYUVTests, GivenValidYuvImageWhenMappingImageThenSuccessIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
@@ -141,7 +141,7 @@ TEST_F(clEnqueueMapImageYUVTests, returnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueMapImageYUVTests, invalidOrigin) {
+TEST_F(clEnqueueMapImageYUVTests, GivenInvalidOriginWhenMappingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
@@ -172,7 +172,7 @@ TEST_F(clEnqueueMapImageYUVTests, invalidOrigin) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueMapImageYUVTests, invalidRegion) {
+TEST_F(clEnqueueMapImageYUVTests, GivenInvalidRegionWhenMappingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
