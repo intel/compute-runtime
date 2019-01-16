@@ -66,6 +66,17 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
     }
 
     template <typename FamilyType>
+    void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) {
+        CommandStreamReceiver *csr = pCommandStreamReceiver;
+        if (testMode == TestMode::AubTestsWithTbx) {
+            csr = reinterpret_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR;
+        }
+
+        auto aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
+        aubCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length);
+    }
+
+    template <typename FamilyType>
     void pollForCompletion() {
         CommandStreamReceiver *csr = pCommandStreamReceiver;
         if (testMode == TestMode::AubTestsWithTbx) {
