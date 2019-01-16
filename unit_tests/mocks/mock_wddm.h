@@ -8,6 +8,7 @@
 #pragma once
 
 #include "runtime/os_interface/windows/wddm/wddm.h"
+#include "gmock/gmock.h"
 #include <vector>
 #include <set>
 
@@ -27,6 +28,9 @@ struct MakeResidentCall : public CallResult {
     std::vector<D3DKMT_HANDLE> handlePack;
     uint32_t handleCount = 0;
 };
+struct EvictCallResult : public CallResult {
+    EvictionStatus status = EvictionStatus::UNKNOWN;
+};
 struct KmDafLockCall : public CallResult {
     std::vector<GraphicsAllocation *> lockedAllocations;
 };
@@ -43,6 +47,8 @@ class WddmMock : public Wddm {
     using Wddm::gmmMemory;
     using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
+    using Wddm::temporaryResources;
+    using Wddm::temporaryResourcesLock;
     using Wddm::wddmInterface;
 
     WddmMock() : Wddm(){};
@@ -77,6 +83,10 @@ class WddmMock : public Wddm {
     int virtualFree(void *ptr, size_t size, unsigned long flags) override;
     void releaseReservedAddress(void *reservedAddress) override;
     VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) override;
+    EvictionStatus evictAllTemporaryResources() override;
+    EvictionStatus evictTemporaryResource(WddmAllocation *allocation) override;
+    void applyBlockingMakeResident(WddmAllocation *allocation) override;
+    std::unique_lock<SpinLock> acquireLock(SpinLock &lock) override;
     bool reserveValidAddressRange(size_t size, void *&reservedMem);
     GmmMemory *getGmmMemory() const;
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
@@ -111,6 +121,10 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult waitFromCpuResult;
     WddmMockHelpers::CallResult releaseReservedAddressResult;
     WddmMockHelpers::CallResult reserveValidAddressRangeResult;
+    WddmMockHelpers::EvictCallResult evictAllTemporaryResourcesResult;
+    WddmMockHelpers::EvictCallResult evictTemporaryResourceResult;
+    WddmMockHelpers::CallResult applyBlockingMakeResidentResult;
+    WddmMockHelpers::CallResult acquireLockResult;
     WddmMockHelpers::CallResult registerTrimCallbackResult;
     WddmMockHelpers::CallResult getPagingFenceAddressResult;
 
@@ -122,6 +136,26 @@ class WddmMock : public Wddm {
     std::set<void *> reservedAddresses;
     uintptr_t virtualAllocAddress = OCLRT::windowsMinAddress;
     bool kmDafEnabled = false;
-    uint64_t mockPagingFence;
+    uint64_t mockPagingFence = 0u;
+};
+
+struct GmockWddm : WddmMock {
+    GmockWddm() {
+        virtualAllocAddress = OCLRT::windowsMinAddress;
+    }
+    ~GmockWddm() = default;
+    bool virtualFreeWrapper(void *ptr, size_t size, uint32_t flags) {
+        return true;
+    }
+
+    void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type);
+    uintptr_t virtualAllocAddress;
+    MOCK_METHOD4(makeResident, bool(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim));
+    MOCK_METHOD3(evict, bool(D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim));
+    MOCK_METHOD1(createAllocationsAndMapGpuVa, NTSTATUS(OsHandleStorage &osHandles));
+
+    NTSTATUS baseCreateAllocationAndMapGpuVa(OsHandleStorage &osHandles) {
+        return Wddm::createAllocationsAndMapGpuVa(osHandles);
+    }
 };
 } // namespace OCLRT

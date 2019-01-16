@@ -637,6 +637,11 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
 }
 
 void *Wddm::lockResource(WddmAllocation *wddmAllocation) {
+
+    if (wddmAllocation->needsMakeResidentBeforeLock) {
+        applyBlockingMakeResident(wddmAllocation);
+    }
+
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_LOCK2 lock2 = {};
 
@@ -947,4 +952,60 @@ bool Wddm::init(PreemptionMode preemptionMode) {
     }
     return initialized;
 }
+
+EvictionStatus Wddm::evictAllTemporaryResources() {
+    decltype(temporaryResources) resourcesToEvict;
+    auto &lock = acquireLock(temporaryResourcesLock);
+    temporaryResources.swap(resourcesToEvict);
+    if (resourcesToEvict.empty()) {
+        return EvictionStatus::NOT_APPLIED;
+    }
+    uint64_t sizeToTrim = 0;
+    bool error = false;
+    for (auto &handle : resourcesToEvict) {
+        if (!evict(&handle, 1, sizeToTrim)) {
+            error = true;
+        }
+    }
+    return error ? EvictionStatus::FAILED : EvictionStatus::SUCCESS;
+}
+
+EvictionStatus Wddm::evictTemporaryResource(WddmAllocation *allocation) {
+    auto &lock = acquireLock(temporaryResourcesLock);
+    auto position = std::find(temporaryResources.begin(), temporaryResources.end(), allocation->handle);
+    if (position == temporaryResources.end()) {
+        return EvictionStatus::NOT_APPLIED;
+    }
+    *position = temporaryResources.back();
+    temporaryResources.pop_back();
+    uint64_t sizeToTrim = 0;
+    if (!evict(&allocation->handle, 1, sizeToTrim)) {
+        return EvictionStatus::FAILED;
+    }
+    return EvictionStatus::SUCCESS;
+}
+void Wddm::applyBlockingMakeResident(WddmAllocation *allocation) {
+    bool madeResident = false;
+    while (!(madeResident = makeResident(&allocation->handle, 1, false, nullptr))) {
+        if (evictAllTemporaryResources() == EvictionStatus::SUCCESS) {
+            continue;
+        }
+        if (!makeResident(&allocation->handle, 1, false, nullptr)) {
+            DEBUG_BREAK_IF(true);
+            return;
+        };
+        break;
+    }
+    DEBUG_BREAK_IF(!madeResident);
+    auto &lock = acquireLock(temporaryResourcesLock);
+    temporaryResources.push_back(allocation->handle);
+    lock.unlock();
+    while (currentPagingFenceValue > *getPagingFenceAddress())
+        ;
+}
+
+std::unique_lock<SpinLock> Wddm::acquireLock(SpinLock &lock) {
+    return std::unique_lock<SpinLock>{lock};
+}
+
 } // namespace OCLRT

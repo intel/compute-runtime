@@ -225,6 +225,29 @@ VOID *WddmMock::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback
     return Wddm::registerTrimCallback(callback, residencyController);
 }
 
+EvictionStatus WddmMock::evictAllTemporaryResources() {
+    evictAllTemporaryResourcesResult.called++;
+    evictAllTemporaryResourcesResult.status = Wddm::evictAllTemporaryResources();
+    return evictAllTemporaryResourcesResult.status;
+}
+
+EvictionStatus WddmMock::evictTemporaryResource(WddmAllocation *allocation) {
+    evictTemporaryResourceResult.called++;
+    evictTemporaryResourceResult.status = Wddm::evictTemporaryResource(allocation);
+    return evictTemporaryResourceResult.status;
+}
+
+void WddmMock::applyBlockingMakeResident(WddmAllocation *allocation) {
+    applyBlockingMakeResidentResult.called++;
+    return Wddm::applyBlockingMakeResident(allocation);
+}
+
+std::unique_lock<SpinLock> WddmMock::acquireLock(SpinLock &lock) {
+    acquireLockResult.called++;
+    acquireLockResult.uint64ParamPassed = reinterpret_cast<uint64_t>(&lock);
+    return Wddm::acquireLock(lock);
+}
+
 GmmMemory *WddmMock::getGmmMemory() const {
     return gmmMemory.get();
 }
@@ -233,4 +256,12 @@ uint64_t *WddmMock::getPagingFenceAddress() {
     getPagingFenceAddressResult.called++;
     mockPagingFence++;
     return &mockPagingFence;
+}
+
+void *GmockWddm::virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
+    void *tmp = reinterpret_cast<void *>(virtualAllocAddress);
+    size += MemoryConstants::pageSize;
+    size -= size % MemoryConstants::pageSize;
+    virtualAllocAddress += size;
+    return tmp;
 }

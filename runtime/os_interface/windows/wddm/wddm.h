@@ -19,9 +19,11 @@
 #include "runtime/utilities/debug_settings_reader.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/utilities/spinlock.h"
 #include "gmm_memory.h"
 #include <memory>
 #include <atomic>
+#include <mutex>
 
 namespace OCLRT {
 
@@ -38,6 +40,13 @@ using OsContextWin = OsContext::OsContextImpl;
 enum class WddmInterfaceVersion {
     Wddm20 = 20,
     Wddm23 = 23,
+};
+
+enum class EvictionStatus {
+    SUCCESS,
+    FAILED,
+    NOT_APPLIED,
+    UNKNOWN
 };
 
 class Wddm {
@@ -142,6 +151,10 @@ class Wddm {
     MOCKABLE_VIRTUAL uint64_t *getPagingFenceAddress() {
         return pagingFenceAddress;
     }
+    MOCKABLE_VIRTUAL EvictionStatus evictAllTemporaryResources();
+    MOCKABLE_VIRTUAL EvictionStatus evictTemporaryResource(WddmAllocation *allocation);
+    MOCKABLE_VIRTUAL void applyBlockingMakeResident(WddmAllocation *allocation);
+    MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock);
 
   protected:
     bool initialized = false;
@@ -192,5 +205,7 @@ class Wddm {
 
     std::unique_ptr<KmDafListener> kmDafListener;
     std::unique_ptr<WddmInterface> wddmInterface;
+    std::vector<D3DKMT_HANDLE> temporaryResources;
+    SpinLock temporaryResourcesLock;
 };
 } // namespace OCLRT

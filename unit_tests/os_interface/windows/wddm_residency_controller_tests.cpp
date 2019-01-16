@@ -76,11 +76,6 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
 };
 
 struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerTest {
-    struct GmockWddm : Wddm {
-        using Wddm::gdi;
-        MOCK_METHOD4(makeResident, bool(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim));
-    };
-
     void SetUp() {
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->initGmm(*platformDevices);

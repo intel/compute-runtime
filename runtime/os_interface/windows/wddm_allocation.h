@@ -80,6 +80,7 @@ class WddmAllocation : public GraphicsAllocation {
         this->reservedAddressSpace = reserveMem;
     }
     void setGpuAddress(uint64_t graphicsAddress) { this->gpuAddress = graphicsAddress; }
+    bool needsMakeResidentBeforeLock = false;
 
     std::string getAllocationInfoString() const {
         std::stringstream ss;

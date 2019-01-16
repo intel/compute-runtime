@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -346,6 +346,11 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
             this->setMemoryBudgetExhausted();
             const bool trimmingDone = this->trimResidencyToBudget(bytesToTrim);
             if (!trimmingDone) {
+                auto evictionStatus = wddm.evictAllTemporaryResources();
+                if (evictionStatus == EvictionStatus::SUCCESS) {
+                    continue;
+                }
+                DEBUG_BREAK_IF(evictionStatus != EvictionStatus::NOT_APPLIED);
                 result = wddm.makeResident(handlesForResidency.get(), totalHandlesCount, true, &bytesToTrim);
                 break;
             }

@@ -301,6 +301,11 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         return;
     }
 
+    if (input->isLocked() && input->needsMakeResidentBeforeLock) {
+        auto evictionStatus = wddm->evictTemporaryResource(input);
+        DEBUG_BREAK_IF(evictionStatus == EvictionStatus::FAILED);
+    }
+
     for (auto &osContext : this->registeredOsContexts) {
         if (osContext) {
             auto &residencyController = osContext->get()->getResidencyController();

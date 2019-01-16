@@ -1517,3 +1517,32 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmAllocationWhenEnableMakeResidentOnMap
 
     EXPECT_EQ(5u, wddm.getPagingFenceAddressResult.called);
 }
+
+TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
+    allocation->setLocked(true);
+    EXPECT_FALSE(allocation->needsMakeResidentBeforeLock);
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(0u, wddm->evictTemporaryResourceResult.called);
+}
+TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
+    allocation->setLocked(false);
+    EXPECT_FALSE(allocation->needsMakeResidentBeforeLock);
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(0u, wddm->evictTemporaryResourceResult.called);
+}
+TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatNeedsMakeResidentBeforeLockThenEvictAllocationFromWddmTemporaryResources) {
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
+    allocation->needsMakeResidentBeforeLock = true;
+    allocation->setLocked(true);
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(1u, wddm->evictTemporaryResourceResult.called);
+}
+TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatNeedsMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
+    allocation->needsMakeResidentBeforeLock = true;
+    allocation->setLocked(false);
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(0u, wddm->evictTemporaryResourceResult.called);
+}

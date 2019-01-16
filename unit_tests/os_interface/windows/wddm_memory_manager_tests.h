@@ -75,35 +75,6 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
 
 typedef ::Test<MockWddmMemoryManagerFixture> WddmMemoryManagerResidencyTest;
 
-class GmockWddm : public Wddm {
-  public:
-    using Wddm::device;
-
-    GmockWddm() {
-        virtualAllocAddress = OCLRT::windowsMinAddress;
-    }
-    ~GmockWddm() = default;
-
-    bool virtualFreeWrapper(void *ptr, size_t size, uint32_t flags) {
-        return true;
-    }
-
-    void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
-        void *tmp = reinterpret_cast<void *>(virtualAllocAddress);
-        size += MemoryConstants::pageSize;
-        size -= size % MemoryConstants::pageSize;
-        virtualAllocAddress += size;
-        return tmp;
-    }
-    uintptr_t virtualAllocAddress;
-    MOCK_METHOD4(makeResident, bool(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim));
-    MOCK_METHOD1(createAllocationsAndMapGpuVa, NTSTATUS(OsHandleStorage &osHandles));
-
-    NTSTATUS baseCreateAllocationAndMapGpuVa(OsHandleStorage &osHandles) {
-        return Wddm::createAllocationsAndMapGpuVa(osHandles);
-    }
-};
-
 class WddmMemoryManagerFixtureWithGmockWddm : public GmmEnvironmentFixture {
   public:
     MockWddmMemoryManager *memoryManager = nullptr;
