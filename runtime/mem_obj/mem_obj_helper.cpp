@@ -5,6 +5,7 @@
  *
  */
 
+#include "common/helpers/bit_helpers.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 
 namespace OCLRT {
@@ -31,7 +32,7 @@ bool MemObjHelper::parseMemoryProperties(const cl_mem_properties_intel *properti
 
 AllocationProperties MemObjHelper::getAllocationProperties(cl_mem_flags_intel flags, bool allocateMemory, size_t size, GraphicsAllocation::AllocationType type) {
     AllocationProperties allocationProperties(allocateMemory, size, type);
-    allocationProperties.flags.uncacheable = !!(flags & CL_MEM_LOCALLY_UNCACHED_RESOURCE);
+    allocationProperties.flags.uncacheable = isValSet(flags, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
     return allocationProperties;
 }
 
