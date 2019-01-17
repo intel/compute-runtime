@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,7 @@ GEN10TEST_F(Gen10CoherencyRequirements, coherencyCmdValues) {
     char buff[MemoryConstants::pageSize];
     LinearStream stream(buff, MemoryConstants::pageSize);
 
-    auto expectedCmd = MI_LOAD_REGISTER_IMM::sInit();
+    auto expectedCmd = CNLFamily::cmdInitLoadRegisterImm;
     expectedCmd.setRegisterOffset(gen10HdcModeRegisterAddresss);
     expectedCmd.setDataDword(DwordBuilder::build(4, true));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStre
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
 
     auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
-    *pCmd = PIPELINE_SELECT::sInit();
+    *pCmd = SKLFamily::cmdInitPipelineSelect;
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
     pCmd->setMaskBits(mask);
@@ -43,7 +43,7 @@ void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStre
 template <>
 void PreambleHelper<SKLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo) {
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = PIPE_CONTROL::sInit();
+    *pipeControl = SKLFamily::cmdInitPipeControl;
     pipeControl->setCommandStreamerStallEnable(true);
     if (hwInfo->pWaTable->waSendMIFLUSHBeforeVFE) {
         pipeControl->setRenderTargetCacheFlushEnable(true);
@@ -62,11 +62,11 @@ void PreambleHelper<SKLFamily>::programThreadArbitration(LinearStream *pCommandS
     UNRECOVERABLE_IF(requiredThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent);
 
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = PIPE_CONTROL::sInit();
+    *pipeControl = SKLFamily::cmdInitPipeControl;
     pipeControl->setCommandStreamerStallEnable(true);
 
     auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    *pCmd = MI_LOAD_REGISTER_IMM::sInit();
+    *pCmd = SKLFamily::cmdInitLoadRegisterImm;
 
     pCmd->setRegisterOffset(DebugControlReg2::address);
     pCmd->setDataDword(DebugControlReg2::getRegData(requiredThreadArbitrationPolicy));

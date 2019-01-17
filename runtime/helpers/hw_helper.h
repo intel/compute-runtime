@@ -159,7 +159,7 @@ struct LriHelper {
 
     static MI_LOAD_REGISTER_IMM *program(LinearStream *cmdStream, uint32_t address, uint32_t value) {
         auto lri = (MI_LOAD_REGISTER_IMM *)cmdStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM));
-        *lri = MI_LOAD_REGISTER_IMM::sInit();
+        *lri = GfxFamily::cmdInitLoadRegisterImm;
         lri->setRegisterOffset(address);
         lri->setDataDword(value);
         return lri;

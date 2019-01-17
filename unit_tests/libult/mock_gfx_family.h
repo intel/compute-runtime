@@ -77,6 +77,10 @@ struct GENX {
     } INTERFACE_DESCRIPTOR_DATA;
 
     typedef struct tagBINDING_TABLE_STATE {
+        static tagBINDING_TABLE_STATE sInit(void) {
+            BINDING_TABLE_STATE state;
+            return state;
+        }
         inline void init(void) {
         }
         inline uint32_t getSurfaceStatePointer(void) const {
@@ -369,11 +373,19 @@ struct GENX {
     } MEDIA_VFE_STATE;
 
     typedef struct tagSAMPLER_STATE {
+        static tagSAMPLER_STATE sInit(void) {
+            SAMPLER_STATE state;
+            return state;
+        }
         inline void setIndirectStatePointer(const uint32_t indirectStatePointerValue) {
         }
     } SAMPLER_STATE;
 
     typedef struct tagGPGPU_CSR_BASE_ADDRESS {
+        static tagGPGPU_CSR_BASE_ADDRESS sInit(void) {
+            GPGPU_CSR_BASE_ADDRESS state;
+            return state;
+        }
         inline void init(void) {
         }
         inline void setGpgpuCsrBaseAddress(uint64_t value) {
@@ -381,6 +393,10 @@ struct GENX {
     } GPGPU_CSR_BASE_ADDRESS;
 
     typedef struct tagSTATE_SIP {
+        static tagSTATE_SIP sInit(void) {
+            STATE_SIP state;
+            return state;
+        }
         inline void init(void) {
         }
         inline void setSystemInstructionPointer(uint64_t value) {
@@ -430,6 +446,62 @@ struct GENX {
         inline void setMemoryAddressHigh(uint32_t) {}
     } MI_ATOMIC;
 
+    typedef struct tagMI_LOAD_REGISTER_MEM {
+        static tagMI_LOAD_REGISTER_MEM sInit(void) {
+            MI_LOAD_REGISTER_MEM state;
+            return state;
+        }
+    } MI_LOAD_REGISTER_MEM;
+
+    typedef struct tagMI_STORE_DATA_IMM {
+        static tagMI_STORE_DATA_IMM sInit(void) {
+            MI_STORE_DATA_IMM state;
+            return state;
+        }
+    } MI_STORE_DATA_IMM;
+
+    typedef struct tagMI_NOOP {
+        static tagMI_NOOP sInit(void) {
+            MI_NOOP state;
+            return state;
+        }
+    } MI_NOOP;
+
+    typedef struct tagPIPELINE_SELECT {
+        static tagPIPELINE_SELECT sInit(void) {
+            PIPELINE_SELECT state;
+            return state;
+        }
+    } PIPELINE_SELECT;
+
+    typedef struct tagMI_ARB_CHECK {
+        static tagMI_ARB_CHECK sInit(void) {
+            MI_ARB_CHECK state;
+            return state;
+        }
+    } MI_ARB_CHECK;
+
+    typedef struct tagSTATE_BASE_ADDRESS {
+        static tagSTATE_BASE_ADDRESS sInit(void) {
+            STATE_BASE_ADDRESS state;
+            return state;
+        }
+    } STATE_BASE_ADDRESS;
+
+    typedef struct tagMEDIA_SURFACE_STATE {
+        static tagMEDIA_SURFACE_STATE sInit(void) {
+            MEDIA_SURFACE_STATE state;
+            return state;
+        }
+    } MEDIA_SURFACE_STATE;
+
+    typedef struct tagMI_USER_INTERRUPT {
+        static tagMI_USER_INTERRUPT sInit(void) {
+            MI_USER_INTERRUPT state;
+            return state;
+        }
+    } MI_USER_INTERRUPT;
+
     using WALKER_TYPE = GPGPU_WALKER;
     using MI_STORE_REGISTER_MEM_CMD = MI_STORE_REGISTER_MEM;
     static GPGPU_WALKER cmdInitGpgpuWalker;
@@ -438,7 +510,27 @@ struct GENX {
     static MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;
     static MI_SEMAPHORE_WAIT cmdInitMiSemaphoreWait;
     static PIPE_CONTROL cmdInitPipeControl;
-    static RENDER_SURFACE_STATE cmdRenderSurfaceState;
+    static RENDER_SURFACE_STATE cmdInitRenderSurfaceState;
+    static MI_LOAD_REGISTER_IMM cmdInitLoadRegisterImm;
+    static MI_LOAD_REGISTER_REG cmdInitLoadRegisterReg;
+    static MI_LOAD_REGISTER_MEM cmdInitLoadRegisterMem;
+    static MI_STORE_DATA_IMM cmdInitStoreDataImm;
+    static MI_STORE_REGISTER_MEM cmdInitStoreRegisterMem;
+    static MI_NOOP cmdInitNoop;
+    static MI_BATCH_BUFFER_START cmdInitBatchBufferStart;
+    static MI_BATCH_BUFFER_END cmdInitBatchBufferEnd;
+    static MI_REPORT_PERF_COUNT cmdInitReportPerfCount;
+    static MI_ATOMIC cmdInitAtomic;
+    static PIPELINE_SELECT cmdInitPipelineSelect;
+    static MI_ARB_CHECK cmdInitArbCheck;
+    static MEDIA_VFE_STATE cmdInitMediaVfeState;
+    static STATE_BASE_ADDRESS cmdInitStateBaseAddress;
+    static MEDIA_SURFACE_STATE cmdInitMediaSurfaceState;
+    static SAMPLER_STATE cmdInitSamplerState;
+    static GPGPU_CSR_BASE_ADDRESS cmdInitGpgpuCsrBaseAddress;
+    static STATE_SIP cmdInitStateSip;
+    static BINDING_TABLE_STATE cmdInitBindingTableState;
+    static MI_USER_INTERRUPT cmdInitUserInterrupt;
 };
 
 template <>

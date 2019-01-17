@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,15 +31,13 @@ bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) {
     char *pNewSsh = new char[sshSize + sizeToEnlarge];
     memcpy_s(pNewSsh, sshSize + sizeToEnlarge, pSsh, currSurfaceStateSize);
     RENDER_SURFACE_STATE *pSS = reinterpret_cast<RENDER_SURFACE_STATE *>(pNewSsh + currSurfaceStateSize);
-    pSS->init();
+    *pSS = GfxFamily::cmdInitRenderSurfaceState;
     size_t newSurfaceStateSize = currSurfaceStateSize + ssSize;
     size_t currBTCount = pKernel->getNumberOfBindingTableStates();
     memcpy_s(pNewSsh + newSurfaceStateSize, sshSize + sizeToEnlarge - newSurfaceStateSize, pSsh + currBTOffset, currBTCount * btsSize);
     BINDING_TABLE_STATE *pNewBTS = reinterpret_cast<BINDING_TABLE_STATE *>(pNewSsh + newSurfaceStateSize + currBTCount * btsSize);
-    BINDING_TABLE_STATE bti;
-    bti.init();
-    bti.setSurfaceStatePointer((uint64_t)currBTOffset);
-    *pNewBTS = bti;
+    *pNewBTS = GfxFamily::cmdInitBindingTableState;
+    pNewBTS->setSurfaceStatePointer((uint64_t)currBTOffset);
     pKernel->resizeSurfaceStateHeap(pNewSsh, sshSize + sizeToEnlarge, currBTCount + 1, newSurfaceStateSize);
     return true;
 }

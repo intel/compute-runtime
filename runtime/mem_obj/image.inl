@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -207,7 +207,7 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
 
     auto gmmHelper = executionEnvironment->getGmmHelper();
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
-    *surfaceState = MEDIA_SURFACE_STATE::sInit();
+    *surfaceState = GfxFamily::cmdInitMediaSurfaceState;
 
     setMediaSurfaceRotation(reinterpret_cast<void *>(surfaceState));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ void DeviceQueueHw<Family>::addArbCheckCmdWa() {}
 template <>
 void DeviceQueueHw<Family>::addMiAtomicCmdWa(uint64_t atomicOpPlaceholder) {
     auto miAtomic = slbCS.getSpaceForCmd<Family::MI_ATOMIC>();
-    *miAtomic = Family::MI_ATOMIC::sInit();
+    *miAtomic = Family::cmdInitAtomic;
     miAtomic->setAtomicOpcode(Family::MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT);
     miAtomic->setReturnDataControl(0x1);
     miAtomic->setCsStall(0x1);
@@ -45,7 +45,7 @@ void DeviceQueueHw<Family>::addMiAtomicCmdWa(uint64_t atomicOpPlaceholder) {
 template <>
 void DeviceQueueHw<Family>::addLriCmdWa(bool setArbCheck) {
     auto lri = slbCS.getSpaceForCmd<Family::MI_LOAD_REGISTER_IMM>();
-    *lri = Family::MI_LOAD_REGISTER_IMM::sInit();
+    *lri = Family::cmdInitLoadRegisterImm;
     lri->setRegisterOffset(0x2248); // CTXT_PREMP_DBG offset
     if (setArbCheck)
         lri->setDataDword(0x00000100); // set only bit 8 (Preempt On MI_ARB_CHK Only)
@@ -59,7 +59,7 @@ void DeviceQueueHw<Family>::addPipeControlCmdWa(bool isNoopCmd) {}
 template <>
 void DeviceQueueHw<Family>::addProfilingEndCmds(uint64_t timestampAddress) {
     auto pPipeControlCmd = (PIPE_CONTROL *)slbCS.getSpace(sizeof(PIPE_CONTROL));
-    *pPipeControlCmd = PIPE_CONTROL::sInit();
+    *pPipeControlCmd = Family::cmdInitPipeControl;
     pPipeControlCmd->setCommandStreamerStallEnable(true);
     pPipeControlCmd->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP);
     pPipeControlCmd->setAddressHigh(timestampAddress >> 32);

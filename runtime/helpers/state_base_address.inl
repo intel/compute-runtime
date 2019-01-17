@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     GmmHelper *gmmHelper) {
 
     auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
-    *pCmd = STATE_BASE_ADDRESS::sInit();
+    *pCmd = GfxFamily::cmdInitStateBaseAddress;
 
     pCmd->setDynamicStateBaseAddressModifyEnable(true);
     pCmd->setGeneralStateBaseAddressModifyEnable(true);

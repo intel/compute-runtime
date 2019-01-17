@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
     AUB::reserveAddressPPGTT(aubFile, gpuBatchBuffer, sizeBatchBuffer, physBatchBuffer, 7, aubHelperHw);
     uint8_t batchBuffer[sizeBatchBuffer];
 
-    auto noop = MI_NOOP::sInit();
+    auto noop = FamilyType::cmdInitNoop;
     uint32_t noopId = 0xbaadd;
 
     {
@@ -74,7 +74,7 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
         noop.TheStructure.Common.IdentificationNumber = noopId++;
         *(MI_NOOP *)pBatchBuffer = noop;
         pBatchBuffer = ptrOffset(pBatchBuffer, sizeof(MI_NOOP));
-        *(MI_BATCH_BUFFER_END *)pBatchBuffer = MI_BATCH_BUFFER_END::sInit();
+        *(MI_BATCH_BUFFER_END *)pBatchBuffer = FamilyType::cmdInitBatchBufferEnd;
         pBatchBuffer = ptrOffset(pBatchBuffer, sizeof(MI_BATCH_BUFFER_END));
         auto sizeBufferUsed = ptrDiff(pBatchBuffer, batchBuffer);
 
@@ -94,7 +94,7 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
     EXPECT_EQ(rRing, physRing);
 
     auto cur = (uint32_t *)pRing;
-    auto bbs = MI_BATCH_BUFFER_START::sInit();
+    auto bbs = FamilyType::cmdInitBatchBufferStart;
     bbs.setBatchBufferStartAddressGraphicsaddress472(gpuBatchBuffer);
     bbs.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
     *(MI_BATCH_BUFFER_START *)cur = bbs;

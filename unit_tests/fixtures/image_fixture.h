@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,7 +120,7 @@ class ImageClearColorFixture {
         OCLRT::platformImpl.reset();
         OCLRT::constructPlatform()->peekExecutionEnvironment()->initGmm(&hwInfoHelper.hwInfo);
 
-        surfaceState = RENDER_SURFACE_STATE::sInit();
+        surfaceState = FamilyType::cmdInitRenderSurfaceState;
         surfaceState.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
     }
     void TearDown() {

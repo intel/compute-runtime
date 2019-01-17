@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,8 @@ GEN10TEST_F(gen10ImageTests, appendSurfaceStateParamsDoesNothing) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
     auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(&context));
-    auto surfaceStateBefore = RENDER_SURFACE_STATE::sInit();
-    auto surfaceStateAfter = RENDER_SURFACE_STATE::sInit();
+    auto surfaceStateBefore = FamilyType::cmdInitRenderSurfaceState;
+    auto surfaceStateAfter = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
 
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
@@ -32,8 +32,8 @@ GEN10TEST_F(gen10ImageTests, givenImageForGen10WhenClearColorParametersAreSetThe
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
     auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(&context));
-    auto surfaceStateBefore = RENDER_SURFACE_STATE::sInit();
-    auto surfaceStateAfter = RENDER_SURFACE_STATE::sInit();
+    auto surfaceStateBefore = FamilyType::cmdInitRenderSurfaceState;
+    auto surfaceStateAfter = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
 
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));

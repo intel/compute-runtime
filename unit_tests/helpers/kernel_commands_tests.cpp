@@ -1084,7 +1084,7 @@ HWTEST_F(KernelCommandsHelperTests, whenProgrammingMiAtomicThenSetupAllFields) {
     uint8_t buffer[1024] = {};
     LinearStream cmdStream(buffer, 1024);
 
-    MI_ATOMIC referenceCommand = MI_ATOMIC::sInit();
+    MI_ATOMIC referenceCommand = FamilyType::cmdInitAtomic;
     referenceCommand.setAtomicOpcode(opcode);
     referenceCommand.setDataSize(dataSize);
     referenceCommand.setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));

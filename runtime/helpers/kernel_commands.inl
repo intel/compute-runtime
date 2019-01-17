@@ -203,8 +203,7 @@ size_t KernelCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(Indirec
     auto *dstBtiTableBase = reinterpret_cast<BINDING_TABLE_STATE *>(ptrOffset(dstSurfaceState, offsetOfBindingTable));
     DEBUG_BREAK_IF(reinterpret_cast<uintptr_t>(dstBtiTableBase) % INTERFACE_DESCRIPTOR_DATA::BINDINGTABLEPOINTER_ALIGN_SIZE != 0);
     auto *srcBtiTableBase = reinterpret_cast<const BINDING_TABLE_STATE *>(ptrOffset(srcSurfaceState, offsetOfBindingTable));
-    BINDING_TABLE_STATE bti;
-    bti.init(); // init whole DWORD - i.e. not just the SurfaceStatePointer bits
+    BINDING_TABLE_STATE bti = GfxFamily::cmdInitBindingTableState;
     for (uint32_t i = 0, e = (uint32_t)numberOfBindingTableStates; i != e; ++i) {
         uint32_t localSurfaceStateOffset = srcBtiTableBase[i].getSurfaceStatePointer();
         uint32_t offsetedSurfaceStateOffset = localSurfaceStateOffset + surfaceStatesOffset;
@@ -389,7 +388,7 @@ typename GfxFamily::MI_ATOMIC *KernelCommandsHelper<GfxFamily>::programMiAtomic(
                                                                                 typename MI_ATOMIC::ATOMIC_OPCODES opcode,
                                                                                 typename MI_ATOMIC::DATA_SIZE dataSize) {
     auto miAtomic = commandStream.getSpaceForCmd<MI_ATOMIC>();
-    *miAtomic = MI_ATOMIC::sInit();
+    *miAtomic = GfxFamily::cmdInitAtomic;
     miAtomic->setAtomicOpcode(opcode);
     miAtomic->setDataSize(dataSize);
     miAtomic->setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));

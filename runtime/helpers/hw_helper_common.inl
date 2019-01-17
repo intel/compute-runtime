@@ -108,7 +108,7 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(ExecutionEnvironment &ex
 
     auto gmmHelper = executionEnvironment.getGmmHelper();
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(surfaceStateBuffer);
-    *surfaceState = Family::cmdRenderSurfaceState;
+    *surfaceState = Family::cmdInitRenderSurfaceState;
     auto surfaceSize = alignUp(bufferSize, 4);
 
     SURFACE_STATE_BUFFER_LENGTH Length = {0};

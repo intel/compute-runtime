@@ -165,7 +165,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
 
         // Add BB Start Cmd to the SLB in the Primary Batch Buffer
         auto *bbStart = (MI_BATCH_BUFFER_START *)commandStream->getSpace(sizeof(MI_BATCH_BUFFER_START));
-        *bbStart = MI_BATCH_BUFFER_START::sInit();
+        *bbStart = GfxFamily::cmdInitBatchBufferStart;
         bbStart->setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH);
         uint64_t slbAddress = devQueueHw.getSlbBuffer()->getGpuAddress();
         bbStart->setBatchBufferStartAddressGraphicsaddress472(slbAddress);

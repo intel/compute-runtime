@@ -39,14 +39,14 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
     typedef typename GfxFamily::MI_MATH MI_MATH;
     typedef typename GfxFamily::MI_MATH_ALU_INST_INLINE MI_MATH_ALU_INST_INLINE;
     auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_REG)));
-    *pCmd = MI_LOAD_REGISTER_REG::sInit();
+    *pCmd = GfxFamily::cmdInitLoadRegisterReg;
     pCmd->setSourceRegisterAddress(aluRegister);
     pCmd->setDestinationRegisterAddress(CS_GPR_R0);
 
     // Load "Mask" into CS_GPR_R1
     typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     auto pCmd2 = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
-    *pCmd2 = MI_LOAD_REGISTER_IMM::sInit();
+    *pCmd2 = GfxFamily::cmdInitLoadRegisterImm;
     pCmd2->setRegisterOffset(CS_GPR_R1);
     pCmd2->setDataDword(mask);
 
@@ -85,13 +85,13 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
 
     // LOAD value of CS_GPR_R0 into "Register"
     auto pCmd4 = reinterpret_cast<MI_LOAD_REGISTER_REG *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_REG)));
-    *pCmd4 = MI_LOAD_REGISTER_REG::sInit();
+    *pCmd4 = GfxFamily::cmdInitLoadRegisterReg;
     pCmd4->setSourceRegisterAddress(CS_GPR_R0);
     pCmd4->setDestinationRegisterAddress(aluRegister);
 
     // Add PIPE_CONTROL to flush caches
     auto pCmd5 = reinterpret_cast<PIPE_CONTROL *>(pCommandStream->getSpace(sizeof(PIPE_CONTROL)));
-    *pCmd5 = PIPE_CONTROL::sInit();
+    *pCmd5 = GfxFamily::cmdInitPipeControl;
     pCmd5->setCommandStreamerStallEnable(true);
     pCmd5->setDcFlushEnable(true);
     pCmd5->setTextureCacheInvalidationEnable(true);
@@ -115,7 +115,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
 
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-    *pMICmdLow = MI_STORE_REGISTER_MEM::sInit();
+    *pMICmdLow = GfxFamily::cmdInitStoreRegisterMem;
     adjustMiStoreRegMemMode(pMICmdLow);
     pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
     pMICmdLow->setMemoryAddress(TimeStampAddress);
@@ -130,7 +130,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
 
     // PIPE_CONTROL for global timestamp
     auto pPipeControlCmd = (PIPE_CONTROL *)commandStream->getSpace(sizeof(PIPE_CONTROL));
-    *pPipeControlCmd = PIPE_CONTROL::sInit();
+    *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
     pPipeControlCmd->setCommandStreamerStallEnable(true);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
@@ -138,7 +138,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
 
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-    *pMICmdLow = MI_STORE_REGISTER_MEM::sInit();
+    *pMICmdLow = GfxFamily::cmdInitStoreRegisterMem;
     adjustMiStoreRegMemMode(pMICmdLow);
     pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
     pMICmdLow->setMemoryAddress(TimeStampAddress);
@@ -157,7 +157,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersNoopidRegisterCommands(
                              : reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.DMAFenceIdEnd));
 
     auto pNoopIdRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-    *pNoopIdRegister = MI_STORE_REGISTER_MEM::sInit();
+    *pNoopIdRegister = GfxFamily::cmdInitStoreRegisterMem;
     pNoopIdRegister->setRegisterAddress(OCLRT::INSTR_MMIO_NOOPID);
     pNoopIdRegister->setMemoryAddress(address);
 }
@@ -175,7 +175,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersReadFreqRegisterCommands(
                              : reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.CoreFreqEnd));
 
     auto pCoreFreqRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-    *pCoreFreqRegister = MI_STORE_REGISTER_MEM::sInit();
+    *pCoreFreqRegister = GfxFamily::cmdInitStoreRegisterMem;
     pCoreFreqRegister->setRegisterAddress(OCLRT::INSTR_MMIO_RPSTAT1);
     pCoreFreqRegister->setMemoryAddress(address);
 }
@@ -195,7 +195,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterComm
     // Read General Purpose counters
     for (uint16_t i = 0; i < OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT; i++) {
         auto pGeneralPurposeRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-        *pGeneralPurposeRegister = MI_STORE_REGISTER_MEM::sInit();
+        *pGeneralPurposeRegister = GfxFamily::cmdInitStoreRegisterMem;
         uint32_t regAddr = INSTR_GFX_OFFSETS::INSTR_PERF_CNT_1_DW0 + i * sizeof(cl_uint);
         pGeneralPurposeRegister->setRegisterAddress(regAddr);
         //Gp field is 2*uint64 wide so it can hold 4 uint32
@@ -223,7 +223,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(
 
     for (uint32_t i = 0; i < userRegs->RegsCount; i++) {
         auto pRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-        *pRegister = MI_STORE_REGISTER_MEM::sInit();
+        *pRegister = GfxFamily::cmdInitStoreRegisterMem;
 
         regAddr = userRegs->Reg[i].Offset;
         pRegister->setRegisterAddress(regAddr);
@@ -234,7 +234,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(
 
         if (userRegs->Reg[i].BitSize > 32) {
             pRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-            *pRegister = MI_STORE_REGISTER_MEM::sInit();
+            *pRegister = GfxFamily::cmdInitStoreRegisterMem;
 
             regAddr += sizeof(cl_uint);
             pRegister->setRegisterAddress(regAddr);
@@ -256,21 +256,21 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersOABufferStateCommands(
     uint64_t address = 0;
     //OA Status
     auto pOaRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-    *pOaRegister = MI_STORE_REGISTER_MEM::sInit();
+    *pOaRegister = GfxFamily::cmdInitStoreRegisterMem;
     pOaRegister->setRegisterAddress(INSTR_GFX_OFFSETS::INSTR_OA_STATUS);
     address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.OaStatus));
     pOaRegister->setMemoryAddress(address);
 
     //OA Head
     pOaRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-    *pOaRegister = MI_STORE_REGISTER_MEM::sInit();
+    *pOaRegister = GfxFamily::cmdInitStoreRegisterMem;
     pOaRegister->setRegisterAddress(INSTR_GFX_OFFSETS::INSTR_OA_HEAD_PTR);
     address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.OaHead));
     pOaRegister->setMemoryAddress(address);
 
     //OA Tail
     pOaRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-    *pOaRegister = MI_STORE_REGISTER_MEM::sInit();
+    *pOaRegister = GfxFamily::cmdInitStoreRegisterMem;
     pOaRegister->setRegisterAddress(INSTR_GFX_OFFSETS::INSTR_OA_TAIL_PTR);
     address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.OaTail));
     pOaRegister->setMemoryAddress(address);
@@ -291,7 +291,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     uint64_t address = 0;
     //flush command streamer
     auto pPipeControlCmd = (PIPE_CONTROL *)commandStream->getSpace(sizeof(PIPE_CONTROL));
-    *pPipeControlCmd = PIPE_CONTROL::sInit();
+    *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
     pPipeControlCmd->setCommandStreamerStallEnable(true);
 
     //Store value of NOOPID register
@@ -303,7 +303,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterCommands(commandQueue, hwPerfCounter, commandStream, true);
 
     auto pReportPerfCount = (MI_REPORT_PERF_COUNT *)commandStream->getSpace(sizeof(MI_REPORT_PERF_COUNT));
-    *pReportPerfCount = MI_REPORT_PERF_COUNT::sInit();
+    *pReportPerfCount = GfxFamily::cmdInitReportPerfCount;
     pReportPerfCount->setReportId(currentReportId);
     address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.HwPerfReportBegin.Oa));
     pReportPerfCount->setMemoryAddress(address);
@@ -333,7 +333,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
 
     //flush command streamer
     auto pPipeControlCmd = (PIPE_CONTROL *)commandStream->getSpace(sizeof(PIPE_CONTROL));
-    *pPipeControlCmd = PIPE_CONTROL::sInit();
+    *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
     pPipeControlCmd->setCommandStreamerStallEnable(true);
 
     GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersOABufferStateCommands(commandQueue, hwPerfCounter, commandStream);
@@ -343,7 +343,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, 0llu);
 
     auto pReportPerfCount = (MI_REPORT_PERF_COUNT *)commandStream->getSpace(sizeof(MI_REPORT_PERF_COUNT));
-    *pReportPerfCount = MI_REPORT_PERF_COUNT::sInit();
+    *pReportPerfCount = GfxFamily::cmdInitReportPerfCount;
     pReportPerfCount->setReportId(currentReportId);
     address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.HwPerfReportEnd.Oa));
     pReportPerfCount->setMemoryAddress(address);

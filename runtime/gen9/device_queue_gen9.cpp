@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,13 +33,13 @@ size_t DeviceQueueHw<Family>::getWaCommandsSize() {
 template <>
 void DeviceQueueHw<Family>::addArbCheckCmdWa() {
     auto arbCheck = slbCS.getSpaceForCmd<Family::MI_ARB_CHECK>();
-    *arbCheck = Family::MI_ARB_CHECK::sInit();
+    *arbCheck = Family::cmdInitArbCheck;
 }
 
 template <>
 void DeviceQueueHw<Family>::addMiAtomicCmdWa(uint64_t atomicOpPlaceholder) {
     auto miAtomic = slbCS.getSpaceForCmd<Family::MI_ATOMIC>();
-    *miAtomic = Family::MI_ATOMIC::sInit();
+    *miAtomic = Family::cmdInitAtomic;
     miAtomic->setAtomicOpcode(Family::MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT);
     miAtomic->setReturnDataControl(0x1);
     miAtomic->setCsStall(0x1);

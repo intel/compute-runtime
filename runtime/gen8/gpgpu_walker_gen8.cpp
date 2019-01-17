@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ void GpgpuWalkerHelper<BDWFamily>::applyWADisableLSQCROPERFforOCL(OCLRT::LinearS
             // Add PIPE_CONTROL with CS_Stall to wait till GPU finishes its work
             typedef typename BDWFamily::PIPE_CONTROL PIPE_CONTROL;
             auto pCmd = reinterpret_cast<PIPE_CONTROL *>(pCommandStream->getSpace(sizeof(PIPE_CONTROL)));
-            *pCmd = PIPE_CONTROL::sInit();
+            *pCmd = BDWFamily::cmdInitPipeControl;
             pCmd->setCommandStreamerStallEnable(true);
             // Clear bit L3SQC_BIT_LQSC_RO_PERF_DIS in L3SQC_REG4
             GpgpuWalkerHelper<BDWFamily>::addAluReadModifyWriteRegister(pCommandStream, L3SQC_REG4, ALU_OPCODE_AND, ~L3SQC_BIT_LQSC_RO_PERF_DIS);

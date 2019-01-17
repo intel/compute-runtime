@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ struct WorkGroupSizeBase {
 
         //Now setup GPGPU Walker
         typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-        GPGPU_WALKER pCmd = GPGPU_WALKER::sInit();
+        GPGPU_WALKER pCmd = FamilyType::cmdInitGpgpuWalker;
 
         const size_t workGroupsStart[3] = {0, 0, 0};
         const size_t workGroupsNum[3] = {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ void PreemptionHelper::applyPreemptionWaCmdsBegin(LinearStream *pCommandStream, 
         preemptionMode == PreemptionMode::MidThread) {
         if (device.getWaTable()->waModifyVFEStateAfterGPGPUPreemption) {
             auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
-            *pCmd = MI_LOAD_REGISTER_IMM::sInit();
+            *pCmd = GfxFamily::cmdInitLoadRegisterImm;
             pCmd->setRegisterOffset(CS_GPR_R0);
             pCmd->setDataDword(GPGPU_WALKER_COOKIE_VALUE_BEFORE_WALKER);
         }
@@ -51,7 +51,7 @@ void PreemptionHelper::applyPreemptionWaCmdsEnd(LinearStream *pCommandStream, co
         preemptionMode == PreemptionMode::MidThread) {
         if (device.getWaTable()->waModifyVFEStateAfterGPGPUPreemption) {
             auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
-            *pCmd = MI_LOAD_REGISTER_IMM::sInit();
+            *pCmd = GfxFamily::cmdInitLoadRegisterImm;
             pCmd->setRegisterOffset(CS_GPR_R0);
             pCmd->setDataDword(GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER);
         }
@@ -66,7 +66,7 @@ void PreemptionHelper::programCsrBaseAddress(LinearStream &preambleCmdStream, De
         UNRECOVERABLE_IF(nullptr == preemptionCsr);
 
         auto csr = reinterpret_cast<GPGPU_CSR_BASE_ADDRESS *>(preambleCmdStream.getSpace(sizeof(GPGPU_CSR_BASE_ADDRESS)));
-        csr->init();
+        *csr = GfxFamily::cmdInitGpgpuCsrBaseAddress;
         csr->setGpgpuCsrBaseAddress(preemptionCsr->getGpuAddressToPatch());
     }
 }
@@ -79,7 +79,7 @@ void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &
 
     if (isMidThreadPreemption || sourceLevelDebuggerActive) {
         auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
-        sip->init();
+        *sip = GfxFamily::cmdInitStateSip;
         auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().pPlatform->eRenderCoreFamily, sourceLevelDebuggerActive);
         sip->setSystemInstructionPointer(device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, device).getSipAllocation()->getGpuAddressToPatch());
     }

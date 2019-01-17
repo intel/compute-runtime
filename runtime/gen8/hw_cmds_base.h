@@ -34,7 +34,25 @@ struct BDWFamily : public GEN8 {
     static const MI_BATCH_BUFFER_START cmdInitBatchBufferStart;
     static const PIPE_CONTROL cmdInitPipeControl;
     static const MI_SEMAPHORE_WAIT cmdInitMiSemaphoreWait;
-    static const RENDER_SURFACE_STATE cmdRenderSurfaceState;
+    static const RENDER_SURFACE_STATE cmdInitRenderSurfaceState;
+    static const MI_LOAD_REGISTER_IMM cmdInitLoadRegisterImm;
+    static const MI_LOAD_REGISTER_REG cmdInitLoadRegisterReg;
+    static const MI_LOAD_REGISTER_MEM cmdInitLoadRegisterMem;
+    static const MI_STORE_DATA_IMM cmdInitStoreDataImm;
+    static const MI_STORE_REGISTER_MEM cmdInitStoreRegisterMem;
+    static const MI_NOOP cmdInitNoop;
+    static const MI_REPORT_PERF_COUNT cmdInitReportPerfCount;
+    static const MI_ATOMIC cmdInitAtomic;
+    static const PIPELINE_SELECT cmdInitPipelineSelect;
+    static const MI_ARB_CHECK cmdInitArbCheck;
+    static const MEDIA_VFE_STATE cmdInitMediaVfeState;
+    static const STATE_BASE_ADDRESS cmdInitStateBaseAddress;
+    static const MEDIA_SURFACE_STATE cmdInitMediaSurfaceState;
+    static const SAMPLER_STATE cmdInitSamplerState;
+    static const GPGPU_CSR_BASE_ADDRESS cmdInitGpgpuCsrBaseAddress;
+    static const STATE_SIP cmdInitStateSip;
+    static const BINDING_TABLE_STATE cmdInitBindingTableState;
+    static const MI_USER_INTERRUPT cmdInitUserInterrupt;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_GEN8_CORE;

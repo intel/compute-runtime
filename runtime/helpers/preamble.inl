@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,7 @@ void PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream, co
     addPipeControlBeforeVfeCmd(pCommandStream, &hwInfo);
 
     auto pMediaVfeState = (MEDIA_VFE_STATE *)pCommandStream->getSpace(sizeof(MEDIA_VFE_STATE));
-    *pMediaVfeState = MEDIA_VFE_STATE::sInit();
+    *pMediaVfeState = GfxFamily::cmdInitMediaVfeState;
     pMediaVfeState->setMaximumNumberOfThreads(PreambleHelper<GfxFamily>::getMaxThreadsForVfe(hwInfo));
     pMediaVfeState->setNumberOfUrbEntries(1);
     pMediaVfeState->setUrbEntryAllocationSize(PreambleHelper<GfxFamily>::getUrbEntryAllocationSize());
@@ -64,7 +64,7 @@ void PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream, co
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t l3Config) {
     auto pCmd = (MI_LOAD_REGISTER_IMM *)pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM));
-    *pCmd = MI_LOAD_REGISTER_IMM::sInit();
+    *pCmd = GfxFamily::cmdInitLoadRegisterImm;
 
     pCmd->setRegisterOffset(L3CNTLRegisterOffset<GfxFamily>::registerOffset);
     pCmd->setDataDword(l3Config);
@@ -95,12 +95,12 @@ uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programKernelDebugging(LinearStream *pCommandStream) {
     auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
-    *pCmd = MI_LOAD_REGISTER_IMM::sInit();
+    *pCmd = GfxFamily::cmdInitLoadRegisterImm;
     pCmd->setRegisterOffset(DebugModeRegisterOffset::registerOffset);
     pCmd->setDataDword(DebugModeRegisterOffset::debugEnabledValue);
 
     auto pCmd2 = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
-    *pCmd2 = MI_LOAD_REGISTER_IMM::sInit();
+    *pCmd2 = GfxFamily::cmdInitLoadRegisterImm;
     pCmd2->setRegisterOffset(TdDebugControlRegisterOffset::registerOffset);
     pCmd2->setDataDword(TdDebugControlRegisterOffset::debugEnabledValue);
 }

@@ -478,7 +478,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
             pTail = engineInfo.pRingBuffer;
         } else if (engineInfo.tailRingBuffer == 0) {
             // Add a LRI if this is our first submission
-            auto lri = MI_LOAD_REGISTER_IMM::sInit();
+            auto lri = GfxFamily::cmdInitLoadRegisterImm;
             lri.setRegisterOffset(AubMemDump::computeRegisterOffset(csTraits.mmioBase, 0x2244));
             lri.setDataDword(0x00010000);
             *(MI_LOAD_REGISTER_IMM *)pTail = lri;
@@ -486,7 +486,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
         }
 
         // Add our BBS
-        auto bbs = MI_BATCH_BUFFER_START::sInit();
+        auto bbs = GfxFamily::cmdInitBatchBufferStart;
         bbs.setBatchBufferStartAddressGraphicsaddress472(static_cast<uint64_t>(batchBufferGpuAddress));
         bbs.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
         *(MI_BATCH_BUFFER_START *)pTail = bbs;
@@ -497,7 +497,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
 
         // Add NOOPs as needed as our tail needs to be aligned
         while (engineInfo.tailRingBuffer % tailAlignment) {
-            *(MI_NOOP *)pTail = MI_NOOP::sInit();
+            *(MI_NOOP *)pTail = GfxFamily::cmdInitNoop;
             pTail = ((MI_NOOP *)pTail) + 1;
             engineInfo.tailRingBuffer = (uint32_t)ptrDiff(pTail, engineInfo.pRingBuffer);
         }
@@ -789,7 +789,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
 
     MI_BATCH_BUFFER_START *miBatchBufferStart = linearStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
     DEBUG_BREAK_IF(bufferSize != linearStream.getUsed());
-    miBatchBufferStart->init();
+    *miBatchBufferStart = GfxFamily::cmdInitBatchBufferStart;
     miBatchBufferStart->setBatchBufferStartAddressGraphicsaddress472(AUB::ptrToPPGTT(buffer.get()));
     miBatchBufferStart->setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
 

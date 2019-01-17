@@ -265,7 +265,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (stallingPipeControlOnNextFlushRequired) {
         stallingPipeControlOnNextFlushRequired = false;
         auto stallingPipeControlCmd = commandStream.getSpaceForCmd<PIPE_CONTROL>();
-        *stallingPipeControlCmd = PIPE_CONTROL::sInit();
+        *stallingPipeControlCmd = GfxFamily::cmdInitPipeControl;
         stallingPipeControlCmd->setCommandStreamerStallEnable(true);
     }
     initPageTableManagerRegisters(commandStreamCSR);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,7 +106,7 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
         auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(this->queueBuffer->getUnderlyingBuffer());
         auto placeholder = (uint64_t)&igilCmdQueue->m_controls.m_DummyAtomicOperationPlaceholder;
 
-        MI_ATOMIC miAtomic = MI_ATOMIC::sInit();
+        MI_ATOMIC miAtomic = GfxFamily::cmdInitAtomic;
         miAtomic.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT);
         miAtomic.setReturnDataControl(0x1);
         miAtomic.setCsStall(0x1);
@@ -118,7 +118,7 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
     };
 
     MI_LOAD_REGISTER_IMM getExpectedLriCmd(bool arbCheck) {
-        MI_LOAD_REGISTER_IMM lri = MI_LOAD_REGISTER_IMM::sInit();
+        MI_LOAD_REGISTER_IMM lri = GfxFamily::cmdInitLoadRegisterImm;
         lri.setRegisterOffset(0x2248); // CTXT_PREMP_DBG offset
         if (arbCheck)
             lri.setDataDword(0x00000100); // set only bit 8 (Preempt On MI_ARB_CHK Only)
@@ -135,14 +135,14 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
     }
 
     MI_ARB_CHECK getExpectedArbCheckCmd() {
-        return MI_ARB_CHECK::sInit();
+        return GfxFamily::cmdInitArbCheck;
     }
 
     void setupExpectedCmds() {
-        expectedCmds.mediaStateFlush = MEDIA_STATE_FLUSH::sInit();
+        expectedCmds.mediaStateFlush = GfxFamily::cmdInitMediaStateFlush;
         expectedCmds.arbCheck = getExpectedArbCheckCmd();
         expectedCmds.miAtomic = getExpectedMiAtomicCmd();
-        expectedCmds.mediaIdLoad = MEDIA_INTERFACE_DESCRIPTOR_LOAD::sInit();
+        expectedCmds.mediaIdLoad = GfxFamily::cmdInitMediaInterfaceDescriptorLoad;
         expectedCmds.mediaIdLoad.setInterfaceDescriptorTotalLength(2048);
 
         auto dataStartAddress = DeviceQueue::colorCalcStateSize;
@@ -155,7 +155,7 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
         expectedCmds.lriFalse = getExpectedLriCmd(false);
         expectedCmds.pipeControl = getExpectedPipeControlCmd();
         memset(&expectedCmds.noopedPipeControl, 0x0, sizeof(PIPE_CONTROL));
-        expectedCmds.gpgpuWalker = GPGPU_WALKER::sInit();
+        expectedCmds.gpgpuWalker = GfxFamily::cmdInitGpgpuWalker;
         expectedCmds.gpgpuWalker.setSimdSize(GPGPU_WALKER::SIMD_SIZE::SIMD_SIZE_SIMD16);
         expectedCmds.gpgpuWalker.setThreadGroupIdXDimension(1);
         expectedCmds.gpgpuWalker.setThreadGroupIdYDimension(1);
@@ -164,7 +164,7 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
         expectedCmds.gpgpuWalker.setBottomExecutionMask(0xFFFFFFFF);
         expectedCmds.prefetch = new uint8_t[DeviceQueueHw<GfxFamily>::getCSPrefetchSize()];
         memset(expectedCmds.prefetch, 0x0, DeviceQueueHw<GfxFamily>::getCSPrefetchSize());
-        expectedCmds.bbStart = MI_BATCH_BUFFER_START::sInit();
+        expectedCmds.bbStart = GfxFamily::cmdInitBatchBufferStart;
         auto slbPtr = reinterpret_cast<uintptr_t>(this->getSlbBuffer()->getUnderlyingBuffer());
         expectedCmds.bbStart.setBatchBufferStartAddressGraphicsaddress472(slbPtr);
     }

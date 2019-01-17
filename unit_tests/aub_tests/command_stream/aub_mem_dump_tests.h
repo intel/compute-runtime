@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,7 @@ void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
     auto cur = (uint32_t *)pRing;
 
     using MI_NOOP = typename FamilyType::MI_NOOP;
-    auto noop = MI_NOOP::sInit();
+    auto noop = FamilyType::cmdInitNoop;
     *cur++ = noop.TheStructure.RawData[0];
     *cur++ = noop.TheStructure.RawData[0];
     *cur++ = noop.TheStructure.RawData[0];

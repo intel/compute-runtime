@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,27 @@ GENX::INTERFACE_DESCRIPTOR_DATA GENX::cmdInitInterfaceDescriptorData = GENX::INT
 GENX::MEDIA_STATE_FLUSH GENX::cmdInitMediaStateFlush = GENX::MEDIA_STATE_FLUSH::sInit();
 GENX::MEDIA_INTERFACE_DESCRIPTOR_LOAD GENX::cmdInitMediaInterfaceDescriptorLoad = GENX::MEDIA_INTERFACE_DESCRIPTOR_LOAD::sInit();
 GENX::MI_SEMAPHORE_WAIT GENX::cmdInitMiSemaphoreWait = GENX::MI_SEMAPHORE_WAIT::sInit();
-GENX::RENDER_SURFACE_STATE GENX::cmdRenderSurfaceState = GENX::RENDER_SURFACE_STATE::sInit();
+GENX::RENDER_SURFACE_STATE GENX::cmdInitRenderSurfaceState = GENX::RENDER_SURFACE_STATE::sInit();
+GENX::MI_LOAD_REGISTER_IMM GENX::cmdInitLoadRegisterImm = GENX::MI_LOAD_REGISTER_IMM::sInit();
+GENX::MI_LOAD_REGISTER_REG GENX::cmdInitLoadRegisterReg = GENX::MI_LOAD_REGISTER_REG::sInit();
+GENX::MI_LOAD_REGISTER_MEM GENX::cmdInitLoadRegisterMem = GENX::MI_LOAD_REGISTER_MEM::sInit();
+GENX::MI_STORE_DATA_IMM GENX::cmdInitStoreDataImm = GENX::MI_STORE_DATA_IMM::sInit();
+GENX::MI_STORE_REGISTER_MEM GENX::cmdInitStoreRegisterMem = GENX::MI_STORE_REGISTER_MEM::sInit();
+GENX::MI_NOOP GENX::cmdInitNoop = GENX::MI_NOOP::sInit();
+GENX::MI_BATCH_BUFFER_START GENX::cmdInitBatchBufferStart = GENX::MI_BATCH_BUFFER_START::sInit();
+GENX::MI_BATCH_BUFFER_END GENX::cmdInitBatchBufferEnd = GENX::MI_BATCH_BUFFER_END::sInit();
+GENX::MI_REPORT_PERF_COUNT GENX::cmdInitReportPerfCount = GENX::MI_REPORT_PERF_COUNT::sInit();
+GENX::MI_ATOMIC GENX::cmdInitAtomic = GENX::MI_ATOMIC::sInit();
+GENX::PIPELINE_SELECT GENX::cmdInitPipelineSelect = GENX::PIPELINE_SELECT::sInit();
+GENX::MI_ARB_CHECK GENX::cmdInitArbCheck = GENX::MI_ARB_CHECK::sInit();
+GENX::MEDIA_VFE_STATE GENX::cmdInitMediaVfeState = GENX::MEDIA_VFE_STATE::sInit();
+GENX::STATE_BASE_ADDRESS GENX::cmdInitStateBaseAddress = GENX::STATE_BASE_ADDRESS::sInit();
+GENX::MEDIA_SURFACE_STATE GENX::cmdInitMediaSurfaceState = GENX::MEDIA_SURFACE_STATE::sInit();
+GENX::SAMPLER_STATE GENX::cmdInitSamplerState = GENX::SAMPLER_STATE::sInit();
+GENX::GPGPU_CSR_BASE_ADDRESS GENX::cmdInitGpgpuCsrBaseAddress = GENX::GPGPU_CSR_BASE_ADDRESS::sInit();
+GENX::STATE_SIP GENX::cmdInitStateSip = GENX::STATE_SIP::sInit();
+GENX::BINDING_TABLE_STATE GENX::cmdInitBindingTableState = GENX::BINDING_TABLE_STATE::sInit();
+GENX::MI_USER_INTERRUPT GENX::cmdInitUserInterrupt = GENX::MI_USER_INTERRUPT::sInit();
 bool GENX::enabledYTiling = true;
 
 template <>

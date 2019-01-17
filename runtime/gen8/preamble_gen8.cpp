@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ namespace OCLRT {
 template <>
 void PreambleHelper<BDWFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo) {
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = PIPE_CONTROL::sInit();
+    *pipeControl = BDWFamily::cmdInitPipeControl;
     pipeControl->setCommandStreamerStallEnable(true);
     pipeControl->setDcFlushEnable(true);
 }
@@ -35,7 +35,7 @@ template <>
 void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStream, const DispatchFlags &dispatchFlags) {
     typedef typename BDWFamily::PIPELINE_SELECT PIPELINE_SELECT;
     auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
-    *pCmd = PIPELINE_SELECT::sInit();
+    *pCmd = BDWFamily::cmdInitPipelineSelect;
     pCmd->setMaskBits(pipelineSelectEnablePipelineSelectMaskBits);
     pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -171,7 +171,7 @@ HWTEST_F(LriHelperTests, givenAddressAndOffsetWhenHelperIsUsedThenProgramCmdStre
     uint32_t address = 0x8888;
     uint32_t data = 0x1234;
 
-    auto expectedLri = MI_LOAD_REGISTER_IMM::sInit();
+    auto expectedLri = FamilyType::cmdInitLoadRegisterImm;
     expectedLri.setRegisterOffset(address);
     expectedLri.setDataDword(data);
 
@@ -192,7 +192,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     uint64_t address = 0x1234567887654321;
     uint64_t immediateData = 0x1234;
 
-    auto expectedPipeControl = PIPE_CONTROL::sInit();
+    auto expectedPipeControl = FamilyType::cmdInitPipeControl;
     expectedPipeControl.setCommandStreamerStallEnable(true);
     expectedPipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP);
     expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
@@ -213,7 +213,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     uint64_t address = 0x1234567887654321;
     uint64_t immediateData = 0x1234;
 
-    auto expectedPipeControl = PIPE_CONTROL::sInit();
+    auto expectedPipeControl = FamilyType::cmdInitPipeControl;
     expectedPipeControl.setCommandStreamerStallEnable(true);
     expectedPipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
     expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));

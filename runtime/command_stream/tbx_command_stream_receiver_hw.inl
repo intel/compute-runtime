@@ -275,7 +275,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
             pTail = engineInfo.pRingBuffer;
         } else if (engineInfo.tailRingBuffer == 0) {
             // Add a LRI if this is our first submission
-            auto lri = MI_LOAD_REGISTER_IMM::sInit();
+            auto lri = GfxFamily::cmdInitLoadRegisterImm;
             lri.setRegisterOffset(AubMemDump::computeRegisterOffset(csTraits.mmioBase, 0x2244));
             lri.setDataDword(0x00010000);
             *(MI_LOAD_REGISTER_IMM *)pTail = lri;
@@ -283,14 +283,14 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
         }
 
         // Add our BBS
-        auto bbs = MI_BATCH_BUFFER_START::sInit();
+        auto bbs = GfxFamily::cmdInitBatchBufferStart;
         bbs.setBatchBufferStartAddressGraphicsaddress472(AUB::ptrToPPGTT(batchBuffer));
         bbs.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
         *(MI_BATCH_BUFFER_START *)pTail = bbs;
         pTail = ((MI_BATCH_BUFFER_START *)pTail) + 1;
 
         // Add a NOOP as our tail needs to be aligned to a QWORD
-        *(MI_NOOP *)pTail = MI_NOOP::sInit();
+        *(MI_NOOP *)pTail = GfxFamily::cmdInitNoop;
         pTail = ((MI_NOOP *)pTail) + 1;
 
         // Compute our new ring tail.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
         auto pCmd = (MI_NOOP *)pCS->getSpace(sizeof(MI_NOOP) * 4);
 
         uint32_t noopId = 0xbaadd;
-        auto noop = MI_NOOP::sInit();
+        auto noop = FamilyType::cmdInitNoop;
         *pCmd++ = noop;
         *pCmd++ = noop;
         *pCmd++ = noop;

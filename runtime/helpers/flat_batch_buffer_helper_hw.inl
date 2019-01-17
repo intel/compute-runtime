@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,7 +127,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(Batch
         }
 
         auto pCmdMui = reinterpret_cast<MI_USER_INTERRUPT *>(ptr);
-        pCmdMui->init();
+        *pCmdMui = GfxFamily::cmdInitUserInterrupt;
         ptr += sizeof(MI_USER_INTERRUPT);
 
         auto pCmdBBend = reinterpret_cast<MI_BATCH_BUFFER_END *>(ptr);
@@ -162,7 +162,7 @@ char *FlatBatchBufferHelperHw<GfxFamily>::getIndirectPatchCommands(size_t &indir
     for (auto &patchInfoData : patchInfoCopy) {
         if (patchInfoData.requiresIndirectPatching()) {
             auto storeDataImmediate = indirectPatchCommandStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
-            storeDataImmediate->init();
+            *storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
             storeDataImmediate->setAddress(patchInfoData.targetAllocation + patchInfoData.targetAllocationOffset);
             storeDataImmediate->setStoreQword(patchInfoData.patchAddressSize != sizeof(uint32_t));
             storeDataImmediate->setDataDword0(static_cast<uint32_t>((patchInfoData.sourceAllocation + patchInfoData.sourceAllocationOffset) & 0x0000FFFFFFFFULL));
