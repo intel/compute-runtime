@@ -5,10 +5,10 @@
  *
  */
 
-#include "test.h"
 #include "runtime/os_interface/debug_settings_manager.h"
-#include "unit_tests/os_interface/debug_settings_manager_fixture.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "unit_tests/os_interface/debug_settings_manager_fixture.h"
+#include "test.h"
 
 TEST(DebugSettingsManager, GivenDebugSettingsManagerWithLogAllocationsThenLogsCorrectInfo) {
     FullyEnabledTestDebugManager debugManager;

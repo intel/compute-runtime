@@ -7,14 +7,12 @@
 
 #pragma once
 
-#include "test.h"
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/string_helpers.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/utilities/directory.h"
+
+#include <map>
 
 using namespace OCLRT;
 using namespace std;
