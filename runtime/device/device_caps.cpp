@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -336,7 +336,7 @@ void Device::initializeCaps() {
     deviceInfo.globalVariablePreferredTotalSize = (size_t)deviceInfo.maxMemAllocSize;
 
     deviceInfo.planarYuvMaxWidth = 16384;
-    deviceInfo.planarYuvMaxHeight = 16380;
+    deviceInfo.planarYuvMaxHeight = 16352;
 
     deviceInfo.vmeAvcSupportsPreemption = hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption;
     deviceInfo.vmeAvcSupportsTextureSampler = hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler;

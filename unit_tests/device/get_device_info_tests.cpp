@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,7 @@ TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsCorrectValuesWhenPlanarY
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(16380u, value);
+    EXPECT_EQ(16352u, value);
 }
 
 TEST(GetDeviceInfo, numSimultaneousInterops) {
