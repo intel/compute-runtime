@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -227,4 +227,10 @@ VOID *WddmMock::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback
 
 GmmMemory *WddmMock::getGmmMemory() const {
     return gmmMemory.get();
+}
+
+uint64_t *WddmMock::getPagingFenceAddress() {
+    getPagingFenceAddressResult.called++;
+    mockPagingFence++;
+    return &mockPagingFence;
 }

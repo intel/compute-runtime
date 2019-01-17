@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -372,6 +372,8 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
 
     if (DebugManager.flags.EnableMakeResidentOnMapGpuVa.get()) {
         this->makeResident(&handle, 1, true, nullptr);
+        while (currentPagingFenceValue > *getPagingFenceAddress())
+            ;
     }
 
     if (gmm->isRenderCompressed && pageTableManager.get()) {

@@ -1489,8 +1489,31 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmAllocationWhenEnableMakeResidentOnMap
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     wddm.resetPageTableManager(mockMngr);
+    wddm.mockPagingFence = 0u;
+    wddm.currentPagingFenceValue = 0u;
 
     auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, false, false, false);
     EXPECT_EQ(1u, wddm.makeResidentResult.called);
     ASSERT_TRUE(result);
+}
+
+TEST_F(MockWddmMemoryManagerTest, givenWddmAllocationWhenEnableMakeResidentOnMapGpuVaIsSetThenWaitForPageFenceAfterMakeResident) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableMakeResidentOnMapGpuVa.set(true);
+
+    std::unique_ptr<Gmm> gmm(new Gmm(reinterpret_cast<void *>(123), 4096u, false));
+    D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
+    WddmMock wddm;
+    EXPECT_TRUE(wddm.init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
+
+    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    wddm.resetPageTableManager(mockMngr);
+    wddm.mockPagingFence = 0u;
+    wddm.currentPagingFenceValue = 5u;
+
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, false, false, false);
+    EXPECT_EQ(1u, wddm.makeResidentResult.called);
+    ASSERT_TRUE(result);
+
+    EXPECT_EQ(5u, wddm.getPagingFenceAddressResult.called);
 }

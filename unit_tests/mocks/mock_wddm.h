@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,6 +80,7 @@ class WddmMock : public Wddm {
     bool reserveValidAddressRange(size_t size, void *&reservedMem);
     GmmMemory *getGmmMemory() const;
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
+    uint64_t *getPagingFenceAddress() override;
 
     bool configureDeviceAddressSpace() {
         configureDeviceAddressSpaceResult.called++;
@@ -111,6 +112,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult releaseReservedAddressResult;
     WddmMockHelpers::CallResult reserveValidAddressRangeResult;
     WddmMockHelpers::CallResult registerTrimCallbackResult;
+    WddmMockHelpers::CallResult getPagingFenceAddressResult;
 
     NTSTATUS createAllocationStatus;
     bool mapGpuVaStatus;
@@ -120,5 +122,6 @@ class WddmMock : public Wddm {
     std::set<void *> reservedAddresses;
     uintptr_t virtualAllocAddress = OCLRT::windowsMinAddress;
     bool kmDafEnabled = false;
+    uint64_t mockPagingFence;
 };
 } // namespace OCLRT

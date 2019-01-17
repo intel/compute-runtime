@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -139,6 +139,9 @@ class Wddm {
     }
 
     unsigned int readEnablePreemptionRegKey();
+    MOCKABLE_VIRTUAL uint64_t *getPagingFenceAddress() {
+        return pagingFenceAddress;
+    }
 
   protected:
     bool initialized = false;
