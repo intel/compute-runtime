@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ void MockGmmResourceInfo::computeRowPitch() {
     if (mockResourceCreateParams.OverridePitch) {
         rowPitch = mockResourceCreateParams.OverridePitch;
     } else {
-        rowPitch = static_cast<size_t>(mockResourceCreateParams.BaseWidth * (surfaceFormatInfo->PerChannelSizeInBytes * surfaceFormatInfo->NumChannels));
+        rowPitch = static_cast<size_t>(mockResourceCreateParams.BaseWidth64 * (surfaceFormatInfo->PerChannelSizeInBytes * surfaceFormatInfo->NumChannels));
         rowPitch = alignUp(rowPitch, 64);
     }
 }

@@ -21,7 +21,7 @@ Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(ali
 Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
-    resourceParams.BaseWidth = static_cast<uint32_t>(alignedSize);
+    resourceParams.BaseWidth64 = static_cast<uint64_t>(alignedSize);
     resourceParams.BaseHeight = 1;
     resourceParams.Depth = 1;
     if (!uncacheable) {
@@ -41,7 +41,7 @@ Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool pref
         resourceParams.NoGfxMemory = 1u;
     }
 
-    if (resourceParams.BaseWidth >= GmmHelper::maxPossiblePitch) {
+    if (resourceParams.BaseWidth64 >= GmmHelper::maxPossiblePitch) {
         resourceParams.Flags.Gpu.NoRestriction = 1;
     }
 
@@ -61,7 +61,7 @@ Gmm::Gmm(ImageInfo &inputOutputImgInfo) {
 
 void Gmm::queryImageParams(ImageInfo &imgInfo) {
     this->resourceParams = {};
-    uint32_t imageWidth = static_cast<uint32_t>(imgInfo.imgDesc->image_width);
+    uint64_t imageWidth = static_cast<uint64_t>(imgInfo.imgDesc->image_width);
     uint32_t imageHeight = 1;
     uint32_t imageDepth = 1;
     uint32_t imageCount = 1;
@@ -101,7 +101,7 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
     this->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE;
     this->resourceParams.Format = imgInfo.surfaceFormat->GMMSurfaceFormat;
     this->resourceParams.Flags.Gpu.Texture = 1;
-    this->resourceParams.BaseWidth = imageWidth;
+    this->resourceParams.BaseWidth64 = imageWidth;
     this->resourceParams.BaseHeight = imageHeight;
     this->resourceParams.Depth = imageDepth;
     this->resourceParams.ArraySize = imageCount;

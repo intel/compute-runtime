@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ class GmmHelper {
 
     static constexpr uint32_t cacheDisabledIndex = 0;
     static constexpr uint32_t cacheEnabledIndex = 4;
-    static constexpr uint32_t maxPossiblePitch = 2147483648;
+    static constexpr uint64_t maxPossiblePitch = 2147483648;
 
     static uint64_t canonize(uint64_t address);
     static uint64_t decanonize(uint64_t address);

@@ -94,7 +94,7 @@ TEST_F(GmmTests, resourceCleanupOnDelete) {
 }
 
 TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGMMResourceIsCreatedWithNoRestrictionsFlag) {
-    auto maxSize = GmmHelper::maxPossiblePitch;
+    auto maxSize = static_cast<size_t>(GmmHelper::maxPossiblePitch);
 
     MemoryManager *mm = new OsAgnosticMemoryManager(false, false, executionEnvironment);
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
@@ -170,11 +170,18 @@ TEST_F(GmmTests, validImageTypeQuery) {
     EXPECT_EQ(static_cast<uint32_t>(queryGmm->resourceParams.Format),
               static_cast<uint32_t>(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8G8B8A8_UNORM));
     EXPECT_EQ(queryGmm->resourceParams.Flags.Gpu.Texture, 1u);
-    EXPECT_EQ(queryGmm->resourceParams.BaseWidth, 17u);
+    EXPECT_EQ(queryGmm->resourceParams.BaseWidth64, 17u);
     EXPECT_EQ(queryGmm->resourceParams.BaseHeight, 17u);
     EXPECT_EQ(queryGmm->resourceParams.Depth, 17u);
     EXPECT_EQ(queryGmm->resourceParams.ArraySize, 1u);
     EXPECT_EQ(queryGmm->resourceParams.Flags.Wa.__ForceOtherHVALIGN4, 1u);
+}
+
+TEST_F(GmmTests, givenWidthWhenCreatingResourceThenSetWidth64Field) {
+    const void *dummyPtr = reinterpret_cast<void *>(0x123);
+    size_t allocationSize = std::numeric_limits<size_t>::max();
+    Gmm gmm(dummyPtr, allocationSize, false);
+    EXPECT_EQ(static_cast<uint64_t>(allocationSize), gmm.resourceParams.BaseWidth64);
 }
 
 TEST_F(GmmTests, givenNullptrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperlySet) {
@@ -644,7 +651,7 @@ TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
     GMM_RESCREATE_PARAMS gmmParams = {};
     gmmParams.Type = RESOURCE_BUFFER;
     gmmParams.Format = GMM_FORMAT_GENERIC_8BIT;
-    gmmParams.BaseWidth = 1;
+    gmmParams.BaseWidth64 = 1;
     gmmParams.BaseHeight = 1;
     gmmParams.Depth = 1;
     gmmParams.Flags.Info.Linear = 1;
