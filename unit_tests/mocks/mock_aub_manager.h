@@ -8,9 +8,7 @@
 #include "third_party/aub_stream/headers/aub_manager.h"
 #include "third_party/aub_stream/headers/hardware_context.h"
 
-using namespace AubDump;
-
-struct MockHardwareContext : public HardwareContext {
+struct MockHardwareContext : public aub_stream::HardwareContext {
     MockHardwareContext(uint32_t deviceIndex, uint32_t engineIndex)
         : deviceIndex(deviceIndex), engineIndex(engineIndex){};
     ~MockHardwareContext() override{};
@@ -35,7 +33,9 @@ struct MockHardwareContext : public HardwareContext {
     uint32_t engineIndex = 0;
 };
 
-class MockAubManager : public AubManager {
+class MockAubManager : public aub_stream::AubManager {
+    using HardwareContext = aub_stream::HardwareContext;
+
   public:
     MockAubManager(){};
     ~MockAubManager() override {}

@@ -710,13 +710,13 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineI
 struct InjectMmmioTest : public AubCommandStreamReceiverTests {
     void SetUp() override {
         AubCommandStreamReceiverTests::SetUp();
-        injectMmioListCopy = AubDump::injectMMIOList;
+        injectMmioListCopy = aub_stream::injectMMIOList;
     }
 
     void TearDown() override {
         AubCommandStreamReceiverTests::TearDown();
-        AubDump::injectMMIOList = injectMmioListCopy;
-        AubDump::injectMMIOList.shrink_to_fit();
+        aub_stream::injectMMIOList = injectMmioListCopy;
+        aub_stream::injectMMIOList.shrink_to_fit();
     }
 
   private:

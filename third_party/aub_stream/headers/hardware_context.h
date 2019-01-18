@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <cstddef>
 
-namespace AubDump {
+namespace aub_stream {
 
 struct HardwareContext {
     virtual void initialize() = 0;
@@ -22,4 +22,4 @@ struct HardwareContext {
     virtual ~HardwareContext() = default;
 };
 
-} // namespace AubDump
+} // namespace aub_stream

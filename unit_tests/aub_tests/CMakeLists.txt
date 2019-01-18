@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -19,7 +19,7 @@ list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
 )
 
 if(DEFINED AUB_STREAM_DIR)
-  list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS $<TARGET_OBJECTS:${AUB_STREAM_ENABLE_LIB_NAME}>)
+  list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>)
 endif()
 
 add_executable(igdrcl_aub_tests

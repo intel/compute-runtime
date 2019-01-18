@@ -11,7 +11,7 @@
 #include <ostream>
 #include <vector>
 
-namespace AubDump {
+namespace aub_stream {
 
 extern std::ostream &log;
 extern std::string tbxServerIp;
@@ -19,6 +19,6 @@ extern uint16_t tbxServerPort;
 
 using MMIOPair = std::pair<uint32_t, uint32_t>;
 using MMIOList = std::vector<MMIOPair>;
-extern MMIOList injectMMIOList;
+extern "C" MMIOList injectMMIOList;
 
-} // namespace AubDump
+} // namespace aub_stream

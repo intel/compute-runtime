@@ -9,12 +9,10 @@
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/gen_common/aub_mapper.h"
 #include "runtime/memory_manager/memory_banks.h"
-#include "third_party/aub_stream/headers/aub_manager.h"
 #include "third_party/aub_stream/headers/hardware_context.h"
 
-using namespace AubDump;
-
-namespace AubMemDump {
+namespace aub_stream {
+class AubManager;
 struct AubStream;
 }
 
@@ -45,8 +43,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     void submitLRCA(EngineInstanceT engineInstance, const MiContextDescriptorReg &contextDescriptor);
     void setupContext(OsContext &osContext) override;
 
-    AubManager *aubManager = nullptr;
-    std::unique_ptr<HardwareContext> hardwareContext;
+    aub_stream::AubManager *aubManager = nullptr;
+    std::unique_ptr<aub_stream::HardwareContext> hardwareContext;
 
     struct EngineInfo {
         void *pLRCA;

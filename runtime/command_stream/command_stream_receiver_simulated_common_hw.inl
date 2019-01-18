@@ -10,6 +10,7 @@
 #include "runtime/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
+#include "third_party/aub_stream/headers/aub_manager.h"
 #include "aub_mapper.h"
 
 namespace OCLRT {
@@ -86,8 +87,8 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
     auto &engineType = osContext.getEngineType();
     if (aubManager && !(engineType.type == lowPriorityGpgpuEngine.type && engineType.id == lowPriorityGpgpuEngine.id)) {
         auto engineIndex = static_cast<uint32_t>(getEngineIndex(osContext.getEngineType()));
-        hardwareContext = std::unique_ptr<HardwareContext>(aubManager->createHardwareContext(deviceIndex,
-                                                                                             engineIndex));
+        hardwareContext = std::unique_ptr<aub_stream::HardwareContext>(aubManager->createHardwareContext(deviceIndex,
+                                                                                                         engineIndex));
     }
 }
 } // namespace OCLRT

@@ -8,7 +8,7 @@
 #include "third_party/aub_stream/headers/aub_manager.h"
 #include "third_party/aub_stream/headers/options.h"
 
-namespace AubDump {
+namespace aub_stream {
 
 MMIOList injectMMIOList;
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -49,7 +49,7 @@ endif()
 
 target_link_libraries(${NEO_STATIC_LIB_NAME} elflib)
 if(DEFINED AUB_STREAM_DIR)
-  target_link_libraries(${NEO_STATIC_LIB_NAME} ${AUB_STREAM_LIB_NAME})
+  target_link_libraries(${NEO_STATIC_LIB_NAME} ${AUB_STREAM_PROJECT_NAME})
 endif()
 
 target_include_directories(${NEO_STATIC_LIB_NAME} PRIVATE
@@ -118,13 +118,14 @@ if(${GENERATE_EXECUTABLE})
   )
 
   if(DEFINED AUB_STREAM_DIR)
-    list(APPEND NEO_DYNAMIC_LIB__TARGET_OBJECTS $<TARGET_OBJECTS:${AUB_STREAM_ENABLE_LIB_NAME}>)
+    list(APPEND NEO_DYNAMIC_LIB__TARGET_OBJECTS $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>)
   endif()
 
   add_library(${NEO_DYNAMIC_LIB_NAME} SHARED
     ${NEO_DYNAMIC_LIB__TARGET_OBJECTS}
     ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
   )
+
   if(TARGET ${GMMUMD_LIB_NAME})
     add_dependencies(${NEO_DYNAMIC_LIB_NAME} ${GMMUMD_LIB_NAME})
   endif()

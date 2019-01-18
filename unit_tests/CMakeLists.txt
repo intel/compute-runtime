@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -79,8 +79,8 @@ if(DEFINED AUB_STREAM_DIR)
   add_library (aub_stream_mock_lib OBJECT
     ${IGDRCL_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
   )
-  list(APPEND NEO_IGDRCL_TESTS__TARGET_OBJECTS 
-    $<TARGET_OBJECTS:${AUB_STREAM_ENABLE_LIB_NAME}>
+  list(APPEND NEO_IGDRCL_TESTS__TARGET_OBJECTS
+    $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>
     $<TARGET_OBJECTS:aub_stream_mock_lib>
   )
 else()
@@ -91,6 +91,7 @@ add_executable(igdrcl_tests
   ${NEO_IGDRCL_TESTS__TARGET_OBJECTS}
   ${IGDRCL_SRCS_tests_local}
 )
+
 hide_subdir(gen_common)
 add_subdirectory(gen_common)
 

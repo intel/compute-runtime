@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <string>
 
-namespace AubDump {
+namespace aub_stream {
 
 struct HardwareContext;
 
@@ -22,4 +22,4 @@ class AubManager {
     static AubManager *create(uint32_t gfxFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, const std::string &aubFileName);
 };
 
-} // namespace AubDump
+} // namespace aub_stream
