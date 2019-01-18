@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,7 +13,11 @@ project(igdrcl)
 
 if(CMAKE_CONFIGURATION_TYPES)
     # Set custom build types for multi-configuration generators
-    set(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
+    set(CMAKE_CONFIGURATION_TYPES "Release;ReleaseInternal;Debug")
+    if(DEFINED CMAKE_BUILD_TYPE)
+        list(APPEND CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
+    endif()
+    list(REMOVE_DUPLICATES CMAKE_CONFIGURATION_TYPES)
 endif()
 
 set(BRANCH_TYPE "")
