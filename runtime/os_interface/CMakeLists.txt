@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/32bit_memory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_variables_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/debug_variables.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/translate_debug_settings.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.cpp

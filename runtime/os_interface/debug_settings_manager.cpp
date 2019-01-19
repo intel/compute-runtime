@@ -14,6 +14,7 @@
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/utilities/debug_settings_reader_creator.h"
+#include "runtime/os_interface/definitions/translate_debug_settings.h"
 
 #include "CL/cl.h"
 
@@ -32,7 +33,7 @@ DebugSettingsManager<DebugLevel>::DebugSettingsManager() {
         readerImpl = SettingsReaderCreator::create();
         injectSettingsFromReader();
     }
-
+    translateDebugSettings(flags);
     std::remove(logFileName.c_str());
 }
 
@@ -260,6 +261,7 @@ void DebugSettingsManager<DebugLevel>::injectSettingsFromReader() {
         flags.variableName.set(tempData);                                                    \
     }
 #include "debug_variables.inl"
+#undef DECLARE_DEBUG_VARIABLE
 }
 
 template <DebugFunctionalityLevel DebugLevel>

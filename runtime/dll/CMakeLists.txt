@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -39,6 +39,7 @@ set(RUNTIME_SRCS_DLL_LINUX
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/environment_variables.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/os_interface.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp

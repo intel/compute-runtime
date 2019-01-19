@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,8 +81,6 @@ class Gdi {
   protected:
     MOCKABLE_VIRTUAL bool getAllProcAddresses();
     bool initialized;
-
-  private:
     OCLRT::Windows::OsLibrary gdiDll;
 };
 } // namespace OCLRT

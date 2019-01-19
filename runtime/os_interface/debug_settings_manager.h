@@ -70,16 +70,16 @@ struct DebugVar##variableName                                                   
 #undef DECLARE_DEBUG_VARIABLE
 // clang-format on
 
-template <DebugFunctionalityLevel DebugLevel>
-class DebugSettingsManager {
-  public:
-    struct DebugVariables {
+struct DebugVariables {
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     DebugVar##variableName variableName;
 #include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
-    };
+};
 
+template <DebugFunctionalityLevel DebugLevel>
+class DebugSettingsManager {
+  public:
     DebugSettingsManager();
     ~DebugSettingsManager();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class DebugManagerStateRestore {
 #include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
     }
-    DebugSettingsManager<globalDebugFunctionalityLevel>::DebugVariables debugVarSnapshot;
+    DebugVariables debugVarSnapshot;
     void *injectFcnSnapshot = nullptr;
 
   protected:

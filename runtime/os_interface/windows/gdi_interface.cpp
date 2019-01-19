@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,15 @@
 
 namespace OCLRT {
 
-Gdi::Gdi() : gdiDll(Os::gdiDllName),
+inline const std::string getGdiName() {
+    if (DebugManager.flags.OverrideGdiPath.get() != "unk") {
+        return DebugManager.flags.OverrideGdiPath.get();
+    } else {
+        return Os::gdiDllName;
+    }
+}
+
+Gdi::Gdi() : gdiDll(getGdiName()),
              initialized(false) {
     if (gdiDll.isLoaded()) {
         initialized = getAllProcAddresses();

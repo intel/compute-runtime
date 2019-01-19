@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo) {
         escapeCommand.Flags.Value = 0;
         escapeCommand.hAdapter = (D3DKMT_HANDLE)0;
         escapeCommand.hContext = (D3DKMT_HANDLE)0; // escape is not context specific
-        escapeCommand.hDevice = (D3DKMT_HANDLE)0;  // escape not device specific
+        escapeCommand.hDevice = (D3DKMT_HANDLE)wddm->getDevice(); // escape not device specific, passing only for instrumentation
         escapeCommand.pPrivateDriverData = &escapeInfo;
         escapeCommand.PrivateDriverDataSize = sizeof(escapeInfo);
         escapeCommand.Type = D3DKMT_ESCAPE_DRIVERPRIVATE;
