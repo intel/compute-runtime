@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,6 +54,10 @@ class TimestampPacket {
     uint64_t pickAddressForDataWrite(DataIndex operationType) const {
         auto index = static_cast<uint32_t>(operationType);
         return reinterpret_cast<uint64_t>(&data[index]);
+    }
+
+    uint32_t getData(DataIndex operationType) const {
+        return data[static_cast<uint32_t>(operationType)];
     }
 
     void initialize() {

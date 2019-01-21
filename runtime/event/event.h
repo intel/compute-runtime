@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     void updateCompletionStamp(uint32_t taskCount, uint32_t tasklevel, FlushStamp flushStamp);
     cl_ulong getDelta(cl_ulong startTime,
                       cl_ulong endTime);
-    bool calcProfilingData();
     void setCPUProfilingPath(bool isCPUPath) { this->profilingCpuPath = isCPUPath; }
     bool isCPUProfilingPath() const {
         return profilingCpuPath;
@@ -320,6 +319,9 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
             return ECallbackTarget::Completed;
         }
     }
+
+    bool calcProfilingData();
+    MOCKABLE_VIRTUAL void calcProfilingData(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS);
 
     // executes all callbacks associated with this event
     void executeCallbacks(int32_t executionStatus);

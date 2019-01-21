@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "runtime/event/user_event.h"
 #include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/fixtures/device_instrumentation_fixture.h"
+#include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 #include "test.h"
 
@@ -216,7 +217,7 @@ TEST(clGetEventProfilingInfo, givenTimestampThatOverlapWhenGetDeltaIsCalledThenP
 }
 
 TEST(clGetEventProfilingInfo, WHENCalcProfilingDataTHENFalse) {
-    Event *pEvent = new Event(nullptr, 0, 0, 0);
+    auto *pEvent = new MockEvent<Event>(nullptr, 0, 0, 0);
     EXPECT_FALSE(pEvent->calcProfilingData());
     delete pEvent;
 }

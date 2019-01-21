@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "runtime/utilities/tag_allocator.h"
 
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
+#include "unit_tests/event/event_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -24,6 +25,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "test.h"
 
 namespace OCLRT {
@@ -181,7 +183,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GIVENCommandQueueWithProfolingWHENWa
 
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pBeforePC->getPostSyncOperation());
 
-    EXPECT_TRUE(static_cast<Event *>(event)->calcProfilingData());
+    EXPECT_TRUE(static_cast<MockEvent<Event> *>(event)->calcProfilingData());
 
     clReleaseEvent(event);
 }
@@ -662,7 +664,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWit
     auto itorAfterReportPerf = find<MI_REPORT_PERF_COUNT *>(itorGPGPUWalkerCmd, cmdList.end());
     ASSERT_NE(cmdList.end(), itorAfterReportPerf);
 
-    EXPECT_TRUE(static_cast<Event *>(event)->calcProfilingData());
+    EXPECT_TRUE(static_cast<MockEvent<Event> *>(event)->calcProfilingData());
 
     clReleaseEvent(event);
 
@@ -725,7 +727,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWit
     auto itorAfterReportPerf = find<MI_REPORT_PERF_COUNT *>(itorGPGPUWalkerCmd, cmdList.end());
     ASSERT_NE(cmdList.end(), itorAfterReportPerf);
 
-    EXPECT_TRUE(static_cast<Event *>(event)->calcProfilingData());
+    EXPECT_TRUE(static_cast<MockEvent<Event> *>(event)->calcProfilingData());
 
     clReleaseEvent(event);
 
@@ -852,5 +854,78 @@ HWTEST_F(ProfilingWithPerfCountersTests,
     ASSERT_EQ(cmdList.end(), itorAfterReportPerf);
 
     pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
+}
+
+struct MockTimestampPacketContainer : public TimestampPacketContainer {
+    ~MockTimestampPacketContainer() override {
+        for (const auto &node : timestampPacketNodes) {
+            delete node->tag;
+            delete node;
+        }
+        timestampPacketNodes.clear();
+    }
+};
+
+struct ProfilingTimestampPacketsTest : public ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.ReturnRawGpuTimestamps.set(true);
+        cmdQ->setProfilingEnabled();
+        ev->timestampPacketContainer = std::make_unique<MockTimestampPacketContainer>();
+    }
+
+    void addTimestampNode(int contextStart, int contextEnd, int globalStart) {
+        auto timestampPacket = new TimestampPacket();
+        *reinterpret_cast<uint32_t *>(timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextStart)) = contextStart;
+        *reinterpret_cast<uint32_t *>(timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd)) = contextEnd;
+        *reinterpret_cast<uint32_t *>(timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::GlobalStart)) = globalStart;
+        auto node = new MockTagNode<TimestampPacket>();
+        node->tag = timestampPacket;
+        ev->timestampPacketContainer->add(node);
+    }
+
+    DebugManagerStateRestore restorer;
+    MockContext context;
+    cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
+    ReleaseableObjectPtr<MockCommandQueue> cmdQ = clUniquePtr(new MockCommandQueue(&context, context.getDevice(0), props));
+    ReleaseableObjectPtr<MockEvent<MyEvent>> ev = clUniquePtr(new MockEvent<MyEvent>(cmdQ.get(), CL_COMMAND_USER, Event::eventNotReady, Event::eventNotReady));
+};
+
+TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithOneElementAndTimestampNodeWhenCalculatingProfilingThenTimesAreTakenFromPacket) {
+    addTimestampNode(10, 11, 12);
+
+    HwTimeStamps hwTimestamps;
+    hwTimestamps.ContextStartTS = 100;
+    hwTimestamps.ContextEndTS = 110;
+    hwTimestamps.GlobalStartTS = 120;
+    MockTagNode<HwTimeStamps> hwTimestampsNode;
+    hwTimestampsNode.tag = &hwTimestamps;
+    ev->timeStampNode = &hwTimestampsNode;
+
+    ev->calcProfilingData();
+
+    EXPECT_EQ(10u, ev->getStartTimeStamp());
+    EXPECT_EQ(11u, ev->getEndTimeStamp());
+    EXPECT_EQ(12u, ev->getGlobalStartTimestamp());
+
+    ev->timeStampNode = nullptr;
+}
+
+TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithThreeElementsWhenCalculatingProfilingThenTimesAreTakenFromProperPacket) {
+    addTimestampNode(10, 11, 12);
+    addTimestampNode(1, 21, 22);
+    addTimestampNode(5, 31, 2);
+
+    ev->calcProfilingData();
+
+    EXPECT_EQ(1u, ev->getStartTimeStamp());
+    EXPECT_EQ(31u, ev->getEndTimeStamp());
+    EXPECT_EQ(2u, ev->getGlobalStartTimestamp());
+}
+
+TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithZeroElementsWhenCalculatingProfilingThenDataIsNotCalculated) {
+    EXPECT_EQ(0u, ev->timestampPacketContainer->peekNodes().size());
+    ev->calcProfilingData();
+
+    EXPECT_FALSE(ev->getDataCalcStatus());
 }
 } // namespace OCLRT

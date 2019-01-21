@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -251,49 +251,76 @@ cl_ulong Event::getDelta(cl_ulong startTime,
 }
 
 bool Event::calcProfilingData() {
+    if (!dataCalculated && !profilingCpuPath) {
+        if (timestampPacketContainer && timestampPacketContainer->peekNodes().size() > 0) {
+            const auto timestamps = timestampPacketContainer->peekNodes();
+
+            uint64_t contextStartTS = timestamps[0]->tag->getData(TimestampPacket::DataIndex::ContextStart);
+            uint64_t contextEndTS = timestamps[0]->tag->getData(TimestampPacket::DataIndex::ContextEnd);
+            uint64_t globalStartTS = timestamps[0]->tag->getData(TimestampPacket::DataIndex::GlobalStart);
+
+            for (const auto &timestamp : timestamps) {
+                if (timestamp->tag->getData(TimestampPacket::DataIndex::ContextStart) < contextStartTS) {
+                    contextStartTS = timestamp->tag->getData(TimestampPacket::DataIndex::ContextStart);
+                }
+                if (timestamp->tag->getData(TimestampPacket::DataIndex::ContextEnd) > contextEndTS) {
+                    contextEndTS = timestamp->tag->getData(TimestampPacket::DataIndex::ContextEnd);
+                }
+                if (timestamp->tag->getData(TimestampPacket::DataIndex::GlobalStart) < globalStartTS) {
+                    globalStartTS = timestamp->tag->getData(TimestampPacket::DataIndex::GlobalStart);
+                }
+            }
+            calcProfilingData(contextStartTS, contextEndTS, &contextEndTS, globalStartTS);
+        } else if (timeStampNode) {
+            calcProfilingData(
+                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tag))->ContextStartTS,
+                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tag))->ContextEndTS,
+                &(reinterpret_cast<HwTimeStamps *>(timeStampNode->tag))->ContextCompleteTS,
+                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tag))->GlobalStartTS);
+        }
+    }
+    return dataCalculated;
+}
+
+void Event::calcProfilingData(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS) {
+
     uint64_t gpuDuration = 0;
     uint64_t cpuDuration = 0;
 
     uint64_t gpuCompleteDuration = 0;
     uint64_t cpuCompleteDuration = 0;
 
-    int64_t c0 = 0;
-    if (!dataCalculated && timeStampNode && !profilingCpuPath) {
-        double frequency = cmdQueue->getDevice().getDeviceInfo().profilingTimerResolution;
-        /* calculation based on equation
-           CpuTime = GpuTime * scalar + const( == c0)
-           scalar = DeltaCpu( == dCpu) / DeltaGpu( == dGpu)
-           to determine the value of the const we can use one pair of values
-           const = CpuTimeQueue - GpuTimeQueue * scalar
-        */
+    double frequency = cmdQueue->getDevice().getDeviceInfo().profilingTimerResolution;
+    int64_t c0 = queueTimeStamp.CPUTimeinNS - static_cast<uint64_t>(queueTimeStamp.GPUTimeStamp * frequency);
+    /* calculation based on equation
+       CpuTime = GpuTime * scalar + const( == c0)
+       scalar = DeltaCpu( == dCpu) / DeltaGpu( == dGpu)
+       to determine the value of the const we can use one pair of values
+       const = CpuTimeQueue - GpuTimeQueue * scalar
+    */
 
-        //If device enqueue has not updated complete timestamp, assign end timestamp
-        if (((HwTimeStamps *)timeStampNode->tag)->ContextCompleteTS == 0)
-            ((HwTimeStamps *)timeStampNode->tag)->ContextCompleteTS = ((HwTimeStamps *)timeStampNode->tag)->ContextEndTS;
-
-        c0 = queueTimeStamp.CPUTimeinNS - static_cast<uint64_t>(queueTimeStamp.GPUTimeStamp * frequency);
-        gpuDuration = getDelta(
-            ((HwTimeStamps *)timeStampNode->tag)->ContextStartTS,
-            ((HwTimeStamps *)timeStampNode->tag)->ContextEndTS);
-        gpuCompleteDuration = getDelta(
-            ((HwTimeStamps *)timeStampNode->tag)->ContextStartTS,
-            ((HwTimeStamps *)timeStampNode->tag)->ContextCompleteTS);
-        cpuDuration = static_cast<uint64_t>(gpuDuration * frequency);
-        cpuCompleteDuration = static_cast<uint64_t>(gpuCompleteDuration * frequency);
-        startTimeStamp = static_cast<uint64_t>(((HwTimeStamps *)timeStampNode->tag)->GlobalStartTS * frequency) + c0;
-
-        endTimeStamp = startTimeStamp + cpuDuration;
-        completeTimeStamp = startTimeStamp + cpuCompleteDuration;
-
-        if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
-            startTimeStamp = ((HwTimeStamps *)timeStampNode->tag)->ContextStartTS;
-            endTimeStamp = ((HwTimeStamps *)timeStampNode->tag)->ContextEndTS;
-            completeTimeStamp = ((HwTimeStamps *)timeStampNode->tag)->ContextCompleteTS;
-        }
-
-        dataCalculated = true;
+    //If device enqueue has not updated complete timestamp, assign end timestamp
+    gpuDuration = getDelta(contextStartTS, contextEndTS);
+    if (*contextCompleteTS == 0) {
+        *contextCompleteTS = contextEndTS;
+        gpuCompleteDuration = gpuDuration;
+    } else {
+        gpuCompleteDuration = getDelta(contextStartTS, *contextCompleteTS);
     }
-    return dataCalculated;
+    cpuDuration = static_cast<uint64_t>(gpuDuration * frequency);
+    cpuCompleteDuration = static_cast<uint64_t>(gpuCompleteDuration * frequency);
+
+    startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
+    endTimeStamp = startTimeStamp + cpuDuration;
+    completeTimeStamp = startTimeStamp + cpuCompleteDuration;
+
+    if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
+        startTimeStamp = contextStartTS;
+        endTimeStamp = contextEndTS;
+        completeTimeStamp = *contextCompleteTS;
+    }
+
+    dataCalculated = true;
 }
 
 inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {

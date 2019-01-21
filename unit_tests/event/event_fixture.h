@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,4 +99,21 @@ struct MyEvent : public Event {
     uint64_t getCompleteTimeStamp() {
         return this->completeTimeStamp;
     }
+
+    uint64_t getGlobalStartTimestamp() const {
+        return this->globalStartTimestamp;
+    }
+
+    bool getDataCalcStatus() const {
+        return this->dataCalculated;
+    }
+
+    void calcProfilingData(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS) override {
+        if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
+            globalStartTimestamp = globalStartTS;
+        }
+        Event::calcProfilingData(contextStartTS, contextEndTS, contextCompleteTS, globalStartTS);
+    }
+
+    uint64_t globalStartTimestamp;
 };
