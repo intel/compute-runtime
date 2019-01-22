@@ -11,6 +11,7 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"
@@ -1144,7 +1145,10 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
 
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initGmm(*platformDevices);
-    auto imageGraphicsAllocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
+    TestedDrmMemoryManager::AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+
+    auto imageGraphicsAllocation = memoryManager->allocateGraphicsMemoryForImage(allocationData);
 
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_NE(0u, imageGraphicsAllocation->getGpuAddress());
@@ -1508,7 +1512,11 @@ TEST_F(DrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenAllocateGraphic
     bool copyRequired = Image::isCopyRequired(imgInfo, hostPtr);
     EXPECT_FALSE(copyRequired);
 
-    auto imageAllocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, hostPtr);
+    TestedDrmMemoryManager::AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+    allocationData.hostPtr = hostPtr;
+
+    auto imageAllocation = memoryManager->allocateGraphicsMemoryForImage(allocationData);
     ASSERT_NE(nullptr, imageAllocation);
     EXPECT_EQ(hostPtr, imageAllocation->getUnderlyingBuffer());
 
@@ -1832,7 +1840,11 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
 
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initGmm(*platformDevices);
-    auto allocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
+
+    TestedDrmMemoryManager::AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryForImage(allocationData);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
@@ -3062,4 +3074,24 @@ TEST_F(DrmMemoryManagerTest, givenDisabledHostPtrTrackingWhenAllocateGraphicsMem
     EXPECT_EQ(1u, allocation->allocationOffset);
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenImageOrSharedResourceWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, executionEnvironment));
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+
+    GraphicsAllocation::AllocationType types[] = {GraphicsAllocation::AllocationType::IMAGE,
+                                                  GraphicsAllocation::AllocationType::SHARED_RESOURCE};
+
+    for (uint32_t i = 0; i < arrayCount(types); i++) {
+        allocData.type = types[i];
+        auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+        EXPECT_EQ(nullptr, allocation);
+        EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
+    }
 }

@@ -284,18 +284,9 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(AllocationData alloc
     return nullptr;
 }
 
-GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) {
-    auto gmm = std::make_unique<Gmm>(imgInfo);
-
-    auto hostPtrAllocation = allocateGraphicsMemoryForImageFromHostPtr(imgInfo, hostPtr);
-
-    if (hostPtrAllocation) {
-        hostPtrAllocation->gmm = gmm.release();
-        return hostPtrAllocation;
-    }
-
-    if (!GmmHelper::allowTiling(*imgInfo.imgDesc)) {
-        auto alloc = MemoryManager::allocateGraphicsMemoryWithProperties({imgInfo.size, GraphicsAllocation::AllocationType::UNDECIDED});
+GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
+    if (!GmmHelper::allowTiling(*allocationData.imgInfo->imgDesc)) {
+        auto alloc = allocateGraphicsMemoryWithAlignment(allocationData);
         if (alloc) {
             alloc->gmm = gmm.release();
         }
@@ -303,11 +294,11 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &
     }
 
     StorageAllocatorType allocatorType = UNKNOWN_ALLOCATOR;
-    uint64_t gpuRange = acquireGpuRange(imgInfo.size, allocatorType, false);
+    uint64_t gpuRange = acquireGpuRange(allocationData.imgInfo->size, allocatorType, false);
     DEBUG_BREAK_IF(gpuRange == reinterpret_cast<uint64_t>(MAP_FAILED));
 
     drm_i915_gem_create create = {0, 0, 0};
-    create.size = imgInfo.size;
+    create.size = allocationData.imgInfo->size;
 
     auto ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_CREATE, &create);
     DEBUG_BREAK_IF(ret != 0);
@@ -317,17 +308,17 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &
     if (!bo) {
         return nullptr;
     }
-    bo->size = imgInfo.size;
+    bo->size = allocationData.imgInfo->size;
     bo->address = reinterpret_cast<void *>(gpuRange);
     bo->softPin(gpuRange);
 
-    auto ret2 = bo->setTiling(I915_TILING_Y, static_cast<uint32_t>(imgInfo.rowPitch));
+    auto ret2 = bo->setTiling(I915_TILING_Y, static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
     DEBUG_BREAK_IF(ret2 != true);
     ((void)(ret2));
 
-    bo->setUnmapSize(imgInfo.size);
+    bo->setUnmapSize(allocationData.imgInfo->size);
 
-    auto allocation = new DrmAllocation(bo, nullptr, (uint64_t)gpuRange, imgInfo.size, MemoryPool::SystemCpuInaccessible, getOsContextCount(), false);
+    auto allocation = new DrmAllocation(bo, nullptr, (uint64_t)gpuRange, allocationData.imgInfo->size, MemoryPool::SystemCpuInaccessible, getOsContextCount(), false);
     bo->setAllocationType(allocatorType);
     allocation->gmm = gmm.release();
     return allocation;

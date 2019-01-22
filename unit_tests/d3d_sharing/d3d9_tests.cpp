@@ -47,8 +47,8 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
             gmmOwnershipPassed = true;
             return alloc;
         }
-        GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imginfo, const void *hostPtr) override {
-            auto gmm = std::make_unique<Gmm>(imginfo);
+        GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
+            auto gmm = std::make_unique<Gmm>(*allocationData.imgInfo);
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, false);
             alloc->gmm = forceGmm;
             gmmOwnershipPassed = true;

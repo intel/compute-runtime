@@ -40,20 +40,12 @@ WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemor
     mallocRestrictions.minAddress = wddm->getWddmMinAddress();
 }
 
-GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) {
-    auto gmm = std::make_unique<Gmm>(imgInfo);
-
-    auto hostPtrAllocation = allocateGraphicsMemoryForImageFromHostPtr(imgInfo, hostPtr);
-    if (hostPtrAllocation) {
-        hostPtrAllocation->gmm = gmm.release();
-        return hostPtrAllocation;
+GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
+    if (!GmmHelper::allowTiling(*allocationData.imgInfo->imgDesc) && allocationData.imgInfo->mipCount == 0) {
+        return allocateGraphicsMemoryWithAlignment(allocationData);
     }
 
-    if (!GmmHelper::allowTiling(*imgInfo.imgDesc) && imgInfo.mipCount == 0) {
-        return allocateGraphicsMemoryWithProperties({imgInfo.size, GraphicsAllocation::AllocationType::UNDECIDED});
-    }
-
-    auto allocation = std::make_unique<WddmAllocation>(nullptr, imgInfo.size, nullptr, MemoryPool::SystemCpuInaccessible, getOsContextCount(), false);
+    auto allocation = std::make_unique<WddmAllocation>(nullptr, allocationData.imgInfo->size, nullptr, MemoryPool::SystemCpuInaccessible, getOsContextCount(), false);
     allocation->gmm = gmm.get();
 
     if (!WddmMemoryManager::createWddmAllocation(allocation.get(), AllocationOrigin::EXTERNAL_ALLOCATION)) {

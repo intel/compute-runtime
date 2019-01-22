@@ -69,7 +69,7 @@ struct AllocationProperties {
         flags.flushL3RequiredForWrite = 1;
         flags.allocateMemory = allocateMemory;
     }
-    AllocationProperties(ImageInfo *imgInfo) : AllocationProperties(true, 0, GraphicsAllocation::AllocationType::IMAGE) {
+    AllocationProperties(ImageInfo *imgInfo, bool allocateMemory) : AllocationProperties(allocateMemory, 0, GraphicsAllocation::AllocationType::IMAGE) {
         this->imgInfo = imgInfo;
     }
 };
@@ -118,8 +118,6 @@ class MemoryManager {
     }
 
     virtual GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) = 0;
-
-    virtual GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) = 0;
 
     GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr);
 
@@ -231,19 +229,27 @@ class MemoryManager {
     virtual GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) = 0;
     virtual GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
         status = AllocationStatus::Error;
-        if (!allocationData.flags.useSystemMemory && !(allocationData.flags.allow32Bit && this->force32bitAllocations)) {
-            auto allocation = allocateGraphicsMemory(allocationData);
-            if (allocation) {
-                allocation->devicesBitfield = allocationData.devicesBitfield;
-                allocation->flushL3Required = allocationData.flags.flushL3;
-                status = AllocationStatus::Success;
+        switch (allocationData.type) {
+        case GraphicsAllocation::AllocationType::IMAGE:
+        case GraphicsAllocation::AllocationType::SHARED_RESOURCE:
+            break;
+        default:
+            if (!allocationData.flags.useSystemMemory && !(allocationData.flags.allow32Bit && this->force32bitAllocations)) {
+                auto allocation = allocateGraphicsMemory(allocationData);
+                if (allocation) {
+                    allocation->devicesBitfield = allocationData.devicesBitfield;
+                    allocation->flushL3Required = allocationData.flags.flushL3;
+                    status = AllocationStatus::Success;
+                }
+                return allocation;
             }
-            return allocation;
         }
         status = AllocationStatus::RetryInNonDevicePool;
         return nullptr;
     }
-    GraphicsAllocation *allocateGraphicsMemoryForImageFromHostPtr(ImageInfo &imgInfo, const void *hostPtr);
+    GraphicsAllocation *allocateGraphicsMemoryForImageFromHostPtr(const AllocationData &allocationData);
+    MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData);
+    virtual GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) = 0;
 
     virtual void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;

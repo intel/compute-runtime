@@ -12,6 +12,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/program/printf_handler.h"
@@ -528,7 +529,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenForce32bitallocationI
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemoryForImageIsCalledThenGraphicsAllocationIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
     cl_image_desc imgDesc = {};
     imgDesc.image_width = 512;
     imgDesc.image_height = 1;
@@ -536,7 +537,11 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     executionEnvironment.initGmm(*platformDevices);
-    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
+
+    MockMemoryManager::AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+
+    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(allocationData);
     ASSERT_NE(nullptr, imageAllocation);
     EXPECT_TRUE(imageAllocation->gmm->resourceParams.Usage == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
     EXPECT_TRUE(imageAllocation->gmm->useSystemMemoryPool);
@@ -553,7 +558,11 @@ TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocateGraphicsMemoryF
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     executionEnvironment.initGmm(*platformDevices);
-    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
+
+    MockMemoryManager::AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+
+    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(allocationData);
     ASSERT_NE(nullptr, imageAllocation);
     EXPECT_FALSE(imgInfo.useLocalMemory);
     memoryManager.freeGraphicsMemory(imageAllocation);
@@ -586,7 +595,12 @@ TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphi
     bool copyRequired = Image::isCopyRequired(imgInfo, hostPtr);
     EXPECT_FALSE(copyRequired);
 
-    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImageFromHostPtr(imgInfo, hostPtr);
+    MockMemoryManager::AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+    allocationData.hostPtr = hostPtr;
+    allocationData.size = imgInfo.size;
+
+    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImageFromHostPtr(allocationData);
     ASSERT_NE(nullptr, imageAllocation);
     EXPECT_EQ(hostPtr, imageAllocation->getUnderlyingBuffer());
 
@@ -621,7 +635,11 @@ TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsM
     bool copyRequired = Image::isCopyRequired(imgInfo, hostPtr);
     EXPECT_TRUE(copyRequired);
 
-    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImageFromHostPtr(imgInfo, hostPtr);
+    MockMemoryManager::AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+    allocationData.hostPtr = hostPtr;
+
+    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImageFromHostPtr(allocationData);
     EXPECT_EQ(nullptr, imageAllocation);
 
     alignedFree(hostPtr);
@@ -1124,6 +1142,27 @@ TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndAubUsageWhenMemoryMana
         heap32Base = 0x40000000000ul;
     }
     EXPECT_EQ(heap32Base, memoryManager.allocator32Bit->getBase());
+}
+
+TEST(MemoryManager, givenSharedResourceWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForImageIsCalled) {
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, true, executionEnvironment);
+    cl_image_desc imgDesc = {};
+    imgDesc.image_width = 1;
+    imgDesc.image_height = 1;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+
+    executionEnvironment.initGmm(*platformDevices);
+
+    MockMemoryManager::AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+    allocationData.type = GraphicsAllocation::AllocationType::SHARED_RESOURCE;
+
+    auto imageAllocation = memoryManager.allocateGraphicsMemory(allocationData);
+    EXPECT_NE(nullptr, imageAllocation);
+    EXPECT_TRUE(memoryManager.allocateForImageCalled);
+    memoryManager.freeGraphicsMemory(imageAllocation);
 }
 
 TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenSuccess) {

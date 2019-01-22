@@ -10,6 +10,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/os_interface/os_library.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
@@ -1103,7 +1104,11 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleter
     EXPECT_EQ(0, deleter->drainCalled);
     EXPECT_EQ(0u, wddm->createAllocationResult.called);
     deleter->expectDrainBlockingValue(true);
-    memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
+
+    AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
+    DevicesBitfield devices = 0;
+
+    memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
     EXPECT_EQ(1, deleter->drainCalled);
     EXPECT_EQ(2u, wddm->createAllocationResult.called);
 }
@@ -1119,7 +1124,11 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleter
     EXPECT_EQ(0, deleter->drainCalled);
     EXPECT_EQ(0u, wddm->createAllocationResult.called);
     EXPECT_EQ(0u, wddm->mapGpuVirtualAddressResult.called);
-    auto allocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
+
+    AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
+    DevicesBitfield devices = 0;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
     EXPECT_EQ(0, deleter->drainCalled);
     EXPECT_EQ(1u, wddm->createAllocationResult.called);
     EXPECT_EQ(1u, wddm->mapGpuVirtualAddressResult.called);
@@ -1134,7 +1143,11 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDele
 
     wddm->createAllocationStatus = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
     EXPECT_EQ(0u, wddm->createAllocationResult.called);
-    memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
+
+    AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
+    DevicesBitfield devices = 0;
+
+    memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
     EXPECT_EQ(1u, wddm->createAllocationResult.called);
 }
 

@@ -217,23 +217,20 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
         }
     }
 }
-GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) {
+GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
     GraphicsAllocation *alloc = nullptr;
-    auto gmm = std::make_unique<Gmm>(imgInfo);
 
-    alloc = allocateGraphicsMemoryForImageFromHostPtr(imgInfo, hostPtr);
+    if (!GmmHelper::allowTiling(*allocationData.imgInfo->imgDesc) && allocationData.imgInfo->mipCount == 0) {
+        alloc = allocateGraphicsMemoryWithAlignment(allocationData);
+        alloc->gmm = gmm.release();
+        return alloc;
+    }
 
-    if (!alloc) {
-        if ((!GmmHelper::allowTiling(*imgInfo.imgDesc) && imgInfo.mipCount == 0)) {
-            alloc = allocateGraphicsMemoryWithProperties({imgInfo.size, GraphicsAllocation::AllocationType::UNDECIDED});
-        } else {
-            auto ptr = allocateSystemMemory(alignUp(imgInfo.size, MemoryConstants::pageSize), MemoryConstants::pageSize);
-            if (ptr != nullptr) {
-                alloc = new MemoryAllocation(ptr, ptr, reinterpret_cast<uint64_t>(ptr), imgInfo.size, counter,
-                                             MemoryPool::SystemCpuInaccessible, this->getOsContextCount(), false);
-                counter++;
-            }
-        }
+    auto ptr = allocateSystemMemory(alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize), MemoryConstants::pageSize);
+    if (ptr != nullptr) {
+        alloc = new MemoryAllocation(ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.imgInfo->size, counter,
+                                     MemoryPool::SystemCpuInaccessible, this->getOsContextCount(), false);
+        counter++;
     }
 
     if (alloc) {

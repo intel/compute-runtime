@@ -11,6 +11,8 @@
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/kernel_commands.h"
@@ -89,11 +91,11 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const Alloc
     return graphicsAllocation;
 }
 
-GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImageFromHostPtr(ImageInfo &imgInfo, const void *hostPtr) {
-    bool copyRequired = Image::isCopyRequired(imgInfo, hostPtr);
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImageFromHostPtr(const AllocationData &allocationData) {
+    bool copyRequired = Image::isCopyRequired(*allocationData.imgInfo, allocationData.hostPtr);
 
-    if (hostPtr && !copyRequired) {
-        return allocateGraphicsMemory({false, imgInfo.size, GraphicsAllocation::AllocationType::UNDECIDED}, hostPtr);
+    if (allocationData.hostPtr && !copyRequired) {
+        return allocateGraphicsMemoryWithHostPtr(allocationData);
     }
     return nullptr;
 }
@@ -291,7 +293,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr) {
     AllocationData allocationData;
     getAllocationData(allocationData, properties, devicesBitfield, hostPtr);
-    UNRECOVERABLE_IF(allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE);
 
     AllocationStatus status = AllocationStatus::Error;
     GraphicsAllocation *allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
@@ -306,9 +307,9 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(Allocat
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &allocationData) {
-    if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE) {
+    if (allocationData.type == GraphicsAllocation::AllocationType::IMAGE || allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE) {
         UNRECOVERABLE_IF(allocationData.imgInfo == nullptr);
-        return allocateGraphicsMemoryForImage(*allocationData.imgInfo, allocationData.hostPtr);
+        return allocateGraphicsMemoryForImage(allocationData);
     }
 
     if (force32bitAllocations && allocationData.flags.allow32Bit && is64bit) {
@@ -321,6 +322,23 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         return allocateGraphicsMemory64kb(allocationData);
     }
     return allocateGraphicsMemoryWithAlignment(allocationData);
+}
+
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImage(const AllocationData &allocationData) {
+    auto gmm = std::make_unique<Gmm>(*allocationData.imgInfo);
+
+    // AllocationData needs to be reconfigured for System Memory paths
+    AllocationData allocationDataWithSize = allocationData;
+    allocationDataWithSize.size = allocationData.imgInfo->size;
+
+    auto hostPtrAllocation = allocateGraphicsMemoryForImageFromHostPtr(allocationDataWithSize);
+
+    if (hostPtrAllocation) {
+        hostPtrAllocation->gmm = gmm.release();
+        return hostPtrAllocation;
+    }
+
+    return allocateGraphicsMemoryForImageImpl(allocationDataWithSize, std::move(gmm));
 }
 
 const CsrContainer &MemoryManager::getCommandStreamReceivers() const {

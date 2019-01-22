@@ -6,6 +6,7 @@
  */
 
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
+#include "runtime/mem_obj/mem_obj_helper.h"
 #include "test.h"
 #include "third_party/aub_stream/headers/options.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -427,8 +428,8 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
   public:
     OsAgnosticMemoryManagerForImagesWithNoHostPtr(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment) {}
 
-    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) override {
-        auto imageAllocation = OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(imgInfo, hostPtr);
+    GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
+        auto imageAllocation = OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(allocationData);
         cpuPtr = imageAllocation->getUnderlyingBuffer();
         imageAllocation->setCpuPtrAndGpuAddress(nullptr, imageAllocation->getGpuAddress());
         return imageAllocation;
@@ -479,7 +480,11 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    auto imageAllocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
+
+    AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
+    DevicesBitfield devices = 0;
+
+    auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
     ASSERT_NE(nullptr, imageAllocation);
 
     EXPECT_TRUE(aubCsr->writeMemory(*imageAllocation));

@@ -41,7 +41,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
     void setDeferredDeleter(DeferredDeleter *deleter);
     void overrideAsyncDeleterFlag(bool newValue);
-    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) override;
+    GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override;
     int redundancyRatio = 1;
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
@@ -69,6 +69,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     bool failInDevicePoolWithError = false;
     bool failInAllocateWithSizeAndAlignment = false;
     bool preferRenderCompressedFlagPassed = false;
+    bool allocateForImageCalled = false;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
 };
 
@@ -153,7 +154,7 @@ class FailMemoryManager : public MockMemoryManager {
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override {
         return nullptr;
     };
-    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) override {
+    GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
         return nullptr;
     }
     int32_t failedAllocationsCount = 0;

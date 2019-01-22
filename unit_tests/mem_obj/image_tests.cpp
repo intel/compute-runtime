@@ -10,6 +10,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/os_interface/os_context.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -907,10 +908,10 @@ class ImageCompressionTests : public ::testing::Test {
     class MyMemoryManager : public MockMemoryManager {
       public:
         using MockMemoryManager::MockMemoryManager;
-        GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, const void *hostPtr) override {
+        GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
             mockMethodCalled = true;
-            capturedImgInfo = imgInfo;
-            return OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(imgInfo, hostPtr);
+            capturedImgInfo = *allocationData.imgInfo;
+            return OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(allocationData);
         }
         ImageInfo capturedImgInfo = {};
         bool mockMethodCalled = false;
@@ -1431,7 +1432,10 @@ HWTEST_F(HwImageTest, givenImageHwWhenSettingCCSParamsThenSetClearColorParamsIsC
     format.image_channel_order = CL_RGBA;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
+    AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
+    DevicesBitfield devices = 0;
+
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
 
     SurfaceFormatInfo formatInfo = {};
     std::unique_ptr<MockImageHw<FamilyType>> mockImage(new MockImageHw<FamilyType>(&context, format, imgDesc, formatInfo, graphicsAllocation));

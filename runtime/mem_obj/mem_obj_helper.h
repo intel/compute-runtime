@@ -40,7 +40,7 @@ class MemObjHelper {
     }
 
     static AllocationProperties getAllocationProperties(cl_mem_flags_intel flags, bool allocateMemory, size_t size, GraphicsAllocation::AllocationType type);
-    static AllocationProperties getAllocationProperties(ImageInfo *imgInfo);
+    static AllocationProperties getAllocationProperties(ImageInfo *imgInfo, bool allocateMemory);
 
     static DevicesBitfield getDevicesBitfield(const MemoryProperties &properties);
 

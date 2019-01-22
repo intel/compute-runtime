@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,12 +38,14 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
   public:
     using DrmMemoryManager::allocateGraphicsMemory;
     using DrmMemoryManager::allocateGraphicsMemory64kb;
+    using DrmMemoryManager::allocateGraphicsMemoryForImage;
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
     using DrmMemoryManager::AllocationData;
     using DrmMemoryManager::allocUserptr;
     using DrmMemoryManager::pinThreshold;
     using DrmMemoryManager::setDomainCpu;
     using DrmMemoryManager::sharingBufferObjects;
+    using MemoryManager::allocateGraphicsMemoryInDevicePool;
 
     TestedDrmMemoryManager(Drm *drm, ExecutionEnvironment &executionEnvironment) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
         this->lseekFunction = &lseekMock;
