@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfo) {
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrFbc2AddressTranslation);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrFbcBlitterTracking);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrFbcCpuTracking);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrTileY);
 
     ReleaseOutHwInfoStructs();
 

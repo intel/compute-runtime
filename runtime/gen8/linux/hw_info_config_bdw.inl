@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,21 +25,22 @@ int HwInfoConfigHw<IGFX_BROADWELL>::configureHardwareCustom(HardwareInfo *hwInfo
         pSysInfo->SliceCount = 1;
     }
 
-    pSkuTable->ftrPPGTT = 1;
-    pSkuTable->ftrSVM = 1;
-    pSkuTable->ftrL3IACoherency = 1;
-    pSkuTable->ftrIA32eGfxPTEs = 1;
+    pSkuTable->ftrPPGTT = true;
+    pSkuTable->ftrSVM = true;
+    pSkuTable->ftrL3IACoherency = true;
+    pSkuTable->ftrIA32eGfxPTEs = true;
 
-    pSkuTable->ftrFbc = 1;
-    pSkuTable->ftrFbc2AddressTranslation = 1;
-    pSkuTable->ftrFbcBlitterTracking = 1;
-    pSkuTable->ftrFbcCpuTracking = 1;
+    pSkuTable->ftrFbc = true;
+    pSkuTable->ftrFbc2AddressTranslation = true;
+    pSkuTable->ftrFbcBlitterTracking = true;
+    pSkuTable->ftrFbcCpuTracking = true;
+    pSkuTable->ftrTileY = true;
 
-    pWaTable->waDisableLSQCROPERFforOCL = 1;
-    pWaTable->waReportPerfCountUseGlobalContextID = 1;
-    pWaTable->waUseVAlign16OnTileXYBpp816 = 1;
-    pWaTable->waModifyVFEStateAfterGPGPUPreemption = 1;
-    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = 1;
+    pWaTable->waDisableLSQCROPERFforOCL = true;
+    pWaTable->waReportPerfCountUseGlobalContextID = true;
+    pWaTable->waUseVAlign16OnTileXYBpp816 = true;
+    pWaTable->waModifyVFEStateAfterGPGPUPreemption = true;
+    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
     if (hwInfo->pPlatform->usDeviceID == IBDW_GT3_HALO_MOBL_DEVICE_F0_ID ||
         hwInfo->pPlatform->usDeviceID == IBDW_GT3_SERV_DEVICE_F0_ID) {

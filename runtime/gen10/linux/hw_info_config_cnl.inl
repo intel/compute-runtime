@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,45 +31,46 @@ int HwInfoConfigHw<IGFX_CANNONLAKE>::configureHardwareCustom(HardwareInfo *hwInf
         pSysInfo->L3CacheSizeInKb -= 256;
     }
 
-    pSkuTable->ftrGpGpuMidBatchPreempt = 1;
-    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = 1;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = 0;
-    pSkuTable->ftr3dMidBatchPreempt = 1;
-    pSkuTable->ftr3dObjectLevelPreempt = 1;
-    pSkuTable->ftr3dMidBatchPreempt = 1;
-    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = 1;
-    pSkuTable->ftrPerCtxtPreemptionGranularityControl = 1;
+    pSkuTable->ftrGpGpuMidBatchPreempt = true;
+    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    pSkuTable->ftrGpGpuMidThreadLevelPreempt = false;
+    pSkuTable->ftr3dMidBatchPreempt = true;
+    pSkuTable->ftr3dObjectLevelPreempt = true;
+    pSkuTable->ftr3dMidBatchPreempt = true;
+    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
 
-    pSkuTable->ftrPPGTT = 1;
-    pSkuTable->ftrSVM = 1;
-    pSkuTable->ftrL3IACoherency = 1;
-    pSkuTable->ftrIA32eGfxPTEs = 1;
-    pSkuTable->ftrStandardMipTailFormat = 1;
+    pSkuTable->ftrPPGTT = true;
+    pSkuTable->ftrSVM = true;
+    pSkuTable->ftrL3IACoherency = true;
+    pSkuTable->ftrIA32eGfxPTEs = true;
+    pSkuTable->ftrStandardMipTailFormat = true;
 
-    pSkuTable->ftrDisplayYTiling = 1;
-    pSkuTable->ftrTranslationTable = 1;
-    pSkuTable->ftrUserModeTranslationTable = 1;
-    pSkuTable->ftrTileMappedResource = 1;
-    pSkuTable->ftrEnableGuC = 1;
+    pSkuTable->ftrDisplayYTiling = true;
+    pSkuTable->ftrTranslationTable = true;
+    pSkuTable->ftrUserModeTranslationTable = true;
+    pSkuTable->ftrTileMappedResource = true;
+    pSkuTable->ftrEnableGuC = true;
 
-    pSkuTable->ftrFbc = 1;
-    pSkuTable->ftrFbc2AddressTranslation = 1;
-    pSkuTable->ftrFbcBlitterTracking = 1;
-    pSkuTable->ftrFbcCpuTracking = 1;
+    pSkuTable->ftrFbc = true;
+    pSkuTable->ftrFbc2AddressTranslation = true;
+    pSkuTable->ftrFbcBlitterTracking = true;
+    pSkuTable->ftrFbcCpuTracking = true;
 
-    pSkuTable->ftrAstcHdr2D = 1;
-    pSkuTable->ftrAstcLdr2D = 1;
+    pSkuTable->ftrAstcHdr2D = true;
+    pSkuTable->ftrAstcLdr2D = true;
+    pSkuTable->ftrTileY = true;
 
-    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = 1;
-    pWaTable->waSendMIFLUSHBeforeVFE = 1;
-    pWaTable->waReportPerfCountUseGlobalContextID = 1;
-    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = 1;
+    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = true;
+    pWaTable->waSendMIFLUSHBeforeVFE = true;
+    pWaTable->waReportPerfCountUseGlobalContextID = true;
+    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
     if ((1 << hwInfo->pPlatform->usRevId) & 0x3) {
-        pWaTable->waFbcLinearSurfaceStride = 1;
+        pWaTable->waFbcLinearSurfaceStride = true;
     }
     if ((1 << hwInfo->pPlatform->usRevId) & 0x1) {
-        pWaTable->waEncryptedEdramOnlyPartials = 1;
+        pWaTable->waEncryptedEdramOnlyPartials = true;
     }
     return 0;
 }

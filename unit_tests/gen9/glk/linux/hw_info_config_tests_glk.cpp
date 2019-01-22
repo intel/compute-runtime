@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,6 +64,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfo) {
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrULT);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrAstcHdr2D);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrAstcLdr2D);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrTileY);
 
     ReleaseOutHwInfoStructs();
 

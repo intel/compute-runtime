@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,6 +40,8 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTA);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTC);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTX);
+
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrTileY);
 
     ReleaseOutHwInfoStructs();
 
