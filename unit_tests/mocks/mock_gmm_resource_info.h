@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     uint32_t getMaxLod() override { return 7u; }
 
-    GMM_TILE_TYPE getTileType() override { return mockResourceCreateParams.Flags.Info.TiledY ? GMM_TILED_Y : GMM_NOT_TILED; }
+    uint32_t getTileModeSurfaceState() override;
 
     GMM_RESOURCE_FORMAT getResourceFormat() override { return mockResourceCreateParams.Format; }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,8 +111,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
 
     ASSERT_NE(nullptr, image);
 
-    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->pPlatform->eRenderCoreFamily);
-    EXPECT_EQ(hwHelper.supportsYTiling(), image->isTiledImage);
+    EXPECT_TRUE(image->isTiledImage);
 
     delete image;
 }

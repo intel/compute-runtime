@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,18 +114,6 @@ uint32_t GmmHelper::getRenderAlignment(uint32_t alignment) {
         returnAlign = 1;
     }
     return returnAlign;
-}
-
-uint32_t GmmHelper::getRenderTileMode(uint32_t tileWalk) {
-    uint32_t tileMode = 0; // TILE_MODE_LINEAR
-    if (tileWalk == 0) {
-        tileMode = 2; // TILE_MODE_XMAJOR;
-    } else if (tileWalk == 1) {
-        tileMode = 3; // TILE_MODE_YMAJOR;
-    } else if (tileWalk == 2) {
-        tileMode = 1; // TILE_MODE_WMAJOR;
-    }
-    return tileMode;
 }
 
 uint32_t GmmHelper::getRenderMultisamplesCount(uint32_t numSamples) {

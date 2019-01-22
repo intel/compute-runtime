@@ -129,16 +129,10 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     surfaceState->setSurfaceHorizontalAlignment(hAlign);
     surfaceState->setSurfaceVerticalAlignment(vAlign);
 
-    auto tileMode = RENDER_SURFACE_STATE::TILE_MODE_LINEAR;
-    if (cubeFaceIndex == __GMM_NO_CUBE_MAP) {
-        if (allowTiling()) {
-            tileMode = RENDER_SURFACE_STATE::TILE_MODE_YMAJOR;
-        }
-    } else {
-        auto tileWalk = gmm->gmmResourceInfo->getTileType();
-        tileMode = static_cast<typename RENDER_SURFACE_STATE::TILE_MODE>(GmmHelper::getRenderTileMode(tileWalk));
-    }
-    surfaceState->setTileMode(tileMode);
+    uint32_t tileMode = gmm ? gmm->gmmResourceInfo->getTileModeSurfaceState()
+                            : static_cast<uint32_t>(RENDER_SURFACE_STATE::TILE_MODE_LINEAR);
+
+    surfaceState->setTileMode(static_cast<typename RENDER_SURFACE_STATE::TILE_MODE>(tileMode));
 
     surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
 

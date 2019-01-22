@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -379,9 +379,7 @@ Image *Image::createImageHw(Context *context, cl_mem_flags flags, size_t size, v
 Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler, McsSurfaceInfo &mcsSurfaceInfo,
                                 GraphicsAllocation *graphicsAllocation, GraphicsAllocation *mcsAllocation,
                                 cl_mem_flags flags, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount) {
-    auto tileWalk = graphicsAllocation->gmm->gmmResourceInfo->getTileType();
-    auto tileMode = GmmHelper::getRenderTileMode(tileWalk);
-    bool isTiledImage = tileMode ? true : false;
+    bool isTiledImage = graphicsAllocation->gmm->gmmResourceInfo->getTileModeSurfaceState() != 0;
 
     auto sharedImage = createImageHw(context, flags, graphicsAllocation->getUnderlyingBufferSize(),
                                      nullptr, imgInfo.surfaceFormat->OCLImageFormat, *imgInfo.imgDesc, false, graphicsAllocation, false, isTiledImage, baseMipLevel, mipCount, imgInfo.surfaceFormat);

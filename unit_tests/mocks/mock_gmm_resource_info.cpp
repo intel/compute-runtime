@@ -115,6 +115,15 @@ void MockGmmResourceInfo::setUnifiedAuxTranslationCapable() {
     mockResourceCreateParams.Flags.Info.RenderCompressed = 1;
 }
 
+uint32_t MockGmmResourceInfo::getTileModeSurfaceState() {
+    if (mockResourceCreateParams.Type == GMM_RESOURCE_TYPE::RESOURCE_2D ||
+        mockResourceCreateParams.Type == GMM_RESOURCE_TYPE::RESOURCE_3D) {
+        return 3;
+    } else {
+        return 0;
+    }
+}
+
 MockGmmResourceInfo::MockGmmResourceInfo() {}
 MockGmmResourceInfo::~MockGmmResourceInfo() {}
 } // namespace OCLRT

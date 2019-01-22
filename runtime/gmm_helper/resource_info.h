@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ class GmmResourceInfo {
 
     MOCKABLE_VIRTUAL uint32_t getMaxLod() { return resourceInfo->GetMaxLod(); }
 
-    MOCKABLE_VIRTUAL GMM_TILE_TYPE getTileType() { return resourceInfo->GetTileType(); }
+    MOCKABLE_VIRTUAL uint32_t getTileModeSurfaceState() { return resourceInfo->GetTileModeSurfaceState(); }
 
     MOCKABLE_VIRTUAL GMM_RESOURCE_FORMAT getResourceFormat() { return resourceInfo->GetResourceFormat(); }
 

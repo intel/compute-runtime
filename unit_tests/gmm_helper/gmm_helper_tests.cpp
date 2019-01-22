@@ -326,13 +326,6 @@ TEST_F(GmmTests, decanonize) {
     EXPECT_EQ(GmmHelper::decanonize(addr2), addrExpected2);
 }
 
-TEST_F(GmmTests, returnRenderAlignment) {
-    uint32_t tileModes[4][2] = {{0, 2}, {1, 3}, {2, 1}, {3, 0}}; // {given, expected}
-    for (uint32_t i = 0; i < 4; i++) {
-        EXPECT_EQ(GmmHelper::getRenderTileMode(tileModes[i][0]), tileModes[i][1]);
-    }
-}
-
 TEST_F(GmmTests, returnRenderTileMode) {
     uint32_t alignments[5][2] = {{0, 1}, {4, 1}, {8, 2}, {16, 3}, {20, 1}}; // {given, expected}
     for (uint32_t i = 0; i < 5; i++) {
