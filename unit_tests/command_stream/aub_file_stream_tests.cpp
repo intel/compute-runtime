@@ -190,6 +190,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     aubCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+    aubCsr->aubManager = mockManager.get();
 
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 1, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -198,9 +199,12 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
     aubCsr->flush(batchBuffer, allocationsForResidency);
 
     EXPECT_TRUE(mockHardwareContext->initializeCalled);
-    EXPECT_TRUE(mockHardwareContext->writeMemoryCalled);
     EXPECT_TRUE(mockHardwareContext->submitCalled);
     EXPECT_TRUE(mockHardwareContext->pollForCompletionCalled);
+
+    //call writeMemory on aubManager to clone page tables
+    EXPECT_FALSE(mockHardwareContext->writeMemoryCalled);
+    EXPECT_TRUE(mockManager->writeMemoryCalled);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledWithZeroSizedBufferThenSubmitIsNotCalledOnHwContext) {
@@ -227,12 +231,15 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCall
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     aubCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+    aubCsr->aubManager = mockManager.get();
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
     aubCsr->processResidency(allocationsForResidency);
 
-    EXPECT_TRUE(mockHardwareContext->writeMemoryCalled);
+    //call writeMemory on aubManager to clone page tables
+    EXPECT_FALSE(mockHardwareContext->writeMemoryCalled);
+    EXPECT_TRUE(mockManager->writeMemoryCalled);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenItShouldCallTheExpectedHwContextFunctions) {

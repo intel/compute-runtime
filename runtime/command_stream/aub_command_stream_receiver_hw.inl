@@ -598,9 +598,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResidentExternal(uint64_t gpu
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) {
-    if (hardwareContext) {
+    if (aubManager) {
         int hint = AubMemDump::DataTypeHintValues::TraceNotype;
-        hardwareContext->writeMemory(gpuAddress, cpuAddress, size, memoryBank, hint);
+        aubManager->writeMemory(gpuAddress, cpuAddress, size, memoryBank, hint);
         return;
     }
 
