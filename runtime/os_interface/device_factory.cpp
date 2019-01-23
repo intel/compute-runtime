@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,7 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(HardwareInfo **pHWInfos, 
         numDevices++;
     }
     *pHWInfos = tempHwInfos.get();
+    executionEnvironment.setHwInfo(*pHWInfos);
     DeviceFactory::numDevices = numDevices;
     DeviceFactory::hwInfos = tempHwInfos.get();
     tempHwInfos.release();

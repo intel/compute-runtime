@@ -40,7 +40,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
     : BaseClass(hwInfoIn, executionEnvironment),
       standalone(standalone) {
 
-    executionEnvironment.initAubCenter(&this->peekHwInfo(), this->localMemoryEnabled, fileName, this->getType());
+    executionEnvironment.initAubCenter(this->localMemoryEnabled, fileName, this->getType());
     auto aubCenter = executionEnvironment.aubCenter.get();
     UNRECOVERABLE_IF(nullptr == aubCenter);
 

@@ -15,6 +15,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/os_interface/os_context.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -399,15 +400,14 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndRenderCompressedBuffersDisabledWhen
 }
 
 TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteBuffer) {
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
 
-    auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(executionEnvironment);
-    executionEnvironment.memoryManager.reset(memoryManager);
+    auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
         .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
 
-    std::unique_ptr<MockDevice> device(MockDevice::create<MockDevice>(*platformDevices, &executionEnvironment, 0));
+    std::unique_ptr<MockDevice> device(MockDevice::create<MockDevice>(*platformDevices, executionEnvironment, 0));
 
     MockContext ctx(device.get());
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
@@ -427,7 +427,8 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
 struct RenderCompressedBuffersTests : public ::testing::Test {
     void SetUp() override {
         localHwInfo = *platformDevices[0];
-        device.reset(Device::create<MockDevice>(&localHwInfo, new ExecutionEnvironment(), 0u));
+        ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+        device.reset(Device::create<MockDevice>(&localHwInfo, executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get(), true);
         context->setContextType(ContextType::CONTEXT_TYPE_UNRESTRICTIVE);
     }

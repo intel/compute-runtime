@@ -13,6 +13,7 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_context.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
@@ -102,23 +103,24 @@ struct MyMockCsrWithAubDump : CommandStreamReceiverWithAUBDump<BaseCSR> {
 
 struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bool /*createAubCSR*/> {
     void SetUp() override {
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
         createAubCSR = GetParam();
-        csrWithAubDump = new MyMockCsrWithAubDump<MyMockCsr>(DEFAULT_TEST_PLATFORM::hwInfo, createAubCSR, executionEnvironment);
+        csrWithAubDump = new MyMockCsrWithAubDump<MyMockCsr>(DEFAULT_TEST_PLATFORM::hwInfo, createAubCSR, *executionEnvironment);
         ASSERT_NE(nullptr, csrWithAubDump);
-        executionEnvironment.initializeMemoryManager(false, false);
-        memoryManager = executionEnvironment.memoryManager.get();
+        executionEnvironment->initializeMemoryManager(false, false);
+        memoryManager = executionEnvironment->memoryManager.get();
         ASSERT_NE(nullptr, memoryManager);
 
-        auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csrWithAubDump,
-                                                                                        getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo),
-                                                                                        1, PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo));
+        auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csrWithAubDump,
+                                                                                         getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo),
+                                                                                         1, PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo));
         csrWithAubDump->setupContext(*osContext);
     }
 
     void TearDown() override {
         delete csrWithAubDump;
     }
-    ExecutionEnvironment executionEnvironment;
+    ExecutionEnvironment *executionEnvironment;
     MyMockCsrWithAubDump<MyMockCsr> *csrWithAubDump;
     MemoryManager *memoryManager;
     bool createAubCSR;
@@ -127,9 +129,9 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
 using CommandStreamReceiverWithAubDumpSimpleTest = ::testing::Test;
 
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenSettingOsContextThenReplicateItToAubCsr) {
-    ExecutionEnvironment executionEnvironment;
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
 
-    CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump(*platformDevices[0], "aubfile", executionEnvironment);
+    CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump(*platformDevices[0], "aubfile", *executionEnvironment);
     MockOsContext osContext(nullptr, 0, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
     csrWithAubDump.setupContext(osContext);

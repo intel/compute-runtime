@@ -107,6 +107,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation : public MemoryManagem
     void SetUp() override {
         MemoryManagementFixture::SetUp();
         executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment->setHwInfo(*platformDevices);
         this->mock = new DrmMockCustom;
         memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, *executionEnvironment);
         ASSERT_NE(nullptr, memoryManager);
@@ -1222,8 +1223,6 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     imgInfo.size = 4096u;
     imgInfo.rowPitch = 512u;
 
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initGmm(*platformDevices);
     TestedDrmMemoryManager::AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
 
@@ -1944,9 +1943,6 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     imgInfo.imgDesc = &imgDesc;
     imgInfo.size = 4096u;
     imgInfo.rowPitch = 512u;
-
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initGmm(*platformDevices);
 
     TestedDrmMemoryManager::AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;

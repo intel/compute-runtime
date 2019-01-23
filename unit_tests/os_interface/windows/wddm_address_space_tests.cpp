@@ -6,8 +6,8 @@
  */
 
 #include "runtime/command_stream/preemption.h"
+#include "runtime/helpers/options.h"
 #include "test.h"
-#include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/mocks/mock_wddm.h"
 
 using namespace OCLRT;
@@ -54,9 +54,7 @@ class WddmMockReserveAddress : public WddmMock {
     uint32_t returnNullIter = 0;
 };
 
-using WddmReserveAddressTest = Test<GmmEnvironmentFixture>;
-
-TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAddress) {
+TEST(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAddress) {
     std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
     size_t size = 0x1000;
     void *reserve = nullptr;
@@ -73,7 +71,7 @@ TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAd
     wddm->releaseReservedAddress(reserve);
 }
 
-TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
+TEST(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
     std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
     size_t size = 0x1000;
     void *reserve = nullptr;
@@ -86,7 +84,7 @@ TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
 }
 
-TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenReturnSecond) {
+TEST(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenReturnSecond) {
     std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
     size_t size = 0x1000;
     void *reserve = nullptr;
@@ -103,7 +101,7 @@ TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenRe
     wddm->releaseReservedAddress(reserve);
 }
 
-TEST_F(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenReturnThird) {
+TEST(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenReturnThird) {
     std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
     size_t size = 0x1000;
     void *reserve = nullptr;
@@ -120,7 +118,7 @@ TEST_F(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenRe
     wddm->releaseReservedAddress(reserve);
 }
 
-TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturnSecondNull) {
+TEST(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturnSecondNull) {
     std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
     size_t size = 0x1000;
     void *reserve = nullptr;

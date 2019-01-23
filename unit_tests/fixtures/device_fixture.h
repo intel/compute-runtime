@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,5 @@ struct DeviceFixture {
     volatile uint32_t *pTagMemory = nullptr;
     HardwareInfo hwInfoHelper = {};
     PLATFORM platformHelper = {};
-    ExecutionEnvironment executionEnvironment;
 };
 } // namespace OCLRT

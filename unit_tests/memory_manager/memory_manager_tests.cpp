@@ -16,6 +16,7 @@
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/platform/platform.h"
 #include "runtime/program/printf_handler.h"
 #include "runtime/program/program.h"
 #include "test.h"
@@ -550,15 +551,13 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenForce32bitallocationI
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemoryForImageIsCalledThenGraphicsAllocationIsReturned) {
-    ExecutionEnvironment executionEnvironment;
-    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    MockMemoryManager memoryManager(false, false, *executionEnvironment);
     cl_image_desc imgDesc = {};
     imgDesc.image_width = 512;
     imgDesc.image_height = 1;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-
-    executionEnvironment.initGmm(*platformDevices);
 
     MockMemoryManager::AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
@@ -571,15 +570,13 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
 }
 
 TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocateGraphicsMemoryForImageIsCalledThenUseLocalMemoryIsNotSet) {
-    ExecutionEnvironment executionEnvironment;
-    MockMemoryManager memoryManager(false, true, executionEnvironment);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    MockMemoryManager memoryManager(false, true, *executionEnvironment);
     cl_image_desc imgDesc = {};
     imgDesc.image_width = 1;
     imgDesc.image_height = 1;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-
-    executionEnvironment.initGmm(*platformDevices);
 
     MockMemoryManager::AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
@@ -591,9 +588,8 @@ TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocateGraphicsMemoryF
 }
 
 TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphicsMemoryForImageFromHostPtrIsCalledThenGraphicsAllocationIsReturned) {
-    ExecutionEnvironment executionEnvironment;
-    MockMemoryManager memoryManager(false, false, executionEnvironment);
-    executionEnvironment.initGmm(*platformDevices);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    MockMemoryManager memoryManager(false, false, *executionEnvironment);
 
     cl_image_desc imgDesc = {};
     imgDesc.image_width = 4;
@@ -631,9 +627,8 @@ TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphi
 }
 
 TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsMemoryForImageFromHostPtrIsCalledThenNullptrIsReturned) {
-    ExecutionEnvironment executionEnvironment;
-    MockMemoryManager memoryManager(false, false, executionEnvironment);
-    executionEnvironment.initGmm(*platformDevices);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    MockMemoryManager memoryManager(false, false, *executionEnvironment);
 
     cl_image_desc imgDesc = {};
     imgDesc.image_width = 4;
@@ -1168,15 +1163,13 @@ TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndAubUsageWhenMemoryMana
 }
 
 TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForImageIsCalled) {
-    ExecutionEnvironment executionEnvironment;
-    MockMemoryManager memoryManager(false, true, executionEnvironment);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    MockMemoryManager memoryManager(false, true, *executionEnvironment);
     cl_image_desc imgDesc = {};
     imgDesc.image_width = 1;
     imgDesc.image_height = 1;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-
-    executionEnvironment.initGmm(*platformDevices);
 
     MockMemoryManager::AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
@@ -1479,12 +1472,11 @@ HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultCsrWhenChec
 }
 
 HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultDeviceWhenCheckingUsageBeforeDestroyThenStoreItAsTemporaryAllocation) {
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
-    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], &executionEnvironment, 0u));
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
     auto &defaultCommandStreamReceiver = device->getCommandStreamReceiver();
-    auto &nonDefaultCommandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*executionEnvironment.commandStreamReceivers[0][1]);
-    auto memoryManager = executionEnvironment.memoryManager.get();
+    auto &nonDefaultCommandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*executionEnvironment->commandStreamReceivers[0][1]);
+    auto memoryManager = executionEnvironment->memoryManager.get();
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     auto notReadyTaskCount = *nonDefaultCommandStreamReceiver.getTagAddress() + 1;
 
@@ -1502,15 +1494,14 @@ HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultDeviceWhenC
 }
 
 HWTEST_F(GraphicsAllocationTests, givenAllocationUsedByManyOsContextsWhenCheckingUsageBeforeDestroyThenMultiContextDestructorIsUsedForWaitingForAllOsContexts) {
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
-    auto memoryManager = new MockMemoryManager(false, false, executionEnvironment);
-    executionEnvironment.memoryManager.reset(memoryManager);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    auto memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
     auto multiContextDestructor = new MockDeferredDeleter();
     multiContextDestructor->expectDrainBlockingValue(false);
     memoryManager->multiContextResourceDestructor.reset(multiContextDestructor);
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(platformDevices[0], &executionEnvironment, 0u));
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
     auto nonDefaultOsContext = device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).osContext;
     auto nonDefaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).commandStreamReceiver);
     auto defaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);

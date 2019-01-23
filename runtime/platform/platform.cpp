@@ -175,7 +175,7 @@ bool Platform::initialize() {
             return false;
         }
     }
-    executionEnvironment->initializeSpecialCommandStreamReceiver(*hwInfo);
+    executionEnvironment->initializeSpecialCommandStreamReceiver();
 
     const bool sourceLevelDebuggerActive = executionEnvironment->sourceLevelDebugger && executionEnvironment->sourceLevelDebugger->isDebuggerActive();
     if (devices[0]->getPreemptionMode() == PreemptionMode::MidThread || sourceLevelDebuggerActive) {
@@ -186,7 +186,7 @@ bool Platform::initialize() {
     CommandStreamReceiverType csrType = this->devices[0]->getDefaultEngine().commandStreamReceiver->getType();
     if (csrType != CommandStreamReceiverType::CSR_HW) {
         auto enableLocalMemory = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
-        executionEnvironment->initAubCenter(&hwInfo[0], enableLocalMemory, "aubfile", csrType);
+        executionEnvironment->initAubCenter(enableLocalMemory, "aubfile", csrType);
     }
 
     this->fillGlobalDispatchTable();

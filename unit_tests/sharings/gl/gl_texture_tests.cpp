@@ -6,6 +6,7 @@
  */
 
 #include "runtime/mem_obj/image.h"
+#include "runtime/platform/platform.h"
 #include "runtime/sharings/gl/gl_texture.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
@@ -48,15 +49,15 @@ class GlSharingTextureTests : public ::testing::Test {
     };
 
     void SetUp() override {
-        executionEnvironment.incRefInternal();
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
         imgDesc = {};
         imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
         imgDesc.image_width = 10;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-        tempMM = new TempMM(executionEnvironment);
-        executionEnvironment.memoryManager.reset(tempMM);
-        device.reset(MockDevice::create<MockDevice>(*platformDevices, &executionEnvironment, 0));
+        tempMM = new TempMM(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(tempMM);
+        device.reset(MockDevice::create<MockDevice>(*platformDevices, executionEnvironment, 0));
         clContext = std::make_unique<MockContext>(device.get());
 
         mockGlSharingFunctions = glSharing->sharingFunctions.release();
@@ -75,7 +76,7 @@ class GlSharingTextureTests : public ::testing::Test {
         mockGmmResInfo->setUnifiedAuxTranslationCapable();
     }
 
-    ExecutionEnvironment executionEnvironment;
+    ExecutionEnvironment *executionEnvironment;
     cl_image_desc imgDesc;
     TempMM *tempMM;
     std::unique_ptr<MockDevice> device;

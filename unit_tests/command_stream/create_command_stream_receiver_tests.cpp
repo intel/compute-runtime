@@ -11,7 +11,6 @@
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "test.h"
-#include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/variable_backup.h"
@@ -19,25 +18,12 @@
 
 using namespace OCLRT;
 
-struct CreateCommandStreamReceiverTest : public GmmEnvironmentFixture, public ::testing::TestWithParam<CommandStreamReceiverType> {
-    void SetUp() override {
-        GmmEnvironmentFixture::SetUp();
-        storeInitHWTag = initialHardwareTag;
-    }
-
-    void TearDown() override {
-        initialHardwareTag = storeInitHWTag;
-        GmmEnvironmentFixture::TearDown();
-    }
-
-  protected:
-    int storeInitHWTag;
-};
+struct CreateCommandStreamReceiverTest : public ::testing::TestWithParam<CommandStreamReceiverType> {};
 
 HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetToValidTypeThenTheFuntionReturnsCommandStreamReceiver) {
     DebugManagerStateRestore stateRestorer;
     HardwareInfo *hwInfo = nullptr;
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment = std::unique_ptr<ExecutionEnvironment>(getExecutionEnvironmentImpl(hwInfo));
+    ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
 
     CommandStreamReceiverType csrType = GetParam();
 

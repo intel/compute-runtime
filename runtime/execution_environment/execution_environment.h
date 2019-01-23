@@ -36,17 +36,19 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
   protected:
     std::unique_ptr<GmmHelper> gmmHelper;
+    const HardwareInfo *hwInfo = nullptr;
 
   public:
     ExecutionEnvironment();
     ~ExecutionEnvironment() override;
 
-    MOCKABLE_VIRTUAL void initAubCenter(const HardwareInfo *hwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
-    void initGmm(const HardwareInfo *hwInfo);
-    bool initializeCommandStreamReceiver(const HardwareInfo *pHwInfo, uint32_t deviceIndex, uint32_t deviceCsrIndex);
-    void initializeSpecialCommandStreamReceiver(const HardwareInfo &hwInfo);
+    MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
+    void initGmm();
+    bool initializeCommandStreamReceiver(uint32_t deviceIndex, uint32_t deviceCsrIndex);
+    void initializeSpecialCommandStreamReceiver();
     void initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory);
-    void initSourceLevelDebugger(const HardwareInfo &hwInfo);
+    void initSourceLevelDebugger();
+    void setHwInfo(const HardwareInfo *hwInfo);
 
     GmmHelper *getGmmHelper() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();

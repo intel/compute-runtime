@@ -10,6 +10,7 @@
 #include "runtime/memory_manager/deferrable_allocation_deletion.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/os_interface/os_context.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
@@ -36,10 +37,10 @@ struct DeferredDeleterPublic : DeferredDeleter {
 
 struct DeferrableAllocationDeletionTest : ::testing::Test {
     void SetUp() override {
-        auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+        ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
         memoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        device.reset(Device::create<MockDevice>(nullptr, executionEnvironment.release(), 0u));
+        device.reset(Device::create<MockDevice>(nullptr, executionEnvironment, 0u));
         hwTag = device->getDefaultEngine().commandStreamReceiver->getTagAddress();
         defaultOsContextId = device->getDefaultEngine().osContext->getContextId();
         asyncDeleter = std::make_unique<DeferredDeleterPublic>();

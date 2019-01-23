@@ -11,8 +11,8 @@
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
-#include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/mocks/mock_wddm_interface23.h"
@@ -20,11 +20,11 @@
 
 using namespace OCLRT;
 
-struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture, public GmmEnvironmentFixture {
+struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
     void SetUp() override {
-        GmmEnvironmentFixture::SetUp();
         GdiDllFixture::SetUp();
 
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
         wddm = static_cast<WddmMock *>(Wddm::createWddm());
         osInterface = std::make_unique<OSInterface>();
         osInterface->get()->setWddm(wddm);
@@ -43,13 +43,13 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture, publi
 
     void TearDown() override {
         GdiDllFixture::TearDown();
-        GmmEnvironmentFixture::TearDown();
     }
 
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<OsContextWin> osContext;
     WddmMock *wddm = nullptr;
     WddmMockInterface23 *wddmMockInterface = nullptr;
+    ExecutionEnvironment *executionEnvironment;
 };
 
 struct Wddm23Tests : public Wddm23TestsWithoutWddmInit {

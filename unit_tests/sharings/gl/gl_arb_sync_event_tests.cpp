@@ -9,6 +9,7 @@
 #include "runtime/event/user_event.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/platform/platform.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/sharing.h"
 #include "test.h"
@@ -63,7 +64,7 @@ struct GlArbSyncEventTest : public ::testing::Test {
     }
 
     void SetUp() override {
-        executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
         auto mockCsr = new MockCommandStreamReceiver(*executionEnvironment);
         executionEnvironment->memoryManager = std::make_unique<OsAgnosticMemoryManager>(false, false, *executionEnvironment);
         device.reset(MockDevice::create<MockDevice>(nullptr, executionEnvironment, 0u));

@@ -120,7 +120,8 @@ class ImageClearColorFixture {
         hwInfoHelper.hwInfo.capabilityTable.ftrRenderCompressedImages = true;
 
         OCLRT::platformImpl.reset();
-        OCLRT::constructPlatform()->peekExecutionEnvironment()->initGmm(&hwInfoHelper.hwInfo);
+        OCLRT::constructPlatform()->peekExecutionEnvironment()->setHwInfo(&hwInfoHelper.hwInfo);
+        OCLRT::platform()->peekExecutionEnvironment()->initGmm();
 
         surfaceState = FamilyType::cmdInitRenderSurfaceState;
         surfaceState.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);

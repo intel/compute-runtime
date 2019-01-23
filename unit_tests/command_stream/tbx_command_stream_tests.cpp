@@ -15,6 +15,7 @@
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -148,8 +149,8 @@ TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedW
 
 TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenTypeIsCheckedThenTbxCsrIsReturned) {
     HardwareInfo hwInfo = *platformDevices[0];
-    ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create(hwInfo, "", false, executionEnvironment));
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create(hwInfo, "", false, *executionEnvironment));
     EXPECT_NE(nullptr, csr);
     EXPECT_EQ(CommandStreamReceiverType::CSR_TBX, csr->getType());
 }
@@ -293,8 +294,7 @@ HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThen
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.OverrideAubDeviceId.set(9); //this is Hsw, not used
     const HardwareInfo &hwInfoIn = *platformDevices[0];
-    ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(hwInfoIn, "", false, executionEnvironment)));
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(hwInfoIn, "", false, *pDevice->executionEnvironment)));
     EXPECT_EQ(9u, tbxCsr->aubDeviceId);
 }
 
@@ -482,14 +482,13 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareC
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenPollForCompletionImplIsCalledThenSimulatedCsrMethodIsCalled) {
-    ExecutionEnvironment executionEnvironment;
-
-    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(*platformDevices[0], "", false, executionEnvironment)));
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(*platformDevices[0], "", false, *pDevice->executionEnvironment)));
     tbxCsr->pollForCompletionImpl();
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpThenFileNameIsExtendedWithSystemInfo) {
     MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.setHwInfo(*platformDevices);
 
     auto fullName = AUBCommandStreamReceiver::createFullFilePath(*platformDevices[0], "aubfile");
 

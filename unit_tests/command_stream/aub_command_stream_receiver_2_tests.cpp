@@ -10,6 +10,7 @@
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -468,13 +469,13 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
 
 using AubCommandStreamReceiverNoHostPtrTests = ::testing::Test;
 HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnImageWithNoHostPtrThenResourceShouldBeLockedToGetCpuAddress) {
-    ExecutionEnvironment executionEnvironment;
-    auto memoryManager = new OsAgnosticMemoryManagerForImagesWithNoHostPtr(executionEnvironment);
-    executionEnvironment.memoryManager.reset(memoryManager);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    auto memoryManager = new OsAgnosticMemoryManagerForImagesWithNoHostPtr(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
     auto engineInstance = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
 
     MockOsContext osContext(nullptr, 0, 1, engineInstance, PreemptionMode::Disabled);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true, executionEnvironment));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true, *executionEnvironment));
     aubCsr->setupContext(osContext);
 
     cl_image_desc imgDesc = {};
@@ -703,11 +704,11 @@ HWTEST_F(AubCommandStreamReceiverTests, whenAubCommandStreamReceiverIsCreatedThe
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineIsInitializedThenDumpHandleIsGenerated) {
-    executionEnvironment.aubCenter.reset(new AubCenter());
+    pDevice->executionEnvironment->aubCenter.reset(new AubCenter());
     auto engineInstance = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
     MockOsContext osContext(nullptr, 0, 1, engineInstance, PreemptionMode::Disabled);
 
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
     aubCsr->setupContext(osContext);
@@ -721,7 +722,7 @@ HWTEST_F(InjectMmmioTest, givenAddMmioKeySetToZeroWhenInitAdditionalMmioCalledTh
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AubDumpAddMmioRegistersList.set("");
 
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
     auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
@@ -738,7 +739,7 @@ HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWhenInitAdditionalMmioCall
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AubDumpAddMmioRegistersList.set(registers);
 
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
     auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
@@ -755,7 +756,7 @@ HWTEST_F(InjectMmmioTest, givenLongSequenceOfAddMmioRegistersListSetWhenInitAddi
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AubDumpAddMmioRegistersList.set(registers);
 
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
     auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
@@ -773,7 +774,7 @@ HWTEST_F(InjectMmmioTest, givenSequenceWithIncompletePairOfAddMmioRegistersListS
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AubDumpAddMmioRegistersList.set(registers);
 
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
     auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
@@ -792,7 +793,7 @@ HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWithSemicolonAtTheEndWhenI
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AubDumpAddMmioRegistersList.set(registers);
 
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
     auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();
@@ -809,7 +810,7 @@ HWTEST_F(InjectMmmioTest, givenAddMmioRegistersListSetWithInvalidValueWhenInitAd
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AubDumpAddMmioRegistersList.set(registers);
 
-    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
     auto stream = std::make_unique<MockAubFileStreamMockMmioWrite>();

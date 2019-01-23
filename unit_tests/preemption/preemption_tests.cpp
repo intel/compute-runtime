@@ -478,11 +478,10 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
 
         uint32_t allocateGraphicsMemoryCount = 0;
     };
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
-    executionEnvironment.memoryManager = std::make_unique<FailingMemoryManager>(executionEnvironment);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    executionEnvironment->memoryManager = std::make_unique<FailingMemoryManager>(*executionEnvironment);
 
-    std::unique_ptr<MockDevice> mockDevice(MockDevice::create<MockDevice>(platformDevices[0], &executionEnvironment, 0));
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::create<MockDevice>(platformDevices[0], executionEnvironment, 0));
     EXPECT_EQ(nullptr, mockDevice.get());
 }
 

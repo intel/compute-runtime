@@ -12,6 +12,7 @@
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/os_interface/os_context.h"
+#include "runtime/platform/platform.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_device.h"
@@ -161,11 +162,10 @@ TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThe
 }
 
 TEST(MemObj, givenReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAllocationIsNotAddedToMemoryManagerAllocationList) {
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
-    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(*platformDevices, &executionEnvironment, 0));
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(*platformDevices, executionEnvironment, 0));
     MockContext context(device.get());
-    auto memoryManager = executionEnvironment.memoryManager.get();
+    auto memoryManager = executionEnvironment->memoryManager.get();
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     allocation->updateTaskCount(1, device->getDefaultEngine().osContext->getContextId());

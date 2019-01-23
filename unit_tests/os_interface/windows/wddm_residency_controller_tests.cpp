@@ -14,6 +14,7 @@
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_wddm.h"
@@ -80,8 +81,7 @@ struct WddmResidencyControllerWithGdiTest : ::testing::Test {
 
 struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerTest {
     void SetUp() {
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        executionEnvironment->initGmm(*platformDevices);
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
 
         wddm = new ::testing::NiceMock<GmockWddm>();
         wddm->gdi = std::make_unique<MockGdi>();
@@ -102,7 +102,7 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
         osContext->decRefInternal();
     }
 
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     ::testing::NiceMock<GmockWddm> *wddm = nullptr;
     OsContext *osContext;

@@ -6,6 +6,7 @@
  */
 
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/os_interface/windows/os_interface_win_tests.h"
 
@@ -15,8 +16,8 @@ GEN9TEST_F(OsInterfaceTestSkl, askKmdIfPreemptionRegisterWhitelisted) {
     HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
 
-    ExecutionEnvironment executionEnvironment;
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, *executionEnvironment);
     EXPECT_TRUE(success);
 
     for (size_t i = 0u; i < numDevices; i++) {

@@ -30,9 +30,9 @@ using namespace ::testing;
 namespace OCLRT {
 struct GmmTests : public ::testing::Test {
     void SetUp() override {
-        executionEnvironment.initGmm(*platformDevices);
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
     }
-    ExecutionEnvironment executionEnvironment;
+    ExecutionEnvironment *executionEnvironment;
 };
 
 TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
@@ -53,7 +53,7 @@ TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
 }
 
 TEST_F(GmmTests, resourceCreation) {
-    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager(false, false, executionEnvironment));
+    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager(false, false, *executionEnvironment));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096, false));
 
@@ -67,7 +67,7 @@ TEST_F(GmmTests, resourceCreation) {
 }
 
 TEST_F(GmmTests, resourceCreationUncacheable) {
-    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager(false, false, executionEnvironment));
+    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager(false, false, *executionEnvironment));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096, true));
@@ -83,7 +83,7 @@ TEST_F(GmmTests, resourceCreationUncacheable) {
 }
 
 TEST_F(GmmTests, resourceCleanupOnDelete) {
-    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager(false, false, executionEnvironment));
+    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager(false, false, *executionEnvironment));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096, false));
@@ -96,7 +96,7 @@ TEST_F(GmmTests, resourceCleanupOnDelete) {
 TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGMMResourceIsCreatedWithNoRestrictionsFlag) {
     auto maxSize = static_cast<size_t>(GmmHelper::maxPossiblePitch);
 
-    MemoryManager *mm = new OsAgnosticMemoryManager(false, false, executionEnvironment);
+    MemoryManager *mm = new OsAgnosticMemoryManager(false, false, *executionEnvironment);
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
     auto gmmRes = new Gmm(pSysMem, maxSize, false);

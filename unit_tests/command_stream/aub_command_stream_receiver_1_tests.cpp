@@ -81,7 +81,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCre
     DebugManager.flags.UseAubStream.set(false);
 
     HardwareInfo hwInfo = *platformDevices[0];
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(hwInfo, "", true, executionEnvironment);
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(hwInfo, "", true, *pDevice->executionEnvironment);
     ASSERT_NE(nullptr, aubCsr);
 
     EXPECT_EQ(nullptr, aubCsr->aubManager);
@@ -89,7 +89,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCre
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetEngineIndexFromInstanceIsCalledForGivenEngineInstanceThenEngineIndexForThatInstanceIsReturned) {
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
     EXPECT_TRUE(aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_RCS, 0)) < allEngineInstances.size());
@@ -105,7 +105,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetEngi
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetEngineIndexIsCalledForGivenEngineTypeThenEngineIndexForThatTypeIsReturned) {
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
     auto engineIndex = aubCsr->getEngineIndex(EngineInstanceT(EngineType::ENGINE_RCS, 1));
@@ -134,52 +134,47 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCre
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyOperateOnSingleFileStream) {
-    ExecutionEnvironment executionEnvironment;
-    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
-    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
     EXPECT_EQ(aubCsr1->stream, aubCsr2->stream);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyUseTheSameFileStream) {
-    ExecutionEnvironment executionEnvironment;
-    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
-    auto streamProvider1 = executionEnvironment.aubCenter->getStreamProvider();
+    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    auto streamProvider1 = pDevice->executionEnvironment->aubCenter->getStreamProvider();
     EXPECT_NE(nullptr, streamProvider1);
-    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
-    auto streamProvider2 = executionEnvironment.aubCenter->getStreamProvider();
+    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    auto streamProvider2 = pDevice->executionEnvironment->aubCenter->getStreamProvider();
     EXPECT_NE(nullptr, streamProvider2);
     EXPECT_EQ(streamProvider1, streamProvider2);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyUseTheSamePhysicalAddressAllocator) {
-    ExecutionEnvironment executionEnvironment;
-    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
-    auto physicalAddressAlocator1 = executionEnvironment.aubCenter->getPhysicalAddressAllocator();
+    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    auto physicalAddressAlocator1 = pDevice->executionEnvironment->aubCenter->getPhysicalAddressAllocator();
     EXPECT_NE(nullptr, physicalAddressAlocator1);
-    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
-    auto physicalAddressAlocator2 = executionEnvironment.aubCenter->getPhysicalAddressAllocator();
+    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    auto physicalAddressAlocator2 = pDevice->executionEnvironment->aubCenter->getPhysicalAddressAllocator();
     EXPECT_NE(nullptr, physicalAddressAlocator2);
     EXPECT_EQ(physicalAddressAlocator1, physicalAddressAlocator2);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyUseTheSameAddressMapper) {
-    ExecutionEnvironment executionEnvironment;
-    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
-    auto addressMapper1 = executionEnvironment.aubCenter->getAddressMapper();
+    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    auto addressMapper1 = pDevice->executionEnvironment->aubCenter->getAddressMapper();
     EXPECT_NE(nullptr, addressMapper1);
-    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
-    auto addressMapper2 = executionEnvironment.aubCenter->getAddressMapper();
+    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    auto addressMapper2 = pDevice->executionEnvironment->aubCenter->getAddressMapper();
     EXPECT_NE(nullptr, addressMapper2);
     EXPECT_EQ(addressMapper1, addressMapper2);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyUseTheSameSubCaptureManager) {
-    ExecutionEnvironment executionEnvironment;
-    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
-    auto subCaptureManager1 = executionEnvironment.aubCenter->getSubCaptureManager();
+    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    auto subCaptureManager1 = pDevice->executionEnvironment->aubCenter->getSubCaptureManager();
     EXPECT_NE(nullptr, subCaptureManager1);
-    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
-    auto subCaptureManager2 = executionEnvironment.aubCenter->getSubCaptureManager();
+    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    auto subCaptureManager2 = pDevice->executionEnvironment->aubCenter->getSubCaptureManager();
     EXPECT_NE(nullptr, subCaptureManager2);
     EXPECT_EQ(subCaptureManager1, subCaptureManager2);
 }

@@ -13,6 +13,7 @@
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/platform/platform.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/tests_configuration.h"
@@ -34,7 +35,7 @@ class AUBFixture : public CommandQueueHwFixture {
         std::stringstream strfilename;
         strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
 
-        executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
         if (testMode == TestMode::AubTestsWithTbx) {
             this->csr = TbxCommandStreamReceiver::create(hwInfo, strfilename.str(), true, *executionEnvironment);
         } else {

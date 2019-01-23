@@ -170,7 +170,7 @@ TEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
 }
 
 TEST_F(Wddm20Tests, allocation) {
-    OsAgnosticMemoryManager mm(false, false, executionEnvironment);
+    OsAgnosticMemoryManager mm(false, false, *executionEnvironment);
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
@@ -334,7 +334,7 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocati
 }
 
 TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
-    OsAgnosticMemoryManager mm(false, false, executionEnvironment);
+    OsAgnosticMemoryManager mm(false, false, *executionEnvironment);
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
@@ -359,7 +359,7 @@ TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
 }
 
 TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
-    OsAgnosticMemoryManager mm(false, false, executionEnvironment);
+    OsAgnosticMemoryManager mm(false, false, *executionEnvironment);
 
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, nullptr, 100, nullptr, MemoryPool::MemoryNull, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -379,7 +379,7 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
 }
 
 TEST_F(Wddm20Tests, makeResidentNonResident) {
-    OsAgnosticMemoryManager mm(false, false, executionEnvironment);
+    OsAgnosticMemoryManager mm(false, false, *executionEnvironment);
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
@@ -418,7 +418,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 
-    WddmMemoryManager mm(false, false, wddm, executionEnvironment);
+    WddmMemoryManager mm(false, false, wddm, *executionEnvironment);
 
     auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
@@ -454,7 +454,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 
-    WddmMemoryManager mm(false, false, wddm, executionEnvironment);
+    WddmMemoryManager mm(false, false, wddm, *executionEnvironment);
 
     auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
@@ -482,8 +482,6 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
     D3DKMT_HANDLE adapterHandle = ADAPTER_HANDLE;
     D3DKMT_HANDLE deviceHandle = DEVICE_HANDLE;
     const HardwareInfo hwInfo = *platformDevices[0];
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initGmm(&hwInfo);
     BOOLEAN FtrL3IACoherency = hwInfo.pSkuTable->ftrL3IACoherency ? 1 : 0;
     uintptr_t maxAddr = hwInfo.capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress
                             ? reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress) + 1
@@ -502,8 +500,6 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
 
 TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoAdapter) {
     wddm->adapter = static_cast<D3DKMT_HANDLE>(0);
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initGmm(*platformDevices);
     EXPECT_CALL(*gmmMem,
                 configureDeviceAddressSpace(static_cast<D3DKMT_HANDLE>(0), ::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .Times(0);
@@ -514,8 +510,6 @@ TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoAdapter) {
 
 TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoDevice) {
     wddm->device = static_cast<D3DKMT_HANDLE>(0);
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initGmm(*platformDevices);
     EXPECT_CALL(*gmmMem,
                 configureDeviceAddressSpace(::testing::_, static_cast<D3DKMT_HANDLE>(0), ::testing::_, ::testing::_, ::testing::_))
         .Times(0);
@@ -526,8 +520,6 @@ TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoDevice) {
 
 TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoEscFunc) {
     wddm->gdi->escape = static_cast<PFND3DKMT_ESCAPE>(nullptr);
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initGmm(*platformDevices);
     EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(::testing::_, ::testing::_, static_cast<PFND3DKMT_ESCAPE>(nullptr), ::testing::_,
                                                      ::testing::_))
         .Times(0);
@@ -590,7 +582,6 @@ TEST(DebugFlagTest, givenDebugManagerWhenGetForUseNoRingFlushesKmdModeIsCalledTh
 }
 
 TEST_F(Wddm20Tests, makeResidentMultipleHandles) {
-
     D3DKMT_HANDLE handles[2] = {ALLOCATION_HANDLE, ALLOCATION_HANDLE};
     gdi->getMakeResidentArg().NumAllocations = 0;
     gdi->getMakeResidentArg().AllocationList = nullptr;
@@ -979,7 +970,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenEvictingTemporaryResourceThenOtherReso
 }
 
 TEST_F(WddmLockWithMakeResidentTests, whenAlllocationNeedsBlockingMakeResidentBeforeLockThenLockWithBlockingMakeResident) {
-    WddmMemoryManager memoryManager(false, false, wddm, executionEnvironment);
+    WddmMemoryManager memoryManager(false, false, wddm, *executionEnvironment);
     MockWddmAllocation allocation;
     allocation.needsMakeResidentBeforeLock = false;
     memoryManager.lockResource(&allocation);

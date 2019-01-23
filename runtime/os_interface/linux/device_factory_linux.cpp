@@ -59,6 +59,7 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, Exec
 
     numDevices = devNum;
     *pHWInfos = ptr;
+    executionEnvironment.setHwInfo(*pHWInfos);
 
     DeviceFactory::numDevices = devNum;
     DeviceFactory::hwInfos = ptr;

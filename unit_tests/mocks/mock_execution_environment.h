@@ -13,13 +13,16 @@
 namespace OCLRT {
 struct MockExecutionEnvironment : ExecutionEnvironment {
     MockExecutionEnvironment() = default;
-    void initAubCenter(const HardwareInfo *hwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) override {
+    MockExecutionEnvironment(const HardwareInfo *hwInfo) {
+        setHwInfo(hwInfo);
+    }
+    void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) override {
         if (!initAubCenterCalled) {
             initAubCenterCalled = true;
             localMemoryEnabledReceived = localMemoryEnabled;
             aubFileNameReceived = aubFileName;
         }
-        ExecutionEnvironment::initAubCenter(hwInfo, localMemoryEnabled, aubFileName, csrType);
+        ExecutionEnvironment::initAubCenter(localMemoryEnabled, aubFileName, csrType);
     }
     bool initAubCenterCalled = false;
     bool localMemoryEnabledReceived = false;

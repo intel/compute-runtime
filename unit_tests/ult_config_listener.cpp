@@ -12,8 +12,9 @@
 #include "runtime/platform/platform.h"
 
 void OCLRT::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
+    constructPlatform()->peekExecutionEnvironment()->setHwInfo(*platformDevices);
     // Create platform and initialize gmm that dont want to create Platform and test gmm initialization path
-    constructPlatform()->peekExecutionEnvironment()->initGmm(*platformDevices);
+    platform()->peekExecutionEnvironment()->initGmm();
 }
 void OCLRT::UltConfigListener::OnTestEnd(const ::testing::TestInfo &testInfo) {
     // Clear global platform that it shouldn't be reused between tests

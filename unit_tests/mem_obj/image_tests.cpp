@@ -634,7 +634,7 @@ TEST_P(CreateImageHostPtr, failedAllocationInjection) {
 }
 
 TEST_P(CreateImageHostPtr, checkWritingOutsideAllocatedMemoryWhileCreatingImage) {
-    auto mockMemoryManager = new MockMemoryManager(executionEnvironment);
+    auto mockMemoryManager = new MockMemoryManager(*pDevice->executionEnvironment);
     pDevice->injectMemoryManager(mockMemoryManager);
     context->setMemoryManager(mockMemoryManager);
     mockMemoryManager->redundancyRatio = 2;
@@ -1294,15 +1294,13 @@ TEST(ImageTest, givenForcedLinearImages3DImageAndProperDescriptorValuesWhenIsCop
 }
 
 TEST(ImageTest, givenClMemCopyHostPointerPassedToImageCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteImage) {
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
-
-    auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(executionEnvironment);
-    executionEnvironment.memoryManager.reset(memoryManager);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    auto *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))
         .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
 
-    std::unique_ptr<MockDevice> device(MockDevice::create<MockDevice>(*platformDevices, &executionEnvironment, 0));
+    std::unique_ptr<MockDevice> device(MockDevice::create<MockDevice>(*platformDevices, executionEnvironment, 0));
 
     MockContext ctx(device.get());
     EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInDevicePool(::testing::_, ::testing::_))

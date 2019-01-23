@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/platform/platform.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -36,18 +37,18 @@ class MockDeviceWithDebuggerActive : public MockDevice {
 };
 
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsDestructedThenSourceLevelDebuggerIsNotified) {
-    auto exeEnv = new ExecutionEnvironment;
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     auto gmock = new ::testing::NiceMock<GMockSourceLevelDebugger>(new MockOsLibrary);
-    exeEnv->sourceLevelDebugger.reset(gmock);
-    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, exeEnv, 0u));
+    executionEnvironment->sourceLevelDebugger.reset(gmock);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, executionEnvironment, 0u));
 
     EXPECT_CALL(*gmock, notifyDeviceDestruction()).Times(1);
 }
 
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsCreatedThenPreemptionIsDisabled) {
-    auto exeEnv = new ExecutionEnvironment;
-    exeEnv->sourceLevelDebugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
-    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, exeEnv, 0u));
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    executionEnvironment->sourceLevelDebugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, executionEnvironment, 0u));
 
     EXPECT_EQ(PreemptionMode::Disabled, device->getPreemptionMode());
 }

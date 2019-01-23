@@ -40,6 +40,7 @@ CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, Executio
 bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
     if (overrideDeviceWithDefaultHardwareInfo) {
         *hwInfo = const_cast<HardwareInfo *>(*platformDevices);
+        executionEnvironment.setHwInfo(*hwInfo);
         numDevicesReturned = numPlatformDevices;
         return getDevicesResult;
     }

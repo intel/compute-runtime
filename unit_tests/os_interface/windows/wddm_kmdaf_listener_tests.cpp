@@ -11,8 +11,8 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
-#include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/mock_gdi/mock_gdi.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_kmdaf_listener.h"
@@ -35,20 +35,20 @@ class WddmWithKmDafMock : public Wddm {
     }
 };
 
-class WddmKmDafListenerTest : public GmmEnvironmentFixture, public ::testing::Test {
+class WddmKmDafListenerTest : public ::testing::Test {
   public:
     void SetUp() {
-        GmmEnvironmentFixture::SetUp();
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
         wddmWithKmDafMock.reset(new WddmWithKmDafMock());
         wddmWithKmDafMock->gdi.reset(new MockGdi());
         wddmWithKmDafMock->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
         wddmWithKmDafMock->featureTable->ftrKmdDaf = true;
     }
     void TearDown() {
-        GmmEnvironmentFixture::TearDown();
     }
 
     std::unique_ptr<WddmWithKmDafMock> wddmWithKmDafMock;
+    ExecutionEnvironment *executionEnvironment;
 };
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenLockResourceIsCalledThenKmDafListenerNotifyLockIsFedWithCorrectParams) {

@@ -27,10 +27,10 @@ using namespace OCLRT;
 struct DeviceCommandStreamLeaksTest : ::testing::Test {
     void SetUp() override {
         HardwareInfo *hwInfo = nullptr;
-        executionEnvironment = std::unique_ptr<ExecutionEnvironment>(getExecutionEnvironmentImpl(hwInfo));
+        executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
     }
 
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    ExecutionEnvironment *executionEnvironment;
 };
 
 HWTEST_F(DeviceCommandStreamLeaksTest, Create) {

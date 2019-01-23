@@ -39,6 +39,7 @@ class DrmCommandStreamFixture {
 
         mock = std::make_unique<::testing::NiceMock<DrmMockImpl>>(mockFd);
 
+        executionEnvironment.setHwInfo(*platformDevices);
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         executionEnvironment.osInterface->get()->setDrm(mock.get());
 
@@ -565,7 +566,8 @@ class DrmCommandStreamEnhancedFixture
     virtual void SetUp() {
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->incRefInternal();
-        executionEnvironment->initGmm(*platformDevices);
+        executionEnvironment->setHwInfo(*platformDevices);
+        executionEnvironment->initGmm();
         this->dbgState = std::make_unique<DebugManagerStateRestore>();
         //make sure this is disabled, we don't want test this now
         DebugManager.flags.EnableForcePin.set(false);

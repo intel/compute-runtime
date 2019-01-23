@@ -25,17 +25,20 @@ ExecutionEnvironment::ExecutionEnvironment() = default;
 ExecutionEnvironment::~ExecutionEnvironment() = default;
 extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment);
 
-void ExecutionEnvironment::initAubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
+void ExecutionEnvironment::initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (!aubCenter) {
-        aubCenter.reset(new AubCenter(pHwInfo, localMemoryEnabled, aubFileName, csrType));
+        aubCenter.reset(new AubCenter(this->hwInfo, localMemoryEnabled, aubFileName, csrType));
     }
 }
-void ExecutionEnvironment::initGmm(const HardwareInfo *hwInfo) {
+void ExecutionEnvironment::initGmm() {
     if (!gmmHelper) {
-        gmmHelper.reset(new GmmHelper(hwInfo));
+        gmmHelper.reset(new GmmHelper(this->hwInfo));
     }
 }
-bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *pHwInfo, uint32_t deviceIndex, uint32_t deviceCsrIndex) {
+void ExecutionEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
+    this->hwInfo = hwInfo;
+}
+bool ExecutionEnvironment::initializeCommandStreamReceiver(uint32_t deviceIndex, uint32_t deviceCsrIndex) {
     if (deviceIndex + 1 > commandStreamReceivers.size()) {
         commandStreamReceivers.resize(deviceIndex + 1);
     }
@@ -46,11 +49,11 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *p
     if (this->commandStreamReceivers[deviceIndex][deviceCsrIndex]) {
         return true;
     }
-    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver(createCommandStream(pHwInfo, *this));
+    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver(createCommandStream(this->hwInfo, *this));
     if (!commandStreamReceiver) {
         return false;
     }
-    if (HwHelper::get(pHwInfo->pPlatform->eRenderCoreFamily).isPageTableManagerSupported(*pHwInfo)) {
+    if (HwHelper::get(this->hwInfo->pPlatform->eRenderCoreFamily).isPageTableManagerSupported(*this->hwInfo)) {
         commandStreamReceiver->createPageTableManager();
     }
     commandStreamReceiver->setDeviceIndex(deviceIndex);
@@ -83,12 +86,12 @@ void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages, bool en
     }
     DEBUG_BREAK_IF(!this->memoryManager);
 }
-void ExecutionEnvironment::initSourceLevelDebugger(const HardwareInfo &hwInfo) {
-    if (hwInfo.capabilityTable.sourceLevelDebuggerSupported) {
+void ExecutionEnvironment::initSourceLevelDebugger() {
+    if (this->hwInfo->capabilityTable.sourceLevelDebuggerSupported) {
         sourceLevelDebugger.reset(SourceLevelDebugger::create());
     }
     if (sourceLevelDebugger) {
-        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(hwInfo.pPlatform->eRenderCoreFamily, true));
+        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(this->hwInfo->pPlatform->eRenderCoreFamily, true));
         sourceLevelDebugger->initialize(localMemorySipAvailable);
     }
 }

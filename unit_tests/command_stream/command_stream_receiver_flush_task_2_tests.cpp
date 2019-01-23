@@ -385,7 +385,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousSLML
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, CreateCommandStreamReceiverHw) {
     const HardwareInfo hwInfo = *platformDevices[0];
-    auto csrHw = CommandStreamReceiverHw<FamilyType>::create(hwInfo, executionEnvironment);
+    auto csrHw = CommandStreamReceiverHw<FamilyType>::create(hwInfo, *pDevice->executionEnvironment);
     EXPECT_NE(nullptr, csrHw);
 
     GmmPageTableMngr *ptm = csrHw->createPageTableManager();

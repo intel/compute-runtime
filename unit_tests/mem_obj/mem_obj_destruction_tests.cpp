@@ -8,6 +8,7 @@
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/os_interface/os_context.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -29,11 +30,10 @@ void CL_CALLBACK emptyDestructorCallback(cl_mem memObj, void *userData) {
 class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
   public:
     void SetUp() override {
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        executionEnvironment->incRefInternal();
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
         memoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        device.reset(MockDevice::create<MockDevice>(*platformDevices, executionEnvironment.get(), 0));
+        device.reset(MockDevice::create<MockDevice>(*platformDevices, executionEnvironment, 0));
         context.reset(new MockContext(device.get()));
 
         allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{size});
@@ -64,7 +64,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
     }
 
     constexpr static uint32_t taskCountReady = 3u;
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockDevice> device;
     uint32_t contextId = 0;
     MockMemoryManager *memoryManager;

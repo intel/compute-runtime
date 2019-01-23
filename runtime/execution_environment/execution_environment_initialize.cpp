@@ -8,7 +8,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 
 namespace OCLRT {
-void ExecutionEnvironment::initializeSpecialCommandStreamReceiver(const HardwareInfo &hwInfo) {
+void ExecutionEnvironment::initializeSpecialCommandStreamReceiver() {
 }
 
 } // namespace OCLRT

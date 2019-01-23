@@ -22,7 +22,8 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
     void SetUp() override {
         MemoryManagementFixture::SetUp();
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        executionEnvironment->initializeCommandStreamReceiver(*platformDevices, 0, 0);
+        executionEnvironment->setHwInfo(*platformDevices);
+        executionEnvironment->initializeCommandStreamReceiver(0, 0);
         memoryManager = new MockMemoryManager(false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         csr = memoryManager->getDefaultCommandStreamReceiver(0);

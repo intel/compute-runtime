@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,7 +15,6 @@ set(IGDRCL_SRCS_tests_fixtures
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_handler_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/execution_model_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/execution_model_kernel_fixture.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/gmm_environment_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hello_world_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hello_world_kernel_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/image_fixture.cpp

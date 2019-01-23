@@ -10,6 +10,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/os_interface/os_context.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -154,15 +155,14 @@ TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryM
 }
 
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqueId) {
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     const size_t numDevices = 2;
     const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size());
 
-    auto device1 = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, &executionEnvironment, 0u));
-    auto device2 = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
+    auto device1 = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, executionEnvironment, 0u));
+    auto device2 = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, executionEnvironment, 1u));
 
-    auto &registeredEngines = executionEnvironment.memoryManager->getRegisteredEngines();
+    auto &registeredEngines = executionEnvironment->memoryManager->getRegisteredEngines();
     EXPECT_EQ(numGpgpuEngines * numDevices, registeredEngines.size());
 
     for (uint32_t i = 0; i < numGpgpuEngines; i++) {
@@ -176,43 +176,40 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqu
         EXPECT_EQ(registeredEngines[i + numGpgpuEngines].commandStreamReceiver,
                   device2->getEngine(i).commandStreamReceiver);
     }
-    EXPECT_EQ(numGpgpuEngines * numDevices, executionEnvironment.memoryManager->getRegisteredEnginesCount());
+    EXPECT_EQ(numGpgpuEngines * numDevices, executionEnvironment->memoryManager->getRegisteredEnginesCount());
 }
 
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
-    auto device = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, &executionEnvironment, 0u));
-    auto device2 = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    auto device = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, executionEnvironment, 0u));
+    auto device2 = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, executionEnvironment, 1u));
 
     EXPECT_EQ(0u, device->getDeviceIndex());
     EXPECT_EQ(1u, device2->getDeviceIndex());
 }
 
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateCommandStreamReceiver) {
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     const size_t numDevices = 2;
     const auto &numGpgpuEngines = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size();
-    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 0u));
-    auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
+    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, executionEnvironment, 0u));
+    auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, executionEnvironment, 1u));
 
-    EXPECT_EQ(numDevices, executionEnvironment.commandStreamReceivers.size());
-    EXPECT_EQ(numGpgpuEngines, executionEnvironment.commandStreamReceivers[0].size());
-    EXPECT_EQ(numGpgpuEngines, executionEnvironment.commandStreamReceivers[1].size());
+    EXPECT_EQ(numDevices, executionEnvironment->commandStreamReceivers.size());
+    EXPECT_EQ(numGpgpuEngines, executionEnvironment->commandStreamReceivers[0].size());
+    EXPECT_EQ(numGpgpuEngines, executionEnvironment->commandStreamReceivers[1].size());
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(numGpgpuEngines); i++) {
-        EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[0][i]);
-        EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[1][i]);
-        EXPECT_EQ(executionEnvironment.commandStreamReceivers[0][i].get(), device1->getEngine(i).commandStreamReceiver);
-        EXPECT_EQ(executionEnvironment.commandStreamReceivers[1][i].get(), device2->getEngine(i).commandStreamReceiver);
+        EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[0][i]);
+        EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[1][i]);
+        EXPECT_EQ(executionEnvironment->commandStreamReceivers[0][i].get(), device1->getEngine(i).commandStreamReceiver);
+        EXPECT_EQ(executionEnvironment->commandStreamReceivers[1][i].get(), device2->getEngine(i).commandStreamReceiver);
     }
 }
 
 TEST(DeviceCreation, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) {
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
-    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], &executionEnvironment, 0));
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0));
 
     auto &defaultEngine = device->getDefaultEngine().osContext->getEngineType();
 

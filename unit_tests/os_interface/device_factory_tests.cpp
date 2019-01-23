@@ -11,6 +11,7 @@
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/os_library.h"
+#include "runtime/platform/platform.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 
 #include "gtest/gtest.h"
@@ -23,6 +24,7 @@ struct DeviceFactoryTest : public ::testing::Test {
   public:
     void SetUp() override {
         const HardwareInfo hwInfo = *platformDevices[0];
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
         mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
     }
 
@@ -32,14 +34,14 @@ struct DeviceFactoryTest : public ::testing::Test {
 
   protected:
     OsLibrary *mockGdiDll;
-    ExecutionEnvironment executionEnvironment;
+    ExecutionEnvironment *executionEnvironment;
 };
 
 TEST_F(DeviceFactoryTest, GetDevices_Expect_True_If_Returned) {
     DeviceFactoryCleaner cleaner;
     HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, *executionEnvironment);
 
     EXPECT_TRUE((numDevices > 0) ? success : !success);
 }
@@ -48,7 +50,7 @@ TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Null) {
     DeviceFactoryCleaner cleaner;
     HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, *executionEnvironment);
     EXPECT_TRUE((numDevices > 0) ? success : !success);
 
     if (numDevices > 0) {
@@ -66,7 +68,7 @@ TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Platform) {
     const HardwareInfo *refHwinfo = *platformDevices;
     size_t numDevices = 0;
 
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, *executionEnvironment);
     EXPECT_TRUE((numDevices > 0) ? success : !success);
 
     if (numDevices > 0) {
@@ -85,7 +87,7 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
     HardwareInfo *hwInfoOverriden = nullptr;
     size_t numDevices = 0;
 
-    bool success = DeviceFactory::getDevices(&hwInfoReference, numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevices(&hwInfoReference, numDevices, *executionEnvironment);
     ASSERT_TRUE(success);
     auto refEnableKmdNotify = hwInfoReference->capabilityTable.kmdNotifyProperties.enableKmdNotify;
     auto refDelayKmdNotifyMicroseconds = hwInfoReference->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
@@ -104,7 +106,7 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
     DebugManager.flags.OverrideEnableQuickKmdSleepForSporadicWaits.set(!refEnableQuickKmdSleepForSporadicWaits);
     DebugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.set(static_cast<int32_t>(refDelayQuickKmdSleepForSporadicWaitsMicroseconds) + 12);
 
-    success = DeviceFactory::getDevices(&hwInfoOverriden, numDevices, executionEnvironment);
+    success = DeviceFactory::getDevices(&hwInfoOverriden, numDevices, *executionEnvironment);
     ASSERT_TRUE(success);
 
     EXPECT_EQ(!refEnableKmdNotify, hwInfoOverriden->capabilityTable.kmdNotifyProperties.enableKmdNotify);
@@ -127,7 +129,7 @@ TEST_F(DeviceFactoryTest, getEngineTypeDebugOverride) {
     HardwareInfo *hwInfoOverriden = nullptr;
     size_t numDevices = 0;
 
-    bool success = DeviceFactory::getDevices(&hwInfoOverriden, numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevices(&hwInfoOverriden, numDevices, *executionEnvironment);
     ASSERT_TRUE(success);
     ASSERT_NE(nullptr, hwInfoOverriden);
     int32_t actualEngineType = static_cast<int32_t>(hwInfoOverriden->capabilityTable.defaultEngineType);
@@ -138,7 +140,7 @@ TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSur
     DeviceFactoryCleaner cleaner;
     HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, *executionEnvironment);
     ASSERT_TRUE(success);
 
     EXPECT_EQ(hwInfo->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte, hwInfo->capabilityTable.requiredPreemptionSurfaceSize);
@@ -151,7 +153,7 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleDevicesDebugFlagWhenGetDevicesIsCal
     DebugManager.flags.CreateMultipleDevices.set(requiredDeviceCount);
     HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, *executionEnvironment);
     ASSERT_NE(nullptr, hwInfo);
 
     for (auto deviceIndex = 0u; deviceIndex < requiredDeviceCount; deviceIndex++) {
@@ -174,7 +176,7 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleDevicesDebugFlagWhenGetDevicesForPr
     DebugManager.flags.CreateMultipleDevices.set(requiredDeviceCount);
     HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
-    bool success = DeviceFactory::getDevicesForProductFamilyOverride(&hwInfo, numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevicesForProductFamilyOverride(&hwInfo, numDevices, *executionEnvironment);
     ASSERT_NE(nullptr, hwInfo);
 
     for (auto deviceIndex = 0u; deviceIndex < requiredDeviceCount; deviceIndex++) {
@@ -194,7 +196,7 @@ TEST_F(DeviceFactoryTest, givenGetDevicesCallWhenItIsDoneThenOsInterfaceIsAlloca
     DeviceFactoryCleaner cleaner;
     HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, *executionEnvironment);
     EXPECT_TRUE(success);
-    EXPECT_NE(nullptr, executionEnvironment.osInterface);
+    EXPECT_NE(nullptr, executionEnvironment->osInterface);
 }

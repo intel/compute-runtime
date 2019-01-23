@@ -51,7 +51,8 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, Exec
     DeviceFactory::hwInfos = tempHwInfos.get();
     tempHwInfos.release();
 
-    executionEnvironment.initGmm(*pHWInfos);
+    executionEnvironment.setHwInfo(*pHWInfos);
+    executionEnvironment.initGmm();
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(**pHWInfos);
     bool success = executionEnvironment.osInterface->get()->getWddm()->init(preemptionMode);
     DEBUG_BREAK_IF(!success);

@@ -391,7 +391,7 @@ TEST_F(EventTest, Event_Wait_NonBlocking) {
 struct UpdateEventTest : public ::testing::Test {
 
     void SetUp() override {
-        executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
         memoryManager = new MockMemoryManager(*executionEnvironment);
         hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
         executionEnvironment->memoryManager.reset(memoryManager);

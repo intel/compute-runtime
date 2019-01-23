@@ -15,6 +15,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
+#include "runtime/platform/platform.h"
 #include "runtime/utilities/tag_allocator.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -287,7 +288,7 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugVariableEnabledWhenCreatingCsrThen
 }
 
 HWTEST_F(CommandStreamReceiverTest, whenCsrIsCreatedThenUseTimestampPacketWriteIfPossible) {
-    CommandStreamReceiverHw<FamilyType> csr(*platformDevices[0], executionEnvironment);
+    CommandStreamReceiverHw<FamilyType> csr(*platformDevices[0], *pDevice->executionEnvironment);
     EXPECT_EQ(UnitTestHelper<FamilyType>::isTimestampPacketWriteSupported(), csr.peekTimestampPacketWriteEnabled());
 }
 
@@ -396,7 +397,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhe
 }
 
 TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {
-    auto executionEnvironment = new ExecutionEnvironment;
+    auto executionEnvironment = platformImpl->peekExecutionEnvironment();
 
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(nullptr, executionEnvironment, 0u));
 
@@ -433,7 +434,7 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
 
 struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
     void SetUp() override {
-        executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment = platformImpl->peekExecutionEnvironment();
         gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*executionEnvironment);
         executionEnvironment->memoryManager.reset(gmockMemoryManager);
         device.reset(MockDevice::create<MockDevice>(&hwInfo, executionEnvironment, 0u));
