@@ -37,7 +37,7 @@ class AUBFixture : public CommandQueueHwFixture {
 
         executionEnvironment = new ExecutionEnvironment;
         if (testMode == TestMode::AubTestsWithTbx) {
-            this->csr = TbxCommandStreamReceiver::create(hwInfo, true, *executionEnvironment);
+            this->csr = TbxCommandStreamReceiver::create(hwInfo, false, *executionEnvironment);
         } else {
             this->csr = AUBCommandStreamReceiver::create(hwInfo, strfilename.str(), true, *executionEnvironment);
         }
