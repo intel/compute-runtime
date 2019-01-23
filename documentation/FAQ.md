@@ -1,3 +1,4 @@
+
 # Frequently asked questions
 
 ## OS support
@@ -66,7 +67,43 @@ By storing the binary representations, compiling is required only the first time
 
 In the working directory, manually create *cl_cache* directory.
 The driver will use this directory to store the binary representations of the compiled kernels.
-Note: This will work on all supported OSes. 
+Note: This will work on all supported OSes.
+
+### Configuring cl_cache location
+
+Cached kernels can be stored in a different directory than the default one. This is useful when the application is installed into a directory for which the user doesn't have permissions.
+
+#### Linux configuration
+
+Set the environment variable named `cl_cache_dir` to new location of cl_cache directory.
+
+#### Example:
+
+If the application's directory is `/home/user/Document`, by default cl_cache will be stored in `/home/user/Document/cl_cache`.
+If the new path should be `/home/user/Desktop/cl_cache_place`, set environment variable `cl_cache_dir` to `/home/user/Desktop/cl_cache_place`.
+```bash
+export cl_cache_dir=/home/user/Desktop/cl_cache_place
+```
+
+Subsequent application runs with passed source code and `cl_cache_dir` environment variable set will reuse previously cached kernel binaries instead of compiling kernels from source.
+
+#### Windows configuration
+
+To set the new location of cl_cache directory - in the registry `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\OCL`:
+1. add key `cl_cache_dir`
+1. add string value named <path_to_app> to `cl_cache_dir` key
+1. set data of added value to desired location of cl_cache
+
+#### Example:
+
+If application is located in `C:\Program Files\application\app.exe`, by default cl_cache will be stored in `C:\Program Files\application\cl_cache`.
+If the new path should be `C:\Users\USER\Documents\application\cl_cache`, to subkey `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\OCL\cl_cache_dir` add string value named `C:\Program Files\application\app.exe` with data `C:\Users\USER\Documents\application\cl_cache`.
+
+e.g.
+string value : `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\OCL\cl_cache_dir\C:\Program Files\application\app.exe`
+data : `C:\Users\USER\Documents\application\cl_cache`
+
+Neo will look for string value (REG_SZ) `C:\Program Files\application\app.exe` in key `HKEY_LOCAL_MACHINE\SOFTWARE\Intel\IGFX\OCL\cl_cache_dir`. Data of this string value will be used as new cl_cache dump directory for this specific application.
 
 ### What are the known limitations of cl_cache?
 
