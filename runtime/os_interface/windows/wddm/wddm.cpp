@@ -370,12 +370,6 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
 
     kmDafListener->notifyMapGpuVA(featureTable->ftrKmdDaf, adapter, device, handle, MapGPUVA.VirtualAddress, gdi->escape);
 
-    if (DebugManager.flags.EnableMakeResidentOnMapGpuVa.get()) {
-        this->makeResident(&handle, 1, true, nullptr);
-        while (currentPagingFenceValue > *getPagingFenceAddress())
-            ;
-    }
-
     if (gmm->isRenderCompressed && pageTableManager.get()) {
         return updateAuxTable(gpuPtr, gmm, true);
     }
