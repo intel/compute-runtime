@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,6 +57,7 @@ cl_int Program::build(
 
             options = (buildOptions) ? buildOptions : "";
             extractInternalOptions(options);
+            applyAdditionalOptions();
 
             CompilerInterface *pCompilerInterface = this->executionEnvironment.getCompilerInterface();
             if (!pCompilerInterface) {

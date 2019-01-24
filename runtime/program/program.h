@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -266,6 +266,7 @@ class Program : public BaseObject<_cl_program> {
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);
 
     void extractInternalOptions(std::string &options);
+    MOCKABLE_VIRTUAL void applyAdditionalOptions();
 
     MOCKABLE_VIRTUAL bool appendKernelDebugOptions();
     void notifyDebuggerWithSourceCode(std::string &filename);

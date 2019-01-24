@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2925,4 +2925,23 @@ TEST_F(ProgramTests, givenProgramWhenUnknownInternalOptionsArePassedThenTheyAreN
     pProgram.extractInternalOptionsForward(buildOptions);
     EXPECT_EQ(0u, pProgram.getInternalOptions().length());
     EXPECT_TRUE(buildOptions == internalOption);
+}
+
+class AdditionalOptionsMockProgram : public MockProgram {
+  public:
+    AdditionalOptionsMockProgram() : MockProgram(executionEnvironment) {}
+    void applyAdditionalOptions() override {
+        applyAdditionalOptionsCalled++;
+        MockProgram::applyAdditionalOptions();
+    }
+    uint32_t applyAdditionalOptionsCalled = 0;
+    ExecutionEnvironment executionEnvironment;
+};
+
+TEST_F(ProgramTests, givenProgramWhenBuiltThenAdditionalOptionsAreApplied) {
+    AdditionalOptionsMockProgram program;
+    cl_device_id device = pDevice;
+
+    program.build(1, &device, nullptr, nullptr, nullptr, false);
+    EXPECT_EQ(1u, program.applyAdditionalOptionsCalled);
 }
