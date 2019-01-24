@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenLockResourceIsCalledThenKmDafListener
     MockWddmAllocation allocation;
     allocation.handle = ALLOCATION_HANDLE;
 
-    wddmWithKmDafMock->lockResource(&allocation);
+    wddmWithKmDafMock->lockResource(allocation);
 
     EXPECT_EQ(wddmWithKmDafMock->getFeatureTable()->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyLockParametrization.hAdapter);
@@ -74,7 +74,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenUnlockResourceIsCalledThenKmDafListen
     MockWddmAllocation allocation;
     allocation.handle = ALLOCATION_HANDLE;
 
-    wddmWithKmDafMock->unlockResource(&allocation);
+    wddmWithKmDafMock->unlockResource(allocation);
 
     EXPECT_EQ(wddmWithKmDafMock->getFeatureTable()->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyUnlockParametrization.hAdapter);

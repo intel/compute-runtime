@@ -122,26 +122,6 @@ TEST(GraphicsAllocationTest, setSize) {
     EXPECT_EQ(size, gfxAllocation.getUnderlyingBufferSize());
 }
 
-TEST(GraphicsAllocationTest, GivenGraphicsAllocationWhenLockingThenIsLocked) {
-    void *cpuPtr = (void *)0x30000;
-    uint64_t gpuAddr = 0x30000;
-    uint64_t gpuBaseAddr = 0x10000;
-    size_t size = 0x1000;
-
-    GraphicsAllocation gfxAllocation(cpuPtr, gpuAddr, gpuBaseAddr, size, 1u, false);
-
-    gfxAllocation.setLocked(false);
-    EXPECT_FALSE(gfxAllocation.isLocked());
-    gfxAllocation.setLocked(true);
-    EXPECT_TRUE(gfxAllocation.isLocked());
-
-    gfxAllocation.setCpuPtrAndGpuAddress(cpuPtr, gpuAddr);
-    cpuPtr = gfxAllocation.getUnderlyingBuffer();
-    EXPECT_NE(nullptr, cpuPtr);
-    gpuAddr = gfxAllocation.getGpuAddress();
-    EXPECT_NE(0ULL, gpuAddr);
-}
-
 TEST_F(MemoryAllocatorTest, allocateSystem) {
     auto ptr = memoryManager->allocateSystemMemory(sizeof(char), 0);
     EXPECT_NE(nullptr, ptr);
@@ -810,9 +790,12 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenLockUnlockCalledThenReturnCp
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
 
+    EXPECT_FALSE(allocation->isLocked());
     auto ptr = memoryManager.lockResource(allocation);
     EXPECT_EQ(ptrOffset(allocation->getUnderlyingBuffer(), static_cast<size_t>(allocation->allocationOffset)), ptr);
+    EXPECT_TRUE(allocation->isLocked());
     memoryManager.unlockResource(allocation);
+    EXPECT_FALSE(allocation->isLocked());
 
     memoryManager.freeGraphicsMemory(allocation);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,8 +37,6 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override;
     GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) override;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override { return nullptr; }
-    void *lockResource(GraphicsAllocation *graphicsAllocation) override;
-    void unlockResource(GraphicsAllocation *graphicsAllocation) override;
 
     uint64_t getSystemSharedMemory() override;
     uint64_t getMaxApplicationAddress() override;
@@ -71,6 +69,9 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
+
+    void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
+    void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
 
     Drm *drm;
     BufferObject *pinBB;

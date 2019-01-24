@@ -54,8 +54,6 @@ class OsAgnosticMemoryManager : public MemoryManager {
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
-    void *lockResource(GraphicsAllocation *graphicsAllocation) override { return ptrOffset(graphicsAllocation->getUnderlyingBuffer(), static_cast<size_t>(graphicsAllocation->allocationOffset)); };
-    void unlockResource(GraphicsAllocation *graphicsAllocation) override{};
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
     void cleanOsHandles(OsHandleStorage &handleStorage) override;
@@ -73,6 +71,9 @@ class OsAgnosticMemoryManager : public MemoryManager {
   protected:
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
+
+    void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override { return ptrOffset(graphicsAllocation.getUnderlyingBuffer(), static_cast<size_t>(graphicsAllocation.allocationOffset)); };
+    void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override{};
 
   private:
     unsigned long long counter = 0;

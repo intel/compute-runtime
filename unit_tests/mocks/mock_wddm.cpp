@@ -135,14 +135,14 @@ bool WddmMock::waitOnGPU(D3DKMT_HANDLE context) {
     return waitOnGPUResult.success = Wddm::waitOnGPU(context);
 }
 
-void *WddmMock::lockResource(WddmAllocation *allocation) {
+void *WddmMock::lockResource(WddmAllocation &allocation) {
     lockResult.called++;
     auto ptr = Wddm::lockResource(allocation);
     lockResult.success = ptr != nullptr;
     return ptr;
 }
 
-void WddmMock::unlockResource(WddmAllocation *allocation) {
+void WddmMock::unlockResource(WddmAllocation &allocation) {
     unlockResult.called++;
     unlockResult.success = true;
     Wddm::unlockResource(allocation);
@@ -231,13 +231,13 @@ EvictionStatus WddmMock::evictAllTemporaryResources() {
     return evictAllTemporaryResourcesResult.status;
 }
 
-EvictionStatus WddmMock::evictTemporaryResource(WddmAllocation *allocation) {
+EvictionStatus WddmMock::evictTemporaryResource(WddmAllocation &allocation) {
     evictTemporaryResourceResult.called++;
     evictTemporaryResourceResult.status = Wddm::evictTemporaryResource(allocation);
     return evictTemporaryResourceResult.status;
 }
 
-void WddmMock::applyBlockingMakeResident(WddmAllocation *allocation) {
+void WddmMock::applyBlockingMakeResident(WddmAllocation &allocation) {
     applyBlockingMakeResidentResult.called++;
     return Wddm::applyBlockingMakeResident(allocation);
 }

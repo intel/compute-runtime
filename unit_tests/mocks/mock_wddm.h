@@ -69,8 +69,8 @@ class WddmMock : public Wddm {
     bool queryAdapterInfo() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) override;
     bool waitOnGPU(D3DKMT_HANDLE context) override;
-    void *lockResource(WddmAllocation *allocation) override;
-    void unlockResource(WddmAllocation *allocation) override;
+    void *lockResource(WddmAllocation &allocation) override;
+    void unlockResource(WddmAllocation &allocation) override;
     void kmDafLock(WddmAllocation *allocation) override;
     bool isKmDafEnabled() override;
     void setKmDafEnabled(bool state);
@@ -84,8 +84,8 @@ class WddmMock : public Wddm {
     void releaseReservedAddress(void *reservedAddress) override;
     VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) override;
     EvictionStatus evictAllTemporaryResources() override;
-    EvictionStatus evictTemporaryResource(WddmAllocation *allocation) override;
-    void applyBlockingMakeResident(WddmAllocation *allocation) override;
+    EvictionStatus evictTemporaryResource(WddmAllocation &allocation) override;
+    void applyBlockingMakeResident(WddmAllocation &allocation) override;
     std::unique_lock<SpinLock> acquireLock(SpinLock &lock) override;
     bool reserveValidAddressRange(size_t size, void *&reservedMem);
     GmmMemory *getGmmMemory() const;

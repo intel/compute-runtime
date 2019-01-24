@@ -129,8 +129,8 @@ class MemoryManager {
 
     virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) { return false; };
 
-    virtual void *lockResource(GraphicsAllocation *graphicsAllocation) = 0;
-    virtual void unlockResource(GraphicsAllocation *graphicsAllocation) = 0;
+    void *lockResource(GraphicsAllocation *graphicsAllocation);
+    void unlockResource(GraphicsAllocation *graphicsAllocation);
 
     void cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *);
     GraphicsAllocation *createGraphicsAllocationWithPadding(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding);
@@ -244,6 +244,9 @@ class MemoryManager {
         return nullptr;
     }
     GraphicsAllocation *allocateGraphicsMemoryForImageFromHostPtr(ImageInfo &imgInfo, const void *hostPtr);
+
+    virtual void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
+    virtual void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
 
     bool force32bitAllocations = false;
     bool virtualPaddingAvailable = false;

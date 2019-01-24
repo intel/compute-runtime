@@ -55,9 +55,9 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
         OsAgnosticMemoryManager::freeGraphicsMemoryImpl(gfxAllocation);
     };
 
-    void unlockResource(GraphicsAllocation *gfxAllocation) override {
+    void unlockResourceImpl(GraphicsAllocation &gfxAllocation) override {
         unlockResourceCalled++;
-        OsAgnosticMemoryManager::unlockResource(gfxAllocation);
+        OsAgnosticMemoryManager::unlockResourceImpl(gfxAllocation);
     }
 
     uint32_t freeGraphicsMemoryCalled = 0u;
@@ -134,8 +134,8 @@ class FailMemoryManager : public MockMemoryManager {
         return nullptr;
     };
 
-    void *lockResource(GraphicsAllocation *gfxAllocation) override { return nullptr; };
-    void unlockResource(GraphicsAllocation *gfxAllocation) override{};
+    void *lockResourceImpl(GraphicsAllocation &gfxAllocation) override { return nullptr; };
+    void unlockResourceImpl(GraphicsAllocation &gfxAllocation) override{};
 
     MemoryManager::AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override {
         return AllocationStatus::Error;

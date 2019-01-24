@@ -132,6 +132,9 @@ void MemoryManager::applyCommonCleanup() {
 }
 
 void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
+    if (!gfxAllocation) {
+        return;
+    }
     freeGraphicsMemoryImpl(gfxAllocation);
 }
 //if not in use destroy in place
@@ -328,4 +331,22 @@ CommandStreamReceiver *MemoryManager::getDefaultCommandStreamReceiver(uint32_t d
     return executionEnvironment.commandStreamReceivers[deviceId][defaultEngineIndex].get();
 }
 
+void *MemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
+    if (!graphicsAllocation) {
+        return nullptr;
+    }
+    DEBUG_BREAK_IF(graphicsAllocation->isLocked());
+    auto retVal = lockResourceImpl(*graphicsAllocation);
+    graphicsAllocation->setLocked(true);
+    return retVal;
+}
+
+void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
+    if (!graphicsAllocation) {
+        return;
+    }
+    DEBUG_BREAK_IF(!graphicsAllocation->isLocked());
+    unlockResourceImpl(*graphicsAllocation);
+    graphicsAllocation->setLocked(false);
+}
 } // namespace OCLRT

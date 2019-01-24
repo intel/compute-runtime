@@ -81,7 +81,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(AllocationData
     }
 
     auto cpuPtr = lockResource(wddmAllocation.get());
-    wddmAllocation->setLocked(true);
 
     // 64kb map is not needed
     auto status = wddm->mapGpuVirtualAddress(wddmAllocation.get(), cpuPtr, false, false, false);
@@ -287,24 +286,21 @@ void WddmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *g
     }
 }
 
-void *WddmMemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
-    return wddm->lockResource(static_cast<WddmAllocation *>(graphicsAllocation));
+void *WddmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
+    return wddm->lockResource(static_cast<WddmAllocation &>(graphicsAllocation));
 };
-void WddmMemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
-    wddm->unlockResource(static_cast<WddmAllocation *>(graphicsAllocation));
+void WddmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation) {
+    auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
+    wddm->unlockResource(wddmAllocation);
+    if (wddmAllocation.needsMakeResidentBeforeLock) {
+        auto evictionStatus = wddm->evictTemporaryResource(wddmAllocation);
+        DEBUG_BREAK_IF(evictionStatus == EvictionStatus::FAILED);
+    }
 };
 
 void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     WddmAllocation *input = static_cast<WddmAllocation *>(gfxAllocation);
     DEBUG_BREAK_IF(!validateAllocation(input));
-    if (gfxAllocation == nullptr) {
-        return;
-    }
-
-    if (input->isLocked() && input->needsMakeResidentBeforeLock) {
-        auto evictionStatus = wddm->evictTemporaryResource(input);
-        DEBUG_BREAK_IF(evictionStatus == EvictionStatus::FAILED);
-    }
 
     for (auto &osContext : this->registeredOsContexts) {
         if (osContext) {
@@ -343,7 +339,6 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         }
         if (input->isLocked()) {
             unlockResource(input);
-            input->setLocked(false);
         }
         auto status = tryDeferDeletions(allocationHandles, allocationCount, resourceHandle);
         DEBUG_BREAK_IF(!status);

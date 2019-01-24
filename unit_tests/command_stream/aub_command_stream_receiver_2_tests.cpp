@@ -437,16 +437,16 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
         imageAllocation->setCpuPtrAndGpuAddress(cpuPtr, imageAllocation->getGpuAddress());
         OsAgnosticMemoryManager::freeGraphicsMemoryImpl(imageAllocation);
     };
-    void *lockResource(GraphicsAllocation *imageAllocation) override {
+    void *lockResourceImpl(GraphicsAllocation &imageAllocation) override {
         lockResourceParam.wasCalled = true;
-        lockResourceParam.inImageAllocation = imageAllocation;
-        lockCpuPtr = alignedMalloc(imageAllocation->getUnderlyingBufferSize(), MemoryConstants::pageSize);
+        lockResourceParam.inImageAllocation = &imageAllocation;
+        lockCpuPtr = alignedMalloc(imageAllocation.getUnderlyingBufferSize(), MemoryConstants::pageSize);
         lockResourceParam.retCpuPtr = lockCpuPtr;
         return lockResourceParam.retCpuPtr;
     };
-    void unlockResource(GraphicsAllocation *imageAllocation) override {
+    void unlockResourceImpl(GraphicsAllocation &imageAllocation) override {
         unlockResourceParam.wasCalled = true;
-        unlockResourceParam.inImageAllocation = imageAllocation;
+        unlockResourceParam.inImageAllocation = &imageAllocation;
         alignedFree(lockCpuPtr);
     };
 

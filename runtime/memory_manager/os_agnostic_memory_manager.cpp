@@ -148,9 +148,6 @@ void OsAgnosticMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocat
 }
 
 void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
-    if (gfxAllocation == nullptr)
-        return;
-
     delete gfxAllocation->gmm;
 
     if ((uintptr_t)gfxAllocation->getUnderlyingBuffer() == dummyAddress) {

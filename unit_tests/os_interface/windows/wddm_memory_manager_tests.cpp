@@ -1480,14 +1480,14 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
 
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
-    allocation->setLocked(true);
+    memoryManager->lockResource(allocation);
     EXPECT_FALSE(allocation->needsMakeResidentBeforeLock);
     memoryManager->freeGraphicsMemory(allocation);
     EXPECT_EQ(0u, wddm->evictTemporaryResourceResult.called);
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
-    allocation->setLocked(false);
+    EXPECT_FALSE(allocation->isLocked());
     EXPECT_FALSE(allocation->needsMakeResidentBeforeLock);
     memoryManager->freeGraphicsMemory(allocation);
     EXPECT_EQ(0u, wddm->evictTemporaryResourceResult.called);
@@ -1495,14 +1495,14 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatDoesntN
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatNeedsMakeResidentBeforeLockThenEvictAllocationFromWddmTemporaryResources) {
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
     allocation->needsMakeResidentBeforeLock = true;
-    allocation->setLocked(true);
+    memoryManager->lockResource(allocation);
     memoryManager->freeGraphicsMemory(allocation);
     EXPECT_EQ(1u, wddm->evictTemporaryResourceResult.called);
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatNeedsMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
     allocation->needsMakeResidentBeforeLock = true;
-    allocation->setLocked(false);
+    EXPECT_FALSE(allocation->isLocked());
     memoryManager->freeGraphicsMemory(allocation);
     EXPECT_EQ(0u, wddm->evictTemporaryResourceResult.called);
 }

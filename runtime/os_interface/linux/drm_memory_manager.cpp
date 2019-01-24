@@ -546,8 +546,6 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     DrmAllocation *input;
     input = static_cast<DrmAllocation *>(gfxAllocation);
-    if (input == nullptr)
-        return;
     if (input->gmm)
         delete input->gmm;
 
@@ -675,19 +673,16 @@ bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool
     return drm->ioctl(DRM_IOCTL_I915_GEM_SET_DOMAIN, &set_domain) == 0;
 }
 
-void *DrmMemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
-    if (graphicsAllocation == nullptr)
-        return nullptr;
-
-    auto cpuPtr = graphicsAllocation->getUnderlyingBuffer();
+void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
+    auto cpuPtr = graphicsAllocation.getUnderlyingBuffer();
     if (cpuPtr != nullptr) {
-        auto success = setDomainCpu(*graphicsAllocation, false);
+        auto success = setDomainCpu(graphicsAllocation, false);
         DEBUG_BREAK_IF(!success);
         (void)success;
         return cpuPtr;
     }
 
-    auto bo = static_cast<DrmAllocation *>(graphicsAllocation)->getBO();
+    auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
     if (bo == nullptr)
         return nullptr;
 
@@ -700,23 +695,20 @@ void *DrmMemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
 
     bo->setLockedAddress(reinterpret_cast<void *>(mmap_arg.addr_ptr));
 
-    auto success = setDomainCpu(*graphicsAllocation, false);
+    auto success = setDomainCpu(graphicsAllocation, false);
     DEBUG_BREAK_IF(!success);
     (void)success;
 
     return bo->peekLockedAddress();
 }
 
-void DrmMemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
-    if (graphicsAllocation == nullptr)
-        return;
-
-    auto cpuPtr = graphicsAllocation->getUnderlyingBuffer();
+void DrmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation) {
+    auto cpuPtr = graphicsAllocation.getUnderlyingBuffer();
     if (cpuPtr != nullptr) {
         return;
     }
 
-    auto bo = static_cast<DrmAllocation *>(graphicsAllocation)->getBO();
+    auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
     if (bo == nullptr)
         return;
 

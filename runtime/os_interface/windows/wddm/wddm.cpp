@@ -630,37 +630,37 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
     return true;
 }
 
-void *Wddm::lockResource(WddmAllocation *wddmAllocation) {
+void *Wddm::lockResource(WddmAllocation &wddmAllocation) {
 
-    if (wddmAllocation->needsMakeResidentBeforeLock) {
+    if (wddmAllocation.needsMakeResidentBeforeLock) {
         applyBlockingMakeResident(wddmAllocation);
     }
 
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_LOCK2 lock2 = {};
 
-    lock2.hAllocation = wddmAllocation->handle;
+    lock2.hAllocation = wddmAllocation.handle;
     lock2.hDevice = this->device;
 
     status = gdi->lock2(&lock2);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
-    kmDafListener->notifyLock(featureTable->ftrKmdDaf, adapter, device, wddmAllocation->handle, 0, gdi->escape);
+    kmDafListener->notifyLock(featureTable->ftrKmdDaf, adapter, device, wddmAllocation.handle, 0, gdi->escape);
 
     return lock2.pData;
 }
 
-void Wddm::unlockResource(WddmAllocation *wddmAllocation) {
+void Wddm::unlockResource(WddmAllocation &wddmAllocation) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_UNLOCK2 unlock2 = {};
 
-    unlock2.hAllocation = wddmAllocation->handle;
+    unlock2.hAllocation = wddmAllocation.handle;
     unlock2.hDevice = this->device;
 
     status = gdi->unlock2(&unlock2);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
-    kmDafListener->notifyUnlock(featureTable->ftrKmdDaf, adapter, device, &wddmAllocation->handle, 1, gdi->escape);
+    kmDafListener->notifyUnlock(featureTable->ftrKmdDaf, adapter, device, &wddmAllocation.handle, 1, gdi->escape);
 }
 
 void Wddm::kmDafLock(WddmAllocation *wddmAllocation) {
@@ -964,27 +964,27 @@ EvictionStatus Wddm::evictAllTemporaryResources() {
     return error ? EvictionStatus::FAILED : EvictionStatus::SUCCESS;
 }
 
-EvictionStatus Wddm::evictTemporaryResource(WddmAllocation *allocation) {
+EvictionStatus Wddm::evictTemporaryResource(WddmAllocation &allocation) {
     auto &lock = acquireLock(temporaryResourcesLock);
-    auto position = std::find(temporaryResources.begin(), temporaryResources.end(), allocation->handle);
+    auto position = std::find(temporaryResources.begin(), temporaryResources.end(), allocation.handle);
     if (position == temporaryResources.end()) {
         return EvictionStatus::NOT_APPLIED;
     }
     *position = temporaryResources.back();
     temporaryResources.pop_back();
     uint64_t sizeToTrim = 0;
-    if (!evict(&allocation->handle, 1, sizeToTrim)) {
+    if (!evict(&allocation.handle, 1, sizeToTrim)) {
         return EvictionStatus::FAILED;
     }
     return EvictionStatus::SUCCESS;
 }
-void Wddm::applyBlockingMakeResident(WddmAllocation *allocation) {
+void Wddm::applyBlockingMakeResident(WddmAllocation &allocation) {
     bool madeResident = false;
-    while (!(madeResident = makeResident(&allocation->handle, 1, false, nullptr))) {
+    while (!(madeResident = makeResident(&allocation.handle, 1, false, nullptr))) {
         if (evictAllTemporaryResources() == EvictionStatus::SUCCESS) {
             continue;
         }
-        if (!makeResident(&allocation->handle, 1, false, nullptr)) {
+        if (!makeResident(&allocation.handle, 1, false, nullptr)) {
             DEBUG_BREAK_IF(true);
             return;
         };
@@ -992,7 +992,7 @@ void Wddm::applyBlockingMakeResident(WddmAllocation *allocation) {
     }
     DEBUG_BREAK_IF(!madeResident);
     auto &lock = acquireLock(temporaryResourcesLock);
-    temporaryResources.push_back(allocation->handle);
+    temporaryResources.push_back(allocation.handle);
     lock.unlock();
     while (currentPagingFenceValue > *getPagingFenceAddress())
         ;

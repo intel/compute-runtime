@@ -44,8 +44,6 @@ class WddmMemoryManager : public MemoryManager {
 
     void addAllocationToHostPtrManager(GraphicsAllocation *memory) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) override;
-    void *lockResource(GraphicsAllocation *graphicsAllocation) override;
-    void unlockResource(GraphicsAllocation *graphicsAllocation) override;
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
     void cleanOsHandles(OsHandleStorage &handleStorage) override;
@@ -74,6 +72,9 @@ class WddmMemoryManager : public MemoryManager {
   protected:
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
+
+    void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
+    void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
 
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle);
     static bool validateAllocation(WddmAllocation *alloc);

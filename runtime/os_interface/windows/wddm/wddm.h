@@ -74,8 +74,8 @@ class Wddm {
     MOCKABLE_VIRTUAL bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
     MOCKABLE_VIRTUAL bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc);
     bool openNTHandle(HANDLE handle, WddmAllocation *alloc);
-    MOCKABLE_VIRTUAL void *lockResource(WddmAllocation *wddmAllocation);
-    MOCKABLE_VIRTUAL void unlockResource(WddmAllocation *wddmAllocation);
+    MOCKABLE_VIRTUAL void *lockResource(WddmAllocation &wddmAllocation);
+    MOCKABLE_VIRTUAL void unlockResource(WddmAllocation &wddmAllocation);
     MOCKABLE_VIRTUAL void kmDafLock(WddmAllocation *wddmAllocation);
     MOCKABLE_VIRTUAL bool isKmDafEnabled() { return featureTable->ftrKmdDaf; };
 
@@ -152,8 +152,8 @@ class Wddm {
         return pagingFenceAddress;
     }
     MOCKABLE_VIRTUAL EvictionStatus evictAllTemporaryResources();
-    MOCKABLE_VIRTUAL EvictionStatus evictTemporaryResource(WddmAllocation *allocation);
-    MOCKABLE_VIRTUAL void applyBlockingMakeResident(WddmAllocation *allocation);
+    MOCKABLE_VIRTUAL EvictionStatus evictTemporaryResource(WddmAllocation &allocation);
+    MOCKABLE_VIRTUAL void applyBlockingMakeResident(WddmAllocation &allocation);
     MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock);
 
   protected:

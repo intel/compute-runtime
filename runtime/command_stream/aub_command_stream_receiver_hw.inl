@@ -635,14 +635,12 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     if (cpuAddress == nullptr) {
         DEBUG_BREAK_IF(gfxAllocation.isLocked());
         cpuAddress = this->getMemoryManager()->lockResource(&gfxAllocation);
-        gfxAllocation.setLocked(true);
     }
 
     writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation), gfxAllocation.devicesBitfield);
 
     if (gfxAllocation.isLocked()) {
         this->getMemoryManager()->unlockResource(&gfxAllocation);
-        gfxAllocation.setLocked(false);
     }
 
     if (AubHelper::isOneTimeAubWritableAllocationType(gfxAllocation.getAllocationType())) {

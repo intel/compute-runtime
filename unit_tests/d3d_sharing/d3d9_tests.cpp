@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,9 +55,20 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
             return alloc;
         }
 
-        MOCK_METHOD1(lockResource, void *(GraphicsAllocation *allocation));
-        MOCK_METHOD1(unlockResource, void(GraphicsAllocation *allocation));
+        void *lockResourceImpl(GraphicsAllocation &allocation) override {
+            lockResourceCalled++;
+            EXPECT_EQ(expectedLockingAllocation, &allocation);
+            return lockResourceReturnValue;
+        }
+        void unlockResourceImpl(GraphicsAllocation &allocation) override {
+            unlockResourceCalled++;
+            EXPECT_EQ(expectedLockingAllocation, &allocation);
+        }
 
+        int32_t lockResourceCalled = 0;
+        int32_t unlockResourceCalled = 0;
+        GraphicsAllocation *expectedLockingAllocation = nullptr;
+        void *lockResourceReturnValue = nullptr;
         Gmm *forceGmm = nullptr;
         bool gmmOwnershipPassed = false;
     };
@@ -72,16 +83,16 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
         gmm = MockGmm::queryImgParams(imgInfo).release();
         mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
 
-        mockMM->forceGmm = gmm;
+        memoryManager->forceGmm = gmm;
     }
 
     void SetUp() override {
         dbgRestore = new DebugManagerStateRestore();
         PlatformFixture::SetUp();
-        mockMM = std::make_unique<NiceMock<MockMM>>(*pPlatform->peekExecutionEnvironment());
+        memoryManager = std::make_unique<MockMM>(*pPlatform->peekExecutionEnvironment());
         context = new MockContext(pPlatform->getDevice(0));
         context->forcePreferD3dSharedResources(true);
-        context->setMemoryManager(mockMM.get());
+        context->setMemoryManager(memoryManager.get());
 
         mockSharingFcns = new NiceMock<MockD3DSharingFunctions<D3D9>>();
         context->setSharingFunctions(mockSharingFcns);
@@ -100,7 +111,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
     void TearDown() override {
         delete cmdQ;
         delete context;
-        if (!mockMM->gmmOwnershipPassed) {
+        if (!memoryManager->gmmOwnershipPassed) {
             delete gmm;
         }
         PlatformFixture::TearDown();
@@ -117,7 +128,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
 
     Gmm *gmm = nullptr;
     NiceMock<MockGmmResourceInfo> *mockGmmResInfo = nullptr;
-    std::unique_ptr<NiceMock<MockMM>> mockMM;
+    std::unique_ptr<MockMM> memoryManager;
 };
 
 TEST_F(D3D9Tests, givenD3DDeviceParamWhenContextCreationThenSetProperValues) {
@@ -520,9 +531,7 @@ TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndEnabledInteropUserSync
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
     EXPECT_CALL(*mockSharingFcns, getRenderTargetData(_, _)).Times(0);
     EXPECT_CALL(*mockSharingFcns, lockRect(_, _, _)).Times(0);
-    EXPECT_CALL(*mockMM, lockResource(_)).Times(0);
     EXPECT_CALL(*mockGmmResInfo, cpuBlt(_)).Times(0);
-    EXPECT_CALL(*mockMM, unlockResource(_)).Times(0);
     EXPECT_CALL(*mockSharingFcns, unlockRect(_)).Times(0);
     EXPECT_CALL(*mockSharingFcns, flushAndWait(_)).Times(0);
     EXPECT_CALL(*mockSharingFcns, updateSurface(_, _)).Times(0);
@@ -538,6 +547,8 @@ TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndEnabledInteropUserSync
 
     retVal = clEnqueueReleaseDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0, memoryManager->lockResourceCalled);
+    EXPECT_EQ(0, memoryManager->unlockResourceCalled);
 }
 
 TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndDisabledInteropUserSync) {
@@ -549,9 +560,7 @@ TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndDisabledInteropUserSyn
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
     EXPECT_CALL(*mockSharingFcns, getRenderTargetData(_, _)).Times(0);
     EXPECT_CALL(*mockSharingFcns, lockRect(_, _, _)).Times(0);
-    EXPECT_CALL(*mockMM, lockResource(_)).Times(0);
     EXPECT_CALL(*mockGmmResInfo, cpuBlt(_)).Times(0);
-    EXPECT_CALL(*mockMM, unlockResource(_)).Times(0);
     EXPECT_CALL(*mockSharingFcns, unlockRect(_)).Times(0);
     EXPECT_CALL(*mockSharingFcns, flushAndWait(_)).Times(1);
     EXPECT_CALL(*mockSharingFcns, updateSurface(_, _)).Times(0);
@@ -566,6 +575,8 @@ TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndDisabledInteropUserSyn
 
     retVal = clEnqueueReleaseDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0, memoryManager->lockResourceCalled);
+    EXPECT_EQ(0, memoryManager->unlockResourceCalled);
 }
 
 TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndDisabledInteropUserSyncIntel) {
@@ -577,9 +588,7 @@ TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndDisabledInteropUserSyn
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
     EXPECT_CALL(*mockSharingFcns, getRenderTargetData(_, _)).Times(0);
     EXPECT_CALL(*mockSharingFcns, lockRect(_, _, _)).Times(0);
-    EXPECT_CALL(*mockMM, lockResource(_)).Times(0);
     EXPECT_CALL(*mockGmmResInfo, cpuBlt(_)).Times(0);
-    EXPECT_CALL(*mockMM, unlockResource(_)).Times(0);
     EXPECT_CALL(*mockSharingFcns, unlockRect(_)).Times(0);
     EXPECT_CALL(*mockSharingFcns, flushAndWait(_)).Times(1);
     EXPECT_CALL(*mockSharingFcns, updateSurface(_, _)).Times(0);
@@ -593,6 +602,8 @@ TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndDisabledInteropUserSyn
 
     retVal = clEnqueueReleaseDX9ObjectsINTEL(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0, memoryManager->lockResourceCalled);
+    EXPECT_EQ(0, memoryManager->unlockResourceCalled);
 }
 
 TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndLockable) {
@@ -613,7 +624,8 @@ TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndLockable) {
 
     EXPECT_CALL(*mockSharingFcns, getRenderTargetData(_, _)).Times(0);
     EXPECT_CALL(*mockSharingFcns, lockRect((IDirect3DSurface9 *)&dummyD3DSurface, _, D3DLOCK_READONLY)).Times(1).WillOnce(SetArgPointee<1>(lockedRect));
-    EXPECT_CALL(*mockMM, lockResource(sharedImg->getGraphicsAllocation())).Times(1).WillOnce(::testing::Return(returnedLockedRes));
+    memoryManager->lockResourceReturnValue = returnedLockedRes;
+    memoryManager->expectedLockingAllocation = sharedImg->getGraphicsAllocation();
 
     GMM_RES_COPY_BLT requestedResCopyBlt = {};
     GMM_RES_COPY_BLT expectedResCopyBlt = {};
@@ -624,28 +636,29 @@ TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndLockable) {
     expectedResCopyBlt.Sys.BufferSize = lockedRect.Pitch * imgHeight;
 
     EXPECT_CALL(*mockGmmResInfo, cpuBlt(_)).Times(1).WillOnce(::testing::Invoke([&](GMM_RES_COPY_BLT *arg) {requestedResCopyBlt = *arg; return 1; }));
-    EXPECT_CALL(*mockMM, unlockResource(sharedImg->getGraphicsAllocation())).Times(1);
     EXPECT_CALL(*mockSharingFcns, unlockRect((IDirect3DSurface9 *)&dummyD3DSurface)).Times(1);
     EXPECT_CALL(*mockSharingFcns, flushAndWait(_)).Times(1);
 
     auto retVal = clEnqueueAcquireDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1, memoryManager->lockResourceCalled);
+    EXPECT_EQ(1, memoryManager->unlockResourceCalled);
     EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
 
     EXPECT_CALL(*mockSharingFcns, lockRect((IDirect3DSurface9 *)&dummyD3DSurface, _, 0u)).Times(1).WillOnce(SetArgPointee<1>(lockedRect));
-    EXPECT_CALL(*mockMM, lockResource(sharedImg->getGraphicsAllocation())).Times(1).WillOnce(::testing::Return(returnedLockedRes));
 
     requestedResCopyBlt = {};
     expectedResCopyBlt.Blt.Upload = 0;
 
     EXPECT_CALL(*mockGmmResInfo, cpuBlt(_)).Times(1).WillOnce(::testing::Invoke([&](GMM_RES_COPY_BLT *arg) {requestedResCopyBlt = *arg; return 1; }));
-    EXPECT_CALL(*mockMM, unlockResource(sharedImg->getGraphicsAllocation())).Times(1);
     EXPECT_CALL(*mockSharingFcns, unlockRect((IDirect3DSurface9 *)&dummyD3DSurface)).Times(1);
     EXPECT_CALL(*mockSharingFcns, updateSurface(_, _)).Times(0);
 
     retVal = clEnqueueReleaseDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(2, memoryManager->lockResourceCalled);
+    EXPECT_EQ(2, memoryManager->unlockResourceCalled);
 }
 
 TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndLockableIntel) {
@@ -665,7 +678,8 @@ TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndLockableIntel) {
 
     EXPECT_CALL(*mockSharingFcns, getRenderTargetData(_, _)).Times(0);
     EXPECT_CALL(*mockSharingFcns, lockRect((IDirect3DSurface9 *)&dummyD3DSurface, _, D3DLOCK_READONLY)).Times(1).WillOnce(SetArgPointee<1>(lockedRect));
-    EXPECT_CALL(*mockMM, lockResource(sharedImg->getGraphicsAllocation())).Times(1).WillOnce(::testing::Return(returnedLockedRes));
+    memoryManager->lockResourceReturnValue = returnedLockedRes;
+    memoryManager->expectedLockingAllocation = sharedImg->getGraphicsAllocation();
 
     GMM_RES_COPY_BLT requestedResCopyBlt = {};
     GMM_RES_COPY_BLT expectedResCopyBlt = {};
@@ -676,28 +690,29 @@ TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndLockableIntel) {
     expectedResCopyBlt.Sys.BufferSize = lockedRect.Pitch * imgHeight;
 
     EXPECT_CALL(*mockGmmResInfo, cpuBlt(_)).Times(1).WillOnce(::testing::Invoke([&](GMM_RES_COPY_BLT *arg) {requestedResCopyBlt = *arg; return 1; }));
-    EXPECT_CALL(*mockMM, unlockResource(sharedImg->getGraphicsAllocation())).Times(1);
     EXPECT_CALL(*mockSharingFcns, unlockRect((IDirect3DSurface9 *)&dummyD3DSurface)).Times(1);
     EXPECT_CALL(*mockSharingFcns, flushAndWait(_)).Times(1);
 
     auto retVal = clEnqueueAcquireDX9ObjectsINTEL(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(1, memoryManager->lockResourceCalled);
+    EXPECT_EQ(1, memoryManager->unlockResourceCalled);
 
     EXPECT_CALL(*mockSharingFcns, lockRect((IDirect3DSurface9 *)&dummyD3DSurface, _, 0u)).Times(1).WillOnce(SetArgPointee<1>(lockedRect));
-    EXPECT_CALL(*mockMM, lockResource(sharedImg->getGraphicsAllocation())).Times(1).WillOnce(::testing::Return(returnedLockedRes));
 
     requestedResCopyBlt = {};
     expectedResCopyBlt.Blt.Upload = 0;
 
     EXPECT_CALL(*mockGmmResInfo, cpuBlt(_)).Times(1).WillOnce(::testing::Invoke([&](GMM_RES_COPY_BLT *arg) {requestedResCopyBlt = *arg; return 1; }));
-    EXPECT_CALL(*mockMM, unlockResource(sharedImg->getGraphicsAllocation())).Times(1);
     EXPECT_CALL(*mockSharingFcns, unlockRect((IDirect3DSurface9 *)&dummyD3DSurface)).Times(1);
     EXPECT_CALL(*mockSharingFcns, updateSurface(_, _)).Times(0);
 
     retVal = clEnqueueReleaseDX9ObjectsINTEL(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(2, memoryManager->lockResourceCalled);
+    EXPECT_EQ(2, memoryManager->unlockResourceCalled);
 }
 
 TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndNonLockable) {
@@ -719,7 +734,8 @@ TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndNonLockable) {
 
     EXPECT_CALL(*mockSharingFcns, getRenderTargetData((IDirect3DSurface9 *)&dummyD3DSurface, (IDirect3DSurface9 *)&dummyD3DSurfaceStaging)).Times(1);
     EXPECT_CALL(*mockSharingFcns, lockRect((IDirect3DSurface9 *)&dummyD3DSurfaceStaging, _, D3DLOCK_READONLY)).Times(1).WillOnce(SetArgPointee<1>(lockedRect));
-    EXPECT_CALL(*mockMM, lockResource(sharedImg->getGraphicsAllocation())).Times(1).WillOnce(::testing::Return(returnedLockedRes));
+    memoryManager->lockResourceReturnValue = returnedLockedRes;
+    memoryManager->expectedLockingAllocation = sharedImg->getGraphicsAllocation();
 
     GMM_RES_COPY_BLT requestedResCopyBlt = {};
     GMM_RES_COPY_BLT expectedResCopyBlt = {};
@@ -730,28 +746,29 @@ TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndNonLockable) {
     expectedResCopyBlt.Sys.BufferSize = lockedRect.Pitch * imgHeight;
 
     EXPECT_CALL(*mockGmmResInfo, cpuBlt(_)).Times(1).WillOnce(::testing::Invoke([&](GMM_RES_COPY_BLT *arg) {requestedResCopyBlt = *arg; return 1; }));
-    EXPECT_CALL(*mockMM, unlockResource(sharedImg->getGraphicsAllocation())).Times(1);
     EXPECT_CALL(*mockSharingFcns, unlockRect((IDirect3DSurface9 *)&dummyD3DSurfaceStaging)).Times(1);
     EXPECT_CALL(*mockSharingFcns, flushAndWait(_)).Times(1);
 
     auto retVal = clEnqueueAcquireDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(1, memoryManager->lockResourceCalled);
+    EXPECT_EQ(1, memoryManager->unlockResourceCalled);
 
     EXPECT_CALL(*mockSharingFcns, lockRect((IDirect3DSurface9 *)&dummyD3DSurfaceStaging, _, 0)).Times(1).WillOnce(SetArgPointee<1>(lockedRect));
-    EXPECT_CALL(*mockMM, lockResource(sharedImg->getGraphicsAllocation())).Times(1).WillOnce(::testing::Return(returnedLockedRes));
 
     requestedResCopyBlt = {};
     expectedResCopyBlt.Blt.Upload = 0;
 
     EXPECT_CALL(*mockGmmResInfo, cpuBlt(_)).Times(1).WillOnce(::testing::Invoke([&](GMM_RES_COPY_BLT *arg) {requestedResCopyBlt = *arg; return 1; }));
-    EXPECT_CALL(*mockMM, unlockResource(sharedImg->getGraphicsAllocation())).Times(1);
     EXPECT_CALL(*mockSharingFcns, unlockRect((IDirect3DSurface9 *)&dummyD3DSurfaceStaging)).Times(1);
     EXPECT_CALL(*mockSharingFcns, updateSurface((IDirect3DSurface9 *)&dummyD3DSurfaceStaging, (IDirect3DSurface9 *)&dummyD3DSurface)).Times(1);
 
     retVal = clEnqueueReleaseDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(2, memoryManager->lockResourceCalled);
+    EXPECT_EQ(2, memoryManager->unlockResourceCalled);
 }
 
 TEST_F(D3D9Tests, givenInvalidClMemObjectPassedOnReleaseListWhenCallIsMadeThenFailureIsReturned) {
@@ -767,6 +784,7 @@ TEST_F(D3D9Tests, givenResourcesCreatedFromDifferentDevicesWhenAcquireReleaseCal
     mockSharingFcns->setDevice(createdResourceDevice); // create call will pick this device
     auto sharedImg = std::unique_ptr<Image>(D3DSurface::create(context, &surfaceInfo, CL_MEM_READ_WRITE, 0, 0, nullptr));
     ASSERT_NE(nullptr, sharedImg.get());
+    memoryManager->expectedLockingAllocation = sharedImg->getGraphicsAllocation();
 
     mockSharingFcns->setDevice(nullptr); // force device change
     sharedImg->getSharingHandler()->acquire(sharedImg.get());
