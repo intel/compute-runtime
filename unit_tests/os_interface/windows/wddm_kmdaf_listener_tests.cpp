@@ -104,7 +104,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenFreeGpuVirtualAddressIsCalledThenKmDa
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, 1u, false);
     allocation.gpuPtr = GPUVA;
 
-    wddmWithKmDafMock->freeGpuVirtualAddres(allocation.gpuPtr, allocation.getUnderlyingBufferSize());
+    wddmWithKmDafMock->freeGpuVirtualAddress(allocation.gpuPtr, allocation.getUnderlyingBufferSize());
 
     EXPECT_EQ(wddmWithKmDafMock->getFeatureTable()->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyUnmapGpuVAParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyUnmapGpuVAParametrization.hAdapter);

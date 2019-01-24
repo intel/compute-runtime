@@ -57,7 +57,7 @@ class WddmMock : public Wddm {
     bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override;
     bool evict(D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) override;
     bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32Bit, bool use64kbPages, bool useHeap1) override;
-    bool freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) override;
+    bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) override;
     NTSTATUS createAllocation(WddmAllocation *alloc) override;
     bool createAllocation64k(WddmAllocation *alloc) override;
     bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) override;
@@ -105,7 +105,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::MakeResidentCall makeResidentResult;
     WddmMockHelpers::CallResult makeNonResidentResult;
     WddmMockHelpers::CallResult mapGpuVirtualAddressResult;
-    WddmMockHelpers::CallResult freeGpuVirtualAddresResult;
+    WddmMockHelpers::CallResult freeGpuVirtualAddressResult;
     WddmMockHelpers::CallResult createAllocationResult;
     WddmMockHelpers::CallResult destroyAllocationResult;
     WddmMockHelpers::CallResult destroyContextResult;

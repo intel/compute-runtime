@@ -332,7 +332,7 @@ TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.gpuPtr != 0);
 
-    error = wddm->freeGpuVirtualAddres(allocation.gpuPtr, allocation.getUnderlyingBufferSize());
+    error = wddm->freeGpuVirtualAddress(allocation.gpuPtr, allocation.getUnderlyingBufferSize());
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.gpuPtr == 0);
 

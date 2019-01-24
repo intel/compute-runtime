@@ -377,7 +377,7 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
     return true;
 }
 
-bool Wddm::freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
+bool Wddm::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_FREEGPUVIRTUALADDRESS FreeGPUVA = {0};
     FreeGPUVA.hAdapter = adapter;
