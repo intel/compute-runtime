@@ -64,7 +64,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(AllocationData
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(nullptr, sizeAligned, nullptr, MemoryPool::System64KBPages, getOsContextCount(), !!allocationData.flags.multiOsContextCapable);
 
-    gmm = new Gmm(nullptr, sizeAligned, false, allocationData.flags.preferRenderCompressed, true);
+    gmm = new Gmm(nullptr, sizeAligned, false, allocationData.flags.preferRenderCompressed, true, 0);
     wddmAllocation->gmm = gmm;
 
     if (!wddm->createAllocation64k(wddmAllocation.get())) {
