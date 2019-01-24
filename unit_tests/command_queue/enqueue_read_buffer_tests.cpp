@@ -454,9 +454,8 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenCommandQueueWhenEnqueueReadBufferIsCall
     EXPECT_TRUE(mockCmdQ->notifyEnqueueReadBufferCalled);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, givenEnqueueReadBufferCalledWhenLockedPtrInTransferPropertisIsAvailableThenItIsUnlocked) {
+HWTEST_F(EnqueueReadBufferTypeTest, givenEnqueueReadBufferCalledWhenLockedPtrInTransferPropertisIsAvailableThenItIsNotUnlocked) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceResourceLockOnTransferCalls.set(true);
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
 
     ExecutionEnvironment executionEnvironment;
@@ -479,12 +478,11 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenEnqueueReadBufferCalledWhenLockedPtrInT
                                          nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, memoryManager.unlockResourceCalled);
+    EXPECT_EQ(0u, memoryManager.unlockResourceCalled);
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, gicenEnqueueReadBufferCalledWhenLockedPtrInTransferPropertisIsNotAvailableThenItIsNotUnlocked) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceResourceLockOnTransferCalls.set(true);
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
 
     ExecutionEnvironment executionEnvironment;

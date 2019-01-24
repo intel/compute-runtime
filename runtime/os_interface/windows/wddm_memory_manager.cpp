@@ -329,9 +329,6 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
             allocationHandles = &input->handle;
             allocationCount = 1;
         }
-        if (input->isLocked()) {
-            unlockResource(input);
-        }
         auto status = tryDeferDeletions(allocationHandles, allocationCount, resourceHandle);
         DEBUG_BREAK_IF(!status);
         alignedFreeWrapper(input->driverAllocatedCpuPointer);

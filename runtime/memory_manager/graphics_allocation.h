@@ -110,9 +110,10 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void setEvictable(bool evictable) { this->evictable = evictable; }
     bool peekEvictable() const { return evictable; }
 
-    bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
-    void setLocked(bool locked) { this->locked = locked; }
-    bool isLocked() const { return locked; }
+    void lock(void *ptr) { this->lockedPtr = ptr; }
+    void unlock() { this->lockedPtr = nullptr; }
+    bool isLocked() const { return lockedPtr != nullptr; }
+    void *getLockedPtr() const { return lockedPtr; }
 
     void incReuseCount() { reuseCount++; }
     void decReuseCount() { reuseCount--; }
@@ -128,6 +129,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint32_t getInspectionId(uint32_t contextId) { return usageInfos[contextId].inspectionId; }
     void setInspectionId(uint32_t newInspectionId, uint32_t contextId) { usageInfos[contextId].inspectionId = newInspectionId; }
 
+    bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
     void updateResidencyTaskCount(uint32_t newTaskCount, uint32_t contextId) { usageInfos[contextId].residencyTaskCount = newTaskCount; }
     uint32_t getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
     void releaseResidencyInOsContext(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }
@@ -155,7 +157,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint64_t gpuAddress = 0;
     bool coherent = false;
     osHandle sharedHandle = Sharing::nonSharedResource;
-    bool locked = false;
+    void *lockedPtr = nullptr;
     uint32_t reuseCount = 0; // GraphicsAllocation can be reused by shared resources
     bool evictable = true;
     MemoryPool::Type memoryPool = MemoryPool::MemoryNull;

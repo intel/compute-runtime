@@ -137,6 +137,9 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
     if (!gfxAllocation) {
         return;
     }
+    if (gfxAllocation->isLocked()) {
+        unlockResource(gfxAllocation);
+    }
     freeGraphicsMemoryImpl(gfxAllocation);
 }
 //if not in use destroy in place
@@ -353,9 +356,11 @@ void *MemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
     if (!graphicsAllocation) {
         return nullptr;
     }
-    DEBUG_BREAK_IF(graphicsAllocation->isLocked());
+    if (graphicsAllocation->isLocked()) {
+        return graphicsAllocation->getLockedPtr();
+    }
     auto retVal = lockResourceImpl(*graphicsAllocation);
-    graphicsAllocation->setLocked(true);
+    graphicsAllocation->lock(retVal);
     return retVal;
 }
 
@@ -365,6 +370,6 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
     }
     DEBUG_BREAK_IF(!graphicsAllocation->isLocked());
     unlockResourceImpl(*graphicsAllocation);
-    graphicsAllocation->setLocked(false);
+    graphicsAllocation->unlock();
 }
 } // namespace OCLRT

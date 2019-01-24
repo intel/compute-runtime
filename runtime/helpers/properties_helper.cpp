@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,10 +21,8 @@ TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, 
         if (memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
             size[0] = *sizePtr;
             offset[0] = *offsetPtr;
-            if (DebugManager.flags.ForceResourceLockOnTransferCalls.get()) {
-                if ((false == MemoryPool::isSystemMemoryPool(memObj->getGraphicsAllocation()->getMemoryPool())) && (memObj->getMemoryManager() != nullptr)) {
-                    this->lockedPtr = memObj->getMemoryManager()->lockResource(memObj->getGraphicsAllocation());
-                }
+            if ((false == MemoryPool::isSystemMemoryPool(memObj->getGraphicsAllocation()->getMemoryPool())) && (memObj->getMemoryManager() != nullptr)) {
+                this->lockedPtr = memObj->getMemoryManager()->lockResource(memObj->getGraphicsAllocation());
             }
         } else {
             size = {{sizePtr[0], sizePtr[1], sizePtr[2]}};

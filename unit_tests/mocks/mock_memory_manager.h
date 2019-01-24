@@ -55,6 +55,11 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
         OsAgnosticMemoryManager::freeGraphicsMemoryImpl(gfxAllocation);
     };
 
+    void *lockResourceImpl(GraphicsAllocation &gfxAllocation) override {
+        lockResourceCalled++;
+        return OsAgnosticMemoryManager::lockResourceImpl(gfxAllocation);
+    }
+
     void unlockResourceImpl(GraphicsAllocation &gfxAllocation) override {
         unlockResourceCalled++;
         OsAgnosticMemoryManager::unlockResourceImpl(gfxAllocation);
@@ -62,6 +67,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
 
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
+    uint32_t lockResourceCalled = 0u;
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;
     bool allocationInDevicePoolCreated = false;

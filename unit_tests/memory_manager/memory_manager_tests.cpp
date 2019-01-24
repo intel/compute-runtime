@@ -1572,3 +1572,38 @@ TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenIt
     EXPECT_EQ(lastFenceValue3, residency.lastFenceValues[1]);
     EXPECT_EQ(lastFenceValue3, residency.getFenceValueForContextId(osContext2.getContextId()));
 }
+
+TEST(MemoryManagerTest, givenMemoryManagerWhenLockIsCalledOnLockedResourceThenDoesNothing) {
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+
+    EXPECT_FALSE(allocation->isLocked());
+    auto ptr = memoryManager.MemoryManager::lockResource(allocation);
+    EXPECT_TRUE(allocation->isLocked());
+    EXPECT_EQ(1u, memoryManager.lockResourceCalled);
+    EXPECT_EQ(0u, memoryManager.unlockResourceCalled);
+
+    auto ptr2 = memoryManager.MemoryManager::lockResource(allocation);
+    EXPECT_TRUE(allocation->isLocked());
+    EXPECT_EQ(1u, memoryManager.lockResourceCalled);
+    EXPECT_EQ(0u, memoryManager.unlockResourceCalled);
+
+    EXPECT_EQ(ptr, ptr2);
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationWasNotUnlockedThenItIsUnlockedDuringDestruction) {
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+
+    EXPECT_FALSE(allocation->isLocked());
+    memoryManager.MemoryManager::lockResource(allocation);
+    EXPECT_TRUE(allocation->isLocked());
+    EXPECT_EQ(1u, memoryManager.lockResourceCalled);
+    EXPECT_EQ(0u, memoryManager.unlockResourceCalled);
+
+    memoryManager.freeGraphicsMemory(allocation);
+    EXPECT_EQ(1u, memoryManager.unlockResourceCalled);
+}

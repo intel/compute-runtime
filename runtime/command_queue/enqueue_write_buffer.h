@@ -52,12 +52,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
         TransferProperties transferProperties(buffer, CL_COMMAND_WRITE_BUFFER, 0, true, &offset, &size, const_cast<void *>(ptr));
         EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
         cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
-        if (DebugManager.flags.ForceResourceLockOnTransferCalls.get()) {
-            if (transferProperties.lockedPtr != nullptr) {
-                buffer->getMemoryManager()->unlockResource(buffer->getGraphicsAllocation());
-            }
-        }
-
         return retVal;
     }
 

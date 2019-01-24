@@ -363,9 +363,8 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopies
     EXPECT_EQ(pCmdQ->taskLevel, 1u);
 }
 
-HWTEST_F(EnqueueWriteBufferTypeTest, givenEnqueueWriteBufferCalledWhenLockedPtrInTransferPropertisIsAvailableThenItIsUnlocked) {
+HWTEST_F(EnqueueWriteBufferTypeTest, givenEnqueueWriteBufferCalledWhenLockedPtrInTransferPropertisIsAvailableThenItIsNotUnlocked) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceResourceLockOnTransferCalls.set(true);
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
 
     ExecutionEnvironment executionEnvironment;
@@ -388,12 +387,11 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenEnqueueWriteBufferCalledWhenLockedPtrI
                                           nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, memoryManager.unlockResourceCalled);
+    EXPECT_EQ(0u, memoryManager.unlockResourceCalled);
 }
 
 HWTEST_F(EnqueueWriteBufferTypeTest, givenEnqueueWriteBufferCalledWhenLockedPtrInTransferPropertisIsNotAvailableThenItIsNotUnlocked) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.ForceResourceLockOnTransferCalls.set(true);
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
 
     ExecutionEnvironment executionEnvironment;
