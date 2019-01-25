@@ -11,6 +11,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/common.cmake)
 list(APPEND IGDRCL_AUB_TESTS__TARGET_OBJECTS
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
   $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
   $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
   $<TARGET_OBJECTS:igdrcl_libult>

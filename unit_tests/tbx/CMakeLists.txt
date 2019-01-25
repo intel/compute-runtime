@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,7 @@ add_executable(igdrcl_tbx_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_tests_configuration.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/dll/create_command_stream.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/options.cpp
   $<TARGET_OBJECTS:igdrcl_libult>
 )

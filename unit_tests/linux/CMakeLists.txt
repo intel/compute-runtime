@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,6 +8,7 @@ set(IGDRCL_SRCS_linux_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/linux_tests_configuration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/main_linux.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/allocator_helper.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/options.cpp
 )
@@ -23,6 +24,7 @@ set(IGDRCL_SRCS_linux_dll_tests
   ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/drm_neo_create.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/options.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
 )
 
 if(IGDRCL__LIBVA_FOUND)

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,6 +16,7 @@ set(NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS
 add_executable(igdrcl_windows_dll_tests
   ${NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS}
   ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/dll/windows/os_interface.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/wddm/wddm_create.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/ult_configuration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_create_tests.cpp

@@ -37,7 +37,6 @@ set(IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/utilities/debug_settings_reader_creator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp
 )
 
 set(IGDRCL_SRCS_LIB_ULT_WINDOWS

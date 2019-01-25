@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,6 +8,7 @@ project(igdrcl_mt_tests)
 
 add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/ult_configuration.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
   $<TARGET_OBJECTS:igdrcl_libult>
