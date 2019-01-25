@@ -238,13 +238,36 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimat
     MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel->mockKernel}));
     mockCmdQ->setOoqEnabled();
 
-    cl_uint numEventsOnWaitlist = 5;
-
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, numEventsOnWaitlist, false, false, multiDispatchInfo);
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, 0, false, false, multiDispatchInfo);
     auto sizeWithDisabled = mockCmdQ->requestedCmdStreamSize;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event1(mockCmdQ, 0, 0, 0);
+    event1.addTimestampPacketNodes(timestamp1);
+    Event event2(mockCmdQ, 0, 0, 0);
+    event2.addTimestampPacketNodes(timestamp2);
+    Event event3(mockCmdQ, 0, 0, 0);
+    event3.addTimestampPacketNodes(timestamp3);
+    Event event4(mockCmdQ, 0, 0, 0);
+    event4.addTimestampPacketNodes(timestamp4);
+    Event event5(mockCmdQ, 0, 0, 0);
+    event5.addTimestampPacketNodes(timestamp5);
+
+    const cl_uint numEventsOnWaitlist = 5;
+    cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5};
+
+    EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
+    CsrDependencies csrDeps;
+    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, device->getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, numEventsOnWaitlist, false, false, multiDispatchInfo);
     auto sizeWithEnabled = mockCmdQ->requestedCmdStreamSize;
 
@@ -258,13 +281,36 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
     MockKernelWithInternals kernel2(*device);
     MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
 
-    cl_uint numEventsOnWaitlist = 5;
-
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, numEventsOnWaitlist, false, false, multiDispatchInfo);
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, 0, false, false, multiDispatchInfo);
     auto sizeWithDisabled = mockCmdQ->requestedCmdStreamSize;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event1(mockCmdQ, 0, 0, 0);
+    event1.addTimestampPacketNodes(timestamp1);
+    Event event2(mockCmdQ, 0, 0, 0);
+    event2.addTimestampPacketNodes(timestamp2);
+    Event event3(mockCmdQ, 0, 0, 0);
+    event3.addTimestampPacketNodes(timestamp3);
+    Event event4(mockCmdQ, 0, 0, 0);
+    event4.addTimestampPacketNodes(timestamp4);
+    Event event5(mockCmdQ, 0, 0, 0);
+    event5.addTimestampPacketNodes(timestamp5);
+
+    const cl_uint numEventsOnWaitlist = 5;
+    cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5};
+
+    EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
+    CsrDependencies csrDeps;
+    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, device->getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, numEventsOnWaitlist, false, false, multiDispatchInfo);
     auto sizeWithEnabled = mockCmdQ->requestedCmdStreamSize;
 
@@ -272,6 +318,54 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
                           ((numEventsOnWaitlist + 1) * (sizeof(typename FamilyType::MI_SEMAPHORE_WAIT) + sizeof(typename FamilyType::MI_ATOMIC)));
 
     EXPECT_EQ(sizeWithEnabled, extendedSize);
+}
+
+HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhenComputeCsrDepsThanDoNotAddthemToCsrDeps) {
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
+
+    Event eventWithoutTimestampContainer1(mockCmdQ, 0, 0, 0);
+    Event eventWithoutTimestampContainer2(mockCmdQ, 0, 0, 0);
+    Event eventWithoutTimestampContainer3(mockCmdQ, 0, 0, 0);
+    Event eventWithoutTimestampContainer4(mockCmdQ, 0, 0, 0);
+    Event eventWithoutTimestampContainer5(mockCmdQ, 0, 0, 0);
+
+    const cl_uint numEventsOnWaitlist = 5;
+    cl_event waitlist[] = {&eventWithoutTimestampContainer1, &eventWithoutTimestampContainer2, &eventWithoutTimestampContainer3,
+                           &eventWithoutTimestampContainer4, &eventWithoutTimestampContainer5};
+
+    EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
+    CsrDependencies csrDepsEmpty;
+    csrDepsEmpty.fillFromEventsRequestAndMakeResident(eventsRequest, device->getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    EXPECT_EQ(0u, csrDepsEmpty.size());
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event1(mockCmdQ, 0, 0, 0);
+    event1.addTimestampPacketNodes(timestamp1);
+
+    Event eventWithEmptyTimestampContainer2(mockCmdQ, 0, 0, 0);
+    // event2 does not have timestamp
+
+    Event event3(mockCmdQ, 0, 0, 0);
+    event3.addTimestampPacketNodes(timestamp3);
+
+    Event eventWithEmptyTimestampContainer4(mockCmdQ, 0, 0, 0);
+    // event4 does not have timestamp
+
+    Event event5(mockCmdQ, 0, 0, 0);
+    event5.addTimestampPacketNodes(timestamp5);
+
+    cl_event waitlist2[] = {&event1, &eventWithEmptyTimestampContainer2, &event3, &eventWithEmptyTimestampContainer4, &event5};
+    EventsRequest eventsRequest2(numEventsOnWaitlist, waitlist2, nullptr);
+    CsrDependencies csrDepsSize3;
+    csrDepsSize3.fillFromEventsRequestAndMakeResident(eventsRequest2, device->getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+
+    EXPECT_EQ(3u, csrDepsSize3.size());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispatchingGpuWalkerThenAddTwoPcForLastWalker) {
@@ -422,16 +516,85 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 }
 
 HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrThenAddSizeForSemaphores) {
-    cl_uint numEventsOnWaitlist = 5;
-    EventsRequest eventsRequest(numEventsOnWaitlist, nullptr, nullptr);
+    auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
+    MockContext context2(device2.get());
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
+
+    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    auto &csr2 = device2->getUltCommandStreamReceiver<FamilyType>();
+    csr2.timestampPacketWriteEnabled = true;
+
+    Event event1(cmdQ2.get(), 0, 0, 0);
+    event1.addTimestampPacketNodes(timestamp1);
+    Event event2(cmdQ2.get(), 0, 0, 0);
+    event2.addTimestampPacketNodes(timestamp2);
+    Event event3(cmdQ2.get(), 0, 0, 0);
+    event3.addTimestampPacketNodes(timestamp3);
+    Event event4(cmdQ2.get(), 0, 0, 0);
+    event4.addTimestampPacketNodes(timestamp4);
+    Event event5(cmdQ2.get(), 0, 0, 0);
+    event5.addTimestampPacketNodes(timestamp5);
+
+    const cl_uint numEventsOnWaitlist = 5;
+    cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5};
+
+    EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
     DispatchFlags flags;
 
-    auto sizeWithoutEvents = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, *device.get());
+    auto sizeWithoutEvents = csr.getRequiredCmdStreamSize(flags, *device);
 
-    flags.outOfDeviceDependencies = &eventsRequest;
-    auto sizeWithEvents = device->getUltCommandStreamReceiver<FamilyType>().getRequiredCmdStreamSize(flags, *device.get());
+    flags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, csr, OCLRT::CsrDependencies::DependenciesType::OutOfCsr);
+    auto sizeWithEvents = csr.getRequiredCmdStreamSize(flags, *device);
 
-    size_t extendedSize = sizeWithoutEvents + (numEventsOnWaitlist * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT));
+    size_t extendedSize = sizeWithoutEvents + (numEventsOnWaitlist * (sizeof(typename FamilyType::MI_SEMAPHORE_WAIT) + sizeof(typename FamilyType::MI_ATOMIC)));
+
+    EXPECT_EQ(sizeWithEvents, extendedSize);
+}
+
+HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForDifferentCsrFromSameDeviceThenAddSizeForSemaphores) {
+    // Create second (LOW_PRIORITY) queue on the same device
+    cl_queue_properties props[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), props);
+
+    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    auto &csr2 = cmdQ2->getUltCommandStreamReceiver();
+    csr2.timestampPacketWriteEnabled = true;
+
+    Event event1(cmdQ2.get(), 0, 0, 0);
+    event1.addTimestampPacketNodes(timestamp1);
+    Event event2(cmdQ2.get(), 0, 0, 0);
+    event2.addTimestampPacketNodes(timestamp2);
+    Event event3(cmdQ2.get(), 0, 0, 0);
+    event3.addTimestampPacketNodes(timestamp3);
+    Event event4(cmdQ2.get(), 0, 0, 0);
+    event4.addTimestampPacketNodes(timestamp4);
+    Event event5(cmdQ2.get(), 0, 0, 0);
+    event5.addTimestampPacketNodes(timestamp5);
+
+    const cl_uint numEventsOnWaitlist = 5;
+    cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5};
+
+    EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
+    DispatchFlags flags;
+
+    auto sizeWithoutEvents = csr.getRequiredCmdStreamSize(flags, *device.get());
+
+    flags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, csr, OCLRT::CsrDependencies::DependenciesType::OutOfCsr);
+    auto sizeWithEvents = csr.getRequiredCmdStreamSize(flags, *device.get());
+
+    size_t extendedSize = sizeWithoutEvents + (numEventsOnWaitlist * (sizeof(typename FamilyType::MI_SEMAPHORE_WAIT) + sizeof(typename FamilyType::MI_ATOMIC)));
 
     EXPECT_EQ(sizeWithEvents, extendedSize);
 }

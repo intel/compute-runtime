@@ -80,7 +80,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programPipelineSelect(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programMediaSampler(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programStateSip(LinearStream &cmdStream, Device &device);
-    void handleEventsTimestampPacketTags(LinearStream &linearStream, DispatchFlags &dispatchFlags, CommandStreamReceiver &currentCsr);
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags);
     virtual void initPageTableManagerRegisters(LinearStream &csr){};
 

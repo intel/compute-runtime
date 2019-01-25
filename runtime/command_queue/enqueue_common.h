@@ -602,7 +602,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
     dispatchFlags.outOfOrderExecutionAllowed = !eventBuilder.getEvent() || getCommandStreamReceiver().isNTo1SubmissionModelEnabled();
     if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        dispatchFlags.outOfDeviceDependencies = &eventsRequest;
+        dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, getCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
     }
     dispatchFlags.numGrfRequired = numGrfRequired;
     dispatchFlags.specialPipelineSelectMode = specialPipelineSelectMode;

@@ -14,6 +14,7 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/csr_deps.h"
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/task_information.h"
 #include "runtime/mem_obj/mem_obj.h"
@@ -212,7 +213,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     dispatchFlags.preemptionMode = preemptionMode;
     dispatchFlags.mediaSamplerRequired = kernel->isVmeKernel();
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        dispatchFlags.outOfDeviceDependencies = &eventsRequest;
+        dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
     }
     dispatchFlags.specialPipelineSelectMode = kernel->requiresSpecialPipelineSelectMode();
 

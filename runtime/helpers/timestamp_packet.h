@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include "runtime/helpers/csr_deps.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/properties_helper.h"
+#include "runtime/utilities/tag_allocator.h"
 
 #include <cstdint>
 #include <array>
@@ -18,8 +20,6 @@
 namespace OCLRT {
 class CommandStreamReceiver;
 class LinearStream;
-template <typename TagType>
-struct TagNode;
 
 namespace TimestampPacketSizeControl {
 constexpr uint32_t preferedChunkCount = 16u;
@@ -79,23 +79,6 @@ class TimestampPacket {
 static_assert(((static_cast<uint32_t>(TimestampPacket::DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount + 1) * sizeof(uint32_t)) == sizeof(TimestampPacket),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
-struct TimestampPacketHelper {
-    template <typename GfxFamily>
-    static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TimestampPacket &timestampPacket) {
-        using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
-        auto compareAddress = timestampPacket.pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
-        auto dependenciesCountAddress = timestampPacket.pickImplicitDependenciesCountWriteAddress();
-
-        KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress, 1);
-
-        timestampPacket.incImplicitDependenciesCount();
-
-        KernelCommandsHelper<GfxFamily>::programMiAtomic(cmdStream, dependenciesCountAddress,
-                                                         MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
-                                                         MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
-    }
-};
-
 class TimestampPacketContainer : public NonCopyableOrMovableClass {
   public:
     using Node = TagNode<TimestampPacket>;
@@ -111,5 +94,41 @@ class TimestampPacketContainer : public NonCopyableOrMovableClass {
 
   protected:
     std::vector<Node *> timestampPacketNodes;
+};
+
+struct TimestampPacketHelper {
+    template <typename GfxFamily>
+    static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TimestampPacket &timestampPacket) {
+        using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
+        auto compareAddress = timestampPacket.pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+        auto dependenciesCountAddress = timestampPacket.pickImplicitDependenciesCountWriteAddress();
+
+        KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress, 1);
+
+        timestampPacket.incImplicitDependenciesCount();
+
+        KernelCommandsHelper<GfxFamily>::programMiAtomic(cmdStream, dependenciesCountAddress,
+                                                         MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
+                                                         MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
+    }
+
+    template <typename GfxFamily>
+    static void programCsrDependencies(LinearStream &cmdStream, const CsrDependencies &csrDependencies) {
+        for (auto timestampPacketContainer : csrDependencies) {
+            for (auto &node : timestampPacketContainer->peekNodes()) {
+                TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(cmdStream, *node->tag);
+            }
+        }
+    }
+
+    template <typename GfxFamily>
+    static size_t getRequiredCmdStreamSize(const CsrDependencies &csrDependencies) {
+        size_t totalNodesCount = 0;
+        for (auto timestampPacketContainer : csrDependencies) {
+            totalNodesCount += timestampPacketContainer->peekNodes().size();
+        }
+
+        return totalNodesCount * (sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT) + sizeof(typename GfxFamily::MI_ATOMIC));
+    }
 };
 } // namespace OCLRT

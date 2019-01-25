@@ -16,10 +16,11 @@
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/hw_helper.h"
+#include "runtime/helpers/options.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/state_base_address.h"
-#include "runtime/helpers/options.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -259,9 +260,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags, device));
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
-    if (dispatchFlags.outOfDeviceDependencies) {
-        handleEventsTimestampPacketTags(commandStreamCSR, dispatchFlags, *this);
-    }
+    TimestampPacketHelper::programCsrDependencies<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies);
+
     if (stallingPipeControlOnNextFlushRequired) {
         stallingPipeControlOnNextFlushRequired = false;
         auto stallingPipeControlCmd = commandStream.getSpaceForCmd<PIPE_CONTROL>();
@@ -645,9 +645,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (experimentalCmdBuffer.get() != nullptr) {
         size += experimentalCmdBuffer->getRequiredInjectionSize<GfxFamily>();
     }
-    if (dispatchFlags.outOfDeviceDependencies) {
-        size += dispatchFlags.outOfDeviceDependencies->numEventsInWaitList * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
-    }
+
+    size += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.csrDependencies);
+
     if (stallingPipeControlOnNextFlushRequired) {
         size += sizeof(typename GfxFamily::PIPE_CONTROL);
     }
@@ -785,25 +785,6 @@ void CommandStreamReceiverHw<GfxFamily>::resetKmdNotifyHelper(KmdNotifyHelper *n
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd) {
-}
-
-template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::handleEventsTimestampPacketTags(LinearStream &linearStream, DispatchFlags &dispatchFlags, CommandStreamReceiver &currentCsr) {
-    for (cl_uint i = 0; i < dispatchFlags.outOfDeviceDependencies->numEventsInWaitList; i++) {
-        auto event = castToObjectOrAbort<Event>(dispatchFlags.outOfDeviceDependencies->eventWaitList[i]);
-        if (event->isUserEvent()) {
-            continue;
-        }
-
-        auto timestampPacketContainer = event->getTimestampPacketNodes();
-        timestampPacketContainer->makeResident(currentCsr);
-
-        if (&event->getCommandQueue()->getCommandStreamReceiver() != &currentCsr) {
-            for (auto &node : timestampPacketContainer->peekNodes()) {
-                TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(linearStream, *node->tag);
-            }
-        }
-    }
 }
 
 template <typename GfxFamily>

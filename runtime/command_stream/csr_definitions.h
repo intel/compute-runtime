@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/memory_manager/memory_constants.h"
+#include "runtime/helpers/csr_deps.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/kernel/grf_config.h"
@@ -43,7 +44,7 @@ struct DispatchFlags {
     bool outOfOrderExecutionAllowed = false;
     FlushStampTrackingObj *flushStampReference = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
-    EventsRequest *outOfDeviceDependencies = nullptr;
+    CsrDependencies csrDependencies;
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
     bool specialPipelineSelectMode = false;
 };

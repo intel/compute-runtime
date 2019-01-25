@@ -91,13 +91,14 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     }
 
     if (commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchOnCsrWaitlistSemaphores(commandStream, commandQueue.getCommandStreamReceiver(),
-                                                                      numEventsInWaitList, eventWaitList);
+        CsrDependencies csrDeps;
+        csrDeps.fillFromEventsRequestAndMakeResident(EventsRequest(numEventsInWaitList, eventWaitList, nullptr),
+                                                     commandQueue.getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
         if (previousTimestampPacketNodes) {
-            for (auto &node : previousTimestampPacketNodes->peekNodes()) {
-                TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *node->tag);
-            }
+            csrDeps.push_back(previousTimestampPacketNodes);
         }
+
+        TimestampPacketHelper::programCsrDependencies<GfxFamily>(*commandStream, csrDeps);
     }
 
     dsh->align(KernelCommandsHelper<GfxFamily>::alignInterfaceDescriptorData);

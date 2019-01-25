@@ -362,21 +362,6 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
 }
 
 template <typename GfxFamily>
-inline void GpgpuWalkerHelper<GfxFamily>::dispatchOnCsrWaitlistSemaphores(LinearStream *linearStream, CommandStreamReceiver &currentCsr,
-                                                                          cl_uint numEventsInWaitList, const cl_event *eventWaitList) {
-    for (cl_uint i = 0; i < numEventsInWaitList; i++) {
-        auto event = castToObjectOrAbort<Event>(eventWaitList[i]);
-        if (event->isUserEvent() || (&event->getCommandQueue()->getCommandStreamReceiver() != &currentCsr)) {
-            continue;
-        }
-
-        for (auto &node : event->getTimestampPacketNodes()->peekNodes()) {
-            TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*linearStream, *node->tag);
-        }
-    }
-}
-
-template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(OCLRT::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
 }
 

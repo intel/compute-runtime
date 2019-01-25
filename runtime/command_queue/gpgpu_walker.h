@@ -201,9 +201,6 @@ class GpgpuWalkerHelper {
         IndirectHeap *ssh,
         IndirectHeap *dsh);
 
-    static void dispatchOnCsrWaitlistSemaphores(LinearStream *linearStream, CommandStreamReceiver &currentCsr,
-                                                cl_uint numEventsInWaitList, const cl_event *eventWaitList);
-
     static void adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxFamily> *storeCmd);
 };
 
