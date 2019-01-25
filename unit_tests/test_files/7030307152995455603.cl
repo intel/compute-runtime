@@ -231,7 +231,7 @@ __kernel void CopyBufferToImage3dBytes(__global uchar *src,
     int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
     uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
 
-    write_imageui(output, dstCoord, (__global uint4)(*(src + LOffset + x), 0, 0, 1));
+    write_imageui(output, dstCoord, (uint4)(*(src + LOffset + x), 0, 0, 1));
 }
 
 __kernel void CopyBufferToImage3d2Bytes(__global uchar *src,
@@ -320,7 +320,7 @@ __kernel void CopyBufferToImage3d8Bytes(__global uchar *src,
         c = *((__global uint2*)(src + LOffset + x * 8));
     }
 
-    write_imageui(output, dstCoord, (__global uint4)(c.x, c.y, 0, 1));
+    write_imageui(output, dstCoord, (uint4)(c.x, c.y, 0, 1));
 }
 
 __kernel void CopyBufferToImage3d16Bytes(__global uchar *src,
