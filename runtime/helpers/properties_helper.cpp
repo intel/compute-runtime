@@ -41,7 +41,7 @@ TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, 
 }
 
 void *TransferProperties::getCpuPtrForReadWrite() {
-    return ptrOffset(lockedPtr ? lockedPtr : memObj->getCpuAddressForMemoryTransfer(), offset[0]);
+    return ptrOffset(lockedPtr ? ptrOffset(lockedPtr, memObj->getOffset()) : memObj->getCpuAddressForMemoryTransfer(), offset[0]);
 }
 
 } // namespace OCLRT

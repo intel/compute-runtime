@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ class MockBufferStorage {
 class MockBuffer : public MockBufferStorage, public Buffer {
   public:
     using Buffer::magic;
+    using Buffer::offset;
     using MockBufferStorage::device;
 
     MockBuffer(GraphicsAllocation &alloc)
