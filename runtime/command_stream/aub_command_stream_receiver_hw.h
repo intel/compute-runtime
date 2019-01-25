@@ -110,6 +110,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     size_t getPreferredTagPoolSize() const override { return 1; }
 
   protected:
+    constexpr static uint32_t getMaskAndValueForPollForCompletion();
+
     bool dumpAubNonWritable = false;
     ExternalAllocationsContainer externalAllocations;
 };

@@ -569,16 +569,21 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineInstanceT en
         return;
     }
 
-    typedef typename AubMemDump::CmdServicesMemTraceRegisterPoll CmdServicesMemTraceRegisterPoll;
-
-    auto mmioBase = this->getCsTraits(engineInstance).mmioBase;
-    bool pollNotEqual = false;
+    const auto mmioBase = this->getCsTraits(engineInstance).mmioBase;
+    const bool pollNotEqual = false;
+    const uint32_t mask = getMaskAndValueForPollForCompletion();
+    const uint32_t value = mask;
     stream->registerPoll(
         AubMemDump::computeRegisterOffset(mmioBase, 0x2234), //EXECLIST_STATUS
-        0x100,
-        0x100,
+        mask,
+        value,
         pollNotEqual,
-        CmdServicesMemTraceRegisterPoll::TimeoutActionValues::Abort);
+        AubMemDump::CmdServicesMemTraceRegisterPoll::TimeoutActionValues::Abort);
+}
+
+template <typename GfxFamily>
+constexpr uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getMaskAndValueForPollForCompletion() {
+    return 0x100;
 }
 
 template <typename GfxFamily>
