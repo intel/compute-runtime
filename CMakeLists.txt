@@ -62,7 +62,7 @@ message(STATUS "${CMAKE_BUILD_TYPE} build configuration")
 
 # Set the runtime source directory
 if(NOT DEFINED IGDRCL_SOURCE_DIR)
-	set(IGDRCL_SOURCE_DIR ${CMAKE_SOURCE_DIR})
+	set(IGDRCL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 # Set our build directory
