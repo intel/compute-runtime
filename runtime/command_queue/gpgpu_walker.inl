@@ -362,16 +362,16 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
 }
 
 template <typename GfxFamily>
-inline void GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(LinearStream *commandStream, Device &currentDevice,
-                                                                             cl_uint numEventsInWaitList, const cl_event *eventWaitList) {
+inline void GpgpuWalkerHelper<GfxFamily>::dispatchOnCsrWaitlistSemaphores(LinearStream *linearStream, CommandStreamReceiver &currentCsr,
+                                                                          cl_uint numEventsInWaitList, const cl_event *eventWaitList) {
     for (cl_uint i = 0; i < numEventsInWaitList; i++) {
         auto event = castToObjectOrAbort<Event>(eventWaitList[i]);
-        if (event->isUserEvent() || (&event->getCommandQueue()->getDevice() != &currentDevice)) {
+        if (event->isUserEvent() || (&event->getCommandQueue()->getCommandStreamReceiver() != &currentCsr)) {
             continue;
         }
 
         for (auto &node : event->getTimestampPacketNodes()->peekNodes()) {
-            TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *node->tag);
+            TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*linearStream, *node->tag);
         }
     }
 }

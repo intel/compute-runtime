@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_queue/command_queue_hw.h"
+#include "unit_tests/libult/ult_command_stream_receiver.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // MockCommandQueue - Core implementation
@@ -74,6 +75,10 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     MockCommandQueueHw(Context *context,
                        Device *device,
                        cl_queue_properties *properties) : BaseClass(context, device, properties) {
+    }
+
+    UltCommandStreamReceiver<GfxFamily> &getUltCommandStreamReceiver() {
+        return reinterpret_cast<UltCommandStreamReceiver<GfxFamily> &>(*BaseClass::engine->commandStreamReceiver);
     }
 
     cl_int enqueueWriteImage(Image *dstImage,

@@ -487,6 +487,62 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     }
 }
 
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFromOneDeviceWhenEnqueueingThenProgramSemaphoresOnCsrStream) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+    // Create second (LOW_PRIORITY) queue on the same device
+    cl_queue_properties props[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), props);
+    cmdQ2->getUltCommandStreamReceiver().timestampPacketWriteEnabled = true;
+
+    const cl_uint eventsOnWaitlist = 6;
+    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp6(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+
+    UserEvent event1;
+    event1.setStatus(CL_COMPLETE);
+    UserEvent event2;
+    event2.setStatus(CL_COMPLETE);
+    Event event3(cmdQ1.get(), 0, 0, 0);
+    event3.addTimestampPacketNodes(timestamp3);
+    Event event4(cmdQ2.get(), 0, 0, 0);
+    event4.addTimestampPacketNodes(timestamp4);
+    Event event5(cmdQ1.get(), 0, 0, 0);
+    event5.addTimestampPacketNodes(timestamp5);
+    Event event6(cmdQ2.get(), 0, 0, 0);
+    event6.addTimestampPacketNodes(timestamp6);
+
+    cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
+
+    cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
+    auto &cmdStream = device->getUltCommandStreamReceiver<FamilyType>().commandStream;
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+
+    auto it = hwParser.cmdList.begin();
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp4.getNode(0)->tag);
+    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*it++), timestamp4.getNode(0)->tag);
+    verifyDependencyCounterValues(event4.getTimestampPacketNodes(), 1);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp6.getNode(0)->tag);
+    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*it++), timestamp6.getNode(0)->tag);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp6.getNode(1)->tag);
+    verifyMiAtomic(genCmdCast<MI_ATOMIC *>(*it++), timestamp6.getNode(1)->tag);
+    verifyDependencyCounterValues(event6.getTimestampPacketNodes(), 1);
+
+    while (it != hwParser.cmdList.end()) {
+        EXPECT_EQ(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));
+        it++;
+    }
+}
+
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockedThenProgramSemaphoresOnCsrStreamOnFlush) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
@@ -497,6 +553,48 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlo
 
     auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
+
+    MockTimestampPacketContainer timestamp0(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    UserEvent userEvent;
+    Event event0(cmdQ1.get(), 0, 0, 0);
+    event0.addTimestampPacketNodes(timestamp0);
+    Event event1(cmdQ2.get(), 0, 0, 0);
+    event1.addTimestampPacketNodes(timestamp1);
+
+    cl_event waitlist[] = {&userEvent, &event0, &event1};
+    cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 3, waitlist, nullptr);
+    auto &cmdStream = device->getUltCommandStreamReceiver<FamilyType>().commandStream;
+    EXPECT_EQ(0u, cmdStream.getUsed());
+    userEvent.setStatus(CL_COMPLETE);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+
+    auto it = hwParser.cmdList.begin();
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp1.getNode(0)->tag);
+    verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*it++), timestamp1.getNode(0)->tag);
+    verifyDependencyCounterValues(event1.getTimestampPacketNodes(), 1);
+
+    while (it != hwParser.cmdList.end()) {
+        EXPECT_EQ(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));
+        it++;
+    }
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFromOneDeviceWhenEnqueueingBlockedThenProgramSemaphoresOnCsrStreamOnFlush) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+    // Create second (LOW_PRIORITY) queue on the same device
+    cl_queue_properties props[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), props);
+    cmdQ2->getUltCommandStreamReceiver().timestampPacketWriteEnabled = true;
 
     MockTimestampPacketContainer timestamp0(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
     MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
@@ -556,6 +654,86 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
     Event event5(mockCmdQ.get(), 0, 0, 0);
     event5.addTimestampPacketNodes(timestamp5);
     Event event6(&mockCmdQ2, 0, 0, 0);
+    event6.addTimestampPacketNodes(timestamp6);
+
+    cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
+
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *mockCmdQ,
+        multiDispatchInfo,
+        eventsOnWaitlist,
+        waitlist,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        device->getPreemptionMode(),
+        false);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+
+    uint32_t semaphoresFound = 0;
+    uint32_t walkersFound = 0;
+
+    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
+        if (semaphoreCmd) {
+            semaphoresFound++;
+            if (semaphoresFound == 1) {
+                verifySemaphore(semaphoreCmd, timestamp3.getNode(0)->tag);
+                verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp3.getNode(0)->tag);
+                verifyDependencyCounterValues(event3.getTimestampPacketNodes(), 1);
+            } else if (semaphoresFound == 2) {
+                verifySemaphore(semaphoreCmd, timestamp5.getNode(0)->tag);
+                verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp5.getNode(0)->tag);
+                verifyDependencyCounterValues(event5.getTimestampPacketNodes(), 1);
+            } else if (semaphoresFound == 3) {
+                verifySemaphore(semaphoreCmd, timestamp5.getNode(1)->tag);
+                verifyMiAtomic(genCmdCast<typename FamilyType::MI_ATOMIC *>(*++it), timestamp5.getNode(1)->tag);
+                verifyDependencyCounterValues(event5.getTimestampPacketNodes(), 1);
+            }
+        }
+        if (genCmdCast<WALKER *>(*it)) {
+            walkersFound++;
+            EXPECT_EQ(3u, semaphoresFound); // semaphores from events programmed before walker
+        }
+    }
+    EXPECT_EQ(1u, walkersFound);
+    EXPECT_EQ(3u, semaphoresFound); // total number of semaphores found in cmdList
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFromOneDeviceWhenDispatchingThenProgramSemaphoresForWaitlist) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using WALKER = WALKER_TYPE<FamilyType>;
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel->mockKernel}));
+
+    // Create second (LOW_PRIORITY) queue on the same device
+    cl_queue_properties props[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+    auto mockCmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), props);
+    mockCmdQ2->getUltCommandStreamReceiver().timestampPacketWriteEnabled = true;
+
+    auto &cmdStream = mockCmdQ->getCS(0);
+
+    const cl_uint eventsOnWaitlist = 6;
+    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestamp6(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    UserEvent event1;
+    UserEvent event2;
+    Event event3(mockCmdQ.get(), 0, 0, 0);
+    event3.addTimestampPacketNodes(timestamp3);
+    Event event4(mockCmdQ2.get(), 0, 0, 0);
+    event4.addTimestampPacketNodes(timestamp4);
+    Event event5(mockCmdQ.get(), 0, 0, 0);
+    event5.addTimestampPacketNodes(timestamp5);
+    Event event6(mockCmdQ2.get(), 0, 0, 0);
     event6.addTimestampPacketNodes(timestamp6);
 
     cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
@@ -756,6 +934,42 @@ HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueu
 
     auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
+
+    MockTimestampPacketContainer node1(*ultCsr.getTimestampPacketAllocator(), 0);
+    MockTimestampPacketContainer node2(*ultCsr.getTimestampPacketAllocator(), 0);
+
+    auto tagNode1 = tagAllocator.getTag();
+    node1.add(tagNode1);
+    auto tagNode2 = tagAllocator.getTag();
+    node2.add(tagNode2);
+
+    Event event0(cmdQ1.get(), 0, 0, 0);
+    event0.addTimestampPacketNodes(node1);
+    Event event1(cmdQ2.get(), 0, 0, 0);
+    event1.addTimestampPacketNodes(node2);
+
+    cl_event waitlist[] = {&event0, &event1};
+
+    cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 2, waitlist, nullptr);
+
+    EXPECT_NE(tagNode1->getGraphicsAllocation(), tagNode2->getGraphicsAllocation());
+    EXPECT_TRUE(ultCsr.isMadeResident(tagNode1->getGraphicsAllocation()));
+    EXPECT_TRUE(ultCsr.isMadeResident(tagNode2->getGraphicsAllocation()));
+}
+
+HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentCSRsWhenEnqueueingThenMakeAllTimestampsResident) {
+    TagAllocator<TimestampPacket> tagAllocator(executionEnvironment.memoryManager.get(), 1, 1);
+
+    auto &ultCsr = device->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.timestampPacketWriteEnabled = true;
+    ultCsr.storeMakeResidentAllocations = true;
+
+    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+    // Create second (LOW_PRIORITY) queue on the same device
+    cl_queue_properties props[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), props);
+    cmdQ2->getUltCommandStreamReceiver().timestampPacketWriteEnabled = true;
 
     MockTimestampPacketContainer node1(*ultCsr.getTimestampPacketAllocator(), 0);
     MockTimestampPacketContainer node2(*ultCsr.getTimestampPacketAllocator(), 0);

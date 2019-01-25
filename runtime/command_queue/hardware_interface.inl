@@ -91,8 +91,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     }
 
     if (commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(commandStream, commandQueue.getDevice(),
-                                                                         numEventsInWaitList, eventWaitList);
+        GpgpuWalkerHelper<GfxFamily>::dispatchOnCsrWaitlistSemaphores(commandStream, commandQueue.getCommandStreamReceiver(),
+                                                                      numEventsInWaitList, eventWaitList);
         if (previousTimestampPacketNodes) {
             for (auto &node : previousTimestampPacketNodes->peekNodes()) {
                 TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *node->tag);

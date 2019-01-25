@@ -260,7 +260,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
     if (dispatchFlags.outOfDeviceDependencies) {
-        handleEventsTimestampPacketTags(commandStreamCSR, dispatchFlags, device);
+        handleEventsTimestampPacketTags(commandStreamCSR, dispatchFlags, *this);
     }
     if (stallingPipeControlOnNextFlushRequired) {
         stallingPipeControlOnNextFlushRequired = false;
@@ -784,7 +784,7 @@ void CommandStreamReceiverHw<GfxFamily>::addClearSLMWorkAround(typename GfxFamil
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::handleEventsTimestampPacketTags(LinearStream &csr, DispatchFlags &dispatchFlags, Device &currentDevice) {
+void CommandStreamReceiverHw<GfxFamily>::handleEventsTimestampPacketTags(LinearStream &linearStream, DispatchFlags &dispatchFlags, CommandStreamReceiver &currentCsr) {
     for (cl_uint i = 0; i < dispatchFlags.outOfDeviceDependencies->numEventsInWaitList; i++) {
         auto event = castToObjectOrAbort<Event>(dispatchFlags.outOfDeviceDependencies->eventWaitList[i]);
         if (event->isUserEvent()) {
@@ -792,11 +792,11 @@ void CommandStreamReceiverHw<GfxFamily>::handleEventsTimestampPacketTags(LinearS
         }
 
         auto timestampPacketContainer = event->getTimestampPacketNodes();
-        timestampPacketContainer->makeResident(*this);
+        timestampPacketContainer->makeResident(currentCsr);
 
-        if (&event->getCommandQueue()->getDevice() != &currentDevice) {
+        if (&event->getCommandQueue()->getCommandStreamReceiver() != &currentCsr) {
             for (auto &node : timestampPacketContainer->peekNodes()) {
-                TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(csr, *node->tag);
+                TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(linearStream, *node->tag);
             }
         }
     }
