@@ -65,7 +65,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode) {
     surfaceState->setVerticalLineStride(0);
     surfaceState->setVerticalLineStrideOffset(0);
     if ((isAligned<MemoryConstants::cacheLineSize>(bufferAddress) && isAligned<MemoryConstants::cacheLineSize>(bufferSize)) ||
-        ((getFlags() & CL_MEM_READ_ONLY)) != 0) {
+        ((getFlags() & CL_MEM_READ_ONLY)) != 0 || !this->isMemObjZeroCopy()) {
         surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
     } else {
         surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
