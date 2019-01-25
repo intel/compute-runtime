@@ -133,8 +133,7 @@ HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -182,8 +181,7 @@ HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -213,8 +211,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithDefaultLwsAlgorithm)
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             nullptr,
             nullptr,
             nullptr,
@@ -245,8 +242,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithSquaredLwsAlgorithm)
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             nullptr,
             nullptr,
             nullptr,
@@ -275,8 +271,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithNDLwsAlgorithm) {
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             nullptr,
             nullptr,
             nullptr,
@@ -306,8 +301,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithOldLwsAlgorithm) {
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             nullptr,
             nullptr,
             nullptr,
@@ -337,8 +331,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNumWorkGroups) {
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -370,8 +363,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeND) {
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -402,8 +394,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeND) {
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -435,8 +426,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeSquared) {
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -468,8 +458,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeSquaredAn
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -499,8 +488,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSize) {
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -533,8 +521,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizes) {
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -571,8 +558,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizeForSplitKernel) {
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -623,8 +609,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizesForSplitWalker) {
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -679,8 +664,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerDoesntConsumeCommandStreamWhenQueueIs
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         &blockedCommandsData,
         nullptr,
         nullptr,
@@ -720,8 +704,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelW
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         &blockedCommandsData,
         nullptr,
         nullptr,
@@ -759,8 +742,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromMdiWhen
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         &blockedCommandsData,
         nullptr,
         nullptr,
@@ -793,8 +775,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfo) {
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -836,8 +817,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -922,8 +902,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -969,8 +948,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -1021,8 +999,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,
@@ -1071,7 +1048,7 @@ HWTEST_F(DispatchWalkerTest, givenMultiDispatchWhenWhitelistedRegisterForCoheren
     DispatchInfo di2(&kernel, 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0));
     MockMultiDispatchInfo multiDispatchInfo(std::vector<DispatchInfo *>({&di1, &di2}));
 
-    HardwareInterface<FamilyType>::dispatchWalker(*pCmdQ, multiDispatchInfo, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, pDevice->getPreemptionMode(), false);
+    HardwareInterface<FamilyType>::dispatchWalker(*pCmdQ, multiDispatchInfo, CsrDependencies(), nullptr, nullptr, nullptr, nullptr, nullptr, pDevice->getPreemptionMode(), false);
 
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
 
@@ -1127,8 +1104,7 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxTranslationRequiredThenPipeContro
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
-        0,
-        nullptr,
+        CsrDependencies(),
         nullptr,
         nullptr,
         nullptr,

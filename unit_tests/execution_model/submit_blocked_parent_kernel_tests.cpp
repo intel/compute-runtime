@@ -423,8 +423,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommand
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             &blockedCommandsData,
             nullptr,
             nullptr,

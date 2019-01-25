@@ -37,8 +37,7 @@ class HardwareInterface {
     static void dispatchWalker(
         CommandQueue &commandQueue,
         const MultiDispatchInfo &multiDispatchInfo,
-        cl_uint numEventsInWaitList,
-        const cl_event *eventWaitList,
+        const CsrDependencies &csrDependencies,
         KernelOperation **blockedCommandsData,
         TagNode<HwTimeStamps> *hwTimeStamps,
         HwPerfCounter *hwPerfCounter,

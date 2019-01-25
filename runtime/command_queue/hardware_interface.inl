@@ -24,8 +24,7 @@ template <typename GfxFamily>
 void HardwareInterface<GfxFamily>::dispatchWalker(
     CommandQueue &commandQueue,
     const MultiDispatchInfo &multiDispatchInfo,
-    cl_uint numEventsInWaitList,
-    const cl_event *eventWaitList,
+    const CsrDependencies &csrDependencies,
     KernelOperation **blockedCommandsData,
     TagNode<HwTimeStamps> *hwTimeStamps,
     HwPerfCounter *hwPerfCounter,
@@ -90,16 +89,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         ssh = &getIndirectHeap<GfxFamily, IndirectHeap::SURFACE_STATE>(commandQueue, multiDispatchInfo);
     }
 
-    if (commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        CsrDependencies csrDeps;
-        csrDeps.fillFromEventsRequestAndMakeResident(EventsRequest(numEventsInWaitList, eventWaitList, nullptr),
-                                                     commandQueue.getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
-        if (previousTimestampPacketNodes) {
-            csrDeps.push_back(previousTimestampPacketNodes);
-        }
-
-        TimestampPacketHelper::programCsrDependencies<GfxFamily>(*commandStream, csrDeps);
-    }
+    TimestampPacketHelper::programCsrDependencies<GfxFamily>(*commandStream, csrDependencies);
 
     dsh->align(KernelCommandsHelper<GfxFamily>::alignInterfaceDescriptorData);
 

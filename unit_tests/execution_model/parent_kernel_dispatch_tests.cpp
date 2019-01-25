@@ -46,8 +46,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDev
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             &blockedCommandsData,
             nullptr,
             nullptr,
@@ -103,8 +102,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDef
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             &blockedCommandsData,
             nullptr,
             nullptr,
@@ -130,8 +128,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenSSH
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             &blockedCommandsData,
             nullptr,
             nullptr,
@@ -167,8 +164,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsBlockedThenSSHSiz
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             &blockedCommandsData,
             nullptr,
             nullptr,
@@ -234,7 +230,7 @@ HWTEST_F(ParentKernelCommandStreamFixture, GivenDispatchInfoWithParentKernelWhen
 
         size_t totalKernelSize = alignUp(numOfKernels * size, MemoryConstants::pageSize);
 
-        LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, 0, false, false, multiDispatchInfo);
+        LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(), false, false, multiDispatchInfo);
 
         EXPECT_LT(totalKernelSize, commandStream.getMaxAvailableSpace());
 
@@ -269,8 +265,7 @@ HWTEST_F(MockParentKernelDispatch, GivenBlockedQueueWhenParentKernelIsDispatched
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             &blockedCommandsData,
             nullptr,
             nullptr,
@@ -304,8 +299,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispa
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             &blockedCommandsData,
             nullptr,
             nullptr,
@@ -363,8 +357,7 @@ HWTEST_F(MockParentKernelDispatch, GivenUsedSSHHeapWhenParentKernelIsDispatchedT
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             &blockedCommandsData,
             nullptr,
             nullptr,
@@ -400,8 +393,7 @@ HWTEST_F(MockParentKernelDispatch, GivenNotUsedSSHHeapWhenParentKernelIsDispatch
         HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
-            0,
-            nullptr,
+            CsrDependencies(),
             &blockedCommandsData,
             nullptr,
             nullptr,

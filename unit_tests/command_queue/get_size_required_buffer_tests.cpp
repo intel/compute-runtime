@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueFillBuffer) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_FILL_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_FILL_BUFFER, CsrDependencies(), false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -147,7 +147,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueCopyBuffer) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_COPY_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_COPY_BUFFER, CsrDependencies(), false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -199,7 +199,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueReadBufferNonBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_READ_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_READ_BUFFER, CsrDependencies(), false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -252,7 +252,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueReadBufferBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_READ_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_READ_BUFFER, CsrDependencies(), false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -305,7 +305,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueWriteBufferNonBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_WRITE_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_WRITE_BUFFER, CsrDependencies(), false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -355,7 +355,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueWriteBufferBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_WRITE_BUFFER, 0, false, false, *pCmdQ, multiDispatchInfo);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_WRITE_BUFFER, CsrDependencies(), false, false, *pCmdQ, multiDispatchInfo);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);

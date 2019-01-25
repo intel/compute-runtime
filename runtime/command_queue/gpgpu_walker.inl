@@ -378,7 +378,7 @@ void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxF
 }
 
 template <typename GfxFamily>
-size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, cl_uint numEventsInWaitList, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
+size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
     size_t expectedSizeCS = 0;
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     if (multiDispatchInfo.peekMainKernel() && multiDispatchInfo.peekMainKernel()->isAuxTranslationRequired()) {
@@ -395,14 +395,8 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, &scheduler);
     }
     if (commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        auto semaphoreSize = sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
-        auto atomicSize = sizeof(typename GfxFamily::MI_ATOMIC);
-
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
-        expectedSizeCS += numEventsInWaitList * (semaphoreSize + atomicSize);
-        if (!commandQueue.isOOQEnabled()) {
-            expectedSizeCS += semaphoreSize + atomicSize;
-        }
+        expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps);
     }
     return expectedSizeCS;
 }

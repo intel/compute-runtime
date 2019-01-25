@@ -182,9 +182,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     auto taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, numEventsInWaitList, eventWaitList, blockQueue, commandType);
 
-    auto &commandStream = getCommandStream<GfxFamily, commandType>(*this, numEventsInWaitList, profilingRequired, perfCountersRequired, multiDispatchInfo);
-    auto commandStreamStart = commandStream.getUsed();
-
     DBG_LOG(EventsDebugEnable, "blockQueue", blockQueue, "virtualEvent", virtualEvent, "taskLevel", taskLevel);
 
     if (parentKernel && !blockQueue) {
@@ -204,6 +201,19 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     TimestampPacketContainer previousTimestampPacketNodes;
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+    CsrDependencies csrDeps;
+
+    if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+
+        if (!multiDispatchInfo.empty()) {
+            obtainNewTimestampPacketNodes(multiDispatchInfo.size(), previousTimestampPacketNodes);
+            csrDeps.push_back(&previousTimestampPacketNodes);
+        }
+    }
+
+    auto &commandStream = getCommandStream<GfxFamily, commandType>(*this, csrDeps, profilingRequired, perfCountersRequired, multiDispatchInfo);
+    auto commandStreamStart = commandStream.getUsed();
 
     if (multiDispatchInfo.empty() == false) {
         HwPerfCounter *hwPerfCounter = nullptr;
@@ -218,10 +228,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             if (multiDispatchInfo.peekMainKernel()->getProgram()->isKernelDebugEnabled()) {
                 setupDebugSurface(multiDispatchInfo.peekMainKernel());
             }
-        }
-
-        if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-            obtainNewTimestampPacketNodes(multiDispatchInfo.size(), previousTimestampPacketNodes);
         }
 
         if (eventBuilder.getEvent()) {
@@ -253,8 +259,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         HardwareInterface<GfxFamily>::dispatchWalker(
             *this,
             multiDispatchInfo,
-            numEventsInWaitList,
-            eventWaitList,
+            csrDeps,
             &blockedCommandsData,
             hwTimeStamps,
             hwPerfCounter,
