@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,8 @@ struct StateBaseAddressHelper {
         const IndirectHeap &ioh,
         const IndirectHeap &ssh,
         uint64_t generalStateBase,
-        uint64_t internalHeapBase);
+        uint64_t internalHeapBase,
+        GmmHelper *gmmHelper);
 
     static void programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, size_t stateBaseAddressCmdOffset,
                                                GmmHelper *gmmHelper);
