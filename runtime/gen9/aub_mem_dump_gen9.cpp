@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "aub_mapper.h"
+#include "runtime/aub_mem_dump/aub_alloc_dump.inl"
 #include "runtime/aub_mem_dump/aub_mem_dump.inl"
+#include "runtime/helpers/hw_helper.h"
 
 namespace AubMemDump {
 
@@ -74,3 +76,19 @@ const MMIOList *AUBFamilyMapper<Family>::perEngineMMIO[EngineType::NUM_ENGINES] 
     &mmioListVECS};
 
 } // namespace OCLRT
+
+namespace AubAllocDump {
+using namespace OCLRT;
+
+template uint32_t getImageSurfaceTypeFromGmmResourceType<Family>(GMM_RESOURCE_TYPE gmmResourceType);
+
+template void dumpBufferInBinFormat<Family>(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
+
+template void dumpImageInBmpFormat<Family>(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
+
+template void dumpBufferInTreFormat<Family>(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
+
+template void dumpImageInTreFormat<Family>(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
+
+template void dumpAllocation<Family>(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
+} // namespace AubAllocDump

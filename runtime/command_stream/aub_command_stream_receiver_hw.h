@@ -64,6 +64,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     uint32_t getDumpHandle();
     MOCKABLE_VIRTUAL void addContextToken(uint32_t dumpHandle);
+    void dumpAllocation(GraphicsAllocation &gfxAllocation);
 
     static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment);
 

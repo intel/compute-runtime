@@ -20,6 +20,7 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
     void freeMemory(uint64_t gfxAddress, size_t size) override { freeMemoryCalled = true; }
     void expectMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t compareOperation) override { expectMemoryCalled = true; }
     void readMemory(uint64_t gfxAddress, void *memory, size_t size) override { readMemoryCalled = true; };
+    void dumpBufferBIN(uint64_t gfxAddress, size_t size) override { dumpBufferBINCalled = true; };
 
     bool initializeCalled = false;
     bool pollForCompletionCalled = false;
@@ -28,6 +29,7 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
     bool freeMemoryCalled = false;
     bool expectMemoryCalled = false;
     bool readMemoryCalled = false;
+    bool dumpBufferBINCalled = false;
 
     uint32_t deviceIndex = 0;
     uint32_t engineIndex = 0;

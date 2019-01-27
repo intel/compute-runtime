@@ -1,11 +1,13 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(RUNTIME_SRCS_AUB_MEM_DUMP
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_alloc_dump.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_alloc_dump.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_data.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_header.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump.cpp

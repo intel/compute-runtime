@@ -16,6 +16,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_banks.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -218,7 +219,7 @@ template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
     if (hardwareContext) {
         if (batchBufferSize) {
-            hardwareContext->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank);
+            hardwareContext->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
         }
         return;
     }
@@ -366,7 +367,7 @@ template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) {
     if (hardwareContext) {
         int hint = AubMemDump::DataTypeHintValues::TraceNotype;
-        hardwareContext->writeMemory(gpuAddress, cpuAddress, size, memoryBank, hint);
+        hardwareContext->writeMemory(gpuAddress, cpuAddress, size, memoryBank, hint, MemoryConstants::pageSize64k);
         return;
     }
 

@@ -7,6 +7,8 @@
 
 #include "hw_cmds.h"
 #include "runtime/aub/aub_helper.h"
+#include "runtime/aub_mem_dump/aub_alloc_dump.h"
+#include "runtime/aub_mem_dump/aub_alloc_dump.inl"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_stream_provider.h"
 #include "runtime/command_stream/aub_subcapture.h"
@@ -21,6 +23,7 @@
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_banks.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
@@ -407,7 +410,7 @@ template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
     if (hardwareContext) {
         if (batchBufferSize) {
-            hardwareContext->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank);
+            hardwareContext->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
         }
         return;
     }
@@ -605,7 +608,7 @@ template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) {
     if (aubManager) {
         int hint = AubMemDump::DataTypeHintValues::TraceNotype;
-        aubManager->writeMemory(gpuAddress, cpuAddress, size, memoryBank, hint);
+        aubManager->writeMemory(gpuAddress, cpuAddress, size, memoryBank, hint, MemoryConstants::pageSize64k);
         return;
     }
 
@@ -739,8 +742,32 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 }
 
 template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &gfxAllocation) {
+    if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
+        if (!gfxAllocation.isAllocDumpable()) {
+            return;
+        }
+        gfxAllocation.setAllocDumpable(false);
+    }
+
+    if (hardwareContext) {
+        if (AubAllocDump::isWritableBuffer(gfxAllocation)) {
+            if (0 == DebugManager.flags.AUBDumpBufferFormat.get().compare("BIN")) {
+                auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
+                auto size = gfxAllocation.getUnderlyingBufferSize();
+                hardwareContext->dumpBufferBIN(gpuAddress, size);
+            }
+        }
+        return;
+    }
+
+    AubAllocDump::dumpAllocation<GfxFamily>(gfxAllocation, getAubStream(), getDumpHandle());
+}
+
+template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isResident(this->osContext->getContextId())) {
+        dumpAllocation(gfxAllocation);
         this->getEvictionAllocations().push_back(&gfxAllocation);
         gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
     }

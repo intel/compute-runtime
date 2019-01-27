@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,8 +30,15 @@
 namespace OCLRT {
 template <typename Family>
 void CommandQueueHw<Family>::notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead) {
+    if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
+        buffer->getGraphicsAllocation()->setAllocDumpable(blockingRead);
+        buffer->forceDisallowCPUCopy = blockingRead;
+    }
 }
 template <typename Family>
 void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingRead) {
+    if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
+        image->getGraphicsAllocation()->setAllocDumpable(blockingRead);
+    }
 }
 } // namespace OCLRT
