@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@
     if (expression) {                                  \
         OCLRT::abortUnrecoverable(__LINE__, __FILE__); \
     }
+
+#define UNREACHABLE(...) std::abort()
 
 #ifndef DEBUG_BREAK_IF
 #ifdef _DEBUG

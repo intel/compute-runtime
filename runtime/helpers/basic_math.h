@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@
 namespace OCLRT {
 namespace Math {
 
-inline uint32_t nextPowerOfTwo(uint32_t value) {
+constexpr uint32_t nextPowerOfTwo(uint32_t value) {
     --value;
     value |= value >> 1;
     value |= value >> 2;
@@ -31,12 +31,34 @@ inline uint32_t nextPowerOfTwo(uint32_t value) {
     return value;
 }
 
-inline uint32_t prevPowerOfTwo(uint32_t value) {
+constexpr uint64_t nextPowerOfTwo(uint64_t value) {
+    --value;
     value |= value >> 1;
     value |= value >> 2;
     value |= value >> 4;
     value |= value >> 8;
     value |= value >> 16;
+    value |= value >> 32;
+    ++value;
+    return value;
+}
+
+constexpr uint32_t prevPowerOfTwo(uint32_t value) {
+    value |= value >> 1;
+    value |= value >> 2;
+    value |= value >> 4;
+    value |= value >> 8;
+    value |= value >> 16;
+    return (value - (value >> 1));
+}
+
+constexpr uint64_t prevPowerOfTwo(uint64_t value) {
+    value |= value >> 1;
+    value |= value >> 2;
+    value |= value >> 4;
+    value |= value >> 8;
+    value |= value >> 16;
+    value |= value >> 32;
     return (value - (value >> 1));
 }
 
@@ -49,7 +71,7 @@ inline uint32_t getMinLsbSet(uint32_t value) {
     return multiplyDeBruijnBitPosition[static_cast<uint32_t>(value * 0x077CB531U) >> 27];
 }
 
-inline uint32_t log2(uint32_t value) {
+constexpr uint32_t log2(uint32_t value) {
     uint32_t exponent = 0u;
     uint32_t startVal = value;
     if (value == 0) {
@@ -65,7 +87,7 @@ inline uint32_t log2(uint32_t value) {
     return exponent;
 }
 
-inline uint64_t log2(uint64_t value) {
+constexpr uint64_t log2(uint64_t value) {
     uint64_t exponent = 0;
     uint64_t startVal = value;
     if (value == 0) {
@@ -141,7 +163,7 @@ inline bool isDivisableByPowerOfTwoDivisor(uint32_t number, uint32_t divisor) {
         return false;
 }
 
-inline size_t computeTotalElementsCount(const Vec3<size_t> &inputVector) {
+constexpr size_t computeTotalElementsCount(const Vec3<size_t> &inputVector) {
     size_t minElementCount = 1;
     auto xDim = std::max(minElementCount, inputVector.x);
     auto yDim = std::max(minElementCount, inputVector.y);
@@ -150,13 +172,28 @@ inline size_t computeTotalElementsCount(const Vec3<size_t> &inputVector) {
 }
 
 template <typename T>
-bool isPow2(T val) {
+constexpr bool isPow2(T val) {
     if (val != 0) {
         if ((val & (val - 1)) == 0) {
             return true;
         }
     }
     return false;
+}
+
+template <typename T>
+constexpr T ffs(T v) {
+    if (v == 0) {
+        return std::numeric_limits<T>::max();
+    }
+
+    for (T i = 0; i < sizeof(T) * 8; ++i) {
+        if (0 != (v & (1ULL << i))) {
+            return i;
+        }
+    }
+
+    UNREACHABLE("Either v==0 or any of bits is set");
 }
 
 } // namespace Math
