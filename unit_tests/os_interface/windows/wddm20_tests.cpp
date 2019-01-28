@@ -19,6 +19,7 @@
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
+#include "runtime/os_interface/windows/wddm/wddm_interface.h"
 
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/memory_manager/host_ptr_defines.h"
 #include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/ult_dxgi_factory.h"
 

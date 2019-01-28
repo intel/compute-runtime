@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/os_interface/windows/wddm/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm_interface.h"
 
 namespace OCLRT {
 class WddmMockInterface23 : public WddmInterface23 {

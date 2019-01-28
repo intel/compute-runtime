@@ -7,40 +7,32 @@
 
 #pragma once
 #include "runtime/os_interface/os_context.h"
-#include "runtime/os_interface/windows/windows_wrapper.h"
-#include "runtime/os_interface/windows/windows_defs.h"
-#include "runtime/os_interface/windows/wddm/wddm_interface.h"
-#include "umKmInc/sharedata.h"
 #include "runtime/helpers/debug_helpers.h"
-#include <d3d9types.h>
-#include <d3dkmthk.h>
-#include "gfxEscape.h"
-#include "runtime/memory_manager/host_ptr_defines.h"
-#include "runtime/utilities/debug_settings_reader.h"
 #include "runtime/gmm_helper/gmm_lib.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/utilities/spinlock.h"
-#include "gmm_memory.h"
+#include "sku_info.h"
 #include <memory>
-#include <atomic>
 #include <mutex>
 
 namespace OCLRT {
-
-class WddmAllocation;
 class Gdi;
 class Gmm;
+class GmmMemory;
 class GmmPageTableMngr;
-struct WorkaroundTable;
-struct KmDafListener;
+class SettingsReader;
+class WddmAllocation;
+class WddmInterface;
+class WddmResidencyController;
+
 enum class PreemptionMode : uint32_t;
 
-using OsContextWin = OsContext::OsContextImpl;
+struct AllocationStorageData;
+struct HardwareInfo;
+struct KmDafListener;
+struct MonitoredFence;
+struct OsHandleStorage;
 
-enum class WddmInterfaceVersion {
-    Wddm20 = 20,
-    Wddm23 = 23,
-};
+using OsContextWin = OsContext::OsContextImpl;
 
 enum class EvictionStatus {
     SUCCESS,

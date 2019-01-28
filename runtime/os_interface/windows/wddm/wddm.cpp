@@ -5,9 +5,7 @@
  *
  */
 
-#include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/options.h"
-#include "runtime/os_interface/windows/gdi_interface.h"
+#include "gmm_memory.h"
 #include "runtime/os_interface/windows/kmdaf_listener.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
@@ -17,25 +15,18 @@
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
+#include "runtime/os_interface/windows/wddm/wddm_interface.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
 #include "runtime/os_interface/windows/registry_reader.h"
-#include "runtime/helpers/debug_helpers.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/wddm_helper.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/sku_info/operations/sku_info_receiver.h"
-#include "runtime/utilities/stackvec.h"
-#include <dxgi.h>
-#include "CL/cl.h"
 
 namespace OCLRT {
 extern Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory();
 extern Wddm::GetSystemInfoFcn getGetSystemInfo();
 extern Wddm::VirtualAllocFcn getVirtualAlloc();
 extern Wddm::VirtualFreeFcn getVirtualFree();
-
-class WddmMemoryManager;
 
 Wddm::CreateDXGIFactoryFcn Wddm::createDxgiFactory = getCreateDxgiFactory();
 Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();

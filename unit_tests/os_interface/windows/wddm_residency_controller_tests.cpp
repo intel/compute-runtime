@@ -12,6 +12,7 @@
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
+#include "runtime/os_interface/windows/wddm/wddm_interface.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
