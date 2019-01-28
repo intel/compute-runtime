@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 
 #include <cinttypes>
 #include <cstddef>
+#include <iterator>
 #include <vector>
 
 template <typename DataType, size_t OnStackCapacity>
@@ -56,6 +57,13 @@ class StackVec {
     explicit StackVec(size_t initialSize)
         : StackVec() {
         resize(initialSize);
+    }
+
+    StackVec(std::initializer_list<DataType> init) {
+        reserve(init.size());
+        for (const auto &obj : init) {
+            push_back(obj);
+        }
     }
 
     StackVec &operator=(const StackVec &rhs) {
@@ -320,4 +328,10 @@ bool operator==(const StackVec<T, LhsStackCaps> &lhs,
     }
 
     return true;
+}
+
+template <typename T, size_t LhsStackCaps, size_t RhsStackCaps>
+bool operator!=(const StackVec<T, LhsStackCaps> &lhs,
+                const StackVec<T, RhsStackCaps> &rhs) {
+    return false == (lhs == rhs);
 }

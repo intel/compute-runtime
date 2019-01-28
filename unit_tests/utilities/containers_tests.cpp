@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "runtime/utilities/arrayref.h"
 #include "runtime/utilities/idlist.h"
 #include "runtime/utilities/iflist.h"
+#include "runtime/utilities/range.h"
 #include "runtime/utilities/stackvec.h"
 #include "unit_tests/utilities/containers_tests_helpers.h"
 
@@ -1069,6 +1070,12 @@ TEST(StackVec, Constructor) {
     ASSERT_TRUE(contains(&bigger, &*bigger.begin()));
     ASSERT_TRUE(contains(&exact, &*exact.begin()));
     ASSERT_FALSE(contains(&smaller, &*smaller.begin()));
+
+    StackVec<Type, 4> withInitList{1, 2, 3, 5};
+    EXPECT_EQ(1, withInitList[0]);
+    EXPECT_EQ(2, withInitList[1]);
+    EXPECT_EQ(3, withInitList[2]);
+    EXPECT_EQ(5, withInitList[3]);
 }
 
 TEST(StackVec, ConstructorWithInitialSizeGetsResizedAutomaticallyDuringConstruction) {
@@ -1499,6 +1506,8 @@ TEST(StackVec, EqualsOperatorReturnsFalseIfStackVecsHaveDifferentSizes) {
 
     EXPECT_FALSE(longer == shorter);
     EXPECT_FALSE(shorter == longer);
+    EXPECT_TRUE(longer != shorter);
+    EXPECT_TRUE(shorter != longer);
 }
 
 TEST(StackVec, EqualsOperatorReturnsFalseIfDataNotEqual) {
@@ -1508,6 +1517,7 @@ TEST(StackVec, EqualsOperatorReturnsFalseIfDataNotEqual) {
     StackVec<char, 10> vecA{dataA, dataA + sizeof(dataA)};
     StackVec<char, 15> vecB{dataB, dataB + sizeof(dataB)};
     EXPECT_FALSE(vecA == vecB);
+    EXPECT_TRUE(vecA != vecB);
 }
 
 TEST(StackVec, EqualsOperatorReturnsTrueIfBothContainersAreEmpty) {
@@ -1515,6 +1525,7 @@ TEST(StackVec, EqualsOperatorReturnsTrueIfBothContainersAreEmpty) {
     StackVec<char, 15> vecB;
 
     EXPECT_TRUE(vecA == vecB);
+    EXPECT_FALSE(vecA != vecB);
 }
 
 TEST(StackVec, EqualsOperatorReturnsTrueIfDataIsEqual) {
@@ -1524,6 +1535,7 @@ TEST(StackVec, EqualsOperatorReturnsTrueIfDataIsEqual) {
     StackVec<char, 10> vecA{dataA, dataA + sizeof(dataA)};
     StackVec<char, 15> vecB{dataB, dataB + sizeof(dataB)};
     EXPECT_TRUE(vecA == vecB);
+    EXPECT_FALSE(vecA != vecB);
 }
 
 int sum(ArrayRef<int> a) {
@@ -1637,4 +1649,46 @@ TEST(ArrayRef, EqualsOperatorReturnsTrueIfDataIsEqual) {
     ArrayRef<char> arrayA{dataA, sizeof(dataA)};
     ArrayRef<char> arrayB{dataB, sizeof(dataB)};
     EXPECT_TRUE(arrayA == arrayB);
+}
+
+TEST(Range, GivenRangeThenValidStandardIteratorsAreAvailable) {
+    int tab[10] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29};
+    Range<int> range = tab;
+    const Range<int> &constantRange = range;
+    Range<int> emptyRange{nullptr, 0};
+    EXPECT_EQ(0U, emptyRange.size());
+    EXPECT_TRUE(emptyRange.empty());
+    EXPECT_EQ(10U, constantRange.size());
+    EXPECT_FALSE(constantRange.empty());
+
+    auto rangeFwdIt = range.begin();
+    auto rangeFwdEnd = range.end();
+    auto rangeBackIt = range.rbegin();
+    auto rangeBackEnd = range.rend();
+
+    auto constantRangeFwdIt = constantRange.begin();
+    auto constantRangeFwdEnd = constantRange.end();
+    auto constantRangeBackIt = constantRange.rbegin();
+    auto constantRangeBackEnd = constantRange.rend();
+    for (int i = 0; i < 10; ++i, ++rangeFwdIt, ++rangeBackIt, ++constantRangeFwdIt, ++constantRangeBackIt) {
+        EXPECT_EQ(tab[i], *rangeFwdIt) << " it : " << i;
+        EXPECT_EQ(tab[i], *constantRangeFwdIt) << " it : " << i;
+        EXPECT_NE(rangeFwdEnd, rangeFwdIt) << " it : " << i;
+        EXPECT_NE(constantRangeFwdEnd, constantRangeFwdIt) << " it : " << i;
+
+        EXPECT_EQ(tab[10 - 1 - i], *rangeBackIt) << " it : " << i;
+        EXPECT_EQ(tab[10 - 1 - i], *constantRangeBackIt) << " it : " << i;
+        EXPECT_NE(rangeBackEnd, rangeBackIt) << " it : " << i;
+        EXPECT_NE(constantRangeBackEnd, constantRangeBackIt) << " it : " << i;
+    }
+
+    EXPECT_EQ(rangeFwdEnd, rangeFwdIt);
+    EXPECT_EQ(constantRangeFwdEnd, constantRangeFwdIt);
+    EXPECT_EQ(rangeBackEnd, rangeBackIt);
+    EXPECT_EQ(constantRangeBackEnd, constantRangeBackIt);
+
+    std::vector<int> vec(&tab[0], &tab[10]);
+    Range<int> rangeFromVec = vec;
+    EXPECT_EQ(&*vec.begin(), &*rangeFromVec.begin());
+    EXPECT_EQ(&*vec.rbegin(), &*rangeFromVec.rbegin());
 }
