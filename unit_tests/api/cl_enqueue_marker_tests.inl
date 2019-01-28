@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,14 +13,14 @@ using namespace OCLRT;
 
 typedef api_tests clEnqueueMarkerTests;
 
-TEST_F(clEnqueueMarkerTests, NullCommandQueue_returnsError) {
+TEST_F(clEnqueueMarkerTests, GivenNullCommandQueueWhenEnqueingMarkerThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueMarker(
         nullptr,
         nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueMarkerTests, returnsSuccess) {
+TEST_F(clEnqueueMarkerTests, GivenValidCommandQueueWhenEnqueingMarkerThenSuccessIsReturned) {
     auto retVal = clEnqueueMarker(
         pCommandQueue,
         nullptr);

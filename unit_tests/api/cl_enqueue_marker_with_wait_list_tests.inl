@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@ using namespace OCLRT;
 
 typedef api_tests clEnqueueMarkerWithWaitListTests;
 
-TEST_F(clEnqueueMarkerWithWaitListTests, NullCommandQueue_returnsError) {
+TEST_F(clEnqueueMarkerWithWaitListTests, GivenNullCommandQueueWhenEnqueingMarkerWithWaitListThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueMarkerWithWaitList(
         nullptr,
         0,
@@ -21,7 +21,7 @@ TEST_F(clEnqueueMarkerWithWaitListTests, NullCommandQueue_returnsError) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueMarkerWithWaitListTests, returnsSuccess) {
+TEST_F(clEnqueueMarkerWithWaitListTests, GivenValidCommandQueueWhenEnqueingMarkerWithWaitListThenSuccessIsReturned) {
     auto retVal = clEnqueueMarkerWithWaitList(
         pCommandQueue,
         0,
