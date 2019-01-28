@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -878,7 +878,7 @@ TEST_F(DispatchInfoBuilderTest, setKernelArg) {
     EXPECT_EQ(CL_SUCCESS, diBuilder->setArg(0, sizeof(cl_mem *), pVal));
     char data[128];
     void *svmPtr = &data;
-    EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvm(1, sizeof(svmPtr), svmPtr));
+    EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvm(1, sizeof(svmPtr), svmPtr, nullptr, 0u));
     MockGraphicsAllocation svmAlloc(svmPtr, 128);
     EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvmAlloc(2, svmPtr, &svmAlloc));
 
@@ -945,17 +945,17 @@ TEST_F(DispatchInfoBuilderTest, SetArgSplit) {
 
     //Set arg SVM
     clearCrossThreadData();
-    builder1D.setArgSvm(SplitDispatch::RegionCoordX::Left, 1, sizeof(svmPtr), svmPtr);
+    builder1D.setArgSvm(SplitDispatch::RegionCoordX::Left, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
     for (auto &dispatchInfo : mdi1D) {
         EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + 0x30)));
     }
     clearCrossThreadData();
-    builder2D.setArgSvm(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, 1, sizeof(svmPtr), svmPtr);
+    builder2D.setArgSvm(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
     for (auto &dispatchInfo : mdi2D) {
         EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + 0x30)));
     }
     clearCrossThreadData();
-    builder3D.setArgSvm(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, SplitDispatch::RegionCoordZ::Front, 1, sizeof(svmPtr), svmPtr);
+    builder3D.setArgSvm(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, SplitDispatch::RegionCoordZ::Front, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
     for (auto &dispatchInfo : mdi3D) {
         EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + 0x30)));
     }
@@ -978,7 +978,7 @@ TEST_F(DispatchInfoBuilderTest, setKernelArgNegative) {
 
     diBuilder->bake(multiDispatchInfo);
     EXPECT_NE(CL_SUCCESS, diBuilder->setArg(0, sizeof(cl_mem *), pVal));
-    EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvm(1, sizeof(void *), nullptr));
+    EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvm(1, sizeof(void *), nullptr, nullptr, 0u));
 
     delete diBuilder;
     delete[] buffer;
@@ -1000,7 +1000,7 @@ TEST_F(DispatchInfoBuilderTest, setKernelArgNullKernel) {
 
     diBuilder->bake(multiDispatchInfo);
     EXPECT_EQ(CL_SUCCESS, diBuilder->setArg(0, sizeof(cl_mem *), pVal));
-    EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvm(1, sizeof(svmPtr), svmPtr));
+    EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvm(1, sizeof(svmPtr), svmPtr, nullptr, 0u));
     EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvmAlloc(2, svmPtr, &svmAlloc));
 
     delete diBuilder;

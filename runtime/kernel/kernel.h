@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,7 +121,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     // API entry points
     cl_int setArg(uint32_t argIndex, size_t argSize, const void *argVal);
-    cl_int setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, GraphicsAllocation *svmAlloc = nullptr, cl_mem_flags svmFlags = 0);
+    cl_int setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, GraphicsAllocation *svmAlloc, cl_mem_flags svmFlags);
     cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc);
 
     void setKernelExecInfo(GraphicsAllocation *argValue);

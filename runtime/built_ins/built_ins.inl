@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,11 +38,11 @@ bool BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiD
         if (AuxTranslationDirection::AuxToNonAux == operationParams.auxTranslationDirection) {
             builder.setKernel(convertToNonAuxKernel.at(kernelInstanceNumber++).get());
             builder.setArg(0, memObj);
-            builder.setArgSvm(1, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()));
+            builder.setArgSvm(1, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), nullptr, 0u);
         } else {
             UNRECOVERABLE_IF(AuxTranslationDirection::NonAuxToAux != operationParams.auxTranslationDirection);
             builder.setKernel(convertToAuxKernel.at(kernelInstanceNumber++).get());
-            builder.setArgSvm(0, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()));
+            builder.setArgSvm(0, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), nullptr, 0u);
             builder.setArg(1, memObj);
         }
 

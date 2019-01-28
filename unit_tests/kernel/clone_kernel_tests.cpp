@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -420,7 +420,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CloneKernelTest, cloneKernelWithArgDeviceQueue) {
 TEST_F(CloneKernelTest, cloneKernelWithArgSvm) {
     char *svmPtr = new char[256];
 
-    retVal = pSourceKernel->setArgSvm(0, 256, svmPtr);
+    retVal = pSourceKernel->setArgSvm(0, 256, svmPtr, nullptr, 0u);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,11 +77,11 @@ TEST_F(PatchedKernelTest, givenKernelWithAllArgsSetWithSvmWhenIsPatchedIsCalledT
     uint32_t size = sizeof(int);
     auto argsNum = kernel->getKernelArgsNumber();
     for (uint32_t i = 0; i < argsNum; i++) {
-        kernel->setArgSvm(0, size, nullptr, nullptr);
+        kernel->setArgSvm(0, size, nullptr, nullptr, 0u);
     }
     EXPECT_FALSE(kernel->isPatched());
     for (uint32_t i = 0; i < argsNum; i++) {
-        kernel->setArgSvm(i, size, nullptr, nullptr);
+        kernel->setArgSvm(i, size, nullptr, nullptr, 0u);
     }
     EXPECT_TRUE(kernel->isPatched());
 }
@@ -97,7 +97,7 @@ TEST_F(PatchedKernelTest, givenKernelWithOneArgumentToPatchWhichIsNonzeroIndexed
     kernel.reset(mockKernel.mockKernel);
     kernel->initialize();
     EXPECT_FALSE(kernel->Kernel::isPatched());
-    kernel->setArgSvm(1, size, nullptr, nullptr);
+    kernel->setArgSvm(1, size, nullptr, nullptr, 0u);
     EXPECT_TRUE(kernel->Kernel::isPatched());
     kernel.release();
 }

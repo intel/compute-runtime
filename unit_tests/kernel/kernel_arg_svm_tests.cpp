@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,7 @@ typedef Test<KernelArgSvmFixture_> KernelArgSvmTest;
 TEST_F(KernelArgSvmTest, SetKernelArgValidSvmPtr) {
     char *svmPtr = new char[256];
 
-    auto retVal = pKernel->setArgSvm(0, 256, svmPtr);
+    auto retVal = pKernel->setArgSvm(0, 256, svmPtr, nullptr, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto pKernelArg = (void **)(pKernel->getCrossThreadData() +
@@ -98,7 +98,7 @@ TEST_F(KernelArgSvmTest, SetKernelArgValidSvmPtrStateless) {
     pKernelInfo->usesSsh = false;
     pKernelInfo->requiresSshForBuffers = false;
 
-    auto retVal = pKernel->setArgSvm(0, 256, svmPtr);
+    auto retVal = pKernel->setArgSvm(0, 256, svmPtr, nullptr, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, pKernel->getSurfaceStateHeapSize());
@@ -112,7 +112,7 @@ HWTEST_F(KernelArgSvmTest, SetKernelArgValidSvmPtrStateful) {
     pKernelInfo->usesSsh = true;
     pKernelInfo->requiresSshForBuffers = true;
 
-    auto retVal = pKernel->setArgSvm(0, 256, svmPtr);
+    auto retVal = pKernel->setArgSvm(0, 256, svmPtr, nullptr, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_NE(0u, pKernel->getSurfaceStateHeapSize());
@@ -317,7 +317,7 @@ class KernelArgSvmTestTyped : public KernelArgSvmTest {
 
 struct SetArgHandlerSetArgSvm {
     static void setArg(Kernel &kernel, uint32_t argNum, void *ptrToPatch, size_t allocSize, GraphicsAllocation &alloc) {
-        kernel.setArgSvm(argNum, allocSize, ptrToPatch, &alloc);
+        kernel.setArgSvm(argNum, allocSize, ptrToPatch, &alloc, 0u);
     }
 
     static constexpr bool supportsOffsets() {

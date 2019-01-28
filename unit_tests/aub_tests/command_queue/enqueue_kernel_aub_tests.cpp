@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -378,7 +378,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
 
         memset(expectedMemory, 0x0, sizeUserMemory);
 
-        kernel->setArgSvm(1, sizeUserMemory, destMemory);
+        kernel->setArgSvm(1, sizeUserMemory, destMemory, nullptr, 0u);
 
         outBuffer = createHostPtrAllocationFromSvmPtr(destMemory, sizeUserMemory);
     }
