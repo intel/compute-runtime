@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,10 +41,8 @@ static const uint8_t  expectedUNORM8[4]     = {  0xff,   0x00,   0xd4,   0xa9};
 static const uint8_t  expectedUNORM8sRGB[4]     = {  0xff,   0x00,   0xeb,   0xa9};
 static const uint8_t  expectedUNORM8sBGR[4]     = {  0xeb,   0x00,   0xff,   0xa9};
 
-#if SUPPORT_SNORM
-static const uint16_t expectedSNORM16[4]    = {0x7fff, 0x0000, 0x2000, 0x4000};
-static const uint8_t  expectedSNORM8[4]     = {  0x7f,   0x00,   0x1f,   0x3f};
-#endif
+static const uint16_t expectedSNORM16[4]    = {0x7fff, 0x0000, 0x6AA9, 0x5554};
+static const uint8_t  expectedSNORM8[4]     = {  0x7f,   0x00,   0x69,   0x54};
 
 static auto     expectedSINT32    = fillValues;
 static uint16_t expectedSINT16[4] = { 0x0000, 0x0000, 0x5555, 0xaaaa };
@@ -61,10 +59,8 @@ struct FillChannelType {
     cl_channel_type type;
     const void *expectedValues;
 } fillChannelTypes[] = {
-#if SUPPORT_SNORM
     {CL_SNORM_INT8,     expectedSNORM8},
     {CL_SNORM_INT16,    expectedSNORM16},
-#endif
     {CL_UNORM_INT8,     expectedUNORM8},
     {CL_UNORM_INT16,    expectedUNORM16},
     {CL_SIGNED_INT8,    expectedSINT8},
