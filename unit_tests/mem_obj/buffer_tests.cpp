@@ -1368,6 +1368,25 @@ HWTEST_F(BufferSetSurfaceTests, givenMisalignedPointerWhenSurfaceStateIsProgramm
     EXPECT_EQ(alignUp(5u, 4u), length.Length + 1);
 }
 
+HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedWhenSurfaceStateIsBeingProgrammedThenL3CacheIsOff) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    this->device->getExecutionEnvironment()->getGmmHelper()->setSimplifiedMocsTableUsage(true);
+
+    RENDER_SURFACE_STATE surfaceState = {};
+    MockContext context;
+    void *svmPtr = reinterpret_cast<void *>(0x1005);
+
+    Buffer::setSurfaceState(device.get(),
+                            &surfaceState,
+                            5,
+                            svmPtr,
+                            nullptr,
+                            0);
+
+    EXPECT_EQ(0u, surfaceState.getMemoryObjectControlState());
+}
+
 struct BufferUnmapTest : public DeviceFixture, public ::testing::Test {
     void SetUp() override {
         DeviceFixture::SetUp();
