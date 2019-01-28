@@ -345,7 +345,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     submitBatchBuffer(engineIndex, batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
 
     if (!DebugManager.flags.AUBDumpConcurrentCS.get()) {
-        pollForCompletion(osContext->getEngineType());
+        pollForCompletion();
     }
 
     if (this->standalone) {
@@ -563,13 +563,13 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineInstanceT engineInstance) {
+void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
     if (hardwareContext) {
         hardwareContext->pollForCompletion();
         return;
     }
 
-    const auto mmioBase = this->getCsTraits(engineInstance).mmioBase;
+    const auto mmioBase = this->getCsTraits(osContext->getEngineType()).mmioBase;
     const bool pollNotEqual = false;
     const uint32_t mask = getMaskAndValueForPollForCompletion();
     const uint32_t value = mask;

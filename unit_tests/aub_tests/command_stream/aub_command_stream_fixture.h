@@ -84,7 +84,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
         }
 
         auto aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
-        aubCsr->pollForCompletion(csr->getOsContext().getEngineType());
+        aubCsr->pollForCompletion();
     }
 
     GraphicsAllocation *createResidentAllocationAndStoreItInCsr(const void *address, size_t size) {

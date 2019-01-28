@@ -50,8 +50,8 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(engineIndex, batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits);
         submitBatchBufferCalled = true;
     }
-    void pollForCompletion(EngineInstanceT engineInstance) override {
-        TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(engineInstance);
+    void pollForCompletion() override {
+        TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion();
         pollForCompletionCalled = true;
     }
     void makeCoherent(GraphicsAllocation &gfxAllocation) override {

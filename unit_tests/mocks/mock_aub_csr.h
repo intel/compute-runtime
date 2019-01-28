@@ -86,8 +86,8 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(engineIndex, batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits);
         submitBatchBufferCalled = true;
     }
-    void pollForCompletion(EngineInstanceT engineInstance) override {
-        AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(engineInstance);
+    void pollForCompletion() override {
+        AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion();
         pollForCompletionCalled = true;
     }
     void expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length) {

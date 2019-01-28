@@ -210,7 +210,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 
     submitBatchBuffer(engineIndex, batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
 
-    pollForCompletion(osContext->getEngineType());
+    pollForCompletion();
     return 0;
 }
 
@@ -344,7 +344,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineInstanceT engineInstance) {
+void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
     if (hardwareContext) {
         hardwareContext->pollForCompletion();
         return;
@@ -352,7 +352,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineInstanceT en
 
     typedef typename AubMemDump::CmdServicesMemTraceRegisterPoll CmdServicesMemTraceRegisterPoll;
 
-    auto mmioBase = this->getCsTraits(engineInstance).mmioBase;
+    auto mmioBase = this->getCsTraits(osContext->getEngineType()).mmioBase;
     bool pollNotEqual = false;
     tbxStream.registerPoll(
         AubMemDump::computeRegisterOffset(mmioBase, 0x2234), //EXECLIST_STATUS
