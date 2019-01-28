@@ -24,7 +24,7 @@ TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevice
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenImageOrSharedResourceWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
+TEST(MemoryManagerTest, givenImageOrSharedResourceCopyWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
     ExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
 
@@ -34,7 +34,7 @@ TEST(MemoryManagerTest, givenImageOrSharedResourceWhenGraphicsAllocationInDevice
     allocData.flags.allocateMemory = true;
 
     GraphicsAllocation::AllocationType types[] = {GraphicsAllocation::AllocationType::IMAGE,
-                                                  GraphicsAllocation::AllocationType::SHARED_RESOURCE};
+                                                  GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY};
 
     for (uint32_t i = 0; i < arrayCount(types); i++) {
         allocData.type = types[i];

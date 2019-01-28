@@ -3076,7 +3076,7 @@ TEST_F(DrmMemoryManagerTest, givenDisabledHostPtrTrackingWhenAllocateGraphicsMem
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerTest, givenImageOrSharedResourceWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
+TEST_F(DrmMemoryManagerTest, givenImageOrSharedResourceCopyWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
     ExecutionEnvironment executionEnvironment;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, executionEnvironment));
 
@@ -3086,7 +3086,7 @@ TEST_F(DrmMemoryManagerTest, givenImageOrSharedResourceWhenGraphicsAllocationInD
     allocData.flags.allocateMemory = true;
 
     GraphicsAllocation::AllocationType types[] = {GraphicsAllocation::AllocationType::IMAGE,
-                                                  GraphicsAllocation::AllocationType::SHARED_RESOURCE};
+                                                  GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY};
 
     for (uint32_t i = 0; i < arrayCount(types); i++) {
         allocData.type = types[i];

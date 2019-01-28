@@ -1144,7 +1144,7 @@ TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndAubUsageWhenMemoryMana
     EXPECT_EQ(heap32Base, memoryManager.allocator32Bit->getBase());
 }
 
-TEST(MemoryManager, givenSharedResourceWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForImageIsCalled) {
+TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForImageIsCalled) {
     ExecutionEnvironment executionEnvironment;
     MockMemoryManager memoryManager(false, true, executionEnvironment);
     cl_image_desc imgDesc = {};
@@ -1157,7 +1157,7 @@ TEST(MemoryManager, givenSharedResourceWhenAllocatingGraphicsMemoryThenAllocateG
 
     MockMemoryManager::AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
-    allocationData.type = GraphicsAllocation::AllocationType::SHARED_RESOURCE;
+    allocationData.type = GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY;
 
     auto imageAllocation = memoryManager.allocateGraphicsMemory(allocationData);
     EXPECT_NE(nullptr, imageAllocation);

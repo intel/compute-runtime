@@ -231,7 +231,7 @@ class MemoryManager {
         status = AllocationStatus::Error;
         switch (allocationData.type) {
         case GraphicsAllocation::AllocationType::IMAGE:
-        case GraphicsAllocation::AllocationType::SHARED_RESOURCE:
+        case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
             break;
         default:
             if (!allocationData.flags.useSystemMemory && !(allocationData.flags.allow32Bit && this->force32bitAllocations)) {

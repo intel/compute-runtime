@@ -313,8 +313,8 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "SURFACE_STATE_HEAP";
     case OCLRT::GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP:
         return "DYNAMIC_STATE_HEAP";
-    case OCLRT::GraphicsAllocation::AllocationType::SHARED_RESOURCE:
-        return "SHARED_RESOURCE";
+    case OCLRT::GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
+        return "SHARED_RESOURCE_COPY";
     case OCLRT::GraphicsAllocation::AllocationType::SVM:
         return "SVM";
     case OCLRT::GraphicsAllocation::AllocationType::UNDECIDED:

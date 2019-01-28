@@ -888,7 +888,7 @@ AllocationTypeTestCase allocationTypeValues[] = {
     {OCLRT::GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP, "INDIRECT_OBJECT_HEAP"},
     {OCLRT::GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP, "SURFACE_STATE_HEAP"},
     {OCLRT::GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP, "DYNAMIC_STATE_HEAP"},
-    {OCLRT::GraphicsAllocation::AllocationType::SHARED_RESOURCE, "SHARED_RESOURCE"},
+    {OCLRT::GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY, "SHARED_RESOURCE_COPY"},
     {OCLRT::GraphicsAllocation::AllocationType::SVM, "SVM"},
     {OCLRT::GraphicsAllocation::AllocationType::UNDECIDED, "UNDECIDED"}};
 
