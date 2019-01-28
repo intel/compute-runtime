@@ -165,7 +165,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (DebugManager.flags.ForceCsrFlushing.get()) {
         flushBatchedSubmissions();
     }
-    if (DebugManager.flags.ForceCsrReprogramming.get()) {
+    if (detectInitProgrammingFlagsRequired(dispatchFlags)) {
         initProgrammingFlags();
     }
 
@@ -407,7 +407,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     GraphicsAllocation *chainedBatchBuffer = nullptr;
 
     if (submitTask) {
-        programMediaSampler(commandStreamTask, dispatchFlags);
         this->addBatchBufferEnd(commandStreamTask, &bbEndLocation);
         this->emitNoop(commandStreamTask, bbEndPaddingSize);
         this->alignToCacheLine(commandStreamTask);
@@ -811,5 +810,10 @@ void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceController(const Hard
 template <typename GfxFamily>
 uint64_t CommandStreamReceiverHw<GfxFamily>::getScratchPatchAddress() {
     return scratchSpaceController->getScratchPatchAddress();
+}
+
+template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const {
+    return DebugManager.flags.ForceCsrReprogramming.get();
 }
 } // namespace OCLRT

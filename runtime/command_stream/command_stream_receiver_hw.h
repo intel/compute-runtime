@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,6 +94,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void createScratchSpaceController(const HardwareInfo &hwInfoIn);
 
     static void emitNoop(LinearStream &commandStream, size_t bytesToUpdate);
+
+    bool detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const;
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;
