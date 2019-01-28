@@ -41,6 +41,17 @@ enum class EvictionStatus {
     UNKNOWN
 };
 
+enum class HeapIndex : uint32_t {
+    HEAP_INTERNAL_DEVICE_MEMORY = 0u,
+    HEAP_INTERNAL = 1u,
+    HEAP_EXTERNAL_DEVICE_MEMORY = 2u,
+    HEAP_EXTERNAL = 3u,
+    HEAP_STANDARD,
+    HEAP_STANDARD64Kb,
+    HEAP_SVM,
+    HEAP_LIMITED
+};
+
 class Wddm {
   public:
     typedef HRESULT(WINAPI *CreateDXGIFactoryFcn)(REFIID riid, void **ppFactory);
@@ -55,8 +66,8 @@ class Wddm {
 
     MOCKABLE_VIRTUAL bool evict(D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
     MOCKABLE_VIRTUAL bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim);
-    bool mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1);
-    bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData, bool allocation32bit, bool use64kbPages);
+    bool mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr);
+    bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData);
     MOCKABLE_VIRTUAL bool createContext(D3DKMT_HANDLE &context, EngineInstanceT engineType, PreemptionMode preemptionMode);
     MOCKABLE_VIRTUAL void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData);
     MOCKABLE_VIRTUAL bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
@@ -123,8 +134,8 @@ class Wddm {
         return static_cast<uint32_t>(hwContextId);
     }
 
-    uint64_t getHeap32Base();
-    uint64_t getHeap32Size();
+    uint64_t getExternalHeapBase() const;
+    uint64_t getExternalHeapSize() const;
 
     std::unique_ptr<SettingsReader> registryReader;
 
@@ -147,6 +158,7 @@ class Wddm {
     MOCKABLE_VIRTUAL EvictionStatus evictTemporaryResource(WddmAllocation &allocation);
     MOCKABLE_VIRTUAL void applyBlockingMakeResident(WddmAllocation &allocation);
     MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock);
+    HeapIndex selectHeap(const WddmAllocation *allocation, const void *cpuPtr) const;
 
   protected:
     bool initialized = false;
@@ -177,7 +189,7 @@ class Wddm {
     uintptr_t minAddress = 0;
 
     Wddm();
-    MOCKABLE_VIRTUAL bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1);
+    MOCKABLE_VIRTUAL bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, HeapIndex heapIndex);
     MOCKABLE_VIRTUAL bool openAdapter();
     MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);
     bool createDevice(PreemptionMode preemptionMode);

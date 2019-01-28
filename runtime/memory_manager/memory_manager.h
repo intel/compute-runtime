@@ -36,11 +36,6 @@ enum AllocationUsage {
     REUSABLE_ALLOCATION
 };
 
-enum class AllocationOrigin {
-    EXTERNAL_ALLOCATION,
-    INTERNAL_ALLOCATION
-};
-
 struct AllocationProperties {
     union {
         struct {

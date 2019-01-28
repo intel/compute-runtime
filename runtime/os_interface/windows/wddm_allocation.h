@@ -81,6 +81,7 @@ class WddmAllocation : public GraphicsAllocation {
     }
     void setGpuAddress(uint64_t graphicsAddress) { this->gpuAddress = graphicsAddress; }
     bool needsMakeResidentBeforeLock = false;
+    AllocationOrigin origin = AllocationOrigin::EXTERNAL_ALLOCATION;
 
     std::string getAllocationInfoString() const {
         std::stringstream ss;

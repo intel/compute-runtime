@@ -24,6 +24,11 @@ namespace OCLRT {
 using osHandle = unsigned int;
 using DevicesBitfield = uint32_t;
 
+enum class AllocationOrigin {
+    EXTERNAL_ALLOCATION,
+    INTERNAL_ALLOCATION
+};
+
 namespace Sharing {
 constexpr auto nonSharedResource = 0u;
 }

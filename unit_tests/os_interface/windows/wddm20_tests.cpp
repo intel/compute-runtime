@@ -82,7 +82,7 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMapp
     allocation.gmm = gmm.get();
     allocation.handle = ALLOCATION_HANDLE;
 
-    EXPECT_TRUE(wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.is32BitAllocation, false, false));
+    EXPECT_TRUE(wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr()));
 }
 
 TEST(Wddm20EnumAdaptersTest, expectTrue) {
@@ -205,7 +205,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_NE(0, allocation.handle);
 
-    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.is32BitAllocation, false, false);
+    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(alignedPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
@@ -228,7 +228,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmS
     auto mockResourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockResourceInfo->overrideReturnedSize(allocation.getAlignedSize() + (2 * MemoryConstants::pageSize));
 
-    wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.is32BitAllocation, false, false);
+    wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
 
     uint64_t expectedSizeInPages = static_cast<uint64_t>(mockResourceInfo->getSizeAllocation() / MemoryConstants::pageSize);
     EXPECT_EQ(expectedSizeInPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
@@ -253,7 +253,7 @@ TEST_F(Wddm20Tests, createAllocation32bit) {
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
-    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.is32BitAllocation, false, false);
+    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(1u, wddm->mapGpuVirtualAddressResult.called);
@@ -274,8 +274,9 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap1ThenItHasGpuAddr
 
     allocation.handle = ALLOCATION_HANDLE;
     allocation.gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
-
-    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), false, false, true);
+    allocation.origin = AllocationOrigin::INTERNAL_ALLOCATION;
+    EXPECT_EQ(HeapIndex::HEAP_INTERNAL, wddm->selectHeap(&allocation, allocation.getAlignedCpuPtr()));
+    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
 
     auto cannonizedHeapBase = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Base);
@@ -329,7 +330,7 @@ TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
-    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), false, false, false);
+    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.gpuPtr != 0);
 
@@ -353,7 +354,7 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
 
-    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.is32BitAllocation, false, false);
+    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
 
     EXPECT_NE(0u, allocation.gpuPtr);
@@ -374,7 +375,7 @@ TEST_F(Wddm20Tests, makeResidentNonResident) {
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
-    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), false, false, false);
+    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.gpuPtr != 0);
 
@@ -995,4 +996,49 @@ TEST_F(Wddm20Tests, whenEvictingTemporaryResourceThenOtherResourcesRemainOnTheLi
     EXPECT_EQ(2u, wddm->temporaryResources.size());
     EXPECT_EQ(0x1, wddm->temporaryResources.front());
     EXPECT_EQ(0x3, wddm->temporaryResources.back());
+}
+
+using WddmHeapSelectorTest = Wddm20Tests;
+
+TEST_F(WddmHeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
+    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u, false};
+    allocation.is32BitAllocation = true;
+    allocation.origin = AllocationOrigin::INTERNAL_ALLOCATION;
+    EXPECT_EQ(HeapIndex::HEAP_INTERNAL, wddm->selectHeap(&allocation, nullptr));
+}
+TEST_F(WddmHeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
+    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u, false};
+    allocation.is32BitAllocation = false;
+    allocation.origin = AllocationOrigin::INTERNAL_ALLOCATION;
+    EXPECT_EQ(HeapIndex::HEAP_INTERNAL, wddm->selectHeap(&allocation, nullptr));
+}
+TEST_F(WddmHeapSelectorTest, given32bitExternalAllocationWhenSelectingHeapThenExternalHeapIsUsed) {
+    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u, false};
+    allocation.is32BitAllocation = true;
+    allocation.origin = AllocationOrigin::EXTERNAL_ALLOCATION;
+    EXPECT_EQ(HeapIndex::HEAP_EXTERNAL, wddm->selectHeap(&allocation, nullptr));
+}
+TEST_F(WddmHeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForExternalAllocationThenLimitedHeapIsUsed) {
+    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u, false};
+    EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
+    if (hardwareInfoTable[wddm->getGfxPlatform()->eProductFamily]->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
+        return;
+    }
+    EXPECT_EQ(HeapIndex::HEAP_LIMITED, wddm->selectHeap(&allocation, nullptr));
+}
+TEST_F(WddmHeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithPtrThenSvmHeapIsUsed) {
+    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u, false};
+    EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
+    if (hardwareInfoTable[wddm->getGfxPlatform()->eProductFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
+        return;
+    }
+    EXPECT_EQ(HeapIndex::HEAP_SVM, wddm->selectHeap(&allocation, &allocation));
+}
+TEST_F(WddmHeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrThenStandardHeapIsUsed) {
+    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u, false};
+    EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
+    if (hardwareInfoTable[wddm->getGfxPlatform()->eProductFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
+        return;
+    }
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD, wddm->selectHeap(&allocation, nullptr));
 }

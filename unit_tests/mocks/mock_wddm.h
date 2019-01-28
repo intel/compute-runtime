@@ -58,7 +58,7 @@ class WddmMock : public Wddm {
 
     bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override;
     bool evict(D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) override;
-    bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32Bit, bool use64kbPages, bool useHeap1) override;
+    bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, HeapIndex heapIndex) override;
     bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) override;
     NTSTATUS createAllocation(WddmAllocation *alloc) override;
     bool createAllocation64k(WddmAllocation *alloc) override;

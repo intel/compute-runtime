@@ -34,11 +34,11 @@ bool WddmMock::evict(D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim)
     return makeNonResidentResult.success = Wddm::evict(handles, num, sizeToTrim);
 }
 
-bool WddmMock::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32Bit, bool use64kbPages, bool useHeap1) {
+bool WddmMock::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, HeapIndex heapIndex) {
     mapGpuVirtualAddressResult.called++;
     mapGpuVirtualAddressResult.cpuPtrPassed = cpuPtr;
     if (callBaseMapGpuVa) {
-        return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddressImpl(gmm, handle, cpuPtr, gpuPtr, allocation32Bit, use64kbPages, useHeap1);
+        return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddressImpl(gmm, handle, cpuPtr, gpuPtr, heapIndex);
     } else {
         gpuPtr = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(cpuPtr);
         return mapGpuVaStatus;

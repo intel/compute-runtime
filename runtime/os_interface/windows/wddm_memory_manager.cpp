@@ -33,7 +33,7 @@ WddmMemoryManager::~WddmMemoryManager() {
 WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemory, Wddm *wddm, ExecutionEnvironment &executionEnvironment) : MemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment) {
     DEBUG_BREAK_IF(wddm == nullptr);
     this->wddm = wddm;
-    allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(wddm->getHeap32Base(), wddm->getHeap32Size()));
+    allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(wddm->getExternalHeapBase(), wddm->getExternalHeapSize()));
     asyncDeleterEnabled = DebugManager.flags.EnableDeferredDeleter.get();
     if (asyncDeleterEnabled)
         deferredDeleter = createDeferredDeleter();
@@ -75,7 +75,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(AllocationData
     auto cpuPtr = lockResource(wddmAllocation.get());
 
     // 64kb map is not needed
-    auto status = wddm->mapGpuVirtualAddress(wddmAllocation.get(), cpuPtr, false, false, false);
+    auto status = wddm->mapGpuVirtualAddress(wddmAllocation.get(), cpuPtr);
     DEBUG_BREAK_IF(!status);
     wddmAllocation->setCpuPtrAndGpuAddress(cpuPtr, (uint64_t)wddmAllocation->gpuPtr);
 
@@ -212,7 +212,6 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
 
 GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle) {
     auto allocation = std::make_unique<WddmAllocation>(nullptr, 0, handle, MemoryPool::SystemCpuInaccessible, getOsContextCount(), false);
-    bool is32BitAllocation = false;
 
     bool status = ntHandle ? wddm->openNTHandle((HANDLE)((UINT_PTR)handle), allocation.get())
                            : wddm->openSharedHandle(handle, allocation.get());
@@ -232,11 +231,10 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
         }
         allocation->setReservedAddress(ptr);
     } else if (requireSpecificBitness && this->force32bitAllocations) {
-        is32BitAllocation = true;
         allocation->is32BitAllocation = true;
         allocation->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());
     }
-    status = wddm->mapGpuVirtualAddress(allocation.get(), ptr, is32BitAllocation, false, false);
+    status = wddm->mapGpuVirtualAddress(allocation.get(), ptr);
     DEBUG_BREAK_IF(!status);
     allocation->setGpuAddress(allocation->gpuPtr);
 
@@ -464,17 +462,18 @@ AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {
 }
 
 bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, AllocationOrigin allocationOrigin) {
-    bool useHeap1 = (allocationOrigin == AllocationOrigin::INTERNAL_ALLOCATION);
     auto wddmSuccess = wddm->createAllocation(allocation);
     if (wddmSuccess == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
         deferredDeleter->drain(true);
         wddmSuccess = wddm->createAllocation(allocation);
     }
+    allocation->origin = allocationOrigin;
+
     if (wddmSuccess == STATUS_SUCCESS) {
-        bool mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr(), allocation->is32BitAllocation, false, useHeap1);
+        bool mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr());
         if (!mapSuccess && deferredDeleter) {
             deferredDeleter->drain(true);
-            mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr(), allocation->is32BitAllocation, false, useHeap1);
+            mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr());
         }
         if (!mapSuccess) {
             wddm->destroyAllocations(&allocation->handle, 1, allocation->resourceHandle);

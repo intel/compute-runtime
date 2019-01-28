@@ -709,8 +709,8 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithNullptr) {
     auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
 
     ASSERT_NE(nullptr, gpuAllocation);
-    EXPECT_LE(GmmHelper::canonize(wddm->getHeap32Base()), gpuAllocation->getGpuAddress());
-    EXPECT_GT(GmmHelper::canonize(wddm->getHeap32Base()) + wddm->getHeap32Size() - 1, gpuAllocation->getGpuAddress());
+    EXPECT_LE(GmmHelper::canonize(wddm->getExternalHeapBase()), gpuAllocation->getGpuAddress());
+    EXPECT_GT(GmmHelper::canonize(wddm->getExternalHeapBase()) + wddm->getExternalHeapSize() - 1, gpuAllocation->getGpuAddress());
 
     EXPECT_EQ(0u, gpuAllocation->fragmentsStorage.fragmentCount);
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -734,8 +734,8 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotDoT
 
     EXPECT_EQ(alignSizeWholePage(misalignedPtr, misalignedSize), gpuAllocation->getUnderlyingBufferSize());
 
-    EXPECT_LE(GmmHelper::canonize(wddm->getHeap32Base()), gpuAllocation->getGpuAddress());
-    EXPECT_GT(GmmHelper::canonize(wddm->getHeap32Base()) + wddm->getHeap32Size() - 1, gpuAllocation->getGpuAddress());
+    EXPECT_LE(GmmHelper::canonize(wddm->getExternalHeapBase()), gpuAllocation->getGpuAddress());
+    EXPECT_GT(GmmHelper::canonize(wddm->getExternalHeapBase()) + wddm->getExternalHeapSize() - 1, gpuAllocation->getGpuAddress());
 
     EXPECT_EQ(0u, gpuAllocation->fragmentsStorage.fragmentCount);
 
@@ -751,7 +751,7 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemorySetsCannonizedGpuBaseAddress) {
 
     ASSERT_NE(nullptr, gpuAllocation);
 
-    uint64_t cannonizedAddress = GmmHelper::canonize(wddm->getHeap32Base());
+    uint64_t cannonizedAddress = GmmHelper::canonize(wddm->getExternalHeapBase());
     EXPECT_EQ(cannonizedAddress, gpuAllocation->gpuBaseAddress);
 
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -1072,6 +1072,7 @@ struct WddmMemoryManagerWithAsyncDeleterTest : ::testing::Test {
         wddm = std::make_unique<WddmMock>();
         wddm->gdi.reset(new MockGdi());
         wddm->callBaseDestroyAllocations = false;
+        wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
         deleter = new MockDeferredDeleter;
         memoryManager = std::make_unique<MockWddmMemoryManager>(wddm.get(), executionEnvironment);
         memoryManager->setDeferredDeleter(deleter);
@@ -1318,7 +1319,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVa
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {givenDdiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, false, false, false);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, wddm.selectHeap(nullptr, nullptr));
     ASSERT_TRUE(result);
 
     auto productFamily = wddm.getGfxPlatform()->eProductFamily;
@@ -1388,7 +1389,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMappedGp
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, false, false, false);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, wddm.selectHeap(nullptr, nullptr));
     ASSERT_TRUE(result);
 }
 
@@ -1399,7 +1400,7 @@ TEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenRetur
     WddmMock wddm;
     EXPECT_TRUE(wddm.init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), 0, nullptr, gpuVa, false, false, false);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), 0, nullptr, gpuVa, wddm.selectHeap(nullptr, nullptr));
     ASSERT_FALSE(result);
 }
 
@@ -1422,7 +1423,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnse
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
-    auto result = wddm->mapGpuVirtualAddressImpl(myGmm, ALLOCATION_HANDLE, nullptr, gpuVa, false, false, false);
+    auto result = wddm->mapGpuVirtualAddressImpl(myGmm, ALLOCATION_HANDLE, nullptr, gpuVa, wddm->selectHeap(nullptr, nullptr));
     EXPECT_TRUE(result);
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }
