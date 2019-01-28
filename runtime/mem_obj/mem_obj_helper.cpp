@@ -30,7 +30,8 @@ bool MemObjHelper::parseMemoryProperties(const cl_mem_properties_intel *properti
     return true;
 }
 
-AllocationProperties MemObjHelper::getAllocationProperties(cl_mem_flags_intel flags, bool allocateMemory, size_t size, GraphicsAllocation::AllocationType type) {
+AllocationProperties MemObjHelper::getAllocationProperties(cl_mem_flags_intel flags, bool allocateMemory,
+                                                           size_t size, GraphicsAllocation::AllocationType type) {
     AllocationProperties allocationProperties(allocateMemory, size, type);
     allocationProperties.flags.uncacheable = isValueSet(flags, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
     return allocationProperties;
@@ -42,6 +43,10 @@ AllocationProperties MemObjHelper::getAllocationProperties(ImageInfo *imgInfo, b
 
 DevicesBitfield MemObjHelper::getDevicesBitfield(const MemoryProperties &properties) {
     return DevicesBitfield(0);
+}
+
+bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressedBuffers, const MemoryProperties &properties, ContextType contextType) {
+    return renderCompressedBuffers;
 }
 
 bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &properties) {

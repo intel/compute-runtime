@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "runtime/context/context_type.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/helpers/basic_math.h"
@@ -138,7 +139,9 @@ class Buffer : public MemObj {
                             bool &isZeroCopy,
                             bool &copyMemoryFromHostPtr,
                             MemoryManager *memMngr);
-    static GraphicsAllocation::AllocationType getGraphicsAllocationType(cl_mem_flags flags, bool sharedContext, bool renderCompressedBuffers, bool localMemoryEnabled);
+    static GraphicsAllocation::AllocationType getGraphicsAllocationType(const MemoryProperties &properties, bool sharedContext,
+                                                                        ContextType contextType, bool renderCompressedBuffers,
+                                                                        bool localMemoryEnabled);
     static bool isReadOnlyMemoryPermittedByFlags(cl_mem_flags flags);
 
     void transferData(void *dst, void *src, size_t copySize, size_t copyOffset);

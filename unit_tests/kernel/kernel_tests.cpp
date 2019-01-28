@@ -16,18 +16,19 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/gtest_helpers.h"
-#include "test.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/program/program_from_binary.h"
 #include "unit_tests/program/program_tests.h"
+#include "unit_tests/utilities/base_object_utils.h"
 
 #include <memory>
 
@@ -1684,46 +1685,46 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIs
 }
 
 TEST(KernelImageDetectionTests, givenKernelWithImagesOnlyWhenItIsAskedIfItHasImagesOnlyThenTrueIsReturned) {
-    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
     pKernelInfo->kernelArgInfo.resize(3);
     pKernelInfo->kernelArgInfo[2].isImage = true;
     pKernelInfo->kernelArgInfo[1].isMediaBlockImage = true;
     pKernelInfo->kernelArgInfo[0].isMediaImage = true;
 
-    MockProgram program(*device->getExecutionEnvironment());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *device));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto context = clUniquePtr(new MockContext(device.get()));
+    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false));
+    auto kernel = clUniquePtr(new MockKernel(program.get(), *pKernelInfo, *device));
     EXPECT_FALSE(kernel->usesOnlyImages());
     kernel->initialize();
     EXPECT_TRUE(kernel->usesOnlyImages());
 }
 
 TEST(KernelImageDetectionTests, givenKernelWithImagesAndBuffersWhenItIsAskedIfItHasImagesOnlyThenFalseIsReturned) {
-    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
     pKernelInfo->kernelArgInfo.resize(3);
     pKernelInfo->kernelArgInfo[2].isImage = true;
     pKernelInfo->kernelArgInfo[1].isBuffer = true;
     pKernelInfo->kernelArgInfo[0].isMediaImage = true;
 
-    MockProgram program(*device->getExecutionEnvironment());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *device));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto context = clUniquePtr(new MockContext(device.get()));
+    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false));
+    auto kernel = clUniquePtr(new MockKernel(program.get(), *pKernelInfo, *device));
     EXPECT_FALSE(kernel->usesOnlyImages());
     kernel->initialize();
     EXPECT_FALSE(kernel->usesOnlyImages());
 }
 
 TEST(KernelImageDetectionTests, givenKernelWithNoImagesWhenItIsAskedIfItHasImagesOnlyThenFalseIsReturned) {
-    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
     auto pKernelInfo = std::make_unique<KernelInfo>();
-
     pKernelInfo->kernelArgInfo.resize(1);
     pKernelInfo->kernelArgInfo[0].isBuffer = true;
 
-    MockProgram program(*device->getExecutionEnvironment());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *device));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto context = clUniquePtr(new MockContext(device.get()));
+    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false));
+    auto kernel = clUniquePtr(new MockKernel(program.get(), *pKernelInfo, *device));
     EXPECT_FALSE(kernel->usesOnlyImages());
     kernel->initialize();
     EXPECT_FALSE(kernel->usesOnlyImages());
@@ -2319,8 +2320,10 @@ TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
 TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonStatefulAccessThenMarkKernelForAuxTranslation) {
     HardwareInfo localHwInfo = *platformDevices[0];
 
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
-    MockKernelWithInternals kernel(*device);
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    auto context = clUniquePtr(new MockContext(device.get()));
+    context->setContextType(ContextType::CONTEXT_TYPE_UNRESTRICTIVE);
+    MockKernelWithInternals kernel(*device, context.get());
     kernel.kernelInfo.kernelArgInfo.resize(1);
     kernel.kernelInfo.kernelArgInfo.at(0).typeStr = "char *";
 
@@ -2340,12 +2343,13 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
 
 TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkKernelForAuxTranslation) {
     DebugManagerStateRestore restore;
-    HardwareInfo localHwInfo = *platformDevices[0];
-
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
-    MockKernelWithInternals kernel(*device);
+    HardwareInfo localHwInfo = *platformDevices[0];
+
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    auto context = clUniquePtr(new MockContext(device.get()));
+    MockKernelWithInternals kernel(*device, context.get());
     kernel.kernelInfo.kernelArgInfo.resize(1);
     kernel.kernelInfo.kernelArgInfo.at(0).typeStr = "char *";
 

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "runtime/context/context_type.h"
 #include "runtime/device/device_vector.h"
 #include "runtime/context/driver_diagnostics.h"
 #include "runtime/helpers/base_object.h"
@@ -24,12 +25,6 @@ class SVMAllocsManager;
 template <>
 struct OpenCLObjectMapper<_cl_context> {
     typedef class Context DerivedType;
-};
-
-enum class ContextType {
-    CONTEXT_TYPE_DEFAULT,
-    CONTEXT_TYPE_SPECIALIZED,
-    CONTEXT_TYPE_UNRESTRICTIVE
 };
 
 class Context : public BaseObject<_cl_context> {

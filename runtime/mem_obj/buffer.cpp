@@ -132,8 +132,9 @@ Buffer *Buffer::create(Context *context,
     UNRECOVERABLE_IF(!memoryManager);
 
     GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(
-        properties.flags,
+        properties,
         context->isSharedContext,
+        context->peekContextType(),
         HwHelper::renderCompressedBuffersSupported(context->getDevice(0)->getHardwareInfo()),
         memoryManager->isLocalMemorySupported());
 
@@ -333,26 +334,24 @@ void Buffer::checkMemory(cl_mem_flags flags,
     return;
 }
 
-GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(cl_mem_flags flags, bool sharedContext, bool renderCompressedBuffers, bool isLocalMemoryEnabled) {
-    if (is32bit) {
+GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const MemoryProperties &properties, bool sharedContext,
+                                                                     ContextType contextType, bool renderCompressedBuffers,
+                                                                     bool isLocalMemoryEnabled) {
+    if (is32bit || sharedContext) {
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
-    if (sharedContext) {
-        return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
-    }
-
-    GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::BUFFER;
-
-    if (isValueSet(flags, CL_MEM_USE_HOST_PTR)) {
-        if (isValueSet(flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL) || !isLocalMemoryEnabled) {
-            type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR)) {
+        if (isValueSet(properties.flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL) || !isLocalMemoryEnabled) {
+            return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
         }
-    } else if (renderCompressedBuffers) {
-        type = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
+        return GraphicsAllocation::AllocationType::BUFFER;
     }
 
-    return type;
+    if (MemObjHelper::isSuitableForRenderCompression(renderCompressedBuffers, properties, contextType)) {
+        return GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
+    }
+    return GraphicsAllocation::AllocationType::BUFFER;
 }
 
 bool Buffer::isReadOnlyMemoryPermittedByFlags(cl_mem_flags flags) {
