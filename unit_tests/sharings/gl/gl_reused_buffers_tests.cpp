@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,11 +19,13 @@ using namespace OCLRT;
 struct GlReusedBufferTests : public ::testing::Test {
     void SetUp() override {
         glSharingFunctions = new GlSharingFunctionsMock();
+
         context.setSharingFunctions(glSharingFunctions);
         graphicsAllocationsForGlBufferReuse = &glSharingFunctions->graphicsAllocationsForGlBufferReuse;
     }
 
     GlSharingFunctionsMock *glSharingFunctions = nullptr;
+
     MockContext context;
 
     std::vector<std::pair<unsigned int, GraphicsAllocation *>> *graphicsAllocationsForGlBufferReuse = nullptr;
@@ -90,7 +92,10 @@ TEST_F(GlReusedBufferTests, givenMultipleBuffersWithReusedAllocationWhenCreating
 }
 
 TEST_F(GlReusedBufferTests, givenGlobalShareHandleChangedWhenAcquiringSharedBufferThenChangeGraphicsAllocation) {
+    std::unique_ptr<glDllHelper> dllParam = std::make_unique<glDllHelper>();
+    CL_GL_BUFFER_INFO bufferInfoOutput = dllParam->getBufferInfo();
     bufferInfoOutput.globalShareHandle = 40;
+    dllParam->loadBuffer(bufferInfoOutput);
     auto clBuffer = std::unique_ptr<Buffer>(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
     auto glBuffer = clBuffer->peekSharingHandler();
     auto oldGraphicsAllocation = clBuffer->getGraphicsAllocation();
@@ -98,6 +103,7 @@ TEST_F(GlReusedBufferTests, givenGlobalShareHandleChangedWhenAcquiringSharedBuff
     ASSERT_EQ(40, oldGraphicsAllocation->peekSharedHandle());
 
     bufferInfoOutput.globalShareHandle = 41;
+    dllParam->loadBuffer(bufferInfoOutput);
     glBuffer->acquire(clBuffer.get());
     auto newGraphicsAllocation = clBuffer->getGraphicsAllocation();
 
@@ -118,8 +124,11 @@ TEST_F(GlReusedBufferTests, givenGlobalShareHandleDidNotChangeWhenAcquiringShare
             GlBuffer::resolveGraphicsAllocationChange(currentSharedHandle, updateData);
         }
     };
-
+    std::unique_ptr<glDllHelper> dllParam = std::make_unique<glDllHelper>();
+    CL_GL_BUFFER_INFO bufferInfoOutput = dllParam->getBufferInfo();
     bufferInfoOutput.globalShareHandle = 40;
+
+    dllParam->loadBuffer(bufferInfoOutput);
     auto clBuffer = std::unique_ptr<Buffer>(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
     auto glBuffer = new MyGlBuffer(context.getSharing<GLSharingFunctions>(), bufferId1);
     clBuffer->setSharingHandler(glBuffer);
@@ -140,20 +149,26 @@ TEST_F(GlReusedBufferTests, givenGlobalShareHandleChangedWhenAcquiringSharedBuff
             GlBuffer::resolveGraphicsAllocationChange(currentSharedHandle, updateData);
         }
     };
-
+    std::unique_ptr<glDllHelper> dllParam = std::make_unique<glDllHelper>();
+    CL_GL_BUFFER_INFO bufferInfoOutput = dllParam->getBufferInfo();
     bufferInfoOutput.globalShareHandle = 40;
+    dllParam->loadBuffer(bufferInfoOutput);
     auto clBuffer = std::unique_ptr<Buffer>(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
     auto glBuffer = new MyGlBuffer(context.getSharing<GLSharingFunctions>(), bufferId1);
     clBuffer->setSharingHandler(glBuffer);
 
     bufferInfoOutput.globalShareHandle = 41;
+    dllParam->loadBuffer(bufferInfoOutput);
     glBuffer->acquire(clBuffer.get());
 
     glBuffer->release(clBuffer.get());
 }
 
 TEST_F(GlReusedBufferTests, givenMultipleBuffersAndGlobalShareHandleChangedWhenAcquiringSharedBufferDeleteOldGfxAllocationFromReuseVector) {
+    std::unique_ptr<glDllHelper> dllParam = std::make_unique<glDllHelper>();
+    CL_GL_BUFFER_INFO bufferInfoOutput = dllParam->getBufferInfo();
     bufferInfoOutput.globalShareHandle = 40;
+    dllParam->loadBuffer(bufferInfoOutput);
     auto clBuffer1 = std::unique_ptr<Buffer>(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
     auto clBuffer2 = std::unique_ptr<Buffer>(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
     auto graphicsAllocation1 = clBuffer1->getGraphicsAllocation();
@@ -163,6 +178,7 @@ TEST_F(GlReusedBufferTests, givenMultipleBuffersAndGlobalShareHandleChangedWhenA
     ASSERT_EQ(1, graphicsAllocationsForGlBufferReuse->size());
 
     bufferInfoOutput.globalShareHandle = 41;
+    dllParam->loadBuffer(bufferInfoOutput);
     clBuffer1->peekSharingHandler()->acquire(clBuffer1.get());
     auto newGraphicsAllocation = clBuffer1->getGraphicsAllocation();
     EXPECT_EQ(1, graphicsAllocationsForGlBufferReuse->size());
@@ -181,11 +197,16 @@ TEST_F(GlReusedBufferTests, givenGraphicsAllocationCreationReturnsNullptrWhenAcq
     auto suceedingMemoryManager = context.getMemoryManager();
     auto failingMemoryManager = std::unique_ptr<FailingMemoryManager>(new FailingMemoryManager());
 
+    std::unique_ptr<glDllHelper> dllParam = std::make_unique<glDllHelper>();
+    CL_GL_BUFFER_INFO bufferInfoOutput = dllParam->getBufferInfo();
     bufferInfoOutput.globalShareHandle = 40;
+
+    dllParam->loadBuffer(bufferInfoOutput);
     auto clBuffer = std::unique_ptr<Buffer>(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
     auto glBuffer = clBuffer->peekSharingHandler();
 
     bufferInfoOutput.globalShareHandle = 41;
+    dllParam->loadBuffer(bufferInfoOutput);
     context.setMemoryManager(failingMemoryManager.get());
     auto result = glBuffer->acquire(clBuffer.get());
 

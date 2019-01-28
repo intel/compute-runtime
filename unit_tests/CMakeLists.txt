@@ -130,6 +130,8 @@ option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" ON)
 
 if(NOT SHOW_VERBOSE_UTESTS_RESULTS)
   set(IGDRCL_TESTS_LISTENER_OPTION "--disable_default_listener")
+else()
+  set(IGDRCL_TESTS_LISTENER_OPTION "--enable_default_listener")
 endif()
 
 target_include_directories(igdrcl_tests PRIVATE

@@ -52,25 +52,20 @@ class GlSharingTextureTests : public ::testing::Test {
         imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
         imgDesc.image_width = 10;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        glSharing = new MockGlSharing;
 
         tempMM = new TempMM(executionEnvironment);
         executionEnvironment.memoryManager.reset(tempMM);
         device.reset(MockDevice::create<MockDevice>(*platformDevices, &executionEnvironment, 0));
         clContext = std::make_unique<MockContext>(device.get());
 
-        clContext->setSharingFunctions(&glSharing->m_sharingFunctions);
+        mockGlSharingFunctions = glSharing->sharingFunctions.release();
+        clContext->setSharingFunctions(mockGlSharingFunctions);
         ASSERT_FALSE(overrideCommandStreamReceiverCreation);
 
         tempMM->forceGmm = MockGmm::queryImgParams(imgInfo);
         tempMM->forceAllocationSize = textureSize;
         textureSize = imgInfo.size;
         textureId = 1;
-    }
-
-    void TearDown() override {
-        clContext->releaseSharingFunctions(SharingType::CLGL_SHARING);
-        delete glSharing;
     }
 
     void setUnifiedAuxSurf() {
@@ -84,7 +79,8 @@ class GlSharingTextureTests : public ::testing::Test {
     TempMM *tempMM;
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<MockContext> clContext;
-    MockGlSharing *glSharing;
+    std::unique_ptr<MockGlSharing> glSharing = std::make_unique<MockGlSharing>();
+    GlSharingFunctionsMock *mockGlSharingFunctions;
     size_t textureSize;
     unsigned int textureId;
 };
@@ -101,16 +97,16 @@ TEST_F(GlSharingTextureTests, givenMockGlWhen1dGlTextureIsCreatedThenMemObjectHa
     ASSERT_NE(nullptr, glTexture);
     EXPECT_NE(nullptr, glTexture->getGraphicsAllocation());
     EXPECT_EQ(textureSize, glTexture->getGraphicsAllocation()->getUnderlyingBufferSize());
-    EXPECT_EQ(1, GLAcquireSharedTextureCalled);
+    EXPECT_EQ(1, glSharing->dllParam->getParam("GLAcquireSharedTextureCalled"));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(textureId, textureInfoInput.name);
+    EXPECT_EQ(textureId, glSharing->dllParam->getTextureInfo().name); //input
 
     auto handler = glTexture->peekSharingHandler();
     ASSERT_NE(nullptr, handler);
     auto glHandler = static_cast<GlSharing *>(handler);
 
-    EXPECT_EQ(glHandler->peekFunctionsHandler(), &glSharing->m_sharingFunctions);
+    EXPECT_EQ(glHandler->peekFunctionsHandler(), mockGlSharingFunctions);
 
     delete glTexture;
 }
@@ -139,23 +135,25 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedFromWrongHandleTh
 
 GLboolean OSAPI mockGLAcquireSharedTexture(GLDisplay, GLContext, GLContext, GLvoid *pResourceInfo) {
     auto pTextureInfo = (CL_GL_RESOURCE_INFO *)pResourceInfo;
-    textureInfoInput = *pTextureInfo;
-    pTextureInfo->globalShareHandle = textureInfoOutput.globalShareHandle;
-    pTextureInfo->globalShareHandleMCS = textureInfoOutput.globalShareHandleMCS;
+    glDllHelper dllParam;
+    pTextureInfo->globalShareHandle = dllParam.getTextureInfo().globalShareHandle;
+    pTextureInfo->globalShareHandleMCS = dllParam.getTextureInfo().globalShareHandleMCS;
+
     if (pTextureInfo->target == GL_TEXTURE_BUFFER) {
         // size and width for texture buffer are queried from textureInfo - not from gmm
-        pTextureInfo->textureBufferSize = textureInfoOutput.textureBufferSize;
-        pTextureInfo->textureBufferWidth = textureInfoOutput.textureBufferWidth;
+        pTextureInfo->textureBufferSize = dllParam.getTextureInfo().textureBufferSize;
+        pTextureInfo->textureBufferWidth = dllParam.getTextureInfo().textureBufferWidth;
     }
-    pTextureInfo->pGmmResInfo = textureInfoOutput.pGmmResInfo;
+    pTextureInfo->pGmmResInfo = dllParam.getTextureInfo().pGmmResInfo;
     pTextureInfo->glInternalFormat = 99999;
-    pTextureInfo->glHWFormat = textureInfoOutput.glHWFormat;
-    pTextureInfo->textureBufferOffset = textureInfoOutput.textureBufferOffset;
+    pTextureInfo->glHWFormat = dllParam.getTextureInfo().glHWFormat;
+    pTextureInfo->textureBufferOffset = dllParam.getTextureInfo().textureBufferOffset;
+    dllParam.loadTexture(*pTextureInfo);
     return (GLboolean)1;
 };
 
 TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedFromIncorrectFormatThenErrorAndNoTextureIsReturned) {
-    glSharing->m_sharingFunctions.setGLAcquireSharedTextureMock(mockGLAcquireSharedTexture);
+    mockGlSharingFunctions->setGLAcquireSharedTextureMock(mockGLAcquireSharedTexture);
 
     auto retVal = CL_SUCCESS;
     auto glTexture = GlTexture::createSharedGlTexture(clContext.get(), (cl_mem_flags)0, GL_TEXTURE_1D, 0, textureId, &retVal);
@@ -176,16 +174,16 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenRenderBufferTextureIsCreatedThenMem
     ASSERT_NE(nullptr, glTexture);
     EXPECT_NE(nullptr, glTexture->getGraphicsAllocation());
     EXPECT_EQ(textureSize, glTexture->getGraphicsAllocation()->getUnderlyingBufferSize());
-    EXPECT_EQ(1, GLAcquireSharedRenderBufferCalled);
+    EXPECT_EQ(1, glSharing->dllParam->getParam("GLAcquireSharedRenderBufferCalled"));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(textureId, textureInfoInput.name);
+    EXPECT_EQ(textureId, glSharing->dllParam->getTextureInfo().name);
 
     auto handler = glTexture->peekSharingHandler();
     ASSERT_NE(nullptr, handler);
     auto glHandler = static_cast<GlSharing *>(handler);
 
-    EXPECT_EQ(glHandler->peekFunctionsHandler(), &glSharing->m_sharingFunctions);
+    EXPECT_EQ(glHandler->peekFunctionsHandler(), mockGlSharingFunctions);
 
     delete glTexture;
 }
@@ -255,7 +253,7 @@ TEST_F(GlSharingTextureTests, givenContextAnd1dTextureWhenClCreateFromGlTextureI
 
 TEST_F(GlSharingTextureTests, givenContextWithoutSharingAnd1dTextureWhenClCreateFromGlTextureIsCalledThenErrorIsReturned) {
     tempMM->useForcedGmm = false;
-    clContext->releaseSharingFunctions(CLGL_SHARING);
+    clContext->resetSharingFunctions(CLGL_SHARING);
     cl_int retVal = CL_INVALID_GL_OBJECT;
     auto glImage = clCreateFromGLTexture(clContext.get(), 0, GL_TEXTURE_1D, 0, textureId, &retVal);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
@@ -274,7 +272,7 @@ TEST_F(GlSharingTextureTests, givenContextAndRenderBufferTextureWhenClCreateFrom
 
 TEST_F(GlSharingTextureTests, givenContextWithoutSharingAndRenderBufferTextureWhenClCreateFromGlTextureIsCalledThenErrorIsReturned) {
     tempMM->useForcedGmm = false;
-    clContext->releaseSharingFunctions(CLGL_SHARING);
+    clContext->resetSharingFunctions(CLGL_SHARING);
     cl_int retVal = CL_INVALID_GL_OBJECT;
     auto glImage = clCreateFromGLRenderbuffer(clContext.get(), 0, textureId, &retVal);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
@@ -319,7 +317,7 @@ TEST_F(GlSharingTextureTests, givenHwCommandQueueAndGlTextureWhenItIsCreatedWith
 
 TEST_F(GlSharingTextureTests, givenContextWithoutSharingAndGlTextureWhenItIsCreatedWithClCreateFromGlTexture2dThenErrorIsReturned) {
     tempMM->useForcedGmm = false;
-    clContext->releaseSharingFunctions(CLGL_SHARING);
+    clContext->resetSharingFunctions(CLGL_SHARING);
     auto retVal = CL_SUCCESS;
     auto glImage = clCreateFromGLTexture2D(clContext.get(), 0, GL_TEXTURE_2D, 0, textureId, &retVal);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
@@ -346,7 +344,7 @@ TEST_F(GlSharingTextureTests, givenHwCommandQueueAndGlTextureWhenItIsCreatedWith
 
 TEST_F(GlSharingTextureTests, givenContextWithoutSharingAndGlTextureWhenItIsCreatedWithClCreateFromGlTexture3dThenErrorIsReturned) {
     tempMM->useForcedGmm = false;
-    clContext->releaseSharingFunctions(CLGL_SHARING);
+    clContext->resetSharingFunctions(CLGL_SHARING);
     auto retVal = CL_SUCCESS;
     auto glImage = clCreateFromGLTexture3D(clContext.get(), 0, GL_TEXTURE_3D, 0, textureId, &retVal);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
@@ -362,17 +360,17 @@ TEST_F(GlSharingTextureTests, givenHwCommandQueueAndGlTextureWhenAcquireIsCalled
 
     auto glImage = clCreateFromGLTexture(clContext.get(), 0, GL_TEXTURE_1D, 0, textureId, &retVal);
 
-    EXPECT_EQ(1, GLAcquireSharedTextureCalled);
+    EXPECT_EQ(1, glSharing->dllParam->getParam("GLAcquireSharedTextureCalled"));
     retVal = clEnqueueAcquireGLObjects(commandQueue, 1, &glImage, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(2, GLAcquireSharedTextureCalled);
+    EXPECT_EQ(2, glSharing->dllParam->getParam("GLAcquireSharedTextureCalled"));
 
     retVal = clEnqueueReleaseGLObjects(commandQueue, 1, &glImage, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clEnqueueAcquireGLObjects(commandQueue, 1, &glImage, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(3, GLAcquireSharedTextureCalled);
+    EXPECT_EQ(3, glSharing->dllParam->getParam("GLAcquireSharedTextureCalled"));
 
     retVal = clReleaseCommandQueue(commandQueue);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -425,17 +423,17 @@ TEST_F(GlSharingTextureTests, givenHwCommandQueueAndGlRenderBufferWhenAcquireIsC
 
     auto glImage = clCreateFromGLRenderbuffer(clContext.get(), 0, textureId, &retVal);
 
-    EXPECT_EQ(1, GLAcquireSharedRenderBufferCalled);
+    EXPECT_EQ(1, glSharing->dllParam->getParam("GLAcquireSharedRenderBufferCalled"));
     retVal = clEnqueueAcquireGLObjects(commandQueue, 1, &glImage, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(2, GLAcquireSharedRenderBufferCalled);
+    EXPECT_EQ(2, glSharing->dllParam->getParam("GLAcquireSharedRenderBufferCalled"));
 
     retVal = clEnqueueReleaseGLObjects(commandQueue, 1, &glImage, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clEnqueueAcquireGLObjects(commandQueue, 1, &glImage, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(3, GLAcquireSharedRenderBufferCalled);
+    EXPECT_EQ(3, glSharing->dllParam->getParam("GLAcquireSharedRenderBufferCalled"));
 
     retVal = clReleaseCommandQueue(commandQueue);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -451,12 +449,12 @@ TEST_F(GlSharingTextureTests, givenSharedGlTextureWhenItIsAcquireCountIsDecremen
     sharingHandler->acquire(image.get());
 
     sharingHandler->release(image.get());
-    EXPECT_EQ(0, GLReleaseSharedTextureCalled);
+    EXPECT_EQ(0, glSharing->dllParam->getParam("GLReleaseSharedTextureCalled"));
 
     sharingHandler->release(image.get());
-    EXPECT_EQ(1, GLReleaseSharedTextureCalled);
-    EXPECT_EQ(0, GLReleaseSharedRenderBufferCalled);
-    EXPECT_EQ(textureId, textureInfoInput.name);
+    EXPECT_EQ(1, glSharing->dllParam->getParam("GLReleaseSharedTextureCalled"));
+    EXPECT_EQ(0, glSharing->dllParam->getParam("GLReleaseSharedRenderBufferCalled"));
+    EXPECT_EQ(textureId, glSharing->dllParam->getTextureInfo().name);
 }
 
 TEST_F(GlSharingTextureTests, givenSharedRenderBufferWhenItIsAcquireCountIsDecrementedToZeroThenCallReleaseFunction) {
@@ -467,12 +465,12 @@ TEST_F(GlSharingTextureTests, givenSharedRenderBufferWhenItIsAcquireCountIsDecre
     sharingHandler->acquire(image.get());
 
     sharingHandler->release(image.get());
-    EXPECT_EQ(0, GLReleaseSharedRenderBufferCalled);
+    EXPECT_EQ(0, glSharing->dllParam->getParam("GLReleaseSharedRenderBufferCalled"));
 
     sharingHandler->release(image.get());
-    EXPECT_EQ(1, GLReleaseSharedRenderBufferCalled);
-    EXPECT_EQ(0, GLReleaseSharedTextureCalled);
-    EXPECT_EQ(textureId, textureInfoInput.name);
+    EXPECT_EQ(1, glSharing->dllParam->getParam("GLReleaseSharedRenderBufferCalled"));
+    EXPECT_EQ(0, glSharing->dllParam->getParam("GLReleaseSharedTextureCalled"));
+    EXPECT_EQ(textureId, glSharing->dllParam->getTextureInfo().name);
 }
 
 TEST_F(GlSharingTextureTests, givenMultisampleTextureWithMoreThanOneSampleWhenAskedForNumSamplesThenReturnCorrectValue) {
@@ -520,7 +518,10 @@ TEST_F(GlSharingTextureTests, givenTextureWithZeroSamplesWhenAskedForNumSamplesT
 
 TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedFromFormatNotIncludedInSurfaceFormatsThenErrorAndNoTextureIsReturned) {
     cl_int retVal = CL_SUCCESS;
-    textureInfoOutput.glInternalFormat = GL_SRGB8_ALPHA8;
+    auto textureInfoOutput = std::make_unique<CL_GL_RESOURCE_INFO>();
+    textureInfoOutput->glInternalFormat = GL_SRGB8_ALPHA8;
+    glSharing->dllParam->loadTexture(*textureInfoOutput);
+
     auto glTexture = GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_WRITE_ONLY, GL_SRGB8_ALPHA8, 0, textureId, &retVal);
 
     EXPECT_EQ(nullptr, glTexture);

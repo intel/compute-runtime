@@ -18,9 +18,41 @@
 ; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 ; OTHER DEALINGS IN THE SOFTWARE.
 
-LIBRARY    "gdi32_mock"
+LIBRARY    "mock_opengl32"
 EXPORTS
 glGetString
 wglGetProcAddress
 glSetString
 mockLoader
+glGetStringiMock
+wglSetSharedOCLContextStateINTELMock
+wglGetCurrentContext
+wglGetCurrentDC
+glGetIntegerv
+wglCreateContext
+wglDeleteContext
+wglShareLists
+wglMakeCurrent
+glSetString
+glSetStringi
+mockGLAcquireSharedBuffer
+resetParam
+getParam
+loadBuffer
+getBufferInfo
+memParam
+setGLSetSharedOCLContextStateReturnedValue
+getGLSetSharedOCLContextStateReturnedValue
+mockGLAcquireSharedRenderBuffer
+mockGLReleaseSharedBuffer
+mockGLReleaseSharedRenderBuffer
+mockGLReleaseSharedTexture
+mockGLAcquireSharedTexture
+loadTexture
+getTextureInfo
+mockGLGetCurrentDisplay
+setGlMockReturnedValues
+getGlMockReturnedValues
+mockGlRetainSync
+mockGlReleaseSync
+mockGlGetSynciv

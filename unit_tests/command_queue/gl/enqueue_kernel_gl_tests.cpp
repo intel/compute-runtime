@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ TEST_F(EnqueueKernelTest, givenKernelWithSharedObjArgsWhenEnqueueIsCalledThenRes
     auto nonSharedBuffer = new MockBuffer;
     MockGlSharing glSharing;
     glSharing.uploadDataToBufferInfo(1, 0);
-    pContext->setSharingFunctions(new GlSharingFunctionsMock());
+    pContext->setSharingFunctions(glSharing.sharingFunctions.release());
     auto retVal = CL_SUCCESS;
     auto sharedBuffer = GlBuffer::createSharedGlBuffer(pContext, CL_MEM_READ_WRITE, 1, &retVal);
     auto sharedMem = static_cast<cl_mem>(sharedBuffer);

@@ -52,11 +52,12 @@ TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenBackupConte
     GLContext GLHGLRCHandle = 0;
     GLDisplay GLHDCHandle = 0;
     int32_t expectedContextAttrs[3] = {0};
+    glDllHelper dllHelper;
 
     auto glSharingFunctions = new GlSharingFunctionsMock(GLHDCType, GLHGLRCHandle, GLHGLRCHandle, GLHDCHandle);
 
-    EXPECT_EQ(1, WGLCreateContextCalled);
-    EXPECT_EQ(1, WGLShareListsCalled);
+    EXPECT_EQ(1, dllHelper.getParam("WGLCreateContextCalled"));
+    EXPECT_EQ(1, dllHelper.getParam("WGLShareListsCalled"));
     EXPECT_EQ(0, EGLChooseConfigCalled);
     EXPECT_EQ(0, EGLCreateContextCalled);
     EXPECT_EQ(0, GlxChooseFBConfigCalled);
@@ -71,8 +72,8 @@ TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenBackupConte
     EXPECT_EQ(0, glxBkpContextParams.queryAttribute);
     EXPECT_EQ(0, glxBkpContextParams.renderType);
     delete glSharingFunctions;
-    EXPECT_EQ(1, WGLDeleteContextCalled);
-    EXPECT_EQ(1, GLDeleteContextCalled);
+    EXPECT_EQ(1, dllHelper.getParam("WGLDeleteContextCalled"));
+    EXPECT_EQ(1, dllHelper.getParam("GLDeleteContextCalled"));
 }
 
 struct GlArbSyncEventOsTest : public ::testing::Test {

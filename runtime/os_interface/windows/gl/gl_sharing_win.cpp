@@ -70,7 +70,7 @@ bool GLSharingFunctions::isGlSharingEnabled() {
     return oglLibAvailable;
 }
 
-bool GLSharingFunctions::isOpenGlExtensionSupported(const char *pExtensionString) {
+bool GLSharingFunctions::isOpenGlExtensionSupported(const unsigned char *pExtensionString) {
     bool LoadedNull = (glGetStringi == nullptr) || (glGetIntegerv == nullptr);
     if (LoadedNull) {
         return false;
@@ -79,8 +79,8 @@ bool GLSharingFunctions::isOpenGlExtensionSupported(const char *pExtensionString
     cl_int NumberOfExtensions = 0;
     glGetIntegerv(GL_NUM_EXTENSIONS, &NumberOfExtensions);
     for (cl_int i = 0; i < NumberOfExtensions; i++) {
-        const char *pString = reinterpret_cast<const char *>(glGetStringi(GL_EXTENSIONS, i));
-        if (strcmp(pString, pExtensionString) == 0) {
+        std::basic_string<unsigned char> pString = glGetStringi(GL_EXTENSIONS, i);
+        if (pString == pExtensionString) {
             return true;
         }
     }
@@ -89,30 +89,35 @@ bool GLSharingFunctions::isOpenGlExtensionSupported(const char *pExtensionString
 
 bool GLSharingFunctions::isOpenGlSharingSupported() {
 
-    const char *Vendor = reinterpret_cast<const char *>(glGetString(GL_VENDOR));
-    if ((Vendor == nullptr) || (strcmp(Vendor, "Intel") != 0)) {
+    std::basic_string<unsigned char> Vendor = glGetString(GL_VENDOR);
+    const unsigned char intelVendor[] = "Intel";
+
+    if ((Vendor.empty()) || (Vendor != intelVendor)) {
         return false;
     }
-
-    const char *Version = reinterpret_cast<const char *>(glGetString(GL_VERSION));
-    if (Version == nullptr) {
+    std::basic_string<unsigned char> Version = glGetString(GL_VERSION);
+    if (Version.empty()) {
         return false;
     }
 
     bool IsOpenGLES = false;
-    if (strstr(Version, "OpenGL ES") != NULL) {
+    const unsigned char versionES[] = "OpenGL ES";
+    if (Version.find(versionES) != std::string::npos) {
         IsOpenGLES = true;
     }
 
     if (IsOpenGLES == true) {
-        if (strstr(Version, "OpenGL ES 1.") != NULL) {
-            if (isOpenGlExtensionSupported("GL_OES_framebuffer_object") == false) {
+        const unsigned char versionES1[] = "OpenGL ES 1.";
+        if (Version.find(versionES1) != std::string::npos) {
+            const unsigned char supportGLOES[] = "GL_OES_framebuffer_object";
+            if (isOpenGlExtensionSupported(supportGLOES) == false) {
                 return false;
             }
         }
     } else {
         if (Version[0] < '3') {
-            if (isOpenGlExtensionSupported("GL_EXT_framebuffer_object") == false) {
+            const unsigned char supportGLEXT[] = "GL_EXT_framebuffer_object";
+            if (isOpenGlExtensionSupported(supportGLEXT) == false) {
                 return false;
             }
         }

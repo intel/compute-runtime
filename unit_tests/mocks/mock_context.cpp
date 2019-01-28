@@ -81,6 +81,10 @@ void MockContext::releaseSharingFunctions(SharingType sharing) {
     this->sharingFunctions[sharing].release();
 }
 
+void MockContext::resetSharingFunctions(SharingType sharing) {
+    this->sharingFunctions[sharing].reset();
+}
+
 void MockContext::registerSharingWithId(SharingFunctions *sharing, SharingType sharingId) {
     this->sharingFunctions[sharingId].reset(sharing);
 }

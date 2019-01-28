@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,8 +43,7 @@ class CreateFromGlTexture : public ::testing::Test {
     void SetUp() override {
         imgDesc = {};
         imgInfo = {};
-        glSharing = new MockGlSharing;
-        clContext.setSharingFunctions(&glSharing->m_sharingFunctions);
+        clContext.setSharingFunctions(glSharing->sharingFunctions.release());
         ASSERT_FALSE(overrideCommandStreamReceiverCreation);
         clContext.setMemoryManager(&tempMM);
     }
@@ -79,7 +78,7 @@ class CreateFromGlTexture : public ::testing::Test {
     std::unique_ptr<Gmm> mcsGmm;
     TempMM tempMM;
     MockContext clContext;
-    MockGlSharing *glSharing;
+    std::unique_ptr<MockGlSharing> glSharing = std::make_unique<MockGlSharing>();
     cl_int retVal;
     static const unsigned int mcsHandle = 0xFF;
 };
@@ -135,9 +134,9 @@ TEST_P(CreateFromGlTextureTestsWithParams, givenAllTextureSpecificParamsWhenCrea
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     if (target == GL_RENDERBUFFER_EXT) {
-        EXPECT_EQ(1, GLAcquireSharedRenderBufferCalled);
+        EXPECT_EQ(1, glSharing->dllParam->getParam("GLAcquireSharedRenderBufferCalled"));
     } else {
-        EXPECT_EQ(1, GLAcquireSharedTextureCalled);
+        EXPECT_EQ(1, glSharing->dllParam->getParam("GLAcquireSharedTextureCalled"));
     }
 
     EXPECT_EQ(GmmHelper::getCubeFaceIndex(target), glImage->getCubeFaceIndex());

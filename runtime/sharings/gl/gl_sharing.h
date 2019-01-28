@@ -163,7 +163,8 @@ class GLSharingFunctions : public SharingFunctions {
     }
 
     void createBackupContext();
-    bool isOpenGlExtensionSupported(const char *pExtensionString);
+
+    bool isOpenGlExtensionSupported(const unsigned char *pExtentionString);
     bool isOpenGlSharingSupported();
 
     std::mutex mutex;
