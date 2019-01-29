@@ -37,9 +37,12 @@ TEST(CommandQueueTests, givenCommandQueueWhenEnqueueWithBlockingFlagIsSetThenDri
 ```
 # Testing mindset
 
-* Test behaviors instead of implementations, do not focus on adding a test per every function in the 
+* Test behaviors instead of implementations, do not focus on adding a test per every function in the
 class (avoid tests for setters and getters), focus on the functionality you are adding and how it changes
 the driver behavior, do not bind tests to implementation.
-* Make sure that test is fast, our test suite needs to complete in seconds for efficient development pace, as 
+* Make sure that test is fast, our test suite needs to complete in seconds for efficient development pace, as
 a general rule test shouldn't be longer then 1ms in Debug driver.
 
+# Coding guidelines
+* HW commands and structures used in NEO must be initialized with constants defines for each Gfx Family: i.e. PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl
+* Any new HW command or structure must have its own static constant initializer added to any Gfx Family that is going to use it.
