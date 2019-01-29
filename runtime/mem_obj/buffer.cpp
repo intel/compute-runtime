@@ -5,6 +5,7 @@
  *
  */
 
+#include "common/helpers/bit_helpers.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/command_queue/command_queue.h"
@@ -343,8 +344,8 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(cl_mem_flag
 
     GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::BUFFER;
 
-    if (flags & CL_MEM_USE_HOST_PTR) {
-        if (flags & CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL || !isLocalMemoryEnabled) {
+    if (isValueSet(flags, CL_MEM_USE_HOST_PTR)) {
+        if (isValueSet(flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL) || !isLocalMemoryEnabled) {
             type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
         }
     } else if (renderCompressedBuffers) {

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "CL/cl.h"
+#include "common/helpers/bit_helpers.h"
 #include "mem_obj_types.h"
 #include "public/cl_ext_private.h"
 #include "runtime/mem_obj/mem_obj.h"
@@ -26,13 +27,14 @@ class MemObjHelper {
         }
 
         /* Check all the invalid flags combination. */
-        if (((properties.flags & CL_MEM_READ_WRITE) && (properties.flags & (CL_MEM_READ_ONLY | CL_MEM_WRITE_ONLY))) ||
-            ((properties.flags & CL_MEM_READ_ONLY) && (properties.flags & (CL_MEM_WRITE_ONLY))) ||
-            ((properties.flags & CL_MEM_ALLOC_HOST_PTR) && (properties.flags & CL_MEM_USE_HOST_PTR)) ||
-            ((properties.flags & CL_MEM_COPY_HOST_PTR) && (properties.flags & CL_MEM_USE_HOST_PTR)) ||
-            ((properties.flags & CL_MEM_HOST_READ_ONLY) && (properties.flags & CL_MEM_HOST_NO_ACCESS)) ||
-            ((properties.flags & CL_MEM_HOST_READ_ONLY) && (properties.flags & CL_MEM_HOST_WRITE_ONLY)) ||
-            ((properties.flags & CL_MEM_HOST_WRITE_ONLY) && (properties.flags & CL_MEM_HOST_NO_ACCESS))) {
+        if ((isValueSet(properties.flags, CL_MEM_READ_WRITE | CL_MEM_READ_ONLY)) ||
+            (isValueSet(properties.flags, CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY)) ||
+            (isValueSet(properties.flags, CL_MEM_READ_ONLY | CL_MEM_WRITE_ONLY)) ||
+            (isValueSet(properties.flags, CL_MEM_ALLOC_HOST_PTR | CL_MEM_USE_HOST_PTR)) ||
+            (isValueSet(properties.flags, CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) ||
+            (isValueSet(properties.flags, CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)) ||
+            (isValueSet(properties.flags, CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY)) ||
+            (isValueSet(properties.flags, CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS))) {
             return false;
         }
 
@@ -49,10 +51,7 @@ class MemObjHelper {
             CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
             CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS;
 
-        if ((flags & (~allValidFlags)) != 0) {
-            return false;
-        }
-        return true;
+        return isFieldValid(flags, allValidFlags);
     }
 
   protected:
@@ -69,8 +68,8 @@ class MemObjHelper {
         const cl_mem_flags allValidFlagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE |
                                                 additionalAcceptedProperties.flags_intel;
 
-        return ((properties.flags & (~allValidFlags)) == 0) &&
-               ((properties.flags_intel & (~allValidFlagsIntel)) == 0);
+        return (isFieldValid(properties.flags, allValidFlags) &&
+                isFieldValid(properties.flags_intel, allValidFlagsIntel));
     }
 
     static bool validateExtraMemoryProperties(const MemoryProperties &properties);
