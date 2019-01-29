@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ using namespace OCLRT;
 
 class EnqueueFillImageTest : public EnqueueFillImageTestFixture,
                              public ::testing::Test {
+  public:
     void SetUp(void) override {
         EnqueueFillImageTestFixture::SetUp();
     }

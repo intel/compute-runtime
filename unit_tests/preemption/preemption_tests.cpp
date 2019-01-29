@@ -31,6 +31,7 @@ class ThreadGroupPreemptionTests : public DevicePreemptionTests {
 };
 
 class MidThreadPreemptionTests : public DevicePreemptionTests {
+  public:
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
         DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));

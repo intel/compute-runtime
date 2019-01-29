@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -394,6 +394,7 @@ INSTANTIATE_TEST_CASE_P(ParentKernelEnqueueTest,
 
 class ParentKernelEnqueueFixture : public ExecutionModelSchedulerTest,
                                    public testing::Test {
+  public:
     void SetUp() override {
         ExecutionModelSchedulerTest::SetUp();
     }

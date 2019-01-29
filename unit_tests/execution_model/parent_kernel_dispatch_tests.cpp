@@ -244,6 +244,7 @@ HWTEST_F(ParentKernelCommandStreamFixture, GivenDispatchInfoWithParentKernelWhen
 
 class MockParentKernelDispatch : public ExecutionModelSchedulerTest,
                                  public testing::Test {
+  public:
     void SetUp() override {
         ExecutionModelSchedulerTest::SetUp();
     }

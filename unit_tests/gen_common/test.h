@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,10 @@
 #include "runtime/gen_common/hw_cmds.h"
 #include "igfxfmid.h"
 #include "gtest/gtest.h"
+
+#include <cstdint>
+#include <memory>
+#include <unordered_set>
 
 extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
@@ -85,11 +89,28 @@ extern GFXCORE_FAMILY renderCoreFamily;
     HWTEST_TEST_(test_fixture, test_name, test_fixture, \
                  ::testing::internal::GetTypeId<test_fixture>())
 
+#define PLATFORM_EXCLUDES_CLASS_NAME(test_case_name, test_name) \
+    PLATFORM_EXCLUDES_##test_case_name##test_name
+
 // Macros to provide template based testing.
 // Test can use FamilyType in the test -- equivalent to SKLFamily
 #define HWCMDTEST_TEST_(cmdset_gen_base, test_case_name, test_name, parent_class, parent_id)              \
-    class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public parent_class {                       \
+    class PLATFORM_EXCLUDES_CLASS_NAME(test_case_name, test_name) {                                       \
+      public:                                                                                             \
+        static std::unique_ptr<std::unordered_set<uint32_t>> &getExcludes() {                             \
+            static std::unique_ptr<std::unordered_set<uint32_t>> excludes;                                \
+            return excludes;                                                                              \
+        }                                                                                                 \
+        static void addExclude(uint32_t product) {                                                        \
+            auto &excludes = getExcludes();                                                               \
+            if (excludes == nullptr) {                                                                    \
+                excludes = std::make_unique<std::unordered_set<uint32_t>>();                              \
+            }                                                                                             \
+            excludes->insert(product);                                                                    \
+        }                                                                                                 \
+    };                                                                                                    \
                                                                                                           \
+    class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public parent_class {                       \
       public:                                                                                             \
         GTEST_TEST_CLASS_NAME_(test_case_name, test_name)                                                 \
         () {}                                                                                             \
@@ -100,7 +121,18 @@ extern GFXCORE_FAMILY renderCoreFamily;
                                                                                                           \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)> \
         auto runCmdTestHwIfSupported() -> typename std::enable_if<ShouldBeTested>::type {                 \
-            testBodyHw<FamilyType>();                                                                     \
+            if (notExcluded()) {                                                                          \
+                testBodyHw<FamilyType>();                                                                 \
+            }                                                                                             \
+        }                                                                                                 \
+                                                                                                          \
+        bool notExcluded() const {                                                                        \
+            using ExcludesT = PLATFORM_EXCLUDES_CLASS_NAME(test_case_name, test_name);                    \
+            auto &excludes = ExcludesT::getExcludes();                                                    \
+            if (excludes == nullptr) {                                                                    \
+                return true;                                                                              \
+            }                                                                                             \
+            return excludes->count(::productFamily) == 0;                                                 \
         }                                                                                                 \
                                                                                                           \
         template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)> \
@@ -124,6 +156,16 @@ extern GFXCORE_FAMILY renderCoreFamily;
                 break;                                                                                    \
             }                                                                                             \
         }                                                                                                 \
+        void SetUp() override {                                                                           \
+            if (notExcluded()) {                                                                          \
+                parent_class::SetUp();                                                                    \
+            }                                                                                             \
+        }                                                                                                 \
+        void TearDown() override {                                                                        \
+            if (notExcluded()) {                                                                          \
+                parent_class::TearDown();                                                                 \
+            }                                                                                             \
+        }                                                                                                 \
         static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                             \
         GTEST_DISALLOW_COPY_AND_ASSIGN_(                                                                  \
             GTEST_TEST_CLASS_NAME_(test_case_name, test_name));                                           \
@@ -139,6 +181,28 @@ extern GFXCORE_FAMILY renderCoreFamily;
                 GTEST_TEST_CLASS_NAME_(test_case_name, test_name)>);                                      \
     template <typename FamilyType>                                                                        \
     void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::testBodyHw()
+
+#define HWCMDTEST_EXCLUDE_FAMILY(test_case_name, test_name, family)                      \
+    class PLATFORM_EXCLUDES_CLASS_NAME(test_case_name, test_name) {                      \
+      public:                                                                            \
+        static std::unique_ptr<std::unordered_set<uint32_t>> &getExcludes() {            \
+            static std::unique_ptr<std::unordered_set<uint32_t>> excludes;               \
+            return excludes;                                                             \
+        }                                                                                \
+        static void addExclude(uint32_t product) {                                       \
+            auto &excludes = getExcludes();                                              \
+            if (excludes == nullptr) {                                                   \
+                excludes = std::make_unique<std::unordered_set<uint32_t>>();             \
+            }                                                                            \
+            excludes->insert(product);                                                   \
+        }                                                                                \
+    };                                                                                   \
+                                                                                         \
+    struct test_case_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family {              \
+        test_case_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family() {               \
+            PLATFORM_EXCLUDES_CLASS_NAME(test_case_name, test_name)::addExclude(family); \
+        }                                                                                \
+    } test_case_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family##_init;
 
 #define HWCMDTEST_F(cmdset_gen_base, test_fixture, test_name)               \
     HWCMDTEST_TEST_(cmdset_gen_base, test_fixture, test_name, test_fixture, \
