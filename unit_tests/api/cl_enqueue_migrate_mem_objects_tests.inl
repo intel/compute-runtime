@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace OCLRT;
 
 typedef api_tests clEnqueueMigrateMemObjectsTests;
 
-TEST_F(clEnqueueMigrateMemObjectsTests, NullCommandQueue_returnsError) {
+TEST_F(clEnqueueMigrateMemObjectsTests, GivenNullCommandQueueWhenMigratingMemObjThenInvalidCommandQueueErrorIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -48,7 +48,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, NullCommandQueue_returnsError) {
     clReleaseEvent(eventReturned);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, ValidInputsExpectSuccess) {
+TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidInputsWhenMigratingMemObjThenSuccessIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -82,7 +82,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, ValidInputsExpectSuccess) {
     clReleaseEvent(eventReturned);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, NullMemObjectsReturnsInvalidValue) {
+TEST_F(clEnqueueMigrateMemObjectsTests, GivenNullMemObjsWhenMigratingMemObjThenInvalidValueErrorIsReturned) {
 
     cl_event eventReturned = nullptr;
     auto Result = clEnqueueMigrateMemObjects(
@@ -96,7 +96,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, NullMemObjectsReturnsInvalidValue) {
     EXPECT_EQ(CL_INVALID_VALUE, Result);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, ZeroMemObjectsReturnsInvalidValue) {
+TEST_F(clEnqueueMigrateMemObjectsTests, GivenZeroMemObjectsWhenMigratingMemObjsThenInvalidValueErrorIsReturned) {
 
     cl_event eventReturned = nullptr;
     auto Result = clEnqueueMigrateMemObjects(
@@ -110,7 +110,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, ZeroMemObjectsReturnsInvalidValue) {
     EXPECT_EQ(CL_INVALID_VALUE, Result);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, NonZeroEventsNullWaitlistReturnsInvalidWaitlist) {
+TEST_F(clEnqueueMigrateMemObjectsTests, GivenNonZeroEventsAndNullWaitlistWhenMigratingMemObjThenInvalidWaitListErrorIsReturned) {
 
     cl_event eventReturned = nullptr;
     auto Result = clEnqueueMigrateMemObjects(
@@ -124,7 +124,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, NonZeroEventsNullWaitlistReturnsInvalidW
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, Result);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, ZeroEventsNonNullWaitlistReturnsInvalidWaitlist) {
+TEST_F(clEnqueueMigrateMemObjectsTests, GivenZeroEventsAndNonNullWaitlistWhenMigratingMemObjsThenInvalidWaitListErrorIsReturned) {
 
     cl_event eventReturned = nullptr;
     Event event(pCommandQueue, CL_COMMAND_MIGRATE_MEM_OBJECTS, 0, 0);
@@ -140,7 +140,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, ZeroEventsNonNullWaitlistReturnsInvalidW
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, Result);
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, ValidFlagsReturnsSuccess) {
+TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidFlagsWhenMigratingMemObjsThenSuccessIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
@@ -177,7 +177,7 @@ TEST_F(clEnqueueMigrateMemObjectsTests, ValidFlagsReturnsSuccess) {
     delete[] pHostMem;
 }
 
-TEST_F(clEnqueueMigrateMemObjectsTests, InvalidFlagsReturnsError) {
+TEST_F(clEnqueueMigrateMemObjectsTests, GivenInvalidFlagsWhenMigratingMemObjsThenInvalidValueErrorIsReturned) {
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
