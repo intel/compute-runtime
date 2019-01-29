@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,12 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
         addressSpaceCapturedFromExpectMemory = addressSpace;
         compareOperationFromExpectMemory = compareOperation;
     }
+    void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) override {
+        registerPollCalled = true;
+        AUBCommandStreamReceiver::AubFileStream::registerPoll(registerOffset, mask, value, pollNotEqual, timeoutAction);
+    }
     uint32_t initCalledCnt = 0;
+    bool registerPollCalled = false;
     bool flushCalled = false;
     bool lockStreamCalled = false;
     uint64_t physAddressCapturedFromExpectMemory = 0;

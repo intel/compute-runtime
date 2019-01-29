@@ -15,6 +15,7 @@
 #include "runtime/memory_manager/page_table.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "runtime/utilities/spinlock.h"
 
 namespace OCLRT {
 
@@ -62,6 +63,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     // Family specific version
     MOCKABLE_VIRTUAL void submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits);
     MOCKABLE_VIRTUAL void pollForCompletion();
+    void pollForCompletionImpl();
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
 
     uint32_t getDumpHandle();
     MOCKABLE_VIRTUAL void addContextToken(uint32_t dumpHandle);
@@ -115,5 +118,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     bool dumpAubNonWritable = false;
     ExternalAllocationsContainer externalAllocations;
+
+    uint32_t pollForCompletionTaskCount = 0u;
+    SpinLock pollForCompletionLock;
 };
 } // namespace OCLRT

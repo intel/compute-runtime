@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include "aub_command_stream_receiver_hw.h"
 
 namespace OCLRT {
 
@@ -89,6 +90,9 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
 
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::~AUBCommandStreamReceiverHw() {
+    if (osContext) {
+        pollForCompletion();
+    }
     freeEngineInfoTable();
 }
 
@@ -342,10 +346,6 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 
     submitBatchBuffer(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
 
-    if (!DebugManager.flags.AUBDumpConcurrentCS.get()) {
-        pollForCompletion();
-    }
-
     if (this->standalone) {
         *this->tagAddress = this->peekLatestSentTaskCount();
     }
@@ -561,6 +561,17 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBuff
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
+    const auto lock = std::unique_lock<decltype(pollForCompletionLock)>{pollForCompletionLock};
+    if (this->pollForCompletionTaskCount == this->taskCount) {
+        return;
+    }
+    pollForCompletionImpl();
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionImpl() {
+    this->pollForCompletionTaskCount = this->taskCount;
+
     if (hardwareContext) {
         hardwareContext->pollForCompletion();
         return;
@@ -576,6 +587,12 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
         value,
         pollNotEqual,
         AubMemDump::CmdServicesMemTraceRegisterPoll::TimeoutActionValues::Abort);
+}
+
+template <typename GfxFamily>
+inline void AUBCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
+    CommandStreamReceiverSimulatedHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
+    pollForCompletion();
 }
 
 template <typename GfxFamily>
@@ -691,6 +708,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryNotEqual(void *gfxAddres
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
                                                          size_t length, uint32_t compareOperation) {
+    pollForCompletion();
+
     if (hardwareContext) {
         hardwareContext->expectMemory(reinterpret_cast<uint64_t>(gfxAddress), srcAddress, length, compareOperation);
     }
@@ -846,4 +865,5 @@ template <typename GfxFamily>
 int AUBCommandStreamReceiverHw<GfxFamily>::getAddressSpaceFromPTEBits(uint64_t entryBits) const {
     return AubMemDump::AddressSpaceValues::TraceNonlocal;
 }
+
 } // namespace OCLRT

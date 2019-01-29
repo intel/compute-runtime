@@ -55,6 +55,8 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         : AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, fileName, standalone, executionEnvironment){};
 
     using CommandStreamReceiverHw<GfxFamily>::defaultSshSize;
+    using AUBCommandStreamReceiverHw<GfxFamily>::taskCount;
+    using AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionTaskCount;
 
     DispatchMode peekDispatchMode() const {
         return this->dispatchMode;
@@ -97,6 +99,9 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) {
         AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryNotEqual(gfxAddress, srcAddress, length);
         expectMemoryNotEqualCalled = true;
+    }
+    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+        return true;
     }
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;

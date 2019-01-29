@@ -77,14 +77,17 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
     }
 
     template <typename FamilyType>
-    void pollForCompletion() {
+    AUBCommandStreamReceiverHw<FamilyType> *getAubCsr() {
         CommandStreamReceiver *csr = pCommandStreamReceiver;
         if (testMode == TestMode::AubTestsWithTbx) {
             csr = reinterpret_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR;
         }
+        return reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
+    }
 
-        auto aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
-        aubCsr->pollForCompletion();
+    template <typename FamilyType>
+    void pollForCompletion() {
+        getAubCsr<FamilyType>()->pollForCompletion();
     }
 
     GraphicsAllocation *createResidentAllocationAndStoreItInCsr(const void *address, size_t size) {

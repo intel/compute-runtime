@@ -58,6 +58,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
         ResidencyContainer allocationsForResidency;
         pCommandStreamReceiver->flush(batchBuffer, allocationsForResidency);
 
+        AUBCommandStreamFixture::getAubCsr<FamilyType>()->pollForCompletionImpl();
         auto engineType = pCommandStreamReceiver->getOsContext().getEngineType();
         auto mmioBase = CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(engineType.type).mmioBase;
         AUBCommandStreamFixture::expectMMIO<FamilyType>(AubMemDump::computeRegisterOffset(mmioBase, 0x2094), noopId);
@@ -75,6 +76,7 @@ HWTEST_F(AUBcommandstreamTests, testFlushTwice) {
     BatchBuffer batchBuffer2{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, pCS->getUsed(), pCS};
     ResidencyContainer allocationsForResidency2;
     pCommandStreamReceiver->flush(batchBuffer2, allocationsForResidency);
+    AUBCommandStreamFixture::getAubCsr<FamilyType>()->pollForCompletionImpl();
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdRcs) {
