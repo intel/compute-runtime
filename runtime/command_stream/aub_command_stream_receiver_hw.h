@@ -26,6 +26,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
     using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using ExternalAllocationsContainer = std::vector<AllocationView>;
+    using BaseClass::engineIndex;
     using BaseClass::osContext;
 
   public:
@@ -59,7 +60,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
 
     // Family specific version
-    MOCKABLE_VIRTUAL void submitBatchBuffer(size_t engineIndex, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits);
+    MOCKABLE_VIRTUAL void submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits);
     MOCKABLE_VIRTUAL void pollForCompletion();
 
     uint32_t getDumpHandle();
@@ -81,7 +82,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL bool isFileOpen() const;
     MOCKABLE_VIRTUAL const std::string &getFileName();
 
-    MOCKABLE_VIRTUAL void initializeEngine(size_t engineIndex);
+    MOCKABLE_VIRTUAL void initializeEngine();
     void freeEngineInfoTable();
 
     MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
@@ -98,8 +99,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     AddressMapper *gttRemap;
 
     MOCKABLE_VIRTUAL bool addPatchInfoComments();
-    void addGUCStartMessage(uint64_t batchBufferAddress, EngineType engineType);
-    uint32_t getGUCWorkQueueItemHeader(EngineType engineType);
+    void addGUCStartMessage(uint64_t batchBufferAddress);
+    uint32_t getGUCWorkQueueItemHeader();
 
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_AUB;

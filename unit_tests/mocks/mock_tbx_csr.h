@@ -38,16 +38,16 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     MockTbxCsr(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
         : TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment) {}
 
-    void initializeEngine(size_t engineIndex) {
-        TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(engineIndex);
+    void initializeEngine() {
+        TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine();
         initializeEngineCalled = true;
     }
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) {
         TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(gpuAddress, cpuAddress, size, memoryBank, entryBits, devicesBitfield);
         writeMemoryCalled = true;
     }
-    void submitBatchBuffer(size_t engineIndex, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) override {
-        TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(engineIndex, batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits);
+    void submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) override {
+        TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits);
         submitBatchBufferCalled = true;
     }
     void pollForCompletion() override {

@@ -146,15 +146,14 @@ const std::string &AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex) {
+void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
     if (hardwareContext) {
         DEBUG_BREAK_IF(allEngineInstances[engineIndex].type != osContext->getEngineType().type);
         hardwareContext->initialize();
         return;
     }
 
-    auto engineInstance = allEngineInstances[engineIndex];
-    auto csTraits = this->getCsTraits(engineInstance);
+    auto csTraits = this->getCsTraits(osContext->getEngineType());
     auto &engineInfo = engineInfoTable[engineIndex];
 
     if (engineInfo.pLRCA) {
@@ -162,7 +161,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex)
     }
 
     this->initGlobalMMIO();
-    this->initEngineMMIO(engineInstance);
+    this->initEngineMMIO();
     this->initAdditionalMMIO();
 
     // Write driver version
@@ -309,9 +308,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 
     auto streamLocked = getAubStream()->lockStream();
 
-    auto engineIndex = this->getEngineIndex(osContext->getEngineType());
-
-    initializeEngine(engineIndex);
+    initializeEngine();
 
     // Write our batch buffer
     auto pBatchBuffer = ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset);
@@ -343,7 +340,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
     processResidency(allocationsForResidency);
 
-    submitBatchBuffer(engineIndex, batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
+    submitBatchBuffer(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
 
     if (!DebugManager.flags.AUBDumpConcurrentCS.get()) {
         pollForCompletion();
@@ -405,7 +402,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
+void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
     if (hardwareContext) {
         if (batchBufferSize) {
             hardwareContext->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
@@ -413,8 +410,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
         return;
     }
 
-    auto engineInstance = allEngineInstances[engineIndex];
-    auto csTraits = this->getCsTraits(engineInstance);
+    auto csTraits = this->getCsTraits(osContext->getEngineType());
     auto &engineInfo = engineInfoTable[engineIndex];
 
     {
@@ -439,7 +435,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
     }
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-        addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(batchBuffer)), engineInstance.type);
+        addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(batchBuffer)));
         addPatchInfoComments();
     }
 
@@ -559,7 +555,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
         contextDescriptor.sData.LogicalRingCtxAddress = ggttLRCA / 4096;
         contextDescriptor.sData.ContextID = 0;
 
-        this->submitLRCA(engineInstance, contextDescriptor);
+        this->submitLRCA(contextDescriptor);
     }
 }
 
@@ -803,7 +799,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addContextToken(uint32_t dumpHandle)
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBufferAddress, EngineType engineType) {
+void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBufferAddress) {
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
 
     auto bufferSize = sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START);
@@ -813,7 +809,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
     LinearStream linearStream(buffer.get(), bufferSize);
 
     uint32_t *header = static_cast<uint32_t *>(linearStream.getSpace(sizeof(uint32_t)));
-    *header = getGUCWorkQueueItemHeader(engineType);
+    *header = getGUCWorkQueueItemHeader();
 
     MI_BATCH_BUFFER_START *miBatchBufferStart = linearStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
     DEBUG_BREAK_IF(bufferSize != linearStream.getUsed());
@@ -841,7 +837,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
 }
 
 template <typename GfxFamily>
-uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getGUCWorkQueueItemHeader(EngineType engineType) {
+uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getGUCWorkQueueItemHeader() {
     uint32_t GUCWorkQueueItemHeader = 0x00030001;
     return GUCWorkQueueItemHeader;
 }

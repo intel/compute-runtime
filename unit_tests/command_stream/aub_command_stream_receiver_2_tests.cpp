@@ -174,7 +174,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddGucS
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     std::unique_ptr<char> batchBuffer(new char[1024]);
-    aubCsr->addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(batchBuffer.get())), EngineType::ENGINE_RCS);
+    aubCsr->addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(batchBuffer.get())));
 
     auto &patchInfoCollection = aubCsr->getFlatBatchBufferHelper().getPatchInfoCollection();
     ASSERT_EQ(1u, patchInfoCollection.size());
@@ -705,12 +705,14 @@ HWTEST_F(AubCommandStreamReceiverTests, whenAubCommandStreamReceiverIsCreatedThe
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineIsInitializedThenDumpHandleIsGenerated) {
     executionEnvironment.aubCenter.reset(new AubCenter());
+    auto engineInstance = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
+    OsContext osContext(nullptr, 0, engineInstance, PreemptionMode::Disabled);
+
     auto aubCsr = std::make_unique<MockAubCsrToTestDumpContext<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     EXPECT_NE(nullptr, aubCsr);
 
-    auto engineIndex = aubCsr->getEngineIndex(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0]);
-
-    aubCsr->initializeEngine(engineIndex);
+    aubCsr->setupContext(osContext);
+    aubCsr->initializeEngine();
     EXPECT_NE(0u, aubCsr->handle);
 }
 

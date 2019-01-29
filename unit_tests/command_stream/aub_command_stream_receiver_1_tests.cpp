@@ -295,17 +295,21 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.aubCenter.reset(new AubCenter());
 
+    auto engineInstance = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
+    OsContext osContext(nullptr, 0, engineInstance, PreemptionMode::Disabled);
+
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     auto engineType = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0].type;
-    auto engineIndex = aubCsr1->getEngineIndex(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0]);
 
-    aubCsr1->initializeEngine(engineIndex);
+    aubCsr1->setupContext(osContext);
+    aubCsr1->initializeEngine();
     EXPECT_NE(0u, aubCsr1->engineInfoTable[engineType].ggttLRCA);
     EXPECT_NE(0u, aubCsr1->engineInfoTable[engineType].ggttHWSP);
     EXPECT_NE(0u, aubCsr1->engineInfoTable[engineType].ggttRingBuffer);
 
-    aubCsr2->initializeEngine(engineIndex);
+    aubCsr2->setupContext(osContext);
+    aubCsr2->initializeEngine();
     EXPECT_NE(aubCsr1->engineInfoTable[engineType].ggttLRCA, aubCsr2->engineInfoTable[engineType].ggttLRCA);
     EXPECT_NE(aubCsr1->engineInfoTable[engineType].ggttHWSP, aubCsr2->engineInfoTable[engineType].ggttHWSP);
     EXPECT_NE(aubCsr1->engineInfoTable[engineType].ggttRingBuffer, aubCsr2->engineInfoTable[engineType].ggttRingBuffer);

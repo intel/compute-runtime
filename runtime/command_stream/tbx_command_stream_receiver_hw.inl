@@ -79,14 +79,13 @@ TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex) {
+void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
     if (hardwareContext) {
         hardwareContext->initialize();
         return;
     }
 
-    auto engineInstance = allEngineInstances[engineIndex];
-    auto csTraits = this->getCsTraits(engineInstance);
+    auto csTraits = this->getCsTraits(osContext->getEngineType());
     auto &engineInfo = engineInfoTable[engineIndex];
 
     if (engineInfo.pLRCA) {
@@ -94,7 +93,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(size_t engineIndex)
     }
 
     this->initGlobalMMIO();
-    this->initEngineMMIO(engineInstance);
+    this->initEngineMMIO();
     this->initAdditionalMMIO();
 
     // Global HW Status Page
@@ -188,9 +187,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
 
 template <typename GfxFamily>
 FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
-    auto engineIndex = this->getEngineIndex(osContext->getEngineType());
-
-    initializeEngine(engineIndex);
+    initializeEngine();
 
     // Write our batch buffer
     auto pBatchBuffer = ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset);
@@ -209,14 +206,14 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     // Write allocations for residency
     processResidency(allocationsForResidency);
 
-    submitBatchBuffer(engineIndex, batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
+    submitBatchBuffer(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, this->getMemoryBank(batchBuffer.commandBufferAllocation), this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
 
     pollForCompletion();
     return 0;
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
+void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
     if (hardwareContext) {
         if (batchBufferSize) {
             hardwareContext->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
@@ -224,8 +221,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
         return;
     }
 
-    auto engineInstance = allEngineInstances[engineIndex];
-    auto csTraits = this->getCsTraits(engineInstance);
+    auto csTraits = this->getCsTraits(osContext->getEngineType());
     auto &engineInfo = engineInfoTable[engineIndex];
 
     {
@@ -340,7 +336,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(size_t engineIndex
         contextDescriptor.sData.LogicalRingCtxAddress = ggttLRCA / 4096;
         contextDescriptor.sData.ContextID = 0;
 
-        this->submitLRCA(engineInstance, contextDescriptor);
+        this->submitLRCA(contextDescriptor);
     }
 }
 

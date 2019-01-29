@@ -49,11 +49,11 @@ uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getMemoryBankForGtt(
 }
 
 template <typename GfxFamily>
-size_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getEngineIndex(EngineInstanceT engineInstance) {
+uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getEngineIndex(EngineInstanceT engineInstance) {
     auto findCriteria = [&](const auto &it) { return it.type == engineInstance.type && it.id == engineInstance.id; };
     auto findResult = std::find_if(allEngineInstances.begin(), allEngineInstances.end(), findCriteria);
     UNRECOVERABLE_IF(findResult == allEngineInstances.end());
-    return findResult - allEngineInstances.begin();
+    return static_cast<uint32_t>(findResult - allEngineInstances.begin());
 }
 
 template <typename GfxFamily>
@@ -62,8 +62,8 @@ const AubMemDump::LrcaHelper &CommandStreamReceiverSimulatedCommonHw<GfxFamily>:
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initEngineMMIO(EngineInstanceT engineInstance) {
-    auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[engineInstance.type];
+void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initEngineMMIO() {
+    auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[osContext->getEngineType().type];
 
     DEBUG_BREAK_IF(!mmioList);
     for (auto &mmioPair : *mmioList) {
@@ -72,8 +72,8 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initEngineMMIO(EngineIns
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::submitLRCA(EngineInstanceT engineInstance, const MiContextDescriptorReg &contextDescriptor) {
-    auto mmioBase = getCsTraits(engineInstance).mmioBase;
+void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::submitLRCA(const MiContextDescriptorReg &contextDescriptor) {
+    auto mmioBase = getCsTraits(osContext->getEngineType()).mmioBase;
     stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
     stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
     stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[1]);
@@ -84,9 +84,9 @@ template <typename GfxFamily>
 void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &osContext) {
     CommandStreamReceiverHw<GfxFamily>::setupContext(osContext);
 
+    engineIndex = getEngineIndex(osContext.getEngineType());
     auto &engineType = osContext.getEngineType();
     if (aubManager && !(engineType.type == lowPriorityGpgpuEngine.type && engineType.id == lowPriorityGpgpuEngine.id)) {
-        auto engineIndex = static_cast<uint32_t>(getEngineIndex(osContext.getEngineType()));
         hardwareContext = std::unique_ptr<aub_stream::HardwareContext>(aubManager->createHardwareContext(deviceIndex,
                                                                                                          engineIndex));
     }
