@@ -316,7 +316,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(Allocat
     if (allocation) {
         allocation->setAllocationType(properties.allocationType);
     }
-
+    DebugManager.logAllocation(allocation);
     return allocation;
 }
 
