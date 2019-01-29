@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -444,7 +444,7 @@ HWTEST_F(BuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThe
     auto mockAuxBuiltInOp = new MockAuxBuilInOp<FamilyType>(*pBuiltIns, *pContext, *pDevice);
     pBuiltIns->BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::AuxTranslation)].first.reset(mockAuxBuiltInOp);
 
-    auto mockProgram = wrapReleasableObjectWithUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
+    auto mockProgram = clUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
     auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
     mockAuxBuiltInOp->usedKernels.at(0).reset(mockBuiltinKernel);
 

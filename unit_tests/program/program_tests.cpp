@@ -2842,20 +2842,20 @@ TEST_F(ProgramTests, givenCompilerInterfaceWhenCompileIsCalledThenProperIntermed
     pDevice->getExecutionEnvironment()->compilerInterface.reset(compilerInterface);
 
     compilerInterface->useLlvmText = true;
-    auto programLlvmText = wrapReleasableObjectWithUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
+    auto programLlvmText = clUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
     programLlvmText->setDevice(device);
     compilerInterface->intermediateRepresentation = IGC::CodeType::spirV;
     compilerInterface->compile(*programLlvmText, input);
     EXPECT_FALSE(programLlvmText->getIsSpirV());
 
     compilerInterface->useLlvmText = false;
-    auto programSpirV = wrapReleasableObjectWithUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
+    auto programSpirV = clUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
     programSpirV->setDevice(device);
     compilerInterface->intermediateRepresentation = IGC::CodeType::spirV;
     compilerInterface->compile(*programSpirV, input);
     EXPECT_TRUE(programSpirV->getIsSpirV());
 
-    auto programLlvmBc = wrapReleasableObjectWithUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
+    auto programLlvmBc = clUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
     programLlvmBc->setDevice(device);
     compilerInterface->intermediateRepresentation = IGC::CodeType::llvmBc;
     compilerInterface->compile(*programLlvmBc, input);
@@ -2881,7 +2881,7 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     gEnvironment->igcPushDebugVars(debugVars);
     std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) { gEnvironment->igcPopDebugVars(); }};
 
-    auto program = wrapReleasableObjectWithUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
+    auto program = clUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
     program->setDevice(device);
     uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
     program->storeIrBinary(spirv, sizeof(spirv), true);
