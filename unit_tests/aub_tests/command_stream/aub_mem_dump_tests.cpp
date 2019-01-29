@@ -89,7 +89,7 @@ HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, writeVerifyOneBytePPGTT) {
+HWTEST_F(AubMemDumpTests, DISABLED_writeVerifyOneBytePPGTT) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
     filePath.append(Os::fileSeparator);
