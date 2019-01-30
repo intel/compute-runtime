@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "runtime/helpers/pipeline_select_helper.h"
 #include "runtime/kernel/kernel.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
+
 #include "gtest/gtest.h"
 
 namespace OCLRT {
@@ -178,6 +179,11 @@ struct HardwareParse {
         return cmdCount;
     }
 
+    template <typename FamilyType>
+    static const char *getCommandName(void *cmd) {
+        return FamilyType::PARSE::getCommandName(cmd);
+    }
+
     // The starting point of parsing commandBuffers.  This is important
     // because as buffers get reused, we only want to parse the deltas.
     LinearStream *previousCS;
@@ -204,4 +210,5 @@ struct HardwareParse {
     void *cmdBBStartAfterWalker;
     void *cmdGpgpuCsrBaseAddress;
 };
+
 } // namespace OCLRT

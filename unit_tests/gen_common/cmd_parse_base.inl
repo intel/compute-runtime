@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -264,4 +264,32 @@ size_t CmdParse<T>::getCommandLength(void *cmd) {
             return pCmd->TheStructure.Common.DwordLength + 3;
     }
     return getCommandLengthHwSpecific(cmd);
+}
+
+template <class T>
+const char *CmdParse<T>::getCommandName(void *cmd) {
+#define RETURN_NAME_IF(CMD_NAME)                \
+    if (nullptr != genCmdCast<CMD_NAME *>(cmd)) \
+        return #CMD_NAME;
+
+    RETURN_NAME_IF(STATE_BASE_ADDRESS);
+    RETURN_NAME_IF(PIPE_CONTROL);
+    RETURN_NAME_IF(MI_ARB_CHECK);
+    RETURN_NAME_IF(MI_ATOMIC);
+    RETURN_NAME_IF(MI_BATCH_BUFFER_END);
+    RETURN_NAME_IF(MI_BATCH_BUFFER_START);
+    RETURN_NAME_IF(MI_LOAD_REGISTER_IMM);
+    RETURN_NAME_IF(MI_LOAD_REGISTER_MEM);
+    RETURN_NAME_IF(MI_STORE_REGISTER_MEM);
+    RETURN_NAME_IF(MI_NOOP);
+    RETURN_NAME_IF(PIPELINE_SELECT);
+    RETURN_NAME_IF(MI_REPORT_PERF_COUNT);
+    RETURN_NAME_IF(MI_MATH);
+    RETURN_NAME_IF(MI_LOAD_REGISTER_REG);
+    RETURN_NAME_IF(MI_SEMAPHORE_WAIT);
+    RETURN_NAME_IF(MI_STORE_DATA_IMM);
+
+#undef RETURN_NAME_IF
+
+    return getCommandNameHwSpecific(cmd);
 }

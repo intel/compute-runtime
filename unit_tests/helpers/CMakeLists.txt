@@ -13,6 +13,8 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/basic_math_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_helper_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager_state_restore.h
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers_tests.cpp
@@ -73,3 +75,5 @@ if(WIN32)
 
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_helpers})
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_helpers_linux ${IGDRCL_SRCS_tests_helpers_linux})
+
+add_subdirectories()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,4 +80,7 @@ struct CmdParse : public T {
 
     template <typename CmdType>
     static void validateCommand(GenCmdList::iterator itorBegin, GenCmdList::iterator itorEnd);
+
+    static const char *getCommandName(void *cmd);
+    static const char *getCommandNameHwSpecific(void *cmd);
 };

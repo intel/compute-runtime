@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,26 @@ size_t CmdParse<GenGfxFamily>::getCommandLengthHwSpecific(void *cmd) {
             return pCmd->TheStructure.Common.DwordLength + 2;
     }
     return 0;
+}
+
+template <>
+const char *CmdParse<GenGfxFamily>::getCommandNameHwSpecific(void *cmd) {
+    if (nullptr != genCmdCast<GPGPU_WALKER *>(cmd)) {
+        return "GPGPU_WALKER";
+    }
+
+    if (nullptr != genCmdCast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmd)) {
+        return "MEDIA_INTERFACE_DESCRIPTOR_LOAD";
+    }
+
+    if (nullptr != genCmdCast<MEDIA_VFE_STATE *>(cmd)) {
+        return "MEDIA_VFE_STATE";
+    }
+
+    if (nullptr != genCmdCast<MEDIA_STATE_FLUSH *>(cmd)) {
+        return "MEDIA_STATE_FLUSH";
+    }
+    return "UNKNOWN";
 }
 
 template struct CmdParse<GenGfxFamily>;
