@@ -527,6 +527,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
     auto specialPipelineSelectMode = false;
     Kernel *kernel = nullptr;
+    bool anyUncacheableArgs = false;
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {
             kernel = dispatchInfo.getKernel();
@@ -539,6 +540,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         auto numGrfRequiredByKernel = kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired;
         numGrfRequired = std::max(numGrfRequired, numGrfRequiredByKernel);
         specialPipelineSelectMode |= kernel->requiresSpecialPipelineSelectMode();
+        if (kernel->hasUncacheableArgs()) {
+            anyUncacheableArgs = true;
+        }
     }
 
     if (mediaSamplerRequired) {
@@ -577,6 +581,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         if (std::any_of(getCommandStreamReceiver().getResidencyAllocations().begin(), getCommandStreamReceiver().getResidencyAllocations().end(), [](const auto allocation) { return allocation->flushL3Required; })) {
             allocNeedsFlushDC = true;
         }
+    }
+
+    if (anyUncacheableArgs) {
+        getCommandStreamReceiver().setDisableL3Cache(true);
     }
 
     DispatchFlags dispatchFlags;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -217,6 +217,10 @@ bool MemObj::isMemObjZeroCopy() const {
 
 bool MemObj::isMemObjWithHostPtrSVM() const {
     return isHostPtrSVM;
+}
+
+bool MemObj::isMemObjUncacheable() const {
+    return isUncacheable;
 }
 
 GraphicsAllocation *MemObj::getGraphicsAllocation() {

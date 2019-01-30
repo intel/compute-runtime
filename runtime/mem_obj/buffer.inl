@@ -5,6 +5,7 @@
  *
  */
 
+#include "common/helpers/bit_helpers.h"
 #include "hw_cmds.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/surface_formats.h"
@@ -64,8 +65,9 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode) {
     surfaceState->setTileMode(RENDER_SURFACE_STATE::TILE_MODE_LINEAR);
     surfaceState->setVerticalLineStride(0);
     surfaceState->setVerticalLineStrideOffset(0);
-    if ((isAligned<MemoryConstants::cacheLineSize>(bufferAddress) && isAligned<MemoryConstants::cacheLineSize>(bufferSize)) ||
-        ((getFlags() & CL_MEM_READ_ONLY)) != 0 || !this->isMemObjZeroCopy()) {
+    if (((isAligned<MemoryConstants::cacheLineSize>(bufferAddress) && isAligned<MemoryConstants::cacheLineSize>(bufferSize)) ||
+         isValueSet(getFlags(), CL_MEM_READ_ONLY) || !this->isMemObjZeroCopy()) &&
+        !this->isUncacheable) {
         surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
     } else {
         surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));

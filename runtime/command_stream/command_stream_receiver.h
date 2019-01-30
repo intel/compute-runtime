@@ -170,11 +170,12 @@ class CommandStreamReceiver {
 
     virtual void expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
 
-  protected:
-    void cleanupResources();
     void setDisableL3Cache(bool val) {
         disableL3Cache = val;
     }
+
+  protected:
+    void cleanupResources();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;

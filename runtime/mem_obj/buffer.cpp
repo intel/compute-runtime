@@ -255,6 +255,7 @@ Buffer *Buffer::create(Context *context,
     }
 
     pBuffer->setHostPtrMinSize(size);
+    pBuffer->isUncacheable = isValueSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
 
     if (copyMemoryFromHostPtr) {
         if ((memory->gmm && memory->gmm->isRenderCompressed) || !MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {

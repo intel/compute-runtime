@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,9 @@ MockGmmClientContextBase::MockGmmClientContextBase(GMM_CLIENT clientType, GmmExp
 MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {
     MEMORY_OBJECT_CONTROL_STATE retVal = {};
     memset(&retVal, 0, sizeof(MEMORY_OBJECT_CONTROL_STATE));
+    if (usage != GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) {
+        retVal.DwordValue = 4u;
+    }
     return retVal;
 }
 

@@ -784,6 +784,7 @@ uint32_t Kernel::getScratchSizeValueToProgramMediaVfeState(int scratchSize) {
 cl_int Kernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) {
     cl_int retVal = CL_SUCCESS;
     bool updateExposedKernel = true;
+    auto argWasUncacheable = false;
     if (getKernelInfo().builtinDispatchBuilder != nullptr) {
         updateExposedKernel = getKernelInfo().builtinDispatchBuilder->setExplicitArg(argIndex, argSize, argVal, retVal);
     }
@@ -791,6 +792,7 @@ cl_int Kernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) {
         if (argIndex >= kernelArgHandlers.size()) {
             return CL_INVALID_ARG_INDEX;
         }
+        argWasUncacheable = kernelArguments[argIndex].isUncacheable;
         auto argHandler = kernelArgHandlers[argIndex];
         retVal = (this->*argHandler)(argIndex, argSize, argVal);
     }
@@ -799,6 +801,8 @@ cl_int Kernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) {
             patchedArgumentsNum++;
             kernelArguments[argIndex].isPatched = true;
         }
+        auto argIsUncacheable = kernelArguments[argIndex].isUncacheable;
+        uncacheableArgsCount += (argIsUncacheable ? 1 : 0) - (argWasUncacheable ? 1 : 0);
         resolveArgs();
     }
     return retVal;
@@ -1128,6 +1132,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
             buffer->setArgStateful(surfaceState, forceNonAuxMode);
+            kernelArguments[argIndex].isUncacheable = buffer->isMemObjUncacheable();
         }
         addAllocationToCacheFlushVector(argIndex, buffer->getGraphicsAllocation());
         return CL_SUCCESS;
@@ -1433,6 +1438,10 @@ void Kernel::unsetArg(uint32_t argIndex) {
     if (kernelArguments[argIndex].isPatched) {
         patchedArgumentsNum--;
         kernelArguments[argIndex].isPatched = false;
+        if (kernelArguments[argIndex].isUncacheable) {
+            uncacheableArgsCount--;
+            kernelArguments[argIndex].isUncacheable = false;
+        }
     }
 }
 

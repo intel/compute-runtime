@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     bool isMemObjZeroCopy() const;
     bool isMemObjWithHostPtrSVM() const;
+    bool isMemObjUncacheable() const;
     virtual void transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) { UNRECOVERABLE_IF(true); };
     virtual void transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) { UNRECOVERABLE_IF(true); };
 
@@ -126,6 +127,7 @@ class MemObj : public BaseObject<_cl_mem> {
     bool isZeroCopy;
     bool isHostPtrSVM;
     bool isObjectRedescribed;
+    bool isUncacheable = false;
     MemoryManager *memoryManager = nullptr;
     GraphicsAllocation *graphicsAllocation;
     GraphicsAllocation *mcsAllocation = nullptr;
