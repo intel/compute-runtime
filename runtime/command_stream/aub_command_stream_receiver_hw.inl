@@ -70,8 +70,6 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
     }
 
-    setCsrProgrammingMode();
-
     if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
         this->subCaptureManager->subCaptureMode = static_cast<AubSubCaptureManager::SubCaptureMode>(DebugManager.flags.AUBDumpSubCaptureMode.get());
         this->subCaptureManager->subCaptureFilter.dumpKernelStartIdx = static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelStartIdx.get());

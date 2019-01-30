@@ -97,7 +97,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     // remap CPU VA -> GGTT VA
     AddressMapper *gttRemap;
 
-    void setCsrProgrammingMode(void){};
     MOCKABLE_VIRTUAL bool addPatchInfoComments();
     void addGUCStartMessage(uint64_t batchBufferAddress, EngineType engineType);
     uint32_t getGUCWorkQueueItemHeader(EngineType engineType);
