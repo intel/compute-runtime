@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ typedef api_tests clEnqueueNativeKernelTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueNativeKernelTests, notImplemented) {
+TEST_F(clEnqueueNativeKernelTests, GivenAnyParametersWhenExecutingNativeKernelThenOutOfHostMemoryErrorIsReturned) {
     auto retVal = clEnqueueNativeKernel(
         nullptr, // commandQueue
         nullptr, // user_func

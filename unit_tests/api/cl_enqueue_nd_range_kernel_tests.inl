@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ typedef api_tests clEnqueueNDRangeKernelTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueNDRangeKernelTests, returnsSuccess) {
+TEST_F(clEnqueueNDRangeKernelTests, GivenValidParametersWhenExecutingKernelThenSuccessIsReturned) {
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
@@ -38,7 +38,7 @@ TEST_F(clEnqueueNDRangeKernelTests, returnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueNDRangeKernelTests, NullCommandQueue_returnsError) {
+TEST_F(clEnqueueNDRangeKernelTests, GivenNullCommandQueueWhenExecutingKernelThenInvalidCommandQueueErrorIsReturned) {
     size_t globalWorkSize[3] = {1, 1, 1};
 
     retVal = clEnqueueNDRangeKernel(
@@ -55,7 +55,7 @@ TEST_F(clEnqueueNDRangeKernelTests, NullCommandQueue_returnsError) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueNDRangeKernelTests, returnsFailWithEventWaitList) {
+TEST_F(clEnqueueNDRangeKernelTests, GivenNonZeroEventsAndEmptyEventWaitListWhenExecutingKernelThenInvalidEventWaitListErrorIsReturned) {
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
