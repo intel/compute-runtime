@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
             if (localWorkSizeIn[i] == 0) {
                 return CL_INVALID_WORK_GROUP_SIZE;
             }
-            workGroupSize[i] = localWorkSizeIn[i];
+            if (kernel.getAllowNonUniform()) {
+                workGroupSize[i] = std::min(localWorkSizeIn[i], globalWorkSizeIn[i]);
+            } else {
+                workGroupSize[i] = localWorkSizeIn[i];
+            }
             totalWorkItems *= localWorkSizeIn[i];
         }
 
