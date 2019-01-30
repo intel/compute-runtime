@@ -81,6 +81,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     void overrideReturnedSize(size_t newSize) { size = newSize; }
 
     void setUnifiedAuxTranslationCapable();
+    void setMultisampleControlSurface();
 
     uint32_t getOffsetCalled = 0u;
     uint32_t arrayIndexPassedToGetOffset = 0;

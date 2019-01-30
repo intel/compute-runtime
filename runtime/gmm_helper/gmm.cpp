@@ -249,4 +249,7 @@ bool Gmm::unifiedAuxTranslationCapable() const {
     return gmmFlags->Gpu.CCS && gmmFlags->Gpu.UnifiedAuxSurface && gmmFlags->Info.RenderCompressed;
 }
 
+bool Gmm::hasMultisampleControlSurface() const {
+    return this->gmmResourceInfo->getResourceFlags()->Gpu.MCS;
+}
 } // namespace OCLRT

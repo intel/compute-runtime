@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,11 @@ class GlSharingTextureTests : public ::testing::Test {
             }
             OsAgnosticMemoryManager::freeGraphicsMemoryImpl(gfxAllocation);
         }
+        bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) override {
+            mapAuxGpuVACalled++;
+            return false;
+        }
+        uint32_t mapAuxGpuVACalled = 0u;
         size_t forceAllocationSize;
         std::unique_ptr<Gmm> forceGmm;
         bool useForcedGmm = true;
@@ -66,6 +71,12 @@ class GlSharingTextureTests : public ::testing::Test {
     void TearDown() override {
         clContext->releaseSharingFunctions(SharingType::CLGL_SHARING);
         delete glSharing;
+    }
+
+    void setUnifiedAuxSurf() {
+        tempMM->useForcedGmm = true;
+        auto mockGmmResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(tempMM->forceGmm->gmmResourceInfo.get());
+        mockGmmResInfo->setUnifiedAuxTranslationCapable();
     }
 
     ExecutionEnvironment executionEnvironment;
@@ -516,6 +527,15 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedFromFormatNotIncl
     EXPECT_EQ(CL_INVALID_GL_OBJECT, retVal);
 }
 
+TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedWithUnifiedAuxSurfThenMapAuxGpuVaIsCalled) {
+    cl_int retVal = CL_SUCCESS;
+    setUnifiedAuxSurf();
+    EXPECT_EQ(0u, tempMM->mapAuxGpuVACalled);
+
+    auto glTexture = std::unique_ptr<Image>(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_WRITE_ONLY, GL_SRGB8_ALPHA8, 0, textureId, &retVal));
+
+    EXPECT_EQ(1u, tempMM->mapAuxGpuVACalled);
+}
 class GetGlTextureInfoTests : public GlSharingTextureTests,
                               public ::testing::WithParamInterface<unsigned int /*cl_GLenum*/> {
 };

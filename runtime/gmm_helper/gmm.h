@@ -37,6 +37,7 @@ class Gmm {
     void applyMemoryFlags(bool systemMemoryPool);
 
     bool unifiedAuxTranslationCapable() const;
+    bool hasMultisampleControlSurface() const;
 
     uint32_t queryQPitch(GMM_RESOURCE_TYPE resType);
     void updateImgInfo(ImageInfo &imgInfo, cl_image_desc &imgDesc, cl_uint arrayIndex);

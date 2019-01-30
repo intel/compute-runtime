@@ -661,6 +661,18 @@ TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
     EXPECT_NE(myMockResourceInfo1.resourceInfo.get(), myMockResourceInfo2.resourceInfo.get());
 }
 
+TEST(GmmTest, givenGmmWithNotSetMCSInResourceInfoGpuFlagsWhenCallHasMultisampleControlSurfaceThenReturnFalse) {
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
+    EXPECT_FALSE(gmm->hasMultisampleControlSurface());
+}
+
+TEST(GmmTest, givenGmmWithSetMCSInResourceInfoGpuFlagsWhenCallhasMultisampleControlSurfaceThenReturnTrue) {
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
+    auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    mockResource->setMultisampleControlSurface();
+    EXPECT_TRUE(gmm->hasMultisampleControlSurface());
+}
+
 TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicyWhenItIsAskedForUncachedIndexThen0IsReturned) {
     GmmHelper gmmHelper(*platformDevices);
     gmmHelper.setSimplifiedMocsTableUsage(true);

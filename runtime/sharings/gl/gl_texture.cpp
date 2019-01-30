@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,6 +130,10 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
 
     auto glTexture = new GlTexture(sharingFunctions, getClGlObjectType(target), texture, texInfo, target, std::max(miplevel, 0));
+
+    if (alloc->gmm->unifiedAuxTranslationCapable()) {
+        alloc->gmm->isRenderCompressed = context->getMemoryManager()->mapAuxGpuVA(alloc);
+    }
     return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, alloc, mcsAlloc, flags, imgInfo, cubeFaceIndex,
                                     std::max(miplevel, 0), imgDesc.num_mip_levels);
 }

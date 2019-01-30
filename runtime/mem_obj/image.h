@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -264,7 +264,9 @@ class ImageHw : public Image {
     void setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel) override;
     void setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState);
     void setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
+    void setUnifiedAuxBaseAddress(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm);
     MOCKABLE_VIRTUAL void setClearColorParams(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm);
+    MOCKABLE_VIRTUAL void setAuxParamsForMCSCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
     void setMediaImageArg(void *memory) override;
     void setMediaSurfaceRotation(void *memory) override;
     void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override;
