@@ -19,7 +19,7 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 65536) override { writeMemoryCalled = true; }
     void freeMemory(uint64_t gfxAddress, size_t size) override { freeMemoryCalled = true; }
     void expectMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t compareOperation) override { expectMemoryCalled = true; }
-    void readMemory(uint64_t gfxAddress, void *memory, size_t size) override { readMemoryCalled = true; };
+    void readMemory(uint64_t gfxAddress, void *memory, size_t size, uint32_t memoryBank, size_t pageSize) override { readMemoryCalled = true; };
     void dumpBufferBIN(uint64_t gfxAddress, size_t size) override { dumpBufferBINCalled = true; };
 
     bool initializeCalled = false;

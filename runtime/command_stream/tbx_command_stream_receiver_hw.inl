@@ -404,7 +404,8 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::makeCoherent(GraphicsAllocation &gfxAllocation) {
     if (hardwareContext) {
-        hardwareContext->readMemory(gfxAllocation.getGpuAddress(), gfxAllocation.getUnderlyingBuffer(), gfxAllocation.getUnderlyingBufferSize());
+        hardwareContext->readMemory(gfxAllocation.getGpuAddress(), gfxAllocation.getUnderlyingBuffer(), gfxAllocation.getUnderlyingBufferSize(),
+                                    this->getMemoryBank(&gfxAllocation), MemoryConstants::pageSize64k);
         return;
     }
 
