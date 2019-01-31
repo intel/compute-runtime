@@ -11,9 +11,11 @@
 namespace aub_stream {
 
 MMIOList injectMMIOList;
+std::string tbxServerIp = "127.0.0.1";
+uint16_t tbxServerPort = 4321;
 
 AubManager *AubManager::create(uint32_t gfxFamily, uint32_t devicesCount, uint64_t memoryBankSizeInGB, bool localMemorySupported, const std::string &aubFileName) {
     return nullptr;
 }
 
-} // namespace AubDump
+} // namespace aub_stream

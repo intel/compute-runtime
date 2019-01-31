@@ -22,6 +22,8 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
         if (DebugManager.flags.AubDumpAddMmioRegistersList.get() != "unk") {
             aub_stream::injectMMIOList = AubHelper::getAdditionalMmioList();
         }
+        aub_stream::tbxServerIp = DebugManager.flags.TbxServer.get();
+        aub_stream::tbxServerPort = DebugManager.flags.TbxPort.get();
 
         aubManager.reset(createAubManager(pHwInfo->pPlatform->eRenderCoreFamily, devicesCount, memoryBankSize, localMemoryEnabled, aubFileName));
     }
