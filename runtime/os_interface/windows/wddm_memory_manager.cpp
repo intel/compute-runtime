@@ -203,7 +203,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     }
 
     wddmAllocation->is32BitAllocation = true;
-    auto baseAddress = allocationData.allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit->getBase() : this->wddm->getGfxPartition().Heap32[1].Base;
+    auto baseAddress = allocationData.allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit->getBase() : getInternalHeapBaseAddress();
     wddmAllocation->gpuBaseAddress = GmmHelper::canonize(baseAddress);
 
     DebugManager.logAllocation(wddmAllocation.get());
@@ -450,7 +450,7 @@ uint64_t WddmMemoryManager::getMaxApplicationAddress() {
 }
 
 uint64_t WddmMemoryManager::getInternalHeapBaseAddress() {
-    return this->wddm->getGfxPartition().Heap32[1].Base;
+    return this->wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Base;
 }
 
 bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {

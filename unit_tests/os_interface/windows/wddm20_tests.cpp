@@ -267,7 +267,7 @@ TEST_F(Wddm20Tests, createAllocation32bit) {
     delete gmm;
 }
 
-TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap1ThenItHasGpuAddressWithingHeap1Limits) {
+TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddressWithingHeap0Limits) {
     void *alignedPtr = (void *)0x12000;
     size_t alignedSize = 0x2000;
     WddmAllocation allocation(alignedPtr, alignedSize, nullptr, MemoryPool::MemoryNull, 1u, false);
@@ -275,12 +275,13 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap1ThenItHasGpuAddr
     allocation.handle = ALLOCATION_HANDLE;
     allocation.gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
     allocation.origin = AllocationOrigin::INTERNAL_ALLOCATION;
-    EXPECT_EQ(HeapIndex::HEAP_INTERNAL, wddm->selectHeap(&allocation, allocation.getAlignedCpuPtr()));
+    EXPECT_EQ(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, wddm->selectHeap(&allocation, allocation.getAlignedCpuPtr()));
     bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
 
-    auto cannonizedHeapBase = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Base);
-    auto cannonizedHeapEnd = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Limit);
+    uint32_t heapIndex = static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY);
+    auto cannonizedHeapBase = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[heapIndex].Base);
+    auto cannonizedHeapEnd = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[heapIndex].Limit);
 
     EXPECT_GE(allocation.gpuPtr, cannonizedHeapBase);
     EXPECT_LE(allocation.gpuPtr, cannonizedHeapEnd);
@@ -1000,17 +1001,17 @@ TEST_F(Wddm20Tests, whenEvictingTemporaryResourceThenOtherResourcesRemainOnTheLi
 
 using WddmHeapSelectorTest = Wddm20Tests;
 
-TEST_F(WddmHeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
+TEST_F(WddmHeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalDeviceMemoryHeapIsUsed) {
     WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u, false};
     allocation.is32BitAllocation = true;
     allocation.origin = AllocationOrigin::INTERNAL_ALLOCATION;
-    EXPECT_EQ(HeapIndex::HEAP_INTERNAL, wddm->selectHeap(&allocation, nullptr));
+    EXPECT_EQ(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, wddm->selectHeap(&allocation, nullptr));
 }
-TEST_F(WddmHeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
+TEST_F(WddmHeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalDeviceMemoryHeapIsUsed) {
     WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u, false};
     allocation.is32BitAllocation = false;
     allocation.origin = AllocationOrigin::INTERNAL_ALLOCATION;
-    EXPECT_EQ(HeapIndex::HEAP_INTERNAL, wddm->selectHeap(&allocation, nullptr));
+    EXPECT_EQ(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, wddm->selectHeap(&allocation, nullptr));
 }
 TEST_F(WddmHeapSelectorTest, given32bitExternalAllocationWhenSelectingHeapThenExternalHeapIsUsed) {
     WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u, false};

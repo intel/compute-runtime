@@ -260,8 +260,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::LINEAR_STREAM:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
     case GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER:
-    case GraphicsAllocation::AllocationType::KERNEL_ISA:
-    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
         allocationData.flags.useSystemMemory = true;
         break;
     default:

@@ -868,12 +868,12 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
 TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeap1) {
     auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION));
     ASSERT_NE(nullptr, wddmAllocation);
-    EXPECT_EQ(wddmAllocation->gpuBaseAddress, GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Base));
+    EXPECT_EQ(wddmAllocation->gpuBaseAddress, GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress()));
     EXPECT_NE(nullptr, wddmAllocation->getUnderlyingBuffer());
     EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
     EXPECT_NE((uint64_t)wddmAllocation->getUnderlyingBuffer(), wddmAllocation->getGpuAddress());
-    auto cannonizedHeapBase = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Base);
-    auto cannonizedHeapEnd = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Limit);
+    auto cannonizedHeapBase = GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress());
+    auto cannonizedHeapEnd = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Limit);
 
     EXPECT_GE(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
     EXPECT_LE(wddmAllocation->getGpuAddress(), cannonizedHeapEnd);
@@ -883,16 +883,16 @@ TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocatio
     memoryManager->freeGraphicsMemory(wddmAllocation);
 }
 
-TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeap1) {
+TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeapInternal) {
     auto ptr = reinterpret_cast<void *>(0x1000000);
     auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
     ASSERT_NE(nullptr, wddmAllocation);
-    EXPECT_EQ(wddmAllocation->gpuBaseAddress, GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Base));
+    EXPECT_EQ(wddmAllocation->gpuBaseAddress, GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress()));
     EXPECT_EQ(ptr, wddmAllocation->getUnderlyingBuffer());
     EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
     EXPECT_NE((uint64_t)wddmAllocation->getUnderlyingBuffer(), wddmAllocation->getGpuAddress());
-    auto cannonizedHeapBase = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Base);
-    auto cannonizedHeapEnd = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Limit);
+    auto cannonizedHeapBase = GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress());
+    auto cannonizedHeapEnd = GmmHelper::canonize(wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Limit);
 
     EXPECT_GE(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
     EXPECT_LE(wddmAllocation->getGpuAddress(), cannonizedHeapEnd);
