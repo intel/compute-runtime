@@ -1240,11 +1240,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenCacheFlushAfterWalkerEnable
     MockGraphicsAllocation globalAllocation;
     mockKernelWithInternal->mockProgram->setGlobalSurface(&globalAllocation);
 
-    size_t expectedSize = 2 * sizeof(MEDIA_STATE_FLUSH) + sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD) + sizeof(PIPE_CONTROL);
-    size_t actualSize = KernelCommandsHelper<FamilyType>::getSizeRequiredCS(mockKernelWithInternal->mockKernel);
+    Kernel::CacheFlushAllocationsVec allocs;
+    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs);
+    EXPECT_NE(allocs.end(), std::find(allocs.begin(), allocs.end(), &globalAllocation));
+
+    size_t expectedSize = sizeof(PIPE_CONTROL);
+    size_t actualSize = KernelCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(mockKernelWithInternal->mockKernel, 0U, 0U);
     EXPECT_EQ(expectedSize, actualSize);
 
-    KernelCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, mockKernelWithInternal->mockKernel);
+    KernelCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, mockKernelWithInternal->mockKernel, 0U, 0U);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(commandStream);
@@ -1267,13 +1271,24 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenCacheFlushAfterWalkerEnable
     CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
     auto &commandStream = cmdQ.getCS(1024);
 
+    char buff[MemoryConstants::pageSize * 2];
+    MockGraphicsAllocation svmAllocation1{alignUp(buff, MemoryConstants::pageSize), MemoryConstants::pageSize};
+    svmAllocation1.flushL3Required = true;
+    mockKernelWithInternal->mockKernel->kernelSvmGfxAllocations.push_back(&svmAllocation1);
+    MockGraphicsAllocation svmAllocation2{alignUp(buff, MemoryConstants::pageSize), MemoryConstants::pageSize};
+    mockKernelWithInternal->mockKernel->kernelSvmGfxAllocations.push_back(&svmAllocation2);
     mockKernelWithInternal->mockKernel->svmAllocationsRequireCacheFlush = true;
 
-    size_t expectedSize = 2 * sizeof(MEDIA_STATE_FLUSH) + sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD) + sizeof(PIPE_CONTROL);
-    size_t actualSize = KernelCommandsHelper<FamilyType>::getSizeRequiredCS(mockKernelWithInternal->mockKernel);
+    Kernel::CacheFlushAllocationsVec allocs;
+    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs);
+    EXPECT_NE(allocs.end(), std::find(allocs.begin(), allocs.end(), &svmAllocation1));
+    EXPECT_EQ(allocs.end(), std::find(allocs.begin(), allocs.end(), &svmAllocation2));
+
+    size_t expectedSize = sizeof(PIPE_CONTROL);
+    size_t actualSize = KernelCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(mockKernelWithInternal->mockKernel, 0U, 0U);
     EXPECT_EQ(expectedSize, actualSize);
 
-    KernelCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, mockKernelWithInternal->mockKernel);
+    KernelCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, mockKernelWithInternal->mockKernel, 0U, 0U);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(commandStream);
@@ -1281,6 +1296,31 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenCacheFlushAfterWalkerEnable
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControl->getDcFlushEnable());
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenCacheFlushAfterWalkerDisabledWhenSvmAllocationsSetAsCacheFlushRequiringThenExpectNoCacheFlushCommand) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MEDIA_STATE_FLUSH = typename FamilyType::MEDIA_STATE_FLUSH;
+    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
+
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
+    auto &commandStream = cmdQ.getCS(1024);
+
+    mockKernelWithInternal->mockKernel->svmAllocationsRequireCacheFlush = true;
+
+    size_t expectedSize = 0U;
+    size_t actualSize = KernelCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(mockKernelWithInternal->mockKernel, 0U, 0U);
+    EXPECT_EQ(expectedSize, actualSize);
+
+    KernelCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, mockKernelWithInternal->mockKernel, 0U, 0U);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(commandStream);
+    PIPE_CONTROL *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
+    ASSERT_EQ(nullptr, pipeControl);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenCacheFlushAfterWalkerEnabledWhenKernelArgIsSetAsCacheFlushRequiredThenExpectCacheFlushCommand) {
@@ -1296,13 +1336,18 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenCacheFlushAfterWalkerEnable
 
     addSpaceForSingleKernelArg();
     MockGraphicsAllocation cacheRequiringAllocation;
+    mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush.resize(2);
     mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
 
-    size_t expectedSize = 2 * sizeof(MEDIA_STATE_FLUSH) + sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD) + sizeof(PIPE_CONTROL);
-    size_t actualSize = KernelCommandsHelper<FamilyType>::getSizeRequiredCS(mockKernelWithInternal->mockKernel);
+    Kernel::CacheFlushAllocationsVec allocs;
+    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocs);
+    EXPECT_NE(allocs.end(), std::find(allocs.begin(), allocs.end(), &cacheRequiringAllocation));
+
+    size_t expectedSize = sizeof(PIPE_CONTROL);
+    size_t actualSize = KernelCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(mockKernelWithInternal->mockKernel, 0U, 0U);
     EXPECT_EQ(expectedSize, actualSize);
 
-    KernelCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, mockKernelWithInternal->mockKernel);
+    KernelCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, mockKernelWithInternal->mockKernel, 0U, 0U);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(commandStream);
@@ -1325,11 +1370,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenCacheFlushAfterWalkerEnable
 
     addSpaceForSingleKernelArg();
 
-    size_t expectedSize = 2 * sizeof(MEDIA_STATE_FLUSH) + sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD);
-    size_t actualSize = KernelCommandsHelper<FamilyType>::getSizeRequiredCS(mockKernelWithInternal->mockKernel);
+    size_t expectedSize = 0U;
+    size_t actualSize = KernelCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(mockKernelWithInternal->mockKernel, 0U, 0U);
     EXPECT_EQ(expectedSize, actualSize);
 
-    KernelCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, mockKernelWithInternal->mockKernel);
+    KernelCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, mockKernelWithInternal->mockKernel, 0U, 0U);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(commandStream);
@@ -1353,11 +1398,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenCacheFlushAfterWalkerEnable
     MockGraphicsAllocation cacheRequiringAllocation;
     mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
 
-    size_t expectedSize = 2 * sizeof(MEDIA_STATE_FLUSH) + sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD);
-    size_t actualSize = KernelCommandsHelper<FamilyType>::getSizeRequiredCS(mockKernelWithInternal->mockKernel);
+    StackVec<GraphicsAllocation *, 32> allocationsForCacheFlush;
+    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocationsForCacheFlush);
+    EXPECT_EQ(0U, allocationsForCacheFlush.size());
+
+    size_t expectedSize = 0U;
+    size_t actualSize = KernelCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(mockKernelWithInternal->mockKernel, 0U, 0U);
     EXPECT_EQ(expectedSize, actualSize);
 
-    KernelCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, mockKernelWithInternal->mockKernel);
+    KernelCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, mockKernelWithInternal->mockKernel, 0U, 0U);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(commandStream);

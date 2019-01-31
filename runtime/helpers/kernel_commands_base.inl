@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,10 +47,12 @@ template <typename GfxFamily>
 size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredCS(const Kernel *kernel) {
     size_t size = 2 * sizeof(typename GfxFamily::MEDIA_STATE_FLUSH) +
                   sizeof(typename GfxFamily::MEDIA_INTERFACE_DESCRIPTOR_LOAD);
-    if (kernel->requiresCacheFlushCommand()) {
-        size += sizeof(typename GfxFamily::PIPE_CONTROL);
-    }
     return size;
+}
+
+template <typename GfxFamily>
+size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
+    return kernel->requiresCacheFlushCommand() ? sizeof(typename GfxFamily::PIPE_CONTROL) : 0;
 }
 
 template <typename GfxFamily>
@@ -161,7 +163,7 @@ bool KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const Kernel *kernel) {
+void KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
     if (kernel->requiresCacheFlushCommand()) {
         using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));

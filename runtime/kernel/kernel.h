@@ -376,6 +376,9 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     bool requiresCacheFlushCommand() const;
 
+    using CacheFlushAllocationsVec = StackVec<GraphicsAllocation *, 32>;
+    void getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const;
+
   protected:
     struct ObjectCounts {
         uint32_t imageCount;
@@ -465,7 +468,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     bool platformSupportCacheFlushAfterWalker() const;
     void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
-    bool allocationForCacheFlush(GraphicsAllocation *argAllocation);
+    bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
     Program *program;
     Context *context;
     const Device &device;

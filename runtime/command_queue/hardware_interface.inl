@@ -213,7 +213,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
             pPipeControlCmd->setCommandStreamerStallEnable(true);
         }
-        KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, &kernel);
+        KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, &kernel, 0U, 0U);
 
         currentDispatchIndex++;
     }

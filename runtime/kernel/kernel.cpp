@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2144,24 +2144,51 @@ bool Kernel::platformSupportCacheFlushAfterWalker() const {
 }
 
 bool Kernel::requiresCacheFlushCommand() const {
-    if (platformSupportCacheFlushAfterWalker()) {
-        if (getProgram()->getGlobalSurface() != nullptr) {
+    if (false == platformSupportCacheFlushAfterWalker()) {
+        return false;
+    }
+    if (getProgram()->getGlobalSurface() != nullptr) {
+        return true;
+    }
+    if (svmAllocationsRequireCacheFlush) {
+        return true;
+    }
+    size_t args = kernelArgRequiresCacheFlush.size();
+    for (size_t i = 0; i < args; i++) {
+        if (kernelArgRequiresCacheFlush[i] != nullptr) {
             return true;
-        }
-        if (svmAllocationsRequireCacheFlush) {
-            return true;
-        }
-        size_t args = kernelArgRequiresCacheFlush.size();
-        for (size_t i = 0; i < args; i++) {
-            if (kernelArgRequiresCacheFlush[i] != nullptr) {
-                return true;
-            }
         }
     }
     return false;
 }
 
-bool Kernel::allocationForCacheFlush(GraphicsAllocation *argAllocation) {
+void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
+    if (false == platformSupportCacheFlushAfterWalker()) {
+        return;
+    }
+    for (GraphicsAllocation *alloc : this->kernelArgRequiresCacheFlush) {
+        if (nullptr == alloc) {
+            continue;
+        }
+
+        out.push_back(alloc);
+    }
+
+    auto global = getProgram()->getGlobalSurface();
+    if (global != nullptr) {
+        out.push_back(global);
+    }
+
+    if (svmAllocationsRequireCacheFlush) {
+        for (GraphicsAllocation *alloc : kernelSvmGfxAllocations) {
+            if (allocationForCacheFlush(alloc)) {
+                out.push_back(alloc);
+            }
+        }
+    }
+}
+
+bool Kernel::allocationForCacheFlush(GraphicsAllocation *argAllocation) const {
     if (argAllocation->flushL3Required || argAllocation->isMemObjectsAllocationWithWritableFlags()) {
         return true;
     }

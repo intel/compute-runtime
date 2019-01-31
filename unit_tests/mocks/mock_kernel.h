@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ class MockKernel : public Kernel {
     using Kernel::isSchedulerKernel;
     using Kernel::kernelArgRequiresCacheFlush;
     using Kernel::kernelArguments;
+    using Kernel::kernelSvmGfxAllocations;
     using Kernel::numberOfBindingTableStates;
     using Kernel::platformSupportCacheFlushAfterWalker;
     using Kernel::svmAllocationsRequireCacheFlush;
@@ -245,7 +246,7 @@ class MockKernel : public Kernel {
 //class below have enough internals to service Enqueue operation.
 class MockKernelWithInternals {
   public:
-    MockKernelWithInternals(const Device &deviceArg, Context *context = nullptr) {
+    MockKernelWithInternals(const Device &deviceArg, Context *context = nullptr, bool addDefaultArg = false) {
         memset(&kernelHeader, 0, sizeof(SKernelBinaryHeaderCommon));
         memset(&threadPayload, 0, sizeof(SPatchThreadPayload));
         memset(&executionEnvironment, 0, sizeof(SPatchExecutionEnvironment));
@@ -279,6 +280,17 @@ class MockKernelWithInternals {
         mockKernel = new MockKernel(mockProgram, kernelInfo, deviceArg);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
         mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal));
+
+        if (addDefaultArg) {
+            defaultKernelArguments.resize(1);
+            defaultKernelArguments[0] = {};
+            kernelInfo.resizeKernelArgInfoAndRegisterParameter(1);
+            kernelInfo.kernelArgInfo.resize(1);
+            kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector.resize(1);
+            kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0;
+            kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(uintptr_t);
+            mockKernel->setKernelArguments(defaultKernelArguments);
+        }
     }
     ~MockKernelWithInternals() {
         mockKernel->decRefInternal();
@@ -304,6 +316,7 @@ class MockKernelWithInternals {
     char crossThreadData[256];
     char sshLocal[128];
     char dshLocal[128];
+    std::vector<Kernel::SimpleKernelArgInfo> defaultKernelArguments;
 };
 
 class MockParentKernel : public Kernel {
