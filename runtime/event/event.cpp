@@ -270,9 +270,9 @@ bool Event::calcProfilingData() {
                     globalStartTS = timestamp->tag->getData(TimestampPacket::DataIndex::GlobalStart);
                 }
             }
-            calcProfilingData(contextStartTS, contextEndTS, &contextEndTS, globalStartTS);
+            calculateProfilingDataInternal(contextStartTS, contextEndTS, &contextEndTS, globalStartTS);
         } else if (timeStampNode) {
-            calcProfilingData(
+            calculateProfilingDataInternal(
                 (reinterpret_cast<HwTimeStamps *>(timeStampNode->tag))->ContextStartTS,
                 (reinterpret_cast<HwTimeStamps *>(timeStampNode->tag))->ContextEndTS,
                 &(reinterpret_cast<HwTimeStamps *>(timeStampNode->tag))->ContextCompleteTS,
@@ -282,7 +282,7 @@ bool Event::calcProfilingData() {
     return dataCalculated;
 }
 
-void Event::calcProfilingData(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS) {
+void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS) {
 
     uint64_t gpuDuration = 0;
     uint64_t cpuDuration = 0;

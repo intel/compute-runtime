@@ -108,11 +108,11 @@ struct MyEvent : public Event {
         return this->dataCalculated;
     }
 
-    void calcProfilingData(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS) override {
+    void calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS) override {
         if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
             globalStartTimestamp = globalStartTS;
         }
-        Event::calcProfilingData(contextStartTS, contextEndTS, contextCompleteTS, globalStartTS);
+        Event::calculateProfilingDataInternal(contextStartTS, contextEndTS, contextCompleteTS, globalStartTS);
     }
 
     uint64_t globalStartTimestamp;
