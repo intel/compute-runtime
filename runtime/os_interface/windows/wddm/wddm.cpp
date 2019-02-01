@@ -503,7 +503,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
 
         if (status != STATUS_SUCCESS) {
             DBG_LOG(PrintDebugMessages, __FUNCTION__, "status: ", status);
-            DEBUG_BREAK_IF(true);
+            DEBUG_BREAK_IF(status != STATUS_GRAPHICS_NO_VIDEO_MEMORY);
             break;
         }
         auto allocationIndex = 0;
