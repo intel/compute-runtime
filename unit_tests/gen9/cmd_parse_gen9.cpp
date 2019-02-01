@@ -83,5 +83,6 @@ template struct CmdParse<GenGfxFamily>;
 
 namespace OCLRT {
 template void HardwareParse::findHardwareCommands<SKLFamily>();
+template void HardwareParse::findHardwareCommands<SKLFamily>(IndirectHeap *);
 template const void *HardwareParse::getStatelessArgumentPointer<SKLFamily>(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh);
 } // namespace OCLRT

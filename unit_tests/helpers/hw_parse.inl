@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 namespace OCLRT {
 
 template <typename FamilyType>
-void HardwareParse::findHardwareCommands() {
+void HardwareParse::findHardwareCommands(IndirectHeap *dsh) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
@@ -62,6 +62,9 @@ void HardwareParse::findHardwareCommands() {
 
         // Extract the dynamicStateHeap
         dynamicStateHeap = cmdSBA->getDynamicStateBaseAddress();
+        if (dsh && (dsh->getHeapGpuBase() == dynamicStateHeap)) {
+            dynamicStateHeap = reinterpret_cast<uint64_t>(dsh->getCpuBase());
+        }
         ASSERT_NE(0u, dynamicStateHeap);
     }
 
@@ -74,6 +77,11 @@ void HardwareParse::findHardwareCommands() {
         // Extract the interfaceDescriptorData
         cmdInterfaceDescriptorData = (INTERFACE_DESCRIPTOR_DATA *)(dynamicStateHeap + iddStart);
     }
+}
+
+template <typename FamilyType>
+void HardwareParse::findHardwareCommands() {
+    findHardwareCommands<FamilyType>(nullptr);
 }
 
 template <typename FamilyType>

@@ -239,8 +239,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, InterfaceDe
     auto IDDEnd = iddStart + cmdMIDL->getInterfaceDescriptorTotalLength();
     ASSERT_LE(IDDEnd, cmdSBA->getDynamicStateBufferSize() * MemoryConstants::pageSize);
 
-    // Extract the IDD
-    auto &IDD = *(INTERFACE_DESCRIPTOR_DATA *)(DSH + iddStart);
+    auto &IDD = *(INTERFACE_DESCRIPTOR_DATA *)cmdInterfaceDescriptorData;
 
     // Validate the kernel start pointer.  Technically, a kernel can start at address 0 but let's force a value.
     auto kernelStartPointer = ((uint64_t)IDD.getKernelStartPointerHigh() << 32) + IDD.getKernelStartPointer();

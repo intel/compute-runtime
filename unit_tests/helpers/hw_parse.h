@@ -65,6 +65,9 @@ struct HardwareParse {
     void findHardwareCommands();
 
     template <typename FamilyType>
+    void findHardwareCommands(IndirectHeap *dsh);
+
+    template <typename FamilyType>
     void parseCommands(OCLRT::LinearStream &commandStream, size_t startOffset = 0) {
         ASSERT_LE(startOffset, commandStream.getUsed());
         auto sizeToParse = commandStream.getUsed() - startOffset;
@@ -91,7 +94,7 @@ struct HardwareParse {
         previousCS = &commandStream;
 
         sizeUsed = commandStream.getUsed();
-        findHardwareCommands<FamilyType>();
+        findHardwareCommands<FamilyType>(&commandStreamReceiver.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0));
     }
 
     template <typename FamilyType>
