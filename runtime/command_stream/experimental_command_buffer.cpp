@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,11 +59,11 @@ void ExperimentalCommandBuffer::getCS(size_t minRequiredSize) {
 
         auto requiredSize = minRequiredSize + CSRequirements::csOverfetchSize;
         auto storageWithAllocations = commandStreamReceiver->getInternalAllocationStorage();
-        GraphicsAllocation *allocation = storageWithAllocations->obtainReusableAllocation(requiredSize, false).release();
+        auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
+        GraphicsAllocation *allocation = storageWithAllocations->obtainReusableAllocation(requiredSize, allocationType).release();
         if (!allocation) {
-            allocation = memoryManager->allocateGraphicsMemoryWithProperties({requiredSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
+            allocation = memoryManager->allocateGraphicsMemoryWithProperties({requiredSize, allocationType});
         }
-        allocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
         // Deallocate the old block, if not null
         auto oldAllocation = currentStream->getGraphicsAllocation();
         if (oldAllocation) {

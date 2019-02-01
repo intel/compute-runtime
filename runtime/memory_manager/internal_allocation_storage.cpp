@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,23 +57,23 @@ void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, Allo
     }
 }
 
-std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAllocation(size_t requiredSize, bool internalAllocation) {
-    auto allocation = allocationsForReuse.detachAllocation(requiredSize, commandStreamReceiver, internalAllocation);
+std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAllocation(size_t requiredSize, GraphicsAllocation::AllocationType allocationType) {
+    auto allocation = allocationsForReuse.detachAllocation(requiredSize, commandStreamReceiver, allocationType);
     return allocation;
 }
 
 struct ReusableAllocationRequirements {
     size_t requiredMinimalSize;
     volatile uint32_t *csrTagAddress;
-    bool internalAllocationRequired;
+    GraphicsAllocation::AllocationType allocationType;
     uint32_t contextId;
 };
 
-std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, CommandStreamReceiver &commandStreamReceiver, bool internalAllocationRequired) {
+std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, CommandStreamReceiver &commandStreamReceiver, GraphicsAllocation::AllocationType allocationType) {
     ReusableAllocationRequirements req;
     req.requiredMinimalSize = requiredMinimalSize;
     req.csrTagAddress = commandStreamReceiver.getTagAddress();
-    req.internalAllocationRequired = internalAllocationRequired;
+    req.allocationType = allocationType;
     req.contextId = commandStreamReceiver.getOsContext().getContextId();
     GraphicsAllocation *a = nullptr;
     GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));
@@ -85,7 +85,7 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
     auto *curr = head;
     while (curr != nullptr) {
         auto currentTagValue = *req->csrTagAddress;
-        if ((req->internalAllocationRequired == curr->is32BitAllocation) &&
+        if ((req->allocationType == curr->getAllocationType()) &&
             (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize) &&
             (currentTagValue >= curr->getTaskCount(req->contextId))) {
             return removeOneImpl(curr, nullptr);

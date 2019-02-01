@@ -331,7 +331,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllo
 
     auto memoryManager = pDevice->getMemoryManager();
     size_t requiredSize = alignUp(100, MemoryConstants::pageSize) + CSRequirements::csOverfetchSize;
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{requiredSize});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({requiredSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
     auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
@@ -623,15 +623,21 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocat
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCalledThenIndirectHeapAllocationTypeShouldBeSetToLinearStream) {
+TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCalledThenIndirectHeapAllocationTypeShouldBeSetToInternalHeapForIohAndLinearStreamForOthers) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     CommandQueue cmdQ(context.get(), pDevice, props);
 
-    const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
+    auto heapType = this->GetParam();
+
+    bool requireInternalHeap = IndirectHeap::INDIRECT_OBJECT == heapType;
+    const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
     auto indirectHeapAllocation = indirectHeap.getGraphicsAllocation();
     ASSERT_NE(nullptr, indirectHeapAllocation);
-
-    EXPECT_EQ(GraphicsAllocation::AllocationType::LINEAR_STREAM, indirectHeapAllocation->getAllocationType());
+    auto expectedAllocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
+    if (requireInternalHeap) {
+        expectedAllocationType = GraphicsAllocation::AllocationType::INTERNAL_HEAP;
+    }
+    EXPECT_EQ(expectedAllocationType, indirectHeapAllocation->getAllocationType());
 }
 
 TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledThenHeapIsCreated) {

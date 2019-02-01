@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,9 @@
 
 #pragma once
 #include "runtime/memory_manager/allocations_list.h"
-#include <cstdint>
 
 namespace OCLRT {
 class CommandStreamReceiver;
-class GraphicsAllocation;
 
 class InternalAllocationStorage {
   public:
@@ -20,7 +18,7 @@ class InternalAllocationStorage {
     MOCKABLE_VIRTUAL void cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage);
     void storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage);
     void storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount);
-    std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize, bool isInternalAllocationRequired);
+    std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize, GraphicsAllocation::AllocationType allocationType);
     AllocationsList &getTemporaryAllocations() { return temporaryAllocations; }
     AllocationsList &getAllocationsForReuse() { return allocationsForReuse; }
 

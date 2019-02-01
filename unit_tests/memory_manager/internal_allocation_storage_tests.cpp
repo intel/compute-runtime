@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,25 +74,25 @@ TEST_F(InternalAllocationStorageTest, whenCleanAllocationListThenRemoveOnlyCompl
 }
 
 TEST_F(InternalAllocationStorageTest, whenAllocationIsStoredAsReusableButIsStillUsedThenCannotBeObtained) {
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
 
     storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION, 2u);
 
     auto *hwTag = csr->getTagAddress();
 
     *hwTag = 1u;
-    auto newAllocation = storage->obtainReusableAllocation(1, false);
+    auto newAllocation = storage->obtainReusableAllocation(1, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_EQ(nullptr, newAllocation);
     storage->cleanAllocationList(2u, REUSABLE_ALLOCATION);
 }
 
 TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromEmptyReuseListThenReturnNullptr) {
-    auto allocation2 = storage->obtainReusableAllocation(1, false);
+    auto allocation2 = storage->obtainReusableAllocation(1, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_EQ(nullptr, allocation2);
 }
 
 TEST_F(InternalAllocationStorageTest, whenCompletedAllocationIsStoredAsReusableAndThenCanBeObtained) {
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
     EXPECT_NE(nullptr, allocation);
 
     storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION, 2u);
@@ -101,7 +101,7 @@ TEST_F(InternalAllocationStorageTest, whenCompletedAllocationIsStoredAsReusableA
     auto *hwTag = csr->getTagAddress();
 
     *hwTag = 2u;
-    auto reusedAllocation = storage->obtainReusableAllocation(1, false).release();
+    auto reusedAllocation = storage->obtainReusableAllocation(1, GraphicsAllocation::AllocationType::BUFFER).release();
 
     EXPECT_EQ(allocation, reusedAllocation);
     EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
@@ -110,7 +110,7 @@ TEST_F(InternalAllocationStorageTest, whenCompletedAllocationIsStoredAsReusableA
 
 TEST_F(InternalAllocationStorageTest, whenNotUsedAllocationIsStoredAsReusableAndThenCanBeObtained) {
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
     EXPECT_NE(nullptr, allocation);
     EXPECT_FALSE(allocation->isUsed());
     EXPECT_EQ(0u, csr->peekTaskCount());
@@ -120,7 +120,7 @@ TEST_F(InternalAllocationStorageTest, whenNotUsedAllocationIsStoredAsReusableAnd
     EXPECT_EQ(0u, allocation->getTaskCount(csr->getOsContext().getContextId()));
     EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
 
-    auto reusedAllocation = storage->obtainReusableAllocation(1, false).release();
+    auto reusedAllocation = storage->obtainReusableAllocation(1, GraphicsAllocation::AllocationType::BUFFER).release();
 
     EXPECT_EQ(allocation, reusedAllocation);
     EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
@@ -131,9 +131,9 @@ TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromMidlleOfReusableLi
     auto &reusableAllocations = csr->getAllocationsForReuse();
     EXPECT_TRUE(reusableAllocations.peekIsEmpty());
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{1});
-    auto allocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{10000});
-    auto allocation3 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{1});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{1, GraphicsAllocation::AllocationType::BUFFER});
+    auto allocation2 = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{10000, GraphicsAllocation::AllocationType::BUFFER});
+    auto allocation3 = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{1, GraphicsAllocation::AllocationType::BUFFER});
 
     EXPECT_TRUE(reusableAllocations.peekIsEmpty());
     EXPECT_EQ(nullptr, allocation2->next);
@@ -163,7 +163,7 @@ TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromMidlleOfReusableLi
     EXPECT_EQ(allocation3, allocation2->next);
     EXPECT_EQ(allocation, allocation2->prev);
 
-    auto reusableAllocation = storage->obtainReusableAllocation(10000, false).release();
+    auto reusableAllocation = storage->obtainReusableAllocation(10000, GraphicsAllocation::AllocationType::BUFFER).release();
     EXPECT_EQ(reusableAllocation, allocation2);
     EXPECT_EQ(nullptr, allocation2->next);
     EXPECT_EQ(nullptr, allocation2->prev);
@@ -181,44 +181,14 @@ TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromMidlleOfReusableLi
     allocation3->updateTaskCount(0u, csr->getOsContext().getContextId());
 }
 
-TEST_F(InternalAllocationStorageTest, givenNonInternalAllocationWhenItIsPutOnReusableListWhenInternalAllocationIsRequestedThenNullIsReturned) {
+TEST_F(InternalAllocationStorageTest, givenAllocationWhenItIsPutOnReusableListWhenOtherAllocationTypeIsRequestedThenNullIsReturned) {
     EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
 
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
 
-    auto internalAllocation = storage->obtainReusableAllocation(1, true);
+    auto internalAllocation = storage->obtainReusableAllocation(1, GraphicsAllocation::AllocationType::INTERNAL_HEAP);
     EXPECT_EQ(nullptr, internalAllocation);
-}
-
-TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenItIsPutOnReusableListWhenNonInternalAllocationIsRequestedThenNullIsReturned) {
-    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
-
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    allocation->is32BitAllocation = true;
-
-    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-
-    EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
-
-    auto internalAllocation = storage->obtainReusableAllocation(1, false);
-    EXPECT_EQ(nullptr, internalAllocation);
-}
-
-TEST_F(InternalAllocationStorageTest, givenInternalAllocationWhenItIsPutOnReusableListWhenInternalAllocationIsRequestedThenItIsReturned) {
-    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
-
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    allocation->is32BitAllocation = true;
-
-    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-
-    EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
-
-    auto internalAllocation = storage->obtainReusableAllocation(1, true);
-    EXPECT_EQ(allocation, internalAllocation.get());
-    internalAllocation.release();
-    memoryManager->freeGraphicsMemory(allocation);
 }

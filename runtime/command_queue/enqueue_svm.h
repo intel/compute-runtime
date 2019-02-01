@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -224,14 +224,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
 
     auto commandStreamReceieverOwnership = getCommandStreamReceiver().obtainUniqueOwnership();
     auto storageWithAllocations = getCommandStreamReceiver().getInternalAllocationStorage();
-    auto patternAllocation = storageWithAllocations->obtainReusableAllocation(patternSize, false).release();
+    auto allocationType = GraphicsAllocation::AllocationType::FILL_PATTERN;
+    auto patternAllocation = storageWithAllocations->obtainReusableAllocation(patternSize, allocationType).release();
     commandStreamReceieverOwnership.unlock();
 
     if (!patternAllocation) {
-        patternAllocation = memoryManager->allocateGraphicsMemoryWithProperties({patternSize, GraphicsAllocation::AllocationType::FILL_PATTERN});
+        patternAllocation = memoryManager->allocateGraphicsMemoryWithProperties({patternSize, allocationType});
     }
-
-    patternAllocation->setAllocationType(GraphicsAllocation::AllocationType::FILL_PATTERN);
 
     if (patternSize == 1) {
         int patternInt = (uint32_t)((*(uint8_t *)pattern << 24) | (*(uint8_t *)pattern << 16) | (*(uint8_t *)pattern << 8) | *(uint8_t *)pattern);

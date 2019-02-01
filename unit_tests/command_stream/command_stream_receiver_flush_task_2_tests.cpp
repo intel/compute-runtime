@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -688,7 +688,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, InForced32BitAllocationsModeDoNotS
     auto newScratchAllocation = commandStreamReceiver->getScratchAllocation();
     EXPECT_NE(scratchAllocation, newScratchAllocation); // Allocation changed
 
-    std::unique_ptr<GraphicsAllocation> allocationReusable = commandStreamReceiver->getInternalAllocationStorage()->obtainReusableAllocation(4096, false);
+    std::unique_ptr<GraphicsAllocation> allocationReusable = commandStreamReceiver->getInternalAllocationStorage()->obtainReusableAllocation(4096, GraphicsAllocation::AllocationType::LINEAR_STREAM);
 
     if (allocationReusable.get() != nullptr) {
         if (is64bit) {
@@ -722,7 +722,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, InForced32BitAllocationsModeStore3
         auto newScratchAllocation = commandStreamReceiver->getScratchAllocation();
         EXPECT_NE(scratchAllocation, newScratchAllocation); // Allocation changed
 
-        std::unique_ptr<GraphicsAllocation> allocationTemporary = commandStreamReceiver->getTemporaryAllocations().detachAllocation(0, *commandStreamReceiver, true);
+        std::unique_ptr<GraphicsAllocation> allocationTemporary = commandStreamReceiver->getTemporaryAllocations().detachAllocation(0, *commandStreamReceiver, GraphicsAllocation::AllocationType::SCRATCH_SURFACE);
 
         EXPECT_EQ(scratchAllocation, allocationTemporary.get());
         pDevice->getMemoryManager()->freeGraphicsMemory(allocationTemporary.release());
