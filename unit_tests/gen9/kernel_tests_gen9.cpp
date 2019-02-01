@@ -48,5 +48,6 @@ GEN9TEST_F(Gen9KernelCommandsTest, givenBufferThatIsNotZeroCopyWhenSurfaceStatei
 
     buffer->setArgStateful(&surfaceState, false);
     //make sure proper mocs is selected
-    EXPECT_EQ(2u, surfaceState.getMemoryObjectControlStateIndexToMocsTables());
+    constexpr uint32_t expectedMocs = GmmHelper::cacheEnabledIndex;
+    EXPECT_EQ(expectedMocs, surfaceState.getMemoryObjectControlStateIndexToMocsTables());
 }

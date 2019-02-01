@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -277,10 +277,10 @@ typedef struct tagMEDIA_SURFACE_STATE {
         return (TheStructure.Common.SurfaceMemoryObjectControlState_Reserved);
     }
     inline void setSurfaceMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
-        TheStructure.Common.SurfaceMemoryObjectControlState_IndexToMocsTables = value;
+        TheStructure.Common.SurfaceMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
     inline uint32_t getSurfaceMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.SurfaceMemoryObjectControlState_IndexToMocsTables);
+        return (TheStructure.Common.SurfaceMemoryObjectControlState_IndexToMocsTables << 1);
     }
     inline void setTiledResourceMode(const TILED_RESOURCE_MODE value) {
         TheStructure.Common.TiledResourceMode = value;

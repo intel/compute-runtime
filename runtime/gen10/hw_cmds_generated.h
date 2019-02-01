@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2842,10 +2842,10 @@ typedef struct tagRENDER_SURFACE_STATE {
         return (TheStructure.Common.MemoryObjectControlState_Reserved);
     }
     inline void setMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
-        TheStructure.Common.MemoryObjectControlState_IndexToMocsTables = value;
+        TheStructure.Common.MemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
     inline uint32_t getMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.MemoryObjectControlState_IndexToMocsTables);
+        return (TheStructure.Common.MemoryObjectControlState_IndexToMocsTables << 1);
     }
     inline void setMemoryObjectControlState(const uint32_t value) {
         TheStructure.Common.MemoryObjectControlState_Reserved = value;
@@ -3720,10 +3720,10 @@ typedef struct tagSTATE_BASE_ADDRESS {
         return (TheStructure.Common.GeneralStateMemoryObjectControlState_Reserved);
     }
     inline void setGeneralStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
-        TheStructure.Common.GeneralStateMemoryObjectControlState_IndexToMocsTables = value;
+        TheStructure.Common.GeneralStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
     inline uint64_t getGeneralStateMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.GeneralStateMemoryObjectControlState_IndexToMocsTables);
+        return (TheStructure.Common.GeneralStateMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagGENERALSTATEBASEADDRESS {
         GENERALSTATEBASEADDRESS_BIT_SHIFT = 0xc,
@@ -3742,10 +3742,10 @@ typedef struct tagSTATE_BASE_ADDRESS {
         return (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved);
     }
     inline void setStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables(const uint32_t value) {
-        TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables = value;
+        TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
     inline uint32_t getStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables);
+        return (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables << 1);
     }
     inline void setStatelessDataPortAccessMemoryObjectControlState(const uint32_t value) {
         TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved = value;
@@ -3769,10 +3769,10 @@ typedef struct tagSTATE_BASE_ADDRESS {
         return (TheStructure.Common.SurfaceStateMemoryObjectControlState_Reserved);
     }
     inline void setSurfaceStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
-        TheStructure.Common.SurfaceStateMemoryObjectControlState_IndexToMocsTables = value;
+        TheStructure.Common.SurfaceStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
     inline uint64_t getSurfaceStateMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.SurfaceStateMemoryObjectControlState_IndexToMocsTables);
+        return (TheStructure.Common.SurfaceStateMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagSURFACESTATEBASEADDRESS {
         SURFACESTATEBASEADDRESS_BIT_SHIFT = 0xc,
@@ -3797,10 +3797,10 @@ typedef struct tagSTATE_BASE_ADDRESS {
         return (TheStructure.Common.DynamicStateMemoryObjectControlState_Reserved);
     }
     inline void setDynamicStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
-        TheStructure.Common.DynamicStateMemoryObjectControlState_IndexToMocsTables = value;
+        TheStructure.Common.DynamicStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
     inline uint64_t getDynamicStateMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.DynamicStateMemoryObjectControlState_IndexToMocsTables);
+        return (TheStructure.Common.DynamicStateMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagDYNAMICSTATEBASEADDRESS {
         DYNAMICSTATEBASEADDRESS_BIT_SHIFT = 0xc,
@@ -3825,10 +3825,10 @@ typedef struct tagSTATE_BASE_ADDRESS {
         return (TheStructure.Common.IndirectObjectMemoryObjectControlState_Reserved);
     }
     inline void setIndirectObjectMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
-        TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables = value;
+        TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
     inline uint64_t getIndirectObjectMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables);
+        return (TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagINDIRECTOBJECTBASEADDRESS {
         INDIRECTOBJECTBASEADDRESS_BIT_SHIFT = 0xc,
@@ -3853,10 +3853,10 @@ typedef struct tagSTATE_BASE_ADDRESS {
         return (TheStructure.Common.InstructionMemoryObjectControlState_Reserved);
     }
     inline void setInstructionMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
-        TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables = value;
+        TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
     inline uint64_t getInstructionMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables);
+        return (TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables << 1);
     }
     inline void setInstructionMemoryObjectControlState(const uint32_t value) {
         uint64_t val = static_cast<uint64_t>(value);
@@ -3939,10 +3939,10 @@ typedef struct tagSTATE_BASE_ADDRESS {
         return (TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_Reserved);
     }
     inline void setBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
-        TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_IndexToMocsTables = value;
+        TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
     inline uint64_t getBindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_IndexToMocsTables);
+        return (TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagBINDLESSSURFACESTATEBASEADDRESS {
         BINDLESSSURFACESTATEBASEADDRESS_BIT_SHIFT = 0xc,
@@ -3973,10 +3973,10 @@ typedef struct tagSTATE_BASE_ADDRESS {
         return (TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_Reserved);
     }
     inline void setBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables(const uint64_t value) {
-        TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables = value;
+        TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
     }
     inline uint64_t getBindlessSamplerStateMemoryObjectControlStateIndexToMocsTables(void) const {
-        return (TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables);
+        return (TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables << 1);
     }
     typedef enum tagBINDLESSSAMPLERSTATEBASEADDRESS {
         BINDLESSSAMPLERSTATEBASEADDRESS_BIT_SHIFT = 0xc,
