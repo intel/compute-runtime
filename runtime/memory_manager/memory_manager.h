@@ -199,7 +199,8 @@ class MemoryManager {
                 uint32_t flushL3 : 1;
                 uint32_t preferRenderCompressed : 1;
                 uint32_t multiOsContextCapable : 1;
-                uint32_t reserved : 22;
+                uint32_t requiresCpuAccess : 1;
+                uint32_t reserved : 21;
             } flags;
             uint32_t allFlags = 0;
         };

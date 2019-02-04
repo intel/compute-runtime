@@ -257,7 +257,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::UNDECIDED:
-    case GraphicsAllocation::AllocationType::LINEAR_STREAM:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
     case GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER:
         allocationData.flags.useSystemMemory = true;
@@ -270,6 +269,16 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::KERNEL_ISA:
     case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
         allocationData.allocationOrigin = AllocationOrigin::INTERNAL_ALLOCATION;
+        break;
+    default:
+        break;
+    }
+
+    switch (properties.allocationType) {
+    case GraphicsAllocation::AllocationType::LINEAR_STREAM:
+    case GraphicsAllocation::AllocationType::KERNEL_ISA:
+    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
+        allocationData.flags.requiresCpuAccess = true;
         break;
     default:
         break;
