@@ -1152,12 +1152,12 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDele
     EXPECT_EQ(1u, wddm->createAllocationResult.called);
 }
 
-TEST(WddmMemoryManagerDefaults, givenDefaultWddmMemoryManagerWhenItIsQueriedForInternalHeapBaseThenHeap1BaseIsReturned) {
+TEST(WddmMemoryManagerDefaults, givenDefaultWddmMemoryManagerWhenItIsQueriedForInternalHeapBaseThenHeapInternalDeviceMemoryBaseIsReturned) {
     ExecutionEnvironment executionEnvironment;
     auto wddm = std::make_unique<WddmMock>();
-    wddm->callBaseDestroyAllocations = false;
+    wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     MockWddmMemoryManager memoryManager(wddm.get(), executionEnvironment);
-    auto heapBase = wddm->getGfxPartition().Heap32[1].Base;
+    auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Base;
     EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress());
 }
 
