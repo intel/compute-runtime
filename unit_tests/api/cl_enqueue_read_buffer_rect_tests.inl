@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ typedef api_tests clEnqueueReadBufferRectTest;
 
 namespace ULT {
 
-TEST_F(clEnqueueReadBufferRectTest, returnFailure) {
+TEST_F(clEnqueueReadBufferRectTest, GivenInvalidBufferWhenReadingRectangularRegionThenInvalidMemObjectErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
@@ -42,7 +42,7 @@ TEST_F(clEnqueueReadBufferRectTest, returnFailure) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueReadBufferRectTest, NullCommandQueue) {
+TEST_F(clEnqueueReadBufferRectTest, GivenNullCommandQueueWhenReadingRectangularRegionThenInvalidCommandQueueErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
@@ -68,7 +68,7 @@ TEST_F(clEnqueueReadBufferRectTest, NullCommandQueue) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueReadBufferRectTest, NullHostPtr) {
+TEST_F(clEnqueueReadBufferRectTest, GivenNullHostPtrWhenReadingRectangularRegionThenInvalidValueErrorIsReturned) {
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
@@ -103,7 +103,7 @@ TEST_F(clEnqueueReadBufferRectTest, NullHostPtr) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueReadBufferRectTest, returnSuccess) {
+TEST_F(clEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRegionThenSuccessIsReturned) {
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
@@ -139,7 +139,7 @@ TEST_F(clEnqueueReadBufferRectTest, returnSuccess) {
     clReleaseMemObject(buffer);
 }
 
-TEST_F(clEnqueueReadBufferRectTest, pitchInvalid) {
+TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegionThenInvalidValueErrorIsReturned) {
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
@@ -273,7 +273,7 @@ class EnqueueReadBufferRectFlagsTest : public api_fixture,
 
 typedef EnqueueReadBufferRectFlagsTest EnqueueReadReadBufferRectTests;
 
-TEST_P(EnqueueReadReadBufferRectTests, invalidFlags) {
+TEST_P(EnqueueReadReadBufferRectTests, GivenNoReadFlagsWhenReadingRectangularRegionThenInvalidOperationErrorIsReturned) {
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
     size_t region[] = {10, 10, 0};
