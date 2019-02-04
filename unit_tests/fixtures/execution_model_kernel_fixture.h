@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,17 +65,22 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
     }
 
     void TearDown() override {
-        delete pKernel;
+        if (pKernel != nullptr) {
+            pKernel->release();
+        }
 
         std::string temp;
         temp.assign(pPlatform->getDevice(0)->getDeviceInfo().clVersion);
 
-        if (temp.find("OpenCL 1.2") != std::string::npos) {
-            delete pDevice;
-            pDevice = nullptr;
-        }
         ProgramFromBinaryTest::TearDown();
         PlatformFixture::TearDown();
+
+        if (temp.find("OpenCL 1.2") != std::string::npos) {
+            if (pDevice != nullptr) {
+                delete pDevice;
+                pDevice = nullptr;
+            }
+        }
     }
 
     Kernel *pKernel;

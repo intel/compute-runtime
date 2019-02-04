@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,7 +80,7 @@ class ExecutionModelSchedulerTest : public DeviceFixture,
     }
 
     void TearDown() override {
-        delete parentKernel;
+        parentKernel->release();
 
         DeviceQueueFixture::TearDown();
         CommandQueueHwFixture::TearDown();

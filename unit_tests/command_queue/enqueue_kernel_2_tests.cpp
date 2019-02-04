@@ -643,6 +643,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
 
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_STREQ("test", output.c_str());
+        pCmdQ->releaseVirtualEvent();
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -99,6 +100,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMapBlockedOnEvent_Success) {
         nullptr        // cl_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMUnmap_InvalidValue) {
@@ -132,6 +134,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMUnmapBlockedOnEvent_Success) {
         nullptr        // cl_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMFreeWithoutCallback_Success) {
@@ -232,6 +235,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMFreeBlockedOnEvent_Success) {
         nullptr        // cl_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueDstPtrIsNull) {
@@ -315,6 +319,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlockedOnEvent_Success) {
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherent_Success) {
@@ -349,6 +354,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherentBlockedOnEvent_Success) {
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemFill_InvalidValue) {
@@ -397,6 +403,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFillBlockedOnEvent_Success) {
         nullptr        // cL_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemFillDoubleToReuseAllocation_Success) {
@@ -480,10 +487,10 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
     GraphicsAllocation *pSvmAlloc = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     EXPECT_NE(nullptr, ptrSVM);
 
-    std::unique_ptr<Program> program(Program::create("FillBufferBytes", context, *pDevice, true, &retVal));
+    auto program = clUniquePtr(Program::create("FillBufferBytes", context, *pDevice, true, &retVal));
     cl_device_id device = pDevice;
     program->build(1, &device, nullptr, nullptr, nullptr, false);
-    std::unique_ptr<Kernel> kernel(Kernel::create<MockKernel>(program.get(), *program->getKernelInfo("FillBufferBytes"), &retVal));
+    auto kernel = clUniquePtr(Kernel::create<MockKernel>(program.get(), *program->getKernelInfo("FillBufferBytes"), &retVal));
 
     std::vector<Surface *> allSurfaces;
     kernel->getResidency(allSurfaces);
@@ -513,6 +520,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
         delete surface;
 
     EXPECT_EQ(1u, kernel->getKernelSvmGfxAllocations().size());
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EnqueueSvmTest, concurentMapAccess) {

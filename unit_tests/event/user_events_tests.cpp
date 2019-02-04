@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_event.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_context.h"
@@ -195,6 +196,7 @@ TEST_F(EventTests, blockedUserEventPassedToEnqueueNdRangeWithoutReturnEventIsNot
     EXPECT_EQ(taskCountAfter, taskCount);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, blockedUserEventPassedToEnqueueNdRangeWithReturnEventIsNotSubmittedToCSR) {
@@ -238,6 +240,8 @@ TEST_F(EventTests, blockedUserEventPassedToEnqueueNdRangeWithReturnEventIsNotSub
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, userEventInjectsCountOnReturnEventAndCreatesConnection) {
@@ -265,6 +269,7 @@ TEST_F(EventTests, userEventInjectsCountOnReturnEventAndCreatesConnection) {
 
     auto retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, givenNormalEventThatHasParentUserEventWhenUserEventIsUnblockedThenChildEventIsCompleteIfGpuCompletedProcessing) {
@@ -319,6 +324,7 @@ TEST_F(EventTests, twoUserEventInjectsCountOnReturnEventAndCreatesConnection) {
 
     auto retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, twoUserEventInjectsCountOnNDR1whichIsPropagatedToNDR2viaVirtualEvent) {
@@ -428,6 +434,7 @@ TEST_F(EventTests, userEventStatusPropagatedToNormalEvent) {
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 HWTEST_F(EventTests, userEventObtainsProperTaskLevelAfterSignaling) {
@@ -474,6 +481,7 @@ TEST_F(EventTests, normalEventsBasingOnUserEventHasProperTaskLevel) {
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, waitForEventThatWaitsOnSignaledUserEvent) {
@@ -499,6 +507,7 @@ TEST_F(EventTests, waitForEventThatWaitsOnSignaledUserEvent) {
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, waitForAbortedUserEventReturnsFailure) {
@@ -544,6 +553,7 @@ TEST_F(EventTests, enqueueWithAbortedUserEventDoesntFlushToCSR) {
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, childEventDestructorDoesntProcessBlockedCommandsWhenParentEventWasAborted) {
@@ -584,6 +594,7 @@ TEST_F(EventTests, childEventDestructorDoesntProcessBlockedCommandsWhenParentEve
 
     taskCountAfter = csr.peekTaskCount();
     EXPECT_EQ(taskCount, taskCountAfter);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, waitForEventDependingOnAbortedUserEventReturnsFailure) {
@@ -607,6 +618,7 @@ TEST_F(EventTests, waitForEventDependingOnAbortedUserEventReturnsFailure) {
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, waitForEventDependingOnAbortedUserEventReturnsFailureTwoInputEvents) {
@@ -630,6 +642,7 @@ TEST_F(EventTests, waitForEventDependingOnAbortedUserEventReturnsFailureTwoInput
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, finishReturnsSuccessAfterQueueIsAborted) {
@@ -653,6 +666,7 @@ TEST_F(EventTests, finishReturnsSuccessAfterQueueIsAborted) {
 
     retVal = clFinish(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, userEventRecordsDependantPacket) {
@@ -666,6 +680,8 @@ TEST_F(EventTests, userEventRecordsDependantPacket) {
     //virtual event should register for this command packet
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
     EXPECT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
+    EXPECT_FALSE(pCmdQ->virtualEvent->peekIsCmdSubmitted());
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, userEventDependantCommandPacketContainsValidCommandStream) {
@@ -680,6 +696,7 @@ TEST_F(EventTests, userEventDependantCommandPacketContainsValidCommandStream) {
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
     auto cmd = static_cast<CommandComputeKernel *>(pCmdQ->virtualEvent->peekCommand());
     EXPECT_NE(0u, cmd->getCommandStream()->getUsed());
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, unblockingEventSendsBlockedPackets) {
@@ -709,6 +726,7 @@ TEST_F(EventTests, unblockingEventSendsBlockedPackets) {
     uEvent.setStatus(0);
 
     EXPECT_EQ(csr.peekTaskLevel(), 1u);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, virtualEventObtainedFromReturnedEventCannotBeReleasedByIsQueueBlocked) {
@@ -734,6 +752,7 @@ TEST_F(EventTests, virtualEventObtainedFromReturnedEventCannotBeReleasedByIsQueu
     EXPECT_EQ(nullptr, pCmdQ->virtualEvent);
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, userEventsDoesntChangeCommandStreamWhileEnqueueButDoesAfterSignaling) {
@@ -766,6 +785,7 @@ TEST_F(EventTests, userEventsDoesntChangeCommandStreamWhileEnqueueButDoesAfterSi
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, givenUserEventThatHasCallbackAndBlockQueueWhenQueueIsQueriedForBlockedThenCallBackIsCalled) {
@@ -845,6 +865,7 @@ TEST_F(EventTests, CallBackAfterEnqueue) {
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, CallBackAfterEnqueueWithoutWait) {
@@ -873,6 +894,7 @@ TEST_F(EventTests, CallBackAfterEnqueueWithoutWait) {
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, enqueueReadImageBlockedOnUserEvent) {
@@ -880,7 +902,7 @@ TEST_F(EventTests, enqueueReadImageBlockedOnUserEvent) {
     UserEvent userEvent(this->context);
     cl_event events[] = {&userEvent};
 
-    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(pContext));
+    auto image = clUniquePtr(Image2dHelper<>::create(this->context));
     ASSERT_NE(nullptr, image);
 
     auto retVal = EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ,
@@ -904,6 +926,7 @@ TEST_F(EventTests, enqueueReadImageBlockedOnUserEvent) {
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
@@ -998,6 +1021,7 @@ TEST_F(EventTests, WhenCalbackWasRegisteredOnCallbackExecutionPassesCorrectExecu
     EXPECT_EQ(CL_COMPLETE, completeClbExecStatus);
 
     clReleaseEvent(retEvent);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, eventOnQueryReturnsCorrentNumberOfBlockerEvents) {
@@ -1037,6 +1061,7 @@ TEST_F(EventTests, eventOnQueryReturnsCorrentNumberOfBlockerEvents) {
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, blockedUserEventPassedToEnqueueNdRangeDoesntRetainCommandQueue) {
@@ -1066,6 +1091,7 @@ TEST_F(EventTests, blockedUserEventPassedToEnqueueNdRangeDoesntRetainCommandQueu
     retVal = clReleaseEvent(userEvent);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
+    pCmdQ->isQueueBlocked();
     // VirtualEvent should be freed, so refCount should equal initial value
     EXPECT_EQ(intitialRefCount, pCmdQ->getRefInternalCount());
 }

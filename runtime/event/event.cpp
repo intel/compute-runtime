@@ -416,11 +416,6 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
 
         childEvent->unblockEventBy(*this, taskLevelToPropagate, transitionStatus);
 
-        if (childEvent->getCommandQueue() && childEvent->isCurrentCmdQVirtualEvent()) {
-            // Check virtual event state and delete it if possible.
-            childEvent->getCommandQueue()->isQueueBlocked();
-        }
-
         childEvent->decRefInternal();
         auto next = childEventRef->next;
         delete childEventRef;

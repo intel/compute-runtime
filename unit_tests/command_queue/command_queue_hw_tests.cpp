@@ -11,6 +11,7 @@
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -361,6 +362,7 @@ HWTEST_F(CommandQueueHwTest, GivenNotCompleteUserEventPassedToEnqueueWhenEventIs
     mockCSR->getMemoryManager()->freeGraphicsMemory(privateSurface);
     mockCSR->getMemoryManager()->freeGraphicsMemory(printfSurface);
     mockCSR->getMemoryManager()->freeGraphicsMemory(constantSurface);
+    pCmdQ->isQueueBlocked();
 }
 
 typedef CommandQueueHwTest BlockedCommandQueueTest;
@@ -387,6 +389,8 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhenBlockedCommandIsBeingSubm
     EXPECT_EQ(0u, ioh.getUsed());
     EXPECT_EQ(0u, dsh.getUsed());
     EXPECT_EQ(defaultSshUse, ssh.getUsed());
+
+    pCmdQ->isQueueBlocked();
 }
 
 HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWithUsedHeapsWhenBlockedCommandIsBeingSubmittedThenQueueHeapsAreNotUsed) {
@@ -417,6 +421,8 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWithUsedHeapsWhenBlockedComma
     EXPECT_EQ(spaceToUse, ioh.getUsed());
     EXPECT_EQ(spaceToUse, dsh.getUsed());
     EXPECT_EQ(sshSpaceUse, ssh.getUsed());
+
+    pCmdQ->isQueueBlocked();
 }
 
 HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBlockedCommandIsBeingSubmittedThenThoseHeapsAreBeingUsed) {
@@ -443,6 +449,8 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBl
     EXPECT_EQ(iohBase, ioh.getCpuBase());
     EXPECT_EQ(dshBase, dsh.getCpuBase());
     EXPECT_EQ(sshBase, ssh.getCpuBase());
+
+    pCmdQ->isQueueBlocked();
 }
 
 HWTEST_F(BlockedCommandQueueTest, givenEnqueueBlockedByUserEventWhenItIsEnqueuedThenKernelReferenceCountIsIncreased) {
@@ -459,6 +467,7 @@ HWTEST_F(BlockedCommandQueueTest, givenEnqueueBlockedByUserEventWhenItIsEnqueued
     pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
     EXPECT_EQ(currentRefCount + 1, mockKernel->getRefInternalCount());
     userEvent.setStatus(CL_COMPLETE);
+    pCmdQ->isQueueBlocked();
     EXPECT_EQ(currentRefCount, mockKernel->getRefInternalCount());
 }
 
@@ -490,7 +499,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenBlockedCmdQWhenNewBlockedEnqueueReplac
 
     userEvent.setStatus(CL_COMPLETE);
     // UserEvent is set to complete and event tree is unblocked, queue has only 1 refference to itself after this operation
-    EXPECT_EQ(1, mockCmdQ->getRefInternalCount());
+    EXPECT_EQ(2, mockCmdQ->getRefInternalCount());
 
     //this call will release the queue
     releaseQueue<CommandQueue>(mockCmdQ, retVal);
@@ -530,12 +539,13 @@ HWTEST_F(CommandQueueHwRefCountTest, givenBlockedCmdQWithOutputEventAsVirtualEve
     // unblocking deletes 2 virtualEvents
     userEvent.setStatus(CL_COMPLETE);
 
-    EXPECT_EQ(2, mockCmdQ->getRefInternalCount());
+    EXPECT_EQ(3, mockCmdQ->getRefInternalCount());
 
     auto pEventOut = castToObject<Event>(eventOut);
     pEventOut->release();
     // releasing output event decrements refCount
-    EXPECT_EQ(1, mockCmdQ->getRefInternalCount());
+    EXPECT_EQ(2, mockCmdQ->getRefInternalCount());
+    mockCmdQ->isQueueBlocked();
 
     releaseQueue<CommandQueue>(mockCmdQ, retVal);
 }
@@ -575,13 +585,16 @@ HWTEST_F(CommandQueueHwRefCountTest, givenSeriesOfBlockedEnqueuesWhenEveryEventI
     userEvent->setStatus(CL_COMPLETE);
 
     userEvent->release();
-    // releasing UserEvent doesn't change the refCount
-    EXPECT_EQ(2, mockCmdQ->getRefInternalCount());
+    EXPECT_EQ(3, mockCmdQ->getRefInternalCount());
 
     auto pEventOut = castToObject<Event>(eventOut);
     pEventOut->release();
 
     // releasing output event decrements refCount
+    EXPECT_EQ(2, mockCmdQ->getRefInternalCount());
+
+    mockCmdQ->isQueueBlocked();
+
     EXPECT_EQ(1, mockCmdQ->getRefInternalCount());
 
     releaseQueue<CommandQueue>(mockCmdQ, retVal);
@@ -622,7 +635,7 @@ HWTEST_F(CommandQueueHwRefCountTest, givenSeriesOfBlockedEnqueuesWhenCmdQIsRelea
 
     userEvent->release();
     // releasing UserEvent doesn't change the queue refCount
-    EXPECT_EQ(2, mockCmdQ->getRefInternalCount());
+    EXPECT_EQ(3, mockCmdQ->getRefInternalCount());
 
     releaseQueue<CommandQueue>(mockCmdQ, retVal);
 
@@ -963,6 +976,7 @@ HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenBlockedThenKernel
     EXPECT_EQ(1u, mockKernel->getResidencyCalls);
 
     userEvent.setStatus(CL_COMPLETE);
+    pCmdQ->isQueueBlocked();
 }
 
 HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnqueueSurfacesMakeResidentIsCalledOnce) {
@@ -972,7 +986,7 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
     csr.timestampPacketWriteEnabled = false;
 
     BufferDefaults::context = context;
-    std::unique_ptr<Buffer> buffer(BufferHelper<>::create());
+    auto buffer = clUniquePtr(BufferHelper<>::create());
     GraphicsAllocation *bufferAllocation = buffer->getGraphicsAllocation();
     char array[3 * MemoryConstants::cacheLineSize];
     char *ptr = &array[MemoryConstants::cacheLineSize];
@@ -995,4 +1009,6 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
         }
         EXPECT_EQ(expected, it->second);
     }
+
+    pCmdQ->isQueueBlocked();
 }

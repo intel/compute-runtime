@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,8 +72,7 @@ class ProgramFixture {
 
     void Cleanup() {
         if (pProgram != nullptr) {
-            delete pProgram;
-            pProgram = nullptr;
+            pProgram->release();
         }
 
         if (knownSource != nullptr) {

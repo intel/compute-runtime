@@ -139,6 +139,7 @@ HWTEST_P(ParentKernelEnqueueTest, GivenBlocksWithPrivateMemoryWhenEnqueueKernelT
         EXPECT_FALSE(csr.isMadeResident(privateAllocation));
         uEvent.setStatus(CL_COMPLETE);
         EXPECT_TRUE(csr.isMadeResident(privateAllocation));
+        pCmdQ->releaseVirtualEvent();
     }
 }
 
@@ -199,6 +200,7 @@ HWTEST_P(ParentKernelEnqueueTest, GivenParentKernelWithBlocksWhenEnqueueKernelTh
         for (auto blockId = 0u; blockId < blockCount; blockId++) {
             EXPECT_TRUE(csr.isMadeResident(blockKernelManager->getBlockKernelInfo(blockId)->getGraphicsAllocation()));
         }
+        pCmdQ->releaseVirtualEvent();
     }
 }
 
@@ -337,6 +339,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenBlockedQueueWhenParent
         pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 1, &eventBlocking, nullptr);
 
         EXPECT_FALSE(mockDevQueue.isEMCriticalSectionFree());
+        pCmdQ->releaseVirtualEvent();
     }
 }
 
@@ -500,6 +503,7 @@ HWTEST_F(ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedToBlockedQueue
         pCmdQ->enqueueKernel(parentKernel, 1, offset, gws, gws, 1, &eventBlocking, nullptr);
 
         EXPECT_TRUE(pDevQueueHw->isEMCriticalSectionFree());
+        pCmdQ->releaseVirtualEvent();
     }
 }
 

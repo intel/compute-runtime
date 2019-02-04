@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,6 @@ void ProgramFixture::CreateProgramFromBinary(cl_context context,
                                              const std::string &binaryFileName,
                                              cl_int &retVal,
                                              const std::string &options) {
-    Cleanup();
     retVal = CL_SUCCESS;
 
     std::string testFile;

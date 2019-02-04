@@ -659,7 +659,6 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
         eventBuilder = &internalEventBuilder;
         DBG_LOG(EventsDebugEnable, "enqueueBlocked", "new virtualEvent", eventBuilder->getEvent());
     }
-    eventBuilder->getEvent()->setCurrentCmdQVirtualEvent(true);
 
     //update queue taskCount
     taskCount = eventBuilder->getEvent()->getCompletionStamp();
@@ -720,7 +719,6 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     eventBuilder->finalize();
 
     if (this->virtualEvent) {
-        this->virtualEvent->setCurrentCmdQVirtualEvent(false);
         this->virtualEvent->decRefInternal();
     }
 

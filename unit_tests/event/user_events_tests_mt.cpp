@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,7 @@ TEST_F(EventTests, eventCreatedFromUserEventsThatIsNotSignaledDoesntFlushToCSR) 
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsCompletedAfterBlockedPathIsChosenThenBlockingFlagDoesNotCauseStall) {
@@ -79,6 +80,7 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
 
         t.join();
     }
+    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsCompletedAfterUpdateFromCompletionStampThenBlockingFlagDoesNotCauseStall) {
@@ -106,4 +108,5 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
     auto retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(), CL_TRUE, 0, srcBuffer->getSize(), dst.get(), sizeOfWaitList, eventWaitList, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     t.join();
+    pCmdQ->releaseVirtualEvent();
 }

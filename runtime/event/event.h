@@ -203,6 +203,10 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         }
     }
 
+    bool peekIsCmdSubmitted() {
+        return submittedCmd != nullptr;
+    }
+
     //commands blocked by user event depencies
     bool isReadyForSubmission();
 
@@ -215,6 +219,10 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     bool isUserEvent() const {
         return (CL_COMMAND_USER == cmdType);
+    }
+
+    bool isEventWithoutCommand() {
+        return eventWithoutCommand;
     }
 
     Context *getContext() {

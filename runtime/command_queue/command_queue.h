@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/task_information.h"
 #include "runtime/helpers/dispatch_info.h"
+#include "runtime/event/user_event.h"
 #include "instrumentation.h"
 #include <atomic>
 #include <cstdint>
@@ -340,6 +341,13 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                             size_t minRequiredSize, IndirectHeap *&indirectHeap);
 
     MOCKABLE_VIRTUAL void releaseIndirectHeap(IndirectHeap::Type heapType);
+
+    void releaseVirtualEvent() {
+        if (this->virtualEvent != nullptr) {
+            this->virtualEvent->decRefInternal();
+            this->virtualEvent = nullptr;
+        }
+    }
 
     cl_command_queue_properties getCommandQueueProperties() const {
         return commandQueueProperties;

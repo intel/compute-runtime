@@ -200,51 +200,8 @@ HWTEST_F(EnqueueHandlerTest, enqueueBlockedSetsVirtualEventAsCurrentCmdQVirtualE
 
     ASSERT_NE(nullptr, mockCmdQ->virtualEvent);
 
-    EXPECT_TRUE(mockCmdQ->virtualEvent->isCurrentCmdQVirtualEvent());
-
     mockCmdQ->virtualEvent->setStatus(CL_COMPLETE);
     mockCmdQ->isQueueBlocked();
-    mockCmdQ->release();
-}
-
-HWTEST_F(EnqueueHandlerTest, enqueueBlockedUnsetsCurrentCmdQVirtualEventForPreviousVirtualEvent) {
-
-    UserEvent userEvent;
-    cl_event clUserEvent = &userEvent;
-
-    MockKernelWithInternals kernelInternals(*pDevice, context);
-
-    Kernel *kernel = kernelInternals.mockKernel;
-
-    MockMultiDispatchInfo multiDispatchInfo(kernel);
-
-    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pDevice, 0);
-
-    // put queue into initial blocked state with userEvent
-
-    bool blocking = false;
-    mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
-                                                                 0,
-                                                                 blocking,
-                                                                 multiDispatchInfo,
-                                                                 1,
-                                                                 &clUserEvent,
-                                                                 nullptr);
-
-    ASSERT_NE(nullptr, mockCmdQ->virtualEvent);
-    Event *previousVirtualEvent = mockCmdQ->virtualEvent;
-
-    mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
-                                                                 0,
-                                                                 blocking,
-                                                                 multiDispatchInfo,
-                                                                 0,
-                                                                 nullptr,
-                                                                 nullptr);
-
-    EXPECT_FALSE(previousVirtualEvent->isCurrentCmdQVirtualEvent());
-    EXPECT_TRUE(mockCmdQ->virtualEvent->isCurrentCmdQVirtualEvent());
-
     mockCmdQ->release();
 }
 

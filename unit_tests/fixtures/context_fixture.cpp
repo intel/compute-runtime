@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,8 @@ void ContextFixture::SetUp(cl_uint numDevices, cl_device_id *pDeviceList) {
 }
 
 void ContextFixture::TearDown() {
-    delete pContext;
-    pContext = nullptr;
+    if (pContext != nullptr) {
+        pContext->release();
+    }
 }
 } // namespace OCLRT

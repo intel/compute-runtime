@@ -25,6 +25,7 @@ void DeviceFixture::SetUpImpl(const OCLRT::HardwareInfo *hardwareInfo) {
 
 void DeviceFixture::TearDown() {
     delete pDevice;
+    pDevice = nullptr;
 }
 
 MockDevice *DeviceFixture::createWithUsDeviceId(unsigned short usDeviceId) {

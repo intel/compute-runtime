@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,8 +78,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
     }
 
     void TearDown() override {
-        delete pVmeKernel;
-        pVmeKernel = nullptr;
+        pVmeKernel->release();
 
         HardwareParse::TearDown();
         Parent::TearDown();

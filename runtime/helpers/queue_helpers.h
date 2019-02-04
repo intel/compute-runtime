@@ -11,6 +11,16 @@
 #include "runtime/helpers/get_info.h"
 
 namespace OCLRT {
+
+inline void releaseVirtualEvent(CommandQueue &commandQueue) {
+    if (commandQueue.getRefApiCount() == 1) {
+        commandQueue.releaseVirtualEvent();
+    }
+}
+
+inline void releaseVirtualEvent(DeviceQueue &commandQueue) {
+}
+
 template <typename QueueType>
 void retainQueue(cl_command_queue commandQueue, cl_int &retVal) {
     using BaseType = typename QueueType::BaseType;
@@ -26,6 +36,7 @@ void releaseQueue(cl_command_queue commandQueue, cl_int &retVal) {
     using BaseType = typename QueueType::BaseType;
     auto queue = castToObject<QueueType>(static_cast<BaseType *>(commandQueue));
     if (queue) {
+        releaseVirtualEvent(*queue);
         queue->release();
         retVal = CL_SUCCESS;
     }

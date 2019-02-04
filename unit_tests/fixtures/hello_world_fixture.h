@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,8 +98,8 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
     virtual void TearDown() {
         pCmdQ->flush();
 
-        delete srcBuffer;
-        delete destBuffer;
+        srcBuffer->release();
+        destBuffer->release();
 
         KernelFixture::TearDown();
         IndirectHeapFixture::TearDown();

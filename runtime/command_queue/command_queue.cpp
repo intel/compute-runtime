@@ -76,7 +76,6 @@ CommandQueue::CommandQueue(Context *context, Device *deviceId, const cl_queue_pr
 CommandQueue::~CommandQueue() {
     if (virtualEvent) {
         UNRECOVERABLE_IF(this->virtualEvent->getCommandQueue() != this && this->virtualEvent->getCommandQueue() != nullptr);
-        virtualEvent->setCurrentCmdQVirtualEvent(false);
         virtualEvent->decRefInternal();
     }
 
@@ -519,7 +518,6 @@ void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList
     eventBuilder->finalize();
 
     if (this->virtualEvent) {
-        this->virtualEvent->setCurrentCmdQVirtualEvent(false);
         this->virtualEvent->decRefInternal();
     }
     this->virtualEvent = eventBuilder->getEvent();

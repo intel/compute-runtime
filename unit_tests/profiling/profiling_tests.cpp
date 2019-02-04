@@ -34,7 +34,8 @@ struct ProfilingTests : public CommandEnqueueFixture,
                         public ::testing::Test {
     void SetUp() override {
         CommandEnqueueFixture::SetUp(CL_QUEUE_PROFILING_ENABLE);
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+
+        program = ReleaseableObjectPtr<MockProgram>(new MockProgram(*pDevice->getExecutionEnvironment()));
 
         memset(&kernelHeader, 0, sizeof(kernelHeader));
         kernelHeader.KernelHeapSize = sizeof(kernelIsa);
@@ -63,7 +64,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
         CommandEnqueueFixture::TearDown();
     }
 
-    std::unique_ptr<MockProgram> program;
+    ReleaseableObjectPtr<MockProgram> program;
 
     SKernelBinaryHeaderCommon kernelHeader = {};
     SPatchDataParameterStream dataParameterStream = {};
@@ -295,6 +296,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GIVENCommandQueueBlockedWithProfilin
 
     clReleaseEvent(event);
     ((UserEvent *)ue)->release();
+    pCmdQ->isQueueBlocked();
 }
 
 /*
@@ -354,6 +356,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GIVENCommandQueueBlockedWithProfilin
     EXPECT_EQ(itorAfterMI, cmdList.end());
     clReleaseEvent(event);
     ((UserEvent *)ue)->release();
+    pCmdQ->isQueueBlocked();
 }
 
 HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPath) {
@@ -794,6 +797,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueBlo
 
     clReleaseEvent(event);
     ((UserEvent *)ue)->release();
+    pCmdQ->isQueueBlocked();
     pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
 }
 

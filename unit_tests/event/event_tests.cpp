@@ -156,21 +156,6 @@ TEST(Event, givenCommandQueueWhenEventIsCreatedWithoutCommandQueueThenCommandQue
     EXPECT_EQ(intitialRefCount, finalRefCount);
 }
 
-TEST(Event, currentCmdQVirtualEventSetToFalseInCtor) {
-    Event *event = new Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 4, 10);
-
-    EXPECT_FALSE(event->isCurrentCmdQVirtualEvent());
-    delete event;
-}
-
-TEST(Event, setCurrentCmdQVirtualEven) {
-    Event *event = new Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 4, 10);
-    event->setCurrentCmdQVirtualEvent(true);
-
-    EXPECT_TRUE(event->isCurrentCmdQVirtualEvent());
-    delete event;
-}
-
 TEST(Event, waitForEventsFlushesAllQueues) {
     class MockCommandQueueWithFlushCheck : public MockCommandQueue {
       public:
