@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -156,7 +156,7 @@ HWTEST_F(EnqueueCopyImageTest, surfaceState) {
     enqueueCopyImage<FamilyType>();
 
     for (uint32_t i = 0; i < 2; ++i) {
-        const auto &surfaceState = getSurfaceState<FamilyType>(i);
+        const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), i);
         const auto &imageDesc = dstImage->getImageDesc();
         EXPECT_EQ(imageDesc.image_width, surfaceState.getWidth());
         EXPECT_EQ(imageDesc.image_height, surfaceState.getHeight());
@@ -174,10 +174,10 @@ HWTEST_F(EnqueueCopyImageTest, surfaceState) {
         EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState.getSurfaceVerticalAlignment());
     }
 
-    const auto &srcSurfaceState = getSurfaceState<FamilyType>(0);
+    const auto &srcSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 0);
     EXPECT_EQ(reinterpret_cast<uint64_t>(srcImage->getCpuAddress()), srcSurfaceState.getSurfaceBaseAddress());
 
-    const auto &dstSurfaceState = getSurfaceState<FamilyType>(1);
+    const auto &dstSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 1);
     EXPECT_EQ(reinterpret_cast<uint64_t>(dstImage->getCpuAddress()), dstSurfaceState.getSurfaceBaseAddress());
 }
 

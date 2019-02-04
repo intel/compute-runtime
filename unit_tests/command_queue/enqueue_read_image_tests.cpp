@@ -166,7 +166,7 @@ HWTEST_F(EnqueueReadImageTest, surfaceState) {
 
     // BufferToImage kernel uses BTI=1 for destSurface
     uint32_t bindingTableIndex = 0;
-    const auto &surfaceState = getSurfaceState<FamilyType>(bindingTableIndex);
+    const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), bindingTableIndex);
 
     // EnqueueReadImage uses multi-byte copies depending on per-pixel-size-in-bytes
     const auto &imageDesc = srcImage->getImageDesc();

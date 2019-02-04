@@ -98,7 +98,7 @@ struct HardwareParse {
     }
 
     template <typename FamilyType>
-    const typename FamilyType::RENDER_SURFACE_STATE &getSurfaceState(uint32_t index) {
+    const typename FamilyType::RENDER_SURFACE_STATE &getSurfaceState(IndirectHeap *ssh, uint32_t index) {
         typedef typename FamilyType::BINDING_TABLE_STATE BINDING_TABLE_STATE;
         typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
         typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
@@ -108,6 +108,9 @@ struct HardwareParse {
 
         auto cmdSBA = (STATE_BASE_ADDRESS *)cmdStateBaseAddress;
         auto surfaceStateHeap = cmdSBA->getSurfaceStateBaseAddress();
+        if (ssh && (ssh->getHeapGpuBase() == surfaceStateHeap)) {
+            surfaceStateHeap = reinterpret_cast<uint64_t>(ssh->getCpuBase());
+        }
         EXPECT_NE(0u, surfaceStateHeap);
 
         auto bindingTablePointer = interfaceDescriptorData.getBindingTablePointer();

@@ -163,7 +163,7 @@ HWTEST_F(EnqueueFillImageTest, surfaceState) {
 
     enqueueFillImage<FamilyType>();
 
-    const auto &surfaceState = getSurfaceState<FamilyType>(0);
+    const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 0);
     const auto &imageDesc = image->getImageDesc();
     EXPECT_EQ(imageDesc.image_width, surfaceState.getWidth());
     EXPECT_EQ(imageDesc.image_height, surfaceState.getHeight());
@@ -172,7 +172,7 @@ HWTEST_F(EnqueueFillImageTest, surfaceState) {
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4, surfaceState.getSurfaceHorizontalAlignment());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState.getSurfaceVerticalAlignment());
 
-    const auto &srcSurfaceState = getSurfaceState<FamilyType>(0);
+    const auto &srcSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 0);
     EXPECT_EQ(reinterpret_cast<uint64_t>(image->getCpuAddress()), srcSurfaceState.getSurfaceBaseAddress());
 }
 

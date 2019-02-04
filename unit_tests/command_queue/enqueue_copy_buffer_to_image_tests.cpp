@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -152,7 +152,7 @@ HWTEST_F(EnqueueCopyBufferToImageTest, surfaceState) {
 
     enqueueCopyBufferToImage<FamilyType>();
 
-    const auto &surfaceState = getSurfaceState<FamilyType>(1);
+    const auto &surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 1);
     const auto &imageDesc = dstImage->getImageDesc();
     // EnqueueReadImage uses multi-byte copies depending on per-pixel-size-in-bytes
     EXPECT_EQ(imageDesc.image_width, surfaceState.getWidth());

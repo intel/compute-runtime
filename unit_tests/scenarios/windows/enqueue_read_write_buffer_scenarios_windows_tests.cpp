@@ -103,7 +103,7 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
     parseCommands<FamilyType>(*cmdQ);
 
     if (hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
-        const auto &surfaceStateDst = getSurfaceState<FamilyType>(1);
+        const auto &surfaceStateDst = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 1);
 
         if (kernel->getKernelInfo().kernelArgInfo[1].kernelArgPatchInfoVector[0].size == sizeof(uint64_t)) {
             auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() +
