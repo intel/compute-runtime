@@ -6,11 +6,12 @@
  */
 
 #pragma once
-#include "CL/cl.h"
+#include "runtime/built_ins/sip.h"
+#include "runtime/command_stream/linear_stream.h"
 #include "runtime/gen_common/aub_mapper.h"
 #include "runtime/gen_common/hw_cmds.h"
-#include "runtime/command_stream/linear_stream.h"
-#include "runtime/built_ins/sip.h"
+
+#include "CL/cl.h"
 
 #include <cstdint>
 #include <type_traits>
@@ -41,6 +42,7 @@ class HwHelper {
     virtual bool supportsYTiling() const = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
     static bool renderCompressedImagesSupported(const HardwareInfo &hwInfo);
+    static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
     virtual bool timestampPacketWriteSupported() const = 0;
     virtual size_t getRenderSurfaceStateSize() const = 0;
     virtual void setRenderSurfaceStateForBuffer(ExecutionEnvironment &executionEnvironment,

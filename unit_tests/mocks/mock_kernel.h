@@ -30,7 +30,6 @@ class MockKernel : public Kernel {
     using Kernel::kernelArguments;
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::numberOfBindingTableStates;
-    using Kernel::platformSupportCacheFlushAfterWalker;
     using Kernel::svmAllocationsRequireCacheFlush;
 
     struct BlockPatchValues {

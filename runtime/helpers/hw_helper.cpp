@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,16 @@ bool HwHelper::renderCompressedImagesSupported(const HardwareInfo &hwInfo) {
         return !!DebugManager.flags.RenderCompressedImagesEnabled.get();
     }
     return hwInfo.capabilityTable.ftrRenderCompressedImages;
+}
+
+bool HwHelper::cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo) {
+    int32_t dbgFlag = DebugManager.flags.EnableCacheFlushAfterWalker.get();
+    if (dbgFlag == 1) {
+        return true;
+    } else if (dbgFlag == 0) {
+        return false;
+    }
+    return hwInfo.capabilityTable.supportCacheFlushAfterWalker;
 }
 
 } // namespace OCLRT

@@ -589,3 +589,47 @@ HWTEST_F(HwHelperTest, DISABLED_profilingCreationOfRenderSurfaceStateVsMemcpyOfC
         alignedFree(copyBuffers[i]);
     }
 }
+
+TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsEnableWhenPlatformDoesNotSupportThenOverrideAndReturnSupportTrue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.supportCacheFlushAfterWalker = false;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    EXPECT_TRUE(HwHelper::cacheFlushAfterWalkerSupported(device->getHardwareInfo()));
+}
+
+TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsDisableWhenPlatformSupportsThenOverrideAndReturnSupportFalse) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
+
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.supportCacheFlushAfterWalker = true;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    EXPECT_FALSE(HwHelper::cacheFlushAfterWalkerSupported(device->getHardwareInfo()));
+}
+
+TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsReadPlatformSettingWhenPlatformDoesNotSupportThenReturnSupportFalse) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
+
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.supportCacheFlushAfterWalker = false;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    EXPECT_FALSE(HwHelper::cacheFlushAfterWalkerSupported(device->getHardwareInfo()));
+}
+
+TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsReadPlatformSettingWhenPlatformSupportsThenReturnSupportTrue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
+
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.supportCacheFlushAfterWalker = true;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    EXPECT_TRUE(HwHelper::cacheFlushAfterWalkerSupported(device->getHardwareInfo()));
+}

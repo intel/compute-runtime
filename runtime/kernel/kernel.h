@@ -468,7 +468,6 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void reconfigureKernel();
 
-    bool platformSupportCacheFlushAfterWalker() const;
     void addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation);
     bool allocationForCacheFlush(GraphicsAllocation *argAllocation) const;
     Program *program;

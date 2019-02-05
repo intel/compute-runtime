@@ -561,9 +561,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 surfacesForSubmit.push_back(surface);
             }
 
-            //make sure we flush DC
+            //make sure we flush DC if needed
             if (epiloguePipeControlLocation) {
-                ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(true);
+                ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(false == HwHelper::cacheFlushAfterWalkerSupported(this->hwInfo));
             }
             auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, surfacesForSubmit);
 

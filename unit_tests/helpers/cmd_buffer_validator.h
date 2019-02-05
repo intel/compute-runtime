@@ -217,7 +217,7 @@ inline bool expectCmdBuff(GenCmdList::iterator begin, GenCmdList::iterator end,
                 // proceed to next matcher if not matched
                 if ((expectedCmdBuffMatchers[currentMatcher]->getExpectedCount() == AtLeastOne) && (currentMatcherCount < 1)) {
                     failed = true;
-                    failReason = "Unmatched cmd#" + std::to_string(cmdNum) + " - expected " + std::string(expectedCmdBuffMatchers[currentMatcher]->getName()) + "(" + countToString(expectedCmdBuffMatchers[currentMatcher]->getExpectedCount()) + " - " + std::to_string(currentMatcherCount) + ") after : " + matchedCommandsString();
+                    failReason = "Unmatched cmd#" + std::to_string(cmdNum) + ":" + HardwareParse::getCommandName<FamilyType>(*it) + " - expected " + std::string(expectedCmdBuffMatchers[currentMatcher]->getName()) + "(" + countToString(expectedCmdBuffMatchers[currentMatcher]->getExpectedCount()) + " - " + std::to_string(currentMatcherCount) + ") after : " + matchedCommandsString();
                     break;
                 }
                 ++currentMatcher;
@@ -249,7 +249,7 @@ inline bool expectCmdBuff(GenCmdList::iterator begin, GenCmdList::iterator end,
 
         if (false == expectedCmdBuffMatchers[currentMatcher]->matches(it)) {
             failed = true;
-            failReason = "Unmatched cmd#" + std::to_string(cmdNum) + " - expected " + std::string(expectedCmdBuffMatchers[currentMatcher]->getName()) + "(" + countToString(expectedCmdBuffMatchers[currentMatcher]->getExpectedCount()) + " - " + std::to_string(currentMatcherCount) + ") after : " + matchedCommandsString();
+            failReason = "Unmatched cmd#" + std::to_string(cmdNum) + ":" + HardwareParse::getCommandName<FamilyType>(*it) + " - expected " + std::string(expectedCmdBuffMatchers[currentMatcher]->getName()) + "(" + countToString(expectedCmdBuffMatchers[currentMatcher]->getExpectedCount()) + " - " + std::to_string(currentMatcherCount) + ") after : " + matchedCommandsString();
             break;
         }
 
@@ -304,10 +304,28 @@ inline bool expectCmdBuff(GenCmdList::iterator begin, GenCmdList::iterator end,
             failReason = "Unexpected command buffer end at cmd#" + std::to_string(cmdNum) + " - expected " + expectedMatchers + " after : " + matchedCommandsString();
             failed = true;
         }
+    } else {
+        if ((it != end) && (++it != end)) {
+            ++cmdNum;
+            failReason += "\n Unconsumed commands after failed one : ";
+            while (it != end) {
+                failReason += std::to_string(cmdNum) + ":" + HardwareParse::getCommandName<FamilyType>(*it) + " ";
+                ++cmdNum;
+                ++it;
+            }
+        }
     }
 
     if (failed) {
         if (outReason != nullptr) {
+            failReason += "\n Note : Input command buffer was : ";
+            it = begin;
+            cmdNum = 0;
+            while (it != end) {
+                failReason += std::to_string(cmdNum) + ":" + HardwareParse::getCommandName<FamilyType>(*it) + " ";
+                ++cmdNum;
+                ++it;
+            }
             *outReason = failReason;
         }
     }

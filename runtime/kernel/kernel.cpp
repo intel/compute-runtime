@@ -2142,18 +2142,8 @@ void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsF
     }
 }
 
-bool Kernel::platformSupportCacheFlushAfterWalker() const {
-    int32_t dbgFlag = DebugManager.flags.EnableCacheFlushAfterWalker.get();
-    if (dbgFlag == 1) {
-        return true;
-    } else if (dbgFlag == 0) {
-        return false;
-    }
-    return device.getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker;
-}
-
 bool Kernel::requiresCacheFlushCommand() const {
-    if (false == platformSupportCacheFlushAfterWalker()) {
+    if (false == HwHelper::cacheFlushAfterWalkerSupported(device.getHardwareInfo())) {
         return false;
     }
     if (getProgram()->getGlobalSurface() != nullptr) {
@@ -2172,7 +2162,7 @@ bool Kernel::requiresCacheFlushCommand() const {
 }
 
 void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
-    if (false == platformSupportCacheFlushAfterWalker()) {
+    if (false == HwHelper::cacheFlushAfterWalkerSupported(device.getHardwareInfo())) {
         return;
     }
     for (GraphicsAllocation *alloc : this->kernelArgRequiresCacheFlush) {
