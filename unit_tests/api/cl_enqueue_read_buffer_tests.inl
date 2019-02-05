@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ typedef api_tests clEnqueueReadBufferTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueReadBufferTests, NullCommandQueue_returnsError) {
+TEST_F(clEnqueueReadBufferTests, GivenNullCommandQueueWhenReadingBufferThenInvalidCommandQueueErrorIsReturned) {
     auto data = 1;
     auto retVal = clEnqueueReadBuffer(
         nullptr,
@@ -69,7 +69,7 @@ class EnqueueReadBufferFlagsTest : public api_fixture,
 
 typedef EnqueueReadBufferFlagsTest EnqueueReadReadBufferTests;
 
-TEST_P(EnqueueReadReadBufferTests, invalidFlags) {
+TEST_P(EnqueueReadReadBufferTests, GivenNoReadFlagsWhenReadingBufferThenInvalidOperationErrorIsReturned) {
     auto data = 1;
     cl_event eventReturned = nullptr;
     retVal = clEnqueueReadBuffer(
@@ -131,7 +131,7 @@ class EnqueueReadBufferTest : public api_tests {
         api_tests::TearDown();
     }
 };
-TEST_F(EnqueueReadBufferTest, svmPtr) {
+TEST_F(EnqueueReadBufferTest, GivenSvmPtrWhenReadingBufferThenSuccessIsReturned) {
     const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto data = clSVMAlloc(pContext, CL_MEM_READ_WRITE, bufferSize, 64);
