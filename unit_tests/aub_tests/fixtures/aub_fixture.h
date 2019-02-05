@@ -37,7 +37,7 @@ class AUBFixture : public CommandQueueHwFixture {
 
         executionEnvironment = new ExecutionEnvironment;
         if (testMode == TestMode::AubTestsWithTbx) {
-            this->csr = TbxCommandStreamReceiver::create(hwInfo, true, *executionEnvironment);
+            this->csr = TbxCommandStreamReceiver::create(hwInfo, strfilename.str(), true, *executionEnvironment);
         } else {
             this->csr = AUBCommandStreamReceiver::create(hwInfo, strfilename.str(), true, *executionEnvironment);
         }
@@ -70,13 +70,17 @@ class AUBFixture : public CommandQueueHwFixture {
     template <typename FamilyType>
     void expectMemory(void *gfxAddress, const void *srcAddress, size_t length) {
         auto aubCsr = getAubCsr<FamilyType>();
-        aubCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
+        if (aubCsr) {
+            aubCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
+        }
     }
 
     template <typename FamilyType>
     void expectNotEqualMemory(void *gfxAddress, const void *srcAddress, size_t length) {
         auto aubCsr = getAubCsr<FamilyType>();
-        aubCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length);
+        if (aubCsr) {
+            aubCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length);
+        }
     }
 
     static void *getGpuPointer(GraphicsAllocation *allocation) {

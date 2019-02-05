@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,11 +45,13 @@ void AubWriteCopyReadBuffer::runTest() {
         retVal));
     ASSERT_NE(nullptr, dstBuffer);
 
-    aubCsr->writeMemory(*srcBuffer->getGraphicsAllocation());
-    aubCsr->writeMemory(*dstBuffer->getGraphicsAllocation());
+    if (aubCsr) {
+        aubCsr->writeMemory(*srcBuffer->getGraphicsAllocation());
+        aubCsr->writeMemory(*dstBuffer->getGraphicsAllocation());
 
-    getAubCsr<FamilyType>()->expectMemoryEqual(AUBFixture::getGpuPointer(srcBuffer->getGraphicsAllocation()), srcMemoryInitial, bufferSize);
-    getAubCsr<FamilyType>()->expectMemoryEqual(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation()), dstMemoryInitial, bufferSize);
+        aubCsr->expectMemoryEqual(AUBFixture::getGpuPointer(srcBuffer->getGraphicsAllocation()), srcMemoryInitial, bufferSize);
+        aubCsr->expectMemoryEqual(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation()), dstMemoryInitial, bufferSize);
+    }
 
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
@@ -79,8 +81,10 @@ void AubWriteCopyReadBuffer::runTest() {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    getAubCsr<FamilyType>()->expectMemoryEqual(AUBFixture::getGpuPointer(srcBuffer->getGraphicsAllocation()), srcMemoryToWrite, bufferSize);
-    getAubCsr<FamilyType>()->expectMemoryEqual(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation()), dstMemoryToWrite, bufferSize);
+    if (aubCsr) {
+        aubCsr->expectMemoryEqual(AUBFixture::getGpuPointer(srcBuffer->getGraphicsAllocation()), srcMemoryToWrite, bufferSize);
+        aubCsr->expectMemoryEqual(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation()), dstMemoryToWrite, bufferSize);
+    }
 
     retVal = pCmdQ->enqueueCopyBuffer(
         srcBuffer.get(),
@@ -96,8 +100,10 @@ void AubWriteCopyReadBuffer::runTest() {
 
     pCmdQ->flush();
 
-    // Destination buffer should have src buffer content
-    getAubCsr<FamilyType>()->expectMemoryEqual(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation()), srcMemoryToWrite, bufferSize);
+    if (aubCsr) {
+        // Destination buffer should have src buffer content
+        aubCsr->expectMemoryEqual(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation()), srcMemoryToWrite, bufferSize);
+    }
 
     char hostPtrMemory[] = {0, 0, 0, 0, 0, 0, 0, 0};
     ASSERT_EQ(bufferSize, sizeof(hostPtrMemory));
@@ -119,7 +125,9 @@ void AubWriteCopyReadBuffer::runTest() {
         allocation = allocation->next;
     }
 
-    getAubCsr<FamilyType>()->expectMemoryEqual(AUBFixture::getGpuPointer(allocation), srcMemoryToWrite, bufferSize);
+    if (aubCsr) {
+        aubCsr->expectMemoryEqual(AUBFixture::getGpuPointer(allocation), srcMemoryToWrite, bufferSize);
+    }
 }
 
 HWTEST_F(AubWriteCopyReadBuffer, givenTwoBuffersFilledWithPatternWhenSourceIsCopiedToDestinationThenDestinationDataValidates) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,13 +29,13 @@ CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo, Exec
             commandStreamReceiver = AUBCommandStreamReceiver::create(*pHwInfo, "aubfile", true, executionEnvironment);
             break;
         case CSR_TBX:
-            commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo, false, executionEnvironment);
+            commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo, "", false, executionEnvironment);
             break;
         case CSR_HW_WITH_AUB:
             commandStreamReceiver = funcCreate(*pHwInfo, true, executionEnvironment);
             break;
         case CSR_TBX_WITH_AUB:
-            commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo, true, executionEnvironment);
+            commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo, "aubfile", true, executionEnvironment);
             break;
         default:
             break;

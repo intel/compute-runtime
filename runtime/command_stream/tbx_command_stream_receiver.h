@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,10 +45,10 @@ class TbxStream : public AubMemDump::AubStream {
 };
 
 struct TbxCommandStreamReceiver {
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, bool withAubDump, ExecutionEnvironment &executionEnvironment);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 
     using TbxStream = OCLRT::TbxStream;
 };
 
-typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);
+typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 } // namespace OCLRT

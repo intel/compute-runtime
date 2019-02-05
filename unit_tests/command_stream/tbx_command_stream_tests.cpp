@@ -17,6 +17,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
@@ -25,6 +26,11 @@
 #include <cstdint>
 
 using namespace OCLRT;
+
+namespace OCLRT {
+extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE];
+} // namespace OCLRT
+
 namespace Os {
 extern const char *tbxLibName;
 }
@@ -110,25 +116,16 @@ HWTEST_F(TbxCommandStreamTests, DISABLED_getCsTraits) {
     tbxCsr->getCsTraits(EngineType::ENGINE_VECS);
 }
 
-#if defined(__linux__)
-namespace OCLRT {
-TEST(TbxCommandStreamReceiverTest, createShouldReturnNullptrForEmptyEntryInFactory) {
-    extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_PRODUCT];
-
-    TbxCommandStreamReceiver tbx;
+TEST(TbxCommandStreamReceiverTest, givenNullFactoryEntryWhenTbxCsrIsCreatedThenNullptrIsReturned) {
     const HardwareInfo *hwInfo = platformDevices[0];
     GFXCORE_FAMILY family = hwInfo->pPlatform->eRenderCoreFamily;
-    auto pCreate = tbxCommandStreamReceiverFactory[family];
+    VariableBackup<TbxCommandStreamReceiverCreateFunc> tbxCsrFactoryBackup(&tbxCommandStreamReceiverFactory[family]);
 
     tbxCommandStreamReceiverFactory[family] = nullptr;
     ExecutionEnvironment executionEnvironment;
-    CommandStreamReceiver *csr = tbx.create(*hwInfo, false, executionEnvironment);
+    CommandStreamReceiver *csr = TbxCommandStreamReceiver::create(*hwInfo, "", false, executionEnvironment);
     EXPECT_EQ(nullptr, csr);
-
-    tbxCommandStreamReceiverFactory[family] = pCreate;
 }
-} // namespace OCLRT
-#endif
 
 TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedWithWrongGfxCoreFamilyThenNullPointerShouldBeReturned) {
     HardwareInfo hwInfo = *platformDevices[0];
@@ -136,7 +133,7 @@ TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedW
 
     const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
     ExecutionEnvironment executionEnvironment;
-    CommandStreamReceiver *csr = TbxCommandStreamReceiver::create(hwInfo, false, executionEnvironment);
+    CommandStreamReceiver *csr = TbxCommandStreamReceiver::create(hwInfo, "", false, executionEnvironment);
     EXPECT_EQ(nullptr, csr);
 
     const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = family;
@@ -145,7 +142,7 @@ TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedW
 TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenTypeIsCheckedThenTbxCsrIsReturned) {
     HardwareInfo hwInfo = *platformDevices[0];
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create(hwInfo, false, executionEnvironment));
+    std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create(hwInfo, "", false, executionEnvironment));
     EXPECT_NE(nullptr, csr);
     EXPECT_EQ(CommandStreamReceiverType::CSR_TBX, csr->getType());
 }
@@ -290,7 +287,7 @@ HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThen
     DebugManager.flags.OverrideAubDeviceId.set(9); //this is Hsw, not used
     const HardwareInfo &hwInfoIn = *platformDevices[0];
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(hwInfoIn, false, executionEnvironment)));
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(hwInfoIn, "", false, executionEnvironment)));
     EXPECT_EQ(9u, tbxCsr->aubDeviceId);
 }
 
@@ -448,7 +445,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenHardwareContextIsCreatedThenTbxSt
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
     auto tbxCsr = std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>>(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(
-        TbxCommandStreamReceiverHw<FamilyType>::create(hwInfo, false, executionEnvironment)));
+        TbxCommandStreamReceiverHw<FamilyType>::create(hwInfo, "", false, executionEnvironment)));
 
     EXPECT_FALSE(tbxCsr->streamInitialized);
 }
@@ -462,7 +459,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareC
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
-    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(*platformDevices[0], true, executionEnvironment)));
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(*platformDevices[0], fileName, true, executionEnvironment)));
     EXPECT_EQ(nullptr, tbxCsr->hardwareContext.get());
 
     tbxCsr->setupContext(osContext);

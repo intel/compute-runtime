@@ -17,7 +17,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
 
   public:
     using BaseCSR::createMemoryManager;
-    CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);
+    CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn, const std::string &baseName, ExecutionEnvironment &executionEnvironment);
     ~CommandStreamReceiverWithAUBDump() override;
 
     CommandStreamReceiverWithAUBDump(const CommandStreamReceiverWithAUBDump &) = delete;

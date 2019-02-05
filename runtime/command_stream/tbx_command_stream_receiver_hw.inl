@@ -166,10 +166,14 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
 }
 
 template <typename GfxFamily>
-CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
+CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
     TbxCommandStreamReceiverHw<GfxFamily> *csr;
     if (withAubDump) {
-        csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(hwInfoIn, executionEnvironment);
+        auto &hwHelper = HwHelper::get(hwInfoIn.pPlatform->eRenderCoreFamily);
+        auto localMemoryEnabled = hwHelper.isLocalMemoryEnabled(hwInfoIn);
+        executionEnvironment.initAubCenter(&hwInfoIn, localMemoryEnabled, baseName);
+
+        csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(hwInfoIn, baseName, executionEnvironment);
     } else {
         csr = new TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment);
     }

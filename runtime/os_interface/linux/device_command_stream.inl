@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ namespace OCLRT {
 template <typename GfxFamily>
 CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(const HardwareInfo &hwInfo, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
     if (withAubDump) {
-        return new CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<GfxFamily>>(hwInfo, executionEnvironment);
+        return new CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<GfxFamily>>(hwInfo, "aubfile", executionEnvironment);
     } else {
         return new DrmCommandStreamReceiver<GfxFamily>(hwInfo, executionEnvironment);
     }

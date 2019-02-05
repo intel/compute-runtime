@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ namespace OCLRT {
 void TbxCommandStreamFixture::SetUp(MockDevice *pDevice) {
     // Create our TBX command stream receiver based on HW type
     const auto &hwInfo = pDevice->getHardwareInfo();
-    pCommandStreamReceiver = TbxCommandStreamReceiver::create(hwInfo, false, *pDevice->executionEnvironment);
+    pCommandStreamReceiver = TbxCommandStreamReceiver::create(hwInfo, "", false, *pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCommandStreamReceiver);
     mmTbx = pCommandStreamReceiver->createMemoryManager(false, false);
     pDevice->resetCommandStreamReceiver(pCommandStreamReceiver);
