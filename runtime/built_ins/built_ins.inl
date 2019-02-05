@@ -64,6 +64,7 @@ void BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::resizeKernelInstances(siz
 
     for (size_t i = convertToNonAuxKernel.size(); i < size; i++) {
         auto clonedKernel1 = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), nullptr);
+        clonedKernel1->setDisableL3forStatefulBuffers(true);
         auto clonedKernel2 = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), nullptr);
         clonedKernel1->cloneKernel(baseKernel);
         clonedKernel2->cloneKernel(baseKernel);

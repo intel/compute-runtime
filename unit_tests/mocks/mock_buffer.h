@@ -44,7 +44,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
             this->graphicsAllocation = &this->mockGfxAllocation;
         }
     }
-    void setArgStateful(void *memory, bool forceNonAuxMode) override {
+    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3Cache) override {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), (externalAlloc != nullptr) ? externalAlloc : &mockGfxAllocation);
     }
     GraphicsAllocation *externalAlloc = nullptr;
@@ -57,7 +57,7 @@ class AlignedBuffer : public MockBufferStorage, public Buffer {
     }
     AlignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(), Buffer(nullptr, CL_MEM_USE_HOST_PTR, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64), gfxAllocation, true, false, false) {
     }
-    void setArgStateful(void *memory, bool forceNonAuxMode) override {
+    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3Cache) override {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), &mockGfxAllocation);
     }
 };
@@ -69,7 +69,7 @@ class UnalignedBuffer : public MockBufferStorage, public Buffer {
     }
     UnalignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(true), Buffer(nullptr, CL_MEM_USE_HOST_PTR, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4), gfxAllocation, false, false, false) {
     }
-    void setArgStateful(void *memory, bool forceNonAuxMode) override {
+    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3Cache) override {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), &mockGfxAllocation);
     }
 };

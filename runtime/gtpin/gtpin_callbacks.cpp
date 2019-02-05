@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -136,7 +136,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI);
         cl_mem buffer = (cl_mem)resource;
         auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
-        pBuffer->setArgStateful(pSurfaceState, false);
+        pBuffer->setArgStateful(pSurfaceState, false, false);
     }
 }
 

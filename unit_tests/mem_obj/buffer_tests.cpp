@@ -1260,7 +1260,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatAddressIsForcedTo32bitW
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
         RENDER_SURFACE_STATE surfaceState = {};
 
-        buffer->setArgStateful(&surfaceState, false);
+        buffer->setArgStateful(&surfaceState, false, false);
 
         auto surfBaseAddress = surfaceState.getSurfaceBaseAddress();
         auto bufferAddress = buffer->getGraphicsAllocation()->getGpuAddress();
@@ -1295,7 +1295,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledT
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
 
-    subBuffer->setArgStateful(&surfaceState, false);
+    subBuffer->setArgStateful(&surfaceState, false, false);
 
     auto surfBaseAddress = surfaceState.getSurfaceBaseAddress();
     auto bufferAddress = buffer->getGraphicsAllocation()->getGpuAddress();
@@ -1306,6 +1306,32 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledT
     delete buffer;
     alignedFree(ptr);
     DebugManager.flags.Force32bitAddressing.set(false);
+}
+
+HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisabledIsCalledThenL3CacheShouldBeOff) {
+    MockContext context;
+    auto size = MemoryConstants::pageSize;
+    auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
+    auto retVal = CL_SUCCESS;
+
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(
+        &context,
+        CL_MEM_USE_HOST_PTR,
+        size,
+        ptr,
+        retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    RENDER_SURFACE_STATE surfaceState = {};
+
+    buffer->setArgStateful(&surfaceState, false, true);
+
+    auto mocs = surfaceState.getMemoryObjectControlState();
+    auto gmmHelper = device->getGmmHelper();
+    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
+
+    alignedFree(ptr);
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenRenderCompressedGmmResourceWhenSurfaceStateIsProgrammedThenSetAuxParams) {
@@ -1322,14 +1348,14 @@ HWTEST_F(BufferSetSurfaceTests, givenRenderCompressedGmmResourceWhenSurfaceState
     buffer->getGraphicsAllocation()->gmm = gmm;
     gmm->isRenderCompressed = true;
 
-    buffer->setArgStateful(&surfaceState, false);
+    buffer->setArgStateful(&surfaceState, false, false);
 
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
     EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E == surfaceState.getAuxiliarySurfaceMode());
     EXPECT_TRUE(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT == surfaceState.getCoherencyType());
 
     buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-    buffer->setArgStateful(&surfaceState, false);
+    buffer->setArgStateful(&surfaceState, false, false);
     EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE == surfaceState.getAuxiliarySurfaceMode());
 }
 
@@ -1346,7 +1372,7 @@ HWTEST_F(BufferSetSurfaceTests, givenNonRenderCompressedGmmResourceWhenSurfaceSt
     buffer->getGraphicsAllocation()->gmm = gmm;
     gmm->isRenderCompressed = false;
 
-    buffer->setArgStateful(&surfaceState, false);
+    buffer->setArgStateful(&surfaceState, false, false);
 
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
     EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE == surfaceState.getAuxiliarySurfaceMode());
