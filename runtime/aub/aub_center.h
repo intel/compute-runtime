@@ -17,6 +17,7 @@ struct HardwareInfo;
 class AubCenter {
   public:
     AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName);
+
     AubCenter();
     virtual ~AubCenter() = default;
 
@@ -39,6 +40,8 @@ class AubCenter {
     aub_stream::AubManager *getAubManager() const {
         return aubManager.get();
     }
+
+    static uint32_t getAubStreamMode(const std::string &aubFileName, uint32_t csrType);
 
   protected:
     std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;
