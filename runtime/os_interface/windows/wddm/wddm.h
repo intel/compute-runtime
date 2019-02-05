@@ -9,6 +9,7 @@
 #include "runtime/os_interface/os_context.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/gmm_helper/gmm_lib.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/utilities/spinlock.h"
 #include "sku_info.h"
 #include <memory>
@@ -51,6 +52,8 @@ enum class HeapIndex : uint32_t {
     HEAP_SVM,
     HEAP_LIMITED
 };
+
+constexpr auto internalHeapIndex = is32bit ? HeapIndex::HEAP_INTERNAL : HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
 
 class Wddm {
   public:

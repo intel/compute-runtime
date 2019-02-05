@@ -999,7 +999,7 @@ std::unique_lock<SpinLock> Wddm::acquireLock(SpinLock &lock) {
 HeapIndex Wddm::selectHeap(const WddmAllocation *allocation, const void *ptr) const {
     if (allocation) {
         if (allocation->origin == AllocationOrigin::INTERNAL_ALLOCATION) {
-            return HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
+            return internalHeapIndex;
         } else if (allocation->is32BitAllocation) {
             return HeapIndex::HEAP_EXTERNAL;
         }

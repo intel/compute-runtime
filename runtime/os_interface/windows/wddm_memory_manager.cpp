@@ -450,7 +450,7 @@ uint64_t WddmMemoryManager::getMaxApplicationAddress() {
 }
 
 uint64_t WddmMemoryManager::getInternalHeapBaseAddress() {
-    return this->wddm->getGfxPartition().Heap32[static_cast<uint32_t>(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY)].Base;
+    return this->wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Base;
 }
 
 bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
