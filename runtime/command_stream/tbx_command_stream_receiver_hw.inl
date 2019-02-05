@@ -350,11 +350,13 @@ void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
     typedef typename AubMemDump::CmdServicesMemTraceRegisterPoll CmdServicesMemTraceRegisterPoll;
 
     auto mmioBase = this->getCsTraits(osContext->getEngineType()).mmioBase;
-    bool pollNotEqual = false;
+    bool pollNotEqual = getpollNotEqualValueForPollForCompletion();
+    uint32_t mask = getMaskAndValueForPollForCompletion();
+    uint32_t value = mask;
     tbxStream.registerPoll(
         AubMemDump::computeRegisterOffset(mmioBase, 0x2234), //EXECLIST_STATUS
-        0x100,
-        0x100,
+        mask,
+        value,
         pollNotEqual,
         CmdServicesMemTraceRegisterPoll::TimeoutActionValues::Abort);
 }
@@ -430,5 +432,15 @@ void TbxCommandStreamReceiverHw<GfxFamily>::waitBeforeMakingNonResidentWhenRequi
     while (*this->getTagAddress() < this->latestFlushedTaskCount) {
         this->makeCoherent(*allocation);
     }
+}
+
+template <typename GfxFamily>
+uint32_t TbxCommandStreamReceiverHw<GfxFamily>::getMaskAndValueForPollForCompletion() const {
+    return 0x100;
+}
+
+template <typename GfxFamily>
+bool TbxCommandStreamReceiverHw<GfxFamily>::getpollNotEqualValueForPollForCompletion() const {
+    return false;
 }
 } // namespace OCLRT

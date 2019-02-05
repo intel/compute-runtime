@@ -33,6 +33,9 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     using BaseClass::engineIndex;
     using BaseClass::osContext;
 
+    uint32_t getMaskAndValueForPollForCompletion() const;
+    bool getpollNotEqualValueForPollForCompletion() const;
+
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
