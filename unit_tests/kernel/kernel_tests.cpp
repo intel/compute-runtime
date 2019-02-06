@@ -2411,3 +2411,16 @@ TEST(KernelTest, whenAllocationReadOnlyNonFlushRequiredThenAssignNullPointerToCa
     EXPECT_EQ(nullptr, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
 }
 
+TEST(KernelTest, givenKernelUsesPrivateMemoryWhenDeviceReleasedBeforeKernelThenKernelUsesMemoryManagerFromEnvironment) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto executionEnvironment = device->getExecutionEnvironment();
+
+    auto mockKernel = std::make_unique<MockKernelWithInternals>(*device);
+    GraphicsAllocation *privateSurface = device->getExecutionEnvironment()->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    mockKernel->mockKernel->setPrivateSurface(privateSurface, 10);
+
+    executionEnvironment->incRefInternal();
+    device.reset(nullptr);
+    mockKernel.reset(nullptr);
+    executionEnvironment->decRefInternal();
+}

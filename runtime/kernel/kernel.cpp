@@ -100,12 +100,12 @@ Kernel::~Kernel() {
     crossThreadDataSize = 0;
 
     if (privateSurface) {
-        device.getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(privateSurface);
+        program->peekExecutionEnvironment().memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(privateSurface);
         privateSurface = nullptr;
     }
 
     if (kernelReflectionSurface) {
-        device.getMemoryManager()->freeGraphicsMemory(kernelReflectionSurface);
+        program->peekExecutionEnvironment().memoryManager->freeGraphicsMemory(kernelReflectionSurface);
         kernelReflectionSurface = nullptr;
     }
 
