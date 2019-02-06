@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ struct clEnqueueReadImageTests : public api_fixture,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clEnqueueReadImageTests, NullCommandQueue_returnsError) {
+TEST_F(clEnqueueReadImageTests, GivenNullCommandQueueWhenReadingImageThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueReadImage(
         nullptr,
         nullptr,
@@ -63,7 +63,7 @@ TEST_F(clEnqueueReadImageTests, NullCommandQueue_returnsError) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueReadImageTests, nullImageReturnsError) {
+TEST_F(clEnqueueReadImageTests, GivenNullImageWhenReadingImageThenInvalidMemObjectErrorIsReturned) {
     auto retVal = clEnqueueReadImage(
         pCommandQueue,
         nullptr,
@@ -80,7 +80,7 @@ TEST_F(clEnqueueReadImageTests, nullImageReturnsError) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueReadImageTests, returnSuccess) {
+TEST_F(clEnqueueReadImageTests, GivenValidParametersWhenReadinImagesThenSuccessIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto image = clCreateImage(
         pContext,
@@ -111,9 +111,9 @@ TEST_F(clEnqueueReadImageTests, returnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-typedef clEnqueueReadImageTests clEnqueueReadImageYUV_;
+typedef clEnqueueReadImageTests clEnqueueReadImageYuv;
 
-TEST_F(clEnqueueReadImageYUV_, returnSuccess) {
+TEST_F(clEnqueueReadImageYuv, GivenValidYuvImageWhenReadingImageThenSuccessIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
@@ -143,7 +143,7 @@ TEST_F(clEnqueueReadImageYUV_, returnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueReadImageYUV_, invalidOrigin) {
+TEST_F(clEnqueueReadImageYuv, GivenInvalidOriginWhenReadingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
@@ -173,7 +173,7 @@ TEST_F(clEnqueueReadImageYUV_, invalidOrigin) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueReadImageYUV_, invalidRegion) {
+TEST_F(clEnqueueReadImageYuv, GivenInvalidRegionWhenReadingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
