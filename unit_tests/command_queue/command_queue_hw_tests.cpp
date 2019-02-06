@@ -331,7 +331,7 @@ HWTEST_F(CommandQueueHwTest, GivenNotCompleteUserEventPassedToEnqueueWhenEventIs
     auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCSR);
 
-    UserEvent userEvent(context);
+    auto userEvent = make_releaseable<UserEvent>(context);
     KernelInfo kernelInfo;
     MockKernelWithInternals mockKernelWithInternals(*pDevice);
     auto mockKernel = mockKernelWithInternals.mockKernel;
@@ -348,10 +348,10 @@ HWTEST_F(CommandQueueHwTest, GivenNotCompleteUserEventPassedToEnqueueWhenEventIs
 
     mockKernel->setPrivateSurface(privateSurface, 10);
 
-    cl_event blockedEvent = &userEvent;
+    cl_event blockedEvent = userEvent.get();
     pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
 
-    userEvent.setStatus(CL_COMPLETE);
+    userEvent->setStatus(CL_COMPLETE);
 
     EXPECT_TRUE(mockCSR->isMadeResident(constantSurface));
     EXPECT_TRUE(mockCSR->isMadeResident(privateSurface));
@@ -362,7 +362,6 @@ HWTEST_F(CommandQueueHwTest, GivenNotCompleteUserEventPassedToEnqueueWhenEventIs
     mockCSR->getMemoryManager()->freeGraphicsMemory(privateSurface);
     mockCSR->getMemoryManager()->freeGraphicsMemory(printfSurface);
     mockCSR->getMemoryManager()->freeGraphicsMemory(constantSurface);
-    pCmdQ->isQueueBlocked();
 }
 
 typedef CommandQueueHwTest BlockedCommandQueueTest;

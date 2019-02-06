@@ -105,7 +105,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         IndirectHeapFixture::TearDown();
         CommandStreamFixture::TearDown();
         CommandQueueFixture::TearDown();
-        delete BufferDefaults::context;
+        BufferDefaults::context->release();
         DeviceFixture::TearDown();
     }
     Buffer *srcBuffer;

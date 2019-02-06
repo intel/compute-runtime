@@ -10,7 +10,7 @@
 #include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/task_information.h"
 #include "runtime/helpers/dispatch_info.h"
-#include "runtime/event/user_event.h"
+#include "runtime/event/event.h"
 #include "instrumentation.h"
 #include <atomic>
 #include <cstdint>

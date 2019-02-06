@@ -187,7 +187,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // Note from OCL spec :
     //      "A negative integer value causes all enqueued commands that wait on this user event
     //       to be terminated."
-    bool isStatusCompletedByTermination(const int32_t *executionStatusSnapshot = nullptr) {
+    bool isStatusCompletedByTermination(const int32_t *executionStatusSnapshot = nullptr) const {
         if (executionStatusSnapshot == nullptr) {
             return (peekExecutionStatus() < 0);
         } else {
@@ -195,7 +195,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         }
     }
 
-    bool peekIsSubmitted(const int32_t *executionStatusSnapshot = nullptr) {
+    bool peekIsSubmitted(const int32_t *executionStatusSnapshot = nullptr) const {
         if (executionStatusSnapshot == nullptr) {
             return (peekExecutionStatus() == CL_SUBMITTED);
         } else {
@@ -221,7 +221,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return (CL_COMMAND_USER == cmdType);
     }
 
-    bool isEventWithoutCommand() {
+    bool isEventWithoutCommand() const {
         return eventWithoutCommand;
     }
 
@@ -239,7 +239,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     virtual uint32_t getTaskLevel();
 
-    cl_int peekExecutionStatus() {
+    cl_int peekExecutionStatus() const {
         return executionStatus;
     }
 

@@ -22,6 +22,7 @@
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
+#include "unit_tests/utilities/base_object_utils.h"
 
 using namespace OCLRT;
 
@@ -131,15 +132,14 @@ HWTEST_P(ParentKernelEnqueueTest, GivenBlocksWithPrivateMemoryWhenEnqueueKernelT
         auto privateAllocation = csr.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
         blockKernelManager->pushPrivateSurface(privateAllocation, 0);
 
-        UserEvent uEvent(pContext);
-        auto clEvent = static_cast<cl_event>(&uEvent);
+        auto uEvent = make_releaseable<UserEvent>(pContext);
+        auto clEvent = static_cast<cl_event>(uEvent.get());
 
         pCmdQ->enqueueKernel(pKernel, 1, offset, gws, gws, 1, &clEvent, nullptr);
 
         EXPECT_FALSE(csr.isMadeResident(privateAllocation));
-        uEvent.setStatus(CL_COMPLETE);
+        uEvent->setStatus(CL_COMPLETE);
         EXPECT_TRUE(csr.isMadeResident(privateAllocation));
-        pCmdQ->releaseVirtualEvent();
     }
 }
 
@@ -185,8 +185,8 @@ HWTEST_P(ParentKernelEnqueueTest, GivenParentKernelWithBlocksWhenEnqueueKernelTh
         auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
         csr.storeMakeResidentAllocations = true;
 
-        UserEvent uEvent(pContext);
-        auto clEvent = static_cast<cl_event>(&uEvent);
+        auto uEvent = make_releaseable<UserEvent>(pContext);
+        auto clEvent = static_cast<cl_event>(uEvent.get());
 
         pCmdQ->enqueueKernel(pKernel, 1, offset, gws, gws, 1, &clEvent, nullptr);
 
@@ -195,12 +195,11 @@ HWTEST_P(ParentKernelEnqueueTest, GivenParentKernelWithBlocksWhenEnqueueKernelTh
             EXPECT_FALSE(csr.isMadeResident(blockKernelManager->getBlockKernelInfo(blockId)->getGraphicsAllocation()));
         }
 
-        uEvent.setStatus(CL_COMPLETE);
+        uEvent->setStatus(CL_COMPLETE);
 
         for (auto blockId = 0u; blockId < blockCount; blockId++) {
             EXPECT_TRUE(csr.isMadeResident(blockKernelManager->getBlockKernelInfo(blockId)->getGraphicsAllocation()));
         }
-        pCmdQ->releaseVirtualEvent();
     }
 }
 
@@ -332,14 +331,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenBlockedQueueWhenParent
         // Acquire CS to check if reset queue was called
         mockDevQueue.acquireEMCriticalSection();
 
-        MockEvent<UserEvent> mockEvent(context);
+        auto mockEvent = make_releaseable<UserEvent>(context);
 
-        cl_event eventBlocking = &mockEvent;
+        cl_event eventBlocking = mockEvent.get();
 
         pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 1, &eventBlocking, nullptr);
 
         EXPECT_FALSE(mockDevQueue.isEMCriticalSectionFree());
-        pCmdQ->releaseVirtualEvent();
     }
 }
 
@@ -495,15 +493,15 @@ HWTEST_F(ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedToBlockedQueue
         size_t gws[3] = {1, 1, 1};
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
 
-        MockEvent<UserEvent> mockEvent(context);
-        cl_event eventBlocking = &mockEvent;
+        auto mockEvent = make_releaseable<MockEvent<UserEvent>>(context);
+        cl_event eventBlocking = mockEvent.get();
 
         EXPECT_TRUE(pDevQueueHw->isEMCriticalSectionFree());
 
         pCmdQ->enqueueKernel(parentKernel, 1, offset, gws, gws, 1, &eventBlocking, nullptr);
 
         EXPECT_TRUE(pDevQueueHw->isEMCriticalSectionFree());
-        pCmdQ->releaseVirtualEvent();
+        mockEvent->setStatus(-1);
     }
 }
 

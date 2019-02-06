@@ -47,7 +47,7 @@ MockContext::MockContext(
 
 MockContext::~MockContext() {
     if (specialQueue) {
-        delete specialQueue;
+        specialQueue->release();
         specialQueue = nullptr;
     }
     if (memoryManager->isAsyncDeleterEnabled()) {

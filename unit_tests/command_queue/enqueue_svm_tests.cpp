@@ -100,7 +100,6 @@ TEST_F(EnqueueSvmTest, enqueueSVMMapBlockedOnEvent_Success) {
         nullptr        // cl_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMUnmap_InvalidValue) {
@@ -134,7 +133,6 @@ TEST_F(EnqueueSvmTest, enqueueSVMUnmapBlockedOnEvent_Success) {
         nullptr        // cl_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMFreeWithoutCallback_Success) {
@@ -235,7 +233,6 @@ TEST_F(EnqueueSvmTest, enqueueSVMFreeBlockedOnEvent_Success) {
         nullptr        // cl_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueDstPtrIsNull) {
@@ -306,8 +303,8 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlocking_Success) {
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlockedOnEvent_Success) {
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, false, false);
-    UserEvent uEvent;
-    cl_event eventWaitList[] = {&uEvent};
+    auto uEvent = make_releaseable<UserEvent>();
+    cl_event eventWaitList[] = {uEvent.get()};
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         false,         // cl_bool  blocking_copy
         pDstSVM,       // void *dst_ptr
@@ -319,7 +316,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlockedOnEvent_Success) {
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
-    pCmdQ->releaseVirtualEvent();
+    uEvent->setStatus(-1);
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherent_Success) {
@@ -341,8 +338,8 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherent_Success) {
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherentBlockedOnEvent_Success) {
     void *pDstSVM = ptrSVM;
     void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, true, false);
-    UserEvent uEvent;
-    cl_event eventWaitList[] = {&uEvent};
+    auto uEvent = make_releaseable<UserEvent>();
+    cl_event eventWaitList[] = {uEvent.get()};
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         false,         // cl_bool  blocking_copy
         pDstSVM,       // void *dst_ptr
@@ -354,7 +351,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherentBlockedOnEvent_Success) {
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
-    pCmdQ->releaseVirtualEvent();
+    uEvent->setStatus(-1);
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemFill_InvalidValue) {
@@ -391,8 +388,8 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFill_Success) {
 TEST_F(EnqueueSvmTest, enqueueSVMMemFillBlockedOnEvent_Success) {
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
-    UserEvent uEvent;
-    cl_event eventWaitList[] = {&uEvent};
+    auto uEvent = make_releaseable<UserEvent>();
+    cl_event eventWaitList[] = {uEvent.get()};
     retVal = this->pCmdQ->enqueueSVMMemFill(
         ptrSVM,        // void *svm_ptr
         pattern,       // const void *pattern
@@ -403,7 +400,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFillBlockedOnEvent_Success) {
         nullptr        // cL_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
-    pCmdQ->releaseVirtualEvent();
+    uEvent->setStatus(-1);
 }
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemFillDoubleToReuseAllocation_Success) {
@@ -498,8 +495,8 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
 
     kernel->setKernelExecInfo(pSvmAlloc);
 
-    UserEvent uEvent;
-    cl_event eventWaitList[] = {&uEvent};
+    auto uEvent = make_releaseable<UserEvent>();
+    cl_event eventWaitList[] = {uEvent.get()};
     size_t offset = 0;
     size_t size = 1;
     retVal = this->pCmdQ->enqueueKernel(
@@ -520,7 +517,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
         delete surface;
 
     EXPECT_EQ(1u, kernel->getKernelSvmGfxAllocations().size());
-    pCmdQ->releaseVirtualEvent();
+    uEvent->setStatus(-1);
 }
 
 TEST_F(EnqueueSvmTest, concurentMapAccess) {

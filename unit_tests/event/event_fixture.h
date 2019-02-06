@@ -16,7 +16,9 @@
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
@@ -116,4 +118,16 @@ struct MyEvent : public Event {
     }
 
     uint64_t globalStartTimestamp;
+};
+
+class MockEventTests : public HelloWorldTest<HelloWorldFixtureFactory> {
+  public:
+    void TearDown() {
+        uEvent->setStatus(-1);
+        uEvent.reset();
+        HelloWorldFixture::TearDown();
+    }
+
+  protected:
+    ReleaseableObjectPtr<UserEvent> uEvent;
 };

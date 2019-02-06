@@ -68,7 +68,7 @@ TEST(EventBuilder, whenCreatingNewEventForwardsArgumentsToEventConstructor) {
     finalizedEvent->release();
 }
 
-TEST(EventBuilder, givenVirtualEvenWhenVirtualEventWithCommandIsAddedThenFinilizeAddChild) {
+TEST(EventBuilder, givenVirtualEventWithCommandThenFinalizeAddChild) {
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     class MockCommandComputeKernel : public CommandComputeKernel {
       public:
@@ -112,7 +112,7 @@ TEST(EventBuilder, givenVirtualEvenWhenVirtualEventWithCommandIsAddedThenFiniliz
     peekedEvent->release();
 }
 
-TEST(EventBuilder, givenVirtualEvenWhenVirtualEventWithSubmittedCommandIsAddedThenFinilizeNotChild) {
+TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotAddChild) {
     class MockVirtualEvent : public VirtualEvent {
       public:
         using VirtualEvent::eventWithoutCommand;

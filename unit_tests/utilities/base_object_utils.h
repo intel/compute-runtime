@@ -26,4 +26,9 @@ template <typename T>
 static ReleaseableObjectPtr<T> clUniquePtr(T *object) {
     return ReleaseableObjectPtr<T>{object};
 }
+
+template <class _Ty, class... _Types>
+inline ReleaseableObjectPtr<_Ty> make_releaseable(_Types &&... _Args) {
+    return (ReleaseableObjectPtr<_Ty>(new _Ty(std::forward<_Types>(_Args)...)));
+}
 } // namespace OCLRT

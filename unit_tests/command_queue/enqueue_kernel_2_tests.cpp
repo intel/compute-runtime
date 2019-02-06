@@ -18,6 +18,7 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_device_queue.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/utilities/base_object_utils.h"
 
 using namespace OCLRT;
 
@@ -596,7 +597,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     if (!pDevice->getMemoryManager()->peekForce32BitAllocations()) {
         testing::internal::CaptureStdout();
 
-        UserEvent userEvent(context);
+        auto userEvent = make_releaseable<UserEvent>(context);
 
         SPatchAllocateStatelessPrintfSurface patchData;
         patchData.Size = 256;
@@ -622,7 +623,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
 
         FillValues();
 
-        cl_event blockedEvent = &userEvent;
+        cl_event blockedEvent = userEvent.get();
         auto retVal = pCmdQ->enqueueKernel(
             mockKernel,
             workDim,
@@ -639,11 +640,10 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
         printfAllocation[0] = 8;
         printfAllocation[1] = 0;
 
-        userEvent.setStatus(CL_COMPLETE);
+        userEvent->setStatus(CL_COMPLETE);
 
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_STREQ("test", output.c_str());
-        pCmdQ->releaseVirtualEvent();
     }
 }
 

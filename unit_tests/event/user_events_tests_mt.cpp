@@ -7,17 +7,16 @@
 
 #include "event_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/fixtures/hello_world_fixture.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 #include <memory>
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> EventTests;
 
-TEST_F(EventTests, eventCreatedFromUserEventsThatIsNotSignaledDoesntFlushToCSR) {
-    UserEvent uEvent;
+TEST_F(MockEventTests, eventCreatedFromUserEventsThatIsNotSignaledDoesntFlushToCSR) {
+    uEvent = make_releaseable<UserEvent>();
     cl_event retEvent = nullptr;
-    cl_event eventWaitList[] = {&uEvent};
+    cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
     //call NDR
@@ -53,12 +52,11 @@ TEST_F(EventTests, eventCreatedFromUserEventsThatIsNotSignaledDoesntFlushToCSR) 
     EXPECT_EQ(taskLevelBeforeWaitForEvents, csr.peekTaskLevel());
 
     //set event to CL_COMPLETE
-    uEvent.setStatus(CL_COMPLETE);
+    uEvent->setStatus(CL_COMPLETE);
     t.join();
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsCompletedAfterBlockedPathIsChosenThenBlockingFlagDoesNotCauseStall) {
@@ -80,7 +78,6 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
 
         t.join();
     }
-    pCmdQ->releaseVirtualEvent();
 }
 
 TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsCompletedAfterUpdateFromCompletionStampThenBlockingFlagDoesNotCauseStall) {
@@ -108,5 +105,4 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
     auto retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(), CL_TRUE, 0, srcBuffer->getSize(), dst.get(), sizeOfWaitList, eventWaitList, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     t.join();
-    pCmdQ->releaseVirtualEvent();
 }
