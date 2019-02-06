@@ -6,6 +6,7 @@
  */
 
 #include "gmock/gmock.h"
+#include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
@@ -1420,6 +1421,75 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedWhenSurfaceStateIsBei
 
     EXPECT_EQ(0u, surfaceState.getMemoryObjectControlState());
 }
+
+class BufferL3CacheTests : public ::testing::TestWithParam<uint64_t> {
+  public:
+    void SetUp() override {
+        ctx.getDevice(0)->getExecutionEnvironment()->getGmmHelper()->setSimplifiedMocsTableUsage(true);
+        hostPtr = reinterpret_cast<void *>(GetParam());
+    }
+    MockContext ctx;
+    const size_t region[3] = {3, 3, 1};
+    const size_t origin[3] = {0, 0, 0};
+
+    void *hostPtr;
+};
+
+HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteImageThenL3CacheIsOn) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    CommandQueueHw<FamilyType> cmdQ(&ctx, ctx.getDevice(0), nullptr);
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(cmdQ.getCommandStreamReceiver().getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0).getSpace(0));
+
+    cl_image_format imageFormat;
+    cl_image_desc imageDesc;
+    imageFormat.image_channel_order = CL_RGBA;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = 3;
+    imageDesc.image_height = 3;
+    imageDesc.image_depth = 1;
+    imageDesc.image_array_size = 1;
+    imageDesc.image_row_pitch = 0;
+    imageDesc.image_slice_pitch = 0;
+    imageDesc.num_mip_levels = 0;
+    imageDesc.num_samples = 0;
+    imageDesc.mem_object = nullptr;
+    auto image = clCreateImage(&ctx, CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, nullptr);
+
+    clEnqueueWriteImage(&cmdQ, image, false, origin, region, 0, 0, hostPtr, 0, nullptr, nullptr);
+
+    auto expect = ctx.getDevice(0)->getExecutionEnvironment()->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    EXPECT_NE(NULL, surfaceState->getMemoryObjectControlState());
+    EXPECT_EQ(expect, surfaceState->getMemoryObjectControlState());
+
+    clReleaseMemObject(image);
+}
+
+HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteBufferRectThenL3CacheIsOn) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    CommandQueueHw<FamilyType> cmdQ(&ctx, ctx.getDevice(0), nullptr);
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(cmdQ.getCommandStreamReceiver().getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0).getSpace(0));
+    auto buffer = clCreateBuffer(&ctx, CL_MEM_READ_WRITE, 36, nullptr, nullptr);
+
+    clEnqueueWriteBufferRect(&cmdQ, buffer, false, origin, origin, region, 0, 0, 0, 0, hostPtr, 0, nullptr, nullptr);
+
+    auto expect = ctx.getDevice(0)->getExecutionEnvironment()->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    EXPECT_NE(NULL, surfaceState->getMemoryObjectControlState());
+    EXPECT_EQ(expect, surfaceState->getMemoryObjectControlState());
+
+    clReleaseMemObject(buffer);
+}
+
+static uint64_t pointers[] = {
+    0x1005,
+    0x2000};
+
+INSTANTIATE_TEST_CASE_P(
+    pointers,
+    BufferL3CacheTests,
+    testing::ValuesIn(pointers));
 
 struct BufferUnmapTest : public DeviceFixture, public ::testing::Test {
     void SetUp() override {
