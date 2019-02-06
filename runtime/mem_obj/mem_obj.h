@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "mem_obj_types.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/mipmap.h"
@@ -35,7 +36,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     MemObj(Context *context,
            cl_mem_object_type memObjectType,
-           cl_mem_flags flags,
+           MemoryProperties properties,
            size_t size,
            void *memoryStorage,
            void *hostPtr,
@@ -113,7 +114,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     Context *context;
     cl_mem_object_type memObjectType;
-    cl_mem_flags flags;
+    MemoryProperties properties;
     size_t size;
     size_t hostPtrMinSize = 0;
     void *memoryStorage;
@@ -127,7 +128,6 @@ class MemObj : public BaseObject<_cl_mem> {
     bool isZeroCopy;
     bool isHostPtrSVM;
     bool isObjectRedescribed;
-    bool isUncacheable = false;
     MemoryManager *memoryManager = nullptr;
     GraphicsAllocation *graphicsAllocation;
     GraphicsAllocation *mcsAllocation = nullptr;

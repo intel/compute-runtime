@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,8 @@
 namespace OCLRT {
 
 struct MemoryProperties : MemoryPropertiesBase {
+    MemoryProperties() : MemoryPropertiesBase(0) {}
+    MemoryProperties(cl_mem_flags flags) : MemoryPropertiesBase(flags) {}
 };
 
 } // namespace OCLRT

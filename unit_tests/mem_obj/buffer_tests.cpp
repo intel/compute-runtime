@@ -631,7 +631,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
         BufferFuncsBackup[i] = bufferFactory[i];
         bufferFactory[i].createBufferFunction =
             [](Context *,
-               cl_mem_flags,
+               MemoryProperties,
                size_t,
                void *,
                void *,

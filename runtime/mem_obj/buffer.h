@@ -20,7 +20,7 @@ class MemoryManager;
 struct MemoryProperties;
 
 typedef Buffer *(*BufferCreatFunc)(Context *context,
-                                   cl_mem_flags flags,
+                                   MemoryProperties properties,
                                    size_t size,
                                    void *memoryStorage,
                                    void *hostPtr,
@@ -69,7 +69,7 @@ class Buffer : public MemObj {
                                       GraphicsAllocation *graphicsAllocation);
 
     static Buffer *createBufferHw(Context *context,
-                                  cl_mem_flags flags,
+                                  MemoryProperties properties,
                                   size_t size,
                                   void *memoryStorage,
                                   void *hostPtr,
@@ -121,7 +121,7 @@ class Buffer : public MemObj {
 
   protected:
     Buffer(Context *context,
-           cl_mem_flags flags,
+           MemoryProperties properties,
            size_t size,
            void *memoryStorage,
            void *hostPtr,
@@ -151,7 +151,7 @@ template <typename GfxFamily>
 class BufferHw : public Buffer {
   public:
     BufferHw(Context *context,
-             cl_mem_flags flags,
+             MemoryProperties properties,
              size_t size,
              void *memoryStorage,
              void *hostPtr,
@@ -159,13 +159,13 @@ class BufferHw : public Buffer {
              bool zeroCopy,
              bool isHostPtrSVM,
              bool isObjectRedescribed)
-        : Buffer(context, flags, size, memoryStorage, hostPtr, gfxAllocation,
+        : Buffer(context, properties, size, memoryStorage, hostPtr, gfxAllocation,
                  zeroCopy, isHostPtrSVM, isObjectRedescribed) {}
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3Cache) override;
 
     static Buffer *create(Context *context,
-                          cl_mem_flags flags,
+                          MemoryProperties properties,
                           size_t size,
                           void *memoryStorage,
                           void *hostPtr,
@@ -174,7 +174,7 @@ class BufferHw : public Buffer {
                           bool isHostPtrSVM,
                           bool isObjectRedescribed) {
         auto buffer = new BufferHw<GfxFamily>(context,
-                                              flags,
+                                              properties,
                                               size,
                                               memoryStorage,
                                               hostPtr,

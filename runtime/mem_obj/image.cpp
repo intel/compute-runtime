@@ -827,7 +827,7 @@ Image *Image::redescribeFillImage() {
 
     DEBUG_BREAK_IF(nullptr == createFunction);
     auto image = createFunction(context,
-                                flags | CL_MEM_USE_HOST_PTR,
+                                properties.flags | CL_MEM_USE_HOST_PTR,
                                 this->getSize(),
                                 this->getCpuAddress(),
                                 imageFormatNew,
@@ -875,7 +875,7 @@ Image *Image::redescribe() {
 
     DEBUG_BREAK_IF(nullptr == createFunction);
     auto image = createFunction(context,
-                                flags | CL_MEM_USE_HOST_PTR,
+                                properties.flags | CL_MEM_USE_HOST_PTR,
                                 this->getSize(),
                                 this->getCpuAddress(),
                                 imageFormatNew,

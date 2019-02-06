@@ -5,6 +5,7 @@
  *
  */
 
+#include "common/helpers/bit_helpers.h"
 #include "runtime/context/context.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -23,7 +24,7 @@ namespace OCLRT {
 
 MemObj::MemObj(Context *context,
                cl_mem_object_type memObjectType,
-               cl_mem_flags flags,
+               MemoryProperties properties,
                size_t size,
                void *memoryStorage,
                void *hostPtr,
@@ -31,7 +32,7 @@ MemObj::MemObj(Context *context,
                bool zeroCopy,
                bool isHostPtrSVM,
                bool isObjectRedescribed)
-    : context(context), memObjectType(memObjectType), flags(flags), size(size),
+    : context(context), memObjectType(memObjectType), properties(properties), size(size),
       memoryStorage(memoryStorage), hostPtr(hostPtr),
       isZeroCopy(zeroCopy), isHostPtrSVM(isHostPtrSVM), isObjectRedescribed(isObjectRedescribed),
       graphicsAllocation(gfxAllocation) {
@@ -120,8 +121,8 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_FLAGS:
-        srcParamSize = sizeof(flags);
-        srcParam = &flags;
+        srcParamSize = sizeof(properties.flags);
+        srcParam = &properties.flags;
         break;
 
     case CL_MEM_SIZE:
@@ -141,7 +142,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_USES_SVM_POINTER:
-        usesSVMPointer = isHostPtrSVM && !!(flags & CL_MEM_USE_HOST_PTR);
+        usesSVMPointer = isHostPtrSVM && isValueSet(properties.flags, CL_MEM_USE_HOST_PTR);
         srcParamSize = sizeof(cl_bool);
         srcParam = &usesSVMPointer;
         break;
@@ -208,7 +209,7 @@ void MemObj::setAllocatedMapPtr(void *allocatedMapPtr) {
 }
 
 cl_mem_flags MemObj::getFlags() const {
-    return flags;
+    return properties.flags;
 }
 
 bool MemObj::isMemObjZeroCopy() const {
@@ -220,7 +221,7 @@ bool MemObj::isMemObjWithHostPtrSVM() const {
 }
 
 bool MemObj::isMemObjUncacheable() const {
-    return isUncacheable;
+    return isValueSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
 }
 
 GraphicsAllocation *MemObj::getGraphicsAllocation() {
@@ -238,28 +239,16 @@ void MemObj::resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation) 
 }
 
 bool MemObj::readMemObjFlagsInvalid() {
-    if (this->getFlags() & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) {
-        return true;
-    }
-
-    return false;
+    return isValueSet(properties.flags, CL_MEM_HOST_WRITE_ONLY) || isValueSet(properties.flags, CL_MEM_HOST_NO_ACCESS);
 }
 
 bool MemObj::writeMemObjFlagsInvalid() {
-    if (this->getFlags() & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)) {
-        return true;
-    }
-
-    return false;
+    return isValueSet(properties.flags, CL_MEM_HOST_READ_ONLY) || isValueSet(properties.flags, CL_MEM_HOST_NO_ACCESS);
 }
 
 bool MemObj::mapMemObjFlagsInvalid(cl_map_flags mapFlags) {
-    if ((this->getFlags() & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS) && (mapFlags & CL_MAP_WRITE)) ||
-        (this->getFlags() & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS) && (mapFlags & CL_MAP_READ))) {
-        return true;
-    }
-
-    return false;
+    return (writeMemObjFlagsInvalid() && (mapFlags & CL_MAP_WRITE)) ||
+           (readMemObjFlagsInvalid() && (mapFlags & CL_MAP_READ));
 }
 
 void MemObj::setHostPtrMinSize(size_t size) {
@@ -268,7 +257,7 @@ void MemObj::setHostPtrMinSize(size_t size) {
 
 void *MemObj::getCpuAddressForMapping() {
     void *ptrToReturn = nullptr;
-    if ((this->flags & CL_MEM_USE_HOST_PTR)) {
+    if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR)) {
         ptrToReturn = this->hostPtr;
     } else {
         ptrToReturn = this->memoryStorage;
@@ -277,7 +266,7 @@ void *MemObj::getCpuAddressForMapping() {
 }
 void *MemObj::getCpuAddressForMemoryTransfer() {
     void *ptrToReturn = nullptr;
-    if ((this->flags & CL_MEM_USE_HOST_PTR) && this->isMemObjZeroCopy()) {
+    if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR) && this->isMemObjZeroCopy()) {
         ptrToReturn = this->hostPtr;
     } else {
         ptrToReturn = this->memoryStorage;
@@ -286,7 +275,7 @@ void *MemObj::getCpuAddressForMemoryTransfer() {
 }
 void MemObj::releaseAllocatedMapPtr() {
     if (allocatedMapPtr) {
-        DEBUG_BREAK_IF((flags & CL_MEM_USE_HOST_PTR));
+        DEBUG_BREAK_IF(isValueSet(properties.flags, CL_MEM_USE_HOST_PTR));
         memoryManager->freeSystemMemory(allocatedMapPtr);
     }
     allocatedMapPtr = nullptr;

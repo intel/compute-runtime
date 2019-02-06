@@ -5,7 +5,6 @@
  *
  */
 
-#include "common/helpers/bit_helpers.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/command_queue/command_queue.h"
@@ -29,7 +28,7 @@ namespace OCLRT {
 BufferFuncs bufferFactory[IGFX_MAX_CORE] = {};
 
 Buffer::Buffer(Context *context,
-               cl_mem_flags flags,
+               MemoryProperties properties,
                size_t size,
                void *memoryStorage,
                void *hostPtr,
@@ -39,7 +38,7 @@ Buffer::Buffer(Context *context,
                bool isObjectRedescribed)
     : MemObj(context,
              CL_MEM_OBJECT_BUFFER,
-             flags,
+             properties,
              size,
              memoryStorage,
              hostPtr,
@@ -239,7 +238,7 @@ Buffer *Buffer::create(Context *context,
     DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", size, "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
 
     pBuffer = createBufferHw(context,
-                             properties.flags,
+                             properties,
                              size,
                              memory->getUnderlyingBuffer(),
                              hostPtr,
@@ -255,7 +254,6 @@ Buffer *Buffer::create(Context *context,
     }
 
     pBuffer->setHostPtrMinSize(size);
-    pBuffer->isUncacheable = isValueSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
 
     if (copyMemoryFromHostPtr) {
         if ((memory->gmm && memory->gmm->isRenderCompressed) || !MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
@@ -459,7 +457,7 @@ bool Buffer::isReadWriteOnCpuAllowed(cl_bool blocking, cl_uint numEventsInWaitLi
 }
 
 Buffer *Buffer::createBufferHw(Context *context,
-                               cl_mem_flags flags,
+                               MemoryProperties properties,
                                size_t size,
                                void *memoryStorage,
                                void *hostPtr,
@@ -472,7 +470,7 @@ Buffer *Buffer::createBufferHw(Context *context,
 
     auto funcCreate = bufferFactory[hwInfo.pPlatform->eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    auto pBuffer = funcCreate(context, flags, size, memoryStorage, hostPtr, gfxAllocation,
+    auto pBuffer = funcCreate(context, properties, size, memoryStorage, hostPtr, gfxAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
     DEBUG_BREAK_IF(nullptr == pBuffer);
     if (pBuffer) {
