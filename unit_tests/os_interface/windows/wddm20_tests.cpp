@@ -1042,3 +1042,15 @@ TEST_F(WddmHeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAl
     }
     EXPECT_EQ(HeapIndex::HEAP_STANDARD, wddm->selectHeap(&allocation, nullptr));
 }
+
+TEST(WddmInternalHeapTest, whenConfigurationIs64BitThenInternalHeapIndexIsHeapInternalDeviceMemory) {
+    if (is64bit) {
+        EXPECT_EQ(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY, internalHeapIndex);
+    }
+}
+
+TEST(WddmInternalHeapTest, whenConfigurationIs32BitThenInternalHeapIndexIsHeapInternal) {
+    if (is32bit) {
+        EXPECT_EQ(HeapIndex::HEAP_INTERNAL, internalHeapIndex);
+    }
+}
