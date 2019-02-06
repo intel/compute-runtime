@@ -304,7 +304,6 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
     auto aubStream = std::make_unique<MockAubFileStream>();
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
-    auto mockManager = static_cast<MockAubManager *>(mockAubCenter->aubManager.get());
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
@@ -326,9 +325,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
     EXPECT_TRUE(mockHardwareContext->submitCalled);
     EXPECT_FALSE(mockHardwareContext->pollForCompletionCalled);
 
-    //call writeMemory on aubManager to clone page tables
-    EXPECT_FALSE(mockHardwareContext->writeMemoryCalled);
-    EXPECT_TRUE(mockManager->writeMemoryCalled);
+    EXPECT_TRUE(aubCsr.writeMemoryWithAubManagerCalled);
     pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
@@ -360,21 +357,17 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledWithZ
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
-    auto mockManager = static_cast<MockAubManager *>(mockAubCenter->aubManager.get());
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
     OsContext osContext(nullptr, 0, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
     aubCsr.setupContext(osContext);
-    auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
     aubCsr.processResidency(allocationsForResidency);
 
-    //call writeMemory on aubManager to clone page tables
-    EXPECT_FALSE(mockHardwareContext->writeMemoryCalled);
-    EXPECT_TRUE(mockManager->writeMemoryCalled);
+    EXPECT_TRUE(aubCsr.writeMemoryWithAubManagerCalled);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenItShouldCallTheExpectedHwContextFunctions) {

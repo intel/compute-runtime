@@ -13,9 +13,6 @@
 #include "runtime/command_stream/aub_stream_provider.h"
 #include "runtime/command_stream/aub_subcapture.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hardware_context_controller.h"
@@ -618,12 +615,6 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResidentExternal(uint64_t gpu
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) {
-    if (aubManager) {
-        int hint = AubMemDump::DataTypeHintValues::TraceNotype;
-        aubManager->writeMemory(gpuAddress, cpuAddress, size, memoryBank, hint, MemoryConstants::pageSize64k);
-        return;
-    }
-
     {
         std::ostringstream str;
         str << "ppgtt: " << std::hex << std::showbase << gpuAddress << " end address: " << gpuAddress + size << " cpu address: " << cpuAddress << " device mask: " << devicesBitfield << " size: " << std::dec << size;
@@ -642,22 +633,18 @@ void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
-    auto cpuAddress = ptrOffset(gfxAllocation.getUnderlyingBuffer(), static_cast<size_t>(gfxAllocation.allocationOffset));
-    auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
-    auto size = gfxAllocation.getUnderlyingBufferSize();
-    if (gfxAllocation.gmm && gfxAllocation.gmm->isRenderCompressed) {
-        size = gfxAllocation.gmm->gmmResourceInfo->getSizeAllocation();
-    }
-
-    if ((size == 0) || !gfxAllocation.isAubWritable())
+    uint64_t gpuAddress;
+    void *cpuAddress;
+    size_t size;
+    if (!this->getParametersForWriteMemory(gfxAllocation, gpuAddress, cpuAddress, size)) {
         return false;
-
-    if (cpuAddress == nullptr) {
-        DEBUG_BREAK_IF(gfxAllocation.isLocked());
-        cpuAddress = this->getMemoryManager()->lockResource(&gfxAllocation);
     }
 
-    writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation), gfxAllocation.devicesBitfield);
+    if (aubManager) {
+        this->writeMemoryWithAubManager(gfxAllocation);
+    } else {
+        writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation), gfxAllocation.devicesBitfield);
+    }
 
     if (gfxAllocation.isLocked()) {
         this->getMemoryManager()->unlockResource(&gfxAllocation);

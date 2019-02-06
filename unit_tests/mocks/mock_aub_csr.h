@@ -57,6 +57,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::defaultSshSize;
     using AUBCommandStreamReceiverHw<GfxFamily>::taskCount;
     using AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionTaskCount;
+    using AUBCommandStreamReceiverHw<GfxFamily>::writeMemory;
 
     DispatchMode peekDispatchMode() const {
         return this->dispatchMode;
@@ -80,7 +81,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine();
         initializeEngineCalled = true;
     }
-    void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) {
+    void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) override {
         AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(gpuAddress, cpuAddress, size, memoryBank, entryBits, devicesBitfield);
         writeMemoryCalled = true;
     }
@@ -88,6 +89,12 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits);
         submitBatchBufferCalled = true;
     }
+
+    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) override {
+        CommandStreamReceiverSimulatedHw<GfxFamily>::writeMemoryWithAubManager(graphicsAllocation);
+        writeMemoryWithAubManagerCalled = true;
+    }
+
     void pollForCompletion() override {
         AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion();
         pollForCompletionCalled = true;
@@ -107,6 +114,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool initProgrammingFlagsCalled = false;
     bool initializeEngineCalled = false;
     bool writeMemoryCalled = false;
+    bool writeMemoryWithAubManagerCalled = false;
     bool submitBatchBufferCalled = false;
     bool pollForCompletionCalled = false;
     bool expectMemoryEqualCalled = false;

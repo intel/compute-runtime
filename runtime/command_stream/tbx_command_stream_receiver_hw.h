@@ -31,6 +31,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
     using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using BaseClass::engineIndex;
+    using BaseClass::getParametersForWriteMemory;
     using BaseClass::osContext;
 
     uint32_t getMaskAndValueForPollForCompletion() const;
@@ -48,7 +49,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     void processResidency(ResidencyContainer &allocationsForResidency) override;
     void waitBeforeMakingNonResidentWhenRequired() override;
-    void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield);
+    void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) override;
     bool writeMemory(GraphicsAllocation &gfxAllocation);
 
     // Family specific version

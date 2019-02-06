@@ -368,11 +368,6 @@ void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) {
-    if (aubManager) {
-        int hint = AubMemDump::DataTypeHintValues::TraceNotype;
-        aubManager->writeMemory(gpuAddress, cpuAddress, size, memoryBank, hint, MemoryConstants::pageSize64k);
-        return;
-    }
 
     AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
 
@@ -386,14 +381,18 @@ void TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
 
 template <typename GfxFamily>
 bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
-    auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
-    auto gpuAddress = gfxAllocation.getGpuAddress();
-    auto size = gfxAllocation.getUnderlyingBufferSize();
-
-    if (size == 0)
+    uint64_t gpuAddress;
+    void *cpuAddress;
+    size_t size;
+    if (!this->getParametersForWriteMemory(gfxAllocation, gpuAddress, cpuAddress, size)) {
         return false;
+    }
 
-    writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation), gfxAllocation.devicesBitfield);
+    if (aubManager) {
+        this->writeMemoryWithAubManager(gfxAllocation);
+    } else {
+        writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation), gfxAllocation.devicesBitfield);
+    }
 
     return true;
 }

@@ -343,7 +343,6 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenItIsCreatedWith
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
-    auto mockManager = static_cast<MockAubManager *>(mockAubCenter->aubManager.get());
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
@@ -364,9 +363,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     EXPECT_TRUE(mockHardwareContext->submitCalled);
     EXPECT_TRUE(mockHardwareContext->pollForCompletionCalled);
 
-    //call writeMemory on aubManager to clone page tables
-    EXPECT_FALSE(mockHardwareContext->writeMemoryCalled);
-    EXPECT_TRUE(mockManager->writeMemoryCalled);
+    EXPECT_TRUE(tbxCsr.writeMemoryWithAubManagerCalled);
     pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
@@ -376,13 +373,11 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverInBatchedModeWhenFl
 
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
-    auto mockManager = static_cast<MockAubManager *>(mockAubCenter->aubManager.get());
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
     OsContext osContext(nullptr, 0, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
     tbxCsr.setupContext(osContext);
-    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
 
     auto commandBuffer = pDevice->executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
@@ -392,9 +387,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverInBatchedModeWhenFl
 
     tbxCsr.flush(batchBuffer, allocationsForResidency);
 
-    //call writeMemory on aubManager to clone page tables
-    EXPECT_FALSE(mockHardwareContext->writeMemoryCalled);
-    EXPECT_TRUE(mockManager->writeMemoryCalled);
+    EXPECT_TRUE(tbxCsr.writeMemoryWithAubManagerCalled);
     EXPECT_EQ(1u, batchBuffer.commandBufferAllocation->getResidencyTaskCount(tbxCsr.getOsContext().getContextId()));
     pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -424,21 +417,17 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledWi
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
-    auto mockManager = static_cast<MockAubManager *>(mockAubCenter->aubManager.get());
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
     OsContext osContext(nullptr, 0, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
     tbxCsr.setupContext(osContext);
-    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
     tbxCsr.processResidency(allocationsForResidency);
 
-    //call writeMemory on aubManager to clone page tables
-    EXPECT_FALSE(mockHardwareContext->writeMemoryCalled);
-    EXPECT_TRUE(mockManager->writeMemoryCalled);
+    EXPECT_TRUE(tbxCsr.writeMemoryWithAubManagerCalled);
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeCoherentIsCalledThenItShouldCallTheExpectedHwContextFunctions) {

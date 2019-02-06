@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,5 +28,6 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
     PhysicalAddressAllocator *createPhysicalAddressAllocator(const HardwareInfo *hwInfo) {
         return new PhysicalAddressAllocator();
     }
+    void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) override{};
 };
 } // namespace OCLRT

@@ -30,6 +30,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;
 
     uint32_t engineIndex = 0;
+    bool getParametersForWriteMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const;
 
   public:
     uint64_t getGTTBits() const {
@@ -45,6 +46,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     void initEngineMMIO();
     void submitLRCA(const MiContextDescriptorReg &contextDescriptor);
     void setupContext(OsContext &osContext) override;
+    virtual void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) = 0;
+    virtual void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) = 0;
 
     aub_stream::AubManager *aubManager = nullptr;
     std::unique_ptr<HardwareContextController> hardwareContextController;
