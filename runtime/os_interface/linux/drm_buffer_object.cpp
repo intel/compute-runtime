@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,7 +114,8 @@ void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_
     execObject.offset = this->isSoftpin ? this->offset64 : 0;
     execObject.flags = this->isSoftpin ? EXEC_OBJECT_PINNED : 0;
 #ifdef __x86_64__
-    execObject.flags |= reinterpret_cast<uint64_t>(this->address) & MemoryConstants::zoneHigh ? EXEC_OBJECT_SUPPORTS_48B_ADDRESS : 0;
+    // set EXEC_OBJECT_SUPPORTS_48B_ADDRESS flag if whole object resides in 32BIT address space boundary
+    execObject.flags |= (reinterpret_cast<uint64_t>(this->address) + this->size) & MemoryConstants::zoneHigh ? EXEC_OBJECT_SUPPORTS_48B_ADDRESS : 0;
 #endif
     execObject.rsvd1 = drmContextId;
     execObject.rsvd2 = 0;

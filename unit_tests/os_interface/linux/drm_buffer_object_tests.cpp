@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,10 @@ class TestedBufferObject : public BufferObject {
     void fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t drmContextId) override {
         BufferObject::fillExecObject(execObject, drmContextId);
         execObjectPointerFilled = &execObject;
+    }
+
+    void setSize(size_t size) {
+        this->size = size;
     }
 
     drm_i915_gem_exec_object2 *execObjectPointerFilled = nullptr;
@@ -94,19 +98,25 @@ TEST_F(DrmBufferObjectTest, setTiling_ioctlFailed) {
     EXPECT_FALSE(ret);
 }
 
-TEST_F(DrmBufferObjectTest, testExecObjectFlags) {
+TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedCrosses32BitBoundaryWhenExecIsCalledThen48BitFlagIsSet) {
     drm_i915_gem_exec_object2 execObject;
 
-#ifdef __x86_64__
     memset(&execObject, 0, sizeof(execObject));
-    bo->setAddress((void *)((uint64_t)1u << 34)); //anything above 4GB
+    bo->setAddress((void *)(((uint64_t)1u << 32) - 0x1000u));
+    bo->setSize(0x1000);
     bo->fillExecObject(execObject, 1);
+    //base address + size > size of 32bit address space
     EXPECT_TRUE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
-#endif
+}
+
+TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWhenExecIsCalledThen48BitFlagIsNotSet) {
+    drm_i915_gem_exec_object2 execObject;
 
     memset(&execObject, 0, sizeof(execObject));
-    bo->setAddress((void *)((uint64_t)1u << 31)); //anything below 4GB
+    bo->setAddress((void *)(((uint64_t)1u << 32) - 0x1000u));
+    bo->setSize(0xFFF);
     bo->fillExecObject(execObject, 1);
+    //base address + size < size of 32bit address space
     EXPECT_FALSE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
 }
 
