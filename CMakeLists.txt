@@ -192,6 +192,13 @@ if(WIN32)
 	endif()
 	message(STATUS "WDK Version is ${WindowsTargetPlatformVersion}")
 
+	if(${WindowsTargetPlatformVersion} VERSION_LESS "10.0.18328.0")
+		set(CONST_FROM_WDK_10_0_18328_0)
+	else()
+		set(CONST_FROM_WDK_10_0_18328_0 "CONST")
+	endif()
+	add_compile_options(-D CONST_FROM_WDK_10_0_18328_0=${CONST_FROM_WDK_10_0_18328_0})
+
 	set(WDK_INCLUDE_PATHS
 		"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/um"
 		"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/shared"
