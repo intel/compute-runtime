@@ -2801,7 +2801,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForN
     auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
 
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(reinterpret_cast<void *>(0x5001), allocation->getUnderlyingBuffer());
+    EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()) + allocation->allocationOffset);
     EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(1u, allocation->allocationOffset);
 
@@ -3069,7 +3069,7 @@ TEST_F(DrmMemoryManagerTest, givenDisabledHostPtrTrackingWhenAllocateGraphicsMem
     auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
 
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(reinterpret_cast<void *>(0x5001), allocation->getUnderlyingBuffer());
+    EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()) + allocation->allocationOffset);
     EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(1u, allocation->allocationOffset);
 

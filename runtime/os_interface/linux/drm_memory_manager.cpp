@@ -269,13 +269,12 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(size_t s
     bo->isAllocated = false;
     bo->setUnmapSize(alignedSize);
     bo->address = reinterpret_cast<void *>(gpuVirtualAddress);
-    uintptr_t offset = (uintptr_t)bo->address;
-    bo->softPin((uint64_t)offset);
+    bo->softPin((uint64_t)bo->address);
     bo->setAllocationType(allocType);
 
-    auto allocation = new DrmAllocation(bo, cpuPtr, reinterpret_cast<uint64_t>(alignedPtr), size, MemoryPool::System4KBPages, false);
+    auto allocation = new DrmAllocation(bo, alignedPtr, gpuVirtualAddress, size, MemoryPool::System4KBPages, false);
     allocation->allocationOffset = offsetInPage;
-    allocation->gpuBaseAddress = limitedGpuAddressRangeAllocator->getBase();
+    allocation->gpuBaseAddress = 0;
 
     return allocation;
 }
