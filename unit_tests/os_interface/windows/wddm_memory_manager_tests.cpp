@@ -313,11 +313,10 @@ TEST_F(WddmMemoryManagerTest, givenDefaultMemoryManagerWhenAllocateWithSizeIsCal
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIsCalledThenNonNullGraphicsAllocationIsReturned) {
     auto osHandle = 1u;
-    auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
-    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
@@ -329,11 +328,10 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledThenNonNullGraphicsAllocationIsReturned) {
-    auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
-    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1));
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
@@ -361,11 +359,10 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenLockUnlockIsCalledThenRe
 
 TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllocWhenForce32bitAddressingIsSetAndRequireSpecificBitnessIsTrue) {
     auto osHandle = 1u;
-    auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
-    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     memoryManager->setForce32BitAllocations(true);
 
@@ -383,11 +380,10 @@ TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllocW
 
 TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32BitAllocWhenForce32bitAddressingIsSetAndRequireSpecificBitnessIsFalse) {
     auto osHandle = 1u;
-    auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
-    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     memoryManager->setForce32BitAllocations(true);
 
@@ -405,11 +401,10 @@ TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32Bit
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHandleIsCalledThenDestroyResourceHandle) {
     auto osHandle = 1u;
-    auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
-    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto gpuAllocation = (WddmAllocation *)memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     EXPECT_NE(nullptr, gpuAllocation);
@@ -430,7 +425,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShared
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, size, false));
-    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     ASSERT_NE(nullptr, gpuAllocation);
@@ -444,7 +439,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFa
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, size, false));
-    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     wddm->failOpenSharedHandle = true;
 
@@ -597,7 +592,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountN
 
 TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
     MockWddmAllocation alloc, allocOffseted;
-    bool success = false;
     // three pages
     void *ptr = alignedMalloc(4 * 4096, 4096);
     ASSERT_NE(nullptr, ptr);
@@ -651,7 +645,6 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
 
 TEST_F(WddmMemoryManagerTest, AllocateGpuMemCheckGmm) {
     MockWddmAllocation allocation;
-    bool success = false;
     // three pages
     void *ptr = alignedMalloc(3 * 4096, 4096);
     auto *gpuAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 3 * MemoryConstants::pageSize}, ptr);
@@ -669,9 +662,7 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemCheckGmm) {
 }
 
 TEST_F(WddmMemoryManagerTest, GivenAlignedPointerWhenAllocate32BitMemoryThenGmmCalledWithCorrectPointerAndSize) {
-
     MockWddmAllocation allocation;
-    bool success = false;
     uint32_t size = 4096;
     void *ptr = reinterpret_cast<void *>(4096);
     auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
@@ -682,7 +673,6 @@ TEST_F(WddmMemoryManagerTest, GivenAlignedPointerWhenAllocate32BitMemoryThenGmmC
 
 TEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMemoryThenGmmCalledWithCorrectPointerAndSize) {
     MockWddmAllocation allocation;
-    bool success = false;
     uint32_t size = 0x1001;
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
@@ -955,9 +945,6 @@ TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
     auto reqs = MockHostPtrManager::getAllocationRequirements(ptr, size);
 
     for (int i = 0; i < maxFragmentsCount; i++) {
-
-        uintptr_t GpuPtr = (uintptr_t)(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gpuPtr);
-        uintptr_t CpuPtr = (uintptr_t)(reqs.AllocationFragments[i].allocationPtr);
         EXPECT_NE((D3DKMT_HANDLE) nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->handle);
 
         EXPECT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gmm);

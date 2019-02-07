@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,6 @@ typedef OsInterfaceTest OsInterfaceTestSkl;
 
 GEN9TEST_F(OsInterfaceTestSkl, askKmdIfPreemptionRegisterWhitelisted) {
     HardwareInfo *hwInfo = nullptr;
-    const HardwareInfo *refHwinfo = *platformDevices;
     size_t numDevices = 0;
 
     ExecutionEnvironment executionEnvironment;

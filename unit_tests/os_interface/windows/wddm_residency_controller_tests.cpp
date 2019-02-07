@@ -364,8 +364,8 @@ TEST_F(WddmResidencyControllerTest, compactTrimCandidateListRemovesInitialNullEn
     residencyController->addToTrimCandidateList(&allocation3);
     residencyController->addToTrimCandidateList(&allocation4);
 
-    size_t position3 = allocation3.getTrimCandidateListPosition(osContextId);
-    size_t position4 = allocation4.getTrimCandidateListPosition(osContextId);
+    allocation3.getTrimCandidateListPosition(osContextId);
+    allocation4.getTrimCandidateListPosition(osContextId);
 
     residencyController->removeFromTrimCandidateList(&allocation2, false);
     residencyController->removeFromTrimCandidateList(&allocation1, false);
@@ -687,7 +687,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetMarksEvictedAllocationNon
     residencyController->addToTrimCandidateList(&allocation2);
     residencyController->addToTrimCandidateList(&allocation3);
 
-    bool status = residencyController->trimResidencyToBudget(3 * 4096);
+    residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
     EXPECT_FALSE(allocation2.getResidencyData().resident[osContextId]);
@@ -713,7 +713,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetWaitsFromCpuWhenLastFence
 
     gdi->getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
 
-    bool status = residencyController->trimResidencyToBudget(3 * 4096);
+    residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, wddm->makeNonResidentResult.called);
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
@@ -759,7 +759,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, trimToBudgetEvictsDon
 
     wddm->makeNonResidentResult.called = 0;
 
-    bool status = residencyController->trimResidencyToBudget(3 * 4096);
+    residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(2u, wddm->makeNonResidentResult.called);
 
@@ -1012,6 +1012,6 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2).WillOnce(::testing::Invoke(makeResidentThatFails)).WillOnce(::testing::Invoke(makeResidentThatSucceds));
 
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack);
+    residencyController->makeResidentResidencyAllocations(residencyPack);
     EXPECT_TRUE(residencyController->isMemoryBudgetExhausted());
 }

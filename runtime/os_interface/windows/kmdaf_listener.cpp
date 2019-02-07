@@ -1,12 +1,15 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/os_interface/windows/kmdaf_listener.h"
+#pragma warning(push)           // save the current state
+#pragma warning(disable : 4189) // disable warning 4189 (unused local variable)
 #include "kmdaf.h"
+#pragma warning(pop) // restore state.
 
 namespace OCLRT {
 

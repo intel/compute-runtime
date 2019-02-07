@@ -172,13 +172,13 @@ int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
     bool enable_alarm = true;
-    bool enable_segv = true;
-    bool enable_abrt = true;
     bool setupFeatureTable = testMode == TestMode::AubTests ? true : false;
 
     applyWorkarounds();
 
 #if defined(__linux__)
+    bool enable_segv = true;
+    bool enable_abrt = true;
     if (getenv("IGDRCL_TEST_SELF_EXEC") == nullptr) {
         std::string wd = getRunPath(argv[0]);
         setenv("LD_LIBRARY_PATH", wd.c_str(), 1);

@@ -224,6 +224,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmS
 
     allocation.gmm = gmm.get();
     auto status = wddm->createAllocation(&allocation);
+    EXPECT_EQ(STATUS_SUCCESS, status);
 
     auto mockResourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockResourceInfo->overrideReturnedSize(allocation.getAlignedSize() + (2 * MemoryConstants::pageSize));
@@ -645,8 +646,6 @@ TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedTo
     allocation.handle = ALLOCATION_HANDLE;
 
     *osContextWin->getResidencyController().getMonitoredFence().cpuAddress = 10;
-
-    D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
     gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
     gdi->getWaitFromCpuArg().Flags.Value = 0;

@@ -943,7 +943,7 @@ bool Wddm::init(PreemptionMode preemptionMode) {
 
 EvictionStatus Wddm::evictAllTemporaryResources() {
     decltype(temporaryResources) resourcesToEvict;
-    auto &lock = acquireLock(temporaryResourcesLock);
+    auto lock = acquireLock(temporaryResourcesLock);
     temporaryResources.swap(resourcesToEvict);
     if (resourcesToEvict.empty()) {
         return EvictionStatus::NOT_APPLIED;
@@ -959,7 +959,7 @@ EvictionStatus Wddm::evictAllTemporaryResources() {
 }
 
 EvictionStatus Wddm::evictTemporaryResource(WddmAllocation &allocation) {
-    auto &lock = acquireLock(temporaryResourcesLock);
+    auto lock = acquireLock(temporaryResourcesLock);
     auto position = std::find(temporaryResources.begin(), temporaryResources.end(), allocation.handle);
     if (position == temporaryResources.end()) {
         return EvictionStatus::NOT_APPLIED;

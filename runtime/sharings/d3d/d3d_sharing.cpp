@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,8 +41,6 @@ D3DSharing<D3D>::~D3DSharing() {
 
 template <typename D3D>
 void D3DSharing<D3D>::synchronizeObject(UpdateData &updateData) {
-    void *sharedHandle = nullptr;
-
     sharingFunctions->getDeviceContext(d3dQuery);
     if (!sharedResource) {
         sharingFunctions->copySubresourceRegion(resourceStaging, 0, resource, subresource);

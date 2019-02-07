@@ -137,6 +137,7 @@ TEST_F(GlArbSyncEventOsTest, WhenCreateSynchronizationObjectSucceedsThenAllHAndl
     gdi->createSynchronizationObject.mFunc = CreateSyncObjectMock::createSynchObject;
     gdi->createSynchronizationObject2.mFunc = CreateSyncObjectMock::createSynchObject2;
     auto ret = setupArbSyncObject(sharing, osInterface, syncInfo);
+    EXPECT_TRUE(ret);
     EXPECT_EQ(1U, syncInfo.serverSynchronizationObject);
     EXPECT_EQ(2U, syncInfo.clientSynchronizationObject);
     EXPECT_EQ(3U, syncInfo.submissionSynchronizationObject);

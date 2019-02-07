@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,9 @@ TEST_F(MockOSTimeWinTest, DynamicResolution) {
     auto wddmMock = std::unique_ptr<WddmMock>(new WddmMock());
     auto mDev = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    bool error = wddmMock->init(mDev->getPreemptionMode());
+    bool success = wddmMock->init(mDev->getPreemptionMode());
+    EXPECT_TRUE(success);
+
     std::unique_ptr<MockOSTimeWin> timeWin(new MockOSTimeWin(wddmMock.get()));
 
     double res = 0.0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,6 +73,10 @@ void SehException::getCallStack(unsigned int code, struct _EXCEPTION_POINTERS *e
     stack.clear();
 
     BOOL result = SymInitialize(hProcess, NULL, TRUE);
+    if (result == FALSE) {
+        return;
+    }
+
     STACKFRAME64 stackFrame;
     memset(&stackFrame, 0, sizeof(STACKFRAME64));
     const int nameSize = 255;

@@ -129,7 +129,7 @@ if(NOT DEFINED AUB_STREAM_DIR AND NOT DISABLE_AUB_STREAM)
     endif()
 else()
     unset(AUB_STREAM_DIR)
-endif(NOT DEFINED AUB_STREAM_DIR)
+endif()
 
 if(LIBDRM_DIR)
   get_filename_component(I915_INCLUDES_DIR "${LIBDRM_DIR}/include" ABSOLUTE)
@@ -469,7 +469,10 @@ endif()
 if(MSVC)
 	# Force to treat warnings as errors
 	if(NOT CMAKE_CXX_FLAGS MATCHES "/WX")
-		 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
+        if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4189")
+        endif()
 	endif()
 
 # Support for WUD

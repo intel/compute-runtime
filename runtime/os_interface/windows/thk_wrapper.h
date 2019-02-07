@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,8 +80,7 @@ class ThkWrapper {
             SYSTEM_ENTER()
             NTSTATUS Status;
             Status = mFunc(param);
-            unsigned int ID = getId<Param>();
-            SYSTEM_LEAVE(ID);
+            SYSTEM_LEAVE(getId<Param>());
             return Status;
         } else {
             return mFunc(param);
