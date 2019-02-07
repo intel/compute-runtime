@@ -1110,7 +1110,7 @@ HWTEST_F(DispatchWalkerTest, WhenCallingDefaultWaMethodsThenExpectNothing) {
     EXPECT_EQ(expectedSize, actualSize);
 }
 
-HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxTranslationWithoutParentKernelThenPipeControlAdded) {
+HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxTranslationRequiredThenPipeControlWithStallAndDCFlushAdded) {
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     kernelInfo.workloadInfo.workDimOffset = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -1141,8 +1141,17 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxTranslationWithoutParentKernelThe
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, buffer, sizeUsed));
 
-    auto itorCmd = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorCmd);
+    auto pipeControls = findAll<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+    ASSERT_EQ(2u, pipeControls.size());
+
+    auto beginPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[0]));
+    EXPECT_TRUE(beginPipeControl->getDcFlushEnable());
+    EXPECT_TRUE(beginPipeControl->getCommandStreamerStallEnable());
+
+    auto endPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[1]));
+    EXPECT_FALSE(endPipeControl->getDcFlushEnable());
+    EXPECT_TRUE(endPipeControl->getCommandStreamerStallEnable());
 }
 
 struct ProfilingCommandsTest : public DispatchWalkerTest, ::testing::WithParamInterface<bool> {

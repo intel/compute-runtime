@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/gen_common/hw_cmds.h"
+#include <vector>
 #include <list>
 
 typedef std::list<void *> GenCmdList;
@@ -23,6 +24,19 @@ static inline GenCmdList::iterator find(GenCmdList::iterator itorStart, GenCmdLi
         ++itor;
     }
     return itor;
+}
+
+template <typename CommandToFind>
+static inline std::vector<GenCmdList::iterator> findAll(GenCmdList::iterator commandListStart, GenCmdList::const_iterator commandListEnd) {
+    std::vector<GenCmdList::iterator> matchedCommands;
+    GenCmdList::iterator currentCommand = commandListStart;
+    while (currentCommand != commandListEnd) {
+        if (genCmdCast<CommandToFind>(*currentCommand)) {
+            matchedCommands.push_back(currentCommand);
+        }
+        ++currentCommand;
+    }
+    return matchedCommands;
 }
 
 template <typename FamilyType>

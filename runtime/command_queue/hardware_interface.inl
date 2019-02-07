@@ -123,6 +123,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
         auto pPipeControlCmd = static_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
         *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
+        pPipeControlCmd->setDcFlushEnable(true);
         pPipeControlCmd->setCommandStreamerStallEnable(true);
     }
 
