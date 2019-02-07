@@ -43,6 +43,8 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.h
   ${CMAKE_CURRENT_SOURCE_DIR}/get_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hash.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_common.inl

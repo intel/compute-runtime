@@ -33,7 +33,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
-    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContext;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContextController;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::engineInfoTable;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::stream;
 

@@ -18,6 +18,7 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
@@ -151,9 +152,9 @@ const std::string &AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
-    if (hardwareContext) {
+    if (hardwareContextController) {
         DEBUG_BREAK_IF(allEngineInstances[engineIndex].type != osContext->getEngineType().type);
-        hardwareContext->initialize();
+        hardwareContextController->initialize();
         return;
     }
 
@@ -403,9 +404,9 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
-    if (hardwareContext) {
+    if (hardwareContextController) {
         if (batchBufferSize) {
-            hardwareContext->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
+            hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
         }
         return;
     }
@@ -572,8 +573,8 @@ template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionImpl() {
     this->pollForCompletionTaskCount = this->taskCount;
 
-    if (hardwareContext) {
-        hardwareContext->pollForCompletion();
+    if (hardwareContextController) {
+        hardwareContextController->pollForCompletion();
         return;
     }
 
@@ -710,8 +711,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
                                                          size_t length, uint32_t compareOperation) {
     pollForCompletion();
 
-    if (hardwareContext) {
-        hardwareContext->expectMemory(reinterpret_cast<uint64_t>(gfxAddress), srcAddress, length, compareOperation);
+    if (hardwareContextController) {
+        hardwareContextController->expectMemory(reinterpret_cast<uint64_t>(gfxAddress), srcAddress, length, compareOperation);
     }
 
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
@@ -763,12 +764,12 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         gfxAllocation.setAllocDumpable(false);
     }
 
-    if (hardwareContext) {
+    if (hardwareContextController) {
         if (AubAllocDump::isWritableBuffer(gfxAllocation)) {
             if (0 == DebugManager.flags.AUBDumpBufferFormat.get().compare("BIN")) {
                 auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
                 auto size = gfxAllocation.getUnderlyingBufferSize();
-                hardwareContext->dumpBufferBIN(gpuAddress, size);
+                hardwareContextController->dumpBufferBIN(gpuAddress, size);
             }
         }
         return;

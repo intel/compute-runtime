@@ -18,6 +18,7 @@ struct AubStream;
 
 namespace OCLRT {
 class GraphicsAllocation;
+class HardwareContextController;
 template <typename GfxFamily>
 class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<GfxFamily> {
   protected:
@@ -46,7 +47,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     void setupContext(OsContext &osContext) override;
 
     aub_stream::AubManager *aubManager = nullptr;
-    std::unique_ptr<aub_stream::HardwareContext> hardwareContext;
+    std::unique_ptr<HardwareContextController> hardwareContextController;
 
     struct EngineInfo {
         void *pLRCA;

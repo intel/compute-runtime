@@ -12,6 +12,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/graphics_allocation.h"
@@ -80,8 +81,8 @@ TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
-    if (hardwareContext) {
-        hardwareContext->initialize();
+    if (hardwareContextController) {
+        hardwareContextController->initialize();
         return;
     }
 
@@ -218,9 +219,9 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
-    if (hardwareContext) {
+    if (hardwareContextController) {
         if (batchBufferSize) {
-            hardwareContext->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
+            hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
         }
         return;
     }
@@ -346,8 +347,8 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBuff
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
-    if (hardwareContext) {
-        hardwareContext->pollForCompletion();
+    if (hardwareContextController) {
+        hardwareContextController->pollForCompletion();
         return;
     }
 
@@ -409,9 +410,9 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::makeCoherent(GraphicsAllocation &gfxAllocation) {
-    if (hardwareContext) {
-        hardwareContext->readMemory(gfxAllocation.getGpuAddress(), gfxAllocation.getUnderlyingBuffer(), gfxAllocation.getUnderlyingBufferSize(),
-                                    this->getMemoryBank(&gfxAllocation), MemoryConstants::pageSize64k);
+    if (hardwareContextController) {
+        hardwareContextController->readMemory(gfxAllocation.getGpuAddress(), gfxAllocation.getUnderlyingBuffer(), gfxAllocation.getUnderlyingBufferSize(),
+                                              this->getMemoryBank(&gfxAllocation), MemoryConstants::pageSize64k);
         return;
     }
 

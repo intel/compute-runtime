@@ -6,12 +6,14 @@
  */
 
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
+#include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
 #include "unit_tests/mocks/mock_aub_file_stream.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
@@ -212,38 +214,42 @@ HWTEST_F(AubFileStreamTests, givenNoNewTaskSinceLastPollWhenDeletingAubCsrThenDo
 }
 
 HWTEST_F(AubFileStreamTests, givenNewTasksAndHardwareContextPresentWhenCallingPollForCompletionThenCallPollForCompletion) {
-    auto mockManager = std::make_unique<MockAubManager>();
-    auto hardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
     auto aubStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(hardwareContext);
-    aubCsr->aubManager = mockManager.get();
-    aubCsr->stream = aubStream.get();
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
-    aubCsr->taskCount = 50;
-    aubCsr->pollForCompletionTaskCount = 49;
+    pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
+    MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
+    OsContext osContext(nullptr, 0, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    aubCsr.setupContext(osContext);
+    auto hardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
+    aubCsr.stream = aubStream.get();
+
+    aubCsr.taskCount = 50;
+    aubCsr.pollForCompletionTaskCount = 49;
     ASSERT_FALSE(hardwareContext->pollForCompletionCalled);
 
-    aubCsr->pollForCompletion();
+    aubCsr.pollForCompletion();
     EXPECT_TRUE(hardwareContext->pollForCompletionCalled);
 }
 
 HWTEST_F(AubFileStreamTests, givenNoNewTasksAndHardwareContextPresentWhenCallingPollForCompletionThenDontCallPollForCompletion) {
-    auto mockManager = std::make_unique<MockAubManager>();
-    auto hardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
     auto aubStream = std::make_unique<MockAubFileStream>();
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(hardwareContext);
-    aubCsr->aubManager = mockManager.get();
-    aubCsr->stream = aubStream.get();
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
-    aubCsr->taskCount = 50;
-    aubCsr->pollForCompletionTaskCount = 50;
+    pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
+    MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
+    OsContext osContext(nullptr, 0, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    aubCsr.setupContext(osContext);
+    auto hardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
+    aubCsr.stream = aubStream.get();
+
+    aubCsr.taskCount = 50;
+    aubCsr.pollForCompletionTaskCount = 50;
     ASSERT_FALSE(hardwareContext->pollForCompletionCalled);
 
-    aubCsr->pollForCompletion();
+    aubCsr.pollForCompletion();
     EXPECT_FALSE(hardwareContext->pollForCompletionCalled);
 }
 
@@ -311,19 +317,26 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryNotEqu
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
-    auto mockManager = std::make_unique<MockAubManager>();
-    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+    auto aubStream = std::make_unique<MockAubFileStream>();
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    mockAubCenter->aubManager = std::make_unique<MockAubManager>();
+    auto mockManager = static_cast<MockAubManager *>(mockAubCenter->aubManager.get());
 
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
-    aubCsr->aubManager = mockManager.get();
+    pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
+    MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
+    OsContext osContext(nullptr, 0, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    aubCsr.setupContext(osContext);
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
+    aubCsr.stream = aubStream.get();
 
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
+    auto commandBuffer = pDevice->executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto tagAllocation = pDevice->executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    aubCsr.setTagAllocation(tagAllocation);
+    LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 1, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     ResidencyContainer allocationsForResidency;
 
-    aubCsr->flush(batchBuffer, allocationsForResidency);
+    aubCsr.flush(batchBuffer, allocationsForResidency);
 
     EXPECT_TRUE(mockHardwareContext->initializeCalled);
     EXPECT_TRUE(mockHardwareContext->submitCalled);
@@ -332,37 +345,48 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
     //call writeMemory on aubManager to clone page tables
     EXPECT_FALSE(mockHardwareContext->writeMemoryCalled);
     EXPECT_TRUE(mockManager->writeMemoryCalled);
+    pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledWithZeroSizedBufferThenSubmitIsNotCalledOnHwContext) {
-    auto mockManager = std::make_unique<MockAubManager>();
-    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+    auto aubStream = std::make_unique<MockAubFileStream>();
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+    pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
+    MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
+    OsContext osContext(nullptr, 0, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    aubCsr.setupContext(osContext);
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
+    aubCsr.stream = aubStream.get();
 
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
+    auto commandBuffer = pDevice->executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto tagAllocation = pDevice->executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    aubCsr.setTagAllocation(tagAllocation);
+    LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     ResidencyContainer allocationsForResidency;
 
-    aubCsr->flush(batchBuffer, allocationsForResidency);
+    aubCsr.flush(batchBuffer, allocationsForResidency);
 
     EXPECT_FALSE(mockHardwareContext->submitCalled);
+    pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
-    auto mockManager = std::make_unique<MockAubManager>();
-    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    mockAubCenter->aubManager = std::make_unique<MockAubManager>();
+    auto mockManager = static_cast<MockAubManager *>(mockAubCenter->aubManager.get());
 
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
-    aubCsr->aubManager = mockManager.get();
+    pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
+    MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
+    OsContext osContext(nullptr, 0, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    aubCsr.setupContext(osContext);
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     ResidencyContainer allocationsForResidency = {&allocation};
-    aubCsr->processResidency(allocationsForResidency);
+    aubCsr.processResidency(allocationsForResidency);
 
     //call writeMemory on aubManager to clone page tables
     EXPECT_FALSE(mockHardwareContext->writeMemoryCalled);
@@ -370,29 +394,33 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCall
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
-    auto mockManager = std::make_unique<MockAubManager>();
-    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+    pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
+    MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
+    OsContext osContext(nullptr, 0, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    aubCsr.setupContext(osContext);
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
-    aubCsr->expectMemoryEqual(reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(0x1000), 0x1000);
+    aubCsr.expectMemoryEqual(reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(0x1000), 0x1000);
 
     EXPECT_TRUE(mockHardwareContext->expectMemoryCalled);
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryNotEqualIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
-    auto mockManager = std::make_unique<MockAubManager>();
-    auto mockHardwareContext = static_cast<MockHardwareContext *>(mockManager->createHardwareContext(0, EngineType::ENGINE_RCS));
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    aubCsr->hardwareContext = std::unique_ptr<MockHardwareContext>(mockHardwareContext);
+    pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
+    MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
+    OsContext osContext(nullptr, 0, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    aubCsr.setupContext(osContext);
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
-    aubCsr->expectMemoryNotEqual(reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(0x1000), 0x1000);
+    aubCsr.expectMemoryNotEqual(reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(0x1000), 0x1000);
 
     EXPECT_TRUE(mockHardwareContext->expectMemoryCalled);
 }
