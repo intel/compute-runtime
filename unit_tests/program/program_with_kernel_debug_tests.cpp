@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -270,10 +270,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenPro
 
         auto kernelInfo = pProgram->getKernelInfo("CopyBuffer");
 
-        EXPECT_NE(0u, kernelInfo->debugData.genIsaSize);
         EXPECT_NE(0u, kernelInfo->debugData.vIsaSize);
-
-        EXPECT_NE(nullptr, kernelInfo->debugData.genIsa);
         EXPECT_NE(nullptr, kernelInfo->debugData.vIsa);
     }
 }
