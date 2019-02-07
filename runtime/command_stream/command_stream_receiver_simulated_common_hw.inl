@@ -85,10 +85,13 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
     CommandStreamReceiverHw<GfxFamily>::setupContext(osContext);
 
     engineIndex = getEngineIndex(osContext.getEngineType());
+    uint32_t flags = 0;
+    getCsTraits(osContext.getEngineType()).setContextSaveRestoreFlags(flags);
+
     auto &engineType = osContext.getEngineType();
     if (aubManager && !(engineType.type == lowPriorityGpgpuEngine.type && engineType.id == lowPriorityGpgpuEngine.id)) {
         hardwareContext = std::unique_ptr<aub_stream::HardwareContext>(aubManager->createHardwareContext(deviceIndex,
-                                                                                                         engineIndex));
+                                                                                                         engineIndex, flags));
     }
 }
 } // namespace OCLRT

@@ -13,6 +13,7 @@
 #include "runtime/helpers/basic_math.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_lrca_helper.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -126,15 +127,6 @@ HWTEST_F(AubHelperHwTest, GivenEnabledLocalMemoryWhenGetMemTraceForPtEntryIsCall
     int addressSpace = aubHelper.getMemTraceForPtEntry();
     EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, addressSpace);
 }
-
-struct MockLrcaHelper : AubMemDump::LrcaHelper {
-    mutable uint32_t setContextSaveRestoreFlagsCalled = 0;
-    MockLrcaHelper(uint32_t base) : AubMemDump::LrcaHelper(base) {}
-    void setContextSaveRestoreFlags(uint32_t &value) const override {
-        setContextSaveRestoreFlagsCalled++;
-        AubMemDump::LrcaHelper::setContextSaveRestoreFlags(value);
-    }
-};
 
 HWTEST_F(AubHelperHwTest, giverLrcaHelperWhenContextIsInitializedThenContextFlagsAreSet) {
     const auto &csTraits = CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(EngineType::ENGINE_RCS);

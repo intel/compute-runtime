@@ -42,10 +42,15 @@ class MockAubManager : public aub_stream::AubManager {
     MockAubManager(){};
     ~MockAubManager() override {}
 
-    HardwareContext *createHardwareContext(uint32_t device, uint32_t engine) override { return new MockHardwareContext(device, engine); }
+    HardwareContext *createHardwareContext(uint32_t device, uint32_t engine) { return createHardwareContext(device, engine, 0); }
+    HardwareContext *createHardwareContext(uint32_t device, uint32_t engine, uint32_t flags) override {
+        contextFlags = flags;
+        return new MockHardwareContext(device, engine);
+    }
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 65536) override { writeMemoryCalled = true; }
 
     bool writeMemoryCalled = false;
+    uint32_t contextFlags = 0;
 
   protected:
     HardwareContext *hardwareContext = nullptr;
