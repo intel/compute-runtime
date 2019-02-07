@@ -58,9 +58,13 @@ DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool force
 
 DrmMemoryManager::~DrmMemoryManager() {
     if (this->limitedGpuAddressRangeAllocator) {
-        // internal 32bit allocator size is reserved 1 page (offset to 0x0) when the allocator created.
+        // freeing space for internal 32bit allocator
         uint64_t size = 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize;
         this->limitedGpuAddressRangeAllocator->free(this->internal32bitAllocator->getBase(), size);
+
+        // freeing space for external 32bit allocator
+        size += MemoryConstants::pageSize;
+        this->limitedGpuAddressRangeAllocator->free(this->allocator32Bit->getBase(), size);
     }
     applyCommonCleanup();
     if (gemCloseWorker) {
@@ -74,15 +78,20 @@ DrmMemoryManager::~DrmMemoryManager() {
 
 void DrmMemoryManager::initInternalRangeAllocator(size_t gpuRange) {
     if (gpuRange < MemoryConstants::max48BitAddress || !DebugManager.flags.EnableHostPtrTracking.get()) {
-        // set the allocator with the whole reduced address space range
-        this->limitedGpuAddressRangeAllocator.reset(new AllocatorLimitedRange(0, gpuRange));
+        // set the allocator with the whole reduced address space range - pageSize (base address) to
+        // avoid starting address of the heap to be 0, which could be interpreted as invalid address
+        // nullPtr.
+        this->limitedGpuAddressRangeAllocator.reset(new AllocatorLimitedRange(MemoryConstants::pageSize, gpuRange + 1 - MemoryConstants::pageSize));
 
-        // reserve 4G range for internal 32bit allocator, leave 1 page (offset to 0x0) to avoid mistakenly
-        // treating 0x0 as null pointer.
-        uint64_t size = 4 * MemoryConstants::gigaByte;
-        uint64_t internal32bitRange = size - MemoryConstants::pageSize;
-        uint64_t internal32bitBase = this->limitedGpuAddressRangeAllocator->allocate(size) - internal32bitRange;
-        internal32bitAllocator.reset(new Allocator32bit(internal32bitBase, internal32bitRange));
+        // 0x1000 ~ 0xFFFFFFFF address space for external 32bit allocator //
+        uint64_t size = 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize;
+        uint64_t allocatorBase = this->limitedGpuAddressRangeAllocator->allocate(size);
+        allocator32Bit.reset(new Allocator32bit(allocatorBase, size));
+
+        // 0x100000000 ~ 0x1FFFFFFFF address space for internal 32bit allocator //
+        size += MemoryConstants::pageSize;
+        allocatorBase = this->limitedGpuAddressRangeAllocator->allocate(size);
+        internal32bitAllocator.reset(new Allocator32bit(allocatorBase, size));
     } else {
         // when in full range space, set the internal32bitAllocator using 32bit addressing allocator.
         internal32bitAllocator.reset(new Allocator32bit);
@@ -395,6 +404,9 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
 
     DrmAllocation *drmAllocation = nullptr;
     if (limitedRangeAllocation) {
+        // softpin to the GPU address, res if it uses limitedRangeAllocation
+        bo->address = reinterpret_cast<void *>(res);
+        bo->softPin(res);
         drmAllocation = new DrmAllocation(bo, ptrAlloc, res, alignedAllocationSize,
                                           MemoryPool::System4KBPagesWith32BitGpuAddressing, false);
     } else {
