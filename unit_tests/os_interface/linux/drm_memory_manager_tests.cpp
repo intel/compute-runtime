@@ -993,6 +993,57 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenLimitedRangeAllocatorSetThenH
     EXPECT_EQ(memoryManager->internal32bitAllocator->getBase() + 4 * MemoryConstants::gigaByte, baseInternal32BitAlloc + size);
 }
 
+TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForAllocationWithAlignmentThenCorrectAllocatorTypeSelected) {
+    // if limitedRangeAllocator is enabled by default on the platform, only limitedRangeAllocator case will be tested.
+    auto limitedRangeAllocator = memoryManager->getDrmLimitedRangeAllocator();
+    if (limitedRangeAllocator) {
+        mock->ioctl_expected.gemUserptr = 1;
+        mock->ioctl_expected.gemWait = 1;
+        mock->ioctl_expected.gemClose = 1;
+    } else {
+        mock->ioctl_expected.gemUserptr = 2;
+        mock->ioctl_expected.gemWait = 2;
+        mock->ioctl_expected.gemClose = 2;
+    }
+
+    TestedDrmMemoryManager::AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize;
+    DrmAllocation *allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    auto bo = allocation->getBO();
+
+    // if limitedRangeAllocator is enabled by default on the platform, expect the allocator type
+    // is always INTERNAL_ALLOCATOR_WITH_DYNAMIC_BITRANGE
+    if (limitedRangeAllocator) {
+        EXPECT_EQ(INTERNAL_ALLOCATOR_WITH_DYNAMIC_BITRANGE, bo->peekAllocationType());
+        memoryManager->freeGraphicsMemory(allocation);
+    } else {
+        //allocation type should be UNKNOWN_ALLOCATOR
+        EXPECT_EQ(UNKNOWN_ALLOCATOR, bo->peekAllocationType());
+
+        memoryManager->freeGraphicsMemory(allocation);
+
+        memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+        allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+
+        bo = allocation->getBO();
+        //make sure allocation type is set for limitedRangeAllocation
+        EXPECT_EQ(INTERNAL_ALLOCATOR_WITH_DYNAMIC_BITRANGE, bo->peekAllocationType());
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+}
+
+TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForAllocationWithAlignmentAndLimitedRangeAllocatorSetAndAcquireGpuRangeFailsThenNullIsReturned) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    TestedDrmMemoryManager::AllocationData allocationData;
+
+    memoryManager->forceLimitedRangeAllocator(0xFFFF);
+    // set size to something bigger than allowed space
+    allocationData.size = 0x10000;
+    EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemoryWithAlignment(allocationData));
+}
+
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWithHostPtrAndAllocUserptrFailsThenFails) {
     mock->ioctl_expected.gemUserptr = 1;
 
@@ -1371,6 +1422,47 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFr
     EXPECT_EQ(1u, this->mock->setTilingHandle);
 }
 
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageThenUnmapSizeCorrectlySetWhenLimitedRangeAllocationUsedOrNotUsed) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    MockContext context;
+    context.setMemoryManager(memoryManager);
+
+    cl_image_format imageFormat;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_image_desc imageDesc = {};
+
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 64u;
+
+    char data[64u * 4 * 8];
+
+    auto retVal = CL_SUCCESS;
+
+    cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, data, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, dstImage);
+    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
+    ASSERT_NE(nullptr, imageGraphicsAllocation);
+
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
+
+    // if limitedRangeAllocator is enabled, gpuRange is acquired and it should be
+    // set as unmapsize for freeing in the furture.
+    auto limitedRangeAllocator = memoryManager->getDrmLimitedRangeAllocator();
+    if (!limitedRangeAllocator) {
+        EXPECT_EQ(0u, drmAllocation->getBO()->peekUnmapSize());
+    } else {
+        EXPECT_NE(0u, drmAllocation->getBO()->peekUnmapSize());
+    }
+}
+
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemWait = 1;
@@ -1401,10 +1493,6 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZer
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
-
-    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
-
-    EXPECT_EQ(0u, drmAllocation->getBO()->peekUnmapSize());
 
     EXPECT_EQ(0u, this->mock->createParamsHandle);
     EXPECT_EQ(0u, this->mock->createParamsSize);
@@ -1449,10 +1537,6 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNon
     EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
-    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
-
-    EXPECT_EQ(0u, drmAllocation->getBO()->peekUnmapSize());
-
     EXPECT_EQ(0u, this->mock->createParamsHandle);
     EXPECT_EQ(0u, this->mock->createParamsSize);
     __u32 tilingMode = I915_TILING_NONE;
@@ -1489,10 +1573,6 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreated
     std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, data, retVal));
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-
-    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
-
-    EXPECT_EQ(0u, drmAllocation->getBO()->peekUnmapSize());
 
     EXPECT_EQ(0u, this->mock->createParamsHandle);
     EXPECT_EQ(0u, this->mock->createParamsSize);
