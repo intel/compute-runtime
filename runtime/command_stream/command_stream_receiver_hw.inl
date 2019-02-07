@@ -563,7 +563,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
             //make sure we flush DC if needed
             if (epiloguePipeControlLocation) {
-                ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(false == HwHelper::cacheFlushAfterWalkerSupported(this->hwInfo));
+                bool flushDcInEpilogue = true;
+                if (DebugManager.flags.DisableDcFlushInEpilogue.get()) {
+                    flushDcInEpilogue = false;
+                }
+                ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(flushDcInEpilogue);
             }
             auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, surfacesForSubmit);
 
