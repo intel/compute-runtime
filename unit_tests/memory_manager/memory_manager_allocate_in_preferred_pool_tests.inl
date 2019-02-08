@@ -381,16 +381,18 @@ TEST(MemoryManagerTest, givenLinearStreamTypeWhenGetAllocationDataIsCalledThenSy
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 
-TEST(MemoryManagerTest, givenTimestampTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
+TEST(MemoryManagerTest, givenTimestampPacketTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequestedAndRequireCpuAccess) {
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER}, 0, nullptr);
-    EXPECT_TRUE(allocData.flags.useSystemMemory);
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 
 TEST(MemoryManagerTest, givenProfilingTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER}, 0, nullptr);
     EXPECT_TRUE(allocData.flags.useSystemMemory);
+    EXPECT_FALSE(allocData.flags.requiresCpuAccess);
 }
 
 TEST(MemoryManagerTest, givenAllocationPropertiesWithMultiOsContextCapableFlagEnabledWhenAllocateMemoryThenAllocationIsMultiOsContextCapable) {

@@ -258,7 +258,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::UNDECIDED:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
-    case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
     case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
         allocationData.flags.useSystemMemory = true;
         break;
@@ -279,6 +278,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::LINEAR_STREAM:
     case GraphicsAllocation::AllocationType::KERNEL_ISA:
     case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
+    case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
         allocationData.flags.requiresCpuAccess = true;
         break;
     default:
