@@ -45,15 +45,14 @@ class TimestampPacket {
         AfterWalker
     };
 
+    static GraphicsAllocation::AllocationType getAllocationType() {
+        return GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
+    }
+
     bool canBeReleased() const {
         return data[static_cast<uint32_t>(DataIndex::ContextEnd)] != 1 &&
                data[static_cast<uint32_t>(DataIndex::GlobalEnd)] != 1 &&
                implicitDependenciesCount.load() == 0;
-    }
-
-    uint64_t pickAddressForDataWrite(DataIndex operationType) const {
-        auto index = static_cast<uint32_t>(operationType);
-        return reinterpret_cast<uint64_t>(&data[index]);
     }
 
     uint32_t getData(DataIndex operationType) const {
@@ -68,7 +67,6 @@ class TimestampPacket {
     }
 
     void incImplicitDependenciesCount() { implicitDependenciesCount++; }
-    uint64_t pickImplicitDependenciesCountWriteAddress() const { return reinterpret_cast<uint64_t>(&implicitDependenciesCount); }
 
   protected:
     std::array<uint32_t, static_cast<uint32_t>(DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount> data;
@@ -98,25 +96,37 @@ class TimestampPacketContainer : public NonCopyableOrMovableClass {
 
 struct TimestampPacketHelper {
     template <typename GfxFamily>
-    static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TimestampPacket &timestampPacket) {
+    static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TagNode<TimestampPacket> &timestampPacketNode) {
         using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
-        auto compareAddress = timestampPacket.pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
-        auto dependenciesCountAddress = timestampPacket.pickImplicitDependenciesCountWriteAddress();
+        auto compareAddress = getGpuAddressForDataWrite(timestampPacketNode, TimestampPacket::DataIndex::ContextEnd);
+        auto dependenciesCountAddress = getImplicitDependenciesCounGpuWriteAddress(timestampPacketNode);
 
         KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress, 1);
 
-        timestampPacket.incImplicitDependenciesCount();
+        timestampPacketNode.tagForCpuAccess->incImplicitDependenciesCount();
 
         KernelCommandsHelper<GfxFamily>::programMiAtomic(cmdStream, dependenciesCountAddress,
                                                          MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
                                                          MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
     }
 
+    static uint64_t getGpuAddressForDataWrite(TagNode<TimestampPacket> &timestampPacketNodes, TimestampPacket::DataIndex dataIndex) {
+        auto offset = static_cast<uint32_t>(dataIndex) * sizeof(uint32_t);
+        return timestampPacketNodes.getGpuAddress() + offset;
+    }
+
+    static uint64_t getImplicitDependenciesCounGpuWriteAddress(TagNode<TimestampPacket> &timestampPacketNodes) {
+        auto offset = static_cast<uint32_t>(TimestampPacket::DataIndex::Max) *
+                      TimestampPacketSizeControl::preferedChunkCount *
+                      sizeof(uint32_t);
+        return timestampPacketNodes.getGpuAddress() + offset;
+    }
+
     template <typename GfxFamily>
     static void programCsrDependencies(LinearStream &cmdStream, const CsrDependencies &csrDependencies) {
         for (auto timestampPacketContainer : csrDependencies) {
             for (auto &node : timestampPacketContainer->peekNodes()) {
-                TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(cmdStream, *node->tag);
+                TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(cmdStream, *node);
             }
         }
     }

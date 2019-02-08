@@ -112,8 +112,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     size_t numWorkGroups[3] = {numberOfWorkgroups.x, numberOfWorkgroups.y, numberOfWorkgroups.z};
 
     if (currentTimestampPacketNodes && commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex)->tag;
-        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, walkerCmd, timestampPacket, TimestampPacket::WriteOperationType::AfterWalker);
+        auto timestampPacketNode = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
+        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, walkerCmd, timestampPacketNode, TimestampPacket::WriteOperationType::AfterWalker);
     }
 
     KernelCommandsHelper<GfxFamily>::sendIndirectState(

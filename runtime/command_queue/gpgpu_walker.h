@@ -22,6 +22,7 @@
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/kernel_info.h"
+#include "runtime/utilities/tag_allocator.h"
 #include "runtime/utilities/vec.h"
 
 namespace OCLRT {
@@ -190,7 +191,7 @@ class GpgpuWalkerHelper {
     static void setupTimestampPacket(
         LinearStream *cmdStream,
         WALKER_TYPE<GfxFamily> *walkerCmd,
-        TimestampPacket *timestampPacket,
+        TagNode<TimestampPacket> *timestampPacketNode,
         TimestampPacket::WriteOperationType writeOperationType);
 
     static void dispatchScheduler(

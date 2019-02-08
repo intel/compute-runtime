@@ -258,7 +258,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::UNDECIDED:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
-    case GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
         allocationData.flags.useSystemMemory = true;
         break;
     default:

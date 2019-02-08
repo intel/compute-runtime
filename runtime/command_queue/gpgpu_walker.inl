@@ -106,12 +106,14 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp
-    uint64_t TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->GlobalStartTS, hwTimeStamps.getGraphicsAllocation()->getUnderlyingBuffer());
+    uint64_t TimeStampAddress = hwTimeStamps.getBaseGraphicsAllocation()->getGpuAddress() +
+                                ptrDiff(&hwTimeStamps.tagForCpuAccess->GlobalStartTS, hwTimeStamps.getBaseGraphicsAllocation()->getUnderlyingBuffer());
 
     PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, TimeStampAddress, 0llu);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
-    TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->ContextStartTS, hwTimeStamps.getGraphicsAllocation()->getUnderlyingBuffer());
+    TimeStampAddress = hwTimeStamps.getBaseGraphicsAllocation()->getGpuAddress() +
+                       ptrDiff(&hwTimeStamps.tagForCpuAccess->ContextStartTS, hwTimeStamps.getBaseGraphicsAllocation()->getUnderlyingBuffer());
 
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
@@ -134,7 +136,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     pPipeControlCmd->setCommandStreamerStallEnable(true);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
-    uint64_t TimeStampAddress = hwTimeStamps.getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamps.tag->ContextEndTS, hwTimeStamps.getGraphicsAllocation()->getUnderlyingBuffer());
+    uint64_t TimeStampAddress = hwTimeStamps.getBaseGraphicsAllocation()->getGpuAddress() +
+                                ptrDiff(&hwTimeStamps.tagForCpuAccess->ContextEndTS, hwTimeStamps.getBaseGraphicsAllocation()->getUnderlyingBuffer());
 
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));

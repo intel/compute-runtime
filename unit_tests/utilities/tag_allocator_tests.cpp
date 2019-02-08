@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "test.h"
 #include "gtest/gtest.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/utilities/tag_allocator.h"
 #include "unit_tests/fixtures/memory_allocator_fixture.h"
 
@@ -21,6 +22,9 @@ struct timeStamps {
         start = 1;
         end = 2;
         release = true;
+    }
+    static GraphicsAllocation::AllocationType getAllocationType() {
+        return GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER;
     }
     bool canBeReleased() const { return release; }
     bool release;
@@ -76,7 +80,7 @@ TEST_F(TagAllocatorTest, Initialize) {
     EXPECT_EQ(nullptr, tagAllocator.getUsedTagsHead());
 
     void *gfxMemory = tagAllocator.getGraphicsAllocation()->getUnderlyingBuffer();
-    void *head = reinterpret_cast<void *>(tagAllocator.getFreeTagsHead()->tag);
+    void *head = reinterpret_cast<void *>(tagAllocator.getFreeTagsHead()->tagForCpuAccess);
     EXPECT_EQ(gfxMemory, head);
 }
 
@@ -120,7 +124,7 @@ TEST_F(TagAllocatorTest, TagAlignment) {
     TagNode<timeStamps> *tagNode = tagAllocator.getTag();
 
     ASSERT_NE(nullptr, tagNode);
-    EXPECT_EQ(0u, (uintptr_t)tagNode->tag % alignment);
+    EXPECT_EQ(0u, (uintptr_t)tagNode->tagForCpuAccess % alignment);
 
     tagAllocator.returnTag(tagNode);
 }
@@ -212,7 +216,7 @@ TEST_F(TagAllocatorTest, GetTagsFromTwoPools) {
 
     EXPECT_EQ(2u, tagAllocator.getGraphicsAllocationsCount());
     EXPECT_EQ(2u, tagAllocator.getTagPoolCount());
-    EXPECT_NE(tagNode1->getGraphicsAllocation(), tagNode2->getGraphicsAllocation());
+    EXPECT_NE(tagNode1->getBaseGraphicsAllocation(), tagNode2->getBaseGraphicsAllocation());
 
     tagAllocator.returnTag(tagNode1);
     tagAllocator.returnTag(tagNode2);
@@ -235,7 +239,7 @@ TEST_F(TagAllocatorTest, CleanupResources) {
     ASSERT_NE(nullptr, tagNode2);
 
     // Two pools should have different gfxAllocations
-    EXPECT_NE(tagNode1->getGraphicsAllocation(), tagNode2->getGraphicsAllocation());
+    EXPECT_NE(tagNode1->getBaseGraphicsAllocation(), tagNode2->getBaseGraphicsAllocation());
 
     // Return tags
     tagAllocator.returnTag(tagNode1);
@@ -250,12 +254,12 @@ TEST_F(TagAllocatorTest, CleanupResources) {
 
 TEST_F(TagAllocatorTest, whenNewTagIsTakenThenInitialize) {
     MockTagAllocator tagAllocator(memoryManager, 1, 2);
-    tagAllocator.getFreeTagsHead()->tag->start = 3;
-    tagAllocator.getFreeTagsHead()->tag->end = 4;
+    tagAllocator.getFreeTagsHead()->tagForCpuAccess->start = 3;
+    tagAllocator.getFreeTagsHead()->tagForCpuAccess->end = 4;
 
     auto node = tagAllocator.getTag();
-    EXPECT_EQ(1u, node->tag->start);
-    EXPECT_EQ(2u, node->tag->end);
+    EXPECT_EQ(1u, node->tagForCpuAccess->start);
+    EXPECT_EQ(2u, node->tagForCpuAccess->end);
 }
 
 TEST_F(TagAllocatorTest, givenMultipleReferencesOnTagWhenReleasingThenReturnWhenAllRefCountsAreReleased) {
@@ -280,7 +284,7 @@ TEST_F(TagAllocatorTest, givenNotReadyTagWhenReturnedThenMoveToDeferredList) {
     MockTagAllocator tagAllocator(memoryManager, 1, 1);
     auto node = tagAllocator.getTag();
 
-    node->tag->release = false;
+    node->tagForCpuAccess->release = false;
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
     tagAllocator.returnTag(node);
     EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
@@ -291,7 +295,7 @@ TEST_F(TagAllocatorTest, givenReadyTagWhenReturnedThenMoveToFreeList) {
     MockTagAllocator tagAllocator(memoryManager, 1, 1);
     auto node = tagAllocator.getTag();
 
-    node->tag->release = true;
+    node->tagForCpuAccess->release = true;
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
     tagAllocator.returnTag(node);
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
@@ -302,9 +306,9 @@ TEST_F(TagAllocatorTest, givenEmptyFreeListWhenAskingForNewTagThenTryToReleaseDe
     MockTagAllocator tagAllocator(memoryManager, 1, 1);
     auto node = tagAllocator.getTag();
 
-    node->tag->release = false;
+    node->tagForCpuAccess->release = false;
     tagAllocator.returnTag(node);
-    node->tag->release = false;
+    node->tagForCpuAccess->release = false;
     EXPECT_TRUE(tagAllocator.getFreeTags().peekIsEmpty());
     node = tagAllocator.getTag();
     EXPECT_NE(nullptr, node);
@@ -316,8 +320,8 @@ TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTags
     auto node1 = tagAllocator.getTag();
     auto node2 = tagAllocator.getTag();
 
-    node1->tag->release = false;
-    node2->tag->release = false;
+    node1->tagForCpuAccess->release = false;
+    node2->tagForCpuAccess->release = false;
     tagAllocator.returnTag(node1);
     tagAllocator.returnTag(node2);
 
@@ -325,18 +329,27 @@ TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTags
     EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
     EXPECT_TRUE(tagAllocator.getFreeTags().peekIsEmpty());
 
-    node1->tag->release = true;
+    node1->tagForCpuAccess->release = true;
     tagAllocator.releaseDeferredTags();
     EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
     EXPECT_FALSE(tagAllocator.getFreeTags().peekIsEmpty());
 
-    node2->tag->release = true;
+    node2->tagForCpuAccess->release = true;
     tagAllocator.releaseDeferredTags();
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
     EXPECT_FALSE(tagAllocator.getFreeTags().peekIsEmpty());
 }
 
-TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetTimestampTagBufferAllocationType) {
-    MockTagAllocator mockAllocator(memoryManager, 1, 1);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER, mockAllocator.getGraphicsAllocation()->getAllocationType());
+TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetValidllocationType) {
+    TagAllocator<TimestampPacket> timestampPacketAllocator(memoryManager, 1, 1);
+    TagAllocator<HwTimeStamps> hwTimeStampsAllocator(memoryManager, 1, 1);
+    TagAllocator<HwPerfCounter> hwPerfCounterAllocator(memoryManager, 1, 1);
+
+    auto timestampPacketTag = timestampPacketAllocator.getTag();
+    auto hwTimeStampsTag = hwTimeStampsAllocator.getTag();
+    auto hwPerfCounterTag = hwPerfCounterAllocator.getTag();
+
+    EXPECT_EQ(GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, timestampPacketTag->getBaseGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER, hwTimeStampsTag->getBaseGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER, hwPerfCounterTag->getBaseGraphicsAllocation()->getAllocationType());
 }

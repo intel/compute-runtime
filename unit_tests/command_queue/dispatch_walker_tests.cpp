@@ -1187,8 +1187,8 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
     ASSERT_NE(nullptr, storeReg);
 
     uint64_t gpuAddress = storeReg->getMemoryAddress();
-    auto timestampFieldAddress = checkForStart ? &hwTimeStamp1->tag->ContextStartTS : &hwTimeStamp1->tag->ContextEndTS;
-    uint64_t expectedAddress = hwTimeStamp1->getGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp1->getGraphicsAllocation()->getUnderlyingBuffer());
+    auto timestampFieldAddress = checkForStart ? &hwTimeStamp1->tagForCpuAccess->ContextStartTS : &hwTimeStamp1->tagForCpuAccess->ContextEndTS;
+    uint64_t expectedAddress = hwTimeStamp1->getBaseGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp1->getBaseGraphicsAllocation()->getUnderlyingBuffer());
     EXPECT_EQ(expectedAddress, gpuAddress);
 
     itorStoreReg++;
@@ -1198,8 +1198,8 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
     ASSERT_NE(nullptr, storeReg);
 
     gpuAddress = storeReg->getMemoryAddress();
-    timestampFieldAddress = checkForStart ? &hwTimeStamp2->tag->ContextStartTS : &hwTimeStamp2->tag->ContextEndTS;
-    expectedAddress = hwTimeStamp2->getGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp2->getGraphicsAllocation()->getUnderlyingBuffer());
+    timestampFieldAddress = checkForStart ? &hwTimeStamp2->tagForCpuAccess->ContextStartTS : &hwTimeStamp2->tagForCpuAccess->ContextEndTS;
+    expectedAddress = hwTimeStamp2->getBaseGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp2->getBaseGraphicsAllocation()->getUnderlyingBuffer());
     EXPECT_EQ(expectedAddress, gpuAddress);
 
     if (checkForStart) {
@@ -1209,8 +1209,8 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
         ASSERT_NE(nullptr, pipeControl);
 
         gpuAddress = static_cast<uint64_t>(pipeControl->getAddress()) | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
-        timestampFieldAddress = checkForStart ? &hwTimeStamp1->tag->GlobalStartTS : &hwTimeStamp1->tag->GlobalEndTS;
-        expectedAddress = hwTimeStamp1->getGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp1->getGraphicsAllocation()->getUnderlyingBuffer());
+        timestampFieldAddress = checkForStart ? &hwTimeStamp1->tagForCpuAccess->GlobalStartTS : &hwTimeStamp1->tagForCpuAccess->GlobalEndTS;
+        expectedAddress = hwTimeStamp1->getBaseGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp1->getBaseGraphicsAllocation()->getUnderlyingBuffer());
         EXPECT_EQ(expectedAddress, gpuAddress);
 
         itorPipeCtrl++;
@@ -1220,8 +1220,8 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
         ASSERT_NE(nullptr, pipeControl);
 
         gpuAddress = static_cast<uint64_t>(pipeControl->getAddress()) | static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32;
-        timestampFieldAddress = checkForStart ? &hwTimeStamp2->tag->GlobalStartTS : &hwTimeStamp2->tag->GlobalEndTS;
-        expectedAddress = hwTimeStamp2->getGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp2->getGraphicsAllocation()->getUnderlyingBuffer());
+        timestampFieldAddress = checkForStart ? &hwTimeStamp2->tagForCpuAccess->GlobalStartTS : &hwTimeStamp2->tagForCpuAccess->GlobalEndTS;
+        expectedAddress = hwTimeStamp2->getBaseGraphicsAllocation()->getGpuAddress() + ptrDiff(timestampFieldAddress, hwTimeStamp2->getBaseGraphicsAllocation()->getUnderlyingBuffer());
         EXPECT_EQ(expectedAddress, gpuAddress);
     }
 }

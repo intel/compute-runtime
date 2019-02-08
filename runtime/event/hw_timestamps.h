@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
+#include "runtime/memory_manager/graphics_allocation.h"
 #include <cinttypes>
 
 namespace OCLRT {
@@ -21,6 +21,9 @@ struct HwTimeStamps {
         ContextCompleteTS = 0;
     }
     bool canBeReleased() const { return true; }
+    static GraphicsAllocation::AllocationType getAllocationType() {
+        return GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER;
+    }
     uint64_t GlobalStartTS;
     uint64_t ContextStartTS;
     uint64_t GlobalEndTS;

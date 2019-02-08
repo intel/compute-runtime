@@ -1473,7 +1473,7 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
     EXPECT_EQ(csr, executionEnvironment.memoryManager->getDefaultCommandStreamReceiver(0));
 
     auto tagAllocator = csr->getEventPerfCountAllocator();
-    auto allocation = tagAllocator->getTag()->getGraphicsAllocation();
+    auto allocation = tagAllocator->getTag()->getBaseGraphicsAllocation();
     allocation->updateTaskCount(1, csr->getOsContext().getContextId());
     executionEnvironment.commandStreamReceivers.clear();
     EXPECT_NO_THROW(executionEnvironment.memoryManager.reset());

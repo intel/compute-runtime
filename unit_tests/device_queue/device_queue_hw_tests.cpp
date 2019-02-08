@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -360,7 +360,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
     uint32_t eventTimestampAddrLow = static_cast<uint32_t>(igilCmdQueue->m_controls.m_EventTimestampAddress & 0xFFFFFFFF);
     uint32_t eventTimestampAddrHigh = static_cast<uint32_t>((igilCmdQueue->m_controls.m_EventTimestampAddress & 0xFFFFFFFF00000000) >> 32);
 
-    uint64_t contextCompleteAddr = hwTimeStamp->getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamp->tag->ContextCompleteTS, hwTimeStamp->tag);
+    uint64_t contextCompleteAddr = hwTimeStamp->getBaseGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamp->tagForCpuAccess->ContextCompleteTS, hwTimeStamp->tagForCpuAccess);
     uint32_t contextCompleteAddrLow = static_cast<uint32_t>(contextCompleteAddr & 0xFFFFFFFF);
     uint32_t contextCompleteAddrHigh = static_cast<uint32_t>((contextCompleteAddr & 0xFFFFFFFF00000000) >> 32);
 

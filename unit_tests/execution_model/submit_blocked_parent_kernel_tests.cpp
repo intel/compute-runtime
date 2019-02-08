@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
     }
     void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint32_t taskCount) override {
         cleanupSectionAdded = true;
-        timestampAddedInCleanupSection = hwTimeStamp ? hwTimeStamp->tag : nullptr;
+        timestampAddedInCleanupSection = hwTimeStamp ? hwTimeStamp->tagForCpuAccess : nullptr;
         return BaseClass::addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, taskCount);
     }
     void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) override {
@@ -255,7 +255,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingW
         cmdComputeKernel->submit(0, false);
 
         EXPECT_TRUE(mockDevQueue.cleanupSectionAdded);
-        EXPECT_EQ(mockDevQueue.timestampAddedInCleanupSection, timestamp->tag);
+        EXPECT_EQ(mockDevQueue.timestampAddedInCleanupSection, timestamp->tagForCpuAccess);
 
         delete cmdComputeKernel;
         delete parentKernel;

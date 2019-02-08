@@ -232,7 +232,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 // Get allocation for timestamps
                 hwTimeStamps = eventBuilder.getEvent()->getHwTimeStampNode();
                 if (this->isPerfCountersEnabled()) {
-                    hwPerfCounter = eventBuilder.getEvent()->getHwPerfCounterNode()->tag;
+                    hwPerfCounter = eventBuilder.getEvent()->getHwPerfCounterNode()->tagForCpuAccess;
                     // PERF COUNTER: copy current configuration from queue to event
                     eventBuilder.getEvent()->copyPerfCounters(this->getPerfCountersConfigData());
                 }
@@ -553,9 +553,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     if (isProfilingEnabled() && eventBuilder.getEvent()) {
         this->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
         eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
-        getCommandStreamReceiver().makeResident(*eventBuilder.getEvent()->getHwTimeStampNode()->getGraphicsAllocation());
+        getCommandStreamReceiver().makeResident(*eventBuilder.getEvent()->getHwTimeStampNode()->getBaseGraphicsAllocation());
         if (isPerfCountersEnabled()) {
-            getCommandStreamReceiver().makeResident(*eventBuilder.getEvent()->getHwPerfCounterNode()->getGraphicsAllocation());
+            getCommandStreamReceiver().makeResident(*eventBuilder.getEvent()->getHwPerfCounterNode()->getBaseGraphicsAllocation());
         }
     }
 

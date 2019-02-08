@@ -291,8 +291,10 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "FILL_PATTERN";
     case OCLRT::GraphicsAllocation::AllocationType::PIPE:
         return "PIPE";
-    case OCLRT::GraphicsAllocation::AllocationType::TIMESTAMP_TAG_BUFFER:
-        return "TIMESTAMP_TAG_BUFFER";
+    case OCLRT::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+        return "TIMESTAMP_PACKET_TAG_BUFFER";
+    case OCLRT::GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
+        return "PROFILING_TAG_BUFFER";
     case OCLRT::GraphicsAllocation::AllocationType::COMMAND_BUFFER:
         return "COMMAND_BUFFER";
     case OCLRT::GraphicsAllocation::AllocationType::PRINTF_SURFACE:

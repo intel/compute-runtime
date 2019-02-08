@@ -388,11 +388,11 @@ HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPat
 template <typename TagType>
 struct MockTagNode : public TagNode<TagType> {
   public:
-    using TagNode<TagType>::tag;
+    using TagNode<TagType>::tagForCpuAccess;
     using TagNode<TagType>::gfxAllocation;
     MockTagNode() {
         gfxAllocation = nullptr;
-        tag = nullptr;
+        tagForCpuAccess = nullptr;
     }
 };
 
@@ -444,7 +444,7 @@ TEST(EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEn
     timestamp.ContextCompleteTS = 0;
 
     MockTagNode<HwTimeStamps> timestampNode;
-    timestampNode.tag = &timestamp;
+    timestampNode.tagForCpuAccess = &timestamp;
 
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
 
@@ -479,7 +479,7 @@ TEST(EventProfilingTest, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawData
     timestamp.ContextCompleteTS = 70;
 
     MockTagNode<HwTimeStamps> timestampNode;
-    timestampNode.tag = &timestamp;
+    timestampNode.tagForCpuAccess = &timestamp;
 
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
     cl_event clEvent = &event;
@@ -863,7 +863,7 @@ HWTEST_F(ProfilingWithPerfCountersTests,
 struct MockTimestampPacketContainer : public TimestampPacketContainer {
     ~MockTimestampPacketContainer() override {
         for (const auto &node : timestampPacketNodes) {
-            delete node->tag;
+            delete node->tagForCpuAccess;
             delete node;
         }
         timestampPacketNodes.clear();
@@ -878,12 +878,17 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
     }
 
     void addTimestampNode(int contextStart, int contextEnd, int globalStart) {
-        auto timestampPacket = new TimestampPacket();
-        *reinterpret_cast<uint32_t *>(timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextStart)) = contextStart;
-        *reinterpret_cast<uint32_t *>(timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd)) = contextEnd;
-        *reinterpret_cast<uint32_t *>(timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::GlobalStart)) = globalStart;
         auto node = new MockTagNode<TimestampPacket>();
-        node->tag = timestampPacket;
+        auto timestampPacket = new TimestampPacket();
+        node->tagForCpuAccess = timestampPacket;
+
+        *reinterpret_cast<uint32_t *>(ptrOffset(timestampPacket,
+                                                sizeof(uint32_t) * static_cast<uint32_t>(TimestampPacket::DataIndex::ContextStart))) = contextStart;
+        *reinterpret_cast<uint32_t *>(ptrOffset(timestampPacket,
+                                                sizeof(uint32_t) * static_cast<uint32_t>(TimestampPacket::DataIndex::ContextEnd))) = contextEnd;
+        *reinterpret_cast<uint32_t *>(ptrOffset(timestampPacket,
+                                                sizeof(uint32_t) * static_cast<uint32_t>(TimestampPacket::DataIndex::GlobalStart))) = globalStart;
+
         ev->timestampPacketContainer->add(node);
     }
 
@@ -902,7 +907,7 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithOneEleme
     hwTimestamps.ContextEndTS = 110;
     hwTimestamps.GlobalStartTS = 120;
     MockTagNode<HwTimeStamps> hwTimestampsNode;
-    hwTimestampsNode.tag = &hwTimestamps;
+    hwTimestampsNode.tagForCpuAccess = &hwTimestamps;
     ev->timeStampNode = &hwTimestampsNode;
 
     ev->calcProfilingData();

@@ -216,7 +216,8 @@ void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKer
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     if (hwTimeStamp != nullptr) {
-        uint64_t TimeStampAddress = hwTimeStamp->getGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamp->tag->ContextCompleteTS, hwTimeStamp->getGraphicsAllocation()->getUnderlyingBuffer());
+        uint64_t TimeStampAddress = hwTimeStamp->getBaseGraphicsAllocation()->getGpuAddress() +
+                                    ptrDiff(&hwTimeStamp->tagForCpuAccess->ContextCompleteTS, hwTimeStamp->getBaseGraphicsAllocation()->getUnderlyingBuffer());
         igilQueue->m_controls.m_EventTimestampAddress = TimeStampAddress;
 
         addProfilingEndCmds(TimeStampAddress);

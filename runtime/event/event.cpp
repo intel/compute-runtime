@@ -203,7 +203,7 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
         if (!cmdQueue->getPerfCounters()->processEventReport(paramValueSize,
                                                              paramValue,
                                                              paramValueSizeRet,
-                                                             getHwPerfCounterNode()->tag,
+                                                             getHwPerfCounterNode()->tagForCpuAccess,
                                                              perfConfigurationData,
                                                              updateStatusAndCheckCompletion())) {
             return CL_PROFILING_INFO_NOT_AVAILABLE;
@@ -255,28 +255,28 @@ bool Event::calcProfilingData() {
         if (timestampPacketContainer && timestampPacketContainer->peekNodes().size() > 0) {
             const auto timestamps = timestampPacketContainer->peekNodes();
 
-            uint64_t contextStartTS = timestamps[0]->tag->getData(TimestampPacket::DataIndex::ContextStart);
-            uint64_t contextEndTS = timestamps[0]->tag->getData(TimestampPacket::DataIndex::ContextEnd);
-            uint64_t globalStartTS = timestamps[0]->tag->getData(TimestampPacket::DataIndex::GlobalStart);
+            uint64_t contextStartTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextStart);
+            uint64_t contextEndTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextEnd);
+            uint64_t globalStartTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacket::DataIndex::GlobalStart);
 
             for (const auto &timestamp : timestamps) {
-                if (timestamp->tag->getData(TimestampPacket::DataIndex::ContextStart) < contextStartTS) {
-                    contextStartTS = timestamp->tag->getData(TimestampPacket::DataIndex::ContextStart);
+                if (timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextStart) < contextStartTS) {
+                    contextStartTS = timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextStart);
                 }
-                if (timestamp->tag->getData(TimestampPacket::DataIndex::ContextEnd) > contextEndTS) {
-                    contextEndTS = timestamp->tag->getData(TimestampPacket::DataIndex::ContextEnd);
+                if (timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextEnd) > contextEndTS) {
+                    contextEndTS = timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextEnd);
                 }
-                if (timestamp->tag->getData(TimestampPacket::DataIndex::GlobalStart) < globalStartTS) {
-                    globalStartTS = timestamp->tag->getData(TimestampPacket::DataIndex::GlobalStart);
+                if (timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::GlobalStart) < globalStartTS) {
+                    globalStartTS = timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::GlobalStart);
                 }
             }
             calculateProfilingDataInternal(contextStartTS, contextEndTS, &contextEndTS, globalStartTS);
         } else if (timeStampNode) {
             calculateProfilingDataInternal(
-                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tag))->ContextStartTS,
-                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tag))->ContextEndTS,
-                &(reinterpret_cast<HwTimeStamps *>(timeStampNode->tag))->ContextCompleteTS,
-                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tag))->GlobalStartTS);
+                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tagForCpuAccess))->ContextStartTS,
+                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tagForCpuAccess))->ContextEndTS,
+                &(reinterpret_cast<HwTimeStamps *>(timeStampNode->tagForCpuAccess))->ContextCompleteTS,
+                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tagForCpuAccess))->GlobalStartTS);
         }
     }
     return dataCalculated;
@@ -476,7 +476,7 @@ void Event::submitCommand(bool abortTasks) {
         }
         if ((this->isProfilingEnabled()) && (this->cmdQueue != nullptr)) {
             if (timeStampNode) {
-                this->cmdQueue->getCommandStreamReceiver().makeResident(*timeStampNode->getGraphicsAllocation());
+                this->cmdQueue->getCommandStreamReceiver().makeResident(*timeStampNode->getBaseGraphicsAllocation());
                 cmdToProcess->timestamp = timeStampNode;
             }
             if (profilingCpuPath) {
@@ -486,7 +486,7 @@ void Event::submitCommand(bool abortTasks) {
                 this->cmdQueue->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
             }
             if (perfCountersEnabled && perfCounterNode) {
-                this->cmdQueue->getCommandStreamReceiver().makeResident(*perfCounterNode->getGraphicsAllocation());
+                this->cmdQueue->getCommandStreamReceiver().makeResident(*perfCounterNode->getBaseGraphicsAllocation());
             }
         }
         auto &complStamp = cmdToProcess->submit(taskLevel, abortTasks);

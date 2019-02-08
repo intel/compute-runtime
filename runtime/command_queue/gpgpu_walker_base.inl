@@ -176,11 +176,11 @@ template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     LinearStream *cmdStream,
     WALKER_TYPE<GfxFamily> *walkerCmd,
-    TimestampPacket *timestampPacket,
+    TagNode<TimestampPacket> *timestampPacketNode,
     TimestampPacket::WriteOperationType writeOperationType) {
 
     if (TimestampPacket::WriteOperationType::AfterWalker == writeOperationType) {
-        uint64_t address = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+        uint64_t address = TimestampPacketHelper::getGpuAddressForDataWrite(*timestampPacketNode, TimestampPacket::DataIndex::ContextEnd);
         PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(cmdStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, 0);
     }
 }

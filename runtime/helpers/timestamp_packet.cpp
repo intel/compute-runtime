@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ void TimestampPacketContainer::resolveDependencies(bool clearAllDependencies) {
     std::vector<Node *> pendingNodes;
 
     for (auto node : timestampPacketNodes) {
-        if (node->tag->canBeReleased() || clearAllDependencies) {
+        if (node->tagForCpuAccess->canBeReleased() || clearAllDependencies) {
             node->returnTag();
         } else {
             pendingNodes.push_back(node);
@@ -53,6 +53,6 @@ void TimestampPacketContainer::assignAndIncrementNodesRefCounts(const TimestampP
 
 void TimestampPacketContainer::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     for (auto node : timestampPacketNodes) {
-        commandStreamReceiver.makeResident(*node->getGraphicsAllocation());
+        commandStreamReceiver.makeResident(*node->getBaseGraphicsAllocation());
     }
 }

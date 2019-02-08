@@ -199,8 +199,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         dispatchWorkarounds(commandStream, commandQueue, kernel, true);
 
         if (currentTimestampPacketNodes && commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-            auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex)->tag;
-            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacket, TimestampPacket::WriteOperationType::BeforeWalker);
+            auto timestampPacketNode = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
+            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacketNode, TimestampPacket::WriteOperationType::BeforeWalker);
         }
 
         programWalker(*commandStream, kernel, commandQueue, currentTimestampPacketNodes, *dsh, *ioh, *ssh, globalWorkSizes,
