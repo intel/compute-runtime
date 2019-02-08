@@ -52,6 +52,10 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     uint32_t getTileModeSurfaceState() override;
 
+    uint32_t getRenderAuxPitchTiles() override { return unifiedAuxPitch; };
+
+    uint32_t getAuxQPitch() override { return auxQPitch; }
+
     GMM_RESOURCE_FORMAT getResourceFormat() override { return mockResourceCreateParams.Format; }
 
     GMM_SURFACESTATE_FORMAT getResourceFormatSurfaceState() override { return (GMM_SURFACESTATE_FORMAT)0; }
@@ -66,10 +70,6 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     void *getSystemMemPointer(uint8_t isD3DDdiAllocation) override { return (void *)mockResourceCreateParams.pExistingSysMem; }
 
-    MOCK_METHOD0(getRenderAuxPitchTiles, uint32_t(void));
-
-    MOCK_METHOD0(getAuxQPitch, uint32_t(void));
-
     MOCK_METHOD1(getUnifiedAuxSurfaceOffset, uint64_t(GMM_UNIFIED_AUX_TYPE auxType));
 
     GMM_RESOURCE_INFO *peekHandle() const override { return mockResourceInfoHandle; }
@@ -82,6 +82,9 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     void setUnifiedAuxTranslationCapable();
     void setMultisampleControlSurface();
+
+    void setUnifiedAuxPitchTiles(uint32_t value);
+    void setAuxQPitch(uint32_t value);
 
     uint32_t getOffsetCalled = 0u;
     uint32_t arrayIndexPassedToGetOffset = 0;
@@ -98,6 +101,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     size_t size = 0;
     size_t rowPitch = 0;
     uint32_t qPitch = 0;
+    uint32_t unifiedAuxPitch = 0;
+    uint32_t auxQPitch = 0;
 };
 } // namespace OCLRT
 

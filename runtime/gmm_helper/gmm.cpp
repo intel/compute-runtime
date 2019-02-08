@@ -252,4 +252,11 @@ bool Gmm::unifiedAuxTranslationCapable() const {
 bool Gmm::hasMultisampleControlSurface() const {
     return this->gmmResourceInfo->getResourceFlags()->Gpu.MCS;
 }
+
+uint32_t Gmm::getUnifiedAuxPitchTiles() {
+    return this->gmmResourceInfo->getRenderAuxPitchTiles();
+}
+uint32_t Gmm::getAuxQPitch() {
+    return this->gmmResourceInfo->getAuxQPitch();
+}
 } // namespace OCLRT

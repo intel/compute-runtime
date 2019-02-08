@@ -167,6 +167,8 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
 
         if (mcsGmm->unifiedAuxTranslationCapable() && mcsGmm->hasMultisampleControlSurface()) {
             setAuxParamsForMCSCCS(surfaceState, mcsGmm);
+            surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
+            surfaceState->setAuxiliarySurfaceQpitch(mcsGmm->getAuxQPitch());
             setClearColorParams(surfaceState, mcsGmm);
             setUnifiedAuxBaseAddress(surfaceState, mcsGmm);
         } else if (mcsGmm->unifiedAuxTranslationCapable()) {

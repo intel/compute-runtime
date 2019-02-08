@@ -119,6 +119,13 @@ void MockGmmResourceInfo::setMultisampleControlSurface() {
     mockResourceCreateParams.Flags.Gpu.MCS = 1;
 }
 
+void MockGmmResourceInfo::setUnifiedAuxPitchTiles(uint32_t value) {
+    this->unifiedAuxPitch = value;
+}
+void MockGmmResourceInfo::setAuxQPitch(uint32_t value) {
+    this->auxQPitch = value;
+}
+
 uint32_t MockGmmResourceInfo::getTileModeSurfaceState() {
     if (mockResourceCreateParams.Type == GMM_RESOURCE_TYPE::RESOURCE_2D ||
         mockResourceCreateParams.Type == GMM_RESOURCE_TYPE::RESOURCE_3D) {

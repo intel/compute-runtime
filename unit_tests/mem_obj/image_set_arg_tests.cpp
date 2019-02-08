@@ -617,6 +617,42 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     EXPECT_NE(0u, surfaceState->getAuxiliarySurfaceBaseAddress());
 }
 
+HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapabilityAndMcsThenAuxSurfPitchAndQPitchIsSet) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+
+    McsSurfaceInfo msi = {10, 20, 3};
+    auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    mcsAlloc->gmm = new Gmm(nullptr, 1, false);
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    imgDesc.num_samples = 8;
+
+    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc));
+    image->setMcsSurfaceInfo(msi);
+    image->setMcsAllocation(mcsAlloc);
+    cl_mem memObj = image.get();
+
+    auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->gmm->gmmResourceInfo.get());
+    mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
+    mockMcsGmmResInfo->setMultisampleControlSurface();
+
+    uint32_t pitchValue = 4u;
+    uint32_t qPitchValue = 12u;
+
+    mockMcsGmmResInfo->setUnifiedAuxPitchTiles(pitchValue);
+    mockMcsGmmResInfo->setAuxQPitch(qPitchValue);
+    EXPECT_TRUE(mcsAlloc->gmm->unifiedAuxTranslationCapable());
+
+    retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(),
+                                                                                 pKernelInfo->kernelArgInfo[0].offsetHeap));
+
+    EXPECT_EQ(pitchValue, surfaceState->getAuxiliarySurfacePitch());
+    EXPECT_EQ(qPitchValue, surfaceState->getAuxiliarySurfaceQpitch());
+}
+
 HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Dbuffer) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
@@ -748,9 +784,10 @@ HWTEST_F(ImageSetArgTest, givenNonRenderCompressedResourceWhenSettingImgArgThenD
     auto mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
     gmm->isRenderCompressed = false;
 
-    EXPECT_CALL(*mockGmmResInfo, getRenderAuxPitchTiles()).Times(0);
-    EXPECT_CALL(*mockGmmResInfo, getAuxQPitch()).Times(0);
     EXPECT_CALL(*mockGmmResInfo, getUnifiedAuxSurfaceOffset(_)).Times(0);
+
+    EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceQpitch());
+    EXPECT_EQ(1u, surfaceState.getAuxiliarySurfacePitch());
 
     srcImage->setImageArg(&surfaceState, false, 0);
 
