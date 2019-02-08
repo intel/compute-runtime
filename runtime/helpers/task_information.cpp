@@ -261,7 +261,7 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
     }
 
     bool blocking = true;
-    TakeOwnershipWrapper<Device> deviceOwnership(cmdQ.getDevice());
+    auto lockCSR = this->csr.obtainUniqueOwnership();
 
     auto &queueCommandStream = cmdQ.getCS(this->commandSize);
     size_t offset = queueCommandStream.getUsed();

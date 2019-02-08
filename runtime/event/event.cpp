@@ -470,6 +470,10 @@ void Event::transitionExecutionStatus(int32_t newExecutionStatus) const {
 void Event::submitCommand(bool abortTasks) {
     std::unique_ptr<Command> cmdToProcess(cmdToSubmit.exchange(nullptr));
     if (cmdToProcess.get() != nullptr) {
+        std::unique_lock<CommandStreamReceiver::MutexType> lockCSR;
+        if (this->cmdQueue) {
+            lockCSR = this->getCommandQueue()->getCommandStreamReceiver().obtainUniqueOwnership();
+        }
         if ((this->isProfilingEnabled()) && (this->cmdQueue != nullptr)) {
             if (timeStampNode) {
                 this->cmdQueue->getCommandStreamReceiver().makeResident(*timeStampNode->getGraphicsAllocation());
@@ -498,7 +502,7 @@ void Event::submitCommand(bool abortTasks) {
     if (this->taskCount == Event::eventNotReady) {
         if (!this->isUserEvent() && this->eventWithoutCommand) {
             if (this->cmdQueue) {
-                TakeOwnershipWrapper<Device> deviceOwnerhsip(this->cmdQueue->getDevice());
+                auto lockCSR = this->getCommandQueue()->getCommandStreamReceiver().obtainUniqueOwnership();
                 updateTaskCount(this->cmdQueue->getCommandStreamReceiver().peekTaskCount());
             }
         }
