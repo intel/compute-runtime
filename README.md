@@ -15,6 +15,9 @@ The Intel(R) Graphics Compute Runtime for OpenCL(TM) is distributed under the MI
 
 You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
+## Install
+Compiled .deb packages are provided on the release page: https://github.com/intel/compute-runtime/releases
+
 ## Dependencies
 
 * GmmLib - https://github.com/intel/gmmlib
