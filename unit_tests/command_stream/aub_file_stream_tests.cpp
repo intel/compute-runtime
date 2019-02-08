@@ -199,7 +199,7 @@ HWTEST_F(AubFileStreamTests, givenNoNewTaskSinceLastPollWhenDeletingAubCsrThenDo
 
 HWTEST_F(AubFileStreamTests, givenNewTasksAndHardwareContextPresentWhenCallingPollForCompletionThenCallPollForCompletion) {
     auto aubStream = std::make_unique<MockAubFileStream>();
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
@@ -219,7 +219,7 @@ HWTEST_F(AubFileStreamTests, givenNewTasksAndHardwareContextPresentWhenCallingPo
 
 HWTEST_F(AubFileStreamTests, givenNoNewTasksAndHardwareContextPresentWhenCallingPollForCompletionThenDontCallPollForCompletion) {
     auto aubStream = std::make_unique<MockAubFileStream>();
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
@@ -302,7 +302,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryNotEqu
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
     auto aubStream = std::make_unique<MockAubFileStream>();
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
@@ -331,7 +331,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledWithZeroSizedBufferThenSubmitIsNotCalledOnHwContext) {
     auto aubStream = std::make_unique<MockAubFileStream>();
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
@@ -355,7 +355,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledWithZ
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
@@ -371,7 +371,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenMakeResidentIsCall
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
@@ -387,7 +387,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualI
 }
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryNotEqualIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);

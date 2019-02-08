@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,5 +11,7 @@ class MockAubCenter : public OCLRT::AubCenter {
   public:
     using AubCenter::AubCenter;
     using AubCenter::aubManager;
+    using AubCenter::aubStreamMode;
+
     ~MockAubCenter() override = default;
 };

@@ -142,7 +142,7 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailaleWhen
     HardwareInfo hwInfo = *platformDevices[0];
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(&hwInfo, false, fileName);
+    MockAubCenter *mockAubCenter = new MockAubCenter(&hwInfo, false, fileName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);

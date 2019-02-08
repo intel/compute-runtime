@@ -175,7 +175,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWithAubMana
     HardwareInfo hwInfo = *platformDevices[0];
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(&hwInfo, false, fileName);
+    MockAubCenter *mockAubCenter = new MockAubCenter(&hwInfo, false, fileName, CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
@@ -193,7 +193,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateH
     OsContext osContext(nullptr, 0, allEngineInstances[engineIndex], PreemptionMode::Disabled);
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName);
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
@@ -213,7 +213,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSet
     OsContext osContext(nullptr, 0, lowPriorityGpgpuEngine, PreemptionMode::Disabled);
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName);
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);

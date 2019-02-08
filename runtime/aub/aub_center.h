@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_stream/aub_stream_provider.h"
+#include "runtime/helpers/options.h"
 #include "runtime/memory_manager/address_mapper.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
@@ -16,7 +17,7 @@ struct HardwareInfo;
 
 class AubCenter {
   public:
-    AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName);
+    AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
 
     AubCenter();
     virtual ~AubCenter() = default;
@@ -49,5 +50,6 @@ class AubCenter {
     std::unique_ptr<AubStreamProvider> streamProvider;
 
     std::unique_ptr<aub_stream::AubManager> aubManager;
+    uint32_t aubStreamMode = 0;
 };
 } // namespace OCLRT

@@ -128,7 +128,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledMultip
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsReceivesCorrectInputParams) {
     MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.initAubCenter(platformDevices[0], true, "test.aub");
+    executionEnvironment.initAubCenter(platformDevices[0], true, "test.aub", CommandStreamReceiverType::CSR_AUB);
     EXPECT_TRUE(executionEnvironment.initAubCenterCalled);
     EXPECT_TRUE(executionEnvironment.localMemoryEnabledReceived);
     EXPECT_STREQ(executionEnvironment.aubFileNameReceived.c_str(), "test.aub");
@@ -139,21 +139,21 @@ TEST(ExecutionEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenRe
     DebugManager.flags.UseAubStream.set(false);
 
     ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initAubCenter(platformDevices[0], false, "");
+    executionEnvironment.initAubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
     auto aubManager = executionEnvironment.aubCenter->getAubManager();
     EXPECT_EQ(nullptr, aubManager);
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
     ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initAubCenter(platformDevices[0], false, "");
+    executionEnvironment.initAubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
     auto currentAubCenter = executionEnvironment.aubCenter.get();
     EXPECT_NE(nullptr, currentAubCenter);
     auto currentAubStreamProvider = currentAubCenter->getStreamProvider();
     EXPECT_NE(nullptr, currentAubStreamProvider);
     auto currentAubFileStream = currentAubStreamProvider->getStream();
     EXPECT_NE(nullptr, currentAubFileStream);
-    executionEnvironment.initAubCenter(platformDevices[0], false, "");
+    executionEnvironment.initAubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(currentAubCenter, executionEnvironment.aubCenter.get());
     EXPECT_EQ(currentAubStreamProvider, executionEnvironment.aubCenter->getStreamProvider());
     EXPECT_EQ(currentAubFileStream, executionEnvironment.aubCenter->getStreamProvider()->getStream());
@@ -193,7 +193,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         MemoryMangerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct AubCenterMock : public DestructorCounted<AubCenter, 4> {
-        AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false, "") {}
+        AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB) {}
     };
     struct CommandStreamReceiverMock : public DestructorCounted<MockCommandStreamReceiver, 3> {
         CommandStreamReceiverMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}

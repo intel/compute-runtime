@@ -890,7 +890,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AUBDumpBufferFormat.set("BIN");
 
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
@@ -917,7 +917,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
 HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpAllocationIsCalledButDumpFormatIsNotSpecifiedThenGraphicsAllocationShouldNotBeDumped) {
     DebugManagerStateRestore dbgRestore;
 
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
@@ -945,7 +945,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationNonWritableWhenDu
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AUBDumpBufferFormat.set("BIN");
 
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
@@ -974,7 +974,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationNotDumpableWhenDu
     DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
     DebugManager.flags.AUBDumpBufferFormat.set("BIN");
 
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
@@ -1004,7 +1004,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationDumpableWhenDumpA
     DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
     DebugManager.flags.AUBDumpBufferFormat.set("BIN");
 
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "");
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);

@@ -23,9 +23,9 @@ ExecutionEnvironment::ExecutionEnvironment() = default;
 ExecutionEnvironment::~ExecutionEnvironment() = default;
 extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment);
 
-void ExecutionEnvironment::initAubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName) {
+void ExecutionEnvironment::initAubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (!aubCenter) {
-        aubCenter.reset(new AubCenter(pHwInfo, localMemoryEnabled, aubFileName));
+        aubCenter.reset(new AubCenter(pHwInfo, localMemoryEnabled, aubFileName, csrType));
     }
 }
 void ExecutionEnvironment::initGmm(const HardwareInfo *hwInfo) {

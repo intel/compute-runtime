@@ -178,7 +178,7 @@ bool Platform::initialize() {
     CommandStreamReceiverType csrType = this->devices[0]->getDefaultEngine().commandStreamReceiver->getType();
     if (csrType != CommandStreamReceiverType::CSR_HW) {
         auto enableLocalMemory = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
-        executionEnvironment->initAubCenter(&hwInfo[0], enableLocalMemory, "aubfile");
+        executionEnvironment->initAubCenter(&hwInfo[0], enableLocalMemory, "aubfile", csrType);
     }
 
     this->fillGlobalDispatchTable();
