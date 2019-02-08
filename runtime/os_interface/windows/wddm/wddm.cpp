@@ -985,7 +985,7 @@ void Wddm::applyBlockingMakeResident(WddmAllocation &allocation) {
         break;
     }
     DEBUG_BREAK_IF(!madeResident);
-    auto &lock = acquireLock(temporaryResourcesLock);
+    auto lock = acquireLock(temporaryResourcesLock);
     temporaryResources.push_back(allocation.handle);
     lock.unlock();
     while (currentPagingFenceValue > *getPagingFenceAddress())
