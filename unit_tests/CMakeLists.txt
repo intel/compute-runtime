@@ -177,14 +177,12 @@ target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit
 
 if(WIN32)
   set(cloc_cmd_prefix ocloc)
-  set(ir_extension ".spv")
 else()
   if(DEFINED IGDRCL__IGC_LIBRARY_PATH)
     set(cloc_cmd_prefix LD_LIBRARY_PATH=${IGDRCL__IGC_LIBRARY_PATH} $<TARGET_FILE:ocloc>)
   else()
     set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc> $<TARGET_FILE:ocloc>)
   endif()
-  set(ir_extension ".bc")
 endif()
 
 function(neo_gen_kernels target platform_name suffix)
@@ -198,7 +196,7 @@ function(neo_gen_kernels target platform_name suffix)
 
     set(outputpath_base "${outputdir}${basename}_${suffix}")
     set(output_files
-      ${outputpath_base}${ir_extension}
+      ${outputpath_base}.spv
       ${outputpath_base}.bin
       ${outputpath_base}.gen
     )

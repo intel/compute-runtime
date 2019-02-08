@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -34,13 +34,8 @@ function(compile_builtin gen_type platform_type builtin)
   get_filename_component(BASENAME ${builtin} NAME_WE)
 
   set(OUTPUTPATH_BASE "${OUTPUTDIR}/${BASENAME}_${family_name_with_type}")
-  if(WIN32)
-    set(IR_EXTENSION ".spv")
-  else()
-    set(IR_EXTENSION ".bc")
-  endif()
   set(OUTPUT_FILES
-    ${OUTPUTPATH_BASE}${IR_EXTENSION}
+    ${OUTPUTPATH_BASE}.spv
     ${OUTPUTPATH_BASE}.bin
     ${OUTPUTPATH_BASE}.cpp
     ${OUTPUTPATH_BASE}.gen
