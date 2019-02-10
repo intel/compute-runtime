@@ -402,6 +402,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     MOCKABLE_VIRTUAL bool setupDebugSurface(Kernel *kernel);
 
+    bool getRequiresCacheFlushAfterWalker() const {
+        return requiresCacheFlushAfterWalker;
+    }
+
     // taskCount of last task
     uint32_t taskCount = 0;
 
@@ -451,6 +455,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool mapDcFlushRequired = false;
     bool isSpecialCommandQueue = false;
+    bool requiresCacheFlushAfterWalker = false;
 
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
 

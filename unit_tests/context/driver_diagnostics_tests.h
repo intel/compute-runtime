@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,7 +130,7 @@ struct PerformanceHintCommandQueueTest : public PerformanceHintTest,
 struct PerformanceHintEnqueueTest : public PerformanceHintTest {
     void SetUp() override {
         PerformanceHintTest::SetUp();
-        pCmdQ = createCommandQueue(pPlatform->getDevice(0), 0);
+        pCmdQ = createCommandQueue(pPlatform->getDevice(0));
     }
 
     void TearDown() override {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@ namespace OCLRT {
 
 typedef BDWFamily Family;
 static auto gfxCore = IGFX_GEN8_CORE;
+
+template class CommandQueueHw<Family>;
 
 template <>
 void populateFactoryTable<CommandQueueHw<Family>>() {

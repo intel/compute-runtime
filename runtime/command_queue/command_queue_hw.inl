@@ -41,4 +41,8 @@ void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingR
         image->getGraphicsAllocation()->setAllocDumpable(blockingRead);
     }
 }
+template <typename Family>
+bool CommandQueueHw<Family>::requiresCacheFlushAfterWalkerBasedOnProperties(const cl_queue_properties *properties) {
+    return false;
+}
 } // namespace OCLRT

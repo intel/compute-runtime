@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "hw_cmds.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "runtime/command_queue/command_queue_hw.h"
-#include "hw_cmds.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
+#include "unit_tests/mocks/mock_device.h"
+
 #include "gtest/gtest.h"
 
 namespace OCLRT {
@@ -17,21 +19,32 @@ namespace OCLRT {
 // Global table of create functions
 extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];
 
-CommandQueueHwFixture::CommandQueueHwFixture()
-    : pCmdQ(nullptr), context(nullptr) {
-}
-
 CommandQueue *CommandQueueHwFixture::createCommandQueue(
     Device *pDevice,
     cl_command_queue_properties properties) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, properties, 0};
 
-    auto funcCreate = commandQueueFactory[pDevice->getRenderCoreFamily()];
-    assert(nullptr != funcCreate);
+    return createCommandQueue(pDevice, props);
+}
+
+CommandQueue *CommandQueueHwFixture::createCommandQueue(
+    Device *pDevice,
+    const cl_command_queue_properties *properties) {
+
+    if (pDevice == nullptr) {
+        if (this->device == nullptr) {
+            this->device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
+        }
+        pDevice = this->device;
+    }
+
     if (!context)
         context = new MockContext(pDevice);
 
-    return funcCreate(context, pDevice, props);
+    auto funcCreate = commandQueueFactory[pDevice->getRenderCoreFamily()];
+    assert(nullptr != funcCreate);
+
+    return funcCreate(context, pDevice, properties);
 }
 
 void CommandQueueHwFixture::SetUp() {
@@ -55,7 +68,12 @@ void CommandQueueHwFixture::TearDown() {
         UNRECOVERABLE_IF(blocked);
         pCmdQ->release();
     }
-    context->release();
+    if (context) {
+        context->release();
+    }
+    if (device) {
+        delete device;
+    }
 }
 
 CommandQueueFixture::CommandQueueFixture()

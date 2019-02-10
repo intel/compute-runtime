@@ -18,6 +18,7 @@ class MockCommandQueue : public CommandQueue {
   public:
     using CommandQueue::device;
     using CommandQueue::obtainNewTimestampPacketNodes;
+    using CommandQueue::requiresCacheFlushAfterWalker;
     using CommandQueue::throttle;
     using CommandQueue::timestampPacketContainer;
 

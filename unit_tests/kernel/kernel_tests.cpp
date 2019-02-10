@@ -23,6 +23,7 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/gtest_helpers.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
@@ -2382,6 +2383,43 @@ TEST(KernelTest, whenAllocationRequiringCacheFlushThenAssignAllocationPointerToC
 
     kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation);
     EXPECT_EQ(&mockAllocation, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
+}
+
+TEST(KernelTest, whenQueueAndKernelRequireCacheFlushAfterWalkerThenRequireCacheFlushAfterWalker) {
+    MockGraphicsAllocation mockAllocation;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    MockKernelWithInternals kernel(*device);
+    kernel.mockKernel->svmAllocationsRequireCacheFlush = true;
+
+    MockCommandQueue queue;
+
+    DebugManagerStateRestore debugRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(true);
+
+    queue.requiresCacheFlushAfterWalker = true;
+    EXPECT_TRUE(kernel.mockKernel->requiresCacheFlushCommand(queue));
+
+    queue.requiresCacheFlushAfterWalker = false;
+    EXPECT_FALSE(kernel.mockKernel->requiresCacheFlushCommand(queue));
+}
+
+TEST(KernelTest, whenCacheFlushEnabledForAllQueuesAndKernelRequireCacheFlushAfterWalkerThenRequireCacheFlushAfterWalker) {
+    MockGraphicsAllocation mockAllocation;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    MockKernelWithInternals kernel(*device);
+    kernel.mockKernel->svmAllocationsRequireCacheFlush = true;
+
+    MockCommandQueue queue;
+
+    DebugManagerStateRestore debugRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(true);
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(true);
+
+    queue.requiresCacheFlushAfterWalker = true;
+    EXPECT_TRUE(kernel.mockKernel->requiresCacheFlushCommand(queue));
+
+    queue.requiresCacheFlushAfterWalker = false;
+    EXPECT_TRUE(kernel.mockKernel->requiresCacheFlushCommand(queue));
 }
 
 TEST(KernelTest, whenAllocationWriteableThenAssignAllocationPointerToCacheFlushVector) {

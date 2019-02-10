@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernel
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
     cl_int retVal = CL_SUCCESS;
-    CommandQueue *pCmdQ2 = createCommandQueue(pDevice, 0);
+    CommandQueue *pCmdQ2 = createCommandQueue(pDevice);
 
     std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -79,7 +79,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
     cl_int retVal = CL_SUCCESS;
-    CommandQueue *pCmdQ2 = createCommandQueue(pDevice, 0);
+    CommandQueue *pCmdQ2 = createCommandQueue(pDevice);
 
     std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -118,7 +118,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
     cl_int retVal = CL_SUCCESS;
-    CommandQueue *pCmdQ2 = createCommandQueue(pDevice, 0);
+    CommandQueue *pCmdQ2 = createCommandQueue(pDevice);
 
     std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -380,7 +380,7 @@ HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtr
     MockKernelWithInternals mockKernel(*device, context);
     size_t gws[3] = {1, 0, 0};
     mockCsr->makeResident(*allocation);
-    cmdQ.reset(createCommandQueue(device.get(), 0));
+    cmdQ.reset(createCommandQueue(device.get()));
     auto ret = cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.dcFlush);
@@ -402,7 +402,7 @@ HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtr
     MockKernelWithInternals mockKernel(*device, context);
     size_t gws[3] = {1, 0, 0};
     mockCsr->makeResident(*allocation);
-    cmdQ.reset(createCommandQueue(device.get(), 0));
+    cmdQ.reset(createCommandQueue(device.get()));
     auto ret = cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.dcFlush);
@@ -425,7 +425,7 @@ HWTEST_F(EnqueueKernelTest, givenFullAddressSpaceGraphicsAllocationWhenEnqueueKe
     MockKernelWithInternals mockKernel(*device, context);
     size_t gws[3] = {1, 0, 0};
     mockCsr->makeResident(*allocation);
-    cmdQ.reset(createCommandQueue(device.get(), 0));
+    cmdQ.reset(createCommandQueue(device.get()));
     auto ret = cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.dcFlush);
@@ -433,7 +433,7 @@ HWTEST_F(EnqueueKernelTest, givenFullAddressSpaceGraphicsAllocationWhenEnqueueKe
 
     allocation = (memoryManager->allocateGraphicsMemoryForHostPtr(1, hostPtr, device->isFullRangeSvm(), true));
     mockCsr->makeResident(*allocation);
-    cmdQ.reset(createCommandQueue(device.get(), 0));
+    cmdQ.reset(createCommandQueue(device.get()));
     ret = cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.dcFlush);
@@ -944,7 +944,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreNotAndEventExistSetThenClEnqu
     size_t globalWorkSize[3] = {n, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
     cl_int retVal = CL_SUCCESS;
-    CommandQueue *pCmdQ2 = createCommandQueue(pDevice, 0);
+    CommandQueue *pCmdQ2 = createCommandQueue(pDevice);
 
     std::unique_ptr<Kernel> kernel(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);

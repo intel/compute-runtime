@@ -376,7 +376,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsForAuxTranslation);
 
-    bool requiresCacheFlushCommand() const;
+    bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const;
 
     using CacheFlushAllocationsVec = StackVec<GraphicsAllocation *, 32>;
     void getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const;

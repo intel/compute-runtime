@@ -11,6 +11,7 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/execution_model/device_enqueue.h"
@@ -31,6 +32,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/platform/platform.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/program/printf_handler.h"
 #include "runtime/sampler/sampler.h"
@@ -2142,10 +2144,16 @@ void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsF
     }
 }
 
-bool Kernel::requiresCacheFlushCommand() const {
+bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
     if (false == HwHelper::cacheFlushAfterWalkerSupported(device.getHardwareInfo())) {
         return false;
     }
+
+    bool cmdQueueRequiresCacheFlush = commandQueue.getRequiresCacheFlushAfterWalker() || DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.get();
+    if (false == cmdQueueRequiresCacheFlush) {
+        return false;
+    }
+
     if (getProgram()->getGlobalSurface() != nullptr) {
         return true;
     }

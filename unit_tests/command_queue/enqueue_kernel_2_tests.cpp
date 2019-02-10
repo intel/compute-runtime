@@ -864,6 +864,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabled
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(1);
 
     MockKernelWithInternals mockKernel(*pDevice, context);
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, nullptr);

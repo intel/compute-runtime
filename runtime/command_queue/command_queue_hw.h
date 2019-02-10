@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,11 @@ class CommandQueueHw : public CommandQueue {
             getCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
             getCommandStreamReceiver().enableNTo1SubmissionModel();
         }
+
+        this->requiresCacheFlushAfterWalker = CommandQueueHw<GfxFamily>::requiresCacheFlushAfterWalkerBasedOnProperties(properties);
     }
+
+    static bool requiresCacheFlushAfterWalkerBasedOnProperties(const cl_queue_properties *properties);
 
     static CommandQueue *create(Context *context,
                                 Device *device,

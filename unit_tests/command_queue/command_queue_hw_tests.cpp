@@ -1012,3 +1012,7 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
 
     pCmdQ->isQueueBlocked();
 }
+
+HWTEST_F(CommandQueueHwTest, givenDefaultHwCommandQueueThenCacheFlushAfterWalkerIsNotNeeded) {
+    EXPECT_FALSE(pCmdQ->getRequiresCacheFlushAfterWalker());
+}

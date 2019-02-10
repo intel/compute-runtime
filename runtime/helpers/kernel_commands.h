@@ -141,7 +141,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         Kernel &kernel);
 
     static size_t getSizeRequiredCS(const Kernel *kernel);
-    static size_t getSizeRequiredForCacheFlush(const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData);
+    static size_t getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData);
     static bool isPipeControlWArequired();
     static size_t getSizeRequiredDSH(
         const Kernel &kernel);
@@ -201,7 +201,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
 
     static void programMiSemaphoreWait(LinearStream &commandStream, uint64_t compareAddress, uint32_t compareData);
     static MI_ATOMIC *programMiAtomic(LinearStream &commandStream, uint64_t writeAddress, typename MI_ATOMIC::ATOMIC_OPCODES opcode, typename MI_ATOMIC::DATA_SIZE dataSize);
-    static void programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData);
+    static void programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData);
 
     static const size_t alignInterfaceDescriptorData = 64 * sizeof(uint8_t);
     static const uint32_t alignIndirectStatePointer = 64 * sizeof(uint8_t);

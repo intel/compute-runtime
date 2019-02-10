@@ -51,8 +51,8 @@ size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredCS(const Kernel *kernel) 
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
-    return kernel->requiresCacheFlushCommand() ? sizeof(typename GfxFamily::PIPE_CONTROL) : 0;
+size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
+    return kernel->requiresCacheFlushCommand(commandQueue) ? sizeof(typename GfxFamily::PIPE_CONTROL) : 0;
 }
 
 template <typename GfxFamily>
@@ -163,8 +163,8 @@ bool KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
-    if (kernel->requiresCacheFlushCommand()) {
+void KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
+    if (kernel->requiresCacheFlushCommand(commandQueue)) {
         using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
         *pipeControl = GfxFamily::cmdInitPipeControl;

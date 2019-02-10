@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,19 +15,26 @@ namespace OCLRT {
 class Device;
 
 struct CommandQueueHwFixture {
-    CommandQueueHwFixture();
+    CommandQueue *createCommandQueue(Device *device) {
+        return createCommandQueue(device, cl_command_queue_properties{0});
+    }
 
     CommandQueue *createCommandQueue(
         Device *device,
         cl_command_queue_properties properties);
+
+    CommandQueue *createCommandQueue(
+        Device *device,
+        const cl_command_queue_properties *properties);
 
     virtual void SetUp();
     virtual void SetUp(Device *_pDevice, cl_command_queue_properties properties);
 
     virtual void TearDown();
 
-    CommandQueue *pCmdQ;
-    MockContext *context;
+    CommandQueue *pCmdQ = nullptr;
+    Device *device = nullptr;
+    MockContext *context = nullptr;
 };
 
 struct OOQueueFixture : public CommandQueueHwFixture {
