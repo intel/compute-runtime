@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,6 @@
 
 #pragma once
 
-#include "runtime/helpers/debug_helpers.h"
-
-namespace OCLRT {
 template <typename T>
 struct Vec3 {
     Vec3(T x, T y, T z) : x(x), y(y), z(z) {}
@@ -56,7 +53,6 @@ struct Vec3 {
         if (x >= 1) {
             return 1;
         }
-        DEBUG_BREAK_IF((y != 0) || (z != 0));
         return 0;
     }
 
@@ -64,4 +60,3 @@ struct Vec3 {
     T y;
     T z;
 };
-} // namespace OCLRT

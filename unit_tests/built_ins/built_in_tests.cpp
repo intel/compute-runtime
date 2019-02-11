@@ -649,7 +649,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnFalseIfUnsupportedBuildType
     EXPECT_FALSE(ret);
     ASSERT_EQ(0U, multiDispatchInfo.size());
 
-    ret = bdib.buildDispatchInfos(multiDispatchInfo, nullptr, 0, OCLRT::Vec3<size_t>{0, 0, 0}, OCLRT::Vec3<size_t>{0, 0, 0}, OCLRT::Vec3<size_t>{0, 0, 0});
+    ret = bdib.buildDispatchInfos(multiDispatchInfo, nullptr, 0, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
     EXPECT_FALSE(ret);
     EXPECT_EQ(0U, multiDispatchInfo.size());
 }

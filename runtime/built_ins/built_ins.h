@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "CL/cl.h"
+#include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/built_ins/sip.h"
 #include "runtime/utilities/vec.h"

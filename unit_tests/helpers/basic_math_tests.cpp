@@ -8,8 +8,7 @@
 #include "runtime/helpers/basic_math.h"
 #include "gtest/gtest.h"
 
-using namespace OCLRT::Math;
-using namespace OCLRT;
+using namespace Math;
 
 TEST(NextPowerOfTwo, aFewCases) {
     EXPECT_EQ(1u, nextPowerOfTwo(1U));

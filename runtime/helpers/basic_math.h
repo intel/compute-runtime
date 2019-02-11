@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/utilities/vec.h"
 #include <cstdint>
+#include <cstdlib>
 #include <cmath>
 #include <algorithm>
 #include <stdio.h>
@@ -17,7 +17,6 @@
 #define MB (KB * KB)
 #define GB (KB * MB)
 
-namespace OCLRT {
 namespace Math {
 
 constexpr uint32_t nextPowerOfTwo(uint32_t value) {
@@ -154,7 +153,6 @@ inline uint16_t float2Half(float f) {
 }
 
 inline bool isDivisableByPowerOfTwoDivisor(uint32_t number, uint32_t divisor) {
-    DEBUG_BREAK_IF((divisor & (divisor - 1)) != 0);
     uint32_t mask = 0xffffffff;
     mask = mask - (divisor - 1);
     if ((number & mask) == number)
@@ -193,8 +191,7 @@ constexpr T ffs(T v) {
         }
     }
 
-    UNREACHABLE("Either v==0 or any of bits is set");
+    std::abort();
 }
 
 } // namespace Math
-} // namespace OCLRT
