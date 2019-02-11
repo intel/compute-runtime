@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     UltCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : BaseClass(hwInfoIn, executionEnvironment) {
         if (hwInfoIn.capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
-            tempPreemptionLocation = std::make_unique<GraphicsAllocation>(nullptr, 0, 0, 0, 1u, false);
+            tempPreemptionLocation = std::make_unique<GraphicsAllocation>(nullptr, 0, 0, 0, false);
             this->preemptionCsrAllocation = tempPreemptionLocation.get();
         }
     }

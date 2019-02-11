@@ -629,9 +629,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetReturnsFalseWhenNumBytesT
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetStopsEvictingWhenNumBytesToTrimIsZero) {
-    WddmAllocation allocation1(reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull, 1u, false),
-        allocation2(reinterpret_cast<void *>(0x1000), 0x3000, nullptr, MemoryPool::MemoryNull, 1u, false),
-        allocation3(reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull, 1u, false);
+    WddmAllocation allocation1(reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull, false),
+        allocation2(reinterpret_cast<void *>(0x1000), 0x3000, nullptr, MemoryPool::MemoryNull, false),
+        allocation3(reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull, false);
 
     allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
@@ -724,8 +724,8 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetWaitsFromCpuWhenLastFence
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, trimToBudgetEvictsDoneFragmentsOnly) {
     gdi->setNonZeroNumBytesToTrimInEvict();
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
-    WddmAllocation allocation1(ptr, 0x1000, nullptr, MemoryPool::MemoryNull, 1u, false);
-    WddmAllocation allocation2(ptr, 0x1000, nullptr, MemoryPool::MemoryNull, 1u, false);
+    WddmAllocation allocation1(ptr, 0x1000, nullptr, MemoryPool::MemoryNull, false);
+    WddmAllocation allocation2(ptr, 0x1000, nullptr, MemoryPool::MemoryNull, false);
 
     allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
@@ -783,9 +783,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
     void *ptr2 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x3000);
     void *ptr3 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x5000);
 
-    WddmAllocation allocation1(ptr1, underlyingSize, nullptr, MemoryPool::MemoryNull, 1u, false);
-    WddmAllocation allocation2(ptr2, underlyingSize, nullptr, MemoryPool::MemoryNull, 1u, false);
-    WddmAllocation allocation3(ptr3, underlyingSize, nullptr, MemoryPool::MemoryNull, 1u, false);
+    WddmAllocation allocation1(ptr1, underlyingSize, nullptr, MemoryPool::MemoryNull, false);
+    WddmAllocation allocation2(ptr2, underlyingSize, nullptr, MemoryPool::MemoryNull, false);
+    WddmAllocation allocation3(ptr3, underlyingSize, nullptr, MemoryPool::MemoryNull, false);
 
     allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
@@ -985,7 +985,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     MockWddmAllocation allocation1;
     void *cpuPtr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1000);
     size_t allocationSize = 0x1000;
-    WddmAllocation allocationToTrim(cpuPtr, allocationSize, nullptr, MemoryPool::MemoryNull, memoryManager->getOsContextCount(), false);
+    WddmAllocation allocationToTrim(cpuPtr, allocationSize, nullptr, MemoryPool::MemoryNull, false);
 
     allocationToTrim.getResidencyData().updateCompletionData(residencyController->getMonitoredFence().lastSubmittedFence, osContext->getContextId());
 

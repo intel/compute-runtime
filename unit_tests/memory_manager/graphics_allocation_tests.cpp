@@ -18,8 +18,8 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenAllInspecti
 }
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenTaskCountsAreInitializedProperly) {
-    GraphicsAllocation graphicsAllocation1(nullptr, 0u, 0u, 0u, maxOsContextCount, true);
-    GraphicsAllocation graphicsAllocation2(nullptr, 0u, 0u, maxOsContextCount, true);
+    GraphicsAllocation graphicsAllocation1(nullptr, 0u, 0u, 0u, true);
+    GraphicsAllocation graphicsAllocation2(nullptr, 0u, 0u, true);
     for (auto i = 0u; i < maxOsContextCount; i++) {
         EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation1.getTaskCount(i));
         EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation2.getTaskCount(i));

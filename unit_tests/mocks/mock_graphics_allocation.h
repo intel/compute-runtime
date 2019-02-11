@@ -17,8 +17,8 @@ class MockGraphicsAllocation : public GraphicsAllocation {
     using GraphicsAllocation::usageInfos;
 
     MockGraphicsAllocation() : MockGraphicsAllocation(true) {}
-    MockGraphicsAllocation(bool multiOsContextCapable) : GraphicsAllocation(nullptr, 0u, 0, maxOsContextCount, multiOsContextCapable) {}
-    MockGraphicsAllocation(void *buffer, size_t sizeIn) : GraphicsAllocation(buffer, castToUint64(buffer), 0llu, sizeIn, maxOsContextCount, false) {
+    MockGraphicsAllocation(bool multiOsContextCapable) : GraphicsAllocation(nullptr, 0u, 0, multiOsContextCapable) {}
+    MockGraphicsAllocation(void *buffer, size_t sizeIn) : GraphicsAllocation(buffer, castToUint64(buffer), 0llu, sizeIn, false) {
     }
 
     void resetInspectionIds() {

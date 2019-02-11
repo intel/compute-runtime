@@ -6,9 +6,6 @@
  */
 
 #pragma once
-#include <cstddef>
-#include <cstdint>
-#include <vector>
 
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
@@ -18,6 +15,10 @@
 #include "runtime/memory_manager/residency_container.h"
 #include "runtime/utilities/idlist.h"
 #include "runtime/utilities/stackvec.h"
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
 
 namespace OCLRT {
 
@@ -79,9 +80,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     GraphicsAllocation &operator=(const GraphicsAllocation &) = delete;
     GraphicsAllocation(const GraphicsAllocation &) = delete;
 
-    GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, uint32_t osContextCount, bool multiOsContextCapable);
+    GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, bool multiOsContextCapable);
 
-    GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, uint32_t osContextCount, bool multiOsContextCapable);
+    GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, bool multiOsContextCapable);
 
     void *getUnderlyingBuffer() const { return cpuPtr; }
     void setCpuPtrAndGpuAddress(void *cpuPtr, uint64_t gpuAddress) {
@@ -173,7 +174,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool aubWritable = true;
     bool allocDumpable = false;
     bool memObjectsAllocationWithWritableFlags = false;
-    std::vector<UsageInfo> usageInfos;
+    std::array<UsageInfo, maxOsContextCount> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};
     bool multiOsContextCapable = false;
 };

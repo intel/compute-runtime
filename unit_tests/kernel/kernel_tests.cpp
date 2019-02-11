@@ -945,7 +945,7 @@ TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalS
 
     char buffer[16];
 
-    GraphicsAllocation gfxAlloc((void *)buffer, (uint64_t)buffer - 8u, 8, 1u, false);
+    GraphicsAllocation gfxAlloc((void *)buffer, (uint64_t)buffer - 8u, 8, false);
     uint64_t bufferAddress = gfxAlloc.getGpuAddress();
 
     // create kernel
@@ -1119,7 +1119,7 @@ TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConst
 
     char buffer[16];
 
-    GraphicsAllocation gfxAlloc((void *)buffer, (uint64_t)buffer - 8u, 8, 1u, false);
+    GraphicsAllocation gfxAlloc((void *)buffer, (uint64_t)buffer - 8u, 8, false);
     uint64_t bufferAddress = gfxAlloc.getGpuAddress();
 
     // create kernel

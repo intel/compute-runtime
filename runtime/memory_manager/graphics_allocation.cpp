@@ -23,21 +23,21 @@ bool GraphicsAllocation::isL3Capable() {
     }
     return false;
 }
-GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, uint32_t osContextCount, bool multiOsContextCapable) : gpuBaseAddress(baseAddress),
-                                                                                                                                                                        size(sizeIn),
-                                                                                                                                                                        cpuPtr(cpuPtrIn),
-                                                                                                                                                                        gpuAddress(gpuAddress),
-                                                                                                                                                                        multiOsContextCapable(multiOsContextCapable) {
-    usageInfos.resize(maxOsContextCount);
-}
+GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress,
+                                       size_t sizeIn, bool multiOsContextCapable)
+    : gpuBaseAddress(baseAddress),
+      size(sizeIn),
+      cpuPtr(cpuPtrIn),
+      gpuAddress(gpuAddress),
+      multiOsContextCapable(multiOsContextCapable) {}
 
-GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, uint32_t osContextCount, bool multiOsContextCapable) : size(sizeIn),
-                                                                                                                                                      cpuPtr(cpuPtrIn),
-                                                                                                                                                      gpuAddress(castToUint64(cpuPtrIn)),
-                                                                                                                                                      sharedHandle(sharedHandleIn),
-                                                                                                                                                      multiOsContextCapable(multiOsContextCapable) {
-    usageInfos.resize(maxOsContextCount);
-}
+GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, bool multiOsContextCapable)
+    : size(sizeIn),
+      cpuPtr(cpuPtrIn),
+      gpuAddress(castToUint64(cpuPtrIn)),
+      sharedHandle(sharedHandleIn),
+      multiOsContextCapable(multiOsContextCapable) {}
+
 GraphicsAllocation::~GraphicsAllocation() = default;
 
 void GraphicsAllocation::updateTaskCount(uint32_t newTaskCount, uint32_t contextId) {

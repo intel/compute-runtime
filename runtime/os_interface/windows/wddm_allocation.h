@@ -31,8 +31,8 @@ class WddmAllocation : public GraphicsAllocation {
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
 
     D3DGPU_VIRTUAL_ADDRESS gpuPtr; // set by mapGpuVA
-    WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, size_t osContextsCount, bool multiOsContextCapable)
-        : GraphicsAllocation(cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, static_cast<uint32_t>(osContextsCount), multiOsContextCapable),
+    WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, bool multiOsContextCapable)
+        : GraphicsAllocation(cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, multiOsContextCapable),
           handle(0),
           gpuPtr(0),
           trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
@@ -40,11 +40,11 @@ class WddmAllocation : public GraphicsAllocation {
         this->memoryPool = pool;
     }
 
-    WddmAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, size_t osContextsCount, bool multiOsContextCapable)
-        : GraphicsAllocation(cpuPtrIn, sizeIn, sharedHandle, static_cast<uint32_t>(osContextsCount), multiOsContextCapable),
+    WddmAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, bool multiOsContextCapable)
+        : GraphicsAllocation(cpuPtrIn, sizeIn, sharedHandle, multiOsContextCapable),
           handle(0),
           gpuPtr(0),
-          trimCandidateListPositions(osContextsCount, trimListUnusedPosition) {
+          trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
         reservedAddressSpace = nullptr;
         this->memoryPool = pool;
     }

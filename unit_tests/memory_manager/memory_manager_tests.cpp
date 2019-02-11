@@ -73,7 +73,7 @@ TEST(GraphicsAllocationTest, Ctor2) {
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
     osHandle sharedHandle = Sharing::nonSharedResource;
-    GraphicsAllocation gfxAllocation(cpuPtr, size, sharedHandle, 1u, false);
+    GraphicsAllocation gfxAllocation(cpuPtr, size, sharedHandle, false);
     uint64_t expectedGpuAddr = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(gfxAllocation.getUnderlyingBuffer()));
 
     EXPECT_EQ(expectedGpuAddr, gfxAllocation.getGpuAddress());
@@ -87,7 +87,7 @@ TEST(GraphicsAllocationTest, getGpuAddress) {
     uint64_t gpuBaseAddr = 0x10000;
     size_t size = 0x1000;
 
-    GraphicsAllocation gfxAllocation(cpuPtr, gpuAddr, gpuBaseAddr, size, 1u, false);
+    GraphicsAllocation gfxAllocation(cpuPtr, gpuAddr, gpuBaseAddr, size, false);
 
     EXPECT_EQ(gpuAddr, gfxAllocation.getGpuAddress());
 
@@ -104,7 +104,7 @@ TEST(GraphicsAllocationTest, getGpuAddressToPatch) {
     uint64_t gpuBaseAddr = 0x10000;
     size_t size = 0x1000;
 
-    GraphicsAllocation gfxAllocation(cpuPtr, gpuAddr, gpuBaseAddr, size, 1u, false);
+    GraphicsAllocation gfxAllocation(cpuPtr, gpuAddr, gpuBaseAddr, size, false);
 
     EXPECT_EQ(gpuAddr - gpuBaseAddr, gfxAllocation.getGpuAddressToPatch());
 }
@@ -115,7 +115,7 @@ TEST(GraphicsAllocationTest, setSize) {
     uint64_t gpuBaseAddr = 0x10000;
     size_t size = 0x2000;
 
-    GraphicsAllocation gfxAllocation(cpuPtr, gpuAddr, gpuBaseAddr, size, 1u, false);
+    GraphicsAllocation gfxAllocation(cpuPtr, gpuAddr, gpuBaseAddr, size, false);
     EXPECT_EQ(size, gfxAllocation.getUnderlyingBufferSize());
 
     size = 0x3000;
@@ -1515,7 +1515,7 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
     void *addressWithTrailingBitSet = reinterpret_cast<void *>(address);
     uint64_t expectedGpuAddress = 0xf0000000;
     osHandle sharedHandle{};
-    GraphicsAllocation graphicsAllocation(addressWithTrailingBitSet, 1u, sharedHandle, 1u, false);
+    GraphicsAllocation graphicsAllocation(addressWithTrailingBitSet, 1u, sharedHandle, false);
     EXPECT_EQ(expectedGpuAddress, graphicsAllocation.getGpuAddress());
 }
 
