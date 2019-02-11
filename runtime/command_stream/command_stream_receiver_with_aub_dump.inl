@@ -19,14 +19,7 @@ CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(cons
     bool createAubCsr = !executionEnvironment.aubCenter || executionEnvironment.aubCenter->getAubManager() == nullptr;
 
     if (createAubCsr) {
-        aubCSR = AUBCommandStreamReceiver::create(hwInfoIn, baseName, false, executionEnvironment);
-    }
-}
-
-template <typename BaseCSR>
-CommandStreamReceiverWithAUBDump<BaseCSR>::~CommandStreamReceiverWithAUBDump() {
-    if (aubCSR) {
-        delete aubCSR;
+        aubCSR.reset(AUBCommandStreamReceiver::create(hwInfoIn, baseName, false, executionEnvironment));
     }
 }
 

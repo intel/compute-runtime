@@ -59,10 +59,10 @@ class AUBFixture : public CommandQueueHwFixture {
     AUBCommandStreamReceiverHw<FamilyType> *getAubCsr() {
         AUBCommandStreamReceiverHw<FamilyType> *aubCsr = nullptr;
         if (testMode == TestMode::AubTests) {
-            aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
+            aubCsr = static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
         } else if (testMode == TestMode::AubTestsWithTbx) {
-            aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(
-                reinterpret_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR);
+            aubCsr = static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(
+                static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get());
         }
         return aubCsr;
     }

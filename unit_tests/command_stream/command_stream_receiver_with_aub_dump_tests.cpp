@@ -91,17 +91,10 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
 template <typename BaseCSR>
 struct MyMockCsrWithAubDump : CommandStreamReceiverWithAUBDump<BaseCSR> {
     MyMockCsrWithAubDump<BaseCSR>(const HardwareInfo &hwInfoIn, bool createAubCSR, ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverWithAUBDump<BaseCSR>(hwInfoIn, "aubfile", executionEnvironment) {
-        if (this->aubCSR != nullptr) {
-            delete this->aubCSR;
-            this->aubCSR = nullptr;
-        }
-        if (createAubCSR) {
-            // overwrite with mock
-            this->aubCSR = new MyMockCsr(hwInfoIn, executionEnvironment);
-        }
+        this->aubCSR.reset(createAubCSR ? new MyMockCsr(hwInfoIn, executionEnvironment) : nullptr);
     }
 
-    MyMockCsr &getAubMockCsr() {
+    MyMockCsr &getAubMockCsr() const {
         return static_cast<MyMockCsr &>(*this->aubCSR);
     }
 };

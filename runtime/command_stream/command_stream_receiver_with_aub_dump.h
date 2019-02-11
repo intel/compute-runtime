@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_stream/command_stream_receiver.h"
+#include <memory>
 
 namespace OCLRT {
 
@@ -18,7 +19,6 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
   public:
     using BaseCSR::createMemoryManager;
     CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn, const std::string &baseName, ExecutionEnvironment &executionEnvironment);
-    ~CommandStreamReceiverWithAUBDump() override;
 
     CommandStreamReceiverWithAUBDump(const CommandStreamReceiverWithAUBDump &) = delete;
     CommandStreamReceiverWithAUBDump &operator=(const CommandStreamReceiverWithAUBDump &) = delete;
@@ -29,7 +29,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
     void setupContext(OsContext &osContext) override;
 
-    CommandStreamReceiver *aubCSR = nullptr;
+    std::unique_ptr<CommandStreamReceiver> aubCSR;
 };
 
 } // namespace OCLRT

@@ -13,9 +13,10 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "drm/i915_drm.h"
 #include "runtime/os_interface/debug_settings_manager.h"
-#include <stdio.h>
-#include <limits.h>
 #include <array>
+#include <cstdio>
+#include <cstring>
+#include <memory>
 
 namespace OCLRT {
 
@@ -49,28 +50,17 @@ void Drm::closeDevice(int32_t deviceOrdinal) {
 
 bool Drm::isi915Version(int fd) {
     drm_version_t version = {};
-    int ret;
-
-    version.name = reinterpret_cast<char *>(calloc(1, 5));
+    char name[5] = {};
+    version.name = name;
     version.name_len = 5;
 
-    ret = ::ioctl(fd, DRM_IOCTL_VERSION, &version);
-
+    int ret = ::ioctl(fd, DRM_IOCTL_VERSION, &version);
     if (ret) {
-        free(version.name);
         return false;
     }
 
-    version.name[4] = '\0';
-
-    if (!strcmp(version.name, "i915")) {
-        free(version.name);
-        return true;
-    }
-
-    free(version.name);
-
-    return false;
+    name[4] = '\0';
+    return strcmp(name, "i915") == 0;
 }
 
 int Drm::getDeviceFd(const int devType) {
@@ -130,18 +120,17 @@ Drm *Drm::create(int32_t deviceOrdinal) {
         return nullptr;
     }
 
-    Drm *drmObject = nullptr;
+    std::unique_ptr<Drm> drmObject;
     if (DebugManager.flags.EnableNullHardware.get() == true) {
-        drmObject = new DrmNullDevice(fd);
+        drmObject.reset(new DrmNullDevice(fd));
     } else {
-        drmObject = new Drm(fd);
+        drmObject.reset(new Drm(fd));
     }
 
     // Get HW version (I915_drm.h)
     int ret = drmObject->getDeviceID(drmObject->deviceId);
     if (ret != 0) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
-        delete drmObject;
         return nullptr;
     }
 
@@ -149,7 +138,6 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     ret = drmObject->getDeviceRevID(drmObject->revisionId);
     if (ret != 0) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device Rev ID parameter!\n");
-        delete drmObject;
         return nullptr;
     }
 
@@ -170,7 +158,6 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     } else {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr,
                          "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", drmObject->deviceId, drmObject->revisionId);
-        delete drmObject;
         return nullptr;
     }
 
@@ -179,14 +166,12 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     ret = drmObject->getExecSoftPin(hasExecSoftPin);
     if (ret != 0) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query Soft Pin parameter!\n");
-        delete drmObject;
         return nullptr;
     }
 
     if (!hasExecSoftPin) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
                          "FATAL: Device doesn't support Soft-Pin but this is required.\n");
-        delete drmObject;
         return nullptr;
     }
 
@@ -201,7 +186,7 @@ Drm *Drm::create(int32_t deviceOrdinal) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
-    drms[deviceOrdinal % drms.size()] = drmObject;
+    drms[deviceOrdinal % drms.size()] = drmObject.release();
     return drms[deviceOrdinal % drms.size()];
 }
 

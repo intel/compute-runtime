@@ -169,7 +169,7 @@ TEST_F(DeviceCommandStreamTest, CreateWddmCSRWithAubDump) {
     EXPECT_NE(nullptr, csr);
     auto wddmFromCsr = csr->peekWddm();
     EXPECT_NE(nullptr, wddmFromCsr);
-    auto aubCSR = static_cast<CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>> *>(csr.get())->aubCSR;
+    auto aubCSR = static_cast<CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>> *>(csr.get())->aubCSR.get();
     EXPECT_NE(nullptr, aubCSR);
 }
 

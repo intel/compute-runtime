@@ -131,10 +131,10 @@ struct AUBHelloWorldIntegrateTest : public HelloWorldFixture<AUBHelloWorldFixtur
     void writeMemory(GraphicsAllocation *allocation) {
         AUBCommandStreamReceiverHw<FamilyType> *aubCsr = nullptr;
         if (testMode == TestMode::AubTests) {
-            aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(pCommandStreamReceiver);
+            aubCsr = static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(pCommandStreamReceiver);
         } else if (testMode == TestMode::AubTestsWithTbx) {
-            auto tbxWithAubCsr = reinterpret_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver);
-            aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(tbxWithAubCsr->aubCSR);
+            auto tbxWithAubCsr = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver);
+            aubCsr = static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(tbxWithAubCsr->aubCSR.get());
             tbxWithAubCsr->writeMemory(*allocation);
         }
 

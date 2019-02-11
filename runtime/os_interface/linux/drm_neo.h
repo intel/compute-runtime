@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,8 @@ class Drm {
   public:
     static Drm *get(int32_t deviceOrdinal);
 
+    virtual ~Drm();
+
     virtual int ioctl(unsigned long request, void *arg);
 
     int getDeviceID(int &devId);
@@ -74,7 +76,6 @@ class Drm {
     int revisionId;
     GTTYPE eGtType;
     Drm(int fd) : fd(fd), deviceId(0), revisionId(0), eGtType(GTTYPE_UNDEFINED) {}
-    virtual ~Drm();
 
     static bool isi915Version(int fd);
     static int getDeviceFd(const int devType);
