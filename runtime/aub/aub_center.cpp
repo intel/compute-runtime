@@ -16,7 +16,7 @@
 #include "third_party/aub_stream/headers/modes.h"
 
 namespace OCLRT {
-extern aub_stream::AubManager *createAubManager(uint32_t gfxFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, const std::string &aubFileName, uint32_t streamMode);
+extern aub_stream::AubManager *createAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, const std::string &aubFileName, uint32_t streamMode);
 
 AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName) {
     if (DebugManager.flags.UseAubStream.get()) {
@@ -30,7 +30,7 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
         aub_stream::tbxServerIp = DebugManager.flags.TbxServer.get();
         aub_stream::tbxServerPort = DebugManager.flags.TbxPort.get();
 
-        aubManager.reset(createAubManager(pHwInfo->pPlatform->eRenderCoreFamily, devicesCount, memoryBankSize, localMemoryEnabled, aubFileName, mode));
+        aubManager.reset(createAubManager(pHwInfo->pPlatform->eProductFamily, devicesCount, memoryBankSize, localMemoryEnabled, aubFileName, mode));
     }
     addressMapper = std::make_unique<AddressMapper>();
     streamProvider = std::make_unique<AubFileStreamProvider>();

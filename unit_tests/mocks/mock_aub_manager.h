@@ -40,6 +40,14 @@ class MockAubManager : public aub_stream::AubManager {
 
   public:
     MockAubManager(){};
+    MockAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, const std::string &aubFileName, uint32_t streamMode) {
+        mockAubManagerParams.productFamily = productFamily;
+        mockAubManagerParams.devicesCount = devicesCount;
+        mockAubManagerParams.memoryBankSize = memoryBankSize;
+        mockAubManagerParams.localMemorySupported = localMemorySupported;
+        mockAubManagerParams.aubFileName.assign(aubFileName);
+        mockAubManagerParams.streamMode = streamMode;
+    }
     ~MockAubManager() override {}
 
     HardwareContext *createHardwareContext(uint32_t device, uint32_t engine) { return createHardwareContext(device, engine, 0); }
@@ -51,6 +59,15 @@ class MockAubManager : public aub_stream::AubManager {
 
     bool writeMemoryCalled = false;
     uint32_t contextFlags = 0;
+
+    struct MockAubManagerParams {
+        uint32_t productFamily = 0;
+        int32_t devicesCount = 0;
+        uint64_t memoryBankSize = 0;
+        bool localMemorySupported = false;
+        std::string aubFileName = "";
+        uint32_t streamMode = 0xFFFFFFFF;
+    } mockAubManagerParams;
 
   protected:
     HardwareContext *hardwareContext = nullptr;
