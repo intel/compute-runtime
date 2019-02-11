@@ -56,30 +56,41 @@ class AUBFixture : public CommandQueueHwFixture {
     GraphicsAllocation *createHostPtrAllocationFromSvmPtr(void *svmPtr, size_t size);
 
     template <typename FamilyType>
-    AUBCommandStreamReceiverHw<FamilyType> *getAubCsr() {
-        AUBCommandStreamReceiverHw<FamilyType> *aubCsr = nullptr;
-        if (testMode == TestMode::AubTests) {
-            aubCsr = static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
-        } else if (testMode == TestMode::AubTestsWithTbx) {
-            aubCsr = static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(
-                static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get());
-        }
-        return aubCsr;
+    CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr() {
+        CommandStreamReceiverSimulatedCommonHw<FamilyType> *simulatedCsr = nullptr;
+        simulatedCsr = reinterpret_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(csr);
+        return simulatedCsr;
     }
 
     template <typename FamilyType>
     void expectMemory(void *gfxAddress, const void *srcAddress, size_t length) {
-        auto aubCsr = getAubCsr<FamilyType>();
-        if (aubCsr) {
-            aubCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
+        CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>();
+
+        if (testMode == TestMode::AubTestsWithTbx) {
+            auto tbxCsr = csrSimulated;
+            tbxCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
+            csrSimulated = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(
+                static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get());
+        }
+
+        if (csrSimulated) {
+            csrSimulated->expectMemoryEqual(gfxAddress, srcAddress, length);
         }
     }
 
     template <typename FamilyType>
     void expectNotEqualMemory(void *gfxAddress, const void *srcAddress, size_t length) {
-        auto aubCsr = getAubCsr<FamilyType>();
-        if (aubCsr) {
-            aubCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length);
+        CommandStreamReceiverSimulatedCommonHw<FamilyType> *csrSimulated = getSimulatedCsr<FamilyType>();
+
+        if (testMode == TestMode::AubTestsWithTbx) {
+            auto tbxCsr = csrSimulated;
+            tbxCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length);
+            csrSimulated = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(
+                static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get());
+        }
+
+        if (csrSimulated) {
+            csrSimulated->expectMemoryNotEqual(gfxAddress, srcAddress, length);
         }
     }
 
@@ -95,7 +106,7 @@ class AUBFixture : public CommandQueueHwFixture {
 
   private:
     using CommandQueueHwFixture::SetUp;
-};
+}; // namespace OCLRT
 
 template <typename KernelFixture>
 struct KernelAUBFixture : public AUBFixture,

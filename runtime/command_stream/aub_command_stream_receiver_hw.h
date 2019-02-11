@@ -51,20 +51,17 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
 
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) override;
-    MOCKABLE_VIRTUAL bool writeMemory(GraphicsAllocation &gfxAllocation);
+    bool writeMemory(GraphicsAllocation &gfxAllocation) override;
     MOCKABLE_VIRTUAL bool writeMemory(AllocationView &allocationView);
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue);
-
-    void expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length);
-    void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);
     void expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
 
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
 
     // Family specific version
     MOCKABLE_VIRTUAL void submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits);
-    MOCKABLE_VIRTUAL void pollForCompletion();
-    void pollForCompletionImpl();
+    void pollForCompletion() override;
+    void pollForCompletionImpl() override;
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
 
     uint32_t getDumpHandle();

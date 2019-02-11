@@ -475,3 +475,10 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareC
     tbxCsr->setupContext(osContext);
     EXPECT_NE(nullptr, tbxCsr->hardwareContextController.get());
 }
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenPollForCompletionImplIsCalledThenSimulatedCsrMethodIsCalled) {
+    ExecutionEnvironment executionEnvironment;
+
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(*platformDevices[0], "", false, executionEnvironment)));
+    tbxCsr->pollForCompletionImpl();
+}
