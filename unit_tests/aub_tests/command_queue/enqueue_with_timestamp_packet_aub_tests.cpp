@@ -46,6 +46,8 @@ HWTEST_F(TimestampPacketAubTests, givenTwoBatchedEnqueuesWhenDependencyIsResolve
 
     pCmdQ->enqueueWriteBuffer(buffer.get(), CL_FALSE, 0, bufferSize, writePattern1, 0, nullptr, &outEvent1);
     auto node1 = castToObject<Event>(outEvent1)->getTimestampPacketNodes()->peekNodes().at(0);
+    node1->getBaseGraphicsAllocation()->setAubWritable(true); // allow to write again after Buffer::create
+
     pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writePattern2, 0, nullptr, &outEvent2);
     auto node2 = castToObject<Event>(outEvent2)->getTimestampPacketNodes()->peekNodes().at(0);
 
