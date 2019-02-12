@@ -7,6 +7,7 @@
 
 #pragma once
 #include "public/cl_ext_private.h"
+#include "runtime/command_stream/preemption_mode.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
@@ -26,8 +27,6 @@ class GraphicsAllocation;
 class HostPtrManager;
 class OsContext;
 struct ImageInfo;
-
-enum class PreemptionMode : uint32_t;
 
 using CsrContainer = std::vector<std::vector<std::unique_ptr<CommandStreamReceiver>>>;
 

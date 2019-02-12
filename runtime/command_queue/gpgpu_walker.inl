@@ -17,6 +17,7 @@
 #include "instrumentation.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/mem_obj.h"

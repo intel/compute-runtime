@@ -6,10 +6,11 @@
  */
 
 #pragma once
+#include <cstdint>
 
 namespace OCLRT {
 
-enum class ContextType {
+enum ContextType : uint32_t {
     CONTEXT_TYPE_DEFAULT,
     CONTEXT_TYPE_SPECIALIZED,
     CONTEXT_TYPE_UNRESTRICTIVE

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/preemption.h"
+#include "runtime/helpers/hw_helper.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/preemption_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"

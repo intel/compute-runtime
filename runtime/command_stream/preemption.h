@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,9 @@
 
 #pragma once
 #include "runtime/command_stream/linear_stream.h"
-#include "runtime/helpers/hw_helper.h"
+#include "runtime/command_stream/preemption_mode.h"
+#include "runtime/helpers/hw_info.h"
+#include "sku_info.h"
 
 namespace OCLRT {
 class Kernel;

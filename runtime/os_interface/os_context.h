@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "runtime/command_stream/preemption_mode.h"
 #include "runtime/utilities/reference_tracked_object.h"
 #include "engine_node.h"
 #include <memory>
 
 namespace OCLRT {
 class OSInterface;
-enum class PreemptionMode : uint32_t;
 
 class OsContext : public ReferenceTrackedObject<OsContext> {
   public:

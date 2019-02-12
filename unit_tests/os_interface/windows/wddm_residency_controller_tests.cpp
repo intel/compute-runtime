@@ -7,9 +7,10 @@
 
 #include "runtime/command_stream/preemption.h"
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_context.h"
-#include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"

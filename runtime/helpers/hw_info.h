@@ -11,20 +11,12 @@
 #include "igfxfmid.h"
 #include "sku_info.h"
 
+#include "runtime/command_stream/preemption_mode.h"
 #include "runtime/helpers/kmd_notify_properties.h"
 #include <cstddef>
 #include <string>
 
 namespace OCLRT {
-
-enum class PreemptionMode : uint32_t {
-    // Keep in sync with ForcePreemptionMode debug variable
-    Initial = 0,
-    Disabled = 1,
-    MidBatch,
-    ThreadGroup,
-    MidThread,
-};
 
 struct WhitelistedRegisters {
     bool csChicken1_0x2580;

@@ -12,6 +12,7 @@
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/dispatch_info.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_context.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_aub_center.h"

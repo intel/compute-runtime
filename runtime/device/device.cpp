@@ -17,6 +17,7 @@
 #include "runtime/device/driver_info.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_context.h"

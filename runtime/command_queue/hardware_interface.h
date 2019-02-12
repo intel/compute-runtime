@@ -7,6 +7,7 @@
 
 #pragma once
 #include "CL/cl.h"
+#include "runtime/command_stream/preemption_mode.h"
 #include <cstdint>
 
 namespace OCLRT {
@@ -17,7 +18,6 @@ class IndirectHeap;
 class Kernel;
 class LinearStream;
 class TimestampPacket;
-enum class PreemptionMode : uint32_t;
 struct HwPerfCounter;
 struct HwTimeStamps;
 struct KernelOperation;

@@ -6,10 +6,11 @@
  */
 
 #pragma once
-#include "runtime/os_interface/os_context.h"
-#include "runtime/helpers/debug_helpers.h"
+#include "runtime/command_stream/preemption_mode.h"
 #include "runtime/gmm_helper/gmm_lib.h"
+#include "runtime/helpers/debug_helpers.h"
 #include "runtime/memory_manager/memory_constants.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/spinlock.h"
 #include "sku_info.h"
 #include <memory>
@@ -24,8 +25,6 @@ class SettingsReader;
 class WddmAllocation;
 class WddmInterface;
 class WddmResidencyController;
-
-enum class PreemptionMode : uint32_t;
 
 struct AllocationStorageData;
 struct HardwareInfo;

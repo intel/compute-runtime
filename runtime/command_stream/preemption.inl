@@ -7,9 +7,10 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/sip.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
-#include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
 namespace OCLRT {

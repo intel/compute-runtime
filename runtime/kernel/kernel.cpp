@@ -5,7 +5,6 @@
  *
  */
 
-#include "kernel.h"
 #include "runtime/accelerators/intel_accelerator.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
 #include "runtime/built_ins/built_ins.h"
@@ -26,6 +25,8 @@
 #include "runtime/helpers/sampler_helpers.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/kernel/image_transformer.h"
+#include "runtime/kernel/kernel.h"
+#include "runtime/kernel/kernel.inl"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/pipe.h"
@@ -34,15 +35,12 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/kernel_info.h"
-#include "runtime/program/printf_handler.h"
 #include "runtime/sampler/sampler.h"
 #include "patch_list.h"
 
 #include <algorithm>
 #include <cstdint>
 #include <vector>
-
-#include "runtime/kernel/kernel.inl"
 
 using namespace iOpenCL;
 
