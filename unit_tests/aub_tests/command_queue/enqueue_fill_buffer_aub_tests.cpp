@@ -95,7 +95,6 @@ HWTEST_P(AUBFillBuffer, simple) {
 
 HWTEST_F(AUBFillBuffer, givenFillBufferWhenSeveralSubmissionsWithoutPollForCompletionBetweenThenTestConcurrentCS) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.AUBDumpConcurrentCS.set(true);
 
     cl_float destMemory[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     auto pDestMemory = &destMemory[0];

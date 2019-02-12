@@ -131,22 +131,6 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
     EXPECT_FALSE(aubCsr->pollForCompletionCalled);
 }
 
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubDumpConcurrentCSWhenFlushIsCalledThenItShouldntCallPollForCompletion) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.AUBDumpConcurrentCS.set(true);
-
-    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    LinearStream cs(aubExecutionEnvironment->commandBuffer);
-
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    ResidencyContainer allocationsForResidency = {};
-
-    aubCsr->flush(batchBuffer, allocationsForResidency);
-
-    EXPECT_FALSE(aubCsr->pollForCompletionCalled);
-}
-
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCallingInsertAubWaitInstructionThenCallPollForCompletion) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();

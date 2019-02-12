@@ -32,7 +32,6 @@ DECLARE_DEBUG_VARIABLE(bool, AddPatchInfoCommentsForAUBDump, false, "Dump commen
 DECLARE_DEBUG_VARIABLE(bool, UseAubStream, true, "Use aub_stream for aub dumping")
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpAllocsOnEnqueueReadOnly, false, "Force dumping buffers and images on clEnqueueReadBuffer/Image only (blocking calls)")
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpForceAllToLocalMemory, false, "Force placing every allocation in local memory address space")
-DECLARE_DEBUG_VARIABLE(bool, AUBDumpConcurrentCS, false, "Enable concurrent execution on CS (disabled by default)")
 
 /*DEBUG FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, SchedulerSimulationReturnInstance, 0, "prints execution model related debug information")
