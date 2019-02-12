@@ -17,6 +17,7 @@ namespace OCLRT {
 class MockCommandQueue : public CommandQueue {
   public:
     using CommandQueue::device;
+    using CommandQueue::multiEngineQueue;
     using CommandQueue::obtainNewTimestampPacketNodes;
     using CommandQueue::requiresCacheFlushAfterWalker;
     using CommandQueue::throttle;

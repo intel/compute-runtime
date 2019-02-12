@@ -406,6 +406,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return requiresCacheFlushAfterWalker;
     }
 
+    bool isMultiEngineQueue() { return this->multiEngineQueue; }
+
     // taskCount of last task
     uint32_t taskCount = 0;
 
@@ -456,6 +458,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool mapDcFlushRequired = false;
     bool isSpecialCommandQueue = false;
     bool requiresCacheFlushAfterWalker = false;
+    bool multiEngineQueue = false;
 
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
 

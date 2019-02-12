@@ -23,6 +23,7 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -975,4 +976,21 @@ TEST(CommandQueueDestructorTest, whenCommandQueueIsDestroyedThenDestroysTimestam
     EXPECT_EQ(2, context->getRefInternalCount());
     context->release();
     EXPECT_EQ(1, context->getRefInternalCount());
+}
+
+TEST(CommandQueuePropertiesTests, whenDefaultCommandQueueIsCreatedThenItIsNotMultiEngineQueue) {
+    MockCommandQueue queue;
+    EXPECT_FALSE(queue.multiEngineQueue);
+    EXPECT_FALSE(queue.isMultiEngineQueue());
+    queue.multiEngineQueue = true;
+    EXPECT_TRUE(queue.isMultiEngineQueue());
+}
+TEST(CommandQueuePropertiesTests, whenDebugVariableOverridesMultiEngineVariableThenItIsSetToTrue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceMultiEngineQueue.set(1u);
+    MockCommandQueue queue;
+    EXPECT_TRUE(queue.isMultiEngineQueue());
+    DebugManager.flags.ForceMultiEngineQueue.set(0u);
+    MockCommandQueue queue2;
+    EXPECT_FALSE(queue2.isMultiEngineQueue());
 }
