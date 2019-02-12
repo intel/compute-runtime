@@ -406,7 +406,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return requiresCacheFlushAfterWalker;
     }
 
-    bool isMultiEngineQueue() { return this->multiEngineQueue; }
+    bool isMultiEngineQueue() const { return this->multiEngineQueue; }
 
     // taskCount of last task
     uint32_t taskCount = 0;
