@@ -229,7 +229,7 @@ function(neo_gen_kernels_with_options target platform_name suffix filepath)
 
       set(outputpath_base "${outputdir}/${basename}_${suffix}")
       set(output_files
-        ${outputpath_base}${ir_extension}${argwospaces}
+        ${outputpath_base}.spv${argwospaces}
         ${outputpath_base}.bin${argwospaces}
         ${outputpath_base}.gen${argwospaces}
       )
@@ -265,7 +265,7 @@ function(neo_gen_kernel_with_kernel_debug_options target platform_name suffix fi
 
   set(outputpath_base "${outputdir}/${argwospaces}_${suffix}")
   set(output_files
-    ${outputpath_base}${ir_extension}
+    ${outputpath_base}.spv
     ${outputpath_base}.bin
     ${outputpath_base}.gen
     ${outputpath_base}.dbg
