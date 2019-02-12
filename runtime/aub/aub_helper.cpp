@@ -12,6 +12,10 @@
 
 namespace OCLRT {
 
+uint64_t AubHelper::getTotalMemBankSize() {
+    return 2 * GB;
+}
+
 int AubHelper::getMemTrace(uint64_t pdEntryBits) {
     return AubMemDump::AddressSpaceValues::TraceNonlocal;
 }
@@ -27,8 +31,8 @@ uint32_t AubHelper::getMemType(uint32_t addressSpace) {
     return 0;
 }
 
-uint64_t AubHelper::getMemBankSize() {
-    return 2 * GB;
+uint64_t AubHelper::getMemBankSize(const HardwareInfo *pHwInfo) {
+    return getTotalMemBankSize();
 }
 
 uint32_t AubHelper::getDevicesCount(const HardwareInfo *pHwInfo) {

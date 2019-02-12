@@ -21,7 +21,7 @@ extern aub_stream::AubManager *createAubManager(uint32_t productFamily, uint32_t
 AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (DebugManager.flags.UseAubStream.get()) {
         auto devicesCount = AubHelper::getDevicesCount(pHwInfo);
-        auto memoryBankSize = AubHelper::getMemBankSize();
+        auto memoryBankSize = AubHelper::getMemBankSize(pHwInfo);
         CommandStreamReceiverType type = static_cast<CommandStreamReceiverType>(DebugManager.flags.SetCommandStreamReceiver.get() != CommandStreamReceiverType::CSR_HW
                                                                                     ? DebugManager.flags.SetCommandStreamReceiver.get()
                                                                                     : csrType);

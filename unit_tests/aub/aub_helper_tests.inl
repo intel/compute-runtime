@@ -49,11 +49,6 @@ TEST(AubHelper, WhenCreateMultipleDevicesIsSetThenGetDevicesCountReturnedCorrect
     EXPECT_EQ(devicesCount, 1u);
 }
 
-TEST(AubHelper, WhenGetMemBankSizeIsCalledThenItReturnsCorrectValue) {
-    auto memBankSize = AubHelper::getMemBankSize();
-    EXPECT_EQ(memBankSize, 2 * GB);
-}
-
 typedef Test<DeviceFixture> AubHelperHwTest;
 
 HWTEST_F(AubHelperHwTest, GivenDisabledLocalMemoryWhenGetDataHintForPml4EntryIsCalledThenTraceNotypeIsReturned) {
