@@ -191,7 +191,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateH
     uint32_t engineIndex = 2;
     uint32_t deviceIndex = 3;
 
-    OsContext osContext(nullptr, 0, allEngineInstances[engineIndex], PreemptionMode::Disabled);
+    OsContext osContext(nullptr, 0, 1, allEngineInstances[engineIndex], PreemptionMode::Disabled);
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_AUB);
@@ -211,7 +211,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateH
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSetThenDontCreateHardwareContext) {
-    OsContext osContext(nullptr, 0, lowPriorityGpgpuEngine, PreemptionMode::Disabled);
+    OsContext osContext(nullptr, 0, 1, lowPriorityGpgpuEngine, PreemptionMode::Disabled);
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_AUB);
@@ -298,7 +298,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
     executionEnvironment.aubCenter.reset(new AubCenter());
 
     auto engineInstance = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
-    OsContext osContext(nullptr, 0, engineInstance, PreemptionMode::Disabled);
+    OsContext osContext(nullptr, 0, 1, engineInstance, PreemptionMode::Disabled);
 
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
@@ -688,7 +688,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     auto memoryManager = aubExecutionEnvironment->executionEnvironment->memoryManager.get();
 
     auto gfxDefaultAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    ;
 
     ResidencyContainer allocationsForResidency = {gfxDefaultAllocation};
     aubCsr->processResidency(allocationsForResidency);
@@ -729,11 +728,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    ;
+
     gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
 
     auto gfxImageAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    ;
+
     gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
@@ -754,12 +753,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    ;
+
     gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
     gfxBufferAllocation->setAubWritable(false);
 
     auto gfxImageAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    ;
+
     gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
     gfxImageAllocation->setAubWritable(false);
 
@@ -783,12 +782,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    ;
+
     gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
     gfxBufferAllocation->setAubWritable(false);
 
     auto gfxImageAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    ;
+
     gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
     gfxImageAllocation->setAubWritable(false);
 
@@ -802,6 +801,18 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 
     memoryManager->freeGraphicsMemory(gfxBufferAllocation);
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenOsContextWithMultipleDevicesSupportedWhenSetupIsCalledThenAbort) {
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
+    mockAubCenter->aubManager = std::make_unique<MockAubManager>();
+    pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
+
+    uint32_t numSupportedDevices = 3;
+    OsContext osContext(nullptr, 1, numSupportedDevices, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
+
+    EXPECT_THROW(aubCsr->setupContext(osContext), std::exception);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationTypeIsntNonAubWritableThenWriteMemoryIsAllowed) {
@@ -1102,11 +1113,29 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 
 using HardwareContextContainerTests = ::testing::Test;
 
+TEST_F(HardwareContextContainerTests, givenDeviceIndexWhenOsContextWithMultipleDevicesSupportedThenAbort) {
+    MockAubManager aubManager;
+    uint32_t numSupportedDevices = 2;
+    uint32_t deviceIndex = 1;
+    OsContext osContext(nullptr, 1, numSupportedDevices, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+
+    EXPECT_THROW(HardwareContextController(aubManager, osContext, deviceIndex, 0, 0), std::exception);
+}
+
+TEST_F(HardwareContextContainerTests, givenOsContextWithoutMultipleDevicesSupportedWhenNoDeviceIndexPassedThenAbort) {
+    MockAubManager aubManager;
+    uint32_t numSupportedDevices = 1;
+    OsContext osContext(nullptr, 1, numSupportedDevices, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+
+    EXPECT_THROW(HardwareContextController(aubManager, osContext, 0, 0), std::exception);
+}
+
 TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCalledThenUseAllContexts) {
     MockAubManager aubManager;
-    HardwareContextController hwContextContainer(aubManager, 1, 2, 0);
-    hwContextContainer.hardwareContexts.emplace_back(aubManager.createHardwareContext(2, 3));
-    EXPECT_EQ(2u, hwContextContainer.hardwareContexts.size());
+    uint32_t numSupportedDevices = 2;
+    OsContext osContext(nullptr, 1, numSupportedDevices, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    HardwareContextController hwContextContainer(aubManager, osContext, numSupportedDevices, 0);
+    EXPECT_EQ(numSupportedDevices, hwContextContainer.hardwareContexts.size());
 
     auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
     auto mockHwContext1 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[1].get());
@@ -1137,9 +1166,10 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
 
 TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCalledThenUseFirstContext) {
     MockAubManager aubManager;
-    HardwareContextController hwContextContainer(aubManager, 1, 2, 0);
-    hwContextContainer.hardwareContexts.emplace_back(aubManager.createHardwareContext(2, 3));
-    EXPECT_EQ(2u, hwContextContainer.hardwareContexts.size());
+    uint32_t numSupportedDevices = 2;
+    OsContext osContext(nullptr, 1, numSupportedDevices, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    HardwareContextController hwContextContainer(aubManager, osContext, 2, 0);
+    EXPECT_EQ(numSupportedDevices, hwContextContainer.hardwareContexts.size());
 
     auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
     auto mockHwContext1 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[1].get());

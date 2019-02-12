@@ -41,7 +41,7 @@ class DrmCommandStreamFixture {
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         executionEnvironment.osInterface->get()->setDrm(mock.get());
 
-        osContext = std::make_unique<OsContext>(executionEnvironment.osInterface.get(), 0u, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+        osContext = std::make_unique<OsContext>(executionEnvironment.osInterface.get(), 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
         csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], executionEnvironment,
                                                                      gemCloseWorkerMode::gemCloseWorkerActive);
@@ -253,7 +253,7 @@ TEST_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdToAllExecBuff
         .WillRepeatedly(::testing::Return(0))
         .RetiresOnSaturation();
 
-    osContext = std::make_unique<OsContext>(executionEnvironment.osInterface.get(), 1,
+    osContext = std::make_unique<OsContext>(executionEnvironment.osInterface.get(), 1, 1,
                                             HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     csr->setupContext(*osContext);
 

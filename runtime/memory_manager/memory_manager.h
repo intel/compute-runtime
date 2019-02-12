@@ -177,7 +177,7 @@ class MemoryManager {
         ::alignedFree(ptr);
     }
 
-    OsContext *createAndRegisterOsContext(EngineInstanceT engineType, PreemptionMode preemptionMode);
+    OsContext *createAndRegisterOsContext(EngineInstanceT engineType, uint32_t numSupportedDevices, PreemptionMode preemptionMode);
     uint32_t getOsContextCount() { return static_cast<uint32_t>(registeredOsContexts.size()); }
     CommandStreamReceiver *getDefaultCommandStreamReceiver(uint32_t deviceId) const;
     const CsrContainer &getCommandStreamReceivers() const;

@@ -184,12 +184,12 @@ bool MemoryManager::isMemoryBudgetExhausted() const {
     return false;
 }
 
-OsContext *MemoryManager::createAndRegisterOsContext(EngineInstanceT engineType, PreemptionMode preemptionMode) {
+OsContext *MemoryManager::createAndRegisterOsContext(EngineInstanceT engineType, uint32_t numSupportedDevices, PreemptionMode preemptionMode) {
     auto contextId = ++latestContextId;
     if (contextId + 1 > registeredOsContexts.size()) {
         registeredOsContexts.resize(contextId + 1);
     }
-    auto osContext = new OsContext(executionEnvironment.osInterface.get(), contextId, engineType, preemptionMode);
+    auto osContext = new OsContext(executionEnvironment.osInterface.get(), contextId, numSupportedDevices, engineType, preemptionMode);
     osContext->incRefInternal();
     registeredOsContexts[contextId] = osContext;
 

@@ -110,7 +110,7 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
         ASSERT_NE(nullptr, memoryManager);
 
         auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(
-            getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo), PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo));
+            getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo), 1, PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo));
         csrWithAubDump->setupContext(*osContext);
         if (csrWithAubDump->aubCSR) {
             csrWithAubDump->aubCSR->setupContext(*osContext);
@@ -132,7 +132,7 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenSett
     ExecutionEnvironment executionEnvironment;
 
     CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump(*platformDevices[0], "aubfile", executionEnvironment);
-    OsContext osContext(nullptr, 0, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    OsContext osContext(nullptr, 0, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
     csrWithAubDump.setupContext(osContext);
     EXPECT_EQ(&osContext, &csrWithAubDump.getOsContext());

@@ -17,18 +17,20 @@ class OSInterface;
 class OsContext : public ReferenceTrackedObject<OsContext> {
   public:
     class OsContextImpl;
-    OsContext(OSInterface *osInterface, uint32_t contextId, EngineInstanceT engineType, PreemptionMode preemptionMode);
+    OsContext(OSInterface *osInterface, uint32_t contextId, uint32_t numDevicesSupported, EngineInstanceT engineType, PreemptionMode preemptionMode);
     ~OsContext() override;
     OsContextImpl *get() const {
         return osContextImpl.get();
     };
 
     uint32_t getContextId() const { return contextId; }
+    uint32_t getNumDevicesSupported() const { return numDevicesSupported; }
     EngineInstanceT &getEngineType() { return engineType; }
 
   protected:
     std::unique_ptr<OsContextImpl> osContextImpl;
-    uint32_t contextId = 0;
-    EngineInstanceT engineType;
+    const uint32_t contextId;
+    const uint32_t numDevicesSupported;
+    EngineInstanceT engineType = {EngineType::ENGINE_RCS, 0};
 };
 } // namespace OCLRT

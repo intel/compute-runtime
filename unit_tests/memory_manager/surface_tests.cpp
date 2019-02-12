@@ -64,7 +64,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     MockCsr<FamilyType> *csr = new MockCsr<FamilyType>(execStamp, executionEnvironment);
     executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
     executionEnvironment.memoryManager.reset(csr->createMemoryManager(false, false));
-    csr->setupContext(*executionEnvironment.memoryManager->createAndRegisterOsContext(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
+    csr->setupContext(*executionEnvironment.memoryManager->createAndRegisterOsContext(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
 
     Surface *surface = createSurface::Create<TypeParam>(this->data,
                                                         &this->buffer,
