@@ -42,7 +42,7 @@ static constexpr cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_c
                                                                                        CL_FP_DENORM |
                                                                                        CL_FP_FMA);
 
-bool Device::getEnabled64kbPages() {
+bool Device::getEnabled64kbPages() const {
     if (DebugManager.flags.Enable64kbpages.get() == -1) {
         // assign value according to os and hw configuration
         return OSInterface::osEnabled64kbPages && hwInfo.capabilityTable.ftr64KBpages;
@@ -50,17 +50,7 @@ bool Device::getEnabled64kbPages() {
         // force debug settings
         return (DebugManager.flags.Enable64kbpages.get() != 0);
     }
-};
-
-bool Device::getEnableLocalMemory() {
-    if (DebugManager.flags.EnableLocalMemory.get() != -1) {
-        return DebugManager.flags.EnableLocalMemory.get();
-    } else if (DebugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
-        return true;
-    }
-
-    return OSInterface::osEnableLocalMemory && getHardwareCapabilities().localMemorySupported;
-};
+}
 
 void Device::setupFp64Flags() {
     if (DebugManager.flags.OverrideDefaultFP64Settings.get() == -1) {

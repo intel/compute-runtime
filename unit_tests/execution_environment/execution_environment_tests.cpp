@@ -160,11 +160,13 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCal
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenLocalMemorySupportedInMemoryManagerHasCorrectValue) {
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    const HardwareInfo *hwInfo = platformDevices[0];
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
     auto executionEnvironment = device->getExecutionEnvironment();
-    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 0, 0);
-    executionEnvironment->initializeMemoryManager(false, device->getEnableLocalMemory(), 0, 0);
-    EXPECT_EQ(device->getEnableLocalMemory(), executionEnvironment->memoryManager->isLocalMemorySupported());
+    executionEnvironment->initializeCommandStreamReceiver(hwInfo, 0, 0);
+    auto enableLocalMemory = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
+    executionEnvironment->initializeMemoryManager(false, enableLocalMemory, 0, 0);
+    EXPECT_EQ(enableLocalMemory, executionEnvironment->memoryManager->isLocalMemorySupported());
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {

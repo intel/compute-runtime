@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,6 @@ extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, E
 
 class MockDevice : public Device {
   public:
-    using Device::createDeviceImpl;
     using Device::executionEnvironment;
     using Device::initializeCaps;
 
@@ -105,8 +104,6 @@ class MockDevice : public Device {
         }
     }
     std::unique_ptr<MemoryManager> mockMemoryManager;
-
-    void setHWCapsLocalMemorySupported(bool localMemorySupported);
 
   private:
     bool forceWhitelistedRegs = false;

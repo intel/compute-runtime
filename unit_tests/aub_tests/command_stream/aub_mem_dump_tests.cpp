@@ -77,13 +77,15 @@ HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
     // Header
-    auto deviceId = pDevice->getHardwareInfo().capabilityTable.aubDeviceId;
+    auto hwInfo = pDevice->getHardwareInfo();
+    auto deviceId = hwInfo.capabilityTable.aubDeviceId;
     aubFile.init(AubMemDump::SteppingValues::A, deviceId);
 
     auto gAddress = static_cast<uintptr_t>(-1) - 4096;
     auto pAddress = static_cast<uint64_t>(gAddress) & 0xFFFFFFFF;
 
-    OCLRT::AubHelperHw<FamilyType> aubHelperHw(pDevice->getEnableLocalMemory());
+    auto enableLocalMemory = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily).getEnableLocalMemory(hwInfo);
+    OCLRT::AubHelperHw<FamilyType> aubHelperHw(enableLocalMemory);
     AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress, 7, aubHelperHw);
 
     aubFile.fileHandle.close();

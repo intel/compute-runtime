@@ -12,9 +12,11 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
+#include "runtime/os_interface/os_interface.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_helper_tests.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/helpers/variable_backup.h"
 
 #include <chrono>
 #include <iostream>
@@ -632,4 +634,33 @@ TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsReadPlatformSettingWhenP
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
     EXPECT_TRUE(HwHelper::cacheFlushAfterWalkerSupported(device->getHardwareInfo()));
+}
+
+TEST_F(HwHelperTest, givenEnableLocalMemoryDebugVarAndOsEnableLocalMemoryWhenSetThenGetEnableLocalMemoryReturnsCorrectValue) {
+    DebugManagerStateRestore dbgRestore;
+    VariableBackup<bool> orgOsEnableLocalMemory(&OSInterface::osEnableLocalMemory);
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    DebugManager.flags.EnableLocalMemory.set(0);
+    EXPECT_FALSE(helper.getEnableLocalMemory(hwInfoHelper.hwInfo));
+
+    DebugManager.flags.EnableLocalMemory.set(1);
+    EXPECT_TRUE(helper.getEnableLocalMemory(hwInfoHelper.hwInfo));
+
+    DebugManager.flags.EnableLocalMemory.set(-1);
+
+    OSInterface::osEnableLocalMemory = false;
+    EXPECT_FALSE(helper.getEnableLocalMemory(hwInfoHelper.hwInfo));
+
+    OSInterface::osEnableLocalMemory = true;
+    EXPECT_EQ(helper.isLocalMemoryEnabled(hwInfoHelper.hwInfo), helper.getEnableLocalMemory(hwInfoHelper.hwInfo));
+}
+
+TEST_F(HwHelperTest, givenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGetEnableLocalMemoryReturnsCorrectValue) {
+    DebugManagerStateRestore dbgRestore;
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper.hwInfo));
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
+    EXPECT_TRUE(helper.getEnableLocalMemory(hwInfoHelper.hwInfo));
 }

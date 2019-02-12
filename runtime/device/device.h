@@ -109,8 +109,7 @@ class Device : public BaseObject<_cl_device_id> {
     std::vector<unsigned int> simultaneousInterops;
     std::string deviceExtensions;
     std::string name;
-    bool getEnabled64kbPages();
-    bool getEnableLocalMemory();
+    bool getEnabled64kbPages() const;
     bool isSourceLevelDebuggerActive() const;
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
@@ -159,7 +158,7 @@ class Device : public BaseObject<_cl_device_id> {
 
     PreemptionMode preemptionMode;
     ExecutionEnvironment *executionEnvironment = nullptr;
-    uint32_t deviceIndex = 0u;
+    const uint32_t deviceIndex;
     uint32_t defaultEngineIndex = 0;
 };
 

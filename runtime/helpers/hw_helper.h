@@ -36,7 +36,7 @@ class HwHelper {
     virtual void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
     virtual uint32_t getConfigureAddressSpaceMode() = 0;
-    virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) = 0;
+    virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance) const = 0;
     virtual bool supportsYTiling() const = 0;
@@ -57,6 +57,7 @@ class HwHelper {
                                                 bool forceNonAuxMode) = 0;
     virtual size_t getScratchSpaceOffsetFor64bit() = 0;
     virtual const std::vector<EngineInstanceT> getGpgpuEngineInstances() const = 0;
+    virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
 
   protected:
     HwHelper() = default;
@@ -115,7 +116,7 @@ class HwHelperHw : public HwHelper {
 
     uint32_t getConfigureAddressSpaceMode() override;
 
-    bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) override;
+    bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override;
 
     bool supportsYTiling() const override;
 
@@ -137,6 +138,8 @@ class HwHelperHw : public HwHelper {
     size_t getScratchSpaceOffsetFor64bit() override;
 
     const std::vector<EngineInstanceT> getGpgpuEngineInstances() const override;
+
+    bool getEnableLocalMemory(const HardwareInfo &hwInfo) const override;
 
   protected:
     HwHelperHw() = default;

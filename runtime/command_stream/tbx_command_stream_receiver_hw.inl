@@ -171,7 +171,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
     TbxCommandStreamReceiverHw<GfxFamily> *csr;
     if (withAubDump) {
         auto &hwHelper = HwHelper::get(hwInfoIn.pPlatform->eRenderCoreFamily);
-        auto localMemoryEnabled = hwHelper.isLocalMemoryEnabled(hwInfoIn);
+        auto localMemoryEnabled = hwHelper.getEnableLocalMemory(hwInfoIn);
         executionEnvironment.initAubCenter(&hwInfoIn, localMemoryEnabled, baseName);
 
         csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(hwInfoIn, baseName, executionEnvironment);

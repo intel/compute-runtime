@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,5 +16,4 @@ void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper, co
     EXPECT_EQ(16384u, hwCaps.image3DMaxHeight);
     EXPECT_EQ(16384u, hwCaps.image3DMaxWidth);
     EXPECT_TRUE(hwCaps.isStatelesToStatefullWithOffsetSupported);
-    EXPECT_FALSE(hwCaps.localMemorySupported);
 }

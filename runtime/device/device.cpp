@@ -149,7 +149,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo) {
         }
     }
 
-    for (auto engine : engines) {
+    for (auto &engine : engines) {
         auto csr = engine.commandStreamReceiver;
         csr->setPreemptionCsrAllocation(preemptionAllocation);
         if (DebugManager.flags.EnableExperimentalCommandBuffer.get() > 0) {
@@ -162,14 +162,15 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo) {
 
 bool Device::createEngines(const HardwareInfo *pHwInfo) {
     auto defaultEngineType = getChosenEngineType(*pHwInfo);
-    auto &gpgpuEngines = HwHelper::get(pHwInfo->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances();
+    auto &hwHelper = HwHelper::get(pHwInfo->pPlatform->eRenderCoreFamily);
+    auto &gpgpuEngines = hwHelper.getGpgpuEngineInstances();
+    auto enableLocalMemory = hwHelper.getEnableLocalMemory(*pHwInfo);
 
     for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngines.size(); deviceCsrIndex++) {
         if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo, getDeviceIndex(), deviceCsrIndex)) {
             return false;
         }
-        executionEnvironment->initializeMemoryManager(getEnabled64kbPages(), getEnableLocalMemory(),
-                                                      getDeviceIndex(), deviceCsrIndex);
+        executionEnvironment->initializeMemoryManager(getEnabled64kbPages(), enableLocalMemory, getDeviceIndex(), deviceCsrIndex);
 
         auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(gpgpuEngines[deviceCsrIndex], preemptionMode);
         auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[getDeviceIndex()][deviceCsrIndex].get();

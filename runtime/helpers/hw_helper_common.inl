@@ -14,6 +14,7 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_constants.h"
+#include "runtime/os_interface/os_interface.h"
 
 namespace OCLRT {
 
@@ -27,7 +28,7 @@ void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 template <typename Family>
-bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) {
+bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
     return false;
 }
 
@@ -39,7 +40,6 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
     //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
     caps->maxMemAllocSize = (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
     caps->isStatelesToStatefullWithOffsetSupported = true;
-    caps->localMemorySupported = isLocalMemoryEnabled(hwInfo);
 }
 
 template <typename Family>
@@ -167,6 +167,17 @@ const std::vector<EngineInstanceT> HwHelperHw<Family>::getGpgpuEngineInstances()
     constexpr std::array<EngineInstanceT, 2> gpgpuEngineInstances = {{{ENGINE_RCS, 0},
                                                                       lowPriorityGpgpuEngine}};
     return std::vector<EngineInstanceT>(gpgpuEngineInstances.begin(), gpgpuEngineInstances.end());
-};
+}
+
+template <typename Family>
+bool HwHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const {
+    if (DebugManager.flags.EnableLocalMemory.get() != -1) {
+        return DebugManager.flags.EnableLocalMemory.get();
+    } else if (DebugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
+        return true;
+    }
+
+    return OSInterface::osEnableLocalMemory && isLocalMemoryEnabled(hwInfo);
+}
 
 } // namespace OCLRT

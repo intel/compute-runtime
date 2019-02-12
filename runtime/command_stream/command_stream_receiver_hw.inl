@@ -42,10 +42,10 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &
     : CommandStreamReceiver(executionEnvironment), hwInfo(hwInfoIn) {
 
     auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
-    localMemoryEnabled = hwHelper.isLocalMemoryEnabled(hwInfo);
+    localMemoryEnabled = hwHelper.getEnableLocalMemory(hwInfo);
 
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
-    resetKmdNotifyHelper(new KmdNotifyHelper(&(hwInfoIn.capabilityTable.kmdNotifyProperties)));
+    resetKmdNotifyHelper(new KmdNotifyHelper(&hwInfoIn.capabilityTable.kmdNotifyProperties));
     flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(executionEnvironment));
     defaultSshSize = getSshHeapSize();
 

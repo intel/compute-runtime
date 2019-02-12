@@ -69,12 +69,7 @@ size_t HwHelperHw<GENX>::getMaxBarrierRegisterPerSlice() const {
 
 template <>
 void HwHelperHw<GENX>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
-    PLATFORM *pPlatform = const_cast<PLATFORM *>(pHwInfo->pPlatform);
-    if (pPlatform->usDeviceID == 20) {
-        coherencyFlag = false;
-    } else {
-        coherencyFlag = true;
-    }
+    coherencyFlag = (pHwInfo->pPlatform->usDeviceID != 20);
 }
 
 template <>
@@ -82,6 +77,7 @@ bool HwHelperHw<GENX>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enab
     pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580 = enable;
     return enable;
 }
+
 template <>
 const AubMemDump::LrcaHelper &HwHelperHw<GENX>::getCsTraits(EngineInstanceT engineInstance) const {
     return *AUBFamilyMapper<GENX>::csTraits[engineInstance.type];

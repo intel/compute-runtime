@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,23 +22,22 @@ constexpr uint32_t hwConfigTestMidBatchBit = 1 << 10;
 
 template <>
 int HwInfoConfigHw<IGFX_UNKNOWN>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    PLATFORM *pPlatform = const_cast<PLATFORM *>(hwInfo->pPlatform);
-    GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
     FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
 
-    if (pPlatform->usDeviceID == 30) {
+    if (hwInfo->pPlatform->usDeviceID == 30) {
+        GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
         pSysInfo->EdramSizeInKb = 128 * 1000;
     }
-    if (pPlatform->usDeviceID & hwConfigTestMidThreadBit) {
+    if (hwInfo->pPlatform->usDeviceID & hwConfigTestMidThreadBit) {
         pSkuTable->ftrGpGpuMidThreadLevelPreempt = 1;
     }
-    if (pPlatform->usDeviceID & hwConfigTestThreadGroupBit) {
+    if (hwInfo->pPlatform->usDeviceID & hwConfigTestThreadGroupBit) {
         pSkuTable->ftrGpGpuThreadGroupLevelPreempt = 1;
     }
-    if (pPlatform->usDeviceID & hwConfigTestMidBatchBit) {
+    if (hwInfo->pPlatform->usDeviceID & hwConfigTestMidBatchBit) {
         pSkuTable->ftrGpGpuMidBatchPreempt = 1;
     }
-    return (pPlatform->usDeviceID == 10) ? -1 : 0;
+    return (hwInfo->pPlatform->usDeviceID == 10) ? -1 : 0;
 }
 
 template <>

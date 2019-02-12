@@ -7,6 +7,7 @@
 
 #include "unit_tests/mocks/mock_device.h"
 #include "runtime/device/driver_info.h"
+#include "runtime/helpers/hw_helper.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/tests_configuration.h"
@@ -25,8 +26,9 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
 }
 MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : Device(hwInfo, executionEnvironment, deviceIndex) {
+    bool enableLocalMemory = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily).getEnableLocalMemory(hwInfo);
     bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
-    this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, this->getEnableLocalMemory(), aubUsage, *executionEnvironment));
+    this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, enableLocalMemory, aubUsage, *executionEnvironment));
     this->osTime = MockOSTime::create();
     mockWaTable = *hwInfo.pWaTable;
 }
@@ -66,8 +68,4 @@ FailDevice::FailDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executi
 FailDeviceAfterOne::FailDeviceAfterOne(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : MockDevice(hwInfo, executionEnvironment, deviceIndex) {
     this->mockMemoryManager.reset(new FailMemoryManager(1));
-}
-
-void MockDevice::setHWCapsLocalMemorySupported(bool localMemorySupported) {
-    this->hardwareCapabilities.localMemorySupported = localMemorySupported;
 }

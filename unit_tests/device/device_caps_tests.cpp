@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,6 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_helper_tests.h"
-#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_device.h"
 
@@ -878,47 +877,6 @@ TEST(Device_GetCaps, givenDeviceWithNullSourceLevelDebuggerWhenCapsAreInitialize
 }
 
 typedef HwHelperTest DeviceCapsWithModifiedHwInfoTest;
-
-TEST_F(DeviceCapsWithModifiedHwInfoTest, GivenLocalMemorySupportedAndOsEnableLocalMemoryAndEnableLocalMemoryDebugVarWhenSetThenGetEnableLocalMemoryReturnCorrectValue) {
-    DebugManagerStateRestore dbgRestore;
-    VariableBackup<bool> orgOsEnableLocalMemory(&OSInterface::osEnableLocalMemory);
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper.hwInfo));
-    bool orgHwCapsLocalMemorySupported = device->getHardwareCapabilities().localMemorySupported;
-
-    DebugManager.flags.EnableLocalMemory.set(0);
-    EXPECT_FALSE(device->getEnableLocalMemory());
-
-    DebugManager.flags.EnableLocalMemory.set(1);
-    EXPECT_TRUE(device->getEnableLocalMemory());
-
-    DebugManager.flags.EnableLocalMemory.set(-1);
-
-    device->setHWCapsLocalMemorySupported(false);
-    OSInterface::osEnableLocalMemory = false;
-    EXPECT_FALSE(device->getEnableLocalMemory());
-
-    device->setHWCapsLocalMemorySupported(false);
-    OSInterface::osEnableLocalMemory = true;
-    EXPECT_FALSE(device->getEnableLocalMemory());
-
-    device->setHWCapsLocalMemorySupported(true);
-    OSInterface::osEnableLocalMemory = false;
-    EXPECT_FALSE(device->getEnableLocalMemory());
-
-    device->setHWCapsLocalMemorySupported(true);
-    OSInterface::osEnableLocalMemory = true;
-    EXPECT_TRUE(device->getEnableLocalMemory());
-
-    device->setHWCapsLocalMemorySupported(orgHwCapsLocalMemorySupported);
-}
-
-TEST_F(DeviceCapsWithModifiedHwInfoTest, GivenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGetEnableLocalMemoryReturnCorrectValue) {
-    DebugManagerStateRestore dbgRestore;
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper.hwInfo));
-
-    DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
-    EXPECT_TRUE(device->getEnableLocalMemory());
-}
 
 TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNotSupportedWhenDeviceIsCreatedThenSourceLevelDebuggerActiveIsSetToFalse) {
 
