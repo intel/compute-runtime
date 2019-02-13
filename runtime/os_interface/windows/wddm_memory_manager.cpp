@@ -47,8 +47,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
 
     auto allocation = std::make_unique<WddmAllocation>(nullptr, allocationData.imgInfo->size, nullptr, MemoryPool::SystemCpuInaccessible, false);
     allocation->gmm = gmm.get();
-
-    if (!WddmMemoryManager::createWddmAllocation(allocation.get(), AllocationOrigin::EXTERNAL_ALLOCATION)) {
+    allocation->origin = allocationData.allocationOrigin;
+    if (!WddmMemoryManager::createWddmAllocation(allocation.get())) {
         return nullptr;
     }
 
@@ -99,8 +99,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const
     gmm = new Gmm(pSysMem, sizeAligned, allocationData.flags.uncacheable);
 
     wddmAllocation->gmm = gmm;
+    wddmAllocation->origin = allocationData.allocationOrigin;
 
-    if (!createWddmAllocation(wddmAllocation.get(), AllocationOrigin::EXTERNAL_ALLOCATION)) {
+    if (!createWddmAllocation(wddmAllocation.get())) {
         delete gmm;
         freeSystemMemory(pSysMem);
         return nullptr;
@@ -122,7 +123,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(si
 
     wddmAllocation->gmm = gmm;
 
-    if (!createWddmAllocation(wddmAllocation.get(), AllocationOrigin::EXTERNAL_ALLOCATION)) {
+    if (!createWddmAllocation(wddmAllocation.get())) {
         delete gmm;
         return nullptr;
     }
@@ -154,7 +155,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(const AllocationPr
 
         Gmm *gmm = new Gmm(ptrAligned, sizeAligned, false);
         allocation->gmm = gmm;
-        if (createWddmAllocation(allocation, AllocationOrigin::EXTERNAL_ALLOCATION)) {
+        if (createWddmAllocation(allocation)) {
             DebugManager.logAllocation(allocation);
             return allocation;
         }
@@ -195,8 +196,9 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
 
     gmm = new Gmm(ptrAligned, sizeAligned, false);
     wddmAllocation->gmm = gmm;
+    wddmAllocation->origin = allocationData.allocationOrigin;
 
-    if (!createWddmAllocation(wddmAllocation.get(), allocationData.allocationOrigin)) {
+    if (!createWddmAllocation(wddmAllocation.get())) {
         delete gmm;
         freeSystemMemory(pSysMem);
         return nullptr;
@@ -461,13 +463,12 @@ AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {
     return &mallocRestrictions;
 }
 
-bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, AllocationOrigin allocationOrigin) {
+bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation) {
     auto wddmSuccess = wddm->createAllocation(allocation);
     if (wddmSuccess == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
         deferredDeleter->drain(true);
         wddmSuccess = wddm->createAllocation(allocation);
     }
-    allocation->origin = allocationOrigin;
 
     if (wddmSuccess == STATUS_SUCCESS) {
         bool mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr());

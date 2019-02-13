@@ -819,7 +819,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuV
 
     WddmAllocation allocation(ptr, size, nullptr, MemoryPool::MemoryNull, false);
     allocation.gmm = gmm.get();
-    bool ret = memoryManager->createWddmAllocation(&allocation, AllocationOrigin::EXTERNAL_ALLOCATION);
+    bool ret = memoryManager->createWddmAllocation(&allocation);
     EXPECT_FALSE(ret);
 }
 
@@ -835,7 +835,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMap
 
     WddmAllocation allocation(ptr, size, nullptr, MemoryPool::MemoryNull, false);
     allocation.gmm = gmm.get();
-    bool ret = memoryManager->createWddmAllocation(&allocation, AllocationOrigin::EXTERNAL_ALLOCATION);
+    bool ret = memoryManager->createWddmAllocation(&allocation);
     EXPECT_TRUE(ret);
 }
 
@@ -851,7 +851,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
 
     WddmAllocation allocation(ptr, size, nullptr, MemoryPool::MemoryNull, false);
     allocation.gmm = gmm.get();
-    bool ret = memoryManager->createWddmAllocation(&allocation, AllocationOrigin::EXTERNAL_ALLOCATION);
+    bool ret = memoryManager->createWddmAllocation(&allocation);
     EXPECT_FALSE(ret);
 }
 
