@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,8 +14,6 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
 
-using namespace OCLRT;
-
 namespace OCLRT {
 bool operator==(const HardwareInfo &hwInfoIn, const HardwareInfo &hwInfoOut) {
     bool result = (0 == memcmp(hwInfoIn.pPlatform, hwInfoOut.pPlatform, sizeof(PLATFORM)));
@@ -24,9 +22,8 @@ bool operator==(const HardwareInfo &hwInfoIn, const HardwareInfo &hwInfoOut) {
     result &= (0 == memcmp(&hwInfoIn.capabilityTable, &hwInfoOut.capabilityTable, sizeof(RuntimeCapabilityTable)));
     return result;
 }
-} // namespace OCLRT
 
-struct GetDevicesTest : ::testing::TestWithParam<std::tuple<CommandStreamReceiverType, const char *>> {
+struct GetDevicesTest : ::testing::Test {
     void SetUp() override {
         overrideDeviceWithDefaultHardwareInfo = false;
         gtSystemInfo = *platformDevices[0]->pSysInfo;
@@ -36,80 +33,106 @@ struct GetDevicesTest : ::testing::TestWithParam<std::tuple<CommandStreamReceive
         memcpy(const_cast<GT_SYSTEM_INFO *>(platformDevices[0]->pSysInfo), &gtSystemInfo, sizeof(GT_SYSTEM_INFO));
     }
     GT_SYSTEM_INFO gtSystemInfo;
-};
-
-HWTEST_P(GetDevicesTest, givenGetDevicesWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
-    DebugManagerStateRestore stateRestorer;
-    CommandStreamReceiverType csrType = std::get<0>(GetParam());
-    const char *hwPrefix = std::get<1>(GetParam());
-    std::string productFamily = "unk";
-    if (hwPrefix != nullptr) {
-        productFamily = hwPrefix;
-    }
-
-    DebugManager.flags.SetCommandStreamReceiver.set(csrType);
-    DebugManager.flags.ProductFamilyOverride.set(productFamily);
-
     int i = 0;
     size_t numDevices = 0;
     HardwareInfo *hwInfo = nullptr;
-    ExecutionEnvironment executionEnvironment;
-    auto ret = getDevices(&hwInfo, numDevices, executionEnvironment);
+    DebugManagerStateRestore stateRestorer;
+};
 
-    switch (csrType) {
-    case CSR_HW:
-    case CSR_HW_WITH_AUB:
-        EXPECT_TRUE(ret);
-        EXPECT_NE(nullptr, hwInfo);
-        EXPECT_EQ(1u, numDevices);
-        DeviceFactory::releaseDevices();
-        break;
-    case CSR_AUB:
-    case CSR_TBX:
-    case CSR_TBX_WITH_AUB:
-        EXPECT_TRUE(ret);
-        EXPECT_NE(nullptr, hwInfo);
-        EXPECT_EQ(1u, numDevices);
-        for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
-            auto hardwareInfo = hardwareInfoTable[i];
-            if (hardwareInfo == nullptr)
-                continue;
-            if (hardwareInfoTable[i]->pPlatform->eProductFamily == hwInfo->pPlatform->eProductFamily)
-                break;
+HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
+    for (int productFamily = 0; productFamily < IGFX_MAX_PRODUCT; productFamily++) {
+        const char *hwPrefix = hardwarePrefix[productFamily];
+        if (hwPrefix == nullptr) {
+            continue;
         }
-        EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
-        ASSERT_NE(nullptr, hardwarePrefix[i]);
-        if (hwPrefix != nullptr) {
-            EXPECT_EQ(0, memcmp(hardwareInfoTable[i]->pPlatform, hwInfo->pPlatform, sizeof(PLATFORM)));
-            EXPECT_EQ(0, memcmp(&hardwareInfoTable[i]->capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
-            EXPECT_EQ(0, memcmp(hardwareInfoTable[i]->pWaTable, hwInfo->pWaTable, sizeof(WorkaroundTable)));
-            EXPECT_STREQ(hardwarePrefix[i], productFamily.c_str());
-        } else {
+        for (int csrTypes = 0; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
+            CommandStreamReceiverType csrType = static_cast<CommandStreamReceiverType>(csrTypes);
+            std::string productFamily(hwPrefix);
+
+            DebugManager.flags.SetCommandStreamReceiver.set(csrType);
+            DebugManager.flags.ProductFamilyOverride.set(productFamily);
+            ExecutionEnvironment exeEnv;
+
+            auto ret = getDevices(&hwInfo, numDevices, exeEnv);
+
+            switch (csrType) {
+            case CSR_HW:
+            case CSR_HW_WITH_AUB:
+                EXPECT_TRUE(ret);
+                EXPECT_NE(nullptr, hwInfo);
+                EXPECT_EQ(1u, numDevices);
+                DeviceFactory::releaseDevices();
+                break;
+            case CSR_AUB:
+            case CSR_TBX:
+            case CSR_TBX_WITH_AUB:
+                EXPECT_TRUE(ret);
+                EXPECT_NE(nullptr, hwInfo);
+                EXPECT_EQ(1u, numDevices);
+                for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
+                    auto hardwareInfo = hardwareInfoTable[i];
+                    if (hardwareInfo == nullptr)
+                        continue;
+                    if (hardwareInfoTable[i]->pPlatform->eProductFamily == hwInfo->pPlatform->eProductFamily)
+                        break;
+                }
+                EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
+                ASSERT_NE(nullptr, hardwarePrefix[i]);
+                EXPECT_EQ(0, memcmp(hardwareInfoTable[i]->pPlatform, hwInfo->pPlatform, sizeof(PLATFORM)));
+                EXPECT_EQ(0, memcmp(&hardwareInfoTable[i]->capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
+                EXPECT_EQ(0, memcmp(hardwareInfoTable[i]->pWaTable, hwInfo->pWaTable, sizeof(WorkaroundTable)));
+                EXPECT_STREQ(hardwarePrefix[i], productFamily.c_str());
+                break;
+            default:
+                break;
+            }
+        }
+    }
+}
+
+HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
+    for (int csrTypes = 0; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
+        CommandStreamReceiverType csrType = static_cast<CommandStreamReceiverType>(csrTypes);
+        std::string productFamily("unk");
+
+        DebugManager.flags.SetCommandStreamReceiver.set(csrType);
+        DebugManager.flags.ProductFamilyOverride.set(productFamily);
+        ExecutionEnvironment exeEnv;
+
+        auto ret = getDevices(&hwInfo, numDevices, exeEnv);
+
+        switch (csrType) {
+        case CSR_HW:
+        case CSR_HW_WITH_AUB:
+            EXPECT_TRUE(ret);
+            EXPECT_NE(nullptr, hwInfo);
+            EXPECT_EQ(1u, numDevices);
+            DeviceFactory::releaseDevices();
+            break;
+        case CSR_AUB:
+        case CSR_TBX:
+        case CSR_TBX_WITH_AUB: {
+            EXPECT_TRUE(ret);
+            EXPECT_NE(nullptr, hwInfo);
+            EXPECT_EQ(1u, numDevices);
+            for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
+                auto hardwareInfo = hardwareInfoTable[i];
+                if (hardwareInfo == nullptr)
+                    continue;
+                if (hardwareInfoTable[i]->pPlatform->eProductFamily == hwInfo->pPlatform->eProductFamily)
+                    break;
+            }
+            EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
+            ASSERT_NE(nullptr, hardwarePrefix[i]);
             auto defaultHwInfo = *platformDevices;
             EXPECT_EQ(0, memcmp(defaultHwInfo->pPlatform, hwInfo->pPlatform, sizeof(PLATFORM)));
             EXPECT_EQ(0, memcmp(&defaultHwInfo->capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
             EXPECT_EQ(0, memcmp(defaultHwInfo->pWaTable, hwInfo->pWaTable, sizeof(WorkaroundTable)));
+            break;
         }
-        break;
-    default:
-        EXPECT_FALSE(ret);
-        EXPECT_EQ(nullptr, hwInfo);
-        EXPECT_EQ(0u, numDevices);
-        break;
+        default:
+            break;
+        }
     }
 }
-
-static CommandStreamReceiverType commandStreamReceiverTypes[] = {
-    CSR_HW,
-    CSR_AUB,
-    CSR_TBX,
-    CSR_HW_WITH_AUB,
-    CSR_TBX_WITH_AUB,
-    CSR_TYPES_NUM};
-
-INSTANTIATE_TEST_CASE_P(
-    GetDevicesTest_Create,
-    GetDevicesTest,
-    ::testing::Combine(
-        ::testing::ValuesIn(commandStreamReceiverTypes),
-        ::testing::ValuesIn(hardwarePrefix, &hardwarePrefix[IGFX_MAX_PRODUCT])));
+} // namespace OCLRT
