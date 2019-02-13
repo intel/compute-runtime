@@ -145,7 +145,7 @@ class CommandStreamReceiver {
     void setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer);
 
     bool initializeTagAllocation();
-    std::unique_lock<MutexType> obtainUniqueOwnership();
+    MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
 
     KmdNotifyHelper *peekKmdNotifyHelper() {
         return kmdNotifyHelper.get();

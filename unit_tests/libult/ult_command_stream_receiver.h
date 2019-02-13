@@ -68,7 +68,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         }
     }
 
-    UltCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : BaseClass(hwInfoIn, executionEnvironment) {
+    UltCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : BaseClass(hwInfoIn, executionEnvironment), recursiveLockCounter(0) {
         if (hwInfoIn.capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
             tempPreemptionLocation = std::make_unique<GraphicsAllocation>(nullptr, 0, 0, 0, false);
             this->preemptionCsrAllocation = tempPreemptionLocation.get();
@@ -129,6 +129,12 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         initProgrammingFlagsCalled = true;
     }
 
+    std::unique_lock<CommandStreamReceiver::MutexType> obtainUniqueOwnership() override {
+        recursiveLockCounter++;
+        return CommandStreamReceiverHw<GfxFamily>::obtainUniqueOwnership();
+    }
+
+    std::atomic<uint32_t> recursiveLockCounter;
     bool createPageTableManagerCalled = false;
     bool activateAubSubCaptureCalled = false;
     bool flushBatchedSubmissionsCalled = false;
