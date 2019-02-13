@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,16 +22,16 @@ void SchedulerKernel::setArgs(GraphicsAllocation *queue,
                               GraphicsAllocation *ssh,
                               GraphicsAllocation *debugQueue) {
 
-    setArgSvmAlloc(0, queue->getUnderlyingBuffer(), queue);
-    setArgSvmAlloc(1, commandsStack->getUnderlyingBuffer(), commandsStack);
-    setArgSvmAlloc(2, eventsPool->getUnderlyingBuffer(), eventsPool);
-    setArgSvmAlloc(3, secondaryBatchBuffer->getUnderlyingBuffer(), secondaryBatchBuffer);
-    setArgSvmAlloc(4, dsh->getUnderlyingBuffer(), dsh);
-    setArgSvmAlloc(5, reflectionSurface->getUnderlyingBuffer(), reflectionSurface);
-    setArgSvmAlloc(6, queueStorageBuffer->getUnderlyingBuffer(), queueStorageBuffer);
-    setArgSvmAlloc(7, ssh->getUnderlyingBuffer(), ssh);
+    setArgSvmAlloc(0, reinterpret_cast<void *>(queue->getGpuAddress()), queue);
+    setArgSvmAlloc(1, reinterpret_cast<void *>(commandsStack->getGpuAddress()), commandsStack);
+    setArgSvmAlloc(2, reinterpret_cast<void *>(eventsPool->getGpuAddress()), eventsPool);
+    setArgSvmAlloc(3, reinterpret_cast<void *>(secondaryBatchBuffer->getGpuAddress()), secondaryBatchBuffer);
+    setArgSvmAlloc(4, reinterpret_cast<void *>(dsh->getGpuAddress()), dsh);
+    setArgSvmAlloc(5, reinterpret_cast<void *>(reflectionSurface->getGpuAddress()), reflectionSurface);
+    setArgSvmAlloc(6, reinterpret_cast<void *>(queueStorageBuffer->getGpuAddress()), queueStorageBuffer);
+    setArgSvmAlloc(7, reinterpret_cast<void *>(ssh->getGpuAddress()), ssh);
     if (debugQueue)
-        setArgSvmAlloc(8, debugQueue->getUnderlyingBuffer(), debugQueue);
+        setArgSvmAlloc(8, reinterpret_cast<void *>(debugQueue->getGpuAddress()), debugQueue);
 
     DBG_LOG(PrintEMDebugInformation,
             "Scheduler Surfaces: \nqueue=", queue->getUnderlyingBuffer(), " \nstack=", commandsStack->getUnderlyingBuffer(),

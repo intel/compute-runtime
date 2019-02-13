@@ -178,6 +178,38 @@ TEST(SchedulerKernelTest, setArgsForSchedulerKernelWithNullDebugQueue) {
     EXPECT_EQ(nullptr, scheduler->getKernelArg(8));
 }
 
+TEST(SchedulerKernelTest, givenGraphicsAllocationWithDifferentCpuAndGpuAddressesWhenCallSetArgsThenGpuAddressesAreTaken) {
+    unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto context = clUniquePtr(new MockContext(device.get()));
+    auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false));
+    program->setDevice(device.get());
+
+    unique_ptr<KernelInfo> info(nullptr);
+    KernelInfo *infoPtr = nullptr;
+    auto scheduler = clUniquePtr(MockSchedulerKernel::create(*program, *device, infoPtr));
+    info.reset(infoPtr);
+    unique_ptr<MockGraphicsAllocation> allocs[9];
+
+    for (uint32_t i = 0; i < 9; i++) {
+        allocs[i] = std::make_unique<MockGraphicsAllocation>(reinterpret_cast<void *>(0x1234), 0x4321, 10);
+    }
+
+    scheduler->setArgs(allocs[0].get(),
+                       allocs[1].get(),
+                       allocs[2].get(),
+                       allocs[3].get(),
+                       allocs[4].get(),
+                       allocs[5].get(),
+                       allocs[6].get(),
+                       allocs[7].get(),
+                       allocs[8].get());
+
+    for (uint32_t i = 0; i < 9; i++) {
+        auto argAddr = reinterpret_cast<uint64_t>(scheduler->getKernelArgInfo(i).value);
+        EXPECT_EQ(allocs[i]->getGpuAddress(), argAddr);
+    }
+}
+
 TEST(SchedulerKernelTest, createKernelReflectionForForcedSchedulerDispatch) {
     DebugManagerStateRestore dbgRestorer;
 
