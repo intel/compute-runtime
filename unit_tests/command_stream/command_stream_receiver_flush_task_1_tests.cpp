@@ -795,14 +795,15 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSi
     // work.
     size_t sizeCQReserves = CSRequirements::minCommandQueueCommandStreamSize;
 
-    size_t sizeRequested = 0x1000 - sizeCQReserves;
+    size_t sizeRequested = MemoryConstants::pageSize64k - sizeCQReserves;
     auto &commandStream = commandQueue.getCS(sizeRequested);
-    ASSERT_GE(0x1000u, commandStream.getMaxAvailableSpace());
+    auto expect = alignUp(sizeRequested + CSRequirements::csOverfetchSize, MemoryConstants::pageSize64k);
+    ASSERT_GE(expect, commandStream.getMaxAvailableSpace());
 
     EXPECT_GE(commandStream.getAvailableSpace(), sizeRequested);
     commandStream.getSpace(sizeRequested - sizeCQReserves);
 
-    MockGraphicsAllocation allocation((void *)MemoryConstants::pageSize, 1);
+    MockGraphicsAllocation allocation((void *)MemoryConstants::pageSize64k, 1);
     IndirectHeap linear(&allocation);
 
     auto blocking = true;
@@ -820,7 +821,7 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSi
         dispatchFlags,
         *pDevice);
 
-    auto expectedSize = 0x1000u - sizeCQReserves;
+    auto expectedSize = MemoryConstants::pageSize64k - sizeCQReserves;
 
     if (::renderCoreFamily == IGFX_GEN8_CORE) {
         expectedSize -= sizeof(typename FamilyType::PIPE_CONTROL);

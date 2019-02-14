@@ -297,10 +297,10 @@ TEST_F(CommandQueueCommandStreamTest, GetCommandStreamReturnsCsWithCsOverfetchSi
 
     auto *allocation = cs.getGraphicsAllocation();
     ASSERT_NE(nullptr, &allocation);
-    size_t expectedCsSize = alignUp(minSizeRequested + CSRequirements::minCommandQueueCommandStreamSize, MemoryConstants::pageSize) - CSRequirements::minCommandQueueCommandStreamSize;
+    size_t expectedCsSize = alignUp(minSizeRequested + CSRequirements::minCommandQueueCommandStreamSize + CSRequirements::csOverfetchSize, MemoryConstants::pageSize64k) - CSRequirements::minCommandQueueCommandStreamSize - CSRequirements::csOverfetchSize;
     EXPECT_EQ(expectedCsSize, cs.getMaxAvailableSpace());
 
-    size_t expectedTotalSize = alignUp(minSizeRequested + CSRequirements::minCommandQueueCommandStreamSize, MemoryConstants::pageSize) + CSRequirements::csOverfetchSize;
+    size_t expectedTotalSize = alignUp(minSizeRequested + CSRequirements::minCommandQueueCommandStreamSize + CSRequirements::csOverfetchSize, MemoryConstants::pageSize64k);
     EXPECT_EQ(expectedTotalSize, allocation->getUnderlyingBufferSize());
 }
 
@@ -331,7 +331,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllo
     CommandQueue cmdQ(context.get(), pDevice, props);
 
     auto memoryManager = pDevice->getMemoryManager();
-    size_t requiredSize = alignUp(100, MemoryConstants::pageSize) + CSRequirements::csOverfetchSize;
+    size_t requiredSize = alignUp(100 + CSRequirements::minCommandQueueCommandStreamSize + CSRequirements::csOverfetchSize, MemoryConstants::pageSize64k);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({requiredSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
     auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
@@ -369,7 +369,7 @@ TEST_F(CommandQueueCommandStreamTest, CommandQueueWhenAskedForNewCommandStreamSt
 
     auto graphicsAllocation = indirectHeap.getGraphicsAllocation();
 
-    cmdQ.getCS(10000);
+    cmdQ.getCS(indirectHeap.getAvailableSpace() + 100);
 
     EXPECT_FALSE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
 

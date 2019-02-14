@@ -247,9 +247,9 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     MemoryManager *memoryManager = commandStreamReceiver.getMemoryManager();
 
     //Make two allocations, since CSR will try to reuse it also
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({3 * MemoryConstants::pageSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({3 * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::LINEAR_STREAM});
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-    allocation = memoryManager->allocateGraphicsMemoryWithProperties({3 * MemoryConstants::pageSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
+    allocation = memoryManager->allocateGraphicsMemoryWithProperties({3 * MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::LINEAR_STREAM});
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     MockExperimentalCommandBuffer *mockExCmdBuffer = static_cast<MockExperimentalCommandBuffer *>(commandStreamReceiver.experimentalCmdBuffer.get());

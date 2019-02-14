@@ -125,16 +125,15 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
     if (commandStream.getAvailableSpace() < minRequiredSize) {
         // Make sure we have enough room for a MI_BATCH_BUFFER_END and any padding.
         // Currently reserving 64bytes (cacheline) which should be more than enough.
-        static const size_t sizeForSubmission = MemoryConstants::cacheLineSize;
-        minRequiredSize += sizeForSubmission;
+        minRequiredSize += MemoryConstants::cacheLineSize;
+        minRequiredSize += CSRequirements::csOverfetchSize;
         // If not, allocate a new block. allocate full pages
-        minRequiredSize = alignUp(minRequiredSize, MemoryConstants::pageSize);
+        minRequiredSize = alignUp(minRequiredSize, MemoryConstants::pageSize64k);
 
-        auto requiredSize = minRequiredSize + CSRequirements::csOverfetchSize;
         auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
-        auto allocation = internalAllocationStorage->obtainReusableAllocation(requiredSize, allocationType).release();
+        auto allocation = internalAllocationStorage->obtainReusableAllocation(minRequiredSize, allocationType).release();
         if (!allocation) {
-            allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({requiredSize, allocationType});
+            allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({minRequiredSize, allocationType});
         }
 
         //pass current allocation to reusable list
@@ -142,7 +141,7 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
             internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream.getGraphicsAllocation()), REUSABLE_ALLOCATION);
         }
 
-        commandStream.replaceBuffer(allocation->getUnderlyingBuffer(), minRequiredSize - sizeForSubmission);
+        commandStream.replaceBuffer(allocation->getUnderlyingBuffer(), minRequiredSize - MemoryConstants::cacheLineSize - CSRequirements::csOverfetchSize);
         commandStream.replaceGraphicsAllocation(allocation);
     }
 

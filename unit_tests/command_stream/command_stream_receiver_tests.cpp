@@ -114,7 +114,7 @@ TEST_F(CommandStreamReceiverTest, getCsReturnsCsWithCsOverfetchSizeIncludedInGra
     auto *allocation = commandStream.getGraphicsAllocation();
     ASSERT_NE(nullptr, allocation);
 
-    size_t expectedTotalSize = alignUp(sizeRequested + MemoryConstants::cacheLineSize, MemoryConstants::pageSize) + CSRequirements::csOverfetchSize;
+    size_t expectedTotalSize = alignUp(sizeRequested + MemoryConstants::cacheLineSize + CSRequirements::csOverfetchSize, MemoryConstants::pageSize64k);
 
     EXPECT_LT(commandStream.getAvailableSpace(), expectedTotalSize);
     EXPECT_LE(commandStream.getAvailableSpace(), expectedTotalSize - CSRequirements::csOverfetchSize);

@@ -208,15 +208,14 @@ LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
 
     if (commandStream->getAvailableSpace() < minRequiredSize) {
         // If not, allocate a new block. allocate full pages
-        minRequiredSize = alignUp(minRequiredSize, MemoryConstants::pageSize);
-
-        auto requiredSize = minRequiredSize + CSRequirements::csOverfetchSize;
+        minRequiredSize += CSRequirements::csOverfetchSize;
+        minRequiredSize = alignUp(minRequiredSize, MemoryConstants::pageSize64k);
 
         auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
-        GraphicsAllocation *allocation = storageForAllocation->obtainReusableAllocation(requiredSize, allocationType).release();
+        GraphicsAllocation *allocation = storageForAllocation->obtainReusableAllocation(minRequiredSize, allocationType).release();
 
         if (!allocation) {
-            allocation = memoryManager->allocateGraphicsMemoryWithProperties({requiredSize, allocationType});
+            allocation = memoryManager->allocateGraphicsMemoryWithProperties({minRequiredSize, allocationType});
         }
 
         // Deallocate the old block, if not null
@@ -225,7 +224,7 @@ LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
         if (oldAllocation) {
             storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(oldAllocation), REUSABLE_ALLOCATION);
         }
-        commandStream->replaceBuffer(allocation->getUnderlyingBuffer(), minRequiredSize - CSRequirements::minCommandQueueCommandStreamSize);
+        commandStream->replaceBuffer(allocation->getUnderlyingBuffer(), minRequiredSize - CSRequirements::minCommandQueueCommandStreamSize - CSRequirements::csOverfetchSize);
         commandStream->replaceGraphicsAllocation(allocation);
     }
 
