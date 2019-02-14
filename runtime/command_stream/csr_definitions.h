@@ -31,6 +31,11 @@ constexpr int64_t maxTimeout = std::numeric_limits<int64_t>::max();
 }
 
 struct DispatchFlags {
+    CsrDependencies csrDependencies;
+    FlushStampTrackingObj *flushStampReference = nullptr;
+    QueueThrottle throttle = QueueThrottle::MEDIUM;
+    PreemptionMode preemptionMode = PreemptionMode::Disabled;
+    uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
     bool blocking = false;
     bool dcFlush = false;
     bool useSLM = false;
@@ -39,14 +44,10 @@ struct DispatchFlags {
     bool mediaSamplerRequired = false;
     bool requiresCoherency = false;
     bool lowPriority = false;
-    QueueThrottle throttle = QueueThrottle::MEDIUM;
     bool implicitFlush = false;
     bool outOfOrderExecutionAllowed = false;
-    FlushStampTrackingObj *flushStampReference = nullptr;
-    PreemptionMode preemptionMode = PreemptionMode::Disabled;
-    CsrDependencies csrDependencies;
-    uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
     bool specialPipelineSelectMode = false;
+    bool multiEngineQueue = false;
 };
 
 struct CsrSizeRequestFlags {

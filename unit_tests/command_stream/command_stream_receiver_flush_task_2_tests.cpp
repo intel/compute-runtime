@@ -6,6 +6,7 @@
  */
 
 #include "reg_configs_common.h"
+#include "runtime/command_stream/csr_definitions.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/state_base_address.h"
@@ -980,8 +981,17 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateAndBatching
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenGeneralStateBaseAddressIsProgrammedThenDecanonizedAddressIsWritten) {
     uint64_t generalStateBaseAddress = 0xffff800400010000ull;
     StateBaseAddressHelper<FamilyType> helper;
+    DispatchFlags dispatchFlags;
 
-    helper.programStateBaseAddress(commandStream, dsh, ioh, ssh, generalStateBaseAddress, 0, generalStateBaseAddress, pDevice->getGmmHelper());
+    helper.programStateBaseAddress(commandStream,
+                                   dsh,
+                                   ioh,
+                                   ssh,
+                                   generalStateBaseAddress,
+                                   0,
+                                   generalStateBaseAddress,
+                                   pDevice->getGmmHelper(),
+                                   dispatchFlags);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream);

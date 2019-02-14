@@ -22,7 +22,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     uint64_t generalStateBase,
     uint32_t statelessMocsIndex,
     uint64_t internalHeapBase,
-    GmmHelper *gmmHelper) {
+    GmmHelper *gmmHelper,
+    DispatchFlags &dispatchFlags) {
 
     auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
     *pCmd = GfxFamily::cmdInitStateBaseAddress;
@@ -57,7 +58,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     pCmd->setStatelessDataPortAccessMemoryObjectControlState(gmmHelper->getMOCS(statelessMocsIndex));
     pCmd->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
 
-    appendStateBaseAddressParameters(pCmd, dsh, ioh, ssh, generalStateBase, internalHeapBase, gmmHelper);
+    appendStateBaseAddressParameters(pCmd, dsh, ioh, ssh, generalStateBase, internalHeapBase, gmmHelper, dispatchFlags);
 }
 
 template <typename GfxFamily>
@@ -68,7 +69,8 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     const IndirectHeap &ssh,
     uint64_t generalStateBase,
     uint64_t internalHeapBase,
-    GmmHelper *gmmHelper) {
+    GmmHelper *gmmHelper,
+    DispatchFlags &dispatchFlags) {
 }
 
 template <typename GfxFamily>

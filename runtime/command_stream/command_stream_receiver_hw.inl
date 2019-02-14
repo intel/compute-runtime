@@ -326,7 +326,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             newGSHbase,
             requiredL3Index,
             getMemoryManager()->getInternalHeapBaseAddress(),
-            device.getGmmHelper());
+            device.getGmmHelper(),
+            dispatchFlags);
 
         if (sshDirty) {
             StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(commandStreamCSR, ssh, stateBaseAddressCmdOffset,

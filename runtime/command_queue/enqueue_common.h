@@ -611,6 +611,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
     dispatchFlags.numGrfRequired = numGrfRequired;
     dispatchFlags.specialPipelineSelectMode = specialPipelineSelectMode;
+    dispatchFlags.multiEngineQueue = this->multiEngineQueue;
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
     if (gtpinIsGTPinInitialized()) {

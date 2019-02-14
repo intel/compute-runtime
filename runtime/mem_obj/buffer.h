@@ -163,6 +163,7 @@ class BufferHw : public Buffer {
                  zeroCopy, isHostPtrSVM, isObjectRedescribed) {}
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3Cache) override;
+    void appendBufferState(void *memory, Context *context, GraphicsAllocation *gfxAllocation);
 
     static Buffer *create(Context *context,
                           MemoryProperties properties,

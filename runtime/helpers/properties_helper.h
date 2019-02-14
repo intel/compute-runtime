@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace OCLRT {
 class MemObj;
 class Buffer;
 
-enum class QueueThrottle {
+enum QueueThrottle : uint32_t {
     LOW,
     MEDIUM,
     HIGH

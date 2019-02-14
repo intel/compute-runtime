@@ -62,6 +62,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     dispatchFlags.lowPriority = cmdQ.getPriority() == QueuePriority::LOW;
     dispatchFlags.throttle = cmdQ.getThrottle();
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(cmdQ.getDevice(), nullptr);
+    dispatchFlags.multiEngineQueue = cmdQ.isMultiEngineQueue();
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
@@ -212,6 +213,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     dispatchFlags.throttle = commandQueue.getThrottle();
     dispatchFlags.preemptionMode = preemptionMode;
     dispatchFlags.mediaSamplerRequired = kernel->isVmeKernel();
+    dispatchFlags.multiEngineQueue = commandQueue.isMultiEngineQueue();
+
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
     }

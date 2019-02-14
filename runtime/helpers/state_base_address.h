@@ -14,6 +14,7 @@ namespace OCLRT {
 class GmmHelper;
 class IndirectHeap;
 class LinearStream;
+struct DispatchFlags;
 
 template <typename GfxFamily>
 struct StateBaseAddressHelper {
@@ -27,7 +28,8 @@ struct StateBaseAddressHelper {
         uint64_t generalStateBase,
         uint32_t statelessMocsIndex,
         uint64_t internalHeapBase,
-        GmmHelper *gmmHelper);
+        GmmHelper *gmmHelper,
+        DispatchFlags &dispatchFlags);
 
     static void appendStateBaseAddressParameters(
         STATE_BASE_ADDRESS *stateBaseAddress,
@@ -36,7 +38,8 @@ struct StateBaseAddressHelper {
         const IndirectHeap &ssh,
         uint64_t generalStateBase,
         uint64_t internalHeapBase,
-        GmmHelper *gmmHelper);
+        GmmHelper *gmmHelper,
+        DispatchFlags &dispatchFlags);
 
     static void programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, size_t stateBaseAddressCmdOffset,
                                                GmmHelper *gmmHelper);
