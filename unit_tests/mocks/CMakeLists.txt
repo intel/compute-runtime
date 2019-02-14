@@ -86,6 +86,7 @@ if(WIN32)
   )
 else()
   list(APPEND IGDRCL_SRCS_tests_mocks
+    ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_command_stream_receiver.h
   )

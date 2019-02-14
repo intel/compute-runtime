@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_32bit_memory.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.h

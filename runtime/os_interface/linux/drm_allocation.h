@@ -24,6 +24,8 @@ class DrmAllocation : public GraphicsAllocation {
         this->memoryPool = pool;
     }
 
+    std::string getAllocationInfoString() const override;
+
     BufferObject *getBO() const {
         if (fragmentsStorage.fragmentCount) {
             return fragmentsStorage.fragmentStorageData[0].osHandleStorage->bo;

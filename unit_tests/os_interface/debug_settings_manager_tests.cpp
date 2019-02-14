@@ -901,7 +901,7 @@ TEST_P(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringT
     FullyEnabledTestDebugManager debugManager;
     auto input = GetParam();
 
-    MockGraphicsAllocation graphicsAllocation;
+    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0, true);
     graphicsAllocation.setAllocationType(input.type);
 
     auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
@@ -916,7 +916,7 @@ INSTANTIATE_TEST_CASE_P(AllAllocationTypes,
 TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStringIllegalValueThenILLEGAL_VALUEIsReturned) {
     FullyEnabledTestDebugManager debugManager;
 
-    MockGraphicsAllocation graphicsAllocation;
+    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0, true);
     graphicsAllocation.setAllocationType(static_cast<OCLRT::GraphicsAllocation::AllocationType>(999));
 
     auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
@@ -927,10 +927,15 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
 TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenDebugManagerDisabledThennullptrReturned) {
     FullyDisabledTestDebugManager debugManager;
 
-    MockGraphicsAllocation graphicsAllocation;
+    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0, true);
     graphicsAllocation.setAllocationType(OCLRT::GraphicsAllocation::AllocationType::BUFFER);
 
     auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
 
     EXPECT_STREQ(result, nullptr);
+}
+
+TEST(AllocationInfoLogging, givenBaseGraphicsAllocationWhenGettingImplementationSpecificAllocationInfoThenReturnEmptyInfoString) {
+    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0, true);
+    EXPECT_STREQ(graphicsAllocation.getAllocationInfoString().c_str(), "");
 }
