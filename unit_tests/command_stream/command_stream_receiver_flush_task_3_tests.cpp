@@ -14,6 +14,9 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_event.h"
+#include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 
 using namespace OCLRT;
@@ -1403,4 +1406,51 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetT
     auto cmdBuffer = cmdBufferList.peekHead();
 
     EXPECT_EQ(cmdBuffer->batchBuffer.throttle, QueueThrottle::HIGH);
+}
+
+template <typename GfxFamily>
+class UltCommandStreamReceiverForDispatchFlags : public UltCommandStreamReceiver<GfxFamily> {
+    using BaseClass = UltCommandStreamReceiver<GfxFamily>;
+
+  public:
+    UltCommandStreamReceiverForDispatchFlags(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : BaseClass(hwInfoIn, executionEnvironment) {
+    }
+
+    CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
+                              const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
+                              uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+        savedDispatchFlags = dispatchFlags;
+        return BaseClass::flushTask(commandStream, commandStreamStart,
+                                    dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+    }
+    DispatchFlags savedDispatchFlags;
+};
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWhenItIsUnblockedThenDispatchFlagsAreSetCorrectly) {
+    MockContext mockContext;
+    auto csr = new UltCommandStreamReceiverForDispatchFlags<FamilyType>(pDevice->getHardwareInfo(), *pDevice->executionEnvironment);
+    pDevice->resetCommandStreamReceiver(csr);
+    uint32_t numGrfRequired = 666u;
+
+    auto pCmdQ = std::make_unique<CommandQueue>(&mockContext, pDevice, nullptr);
+    auto mockProgram = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment(), &mockContext, false);
+
+    std::unique_ptr<MockKernel> pKernel(MockKernel::create(*pDevice, mockProgram.get(), numGrfRequired));
+    auto event = std::make_unique<MockEvent<Event>>(pCmdQ.get(), CL_COMMAND_MARKER, 0, 0);
+    auto cmdStream = new LinearStream(alignedMalloc(4096, 4096), 4096);
+
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
+    using UniqueIH = std::unique_ptr<IndirectHeap>;
+
+    auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
+                                                   UniqueIH(ioh), UniqueIH(ssh), *pCmdQ->getCommandStreamReceiver().getInternalAllocationStorage());
+
+    std::vector<Surface *> surfaces;
+    event->setCommand(std::make_unique<CommandComputeKernel>(*pCmdQ, std::unique_ptr<KernelOperation>(blockedCommandsData), surfaces, false, false, false, nullptr, pDevice->getPreemptionMode(), pKernel.get(), 1));
+    event->submitCommand(false);
+
+    EXPECT_EQ(numGrfRequired, csr->savedDispatchFlags.numGrfRequired);
 }

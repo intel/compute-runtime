@@ -214,7 +214,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     dispatchFlags.preemptionMode = preemptionMode;
     dispatchFlags.mediaSamplerRequired = kernel->isVmeKernel();
     dispatchFlags.multiEngineQueue = commandQueue.isMultiEngineQueue();
-
+    dispatchFlags.numGrfRequired = kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired;
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
     }

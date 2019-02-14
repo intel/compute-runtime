@@ -99,6 +99,11 @@ class MockKernel : public Kernel {
 
     template <typename KernelType = MockKernel>
     static KernelType *create(Device &device, Program *program) {
+        return create<KernelType>(device, program, GrfConfig::DefaultGrfNumber);
+    }
+
+    template <typename KernelType = MockKernel>
+    static KernelType *create(Device &device, Program *program, uint32_t grfNumber) {
         auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
 
@@ -123,7 +128,7 @@ class MockKernel : public Kernel {
         SPatchExecutionEnvironment *executionEnvironment = new SPatchExecutionEnvironment;
         memset(executionEnvironment, 0, sizeof(SPatchExecutionEnvironment));
         executionEnvironment->HasDeviceEnqueue = 0;
-        executionEnvironment->NumGRFRequired = GrfConfig::DefaultGrfNumber;
+        executionEnvironment->NumGRFRequired = grfNumber;
         info->patchInfo.executionEnvironment = executionEnvironment;
 
         info->crossThreadData = new char[crossThreadSize];
