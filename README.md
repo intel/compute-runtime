@@ -54,6 +54,7 @@ A maintainer will contact you if there are questions or concerns.
 * Building and installation:
   * [Ubuntu 16.04](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Ubuntu.md)
   * [Centos 7](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Centos.md)
+* [OpenCL on Linux guide](https://github.com/bashbaug/OpenCLPapers/blob/markdown/OpenCLOnLinux.md)
 * Interoperability with Intel Tools: [TOOLS.md](https://github.com/intel/compute-runtime/blob/master/documentation/TOOLS.md)
 * Contribution guidelines: [CONTRIB.md](https://github.com/intel/compute-runtime/blob/master/documentation/CONTRIB.md)
 * Known issues and limitations: [LIMITATIONS.md](https://github.com/intel/compute-runtime/blob/master/documentation/LIMITATIONS.md)
