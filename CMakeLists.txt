@@ -121,13 +121,15 @@ else()
     message(FATAL_ERROR "Aub Stream headers not available!")
 endif()
 
-if(NOT DEFINED AUB_STREAM_DIR AND NOT DISABLE_AUB_STREAM)
+if(NOT DEFINED AUB_STREAM_DIR)
     get_filename_component(TEMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../aub_stream/aub_mem_dump" ABSOLUTE)
     if(IS_DIRECTORY ${TEMP_DIR})
         set(AUB_STREAM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../aub_stream")
         message(STATUS "Aub Stream dir: ${AUB_STREAM_DIR}")
     endif()
-else()
+endif()
+
+if(DISABLE_AUB_STREAM)
     unset(AUB_STREAM_DIR)
 endif()
 
