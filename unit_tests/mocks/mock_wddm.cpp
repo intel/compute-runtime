@@ -154,7 +154,7 @@ void WddmMock::kmDafLock(WddmAllocation *allocation) {
     Wddm::kmDafLock(allocation);
 }
 
-bool WddmMock::isKmDafEnabled() {
+bool WddmMock::isKmDafEnabled() const {
     return kmDafEnabled;
 }
 

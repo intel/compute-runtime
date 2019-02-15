@@ -11,6 +11,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/memory_manager/memory_banks.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/memory_pool.h"
 #include "runtime/memory_manager/residency_container.h"
 #include "runtime/utilities/idlist.h"
@@ -30,6 +31,19 @@ enum class AllocationOrigin {
     INTERNAL_ALLOCATION
 };
 
+enum class HeapIndex : uint32_t {
+    HEAP_INTERNAL_DEVICE_MEMORY = 0u,
+    HEAP_INTERNAL = 1u,
+    HEAP_EXTERNAL_DEVICE_MEMORY = 2u,
+    HEAP_EXTERNAL = 3u,
+    HEAP_STANDARD,
+    HEAP_STANDARD64Kb,
+    HEAP_SVM,
+    HEAP_LIMITED
+};
+
+constexpr auto internalHeapIndex = is32bit ? HeapIndex::HEAP_INTERNAL : HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
+
 namespace Sharing {
 constexpr auto nonSharedResource = 0u;
 }
@@ -46,6 +60,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void *driverAllocatedCpuPointer = nullptr;
     DevicesBitfield devicesBitfield = 0;
     bool flushL3Required = false;
+    AllocationOrigin origin = AllocationOrigin::EXTERNAL_ALLOCATION;
 
     enum class AllocationType {
         UNKNOWN = 0,

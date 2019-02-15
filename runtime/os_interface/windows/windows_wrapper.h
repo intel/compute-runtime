@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,6 @@
 #pragma warning(disable : 4005)
 #include <ntstatus.h>
 #pragma warning(pop)
-// There is a conflict with max/min defined as macro in windows headers with std::max/std::min
-#undef min
-#undef max
 #undef RegOpenKeyExA
 #undef RegQueryValueExA
 #pragma warning(disable : 4273)

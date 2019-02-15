@@ -74,7 +74,7 @@ class WddmMock : public Wddm {
     void *lockResource(WddmAllocation &allocation) override;
     void unlockResource(WddmAllocation &allocation) override;
     void kmDafLock(WddmAllocation *allocation) override;
-    bool isKmDafEnabled() override;
+    bool isKmDafEnabled() const override;
     void setKmDafEnabled(bool state);
     void setHwContextId(unsigned long hwContextId);
     bool openAdapter() override;

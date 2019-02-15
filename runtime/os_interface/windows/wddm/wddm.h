@@ -9,7 +9,6 @@
 #include "runtime/command_stream/preemption_mode.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/spinlock.h"
 #include "sku_info.h"
@@ -32,6 +31,8 @@ struct KmDafListener;
 struct MonitoredFence;
 struct OsHandleStorage;
 
+enum class HeapIndex : uint32_t;
+
 using OsContextWin = OsContext::OsContextImpl;
 
 enum class EvictionStatus {
@@ -40,19 +41,6 @@ enum class EvictionStatus {
     NOT_APPLIED,
     UNKNOWN
 };
-
-enum class HeapIndex : uint32_t {
-    HEAP_INTERNAL_DEVICE_MEMORY = 0u,
-    HEAP_INTERNAL = 1u,
-    HEAP_EXTERNAL_DEVICE_MEMORY = 2u,
-    HEAP_EXTERNAL = 3u,
-    HEAP_STANDARD,
-    HEAP_STANDARD64Kb,
-    HEAP_SVM,
-    HEAP_LIMITED
-};
-
-constexpr auto internalHeapIndex = is32bit ? HeapIndex::HEAP_INTERNAL : HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
 
 class Wddm {
   public:
@@ -82,7 +70,7 @@ class Wddm {
     MOCKABLE_VIRTUAL void *lockResource(WddmAllocation &wddmAllocation);
     MOCKABLE_VIRTUAL void unlockResource(WddmAllocation &wddmAllocation);
     MOCKABLE_VIRTUAL void kmDafLock(WddmAllocation *wddmAllocation);
-    MOCKABLE_VIRTUAL bool isKmDafEnabled() { return featureTable->ftrKmdDaf; };
+    MOCKABLE_VIRTUAL bool isKmDafEnabled() const { return featureTable->ftrKmdDaf; }
 
     MOCKABLE_VIRTUAL bool destroyContext(D3DKMT_HANDLE context);
     MOCKABLE_VIRTUAL bool queryAdapterInfo();
