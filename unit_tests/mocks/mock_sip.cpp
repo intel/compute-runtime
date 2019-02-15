@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,11 @@ std::vector<char> MockSipKernel::getBinary() {
 
     void *binary = nullptr;
     auto binarySize = loadDataFromFile(testFile.c_str(), binary);
+
+    UNRECOVERABLE_IF(binary == nullptr);
+
     std::vector<char> ret{reinterpret_cast<char *>(binary), reinterpret_cast<char *>(binary) + binarySize};
+
     deleteDataReadFromFile(binary);
     return ret;
 }
