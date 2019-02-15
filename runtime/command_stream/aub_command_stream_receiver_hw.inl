@@ -614,10 +614,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResidentExternal(uint64_t gpu
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits, DevicesBitfield devicesBitfield) {
+void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) {
     {
         std::ostringstream str;
-        str << "ppgtt: " << std::hex << std::showbase << gpuAddress << " end address: " << gpuAddress + size << " cpu address: " << cpuAddress << " device mask: " << devicesBitfield << " size: " << std::dec << size;
+        str << "ppgtt: " << std::hex << std::showbase << gpuAddress << " end address: " << gpuAddress + size << " cpu address: " << cpuAddress << " size: " << std::dec << size;
         getAubStream()->addComment(str.str().c_str());
     }
 
@@ -643,7 +643,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     if (aubManager) {
         this->writeMemoryWithAubManager(gfxAllocation);
     } else {
-        writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation), gfxAllocation.devicesBitfield);
+        writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation));
     }
 
     if (gfxAllocation.isLocked()) {

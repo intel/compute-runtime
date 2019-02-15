@@ -92,11 +92,11 @@ class MemoryManager {
     virtual void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) = 0;
 
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
-        return allocateGraphicsMemoryInPreferredPool(properties, 0u, nullptr);
+        return allocateGraphicsMemoryInPreferredPool(properties, {}, nullptr);
     }
 
     virtual GraphicsAllocation *allocateGraphicsMemory(const AllocationProperties &properties, const void *ptr) {
-        return allocateGraphicsMemoryInPreferredPool(properties, 0u, ptr);
+        return allocateGraphicsMemoryInPreferredPool(properties, {}, ptr);
     }
 
     GraphicsAllocation *allocateGraphicsMemoryForHostPtr(size_t size, void *ptr, bool fullRangeSvm, bool requiresL3Flush) {
@@ -209,7 +209,7 @@ class MemoryManager {
         const void *hostPtr = nullptr;
         size_t size = 0;
         size_t alignment = 0;
-        DevicesBitfield devicesBitfield = 0;
+        DevicesBitfield devicesBitfield = {};
         ImageInfo *imgInfo = nullptr;
     };
 

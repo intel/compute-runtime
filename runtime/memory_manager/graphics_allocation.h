@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "devices_bitfield.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
@@ -24,7 +25,6 @@
 namespace OCLRT {
 
 using osHandle = unsigned int;
-using DevicesBitfield = uint32_t;
 
 enum class AllocationOrigin {
     EXTERNAL_ALLOCATION,
@@ -58,7 +58,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     Gmm *gmm = nullptr;
     uint64_t allocationOffset = 0u;
     void *driverAllocatedCpuPointer = nullptr;
-    DevicesBitfield devicesBitfield = 0;
+    DevicesBitfield devicesBitfield = {};
     bool flushL3Required = false;
     AllocationOrigin origin = AllocationOrigin::EXTERNAL_ALLOCATION;
 

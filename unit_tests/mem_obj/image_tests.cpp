@@ -1460,9 +1460,9 @@ HWTEST_F(HwImageTest, givenImageHwWhenSettingCCSParamsThenSetClearColorParamsIsC
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
-    DevicesBitfield devices = 0;
+    DevicesBitfield devicesBitfield = {};
 
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, devicesBitfield, nullptr);
 
     SurfaceFormatInfo formatInfo = {};
     std::unique_ptr<MockImageHw<FamilyType>> mockImage(new MockImageHw<FamilyType>(&context, format, imgDesc, formatInfo, graphicsAllocation));
@@ -1488,9 +1488,9 @@ HWTEST_F(HwImageTest, givenImageHwWithUnifiedSurfaceAndMcsWhenSettingParamsForMu
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
-    DevicesBitfield devices = 0;
+    DevicesBitfield devicesBitfield = {};
 
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, devicesBitfield, nullptr);
 
     SurfaceFormatInfo formatInfo = {};
     std::unique_ptr<MockImageHw<FamilyType>> mockImage(new MockImageHw<FamilyType>(&context, format, imgDesc, formatInfo, graphicsAllocation));

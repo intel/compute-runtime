@@ -42,7 +42,7 @@ AllocationProperties MemObjHelper::getAllocationProperties(ImageInfo *imgInfo, b
 }
 
 DevicesBitfield MemObjHelper::getDevicesBitfield(const MemoryProperties &properties) {
-    return DevicesBitfield(0);
+    return {};
 }
 
 bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressedBuffers, const MemoryProperties &properties, ContextType contextType) {

@@ -37,9 +37,9 @@ class MockWddmMemoryManager : public WddmMemoryManager {
         bool allocateMemory = ptr == nullptr;
         AllocationData allocationData;
         if (allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION) {
-            getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitExternalAllocation(size, allocateMemory), 0u, ptr);
+            getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitExternalAllocation(size, allocateMemory), {}, ptr);
         } else {
-            getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitInternalAllocation(size, allocateMemory), 0u, ptr);
+            getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitInternalAllocation(size, allocateMemory), {}, ptr);
         }
         return allocate32BitGraphicsMemoryImpl(allocationData);
     }

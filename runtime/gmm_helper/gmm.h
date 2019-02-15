@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "devices_bitfield.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 #include <cstdint>
@@ -24,7 +25,7 @@ class Gmm {
     Gmm() = delete;
     Gmm(ImageInfo &inputOutputImgInfo);
     Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable);
-    Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, uint32_t devicesBitfield);
+    Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, DevicesBitfield devicesBitfield);
     Gmm(GMM_RESOURCE_INFO *inputGmm);
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);

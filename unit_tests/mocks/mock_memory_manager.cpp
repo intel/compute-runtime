@@ -51,7 +51,7 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(AllocationData
 
     auto allocation = OsAgnosticMemoryManager::allocateGraphicsMemory64kb(allocationData);
     if (allocation) {
-        allocation->gmm = new Gmm(allocation->getUnderlyingBuffer(), allocationData.size, false, preferRenderCompressedFlagPassed, true, 0);
+        allocation->gmm = new Gmm(allocation->getUnderlyingBuffer(), allocationData.size, false, preferRenderCompressedFlagPassed, true, {});
         allocation->gmm->isRenderCompressed = preferRenderCompressedFlagPassed;
     }
     return allocation;
@@ -85,9 +85,9 @@ GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     bool allocateMemory = ptr == nullptr;
     AllocationData allocationData;
     if (allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION) {
-        getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitExternalAllocation(size, allocateMemory), 0u, ptr);
+        getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitExternalAllocation(size, allocateMemory), {}, ptr);
     } else {
-        getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitInternalAllocation(size, allocateMemory), 0u, ptr);
+        getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitInternalAllocation(size, allocateMemory), {}, ptr);
     }
     return allocate32BitGraphicsMemoryImpl(allocationData);
 }

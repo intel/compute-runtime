@@ -16,9 +16,9 @@
 #include "runtime/helpers/surface_formats.h"
 
 namespace OCLRT {
-Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(alignedPtr, alignedSize, uncacheable, false, true, 0) {}
+Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(alignedPtr, alignedSize, uncacheable, false, true, {}) {}
 
-Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, uint32_t devicesBitfield) {
+Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, DevicesBitfield devicesBitfield) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth64 = static_cast<uint64_t>(alignedSize);
