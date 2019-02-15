@@ -324,7 +324,13 @@ int OfflineCompiler::initialize(size_t numArgs, const char *const *argv) {
         sourceCode = (pSource != nullptr) ? getStringWithinDelimiters((char *)pSourceFromFile) : (char *)pSourceFromFile;
     }
 
-    this->fclLib.reset(OsLibrary::load(Os::frontEndDllName));
+    auto fclLibFile = OsLibrary::load(Os::frontEndDllName);
+    if (fclLibFile == nullptr) {
+        printf("Error: Failed to load %s\n", Os::frontEndDllName);
+        return CL_OUT_OF_HOST_MEMORY;
+    }
+
+    this->fclLib.reset(fclLibFile);
     if (this->fclLib == nullptr) {
         return CL_OUT_OF_HOST_MEMORY;
     }
