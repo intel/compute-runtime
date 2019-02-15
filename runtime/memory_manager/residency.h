@@ -11,7 +11,7 @@
 #include "engine_node.h"
 namespace OCLRT {
 
-constexpr uint32_t maxOsContextCount = 4u * static_cast<uint32_t>(EngineInstanceConstants::numGpgpuEngineInstances);
+constexpr uint32_t maxOsContextCount = (4u * static_cast<uint32_t>(EngineInstanceConstants::numGpgpuEngineInstances)) + 1;
 
 struct ResidencyData {
     ResidencyData() {

@@ -19,7 +19,7 @@ HardwareContextController::HardwareContextController(aub_stream::AubManager &aub
 
 HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext,
                                                      uint32_t engineIndex, uint32_t flags) {
-    UNRECOVERABLE_IF(osContext.getNumDevicesSupported() < 2);
+    DEBUG_BREAK_IF(osContext.getNumDevicesSupported() < 2);
     for (uint32_t deviceIndex = 0; deviceIndex < osContext.getNumDevicesSupported(); deviceIndex++) {
         hardwareContexts.emplace_back(aubManager.createHardwareContext(deviceIndex, engineIndex, flags));
     }

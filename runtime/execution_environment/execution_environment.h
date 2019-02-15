@@ -43,6 +43,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     MOCKABLE_VIRTUAL void initAubCenter(const HardwareInfo *hwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
     void initGmm(const HardwareInfo *hwInfo);
     bool initializeCommandStreamReceiver(const HardwareInfo *pHwInfo, uint32_t deviceIndex, uint32_t deviceCsrIndex);
+    void initializeSpecialCommandStreamReceiver(const HardwareInfo &hwInfo);
     void initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory, uint32_t deviceIndex, uint32_t deviceCsrIndex);
     void initSourceLevelDebugger(const HardwareInfo &hwInfo);
 
@@ -54,6 +55,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<AubCenter> aubCenter;
     CsrContainer commandStreamReceivers;
+    std::unique_ptr<CommandStreamReceiver> specialCommandStreamReceiver;
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;

@@ -168,6 +168,7 @@ bool Platform::initialize() {
             return false;
         }
     }
+    executionEnvironment->initializeSpecialCommandStreamReceiver(*hwInfo);
 
     const bool sourceLevelDebuggerActive = executionEnvironment->sourceLevelDebugger && executionEnvironment->sourceLevelDebugger->isDebuggerActive();
     if (devices[0]->getPreemptionMode() == PreemptionMode::MidThread || sourceLevelDebuggerActive) {

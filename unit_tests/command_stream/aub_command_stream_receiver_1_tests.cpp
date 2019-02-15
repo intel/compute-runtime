@@ -1123,12 +1123,16 @@ TEST_F(HardwareContextContainerTests, givenDeviceIndexWhenOsContextWithMultipleD
     EXPECT_THROW(HardwareContextController(aubManager, osContext, deviceIndex, 0, 0), std::exception);
 }
 
-TEST_F(HardwareContextContainerTests, givenOsContextWithoutMultipleDevicesSupportedWhenNoDeviceIndexPassedThenAbort) {
+TEST_F(HardwareContextContainerTests, givenOsContextWithMultipleDevicesSupportedThenInitialzeHwContextsWithValidIndexes) {
     MockAubManager aubManager;
-    uint32_t numSupportedDevices = 1;
+    uint32_t numSupportedDevices = 2;
     OsContext osContext(nullptr, 1, numSupportedDevices, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
 
-    EXPECT_THROW(HardwareContextController(aubManager, osContext, 0, 0), std::exception);
+    HardwareContextController hwContextControler(aubManager, osContext, 0, 0);
+    auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextControler.hardwareContexts[0].get());
+    auto mockHwContext1 = static_cast<MockHardwareContext *>(hwContextControler.hardwareContexts[1].get());
+    EXPECT_EQ(0u, mockHwContext0->deviceIndex);
+    EXPECT_EQ(1u, mockHwContext1->deviceIndex);
 }
 
 TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCalledThenUseAllContexts) {

@@ -175,7 +175,11 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     executionEnvironment->initializeMemoryManager(false, false, 0, 0);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
-static_assert(sizeof(ExecutionEnvironment) == sizeof(std::vector<std::unique_ptr<CommandStreamReceiver>>) + sizeof(std::mutex) + (is64bit ? 80 : 44), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
+static_assert(sizeof(ExecutionEnvironment) == sizeof(std::vector<std::unique_ptr<CommandStreamReceiver>>) +
+                                                  sizeof(std::unique_ptr<CommandStreamReceiver>) +
+                                                  sizeof(std::mutex) +
+                                                  (is64bit ? 80 : 44),
+              "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     uint32_t destructorId = 0u;
@@ -183,20 +187,23 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     struct MockExecutionEnvironment : ExecutionEnvironment {
         using ExecutionEnvironment::gmmHelper;
     };
-    struct GmmHelperMock : public DestructorCounted<GmmHelper, 7> {
+    struct GmmHelperMock : public DestructorCounted<GmmHelper, 8> {
         GmmHelperMock(uint32_t &destructorId, const HardwareInfo *hwInfo) : DestructorCounted(destructorId, hwInfo) {}
     };
-    struct OsInterfaceMock : public DestructorCounted<OSInterface, 6> {
+    struct OsInterfaceMock : public DestructorCounted<OSInterface, 7> {
         OsInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 5> {
+    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 6> {
         MemoryMangerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct AubCenterMock : public DestructorCounted<AubCenter, 4> {
+    struct AubCenterMock : public DestructorCounted<AubCenter, 5> {
         AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB) {}
     };
-    struct CommandStreamReceiverMock : public DestructorCounted<MockCommandStreamReceiver, 3> {
+    struct CommandStreamReceiverMock : public DestructorCounted<MockCommandStreamReceiver, 4> {
         CommandStreamReceiverMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}
+    };
+    struct SpecialCommandStreamReceiverMock : public DestructorCounted<MockCommandStreamReceiver, 3> {
+        SpecialCommandStreamReceiverMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}
     };
     struct BuiltinsMock : public DestructorCounted<BuiltIns, 2> {
         BuiltinsMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -215,12 +222,13 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId);
     executionEnvironment->aubCenter = std::make_unique<AubCenterMock>(destructorId);
     executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<CommandStreamReceiverMock>(destructorId, *executionEnvironment));
+    executionEnvironment->specialCommandStreamReceiver = std::make_unique<SpecialCommandStreamReceiverMock>(destructorId, *executionEnvironment);
     executionEnvironment->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->sourceLevelDebugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(8u, destructorId);
+    EXPECT_EQ(9u, destructorId);
 }
 
 TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {

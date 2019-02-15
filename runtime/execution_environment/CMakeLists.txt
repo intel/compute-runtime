@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,6 +8,7 @@ set(RUNTIME_SRCS_EXECUTION_ENVIRONMENT
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/execution_environment.h
   ${CMAKE_CURRENT_SOURCE_DIR}/execution_environment.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/execution_environment_initialize.cpp
 )
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_EXECUTION_ENVIRONMENT})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_EXECUTION_ENVIRONMENT ${RUNTIME_SRCS_EXECUTION_ENVIRONMENT})
