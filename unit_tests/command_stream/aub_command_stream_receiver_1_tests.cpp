@@ -803,7 +803,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenOsContextWithMultipleDevicesSupportedWhenSetupIsCalledThenAbort) {
+HWTEST_F(AubCommandStreamReceiverTests, givenOsContextWithMultipleDevicesSupportedWhenSetupIsCalledThenCreateMultipleHardwareContexts) {
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
@@ -811,8 +811,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenOsContextWithMultipleDevicesSupport
     uint32_t numSupportedDevices = 3;
     OsContext osContext(nullptr, 1, numSupportedDevices, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
+    aubCsr->setupContext(osContext);
 
-    EXPECT_THROW(aubCsr->setupContext(osContext), std::exception);
+    EXPECT_EQ(numSupportedDevices, aubCsr->hardwareContextController->hardwareContexts.size());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationTypeIsntNonAubWritableThenWriteMemoryIsAllowed) {
