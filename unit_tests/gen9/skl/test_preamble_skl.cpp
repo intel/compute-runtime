@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,10 +42,15 @@ SKLTEST_F(Gen9L3Config, checkNoSLM) {
     uint32_t l3Config = 0;
 
     l3Config = getL3ConfigHelper<IGFX_SKYLAKE>(slmUsed);
-    EXPECT_EQ(0x80000140u, l3Config);
+    EXPECT_EQ(0x80000340u, l3Config);
+
+    uint32_t errorDetectionBehaviorControlBit = 1 << 9;
+    EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 
     l3Config = getL3ConfigHelper<IGFX_BROXTON>(slmUsed);
-    EXPECT_EQ(0x80000140u, l3Config);
+    EXPECT_EQ(0x80000340u, l3Config);
+
+    EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 }
 
 SKLTEST_F(Gen9L3Config, checkSLM) {
@@ -53,10 +58,15 @@ SKLTEST_F(Gen9L3Config, checkSLM) {
     uint32_t l3Config = 0;
 
     l3Config = getL3ConfigHelper<IGFX_SKYLAKE>(slmUsed);
-    EXPECT_EQ(0x60000121u, l3Config);
+    EXPECT_EQ(0x60000321u, l3Config);
+
+    uint32_t errorDetectionBehaviorControlBit = 1 << 9;
+    EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 
     l3Config = getL3ConfigHelper<IGFX_BROXTON>(slmUsed);
-    EXPECT_EQ(0x60000121u, l3Config);
+    EXPECT_EQ(0x60000321u, l3Config);
+
+    EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 }
 
 typedef PreambleFixture ThreadArbitration;

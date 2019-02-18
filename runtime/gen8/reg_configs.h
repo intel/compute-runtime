@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,8 @@ namespace OCLRT {
 struct BDWFamily;
 template <>
 struct L3CNTLREGConfig<IGFX_BROADWELL> {
-    static const uint32_t valueForSLM = 0x60000121u;
-    static const uint32_t valueForNoSLM = 0x80000140u;
+    static const uint32_t valueForSLM = 0x60000321u;
+    static const uint32_t valueForNoSLM = 0x80000340u;
 };
 
 template <>

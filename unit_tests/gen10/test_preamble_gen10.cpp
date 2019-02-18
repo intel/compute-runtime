@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,8 +112,8 @@ CNLTEST_F(Gen10PreambleVfeState, WaOn) {
 
 TEST(L3CNTLREGConfig, checkValidValues) {
 
-    uint32_t validCNLNoSLMConfigs[] = {0x80000180, 0x00418180, 0x00420160, 0x00030140, 0xc0000140, 0x00428140};
-    uint32_t validCNLSLMConfigs[] = {0, 0xa0000121, 0x01008121, 0xc0000101};
+    uint32_t validCNLNoSLMConfigs[] = {0x80000180, 0x00418180, 0x00420160, 0x00030140, 0xc0000340, 0x00428140};
+    uint32_t validCNLSLMConfigs[] = {0, 0xa0000321, 0x01008121, 0xc0000101};
 
     bool noSLMConfigValid = false;
     bool SLMConfigValid = false;
@@ -134,6 +134,19 @@ TEST(L3CNTLREGConfig, checkValidValues) {
 
     EXPECT_TRUE(SLMConfigValid);
     EXPECT_TRUE(noSLMConfigValid);
+}
+
+typedef PreambleFixture L3ErrorDetectionBit;
+GEN10TEST_F(L3ErrorDetectionBit, GivenGen10WhenProgrammingL3ThenErrorDetectionBehaviorControlBitSet) {
+    uint32_t l3Config = 0;
+
+    l3Config = getL3ConfigHelper<IGFX_CANNONLAKE>(true);
+
+    uint32_t errorDetectionBehaviorControlBit = 1 << 9;
+    EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
+
+    l3Config = getL3ConfigHelper<IGFX_CANNONLAKE>(false);
+    EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 }
 
 typedef PreambleFixture PreemptionWatermarkGen10;
