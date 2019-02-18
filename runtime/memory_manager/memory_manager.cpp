@@ -274,17 +274,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
-    switch (properties.allocationType) {
-    case GraphicsAllocation::AllocationType::LINEAR_STREAM:
-    case GraphicsAllocation::AllocationType::KERNEL_ISA:
-    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
-    case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
-        allocationData.flags.requiresCpuAccess = true;
-        break;
-    default:
-        break;
-    }
-
+    allocationData.flags.requiresCpuAccess = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
     allocationData.flags.mustBeZeroCopy = mustBeZeroCopy;
     allocationData.flags.allocateMemory = properties.flags.allocateMemory;
     allocationData.flags.allow32Bit = allow32Bit;

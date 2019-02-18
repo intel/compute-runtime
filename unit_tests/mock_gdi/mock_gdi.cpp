@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,8 @@ BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
     case DLL_PROCESS_ATTACH:
         gAdapterInfo.GfxPartition.Standard.Base = 0x0000800400000000;
         gAdapterInfo.GfxPartition.Standard.Limit = 0x0000eeffffffffff;
+        gAdapterInfo.GfxPartition.Standard64KB.Base = 0x0000b80200000000;
+        gAdapterInfo.GfxPartition.Standard64KB.Limit = 0x0000efffffffffff;
         gAdapterInfo.GfxPartition.SVM.Base = 0;
         gAdapterInfo.GfxPartition.SVM.Limit = 0x00007fffffffffff;
         gAdapterInfo.GfxPartition.Heap32[0].Base = 0x0000800000000000;
@@ -287,6 +289,8 @@ NTSTATUS __stdcall D3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *quer
 
     adapterInfo->GfxPartition.Standard.Base = gAdapterInfo.GfxPartition.Standard.Base;
     adapterInfo->GfxPartition.Standard.Limit = gAdapterInfo.GfxPartition.Standard.Limit;
+    adapterInfo->GfxPartition.Standard64KB.Base = gAdapterInfo.GfxPartition.Standard64KB.Base;
+    adapterInfo->GfxPartition.Standard64KB.Limit = gAdapterInfo.GfxPartition.Standard64KB.Limit;
 
     adapterInfo->GfxPartition.SVM.Base = gAdapterInfo.GfxPartition.SVM.Base;
     adapterInfo->GfxPartition.SVM.Limit = gAdapterInfo.GfxPartition.SVM.Limit;

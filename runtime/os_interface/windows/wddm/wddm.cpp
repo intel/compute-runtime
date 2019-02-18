@@ -1006,6 +1006,9 @@ HeapIndex Wddm::selectHeap(const WddmAllocation *allocation, const void *ptr) co
         if (ptr) {
             return HeapIndex::HEAP_SVM;
         }
+        if (allocation && GraphicsAllocation::isCpuAccessRequired(allocation->getAllocationType())) {
+            return HeapIndex::HEAP_STANDARD64Kb;
+        }
         return HeapIndex::HEAP_STANDARD;
     }
     return HeapIndex::HEAP_LIMITED;

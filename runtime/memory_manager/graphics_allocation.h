@@ -164,6 +164,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     virtual std::string getAllocationInfoString() const;
 
+    static bool isCpuAccessRequired(AllocationType allocationType) {
+        return allocationType == AllocationType::LINEAR_STREAM ||
+               allocationType == AllocationType::KERNEL_ISA ||
+               allocationType == AllocationType::INTERNAL_HEAP ||
+               allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
+    }
+
   protected:
     constexpr static uint32_t objectNotResident = (uint32_t)-1;
     constexpr static uint32_t objectNotUsed = (uint32_t)-1;

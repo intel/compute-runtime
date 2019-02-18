@@ -1030,9 +1030,24 @@ TEST_F(WddmHeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAl
     }
     EXPECT_EQ(HeapIndex::HEAP_SVM, wddm->selectHeap(&allocation, &allocation));
 }
-TEST_F(WddmHeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrThenStandardHeapIsUsed) {
+TEST_F(WddmHeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndCpuAccessIsRequiredThenStandard64kHeapIsUsed) {
     WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, false};
     EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
+    auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
+    allocation.setAllocationType(allocationType);
+    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(allocationType));
+    if (hardwareInfoTable[wddm->getGfxPlatform()->eProductFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
+        return;
+    }
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD64Kb, wddm->selectHeap(&allocation, nullptr));
+}
+
+TEST_F(WddmHeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndCpuAccessIsNotRequiredThenStandardHeapIsUsed) {
+    WddmAllocation allocation{nullptr, 0, nullptr, MemoryPool::MemoryNull, false};
+    EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
+    auto allocationType = GraphicsAllocation::AllocationType::UNDECIDED;
+    allocation.setAllocationType(allocationType);
+    EXPECT_FALSE(GraphicsAllocation::isCpuAccessRequired(allocationType));
     if (hardwareInfoTable[wddm->getGfxPlatform()->eProductFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
         return;
     }
