@@ -31,7 +31,7 @@ class AubHelper : public NonCopyableOrMovableClass {
     static uint64_t getTotalMemBankSize();
     static int getMemTrace(uint64_t pdEntryBits);
     static uint64_t getPTEntryBits(uint64_t pdEntryBits);
-    static void checkPTEAddress(uint64_t address);
+    static void checkPTEAddress(const HardwareInfo *pHwInfo, uint64_t address);
     static uint32_t getMemType(uint32_t addressSpace);
     static uint64_t getMemBankSize(const HardwareInfo *pHwInfo);
     static uint32_t getDevicesCount(const HardwareInfo *pHwInfo);

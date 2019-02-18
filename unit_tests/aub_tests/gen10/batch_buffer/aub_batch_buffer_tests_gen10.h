@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
 
     OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
 
-    AUB::reserveAddressPPGTT(aubFile, gpuBatchBuffer, sizeBatchBuffer, physBatchBuffer, 7, aubHelperHw);
+    AUB::reserveAddressPPGTT(aubFile, gpuBatchBuffer, sizeBatchBuffer, physBatchBuffer, 7, aubHelperHw, &pDevice->getHardwareInfo());
     uint8_t batchBuffer[sizeBatchBuffer];
 
     auto noop = MI_NOOP::sInit();

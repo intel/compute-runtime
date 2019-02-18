@@ -86,7 +86,7 @@ HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
 
     auto enableLocalMemory = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily).getEnableLocalMemory(hwInfo);
     OCLRT::AubHelperHw<FamilyType> aubHelperHw(enableLocalMemory);
-    AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress, 7, aubHelperHw);
+    AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress, 7, aubHelperHw, &hwInfo);
 
     aubFile.fileHandle.close();
 }
@@ -108,7 +108,7 @@ HWTEST_F(AubMemDumpTests, DISABLED_writeVerifyOneBytePPGTT) {
     uint64_t physAddress = reinterpret_cast<uint64_t>(&byte) & 0xFFFFFFFF;
 
     OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
-    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(byte), physAddress, 7, aubHelperHw);
+    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(byte), physAddress, 7, aubHelperHw, &pDevice->getHardwareInfo());
     AUB::addMemoryWrite(aubFile, physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal,
                          AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
@@ -156,7 +156,7 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesPPGTT) {
     auto physAddress = reinterpret_cast<uint64_t>(bytes) & 0xFFFFFFFF;
 
     OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
-    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(bytes), physAddress, 7, aubHelperHw);
+    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(bytes), physAddress, 7, aubHelperHw, &pDevice->getHardwareInfo());
     AUB::addMemoryWrite(aubFile, physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal,
                          AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);

@@ -24,7 +24,7 @@ uint64_t AubHelper::getPTEntryBits(uint64_t pdEntryBits) {
     return pdEntryBits;
 }
 
-void AubHelper::checkPTEAddress(uint64_t address) {
+void AubHelper::checkPTEAddress(const HardwareInfo *pHwInfo, uint64_t address) {
 }
 
 uint32_t AubHelper::getMemType(uint32_t addressSpace) {
