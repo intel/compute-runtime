@@ -7,14 +7,6 @@ assumed by default. Intel will clearly designate / tag specific builds to
 indicate production quality including formal compliance. Other builds should be
 considered experimental.
 
-### Build limitations
-
-While NEO can be compiled with various clang/gcc compilers, to compile the whole stack the following are required:
-* clang-4.0
-* llvm-4.0
-* gcc < 7.0
-* Python 2.7
-
 ### Functional delta
 
 The driver has the following functional delta compared to previously released drivers:

@@ -16,8 +16,11 @@ Make sure you adhere to our coding standard - this will be verified by clang-for
 ### 2. Patch submission
 
 Create a pull request on github once you are confident that your changes are complete and fulfill
-the requirements above. Make sure your commit message contains meaningful title (first line).
-A few sentences of additional description is also required. All lines in the commit messages have 80 characters limit.
+the requirements above. Make sure your commit message follows these rules:
+* each line has 80 character limit
+* title (first line) should be self-contained (i.e. make sense without looking at the body)
+* additional description can be provided in the body
+* title and body need to be separated by an empty line
 
 ### 3. Initial (cursory) review
 

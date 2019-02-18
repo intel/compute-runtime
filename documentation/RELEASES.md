@@ -2,7 +2,7 @@
 
 ## Every commit - must ...
 
-* Build under Linux - using multiple versions of gcc (4.8 ... 7.3) and clang (4.0.1)
+* Build under Linux - using clang (6.0, planning switch to 7.0) and multiple versions of gcc (5.2 ... 8.2)
 
 * Build under Windows (this is currently a requirement that cannot be verified externally)
 
@@ -16,12 +16,10 @@
 
 ## Weekly
 
-* Once a week, we run extended cycle on a selected driver. When the extended cycle passes, the corresponding commit on github is tagged (e.g. "2018ww08"). Such version is considered recommended for the community use ("latest good")
+* Once a week, we run extended cycle on a selected driver.
 
-* For selected weekly tags, we may choose to release binaries (deb, rpm, tarball) - those will usually be considered a Beta driver.
+* When the extended cycle passes, the corresponding commit on github is tagged using the format yy.ww.bbbb (yy - year, ww - work week, bbbb - incremental build number).
 
-## Monthly / quarterly releases
+* Typically for weekly tags we will post a binary release (e.g. deb).
 
-* For major _driver_ releases, OpenCL driver is expected to be bundled with Media and/or MESA drivers. Cadence and timeline will be coordinated with our OTC colleagues.
-
-* The driver releases (weekly/monthly/quarterly) will then be bundled with software products (Intel(R) Computer Vision SDK, Intel(R) SDK for OpenCL(TM) Applications, Intel(R) Media Server Studio, etc.) as appropriate.
+* Quality level of the driver (per platform) will be provided in the Release Notes.

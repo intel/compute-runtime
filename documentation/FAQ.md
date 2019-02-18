@@ -10,7 +10,7 @@ with default / stock configuration (no kernel patches), assuming the underlying
 kernel's drm subsystem is 4.7 or higher. Newer platforms will require a kernel version
 that provides support for that platform (e.g. Coffee Lake requires kernel 4.14 or higher).
 
-Our default (most frequent) validation config is currently (as of Q1'18) Ubuntu 16.04.3 LTS.
+Our default (most frequent) validation config is currently (as of Q4'18) Ubuntu 18.04 LTS.
 
 ### What toolchain do you recommend for building NEO on CentOS?
 
@@ -28,8 +28,8 @@ intention to offer that option.
 
 Our Windows release process takes up to several weeks before drivers are available through intel.com
 and/or Windows update. Features available in github will be available on Windows later.
-This is applicable for most recent driver version (currently 15.65 as of Q1'18)
-- older platforms (e.g. Broadwell) are considered to be in maintenance mode for Windows.
+
+Note: Older platforms (e.g. Broadwell) are considered to be in maintenance mode for Windows.
 
 ### Does NEO support Android?
 
@@ -115,11 +115,8 @@ Neo will look for string value (REG_SZ) `C:\Program Files\application\app.exe` i
 
 ## Who are we?
 
-NEO OpenCL team is part of VPG (Visual and Parallel Computing group). Historically, our team
-was responsible for delivery of the closed source OpenCL driver for Windows, Linux, and Android.
-
-With that in mind, we tend to compare NEO against previous closed source releases
-(i.e. [SRB5](https://software.intel.com/en-us/articles/opencl-drivers#latest_linux_driver)).
+NEO OpenCL team is part of VTT (Visual Technologies Team). 
+Historically, our team was responsible for delivery of the closed source OpenCL driver for Windows, Linux, and Android.
 
 Most of the developers are located in Poland (UTC+1 timezone).
 
