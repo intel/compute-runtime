@@ -736,7 +736,7 @@ TEST_F(MockEventTests, virtualEventObtainedFromReturnedEventCannotBeReleasedByIs
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(MockEventTests, userEventsDoesntChangeCommandStreamWhileEnqueueButDoesAfterSignaling) {
+TEST_F(MockEventTests, givenBlockedQueueThenCommandStreamDoesNotChangeWhileEnqueueAndAfterSignaling) {
     uEvent = make_releaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
@@ -761,7 +761,7 @@ TEST_F(MockEventTests, userEventsDoesntChangeCommandStreamWhileEnqueueButDoesAft
     retVal |= clFinish(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_NE(used3, used);
+    EXPECT_EQ(used3, used);
 
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);

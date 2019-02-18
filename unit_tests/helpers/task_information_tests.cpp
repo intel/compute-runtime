@@ -105,7 +105,7 @@ TEST(CommandTest, givenWaitlistRequestWhenCommandComputeKernelIsCreatedThenMakeL
     cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
     cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
     cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
-    auto cmdStream = new LinearStream(alignedMalloc(1, 1), 1);
+    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({1, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
 
     std::vector<Surface *> surfaces;
     auto kernelOperation = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(ih1), UniqueIH(ih2), UniqueIH(ih3),
@@ -126,4 +126,32 @@ TEST(CommandTest, givenWaitlistRequestWhenCommandComputeKernelIsCreatedThenMakeL
 
     EXPECT_EQ(static_cast<cl_event>(&event1), command.eventsWaitlist[0]);
     EXPECT_EQ(static_cast<cl_event>(&event2), command.eventsWaitlist[1]);
+}
+
+TEST(KernelOperationDestruction, givenKernelOperationWhenItIsDestructedThenAllAllocationsAreStoredInInternalStorageForReuse) {
+    using UniqueIH = std::unique_ptr<IndirectHeap>;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    CommandQueue cmdQ(nullptr, device.get(), nullptr);
+    InternalAllocationStorage &allocationStorage = *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage();
+    auto &allocationsForReuse = allocationStorage.getAllocationsForReuse();
+
+    IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
+    cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
+    cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
+    cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
+    auto cmdStream = std::make_unique<LinearStream>(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({1, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
+
+    auto &heapAllocation1 = *ih1->getGraphicsAllocation();
+    auto &heapAllocation2 = *ih2->getGraphicsAllocation();
+    auto &heapAllocation3 = *ih3->getGraphicsAllocation();
+    auto &cmdStreamAllocation = *cmdStream->getGraphicsAllocation();
+
+    auto kernelOperation = std::make_unique<KernelOperation>(std::move(cmdStream), UniqueIH(ih1), UniqueIH(ih2), UniqueIH(ih3), allocationStorage);
+    EXPECT_TRUE(allocationsForReuse.peekIsEmpty());
+
+    kernelOperation.reset();
+    EXPECT_TRUE(allocationsForReuse.peekContains(cmdStreamAllocation));
+    EXPECT_TRUE(allocationsForReuse.peekContains(heapAllocation1));
+    EXPECT_TRUE(allocationsForReuse.peekContains(heapAllocation2));
+    EXPECT_TRUE(allocationsForReuse.peekContains(heapAllocation3));
 }

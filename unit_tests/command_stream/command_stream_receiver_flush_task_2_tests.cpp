@@ -42,7 +42,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
     auto buffer = Buffer::create(&ctx, CL_MEM_USE_HOST_PTR, sizeof(tempBuffer), tempBuffer, retVal);
 
     auto &commandStreamCSR = commandStreamReceiver.getCS();
-    auto &commandStreamTask = commandQueue.getCS(1024);
 
     commandQueue.enqueueWriteBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, 1, &blockingEvent, 0);
 
@@ -51,6 +50,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
 
     // Unblock Event
     mockEvent.setStatus(CL_COMPLETE);
+    auto &commandStreamTask = *commandStreamReceiver.lastFlushedCommandStream;
 
     cmdList.clear();
     // Parse command list

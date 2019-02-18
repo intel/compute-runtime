@@ -12,6 +12,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/task_information.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/utilities/tag_allocator.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
@@ -715,11 +716,13 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelW
 
     Vec3<size_t> localWorkgroupSize(workGroupSize);
 
-    auto expectedSizeCS = MemoryConstants::pageSize; //can get estimated more precisely
+    auto expectedSizeCSAllocation = MemoryConstants::pageSize64k;
+    auto expectedSizeCS = MemoryConstants::pageSize64k - CSRequirements::csOverfetchSize;
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(kernel, Math::computeTotalElementsCount(localWorkgroupSize));
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(kernel);
 
+    EXPECT_EQ(expectedSizeCSAllocation, blockedCommandsData->commandStream->getGraphicsAllocation()->getUnderlyingBufferSize());
     EXPECT_EQ(expectedSizeCS, blockedCommandsData->commandStream->getMaxAvailableSpace());
     EXPECT_LE(expectedSizeDSH, blockedCommandsData->dsh->getMaxAvailableSpace());
     EXPECT_LE(expectedSizeIOH, blockedCommandsData->ioh->getMaxAvailableSpace());
@@ -751,15 +754,73 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromMdiWhen
         pDevice->getPreemptionMode(),
         blockQueue);
 
-    auto expectedSizeCS = MemoryConstants::pageSize; //can get estimated more precisely
+    auto expectedSizeCSAllocation = MemoryConstants::pageSize64k;
+    auto expectedSizeCS = MemoryConstants::pageSize64k - CSRequirements::csOverfetchSize;
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
 
+    EXPECT_EQ(expectedSizeCSAllocation, blockedCommandsData->commandStream->getGraphicsAllocation()->getUnderlyingBufferSize());
     EXPECT_EQ(expectedSizeCS, blockedCommandsData->commandStream->getMaxAvailableSpace());
     EXPECT_LE(expectedSizeDSH, blockedCommandsData->dsh->getMaxAvailableSpace());
     EXPECT_LE(expectedSizeIOH, blockedCommandsData->ioh->getMaxAvailableSpace());
     EXPECT_LE(expectedSizeSSH, blockedCommandsData->ssh->getMaxAvailableSpace());
+
+    delete blockedCommandsData;
+}
+
+HWTEST_F(DispatchWalkerTest, givenBlockedQueueWhenDispatchWalkerIsCalledThenCommandStreamHasGpuAddress) {
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+    MockMultiDispatchInfo multiDispatchInfo(&kernel);
+
+    const auto blockQueue = true;
+    KernelOperation *blockedCommandsData = nullptr;
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        &blockedCommandsData,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        pDevice->getPreemptionMode(),
+        blockQueue);
+
+    EXPECT_NE(nullptr, blockedCommandsData->commandStream->getGraphicsAllocation());
+    EXPECT_NE(0ull, blockedCommandsData->commandStream->getGraphicsAllocation()->getGpuAddress());
+
+    delete blockedCommandsData;
+}
+
+HWTEST_F(DispatchWalkerTest, givenThereAreAllocationsForReuseWhenDispatchWalkerIsCalledThenCommandStreamObtainsReusableAllocation) {
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+    MockMultiDispatchInfo multiDispatchInfo(&kernel);
+
+    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto allocation = csr.getMemoryManager()->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize64k + CSRequirements::csOverfetchSize,
+                                                                                    GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    csr.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>{allocation}, REUSABLE_ALLOCATION);
+    ASSERT_FALSE(csr.getInternalAllocationStorage()->getAllocationsForReuse().peekIsEmpty());
+
+    const auto blockQueue = true;
+    KernelOperation *blockedCommandsData = nullptr;
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        &blockedCommandsData,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        pDevice->getPreemptionMode(),
+        blockQueue);
+
+    EXPECT_TRUE(csr.getInternalAllocationStorage()->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(allocation, blockedCommandsData->commandStream->getGraphicsAllocation());
 
     delete blockedCommandsData;
 }

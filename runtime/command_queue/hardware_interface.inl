@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_queue/hardware_interface.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/task_information.h"
 
@@ -50,8 +51,23 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     // Allocate command stream and indirect heaps
     if (blockQueue) {
         using KCH = KernelCommandsHelper<GfxFamily>;
-        commandStream = new LinearStream(alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize),
-                                         MemoryConstants::pageSize);
+
+        constexpr static auto allocationSize = MemoryConstants::pageSize64k;
+        constexpr static auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
+        auto commandStreamAllocation = commandQueue
+                                           .getCommandStreamReceiver()
+                                           .getInternalAllocationStorage()
+                                           ->obtainReusableAllocation(allocationSize, allocationType)
+                                           .release();
+        if (commandStreamAllocation == nullptr) {
+            const AllocationProperties commandStreamAllocationProperties{allocationSize, allocationType};
+            auto memoryManager = commandQueue.getCommandStreamReceiver().getMemoryManager();
+            commandStreamAllocation = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
+        }
+        UNRECOVERABLE_IF(commandStreamAllocation == nullptr);
+        commandStream = new LinearStream(commandStreamAllocation);
+        commandStream->overrideMaxSize(allocationSize - CSRequirements::csOverfetchSize);
+
         if (parentKernel) {
             uint32_t colorCalcSize = commandQueue.getContext().getDefaultDeviceQueue()->colorCalcStateSize;
 

@@ -31,7 +31,8 @@ KernelOperation::~KernelOperation() {
         storageForAllocations.storeAllocation(std::unique_ptr<GraphicsAllocation>(ioh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
     }
     storageForAllocations.storeAllocation(std::unique_ptr<GraphicsAllocation>(ssh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
-    alignedFree(commandStream->getCpuBase());
+
+    storageForAllocations.storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream->getGraphicsAllocation()), REUSABLE_ALLOCATION);
 }
 
 CommandMapUnmap::CommandMapUnmap(MapOperationType op, MemObj &memObj, MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset, bool readOnly,
@@ -141,14 +142,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         devQueue->acquireEMCriticalSection();
     }
 
-    auto &commandStream = *kernelOperation->commandStream;
-    size_t commandsSize = commandStream.getUsed();
-    auto &queueCommandStream = commandQueue.getCS(commandStream.getUsed());
-    size_t offset = queueCommandStream.getUsed();
-    void *pDst = queueCommandStream.getSpace(commandsSize);
-    //transfer the memory to commandStream of the queue.
-    memcpy_s(pDst, commandsSize, commandStream.getCpuBase(), commandsSize);
-
     IndirectHeap *dsh = kernelOperation->dsh.get();
     IndirectHeap *ioh = kernelOperation->ioh.get();
     IndirectHeap *ssh = kernelOperation->ssh.get();
@@ -224,8 +217,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     gtpinNotifyPreFlushTask(&commandQueue);
 
-    completionStamp = commandStreamReceiver.flushTask(queueCommandStream,
-                                                      offset,
+    completionStamp = commandStreamReceiver.flushTask(*kernelOperation->commandStream,
+                                                      0,
                                                       *dsh,
                                                       *ioh,
                                                       *ssh,
