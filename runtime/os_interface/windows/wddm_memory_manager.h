@@ -45,8 +45,6 @@ class WddmMemoryManager : public MemoryManager {
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
     void cleanOsHandles(OsHandleStorage &handleStorage) override;
 
-    OsContext *getRegisteredOsContext(uint32_t osContextId) { return registeredOsContexts[osContextId]; }
-
     void obtainGpuAddressFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
 
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override;

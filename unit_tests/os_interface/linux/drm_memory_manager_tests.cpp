@@ -571,7 +571,7 @@ TEST_F(DrmMemoryManagerTest, getMinimumSystemSharedMemory) {
     mock->ioctl_expected.contextGetParam = 2;
     EXPECT_EQ(hostMemorySize, systemSharedMemorySize);
     mock->testIoctls();
-    mock->ioctl_expected.contextDestroy = static_cast<int>(memoryManager->getCommandStreamReceivers()[0].size());
+    mock->ioctl_expected.contextDestroy = static_cast<int>(device->getExecutionEnvironment()->commandStreamReceivers[0].size());
 }
 
 TEST_F(DrmMemoryManagerTest, BoWaitFailure) {
@@ -1320,7 +1320,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedAn
 
     injectFailures(method);
     mock->reset();
-    mock->ioctl_expected.contextDestroy = static_cast<int>(memoryManager->getCommandStreamReceivers()[0].size());
+    mock->ioctl_expected.contextDestroy = static_cast<int>(device->getExecutionEnvironment()->commandStreamReceivers[0].size());
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
@@ -1352,7 +1352,6 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFr
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
-    imageGraphicsAllocation->updateTaskCount(0, 0);
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
@@ -1587,7 +1586,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenAllocationFails
 
     injectFailures(method);
     mock->reset();
-    mock->ioctl_expected.contextDestroy = static_cast<int>(memoryManager->getCommandStreamReceivers()[0].size());
+    mock->ioctl_expected.contextDestroy = static_cast<int>(device->getExecutionEnvironment()->commandStreamReceivers[0].size());
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndThreeOsHandlesWhenReuseCreatesAreCalledThenGraphicsAllocationsAreReturned) {

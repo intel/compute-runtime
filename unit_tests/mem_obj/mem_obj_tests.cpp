@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,17 +144,15 @@ TEST(MemObj, givenMemObjWhenReleaseAllocatedPtrIsCalledTwiceThenItDoesntCrash) {
 
 TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAllocationIsAddedToMemoryManagerAllocationList) {
     MockContext context;
-    MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-    memoryManager.setDefaultEngineIndex(context.getDevice(0)->getDefaultEngine().osContext->getContextId());
 
-    context.setMemoryManager(&memoryManager);
+    auto memoryManager = context.getDevice(0)->getExecutionEnvironment()->memoryManager.get();
 
-    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     allocation->updateTaskCount(2, context.getDevice(0)->getDefaultEngine().osContext->getContextId());
-    *(memoryManager.getDefaultCommandStreamReceiver(0)->getTagAddress()) = 1;
+    *(memoryManager->getDefaultCommandStreamReceiver(0)->getTagAddress()) = 1;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
-    auto &allocationList = memoryManager.getDefaultCommandStreamReceiver(0)->getTemporaryAllocations();
+    auto &allocationList = memoryManager->getDefaultCommandStreamReceiver(0)->getTemporaryAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
     memObj.destroyGraphicsAllocation(allocation, true);
 

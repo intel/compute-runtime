@@ -109,12 +109,10 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
         executionEnvironment.memoryManager.reset(memoryManager);
         ASSERT_NE(nullptr, memoryManager);
 
-        auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(
-            getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo), 1, PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo));
+        auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csrWithAubDump,
+                                                                                        getChosenEngineType(DEFAULT_TEST_PLATFORM::hwInfo),
+                                                                                        1, PreemptionHelper::getDefaultPreemptionMode(DEFAULT_TEST_PLATFORM::hwInfo));
         csrWithAubDump->setupContext(*osContext);
-        if (csrWithAubDump->aubCSR) {
-            csrWithAubDump->aubCSR->setupContext(*osContext);
-        }
     }
 
     void TearDown() override {

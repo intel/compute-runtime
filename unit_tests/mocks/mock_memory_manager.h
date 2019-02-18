@@ -22,7 +22,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     using MemoryManager::AllocationData;
     using MemoryManager::getAllocationData;
     using MemoryManager::multiContextResourceDestructor;
-    using MemoryManager::registeredOsContexts;
+    using MemoryManager::registeredEngines;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
     using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
 

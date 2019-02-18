@@ -29,20 +29,14 @@
 #include <algorithm>
 
 namespace OCLRT {
-MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory,
-                             ExecutionEnvironment &executionEnvironment) : allocator32Bit(nullptr), enable64kbpages(enable64kbpages),
-                                                                           localMemorySupported(enableLocalMemory),
-                                                                           executionEnvironment(executionEnvironment),
-                                                                           hostPtrManager(std::make_unique<HostPtrManager>()),
-                                                                           multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {
-    registeredOsContexts.resize(1);
-};
+MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment)
+    : allocator32Bit(nullptr), enable64kbpages(enable64kbpages), localMemorySupported(enableLocalMemory),
+      executionEnvironment(executionEnvironment), hostPtrManager(std::make_unique<HostPtrManager>()),
+      multiContextResourceDestructor(std::make_unique<DeferredDeleter>()){};
 
 MemoryManager::~MemoryManager() {
-    for (auto osContext : registeredOsContexts) {
-        if (osContext) {
-            osContext->decRefInternal();
-        }
+    for (auto &engine : registeredEngines) {
+        engine.osContext->decRefInternal();
     }
 }
 
@@ -151,15 +145,14 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
             multiContextResourceDestructor->drain(false);
             return;
         }
-        for (auto &deviceCsrs : getCommandStreamReceivers()) {
-            for (auto &csr : deviceCsrs) {
-                auto osContextId = csr->getOsContext().getContextId();
-                auto allocationTaskCount = gfxAllocation->getTaskCount(osContextId);
-                if (gfxAllocation->isUsedByOsContext(osContextId) &&
-                    allocationTaskCount > *csr->getTagAddress()) {
-                    csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation), TEMPORARY_ALLOCATION);
-                    return;
-                }
+        for (auto &engine : getRegisteredEngines()) {
+            auto osContextId = engine.osContext->getContextId();
+            auto allocationTaskCount = gfxAllocation->getTaskCount(osContextId);
+            if (gfxAllocation->isUsedByOsContext(osContextId) &&
+                allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+                engine.commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation),
+                                                                                              TEMPORARY_ALLOCATION);
+                return;
             }
         }
     }
@@ -184,14 +177,13 @@ bool MemoryManager::isMemoryBudgetExhausted() const {
     return false;
 }
 
-OsContext *MemoryManager::createAndRegisterOsContext(EngineInstanceT engineType, uint32_t numSupportedDevices, PreemptionMode preemptionMode) {
+OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver, EngineInstanceT engineType,
+                                                     uint32_t numSupportedDevices, PreemptionMode preemptionMode) {
     auto contextId = ++latestContextId;
-    if (contextId + 1 > registeredOsContexts.size()) {
-        registeredOsContexts.resize(contextId + 1);
-    }
     auto osContext = new OsContext(executionEnvironment.osInterface.get(), contextId, numSupportedDevices, engineType, preemptionMode);
     osContext->incRefInternal();
-    registeredOsContexts[contextId] = osContext;
+
+    registeredEngines.emplace_back(commandStreamReceiver, osContext);
 
     return osContext;
 }
@@ -354,8 +346,8 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImage(const Allocati
     return allocateGraphicsMemoryForImageImpl(allocationDataWithSize, std::move(gmm));
 }
 
-const CsrContainer &MemoryManager::getCommandStreamReceivers() const {
-    return executionEnvironment.commandStreamReceivers;
+EngineControlContainer &MemoryManager::getRegisteredEngines() {
+    return registeredEngines;
 }
 
 CommandStreamReceiver *MemoryManager::getDefaultCommandStreamReceiver(uint32_t deviceId) const {

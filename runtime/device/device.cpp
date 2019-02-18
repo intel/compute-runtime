@@ -173,9 +173,12 @@ bool Device::createEngines(const HardwareInfo *pHwInfo) {
         }
         executionEnvironment->initializeMemoryManager(getEnabled64kbPages(), enableLocalMemory, getDeviceIndex(), deviceCsrIndex);
 
-        auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(gpgpuEngines[deviceCsrIndex], 1, preemptionMode);
         auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[getDeviceIndex()][deviceCsrIndex].get();
+
+        auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver, gpgpuEngines[deviceCsrIndex],
+                                                                                         1, preemptionMode);
         commandStreamReceiver->setupContext(*osContext);
+
         if (!commandStreamReceiver->initializeTagAllocation()) {
             return false;
         }

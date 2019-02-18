@@ -9,6 +9,7 @@
 #include "public/cl_ext_private.h"
 #include "runtime/command_stream/preemption_mode.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/engine_control.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/os_interface/32bit_memory.h"
@@ -29,6 +30,7 @@ class OsContext;
 struct ImageInfo;
 
 using CsrContainer = std::vector<std::vector<std::unique_ptr<CommandStreamReceiver>>>;
+using EngineControlContainer = std::vector<EngineControl>;
 
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,
@@ -177,10 +179,11 @@ class MemoryManager {
         ::alignedFree(ptr);
     }
 
-    OsContext *createAndRegisterOsContext(EngineInstanceT engineType, uint32_t numSupportedDevices, PreemptionMode preemptionMode);
-    uint32_t getOsContextCount() { return static_cast<uint32_t>(registeredOsContexts.size()); }
+    OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver, EngineInstanceT engineType,
+                                          uint32_t numSupportedDevices, PreemptionMode preemptionMode);
+    uint32_t getRegisteredEnginesCount() { return static_cast<uint32_t>(registeredEngines.size()); }
     CommandStreamReceiver *getDefaultCommandStreamReceiver(uint32_t deviceId) const;
-    const CsrContainer &getCommandStreamReceivers() const;
+    EngineControlContainer &getRegisteredEngines();
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
     void setDefaultEngineIndex(uint32_t index) { defaultEngineIndex = index; }
 
@@ -258,7 +261,7 @@ class MemoryManager {
     bool enable64kbpages = false;
     bool localMemorySupported = false;
     ExecutionEnvironment &executionEnvironment;
-    std::vector<OsContext *> registeredOsContexts;
+    EngineControlContainer registeredEngines;
     std::unique_ptr<HostPtrManager> hostPtrManager;
     uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
     uint32_t defaultEngineIndex = 0;

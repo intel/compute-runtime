@@ -152,7 +152,7 @@ TEST(DeviceCreation, givenDefaultHwCsrInDebugVarsWhenDeviceIsCreatedThenIsSimula
 TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryManager) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     auto memoryManager = device->getMemoryManager();
-    EXPECT_EQ(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size(), memoryManager->getOsContextCount());
+    EXPECT_EQ(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size(), memoryManager->getRegisteredEnginesCount());
 }
 
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqueId) {
@@ -164,11 +164,19 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqu
     auto device1 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 0u));
     auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 1u));
 
+    auto &registeredEngines = executionEnvironment.memoryManager->getRegisteredEngines();
+    EXPECT_EQ(numGpgpuEngines * numDevices, registeredEngines.size());
+
     for (uint32_t i = 0; i < numGpgpuEngines; i++) {
         EXPECT_EQ(i, device1->getEngine(i).osContext->getContextId());
         EXPECT_EQ(i + numGpgpuEngines, device2->getEngine(i).osContext->getContextId());
+
+        EXPECT_EQ(registeredEngines[i].commandStreamReceiver,
+                  device1->getEngine(i).commandStreamReceiver);
+        EXPECT_EQ(registeredEngines[i + numGpgpuEngines].commandStreamReceiver,
+                  device2->getEngine(i).commandStreamReceiver);
     }
-    EXPECT_EQ(numGpgpuEngines * numDevices, executionEnvironment.memoryManager->getOsContextCount());
+    EXPECT_EQ(numGpgpuEngines * numDevices, executionEnvironment.memoryManager->getRegisteredEnginesCount());
 }
 
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {

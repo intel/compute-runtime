@@ -8,6 +8,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "runtime/device/driver_info.h"
 #include "runtime/helpers/hw_helper.h"
+#include "runtime/os_interface/os_context.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/tests_configuration.h"
@@ -54,7 +55,10 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][defaultEngineIndex]->initializeTagAllocation();
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][defaultEngineIndex]->setPreemptionCsrAllocation(preemptionAllocation);
     this->engines[defaultEngineIndex].commandStreamReceiver = newCsr;
-    this->engines[defaultEngineIndex].commandStreamReceiver->setupContext(*this->engines[defaultEngineIndex].osContext);
+
+    auto osContext = this->engines[defaultEngineIndex].osContext;
+    executionEnvironment->memoryManager->getRegisteredEngines()[osContext->getContextId()].commandStreamReceiver = newCsr;
+    this->engines[defaultEngineIndex].commandStreamReceiver->setupContext(*osContext);
     UNRECOVERABLE_IF(getDeviceIndex() != 0u);
 }
 

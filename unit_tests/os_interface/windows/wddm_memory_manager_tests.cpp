@@ -1228,17 +1228,17 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithNoRegisteredOsContextsWh
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenCallingIsMemoryBudgetExhaustedThenReturnFalse) {
-    memoryManager->createAndRegisterOsContext(defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    memoryManager->createAndRegisterOsContext(defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    memoryManager->createAndRegisterOsContext(defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    memoryManager->createAndRegisterOsContext(nullptr, defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    memoryManager->createAndRegisterOsContext(nullptr, defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    memoryManager->createAndRegisterOsContext(nullptr, defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     EXPECT_FALSE(memoryManager->isMemoryBudgetExhausted());
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithExhaustedMemoryBudgetWhenCallingIsMemoryBudgetExhaustedThenReturnTrue) {
-    memoryManager->createAndRegisterOsContext(defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    memoryManager->createAndRegisterOsContext(defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    memoryManager->createAndRegisterOsContext(defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    memoryManager->getRegisteredOsContext(1)->get()->getResidencyController().setMemoryBudgetExhausted();
+    memoryManager->createAndRegisterOsContext(nullptr, defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    memoryManager->createAndRegisterOsContext(nullptr, defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    memoryManager->createAndRegisterOsContext(nullptr, defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    memoryManager->getRegisteredEngines()[1].osContext->get()->getResidencyController().setMemoryBudgetExhausted();
     EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());
 }
 
@@ -1469,7 +1469,8 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
     executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
 
     executionEnvironment.memoryManager = std::make_unique<WddmMemoryManager>(false, false, wddm, executionEnvironment);
-    csr->setupContext(*executionEnvironment.memoryManager->createAndRegisterOsContext(defaultRcsEngine, 1, preemptionMode));
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr, defaultRcsEngine, 1, preemptionMode);
+    csr->setupContext(*osContext);
     EXPECT_EQ(csr, executionEnvironment.memoryManager->getDefaultCommandStreamReceiver(0));
 
     auto tagAllocator = csr->getEventPerfCountAllocator();
