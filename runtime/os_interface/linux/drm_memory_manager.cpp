@@ -389,11 +389,9 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
         return nullptr;
     }
 
-    auto limitedRangeAllocation = false;
     void *ptrAlloc = reinterpret_cast<void *>(res);
 
-    if (limitedGpuAddressRangeAllocator && allocatorType == BIT32_ALLOCATOR_INTERNAL) {
-        limitedRangeAllocation = true;
+    if (limitedGpuAddressRangeAllocator) {
         ptrAlloc = alignedMallocWrapper(alignedAllocationSize, MemoryConstants::allocationAlignment);
 
         if (!ptrAlloc) {
@@ -405,7 +403,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
     BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(ptrAlloc), alignedAllocationSize, 0, true);
 
     if (!bo) {
-        if (limitedRangeAllocation) {
+        if (limitedGpuAddressRangeAllocator) {
             alignedFreeWrapper(ptrAlloc);
         }
         allocatorToUse->free(res, allocationSize);
@@ -424,7 +422,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
 
     allocation->is32BitAllocation = true;
     allocation->gpuBaseAddress = allocatorToUse->getBase();
-    allocation->driverAllocatedCpuPointer = limitedRangeAllocation ? ptrAlloc : nullptr;
+    allocation->driverAllocatedCpuPointer = limitedGpuAddressRangeAllocator ? ptrAlloc : nullptr;
     return allocation;
 }
 

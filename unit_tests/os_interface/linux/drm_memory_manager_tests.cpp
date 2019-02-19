@@ -782,6 +782,24 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWhenLimitedAllocationEnabledThen32BitDrmAllocationWithGpuAddrDifferentFromCpuAddrIsBeingReturned) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    auto size = 10u;
+    memoryManager->setForce32BitAllocations(true);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, GraphicsAllocation::AllocationType::BUFFER);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+    EXPECT_GE(allocation->getUnderlyingBufferSize(), size);
+
+    EXPECT_NE((uint64_t)allocation->getGpuAddress(), (uint64_t)allocation->getUnderlyingBuffer());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithTrueMutlipleTimesThenAllocatorIsReused) {
     // allocator32Bit is created unconditionally when limitedRangeAllocation is enabled.
     if (!memoryManager->limitedGpuAddressRangeAllocator.get()) {
@@ -1106,7 +1124,7 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCr
         ptr,
         retVal);
 
-    size_t size2 = 2 * 1025 * 1024 * 1024u;
+    size_t size2 = 4 * 1024 * 1024 * 1024u - 1u;
 
     auto buffer2 = Buffer::create(
         &context,
@@ -1153,7 +1171,7 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCr
         nullptr,
         retVal);
 
-    size_t size2 = 2 * 1025 * 1024 * 1024u;
+    size_t size2 = 4 * 1024 * 1024 * 1024u - 1u;
 
     auto buffer2 = Buffer::create(
         &context,
