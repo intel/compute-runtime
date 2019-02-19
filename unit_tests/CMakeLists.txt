@@ -26,6 +26,8 @@ if(WIN32)
   string(REPLACE "/O2" "/Od" CMAKE_C_FLAGS_RELEASEINTERNAL ${CMAKE_C_FLAGS_RELEASEINTERNAL})
 endif()
 
+link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
+
 add_custom_target(unit_tests)
 add_custom_target(run_unit_tests ALL)
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -100,7 +100,6 @@ endif()
 target_link_libraries(ocloc elflib)
 
 set_target_properties(ocloc PROPERTIES FOLDER "offline_compiler")
-set_property(TARGET ocloc APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
 
 add_custom_target(copy_compiler_files DEPENDS ${IGDRCL__IGC_TARGETS})
 set_target_properties(copy_compiler_files PROPERTIES FOLDER "opencl runtime")
