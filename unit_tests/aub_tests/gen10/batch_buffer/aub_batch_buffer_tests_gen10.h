@@ -55,7 +55,7 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
 
     OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
 
-    AUB::reserveAddressPPGTT(aubFile, gpuBatchBuffer, sizeBatchBuffer, physBatchBuffer, 7, aubHelperHw, &pDevice->getHardwareInfo());
+    AUB::reserveAddressPPGTT(aubFile, gpuBatchBuffer, sizeBatchBuffer, physBatchBuffer, 7, aubHelperHw);
     uint8_t batchBuffer[sizeBatchBuffer];
 
     auto noop = MI_NOOP::sInit();

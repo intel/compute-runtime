@@ -117,12 +117,12 @@ uint64_t AubDump<Traits>::reserveAddressGGTT(typename Traits::Stream &stream, co
 template <typename Traits>
 void AubDump<Traits>::reserveAddressGGTTAndWriteMmeory(typename Traits::Stream &stream, uintptr_t gfxAddress,
                                                        const void *memory, uint64_t physAddress,
-                                                       size_t size, size_t offset, uint64_t additionalBits,
-                                                       const OCLRT::AubHelper &aubHelper, const HardwareInfo *hwInfo) {
+                                                       size_t size, size_t offset,
+                                                       uint64_t additionalBits, const OCLRT::AubHelper &aubHelper) {
     auto vmAddr = (gfxAddress + offset) & ~(MemoryConstants::pageSize - 1);
     auto pAddr = physAddress & ~(MemoryConstants::pageSize - 1);
 
-    AubDump<Traits>::reserveAddressPPGTT(stream, vmAddr, MemoryConstants::pageSize, pAddr, additionalBits, aubHelper, hwInfo);
+    AubDump<Traits>::reserveAddressPPGTT(stream, vmAddr, MemoryConstants::pageSize, pAddr, additionalBits, aubHelper);
 
     int hint = OCLRT::AubHelper::getMemTrace(additionalBits);
 
@@ -142,7 +142,7 @@ void AubDump<Traits>::setGttEntry(MiGttEntry &entry, uint64_t address, AubGTTDat
 template <typename Traits>
 uint64_t AubPageTableHelper32<Traits>::reserveAddressPPGTT(typename Traits::Stream &stream, uintptr_t gfxAddress,
                                                            size_t blockSize, uint64_t physAddress,
-                                                           uint64_t additionalBits, const OCLRT::AubHelper &aubHelper, const HardwareInfo *hwInfo) {
+                                                           uint64_t additionalBits, const OCLRT::AubHelper &aubHelper) {
     auto startAddress = gfxAddress;
     auto endAddress = gfxAddress + blockSize - 1;
 
@@ -206,7 +206,7 @@ uint64_t AubPageTableHelper32<Traits>::reserveAddressPPGTT(typename Traits::Stre
 template <typename Traits>
 uint64_t AubPageTableHelper64<Traits>::reserveAddressPPGTT(typename Traits::Stream &stream, uintptr_t gfxAddress,
                                                            size_t blockSize, uint64_t physAddress,
-                                                           uint64_t additionalBits, const OCLRT::AubHelper &aubHelper, const HardwareInfo *hwInfo) {
+                                                           uint64_t additionalBits, const OCLRT::AubHelper &aubHelper) {
     auto startAddress = gfxAddress;
     auto endAddress = gfxAddress + blockSize - 1;
 
@@ -312,7 +312,6 @@ uint64_t AubPageTableHelper64<Traits>::reserveAddressPPGTT(typename Traits::Stre
 
             stream.writePTE(startAddress, pte, addressSpace);
             startAddress += sizeof(pte);
-            OCLRT::AubHelper::checkPTEAddress(hwInfo, startAddress);
 
             physPage += 4096;
             currPTE++;
