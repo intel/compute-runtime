@@ -340,11 +340,8 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const Memor
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
-    if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR)) {
-        if (isValueSet(properties.flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL) || !isLocalMemoryEnabled) {
-            return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
-        }
-        return GraphicsAllocation::AllocationType::BUFFER;
+    if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR) && (isValueSet(properties.flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL) || !isLocalMemoryEnabled)) {
+        return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
     if (MemObjHelper::isSuitableForRenderCompression(renderCompressedBuffers, properties, contextType)) {
