@@ -10,6 +10,7 @@ set(IGDRCL_SRCS_linux_tests
   ${IGDRCL_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/allocator_helper.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/create_drm_memory_manager.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/options.cpp
 )
 
@@ -25,6 +26,7 @@ set(IGDRCL_SRCS_linux_dll_tests
   ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/options.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/create_drm_memory_manager.cpp
 )
 
 if(IGDRCL__LIBVA_FOUND)

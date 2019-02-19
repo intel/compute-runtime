@@ -179,14 +179,14 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     auto executionEnvironment = device->getExecutionEnvironment();
     executionEnvironment->initializeCommandStreamReceiver(hwInfo, 0, 0);
     auto enableLocalMemory = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
-    executionEnvironment->initializeMemoryManager(false, enableLocalMemory, 0, 0);
+    executionEnvironment->initializeMemoryManager(false, enableLocalMemory);
     EXPECT_EQ(enableLocalMemory, executionEnvironment->memoryManager->isLocalMemorySupported());
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 0, 0);
-    executionEnvironment->initializeMemoryManager(false, false, 0, 0);
+    executionEnvironment->initializeMemoryManager(false, false);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::vector<std::unique_ptr<CommandStreamReceiver>>) +
@@ -284,7 +284,7 @@ HWTEST_F(ExecutionEnvironmentHw, givenHwHelperInputWhenInitializingCsrThenCreate
 TEST(ExecutionEnvironment, whenSpecialCsrNotExistThenReturnNullSpecialEngineControl) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 0, 0);
-    executionEnvironment->initializeMemoryManager(false, false, 0, 0);
+    executionEnvironment->initializeMemoryManager(false, false);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
     auto engineControl = executionEnvironment->getEngineControlForSpecialCsr();
     EXPECT_EQ(nullptr, engineControl);
@@ -293,7 +293,7 @@ TEST(ExecutionEnvironment, whenSpecialCsrNotExistThenReturnNullSpecialEngineCont
 TEST(ExecutionEnvironment, whenSpecialCsrExistsThenReturnSpecialEngineControl) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 0, 0);
-    executionEnvironment->initializeMemoryManager(false, false, 0, 0);
+    executionEnvironment->initializeMemoryManager(false, false);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 
     executionEnvironment->specialCommandStreamReceiver.reset(createCommandStream(platformDevices[0], *executionEnvironment));
@@ -307,4 +307,13 @@ TEST(ExecutionEnvironment, whenSpecialCsrExistsThenReturnSpecialEngineControl) {
     auto engineControl = executionEnvironment->getEngineControlForSpecialCsr();
     ASSERT_NE(nullptr, engineControl);
     EXPECT_EQ(executionEnvironment->specialCommandStreamReceiver.get(), engineControl->commandStreamReceiver);
+}
+
+TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryManagerThenCreateDefaultMemoryManager) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SetCommandStreamReceiver.set(10);
+
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->initializeMemoryManager(false, false);
+    EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }

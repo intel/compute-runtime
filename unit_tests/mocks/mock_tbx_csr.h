@@ -98,7 +98,7 @@ std::unique_ptr<TbxExecutionEnvironment> getEnvironment(bool createTagAllocation
 
     executionEnvironment->commandStreamReceivers.resize(1);
     executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<CsrType>(*platformDevices[0], *executionEnvironment));
-    executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceivers[0][0]->createMemoryManager(false, false));
+    executionEnvironment->initializeMemoryManager(false, false);
     if (createTagAllocation) {
         executionEnvironment->commandStreamReceivers[0][0]->initializeTagAllocation();
     }

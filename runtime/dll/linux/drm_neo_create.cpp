@@ -191,5 +191,4 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     drms[deviceOrdinal % drms.size()] = drmObject.release();
     return drms[deviceOrdinal % drms.size()];
 }
-
 } // namespace OCLRT

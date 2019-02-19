@@ -64,9 +64,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     void initializeEngine();
 
-    MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
-        return new TbxMemoryManager(enable64kbPages, enableLocalMemory, this->executionEnvironment);
-    }
     TbxMemoryManager *getMemoryManager() {
         return (TbxMemoryManager *)CommandStreamReceiver::getMemoryManager();
     }

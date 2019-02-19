@@ -95,6 +95,7 @@ add_library (igdrcl_libult_env OBJECT
 )
 
 set(IGDRCL_SRCS_LIB_ULT_ENV_WINDOWS
+  ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/create_wddm_memory_manager.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/options.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/sys_calls.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
@@ -103,6 +104,7 @@ set(IGDRCL_SRCS_LIB_ULT_ENV_WINDOWS
 )
 
 set(IGDRCL_SRCS_LIB_ULT_ENV_LINUX
+  ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/create_drm_memory_manager.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/options.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/allocator_helper.cpp
 )

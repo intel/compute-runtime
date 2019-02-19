@@ -80,10 +80,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return new UltCommandStreamReceiver<GfxFamily>(hwInfoIn, executionEnvironment);
     }
 
-    virtual MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
-        return new OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment);
-    }
-
     virtual GmmPageTableMngr *createPageTableManager() override {
         createPageTableManagerCalled = true;
         return nullptr;

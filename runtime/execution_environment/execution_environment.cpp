@@ -11,6 +11,7 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/sip.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_helper.h"
@@ -56,12 +57,30 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *p
     this->commandStreamReceivers[deviceIndex][deviceCsrIndex] = std::move(commandStreamReceiver);
     return true;
 }
-void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory, uint32_t deviceIndex, uint32_t deviceCsrIndex) {
+void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory) {
     if (this->memoryManager) {
         return;
     }
 
-    memoryManager.reset(commandStreamReceivers[deviceIndex][deviceCsrIndex]->createMemoryManager(enable64KBpages, enableLocalMemory));
+    int32_t setCommandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
+    if (DebugManager.flags.SetCommandStreamReceiver.get() >= 0) {
+        setCommandStreamReceiverType = DebugManager.flags.SetCommandStreamReceiver.get();
+    }
+
+    switch (setCommandStreamReceiverType) {
+    case CommandStreamReceiverType::CSR_TBX:
+    case CommandStreamReceiverType::CSR_TBX_WITH_AUB:
+        memoryManager = std::make_unique<TbxMemoryManager>(enable64KBpages, enableLocalMemory, *this);
+        break;
+    case CommandStreamReceiverType::CSR_AUB:
+        memoryManager = std::make_unique<OsAgnosticMemoryManager>(enable64KBpages, enableLocalMemory, *this);
+        break;
+    case CommandStreamReceiverType::CSR_HW:
+    case CommandStreamReceiverType::CSR_HW_WITH_AUB:
+    default:
+        memoryManager = MemoryManager::createMemoryManager(enable64KBpages, enableLocalMemory, *this);
+        break;
+    }
     DEBUG_BREAK_IF(!this->memoryManager);
 }
 void ExecutionEnvironment::initSourceLevelDebugger(const HardwareInfo &hwInfo) {

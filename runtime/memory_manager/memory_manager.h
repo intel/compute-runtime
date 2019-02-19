@@ -192,8 +192,8 @@ class MemoryManager {
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
     void setDefaultEngineIndex(uint32_t index) { defaultEngineIndex = index; }
     virtual bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, uint32_t sizeToCopy) const;
-
     static HeapIndex selectHeap(const GraphicsAllocation *allocation, const void *ptr, const HardwareInfo &hwInfo);
+    static std::unique_ptr<MemoryManager> createMemoryManager(bool enable64KBpages, bool enableLocalMemory, ExecutionEnvironment &exeEnv);
 
   protected:
     struct AllocationData {

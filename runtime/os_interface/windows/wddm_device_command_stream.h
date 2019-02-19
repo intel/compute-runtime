@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,6 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
 
     WddmMemoryManager *getMemoryManager();
-    MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory);
     Wddm *peekWddm() {
         return wddm;
     }

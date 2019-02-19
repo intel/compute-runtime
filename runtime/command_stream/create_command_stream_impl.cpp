@@ -22,7 +22,10 @@ CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo, Exec
         return nullptr;
     }
     CommandStreamReceiver *commandStreamReceiver = nullptr;
-    int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    int32_t csr = CommandStreamReceiverType::CSR_HW;
+    if (DebugManager.flags.SetCommandStreamReceiver.get() >= 0) {
+        csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    }
     if (csr) {
         switch (csr) {
         case CSR_AUB:
@@ -48,7 +51,10 @@ CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo, Exec
 
 bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
     bool result;
-    int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    int32_t csr = CommandStreamReceiverType::CSR_HW;
+    if (DebugManager.flags.SetCommandStreamReceiver.get() >= 0) {
+        csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    }
     if (csr) {
         switch (csr) {
         case CSR_AUB:

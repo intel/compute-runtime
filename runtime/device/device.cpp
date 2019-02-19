@@ -95,15 +95,13 @@ Device::~Device() {
         executionEnvironment->sourceLevelDebugger->notifyDeviceDestruction();
     }
 
-    if (executionEnvironment->memoryManager) {
-        if (preemptionAllocation) {
-            executionEnvironment->memoryManager->freeGraphicsMemory(preemptionAllocation);
-            preemptionAllocation = nullptr;
-        }
-        executionEnvironment->memoryManager->waitForDeletions();
-
-        alignedFree(this->slmWindowStartAddress);
+    if (preemptionAllocation) {
+        executionEnvironment->memoryManager->freeGraphicsMemory(preemptionAllocation);
+        preemptionAllocation = nullptr;
     }
+    executionEnvironment->memoryManager->waitForDeletions();
+
+    alignedFree(this->slmWindowStartAddress);
     executionEnvironment->decRefInternal();
 }
 
@@ -174,7 +172,7 @@ bool Device::createEngines(const HardwareInfo *pHwInfo) {
         if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo, getDeviceIndex(), deviceCsrIndex)) {
             return false;
         }
-        executionEnvironment->initializeMemoryManager(getEnabled64kbPages(), enableLocalMemory, getDeviceIndex(), deviceCsrIndex);
+        executionEnvironment->initializeMemoryManager(getEnabled64kbPages(), enableLocalMemory);
 
         auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[getDeviceIndex()][deviceCsrIndex].get();
 

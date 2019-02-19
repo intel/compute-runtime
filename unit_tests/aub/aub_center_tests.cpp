@@ -89,6 +89,7 @@ TEST(AubCenter, GivenCsrTypeWhenGettingAubStreamModeThenCorrectModeIsReturned) {
 TEST(AubCenter, GivenSetCommandStreamReceiverFlagEqualDefaultHwWhenAubManagerIsCreatedThenCsrTypeDefinesAubStreamMode) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(true);
+    DebugManager.flags.SetCommandStreamReceiver.set(-1);
 
     std::vector<CommandStreamReceiverType> aubTypes = {CommandStreamReceiverType::CSR_HW,
                                                        CommandStreamReceiverType::CSR_HW_WITH_AUB,

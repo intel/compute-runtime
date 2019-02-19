@@ -388,8 +388,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, CreateCommandStreamReceiverHw) {
     auto csrHw = CommandStreamReceiverHw<FamilyType>::create(hwInfo, executionEnvironment);
     EXPECT_NE(nullptr, csrHw);
 
-    MemoryManager *mm = csrHw->createMemoryManager(false, false);
-    EXPECT_EQ(nullptr, mm);
     GmmPageTableMngr *ptm = csrHw->createPageTableManager();
     EXPECT_EQ(nullptr, ptm);
     delete csrHw;

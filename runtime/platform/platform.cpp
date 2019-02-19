@@ -23,6 +23,7 @@
 #include "runtime/helpers/string.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/device_factory.h"
+#include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
@@ -139,6 +140,11 @@ bool Platform::initialize() {
     if (state == StateNone) {
         return false;
     }
+
+    auto &hwHelper = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily);
+    auto enableLocalMemory = hwHelper.getEnableLocalMemory(*hwInfo);
+
+    executionEnvironment->initializeMemoryManager(Device::getEnabled64kbPages(*hwInfo), enableLocalMemory);
 
     DEBUG_BREAK_IF(this->platformInfo);
     this->platformInfo.reset(new PlatformInfo);

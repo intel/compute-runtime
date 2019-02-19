@@ -22,7 +22,7 @@ void TbxCommandStreamFixture::SetUp(MockDevice *pDevice) {
     const auto &hwInfo = pDevice->getHardwareInfo();
     pCommandStreamReceiver = TbxCommandStreamReceiver::create(hwInfo, "", false, *pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCommandStreamReceiver);
-    mmTbx = pCommandStreamReceiver->createMemoryManager(false, false);
+    mmTbx = new TbxMemoryManager(false, false, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(pCommandStreamReceiver);
 }
 

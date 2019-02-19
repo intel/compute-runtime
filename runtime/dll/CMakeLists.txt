@@ -34,6 +34,7 @@ set(RUNTIME_SRCS_DLL_BASE
 
 set(RUNTIME_SRCS_DLL_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/allocator_helper.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/linux/create_drm_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/devices${BRANCH_DIR_SUFFIX}/devices.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/devices/devices_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_neo_create.cpp
@@ -42,6 +43,7 @@ set(RUNTIME_SRCS_DLL_LINUX
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/create_wddm_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/environment_variables.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/os_interface.cpp

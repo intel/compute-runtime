@@ -148,11 +148,6 @@ DrmMemoryManager *DrmCommandStreamReceiver<GfxFamily>::getMemoryManager() {
 }
 
 template <typename GfxFamily>
-MemoryManager *DrmCommandStreamReceiver<GfxFamily>::createMemoryManager(bool enable64kbPages, bool enableLocalMemory) {
-    return new DrmMemoryManager(this->drm, this->gemCloseWorkerOperationMode, DebugManager.flags.EnableForcePin.get(), true, this->executionEnvironment);
-}
-
-template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp) {
     drm_i915_gem_wait wait = {};
     wait.bo_handle = static_cast<uint32_t>(flushStamp);

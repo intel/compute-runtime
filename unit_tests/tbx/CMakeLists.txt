@@ -23,6 +23,7 @@ if(WIN32)
   )
   target_sources(igdrcl_tbx_tests PRIVATE
     ${IGDRCL_SOURCE_DIR}/runtime/dll/windows/options.cpp
+    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/create_wddm_memory_manager.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/sys_calls.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_calls.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
@@ -32,6 +33,7 @@ else()
   target_sources(igdrcl_tbx_tests PRIVATE
     ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/allocator_helper.cpp
     ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/options.cpp
+    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/create_drm_memory_manager.cpp
   )
 endif()
 

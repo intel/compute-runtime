@@ -5,7 +5,6 @@
  *
  */
 
-#include "runtime/helpers/options.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 
 namespace OCLRT {

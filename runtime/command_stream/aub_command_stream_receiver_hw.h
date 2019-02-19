@@ -86,11 +86,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     MOCKABLE_VIRTUAL void initializeEngine();
     void freeEngineInfoTable();
-
-    MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
-        return new OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, true, this->executionEnvironment);
-    }
-
     AubSubCaptureManager *subCaptureManager = nullptr;
     uint32_t aubDeviceId;
     bool standalone;

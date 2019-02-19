@@ -54,7 +54,7 @@ class DrmCommandStreamFixture {
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
             .Times(1);
-        memoryManager = static_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
+        memoryManager = new DrmMemoryManager(executionEnvironment.osInterface->get()->getDrm(), gemCloseWorkerActive, DebugManager.flags.EnableForcePin.get(), true, executionEnvironment);
         executionEnvironment.memoryManager.reset(memoryManager);
         ::testing::Mock::VerifyAndClearExpectations(mock.get());
 
@@ -577,7 +577,7 @@ class DrmCommandStreamEnhancedFixture
         tCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
         csr = tCsr;
         ASSERT_NE(nullptr, csr);
-        mm = reinterpret_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
+        mm = new DrmMemoryManager(executionEnvironment->osInterface->get()->getDrm(), gemCloseWorkerInactive, DebugManager.flags.EnableForcePin.get(), true, *executionEnvironment);
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
         device.reset(MockDevice::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));

@@ -85,7 +85,6 @@ class CommandStreamReceiver {
     void ensureCommandBufferAllocation(LinearStream &commandStream, size_t minimumRequiredSize, size_t additionalAllocationSize);
 
     MemoryManager *getMemoryManager() const;
-    virtual MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) { return nullptr; }
 
     ResidencyContainer &getResidencyAllocations();
     ResidencyContainer &getEvictionAllocations();

@@ -23,9 +23,11 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
     if (DebugManager.flags.UseAubStream.get()) {
         auto devicesCount = AubHelper::getDevicesCount(pHwInfo);
         auto memoryBankSize = AubHelper::getMemBankSize(pHwInfo);
-        CommandStreamReceiverType type = static_cast<CommandStreamReceiverType>(DebugManager.flags.SetCommandStreamReceiver.get() != CommandStreamReceiverType::CSR_HW
-                                                                                    ? DebugManager.flags.SetCommandStreamReceiver.get()
-                                                                                    : csrType);
+        CommandStreamReceiverType type = csrType;
+        if (DebugManager.flags.SetCommandStreamReceiver.get() >= CommandStreamReceiverType::CSR_HW) {
+            type = static_cast<CommandStreamReceiverType>(DebugManager.flags.SetCommandStreamReceiver.get());
+        }
+
         aubStreamMode = getAubStreamMode(aubFileName, type);
 
         if (DebugManager.flags.AubDumpAddMmioRegistersList.get() != "unk") {

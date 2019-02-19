@@ -138,11 +138,6 @@ WddmMemoryManager *WddmCommandStreamReceiver<GfxFamily>::getMemoryManager() {
 }
 
 template <typename GfxFamily>
-MemoryManager *WddmCommandStreamReceiver<GfxFamily>::createMemoryManager(bool enable64kbPages, bool enableLocalMemory) {
-    return new WddmMemoryManager(enable64kbPages, enableLocalMemory, this->wddm, executionEnvironment);
-}
-
-template <typename GfxFamily>
 bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStampToWait) {
     return wddm->waitFromCpu(flushStampToWait, static_cast<OsContextWin *>(osContext)->getResidencyController().getMonitoredFence());
 }

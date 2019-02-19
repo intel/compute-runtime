@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ using namespace OCLRT;
 
 namespace OCLRT {
 bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
-}
+} // namespace OCLRT
 
 TEST(CSRTests, getDevices) {
     HardwareInfo *hwInfo = nullptr;
