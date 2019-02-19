@@ -1618,28 +1618,28 @@ TEST(OsContextTest, givenOsContextWithNumberOfSupportedDevicesWhenConstructingTh
     EXPECT_EQ(7u, osContext.getNumDevicesSupported());
 }
 
-TEST(MemoryManagerTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
+TEST(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
     allocation.is32BitAllocation = true;
     allocation.origin = AllocationOrigin::INTERNAL_ALLOCATION;
     EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
-TEST(MemoryManagerTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
+TEST(HeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
     allocation.is32BitAllocation = false;
     allocation.origin = AllocationOrigin::INTERNAL_ALLOCATION;
     EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
-TEST(MemoryManagerTest, given32bitExternalAllocationWhenSelectingHeapThenExternalHeapIsUsed) {
+TEST(HeapSelectorTest, given32bitExternalAllocationWhenSelectingHeapThenExternalHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
     allocation.is32BitAllocation = true;
     allocation.origin = AllocationOrigin::EXTERNAL_ALLOCATION;
     EXPECT_EQ(HeapIndex::HEAP_EXTERNAL, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
-TEST(MemoryManagerTest, givenLimitedAddressSpaceWhenSelectingHeapForExternalAllocationThenLimitedHeapIsUsed) {
+TEST(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForExternalAllocationThenLimitedHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
     EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
     if (platformDevices[0]->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
@@ -1648,7 +1648,7 @@ TEST(MemoryManagerTest, givenLimitedAddressSpaceWhenSelectingHeapForExternalAllo
     EXPECT_EQ(HeapIndex::HEAP_LIMITED, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
-TEST(MemoryManagerTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithPtrThenSvmHeapIsUsed) {
+TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithPtrThenSvmHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
     EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
     if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
@@ -1657,38 +1657,40 @@ TEST(MemoryManagerTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocat
     EXPECT_EQ(HeapIndex::HEAP_SVM, MemoryManager::selectHeap(&allocation, &allocation, *platformDevices[0]));
 }
 
-TEST(MemoryManagerTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndCpuAccessIsRequiredThenStandard64kHeapIsUsed) {
+TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIs64KSuitableThenStandard64kHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
     EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
-    auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
-    allocation.setAllocationType(allocationType);
-    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(allocationType));
+    auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
+    auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    resourceInfo->is64KBPageSuitableValue = true;
+    allocation.gmm = gmm.get();
     if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
         return;
     }
     EXPECT_EQ(HeapIndex::HEAP_STANDARD64Kb, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
-TEST(MemoryManagerTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndCpuAccessIsNotRequiredThenStandardHeapIsUsed) {
+TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIsNot64KSuitableThenStandardHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
     EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
-    auto allocationType = GraphicsAllocation::AllocationType::UNDECIDED;
-    allocation.setAllocationType(allocationType);
-    EXPECT_FALSE(GraphicsAllocation::isCpuAccessRequired(allocationType));
+    auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
+    auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    resourceInfo->is64KBPageSuitableValue = false;
+    allocation.gmm = gmm.get();
     if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
         return;
     }
     EXPECT_EQ(HeapIndex::HEAP_STANDARD, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
-TEST(MemoryManagerTest, givenFullAddressSpaceWhenSelectingHeapForNullAllocationWithoutPtrThenStandardHeapIsUsed) {
+TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForNullAllocationWithoutPtrThenStandardHeapIsUsed) {
     if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
         return;
     }
     EXPECT_EQ(HeapIndex::HEAP_STANDARD, MemoryManager::selectHeap(nullptr, nullptr, *platformDevices[0]));
 }
 
-TEST(MemoryManagerTest, givenLimitedAddressSpaceWhenSelectingHeapForNullAllocationWithoutPtrThenLimitedHeapIsUsed) {
+TEST(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForNullAllocationWithoutPtrThenLimitedHeapIsUsed) {
     auto hwInfo = *platformDevices[0];
     hwInfo.capabilityTable.gpuAddressSpace = MemoryConstants::max32BitAddress;
     EXPECT_EQ(HeapIndex::HEAP_LIMITED, MemoryManager::selectHeap(nullptr, nullptr, hwInfo));

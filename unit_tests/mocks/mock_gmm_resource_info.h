@@ -72,6 +72,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     MOCK_METHOD1(getUnifiedAuxSurfaceOffset, uint64_t(GMM_UNIFIED_AUX_TYPE auxType));
 
+    bool is64KBPageSuitable() const override { return is64KBPageSuitableValue; }
+
     GMM_RESOURCE_INFO *peekHandle() const override { return mockResourceInfoHandle; }
 
     GMM_RESOURCE_INFO *mockResourceInfoHandle = (GMM_RESOURCE_INFO *)this;
@@ -89,6 +91,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     uint32_t getOffsetCalled = 0u;
     uint32_t arrayIndexPassedToGetOffset = 0;
     SurfaceFormatInfo tempSurface{};
+    bool is64KBPageSuitableValue = true;
 
   protected:
     MockGmmResourceInfo();
