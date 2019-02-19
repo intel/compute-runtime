@@ -39,20 +39,6 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
 
     template <typename FamilyType>
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
-        using AubMemDump::CmdServicesMemTraceRegisterCompare;
-        CmdServicesMemTraceRegisterCompare header;
-        memset(&header, 0, sizeof(header));
-        header.setHeader();
-
-        header.data[0] = expectedValue;
-        header.registerOffset = mmioRegister;
-        header.noReadExpect = CmdServicesMemTraceRegisterCompare::NoReadExpectValues::ReadExpect;
-        header.registerSize = CmdServicesMemTraceRegisterCompare::RegisterSizeValues::Dword;
-        header.registerSpace = CmdServicesMemTraceRegisterCompare::RegisterSpaceValues::Mmio;
-        header.readMaskLow = 0xffffffff;
-        header.readMaskHigh = 0xffffffff;
-        header.dwordCount = (sizeof(header) / sizeof(uint32_t)) - 1;
-
         CommandStreamReceiver *csr = pCommandStreamReceiver;
         if (testMode == TestMode::AubTestsWithTbx) {
             csr = reinterpret_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR.get();
@@ -61,7 +47,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
         if (csr) {
             // Write our pseudo-op to the AUB file
             auto aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
-            aubCsr->getAubStream()->fileHandle.write(reinterpret_cast<char *>(&header), sizeof(header));
+            aubCsr->expectMMIO(mmioRegister, expectedValue);
         }
     }
 

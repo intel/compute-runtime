@@ -30,7 +30,7 @@ TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenCreat
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(false);
 
-    MockAubManager *mockAubManager = new MockAubManager(platformDevices[0]->pPlatform->eProductFamily, 4, 8 * MB, true, "aub_file.aub", aub_stream::mode::aubFile);
+    MockAubManager *mockAubManager = new MockAubManager(platformDevices[0]->pPlatform->eProductFamily, 4, 8 * MB, true, aub_stream::mode::aubFile);
     MockAubCenter mockAubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter.aubManager = std::unique_ptr<MockAubManager>(mockAubManager);
 
@@ -38,7 +38,6 @@ TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenCreat
     EXPECT_EQ(4, mockAubManager->mockAubManagerParams.devicesCount);
     EXPECT_EQ(8 * MB, mockAubManager->mockAubManagerParams.memoryBankSize);
     EXPECT_EQ(true, mockAubManager->mockAubManagerParams.localMemorySupported);
-    EXPECT_STREQ("aub_file.aub", mockAubManager->mockAubManagerParams.aubFileName.c_str());
     EXPECT_EQ(aub_stream::mode::aubFile, mockAubManager->mockAubManagerParams.streamMode);
 }
 
@@ -121,4 +120,33 @@ TEST(AubCenter, GivenSetCommandStreamReceiverFlagSetWhenAubManagerIsCreatedThenD
 
     MockAubCenter aubCenter2(platformDevices[0], true, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(aub_stream::mode::aubFileAndTbx, aubCenter2.aubStreamMode);
+}
+
+TEST(AubCenter, GivenAubCenterInSubCaptureModeWhenItIsCreatedWithoutDebugFilterSettingsThenItInitializesSubCaptureFiltersWithDefaults) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
+
+    MockAubCenter aubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
+    auto subCaptureManager = aubCenter.getSubCaptureManager();
+    EXPECT_NE(nullptr, subCaptureManager);
+
+    EXPECT_EQ(0u, subCaptureManager->subCaptureFilter.dumpKernelStartIdx);
+    EXPECT_EQ(static_cast<uint32_t>(-1), subCaptureManager->subCaptureFilter.dumpKernelEndIdx);
+    EXPECT_STREQ("", subCaptureManager->subCaptureFilter.dumpKernelName.c_str());
+}
+
+TEST(AubCenter, GivenAubCenterInSubCaptureModeWhenItIsCreatedWithDebugFilterSettingsThenItInitializesSubCaptureFiltersWithDebugFilterSettings) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
+    DebugManager.flags.AUBDumpFilterKernelStartIdx.set(10);
+    DebugManager.flags.AUBDumpFilterKernelEndIdx.set(100);
+    DebugManager.flags.AUBDumpFilterKernelName.set("kernel_name");
+
+    MockAubCenter aubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
+    auto subCaptureManager = aubCenter.getSubCaptureManager();
+    EXPECT_NE(nullptr, subCaptureManager);
+
+    EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelStartIdx.get()), subCaptureManager->subCaptureFilter.dumpKernelStartIdx);
+    EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelEndIdx.get()), subCaptureManager->subCaptureFilter.dumpKernelEndIdx);
+    EXPECT_STREQ(DebugManager.flags.AUBDumpFilterKernelName.get().c_str(), subCaptureManager->subCaptureFilter.dumpKernelName.c_str());
 }

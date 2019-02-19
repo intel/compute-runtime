@@ -172,7 +172,18 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
     EXPECT_EQ(addressMapper1, addressMapper2);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWithAubManagerWhenItIsCreatedThenFileIsNotCreated) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyUseTheSameSubCaptureManager) {
+    ExecutionEnvironment executionEnvironment;
+    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto subCaptureManager1 = executionEnvironment.aubCenter->getSubCaptureManager();
+    EXPECT_NE(nullptr, subCaptureManager1);
+    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto subCaptureManager2 = executionEnvironment.aubCenter->getSubCaptureManager();
+    EXPECT_NE(nullptr, subCaptureManager2);
+    EXPECT_EQ(subCaptureManager1, subCaptureManager2);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWithAubManagerWhenItIsCreatedThenFileIsCreated) {
     HardwareInfo hwInfo = *platformDevices[0];
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
@@ -184,7 +195,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWithAubMana
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(AUBCommandStreamReceiver::create(hwInfo, fileName, true, executionEnvironment)));
     ASSERT_NE(nullptr, aubCsr);
 
-    EXPECT_FALSE(aubCsr->isFileOpen());
+    EXPECT_TRUE(aubCsr->isFileOpen());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateHardwareContext) {
@@ -234,27 +245,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(AUBCommandStreamReceiver::create(hwInfo, fileName, true, *pDevice->executionEnvironment)));
     EXPECT_NE(nullptr, aubCsr);
     EXPECT_FALSE(aubCsr->isFileOpen());
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrInSubCaptureModeWhenItIsCreatedWithoutDebugFilterSettingsThenItInitializesSubCaptureFiltersWithDefaults) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true, *pDevice->executionEnvironment));
-    EXPECT_EQ(0u, aubCsr->subCaptureManager->subCaptureFilter.dumpKernelStartIdx);
-    EXPECT_EQ(static_cast<uint32_t>(-1), aubCsr->subCaptureManager->subCaptureFilter.dumpKernelEndIdx);
-    EXPECT_STREQ("", aubCsr->subCaptureManager->subCaptureFilter.dumpKernelName.c_str());
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrInSubCaptureModeWhenItIsCreatedWithDebugFilterSettingsThenItInitializesSubCaptureFiltersWithDebugFilterSettings) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
-    DebugManager.flags.AUBDumpFilterKernelStartIdx.set(10);
-    DebugManager.flags.AUBDumpFilterKernelEndIdx.set(100);
-    DebugManager.flags.AUBDumpFilterKernelName.set("kernel_name");
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true, *pDevice->executionEnvironment));
-    EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelStartIdx.get()), aubCsr->subCaptureManager->subCaptureFilter.dumpKernelStartIdx);
-    EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelEndIdx.get()), aubCsr->subCaptureManager->subCaptureFilter.dumpKernelEndIdx);
-    EXPECT_STREQ(DebugManager.flags.AUBDumpFilterKernelName.get().c_str(), aubCsr->subCaptureManager->subCaptureFilter.dumpKernelName.c_str());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentCalledMultipleTimesAffectsResidencyOnce) {
@@ -336,10 +326,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto aubSubCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->disableSubCapture();
-    aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
+    aubCsr->subCaptureManager = aubSubCaptureManagerMock.get();
     ASSERT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
@@ -357,11 +347,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     const DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto aubSubCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
     aubSubCaptureManagerMock->activateSubCapture(multiDispatchInfo);
-    aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
+    aubCsr->subCaptureManager = aubSubCaptureManagerMock.get();
     ASSERT_TRUE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0);
@@ -376,10 +366,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto aubSubCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->disableSubCapture();
-    aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
+    aubCsr->subCaptureManager = aubSubCaptureManagerMock.get();
     ASSERT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -458,10 +448,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto aubSubCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->disableSubCapture();
-    aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
+    aubCsr->subCaptureManager = aubSubCaptureManagerMock.get();
     ASSERT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -483,10 +473,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStanda
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto aubSubCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->disableSubCapture();
-    aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
+    aubCsr->subCaptureManager = aubSubCaptureManagerMock.get();
     ASSERT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -513,11 +503,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     const DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto aubSubCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
     aubSubCaptureManagerMock->activateSubCapture(multiDispatchInfo);
-    aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
+    aubCsr->subCaptureManager = aubSubCaptureManagerMock.get();
     ASSERT_TRUE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -637,11 +627,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     const DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto aubSubCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
     aubSubCaptureManagerMock->activateSubCapture(multiDispatchInfo);
-    aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
+    aubCsr->subCaptureManager = aubSubCaptureManagerMock.get();
     ASSERT_TRUE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -887,11 +877,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false, *pDevice->executionEnvironment));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     MockKernelWithInternals kernelInternals(*pDevice);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -908,11 +898,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false, *pDevice->executionEnvironment));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     MockKernelWithInternals kernelInternals(*pDevice);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -933,12 +923,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false, *pDevice->executionEnvironment));
     std::string newFileName = "new_file_name.aub";
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     subCaptureManagerMock->setExternalFileName(newFileName);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     MockKernelWithInternals kernelInternals(*pDevice);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -961,12 +951,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false, *pDevice->executionEnvironment));
     std::string newFileName = "new_file_name.aub";
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     subCaptureManagerMock->setExternalFileName(newFileName);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     MockKernelWithInternals kernelInternals(*pDevice);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -990,11 +980,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsrToTestDumpAubNonWritable<FamilyType>> aubCsr(new MockAubCsrToTestDumpAubNonWritable<FamilyType>(*platformDevices[0], "", false, *pDevice->executionEnvironment));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     MockKernelWithInternals kernelInternals(*pDevice);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -1009,11 +999,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsrToTestDumpAubNonWritable<FamilyType>> aubCsr(new MockAubCsrToTestDumpAubNonWritable<FamilyType>(*platformDevices[0], "", false, *pDevice->executionEnvironment));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     MockKernelWithInternals kernelInternals(*pDevice);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -1029,11 +1019,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false, *pDevice->executionEnvironment));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(false);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     const DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo;
@@ -1047,11 +1037,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false, *pDevice->executionEnvironment));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     MockKernelWithInternals kernelInternals(*pDevice);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -1065,11 +1055,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true, *pDevice->executionEnvironment));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(false);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     MockKernelWithInternals kernelInternals(*pDevice);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -1084,11 +1074,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true, *pDevice->executionEnvironment));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(true);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     MockKernelWithInternals kernelInternals(*pDevice);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -1103,11 +1093,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true, *pDevice->executionEnvironment));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     MockKernelWithInternals kernelInternals(*pDevice);
     Kernel *kernel = kernelInternals.mockKernel;

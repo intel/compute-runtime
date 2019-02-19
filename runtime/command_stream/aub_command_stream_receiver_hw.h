@@ -81,7 +81,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL void initFile(const std::string &fileName);
     MOCKABLE_VIRTUAL void closeFile();
     MOCKABLE_VIRTUAL bool isFileOpen() const;
-    MOCKABLE_VIRTUAL const std::string &getFileName();
+    MOCKABLE_VIRTUAL const std::string getFileName();
 
     MOCKABLE_VIRTUAL void initializeEngine();
     void freeEngineInfoTable();
@@ -90,7 +90,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
         return new OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, true, this->executionEnvironment);
     }
 
-    std::unique_ptr<AubSubCaptureManager> subCaptureManager;
+    AubSubCaptureManager *subCaptureManager = nullptr;
     uint32_t aubDeviceId;
     bool standalone;
 

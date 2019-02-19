@@ -181,6 +181,24 @@ void AubFileStream::registerPoll(uint32_t registerOffset, uint32_t mask, uint32_
     write(reinterpret_cast<char *>(&header), sizeof(header));
 }
 
+void AubFileStream::expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
+    using AubMemDump::CmdServicesMemTraceRegisterCompare;
+    CmdServicesMemTraceRegisterCompare header;
+    memset(&header, 0, sizeof(header));
+    header.setHeader();
+
+    header.data[0] = expectedValue;
+    header.registerOffset = mmioRegister;
+    header.noReadExpect = CmdServicesMemTraceRegisterCompare::NoReadExpectValues::ReadExpect;
+    header.registerSize = CmdServicesMemTraceRegisterCompare::RegisterSizeValues::Dword;
+    header.registerSpace = CmdServicesMemTraceRegisterCompare::RegisterSpaceValues::Mmio;
+    header.readMaskLow = 0xffffffff;
+    header.readMaskHigh = 0xffffffff;
+    header.dwordCount = (sizeof(header) / sizeof(uint32_t)) - 1;
+
+    write(reinterpret_cast<char *>(&header), sizeof(header));
+}
+
 void AubFileStream::expectMemory(uint64_t physAddress, const void *memory, size_t sizeRemaining,
                                  uint32_t addressSpace, uint32_t compareOperation) {
     using CmdServicesMemTraceMemoryCompare = AubMemDump::CmdServicesMemTraceMemoryCompare;

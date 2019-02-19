@@ -40,12 +40,11 @@ class MockAubManager : public aub_stream::AubManager {
 
   public:
     MockAubManager(){};
-    MockAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, const std::string &aubFileName, uint32_t streamMode) {
+    MockAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, uint32_t streamMode) {
         mockAubManagerParams.productFamily = productFamily;
         mockAubManagerParams.devicesCount = devicesCount;
         mockAubManagerParams.memoryBankSize = memoryBankSize;
         mockAubManagerParams.localMemorySupported = localMemorySupported;
-        mockAubManagerParams.aubFileName.assign(aubFileName);
         mockAubManagerParams.streamMode = streamMode;
     }
     ~MockAubManager() override {}
@@ -55,8 +54,33 @@ class MockAubManager : public aub_stream::AubManager {
         contextFlags = flags;
         return new MockHardwareContext(device, engine);
     }
-    void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 65536) override { writeMemoryCalled = true; }
 
+    void open(const std::string &aubFileName) override {
+        fileName.assign(aubFileName);
+        openCalledCnt++;
+    }
+    void close() override {
+        fileName.clear();
+        closeCalled = true;
+    }
+    bool isOpen() override {
+        isOpenCalled = true;
+        return !fileName.empty();
+    }
+    const std::string getFileName() override {
+        getFileNameCalled = true;
+        return fileName;
+    }
+
+    void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 65536) override {
+        writeMemoryCalled = true;
+    }
+
+    uint32_t openCalledCnt = 0;
+    std::string fileName = "";
+    bool closeCalled = false;
+    bool isOpenCalled = false;
+    bool getFileNameCalled = false;
     bool writeMemoryCalled = false;
     uint32_t contextFlags = 0;
 
@@ -65,7 +89,6 @@ class MockAubManager : public aub_stream::AubManager {
         int32_t devicesCount = 0;
         uint64_t memoryBankSize = 0;
         bool localMemorySupported = false;
-        std::string aubFileName = "";
         uint32_t streamMode = 0xFFFFFFFF;
     } mockAubManagerParams;
 

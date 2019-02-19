@@ -33,11 +33,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true, *pDevice->executionEnvironment));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(true);
     subCaptureManagerMock->setSubCaptureToggleActive(false);
-    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+    aubCsr->subCaptureManager = subCaptureManagerMock.get();
 
     MockKernelWithInternals kernelInternals(*pDevice);
     Kernel *kernel = kernelInternals.mockKernel;

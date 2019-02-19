@@ -131,7 +131,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool isFileOpen() const override {
         return fileIsOpen;
     }
-    const std::string &getFileName() override {
+    const std::string getFileName() override {
         return openFileName;
     }
     bool fileIsOpen = false;

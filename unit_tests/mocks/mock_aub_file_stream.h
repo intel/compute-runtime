@@ -22,12 +22,32 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
         initCalledCnt++;
         return true;
     }
+    void open(const char *filePath) override {
+        fileName.assign(filePath);
+        openCalledCnt++;
+    }
+    void close() override {
+        fileName.clear();
+        closeCalled = true;
+    }
+    bool isOpen() const override {
+        isOpenCalled = true;
+        return !fileName.empty();
+    }
+    const std::string &getFileName() const override {
+        getFileNameCalled = true;
+        return fileName;
+    }
     void flush() override {
         flushCalled = true;
     }
     std::unique_lock<std::mutex> lockStream() override {
         lockStreamCalled = true;
         return AUBCommandStreamReceiver::AubFileStream::lockStream();
+    }
+    void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
+        mmioRegisterFromExpectMMIO = mmioRegister;
+        expectedValueFromExpectMMIO = expectedValue;
     }
     void expectMemory(uint64_t physAddress, const void *memory, size_t size, uint32_t addressSpace, uint32_t compareOperation) override {
         physAddressCapturedFromExpectMemory = physAddress;
@@ -40,10 +60,17 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
         registerPollCalled = true;
         AUBCommandStreamReceiver::AubFileStream::registerPoll(registerOffset, mask, value, pollNotEqual, timeoutAction);
     }
+    uint32_t openCalledCnt = 0;
+    std::string fileName = "";
+    bool closeCalled = false;
     uint32_t initCalledCnt = 0;
+    mutable bool isOpenCalled = false;
+    mutable bool getFileNameCalled = false;
     bool registerPollCalled = false;
     bool flushCalled = false;
     bool lockStreamCalled = false;
+    uint32_t mmioRegisterFromExpectMMIO = 0;
+    uint32_t expectedValueFromExpectMMIO = 0;
     uint64_t physAddressCapturedFromExpectMemory = 0;
     uintptr_t memoryCapturedFromExpectMemory = 0;
     size_t sizeCapturedFromExpectMemory = 0;
