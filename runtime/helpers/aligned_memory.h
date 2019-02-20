@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,8 @@
 
 template <typename T>
 constexpr inline T alignUp(T before, size_t alignment) {
-    return static_cast<T>((static_cast<size_t>(before) + alignment - 1) & ~(alignment - 1));
+    T mask = static_cast<T>(alignment - 1);
+    return (before + mask) & ~mask;
 }
 
 template <typename T>
@@ -34,7 +35,8 @@ constexpr inline T *alignUp(T *ptrBefore, size_t alignment) {
 
 template <typename T>
 constexpr inline T alignDown(T before, size_t alignment) {
-    return static_cast<T>(static_cast<size_t>(before) & ~(alignment - 1));
+    T mask = static_cast<T>(alignment - 1);
+    return before & ~mask;
 }
 
 template <typename T>
