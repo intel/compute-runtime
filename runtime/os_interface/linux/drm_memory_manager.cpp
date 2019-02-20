@@ -212,7 +212,7 @@ OCLRT::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t si
 }
 
 DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
-    auto allocation = new DrmAllocation(nullptr, const_cast<void *>(hostPtr), hostPtrSize, MemoryPool::System4KBPages, false);
+    auto allocation = new DrmAllocation(nullptr, const_cast<void *>(hostPtr), castToUint64(const_cast<void *>(hostPtr)), hostPtrSize, MemoryPool::System4KBPages, false);
     allocation->fragmentsStorage = handleStorage;
     return allocation;
 }
@@ -240,7 +240,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
     if (forcePinEnabled && pinBB != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
         pinBB->pin(&bo, 1, getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId());
     }
-    auto allocation = new DrmAllocation(bo, res, cSize, MemoryPool::System4KBPages, allocationData.flags.multiOsContextCapable);
+    auto allocation = new DrmAllocation(bo, res, castToUint64(res), cSize, MemoryPool::System4KBPages, allocationData.flags.multiOsContextCapable);
     allocation->origin = allocationData.allocationOrigin;
     return allocation;
 }
@@ -408,7 +408,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
         drmAllocation = new DrmAllocation(bo, ptrAlloc, res, alignedAllocationSize,
                                           MemoryPool::System4KBPagesWith32BitGpuAddressing, false);
     } else {
-        drmAllocation = new DrmAllocation(bo, reinterpret_cast<void *>(res), alignedAllocationSize,
+        drmAllocation = new DrmAllocation(bo, reinterpret_cast<void *>(res), res, alignedAllocationSize,
                                           MemoryPool::System4KBPagesWith32BitGpuAddressing, false);
     }
 

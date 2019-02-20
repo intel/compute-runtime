@@ -707,6 +707,7 @@ TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
 
     auto allocation = memoryManager->createGraphicsAllocation(handleStorage, size, ptr);
 
+    EXPECT_EQ(reinterpret_cast<void *>(allocation->getGpuAddress()), ptr);
     EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
 

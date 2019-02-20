@@ -17,9 +17,6 @@ struct OsHandle {
 
 class DrmAllocation : public GraphicsAllocation {
   public:
-    DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable) : GraphicsAllocation(ptrIn, castToUint64(ptrIn), 0llu, sizeIn, multiOsContextCapable), bo(bo) {
-        this->memoryPool = pool;
-    }
     DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, bool multiOsContextCapable) : GraphicsAllocation(ptrIn, sizeIn, sharedHandle, multiOsContextCapable), bo(bo) {
         this->memoryPool = pool;
     }
