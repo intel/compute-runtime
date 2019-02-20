@@ -604,7 +604,6 @@ class DrmCommandStreamEnhancedFixture
 
       protected:
         MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1, false) {
-            this->isSoftpin = true;
             this->size = alignUp(size, 4096);
         }
     };

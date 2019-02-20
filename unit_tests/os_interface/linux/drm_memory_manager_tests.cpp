@@ -468,7 +468,7 @@ TEST_F(DrmMemoryManagerTest, Allocate_HostPtr) {
     auto bo = alloc->getBO();
     ASSERT_NE(nullptr, bo);
     EXPECT_FALSE(bo->peekIsAllocated());
-    EXPECT_EQ(ptr, bo->peekAddress());
+    EXPECT_EQ(ptr, reinterpret_cast<void *>(bo->peekAddress()));
     EXPECT_EQ(Sharing::nonSharedResource, alloc->peekSharedHandle());
     memoryManager->freeGraphicsMemory(alloc);
     ::alignedFree(ptr);
@@ -490,7 +490,7 @@ TEST_F(DrmMemoryManagerTest, Allocate_HostPtr_Nullptr) {
     auto bo = alloc->getBO();
     ASSERT_NE(nullptr, bo);
     EXPECT_FALSE(bo->peekIsAllocated());
-    EXPECT_EQ(ptr, bo->peekAddress());
+    EXPECT_EQ(ptr, reinterpret_cast<void *>(bo->peekAddress()));
 
     memoryManager->freeGraphicsMemory(alloc);
     ::alignedFree(ptr);
@@ -514,7 +514,7 @@ TEST_F(DrmMemoryManagerTest, Allocate_HostPtr_MisAligned) {
     auto bo = alloc->getBO();
     ASSERT_NE(nullptr, bo);
     EXPECT_FALSE(bo->peekIsAllocated());
-    EXPECT_EQ(ptrT, bo->peekAddress());
+    EXPECT_EQ(ptrT, reinterpret_cast<void *>(bo->peekAddress()));
 
     memoryManager->freeGraphicsMemory(alloc);
     ::alignedFree(ptrT);
@@ -747,7 +747,7 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
     for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo);
         EXPECT_EQ(reqs.AllocationFragments[i].allocationSize, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekSize());
-        EXPECT_EQ(reqs.AllocationFragments[i].allocationPtr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekAddress());
+        EXPECT_EQ(reqs.AllocationFragments[i].allocationPtr, reinterpret_cast<void *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekAddress()));
         EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekIsAllocated());
     }
     memoryManager->freeGraphicsMemory(graphicsAllocation);
@@ -1561,7 +1561,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledT
     auto bo = drmAllocation->getBO();
     EXPECT_EQ(bo->peekHandle(), (int)this->mock->outputHandle);
     EXPECT_EQ(bo->peekUnmapSize(), size);
-    EXPECT_NE(nullptr, bo->peekAddress());
+    EXPECT_NE(0llu, bo->peekAddress());
     EXPECT_TRUE(bo->peekIsAllocated());
     EXPECT_EQ(1u, bo->getRefCount());
     EXPECT_EQ(size, bo->peekSize());
@@ -1625,7 +1625,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndThreeOsHandlesWhenReuseCrea
         bo = drmAllocation->getBO();
         EXPECT_EQ(bo->peekHandle(), (int)this->mock->outputHandle);
         EXPECT_EQ(bo->peekUnmapSize(), size);
-        EXPECT_NE(nullptr, bo->peekAddress());
+        EXPECT_NE(0llu, bo->peekAddress());
         EXPECT_TRUE(bo->peekIsAllocated());
         EXPECT_EQ(expectedRefCount, bo->getRefCount());
         EXPECT_EQ(size, bo->peekSize());
@@ -2041,7 +2041,7 @@ TEST_F(DrmMemoryManagerTest, givenSharedAllocationWithSmallerThenRealSizeWhenCre
     auto bo = drmAllocation->getBO();
     EXPECT_EQ(bo->peekHandle(), (int)this->mock->outputHandle);
     EXPECT_EQ(bo->peekUnmapSize(), realSize);
-    EXPECT_NE(nullptr, bo->peekAddress());
+    EXPECT_NE(0llu, bo->peekAddress());
     EXPECT_TRUE(bo->peekIsAllocated());
     EXPECT_EQ(1u, bo->getRefCount());
     EXPECT_EQ(realSize, bo->peekSize());
