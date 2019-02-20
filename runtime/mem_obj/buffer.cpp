@@ -336,11 +336,11 @@ void Buffer::checkMemory(cl_mem_flags flags,
 GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const MemoryProperties &properties, bool sharedContext,
                                                                      ContextType contextType, bool renderCompressedBuffers,
                                                                      bool isLocalMemoryEnabled) {
-    if (is32bit || sharedContext) {
+    if (is32bit || sharedContext || isValueSet(properties.flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL)) {
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
-    if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR) && (isValueSet(properties.flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL) || !isLocalMemoryEnabled)) {
+    if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR) && !isLocalMemoryEnabled) {
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 

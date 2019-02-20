@@ -471,6 +471,21 @@ TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationAndZeroCopyH
     alignedFree(cacheAlignedHostPtr);
 }
 
+TEST_F(RenderCompressedBuffersTests, givenAllocationCreatedWithForceSharedPhysicalMemoryWhenItIsCreatedItIsZeroCopy) {
+    buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL, 1u, nullptr, retVal));
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_TRUE(buffer->isMemObjZeroCopy());
+    EXPECT_EQ(1u, buffer->getSize());
+}
+
+TEST_F(RenderCompressedBuffersTests, givenRenderCompressedBuffersAndAllocationCreatedWithForceSharedPhysicalMemoryWhenItIsCreatedItIsZeroCopy) {
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    buffer.reset(Buffer::create(context.get(), CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL, 1u, nullptr, retVal));
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    EXPECT_TRUE(buffer->isMemObjZeroCopy());
+    EXPECT_EQ(1u, buffer->getSize());
+}
+
 TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationAndNoHostPtrWhenCheckingMemoryPropertiesThenForceDisableZeroCopy) {
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
 
