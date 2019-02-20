@@ -454,7 +454,7 @@ set(CMAKE_SKIP_RPATH YES CACHE BOOL "" FORCE )
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
-option(APPVERIFIER_ALLOWED "allow use of AppVerifier" TRUE)
+option(APPVERIFIER_ALLOWED "allow use of AppVerifier" OFF)
 
 option(CCACHE_ALLOWED "allow use of ccache" TRUE)
 find_program(CCACHE_EXE_FOUND ccache)
