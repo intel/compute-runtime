@@ -15,6 +15,7 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/deferrable_allocation_deletion.h"
@@ -373,5 +374,25 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
     DEBUG_BREAK_IF(!graphicsAllocation->isLocked());
     unlockResourceImpl(*graphicsAllocation);
     graphicsAllocation->unlock();
+}
+
+HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, const void *ptr, const HardwareInfo &hwInfo) {
+    if (allocation) {
+        if (allocation->origin == AllocationOrigin::INTERNAL_ALLOCATION) {
+            return internalHeapIndex;
+        } else if (allocation->is32BitAllocation) {
+            return HeapIndex::HEAP_EXTERNAL;
+        }
+    }
+    if (hwInfo.capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
+        if (ptr) {
+            return HeapIndex::HEAP_SVM;
+        }
+        if (allocation && GraphicsAllocation::isCpuAccessRequired(allocation->getAllocationType())) {
+            return HeapIndex::HEAP_STANDARD64Kb;
+        }
+        return HeapIndex::HEAP_STANDARD;
+    }
+    return HeapIndex::HEAP_LIMITED;
 }
 } // namespace OCLRT

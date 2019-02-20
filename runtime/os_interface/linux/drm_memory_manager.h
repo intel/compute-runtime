@@ -21,9 +21,6 @@ class Drm;
 
 class DrmMemoryManager : public MemoryManager {
   public:
-    using MemoryManager::allocateGraphicsMemory;
-    using MemoryManager::createGraphicsAllocationFromSharedHandle;
-
     DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory, ExecutionEnvironment &executionEnvironment);
     ~DrmMemoryManager() override;
 

@@ -27,6 +27,7 @@ class Gmm;
 class GraphicsAllocation;
 class HostPtrManager;
 class OsContext;
+struct HardwareInfo;
 struct ImageInfo;
 
 using CsrContainer = std::vector<std::vector<std::unique_ptr<CommandStreamReceiver>>>;
@@ -186,6 +187,8 @@ class MemoryManager {
     EngineControlContainer &getRegisteredEngines();
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
     void setDefaultEngineIndex(uint32_t index) { defaultEngineIndex = index; }
+
+    static HeapIndex selectHeap(const GraphicsAllocation *allocation, const void *ptr, const HardwareInfo &hwInfo);
 
   protected:
     struct AllocationData {

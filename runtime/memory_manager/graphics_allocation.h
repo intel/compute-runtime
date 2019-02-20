@@ -115,8 +115,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         return gpuAddress + allocationOffset - gpuBaseAddress;
     }
 
-    bool isCoherent() { return coherent; };
-    void setCoherent(bool coherentIn) { this->coherent = coherentIn; };
+    bool isCoherent() const { return coherent; }
+    void setCoherent(bool coherentIn) { this->coherent = coherentIn; }
     void setSize(size_t size) { this->size = size; }
     osHandle peekSharedHandle() { return sharedHandle; }
 

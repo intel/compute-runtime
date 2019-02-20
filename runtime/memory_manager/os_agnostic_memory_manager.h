@@ -8,7 +8,6 @@
 #pragma once
 #include "runtime/helpers/basic_math.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include <map>
 
 namespace OCLRT {
 constexpr size_t bigAllocation = 1 * MB;
@@ -31,18 +30,15 @@ class MemoryAllocation : public GraphicsAllocation {
     void overrideMemoryPool(MemoryPool::Type pool);
 };
 
-typedef std::map<void *, MemoryAllocation *> PointerMap;
-
 class OsAgnosticMemoryManager : public MemoryManager {
   public:
     using MemoryManager::allocateGraphicsMemory;
-    using MemoryManager::createGraphicsAllocationFromSharedHandle;
 
     OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, false, executionEnvironment){};
 
     OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory, bool aubUsage, ExecutionEnvironment &executionEnvironment) : MemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment) {
         allocator32Bit = std::unique_ptr<Allocator32bit>(create32BitAllocator(aubUsage));
-    };
+    }
 
     ~OsAgnosticMemoryManager() override;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override;
@@ -71,8 +67,8 @@ class OsAgnosticMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
 
-    void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override { return ptrOffset(graphicsAllocation.getUnderlyingBuffer(), static_cast<size_t>(graphicsAllocation.allocationOffset)); };
-    void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override{};
+    void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override { return ptrOffset(graphicsAllocation.getUnderlyingBuffer(), static_cast<size_t>(graphicsAllocation.allocationOffset)); }
+    void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override {}
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
 

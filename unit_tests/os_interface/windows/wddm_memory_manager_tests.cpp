@@ -1306,12 +1306,12 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVa
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {givenDdiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, wddm.selectHeap(nullptr, nullptr));
+    auto hwInfo = hardwareInfoTable[wddm.getGfxPlatform()->eProductFamily];
+    ASSERT_NE(nullptr, hwInfo);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, MemoryManager::selectHeap(nullptr, nullptr, *hwInfo));
     ASSERT_TRUE(result);
 
-    auto productFamily = wddm.getGfxPlatform()->eProductFamily;
-    UNRECOVERABLE_IF(!hardwareInfoTable[productFamily]);
-    auto gpuAddressRange = hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace;
+    auto gpuAddressRange = hwInfo->capabilityTable.gpuAddressSpace;
     if (gpuAddressRange == MemoryConstants::max48BitAddress) {
         EXPECT_EQ(GmmHelper::canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
     } else {
@@ -1376,7 +1376,8 @@ TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMappedGp
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, wddm.selectHeap(nullptr, nullptr));
+    auto heapIndex = MemoryManager::selectHeap(nullptr, nullptr, *hardwareInfoTable[wddm.getGfxPlatform()->eProductFamily]);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, heapIndex);
     ASSERT_TRUE(result);
 }
 
@@ -1387,7 +1388,8 @@ TEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenRetur
     WddmMock wddm;
     EXPECT_TRUE(wddm.init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), 0, nullptr, gpuVa, wddm.selectHeap(nullptr, nullptr));
+    auto heapIndex = MemoryManager::selectHeap(nullptr, nullptr, *hardwareInfoTable[wddm.getGfxPlatform()->eProductFamily]);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), 0, nullptr, gpuVa, heapIndex);
     ASSERT_FALSE(result);
 }
 
@@ -1410,7 +1412,8 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnse
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
-    auto result = wddm->mapGpuVirtualAddressImpl(myGmm, ALLOCATION_HANDLE, nullptr, gpuVa, wddm->selectHeap(nullptr, nullptr));
+    auto heapIndex = MemoryManager::selectHeap(nullptr, nullptr, *hardwareInfoTable[wddm->getGfxPlatform()->eProductFamily]);
+    auto result = wddm->mapGpuVirtualAddressImpl(myGmm, ALLOCATION_HANDLE, nullptr, gpuVa, heapIndex);
     EXPECT_TRUE(result);
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }

@@ -148,7 +148,6 @@ class Wddm {
     MOCKABLE_VIRTUAL EvictionStatus evictTemporaryResource(WddmAllocation &allocation);
     MOCKABLE_VIRTUAL void applyBlockingMakeResident(WddmAllocation &allocation);
     MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock);
-    HeapIndex selectHeap(const WddmAllocation *allocation, const void *cpuPtr) const;
 
   protected:
     bool initialized = false;

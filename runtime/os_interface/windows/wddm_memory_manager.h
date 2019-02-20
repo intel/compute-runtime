@@ -24,10 +24,7 @@ using OsContextWin = OsContext::OsContextImpl;
 
 class WddmMemoryManager : public MemoryManager {
   public:
-    using MemoryManager::allocateGraphicsMemory;
-    using MemoryManager::createGraphicsAllocationFromSharedHandle;
-
-    ~WddmMemoryManager();
+    ~WddmMemoryManager() override;
     WddmMemoryManager(bool enable64kbPages, bool enableLocalMemory, Wddm *wddm, ExecutionEnvironment &executionEnvironment);
 
     WddmMemoryManager(const WddmMemoryManager &) = delete;

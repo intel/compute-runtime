@@ -48,7 +48,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
     auto allocation = std::make_unique<WddmAllocation>(nullptr, allocationData.imgInfo->size, nullptr, MemoryPool::SystemCpuInaccessible, false);
     allocation->gmm = gmm.get();
     allocation->origin = allocationData.allocationOrigin;
-    if (!WddmMemoryManager::createWddmAllocation(allocation.get())) {
+    if (!createWddmAllocation(allocation.get())) {
         return nullptr;
     }
 
@@ -60,11 +60,10 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(AllocationData allocationData) {
     size_t sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
-    Gmm *gmm = nullptr;
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(nullptr, sizeAligned, nullptr, MemoryPool::System64KBPages, !!allocationData.flags.multiOsContextCapable);
 
-    gmm = new Gmm(nullptr, sizeAligned, false, allocationData.flags.preferRenderCompressed, true, {});
+    auto gmm = new Gmm(nullptr, sizeAligned, false, allocationData.flags.preferRenderCompressed, true, {});
     wddmAllocation->gmm = gmm;
 
     if (!wddm->createAllocation64k(wddmAllocation.get())) {
@@ -77,7 +76,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(AllocationData
     // 64kb map is not needed
     auto status = wddm->mapGpuVirtualAddress(wddmAllocation.get(), cpuPtr);
     DEBUG_BREAK_IF(!status);
-    wddmAllocation->setCpuPtrAndGpuAddress(cpuPtr, (uint64_t)wddmAllocation->gpuPtr);
+    wddmAllocation->setCpuPtrAndGpuAddress(cpuPtr, wddmAllocation->gpuPtr);
 
     DebugManager.logAllocation(wddmAllocation.get());
     return wddmAllocation.release();
@@ -280,7 +279,7 @@ void WddmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *g
 
 void *WddmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
     return wddm->lockResource(static_cast<WddmAllocation &>(graphicsAllocation));
-};
+}
 void WddmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation) {
     auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
     wddm->unlockResource(wddmAllocation);
@@ -288,7 +287,7 @@ void WddmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocatio
         auto evictionStatus = wddm->evictTemporaryResource(wddmAllocation);
         DEBUG_BREAK_IF(evictionStatus == EvictionStatus::FAILED);
     }
-};
+}
 
 void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     WddmAllocation *input = static_cast<WddmAllocation *>(gfxAllocation);
@@ -450,7 +449,7 @@ uint64_t WddmMemoryManager::getMaxApplicationAddress() {
 }
 
 uint64_t WddmMemoryManager::getInternalHeapBaseAddress() {
-    return this->wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Base;
+    return wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Base;
 }
 
 bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {

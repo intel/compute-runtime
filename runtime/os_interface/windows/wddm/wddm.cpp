@@ -11,6 +11,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
@@ -288,7 +289,7 @@ bool Wddm::makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFur
 bool Wddm::mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr) {
     void *mapPtr = allocation->getReservedAddress() != nullptr ? allocation->getReservedAddress() : cpuPtr;
     return mapGpuVirtualAddressImpl(allocation->gmm, allocation->handle, mapPtr, allocation->gpuPtr,
-                                    selectHeap(allocation, mapPtr));
+                                    MemoryManager::selectHeap(allocation, mapPtr, *hardwareInfoTable[gfxPlatform->eProductFamily]));
 }
 
 bool Wddm::mapGpuVirtualAddress(AllocationStorageData *allocationStorageData) {
@@ -296,7 +297,7 @@ bool Wddm::mapGpuVirtualAddress(AllocationStorageData *allocationStorageData) {
                                     allocationStorageData->osHandleStorage->handle,
                                     const_cast<void *>(allocationStorageData->cpuPtr),
                                     allocationStorageData->osHandleStorage->gpuPtr,
-                                    selectHeap(nullptr, allocationStorageData->cpuPtr));
+                                    MemoryManager::selectHeap(nullptr, allocationStorageData->cpuPtr, *hardwareInfoTable[gfxPlatform->eProductFamily]));
 }
 
 bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, HeapIndex heapIndex) {
@@ -992,26 +993,6 @@ void Wddm::applyBlockingMakeResident(WddmAllocation &allocation) {
 
 std::unique_lock<SpinLock> Wddm::acquireLock(SpinLock &lock) {
     return std::unique_lock<SpinLock>{lock};
-}
-
-HeapIndex Wddm::selectHeap(const WddmAllocation *allocation, const void *ptr) const {
-    if (allocation) {
-        if (allocation->origin == AllocationOrigin::INTERNAL_ALLOCATION) {
-            return internalHeapIndex;
-        } else if (allocation->is32BitAllocation) {
-            return HeapIndex::HEAP_EXTERNAL;
-        }
-    }
-    if (hardwareInfoTable[gfxPlatform->eProductFamily]->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
-        if (ptr) {
-            return HeapIndex::HEAP_SVM;
-        }
-        if (allocation && GraphicsAllocation::isCpuAccessRequired(allocation->getAllocationType())) {
-            return HeapIndex::HEAP_STANDARD64Kb;
-        }
-        return HeapIndex::HEAP_STANDARD;
-    }
-    return HeapIndex::HEAP_LIMITED;
 }
 
 } // namespace OCLRT
