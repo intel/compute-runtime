@@ -9,6 +9,7 @@
 #include "runtime/aub/aub_center.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
+#include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
@@ -172,7 +173,8 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
     if (withAubDump) {
         auto &hwHelper = HwHelper::get(hwInfoIn.pPlatform->eRenderCoreFamily);
         auto localMemoryEnabled = hwHelper.getEnableLocalMemory(hwInfoIn);
-        executionEnvironment.initAubCenter(&hwInfoIn, localMemoryEnabled, baseName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+        auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfoIn, baseName);
+        executionEnvironment.initAubCenter(&hwInfoIn, localMemoryEnabled, fullName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 
         csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(hwInfoIn, baseName, executionEnvironment);
     } else {

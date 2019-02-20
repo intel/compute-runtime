@@ -6,6 +6,7 @@
  */
 
 #include "tbx_command_stream_fixture.h"
+#include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/helpers/ptr_math.h"
@@ -22,6 +23,7 @@
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_tbx_csr.h"
 #include "test.h"
@@ -481,4 +483,13 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenPollForCompletionImplIsCalledThen
 
     std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(*platformDevices[0], "", false, executionEnvironment)));
     tbxCsr->pollForCompletionImpl();
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpThenFileNameIsExtendedWithSystemInfo) {
+    MockExecutionEnvironment executionEnvironment;
+
+    auto fullName = AUBCommandStreamReceiver::createFullFilePath(*platformDevices[0], "aubfile");
+
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(*platformDevices[0], "aubfile", true, executionEnvironment)));
+    EXPECT_STREQ(fullName.c_str(), executionEnvironment.aubFileNameReceived.c_str());
 }
