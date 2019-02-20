@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ struct EnqueueTaskWithRequiredWorkGroupSize : public HelloWorldTest<HelloWorldFi
 
 namespace ULT {
 
-TEST_F(clEnqueueTaskTests, returnsSuccess) {
+TEST_F(clEnqueueTaskTests, GivenValidParametersWhenEnqueingTaskThenSuccessIsReturned) {
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
@@ -46,7 +46,7 @@ TEST_F(clEnqueueTaskTests, returnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueTaskWithRequiredWorkGroupSize, returnsSuccess) {
+TEST_F(EnqueueTaskWithRequiredWorkGroupSize, GivenRequiredWorkGroupSizeWhenEnqueingTaskThenSuccessIsReturned) {
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
