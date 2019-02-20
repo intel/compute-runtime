@@ -130,7 +130,7 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
         // If not, allocate a new block. allocate full pages
         minRequiredSize = alignUp(minRequiredSize, MemoryConstants::pageSize64k);
 
-        auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
+        auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
         auto allocation = internalAllocationStorage->obtainReusableAllocation(minRequiredSize, allocationType).release();
         if (!allocation) {
             allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({minRequiredSize, allocationType});

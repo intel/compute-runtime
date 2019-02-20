@@ -59,7 +59,7 @@ void ExperimentalCommandBuffer::getCS(size_t minRequiredSize) {
 
         auto requiredSize = minRequiredSize + CSRequirements::csOverfetchSize;
         auto storageWithAllocations = commandStreamReceiver->getInternalAllocationStorage();
-        auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
+        auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
         GraphicsAllocation *allocation = storageWithAllocations->obtainReusableAllocation(requiredSize, allocationType).release();
         if (!allocation) {
             allocation = memoryManager->allocateGraphicsMemoryWithProperties({requiredSize, allocationType});
