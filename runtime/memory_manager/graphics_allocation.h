@@ -44,6 +44,7 @@ constexpr auto nonSharedResource = 0u;
 }
 
 class Gmm;
+struct AllocationProperties;
 
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {
   public:
@@ -165,6 +166,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER ||
                allocationType == AllocationType::COMMAND_BUFFER;
     }
+    static DevicesBitfield createBitfieldFromProperties(const AllocationProperties &properties);
 
   protected:
     constexpr static uint32_t objectNotResident = (uint32_t)-1;

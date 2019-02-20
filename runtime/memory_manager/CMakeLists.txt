@@ -14,6 +14,7 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion.h
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/devices_bitfield.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/devices_bitfield.h
   ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation.h

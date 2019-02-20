@@ -80,6 +80,20 @@ TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesCommandStrea
     EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[0][0].get());
 }
 
+TEST(ExecutionEnvironment, whenPlatformIsInitializedThenOnlySpecialCommandStreamReceiverIsMultiOsContextCapable) {
+    Platform platform;
+    auto executionEnvironment = platform.peekExecutionEnvironment();
+    platform.initialize();
+    for (auto &csrContainer : executionEnvironment->commandStreamReceivers) {
+        for (auto &csr : csrContainer) {
+            EXPECT_FALSE(csr->isMultiOsContextCapable());
+        }
+    }
+    if (executionEnvironment->specialCommandStreamReceiver) {
+        EXPECT_TRUE(executionEnvironment->specialCommandStreamReceiver->isMultiOsContextCapable());
+    }
+}
+
 TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManagerInExecutionEnvironment) {
     Platform platform;
     auto executionEnvironment = platform.peekExecutionEnvironment();

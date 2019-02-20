@@ -60,11 +60,14 @@ struct AllocationProperties {
     AllocationProperties(size_t size, GraphicsAllocation::AllocationType allocationType)
         : AllocationProperties(true, size, allocationType) {}
     AllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType)
+        : AllocationProperties(allocateMemory, size, allocationType, false) {}
+    AllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType, bool multiOsContextCapable)
         : size(size), allocationType(allocationType) {
         allFlags = 0;
         flags.flushL3RequiredForRead = 1;
         flags.flushL3RequiredForWrite = 1;
         flags.allocateMemory = allocateMemory;
+        flags.multiOsContextCapable = multiOsContextCapable;
     }
     AllocationProperties(ImageInfo *imgInfo, bool allocateMemory) : AllocationProperties(allocateMemory, 0, GraphicsAllocation::AllocationType::IMAGE) {
         this->imgInfo = imgInfo;
@@ -95,11 +98,11 @@ class MemoryManager {
     virtual void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) = 0;
 
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
-        return allocateGraphicsMemoryInPreferredPool(properties, {}, nullptr);
+        return allocateGraphicsMemoryInPreferredPool(properties, GraphicsAllocation::createBitfieldFromProperties(properties), nullptr);
     }
 
     virtual GraphicsAllocation *allocateGraphicsMemory(const AllocationProperties &properties, const void *ptr) {
-        return allocateGraphicsMemoryInPreferredPool(properties, {}, ptr);
+        return allocateGraphicsMemoryInPreferredPool(properties, GraphicsAllocation::createBitfieldFromProperties(properties), ptr);
     }
 
     GraphicsAllocation *allocateGraphicsMemoryForHostPtr(size_t size, void *ptr, bool fullRangeSvm, bool requiresL3Flush) {

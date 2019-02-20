@@ -121,6 +121,10 @@ MemoryManager *CommandStreamReceiver::getMemoryManager() const {
     return executionEnvironment.memoryManager.get();
 }
 
+bool CommandStreamReceiver::isMultiOsContextCapable() const {
+    return executionEnvironment.specialCommandStreamReceiver.get() == this;
+}
+
 LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
     if (commandStream.getAvailableSpace() < minRequiredSize) {
         // Make sure we have enough room for a MI_BATCH_BUFFER_END and any padding.
@@ -133,7 +137,7 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
         auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
         auto allocation = internalAllocationStorage->obtainReusableAllocation(minRequiredSize, allocationType).release();
         if (!allocation) {
-            allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({minRequiredSize, allocationType});
+            allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({true, minRequiredSize, allocationType, isMultiOsContextCapable()});
         }
 
         //pass current allocation to reusable list

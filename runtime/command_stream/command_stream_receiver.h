@@ -173,6 +173,7 @@ class CommandStreamReceiver {
     void setDisableL3Cache(bool val) {
         disableL3Cache = val;
     }
+    bool isMultiOsContextCapable() const;
 
   protected:
     void cleanupResources();

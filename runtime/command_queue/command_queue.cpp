@@ -215,7 +215,7 @@ LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
         GraphicsAllocation *allocation = storageForAllocation->obtainReusableAllocation(minRequiredSize, allocationType).release();
 
         if (!allocation) {
-            allocation = memoryManager->allocateGraphicsMemoryWithProperties({minRequiredSize, allocationType});
+            allocation = memoryManager->allocateGraphicsMemoryWithProperties({true, minRequiredSize, allocationType, getCommandStreamReceiver().isMultiOsContextCapable()});
         }
 
         // Deallocate the old block, if not null

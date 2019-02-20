@@ -62,7 +62,7 @@ void ExperimentalCommandBuffer::getCS(size_t minRequiredSize) {
         auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
         GraphicsAllocation *allocation = storageWithAllocations->obtainReusableAllocation(requiredSize, allocationType).release();
         if (!allocation) {
-            allocation = memoryManager->allocateGraphicsMemoryWithProperties({requiredSize, allocationType});
+            allocation = memoryManager->allocateGraphicsMemoryWithProperties({true, minRequiredSize, allocationType, commandStreamReceiver->isMultiOsContextCapable()});
         }
         // Deallocate the old block, if not null
         auto oldAllocation = currentStream->getGraphicsAllocation();
