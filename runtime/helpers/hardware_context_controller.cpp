@@ -50,6 +50,12 @@ void HardwareContextController::submit(uint64_t batchBufferGpuAddress, const voi
     }
 }
 
+void HardwareContextController::writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize) {
+    for (auto &hardwareContext : hardwareContexts) {
+        hardwareContext->writeMemory(gfxAddress, memory, size, memoryBanks, hint, pageSize);
+    }
+}
+
 void HardwareContextController::dumpBufferBIN(uint64_t gfxAddress, size_t size) {
     hardwareContexts[0]->dumpBufferBIN(gfxAddress, size);
 }

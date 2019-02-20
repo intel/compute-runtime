@@ -699,7 +699,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnBufferAndImageTypeAllocationsThenAllocationsHaveAubWritableSetToFalse) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
+
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true, *pDevice->executionEnvironment));
+    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+
     memoryManager.reset(aubCsr->createMemoryManager(false, false));
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -819,6 +822,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenOsContextWithMultipleDevicesSupport
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationTypeIsntNonAubWritableThenWriteMemoryIsAllowed) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true, *pDevice->executionEnvironment));
+    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+
     memoryManager.reset(aubCsr->createMemoryManager(false, false));
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -850,6 +855,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAllocationDataIsPassedInAllocationViewThenWriteMemoryIsAllowed) {
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
+    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
     size_t size = 100;
     auto ptr = std::make_unique<char[]>(size);
     auto addr = reinterpret_cast<uint64_t>(ptr.get());
@@ -1153,11 +1159,14 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     EXPECT_FALSE(mockHwContext1->expectMemoryCalled);
     EXPECT_FALSE(mockHwContext0->submitCalled);
     EXPECT_FALSE(mockHwContext1->submitCalled);
+    EXPECT_FALSE(mockHwContext0->writeMemoryCalled);
+    EXPECT_FALSE(mockHwContext1->writeMemoryCalled);
 
     hwContextContainer.initialize();
     hwContextContainer.pollForCompletion();
     hwContextContainer.expectMemory(1, reinterpret_cast<const void *>(0x123), 2, 0);
     hwContextContainer.submit(1, reinterpret_cast<const void *>(0x123), 2, 0, 1);
+    hwContextContainer.writeMemory(1, reinterpret_cast<const void *>(0x123), 2, 3, 4, 5);
 
     EXPECT_TRUE(mockHwContext0->initializeCalled);
     EXPECT_TRUE(mockHwContext1->initializeCalled);
@@ -1167,6 +1176,8 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     EXPECT_TRUE(mockHwContext1->expectMemoryCalled);
     EXPECT_TRUE(mockHwContext0->submitCalled);
     EXPECT_TRUE(mockHwContext1->submitCalled);
+    EXPECT_TRUE(mockHwContext0->writeMemoryCalled);
+    EXPECT_TRUE(mockHwContext1->writeMemoryCalled);
 }
 
 TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCalledThenUseFirstContext) {

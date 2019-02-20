@@ -476,8 +476,11 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     ExecutionEnvironment executionEnvironment;
     auto memoryManager = new OsAgnosticMemoryManagerForImagesWithNoHostPtr(executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
+    auto engineInstance = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
 
+    OsContext osContext(nullptr, 0, 1, engineInstance, PreemptionMode::Disabled);
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true, executionEnvironment));
+    aubCsr->setupContext(osContext);
 
     cl_image_desc imgDesc = {};
     imgDesc.image_width = 512;
