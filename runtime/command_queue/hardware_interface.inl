@@ -52,21 +52,10 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     if (blockQueue) {
         using KCH = KernelCommandsHelper<GfxFamily>;
 
-        constexpr static auto allocationSize = MemoryConstants::pageSize64k;
-        constexpr static auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
-        auto commandStreamAllocation = commandQueue
-                                           .getCommandStreamReceiver()
-                                           .getInternalAllocationStorage()
-                                           ->obtainReusableAllocation(allocationSize, allocationType)
-                                           .release();
-        if (commandStreamAllocation == nullptr) {
-            const AllocationProperties commandStreamAllocationProperties{allocationSize, allocationType};
-            auto memoryManager = commandQueue.getCommandStreamReceiver().getMemoryManager();
-            commandStreamAllocation = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
-        }
-        UNRECOVERABLE_IF(commandStreamAllocation == nullptr);
-        commandStream = new LinearStream(commandStreamAllocation);
-        commandStream->overrideMaxSize(allocationSize - CSRequirements::csOverfetchSize);
+        constexpr static auto additionalAllocationSize = CSRequirements::csOverfetchSize;
+        constexpr static auto allocationSize = MemoryConstants::pageSize64k - additionalAllocationSize;
+        commandStream = new LinearStream();
+        commandQueue.getCommandStreamReceiver().ensureCommandBufferAllocation(*commandStream, allocationSize, additionalAllocationSize);
 
         if (parentKernel) {
             uint32_t colorCalcSize = commandQueue.getContext().getDefaultDeviceQueue()->colorCalcStateSize;

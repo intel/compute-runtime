@@ -54,26 +54,8 @@ void ExperimentalCommandBuffer::getCS(size_t minRequiredSize) {
         currentStream.reset(new LinearStream(nullptr));
     }
     minRequiredSize += CSRequirements::minCommandQueueCommandStreamSize;
-    if (currentStream->getAvailableSpace() < minRequiredSize) {
-        MemoryManager *memoryManager = commandStreamReceiver->getMemoryManager();
-        // If not, allocate a new block. allocate full pages
-        minRequiredSize = alignUp(minRequiredSize, MemoryConstants::pageSize);
-
-        auto requiredSize = minRequiredSize + CSRequirements::csOverfetchSize;
-        auto storageWithAllocations = commandStreamReceiver->getInternalAllocationStorage();
-        auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
-        GraphicsAllocation *allocation = storageWithAllocations->obtainReusableAllocation(requiredSize, allocationType).release();
-        if (!allocation) {
-            allocation = memoryManager->allocateGraphicsMemoryWithProperties({true, minRequiredSize, allocationType, commandStreamReceiver->isMultiOsContextCapable()});
-        }
-        // Deallocate the old block, if not null
-        auto oldAllocation = currentStream->getGraphicsAllocation();
-        if (oldAllocation) {
-            storageWithAllocations->storeAllocation(std::unique_ptr<GraphicsAllocation>(oldAllocation), REUSABLE_ALLOCATION);
-        }
-        currentStream->replaceBuffer(allocation->getUnderlyingBuffer(), minRequiredSize - CSRequirements::minCommandQueueCommandStreamSize);
-        currentStream->replaceGraphicsAllocation(allocation);
-    }
+    constexpr static auto additionalAllocationSize = CSRequirements::minCommandQueueCommandStreamSize + CSRequirements::csOverfetchSize;
+    commandStreamReceiver->ensureCommandBufferAllocation(*currentStream, minRequiredSize, additionalAllocationSize);
 }
 
 void ExperimentalCommandBuffer::makeResidentAllocations() {

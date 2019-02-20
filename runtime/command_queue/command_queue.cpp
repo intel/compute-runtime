@@ -194,39 +194,14 @@ uint32_t CommandQueue::getTaskLevelFromWaitList(uint32_t taskLevel,
 
 LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
     DEBUG_BREAK_IF(nullptr == device);
-    auto storageForAllocation = getCommandStreamReceiver().getInternalAllocationStorage();
-    auto memoryManager = getCommandStreamReceiver().getMemoryManager();
-    DEBUG_BREAK_IF(nullptr == memoryManager);
 
     if (!commandStream) {
         commandStream = new LinearStream(nullptr);
     }
 
-    // Make sure we have enough room for any CSR additions
     minRequiredSize += CSRequirements::minCommandQueueCommandStreamSize;
-
-    if (commandStream->getAvailableSpace() < minRequiredSize) {
-        // If not, allocate a new block. allocate full pages
-        minRequiredSize += CSRequirements::csOverfetchSize;
-        minRequiredSize = alignUp(minRequiredSize, MemoryConstants::pageSize64k);
-
-        auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
-        GraphicsAllocation *allocation = storageForAllocation->obtainReusableAllocation(minRequiredSize, allocationType).release();
-
-        if (!allocation) {
-            allocation = memoryManager->allocateGraphicsMemoryWithProperties({true, minRequiredSize, allocationType, getCommandStreamReceiver().isMultiOsContextCapable()});
-        }
-
-        // Deallocate the old block, if not null
-        auto oldAllocation = commandStream->getGraphicsAllocation();
-
-        if (oldAllocation) {
-            storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(oldAllocation), REUSABLE_ALLOCATION);
-        }
-        commandStream->replaceBuffer(allocation->getUnderlyingBuffer(), minRequiredSize - CSRequirements::minCommandQueueCommandStreamSize - CSRequirements::csOverfetchSize);
-        commandStream->replaceGraphicsAllocation(allocation);
-    }
-
+    constexpr static auto additionalAllocationSize = CSRequirements::minCommandQueueCommandStreamSize + CSRequirements::csOverfetchSize;
+    getCommandStreamReceiver().ensureCommandBufferAllocation(*commandStream, minRequiredSize, additionalAllocationSize);
     return *commandStream;
 }
 

@@ -117,6 +117,28 @@ void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requ
     internalAllocationStorage->cleanAllocationList(requiredTaskCount, allocationUsage);
 }
 
+void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandStream, size_t minimumRequiredSize, size_t additionalAllocationSize) {
+    if (commandStream.getAvailableSpace() >= minimumRequiredSize) {
+        return;
+    }
+
+    const auto allocationSize = alignUp(minimumRequiredSize + additionalAllocationSize, MemoryConstants::pageSize64k);
+    constexpr static auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
+    auto allocation = this->getInternalAllocationStorage()->obtainReusableAllocation(allocationSize, allocationType).release();
+    if (allocation == nullptr) {
+        const AllocationProperties commandStreamAllocationProperties{true, allocationSize, allocationType, this->isMultiOsContextCapable()};
+        allocation = this->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
+    }
+    DEBUG_BREAK_IF(allocation == nullptr);
+
+    if (commandStream.getGraphicsAllocation() != nullptr) {
+        getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream.getGraphicsAllocation()), REUSABLE_ALLOCATION);
+    }
+
+    commandStream.replaceBuffer(allocation->getUnderlyingBuffer(), allocationSize - additionalAllocationSize);
+    commandStream.replaceGraphicsAllocation(allocation);
+}
+
 MemoryManager *CommandStreamReceiver::getMemoryManager() const {
     DEBUG_BREAK_IF(!executionEnvironment.memoryManager);
     return executionEnvironment.memoryManager.get();
@@ -127,29 +149,8 @@ bool CommandStreamReceiver::isMultiOsContextCapable() const {
 }
 
 LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
-    if (commandStream.getAvailableSpace() < minRequiredSize) {
-        // Make sure we have enough room for a MI_BATCH_BUFFER_END and any padding.
-        // Currently reserving 64bytes (cacheline) which should be more than enough.
-        minRequiredSize += MemoryConstants::cacheLineSize;
-        minRequiredSize += CSRequirements::csOverfetchSize;
-        // If not, allocate a new block. allocate full pages
-        minRequiredSize = alignUp(minRequiredSize, MemoryConstants::pageSize64k);
-
-        auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
-        auto allocation = internalAllocationStorage->obtainReusableAllocation(minRequiredSize, allocationType).release();
-        if (!allocation) {
-            allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({true, minRequiredSize, allocationType, isMultiOsContextCapable()});
-        }
-
-        //pass current allocation to reusable list
-        if (commandStream.getCpuBase()) {
-            internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream.getGraphicsAllocation()), REUSABLE_ALLOCATION);
-        }
-
-        commandStream.replaceBuffer(allocation->getUnderlyingBuffer(), minRequiredSize - MemoryConstants::cacheLineSize - CSRequirements::csOverfetchSize);
-        commandStream.replaceGraphicsAllocation(allocation);
-    }
-
+    constexpr static auto additionalAllocationSize = MemoryConstants::cacheLineSize + CSRequirements::csOverfetchSize;
+    ensureCommandBufferAllocation(this->commandStream, minRequiredSize, additionalAllocationSize);
     return commandStream;
 }
 
