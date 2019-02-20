@@ -715,4 +715,18 @@ void Event::addTimestampPacketNodes(const TimestampPacketContainer &inputTimesta
 }
 
 TimestampPacketContainer *Event::getTimestampPacketNodes() const { return timestampPacketContainer.get(); }
+
+bool Event::checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_event *eventWaitList) {
+    bool userEventsDependencies = false;
+
+    for (uint32_t i = 0; i < numEventsInWaitList; i++) {
+        auto event = castToObjectOrAbort<Event>(eventWaitList[i]);
+        if (!event->isReadyForSubmission()) {
+            userEventsDependencies = true;
+            break;
+        }
+    }
+    return userEventsDependencies;
+}
+
 } // namespace OCLRT

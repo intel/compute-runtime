@@ -306,6 +306,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return false;
     }
 
+    static bool checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_event *eventWaitList);
+
   protected:
     Event(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType,
           uint32_t taskLevel, uint32_t taskCount);

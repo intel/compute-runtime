@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,7 +95,7 @@ TEST_F(EnqueueWriteBufferTypeTest, eventReturnedShouldBeMaxOfInputEventsAndCmdQP
     delete pEvent;
 }
 
-TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBufferAndDstPtrEqualSrcPtrWithEventsNotBlockedWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
     cl_int retVal = CL_SUCCESS;
@@ -135,7 +135,78 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAn
 
     pEvent->release();
 }
-TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+
+TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBufferAndEventNotReadyWhenWriteBufferIsExecutedThenTaskLevelShouldBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+    cl_int retVal = CL_SUCCESS;
+    uint32_t taskLevelCmdQ = 17;
+    pCmdQ->taskLevel = taskLevelCmdQ;
+
+    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, Event::eventNotReady, 4);
+
+    cl_bool blockingWrite = CL_FALSE;
+    size_t size = sizeof(cl_float);
+    cl_event eventWaitList[] = {&event1};
+    cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+    cl_event event = nullptr;
+    auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+    cl_float mem[4];
+
+    retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
+                                       blockingWrite,
+                                       0,
+                                       size,
+                                       mem,
+                                       numEventsInWaitList,
+                                       eventWaitList,
+                                       &event);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, event);
+
+    auto pEvent = (Event *)event;
+    EXPECT_EQ(Event::eventNotReady, pEvent->taskLevel);
+    EXPECT_EQ(Event::eventNotReady, pCmdQ->taskLevel);
+    event1.taskLevel = 20;
+    event1.setStatus(CL_COMPLETE);
+    pEvent->updateExecutionStatus();
+    pCmdQ->isQueueBlocked();
+    pEvent->release();
+}
+
+TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBufferAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+    cl_int retVal = CL_SUCCESS;
+    uint32_t taskLevelCmdQ = 17;
+    pCmdQ->taskLevel = taskLevelCmdQ;
+
+    cl_bool blockingRead = CL_TRUE;
+    size_t size = sizeof(cl_float);
+    cl_event event = nullptr;
+    auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+    retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
+                                       blockingRead,
+                                       0,
+                                       size,
+                                       ptr,
+                                       0,
+                                       nullptr,
+                                       &event);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, event);
+
+    auto pEvent = (Event *)event;
+    EXPECT_EQ(17u, pEvent->taskLevel);
+    EXPECT_EQ(17u, pCmdQ->taskLevel);
+
+    pEvent->release();
+}
+
+TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndForcedCpuCopyOnWriteBufferAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));

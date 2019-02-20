@@ -213,6 +213,22 @@ TEST(Event, waitForEventsWithNotReadyEventDoesNotFlushQueue) {
     EXPECT_EQ(0u, cmdQ1->flushCounter);
 }
 
+TEST(Event, givenNotReadyEventOnWaitlistWhenCheckingUserEventDependeciesThenTrueIsReturned) {
+    auto event1 = std::make_unique<Event>(nullptr, CL_COMMAND_NDRANGE_KERNEL, Event::eventNotReady, 0);
+    cl_event eventWaitlist[] = {event1.get()};
+
+    bool userEventDependencies = Event::checkUserEventDependencies(1, eventWaitlist);
+    EXPECT_TRUE(userEventDependencies);
+}
+
+TEST(Event, givenReadyEventsOnWaitlistWhenCheckingUserEventDependeciesThenFalseIsReturned) {
+    auto event1 = std::make_unique<Event>(nullptr, CL_COMMAND_NDRANGE_KERNEL, 5, 0);
+    cl_event eventWaitlist[] = {event1.get()};
+
+    bool userEventDependencies = Event::checkUserEventDependencies(1, eventWaitlist);
+    EXPECT_FALSE(userEventDependencies);
+}
+
 TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_sizeReturned) {
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 1, 5);
     cl_int eventStatus = -1;
