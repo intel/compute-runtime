@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ typedef api_tests clEnqueueWriteBufferRectTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueWriteBufferRectTests, returnFailure) {
+TEST_F(clEnqueueWriteBufferRectTests, GivenInvalidBufferWhenWritingRectangularRegionThenInvalidMemObjectErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
@@ -42,7 +42,7 @@ TEST_F(clEnqueueWriteBufferRectTests, returnFailure) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueWriteBufferRectTests, NullCommandQueue) {
+TEST_F(clEnqueueWriteBufferRectTests, GivenNullCommandQueueWhenWritingRectangularRegionThenInvalidCommandQueueErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
     size_t buffOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
@@ -68,7 +68,7 @@ TEST_F(clEnqueueWriteBufferRectTests, NullCommandQueue) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueWriteBufferRectTests, NullHostPtr) {
+TEST_F(clEnqueueWriteBufferRectTests, GivenNullHostPtrWhenWritingRectangularRegionThenInvalidValueErrorIsReturned) {
     auto buffer = clCreateBuffer(
         pContext,
         CL_MEM_READ_WRITE,
