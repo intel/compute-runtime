@@ -170,7 +170,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     perfCountersRequired = (this->isPerfCountersEnabled() && event != nullptr);
     KernelOperation *blockedCommandsData = nullptr;
     std::unique_ptr<PrintfHandler> printfHandler;
-    bool slmUsed = false;
+    bool slmUsed = multiDispatchInfo.usesSlm() || parentKernel;
     auto preemption = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
@@ -212,70 +212,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     auto commandStreamStart = commandStream.getUsed();
 
     if (multiDispatchInfo.empty() == false) {
-        HwPerfCounter *hwPerfCounter = nullptr;
-        DebugManager.dumpKernelArgs(&multiDispatchInfo);
-
-        printfHandler.reset(PrintfHandler::create(multiDispatchInfo, *device));
-        if (printfHandler) {
-            printfHandler.get()->prepareDispatch(multiDispatchInfo);
-        }
-
-        if (commandType == CL_COMMAND_NDRANGE_KERNEL) {
-            if (multiDispatchInfo.peekMainKernel()->getProgram()->isKernelDebugEnabled()) {
-                setupDebugSurface(multiDispatchInfo.peekMainKernel());
-            }
-        }
-
-        if (eventBuilder.getEvent()) {
-            if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-                eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
-            }
-            if (this->isProfilingEnabled()) {
-                // Get allocation for timestamps
-                hwTimeStamps = eventBuilder.getEvent()->getHwTimeStampNode();
-                if (this->isPerfCountersEnabled()) {
-                    hwPerfCounter = eventBuilder.getEvent()->getHwPerfCounterNode()->tagForCpuAccess;
-                    // PERF COUNTER: copy current configuration from queue to event
-                    eventBuilder.getEvent()->copyPerfCounters(this->getPerfCountersConfigData());
-                }
-            }
-        }
-
-        if (parentKernel) {
-            parentKernel->createReflectionSurface();
-            parentKernel->patchDefaultDeviceQueue(context->getDefaultDeviceQueue());
-            parentKernel->patchEventPool(context->getDefaultDeviceQueue());
-            parentKernel->patchReflectionSurface(context->getDefaultDeviceQueue(), printfHandler.get());
-            if (!blockQueue) {
-                devQueueHw->resetDeviceQueue();
-                devQueueHw->acquireEMCriticalSection();
-            }
-        }
-
-        HardwareInterface<GfxFamily>::dispatchWalker(
-            *this,
-            multiDispatchInfo,
-            csrDeps,
-            &blockedCommandsData,
-            hwTimeStamps,
-            hwPerfCounter,
-            &previousTimestampPacketNodes,
-            timestampPacketContainer.get(),
-            preemption,
-            blockQueue,
-            commandType);
-
-        if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-            for (auto &dispatchInfo : multiDispatchInfo) {
-                for (auto &patchInfoData : dispatchInfo.getKernel()->getPatchInfoDataList()) {
-                    getCommandStreamReceiver().getFlatBatchBufferHelper().setPatchInfoData(patchInfoData);
-                }
-            }
-        }
-
-        getCommandStreamReceiver().setRequiredScratchSize(multiDispatchInfo.getRequiredScratchSize());
-
-        slmUsed = multiDispatchInfo.usesSlm();
+        processDispatchForKernels<commandType>(multiDispatchInfo, printfHandler, eventBuilder.getEvent(),
+                                               hwTimeStamps, parentKernel, blockQueue, devQueueHw, csrDeps, blockedCommandsData,
+                                               previousTimestampPacketNodes, preemption);
     } else if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         if (CL_COMMAND_BARRIER == commandType) {
             getCommandStreamReceiver().requestStallingPipeControlOnNextFlush();
@@ -295,46 +234,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     CompletionStamp completionStamp;
     if (!blockQueue) {
         if (parentKernel) {
-            size_t minSizeSSHForEM = KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
-
-            uint32_t taskCount = getCommandStreamReceiver().peekTaskCount() + 1;
-            devQueueHw->setupExecutionModelDispatch(getIndirectHeap(IndirectHeap::SURFACE_STATE, minSizeSSHForEM),
-                                                    *devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
-                                                    parentKernel,
-                                                    (uint32_t)multiDispatchInfo.size(),
-                                                    taskCount,
-                                                    hwTimeStamps);
-
-            BuiltIns &builtIns = *getDevice().getExecutionEnvironment()->getBuiltIns();
-            SchedulerKernel &scheduler = builtIns.getSchedulerKernel(this->getContext());
-
-            scheduler.setArgs(devQueueHw->getQueueBuffer(),
-                              devQueueHw->getStackBuffer(),
-                              devQueueHw->getEventPoolBuffer(),
-                              devQueueHw->getSlbBuffer(),
-                              devQueueHw->getDshBuffer(),
-                              parentKernel->getKernelReflectionSurface(),
-                              devQueueHw->getQueueStorageBuffer(),
-                              this->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getGraphicsAllocation(),
-                              devQueueHw->getDebugQueue());
-
-            GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
-                *this,
-                *devQueueHw,
-                preemption,
-                scheduler,
-                &getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
-                devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
-
-            scheduler.makeResident(getCommandStreamReceiver());
-
-            // Update SLM usage
-            slmUsed |= scheduler.slmTotalSize > 0;
-
-            parentKernel->getProgram()->getBlockKernelManager()->makeInternalAllocationsResident(getCommandStreamReceiver());
-            if (parentKernel->isAuxTranslationRequired()) {
-                blocking = true;
-            }
+            processDeviceEnqueue(parentKernel, devQueueHw, multiDispatchInfo, hwTimeStamps, preemption, blocking);
         }
 
         auto submissionRequired = !isCommandWithoutKernel(commandType);
@@ -443,6 +343,128 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
             getCommandStreamReceiver().waitForTaskCountAndCleanAllocationList(completionStamp.taskCount, TEMPORARY_ALLOCATION);
         }
+    }
+}
+
+template <typename GfxFamily>
+template <uint32_t commandType>
+void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInfo &multiDispatchInfo,
+                                                          std::unique_ptr<PrintfHandler> &printfHandler,
+                                                          Event *event,
+                                                          TagNode<HwTimeStamps> *&hwTimeStamps,
+                                                          Kernel *parentKernel,
+                                                          bool blockQueue,
+                                                          DeviceQueueHw<GfxFamily> *devQueueHw,
+                                                          CsrDependencies &csrDeps,
+                                                          KernelOperation *&blockedCommandsData,
+                                                          TimestampPacketContainer &previousTimestampPacketNodes,
+                                                          PreemptionMode preemption) {
+    HwPerfCounter *hwPerfCounter = nullptr;
+    DebugManager.dumpKernelArgs(&multiDispatchInfo);
+
+    printfHandler.reset(PrintfHandler::create(multiDispatchInfo, *device));
+    if (printfHandler) {
+        printfHandler.get()->prepareDispatch(multiDispatchInfo);
+    }
+
+    if (commandType == CL_COMMAND_NDRANGE_KERNEL) {
+        if (multiDispatchInfo.peekMainKernel()->getProgram()->isKernelDebugEnabled()) {
+            setupDebugSurface(multiDispatchInfo.peekMainKernel());
+        }
+    }
+
+    if (event) {
+        if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+            event->addTimestampPacketNodes(*timestampPacketContainer);
+        }
+        if (this->isProfilingEnabled()) {
+            // Get allocation for timestamps
+            hwTimeStamps = event->getHwTimeStampNode();
+            if (this->isPerfCountersEnabled()) {
+                hwPerfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
+                // PERF COUNTER: copy current configuration from queue to event
+                event->copyPerfCounters(this->getPerfCountersConfigData());
+            }
+        }
+    }
+
+    if (parentKernel) {
+        parentKernel->createReflectionSurface();
+        parentKernel->patchDefaultDeviceQueue(context->getDefaultDeviceQueue());
+        parentKernel->patchEventPool(context->getDefaultDeviceQueue());
+        parentKernel->patchReflectionSurface(context->getDefaultDeviceQueue(), printfHandler.get());
+        if (!blockQueue) {
+            devQueueHw->resetDeviceQueue();
+            devQueueHw->acquireEMCriticalSection();
+        }
+    }
+
+    HardwareInterface<GfxFamily>::dispatchWalker(
+        *this,
+        multiDispatchInfo,
+        csrDeps,
+        &blockedCommandsData,
+        hwTimeStamps,
+        hwPerfCounter,
+        &previousTimestampPacketNodes,
+        timestampPacketContainer.get(),
+        preemption,
+        blockQueue,
+        commandType);
+
+    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        for (auto &dispatchInfo : multiDispatchInfo) {
+            for (auto &patchInfoData : dispatchInfo.getKernel()->getPatchInfoDataList()) {
+                getCommandStreamReceiver().getFlatBatchBufferHelper().setPatchInfoData(patchInfoData);
+            }
+        }
+    }
+
+    getCommandStreamReceiver().setRequiredScratchSize(multiDispatchInfo.getRequiredScratchSize());
+}
+template <typename GfxFamily>
+void CommandQueueHw<GfxFamily>::processDeviceEnqueue(Kernel *parentKernel,
+                                                     DeviceQueueHw<GfxFamily> *devQueueHw,
+                                                     const MultiDispatchInfo &multiDispatchInfo,
+                                                     TagNode<HwTimeStamps> *hwTimeStamps,
+                                                     PreemptionMode preemption,
+                                                     bool &blocking) {
+    size_t minSizeSSHForEM = KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
+
+    uint32_t taskCount = getCommandStreamReceiver().peekTaskCount() + 1;
+    devQueueHw->setupExecutionModelDispatch(getIndirectHeap(IndirectHeap::SURFACE_STATE, minSizeSSHForEM),
+                                            *devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
+                                            parentKernel,
+                                            (uint32_t)multiDispatchInfo.size(),
+                                            taskCount,
+                                            hwTimeStamps);
+
+    BuiltIns &builtIns = *getDevice().getExecutionEnvironment()->getBuiltIns();
+    SchedulerKernel &scheduler = builtIns.getSchedulerKernel(this->getContext());
+
+    scheduler.setArgs(devQueueHw->getQueueBuffer(),
+                      devQueueHw->getStackBuffer(),
+                      devQueueHw->getEventPoolBuffer(),
+                      devQueueHw->getSlbBuffer(),
+                      devQueueHw->getDshBuffer(),
+                      parentKernel->getKernelReflectionSurface(),
+                      devQueueHw->getQueueStorageBuffer(),
+                      this->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getGraphicsAllocation(),
+                      devQueueHw->getDebugQueue());
+
+    GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
+        *this,
+        *devQueueHw,
+        preemption,
+        scheduler,
+        &getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
+        devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
+
+    scheduler.makeResident(getCommandStreamReceiver());
+
+    parentKernel->getProgram()->getBlockKernelManager()->makeInternalAllocationsResident(getCommandStreamReceiver());
+    if (parentKernel->isAuxTranslationRequired()) {
+        blocking = true;
     }
 }
 
