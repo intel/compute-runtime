@@ -53,4 +53,7 @@ void MockKernel::getResidency(std::vector<Surface *> &dst) {
     getResidencyCalls++;
     Kernel::getResidency(dst);
 }
+bool MockKernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
+    return DebugManager.flags.EnableCacheFlushAfterWalker.get();
+}
 } // namespace OCLRT

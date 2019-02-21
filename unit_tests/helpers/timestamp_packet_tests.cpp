@@ -12,6 +12,7 @@
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/utilities/tag_allocator.h"
 #include "test.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -861,6 +862,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
     MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
     MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
     MockTimestampPacketContainer timestamp6(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp7(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
 
     UserEvent event1;
     UserEvent event2;
@@ -887,7 +889,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
         nullptr,
         nullptr,
         nullptr,
-        nullptr,
+        &timestamp7,
         device->getPreemptionMode(),
         false);
 
@@ -944,6 +946,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
     MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
     MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
     MockTimestampPacketContainer timestamp6(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp7(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
 
     UserEvent event1;
     UserEvent event2;
@@ -970,7 +973,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
         nullptr,
         nullptr,
         nullptr,
-        nullptr,
+        &timestamp7,
         device->getPreemptionMode(),
         false);
 
@@ -1425,4 +1428,42 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenFlushingThenProgramPip
 
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(secondEnqueueOffset, csr.commandStream.getUsed()); // nothing programmed when flag is not set
+}
+
+HWTEST_F(TimestampPacketTests, givenKernelWhichDoesntRequiersFlushWhenEnquingKernelThenOneNodeCreated) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(false);
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    auto mockTagAllocator = new MockTagAllocator<>(executionEnvironment.memoryManager.get());
+    csr.timestampPacketAllocator.reset(mockTagAllocator);
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    // obtain first node for cmdQ and event1
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    auto size = cmdQ->timestampPacketContainer->peekNodes().size();
+    EXPECT_EQ(size, 1u);
+}
+
+HWTEST_F(TimestampPacketTests, givenKernelWhichRequiersFlushWhenEnquingKernelThenTwoNodesCreated) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(true);
+    DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(true);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    auto mockTagAllocator = new MockTagAllocator<>(executionEnvironment.memoryManager.get());
+    csr.timestampPacketAllocator.reset(mockTagAllocator);
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    kernel->mockKernel->svmAllocationsRequireCacheFlush = true;
+    // obtain first node for cmdQ and event1
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    auto node1 = cmdQ->timestampPacketContainer->peekNodes().at(0);
+    auto node2 = cmdQ->timestampPacketContainer->peekNodes().at(1);
+    auto size = cmdQ->timestampPacketContainer->peekNodes().size();
+    EXPECT_EQ(size, 2u);
+    EXPECT_NE(nullptr, node1);
+    EXPECT_NE(nullptr, node2);
+    EXPECT_NE(node1, node2);
 }

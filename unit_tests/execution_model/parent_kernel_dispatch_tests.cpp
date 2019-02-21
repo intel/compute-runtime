@@ -11,6 +11,7 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/sampler/sampler.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -242,12 +243,14 @@ class MockParentKernelDispatch : public ExecutionModelSchedulerTest,
                                  public testing::Test {
   public:
     void SetUp() override {
+        DebugManager.flags.EnableTimestampPacket.set(0);
         ExecutionModelSchedulerTest::SetUp();
     }
 
     void TearDown() override {
         ExecutionModelSchedulerTest::TearDown();
     }
+    DebugManagerStateRestore dbgRestore;
 };
 
 HWTEST_F(MockParentKernelDispatch, GivenBlockedQueueWhenParentKernelIsDispatchedThenDshHeapForIndirectObjectHeapIsUsed) {

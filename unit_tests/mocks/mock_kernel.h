@@ -237,6 +237,8 @@ class MockKernel : public Kernel {
 
     void setSpecialPipelineSelectMode(bool value) { specialPipelineSelectMode = value; }
 
+    bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const override;
+
     uint32_t makeResidentCalls = 0;
     uint32_t getResidencyCalls = 0;
     mutable uint32_t takeOwnershipCalls = 0;

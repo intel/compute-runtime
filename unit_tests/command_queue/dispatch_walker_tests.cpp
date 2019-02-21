@@ -19,6 +19,8 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/libult/mock_gfx_family.h"
+#include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_program.h"
@@ -32,6 +34,7 @@ struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, pu
     using CommandQueueFixture::SetUp;
 
     void SetUp() override {
+        DebugManager.flags.EnableTimestampPacket.set(0);
         DeviceFixture::SetUp();
         CommandQueueFixture::SetUp(nullptr, pDevice, 0);
 
@@ -93,6 +96,8 @@ struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, pu
     uint32_t kernelIsa[32];
     uint32_t crossThreadData[32];
     uint32_t dsh[32];
+
+    DebugManagerStateRestore dbgRestore;
 };
 
 HWTEST_F(DispatchWalkerTest, computeDimensions) {
@@ -1095,6 +1100,134 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     }
 }
 
+HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerDisabledWhenAllocationRequiresCacheFlushThenFlushCommandNotPresentAfterWalker) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
+    DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(1);
+
+    MockKernel kernel1(program.get(), kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
+    kernel1.kernelArgRequiresCacheFlush.resize(1);
+    MockGraphicsAllocation cacheRequiringAllocation;
+    kernel1.kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+
+    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({&kernel1}));
+    // create commandStream
+    auto &cmdStream = pCmdQ->getCS(0);
+
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        pDevice->getPreemptionMode(),
+        false);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(cmdStream);
+    PIPE_CONTROL *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
+    EXPECT_EQ(nullptr, pipeControl);
+}
+
+HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerEnabledWhenWalkerWithTwoKernelsThenFlushCommandPresentOnce) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(1);
+
+    MockKernel kernel1(program.get(), kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
+    MockKernel kernel2(program.get(), kernelInfoWithSampler, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
+
+    kernel1.kernelArgRequiresCacheFlush.resize(1);
+    kernel2.kernelArgRequiresCacheFlush.resize(1);
+    MockGraphicsAllocation cacheRequiringAllocation;
+    kernel1.kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+    kernel2.kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+
+    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({&kernel1, &kernel2}));
+    // create commandStream
+    auto &cmdStream = pCmdQ->getCS(0);
+
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        pDevice->getPreemptionMode(),
+        false);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(cmdStream);
+    uint32_t pipeControlCount = hwParse.getCommandCount<PIPE_CONTROL>();
+    EXPECT_EQ(pipeControlCount, 1u);
+}
+
+HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerEnabledWhenTwoWalkersForQueueThenFlushCommandPresentTwice) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(1);
+
+    MockKernel kernel1(program.get(), kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
+    MockKernel kernel2(program.get(), kernelInfoWithSampler, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel2.initialize());
+
+    kernel1.kernelArgRequiresCacheFlush.resize(1);
+    kernel2.kernelArgRequiresCacheFlush.resize(1);
+    MockGraphicsAllocation cacheRequiringAllocation;
+    kernel1.kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+    kernel2.kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+
+    MockMultiDispatchInfo multiDispatchInfo1(std::vector<Kernel *>({&kernel1}));
+    MockMultiDispatchInfo multiDispatchInfo2(std::vector<Kernel *>({&kernel2}));
+    // create commandStream
+    auto &cmdStream = pCmdQ->getCS(0);
+
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo1,
+        CsrDependencies(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        pDevice->getPreemptionMode(),
+        false);
+
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo2,
+        CsrDependencies(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        pDevice->getPreemptionMode(),
+        false);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(cmdStream);
+    uint32_t pipeControlCount = hwParse.getCommandCount<PIPE_CONTROL>();
+    EXPECT_EQ(pipeControlCount, 2u);
+}
+
 HWTEST_F(DispatchWalkerTest, givenMultiDispatchWhenWhitelistedRegisterForCoherencySwitchThenDontProgramLriInTaskStream) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     WhitelistedRegisters registers = {0};
@@ -1274,4 +1407,4 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
 }
 
 INSTANTIATE_TEST_CASE_P(StartEndFlag,
-                        ProfilingCommandsTest, ::testing::Values(true, false));
+                        ProfilingCommandsTest, ::testing::Bool());

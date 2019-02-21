@@ -28,7 +28,9 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_program.h"
 
@@ -384,6 +386,43 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenGetCSIsCalledThenComm
     ASSERT_NE(nullptr, commandStreamAllocation);
 
     EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, commandStreamAllocation->getAllocationType());
+}
+
+HWTEST_F(CommandQueueCommandStreamTest, givenMultiDispatchInfoWithSingleKernelWithFlushAllocationsDisabledWhenEstimatingNodesCountEqualMultiDispatchInfoSize) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
+    DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(1);
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), pDevice, nullptr);
+    cmdQ.multiEngineQueue = true;
+    MockKernelWithInternals mockKernelWithInternals(*pDevice, context.get());
+
+    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush.resize(1);
+    MockGraphicsAllocation cacheRequiringAllocation;
+    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+
+    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({mockKernelWithInternals.mockKernel}));
+
+    size_t estimatedNodesCount = cmdQ.estimateTimestampPacketNodesCount(multiDispatchInfo);
+    EXPECT_EQ(estimatedNodesCount, multiDispatchInfo.size());
+}
+
+HWTEST_F(CommandQueueCommandStreamTest, givenMultiDispatchInfoWithSingleKernelWithFlushAllocationsEnabledWhenEstimatingNodesCountEqualMultiDispatchInfoSizePlusOne) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
+    DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(1);
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), pDevice, nullptr);
+    MockKernelWithInternals mockKernelWithInternals(*pDevice, context.get());
+
+    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush.resize(1);
+    MockGraphicsAllocation cacheRequiringAllocation;
+    mockKernelWithInternals.mockKernel->kernelArgRequiresCacheFlush[0] = &cacheRequiringAllocation;
+
+    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({mockKernelWithInternals.mockKernel}));
+
+    size_t estimatedNodesCount = cmdQ.estimateTimestampPacketNodesCount(multiDispatchInfo);
+    EXPECT_EQ(estimatedNodesCount, multiDispatchInfo.size() + 1);
 }
 
 struct CommandQueueIndirectHeapTest : public CommandQueueMemoryDevice,

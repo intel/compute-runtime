@@ -2144,31 +2144,6 @@ void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsF
     }
 }
 
-bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
-    if (false == HwHelper::cacheFlushAfterWalkerSupported(device.getHardwareInfo())) {
-        return false;
-    }
-
-    bool cmdQueueRequiresCacheFlush = commandQueue.getRequiresCacheFlushAfterWalker() || DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.get();
-    if (false == cmdQueueRequiresCacheFlush) {
-        return false;
-    }
-
-    if (getProgram()->getGlobalSurface() != nullptr) {
-        return true;
-    }
-    if (svmAllocationsRequireCacheFlush) {
-        return true;
-    }
-    size_t args = kernelArgRequiresCacheFlush.size();
-    for (size_t i = 0; i < args; i++) {
-        if (kernelArgRequiresCacheFlush[i] != nullptr) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
     if (false == HwHelper::cacheFlushAfterWalkerSupported(device.getHardwareInfo())) {
         return;

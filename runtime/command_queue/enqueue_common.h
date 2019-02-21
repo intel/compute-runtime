@@ -205,7 +205,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
         if (!multiDispatchInfo.empty()) {
-            obtainNewTimestampPacketNodes(multiDispatchInfo.size(), previousTimestampPacketNodes);
+            obtainNewTimestampPacketNodes(estimateTimestampPacketNodesCount(multiDispatchInfo), previousTimestampPacketNodes);
             csrDeps.push_back(&previousTimestampPacketNodes);
         }
     }

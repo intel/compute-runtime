@@ -194,7 +194,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, true);
 
-        if (currentTimestampPacketNodes && commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        if (commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             auto timestampPacketNode = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
             GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacketNode, TimestampPacket::WriteOperationType::BeforeWalker);
         }
@@ -210,9 +210,16 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
             pPipeControlCmd->setCommandStreamerStallEnable(true);
         }
-        KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, commandQueue, &kernel, 0U, 0U);
 
         currentDispatchIndex++;
+    }
+    if (mainKernel->requiresCacheFlushCommand(commandQueue)) {
+        uint64_t postSyncAddress = 0;
+        if (commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+            auto timestampPacketNodeForPostSync = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
+            postSyncAddress = timestampPacketNodeForPostSync->getGpuAddress();
+        }
+        KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, commandQueue, mainKernel, postSyncAddress, 0);
     }
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
 }

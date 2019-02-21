@@ -331,9 +331,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                              const cl_event *eventWaitList);
 
     CommandStreamReceiver &getCommandStreamReceiver() const;
-    Device &getDevice() { return *device; }
-    Context &getContext() { return *context; }
-    Context *getContextPtr() { return context; }
+    Device &getDevice() const { return *device; }
+    Context &getContext() const { return *context; }
+    Context *getContextPtr() const { return context; }
 
     MOCKABLE_VIRTUAL LinearStream &getCS(size_t minRequiredSize);
     IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType,
@@ -422,6 +422,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     // virtual event that holds last Enqueue information
     Event *virtualEvent = nullptr;
+
+    size_t estimateTimestampPacketNodesCount(const MultiDispatchInfo &dispatchInfo) const;
 
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);

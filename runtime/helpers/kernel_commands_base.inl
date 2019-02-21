@@ -164,12 +164,10 @@ bool KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32
 
 template <typename GfxFamily>
 void KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
-    if (kernel->requiresCacheFlushCommand(commandQueue)) {
-        using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
-        *pipeControl = GfxFamily::cmdInitPipeControl;
-        pipeControl->setCommandStreamerStallEnable(true);
-        pipeControl->setDcFlushEnable(true);
-    }
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
+    *pipeControl = GfxFamily::cmdInitPipeControl;
+    pipeControl->setCommandStreamerStallEnable(true);
+    pipeControl->setDcFlushEnable(true);
 }
 } // namespace OCLRT

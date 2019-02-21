@@ -557,4 +557,13 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
         timestampPacketContainer->add(allocator->getTag());
     }
 }
+
+size_t CommandQueue::estimateTimestampPacketNodesCount(const MultiDispatchInfo &dispatchInfo) const {
+    size_t nodesCount = dispatchInfo.size();
+    auto mainKernel = dispatchInfo.peekMainKernel();
+    if (mainKernel->requiresCacheFlushCommand(*this)) {
+        nodesCount++;
+    }
+    return nodesCount;
+}
 } // namespace OCLRT

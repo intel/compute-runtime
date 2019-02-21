@@ -2385,24 +2385,6 @@ TEST(KernelTest, whenAllocationRequiringCacheFlushThenAssignAllocationPointerToC
     EXPECT_EQ(&mockAllocation, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
 }
 
-TEST(KernelTest, whenQueueAndKernelRequireCacheFlushAfterWalkerThenRequireCacheFlushAfterWalker) {
-    MockGraphicsAllocation mockAllocation;
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    MockKernelWithInternals kernel(*device);
-    kernel.mockKernel->svmAllocationsRequireCacheFlush = true;
-
-    MockCommandQueue queue;
-
-    DebugManagerStateRestore debugRestore;
-    DebugManager.flags.EnableCacheFlushAfterWalker.set(true);
-
-    queue.requiresCacheFlushAfterWalker = true;
-    EXPECT_TRUE(kernel.mockKernel->requiresCacheFlushCommand(queue));
-
-    queue.requiresCacheFlushAfterWalker = false;
-    EXPECT_FALSE(kernel.mockKernel->requiresCacheFlushCommand(queue));
-}
-
 TEST(KernelTest, whenCacheFlushEnabledForAllQueuesAndKernelRequireCacheFlushAfterWalkerThenRequireCacheFlushAfterWalker) {
     MockGraphicsAllocation mockAllocation;
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
