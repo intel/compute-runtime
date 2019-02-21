@@ -185,6 +185,8 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
     time1 = std::chrono::high_resolution_clock::now();
     while (*getTagAddress() < taskCountToWait && timeDiff <= timeoutMicroseconds) {
         std::this_thread::yield();
+        _mm_pause();
+
         if (enableTimeout) {
             time2 = std::chrono::high_resolution_clock::now();
             timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(time2 - time1).count();
