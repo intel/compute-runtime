@@ -211,7 +211,6 @@ class MemoryManager {
         };
         static_assert(sizeof(AllocationData::flags) == sizeof(AllocationData::allFlags), "");
         GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::UNKNOWN;
-        AllocationOrigin allocationOrigin = AllocationOrigin::EXTERNAL_ALLOCATION;
         const void *hostPtr = nullptr;
         size_t size = 0;
         size_t alignment = 0;
@@ -221,6 +220,10 @@ class MemoryManager {
 
     static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const DevicesBitfield devicesBitfield,
                                   const void *hostPtr);
+    static bool useInternal32BitAllocator(GraphicsAllocation::AllocationType allocationType) {
+        return allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA ||
+               allocationType == GraphicsAllocation::AllocationType::INTERNAL_HEAP;
+    }
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) = 0;
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);

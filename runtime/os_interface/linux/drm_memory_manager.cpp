@@ -240,9 +240,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
     if (forcePinEnabled && pinBB != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
         pinBB->pin(&bo, 1, getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId());
     }
-    auto allocation = new DrmAllocation(bo, res, castToUint64(res), cSize, MemoryPool::System4KBPages, allocationData.flags.multiOsContextCapable);
-    allocation->origin = allocationData.allocationOrigin;
-    return allocation;
+    return new DrmAllocation(bo, res, castToUint64(res), cSize, MemoryPool::System4KBPages, allocationData.flags.multiOsContextCapable);
 }
 
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
@@ -328,13 +326,13 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     auto allocation = new DrmAllocation(bo, nullptr, (uint64_t)gpuRange, allocationData.imgInfo->size, MemoryPool::SystemCpuInaccessible, false);
     bo->setAllocationType(allocatorType);
     allocation->gmm = gmm.release();
-    allocation->origin = allocationData.allocationOrigin;
     return allocation;
 }
 
 DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) {
-    auto allocatorToUse = allocationData.allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit.get() : internal32bitAllocator.get();
-    auto allocatorType = allocationData.allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? BIT32_ALLOCATOR_EXTERNAL : BIT32_ALLOCATOR_INTERNAL;
+    auto internal = useInternal32BitAllocator(allocationData.type);
+    auto allocatorToUse = internal ? internal32bitAllocator.get() : allocator32Bit.get();
+    auto allocatorType = internal ? BIT32_ALLOCATOR_INTERNAL : BIT32_ALLOCATOR_EXTERNAL;
 
     if (allocationData.hostPtr) {
         uintptr_t inputPtr = reinterpret_cast<uintptr_t>(allocationData.hostPtr);
@@ -361,7 +359,6 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
                                                allocationSize, MemoryPool::System4KBPagesWith32BitGpuAddressing, false);
         drmAllocation->is32BitAllocation = true;
         drmAllocation->gpuBaseAddress = allocatorToUse->getBase();
-        drmAllocation->origin = allocationData.allocationOrigin;
         return drmAllocation;
     }
 
@@ -415,7 +412,6 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
     drmAllocation->is32BitAllocation = true;
     drmAllocation->gpuBaseAddress = allocatorToUse->getBase();
     drmAllocation->driverAllocatedCpuPointer = ptrAlloc;
-    drmAllocation->origin = allocationData.allocationOrigin;
     return drmAllocation;
 }
 

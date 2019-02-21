@@ -415,17 +415,17 @@ TEST(MemoryManagerTest, givenAllocationPropertiesWithMultiOsContextCapableFlagDi
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenInternalHeapTypeWhenGetAllocationDataIsCalledThenInternalAllocationIsRequested) {
-    AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::INTERNAL_HEAP}, {}, nullptr);
-    EXPECT_EQ(AllocationOrigin::INTERNAL_ALLOCATION, allocData.allocationOrigin);
+TEST(MemoryManagerTest, givenInternalHeapTypeThenUseInternal32BitAllocator) {
+    EXPECT_TRUE(MockMemoryManager::useInternal32BitAllocator(GraphicsAllocation::AllocationType::INTERNAL_HEAP));
 }
+
 TEST(MemoryManagerTest, givenInternalHeapTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::INTERNAL_HEAP}, {}, nullptr);
     EXPECT_FALSE(allocData.flags.useSystemMemory);
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
+
 TEST(MemoryManagerTest, givenKernelIsaTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::KERNEL_ISA}, {}, nullptr);
@@ -440,8 +440,6 @@ TEST(MemoryManagerTest, givenLinearStreamWhenGetAllocationDataIsCalledThenSystem
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 
-TEST(MemoryManagerTest, givenKernelIsaTypeWhenGetAllocationDataIsCalledThenInternalAllocationIsRequested) {
-    AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::KERNEL_ISA}, {}, nullptr);
-    EXPECT_EQ(AllocationOrigin::INTERNAL_ALLOCATION, allocData.allocationOrigin);
+TEST(MemoryManagerTest, givenKernelIsaTypeThenUseInternal32BitAllocator) {
+    EXPECT_TRUE(MockMemoryManager::useInternal32BitAllocator(GraphicsAllocation::AllocationType::KERNEL_ISA));
 }

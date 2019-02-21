@@ -265,14 +265,14 @@ TEST_F(Wddm20Tests, createAllocation32bit) {
     delete gmm;
 }
 
-TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddressWithingHeapInternalLimits) {
+TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddressWithinHeapInternalLimits) {
     void *alignedPtr = (void *)0x12000;
     size_t alignedSize = 0x2000;
     WddmAllocation allocation(alignedPtr, alignedSize, nullptr, MemoryPool::MemoryNull, false);
 
     allocation.handle = ALLOCATION_HANDLE;
     allocation.gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
-    allocation.origin = AllocationOrigin::INTERNAL_ALLOCATION;
+    allocation.setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA);
     EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, allocation.getAlignedCpuPtr(), *hardwareInfoTable[wddm->getGfxPlatform()->eProductFamily]));
     bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);

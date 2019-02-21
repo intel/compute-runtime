@@ -762,7 +762,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32
 
     auto size = 10u;
     memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_NE(nullptr, allocation);
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_GE(allocation->getUnderlyingBufferSize(), size);
@@ -1002,7 +1002,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWithHo
     auto size = 10u;
     void *host_ptr = reinterpret_cast<void *>(0x1000);
     memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, host_ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, host_ptr, GraphicsAllocation::AllocationType::BUFFER);
 
     EXPECT_EQ(nullptr, allocation);
     mock->ioctl_res_ext = &mock->NONE;
@@ -1016,7 +1016,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationAndAll
 
     auto size = 10u;
     memoryManager->setForce32BitAllocations(true);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, GraphicsAllocation::AllocationType::BUFFER);
 
     EXPECT_EQ(nullptr, allocation);
     mock->ioctl_res_ext = &mock->NONE;
@@ -1030,7 +1030,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternal32Bit
 
     auto size = 10u;
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP);
 
     EXPECT_EQ(nullptr, allocation);
     mock->ioctl_res_ext = &mock->NONE;
@@ -1142,7 +1142,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIs
     EXPECT_NE(0llu, alloc);
 
     size_t allocationSize = 4 * 1024 * 1024 * 1024llu;
-    auto graphicsAllocation = memoryManager->allocate32BitGraphicsMemory(allocationSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
+    auto graphicsAllocation = memoryManager->allocate32BitGraphicsMemory(allocationSize, nullptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP);
     EXPECT_EQ(nullptr, graphicsAllocation);
     EXPECT_TRUE(pDevice->getDeviceInfo().force32BitAddressess);
 }
@@ -2014,7 +2014,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAllocatorWithHeapAllocatorWhenLargerFragm
     size_t pages3size = 3 * MemoryConstants::pageSize;
 
     void *host_ptr = reinterpret_cast<void *>(0x1000);
-    DrmAllocation *graphicsAlloaction = memoryManager->allocate32BitGraphicsMemory(pages3size, host_ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    DrmAllocation *graphicsAlloaction = memoryManager->allocate32BitGraphicsMemory(pages3size, host_ptr, GraphicsAllocation::AllocationType::BUFFER);
 
     auto bo = graphicsAlloaction->getBO();
     EXPECT_EQ(allocationSize, bo->peekUnmapSize());
@@ -2097,7 +2097,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
 
     auto bufferSize = MemoryConstants::pageSize;
     void *ptr = nullptr;
-    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, drmAllocation);
 
     auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();
@@ -2134,7 +2134,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAlloc
 
     auto bufferSize = MemoryConstants::pageSize;
     void *ptr = nullptr;
-    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, drmAllocation);
 
     auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();
@@ -2175,7 +2175,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForExternalAlloc
 
     auto bufferSize = MemoryConstants::pageSize;
     void *ptr = nullptr;
-    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, AllocationOrigin::EXTERNAL_ALLOCATION));
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, GraphicsAllocation::AllocationType::BUFFER));
     ASSERT_NE(nullptr, drmAllocation);
 
     EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
@@ -2189,7 +2189,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAlloc
 
     auto bufferSize = 128 * MemoryConstants::megaByte + 4 * MemoryConstants::pageSize;
     void *ptr = nullptr;
-    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
     ASSERT_EQ(nullptr, drmAllocation);
 }
 
@@ -2200,7 +2200,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
 
     auto bufferSize = MemoryConstants::pageSize;
     void *ptr = reinterpret_cast<void *>(0x100000);
-    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, drmAllocation);
 
     auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();
@@ -2606,7 +2606,7 @@ TEST(DrmMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithPtrI
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, GraphicsAllocation::AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());

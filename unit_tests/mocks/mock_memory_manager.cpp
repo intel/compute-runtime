@@ -81,14 +81,11 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithAlignment(const
     allocationCreated = true;
     return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
 }
-GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) {
+
+GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType) {
     bool allocateMemory = ptr == nullptr;
     AllocationData allocationData;
-    if (allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION) {
-        getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitExternalAllocation(size, allocateMemory), {}, ptr);
-    } else {
-        getAllocationData(allocationData, MockAllocationProperties::getPropertiesFor32BitInternalAllocation(size, allocateMemory), {}, ptr);
-    }
+    getAllocationData(allocationData, MockAllocationProperties(allocateMemory, size, allocationType), {}, ptr);
     return allocate32BitGraphicsMemoryImpl(allocationData);
 }
 

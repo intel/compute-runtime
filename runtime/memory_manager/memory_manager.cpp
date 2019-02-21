@@ -258,15 +258,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
-    switch (properties.allocationType) {
-    case GraphicsAllocation::AllocationType::KERNEL_ISA:
-    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
-        allocationData.allocationOrigin = AllocationOrigin::INTERNAL_ALLOCATION;
-        break;
-    default:
-        break;
-    }
-
     allocationData.flags.requiresCpuAccess = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
     allocationData.flags.mustBeZeroCopy = mustBeZeroCopy;
     allocationData.flags.allocateMemory = properties.flags.allocateMemory;
@@ -317,7 +308,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         return allocateGraphicsMemoryForImage(allocationData);
     }
 
-    if (allocationData.allocationOrigin == AllocationOrigin::INTERNAL_ALLOCATION ||
+    if (useInternal32BitAllocator(allocationData.type) ||
         (force32bitAllocations && allocationData.flags.allow32Bit && is64bit)) {
         return allocate32BitGraphicsMemoryImpl(allocationData);
     }
@@ -378,7 +369,7 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
 
 HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, const void *ptr, const HardwareInfo &hwInfo) {
     if (allocation) {
-        if (allocation->origin == AllocationOrigin::INTERNAL_ALLOCATION) {
+        if (useInternal32BitAllocator(allocation->getAllocationType())) {
             return internalHeapIndex;
         } else if (allocation->is32BitAllocation) {
             return HeapIndex::HEAP_EXTERNAL;

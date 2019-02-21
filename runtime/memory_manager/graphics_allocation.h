@@ -26,11 +26,6 @@ namespace OCLRT {
 
 using osHandle = unsigned int;
 
-enum class AllocationOrigin {
-    EXTERNAL_ALLOCATION,
-    INTERNAL_ALLOCATION
-};
-
 enum class HeapIndex : uint32_t {
     HEAP_INTERNAL_DEVICE_MEMORY = 0u,
     HEAP_INTERNAL = 1u,
@@ -60,7 +55,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void *driverAllocatedCpuPointer = nullptr;
     DevicesBitfield devicesBitfield = {};
     bool flushL3Required = false;
-    AllocationOrigin origin = AllocationOrigin::EXTERNAL_ALLOCATION;
 
     enum class AllocationType {
         UNKNOWN = 0,

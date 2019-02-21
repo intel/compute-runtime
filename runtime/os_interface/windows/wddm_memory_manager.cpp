@@ -47,7 +47,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
 
     auto allocation = std::make_unique<WddmAllocation>(nullptr, allocationData.imgInfo->size, nullptr, MemoryPool::SystemCpuInaccessible, false);
     allocation->gmm = gmm.get();
-    allocation->origin = allocationData.allocationOrigin;
     if (!createWddmAllocation(allocation.get())) {
         return nullptr;
     }
@@ -98,7 +97,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const
     gmm = new Gmm(pSysMem, sizeAligned, allocationData.flags.uncacheable);
 
     wddmAllocation->gmm = gmm;
-    wddmAllocation->origin = allocationData.allocationOrigin;
 
     if (!createWddmAllocation(wddmAllocation.get())) {
         delete gmm;
@@ -192,10 +190,10 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     wddmAllocation->driverAllocatedCpuPointer = pSysMem;
     wddmAllocation->is32BitAllocation = true;
     wddmAllocation->allocationOffset = offset;
+    wddmAllocation->setAllocationType(allocationData.type);
 
     gmm = new Gmm(ptrAligned, sizeAligned, false);
     wddmAllocation->gmm = gmm;
-    wddmAllocation->origin = allocationData.allocationOrigin;
 
     if (!createWddmAllocation(wddmAllocation.get())) {
         delete gmm;
@@ -204,7 +202,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     }
 
     wddmAllocation->is32BitAllocation = true;
-    auto baseAddress = allocationData.allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit->getBase() : getInternalHeapBaseAddress();
+    auto baseAddress = useInternal32BitAllocator(allocationData.type) ? getInternalHeapBaseAddress() : allocator32Bit->getBase();
     wddmAllocation->gpuBaseAddress = GmmHelper::canonize(baseAddress);
 
     DebugManager.logAllocation(wddmAllocation.get());

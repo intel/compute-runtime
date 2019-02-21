@@ -23,6 +23,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     using MemoryManager::getAllocationData;
     using MemoryManager::multiContextResourceDestructor;
     using MemoryManager::registeredEngines;
+    using MemoryManager::useInternal32BitAllocator;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
     using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
 
@@ -64,7 +65,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
         unlockResourceCalled++;
         OsAgnosticMemoryManager::unlockResourceImpl(gfxAllocation);
     }
-    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin);
+    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
 
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;

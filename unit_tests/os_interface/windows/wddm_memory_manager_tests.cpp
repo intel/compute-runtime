@@ -154,7 +154,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocate32BitGraphicsM
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, GraphicsAllocation::AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
@@ -665,7 +665,7 @@ TEST_F(WddmMemoryManagerTest, GivenAlignedPointerWhenAllocate32BitMemoryThenGmmC
     MockWddmAllocation allocation;
     uint32_t size = 4096;
     void *ptr = reinterpret_cast<void *>(4096);
-    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_EQ(ptr, reinterpret_cast<void *>(gpuAllocation->gmm->resourceParams.pExistingSysMem));
     EXPECT_EQ(size, gpuAllocation->gmm->resourceParams.ExistingSysMemSize);
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -675,7 +675,7 @@ TEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMemor
     MockWddmAllocation allocation;
     uint32_t size = 0x1001;
     void *ptr = reinterpret_cast<void *>(0x1001);
-    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_EQ(reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(gpuAllocation->gmm->resourceParams.pExistingSysMem));
     EXPECT_EQ(0x2000, gpuAllocation->gmm->resourceParams.ExistingSysMemSize);
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -696,7 +696,7 @@ TEST_F(WddmMemoryManagerTest, getMaxApplicationAddress) {
 }
 
 TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithNullptr) {
-    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, GraphicsAllocation::AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_LE(GmmHelper::canonize(wddm->getExternalHeapBase()), gpuAllocation->getGpuAddress());
@@ -707,7 +707,7 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithNullptr) {
 }
 
 TEST_F(WddmMemoryManagerTest, given32BitAllocationWhenItIsCreatedThenItHasNonZeroGpuAddressToPatch) {
-    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, GraphicsAllocation::AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_NE(0llu, gpuAllocation->getGpuAddressToPatch());
@@ -718,7 +718,7 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotDoT
     size_t misalignedSize = 0x2500;
     void *misalignedPtr = reinterpret_cast<void *>(0x12500);
 
-    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(misalignedSize, misalignedPtr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(misalignedSize, misalignedPtr, GraphicsAllocation::AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, gpuAllocation);
 
@@ -737,7 +737,7 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotDoT
 }
 
 TEST_F(WddmMemoryManagerTest, Allocate32BitMemorySetsCannonizedGpuBaseAddress) {
-    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, GraphicsAllocation::AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, gpuAllocation);
 
@@ -856,7 +856,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
 }
 
 TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeapInternal) {
-    auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION));
+    auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, nullptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, wddmAllocation);
     EXPECT_EQ(wddmAllocation->gpuBaseAddress, GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress()));
     EXPECT_NE(nullptr, wddmAllocation->getUnderlyingBuffer());
@@ -875,7 +875,7 @@ TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocatio
 
 TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeapInternal) {
     auto ptr = reinterpret_cast<void *>(0x1000000);
-    auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
+    auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, ptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, wddmAllocation);
     EXPECT_EQ(wddmAllocation->gpuBaseAddress, GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress()));
     EXPECT_EQ(ptr, wddmAllocation->getUnderlyingBuffer());

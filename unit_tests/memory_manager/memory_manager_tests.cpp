@@ -345,7 +345,7 @@ TEST_F(MemoryAllocatorTest, givenMemoryManagerWhensetForce32BitAllocationsIsCall
 
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationThen32bitGraphicsAllocationIsReturned) {
     size_t size = 10;
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_NE(nullptr, allocation);
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
@@ -355,8 +355,8 @@ TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationThen32b
 
 TEST_F(MemoryAllocatorTest, givenNotEnoughSpaceInAllocatorWhenAskedFor32bitAllocationNullptrIsReturned) {
     size_t size = 0xfffff000;
-    auto allocationFirst = memoryManager->allocate32BitGraphicsMemory(0x5000, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto allocationFirst = memoryManager->allocate32BitGraphicsMemory(0x5000, nullptr, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_EQ(nullptr, allocation);
     memoryManager->freeGraphicsMemory(allocationFirst);
 }
@@ -364,8 +364,8 @@ TEST_F(MemoryAllocatorTest, givenNotEnoughSpaceInAllocatorWhenAskedFor32bitAlloc
 TEST_F(MemoryAllocatorTest, givenNotEnoughSpaceInAllocatorWhenAskedFor32bitAllocationWithHostPtrThenNullptrIsReturned) {
     size_t size = 0xfffff000;
     void *ptr = (void *)0x10000;
-    auto allocationFirst = memoryManager->allocate32BitGraphicsMemory(0x5000, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto allocationFirst = memoryManager->allocate32BitGraphicsMemory(0x5000, nullptr, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_EQ(nullptr, allocation);
     memoryManager->freeGraphicsMemory(allocationFirst);
 }
@@ -373,7 +373,7 @@ TEST_F(MemoryAllocatorTest, givenNotEnoughSpaceInAllocatorWhenAskedFor32bitAlloc
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationWithPtrThen32bitGraphicsAllocationWithGpuAddressIsReturned) {
     size_t size = 10;
     void *ptr = (void *)0x1000;
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_NE(nullptr, allocation);
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
@@ -718,7 +718,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
-    auto allocation = memoryManager.allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto allocation = memoryManager.allocate32BitGraphicsMemory(size, ptr, GraphicsAllocation::AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
@@ -732,7 +732,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
     void *ptr = nullptr;
     auto size = MemoryConstants::pageSize;
 
-    auto allocation = memoryManager.allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    auto allocation = memoryManager.allocate32BitGraphicsMemory(size, ptr, GraphicsAllocation::AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
@@ -1019,7 +1019,7 @@ TEST(OsAgnosticMemoryManager, givenPointerAndSizeWhenCreateInternalAllocationIsC
     MockMemoryManager memoryManager(false, false, executionEnvironment);
     auto ptr = (void *)0x100000;
     size_t allocationSize = 4096;
-    auto graphicsAllocation = memoryManager.allocate32BitGraphicsMemory(allocationSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION);
+    auto graphicsAllocation = memoryManager.allocate32BitGraphicsMemory(allocationSize, ptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP);
     EXPECT_EQ(ptr, graphicsAllocation->getUnderlyingBuffer());
     EXPECT_EQ(allocationSize, graphicsAllocation->getUnderlyingBufferSize());
     memoryManager.freeGraphicsMemory(graphicsAllocation);
@@ -1621,27 +1621,25 @@ TEST(OsContextTest, givenOsContextWithNumberOfSupportedDevicesWhenConstructingTh
 TEST(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
     allocation.is32BitAllocation = true;
-    allocation.origin = AllocationOrigin::INTERNAL_ALLOCATION;
+    allocation.setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA);
     EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
 TEST(HeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
     allocation.is32BitAllocation = false;
-    allocation.origin = AllocationOrigin::INTERNAL_ALLOCATION;
+    allocation.setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA);
     EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
 TEST(HeapSelectorTest, given32bitExternalAllocationWhenSelectingHeapThenExternalHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
     allocation.is32BitAllocation = true;
-    allocation.origin = AllocationOrigin::EXTERNAL_ALLOCATION;
     EXPECT_EQ(HeapIndex::HEAP_EXTERNAL, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
 TEST(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForExternalAllocationThenLimitedHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
-    EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
     if (platformDevices[0]->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
         return;
     }
@@ -1650,7 +1648,6 @@ TEST(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForExternalAlloc
 
 TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithPtrThenSvmHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
-    EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
     if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
         return;
     }
@@ -1659,7 +1656,6 @@ TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocati
 
 TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIs64KSuitableThenStandard64kHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
-    EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
     auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = true;
@@ -1672,7 +1668,6 @@ TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocati
 
 TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIsNot64KSuitableThenStandardHeapIsUsed) {
     GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
-    EXPECT_EQ(AllocationOrigin::EXTERNAL_ALLOCATION, allocation.origin);
     auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = false;
