@@ -126,7 +126,7 @@ endif()
 target_link_libraries(igdrcl_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_tests igdrcl_mocks)
 
-option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" ON)
+option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" OFF)
 
 if(NOT SHOW_VERBOSE_UTESTS_RESULTS)
   set(IGDRCL_TESTS_LISTENER_OPTION "--disable_default_listener")
