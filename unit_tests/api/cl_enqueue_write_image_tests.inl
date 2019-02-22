@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ struct clEnqueueWriteImageTests : public api_fixture,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clEnqueueWriteImageTests, nullCommandQueueReturnsError) {
+TEST_F(clEnqueueWriteImageTests, GivenNullCommandQueueWhenWritingImageThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueWriteImage(
         nullptr,
         nullptr,
@@ -63,7 +63,7 @@ TEST_F(clEnqueueWriteImageTests, nullCommandQueueReturnsError) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueWriteImageTests, nullImageReturnsError) {
+TEST_F(clEnqueueWriteImageTests, GivenNullImageWhenWritingImageThenInvalidMemObjectErrorIsReturned) {
     auto retVal = clEnqueueWriteImage(
         pCommandQueue,
         nullptr,
@@ -80,7 +80,7 @@ TEST_F(clEnqueueWriteImageTests, nullImageReturnsError) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clEnqueueWriteImageTests, returnSuccess) {
+TEST_F(clEnqueueWriteImageTests, GivenValidParametersWhenWritingImageThenSuccessIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
     auto image = clCreateImage(
         pContext,
@@ -113,7 +113,7 @@ TEST_F(clEnqueueWriteImageTests, returnSuccess) {
 
 typedef clEnqueueWriteImageTests clEnqueueWriteImageYUV;
 
-TEST_F(clEnqueueWriteImageYUV, returnSuccess) {
+TEST_F(clEnqueueWriteImageYUV, GivenValidParametersWhenWritingYuvImageThenSuccessIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
@@ -143,7 +143,7 @@ TEST_F(clEnqueueWriteImageYUV, returnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueWriteImageYUV, invalidOrigin) {
+TEST_F(clEnqueueWriteImageYUV, GivenInvalidOriginWhenWritingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
@@ -172,7 +172,7 @@ TEST_F(clEnqueueWriteImageYUV, invalidOrigin) {
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
-TEST_F(clEnqueueWriteImageYUV, invalidRegion) {
+TEST_F(clEnqueueWriteImageYUV, GivenInvalidRegionWhenWritingYuvImageThenInvalidValueErrorIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_ONLY,
