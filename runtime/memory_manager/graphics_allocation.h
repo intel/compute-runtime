@@ -32,7 +32,7 @@ enum class HeapIndex : uint32_t {
     HEAP_EXTERNAL_DEVICE_MEMORY = 2u,
     HEAP_EXTERNAL = 3u,
     HEAP_STANDARD,
-    HEAP_STANDARD64Kb,
+    HEAP_STANDARD64KB,
     HEAP_SVM,
     HEAP_LIMITED
 };

@@ -380,7 +380,7 @@ HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, const 
             return HeapIndex::HEAP_SVM;
         }
         if (allocation && allocation->gmm->gmmResourceInfo->is64KBPageSuitable()) {
-            return HeapIndex::HEAP_STANDARD64Kb;
+            return HeapIndex::HEAP_STANDARD64KB;
         }
         return HeapIndex::HEAP_STANDARD;
     }

@@ -1663,7 +1663,7 @@ TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocati
     if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
         return;
     }
-    EXPECT_EQ(HeapIndex::HEAP_STANDARD64Kb, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD64KB, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
 TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIsNot64KSuitableThenStandardHeapIsUsed) {
