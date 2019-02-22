@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/program_fixture.h"
+#include <type_traits>
 
 namespace OCLRT {
 
@@ -187,9 +188,6 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
 class SimpleKernelFixture : public ProgramFixture {
   public:
     using ProgramFixture::SetUp;
-    SimpleKernelFixture() {
-        kernelsCount = arrayCount(kernels);
-    }
 
   protected:
     void SetUp(Device *device, Context *context) {
@@ -213,7 +211,7 @@ class SimpleKernelFixture : public ProgramFixture {
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
-        for (size_t i = 0; i < kernelsCount; i++) {
+        for (size_t i = 0; i < maxKernelsCount; i++) {
             if ((1 << i) & kernelIds) {
                 std::string kernelName("simple_kernel_");
                 kernelName.append(std::to_string(i));
@@ -228,7 +226,7 @@ class SimpleKernelFixture : public ProgramFixture {
     }
 
     virtual void TearDown() {
-        for (size_t i = 0; i < kernelsCount; i++) {
+        for (size_t i = 0; i < maxKernelsCount; i++) {
             if (kernels[i]) {
                 kernels[i].reset(nullptr);
             }
@@ -237,10 +235,10 @@ class SimpleKernelFixture : public ProgramFixture {
         ProgramFixture::TearDown();
     }
 
-    size_t kernelsCount;
-    cl_int retVal = CL_SUCCESS;
-    std::unique_ptr<Kernel> kernels[8] = {};
     uint32_t kernelIds = 0;
+    static constexpr size_t maxKernelsCount = std::numeric_limits<decltype(kernelIds)>::digits;
+    cl_int retVal = CL_SUCCESS;
+    std::array<std::unique_ptr<Kernel>, maxKernelsCount> kernels;
 };
 
 } // namespace OCLRT
