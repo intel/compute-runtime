@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,4 +105,20 @@ __kernel void simple_kernel_7(__global int *resIdx, global TYPE *src, global TYP
     TYPE res = (locMem[resIdx[gid]]*res3)*res2 + res1;
 
     dst[gid] = res;
+}
+
+__kernel void simple_kernel_8(__global uint *dst, uint incrementationsCount) {
+    uint groupIdX = get_group_id(0);
+    uint groupIdY = get_group_id(1);
+    uint groupIdZ = get_group_id(2);
+
+    uint groupCountX = get_num_groups(0);
+    uint groupCountY = get_num_groups(1);
+    uint groupCountZ = get_num_groups(2);
+
+    uint destination = groupIdZ * groupCountY * groupCountX + groupIdY * groupCountX + groupIdX;
+
+    for(uint i = 0; i < incrementationsCount; i++){
+        dst[destination]++;
+    }
 }
