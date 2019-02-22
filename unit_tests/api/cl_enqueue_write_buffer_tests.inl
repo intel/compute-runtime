@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ typedef api_tests clEnqueueWriteBufferTests;
 
 namespace ULT {
 
-TEST_F(clEnqueueWriteBufferTests, nullCommandQueueReturnsError) {
+TEST_F(clEnqueueWriteBufferTests, GivenNullCommandQueueWhenWritingBufferThenInvalidCommandQueueErrorIsReturned) {
     auto buffer = (cl_mem)ptrGarbage;
 
     retVal = clEnqueueWriteBuffer(
@@ -32,7 +32,7 @@ TEST_F(clEnqueueWriteBufferTests, nullCommandQueueReturnsError) {
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(clEnqueueWriteBufferTests, nullBufferReturnsError) {
+TEST_F(clEnqueueWriteBufferTests, GivenNullBufferWhenWritingBufferThenInvalidMemObjectErrorIsReturned) {
     void *ptr = nullptr;
 
     retVal = clEnqueueWriteBuffer(
