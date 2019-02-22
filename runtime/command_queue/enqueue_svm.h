@@ -72,17 +72,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
 
     NullSurface s;
     Surface *surfaces[] = {&s};
-    cl_uint dimensions = 1;
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_SVM_MAP_DOESNT_REQUIRE_COPY_DATA, svmPtr);
     }
+
     enqueueHandler<CL_COMMAND_SVM_MAP>(surfaces,
                                        blockingMap ? true : false,
-                                       nullptr,
-                                       dimensions,
-                                       nullptr,
-                                       nullptr,
-                                       nullptr,
+                                       MultiDispatchInfo(),
                                        numEventsInWaitList,
                                        eventWaitList,
                                        event);
@@ -103,14 +99,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
 
     NullSurface s;
     Surface *surfaces[] = {&s};
-    cl_uint dimensions = 1;
     enqueueHandler<CL_COMMAND_SVM_UNMAP>(surfaces,
                                          false,
-                                         nullptr,
-                                         dimensions,
-                                         nullptr,
-                                         nullptr,
-                                         nullptr,
+                                         MultiDispatchInfo(),
                                          numEventsInWaitList,
                                          eventWaitList,
                                          event);
@@ -141,14 +132,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMFree(cl_uint numSvmPointers,
 
     NullSurface s;
     Surface *surfaces[] = {&s};
-    cl_uint dimensions = 1;
+
     enqueueHandler<CL_COMMAND_SVM_FREE>(surfaces,
                                         false,
-                                        nullptr,
-                                        dimensions,
-                                        nullptr,
-                                        nullptr,
-                                        nullptr,
+                                        MultiDispatchInfo(),
                                         numEventsInWaitList,
                                         eventWaitList,
                                         retEvent);
@@ -286,18 +273,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMigrateMem(cl_uint numSvmPointers,
                                                        cl_event *event) {
     NullSurface s;
     Surface *surfaces[] = {&s};
-    cl_uint dimensions = 1;
 
     enqueueHandler<CL_COMMAND_MIGRATE_MEM_OBJECTS>(surfaces,
                                                    false,
-                                                   nullptr,
-                                                   dimensions,
-                                                   nullptr,
-                                                   nullptr,
-                                                   nullptr,
+                                                   MultiDispatchInfo(),
                                                    numEventsInWaitList,
                                                    eventWaitList,
                                                    event);
+
     return CL_SUCCESS;
 }
 } // namespace OCLRT

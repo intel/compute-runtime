@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,14 +25,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueMarkerWithWaitList(
 
     NullSurface s;
     Surface *surfaces[] = {&s};
-    cl_uint dimensions = 1;
     enqueueHandler<CL_COMMAND_MARKER>(surfaces,
                                       false,
-                                      nullptr,
-                                      dimensions,
-                                      nullptr,
-                                      nullptr,
-                                      nullptr,
+                                      MultiDispatchInfo(),
                                       numEventsInWaitList,
                                       eventWaitList,
                                       event);

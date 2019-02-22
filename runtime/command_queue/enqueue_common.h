@@ -49,53 +49,49 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                                                cl_uint numEventsInWaitList,
                                                const cl_event *eventWaitList,
                                                cl_event *event) {
-    if (kernel == nullptr) {
-        enqueueHandler<commandType>(surfaces, blocking, MultiDispatchInfo(), numEventsInWaitList, eventWaitList, event);
+    BuiltInOwnershipWrapper builtInLock;
+    MultiDispatchInfo multiDispatchInfo(kernel);
+
+    if (DebugManager.flags.ForceDispatchScheduler.get()) {
+        forceDispatchScheduler(multiDispatchInfo);
     } else {
-        BuiltInOwnershipWrapper builtInLock;
-        MultiDispatchInfo multiDispatchInfo(kernel);
-
-        if (DebugManager.flags.ForceDispatchScheduler.get()) {
-            forceDispatchScheduler(multiDispatchInfo);
-        } else {
-            MemObjsForAuxTranslation memObjsForAuxTranslation;
-            if (kernel->isAuxTranslationRequired()) {
-                auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
-                builtInLock.takeOwnership(builder, this->context);
-                kernel->fillWithBuffersForAuxTranslation(memObjsForAuxTranslation);
-                if (!memObjsForAuxTranslation.empty()) {
-                    dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
-                }
-            }
-
-            if (kernel->getKernelInfo().builtinDispatchBuilder == nullptr) {
-                DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit> builder;
-                builder.setDispatchGeometry(workDim, workItems, localWorkSizesIn, globalOffsets);
-                builder.setKernel(kernel);
-                builder.bake(multiDispatchInfo);
-            } else {
-                auto builder = kernel->getKernelInfo().builtinDispatchBuilder;
-                builder->buildDispatchInfos(multiDispatchInfo, kernel, workDim, workItems, localWorkSizesIn, globalOffsets);
-
-                if (multiDispatchInfo.size() == 0) {
-                    return;
-                }
-            }
-            if (kernel->isAuxTranslationRequired()) {
-                if (kernel->isParentKernel) {
-                    for (auto &buffer : memObjsForAuxTranslation) {
-                        buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-                    }
-                } else {
-                    if (!memObjsForAuxTranslation.empty()) {
-                        dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
-                    }
-                }
+        MemObjsForAuxTranslation memObjsForAuxTranslation;
+        if (kernel->isAuxTranslationRequired()) {
+            auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
+            builtInLock.takeOwnership(builder, this->context);
+            kernel->fillWithBuffersForAuxTranslation(memObjsForAuxTranslation);
+            if (!memObjsForAuxTranslation.empty()) {
+                dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
             }
         }
 
-        enqueueHandler<commandType>(surfaces, blocking, multiDispatchInfo, numEventsInWaitList, eventWaitList, event);
+        if (kernel->getKernelInfo().builtinDispatchBuilder == nullptr) {
+            DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit> builder;
+            builder.setDispatchGeometry(workDim, workItems, localWorkSizesIn, globalOffsets);
+            builder.setKernel(kernel);
+            builder.bake(multiDispatchInfo);
+        } else {
+            auto builder = kernel->getKernelInfo().builtinDispatchBuilder;
+            builder->buildDispatchInfos(multiDispatchInfo, kernel, workDim, workItems, localWorkSizesIn, globalOffsets);
+
+            if (multiDispatchInfo.size() == 0) {
+                return;
+            }
+        }
+        if (kernel->isAuxTranslationRequired()) {
+            if (kernel->isParentKernel) {
+                for (auto &buffer : memObjsForAuxTranslation) {
+                    buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+                }
+            } else {
+                if (!memObjsForAuxTranslation.empty()) {
+                    dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
+                }
+            }
+        }
     }
+
+    enqueueHandler<commandType>(surfaces, blocking, multiDispatchInfo, numEventsInWaitList, eventWaitList, event);
 }
 
 template <typename GfxFamily>

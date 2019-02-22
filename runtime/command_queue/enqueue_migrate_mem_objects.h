@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,18 +25,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueMigrateMemObjects(cl_uint numMemObjects
                                                            cl_event *event) {
     NullSurface s;
     Surface *surfaces[] = {&s};
-    cl_uint dimensions = 1;
 
     enqueueHandler<CL_COMMAND_MIGRATE_MEM_OBJECTS>(surfaces,
                                                    false,
-                                                   nullptr,
-                                                   dimensions,
-                                                   nullptr,
-                                                   nullptr,
-                                                   nullptr,
+                                                   MultiDispatchInfo(),
                                                    numEventsInWaitList,
                                                    eventWaitList,
                                                    event);
+
     return CL_SUCCESS;
 }
 } // namespace OCLRT
