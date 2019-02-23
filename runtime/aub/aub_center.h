@@ -21,7 +21,7 @@ class AubCenter {
     AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
 
     AubCenter();
-    virtual ~AubCenter() = default;
+    virtual ~AubCenter();
 
     void initPhysicalAddressAllocator(PhysicalAddressAllocator *pPhysicalAddressAllocator) {
         physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(pPhysicalAddressAllocator);

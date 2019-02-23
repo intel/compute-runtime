@@ -13,12 +13,11 @@
 
 namespace aub_stream {
 
-extern std::ostream &log;
-extern std::string tbxServerIp;
-extern uint16_t tbxServerPort;
-
 using MMIOPair = std::pair<uint32_t, uint32_t>;
 using MMIOList = std::vector<MMIOPair>;
-extern "C" MMIOList injectMMIOList;
+
+extern "C" void injectMMIOList(MMIOList mmioList);
+extern "C" void setTbxServerPort(uint16_t port);
+extern "C" void setTbxServerIp(std::string server);
 
 } // namespace aub_stream

@@ -28,10 +28,10 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
         aubStreamMode = getAubStreamMode(aubFileName, type);
 
         if (DebugManager.flags.AubDumpAddMmioRegistersList.get() != "unk") {
-            aub_stream::injectMMIOList = AubHelper::getAdditionalMmioList();
+            aub_stream::injectMMIOList(AubHelper::getAdditionalMmioList());
         }
-        aub_stream::tbxServerIp = DebugManager.flags.TbxServer.get();
-        aub_stream::tbxServerPort = DebugManager.flags.TbxPort.get();
+        aub_stream::setTbxServerIp(DebugManager.flags.TbxServer.get());
+        aub_stream::setTbxServerPort(DebugManager.flags.TbxPort.get());
 
         aubManager.reset(createAubManager(pHwInfo->pPlatform->eProductFamily, devicesCount, memoryBankSize, localMemoryEnabled, aubStreamMode));
     }
@@ -55,6 +55,12 @@ AubCenter::AubCenter() {
     addressMapper = std::make_unique<AddressMapper>();
     streamProvider = std::make_unique<AubFileStreamProvider>();
     subCaptureManager = std::make_unique<AubSubCaptureManager>("");
+}
+
+AubCenter::~AubCenter() {
+    if (DebugManager.flags.UseAubStream.get()) {
+        aub_stream::injectMMIOList(MMIOList{});
+    }
 }
 
 uint32_t AubCenter::getAubStreamMode(const std::string &aubFileName, uint32_t csrType) {

@@ -8,14 +8,21 @@
 #include "third_party/aub_stream/headers/aub_manager.h"
 #include "third_party/aub_stream/headers/options.h"
 
-namespace aub_stream {
-
-MMIOList injectMMIOList;
-std::string tbxServerIp = "127.0.0.1";
+namespace aub_stream_stubs {
 uint16_t tbxServerPort = 4321;
+std::string tbxServerIp = "127.0.0.1";
+} // namespace aub_stream_stubs
+
+namespace aub_stream {
 
 AubManager *AubManager::create(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSizeInGB, bool localMemorySupported, uint32_t streamMode) {
     return nullptr;
+}
+
+extern "C" {
+void injectMMIOList(MMIOList mmioList){};
+void setTbxServerPort(uint16_t port) { aub_stream_stubs::tbxServerPort = port; };
+void setTbxServerIp(std::string server) { aub_stream_stubs::tbxServerIp = server; };
 }
 
 } // namespace aub_stream

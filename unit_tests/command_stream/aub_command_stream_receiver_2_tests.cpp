@@ -722,21 +722,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineI
     EXPECT_NE(0u, aubCsr->handle);
 }
 
-struct InjectMmmioTest : public AubCommandStreamReceiverTests {
-    void SetUp() override {
-        AubCommandStreamReceiverTests::SetUp();
-        injectMmioListCopy = aub_stream::injectMMIOList;
-    }
-
-    void TearDown() override {
-        AubCommandStreamReceiverTests::TearDown();
-        aub_stream::injectMMIOList = injectMmioListCopy;
-        aub_stream::injectMMIOList.shrink_to_fit();
-    }
-
-  private:
-    MMIOList injectMmioListCopy;
-};
+using InjectMmmioTest = AubCommandStreamReceiverTests;
 
 HWTEST_F(InjectMmmioTest, givenAddMmioKeySetToZeroWhenInitAdditionalMmioCalledThenDoNotWriteMmio) {
     DebugManagerStateRestore stateRestore;
