@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -305,7 +305,9 @@ TEST_F(DeviceQueueTest, dispatchScheduler) {
     CommandQueue cmdQ(nullptr, nullptr, 0);
     KernelInfo info;
     MockSchedulerKernel *kernel = new MockSchedulerKernel(&program, info, *device);
-    devQueue.dispatchScheduler(cmdQ, *kernel, device->getPreemptionMode(), nullptr, nullptr);
+    LinearStream cmdStream;
+
+    devQueue.dispatchScheduler(cmdQ, cmdStream, *kernel, device->getPreemptionMode(), nullptr, nullptr);
     delete kernel;
 }
 

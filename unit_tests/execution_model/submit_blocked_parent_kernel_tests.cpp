@@ -62,9 +62,9 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
         timestampAddedInCleanupSection = hwTimeStamp ? hwTimeStamp->tagForCpuAccess : nullptr;
         return BaseClass::addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, taskCount);
     }
-    void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) override {
+    void dispatchScheduler(CommandQueue &cmdQ, LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) override {
         schedulerDispatched = true;
-        return BaseClass::dispatchScheduler(cmdQ, scheduler, preemptionMode, ssh, dsh);
+        return BaseClass::dispatchScheduler(cmdQ, commandStream, scheduler, preemptionMode, ssh, dsh);
     }
 
     uint32_t criticalSectioncheckCounter = 0;

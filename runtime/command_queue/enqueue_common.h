@@ -454,6 +454,7 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(Kernel *parentKernel,
 
     GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         *this,
+        *this->commandStream,
         *devQueueHw,
         preemption,
         scheduler,

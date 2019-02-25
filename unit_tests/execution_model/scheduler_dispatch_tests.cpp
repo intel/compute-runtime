@@ -60,6 +60,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
             *pCmdQ,
+            pCmdQ->getCS(0),
             *pDevQueueHw,
             pDevice->getPreemptionMode(),
             scheduler,
@@ -178,6 +179,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoe
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
             *pCmdQ,
+            pCmdQ->getCS(0),
             *pDevQueueHw,
             pDevice->getPreemptionMode(),
             scheduler,
@@ -211,6 +213,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWi
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
             *pCmdQ,
+            pCmdQ->getCS(0),
             mockDevQueue,
             device->getPreemptionMode(),
             scheduler,

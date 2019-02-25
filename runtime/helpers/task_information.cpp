@@ -182,6 +182,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
         devQueue->dispatchScheduler(
             commandQueue,
+            *kernelOperation->commandStream,
             scheduler,
             preemptionMode,
             ssh,

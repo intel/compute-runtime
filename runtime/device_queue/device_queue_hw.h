@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "runtime/scheduler/scheduler_kernel.h"
 
 namespace OCLRT {
+
 template <typename GfxFamily>
 class DeviceQueueHw : public DeviceQueue {
     using BaseClass = DeviceQueue;
@@ -57,7 +58,7 @@ class DeviceQueueHw : public DeviceQueue {
 
     void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint32_t taskCount) override;
     void resetDeviceQueue() override;
-    void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) override;
+    void dispatchScheduler(CommandQueue &cmdQ, LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) override;
 
     uint32_t getSchedulerReturnInstance() {
         return igilQueue->m_controls.m_SchedulerEarlyReturn;

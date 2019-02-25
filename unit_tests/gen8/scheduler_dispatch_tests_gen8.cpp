@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,7 @@ BDWTEST_F(BdwSchedulerTest, givenCallToDispatchSchedulerWhenPipeControlWithCSSta
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
             *pCmdQ,
+            commandStream,
             *pDevQueueHw,
             pDevice->getPreemptionMode(),
             scheduler,

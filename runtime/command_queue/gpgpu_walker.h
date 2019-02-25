@@ -196,6 +196,7 @@ class GpgpuWalkerHelper {
 
     static void dispatchScheduler(
         CommandQueue &commandQueue,
+        LinearStream &commandStream,
         DeviceQueueHw<GfxFamily> &devQueueHw,
         PreemptionMode preemptionMode,
         SchedulerKernel &scheduler,

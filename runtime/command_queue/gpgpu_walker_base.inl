@@ -53,6 +53,7 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     CommandQueue &commandQueue,
+    LinearStream &commandStream,
     DeviceQueueHw<GfxFamily> &devQueueHw,
     PreemptionMode preemptionMode,
     SchedulerKernel &scheduler,
@@ -63,13 +64,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
-    OCLRT::LinearStream *commandStream = nullptr;
-    OCLRT::IndirectHeap *ioh = nullptr;
-
-    commandStream = &commandQueue.getCS(0);
-
     bool dcFlush = false;
-    commandQueue.getCommandStreamReceiver().addPipeControl(*commandStream, dcFlush);
+    commandQueue.getCommandStreamReceiver().addPipeControl(commandStream, dcFlush);
 
     uint32_t interfaceDescriptorIndex = devQueueHw.schedulerIDIndex;
     const size_t offsetInterfaceDescriptorTable = devQueueHw.colorCalcStateSize;
@@ -78,7 +74,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
 
     // Program media interface descriptor load
     KernelCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
-        *commandStream,
+        commandStream,
         offsetInterfaceDescriptor,
         totalInterfaceDescriptorTableSize);
 
@@ -123,16 +119,16 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     size_t curbeOffset = devQueueHw.setSchedulerCrossThreadData(scheduler);
     IndirectHeap indirectObjectHeap(dsh->getCpuBase(), dsh->getMaxAvailableSpace());
     indirectObjectHeap.getSpace(curbeOffset);
-    ioh = &indirectObjectHeap;
+    IndirectHeap *ioh = &indirectObjectHeap;
 
     // Program the walker.  Invokes execution so all state should already be programmed
-    auto pGpGpuWalkerCmd = (GPGPU_WALKER *)commandStream->getSpace(sizeof(GPGPU_WALKER));
+    auto pGpGpuWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
     *pGpGpuWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
 
     bool localIdsGenerationByRuntime = KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(1, globalWorkSizes, localWorkSizes);
     bool inlineDataProgrammingRequired = KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(scheduler);
     KernelCommandsHelper<GfxFamily>::sendIndirectState(
-        *commandStream,
+        commandStream,
         *dsh,
         *ioh,
         *ssh,
@@ -147,7 +143,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         localIdsGenerationByRuntime);
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
-    GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, scheduler, true);
+    GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(&commandStream, scheduler, true);
 
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workGroups[3] = {(scheduler.getGws() / scheduler.getLws()), 1, 1};
@@ -156,15 +152,15 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
                                                            *scheduler.getKernelInfo().patchInfo.threadPayload);
 
     // Implement disabling special WA DisableLSQCROPERFforOCL if needed
-    GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, scheduler, false);
+    GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(&commandStream, scheduler, false);
 
     // Do not put BB_START only when returning in first Scheduler run
     if (devQueueHw.getSchedulerReturnInstance() != 1) {
 
-        commandQueue.getCommandStreamReceiver().addPipeControl(*commandStream, true);
+        commandQueue.getCommandStreamReceiver().addPipeControl(commandStream, true);
 
         // Add BB Start Cmd to the SLB in the Primary Batch Buffer
-        auto *bbStart = (MI_BATCH_BUFFER_START *)commandStream->getSpace(sizeof(MI_BATCH_BUFFER_START));
+        auto *bbStart = static_cast<MI_BATCH_BUFFER_START *>(commandStream.getSpace(sizeof(MI_BATCH_BUFFER_START)));
         *bbStart = GfxFamily::cmdInitBatchBufferStart;
         bbStart->setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH);
         uint64_t slbAddress = devQueueHw.getSlbBuffer()->getGpuAddress();
