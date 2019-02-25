@@ -56,13 +56,12 @@ class OsAgnosticMemoryManager : public MemoryManager {
     uint64_t getMaxApplicationAddress() override;
     uint64_t getInternalHeapBaseAddress() override;
 
-    GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override;
-
     void turnOnFakingBigAllocations();
 
     Allocator32bit *create32BitAllocator(bool enableLocalMemory);
 
   protected:
+    GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;

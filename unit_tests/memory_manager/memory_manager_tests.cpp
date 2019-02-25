@@ -310,7 +310,10 @@ TEST_F(MemoryAllocatorTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocatio
     handleStorage.fragmentStorageData[1].fragmentSize = size * 2;
     handleStorage.fragmentStorageData[2].fragmentSize = size * 3;
 
-    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, size, ptr);
+    MockMemoryManager::AllocationData allocationData;
+    allocationData.size = size;
+    allocationData.hostPtr = ptr;
+    auto allocation = std::unique_ptr<GraphicsAllocation>(memoryManager->createGraphicsAllocation(handleStorage, allocationData));
 
     EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
@@ -324,8 +327,6 @@ TEST_F(MemoryAllocatorTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocatio
     EXPECT_EQ(size * 3, allocation->fragmentsStorage.fragmentStorageData[2].fragmentSize);
 
     EXPECT_NE(&allocation->fragmentsStorage, &handleStorage);
-
-    delete allocation;
 }
 
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithTrueMutlipleTimesThenAllocatorIsReused) {

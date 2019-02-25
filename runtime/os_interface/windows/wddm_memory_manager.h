@@ -44,8 +44,6 @@ class WddmMemoryManager : public MemoryManager {
 
     void obtainGpuAddressFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
 
-    GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override;
-
     static const D3DGPU_VIRTUAL_ADDRESS minimumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>(0x0);
     static const D3DGPU_VIRTUAL_ADDRESS maximumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>((sizeof(size_t) == 8) ? 0x7ffffffffff : (D3DGPU_VIRTUAL_ADDRESS)0xffffffff);
 
@@ -62,6 +60,7 @@ class WddmMemoryManager : public MemoryManager {
     AlignedMallocRestrictions *getAlignedMallocRestrictions() override;
 
   protected:
+    GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;

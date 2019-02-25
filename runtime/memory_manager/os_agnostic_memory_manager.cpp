@@ -182,9 +182,9 @@ uint64_t OsAgnosticMemoryManager::getInternalHeapBaseAddress() {
     return this->allocator32Bit->getBase();
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
-    auto allocation = new MemoryAllocation(nullptr, const_cast<void *>(hostPtr), reinterpret_cast<uint64_t>(hostPtr),
-                                           hostPtrSize, counter++, MemoryPool::System4KBPages, false);
+GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {
+    auto allocation = new MemoryAllocation(nullptr, const_cast<void *>(allocationData.hostPtr), reinterpret_cast<uint64_t>(allocationData.hostPtr),
+                                           allocationData.size, counter++, MemoryPool::System4KBPages, false);
     allocation->fragmentsStorage = handleStorage;
     return allocation;
 }

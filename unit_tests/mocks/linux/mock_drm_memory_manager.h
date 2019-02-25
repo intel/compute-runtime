@@ -44,6 +44,7 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
     using DrmMemoryManager::AllocationData;
     using DrmMemoryManager::allocUserptr;
+    using DrmMemoryManager::createGraphicsAllocation;
     using DrmMemoryManager::internal32bitAllocator;
     using DrmMemoryManager::limitedGpuAddressRangeAllocator;
     using DrmMemoryManager::pinThreshold;

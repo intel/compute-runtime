@@ -20,6 +20,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     using MemoryManager::allocateGraphicsMemory;
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
     using MemoryManager::AllocationData;
+    using MemoryManager::createGraphicsAllocation;
     using MemoryManager::getAllocationData;
     using MemoryManager::multiContextResourceDestructor;
     using MemoryManager::registeredEngines;
@@ -159,7 +160,7 @@ class FailMemoryManager : public MockMemoryManager {
         return MemoryConstants::max32BitAppAddress;
     };
 
-    GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override {
+    GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override {
         return nullptr;
     };
     GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {

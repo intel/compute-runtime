@@ -140,7 +140,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     return ret;
 }
 
-int BufferObject::pin(BufferObject *boToPin[], size_t numberOfBos, uint32_t drmContextId) {
+int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t drmContextId) {
     drm_i915_gem_execbuffer2 execbuf = {};
     StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject;
 

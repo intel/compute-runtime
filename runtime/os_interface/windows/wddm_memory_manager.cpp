@@ -431,8 +431,8 @@ void WddmMemoryManager::obtainGpuAddressFromFragments(WddmAllocation *allocation
     }
 }
 
-GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
-    auto allocation = new WddmAllocation(const_cast<void *>(hostPtr), hostPtrSize, nullptr, MemoryPool::System4KBPages, false);
+GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {
+    auto allocation = new WddmAllocation(const_cast<void *>(allocationData.hostPtr), allocationData.size, nullptr, MemoryPool::System4KBPages, false);
     allocation->fragmentsStorage = handleStorage;
     obtainGpuAddressFromFragments(allocation, handleStorage);
     return allocation;

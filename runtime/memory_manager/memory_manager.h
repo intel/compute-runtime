@@ -120,7 +120,7 @@ class MemoryManager {
 
     virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) = 0;
 
-    virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) { return false; };
+    virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) { return false; }
 
     void *lockResource(GraphicsAllocation *graphicsAllocation);
     void unlockResource(GraphicsAllocation *graphicsAllocation);
@@ -146,15 +146,13 @@ class MemoryManager {
 
     virtual uint64_t getInternalHeapBaseAddress() = 0;
 
-    virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) = 0;
-
     bool peek64kbPagesEnabled() const { return enable64kbpages; }
-    bool peekForce32BitAllocations() { return force32bitAllocations; }
+    bool peekForce32BitAllocations() const { return force32bitAllocations; }
     void setForce32BitAllocations(bool newValue);
 
     std::unique_ptr<Allocator32bit> allocator32Bit;
 
-    bool peekVirtualPaddingSupport() { return virtualPaddingAvailable; }
+    bool peekVirtualPaddingSupport() const { return virtualPaddingAvailable; }
     void setVirtualPaddingSupport(bool virtualPaddingSupport) { virtualPaddingAvailable = virtualPaddingSupport; }
     GraphicsAllocation *peekPaddingAllocation() { return paddingAllocation; }
 
@@ -182,7 +180,7 @@ class MemoryManager {
 
     OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver, EngineInstanceT engineType,
                                           uint32_t numSupportedDevices, PreemptionMode preemptionMode);
-    uint32_t getRegisteredEnginesCount() { return static_cast<uint32_t>(registeredEngines.size()); }
+    uint32_t getRegisteredEnginesCount() const { return static_cast<uint32_t>(registeredEngines.size()); }
     CommandStreamReceiver *getDefaultCommandStreamReceiver(uint32_t deviceId) const;
     EngineControlContainer &getRegisteredEngines();
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
@@ -225,6 +223,7 @@ class MemoryManager {
                allocationType == GraphicsAllocation::AllocationType::INTERNAL_HEAP;
     }
 
+    virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) = 0;
     virtual GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) = 0;
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData);

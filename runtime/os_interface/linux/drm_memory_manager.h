@@ -43,12 +43,11 @@ class DrmMemoryManager : public MemoryManager {
     // drm/i915 ioctl wrappers
     uint32_t unreference(BufferObject *bo, bool synchronousDestroy = false);
 
-    DrmAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override;
     bool isValidateHostMemoryEnabled() const {
         return validateHostPtrMemory;
     }
 
-    DrmGemCloseWorker *peekGemCloseWorker() { return this->gemCloseWorker.get(); }
+    DrmGemCloseWorker *peekGemCloseWorker() const { return this->gemCloseWorker.get(); }
 
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
@@ -60,7 +59,9 @@ class DrmMemoryManager : public MemoryManager {
     uint64_t acquireGpuRange(size_t &size, StorageAllocatorType &allocType, bool requireSpecificBitness);
     void releaseGpuRange(void *address, size_t unmapSize, StorageAllocatorType allocatorType);
     void initInternalRangeAllocator(size_t range);
+    void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
 
+    DrmAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;

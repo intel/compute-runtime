@@ -211,8 +211,15 @@ OCLRT::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t si
     return res;
 }
 
-DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
-    auto allocation = new DrmAllocation(nullptr, const_cast<void *>(hostPtr), castToUint64(const_cast<void *>(hostPtr)), hostPtrSize, MemoryPool::System4KBPages, false);
+void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const {
+    if (forcePinEnabled && pinBB != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
+        pinBB->pin(&bo, 1, getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId());
+    }
+}
+
+DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {
+    auto hostPtr = const_cast<void *>(allocationData.hostPtr);
+    auto allocation = new DrmAllocation(nullptr, hostPtr, castToUint64(hostPtr), allocationData.size, MemoryPool::System4KBPages, false);
     allocation->fragmentsStorage = handleStorage;
     return allocation;
 }
@@ -253,9 +260,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
         bo->setAllocationType(allocType);
     }
 
-    if (forcePinEnabled && pinBB != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
-        pinBB->pin(&bo, 1, getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId());
-    }
+    emitPinningRequest(bo, allocationData);
 
     auto allocation = new DrmAllocation(bo, res, bo->gpuAddress, cSize, MemoryPool::System4KBPages, allocationData.flags.multiOsContextCapable);
     allocation->driverAllocatedCpuPointer = limitedGpuAddressRangeAllocator ? res : nullptr;
@@ -265,10 +270,8 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
     auto res = static_cast<DrmAllocation *>(MemoryManager::allocateGraphicsMemoryWithHostPtr(allocationData));
 
-    bool forcePinAllowed = res != nullptr && pinBB != nullptr && forcePinEnabled && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold;
-    if (!validateHostPtrMemory && forcePinAllowed) {
-        BufferObject *boArray[] = {res->getBO()};
-        pinBB->pin(boArray, 1, getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId());
+    if (res != nullptr && !validateHostPtrMemory) {
+        emitPinningRequest(res->getBO(), allocationData);
     }
     return res;
 }

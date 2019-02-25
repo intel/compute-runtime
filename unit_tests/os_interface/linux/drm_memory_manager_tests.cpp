@@ -705,7 +705,9 @@ TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
     handleStorage.fragmentStorageData[1].fragmentSize = size * 2;
     handleStorage.fragmentStorageData[2].fragmentSize = size * 3;
 
-    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, size, ptr);
+    allocationData.size = size;
+    allocationData.hostPtr = ptr;
+    auto allocation = std::unique_ptr<GraphicsAllocation>(memoryManager->createGraphicsAllocation(handleStorage, allocationData));
 
     EXPECT_EQ(reinterpret_cast<void *>(allocation->getGpuAddress()), ptr);
     EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
@@ -720,8 +722,6 @@ TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
     EXPECT_EQ(size * 3, allocation->fragmentsStorage.fragmentStorageData[2].fragmentSize);
 
     EXPECT_NE(&allocation->fragmentsStorage, &handleStorage);
-
-    delete allocation;
 }
 
 TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocation64kThenNullPtr) {
@@ -2778,7 +2778,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
         PinBufferObject(Drm *drm) : BufferObject(drm, 1, true) {
         }
 
-        int pin(BufferObject *boToPin[], size_t numberOfBos, uint32_t drmContextId) override {
+        int pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t drmContextId) override {
             for (size_t i = 0; i < numberOfBos; i++) {
                 pinnedBoArray[i] = boToPin[i];
             }

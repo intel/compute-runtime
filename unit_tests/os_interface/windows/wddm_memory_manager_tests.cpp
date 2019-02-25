@@ -972,7 +972,10 @@ TEST_F(BufferWithWddmMemory, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
     handleStorage.fragmentStorageData[1].fragmentSize = size * 2;
     handleStorage.fragmentStorageData[2].fragmentSize = size * 3;
 
-    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, size, ptr);
+    AllocationData allocationData;
+    allocationData.size = size;
+    allocationData.hostPtr = ptr;
+    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, allocationData);
 
     EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
@@ -1012,7 +1015,10 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     fragment.osInternalStorage->gpuPtr = gpuAdress;
     memoryManager->getHostPtrManager()->storeFragment(fragment);
 
-    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, size, ptr);
+    AllocationData allocationData;
+    allocationData.size = size;
+    allocationData.hostPtr = ptr;
+    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, allocationData);
     EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(gpuAdress, allocation->getGpuAddress());
@@ -1045,7 +1051,10 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
 
     auto offset = 80;
     auto allocationPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + offset);
-    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, size, allocationPtr);
+    AllocationData allocationData;
+    allocationData.size = size;
+    allocationData.hostPtr = allocationPtr;
+    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, allocationData);
 
     EXPECT_EQ(allocationPtr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());

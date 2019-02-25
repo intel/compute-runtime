@@ -81,7 +81,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const Alloc
     GraphicsAllocation *graphicsAllocation = nullptr;
     auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, allocationData.size, allocationData.hostPtr);
     if (osStorage.fragmentCount > 0) {
-        graphicsAllocation = createGraphicsAllocation(osStorage, allocationData.size, allocationData.hostPtr);
+        graphicsAllocation = createGraphicsAllocation(osStorage, allocationData);
     }
     return graphicsAllocation;
 }

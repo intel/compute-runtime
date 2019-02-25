@@ -42,7 +42,7 @@ class BufferObject {
 
     bool setTiling(uint32_t mode, uint32_t stride);
 
-    MOCKABLE_VIRTUAL int pin(BufferObject *boToPin[], size_t numberOfBos, uint32_t drmContextId);
+    MOCKABLE_VIRTUAL int pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t drmContextId);
 
     int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId);
 
