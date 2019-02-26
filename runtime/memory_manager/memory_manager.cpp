@@ -242,6 +242,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
     case GraphicsAllocation::AllocationType::SVM:
+    case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
         mustBeZeroCopy = true;
         break;
     default:
@@ -252,6 +253,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::UNDECIDED:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
     case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
         allocationData.flags.useSystemMemory = true;
         break;
     default:

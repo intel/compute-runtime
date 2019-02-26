@@ -107,7 +107,7 @@ class MemoryManager {
 
     GraphicsAllocation *allocateGraphicsMemoryForHostPtr(size_t size, void *ptr, bool fullRangeSvm, bool requiresL3Flush) {
         if (fullRangeSvm && DebugManager.flags.EnableHostPtrTracking.get()) {
-            return allocateGraphicsMemory({false, size, GraphicsAllocation::AllocationType::UNDECIDED}, ptr);
+            return allocateGraphicsMemory({false, size, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR}, ptr);
         } else {
             auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(size, ptr);
             if (allocation) {

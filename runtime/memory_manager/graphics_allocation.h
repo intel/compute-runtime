@@ -83,6 +83,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         SVM,
         KERNEL_ISA,
         INTERNAL_HEAP,
+        EXTERNAL_HOST_PTR,
         UNDECIDED,
     };
 

@@ -443,3 +443,15 @@ TEST(MemoryManagerTest, givenLinearStreamWhenGetAllocationDataIsCalledThenSystem
 TEST(MemoryManagerTest, givenKernelIsaTypeThenUseInternal32BitAllocator) {
     EXPECT_TRUE(MockMemoryManager::useInternal32BitAllocator(GraphicsAllocation::AllocationType::KERNEL_ISA));
 }
+
+TEST(MemoryManagerTest, givenExternalHostMemoryWhenGetAllocationDataIsCalledThenItHasProperFieldsSet) {
+    AllocationData allocData;
+    auto hostPtr = reinterpret_cast<void *>(0x1234);
+    MockMemoryManager::getAllocationData(allocData, {false, 1, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR}, {}, hostPtr);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.mustBeZeroCopy);
+    EXPECT_FALSE(allocData.flags.allocateMemory);
+    EXPECT_FALSE(allocData.flags.allow32Bit);
+    EXPECT_FALSE(allocData.flags.allow64kbPages);
+    EXPECT_EQ(allocData.hostPtr, hostPtr);
+}
