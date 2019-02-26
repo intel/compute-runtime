@@ -1301,11 +1301,15 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
     Event event1(cmdQ.get(), 0, 0, 0);
     event1.addTimestampPacketNodes(node2);
     UserEvent userEvent;
+    Event eventWithoutContainer(nullptr, 0, 0, 0);
 
-    cl_event waitlist[] = {&event0, &event1, &userEvent};
+    uint32_t numEventsWithContainer = 2;
+    uint32_t numEventsOnWaitlist = numEventsWithContainer + 2; // UserEvent + eventWithoutContainer
+
+    cl_event waitlist[] = {&event0, &event1, &userEvent, &eventWithoutContainer};
 
     cl_event clOutEvent;
-    cmdQ->enqueueMarkerWithWaitList(3, waitlist, &clOutEvent);
+    cmdQ->enqueueMarkerWithWaitList(numEventsOnWaitlist, waitlist, &clOutEvent);
 
     auto outEvent = castToObject<Event>(clOutEvent);
 
@@ -1313,7 +1317,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
     EXPECT_EQ(1u, cmdQ->timestampPacketContainer->peekNodes().size());
 
     auto &eventsNodes = outEvent->getTimestampPacketNodes()->peekNodes();
-    EXPECT_EQ(3u, eventsNodes.size());
+    EXPECT_EQ(numEventsWithContainer + 1, eventsNodes.size()); // numEventsWithContainer + command queue
     EXPECT_EQ(cmdQNodes.peekNodes().at(0), eventsNodes.at(0));
     EXPECT_EQ(event0.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(1));
     EXPECT_EQ(event1.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(2));
