@@ -17,14 +17,15 @@
 
 namespace OCLRT {
 class AubCenter;
-class GmmHelper;
+class BuiltIns;
 class CommandStreamReceiver;
+class CompilerInterface;
+class GmmHelper;
 class MemoryManager;
 class SourceLevelDebugger;
-class CompilerInterface;
-class BuiltIns;
-struct HardwareInfo;
 class OSInterface;
+struct EngineControl;
+struct HardwareInfo;
 
 using CsrContainer = std::vector<std::vector<std::unique_ptr<CommandStreamReceiver>>>;
 
@@ -50,6 +51,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     GmmHelper *getGmmHelper() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
     BuiltIns *getBuiltIns();
+    EngineControl *getEngineControlForSpecialCsr();
 
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryManager> memoryManager;

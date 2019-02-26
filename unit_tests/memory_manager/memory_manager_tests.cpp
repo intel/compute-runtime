@@ -1703,3 +1703,15 @@ TEST(MemoryAllocationTest, givenMemoryPoolWhenPassedToMemoryAllocationConstructo
     MemoryAllocation allocation{GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, 0, 0, 0, MemoryPool::System64KBPages, false};
     EXPECT_EQ(MemoryPool::System64KBPages, allocation.getMemoryPool());
 }
+
+TEST_F(MemoryAllocatorTest, whenCommandStreamerIsRegisteredThenReturnAssociatedEngineControl) {
+    auto engineControl = memoryManager->getRegisteredEngineForCsr(csr);
+    ASSERT_NE(nullptr, engineControl);
+    EXPECT_EQ(csr, engineControl->commandStreamReceiver);
+}
+
+TEST_F(MemoryAllocatorTest, whenCommandStreamerIsNotRegisteredThenReturnNullEngineControl) {
+    CommandStreamReceiver *dummyCsr = reinterpret_cast<CommandStreamReceiver *>(0x1);
+    auto engineControl = memoryManager->getRegisteredEngineForCsr(dummyCsr);
+    EXPECT_EQ(nullptr, engineControl);
+}

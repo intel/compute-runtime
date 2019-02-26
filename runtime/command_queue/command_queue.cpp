@@ -74,10 +74,6 @@ CommandQueue::CommandQueue(Context *context, Device *deviceId, const cl_queue_pr
     }
 
     processProperties(properties);
-
-    if (DebugManager.flags.ForceMultiEngineQueue.get() > -1) {
-        this->multiEngineQueue = DebugManager.flags.ForceMultiEngineQueue.get();
-    }
 }
 
 CommandQueue::~CommandQueue() {

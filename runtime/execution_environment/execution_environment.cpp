@@ -94,4 +94,13 @@ BuiltIns *ExecutionEnvironment::getBuiltIns() {
     }
     return this->builtins.get();
 }
+
+EngineControl *ExecutionEnvironment::getEngineControlForSpecialCsr() {
+    EngineControl *engine = nullptr;
+    if (specialCommandStreamReceiver.get()) {
+        engine = memoryManager->getRegisteredEngineForCsr(specialCommandStreamReceiver.get());
+    }
+    return engine;
+}
+
 } // namespace OCLRT

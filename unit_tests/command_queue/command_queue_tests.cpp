@@ -984,12 +984,3 @@ TEST(CommandQueuePropertiesTests, whenDefaultCommandQueueIsCreatedThenItIsNotMul
     queue.multiEngineQueue = true;
     EXPECT_TRUE(queue.isMultiEngineQueue());
 }
-TEST(CommandQueuePropertiesTests, whenDebugVariableOverridesMultiEngineVariableThenItIsSetToTrue) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.ForceMultiEngineQueue.set(1u);
-    MockCommandQueue queue;
-    EXPECT_TRUE(queue.isMultiEngineQueue());
-    DebugManager.flags.ForceMultiEngineQueue.set(0u);
-    MockCommandQueue queue2;
-    EXPECT_FALSE(queue2.isMultiEngineQueue());
-}

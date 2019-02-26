@@ -345,6 +345,17 @@ EngineControlContainer &MemoryManager::getRegisteredEngines() {
     return registeredEngines;
 }
 
+EngineControl *MemoryManager::getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver) {
+    EngineControl *engineCtrl = nullptr;
+    for (auto &engine : registeredEngines) {
+        if (engine.commandStreamReceiver == commandStreamReceiver) {
+            engineCtrl = &engine;
+            break;
+        }
+    }
+    return engineCtrl;
+}
+
 CommandStreamReceiver *MemoryManager::getDefaultCommandStreamReceiver(uint32_t deviceId) const {
     return executionEnvironment.commandStreamReceivers[deviceId][defaultEngineIndex].get();
 }
