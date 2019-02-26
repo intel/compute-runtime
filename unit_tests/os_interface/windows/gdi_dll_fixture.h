@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ struct GdiDllFixture {
         getMockAllocationFcn = reinterpret_cast<decltype(&getMockAllocation)>(mockGdiDll->getProcAddress("getMockAllocation"));
         getAdapterInfoAddressFcn = reinterpret_cast<decltype(&getAdapterInfoAddress)>(mockGdiDll->getProcAddress("getAdapterInfoAddress"));
         getLastCallMapGpuVaArgFcn = reinterpret_cast<decltype(&getLastCallMapGpuVaArg)>(mockGdiDll->getProcAddress("getLastCallMapGpuVaArg"));
+        getLastCallReserveGpuVaArgFcn = reinterpret_cast<decltype(&getLastCallReserveGpuVaArg)>(mockGdiDll->getProcAddress("getLastCallReserveGpuVaArg"));
         setMapGpuVaFailConfigFcn = reinterpret_cast<decltype(&setMapGpuVaFailConfig)>(mockGdiDll->getProcAddress("setMapGpuVaFailConfig"));
         setMapGpuVaFailConfigFcn(0, 0);
         getCreateContextDataFcn = reinterpret_cast<decltype(&getCreateContextData)>(mockGdiDll->getProcAddress("getCreateContextData"));
@@ -61,6 +62,7 @@ struct GdiDllFixture {
     decltype(&getMockAllocation) getMockAllocationFcn = nullptr;
     decltype(&getAdapterInfoAddress) getAdapterInfoAddressFcn = nullptr;
     decltype(&getLastCallMapGpuVaArg) getLastCallMapGpuVaArgFcn = nullptr;
+    decltype(&getLastCallReserveGpuVaArg) getLastCallReserveGpuVaArgFcn = nullptr;
     decltype(&setMapGpuVaFailConfig) setMapGpuVaFailConfigFcn = nullptr;
     decltype(&getCreateContextData) getCreateContextDataFcn = nullptr;
     decltype(&getCreateHwQueueData) getCreateHwQueueDataFcn = nullptr;

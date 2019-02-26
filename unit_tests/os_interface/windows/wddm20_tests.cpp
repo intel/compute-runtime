@@ -213,6 +213,24 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
 
     delete gmm;
 }
+TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParamtersThenAddressInRangeIsReturend) {
+    auto sizeAlignedTo64Kb = 64 * KB;
+
+    auto reservationAddress = wddm->reserveGpuVirtualAddress(wddm->getGfxPartition().Heap32[0].Base,
+                                                             wddm->getGfxPartition().Heap32[0].Limit,
+                                                             sizeAlignedTo64Kb);
+
+    EXPECT_GE(reservationAddress, wddm->getGfxPartition().Heap32[0].Base);
+    auto programmedReserved = getLastCallReserveGpuVaArgFcn();
+    EXPECT_EQ(0llu, programmedReserved->BaseAddress);
+    EXPECT_EQ(wddm->getGfxPartition().Heap32[0].Base, programmedReserved->MinimumAddress);
+    EXPECT_EQ(wddm->getGfxPartition().Heap32[0].Limit, programmedReserved->MaximumAddress);
+    EXPECT_EQ(sizeAlignedTo64Kb, programmedReserved->Size);
+
+    auto pagingQueue = wddm->getPagingQueue();
+    EXPECT_NE(0llu, pagingQueue);
+    EXPECT_EQ(pagingQueue, programmedReserved->hPagingQueue);
+}
 
 TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmSize) {
     void *fakePtr = reinterpret_cast<void *>(0x123);

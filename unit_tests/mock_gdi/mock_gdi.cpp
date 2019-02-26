@@ -11,6 +11,7 @@
 
 ADAPTER_INFO gAdapterInfo = {0};
 D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg = {0};
+D3DDDI_RESERVEGPUVIRTUALADDRESS gLastCallReserveGpuVaArg = {0};
 uint32_t gMapGpuVaFailConfigCount = 0;
 uint32_t gMapGpuVaFailConfigMax = 0;
 
@@ -262,6 +263,12 @@ NTSTATUS __stdcall D3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS
     return STATUS_PENDING;
 }
 
+NTSTATUS __stdcall D3DKMTReserveGpuVirtualAddress(IN OUT D3DDDI_RESERVEGPUVIRTUALADDRESS *reserveGpuVirtualAddress) {
+    gLastCallReserveGpuVaArg = *reserveGpuVirtualAddress;
+    reserveGpuVirtualAddress->VirtualAddress = reserveGpuVirtualAddress->MinimumAddress;
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS __stdcall D3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *queryAdapterInfo) {
     if (queryAdapterInfo == nullptr || queryAdapterInfo->hAdapter != ADAPTER_HANDLE) {
         return STATUS_INVALID_PARAMETER;
@@ -452,6 +459,10 @@ ADAPTER_INFO *getAdapterInfoAddress() {
 
 D3DDDI_MAPGPUVIRTUALADDRESS *getLastCallMapGpuVaArg() {
     return &gLastCallMapGpuVaArg;
+}
+
+D3DDDI_RESERVEGPUVIRTUALADDRESS *getLastCallReserveGpuVaArg() {
+    return &gLastCallReserveGpuVaArg;
 }
 
 void setMapGpuVaFailConfig(uint32_t count, uint32_t max) {
