@@ -70,6 +70,7 @@ class DrmMemoryManager : public MemoryManager {
     void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
     DrmAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
 
     Drm *drm;
     BufferObject *pinBB;

@@ -16,22 +16,22 @@ static std::atomic<int> lseekCalledCount(0);
 static std::atomic<int> mmapMockCallCount(0);
 static std::atomic<int> munmapMockCallCount(0);
 
-off_t lseekMock(int fd, off_t offset, int whence) noexcept {
+inline off_t lseekMock(int fd, off_t offset, int whence) noexcept {
     lseekCalledCount++;
     return lseekReturn;
 }
-void *mmapMock(void *addr, size_t length, int prot, int flags,
-               int fd, long offset) noexcept {
+inline void *mmapMock(void *addr, size_t length, int prot, int flags,
+                      int fd, long offset) noexcept {
     mmapMockCallCount++;
     return reinterpret_cast<void *>(0x1000);
 }
 
-int munmapMock(void *addr, size_t length) noexcept {
+inline int munmapMock(void *addr, size_t length) noexcept {
     munmapMockCallCount++;
     return 0;
 }
 
-int closeMock(int) {
+inline int closeMock(int) {
     return 0;
 }
 
