@@ -902,7 +902,7 @@ TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalS
 
     char buffer[16];
 
-    GraphicsAllocation gfxAlloc((void *)buffer, (uint64_t)buffer - 8u, 8, 1u, false);
+    GraphicsAllocation gfxAlloc(GraphicsAllocation::AllocationType::UNKNOWN, buffer, (uint64_t)buffer - 8u, 8, 1u, MemoryPool::MemoryNull, false);
     uint64_t bufferAddress = (uint64_t)gfxAlloc.getUnderlyingBuffer();
 
     // create kernel
@@ -945,7 +945,7 @@ TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalS
 
     char buffer[16];
 
-    GraphicsAllocation gfxAlloc((void *)buffer, (uint64_t)buffer - 8u, 8, false);
+    GraphicsAllocation gfxAlloc(GraphicsAllocation::AllocationType::UNKNOWN, buffer, (uint64_t)buffer - 8u, 8, MemoryPool::MemoryNull, false);
     uint64_t bufferAddress = gfxAlloc.getGpuAddress();
 
     // create kernel
@@ -1077,7 +1077,7 @@ TEST_F(KernelConstantSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenConst
 
     char buffer[16];
 
-    GraphicsAllocation gfxAlloc((void *)buffer, (uint64_t)buffer - 8u, 8, 1u, false);
+    GraphicsAllocation gfxAlloc(GraphicsAllocation::AllocationType::UNKNOWN, buffer, (uint64_t)buffer - 8u, 8, 1u, MemoryPool::MemoryNull, false);
     uint64_t bufferAddress = (uint64_t)gfxAlloc.getUnderlyingBuffer();
 
     // create kernel
@@ -1119,7 +1119,7 @@ TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConst
 
     char buffer[16];
 
-    GraphicsAllocation gfxAlloc((void *)buffer, (uint64_t)buffer - 8u, 8, false);
+    GraphicsAllocation gfxAlloc(GraphicsAllocation::AllocationType::UNKNOWN, buffer, (uint64_t)buffer - 8u, 8, MemoryPool::MemoryNull, false);
     uint64_t bufferAddress = gfxAlloc.getGpuAddress();
 
     // create kernel

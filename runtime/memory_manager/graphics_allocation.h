@@ -90,9 +90,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     GraphicsAllocation &operator=(const GraphicsAllocation &) = delete;
     GraphicsAllocation(const GraphicsAllocation &) = delete;
 
-    GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, bool multiOsContextCapable);
+    GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable);
 
-    GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, bool multiOsContextCapable);
+    GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool, bool multiOsContextCapable);
 
     void *getUnderlyingBuffer() const { return cpuPtr; }
     void setCpuPtrAndGpuAddress(void *cpuPtr, uint64_t gpuAddress) {
@@ -137,15 +137,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void incReuseCount() { reuseCount++; }
     void decReuseCount() { reuseCount--; }
     uint32_t peekReuseCount() const { return reuseCount; }
-    MemoryPool::Type getMemoryPool() const {
-        return memoryPool;
-    }
+    MemoryPool::Type getMemoryPool() const { return memoryPool; }
     bool isUsed() const { return registeredContextsNum > 0; }
     bool isUsedByOsContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
     void updateTaskCount(uint32_t newTaskCount, uint32_t contextId);
     uint32_t getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
     void releaseUsageInOsContext(uint32_t contextId) { updateTaskCount(objectNotUsed, contextId); }
-    uint32_t getInspectionId(uint32_t contextId) { return usageInfos[contextId].inspectionId; }
+    uint32_t getInspectionId(uint32_t contextId) const { return usageInfos[contextId].inspectionId; }
     void setInspectionId(uint32_t newInspectionId, uint32_t contextId) { usageInfos[contextId].inspectionId = newInspectionId; }
 
     bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }

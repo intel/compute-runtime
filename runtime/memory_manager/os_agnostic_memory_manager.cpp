@@ -73,7 +73,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(Allocati
     allocationData.alignment = MemoryConstants::pageSize64k;
     auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationData);
     if (memoryAllocation) {
-        reinterpret_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::System64KBPages);
+        static_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::System64KBPages);
     }
     return memoryAllocation;
 }

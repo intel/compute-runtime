@@ -23,19 +23,24 @@ bool GraphicsAllocation::isL3Capable() {
     }
     return false;
 }
-GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress,
-                                       size_t sizeIn, bool multiOsContextCapable)
+GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress,
+                                       size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable)
     : gpuBaseAddress(baseAddress),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       gpuAddress(gpuAddress),
+      memoryPool(pool),
+      allocationType(allocationType),
       multiOsContextCapable(multiOsContextCapable) {}
 
-GraphicsAllocation::GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, bool multiOsContextCapable)
+GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn,
+                                       MemoryPool::Type pool, bool multiOsContextCapable)
     : size(sizeIn),
       cpuPtr(cpuPtrIn),
       gpuAddress(castToUint64(cpuPtrIn)),
       sharedHandle(sharedHandleIn),
+      memoryPool(pool),
+      allocationType(allocationType),
       multiOsContextCapable(multiOsContextCapable) {}
 
 GraphicsAllocation::~GraphicsAllocation() = default;

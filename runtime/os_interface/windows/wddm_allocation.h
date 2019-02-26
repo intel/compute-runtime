@@ -31,22 +31,21 @@ class WddmAllocation : public GraphicsAllocation {
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
 
     D3DGPU_VIRTUAL_ADDRESS gpuPtr; // set by mapGpuVA
+
     WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, multiOsContextCapable),
+        : GraphicsAllocation(AllocationType::UNKNOWN, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool, multiOsContextCapable),
           handle(0),
           gpuPtr(0),
           trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
         reservedAddressSpace = reservedAddr;
-        this->memoryPool = pool;
     }
 
     WddmAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(cpuPtrIn, sizeIn, sharedHandle, multiOsContextCapable),
+        : GraphicsAllocation(AllocationType::UNKNOWN, cpuPtrIn, sizeIn, sharedHandle, pool, multiOsContextCapable),
           handle(0),
           gpuPtr(0),
           trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
         reservedAddressSpace = nullptr;
-        this->memoryPool = pool;
     }
 
     void *getAlignedCpuPtr() const {

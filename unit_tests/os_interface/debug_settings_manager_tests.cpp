@@ -865,35 +865,35 @@ TEST(DebugSettingsManager, givenReaderImplInDebugManagerWhenSettingDifferentRead
 }
 
 struct AllocationTypeTestCase {
-    OCLRT::GraphicsAllocation::AllocationType type;
+    GraphicsAllocation::AllocationType type;
     const char *str;
 };
 
 AllocationTypeTestCase allocationTypeValues[] = {
-    {OCLRT::GraphicsAllocation::AllocationType::UNKNOWN, "UNKNOWN"},
-    {OCLRT::GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, "BUFFER_COMPRESSED"},
-    {OCLRT::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, "BUFFER_HOST_MEMORY"},
-    {OCLRT::GraphicsAllocation::AllocationType::BUFFER, "BUFFER"},
-    {OCLRT::GraphicsAllocation::AllocationType::IMAGE, "IMAGE"},
-    {OCLRT::GraphicsAllocation::AllocationType::TAG_BUFFER, "TAG_BUFFER"},
-    {OCLRT::GraphicsAllocation::AllocationType::LINEAR_STREAM, "LINEAR_STREAM"},
-    {OCLRT::GraphicsAllocation::AllocationType::FILL_PATTERN, "FILL_PATTERN"},
-    {OCLRT::GraphicsAllocation::AllocationType::PIPE, "PIPE"},
-    {OCLRT::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, "TIMESTAMP_PACKET_TAG_BUFFER"},
-    {OCLRT::GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER, "PROFILING_TAG_BUFFER"},
-    {OCLRT::GraphicsAllocation::AllocationType::COMMAND_BUFFER, "COMMAND_BUFFER"},
-    {OCLRT::GraphicsAllocation::AllocationType::PRINTF_SURFACE, "PRINTF_SURFACE"},
-    {OCLRT::GraphicsAllocation::AllocationType::GLOBAL_SURFACE, "GLOBAL_SURFACE"},
-    {OCLRT::GraphicsAllocation::AllocationType::PRIVATE_SURFACE, "PRIVATE_SURFACE"},
-    {OCLRT::GraphicsAllocation::AllocationType::CONSTANT_SURFACE, "CONSTANT_SURFACE"},
-    {OCLRT::GraphicsAllocation::AllocationType::SCRATCH_SURFACE, "SCRATCH_SURFACE"},
-    {OCLRT::GraphicsAllocation::AllocationType::INSTRUCTION_HEAP, "INSTRUCTION_HEAP"},
-    {OCLRT::GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP, "INDIRECT_OBJECT_HEAP"},
-    {OCLRT::GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP, "SURFACE_STATE_HEAP"},
-    {OCLRT::GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP, "DYNAMIC_STATE_HEAP"},
-    {OCLRT::GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY, "SHARED_RESOURCE_COPY"},
-    {OCLRT::GraphicsAllocation::AllocationType::SVM, "SVM"},
-    {OCLRT::GraphicsAllocation::AllocationType::UNDECIDED, "UNDECIDED"}};
+    {GraphicsAllocation::AllocationType::UNKNOWN, "UNKNOWN"},
+    {GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, "BUFFER_COMPRESSED"},
+    {GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, "BUFFER_HOST_MEMORY"},
+    {GraphicsAllocation::AllocationType::BUFFER, "BUFFER"},
+    {GraphicsAllocation::AllocationType::IMAGE, "IMAGE"},
+    {GraphicsAllocation::AllocationType::TAG_BUFFER, "TAG_BUFFER"},
+    {GraphicsAllocation::AllocationType::LINEAR_STREAM, "LINEAR_STREAM"},
+    {GraphicsAllocation::AllocationType::FILL_PATTERN, "FILL_PATTERN"},
+    {GraphicsAllocation::AllocationType::PIPE, "PIPE"},
+    {GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, "TIMESTAMP_PACKET_TAG_BUFFER"},
+    {GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER, "PROFILING_TAG_BUFFER"},
+    {GraphicsAllocation::AllocationType::COMMAND_BUFFER, "COMMAND_BUFFER"},
+    {GraphicsAllocation::AllocationType::PRINTF_SURFACE, "PRINTF_SURFACE"},
+    {GraphicsAllocation::AllocationType::GLOBAL_SURFACE, "GLOBAL_SURFACE"},
+    {GraphicsAllocation::AllocationType::PRIVATE_SURFACE, "PRIVATE_SURFACE"},
+    {GraphicsAllocation::AllocationType::CONSTANT_SURFACE, "CONSTANT_SURFACE"},
+    {GraphicsAllocation::AllocationType::SCRATCH_SURFACE, "SCRATCH_SURFACE"},
+    {GraphicsAllocation::AllocationType::INSTRUCTION_HEAP, "INSTRUCTION_HEAP"},
+    {GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP, "INDIRECT_OBJECT_HEAP"},
+    {GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP, "SURFACE_STATE_HEAP"},
+    {GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP, "DYNAMIC_STATE_HEAP"},
+    {GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY, "SHARED_RESOURCE_COPY"},
+    {GraphicsAllocation::AllocationType::SVM, "SVM"},
+    {GraphicsAllocation::AllocationType::UNDECIDED, "UNDECIDED"}};
 
 class AllocationTypeLogging : public ::testing::TestWithParam<AllocationTypeTestCase> {};
 
@@ -901,8 +901,7 @@ TEST_P(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringT
     FullyEnabledTestDebugManager debugManager;
     auto input = GetParam();
 
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0, true);
-    graphicsAllocation.setAllocationType(input.type);
+    GraphicsAllocation graphicsAllocation(input.type, nullptr, 0u, 0, MemoryPool::MemoryNull, true);
 
     auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
 
@@ -916,8 +915,7 @@ INSTANTIATE_TEST_CASE_P(AllAllocationTypes,
 TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStringIllegalValueThenILLEGAL_VALUEIsReturned) {
     FullyEnabledTestDebugManager debugManager;
 
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0, true);
-    graphicsAllocation.setAllocationType(static_cast<OCLRT::GraphicsAllocation::AllocationType>(999));
+    GraphicsAllocation graphicsAllocation(static_cast<GraphicsAllocation::AllocationType>(999), nullptr, 0u, 0, MemoryPool::MemoryNull, true);
 
     auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
 
@@ -927,8 +925,7 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
 TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenDebugManagerDisabledThennullptrReturned) {
     FullyDisabledTestDebugManager debugManager;
 
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0, true);
-    graphicsAllocation.setAllocationType(OCLRT::GraphicsAllocation::AllocationType::BUFFER);
+    GraphicsAllocation graphicsAllocation(GraphicsAllocation::AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, true);
 
     auto result = debugManager.getAllocationTypeString(&graphicsAllocation);
 
@@ -936,6 +933,6 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenDebugManagerDis
 }
 
 TEST(AllocationInfoLogging, givenBaseGraphicsAllocationWhenGettingImplementationSpecificAllocationInfoThenReturnEmptyInfoString) {
-    GraphicsAllocation graphicsAllocation(nullptr, 0u, 0, true);
+    GraphicsAllocation graphicsAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0, MemoryPool::MemoryNull, true);
     EXPECT_STREQ(graphicsAllocation.getAllocationInfoString().c_str(), "");
 }

@@ -70,7 +70,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     UltCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : BaseClass(hwInfoIn, executionEnvironment), recursiveLockCounter(0) {
         if (hwInfoIn.capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
-            tempPreemptionLocation = std::make_unique<GraphicsAllocation>(nullptr, 0, 0, 0, false);
+            tempPreemptionLocation = std::make_unique<GraphicsAllocation>(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false);
             this->preemptionCsrAllocation = tempPreemptionLocation.get();
         }
     }

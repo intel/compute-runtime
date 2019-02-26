@@ -16,10 +16,17 @@ class MockGraphicsAllocation : public GraphicsAllocation {
     using GraphicsAllocation::objectNotUsed;
     using GraphicsAllocation::usageInfos;
 
-    MockGraphicsAllocation() : MockGraphicsAllocation(true) {}
-    MockGraphicsAllocation(bool multiOsContextCapable) : GraphicsAllocation(nullptr, 0u, 0, multiOsContextCapable) {}
-    MockGraphicsAllocation(void *buffer, size_t sizeIn) : GraphicsAllocation(buffer, castToUint64(buffer), 0llu, sizeIn, false) {}
-    MockGraphicsAllocation(void *buffer, uint64_t gpuAddr, size_t sizeIn) : GraphicsAllocation(buffer, gpuAddr, 0llu, sizeIn, false) {}
+    MockGraphicsAllocation()
+        : MockGraphicsAllocation(true) {}
+
+    MockGraphicsAllocation(bool multiOsContextCapable)
+        : GraphicsAllocation(AllocationType::UNKNOWN, nullptr, 0u, 0, MemoryPool::MemoryNull, multiOsContextCapable) {}
+
+    MockGraphicsAllocation(void *buffer, size_t sizeIn)
+        : GraphicsAllocation(AllocationType::UNKNOWN, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::MemoryNull, false) {}
+
+    MockGraphicsAllocation(void *buffer, uint64_t gpuAddr, size_t sizeIn)
+        : GraphicsAllocation(AllocationType::UNKNOWN, buffer, gpuAddr, 0llu, sizeIn, MemoryPool::MemoryNull, false) {}
 
     void resetInspectionIds() {
         for (auto &usageInfo : usageInfos) {

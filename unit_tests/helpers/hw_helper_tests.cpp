@@ -347,7 +347,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenU
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
-    GraphicsAllocation allocation(cpuAddr, gpuAddr, 0u, allocSize, false);
+    GraphicsAllocation allocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, false);
     allocation.gmm = new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false);
     ASSERT_NE(nullptr, allocation.gmm);
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
@@ -385,7 +385,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(cpuAddr, gpuAddr, 0u, allocSize, false);
+    GraphicsAllocation allocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, false);
     allocation.gmm = new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false);
     ASSERT_NE(nullptr, allocation.gmm);
     allocation.gmm->isRenderCompressed = true;
@@ -419,7 +419,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionEnabledAn
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(cpuAddr, gpuAddr, 0u, allocSize, false);
+    GraphicsAllocation allocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, false);
     allocation.gmm = new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false);
     ASSERT_NE(nullptr, allocation.gmm);
     allocation.gmm->isRenderCompressed = true;
@@ -452,7 +452,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDisabledA
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(cpuAddr, gpuAddr, 0u, allocSize, false);
+    GraphicsAllocation allocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, false);
     allocation.gmm = new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false);
     ASSERT_NE(nullptr, allocation.gmm);
     allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
@@ -485,7 +485,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(cpuAddr, gpuAddr, 0u, allocSize, false);
+    GraphicsAllocation allocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, false);
     allocation.gmm = new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false);
     ASSERT_NE(nullptr, allocation.gmm);
     allocation.gmm->isRenderCompressed = true;

@@ -17,11 +17,14 @@ struct OsHandle {
 
 class DrmAllocation : public GraphicsAllocation {
   public:
-    DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, bool multiOsContextCapable) : GraphicsAllocation(ptrIn, sizeIn, sharedHandle, multiOsContextCapable), bo(bo) {
-        this->memoryPool = pool;
+    DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, bool multiOsContextCapable)
+        : GraphicsAllocation(AllocationType::UNKNOWN, ptrIn, sizeIn, sharedHandle, pool, multiOsContextCapable),
+          bo(bo) {
     }
-    DrmAllocation(BufferObject *bo, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable) : GraphicsAllocation(ptrIn, gpuAddress, 0, sizeIn, multiOsContextCapable), bo(bo) {
-        this->memoryPool = pool;
+
+    DrmAllocation(BufferObject *bo, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable)
+        : GraphicsAllocation(AllocationType::UNKNOWN, ptrIn, gpuAddress, 0, sizeIn, pool, multiOsContextCapable),
+          bo(bo) {
     }
 
     std::string getAllocationInfoString() const override;

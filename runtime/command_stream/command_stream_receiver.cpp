@@ -350,8 +350,7 @@ AllocationsList &CommandStreamReceiver::getAllocationsForReuse() { return intern
 
 bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surface, Device &device, bool requiresL3Flush) {
     auto memoryManager = getMemoryManager();
-    GraphicsAllocation *allocation = nullptr;
-    allocation = memoryManager->allocateGraphicsMemoryForHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), device.isFullRangeSvm(), requiresL3Flush);
+    auto allocation = memoryManager->allocateGraphicsMemoryForHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), device.isFullRangeSvm(), requiresL3Flush);
     if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
         // Try with no host pointer allocation and copy
         AllocationProperties properties(true, surface.getSurfaceSize(), GraphicsAllocation::AllocationType::UNDECIDED);

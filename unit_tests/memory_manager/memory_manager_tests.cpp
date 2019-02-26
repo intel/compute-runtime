@@ -73,7 +73,7 @@ TEST(GraphicsAllocationTest, Ctor2) {
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
     osHandle sharedHandle = Sharing::nonSharedResource;
-    GraphicsAllocation gfxAllocation(cpuPtr, size, sharedHandle, false);
+    GraphicsAllocation gfxAllocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuPtr, size, sharedHandle, MemoryPool::MemoryNull, false);
     uint64_t expectedGpuAddr = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(gfxAllocation.getUnderlyingBuffer()));
 
     EXPECT_EQ(expectedGpuAddr, gfxAllocation.getGpuAddress());
@@ -87,7 +87,7 @@ TEST(GraphicsAllocationTest, getGpuAddress) {
     uint64_t gpuBaseAddr = 0x10000;
     size_t size = 0x1000;
 
-    GraphicsAllocation gfxAllocation(cpuPtr, gpuAddr, gpuBaseAddr, size, false);
+    GraphicsAllocation gfxAllocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuPtr, gpuAddr, gpuBaseAddr, size, MemoryPool::MemoryNull, false);
 
     EXPECT_EQ(gpuAddr, gfxAllocation.getGpuAddress());
 
@@ -104,7 +104,7 @@ TEST(GraphicsAllocationTest, getGpuAddressToPatch) {
     uint64_t gpuBaseAddr = 0x10000;
     size_t size = 0x1000;
 
-    GraphicsAllocation gfxAllocation(cpuPtr, gpuAddr, gpuBaseAddr, size, false);
+    GraphicsAllocation gfxAllocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuPtr, gpuAddr, gpuBaseAddr, size, MemoryPool::MemoryNull, false);
 
     EXPECT_EQ(gpuAddr - gpuBaseAddr, gfxAllocation.getGpuAddressToPatch());
 }
@@ -115,7 +115,7 @@ TEST(GraphicsAllocationTest, setSize) {
     uint64_t gpuBaseAddr = 0x10000;
     size_t size = 0x2000;
 
-    GraphicsAllocation gfxAllocation(cpuPtr, gpuAddr, gpuBaseAddr, size, false);
+    GraphicsAllocation gfxAllocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuPtr, gpuAddr, gpuBaseAddr, size, MemoryPool::MemoryNull, false);
     EXPECT_EQ(size, gfxAllocation.getUnderlyingBufferSize());
 
     size = 0x3000;
@@ -1516,7 +1516,7 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
     void *addressWithTrailingBitSet = reinterpret_cast<void *>(address);
     uint64_t expectedGpuAddress = 0xf0000000;
     osHandle sharedHandle{};
-    GraphicsAllocation graphicsAllocation(addressWithTrailingBitSet, 1u, sharedHandle, false);
+    GraphicsAllocation graphicsAllocation(GraphicsAllocation::AllocationType::UNKNOWN, addressWithTrailingBitSet, 1u, sharedHandle, MemoryPool::MemoryNull, false);
     EXPECT_EQ(expectedGpuAddress, graphicsAllocation.getGpuAddress());
 }
 
@@ -1620,27 +1620,27 @@ TEST(OsContextTest, givenOsContextWithNumberOfSupportedDevicesWhenConstructingTh
 }
 
 TEST(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
-    GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
+    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     allocation.is32BitAllocation = true;
     allocation.setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA);
     EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
 TEST(HeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
-    GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
+    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     allocation.is32BitAllocation = false;
     allocation.setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA);
     EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
 TEST(HeapSelectorTest, given32bitExternalAllocationWhenSelectingHeapThenExternalHeapIsUsed) {
-    GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
+    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     allocation.is32BitAllocation = true;
     EXPECT_EQ(HeapIndex::HEAP_EXTERNAL, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
 TEST(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForExternalAllocationThenLimitedHeapIsUsed) {
-    GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
+    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     if (platformDevices[0]->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
         return;
     }
@@ -1648,7 +1648,7 @@ TEST(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForExternalAlloc
 }
 
 TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithPtrThenSvmHeapIsUsed) {
-    GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
+    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
         return;
     }
@@ -1656,7 +1656,7 @@ TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocati
 }
 
 TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIs64KSuitableThenStandard64kHeapIsUsed) {
-    GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
+    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = true;
@@ -1668,7 +1668,7 @@ TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocati
 }
 
 TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIsNot64KSuitableThenStandardHeapIsUsed) {
-    GraphicsAllocation allocation{nullptr, 0, 0, 0, false};
+    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = false;
