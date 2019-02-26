@@ -23,6 +23,7 @@ bool GraphicsAllocation::isL3Capable() {
     }
     return false;
 }
+
 GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress,
                                        size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable)
     : gpuBaseAddress(baseAddress),

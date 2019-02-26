@@ -20,8 +20,8 @@ class MemoryAllocation : public GraphicsAllocation {
 
     void setSharedHandle(osHandle handle) { this->sharedHandle = handle; }
 
-    MemoryAllocation(void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(AllocationType::UNKNOWN, pMem, gpuAddress, 0u, memSize, pool, multiOsContextCapable),
+    MemoryAllocation(AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count, MemoryPool::Type pool, bool multiOsContextCapable)
+        : GraphicsAllocation(allocationType, pMem, gpuAddress, 0u, memSize, pool, multiOsContextCapable),
           id(count) {
 
         this->driverAllocatedCpuPointer = driverAllocatedCpuPointer;
