@@ -83,11 +83,7 @@ class WddmAllocation : public GraphicsAllocation {
     void setCpuAddress(void *cpuPtr) { this->cpuPtr = cpuPtr; }
     bool needsMakeResidentBeforeLock = false;
 
-    std::string getAllocationInfoString() const override {
-        std::stringstream ss;
-        ss << " Handle: " << handle;
-        return ss.str();
-    }
+    std::string getAllocationInfoString() const override;
 
   protected:
     ResidencyData residency;

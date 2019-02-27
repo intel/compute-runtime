@@ -47,6 +47,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
   ${CMAKE_CURRENT_SOURCE_DIR}/thk_wrapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_32bit_memory.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_allocation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_allocation.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_additional_context_flags.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.h
