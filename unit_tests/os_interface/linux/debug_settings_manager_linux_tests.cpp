@@ -19,9 +19,7 @@ TEST(DebugSettingsManager, GivenDebugSettingsManagerWithLogAllocationsThenLogsCo
 
     debugManager.flags.LogAllocationMemoryPool.set(true);
 
-    MockDrmAllocation allocation;
-    allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-    allocation.memoryPool = MemoryPool::System64KBPages;
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System64KBPages);
 
     MockBufferObject bo;
     bo.handle = 4;
@@ -56,9 +54,7 @@ TEST(DebugSettingsManager, GivenDebugSettingsManagerWithDrmAllocationWithoutBOTh
 
     debugManager.flags.LogAllocationMemoryPool.set(true);
 
-    MockDrmAllocation allocation;
-    allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-    allocation.memoryPool = MemoryPool::System64KBPages;
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System64KBPages);
 
     debugManager.logAllocation(&allocation);
 
@@ -88,9 +84,7 @@ TEST(DebugSettingsManager, GivenDebugSettingsManagerWithoutLogAllocationsThenAll
 
     debugManager.flags.LogAllocationMemoryPool.set(false);
 
-    MockDrmAllocation allocation;
-    allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-    allocation.memoryPool = MemoryPool::System64KBPages;
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System64KBPages);
 
     debugManager.logAllocation(&allocation);
 

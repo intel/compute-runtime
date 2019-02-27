@@ -82,12 +82,14 @@ class DrmGemCloseWorkerFixture {
   protected:
     class BufferObjectWrapper : public BufferObject {
       public:
-        BufferObjectWrapper(Drm *drm, int handle) : BufferObject(drm, handle, false) {
+        BufferObjectWrapper(Drm *drm, int handle)
+            : BufferObject(drm, handle, false) {
         }
     };
     class DrmAllocationWrapper : public DrmAllocation {
       public:
-        DrmAllocationWrapper(BufferObject *bo) : DrmAllocation(bo, nullptr, 0, MemoryPool::MemoryNull, 1u, false) {
+        DrmAllocationWrapper(BufferObject *bo)
+            : DrmAllocation(GraphicsAllocation::AllocationType::UNDECIDED, bo, nullptr, 0, MemoryPool::MemoryNull, 1u, false) {
         }
     };
     ExecutionEnvironment executionEnvironment;

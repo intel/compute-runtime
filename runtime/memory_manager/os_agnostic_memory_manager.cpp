@@ -60,7 +60,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHost
     auto alignedPtr = alignDown(reinterpret_cast<char *>(cpuPtr), MemoryConstants::pageSize);
     auto offsetInPage = reinterpret_cast<char *>(cpuPtr) - alignedPtr;
 
-    memoryAllocation = new MemoryAllocation(GraphicsAllocation::AllocationType::UNDECIDED, nullptr, cpuPtr, reinterpret_cast<uint64_t>(alignedPtr),
+    memoryAllocation = new MemoryAllocation(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, nullptr, cpuPtr, reinterpret_cast<uint64_t>(alignedPtr),
                                             size, counter, MemoryPool::System4KBPages, false);
 
     memoryAllocation->allocationOffset = offsetInPage;
