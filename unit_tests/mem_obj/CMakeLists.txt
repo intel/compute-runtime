@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,7 +11,7 @@ set(IGDRCL_SRCS_tests_mem_obj
   ${CMAKE_CURRENT_SOURCE_DIR}/buffer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_image_format_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/destructor_callback_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/get_mem_object_info_subbufer_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/get_mem_object_info_subbuffer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/get_mem_object_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_from_subbuffer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image1d_tests.cpp

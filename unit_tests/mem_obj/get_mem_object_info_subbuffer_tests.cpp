@@ -14,8 +14,8 @@
 
 using namespace OCLRT;
 
-struct GetMemObjectSubBuferInfo : public ::testing::Test {
-    GetMemObjectSubBuferInfo()
+struct GetMemObjectSubBufferInfo : public ::testing::Test {
+    GetMemObjectSubBufferInfo()
 
     {
     }
@@ -59,7 +59,7 @@ struct GetMemObjectSubBuferInfo : public ::testing::Test {
     size_t sizeReturned = 0;
 };
 
-TEST_F(GetMemObjectSubBuferInfo, MEM_ASSOCIATED_MEMOBJECT) {
+TEST_F(GetMemObjectSubBufferInfo, MEM_ASSOCIATED_MEMOBJECT) {
     createBuffer();
     createSubBuffer();
 
@@ -76,7 +76,7 @@ TEST_F(GetMemObjectSubBuferInfo, MEM_ASSOCIATED_MEMOBJECT) {
     EXPECT_EQ(clBuffer, object);
 }
 
-TEST_F(GetMemObjectSubBuferInfo, MEM_OFFSET) {
+TEST_F(GetMemObjectSubBufferInfo, MEM_OFFSET) {
     createBuffer();
     createSubBuffer();
 
@@ -90,7 +90,7 @@ TEST_F(GetMemObjectSubBuferInfo, MEM_OFFSET) {
     EXPECT_EQ(region.origin, offset);
 }
 
-TEST_F(GetMemObjectSubBuferInfo, MEM_FLAGS) {
+TEST_F(GetMemObjectSubBufferInfo, MEM_FLAGS) {
     createBuffer();
     createSubBuffer();
 
@@ -104,7 +104,7 @@ TEST_F(GetMemObjectSubBuferInfo, MEM_FLAGS) {
     EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_READ_WRITE), flags);
 }
 
-TEST_F(GetMemObjectSubBuferInfo, MEM_FLAGS_empty) {
+TEST_F(GetMemObjectSubBufferInfo, MEM_FLAGS_empty) {
     createBuffer(CL_MEM_READ_ONLY);
     createSubBuffer(0);
 
@@ -122,7 +122,7 @@ TEST_F(GetMemObjectSubBuferInfo, MEM_FLAGS_empty) {
     EXPECT_EQ(static_cast<cl_mem_flags>(0), flags);
 }
 
-TEST_F(GetMemObjectSubBuferInfo, MEM_HOST_PTR) {
+TEST_F(GetMemObjectSubBufferInfo, MEM_HOST_PTR) {
     createHostPtrBuffer();
     createSubBuffer();
 
