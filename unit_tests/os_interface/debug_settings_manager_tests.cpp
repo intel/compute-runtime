@@ -893,6 +893,7 @@ AllocationTypeTestCase allocationTypeValues[] = {
     {GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP, "DYNAMIC_STATE_HEAP"},
     {GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY, "SHARED_RESOURCE_COPY"},
     {GraphicsAllocation::AllocationType::SVM, "SVM"},
+    {GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, "EXTERNAL_HOST_PTR"},
     {GraphicsAllocation::AllocationType::UNDECIDED, "UNDECIDED"}};
 
 class AllocationTypeLogging : public ::testing::TestWithParam<AllocationTypeTestCase> {};

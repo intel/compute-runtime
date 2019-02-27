@@ -319,6 +319,8 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "SHARED_RESOURCE_COPY";
     case OCLRT::GraphicsAllocation::AllocationType::SVM:
         return "SVM";
+    case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
+        return "EXTERNAL_HOST_PTR";
     case OCLRT::GraphicsAllocation::AllocationType::UNDECIDED:
         return "UNDECIDED";
     default:
