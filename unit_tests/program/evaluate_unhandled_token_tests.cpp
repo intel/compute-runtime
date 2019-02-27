@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gtest/gtest.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/program/create.inl"
 #include "runtime/program/program.h"
+
+#include "gtest/gtest.h"
 
 using namespace OCLRT;
 

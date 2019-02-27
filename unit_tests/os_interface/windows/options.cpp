@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/os_library.h"
 #include "common/gtsysinfo.h"
+#include "runtime/os_interface/os_library.h"
+
 #include "igfxfmid.h"
 
 namespace Os {

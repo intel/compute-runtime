@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/compiler_interface/compiler_options.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/program/program.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
-#include "runtime/os_interface/os_context.h"
+#include "test.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/kernel_filename_helper.h"
@@ -17,7 +18,7 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/program/program_from_binary.h"
-#include "test.h"
+
 #include "gmock/gmock.h"
 
 using namespace OCLRT;

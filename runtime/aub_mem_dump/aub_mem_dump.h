@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include <cstdio>
 #include <cstdint>
+#include <cstdio>
 #include <fstream>
 #include <mutex>
 

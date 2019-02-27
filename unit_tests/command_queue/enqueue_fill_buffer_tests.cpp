@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,18 +9,19 @@
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/os_interface/os_context.h"
-#include "reg_configs_common.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/dispatch_info.h"
+#include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/allocations_list.h"
-#include "unit_tests/command_queue/enqueue_fixture.h"
+#include "runtime/memory_manager/memory_manager.h"
+#include "runtime/os_interface/os_context.h"
+#include "test.h"
 #include "unit_tests/command_queue/enqueue_fill_buffer_fixture.h"
+#include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "unit_tests/helpers/unit_test_helper.h"
-#include "runtime/memory_manager/memory_manager.h"
-#include "test.h"
+
+#include "reg_configs_common.h"
 
 using namespace OCLRT;
 

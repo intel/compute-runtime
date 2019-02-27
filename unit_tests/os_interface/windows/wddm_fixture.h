@@ -11,12 +11,13 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_interface.h"
+#include "test.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/mocks/mock_wddm.h"
-#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
+#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
+
 #include "mock_gmm_memory.h"
-#include "test.h"
 
 namespace OCLRT {
 struct WddmFixture : public GmmEnvironmentFixture {

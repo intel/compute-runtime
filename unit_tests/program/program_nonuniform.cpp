@@ -1,33 +1,35 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/kernel/kernel.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/indirect_heap/indirect_heap.h"
+#include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/surface.h"
-#include "program_tests.h"
+#include "test.h"
+#include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
+#include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/program/program_from_binary.h"
 #include "unit_tests/program/program_with_source.h"
-#include "test.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "program_tests.h"
+
+#include <map>
 #include <memory>
 #include <vector>
-#include <map>
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 
 using namespace OCLRT;
 
@@ -149,10 +151,10 @@ TEST(ProgramNonUniform, UpdateAllowNonUniformOutcomeUniformFlag) {
 
 #include "runtime/helpers/options.h"
 #include "runtime/kernel/kernel.h"
+#include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/fixtures/program_fixture.h"
-#include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/mocks/mock_program.h"
 
 #include <vector>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/mocks/mock_buffer.h"
 
 using namespace OCLRT;
 using namespace DeviceHostQueue;

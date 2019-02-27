@@ -5,12 +5,12 @@
  *
  */
 
+#include "unit_tests/os_interface/linux/hw_info_config_linux_tests.h"
+
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/linux/os_interface.h"
-
 #include "unit_tests/libult/mock_gfx_family.h"
-#include "unit_tests/os_interface/linux/hw_info_config_linux_tests.h"
 
 #include <cstring>
 

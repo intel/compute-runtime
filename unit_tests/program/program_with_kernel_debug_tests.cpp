@@ -6,16 +6,18 @@
  */
 
 #include "runtime/compiler_interface/compiler_options.h"
+#include "test.h"
 #include "unit_tests/fixtures/program_fixture.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/kernel_filename_helper.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_source_level_debugger.h"
-#include "unit_tests/program/program_tests.h"
 #include "unit_tests/program/program_from_binary.h"
-#include "test.h"
+#include "unit_tests/program/program_tests.h"
+
 #include "gmock/gmock.h"
+
 #include <algorithm>
 #include <memory>
 #include <string>

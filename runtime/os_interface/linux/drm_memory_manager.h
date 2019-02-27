@@ -6,12 +6,14 @@
  */
 
 #pragma once
-#include "drm_gem_close_worker.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
-#include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/drm_limited_range.h"
+#include "runtime/os_interface/linux/drm_neo.h"
+
+#include "drm_gem_close_worker.h"
+
 #include <map>
 #include <sys/mman.h>
 

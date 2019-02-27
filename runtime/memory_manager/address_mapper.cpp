@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/memory_manager/address_mapper.h"
+
+#include "runtime/helpers/aligned_memory.h"
 
 #include <inttypes.h>
 #include <iostream>

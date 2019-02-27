@@ -12,9 +12,9 @@
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/utilities/tag_allocator.h"
 
-#include <cstdint>
 #include <array>
 #include <atomic>
+#include <cstdint>
 #include <vector>
 
 namespace OCLRT {

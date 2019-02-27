@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,12 @@
 #pragma once
 
 #include "runtime/event/async_events_handler.h"
-#include <vector>
-#include <memory>
+
 #include <atomic>
-#include <mutex>
 #include <iterator>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 using namespace OCLRT;
 namespace MockAsyncEventHandlerGlobals {

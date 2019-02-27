@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,14 +10,15 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
+#include "test.h"
+#include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+
 #include "gtest/gtest.h"
-#include "test.h"
 
 using namespace OCLRT;
 

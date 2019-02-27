@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include <string>
 #include "runtime/built_ins/registry/built_ins_registry.h"
+
+#include <string>
 
 namespace OCLRT {
 

@@ -1,29 +1,30 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include <iostream>
-#include <memory>
-#include <mutex>
-#include <thread>
-
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "hw_cmds.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/buffer.h"
-#include "drm/i915_drm.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_gem_close_worker.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "test.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
+
+#include "drm/i915_drm.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "hw_cmds.h"
+
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <thread>
 
 using namespace OCLRT;
 

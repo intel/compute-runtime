@@ -8,7 +8,9 @@
 #pragma once
 #include "runtime/command_stream/preemption_mode.h"
 #include "runtime/utilities/reference_tracked_object.h"
+
 #include "engine_node.h"
+
 #include <memory>
 
 namespace OCLRT {

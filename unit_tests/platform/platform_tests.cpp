@@ -5,21 +5,23 @@
  *
  */
 
-#include "runtime/helpers/options.h"
 #include "runtime/device/device.h"
+#include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/options.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
+#include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/fixtures/platform_fixture.h"
+#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_async_event_handler.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_source_level_debugger.h"
-#include "unit_tests/libult/create_command_stream.h"
-#include "gtest/gtest.h"
+
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace OCLRT;
 

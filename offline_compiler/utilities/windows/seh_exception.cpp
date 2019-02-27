@@ -6,6 +6,7 @@
  */
 
 #include "seh_exception.h"
+
 #include "runtime/os_interface/os_library.h"
 
 #include <memory>
@@ -16,9 +17,10 @@
 #include <dbghelp.h>
 #pragma warning(pop)
 
+#include <windows.h>
+
 #include <excpt.h>
 #include <psapi.h>
-#include <windows.h>
 
 using namespace std;
 

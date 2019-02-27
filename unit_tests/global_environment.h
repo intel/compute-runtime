@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/os_library.h"
 #include "unit_tests/mocks/mock_compilers.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

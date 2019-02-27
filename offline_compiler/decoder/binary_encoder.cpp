@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "binary_encoder.h"
-#include "CL/cl.h"
+
 #include "elf/writer.h"
-#include "helper.h"
 #include "runtime/helpers/file_io.h"
+
+#include "CL/cl.h"
+#include "helper.h"
 
 #include <algorithm>
 #include <cstring>

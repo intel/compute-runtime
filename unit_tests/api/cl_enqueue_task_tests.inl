@@ -5,11 +5,12 @@
  *
  */
 
-#include "cl_api_tests.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/helpers/base_object.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
+
+#include "cl_api_tests.h"
 
 using namespace OCLRT;
 

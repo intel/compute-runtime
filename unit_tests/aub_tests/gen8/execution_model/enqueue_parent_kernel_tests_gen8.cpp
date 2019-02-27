@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,10 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/sampler/sampler.h"
+#include "test.h"
 #include "unit_tests/aub_tests/fixtures/aub_parent_kernel_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 
-#include "test.h"
 #include <memory>
 
 using namespace OCLRT;

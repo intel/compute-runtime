@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "global_environment.h"
+
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/os_inc_base.h"
 

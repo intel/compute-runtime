@@ -6,17 +6,18 @@
  */
 
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
-#include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
+#include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
 #include "unit_tests/mocks/mock_aub_file_stream.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
+
 #include "driver_version.h"
 
 #include <fstream>

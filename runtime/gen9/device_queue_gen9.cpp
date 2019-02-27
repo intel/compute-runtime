@@ -8,7 +8,6 @@
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/device_queue/device_queue_hw.inl"
 #include "runtime/device_queue/device_queue_hw_profiling.inl"
-
 #include "runtime/gen9/hw_cmds.h"
 
 namespace OCLRT {

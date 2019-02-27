@@ -6,6 +6,7 @@
  */
 
 #include "aub_mem_dump_tests.h"
+
 #include "runtime/aub/aub_helper.h"
 #include "runtime/helpers/hw_helper.h"
 #include "unit_tests/fixtures/device_fixture.h"

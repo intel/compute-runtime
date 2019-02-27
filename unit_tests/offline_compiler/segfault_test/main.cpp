@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "segfault_helper.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "segfault_helper.h"
 
 #include <string>
 

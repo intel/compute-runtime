@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "runtime/os_interface/print.h"
 
-#include <iostream>
 #include <cstdio>
+#include <iostream>
 
 void printToSTDOUT(const char *str) {
     fprintf(stdout, "%s", str);

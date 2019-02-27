@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "unit_tests/aub_tests/aub_tests_configuration.inl"
 #include "runtime/gen_common/hw_cmds.h"
+#include "unit_tests/aub_tests/aub_tests_configuration.inl"
 
 using namespace OCLRT;
 

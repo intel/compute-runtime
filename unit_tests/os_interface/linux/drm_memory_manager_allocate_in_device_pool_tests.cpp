@@ -8,6 +8,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
+
 #include "gtest/gtest.h"
 using namespace OCLRT;
 using namespace ::testing;

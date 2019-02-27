@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "unit_tests/aub_tests/fixtures/aub_fixture.h"
+
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "unit_tests/aub_tests/fixtures/aub_fixture.h"
 
 namespace OCLRT {
 

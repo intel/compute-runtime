@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "patch_list.h"
 #include "runtime/execution_model/device_enqueue.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/printf_handler.h"
@@ -16,12 +15,14 @@
 #include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/gtest_helpers.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device_queue.h"
+#include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
+#include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_sampler.h"
+
+#include "patch_list.h"
 
 #include <algorithm>
 #include <memory>

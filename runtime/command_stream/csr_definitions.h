@@ -6,11 +6,12 @@
  */
 
 #pragma once
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/helpers/csr_deps.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/kernel/grf_config.h"
+#include "runtime/memory_manager/memory_constants.h"
+
 #include <limits>
 
 namespace OCLRT {

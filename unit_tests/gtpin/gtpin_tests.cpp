@@ -8,9 +8,9 @@
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_defs.h"
-#include "runtime/gtpin/gtpin_init.h"
 #include "runtime/gtpin/gtpin_helpers.h"
 #include "runtime/gtpin/gtpin_hw_helper.h"
+#include "runtime/gtpin/gtpin_init.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/file_io.h"
@@ -20,6 +20,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/os_context.h"
+#include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
@@ -31,8 +32,9 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/program/program_tests.h"
-#include "test.h"
+
 #include "gtest/gtest.h"
+
 #include <deque>
 #include <vector>
 

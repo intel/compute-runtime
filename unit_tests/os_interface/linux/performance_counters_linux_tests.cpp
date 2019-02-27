@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/helpers/options.h"
-#include "mock_performance_counters_linux.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
 #include "unit_tests/os_interface/linux/mock_os_time_linux.h"
+
 #include "gtest/gtest.h"
+#include "mock_performance_counters_linux.h"
 
 using namespace OCLRT;
 

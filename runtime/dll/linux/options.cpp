@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/os_interface/os_library.h"
+
 #include "External/Common/GmmLibDllName.h"
 #include "igc.opencl.h"
-#include "runtime/os_interface/os_library.h"
 
 namespace Os {
 // Compiler library names

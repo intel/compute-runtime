@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/sharings/d3d/d3d_sharing.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/sharings/d3d/d3d_sharing.h"
 
 namespace OCLRT {
 class Buffer;

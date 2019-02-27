@@ -6,11 +6,12 @@
  */
 
 #include "platform.h"
+
 #include "runtime/api/api.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/compiler_interface/compiler_interface.h"
-#include "CL/cl_ext.h"
 #include "runtime/device/device.h"
+#include "runtime/event/async_events_handler.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gtpin/gtpin_notify.h"
@@ -20,12 +21,12 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/string.h"
-#include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/event/async_events_handler.h"
-#include "runtime/sharings/sharing_factory.h"
+#include "runtime/os_interface/device_factory.h"
 #include "runtime/platform/extensions.h"
+#include "runtime/sharings/sharing_factory.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
+
 #include "CL/cl_ext.h"
 
 namespace OCLRT {

@@ -5,7 +5,6 @@
  *
  */
 
-#include "hw_cmds.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
@@ -18,6 +17,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/memory_constants.h"
+#include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/linux/allocator_helper.h"
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
@@ -25,25 +25,24 @@
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/os_interface/linux/os_interface.h"
-#include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/tag_allocator.h"
-
+#include "test.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/memory_management.h"
+#include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
+#include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
 #include "unit_tests/mocks/mock_32bitAllocator.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm.h"
-#include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
-#include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
-#include "test.h"
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "hw_cmds.h"
 
 #include <iostream>
 #include <memory>

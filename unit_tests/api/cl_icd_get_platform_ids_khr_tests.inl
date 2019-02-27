@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,9 @@
 #include "runtime/os_interface/windows/windows_wrapper.h"
 #endif
 
-#include "unit_tests/api/cl_api_tests.h"
-#include "runtime/platform/platform.h"
 #include "runtime/device/device.h"
+#include "runtime/platform/platform.h"
+#include "unit_tests/api/cl_api_tests.h"
 
 #include <algorithm>
 

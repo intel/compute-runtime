@@ -6,6 +6,7 @@
  */
 
 #include "common/helpers/bit_helpers.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

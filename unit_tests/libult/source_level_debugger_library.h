@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "igfx_debug_interchange_types.h"
-
 #include "runtime/os_interface/os_library.h"
+
+#include "igfx_debug_interchange_types.h"
 
 #include <string>
 

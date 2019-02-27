@@ -9,14 +9,15 @@
 #include "runtime/event/event.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/kernel_commands.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/program/printf_handler.h"
 #include "runtime/program/program.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_allocator_fixture.h"
 #include "unit_tests/fixtures/memory_manager_fixture.h"
@@ -34,7 +35,6 @@
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
-#include "test.h"
 #include <future>
 #include <type_traits>
 

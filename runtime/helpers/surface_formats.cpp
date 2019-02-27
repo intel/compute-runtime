@@ -1,16 +1,18 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "surface_formats.h"
-#include "runtime/helpers/array_count.h"
-#include "runtime/gmm_helper/gmm_lib.h"
+
 #include "runtime/api/cl_types.h"
-#include "validators.h"
+#include "runtime/gmm_helper/gmm_lib.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/mem_obj/image.h"
+
+#include "validators.h"
 
 namespace OCLRT {
 

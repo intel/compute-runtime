@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #include "runtime/context/context.h"
 #include "runtime/context/context.inl"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/sharings/gl/enable_gl.h"
 #include "runtime/sharings/gl/gl_sharing.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/sharings/sharing_factory.inl"
-#include "runtime/os_interface/debug_settings_manager.h"
 
 #include <memory>
 

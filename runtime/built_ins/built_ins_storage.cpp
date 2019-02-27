@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include <cstdint>
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+
 #include "os_inc.h"
+
+#include <cstdint>
 
 namespace OCLRT {
 

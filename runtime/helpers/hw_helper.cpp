@@ -6,6 +6,7 @@
  */
 
 #include "runtime/helpers/hw_helper.h"
+
 #include "runtime/os_interface/debug_settings_manager.h"
 
 namespace OCLRT {

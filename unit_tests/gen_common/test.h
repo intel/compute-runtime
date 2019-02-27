@@ -6,10 +6,11 @@
  */
 
 #pragma once
-#include "runtime/helpers/hw_info.h"
 #include "runtime/gen_common/hw_cmds.h"
-#include "igfxfmid.h"
+#include "runtime/helpers/hw_info.h"
+
 #include "gtest/gtest.h"
+#include "igfxfmid.h"
 
 #include <cstdint>
 #include <memory>

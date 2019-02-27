@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "hw_cmds.h"
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
+
+#include "hw_cmds.h"
 
 namespace OCLRT {
 

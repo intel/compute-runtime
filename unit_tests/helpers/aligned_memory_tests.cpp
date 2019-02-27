@@ -6,7 +6,9 @@
  */
 
 #include "runtime/helpers/aligned_memory.h"
+
 #include "gtest/gtest.h"
+
 #include <cstdint>
 
 TEST(AlignedFree, nullptrShouldntCrash) {

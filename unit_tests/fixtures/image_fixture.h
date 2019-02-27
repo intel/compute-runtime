@@ -14,7 +14,9 @@
 #include "runtime/platform/platform.h"
 #include "unit_tests/helpers/hw_info_helper.h"
 #include "unit_tests/mocks/mock_context.h"
+
 #include "CL/cl.h"
+
 #include <cassert>
 #include <cstdio>
 

@@ -6,6 +6,7 @@
  */
 
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
+
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
@@ -17,11 +18,12 @@
 #include "runtime/memory_manager/deferrable_deletion.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
+#include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
-#include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/platform/platform.h"
+
 #include <algorithm>
 
 namespace OCLRT {

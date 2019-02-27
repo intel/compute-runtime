@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/helpers/completion_stamp.h"
+
 #include <vector>
 
 namespace OCLRT {

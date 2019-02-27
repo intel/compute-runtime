@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "sku_info.h"
-#include "runtime/sku_info/operations/sku_info_transfer.h"
 #include "runtime/gmm_helper/gmm_lib.h"
+#include "runtime/sku_info/operations/sku_info_transfer.h"
+
+#include "sku_info.h"
 
 namespace OCLRT {
 class SkuInfoTransfer {

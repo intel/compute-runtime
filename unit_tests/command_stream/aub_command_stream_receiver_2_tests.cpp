@@ -11,7 +11,6 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "test.h"
-#include "third_party/aub_stream/headers/options.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_aub_center.h"
@@ -24,6 +23,8 @@
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
+
+#include "third_party/aub_stream/headers/options.h"
 
 using namespace OCLRT;
 

@@ -5,11 +5,12 @@
  *
  */
 
-#include "test.h"
-#include "gtest/gtest.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/utilities/tag_allocator.h"
+#include "test.h"
 #include "unit_tests/fixtures/memory_allocator_fixture.h"
+
+#include "gtest/gtest.h"
 
 #include <cstdint>
 

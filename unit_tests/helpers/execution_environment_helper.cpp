@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/device_factory.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
+
+#include "runtime/os_interface/device_factory.h"
 
 namespace OCLRT {
 

@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "CL/cl.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/helpers/hw_info.h"
+
+#include "CL/cl.h"
 
 #include <memory>
 #include <mutex>

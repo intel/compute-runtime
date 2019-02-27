@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "unit_tests/mocks/mock_csr.h"
+
 #include "runtime/os_interface/os_interface.h"
 
 FlushStamp MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {

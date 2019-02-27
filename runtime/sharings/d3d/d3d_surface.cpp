@@ -6,14 +6,16 @@
  */
 
 #include "runtime/sharings/d3d/d3d_surface.h"
+
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
+#include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/gmm_helper/gmm.h"
+
 #include "mmsystem.h"
 
 using namespace OCLRT;

@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <vector>
-#include <memory>
 #include <atomic>
-#include <mutex>
 #include <condition_variable>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 namespace OCLRT {
 class Event;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,10 @@
 
 #include "offline_compiler/offline_compiler.h"
 #include "runtime/os_interface/os_inc_base.h"
-#include "gtest/gtest.h"
-#include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/helpers/test_files.h"
+#include "unit_tests/mocks/mock_compilers.h"
+
+#include "gtest/gtest.h"
 
 class Environment : public ::testing::Environment {
   public:

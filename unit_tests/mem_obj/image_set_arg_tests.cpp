@@ -5,25 +5,25 @@
  *
  */
 
-#include "hw_cmds.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
-#include "runtime/memory_manager/graphics_allocation.h"
+#include "runtime/helpers/ptr_math.h"
+#include "runtime/helpers/surface_formats.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/surface.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/mocks/mock_gmm_resource_info.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/mocks/mock_gmm_resource_info.h"
 
 #include "gmock/gmock.h"
-#include "test.h"
+#include "hw_cmds.h"
 
 using namespace OCLRT;
 using namespace ::testing;

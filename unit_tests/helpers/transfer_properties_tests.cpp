@@ -8,6 +8,7 @@
 #include "runtime/helpers/properties_helper.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

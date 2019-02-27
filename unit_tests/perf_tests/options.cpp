@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/helpers/array_count.h"
+
 #include "hw_cmds.h"
 #include "hw_info.h"
-#include "runtime/helpers/array_count.h"
 
 namespace OCLRT {
 // IP address for TBX server

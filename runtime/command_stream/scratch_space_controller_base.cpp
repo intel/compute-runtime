@@ -1,17 +1,18 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/command_stream/scratch_space_controller_base.h"
+
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/preamble.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 namespace OCLRT {

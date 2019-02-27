@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,12 @@
 #pragma once
 
 #include "runtime/utilities/debug_settings_reader.h"
+
 #include "os_inc.h"
-#include <string>
-#include <stdint.h>
 #include <Windows.h>
+
+#include <stdint.h>
+#include <string>
 
 namespace OCLRT {
 class RegistryReader : public SettingsReader {

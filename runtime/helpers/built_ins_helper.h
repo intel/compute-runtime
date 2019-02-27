@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/execution_environment/execution_environment.h"
 
 namespace OCLRT {
 

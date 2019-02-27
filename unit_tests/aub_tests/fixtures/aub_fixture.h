@@ -13,7 +13,6 @@
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_interface.h"
-
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/tests_configuration.h"

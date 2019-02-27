@@ -7,14 +7,15 @@
 
 #pragma once
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/memory_manager/memory_constants.h"
-#include <new>
-#include <cstdint>
-#include <cstddef>
+#include "runtime/os_interface/debug_settings_manager.h"
+
 #include <algorithm>
-#include <memory>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
+#include <memory>
+#include <new>
 
 #ifdef _MSC_VER
 #define ALIGNAS(x) __declspec(align(x))

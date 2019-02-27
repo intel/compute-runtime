@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "unit_tests/os_interface/hw_info_config_tests.h"
+
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
-
-#include "unit_tests/os_interface/hw_info_config_tests.h"
 
 using namespace OCLRT;
 using namespace std;

@@ -5,8 +5,9 @@
  *
  */
 
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/memory_manager/graphics_allocation.h"
+
+#include "runtime/helpers/aligned_memory.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 namespace OCLRT {

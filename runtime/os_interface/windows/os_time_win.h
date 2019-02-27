@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/os_interface/windows/windows_wrapper.h"
-#include "gfxEscape.h"
 #include "runtime/os_interface/os_time.h"
+#include "runtime/os_interface/windows/windows_wrapper.h"
+
+#include "gfxEscape.h"
 
 namespace OCLRT {
 class Wddm;

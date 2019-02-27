@@ -5,8 +5,9 @@
  *
  */
 
-#include "runtime/helpers/mipmap.h"
 #include "runtime/helpers/properties_helper.h"
+
+#include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_manager.h"

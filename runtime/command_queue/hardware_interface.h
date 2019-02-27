@@ -6,8 +6,10 @@
  */
 
 #pragma once
-#include "CL/cl.h"
 #include "runtime/command_stream/preemption_mode.h"
+
+#include "CL/cl.h"
+
 #include <cstdint>
 
 namespace OCLRT {

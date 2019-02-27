@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #pragma once
 
 #include "cif/builtins/memory/buffer/buffer.h"
-#include "cif/common/id.h"
 #include "cif/common/cif.h"
 #include "cif/common/cif_main.h"
+#include "cif/common/id.h"
 
 #include <map>
 

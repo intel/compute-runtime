@@ -1,9 +1,18 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "runtime/compiler_interface/compiler_interface.h"
+
+#include "runtime/compiler_interface/binary_cache.h"
+#include "runtime/compiler_interface/compiler_interface.inl"
+#include "runtime/helpers/hw_info.h"
+#include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/os_inc_base.h"
+#include "runtime/program/program.h"
 
 #include "cif/common/cif_main.h"
 #include "cif/helpers/error.h"
@@ -12,13 +21,6 @@
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 #include "ocl_igc_interface/platform_helper.h"
-#include "runtime/compiler_interface/binary_cache.h"
-#include "runtime/compiler_interface/compiler_interface.h"
-#include "runtime/compiler_interface/compiler_interface.inl"
-#include "runtime/helpers/hw_info.h"
-#include "runtime/program/program.h"
-#include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/os_interface/os_inc_base.h"
 
 #include <fstream>
 

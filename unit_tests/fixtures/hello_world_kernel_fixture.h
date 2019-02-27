@@ -6,19 +6,20 @@
  */
 
 #pragma once
-#include "gtest/gtest.h"
-#include "CL/cl.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/helpers/test_files.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/program_fixture.h"
+#include "unit_tests/helpers/test_files.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_program.h"
+
+#include "CL/cl.h"
+#include "gtest/gtest.h"
 
 namespace OCLRT {
 

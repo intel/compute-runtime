@@ -6,13 +6,15 @@
  */
 
 #pragma once
-#include "cif/common/cif_main.h"
-#include "ocl_igc_interface/igc_ocl_device_ctx.h"
-#include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "elf/writer.h"
+
+#include "cif/common/cif_main.h"
+#include "ocl_igc_interface/fcl_ocl_device_ctx.h"
+#include "ocl_igc_interface/igc_ocl_device_ctx.h"
+
 #include <cstdint>
-#include <string>
 #include <memory>
+#include <string>
 
 namespace OCLRT {
 

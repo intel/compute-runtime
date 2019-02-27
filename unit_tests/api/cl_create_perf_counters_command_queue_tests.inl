@@ -1,17 +1,18 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "cl_api_tests.h"
-#include "runtime/context/context.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/context/context.h"
 #include "runtime/event/event.h"
 #include "unit_tests/fixtures/device_instrumentation_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
+
+#include "cl_api_tests.h"
 
 using namespace OCLRT;
 

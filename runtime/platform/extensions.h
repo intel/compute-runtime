@@ -1,11 +1,15 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "runtime/helpers/hw_info.h"
+
+#include <string>
 
 namespace OCLRT {
 

@@ -7,10 +7,12 @@
 
 #define _GDI32_ //It causes that definitions of functions are not loaded from dll in file wingdi.h because they are in this file.
 
-#include <string.h>
 #include "unit_tests/helpers/windows/mock_function.h"
 #include "unit_tests/mocks/gl/mock_gl_sharing.h"
+
 #include "GL/gl.h"
+
+#include <string.h>
 
 extern "C" {
 const char *glString = "Intel";

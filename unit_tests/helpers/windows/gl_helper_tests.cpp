@@ -1,17 +1,19 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include <memory>
+#include "runtime/helpers/windows/gl_helper.h"
 #include "runtime/os_interface/os_library.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
-#include "runtime/helpers/windows/gl_helper.h"
-#include "unit_tests/helpers/windows/mock_function.h"
 #include "test.h"
+#include "unit_tests/helpers/windows/mock_function.h"
+
 #include "gtest/gtest.h"
+
+#include <memory>
 
 typedef const char *(__cdecl *funcType)();
 

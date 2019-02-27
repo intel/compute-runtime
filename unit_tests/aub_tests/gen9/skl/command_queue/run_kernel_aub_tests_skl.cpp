@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "unit_tests/fixtures/two_walker_fixture.h"
 #include "unit_tests/aub_tests/fixtures/run_kernel_fixture.h"
+#include "unit_tests/fixtures/two_walker_fixture.h"
 
 using namespace OCLRT;
 

@@ -6,8 +6,8 @@
  */
 
 #include "runtime/device/device.h"
-#include "runtime/helpers/options.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/options.h"
 #include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/os_interface/windows/gl/gl_dll_helper.h"
 

@@ -5,10 +5,11 @@
  *
  */
 
-#include "CL/cl.h"
-#include "CL/cl_gl.h"
 #include "public/cl_ext_private.h"
 #include "runtime/api/dispatch.h"
+
+#include "CL/cl.h"
+#include "CL/cl_gl.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "config.h"
+#include "public/cl_gl_private_intel.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/sharings/gl/gl_texture.h"
+
 #include "GL/gl.h"
-#include "public/cl_gl_private_intel.h"
+#include "config.h"
 
 namespace OCLRT {
 bool GlTexture::setClImageFormat(int glFormat, cl_image_format &clImgFormat) {

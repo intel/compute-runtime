@@ -7,8 +7,9 @@
 
 #pragma once
 #include "runtime/gmm_helper/gmm_lib.h"
-#include <memory>
+
 #include <functional>
+#include <memory>
 
 namespace OCLRT {
 class GmmResourceInfo {

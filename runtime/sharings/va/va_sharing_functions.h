@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "runtime/sharings/sharing.h"
 #include "runtime/sharings/va/va_sharing_defines.h"
+
 #include <functional>
 
 namespace OCLRT {

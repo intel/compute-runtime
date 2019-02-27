@@ -6,16 +6,17 @@
  */
 
 #pragma once
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/device_queue/device_queue_hw.h"
+#include "runtime/helpers/dispatch_info.h"
+#include "runtime/helpers/engine_control.h"
+#include "runtime/helpers/queue_helpers.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/program/printf_handler.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/command_stream/preemption.h"
-#include "runtime/helpers/engine_control.h"
-#include "runtime/helpers/queue_helpers.h"
+
 #include <memory>
 
 namespace OCLRT {

@@ -6,6 +6,7 @@
  */
 
 #include "unit_tests/libult/mock_gfx_family.h"
+
 #include "runtime/command_queue/gpgpu_walker.inl"
 #include "runtime/command_queue/gpgpu_walker_base.inl"
 #include "runtime/command_stream/preemption.inl"

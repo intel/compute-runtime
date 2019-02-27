@@ -6,9 +6,10 @@
  */
 
 #pragma once
-#include "runtime/os_interface/os_library.h"
-#include "Gl/gl.h"
 #include "public/cl_gl_private_intel.h"
+#include "runtime/os_interface/os_library.h"
+
+#include "Gl/gl.h"
 
 using namespace OCLRT;
 namespace Os {

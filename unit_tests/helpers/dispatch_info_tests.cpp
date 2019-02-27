@@ -6,14 +6,15 @@
  */
 
 #include "runtime/helpers/dispatch_info.h"
-#include "gtest/gtest.h"
-#include "unit_tests/mocks/mock_kernel.h"
+#include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
-#include <type_traits>
+#include "unit_tests/mocks/mock_kernel.h"
 
-#include "test.h"
+#include "gtest/gtest.h"
+
+#include <type_traits>
 
 using namespace OCLRT;
 

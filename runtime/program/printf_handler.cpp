@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,13 @@
 
 #include "printf_handler.h"
 
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/program/print_formatter.h"
-#include "runtime/kernel/kernel.h"
+#include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/ptr_math.h"
-#include "runtime/helpers/aligned_memory.h"
+#include "runtime/kernel/kernel.h"
+#include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/program/print_formatter.h"
 
 namespace OCLRT {
 

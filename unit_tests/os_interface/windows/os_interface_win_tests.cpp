@@ -5,8 +5,9 @@
  *
  */
 
-#include "runtime/os_interface/windows/os_context_win.h"
 #include "unit_tests/os_interface/windows/os_interface_win_tests.h"
+
+#include "runtime/os_interface/windows/os_context_win.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 
 TEST_F(OsInterfaceTest, givenOsInterfaceWithoutWddmWhenGetHwContextIdIsCalledThenReturnsZero) {

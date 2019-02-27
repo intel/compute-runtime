@@ -5,10 +5,11 @@
  *
  */
 
-#include "cl_api_tests.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/helpers/ptr_math.h"
 #include "unit_tests/fixtures/image_fixture.h"
+
+#include "cl_api_tests.h"
 
 using namespace OCLRT;
 

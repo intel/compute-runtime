@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "platform_info.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/device/device_vector.h"
 #include "runtime/helpers/base_object.h"
+
+#include "platform_info.h"
+
 #include <condition_variable>
 #include <vector>
 

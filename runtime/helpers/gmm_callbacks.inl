@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/gmm_callbacks.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/helpers/gmm_callbacks.h"
 #include "runtime/helpers/hw_helper.h"
+
 #include <cstdint>
 
 namespace OCLRT {

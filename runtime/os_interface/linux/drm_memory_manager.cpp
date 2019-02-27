@@ -5,26 +5,26 @@
  *
  */
 
+#include "runtime/os_interface/linux/drm_memory_manager.h"
+
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/ptr_math.h"
+#include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/options.h"
+#include "runtime/helpers/ptr_math.h"
+#include "runtime/helpers/surface_formats.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
-#include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
-#include "runtime/helpers/surface_formats.h"
-#include <cstring>
-#include <iostream>
 
 #include "drm/i915_drm.h"
-#include "drm/drm.h"
 
-#include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/gmm_helper/resource_info.h"
+#include <cstring>
+#include <iostream>
 
 namespace OCLRT {
 

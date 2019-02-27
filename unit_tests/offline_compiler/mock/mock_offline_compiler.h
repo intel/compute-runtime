@@ -7,6 +7,7 @@
 
 #pragma once
 #include "offline_compiler/offline_compiler.h"
+
 #include <string>
 
 namespace OCLRT {

@@ -6,11 +6,11 @@
  */
 
 #include "runtime/command_stream/thread_arbitration_policy.h"
+#include "runtime/gen8/reg_configs.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/preamble.h"
-#include "runtime/gen8/reg_configs.h"
-#include "unit_tests/preamble/preamble_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
+#include "unit_tests/preamble/preamble_fixture.h"
 
 using namespace OCLRT;
 

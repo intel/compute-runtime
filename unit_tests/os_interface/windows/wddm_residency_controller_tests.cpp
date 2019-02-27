@@ -12,16 +12,17 @@
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
-#include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
+#include "runtime/os_interface/windows/wddm_residency_controller.h"
+#include "test.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 
-#include "test.h"
 #include "gmock/gmock.h"
+
 #include <memory>
 
 using namespace OCLRT;

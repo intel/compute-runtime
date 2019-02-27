@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "unit_tests/fixtures/device_fixture.h"
 #include "test.h"
+#include "unit_tests/fixtures/device_fixture.h"
 
 using namespace OCLRT;
 

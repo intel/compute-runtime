@@ -5,11 +5,12 @@
  *
  */
 
-#include "cl_api_tests.h"
-#include "runtime/context/context.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/device/device_info.h"
+
+#include "cl_api_tests.h"
 
 using namespace OCLRT;
 

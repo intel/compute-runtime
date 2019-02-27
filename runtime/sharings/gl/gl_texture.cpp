@@ -5,20 +5,22 @@
  *
  */
 
-#include "config.h"
+#include "runtime/sharings/gl/gl_texture.h"
+
+#include "public/cl_gl_private_intel.h"
+#include "runtime/context/context.h"
+#include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
-#include "CL/cl_gl.h"
-#include <GL/gl.h>
-#include "public/cl_gl_private_intel.h"
-#include "runtime/sharings/gl/gl_texture.h"
-#include "runtime/context/context.h"
-#include "runtime/device/device.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/mem_obj/image.h"
+#include "runtime/memory_manager/memory_manager.h"
+
+#include "CL/cl_gl.h"
+#include "config.h"
+#include <GL/gl.h>
 
 namespace OCLRT {
 Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel, cl_GLuint texture,

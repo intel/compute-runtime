@@ -6,6 +6,7 @@
  */
 
 #include "unit_tests/mocks/mock_device.h"
+
 #include "runtime/device/driver_info.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_context.h"

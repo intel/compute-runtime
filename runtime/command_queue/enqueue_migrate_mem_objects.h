@@ -6,13 +6,14 @@
  */
 
 #pragma once
-#include "hw_cmds.h"
 #include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
 #include "runtime/event/event.h"
 #include "runtime/memory_manager/surface.h"
+
+#include "hw_cmds.h"
 
 namespace OCLRT {
 

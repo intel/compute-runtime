@@ -1,11 +1,9 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
-
-#include "config.h"
 
 #include <runtime/compiler_interface/binary_cache.h>
 #include <runtime/helpers/aligned_memory.h>
@@ -15,13 +13,15 @@
 #include <runtime/os_interface/os_inc_base.h>
 #include <runtime/program/program.h>
 #include <runtime/utilities/debug_settings_reader.h>
+
+#include "config.h"
 #include "os_inc.h"
 
 #include <cstring>
-#include <string>
-#include <sstream>
 #include <iomanip>
 #include <mutex>
+#include <sstream>
+#include <string>
 
 namespace OCLRT {
 std::mutex BinaryCache::cacheAccessMtx;

@@ -5,7 +5,6 @@
  *
  */
 
-#include "gmock/gmock.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
@@ -14,7 +13,6 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/buffer.h"
-#include "mem_obj_types.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
@@ -26,9 +24,12 @@
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "mem_obj_types.h"
 
 using namespace OCLRT;
 

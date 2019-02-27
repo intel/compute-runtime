@@ -1,13 +1,15 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include <string>
-#include "runtime/helpers/hw_info.h"
 #include "runtime/platform/extensions.h"
+
+#include "runtime/helpers/hw_info.h"
+
+#include <string>
 
 namespace OCLRT {
 

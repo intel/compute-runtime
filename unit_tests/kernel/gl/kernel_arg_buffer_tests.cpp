@@ -1,25 +1,26 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "config.h"
-#include "CL/cl.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/sharings/gl/gl_buffer.h"
+#include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/kernel/kernel_arg_buffer_fixture.h"
-#include "test.h"
+#include "unit_tests/mocks/gl/mock_gl_sharing.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/mocks/gl/mock_gl_sharing.h"
+
+#include "CL/cl.h"
+#include "config.h"
 #include "gtest/gtest.h"
 
 #include <memory>

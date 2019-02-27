@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 #include "runtime/gtpin/gtpin_hw_helper.h"
 #include "runtime/gtpin/gtpin_hw_helper.inl"
+
+#include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 
 namespace OCLRT {
 

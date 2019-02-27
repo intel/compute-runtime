@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,22 +7,22 @@
 
 #include "unit_tests/fixtures/preemption_fixture.h"
 
-#include "runtime/command_stream/preemption.h"
 #include "runtime/command_queue/enqueue_common.h"
 #include "runtime/command_queue/enqueue_kernel.h"
 #include "runtime/command_queue/enqueue_marker.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/scheduler/scheduler_kernel.h"
+#include "test.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_kernel.h"
 
 #include "gtest/gtest.h"
-#include "test.h"
 
 using namespace OCLRT;
 

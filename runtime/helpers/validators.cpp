@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/base_object.h"
 #include "runtime/helpers/validators.h"
-#include "runtime/context/context.h"
+
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/event/event.h"
+#include "runtime/helpers/base_object.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/platform/platform.h"

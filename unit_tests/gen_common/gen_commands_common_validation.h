@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,14 @@
 
 #pragma once
 
-#include <cstdint>
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/indirect_heap/indirect_heap.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+
 #include "gtest/gtest.h"
+
+#include <cstdint>
 
 namespace OCLRT {
 template <typename FamilyType>

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
+#include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
 using namespace OCLRT;

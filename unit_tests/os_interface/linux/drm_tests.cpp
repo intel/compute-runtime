@@ -5,15 +5,16 @@
  *
  */
 
+#include "runtime/helpers/file_io.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
-#include "runtime/helpers/file_io.h"
-#include "unit_tests/os_interface/linux/drm_mock.h"
+#include "runtime/os_interface/os_interface.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/os_interface/linux/drm_mock.h"
+
 #include "gtest/gtest.h"
 
-#include "runtime/os_interface/os_interface.h"
 #include <fstream>
 
 using namespace OCLRT;

@@ -6,6 +6,7 @@
  */
 
 #include "aub_batch_buffer_tests_gen10.h"
+
 #include "unit_tests/fixtures/device_fixture.h"
 
 using Gen10AubBatchBufferTests = Test<OCLRT::DeviceFixture>;

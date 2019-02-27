@@ -1,14 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/utilities/spinlock.h"
+
 #include "gtest/gtest.h"
-#include <thread>
+
 #include <mutex>
+#include <thread>
 
 using namespace OCLRT;
 

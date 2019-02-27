@@ -6,11 +6,13 @@
  */
 
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/program/kernel_info.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "runtime/program/kernel_info.h"
+
 #include "gtest/gtest.h"
-#include <type_traits>
+
 #include <memory>
+#include <type_traits>
 
 using namespace OCLRT;
 

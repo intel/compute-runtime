@@ -5,23 +5,24 @@
  *
  */
 
-#include "CL/cl.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/pipe.h"
 #include "runtime/accelerators/intel_accelerator.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
 #include "runtime/helpers/sampler_helpers.h"
+#include "runtime/kernel/kernel.h"
+#include "runtime/mem_obj/pipe.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
+#include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
-#include "test.h"
-#include "unit_tests/mocks/mock_sampler.h"
-#include "unit_tests/mocks/mock_pipe.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_device_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_pipe.h"
 #include "unit_tests/mocks/mock_program.h"
+#include "unit_tests/mocks/mock_sampler.h"
+
+#include "CL/cl.h"
 #include "gtest/gtest.h"
 
 #include <memory>

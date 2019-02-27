@@ -9,11 +9,11 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/event/event.h"
 #include "runtime/event/user_event.h"
+#include "test.h"
 #include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/fixtures/device_instrumentation_fixture.h"
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
-#include "test.h"
 
 using namespace OCLRT;
 

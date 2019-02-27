@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/device_queue/device_queue.h"
+#include "runtime/device_queue/device_queue_hw.h"
 
 namespace OCLRT {
 template <typename GfxFamily>

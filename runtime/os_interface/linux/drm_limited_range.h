@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,9 @@
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/utilities/heap_allocator.h"
-#include <stdint.h>
+
 #include <memory>
+#include <stdint.h>
 #include <sys/mman.h>
 
 namespace OCLRT {

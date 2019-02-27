@@ -5,12 +5,13 @@
  *
  */
 
-#include "hw_cmds.h"
-#include "runtime/indirect_heap/indirect_heap.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/state_base_address.h"
-#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/memory_manager/memory_constants.h"
+
+#include "hw_cmds.h"
 
 namespace OCLRT {
 template <typename GfxFamily>

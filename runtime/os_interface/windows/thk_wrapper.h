@@ -8,6 +8,8 @@
 #pragma once
 #include "runtime/utilities/api_intercept.h"
 
+#include <d3dkmthk.h>
+
 namespace OCLRT {
 // IDs for easy system times identification
 enum SystemCallsIds {

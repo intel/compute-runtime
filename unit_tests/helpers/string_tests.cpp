@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/string.h"
+
 #include "gtest/gtest.h"
 
 #if defined(__linux__)

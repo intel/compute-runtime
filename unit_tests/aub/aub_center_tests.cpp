@@ -13,9 +13,8 @@
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
 
-#include "third_party/aub_stream/headers/modes.h"
-
 #include "gtest/gtest.h"
+#include "third_party/aub_stream/headers/modes.h"
 using namespace OCLRT;
 
 TEST(AubCenter, GivenUseAubStreamDebugVariableNotSetWhenAubCenterIsCreatedThenAubCenterDoesNotCreateAubManager) {

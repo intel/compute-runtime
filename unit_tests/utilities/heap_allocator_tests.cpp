@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "test.h"
-#include "gtest/gtest.h"
 #include "runtime/utilities/heap_allocator.h"
+#include "test.h"
 
-#include <random>
+#include "gtest/gtest.h"
+
 #include <iostream>
+#include <random>
 
 using namespace OCLRT;
 using namespace std;

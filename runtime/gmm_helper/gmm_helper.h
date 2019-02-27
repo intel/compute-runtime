@@ -6,11 +6,12 @@
  */
 
 #pragma once
+#include "runtime/api/cl_types.h"
+#include "runtime/gmm_helper/gmm_lib.h"
+
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
-#include "runtime/gmm_helper/gmm_lib.h"
-#include "runtime/api/cl_types.h"
 
 namespace OCLRT {
 enum class OCLPlane;

@@ -1,13 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/os_interface/os_library.h"
+
+#include "runtime/helpers/debug_helpers.h"
+
 #include "os_library.h"
+
 #include <dlfcn.h>
 
 namespace OCLRT {

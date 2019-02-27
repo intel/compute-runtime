@@ -5,8 +5,9 @@
  *
  */
 
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
+
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_context.h"
 

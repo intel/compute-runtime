@@ -5,8 +5,9 @@
  *
  */
 
-#include "common/helpers/bit_helpers.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
+
+#include "common/helpers/bit_helpers.h"
 
 namespace OCLRT {
 

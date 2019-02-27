@@ -5,14 +5,14 @@
  *
  */
 
-#include "runtime/mem_obj/buffer.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/resource_info.h"
+#include "runtime/mem_obj/buffer.h"
 #include "runtime/sharings/gl/gl_buffer.h"
+#include "test.h"
 #include "unit_tests/mocks/gl/mock_gl_sharing.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
-#include "test.h"
 
 using namespace OCLRT;
 

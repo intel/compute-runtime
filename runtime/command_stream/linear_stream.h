@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,10 @@
 #pragma once
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
+
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <atomic>
 
 namespace OCLRT {
 class GraphicsAllocation;

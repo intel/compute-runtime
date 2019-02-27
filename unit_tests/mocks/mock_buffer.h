@@ -8,9 +8,9 @@
 #pragma once
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/buffer.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 
 using namespace OCLRT;
 

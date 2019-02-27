@@ -5,8 +5,9 @@
  *
  */
 
-#include "gtest/gtest.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+
+#include "gtest/gtest.h"
 
 using namespace OCLRT;
 

@@ -6,22 +6,21 @@
  */
 
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/enqueue_fill_buffer.h"
 #include "runtime/command_queue/enqueue_kernel.h"
 #include "runtime/command_queue/enqueue_read_buffer.h"
 #include "runtime/command_queue/enqueue_write_buffer.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/kernel/kernel.h"
-
+#include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
-#include "unit_tests/fixtures/hello_world_kernel_fixture.h"
-#include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
-#include "test.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
+#include "unit_tests/fixtures/hello_world_kernel_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
 
 using namespace OCLRT;
 

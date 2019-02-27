@@ -6,7 +6,6 @@
  */
 
 #include "runtime/command_stream/linear_stream.h"
-#include "hw_cmds.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/aligned_memory.h"
@@ -20,6 +19,9 @@
 #include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/platform/platform.h"
+
+#include "hw_cmds.h"
+
 #include <cstdlib>
 #include <cstring>
 

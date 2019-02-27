@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include <GL/gl.h>
-#include "gtest/gtest.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
@@ -19,6 +17,9 @@
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "gtest/gtest.h"
+#include <GL/gl.h>
 
 using namespace OCLRT;
 

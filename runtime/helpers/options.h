@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #pragma once
 #include "runtime/helpers/debug_helpers.h"
-#include <cstdint>
+
 #include <cstddef>
+#include <cstdint>
 
 #ifndef OCL_RUNTIME_PROFILING
 #define OCL_RUNTIME_PROFILING 0

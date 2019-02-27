@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/file_io.h"
 #include "test_files.h"
+
+#include "runtime/helpers/file_io.h"
+
 #include "config.h"
 
 std::string testFiles("test_files/" NEO_ARCH "/");

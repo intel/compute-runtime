@@ -1,15 +1,18 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include <time.h>
-#include "runtime/os_interface/linux/drm_neo.h"
-#include "drm/i915_drm.h"
-#include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/linux/os_time_linux.h"
+
+#include "runtime/os_interface/linux/drm_neo.h"
+#include "runtime/os_interface/linux/os_interface.h"
+
+#include "drm/i915_drm.h"
+
+#include <time.h>
 
 namespace OCLRT {
 

@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/basic_math.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "unit_tests/command_queue/enqueue_read_buffer_fixture.h"
+#include "runtime/helpers/basic_math.h"
 #include "test.h"
+#include "unit_tests/command_queue/enqueue_read_buffer_fixture.h"
 
 using namespace OCLRT;
 

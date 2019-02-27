@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "aub_batch_buffer_tests.h"
+
 #include "unit_tests/fixtures/device_fixture.h"
 
 using AubBatchBufferTests = Test<OCLRT::DeviceFixture>;

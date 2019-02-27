@@ -6,9 +6,10 @@
  */
 
 #include "runtime/sampler/sampler.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
-#include "test.h"
+
 #include <memory>
 
 using namespace OCLRT;

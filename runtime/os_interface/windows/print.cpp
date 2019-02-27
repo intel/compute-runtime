@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,13 @@
 
 #include "runtime/os_interface/print.h"
 
-#include <cstdint>
-#include <cctype>
-#include <iostream>
 #include "runtime/os_interface/windows/windows_wrapper.h"
-#include <io.h>
+
+#include <cctype>
+#include <cstdint>
 #include <fcntl.h>
+#include <io.h>
+#include <iostream>
 
 void printToSTDOUT(const char *str) {
     int fd = 0;

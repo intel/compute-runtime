@@ -5,8 +5,6 @@
  *
  */
 
-#include "gtest/gtest.h"
-#include "test.h"
 #include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/built_ins.inl"
@@ -18,19 +16,22 @@
 #include "runtime/helpers/string.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "test.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
+#include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/run_kernel_fixture.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_builtins.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/utilities/base_object_utils.h"
+
+#include "gtest/gtest.h"
 #include "os_inc.h"
 
 #include <string>

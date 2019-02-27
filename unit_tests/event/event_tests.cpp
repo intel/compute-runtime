@@ -5,7 +5,6 @@
  *
  */
 
-#include "event_fixture.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/perf_counter.h"
@@ -28,6 +27,9 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
+
+#include "event_fixture.h"
+
 #include <memory>
 #include <type_traits>
 

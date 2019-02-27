@@ -7,8 +7,9 @@
 
 #pragma once
 #include "runtime/gen_common/hw_cmds.h"
-#include <vector>
+
 #include <list>
+#include <vector>
 
 typedef std::list<void *> GenCmdList;
 

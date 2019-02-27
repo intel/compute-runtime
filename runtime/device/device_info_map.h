@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "public/cl_ext_private.h"
+#include "runtime/device/device_info.h"
+
+#include "CL/cl_ext_intel.h"
 #include <CL/cl.h>
 #include <CL/cl_ext.h>
-#include "CL/cl_ext_intel.h"
-#include "runtime/device/device_info.h"
-#include "public/cl_ext_private.h"
 
 namespace DeviceInfoTable {
 template <cl_device_info Param, typename _Type, _Type DeviceInfo::*val>

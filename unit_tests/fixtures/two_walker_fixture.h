@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "hello_world_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
+
+#include "hello_world_fixture.h"
 
 namespace OCLRT {
 

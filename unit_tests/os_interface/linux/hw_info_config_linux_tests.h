@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,9 @@
 
 #pragma once
 
-#include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/hw_info_config.h"
+#include "runtime/os_interface/os_interface.h"
 #include "runtime/utilities/cpu_info.h"
-
 #include "unit_tests/os_interface/hw_info_config_tests.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
 

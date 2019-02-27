@@ -1,13 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "hw_info.h"
-#include "hw_cmds.h"
+
 #include "runtime/os_interface/debug_settings_manager.h"
+
+#include "hw_cmds.h"
 
 namespace OCLRT {
 HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *skuTable, const WorkaroundTable *waTable,

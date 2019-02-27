@@ -9,6 +9,8 @@
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_queue/enqueue_common.h"
 #include "runtime/event/event.h"
+#include "runtime/memory_manager/svm_memory_manager.h"
+
 #include <new>
 
 namespace OCLRT {

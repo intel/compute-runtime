@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/mem_obj/map_operations_handler.h"
+
 #include "runtime/helpers/ptr_math.h"
 
 using namespace OCLRT;

@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
-#include "runtime/helpers/aligned_memory.h"
+
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/helpers/aligned_memory.h"
+#include "runtime/memory_manager/memory_manager.h"
 
 namespace OCLRT {
 

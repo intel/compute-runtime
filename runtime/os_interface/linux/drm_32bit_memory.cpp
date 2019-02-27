@@ -5,14 +5,14 @@
  *
  */
 
-#include <memory>
-#include "runtime/os_interface/32bit_memory.h"
-#include "runtime/os_interface/linux/allocator_helper.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/linux/allocator_helper.h"
 
+#include <memory>
 #include <sys/mman.h>
 using namespace OCLRT;
 constexpr uintptr_t maxMmap32BitAddress = 0x80000000;

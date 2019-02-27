@@ -7,16 +7,16 @@
 
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/helpers/execution_environment_helper.h"
 
-#include "test.h"
 #include <memory>
 
 class CommandStreamReceiverWithActiveDebuggerTest : public ::testing::Test {

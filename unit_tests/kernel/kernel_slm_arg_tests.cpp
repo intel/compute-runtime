@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,12 @@
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/kernel/kernel.h"
-#include "unit_tests/fixtures/device_fixture.h"
 #include "test.h"
+#include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

@@ -6,9 +6,10 @@
  */
 
 #include "runtime/os_interface/windows/os_context_win.h"
+
+#include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
-#include "runtime/os_interface/windows/os_interface.h"
 
 namespace OCLRT {
 

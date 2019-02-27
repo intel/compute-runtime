@@ -5,10 +5,11 @@
  *
  */
 
-#include "hw_info.h"
-#include "hw_cmds.h"
-#include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/command_stream_receiver_hw.inl"
+#include "runtime/command_stream/device_command_stream.h"
+
+#include "hw_cmds.h"
+#include "hw_info.h"
 
 namespace OCLRT {
 typedef SKLFamily Family;

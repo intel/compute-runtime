@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "igfx_debug_interchange_types.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
 
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/program/kernel_info.h"
-#include "runtime/source_level_debugger/source_level_debugger.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/program/kernel_info.h"
+
+#include "igfx_debug_interchange_types.h"
 #include "lib_names.h"
 
 #define IGFXDBG_CURRENT_VERSION 4

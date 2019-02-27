@@ -5,14 +5,15 @@
  *
  */
 
-#include "hw_cmds.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
+
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "unit_tests/mocks/mock_device.h"
 
 #include "gtest/gtest.h"
+#include "hw_cmds.h"
 
 namespace OCLRT {
 

@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "runtime/mem_obj/mem_obj.h"
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/validators.h"
+#include "runtime/mem_obj/mem_obj.h"
 
 namespace OCLRT {
 class Image;

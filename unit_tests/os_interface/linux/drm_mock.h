@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include "runtime/helpers/options.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/options.h"
 #include "runtime/os_interface/linux/drm_neo.h"
-#include "drm/i915_drm.h"
 
+#include "drm/i915_drm.h"
 #include "gtest/gtest.h"
 
 #include <cstdio>

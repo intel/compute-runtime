@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "debug_settings_reader.h"
+
 #include "debug_file_reader.h"
 
 namespace OCLRT {

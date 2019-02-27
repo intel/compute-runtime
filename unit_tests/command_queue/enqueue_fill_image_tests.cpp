@@ -5,13 +5,15 @@
  *
  */
 
-#include <algorithm>
-#include "reg_configs_common.h"
 #include "runtime/helpers/convert_color.h"
+#include "test.h"
 #include "unit_tests/command_queue/enqueue_fill_image_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "unit_tests/helpers/unit_test_helper.h"
-#include "test.h"
+
+#include "reg_configs_common.h"
+
+#include <algorithm>
 
 using namespace OCLRT;
 

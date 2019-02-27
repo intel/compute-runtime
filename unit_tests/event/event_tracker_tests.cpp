@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "event_fixture.h"
-#include "runtime/event/event_tracker.h"
 #include "runtime/event/event.h"
+#include "runtime/event/event_tracker.h"
 #include "runtime/helpers/file_io.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+
+#include "event_fixture.h"
 
 #include <array>
 #include <functional>

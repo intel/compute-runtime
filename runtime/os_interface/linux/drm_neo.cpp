@@ -1,13 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "drm_neo.h"
+
 #include "runtime/os_interface/os_inc_base.h"
 #include "runtime/utilities/directory.h"
+
 #include "drm/i915_drm.h"
 
 #include <cstdio>

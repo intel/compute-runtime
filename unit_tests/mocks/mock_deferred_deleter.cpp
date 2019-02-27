@@ -1,13 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "unit_tests/mocks/mock_deferred_deleter.h"
+
 #include "runtime/memory_manager/deferrable_deletion.h"
 #include "runtime/os_interface/os_thread.h"
+
 #include "gtest/gtest.h"
 
 namespace OCLRT {

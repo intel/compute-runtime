@@ -5,8 +5,9 @@
  *
  */
 
-#include "hw_cmds.h"
 #include "test.h"
+
+#include "hw_cmds.h"
 
 #include <type_traits>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,12 @@
 
 #pragma once
 
-#include "CL/cl.h"
 #include <d3d10_1.h>
-#include "CL/cl_dx9_media_sharing.h"
+
+#include "CL/cl.h"
 #include "CL/cl_d3d10.h"
 #include "CL/cl_d3d11.h"
+#include "CL/cl_dx9_media_sharing.h"
 #define CL_DX9_MEDIA_SHARING_INTEL_EXT
 #include "CL/cl_dx9_media_sharing_intel.h"
 

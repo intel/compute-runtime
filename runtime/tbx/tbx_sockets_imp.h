@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,9 @@
 
 #pragma once
 #include "runtime/tbx/tbx_sockets.h"
+
 #include "os_socket.h"
+
 #include <iostream>
 
 namespace OCLRT {

@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/context/context.h"
 #include "runtime/mem_obj/pipe.h"
-#include "runtime/mem_obj/mem_obj_helper.h"
+
+#include "runtime/context/context.h"
 #include "runtime/helpers/get_info.h"
+#include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 namespace OCLRT {

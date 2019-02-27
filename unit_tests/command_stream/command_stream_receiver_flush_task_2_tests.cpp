@@ -5,10 +5,9 @@
  *
  */
 
-#include "reg_configs_common.h"
 #include "runtime/command_stream/csr_definitions.h"
-#include "runtime/helpers/hw_helper.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/state_base_address.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/os_context.h"
@@ -21,6 +20,8 @@
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
+
+#include "reg_configs_common.h"
 
 using namespace OCLRT;
 

@@ -6,12 +6,12 @@
  */
 
 #pragma once
+#include <condition_variable>
+#include <fstream>
+#include <mutex>
 #include <sstream>
 #include <stdint.h>
 #include <string>
-#include <fstream>
-#include <condition_variable>
-#include <mutex>
 #include <thread>
 
 enum class DebugFunctionalityLevel {

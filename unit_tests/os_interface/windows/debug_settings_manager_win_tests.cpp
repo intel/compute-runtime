@@ -7,9 +7,9 @@
 
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "test.h"
 #include "unit_tests/os_interface/debug_settings_manager_fixture.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
-#include "test.h"
 
 TEST(DebugSettingsManager, GivenDebugSettingsManagerWithLogAllocationsThenLogsCorrectInfo) {
     FullyEnabledTestDebugManager debugManager;

@@ -5,29 +5,32 @@
  *
  */
 
+#include "offline_compiler.h"
+
+#include "elf/writer.h"
+#include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/file_io.h"
+#include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/string.h"
+#include "runtime/helpers/validators.h"
+#include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/os_inc_base.h"
+#include "runtime/os_interface/os_library.h"
+#include "runtime/platform/extensions.h"
+
 #include "cif/common/cif_main.h"
 #include "cif/helpers/error.h"
 #include "cif/import/library_api.h"
+#include "igfxfmid.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 #include "ocl_igc_interface/platform_helper.h"
-#include "offline_compiler.h"
-#include "igfxfmid.h"
-#include "runtime/helpers/file_io.h"
-#include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/os_interface/os_inc_base.h"
-#include "runtime/os_interface/os_library.h"
-#include "runtime/helpers/string.h"
-#include "runtime/helpers/debug_helpers.h"
-#include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/validators.h"
-#include "runtime/platform/extensions.h"
-#include "elf/writer.h"
-#include <iomanip>
-#include <list>
+
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
+#include <list>
 
 #ifdef _WIN32
 #include <direct.h>

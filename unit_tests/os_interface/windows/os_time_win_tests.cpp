@@ -1,14 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gtest/gtest.h"
-#include "mock_os_time_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
+
+#include "gtest/gtest.h"
+#include "mock_os_time_win.h"
+
 #include <memory>
 
 using namespace OCLRT;

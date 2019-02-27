@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,10 @@
 
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/mocks/mock_context.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

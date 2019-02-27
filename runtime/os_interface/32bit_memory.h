@@ -7,8 +7,9 @@
 
 #pragma once
 #include "runtime/utilities/heap_allocator.h"
-#include <stdint.h>
+
 #include <memory>
+#include <stdint.h>
 
 namespace OCLRT {
 const uintptr_t max32BitAddress = 0xffffffff;

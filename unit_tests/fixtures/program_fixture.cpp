@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/program/create.inl"
 #include "unit_tests/fixtures/program_fixture.inl"
+
+#include "runtime/program/create.inl"
 #include "unit_tests/mocks/mock_program.h"
 
 namespace OCLRT {

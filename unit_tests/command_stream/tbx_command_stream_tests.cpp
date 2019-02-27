@@ -5,17 +5,17 @@
  *
  */
 
-#include "tbx_command_stream_fixture.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
-#include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
-#include "runtime/helpers/ptr_math.h"
+#include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/helpers/hw_helper.h"
+#include "runtime/helpers/ptr_math.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
+#include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
@@ -26,7 +26,9 @@
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_tbx_csr.h"
-#include "test.h"
+
+#include "tbx_command_stream_fixture.h"
+
 #include <cstdint>
 
 using namespace OCLRT;

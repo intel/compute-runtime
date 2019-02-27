@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "runtime/device/device.h"
 #include "runtime/helpers/options.h"
-#include "unit_tests/fixtures/platform_fixture.h"
 #include "test.h"
+#include "unit_tests/fixtures/platform_fixture.h"
 
 using namespace OCLRT;
 

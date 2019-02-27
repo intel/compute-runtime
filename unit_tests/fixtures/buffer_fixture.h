@@ -8,7 +8,9 @@
 #pragma once
 #include "runtime/mem_obj/buffer.h"
 #include "unit_tests/mocks/mock_context.h"
+
 #include "CL/cl.h"
+
 #include <cassert>
 #include <memory>
 

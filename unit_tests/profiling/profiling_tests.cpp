@@ -7,18 +7,18 @@
 
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_queue/enqueue_common.h"
-#include "runtime/command_queue/enqueue_migrate_mem_objects.h"
 #include "runtime/command_queue/enqueue_kernel.h"
 #include "runtime/command_queue/enqueue_marker.h"
-#include "runtime/memory_manager/surface.h"
+#include "runtime/command_queue/enqueue_migrate_mem_objects.h"
 #include "runtime/helpers/dispatch_info.h"
+#include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/utilities/tag_allocator.h"
-
+#include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/event/event_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_event.h"
@@ -26,7 +26,6 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 #include "unit_tests/utilities/base_object_utils.h"
-#include "test.h"
 
 namespace OCLRT {
 

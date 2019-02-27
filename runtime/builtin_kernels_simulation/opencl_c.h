@@ -1,17 +1,19 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <mutex>
+#include "CL/cl.h"
+
 #include <condition_variable>
-#include <map>
-#include <thread>
-#include <string.h>
 #include <cstdint>
+#include <map>
+#include <mutex>
+#include <string.h>
+#include <thread>
 
 // OpenCL Types
 typedef uint32_t uint;

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
+
 #include <string>
 
 namespace OCLRT {

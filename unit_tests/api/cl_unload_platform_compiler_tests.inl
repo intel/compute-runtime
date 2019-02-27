@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "cl_api_tests.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
+
+#include "cl_api_tests.h"
 
 using namespace OCLRT;
 

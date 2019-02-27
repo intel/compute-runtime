@@ -6,20 +6,22 @@
  */
 
 #pragma once
-#include "block_kernel_manager.h"
 #include "elf/reader.h"
-#include "kernel_info.h"
+#include "elf/writer.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/stdio.h"
 #include "runtime/helpers/string_helpers.h"
-#include "elf/writer.h"
+
+#include "block_kernel_manager.h"
 #include "igfxfmid.h"
+#include "kernel_info.h"
 #include "patch_list.h"
-#include <vector>
-#include <string>
+
 #include <map>
+#include <string>
+#include <vector>
 
 #define OCLRT_ALIGN(a, b) ((((a) % (b)) != 0) ? ((a) - ((a) % (b)) + (b)) : (a))
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,8 @@
 #include "runtime/helpers/kmd_notify_properties.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/windows/sys_calls.h"
-
-#include "unit_tests/helpers/variable_backup.h"
 #include "test.h"
+#include "unit_tests/helpers/variable_backup.h"
 
 namespace OCLRT {
 

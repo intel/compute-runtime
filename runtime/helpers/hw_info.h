@@ -6,13 +6,14 @@
  */
 
 #pragma once
+#include "runtime/command_stream/preemption_mode.h"
+#include "runtime/helpers/kmd_notify_properties.h"
+
 #include "engine_node.h"
 #include "gtsysinfo.h"
 #include "igfxfmid.h"
 #include "sku_info.h"
 
-#include "runtime/command_stream/preemption_mode.h"
-#include "runtime/helpers/kmd_notify_properties.h"
 #include <cstddef>
 #include <string>
 

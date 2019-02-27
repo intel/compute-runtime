@@ -11,7 +11,9 @@
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
+
 #include <d3dkmthk.h>
+
 #include <map>
 #include <mutex>
 #include <vector>

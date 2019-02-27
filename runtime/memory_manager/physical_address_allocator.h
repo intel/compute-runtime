@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/memory_constants.h"
+
 #include <atomic>
 #include <mutex>
 

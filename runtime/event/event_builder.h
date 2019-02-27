@@ -6,10 +6,12 @@
  */
 
 #pragma once
-#include "CL/cl.h"
-#include <type_traits>
 #include "runtime/utilities/arrayref.h"
 #include "runtime/utilities/stackvec.h"
+
+#include "CL/cl.h"
+
+#include <type_traits>
 
 namespace OCLRT {
 

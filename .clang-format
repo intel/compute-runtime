@@ -48,13 +48,24 @@ DerivePointerAlignment: false
 DisableFormat:   false
 ExperimentalAutoDetectBinPacking: false
 ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
-IncludeCategories: 
-  - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
-    Priority:        2
-  - Regex:           '^(<|"(gtest|isl|json)/)'
-    Priority:        3
-  - Regex:           '.*'
+IncludeBlocks:   Regroup
+IncludeCategories:
+  - Regex:           '^.(common|documentation|elf|manifests|offline_compiler|public|runtime|scripts|unit_tests)/'
     Priority:        1
+  - Regex:           '^"test\.h"$'
+    Priority:        1
+  - Regex:           '(d3d9types|d3d10_1)\.h'
+    Priority:        4
+  - Regex:           '(gfxEscape|windows)\.h'
+    Priority:        5
+  - Regex:           '^.(third_party|llvm|llvm-c|clang|clang-c|gtest|isl|json)/'
+    Priority:        5
+  - Regex:           '^.(gmock|cl|gl|d3d)'
+    Priority:        5
+  - Regex:           '^<.*>$'
+    Priority:        10
+  - Regex:           '.*'
+    Priority:        5
 IndentCaseLabels: false
 IndentWidth:     4
 IndentWrappedFunctionNames: false
@@ -74,7 +85,7 @@ PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 60
 PointerAlignment: Right
 ReflowComments:  true
-SortIncludes:    false
+SortIncludes:    true
 SpaceAfterCStyleCast: false
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeParens: ControlStatements

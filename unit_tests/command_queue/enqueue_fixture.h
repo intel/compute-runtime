@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,9 @@
 #include "runtime/kernel/kernel.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
+
 #include "CL/cl.h"
+
 #include <memory>
 
 struct EnqueueTraits {

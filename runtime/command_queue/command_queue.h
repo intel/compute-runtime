@@ -6,12 +6,14 @@
  */
 
 #pragma once
+#include "runtime/event/event.h"
 #include "runtime/helpers/base_object.h"
+#include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/task_information.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/event/event.h"
+
 #include "instrumentation.h"
+
 #include <atomic>
 #include <cstdint>
 

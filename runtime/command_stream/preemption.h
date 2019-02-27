@@ -9,6 +9,7 @@
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption_mode.h"
 #include "runtime/helpers/hw_info.h"
+
 #include "sku_info.h"
 
 namespace OCLRT {

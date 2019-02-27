@@ -8,6 +8,7 @@
 #pragma once
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/surface_formats.h"
+
 #include "gmock/gmock.h"
 
 #if defined(__clang__)

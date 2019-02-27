@@ -6,12 +6,13 @@
  */
 
 #pragma once
-#include "runtime/gen_common/aub_mapper.h"
-#include "command_stream_receiver_simulated_hw.h"
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
+#include "runtime/gen_common/aub_mapper.h"
 #include "runtime/memory_manager/address_mapper.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/memory_manager/page_table.h"
+
+#include "command_stream_receiver_simulated_hw.h"
 
 namespace OCLRT {
 

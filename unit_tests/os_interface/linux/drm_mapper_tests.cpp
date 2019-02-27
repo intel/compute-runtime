@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "drm/i915_drm.h"
 #include "runtime/os_interface/linux/drm_engine_mapper.h"
 #include "test.h"
+
+#include "drm/i915_drm.h"
 
 using namespace OCLRT;
 

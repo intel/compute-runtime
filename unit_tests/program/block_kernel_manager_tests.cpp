@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/program/kernel_info.h"
-
 #include "unit_tests/mocks/mock_block_kernel_manager.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 

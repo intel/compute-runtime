@@ -1,13 +1,15 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "igfxfmid.h"
 #include "runtime/helpers/pipeline_select_helper.h"
+
+#include "igfxfmid.h"
+
 #include <cstddef>
 #include <cstdint>
 

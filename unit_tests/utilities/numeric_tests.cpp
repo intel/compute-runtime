@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "test.h"
 #include "runtime/utilities/numeric.h"
+#include "test.h"
 
 #include <type_traits>
 

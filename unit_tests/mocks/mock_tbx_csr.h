@@ -12,7 +12,9 @@
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
+
 #include "gmock/gmock.h"
+
 #include <string>
 
 namespace OCLRT {

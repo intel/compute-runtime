@@ -10,9 +10,9 @@
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/utilities/tag_allocator.h"
+#include "test.h"
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "test.h"
 
 using namespace OCLRT;
 

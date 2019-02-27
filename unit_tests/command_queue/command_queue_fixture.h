@@ -6,10 +6,11 @@
  */
 
 #pragma once
-#include "gtest/gtest.h"
-#include "CL/cl.h"
 #include "runtime/command_queue/command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
+
+#include "CL/cl.h"
+#include "gtest/gtest.h"
 
 namespace OCLRT {
 class Device;

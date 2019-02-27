@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "hw_cmds.h"
+#include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.inl"
-#include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
-#include "runtime/helpers/base_object.h"
 #include "runtime/helpers/array_count.h"
+#include "runtime/helpers/base_object.h"
+
+#include "hw_cmds.h"
 
 namespace OCLRT {
 typedef CNLFamily Family;

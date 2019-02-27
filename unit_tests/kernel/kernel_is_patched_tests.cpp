@@ -5,10 +5,11 @@
  *
  */
 
-#include "gtest/gtest.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
+
+#include "gtest/gtest.h"
 
 using namespace OCLRT;
 

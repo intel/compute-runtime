@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "runtime/helpers/options.h"
 #include "runtime/platform/platform.h"
-#include "unit_tests/helpers/variable_backup.h"
 #include "test.h"
+#include "unit_tests/helpers/variable_backup.h"
 
 using namespace OCLRT;
 

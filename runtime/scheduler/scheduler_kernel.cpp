@@ -5,8 +5,9 @@
  *
  */
 
-#include "runtime/helpers/hw_helper.h"
 #include "runtime/scheduler/scheduler_kernel.h"
+
+#include "runtime/helpers/hw_helper.h"
 
 #include <cinttypes>
 

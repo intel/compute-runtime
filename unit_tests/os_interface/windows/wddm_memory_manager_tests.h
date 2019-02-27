@@ -7,17 +7,19 @@
 
 #pragma once
 
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
-#include "test.h"
 #include "runtime/os_interface/windows/os_interface.h"
+#include "test.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 #include "unit_tests/mocks/mock_gmm.h"
-#include "unit_tests/os_interface/windows/wddm_fixture.h"
+#include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
+#include "unit_tests/os_interface/windows/wddm_fixture.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
 #include <type_traits>
 
 using namespace OCLRT;

@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "program.h"
+
 #include "elf/writer.h"
+#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/helpers/string.h"
 #include "runtime/helpers/hw_helper.h"
+#include "runtime/helpers/string.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/compiler_interface/compiler_interface.h"
 
 #include <sstream>
 

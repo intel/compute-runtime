@@ -5,7 +5,6 @@
  *
  */
 
-#include "hw_cmds.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/aub_alloc_dump.h"
 #include "runtime/aub_mem_dump/aub_alloc_dump.inl"
@@ -25,12 +24,14 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
+
+#include "aub_command_stream_receiver_hw.h"
 #include "driver_version.h"
+#include "hw_cmds.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
 
 #include <algorithm>
 #include <cstring>
-#include "aub_command_stream_receiver_hw.h"
 
 namespace OCLRT {
 

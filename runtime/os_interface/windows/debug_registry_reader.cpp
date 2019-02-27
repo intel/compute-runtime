@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/utilities/debug_settings_reader.h"
-#include <stdint.h>
-#include "runtime/os_interface/windows/windows_wrapper.h"
 #include "runtime/os_interface/windows/registry_reader.h"
+#include "runtime/os_interface/windows/windows_wrapper.h"
+#include "runtime/utilities/debug_settings_reader.h"
+
+#include <stdint.h>
 
 namespace OCLRT {
 

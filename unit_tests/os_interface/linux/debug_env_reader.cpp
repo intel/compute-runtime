@@ -1,13 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "test.h"
-#include <memory>
 #include "runtime/utilities/linux/debug_env_reader.h"
+
+#include "test.h"
+
+#include <memory>
 
 namespace OCLRT {
 

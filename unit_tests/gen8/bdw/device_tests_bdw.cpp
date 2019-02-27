@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_source_level_debugger.h"
-#include "test.h"
 
 using namespace OCLRT;
 struct BdwDeviceTest : public DeviceFixture,

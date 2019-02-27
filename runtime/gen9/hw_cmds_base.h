@@ -6,11 +6,13 @@
  */
 
 #pragma once
-#include <cstddef>
 #include "runtime/commands/bxml_generator_glue.h"
 #include "runtime/helpers/debug_helpers.h"
+
 #include "hw_info.h"
 #include "igfxfmid.h"
+
+#include <cstddef>
 
 template <class T>
 struct CmdParse;
@@ -18,8 +20,8 @@ struct CmdParse;
 namespace OCLRT {
 
 struct GEN9 {
-#include "runtime/gen9/hw_cmds_generated_patched.h"
 #include "runtime/gen9/hw_cmds_generated.h"
+#include "runtime/gen9/hw_cmds_generated_patched.h"
 };
 
 struct SKLFamily : public GEN9 {

@@ -6,7 +6,9 @@
  */
 
 #include "context_fixture.h"
+
 #include "unit_tests/mocks/mock_context.h"
+
 #include "gtest/gtest.h"
 
 namespace OCLRT {

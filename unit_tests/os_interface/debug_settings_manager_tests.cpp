@@ -17,10 +17,10 @@
 #include "unit_tests/os_interface/debug_settings_manager_fixture.h"
 #include "unit_tests/utilities/base_object_utils.h"
 
-#include <memory>
-#include <string>
-#include <sstream>
 #include <cstdio>
+#include <memory>
+#include <sstream>
+#include <string>
 
 TEST(DebugSettingsManager, WithDebugFunctionality) {
     FullyEnabledTestDebugManager debugManager;

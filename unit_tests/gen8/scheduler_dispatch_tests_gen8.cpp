@@ -12,11 +12,11 @@
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/scheduler/scheduler_kernel.h"
+#include "test.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 
 #include "gtest/gtest.h"
-#include "test.h"
 
 using namespace OCLRT;
 

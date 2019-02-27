@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_svm_manager.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

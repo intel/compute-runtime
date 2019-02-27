@@ -1,17 +1,18 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/array_count.h"
-#include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/mem_obj/image.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/helpers/convert_color.h"
+#include "runtime/helpers/surface_formats.h"
+#include "runtime/mem_obj/image.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

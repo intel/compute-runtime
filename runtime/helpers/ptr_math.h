@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 static const int ptrGarbageContent[16] = {
     0x0131, 0x133, 0xA, 0xEF,

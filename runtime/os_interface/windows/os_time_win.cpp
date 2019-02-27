@@ -5,10 +5,12 @@
  *
  */
 
-#include <memory>
-#include "runtime/os_interface/windows/wddm/wddm.h"
-#include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/os_time_win.h"
+
+#include "runtime/os_interface/windows/os_interface.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
+
+#include <memory>
 
 #undef WIN32_NO_STATUS
 
@@ -27,7 +29,7 @@ bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo) {
 
         escapeCommand.Flags.Value = 0;
         escapeCommand.hAdapter = (D3DKMT_HANDLE)0;
-        escapeCommand.hContext = (D3DKMT_HANDLE)0; // escape is not context specific
+        escapeCommand.hContext = (D3DKMT_HANDLE)0;                // escape is not context specific
         escapeCommand.hDevice = (D3DKMT_HANDLE)wddm->getDevice(); // escape not device specific, passing only for instrumentation
         escapeCommand.pPrivateDriverData = &escapeInfo;
         escapeCommand.PrivateDriverDataSize = sizeof(escapeInfo);

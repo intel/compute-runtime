@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/memory_manager/residency.h"
+
 #include "runtime/os_interface/os_context.h"
 
 using namespace OCLRT;

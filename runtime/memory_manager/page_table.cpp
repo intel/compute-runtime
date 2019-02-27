@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/memory_manager/page_table.h"
+
+#include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/memory_manager/page_table.inl"
 
 namespace OCLRT {

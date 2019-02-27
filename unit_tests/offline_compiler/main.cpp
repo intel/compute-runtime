@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "environment.h"
 #include "runtime/os_interface/os_library.h"
 #include "unit_tests/custom_event_listener.h"
 #include "unit_tests/helpers/test_files.h"
 
+#include "environment.h"
 #include "limits.h"
 
 #ifdef WIN32

@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "gtest/gtest.h"
-#include "CL/cl.h"
 #include "runtime/command_queue/command_queue.h"
+
+#include "CL/cl.h"
+#include "gtest/gtest.h"
 
 namespace OCLRT {
 

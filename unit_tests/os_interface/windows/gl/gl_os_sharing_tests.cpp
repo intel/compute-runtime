@@ -5,6 +5,7 @@
  *
  */
 
+#include "public/cl_gl_private_intel.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
@@ -15,9 +16,8 @@
 #include "unit_tests/mocks/gl/mock_gl_sharing.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 
-#include <GL/gl.h>
-#include "public/cl_gl_private_intel.h"
 #include "gtest/gtest.h"
+#include <GL/gl.h>
 
 using namespace OCLRT;
 

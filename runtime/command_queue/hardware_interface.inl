@@ -7,9 +7,9 @@
 
 #pragma once
 #include "runtime/command_queue/hardware_interface.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/task_information.h"
+#include "runtime/memory_manager/internal_allocation_storage.h"
 
 namespace OCLRT {
 

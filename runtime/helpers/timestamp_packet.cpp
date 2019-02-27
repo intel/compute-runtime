@@ -5,11 +5,12 @@
  *
  */
 
+#include "runtime/helpers/timestamp_packet.h"
+
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/kernel_commands.h"
-#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/utilities/tag_allocator.h"
 
 using namespace OCLRT;

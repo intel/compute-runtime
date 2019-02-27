@@ -1,22 +1,23 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "CL/cl.h"
 #include "runtime/api/dispatch.h"
-#include "runtime/utilities/reference_tracked_object.h"
 #include "runtime/helpers/abort.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/utilities/reference_tracked_object.h"
+
+#include "CL/cl.h"
 
 #include <atomic>
 #include <condition_variable>
+#include <iostream>
 #include <mutex>
 #include <thread>
-#include <iostream>
 
 namespace OCLRT {
 

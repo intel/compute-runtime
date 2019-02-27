@@ -7,12 +7,14 @@
 
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/compiler_interface/compiler_options.h"
+#include "runtime/gtpin/gtpin_notify.h"
+#include "runtime/helpers/validators.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/platform/platform.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
-#include "runtime/helpers/validators.h"
-#include "runtime/gtpin/gtpin_notify.h"
+
 #include "program.h"
+
 #include <cstring>
 
 namespace OCLRT {

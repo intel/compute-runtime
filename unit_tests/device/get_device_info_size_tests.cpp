@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,9 @@
 
 #include "runtime/device/device_info_map.h"
 #include "unit_tests/fixtures/device_fixture.h"
+
 #include "gtest/gtest.h"
+
 #include <memory>
 
 using namespace OCLRT;

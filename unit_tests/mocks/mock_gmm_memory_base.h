@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "gmm_memory.h"
 #include "runtime/os_interface/windows/windows_defs.h"
+
+#include "gmm_memory.h"
 #include "gmock/gmock.h"
 
 namespace OCLRT {

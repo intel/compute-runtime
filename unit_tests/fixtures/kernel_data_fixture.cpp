@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "unit_tests/fixtures/kernel_data_fixture.h"
+
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
-#include "unit_tests/fixtures/kernel_data_fixture.h"
 
 void KernelDataTest::buildAndDecode() {
     cl_int error = CL_SUCCESS;

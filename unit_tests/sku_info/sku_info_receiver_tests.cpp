@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "runtime/sku_info/operations/sku_info_receiver.h"
 #include "unit_tests/sku_info/sku_info_base_reference.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

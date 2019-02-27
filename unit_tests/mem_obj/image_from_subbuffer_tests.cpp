@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/mem_obj/image.h"
-#include "runtime/mem_obj/buffer.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/mem_obj/buffer.h"
+#include "runtime/mem_obj/image.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
-#include "test.h"
 
 #include <memory>
 using namespace OCLRT;

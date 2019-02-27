@@ -9,11 +9,13 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/windows/os_inc.h"
 #include "runtime/os_interface/windows/os_library.h"
-#include <d3d9types.h>
-#include <d3dkmthk.h>
-#include <string>
-
 #include "runtime/os_interface/windows/thk_wrapper.h"
+
+#include <d3d9types.h>
+
+#include <d3dkmthk.h>
+
+#include <string>
 
 namespace OCLRT {
 

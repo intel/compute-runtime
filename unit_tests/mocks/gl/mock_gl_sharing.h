@@ -6,12 +6,14 @@
  */
 
 #pragma once
-#include "config.h"
-#include <cstring>
+#include "public/cl_gl_private_intel.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/sharings/gl/gl_sharing.h"
-#include "public/cl_gl_private_intel.h"
 #include "unit_tests/os_interface/windows/gl/gl_dll_helper.h"
+
+#include "config.h"
+
+#include <cstring>
 
 namespace OCLRT {
 struct EGLBkpContextParams {

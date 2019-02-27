@@ -6,10 +6,11 @@
  */
 
 #pragma once
-#include <limits>
+#include "runtime/helpers/aligned_memory.h"
 #include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/linux/drm_32bit_memory.cpp"
-#include "runtime/helpers/aligned_memory.h"
+
+#include <limits>
 namespace OCLRT {
 
 constexpr uintptr_t startOf32MmapRegion = 0x40000000;

@@ -6,6 +6,7 @@
  */
 
 #include "runtime/helpers/basic_math.h"
+
 #include "gtest/gtest.h"
 
 using namespace Math;

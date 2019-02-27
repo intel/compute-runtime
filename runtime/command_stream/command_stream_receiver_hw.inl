@@ -5,9 +5,11 @@
  *
  */
 
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/command_stream/scratch_space_controller_base.h"
 #include "runtime/device/device.h"
 #include "runtime/event/event.h"
@@ -26,8 +28,6 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
-#include "runtime/command_stream/preemption.h"
-#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/utilities/tag_allocator.h"
 
 namespace OCLRT {

@@ -5,11 +5,11 @@
  *
  */
 
-#include "hw_cmds.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
+#include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
@@ -20,9 +20,11 @@
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
-#include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
+
+#include "hw_cmds.h"
+
 #include <cstring>
 
 namespace OCLRT {

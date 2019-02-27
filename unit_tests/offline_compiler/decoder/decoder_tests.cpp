@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "mock/mock_decoder.h"
 #include "runtime/helpers/array_count.h"
 #include "unit_tests/test_files/patch_list.h"
 
 #include "gmock/gmock.h"
+#include "mock/mock_decoder.h"
 
 #include <fstream>
 

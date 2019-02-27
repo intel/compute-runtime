@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/memory_manager/svm_memory_manager.h"
-#include "cl_api_tests.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
-#include "test.h"
+
+#include "cl_api_tests.h"
 
 using namespace OCLRT;
 

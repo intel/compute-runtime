@@ -7,15 +7,14 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
-#include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/deferrable_allocation_deletion.h"
+#include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/os_interface/os_context.h"
-
+#include "test.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
-#include "test.h"
 
 using namespace OCLRT;
 

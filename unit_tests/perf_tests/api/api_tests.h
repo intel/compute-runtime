@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "gtest/gtest.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/program/program.h"
+#include "unit_tests/perf_tests/fixtures/command_queue_fixture.h"
 #include "unit_tests/perf_tests/fixtures/device_fixture.h"
 #include "unit_tests/perf_tests/fixtures/platform_fixture.h"
-#include "unit_tests/perf_tests/fixtures/command_queue_fixture.h"
 #include "unit_tests/perf_tests/perf_test_utils.h"
+
+#include "gtest/gtest.h"
 
 namespace OCLRT {
 

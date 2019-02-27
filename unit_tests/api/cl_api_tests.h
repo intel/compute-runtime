@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "gtest/gtest.h"
-#include "unit_tests/fixtures/platform_fixture.h"
 #include "runtime/api/api.h"
 #include "test.h"
+#include "unit_tests/fixtures/platform_fixture.h"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 

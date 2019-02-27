@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "test.h"
-#include "gtest/gtest.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/utilities/debug_file_reader.h"
+#include "test.h"
+
+#include "gtest/gtest.h"
 
 #include <memory>
 #include <string>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #pragma once
 #if defined(__linux__)
 
-#include <errno.h>
 #include <cstring>
+#include <errno.h>
 #include <string>
 
 inline int strcpy_s(char *dst, size_t dstSize, const char *src) {

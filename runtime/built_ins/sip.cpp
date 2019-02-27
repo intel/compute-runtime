@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/built_ins/sip.h"
+
 #include "runtime/device/device.h"
+#include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/ptr_math.h"
-#include "runtime/program/program.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
+#include "runtime/program/program.h"
 
 namespace OCLRT {
 

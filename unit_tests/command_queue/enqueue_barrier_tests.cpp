@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/user_event.h"
+#include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
-#include "test.h"
 
 using namespace OCLRT;
 

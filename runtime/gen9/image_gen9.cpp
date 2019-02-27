@@ -5,10 +5,12 @@
  *
  */
 
-#include "hw_cmds.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/image.inl"
 #include "runtime/mem_obj/image_base.inl"
+
+#include "hw_cmds.h"
+
 #include <map>
 
 namespace OCLRT {

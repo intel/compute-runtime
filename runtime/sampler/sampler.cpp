@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/sampler/sampler.h"
+
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
-#include "runtime/sampler/sampler.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_info.h"
+
 #include "patch_list.h"
 
 #include <limits>

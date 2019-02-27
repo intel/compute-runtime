@@ -10,8 +10,8 @@
 #include "runtime/context/context.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/options.h"
-#include "runtime/mem_obj/buffer.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/mem_obj/buffer.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
@@ -19,6 +19,7 @@
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

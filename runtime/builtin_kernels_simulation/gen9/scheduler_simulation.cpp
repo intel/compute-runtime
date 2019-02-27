@@ -1,17 +1,19 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "CL/cl.h"
-#include "runtime/builtin_kernels_simulation/opencl_c.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
+
+#include "runtime/builtin_kernels_simulation/opencl_c.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.inl"
 #include "runtime/execution_model/device_enqueue.h"
 #include "runtime/gen9/hw_cmds.h"
 #include "runtime/memory_manager/graphics_allocation.h"
+
+#include "CL/cl.h"
 
 using namespace OCLRT;
 using namespace BuiltinKernelsSimulation;

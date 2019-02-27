@@ -7,10 +7,11 @@
 
 #pragma once
 #include "runtime/context/context_type.h"
-#include "runtime/device/device_vector.h"
 #include "runtime/context/driver_diagnostics.h"
+#include "runtime/device/device_vector.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+
 #include <vector>
 
 namespace OCLRT {

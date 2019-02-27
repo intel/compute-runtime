@@ -1,16 +1,18 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
+
 #include <d3dkmthk.h>
+
 #include <cstdint>
-#include "runtime/helpers/hw_info.h"
 
 namespace OCLRT {
 class Gdi;

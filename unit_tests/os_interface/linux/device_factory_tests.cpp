@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/os_interface.h"
-#include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/os_interface/linux/device_factory_tests.h"
+
+#include "runtime/os_interface/linux/os_interface.h"
+#include "runtime/os_interface/os_interface.h"
 
 TEST_F(DeviceFactoryLinuxTest, GetDevicesCheckEUCntSSCnt) {
     HardwareInfo *hwInfo = nullptr;

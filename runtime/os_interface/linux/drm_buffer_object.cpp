@@ -5,27 +5,27 @@
  *
  */
 
+#include "runtime/os_interface/linux/drm_buffer_object.h"
+
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/os_time_linux.h"
 #include "runtime/utilities/stackvec.h"
 
-#include <sys/syscall.h>
-#include <sys/mman.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdarg.h>
-
 #include "drm/i915_drm.h"
 
+#include <errno.h>
+#include <fcntl.h>
 #include <map>
+#include <stdarg.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace OCLRT {
 

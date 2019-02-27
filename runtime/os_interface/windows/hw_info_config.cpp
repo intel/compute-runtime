@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/os_interface/hw_info_config.h"
+
 #include "runtime/command_stream/preemption.h"
 #include "runtime/gen_common/hw_cmds.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/hw_helper.h"
+#include "runtime/helpers/hw_info.h"
 #include "runtime/memory_manager/memory_constants.h"
-#include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 #include "instrumentation.h"

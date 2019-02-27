@@ -1,15 +1,20 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <unordered_map>
+#include "runtime/event/event.h"
+#include "runtime/utilities/iflist.h"
+
 #include <set>
+#include <unordered_map>
 
 namespace OCLRT {
+
+class CommandQueue;
 
 struct TrackedEvent : IFNode<TrackedEvent> {
     TrackedEvent(Event *ev, int64_t eventId)

@@ -5,23 +5,25 @@
  *
  */
 
-#include "gmm_memory.h"
-#include "runtime/os_interface/windows/kmdaf_listener.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
+
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
+#include "runtime/gmm_helper/resource_info.h"
+#include "runtime/helpers/wddm_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
+#include "runtime/os_interface/windows/kmdaf_listener.h"
 #include "runtime/os_interface/windows/os_context_win.h"
+#include "runtime/os_interface/windows/registry_reader.h"
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
-#include "runtime/os_interface/windows/registry_reader.h"
-#include "runtime/helpers/wddm_helper.h"
 #include "runtime/sku_info/operations/sku_info_receiver.h"
+
+#include "gmm_memory.h"
 
 namespace OCLRT {
 extern Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory();

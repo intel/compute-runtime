@@ -1,22 +1,21 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gtest/gtest.h"
-#include "test.h"
-
-#include "hw_cmds.h"
+#include "unit_tests/scheduler/scheduler_source_tests.h"
 
 #include "runtime/device_queue/device_queue_hw.h"
-
+#include "test.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_device_queue.h"
-#include "unit_tests/scheduler/scheduler_source_tests.h"
+
+#include "gtest/gtest.h"
+#include "hw_cmds.h"
 // Keep this include after execution_model_fixture.h otherwise there is high chance of conflict with macros
 #include "runtime/builtin_kernels_simulation/opencl_c.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"

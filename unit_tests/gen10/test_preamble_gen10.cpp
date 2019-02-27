@@ -5,12 +5,12 @@
  *
  */
 
-#include "reg_configs_common.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/gen10/reg_configs.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/preamble/preamble_fixture.h"
-#include "runtime/command_stream/preemption.h"
+
+#include "reg_configs_common.h"
 
 namespace OCLRT {
 struct HardwareInfo;

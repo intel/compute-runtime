@@ -5,31 +5,32 @@
  *
  */
 
-#include "global_environment.h"
-#include "hw_cmds.h"
+#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/options.h"
+#include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/hw_info_config.h"
+#include "runtime/utilities/debug_settings_reader.h"
 #include "unit_tests/custom_event_listener.h"
-#include "helpers/test_files.h"
-#include "unit_tests/ult_config_listener.h"
 #include "unit_tests/memory_leak_listener.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_sip.h"
 #include "unit_tests/tests_configuration.h"
-#include "runtime/gmm_helper/resource_info.h"
-#include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/os_interface/hw_info_config.h"
-#include "runtime/utilities/debug_settings_reader.h"
+#include "unit_tests/ult_config_listener.h"
+
 #include "External/Common/GmmLibDllName.h"
-#include "mock_gmm_client_context.h"
+#include "global_environment.h"
 #include "gmock/gmock.h"
+#include "helpers/test_files.h"
+#include "hw_cmds.h"
+#include "mock_gmm_client_context.h"
+
 #include <algorithm>
-#include <mutex>
 #include <fstream>
+#include <limits.h>
+#include <mutex>
 #include <sstream>
 #include <thread>
-
-#include <limits.h>
 
 #ifdef WIN32
 const char *fSeparator = "\\";

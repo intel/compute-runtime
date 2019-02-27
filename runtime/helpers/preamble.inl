@@ -5,14 +5,16 @@
  *
  */
 
-#include "runtime/helpers/preamble.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
+#include "runtime/device/device.h"
+#include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/preamble.h"
+#include "runtime/kernel/kernel.h"
+
 #include "hw_cmds.h"
 #include "reg_configs_common.h"
-#include "runtime/device/device.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/helpers/aligned_memory.h"
+
 #include <cstddef>
 
 namespace OCLRT {

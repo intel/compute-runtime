@@ -1,13 +1,15 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include <cstdint>
 #include "runtime/helpers/kmd_notify_properties.h"
+
 #include "runtime/os_interface/debug_settings_manager.h"
+
+#include <cstdint>
 
 using namespace OCLRT;
 

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/helpers/dirty_state_helpers.h"
+
 #include "runtime/indirect_heap/indirect_heap.h"
 
 using namespace OCLRT;

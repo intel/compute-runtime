@@ -5,9 +5,10 @@
  *
  */
 
+#include "runtime/helpers/csr_deps.h"
+
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/event/event.h"
-#include "runtime/helpers/csr_deps.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/helpers/timestamp_packet.h"
 

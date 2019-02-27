@@ -6,11 +6,12 @@
  */
 
 #pragma once
-#include "CL/cl.h"
+#include "runtime/built_ins/sip.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/properties_helper.h"
-#include "runtime/built_ins/sip.h"
 #include "runtime/utilities/vec.h"
+
+#include "CL/cl.h"
 
 #include <array>
 #include <cstdint>

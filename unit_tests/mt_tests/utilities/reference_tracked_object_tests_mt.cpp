@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "runtime/utilities/reference_tracked_object.h"
 
 #include "gtest/gtest.h"
+
 #include <atomic>
 #include <thread>
 

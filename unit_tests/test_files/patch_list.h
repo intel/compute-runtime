@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 // clang-format off
 #pragma once
 #pragma pack( push, 1 )
+
+#include <cstdint>
 
 const uint32_t MAGIC_CL = 0x494E5443; 
 struct SProgramBinaryHeader

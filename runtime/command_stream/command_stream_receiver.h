@@ -17,6 +17,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/grf_config.h"
+
 #include <cstddef>
 #include <cstdint>
 

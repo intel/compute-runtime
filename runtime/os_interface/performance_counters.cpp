@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "CL/cl.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/os_interface/performance_counters.h"
+
+#include "runtime/helpers/debug_helpers.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/os_time.h"
+
+#include "CL/cl.h"
 
 namespace OCLRT {
 decltype(&instrGetPerfCountersQueryData) getPerfCountersQueryDataFactory[IGFX_MAX_CORE] = {

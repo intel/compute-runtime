@@ -5,12 +5,13 @@
  *
  */
 
-#include "gtest/gtest.h"
-#include "unit_tests/mocks/mock_ostime.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/mocks/mock_ostime_win.h"
 #include "unit_tests/mocks/mock_wddm.h"
-#include "test.h"
+
+#include "gtest/gtest.h"
 
 using namespace OCLRT;
 

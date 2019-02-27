@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,16 +10,15 @@
 #include "runtime/helpers/abort.h"
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/helpers/kmd_notify_properties.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/kmd_notify_properties.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/sku_info/sku_info_base.h"
+#include "test.h"
+#include "unit_tests/gen_common/gen_cmd_parse.h"
 
 #include "third_party/opencl_headers/CL/cl.h"
-
-#include "unit_tests/gen_common/gen_cmd_parse.h"
-#include "test.h"
 
 #include <algorithm>
 #include <fstream>

@@ -5,12 +5,13 @@
  *
  */
 
-#include <cstdint>
-#include <memory>
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/gl/gl_sharing.h"
+
+#include <cstdint>
+#include <memory>
 
 namespace Os {
 extern const char *openglDllName;

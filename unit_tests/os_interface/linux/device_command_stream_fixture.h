@@ -6,17 +6,19 @@
  */
 
 #pragma once
-#include <cstdint>
-#include "drm/i915_drm.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include "engine_node.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "unit_tests/helpers/gtest_helpers.h"
+
+#include "drm/i915_drm.h"
+#include "engine_node.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
 #include <atomic>
+#include <cstdint>
 #include <iostream>
 
 #define RENDER_DEVICE_NAME_MATCHER ::testing::StrEq("/dev/dri/renderD128")

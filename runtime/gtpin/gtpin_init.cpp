@@ -1,16 +1,18 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "gtpin_init.h"
-#include "gtpin_helpers.h"
-#include "CL/cl.h"
+
 #include "runtime/device/device.h"
 #include "runtime/device/device_info.h"
 #include "runtime/platform/platform.h"
+
+#include "CL/cl.h"
+#include "gtpin_helpers.h"
 
 using namespace gtpin;
 using namespace OCLRT;

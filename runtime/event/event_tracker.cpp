@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/event/event.h"
 #include "runtime/event/event_tracker.h"
-#include "runtime/utilities/iflist.h"
+
+#include "runtime/command_queue/command_queue.h"
 #include "runtime/helpers/cl_helper.h"
 
 namespace OCLRT {

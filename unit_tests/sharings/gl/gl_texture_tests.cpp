@@ -5,14 +5,15 @@
  *
  */
 
-#include "unit_tests/mocks/gl/mock_gl_sharing.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "runtime/sharings/gl/gl_texture.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/sharings/gl/gl_texture.h"
+#include "unit_tests/libult/create_command_stream.h"
+#include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "unit_tests/mocks/gl/mock_gl_sharing.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/libult/create_command_stream.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

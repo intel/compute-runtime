@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/os_interface/windows/os_library.h"
-#include "unit_tests/helpers/variable_backup.h"
 #include "test.h"
+#include "unit_tests/helpers/variable_backup.h"
+
 #include "gtest/gtest.h"
 
 #include <memory>

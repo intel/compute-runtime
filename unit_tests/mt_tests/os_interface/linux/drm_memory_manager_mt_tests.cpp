@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
+
 #include "gtest/gtest.h"
 
 #include <atomic>

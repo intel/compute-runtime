@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,9 @@
 
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "unit_tests/helpers/variable_backup.h"
+
 #include "gtest/gtest.h"
+
 #include <array>
 
 GMM_CLIENT_CONTEXT *GMM_STDCALL createClientContext(GMM_CLIENT clientType) {

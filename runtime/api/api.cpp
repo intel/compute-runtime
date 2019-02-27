@@ -5,10 +5,8 @@
  *
  */
 
-#include "config.h"
-#include <algorithm>
 #include "api.h"
-#include "CL/cl.h"
+
 #include "runtime/accelerators/intel_motion_estimation.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
@@ -38,6 +36,11 @@
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/utilities/api_intercept.h"
 #include "runtime/utilities/stackvec.h"
+
+#include "CL/cl.h"
+#include "config.h"
+
+#include <algorithm>
 #include <cstring>
 
 using namespace OCLRT;

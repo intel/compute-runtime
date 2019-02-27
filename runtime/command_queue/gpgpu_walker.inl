@@ -6,23 +6,25 @@
  */
 
 #pragma once
-#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/local_id_gen.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device_info.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/event/user_event.h"
-#include "runtime/indirect_heap/indirect_heap.h"
-#include "instrumentation.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/validators.h"
+#include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/utilities/tag_allocator.h"
+
+#include "instrumentation.h"
+
 #include <algorithm>
 #include <cmath>
 

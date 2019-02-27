@@ -1,31 +1,34 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "reg_configs_common.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue_hw.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/linear_stream.h"
-#include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/event/user_event.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/command_stream/preemption.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "unit_tests/fixtures/device_fixture.h"
+#include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/utilities/linux/debug_env_reader.h"
+#include "test.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
+#include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
-#include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/libult/create_command_stream.h"
+#include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -33,11 +36,9 @@
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
-#include "unit_tests/libult/create_command_stream.h"
-#include "test.h"
+
 #include "gtest/gtest.h"
-#include "runtime/utilities/linux/debug_env_reader.h"
-#include "runtime/command_queue/gpgpu_walker.h"
+#include "reg_configs_common.h"
 
 using namespace OCLRT;
 

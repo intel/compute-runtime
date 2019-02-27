@@ -5,10 +5,11 @@
  *
  */
 
-#include "aub_mapper.h"
 #include "runtime/aub_mem_dump/aub_alloc_dump.inl"
 #include "runtime/aub_mem_dump/aub_mem_dump.inl"
 #include "runtime/helpers/hw_helper.h"
+
+#include "aub_mapper.h"
 
 namespace AubMemDump {
 

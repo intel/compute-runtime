@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,9 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/platform/platform.h"
-#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_context.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gmm_client_context.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
+
+#include "gmm_client_context.h"
 
 namespace OCLRT {
 GmmPageTableMngr::~GmmPageTableMngr() {

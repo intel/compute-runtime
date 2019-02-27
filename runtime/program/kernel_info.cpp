@@ -5,22 +5,24 @@
  *
  */
 
-#include "hw_cmds.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/helpers/string.h"
+#include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/kernel/kernel.h"
 #include "runtime/sampler/sampler.h"
-#include "runtime/helpers/string.h"
+
+#include "hw_cmds.h"
+
 #include <cstdint>
 #include <cstring>
 #include <map>
-#include <unordered_map>
 #include <sstream>
+#include <unordered_map>
 
 namespace OCLRT {
 

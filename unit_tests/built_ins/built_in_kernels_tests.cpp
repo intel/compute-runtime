@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gtest/gtest.h"
 #include "runtime/builtin_kernels_simulation/opencl_c.h"
+
+#include "gtest/gtest.h"
 
 //#include "unit_tests/test_files/4265157215134882557.cl"
 

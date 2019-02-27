@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "hw_cmds.h"
-#include "runtime/os_interface/hw_info_config.h"
 #include "runtime/helpers/enable_product.inl"
+#include "runtime/os_interface/hw_info_config.h"
+
+#include "hw_cmds.h"
 
 namespace OCLRT {
 

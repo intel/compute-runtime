@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/windows/windows_wrapper.h"
 #include "performance_counters_win.h"
+
 #include "runtime/os_interface/windows/os_interface.h"
+#include "runtime/os_interface/windows/windows_wrapper.h"
 
 namespace OCLRT {
 std::unique_ptr<PerformanceCounters> PerformanceCounters::create(OSTime *osTime) {

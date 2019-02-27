@@ -6,7 +6,6 @@
  */
 
 #include "runtime/command_queue/command_queue.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "runtime/device/device.h"
 #include "runtime/event/user_event.h"
 #include "runtime/gmm_helper/gmm.h"
@@ -14,22 +13,24 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
-#include "runtime/sharings/sharing.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/gl/gl_buffer.h"
 #include "runtime/sharings/gl/gl_sync_event.h"
 #include "runtime/sharings/gl/gl_texture.h"
+#include "runtime/sharings/sharing.h"
+#include "test.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/mocks/mock_async_event_handler.h"
+#include "unit_tests/libult/create_command_stream.h"
+#include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/gl/mock_gl_arb_sync_event.h"
 #include "unit_tests/mocks/gl/mock_gl_sharing.h"
+#include "unit_tests/mocks/mock_async_event_handler.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/libult/create_command_stream.h"
-#include "test.h"
+
 #include "gl/gl_sharing_os.h"
 
 using namespace OCLRT;

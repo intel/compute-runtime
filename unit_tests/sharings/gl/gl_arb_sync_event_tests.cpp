@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,16 +9,16 @@
 #include "runtime/event/user_event.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/os_interface.h"
-#include "runtime/sharings/sharing.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
+#include "runtime/sharings/sharing.h"
+#include "test.h"
 #include "unit_tests/mocks/gl/mock_gl_arb_sync_event.h"
 #include "unit_tests/mocks/gl/mock_gl_sharing.h"
-#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_event.h"
-#include "test.h"
 
 using namespace OCLRT;
 

@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "cl_api_tests.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/helpers/options.h"
-#include "runtime/platform/platform.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/platform/platform.h"
+
+#include "cl_api_tests.h"
 
 namespace OCLRT {
 

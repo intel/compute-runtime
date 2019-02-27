@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/context/context.h"
-#include "hw_cmds.h"
 #include "runtime/helpers/array_count.h"
-#include "unit_tests/fixtures/device_fixture.h"
 #include "test.h"
+#include "unit_tests/fixtures/device_fixture.h"
+
 #include "gtest/gtest.h"
+#include "hw_cmds.h"
 
 using namespace OCLRT;
 

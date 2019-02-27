@@ -5,10 +5,11 @@
  *
  */
 
+#include "unit_tests/fixtures/memory_manager_fixture.h"
+
 #include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_context.h"
-#include "unit_tests/fixtures/memory_manager_fixture.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 

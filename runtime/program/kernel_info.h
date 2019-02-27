@@ -1,22 +1,23 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "runtime/helpers/hw_info.h"
+
 #include "CL/cl.h"
 #include "heap_info.h"
 #include "kernel_arg_info.h"
 #include "ocl_igc_shared/gtpin/gtpin_driver_common.h"
 #include "patch_info.h"
-#include "runtime/helpers/hw_info.h"
 
 #include <algorithm>
 #include <array>
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
 #include <map>
 #include <string>
 #include <unordered_map>

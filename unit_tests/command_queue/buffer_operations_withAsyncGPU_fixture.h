@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #pragma once
 
-#include "buffer_operations_fixture.h"
 #include "runtime/helpers/options.h"
+
+#include "buffer_operations_fixture.h"
 
 namespace OCLRT {
 struct AsyncGPUoperations : public EnqueueWriteBufferTypeTest {

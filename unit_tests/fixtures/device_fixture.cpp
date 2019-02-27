@@ -5,8 +5,9 @@
  *
  */
 
-#include "gtest/gtest.h"
 #include "unit_tests/fixtures/device_fixture.h"
+
+#include "gtest/gtest.h"
 
 namespace OCLRT {
 void DeviceFixture::SetUp() {

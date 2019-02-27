@@ -5,16 +5,17 @@
  *
  */
 
-#include "gtest/gtest.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/helpers/basic_math.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_lrca_helper.h"
-#include "test.h"
+
+#include "gtest/gtest.h"
 
 using namespace OCLRT;
 

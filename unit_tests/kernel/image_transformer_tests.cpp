@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "runtime/kernel/image_transformer.h"
 #include "runtime/program/kernel_info.h"
-#include "unit_tests/fixtures/image_fixture.h"
 #include "test.h"
+#include "unit_tests/fixtures/image_fixture.h"
 
 using namespace OCLRT;
 

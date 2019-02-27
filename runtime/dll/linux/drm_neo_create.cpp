@@ -5,14 +5,16 @@
  *
  */
 
-#include "hw_cmds.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/drm_null_device.h"
-#include "runtime/gmm_helper/gmm_helper.h"
+
 #include "drm/i915_drm.h"
-#include "runtime/os_interface/debug_settings_manager.h"
+#include "hw_cmds.h"
+
 #include <array>
 #include <cstdio>
 #include <cstring>

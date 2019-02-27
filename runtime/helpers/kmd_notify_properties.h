@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #pragma once
 #include "runtime/helpers/completion_stamp.h"
 
-#include <cstdint>
-#include <chrono>
 #include <atomic>
+#include <chrono>
+#include <cstdint>
 
 namespace OCLRT {
 struct KmdNotifyProperties {

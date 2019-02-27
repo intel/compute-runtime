@@ -11,7 +11,9 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
+
 #include "gmock/gmock.h"
+
 #include <string>
 
 #if defined(__clang__)

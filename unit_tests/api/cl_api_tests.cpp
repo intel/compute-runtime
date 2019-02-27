@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "cl_api_tests.h"
+
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/helpers/options.h"
 #include "unit_tests/mocks/mock_context.h"

@@ -1,18 +1,20 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
 #include "runtime/helpers/options.h"
+#include "runtime/helpers/ptr_math.h"
+#include "unit_tests/fixtures/buffer_fixture.h"
+#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
+
 #include "gtest/gtest.h"
+
 #include <memory>
 
 using namespace OCLRT;

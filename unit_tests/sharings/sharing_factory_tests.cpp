@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gtest/gtest.h"
-#include "runtime/context/context.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/string.h"
 #include "runtime/platform/platform.h"
@@ -16,6 +15,8 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
+
+#include "gtest/gtest.h"
 
 using namespace OCLRT;
 

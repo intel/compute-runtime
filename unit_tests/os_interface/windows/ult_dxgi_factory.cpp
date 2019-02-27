@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/memory_manager/memory_constants.h"
 #include "unit_tests/os_interface/windows/ult_dxgi_factory.h"
 
 namespace OCLRT {

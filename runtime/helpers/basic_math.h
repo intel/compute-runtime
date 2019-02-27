@@ -7,10 +7,11 @@
 
 #pragma once
 #include "runtime/utilities/vec.h"
+
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
-#include <cmath>
-#include <algorithm>
 #include <stdio.h>
 
 #define KB 1024uLL

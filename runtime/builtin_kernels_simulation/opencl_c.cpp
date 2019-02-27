@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include <cstdint>
-#include "CL/cl.h"
 #include "opencl_c.h"
+
 #include "runtime/helpers/string.h"
 
 namespace BuiltinKernelsSimulation {

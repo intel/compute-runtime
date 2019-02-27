@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,10 +10,11 @@
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
 
-#include <d3dkmthk.h>
-#include <memory>
 #include "profileapi.h"
 #include "umKmInc/sharedata.h"
+#include <d3dkmthk.h>
+
+#include <memory>
 
 namespace OCLRT {
 class Wddm;

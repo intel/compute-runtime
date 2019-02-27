@@ -5,6 +5,8 @@
  *
  */
 
+#include "unit_tests/program/program_tests.h"
+
 #include "elf/reader.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/compiler_options.h"
@@ -21,6 +23,7 @@
 #include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/program/create.inl"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/program_fixture.inl"
 #include "unit_tests/global_environment.h"
@@ -30,12 +33,11 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/program/program_from_binary.h"
-#include "unit_tests/program/program_tests.h"
 #include "unit_tests/program/program_with_source.h"
 #include "unit_tests/utilities/base_object_utils.h"
-#include "gtest/gtest.h"
+
 #include "gmock/gmock.h"
-#include "test.h"
+#include "gtest/gtest.h"
 
 #include <map>
 #include <memory>

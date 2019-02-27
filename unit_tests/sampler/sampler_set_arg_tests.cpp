@@ -1,22 +1,23 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "hw_cmds.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/helpers/sampler_helpers.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/sampler/sampler.h"
-#include "runtime/helpers/sampler_helpers.h"
 #include "runtime/utilities/numeric.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
-#include "test.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
+
+#include "hw_cmds.h"
 
 using namespace OCLRT;
 

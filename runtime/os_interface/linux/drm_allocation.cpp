@@ -6,6 +6,7 @@
  */
 
 #include "runtime/os_interface/linux/drm_allocation.h"
+
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 
 #include <sstream>

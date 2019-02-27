@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/source_level_debugger/source_level_debugger_preamble_test.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

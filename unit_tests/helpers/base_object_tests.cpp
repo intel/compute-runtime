@@ -5,22 +5,23 @@
  *
  */
 
+#include "runtime/accelerators/intel_accelerator.h"
+#include "runtime/api/api.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/context/context.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/context/context.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/platform/platform.h"
-#include "runtime/accelerators/intel_accelerator.h"
 #include "runtime/program/program.h"
 #include "runtime/sampler/sampler.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
+#include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "runtime/api/api.h"
+
 #include "gmock/gmock.h"
 
 namespace OCLRT {

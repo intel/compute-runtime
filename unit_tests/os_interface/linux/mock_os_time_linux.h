@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/os_interface/linux/os_time_linux.h"
 #include "runtime/os_interface/linux/os_interface.h"
+#include "runtime/os_interface/linux/os_time_linux.h"
 
 namespace OCLRT {
 class MockOSTimeLinux : public OSTimeLinux {

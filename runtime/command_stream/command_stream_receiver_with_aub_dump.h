@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_stream/command_stream_receiver.h"
+
 #include <memory>
 
 namespace OCLRT {

@@ -5,20 +5,22 @@
  *
  */
 
-#include "gmm_client_context.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
-#include "runtime/helpers/get_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/memory_manager/graphics_allocation.h"
-#include "runtime/helpers/surface_formats.h"
+#include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_info.h"
-#include "runtime/sku_info/operations/sku_info_transfer.h"
+#include "runtime/helpers/surface_formats.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/os_interface/os_library.h"
 #include "runtime/platform/platform.h"
+#include "runtime/sku_info/operations/sku_info_transfer.h"
+
+#include "gmm_client_context.h"
 
 namespace OCLRT {
 

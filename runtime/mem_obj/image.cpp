@@ -6,8 +6,8 @@
  */
 
 #include "runtime/mem_obj/image.h"
+
 #include "common/compiler_support.h"
-#include "igfxfmid.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
@@ -26,6 +26,9 @@
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+
+#include "igfxfmid.h"
+
 #include <map>
 
 namespace OCLRT {

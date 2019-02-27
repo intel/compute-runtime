@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,13 +14,12 @@
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_sip.h"
 
-#include "ocl_igc_interface/igc_ocl_device_ctx.h"
+#include "cif/macros/enable.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
+#include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
 #include <fstream>
 #include <map>
-
-#include "cif/macros/enable.h"
 namespace OCLRT {
 
 std::unique_ptr<MockCompilerDebugVars> fclDebugVars;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "elf/reader.h"
 #include "elf/writer.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+
 #include "gtest/gtest.h"
 
 using namespace CLElfLib;

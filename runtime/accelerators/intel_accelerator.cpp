@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/accelerators/intel_accelerator.h"
+
 #include "runtime/context/context.h"
-#include "runtime/helpers/string.h"
 #include "runtime/helpers/get_info.h"
+#include "runtime/helpers/string.h"
 
 namespace OCLRT {
 

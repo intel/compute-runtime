@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,9 @@
 #include "common/compiler_support.h"
 #include "elf/reader.h"
 #include "elf/writer.h"
-#include "program.h"
 #include "runtime/helpers/string.h"
+
+#include "program.h"
 
 namespace OCLRT {
 

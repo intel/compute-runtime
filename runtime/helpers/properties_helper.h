@@ -8,6 +8,7 @@
 #pragma once
 
 #include "runtime/api/cl_types.h"
+
 #include <array>
 #include <unordered_set>
 

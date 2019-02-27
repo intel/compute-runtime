@@ -1,13 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "hw_cmds.h"
 #include "runtime/helpers/options.h"
+
 #include "runtime/helpers/array_count.h"
+
+#include "hw_cmds.h"
+
 #include <cstddef>
 
 namespace OCLRT {

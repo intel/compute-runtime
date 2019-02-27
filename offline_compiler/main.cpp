@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "decoder/binary_encoder.h"
-#include "decoder/binary_decoder.h"
 #include "offline_compiler/offline_compiler.h"
 #include "offline_compiler/utilities/safety_caller.h"
 #include "runtime/os_interface/os_library.h"
 
+#include "decoder/binary_decoder.h"
+#include "decoder/binary_encoder.h"
 #include <CL/cl.h>
 
 using namespace OCLRT;

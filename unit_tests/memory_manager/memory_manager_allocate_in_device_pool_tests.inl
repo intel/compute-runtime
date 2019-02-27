@@ -5,14 +5,13 @@
  *
  */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/execution_environment/execution_environment.h"
-
+#include "test.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
 #include "gtest/gtest.h"
-#include "test.h"
 
 using namespace OCLRT;
 

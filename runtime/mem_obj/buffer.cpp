@@ -6,7 +6,7 @@
  */
 
 #include "runtime/mem_obj/buffer.h"
-#include "runtime/mem_obj/mem_obj_helper.h"
+
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
@@ -18,6 +18,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/validators.h"
+#include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/svm_memory_manager.h"

@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/program/program.h"
 #include "runtime/context/context.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/program/program.h"
 
 namespace OCLRT {
 

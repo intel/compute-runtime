@@ -1,13 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "gtest/gtest.h"
 #include "unit_tests/helpers/memory_management.h"
+
+#include "gtest/gtest.h"
+
 #include <functional>
 
 struct MemoryManagementFixture {

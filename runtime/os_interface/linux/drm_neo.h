@@ -6,14 +6,15 @@
  */
 
 #pragma once
-#include "igfxfmid.h"
 #include "runtime/utilities/api_intercept.h"
 
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include "igfxfmid.h"
+
 #include <cerrno>
+#include <fcntl.h>
 #include <string>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 struct GT_SYSTEM_INFO;
 

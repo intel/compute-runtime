@@ -7,10 +7,11 @@
 
 #pragma once
 
-#include "runtime/memory_manager/surface.h"
 #include "runtime/mem_obj/mem_obj.h"
-#include "runtime/utilities/vec.h"
+#include "runtime/memory_manager/surface.h"
 #include "runtime/utilities/stackvec.h"
+#include "runtime/utilities/vec.h"
+
 #include <algorithm>
 #include <memory>
 

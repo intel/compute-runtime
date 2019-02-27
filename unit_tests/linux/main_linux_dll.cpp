@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "mock_os_layer.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/os_interface/linux/allocator_helper.h"
+#include "test.h"
 #include "unit_tests/custom_event_listener.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "mock_os_layer.h"
 
-#include "test.h"
 #include <string>
 
 using namespace OCLRT;

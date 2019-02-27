@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gtest/gtest.h"
-#include "runtime/context/context.inl"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/context/context.inl"
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/options.h"
@@ -18,6 +17,8 @@
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "gtest/gtest.h"
 
 using namespace OCLRT;
 

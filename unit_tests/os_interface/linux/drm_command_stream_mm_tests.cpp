@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,9 @@
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/os_interface.h"
+#include "test.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
-#include "test.h"
 
 using namespace OCLRT;
 

@@ -1,26 +1,25 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/compiler_interface/compiler_interface.h"
+#include "test.h"
+#include <runtime/compiler_interface/binary_cache.h>
+#include <runtime/helpers/aligned_memory.h>
 #include <runtime/helpers/hash.h>
 #include <runtime/helpers/hw_info.h>
-#include <runtime/compiler_interface/binary_cache.h>
-#include "runtime/compiler_interface/compiler_interface.h"
 #include <runtime/helpers/string.h>
-#include <runtime/helpers/aligned_memory.h>
-#include <unit_tests/global_environment.h>
 #include <unit_tests/fixtures/device_fixture.h>
+#include <unit_tests/global_environment.h>
 #include <unit_tests/mocks/mock_context.h>
 #include <unit_tests/mocks/mock_program.h>
 
-#include <memory>
 #include <array>
 #include <list>
-
-#include "test.h"
+#include <memory>
 
 using namespace OCLRT;
 using namespace std;

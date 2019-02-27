@@ -1,14 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include <cstring>
-#include "cl_api_tests.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/device/device.h"
+#include "runtime/helpers/hw_info.h"
+
+#include "cl_api_tests.h"
+
+#include <cstring>
 
 using namespace OCLRT;
 

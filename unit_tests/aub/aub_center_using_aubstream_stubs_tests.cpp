@@ -12,9 +12,8 @@
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 
-#include "third_party/aub_stream/headers/options.h"
-
 #include "gtest/gtest.h"
+#include "third_party/aub_stream/headers/options.h"
 using namespace OCLRT;
 
 namespace aub_stream_stubs {

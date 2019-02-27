@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "unit_tests/ult_config_listener.h"
+
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/options.h"
 #include "runtime/platform/platform.h"
-#include "unit_tests/ult_config_listener.h"
 
 void OCLRT::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
     // Create platform and initialize gmm that dont want to create Platform and test gmm initialization path

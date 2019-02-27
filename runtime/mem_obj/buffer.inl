@@ -6,14 +6,15 @@
  */
 
 #include "common/helpers/bit_helpers.h"
-#include "hw_cmds.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/helpers/aligned_memory.h"
-#include "runtime/mem_obj/buffer.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
+#include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/surface_formats.h"
+#include "runtime/mem_obj/buffer.h"
+
+#include "hw_cmds.h"
 
 namespace OCLRT {
 

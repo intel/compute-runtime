@@ -5,8 +5,6 @@
  *
  */
 
-#include "gtest/gtest.h"
-#include <memory>
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
@@ -14,12 +12,15 @@
 #include "runtime/os_interface/linux/device_command_stream.inl"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/os_interface.h"
-#include "hw_cmds.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
-#include "test.h"
-
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
+
+#include "gtest/gtest.h"
+#include "hw_cmds.h"
+
+#include <memory>
 
 using namespace OCLRT;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "CL/cl.h"
 #include "CL/cl_gl_ext.h"
+
+#include <string>
 
 namespace OCLRT {
 inline const std::string cmdTypetoString(cl_command_type cmd) {

@@ -6,14 +6,15 @@
  */
 
 #include "runtime/aub/aub_center.h"
+
 #include "runtime/aub/aub_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 #include "third_party/aub_stream/headers/aub_manager.h"
-#include "third_party/aub_stream/headers/options.h"
 #include "third_party/aub_stream/headers/modes.h"
+#include "third_party/aub_stream/headers/options.h"
 
 namespace OCLRT {
 extern aub_stream::AubManager *createAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, uint32_t streamMode);

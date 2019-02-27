@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "CL/cl.h"
+
 #include <cstdint>
 
 namespace OCLRT {

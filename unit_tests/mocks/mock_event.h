@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "runtime/event/user_event.h"
 #include "runtime/event/event_builder.h"
+#include "runtime/event/user_event.h"
 
 namespace OCLRT {
 

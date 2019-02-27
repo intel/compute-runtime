@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/utilities/timer_util.h"
+
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
-#include "runtime/utilities/timer_util.h"
 
 namespace OCLRT {
 

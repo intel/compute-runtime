@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 
 constexpr bool is32bit = (sizeof(void *) == 4);

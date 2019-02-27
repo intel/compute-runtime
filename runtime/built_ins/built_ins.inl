@@ -6,8 +6,8 @@
  */
 
 #include "runtime/built_ins/aux_translation_builtin.h"
-#include "runtime/mem_obj/buffer.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/mem_obj/buffer.h"
 
 namespace OCLRT {
 template <typename... KernelsDescArgsT>

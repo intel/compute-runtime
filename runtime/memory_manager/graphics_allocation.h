@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "devices_bitfield.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
@@ -17,6 +16,8 @@
 #include "runtime/memory_manager/residency_container.h"
 #include "runtime/utilities/idlist.h"
 #include "runtime/utilities/stackvec.h"
+
+#include "devices_bitfield.h"
 
 #include <array>
 #include <cstddef>

@@ -11,17 +11,17 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/utilities/tag_allocator.h"
+#include "test.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/utilities/base_object_utils.h"
 
 #include "gmock/gmock.h"
-#include "test.h"
 
 using namespace OCLRT;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,11 @@
 
 #pragma once
 
-#include "gtest/gtest.h"
 #include "runtime/program/kernel_info.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_program.h"
+
+#include "gtest/gtest.h"
 
 using namespace OCLRT;
 using namespace iOpenCL;

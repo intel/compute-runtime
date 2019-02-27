@@ -1,16 +1,18 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <array>
-#include <cstdint>
-#include <cstddef>
 #include "runtime/command_queue/local_id_gen.h"
+
 #include "patch_shared.h"
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
 
 namespace OCLRT {
 class LinearStream;

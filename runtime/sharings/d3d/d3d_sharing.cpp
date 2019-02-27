@@ -6,9 +6,10 @@
  */
 
 #include "runtime/sharings/d3d/d3d_sharing.h"
+
 #include "runtime/context/context.h"
-#include "runtime/mem_obj/image.h"
 #include "runtime/gmm_helper/gmm.h"
+#include "runtime/mem_obj/image.h"
 
 using namespace OCLRT;
 

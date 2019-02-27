@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "hw_cmds.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "test.h"
+
+#include "hw_cmds.h"
 
 #include <array>
 

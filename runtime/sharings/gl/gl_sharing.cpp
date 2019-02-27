@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/sharings/gl/gl_sharing.h"
+
 #include "runtime/context/context.h"
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/timestamp_packet.h"
-#include "runtime/sharings/sharing_factory.h"
-#include "runtime/sharings/gl/gl_sharing.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
+#include "runtime/sharings/sharing_factory.h"
 
 namespace OCLRT {
 const uint32_t GLSharingFunctions::sharingId = SharingType::CLGL_SHARING;

@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "ocl_igc_shared/gtpin/gtpin_driver_common.h"
 
 namespace OCLRT {
 gtpin::GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinCreateBuffer(gtpin::context_handle_t context, uint32_t size, gtpin::resource_handle_t *pResource);

@@ -1,18 +1,20 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "config.h"
-#include "runtime/gmm_helper/gmm.h"
 #include "gl_buffer.h"
+
+#include "public/cl_gl_private_intel.h"
 #include "runtime/context/context.h"
+#include "runtime/gmm_helper/gmm.h"
+#include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/helpers/get_info.h"
-#include "public/cl_gl_private_intel.h"
+
+#include "config.h"
 
 using namespace OCLRT;
 

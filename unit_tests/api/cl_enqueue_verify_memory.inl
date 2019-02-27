@@ -7,9 +7,9 @@
 
 #include "public/cl_ext_private.h"
 #include "runtime/aub_mem_dump/aub_services.h"
+#include "test.h"
 #include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/mocks/mock_csr.h"
-#include "test.h"
 
 using namespace OCLRT;
 

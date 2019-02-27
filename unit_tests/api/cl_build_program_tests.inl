@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "cl_api_tests.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/file_io.h"
@@ -13,6 +12,8 @@
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_compilers.h"
+
+#include "cl_api_tests.h"
 
 using namespace OCLRT;
 

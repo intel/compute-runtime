@@ -8,6 +8,7 @@
 #pragma once
 
 #include "runtime/command_stream/aub_command_stream_receiver.h"
+
 #include "gmock/gmock.h"
 
 #if defined(__clang__)

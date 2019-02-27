@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/built_ins_helper.h"
+
+#include "runtime/execution_environment/execution_environment.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_program.h"
 

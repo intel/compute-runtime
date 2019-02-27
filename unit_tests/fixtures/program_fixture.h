@@ -6,10 +6,11 @@
  */
 
 #pragma once
-#include "gtest/gtest.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/program/program.h"
 #include "unit_tests/helpers/test_files.h"
+
+#include "gtest/gtest.h"
 
 namespace OCLRT {
 

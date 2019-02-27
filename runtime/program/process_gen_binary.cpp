@@ -1,21 +1,22 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "patch_list.h"
-#include "patch_shared.h"
-#include "program.h"
-#include "program_debug_data.h"
+#include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/gtpin/gtpin_notify.h"
+
+#include "patch_list.h"
+#include "patch_shared.h"
+#include "program.h"
+#include "program_debug_data.h"
 
 #include <algorithm>
 

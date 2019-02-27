@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
+#include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 
 namespace OCLRT {

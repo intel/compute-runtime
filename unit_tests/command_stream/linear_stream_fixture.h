@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "test.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "test.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+
 #include <cstdint>
 
 namespace OCLRT {

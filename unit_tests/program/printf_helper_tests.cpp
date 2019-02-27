@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,10 @@
 #include "runtime/helpers/string.h"
 #include "runtime/program/print_formatter.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/mocks/mock_graphics_allocation.h"
+
 #include "gtest/gtest.h"
 
 #include <cmath>

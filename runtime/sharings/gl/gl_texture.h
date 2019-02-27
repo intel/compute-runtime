@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/sharings/gl/gl_sharing.h"
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "CL/cl_gl.h"
 #include "public/cl_gl_private_intel.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/sharings/gl/gl_sharing.h"
+
+#include "CL/cl_gl.h"
 
 namespace OCLRT {
 class Context;

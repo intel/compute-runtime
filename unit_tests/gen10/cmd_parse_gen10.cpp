@@ -6,6 +6,7 @@
  */
 
 #include "unit_tests/gen_common/gen_cmd_parse.h"
+
 #include "gtest/gtest.h"
 using GenStruct = OCLRT::GEN10;
 using GenGfxFamily = OCLRT::CNLFamily;

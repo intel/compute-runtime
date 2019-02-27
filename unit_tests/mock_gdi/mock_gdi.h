@@ -7,9 +7,15 @@
 
 #pragma once
 
+#include "runtime/gmm_helper/gmm_lib.h"
+#include "runtime/os_interface/windows/os_time_win.h"
+
 #include <d3d9types.h>
-#include <d3dkmthk.h>
+
+#include "Windows.h"
+#include "d3d10.h"
 #include "umKmInc/sharedata.h"
+#include <d3dkmthk.h>
 
 #define DECL_FUNCTIONS()                                                                                 \
     FUNCTION(OpenAdapterFromHdc, IN OUT D3DKMT_OPENADAPTERFROMHDC *)                                     \

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "os_interface.h"
 
-#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/sys_calls.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 
 namespace OCLRT {
 

@@ -1,19 +1,19 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "cl_api_tests.h"
-
-#include "unit_tests/fixtures/run_kernel_fixture.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/context/context.h"
 #include "runtime/compiler_interface/compiler_interface.h"
-#include "runtime/kernel/kernel.h"
+#include "runtime/context/context.h"
 #include "runtime/helpers/base_object.h"
+#include "runtime/kernel/kernel.h"
 #include "runtime/program/program.h"
+#include "unit_tests/fixtures/run_kernel_fixture.h"
+
+#include "cl_api_tests.h"
 
 using namespace OCLRT;
 

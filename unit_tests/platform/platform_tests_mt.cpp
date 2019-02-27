@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "runtime/helpers/options.h"
 #include "unit_tests/fixtures/platform_fixture.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
@@ -52,7 +53,6 @@ TEST_F(PlatformTestMt, initialize) {
 
     for (int i = 0; i < 10; ++i)
         EXPECT_TRUE(ret[i]);
-
 }
 
 TEST_F(PlatformTestMt, mtSafeTest) {

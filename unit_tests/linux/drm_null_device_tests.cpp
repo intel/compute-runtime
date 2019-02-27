@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "mock_os_layer.h"
 #include "runtime/os_interface/linux/drm_null_device.h"
 #include "test.h"
+
+#include "mock_os_layer.h"
 
 using namespace OCLRT;
 

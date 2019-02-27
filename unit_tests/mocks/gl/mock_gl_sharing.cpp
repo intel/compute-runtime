@@ -5,8 +5,9 @@
  *
  */
 
-#include "config.h"
 #include "unit_tests/mocks/gl/mock_gl_sharing.h"
+
+#include "config.h"
 
 namespace OCLRT {
 int EGLCreateContextCalled = 0;

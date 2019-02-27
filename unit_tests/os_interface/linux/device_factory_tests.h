@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,10 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
+#include "test.h"
 #include "unit_tests/mocks/mock_device_factory.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
-#include "test.h"
+
 #include "gtest/gtest.h"
 
 namespace OCLRT {

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
+
 #include "runtime/command_queue/command_queue.h"
 
 namespace OCLRT {

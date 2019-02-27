@@ -9,7 +9,6 @@
 // Current order must be preserved due to two versions of igfxfmid.h
 #pragma warning(push)
 #pragma warning(disable : 4005)
-#include "hw_cmds.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
@@ -19,6 +18,8 @@
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
+
+#include "hw_cmds.h"
 #pragma warning(pop)
 
 #undef max

@@ -5,15 +5,16 @@
  *
  */
 
-#include "gtest/gtest.h"
-#include "test.h"
-#include "hw_cmds.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/surface.h"
+#include "test.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_csr.h"
+
+#include "gtest/gtest.h"
+#include "hw_cmds.h"
 
 #include <type_traits>
 

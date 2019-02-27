@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
+
 #include <iostream>
 
 namespace OCLRT {

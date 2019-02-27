@@ -1,20 +1,21 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "cif/common/cif_main.h"
-#include "ocl_igc_interface/code_type.h"
-#include "ocl_igc_interface/igc_ocl_device_ctx.h"
-#include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "runtime/built_ins/sip.h"
 #include "runtime/compiler_interface/binary_cache.h"
 #include "runtime/os_interface/os_library.h"
 
 #include "CL/cl_platform.h"
+#include "cif/common/cif_main.h"
+#include "ocl_igc_interface/code_type.h"
+#include "ocl_igc_interface/fcl_ocl_device_ctx.h"
+#include "ocl_igc_interface/igc_ocl_device_ctx.h"
+
 #include <map>
 #include <mutex>
 

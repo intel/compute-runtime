@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/helpers/preamble.h"
 #include "runtime/helpers/options.h"
+#include "runtime/helpers/preamble.h"
 #include "unit_tests/command_stream/linear_stream_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"

@@ -13,8 +13,8 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/built_ins_helper.h"
-#include "runtime/helpers/gmm_callbacks.h"
 #include "runtime/helpers/flush_stamp.h"
+#include "runtime/helpers/gmm_callbacks.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
@@ -24,7 +24,7 @@
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
-
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -41,8 +41,6 @@
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
-
-#include "test.h"
 
 using namespace OCLRT;
 using namespace ::testing;

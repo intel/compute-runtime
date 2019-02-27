@@ -5,9 +5,10 @@
  *
  */
 
-#include "cl_api_tests.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/helpers/ptr_math.h"
+
+#include "cl_api_tests.h"
 
 using namespace OCLRT;
 

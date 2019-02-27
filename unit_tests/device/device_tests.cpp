@@ -6,10 +6,10 @@
  */
 
 #include "runtime/device/device.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/os_interface/os_context.h"
-#include "runtime/helpers/hw_helper.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -18,6 +18,7 @@
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
+
 #include <memory>
 
 using namespace OCLRT;

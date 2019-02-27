@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,11 @@
 #pragma once
 
 #include "runtime/utilities/debug_settings_reader.h"
-#include <stdint.h>
-#include <sstream>
-#include <string>
+
 #include <map>
+#include <sstream>
+#include <stdint.h>
+#include <string>
 
 using namespace std;
 

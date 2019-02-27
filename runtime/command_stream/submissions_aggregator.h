@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/utilities/idlist.h"
-#include "runtime/utilities/stackvec.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/memory_manager/residency_container.h"
+#include "runtime/utilities/idlist.h"
+#include "runtime/utilities/stackvec.h"
+
 #include <vector>
 namespace OCLRT {
 class Device;

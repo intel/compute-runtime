@@ -6,8 +6,10 @@
  */
 
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
+
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
+
 #include <string>
 
 namespace OCLRT {

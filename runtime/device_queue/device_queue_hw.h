@@ -6,14 +6,15 @@
  */
 
 #pragma once
-#include "hw_cmds.h"
-#include "runtime/device_queue/device_queue.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/program.h"
 #include "runtime/scheduler/scheduler_kernel.h"
+
+#include "hw_cmds.h"
 
 namespace OCLRT {
 

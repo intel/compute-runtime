@@ -6,11 +6,11 @@
  */
 
 #include "runtime/helpers/dispatch_info_builder.h"
-#include "unit_tests/fixtures/context_fixture.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/fixtures/device_fixture.h"
 #include "test.h"
+#include "unit_tests/fixtures/context_fixture.h"
+#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_kernel.h"
 
 namespace OCLRT {
 

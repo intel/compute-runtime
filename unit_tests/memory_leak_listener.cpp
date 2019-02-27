@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "memory_leak_listener.h"
+
 #include "runtime/helpers/options.h"
-#include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/helpers/memory_management.h"
 
 using ::testing::TestInfo;
 using namespace OCLRT;

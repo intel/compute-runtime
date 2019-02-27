@@ -5,7 +5,6 @@
  *
  */
 
-#include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "runtime/command_stream/preemption.h"
@@ -14,11 +13,11 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_context.h"
+#include "test.h"
+#include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
-
-#include "test.h"
 
 using namespace OCLRT;
 

@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/device/device.h"
-#include "runtime/device/device_vector.h"
 #include "runtime/device/device_info.h"
+
+#include "runtime/device/device.h"
 #include "runtime/device/device_info_map.h"
+#include "runtime/device/device_vector.h"
 #include "runtime/helpers/device_helpers.h"
 #include "runtime/helpers/get_info.h"
-#include "runtime/platform/platform.h"
 #include "runtime/os_interface/os_time.h"
+#include "runtime/platform/platform.h"
 
 using DeviceInfoTable::Map;
 

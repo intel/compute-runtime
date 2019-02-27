@@ -14,6 +14,7 @@
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_context.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

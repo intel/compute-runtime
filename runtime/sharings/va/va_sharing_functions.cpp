@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "va_sharing_functions.h"
+
+#include "runtime/os_interface/debug_settings_manager.h"
+
 #include <dlfcn.h>
 
 namespace Os {

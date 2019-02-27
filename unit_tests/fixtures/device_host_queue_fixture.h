@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "unit_tests/api/cl_api_tests.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/device_queue/device_queue.h"
+#include "runtime/device_queue/device_queue_hw.h"
 #include "test.h"
+#include "unit_tests/api/cl_api_tests.h"
 
 using namespace OCLRT;
 

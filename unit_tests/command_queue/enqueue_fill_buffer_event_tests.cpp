@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/event/event.h"
-#include "unit_tests/command_queue/enqueue_fill_buffer_fixture.h"
 #include "test.h"
+#include "unit_tests/command_queue/enqueue_fill_buffer_fixture.h"
 
 using namespace OCLRT;
 

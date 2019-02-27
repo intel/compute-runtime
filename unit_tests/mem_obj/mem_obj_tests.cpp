@@ -6,10 +6,10 @@
  */
 
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/mem_obj/mem_obj.h"
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/properties_helper.h"
+#include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/os_interface/os_context.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -17,6 +17,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

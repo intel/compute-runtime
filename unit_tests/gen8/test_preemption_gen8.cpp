@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,12 +8,12 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/hw_helper.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
-#include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/preemption_fixture.h"
+#include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 
 using namespace OCLRT;

@@ -6,11 +6,13 @@
  */
 
 #pragma once
+#include "runtime/utilities/stackvec.h"
+
+#include "CL/cl.h"
+
 #include <cstdint>
 #include <cstring>
 #include <string>
-#include "CL/cl.h"
-#include "runtime/utilities/stackvec.h"
 
 const int maximalStackSizeSizes = 16;
 

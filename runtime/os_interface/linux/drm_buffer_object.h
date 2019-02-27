@@ -6,13 +6,12 @@
  */
 
 #pragma once
-#include <sys/ioctl.h>
-#include <errno.h>
-#include <stdint.h>
-#include <cstdlib>
-
 #include <atomic>
+#include <cstdlib>
+#include <errno.h>
 #include <set>
+#include <stdint.h>
+#include <sys/ioctl.h>
 #include <vector>
 
 struct drm_i915_gem_exec_object2;

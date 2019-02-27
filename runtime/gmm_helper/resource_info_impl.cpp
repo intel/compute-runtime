@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gmm_client_context.h"
-#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/resource_info.h"
+
+#include "gmm_client_context.h"
 
 namespace OCLRT {
 void GmmResourceInfo::customDeleter(GMM_RESOURCE_INFO *gmmResourceInfo) {

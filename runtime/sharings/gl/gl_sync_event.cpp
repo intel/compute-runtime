@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "runtime/sharings/gl/gl_sync_event.h"
 
-#include "runtime/sharings/gl/gl_sharing.h"
+#include "public/cl_gl_private_intel.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
@@ -17,8 +17,7 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/platform/platform.h"
-
-#include "public/cl_gl_private_intel.h"
+#include "runtime/sharings/gl/gl_sharing.h"
 
 namespace OCLRT {
 GlSyncEvent::GlSyncEvent(Context &context, const GL_CL_SYNC_INFO &sync)

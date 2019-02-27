@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "unit_tests/program/program_tests.h"
-#include "unit_tests/mocks/mock_program.h"
-#include "program_debug_data.h"
 #include "test.h"
+#include "unit_tests/mocks/mock_program.h"
+#include "unit_tests/program/program_tests.h"
+
+#include "program_debug_data.h"
 
 #include <memory>
 using namespace iOpenCL;

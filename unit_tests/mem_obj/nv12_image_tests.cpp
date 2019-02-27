@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/surface_formats.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/gmm_helper/gmm.h"
+#include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
@@ -16,8 +17,8 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
+
 #include "gtest/gtest.h"
-#include "test.h"
 
 using namespace OCLRT;
 

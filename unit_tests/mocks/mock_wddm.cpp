@@ -5,10 +5,11 @@
  *
  */
 
+#include "unit_tests/mocks/mock_wddm.h"
+
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
-#include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/mock_gdi/mock_gdi.h"
 
 #include "gtest/gtest.h"

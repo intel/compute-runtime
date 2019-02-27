@@ -5,25 +5,25 @@
  *
  */
 
-#include "gmm_client_context.h"
-#include "gtest/gtest.h"
-#include "igfxfmid.h"
+#include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "unit_tests/helpers/variable_backup.h"
+#include "runtime/platform/platform.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/libult/mock_gfx_family.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "runtime/platform/platform.h"
 
 #include "GL/gl.h"
 #include "GL/glext.h"
+#include "gmm_client_context.h"
+#include "gtest/gtest.h"
+#include "igfxfmid.h"
 
 using namespace ::testing;
 

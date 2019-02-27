@@ -1,14 +1,16 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gtest/gtest.h"
 #include "test.h"
 #include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+
+#include "gtest/gtest.h"
+
 #include <memory>
 
 using namespace OCLRT;

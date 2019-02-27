@@ -1,14 +1,16 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "gmm_client_context.h"
 #include "runtime/gmm_helper/gmm_memory_base.h"
+
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/windows/windows_defs.h"
+
+#include "gmm_client_context.h"
 
 namespace OCLRT {
 GmmMemoryBase::GmmMemoryBase() {

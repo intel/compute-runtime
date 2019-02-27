@@ -5,13 +5,14 @@
  *
  */
 
+#include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/local_id_gen.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/event/user_event.h"
 #include "runtime/helpers/per_thread_data.h"
 #include "runtime/kernel/kernel.h"
-#include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"

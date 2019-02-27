@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,15 +8,15 @@
 #pragma once
 
 #include "runtime/os_interface/linux/drm_neo.h"
+
 #include "drm/i915_drm.h"
 
+#include <array>
+#include <cstring>
+#include <dlfcn.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#include <fcntl.h>
-#include <dlfcn.h>
-
-#include <cstring>
-#include <array>
 
 extern "C" {
 int open(const char *pathname, int flags, ...);

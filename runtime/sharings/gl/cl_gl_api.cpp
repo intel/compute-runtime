@@ -5,10 +5,7 @@
  *
  */
 
-#include "config.h"
 #include "runtime/api/api.h"
-#include "CL/cl_gl.h"
-#include "CL/cl.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
@@ -25,6 +22,10 @@
 #include "runtime/sharings/gl/gl_sync_event.h"
 #include "runtime/sharings/gl/gl_texture.h"
 #include "runtime/utilities/api_intercept.h"
+
+#include "CL/cl.h"
+#include "CL/cl_gl.h"
+#include "config.h"
 
 using namespace OCLRT;
 

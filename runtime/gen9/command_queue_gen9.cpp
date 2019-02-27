@@ -5,9 +5,9 @@
  *
  */
 
-#include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_queue/command_queue_hw.inl"
+#include "runtime/memory_manager/svm_memory_manager.h"
 
 namespace OCLRT {
 

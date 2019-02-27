@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,12 +14,14 @@
 #include "CL/cl_gl_ext.h"
 #if defined(_WIN32)
 #include <d3d10_1.h>
-#include "CL/cl_dx9_media_sharing.h"
+
 #include "CL/cl_d3d10.h"
 #include "CL/cl_d3d11.h"
+#include "CL/cl_dx9_media_sharing.h"
 #define CL_DX9_MEDIA_SHARING_INTEL_EXT
-#include "CL/cl_dx9_media_sharing_intel.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
+
+#include "CL/cl_dx9_media_sharing_intel.h"
 #else
 #define CL_CONTEXT_D3D10_DEVICE_KHR 0x4014
 #define CL_CONTEXT_D3D10_PREFER_SHARED_RESOURCES_KHR 0x402C

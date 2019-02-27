@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "CL/cl.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/utilities/vec.h"
+
+#include "CL/cl.h"
 
 #include <array>
 #include <cstdint>

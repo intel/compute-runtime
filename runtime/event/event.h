@@ -7,18 +7,19 @@
 
 #pragma once
 #include "runtime/api/cl_types.h"
-#include "runtime/helpers/base_object.h"
-#include <cstdint>
-#include <atomic>
-#include <vector>
-#include "runtime/helpers/task_information.h"
-#include "runtime/utilities/idlist.h"
-#include "runtime/utilities/iflist.h"
 #include "runtime/event/hw_timestamps.h"
+#include "runtime/helpers/base_object.h"
+#include "runtime/helpers/flush_stamp.h"
+#include "runtime/helpers/task_information.h"
 #include "runtime/os_interface/os_time.h"
 #include "runtime/os_interface/performance_counters.h"
-#include "runtime/helpers/flush_stamp.h"
 #include "runtime/utilities/arrayref.h"
+#include "runtime/utilities/idlist.h"
+#include "runtime/utilities/iflist.h"
+
+#include <atomic>
+#include <cstdint>
+#include <vector>
 
 #define OCLRT_NUM_TIMESTAMP_BITS (32)
 

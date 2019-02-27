@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "unit_tests/fixtures/kernel_arg_fixture.h"
-#include "runtime/program/kernel_info.h"
 
+#include "runtime/program/kernel_info.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_image.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
-#include "unit_tests/mocks/mock_image.h"
 
 KernelImageArgTest::~KernelImageArgTest() = default;
 

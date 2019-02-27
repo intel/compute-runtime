@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/error_mappers.h"
+
 #include <utility>
 
 namespace OCLRT {

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/os_interface/windows/registry_reader.h"
 #include "unit_tests/os_interface/windows/registry_reader_tests.h"
+
 #include "test.h"
 
 using namespace OCLRT;

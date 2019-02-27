@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "../segfault_helper.h"
 #include "offline_compiler/utilities/linux/safety_guard_linux.h"
+
+#include "../segfault_helper.h"
 
 void generateSegfaultWithSafetyGuard(SegfaultHelper *segfaultHelper) {
     SafetyGuardLinux safetyGuard;

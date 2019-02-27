@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "test.h"
 #include "runtime/command_queue/local_id_gen.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/per_thread_data.h"
 #include "runtime/program/kernel_info.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+
 #include "patch_shared.h"
 
 using namespace OCLRT;

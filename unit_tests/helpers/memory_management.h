@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #pragma once
 #include <atomic>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 namespace MemoryManagement {
 #if defined(__clang__)

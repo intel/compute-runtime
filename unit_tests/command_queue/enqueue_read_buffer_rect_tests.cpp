@@ -8,12 +8,13 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/event/event.h"
-#include "reg_configs_common.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/memory_manager/memory_constants.h"
+#include "test.h"
 #include "unit_tests/command_queue/enqueue_read_buffer_rect_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
-#include "test.h"
+
+#include "reg_configs_common.h"
 
 using namespace OCLRT;
 

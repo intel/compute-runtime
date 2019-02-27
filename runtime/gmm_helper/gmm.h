@@ -6,9 +6,11 @@
  */
 
 #pragma once
-#include "devices_bitfield.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/gmm_helper/gmm_lib.h"
+
+#include "devices_bitfield.h"
+
 #include <cstdint>
 #include <cstdlib>
 #include <memory>

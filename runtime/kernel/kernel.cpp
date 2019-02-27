@@ -5,12 +5,14 @@
  *
  */
 
+#include "runtime/kernel/kernel.h"
+
 #include "runtime/accelerators/intel_accelerator.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/execution_model/device_enqueue.h"
@@ -25,7 +27,6 @@
 #include "runtime/helpers/sampler_helpers.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/kernel/image_transformer.h"
-#include "runtime/kernel/kernel.h"
 #include "runtime/kernel/kernel.inl"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
@@ -36,6 +37,7 @@
 #include "runtime/platform/platform.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/sampler/sampler.h"
+
 #include "patch_list.h"
 
 #include <algorithm>

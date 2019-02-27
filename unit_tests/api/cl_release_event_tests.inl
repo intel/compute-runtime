@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "cl_api_tests.h"
 #include "runtime/context/context.h"
 #include "runtime/event/event.h"
 #include "test.h"
+
+#include "cl_api_tests.h"
 
 using namespace OCLRT;
 

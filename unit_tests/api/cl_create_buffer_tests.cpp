@@ -5,14 +5,15 @@
  *
  */
 
-#include "cl_api_tests.h"
-#include "runtime/context/context.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/context/context.h"
 #include "runtime/mem_obj/buffer.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_program.h"
+
+#include "cl_api_tests.h"
 
 using namespace OCLRT;
 

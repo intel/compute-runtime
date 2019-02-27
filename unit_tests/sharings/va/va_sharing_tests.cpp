@@ -1,20 +1,21 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "runtime/api/api.h"
 #include "runtime/device/device.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/va/va_sharing.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/sharings/va/mock_va_sharing.h"
+#include "runtime/sharings/va/va_surface.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/libult/create_command_stream.h"
-#include "runtime/sharings/va/va_surface.h"
-#include "runtime/api/api.h"
+#include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/sharings/va/mock_va_sharing.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "runtime/sharings/va/va_sharing.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/sharings/va/va_sharing.h"
 
 namespace OCLRT {
 class Context;

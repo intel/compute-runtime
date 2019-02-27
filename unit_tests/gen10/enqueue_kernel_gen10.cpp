@@ -1,17 +1,18 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/command_queue/command_queue_hw.h"
-#include "reg_configs_common.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/static_size3.h"
 #include "unit_tests/mocks/mock_kernel.h"
-#include "test.h"
+
+#include "reg_configs_common.h"
 
 namespace OCLRT {
 

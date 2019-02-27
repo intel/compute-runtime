@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/command_stream/scratch_space_controller.h"
+
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"

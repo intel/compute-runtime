@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/event/user_event.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
-#include "test.h"
 
 using namespace OCLRT;
 

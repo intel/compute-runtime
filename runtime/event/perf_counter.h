@@ -9,6 +9,7 @@
 
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/memory_manager/graphics_allocation.h"
+
 #include "instrumentation.h"
 
 namespace OCLRT {

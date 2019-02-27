@@ -5,13 +5,15 @@
  *
  */
 
-#include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 #include "gtpin_helpers.h"
-#include "CL/cl.h"
+
 #include "runtime/context/context.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
+
+#include "CL/cl.h"
+#include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 
 using namespace gtpin;
 

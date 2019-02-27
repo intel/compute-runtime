@@ -5,12 +5,13 @@
  *
  */
 
+#include "unit_tests/mocks/mock_program.h"
+
 #include "runtime/context/context.h"
 #include "runtime/helpers/hash.h"
 #include "runtime/program/create.inl"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
-#include "unit_tests/mocks/mock_program.h"
 
 namespace OCLRT {
 GlobalMockSipProgram *GlobalMockSipProgram::sipProgram;

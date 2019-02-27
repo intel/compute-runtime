@@ -6,11 +6,13 @@
  */
 
 #include "unit_tests/helpers/memory_management.h"
+
 #include "gtest/gtest.h"
+
 #include <atomic>
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
-#include <cassert>
 #include <exception>
 #include <iostream>
 #include <new>

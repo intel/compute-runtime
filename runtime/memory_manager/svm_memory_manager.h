@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "CL/cl.h"
+
 #include <cstdint>
 #include <map>
 #include <mutex>
-#include "CL/cl.h"
 
 namespace OCLRT {
 class Device;

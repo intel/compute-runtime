@@ -5,7 +5,6 @@
  *
  */
 
-#include "test.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/hardware_interface.h"
 #include "runtime/event/perf_counter.h"
@@ -14,14 +13,16 @@
 #include "runtime/helpers/task_information.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/utilities/tag_allocator.h"
-#include "unit_tests/fixtures/device_fixture.h"
+#include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/libult/mock_gfx_family.h"
-#include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/libult/mock_gfx_family.h"
 #include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_mdi.h"
+#include "unit_tests/mocks/mock_program.h"
+
 #include "hw_cmds.h"
 
 using namespace OCLRT;

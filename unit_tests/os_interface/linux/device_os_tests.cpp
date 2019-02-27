@@ -1,22 +1,23 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/device/device.h"
-#include "runtime/helpers/options.h"
 #include "runtime/api/api.h"
-#include "runtime/platform/platform.h"
+#include "runtime/device/device.h"
 #include "runtime/helpers/get_info.h"
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
+#include "runtime/helpers/options.h"
+#include "runtime/platform/platform.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_device.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 using namespace ::testing;
 

@@ -5,8 +5,8 @@
  *
  */
 
-#include "runtime/os_interface/32bit_memory.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/os_interface/32bit_memory.h"
 using namespace OCLRT;
 
 bool OCLRT::is32BitOsAllocatorAvailable = is64bit;

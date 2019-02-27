@@ -6,11 +6,11 @@
  */
 
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/mem_obj/buffer.h"
 #include "runtime/helpers/kernel_commands.h"
+#include "runtime/mem_obj/buffer.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
-#include "test.h"
 
 using namespace OCLRT;
 

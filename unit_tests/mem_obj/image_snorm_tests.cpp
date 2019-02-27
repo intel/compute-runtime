@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,9 @@
 
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
+
 #include "gtest/gtest.h"
+
 #include <array>
 
 using namespace OCLRT;

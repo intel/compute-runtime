@@ -7,10 +7,10 @@
 
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "test.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
-#include "test.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

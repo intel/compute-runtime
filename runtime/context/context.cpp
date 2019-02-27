@@ -1,33 +1,36 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/context/context.h"
-#include "runtime/helpers/surface_formats.h"
+
+#include "runtime/built_ins/built_ins.h"
+#include "runtime/command_queue/command_queue.h"
+#include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
-#include "runtime/mem_obj/image.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/ptr_math.h"
-#include "runtime/platform/platform.h"
 #include "runtime/helpers/string.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/built_ins/built_ins.h"
-#include "runtime/compiler_interface/compiler_interface.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/helpers/surface_formats.h"
+#include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/sharings/sharing_factory.h"
+#include "runtime/platform/platform.h"
 #include "runtime/sharings/sharing.h"
+#include "runtime/sharings/sharing_factory.h"
+
+#include "d3d_sharing_functions.h"
+
 #include <algorithm>
 #include <memory>
-#include "d3d_sharing_functions.h"
 
 namespace OCLRT {
 

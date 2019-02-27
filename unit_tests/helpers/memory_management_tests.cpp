@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/helpers/memory_management.h"
+
 #include "gtest/gtest.h"
 
 using MemoryManagement::AllocationEvent;

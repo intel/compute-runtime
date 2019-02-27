@@ -1,31 +1,32 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/options.h"
 #include "runtime/api/api.h"
+#include "runtime/helpers/options.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/d3d/cl_d3d_api.h"
-#include "runtime/sharings/d3d/d3d_sharing.h"
 #include "runtime/sharings/d3d/d3d_buffer.h"
+#include "runtime/sharings/d3d/d3d_sharing.h"
 #include "runtime/sharings/d3d/d3d_surface.h"
 #include "runtime/sharings/d3d/d3d_texture.h"
 #include "runtime/utilities/arrayref.h"
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 #include "test.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/fixtures/platform_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_d3d_objects.h"
 #include "unit_tests/mocks/mock_gmm.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace OCLRT {
 template <>

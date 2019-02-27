@@ -6,11 +6,13 @@
  */
 
 #pragma once
-#include <cstddef>
 #include "runtime/commands/bxml_generator_glue.h"
 #include "runtime/helpers/debug_helpers.h"
+
 #include "hw_info.h"
 #include "igfxfmid.h"
+
+#include <cstddef>
 #define TILERESOURCE_CHICKENBIT_VECTOR_ADDRESS 0x4DFC
 #define TILERESOURCE_CHICKENBIT_VECTOR_BITMASK (1UL << 8)
 template <class T>
@@ -18,8 +20,8 @@ struct CmdParse;
 namespace OCLRT {
 
 struct GEN10 {
-#include "runtime/gen10/hw_cmds_generated_patched.h"
 #include "runtime/gen10/hw_cmds_generated.h"
+#include "runtime/gen10/hw_cmds_generated_patched.h"
 };
 
 struct CNLFamily : public GEN10 {

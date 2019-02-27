@@ -6,6 +6,7 @@
  */
 
 #include "driver_diagnostics_tests.h"
+
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 
 using namespace OCLRT;

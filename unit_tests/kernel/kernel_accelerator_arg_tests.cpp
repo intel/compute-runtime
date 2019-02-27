@@ -1,23 +1,23 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "CL/cl.h"
-#include "runtime/kernel/kernel.h"
-#include "runtime/mem_obj/buffer.h"
-
-#include "test.h"
 #include "runtime/accelerators/intel_accelerator.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
+#include "runtime/kernel/kernel.h"
+#include "runtime/mem_obj/buffer.h"
+#include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
+
+#include "CL/cl.h"
 #include "gtest/gtest.h"
 
 #include <memory>

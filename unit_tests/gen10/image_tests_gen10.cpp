@@ -5,9 +5,9 @@
  *
  */
 
+#include "test.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
-#include "test.h"
 
 using namespace OCLRT;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,11 @@
 #pragma once
 #include <atomic>
 #include <condition_variable>
-#include <mutex>
-#include <map>
-#include <set>
-#include <queue>
 #include <cstdint>
+#include <map>
+#include <mutex>
+#include <queue>
+#include <set>
 
 namespace OCLRT {
 class DrmMemoryManager;

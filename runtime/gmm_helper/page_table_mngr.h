@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #pragma once
 #include "runtime/gmm_helper/gmm_lib.h"
-#include <memory>
+
 #include <functional>
+#include <memory>
 
 namespace OCLRT {
 class GmmPageTableMngr {

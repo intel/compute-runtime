@@ -5,20 +5,20 @@
  *
  */
 
+#include "unit_tests/mocks/mock_sip.h"
+
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/os_inc_base.h"
 #include "unit_tests/helpers/test_files.h"
-#include "unit_tests/mocks/mock_sip.h"
 #include "unit_tests/mocks/mock_compilers.h"
 
+#include "cif/macros/enable.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
 #include <fstream>
 #include <map>
-
-#include "cif/macros/enable.h"
 
 namespace OCLRT {
 std::vector<char> MockSipKernel::dummyBinaryForSip;

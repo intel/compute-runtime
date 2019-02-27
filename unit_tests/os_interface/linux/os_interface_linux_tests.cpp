@@ -10,6 +10,7 @@
 #include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
+
 #include "gtest/gtest.h"
 
 namespace OCLRT {

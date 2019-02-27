@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/os_interface/linux/drm_gem_close_worker.h"
+
 #include "drm/i915_drm.h"
 
 #include <vector>

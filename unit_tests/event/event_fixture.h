@@ -7,18 +7,19 @@
 
 #pragma once
 
-#include "runtime/event/user_event.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/event/user_event.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/ptr_math.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
+#include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/utilities/base_object_utils.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

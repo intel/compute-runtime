@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "runtime/tbx/tbx_sockets_imp.h"
+
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/string.h"
 
@@ -15,18 +16,19 @@
 #endif
 typedef int socklen_t;
 #else
-#include <netdb.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 typedef struct sockaddr SOCKADDR;
 #define SOCKET_ERROR -1
 #define INVALID_SOCKET -1
 #define WSAECONNRESET -1
 #endif
-#include <cstdint>
 #include "tbx_proto.h"
+
+#include <cstdint>
 
 namespace OCLRT {
 

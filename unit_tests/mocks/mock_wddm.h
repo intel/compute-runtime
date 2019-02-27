@@ -10,9 +10,11 @@
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/windows_defs.h"
+
 #include "gmock/gmock.h"
-#include <vector>
+
 #include <set>
+#include <vector>
 
 namespace OCLRT {
 class GraphicsAllocation;

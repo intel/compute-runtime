@@ -5,8 +5,9 @@
  *
  */
 
-#include "runtime/helpers/array_count.h"
 #include "unit_tests/memory_manager/memory_manager_allocate_in_device_pool_tests.inl"
+
+#include "runtime/helpers/array_count.h"
 
 TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenAllocationIsReturned) {
     ExecutionEnvironment executionEnvironment;

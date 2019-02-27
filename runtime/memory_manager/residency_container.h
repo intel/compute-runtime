@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace OCLRT {
 class GraphicsAllocation;

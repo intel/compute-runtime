@@ -7,12 +7,14 @@
 
 #pragma once
 #include "runtime/api/dispatch.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/sharings/sharing.h"
+
 #include "DXGI1_2.h"
+
 #include <map>
 #include <vector>
-#include "runtime/helpers/array_count.h"
 
 namespace OCLRT {
 namespace D3DTypesHelper {

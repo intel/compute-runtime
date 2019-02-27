@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "runtime/sharings/d3d/d3d_texture.h"
 
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
@@ -13,7 +15,6 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/sharings/d3d/d3d_texture.h"
 
 using namespace OCLRT;
 

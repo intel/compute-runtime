@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/flat_batch_buffer_helper.h"
+
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
 namespace OCLRT {

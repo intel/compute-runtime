@@ -5,18 +5,19 @@
  *
  */
 
-#include "runtime/aub/aub_center.h"
 #include "runtime/execution_environment/execution_environment.h"
+
+#include "runtime/aub/aub_center.h"
+#include "runtime/built_ins/built_ins.h"
+#include "runtime/built_ins/sip.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/compiler_interface/compiler_interface.h"
-#include "runtime/source_level_debugger/source_level_debugger.h"
-#include "runtime/built_ins/sip.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/os_interface.h"
-#include "runtime/built_ins/built_ins.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
 
 namespace OCLRT {
 ExecutionEnvironment::ExecutionEnvironment() = default;

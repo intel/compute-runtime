@@ -7,12 +7,12 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/device_factory.h"
-#include "runtime/helpers/options.h"
-#include "unit_tests/libult/create_command_stream.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/libult/create_command_stream.h"
 
 namespace OCLRT {
 bool operator==(const HardwareInfo &hwInfoIn, const HardwareInfo &hwInfoOut) {

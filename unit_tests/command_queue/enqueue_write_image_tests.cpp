@@ -6,14 +6,15 @@
  */
 
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "reg_configs_common.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "test.h"
 #include "unit_tests/command_queue/enqueue_write_image_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
-#include "test.h"
+
+#include "reg_configs_common.h"
 
 using namespace OCLRT;
 

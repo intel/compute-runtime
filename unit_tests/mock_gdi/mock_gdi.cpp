@@ -5,9 +5,9 @@
  *
  */
 
-#include "runtime/os_interface/windows/os_time_win.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "mock_gdi.h"
+
+#include "runtime/memory_manager/memory_constants.h"
 
 ADAPTER_INFO gAdapterInfo = {0};
 D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg = {0};

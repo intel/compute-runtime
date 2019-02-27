@@ -5,9 +5,10 @@
  *
  */
 
-#include "event_fixture.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "unit_tests/fixtures/buffer_fixture.h"
+
+#include "event_fixture.h"
 
 #include <memory>
 

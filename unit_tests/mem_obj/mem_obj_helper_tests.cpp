@@ -6,6 +6,7 @@
  */
 
 #include "runtime/mem_obj/mem_obj_helper.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

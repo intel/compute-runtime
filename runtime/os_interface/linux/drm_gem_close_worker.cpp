@@ -1,20 +1,22 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "runtime/os_interface/linux/drm_gem_close_worker.h"
+
+#include "runtime/helpers/aligned_memory.h"
+#include "runtime/os_interface/linux/drm_buffer_object.h"
+#include "runtime/os_interface/linux/drm_command_stream.h"
+#include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "runtime/os_interface/os_thread.h"
+
 #include <atomic>
 #include <iostream>
 #include <queue>
 #include <stdio.h>
-#include "runtime/helpers/aligned_memory.h"
-#include "runtime/os_interface/linux/drm_buffer_object.h"
-#include "runtime/os_interface/linux/drm_command_stream.h"
-#include "runtime/os_interface/linux/drm_gem_close_worker.h"
-#include "runtime/os_interface/linux/drm_memory_manager.h"
-#include "runtime/os_interface/os_thread.h"
 
 namespace OCLRT {
 

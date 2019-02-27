@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_device.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

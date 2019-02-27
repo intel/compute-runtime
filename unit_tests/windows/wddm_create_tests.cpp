@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 
 #include <typeinfo>
 

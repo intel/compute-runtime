@@ -8,7 +8,6 @@
 #pragma once
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
-
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
 
 #include "gmock/gmock.h"
