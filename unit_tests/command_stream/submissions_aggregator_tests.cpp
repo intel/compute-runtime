@@ -562,7 +562,7 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleQueuesWhenCmdBuffersAreRecorde
     MockKernelWithInternals kernel(*device.get());
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0);
     CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0);
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *device->executionEnvironment);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment);
     size_t GWS = 1;
 
     overrideCsr(mockCsr);
@@ -594,7 +594,7 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleQueuesWhenCmdBuffersAreRecorde
 HWTEST_F(SubmissionsAggregatorTests, givenCmdQueueWhenCmdBufferWithEventIsRecordedThenAssignFlushStampObjForEveryone) {
     MockKernelWithInternals kernel(*device.get());
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0);
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *device->executionEnvironment);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment);
     size_t GWS = 1;
 
     overrideCsr(mockCsr);
@@ -620,7 +620,7 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenFlushThenUpdateA
     MockKernelWithInternals kernel(*device.get());
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0);
     CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0);
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *device->executionEnvironment);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment);
     size_t GWS = 1;
 
     overrideCsr(mockCsr);
@@ -647,7 +647,7 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenNotAggregatedDur
     MockKernelWithInternals kernel(*device.get());
     CommandQueueHw<FamilyType> cmdQ1(context.get(), device.get(), 0);
     CommandQueueHw<FamilyType> cmdQ2(context.get(), device.get(), 0);
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *device->executionEnvironment);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment);
     size_t GWS = 1;
 
     overrideCsr(mockCsr);

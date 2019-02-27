@@ -28,9 +28,8 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo &hwInfoIn,
-                                                              ExecutionEnvironment &executionEnvironment, gemCloseWorkerMode mode)
-    : BaseClass(hwInfoIn, executionEnvironment), gemCloseWorkerOperationMode(mode) {
+DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, gemCloseWorkerMode mode)
+    : BaseClass(executionEnvironment), gemCloseWorkerOperationMode(mode) {
 
     this->drm = executionEnvironment.osInterface->get()->getDrm();
 

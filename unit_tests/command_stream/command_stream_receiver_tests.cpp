@@ -278,17 +278,16 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugVariableEnabledWhenCreatingCsrThen
     DebugManagerStateRestore restore;
 
     DebugManager.flags.EnableTimestampPacket.set(true);
-    ExecutionEnvironment executionEnvironment;
-    CommandStreamReceiverHw<FamilyType> csr1(*platformDevices[0], executionEnvironment);
+    CommandStreamReceiverHw<FamilyType> csr1(*pDevice->executionEnvironment);
     EXPECT_TRUE(csr1.peekTimestampPacketWriteEnabled());
 
     DebugManager.flags.EnableTimestampPacket.set(false);
-    CommandStreamReceiverHw<FamilyType> csr2(*platformDevices[0], executionEnvironment);
+    CommandStreamReceiverHw<FamilyType> csr2(*pDevice->executionEnvironment);
     EXPECT_FALSE(csr2.peekTimestampPacketWriteEnabled());
 }
 
 HWTEST_F(CommandStreamReceiverTest, whenCsrIsCreatedThenUseTimestampPacketWriteIfPossible) {
-    CommandStreamReceiverHw<FamilyType> csr(*platformDevices[0], *pDevice->executionEnvironment);
+    CommandStreamReceiverHw<FamilyType> csr(*pDevice->executionEnvironment);
     EXPECT_EQ(UnitTestHelper<FamilyType>::isTimestampPacketWriteSupported(), csr.peekTimestampPacketWriteEnabled());
 }
 

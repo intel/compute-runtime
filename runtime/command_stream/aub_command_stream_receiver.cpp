@@ -7,6 +7,7 @@
 
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
@@ -42,19 +43,20 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     return filePath;
 }
 
-CommandStreamReceiver *AUBCommandStreamReceiver::create(const HardwareInfo &hwInfo, const std::string &baseName, bool standalone, ExecutionEnvironment &executionEnvironment) {
-    std::string filePath = AUBCommandStreamReceiver::createFullFilePath(hwInfo, baseName);
+CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseName, bool standalone, ExecutionEnvironment &executionEnvironment) {
+    auto hwInfo = executionEnvironment.getHardwareInfo();
+    std::string filePath = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, baseName);
     if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
         filePath.assign(DebugManager.flags.AUBDumpCaptureFileName.get());
     }
 
-    if (hwInfo.pPlatform->eRenderCoreFamily >= IGFX_MAX_CORE) {
+    if (hwInfo->pPlatform->eRenderCoreFamily >= IGFX_MAX_CORE) {
         DEBUG_BREAK_IF(!false);
         return nullptr;
     }
 
-    auto pCreate = aubCommandStreamReceiverFactory[hwInfo.pPlatform->eRenderCoreFamily];
-    return pCreate ? pCreate(hwInfo, filePath, standalone, executionEnvironment) : nullptr;
+    auto pCreate = aubCommandStreamReceiverFactory[hwInfo->pPlatform->eRenderCoreFamily];
+    return pCreate ? pCreate(filePath, standalone, executionEnvironment) : nullptr;
 }
 } // namespace OCLRT
 

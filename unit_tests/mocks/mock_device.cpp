@@ -18,7 +18,7 @@ using namespace OCLRT;
 
 MockDevice::MockDevice(const HardwareInfo &hwInfo)
     : MockDevice(hwInfo, new MockExecutionEnvironment(&hwInfo), 0u) {
-    CommandStreamReceiver *commandStreamReceiver = createCommandStream(&hwInfo, *this->executionEnvironment);
+    CommandStreamReceiver *commandStreamReceiver = createCommandStream(*this->executionEnvironment);
     executionEnvironment->commandStreamReceivers.resize(getDeviceIndex() + 1);
     executionEnvironment->commandStreamReceivers[getDeviceIndex()].resize(defaultEngineIndex + 1);
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][defaultEngineIndex].reset(commandStreamReceiver);

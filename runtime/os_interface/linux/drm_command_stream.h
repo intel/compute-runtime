@@ -24,7 +24,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     typedef DeviceCommandStreamReceiver<GfxFamily> BaseClass;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAddress;
     using BaseClass::getScratchPatchAddress;
-    using BaseClass::hwInfo;
     using BaseClass::makeNonResident;
     using BaseClass::makeResident;
     using BaseClass::mediaVfeStateDirty;
@@ -34,7 +33,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
   public:
     // When drm is null default implementation is used. In this case DrmCommandStreamReceiver is responsible to free drm.
     // When drm is passed, DCSR will not free it at destruction
-    DrmCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment,
+    DrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                              gemCloseWorkerMode mode = gemCloseWorkerMode::gemCloseWorkerActive);
 
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;

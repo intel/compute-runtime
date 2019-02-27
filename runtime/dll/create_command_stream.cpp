@@ -14,8 +14,8 @@
 
 namespace OCLRT {
 
-CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment) {
-    return createCommandStreamImpl(pHwInfo, executionEnvironment);
+CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment) {
+    return createCommandStreamImpl(executionEnvironment);
 }
 
 } // namespace OCLRT

@@ -1290,12 +1290,10 @@ typedef Test<PatchTokenFromBinaryTest> PatchTokenTests;
 
 template <typename FamilyType>
 class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
-    typedef UltCommandStreamReceiver<FamilyType> BaseClass;
+    using BaseClass = UltCommandStreamReceiver<FamilyType>;
+    using BaseClass::BaseClass;
 
   public:
-    CommandStreamReceiverMock(ExecutionEnvironment &executionEnvironment) : BaseClass(*platformDevices[0], executionEnvironment) {
-    }
-
     void makeResident(GraphicsAllocation &graphicsAllocation) override {
         residency[graphicsAllocation.getUnderlyingBuffer()] = graphicsAllocation.getUnderlyingBufferSize();
         CommandStreamReceiver::makeResident(graphicsAllocation);

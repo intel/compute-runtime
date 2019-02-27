@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/csr_deps.h"
 #include "runtime/helpers/dirty_state_helpers.h"
@@ -23,11 +24,11 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
 
   public:
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) {
-        return new CommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment);
+    static CommandStreamReceiver *create(ExecutionEnvironment &executionEnvironment) {
+        return new CommandStreamReceiverHw<GfxFamily>(executionEnvironment);
     }
 
-    CommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);
+    CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment);
 
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
@@ -56,7 +57,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags);
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
-    const HardwareInfo &peekHwInfo() const { return hwInfo; }
+    const HardwareInfo &peekHwInfo() const { return *executionEnvironment.getHardwareInfo(); }
 
     void collectStateBaseAddresPatchInfo(
         uint64_t commandBufferAddress,
@@ -101,7 +102,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     HeapDirtyState iohState;
     HeapDirtyState sshState;
 
-    const HardwareInfo &hwInfo;
     CsrSizeRequestFlags csrSizeRequestFlags = {};
     bool localMemoryEnabled;
 };

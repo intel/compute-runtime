@@ -214,8 +214,7 @@ HWTEST_F(CommandStreamReceiverFlushTests, shouldAlignToCacheLineSize) {
 typedef Test<DeviceFixture> CommandStreamReceiverHwTest;
 
 HWTEST_F(CommandStreamReceiverHwTest, givenCsrHwWhenTypeIsCheckedThenCsrHwIsReturned) {
-    HardwareInfo hwInfo = *platformDevices[0];
-    auto csr = std::unique_ptr<CommandStreamReceiver>(CommandStreamReceiverHw<FamilyType>::create(hwInfo, *pDevice->executionEnvironment));
+    auto csr = std::unique_ptr<CommandStreamReceiver>(CommandStreamReceiverHw<FamilyType>::create(*pDevice->executionEnvironment));
 
     EXPECT_EQ(CommandStreamReceiverType::CSR_HW, csr->getType());
 }
@@ -226,7 +225,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverHwTest, WhenCommandStreamReceiv
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenScratchAllocationIsNotCreated) {
-    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*platformDevices[0], *pDevice->executionEnvironment);
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment);
     auto scratchController = commandStreamReceiver->scratchSpaceController.get();
 
     bool stateBaseAddressDirty = false;
@@ -238,7 +237,7 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenScratchAl
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddressIsReturned) {
-    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*platformDevices[0], *pDevice->executionEnvironment);
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment);
     auto scratchController = commandStreamReceiver->scratchSpaceController.get();
 
     bool cfeStateDirty = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -14,8 +15,8 @@ using namespace OCLRT;
 typedef ::testing::Test Gen9CoherencyRequirements;
 
 GEN9TEST_F(Gen9CoherencyRequirements, noCoherencyProgramming) {
-    ExecutionEnvironment executionEnvironment;
-    CommandStreamReceiverHw<SKLFamily> csr(*platformDevices[0], executionEnvironment);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    CommandStreamReceiverHw<SKLFamily> csr(*executionEnvironment);
     LinearStream stream;
     DispatchFlags flags = {};
 

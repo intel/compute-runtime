@@ -8,6 +8,7 @@
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
@@ -16,8 +17,8 @@ namespace OCLRT {
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
-CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment) {
-    auto funcCreate = commandStreamReceiverFactory[pHwInfo->pPlatform->eRenderCoreFamily];
+CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEnvironment) {
+    auto funcCreate = commandStreamReceiverFactory[executionEnvironment.getHardwareInfo()->pPlatform->eRenderCoreFamily];
     if (funcCreate == nullptr) {
         return nullptr;
     }
@@ -29,22 +30,22 @@ CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo, Exec
     if (csr) {
         switch (csr) {
         case CSR_AUB:
-            commandStreamReceiver = AUBCommandStreamReceiver::create(*pHwInfo, "aubfile", true, executionEnvironment);
+            commandStreamReceiver = AUBCommandStreamReceiver::create("aubfile", true, executionEnvironment);
             break;
         case CSR_TBX:
-            commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo, "", false, executionEnvironment);
+            commandStreamReceiver = TbxCommandStreamReceiver::create("", false, executionEnvironment);
             break;
         case CSR_HW_WITH_AUB:
-            commandStreamReceiver = funcCreate(*pHwInfo, true, executionEnvironment);
+            commandStreamReceiver = funcCreate(true, executionEnvironment);
             break;
         case CSR_TBX_WITH_AUB:
-            commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo, "aubfile", true, executionEnvironment);
+            commandStreamReceiver = TbxCommandStreamReceiver::create("aubfile", true, executionEnvironment);
             break;
         default:
             break;
         }
     } else {
-        commandStreamReceiver = funcCreate(*pHwInfo, false, executionEnvironment);
+        commandStreamReceiver = funcCreate(false, executionEnvironment);
     }
     return commandStreamReceiver;
 }

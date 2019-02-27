@@ -15,13 +15,13 @@ namespace OCLRT {
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
 template <typename BaseCSR>
-CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn, const std::string &baseName, ExecutionEnvironment &executionEnvironment)
-    : BaseCSR(hwInfoIn, executionEnvironment) {
+CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(const std::string &baseName, ExecutionEnvironment &executionEnvironment)
+    : BaseCSR(executionEnvironment) {
     bool isAubManager = executionEnvironment.aubCenter && executionEnvironment.aubCenter->getAubManager();
     bool isTbxMode = CommandStreamReceiverType::CSR_TBX == BaseCSR::getType();
     bool createAubCsr = (isAubManager && isTbxMode) ? false : true;
     if (createAubCsr) {
-        aubCSR.reset(AUBCommandStreamReceiver::create(hwInfoIn, baseName, false, executionEnvironment));
+        aubCSR.reset(AUBCommandStreamReceiver::create(baseName, false, executionEnvironment));
     }
 }
 

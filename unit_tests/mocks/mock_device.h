@@ -15,7 +15,7 @@ namespace OCLRT {
 class OSTime;
 class FailMemoryManager;
 
-extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment);
 
 class MockDevice : public Device {
   public:

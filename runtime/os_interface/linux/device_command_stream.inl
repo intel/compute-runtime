@@ -15,11 +15,11 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(const HardwareInfo &hwInfo, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
+CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(bool withAubDump, ExecutionEnvironment &executionEnvironment) {
     if (withAubDump) {
-        return new CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<GfxFamily>>(hwInfo, "aubfile", executionEnvironment);
+        return new CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<GfxFamily>>("aubfile", executionEnvironment);
     } else {
-        return new DrmCommandStreamReceiver<GfxFamily>(hwInfo, executionEnvironment);
+        return new DrmCommandStreamReceiver<GfxFamily>(executionEnvironment);
     }
 };
 } // namespace OCLRT

@@ -26,7 +26,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::deviceIndex;
     using BaseClass::dshState;
     using BaseClass::getScratchPatchAddress;
-    using BaseClass::hwInfo;
     using BaseClass::indirectHeap;
     using BaseClass::iohState;
     using BaseClass::programPreamble;
@@ -69,15 +68,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         }
     }
 
-    UltCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : BaseClass(hwInfoIn, executionEnvironment), recursiveLockCounter(0) {
-        if (hwInfoIn.capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
+    UltCommandStreamReceiver(ExecutionEnvironment &executionEnvironment) : BaseClass(executionEnvironment), recursiveLockCounter(0) {
+        if (executionEnvironment.getHardwareInfo()->capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
             tempPreemptionLocation = std::make_unique<GraphicsAllocation>(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false);
             this->preemptionCsrAllocation = tempPreemptionLocation.get();
         }
     }
 
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
-        return new UltCommandStreamReceiver<GfxFamily>(hwInfoIn, executionEnvironment);
+    static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment) {
+        return new UltCommandStreamReceiver<GfxFamily>(executionEnvironment);
     }
 
     virtual GmmPageTableMngr *createPageTableManager() override {

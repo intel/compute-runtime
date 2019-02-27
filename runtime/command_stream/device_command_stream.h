@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,18 +9,17 @@
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 
 namespace OCLRT {
-struct HardwareInfo;
 
 template <typename GfxFamily>
 class DeviceCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     typedef CommandStreamReceiverHw<GfxFamily> BaseClass;
 
   protected:
-    DeviceCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
-        : BaseClass(hwInfoIn, executionEnvironment) {
+    DeviceCommandStreamReceiver(ExecutionEnvironment &executionEnvironment)
+        : BaseClass(executionEnvironment) {
     }
 
   public:
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, bool withAubDump, ExecutionEnvironment &executionEnvironment);
+    static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment);
 };
 } // namespace OCLRT

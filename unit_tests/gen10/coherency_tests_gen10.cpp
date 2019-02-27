@@ -19,7 +19,7 @@ struct Gen10CoherencyRequirements : public ::testing::Test {
 
     struct myCsr : public CommandStreamReceiverHw<CNLFamily> {
         using CommandStreamReceiver::commandStream;
-        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<CNLFamily>(*platformDevices[0], executionEnvironment){};
+        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<CNLFamily>(executionEnvironment){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
 

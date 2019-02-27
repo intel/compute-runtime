@@ -248,5 +248,5 @@ class CommandStreamReceiver {
     bool lastSpecialPipelineSelectMode = false;
 };
 
-typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);
+typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump, ExecutionEnvironment &executionEnvironment);
 } // namespace OCLRT

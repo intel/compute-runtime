@@ -16,11 +16,11 @@ class CommandStreamReceiver;
 class ExecutionEnvironment;
 
 struct AUBCommandStreamReceiver {
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, const std::string &filename, bool standalone, ExecutionEnvironment &executionEnvironment);
+    static CommandStreamReceiver *create(const std::string &filename, bool standalone, ExecutionEnvironment &executionEnvironment);
     static std::string createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename);
 
     using AubFileStream = AubMemDump::AubFileStream;
 };
 
-typedef CommandStreamReceiver *(*AubCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment);
+typedef CommandStreamReceiver *(*AubCommandStreamReceiverCreateFunc)(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment);
 } // namespace OCLRT

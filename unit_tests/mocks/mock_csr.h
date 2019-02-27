@@ -33,14 +33,12 @@ template <typename GfxFamily>
 class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
   public:
     using BaseUltCsrClass = UltCommandStreamReceiver<GfxFamily>;
+    using BaseUltCsrClass::BaseUltCsrClass;
 
     MockCsrBase() = delete;
 
     MockCsrBase(int32_t &execStamp, ExecutionEnvironment &executionEnvironment)
-        : BaseUltCsrClass(*platformDevices[0], executionEnvironment), executionStamp(&execStamp), flushTaskStamp(-1) {
-    }
-
-    MockCsrBase(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : BaseUltCsrClass(hwInfoIn, executionEnvironment) {
+        : BaseUltCsrClass(executionEnvironment), executionStamp(&execStamp), flushTaskStamp(-1) {
     }
 
     void makeResident(GraphicsAllocation &gfxAllocation) override {
@@ -146,6 +144,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
 template <typename GfxFamily>
 class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
   public:
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
     using CommandStreamReceiverHw<GfxFamily>::flushStamp;
     using CommandStreamReceiverHw<GfxFamily>::programL3;
     using CommandStreamReceiverHw<GfxFamily>::csrSizeRequestFlags;
@@ -157,8 +156,6 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::taskLevel;
     using CommandStreamReceiver::timestampPacketWriteEnabled;
-
-    MockCsrHw2(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment) {}
 
     SubmissionAggregator *peekSubmissionAggregator() {
         return this->submissionAggregator.get();

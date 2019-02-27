@@ -37,9 +37,9 @@ class AUBFixture : public CommandQueueHwFixture {
 
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         if (testMode == TestMode::AubTestsWithTbx) {
-            this->csr = TbxCommandStreamReceiver::create(hwInfo, strfilename.str(), true, *executionEnvironment);
+            this->csr = TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment);
         } else {
-            this->csr = AUBCommandStreamReceiver::create(hwInfo, strfilename.str(), true, *executionEnvironment);
+            this->csr = AUBCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment);
         }
 
         executionEnvironment->commandStreamReceivers.resize(deviceIndex + 1);

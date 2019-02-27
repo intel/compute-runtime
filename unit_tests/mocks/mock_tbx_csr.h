@@ -23,8 +23,8 @@ template <typename GfxFamily>
 class MockTbxCsrToTestWaitBeforeMakingNonResident : public TbxCommandStreamReceiverHw<GfxFamily> {
   public:
     using CommandStreamReceiver::latestFlushedTaskCount;
-    MockTbxCsrToTestWaitBeforeMakingNonResident(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
-        : TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment) {}
+    MockTbxCsrToTestWaitBeforeMakingNonResident(ExecutionEnvironment &executionEnvironment)
+        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment) {}
 
     void makeCoherent(GraphicsAllocation &gfxAllocation) override {
         auto tagAddress = reinterpret_cast<uint32_t *>(gfxAllocation.getUnderlyingBuffer());
@@ -38,8 +38,8 @@ template <typename GfxFamily>
 class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
   public:
     using TbxCommandStreamReceiverHw<GfxFamily>::writeMemory;
-    MockTbxCsr(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
-        : TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment) {}
+    MockTbxCsr(ExecutionEnvironment &executionEnvironment)
+        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment) {}
 
     void initializeEngine() {
         TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine();

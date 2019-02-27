@@ -11,6 +11,7 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/platform/platform.h"
 
 #include "gmock/gmock.h"
 
@@ -53,8 +54,8 @@ struct MockAubCsrToTestDumpContext : public AUBCommandStreamReceiverHw<GfxFamily
 
 template <typename GfxFamily>
 struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
-    MockAubCsr(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment)
-        : AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, fileName, standalone, executionEnvironment){};
+    MockAubCsr(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment)
+        : AUBCommandStreamReceiverHw<GfxFamily>(fileName, standalone, executionEnvironment){};
 
     using CommandStreamReceiverHw<GfxFamily>::defaultSshSize;
     using AUBCommandStreamReceiverHw<GfxFamily>::taskCount;
@@ -162,10 +163,11 @@ struct AubExecutionEnvironment {
 template <typename CsrType>
 std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation, bool allocateCommandBuffer, bool standalone) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+    executionEnvironment->setHwInfo(*platformDevices);
     executionEnvironment->aubCenter.reset(new AubCenter());
 
     executionEnvironment->commandStreamReceivers.resize(1);
-    executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<CsrType>(*platformDevices[0], "", standalone, *executionEnvironment));
+    executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<CsrType>("", standalone, *executionEnvironment));
     executionEnvironment->initializeMemoryManager(false, false);
     if (createTagAllocation) {
         executionEnvironment->commandStreamReceivers[0][0]->initializeTagAllocation();

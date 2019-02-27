@@ -16,7 +16,6 @@
 //    notepad build_runtime_vs2013.bat
 
 namespace OCLRT {
-struct HardwareInfo;
 class CommandStreamReceiver;
 class TbxSockets;
 class ExecutionEnvironment;
@@ -45,10 +44,10 @@ class TbxStream : public AubMemDump::AubStream {
 };
 
 struct TbxCommandStreamReceiver {
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment);
+    static CommandStreamReceiver *create(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 
     using TbxStream = OCLRT::TbxStream;
 };
 
-typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment);
+typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 } // namespace OCLRT

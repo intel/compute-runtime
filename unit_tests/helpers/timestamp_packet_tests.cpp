@@ -253,7 +253,7 @@ TEST_F(TimestampPacketSimpleTests, whenAskedForStampAddressThenReturnWithValidOf
 }
 
 HWTEST_F(TimestampPacketTests, givenCommandStreamReceiverHwWhenObtainingPreferredTagPoolSizeThenReturnCorrectValue) {
-    CommandStreamReceiverHw<FamilyType> csr(*platformDevices[0], *executionEnvironment);
+    CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment);
     EXPECT_EQ(512u, csr.getPreferredTagPoolSize());
 }
 

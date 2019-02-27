@@ -6,6 +6,7 @@
  */
 
 #include "runtime/command_stream/preemption.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/windows/driver_info.h"
@@ -26,7 +27,7 @@ namespace OCLRT {
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
-CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);
+CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, ExecutionEnvironment &executionEnvironment);
 
 class DriverInfoDeviceTest : public ::testing::Test {
   public:
@@ -44,12 +45,12 @@ class DriverInfoDeviceTest : public ::testing::Test {
     const HardwareInfo *hwInfo;
 };
 
-CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
+CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, ExecutionEnvironment &executionEnvironment) {
     auto csr = new MockCommandStreamReceiver(executionEnvironment);
     if (!executionEnvironment.osInterface) {
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         auto wddm = new WddmMock();
-        wddm->init(PreemptionHelper::getDefaultPreemptionMode(hwInfoIn));
+        wddm->init(PreemptionHelper::getDefaultPreemptionMode(*executionEnvironment.getHardwareInfo()));
         executionEnvironment.osInterface->get()->setWddm(wddm);
     }
 

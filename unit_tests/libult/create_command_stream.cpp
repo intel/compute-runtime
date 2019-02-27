@@ -22,17 +22,18 @@ bool getDevicesResult = true;
 bool overrideCommandStreamReceiverCreation = false;
 bool overrideDeviceWithDefaultHardwareInfo = true;
 
-CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment) {
+CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment) {
     CommandStreamReceiver *commandStreamReceiver = nullptr;
-    assert(nullptr != pHwInfo->pPlatform);
+    auto hwInfo = executionEnvironment.getHardwareInfo();
+    assert(nullptr != hwInfo->pPlatform);
     auto offset = !overrideCommandStreamReceiverCreation ? IGFX_MAX_CORE : 0;
     if (offset != 0) {
-        auto funcCreate = commandStreamReceiverFactory[offset + pHwInfo->pPlatform->eRenderCoreFamily];
+        auto funcCreate = commandStreamReceiverFactory[offset + hwInfo->pPlatform->eRenderCoreFamily];
         if (funcCreate) {
-            commandStreamReceiver = funcCreate(*pHwInfo, false, executionEnvironment);
+            commandStreamReceiver = funcCreate(false, executionEnvironment);
         }
     } else {
-        commandStreamReceiver = createCommandStreamImpl(pHwInfo, executionEnvironment);
+        commandStreamReceiver = createCommandStreamImpl(executionEnvironment);
     }
     return commandStreamReceiver;
 }

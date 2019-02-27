@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,11 +12,10 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using DrmCommandStreamReceiver<GfxFamily>::residency;
 
     TestedDrmCommandStreamReceiver(gemCloseWorkerMode mode, ExecutionEnvironment &executionEnvironment)
-        : DrmCommandStreamReceiver<GfxFamily>(*platformDevices[0], executionEnvironment, mode) {
+        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, mode) {
     }
     TestedDrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment)
-        : DrmCommandStreamReceiver<GfxFamily>(*platformDevices[0], executionEnvironment,
-                                              gemCloseWorkerMode::gemCloseWorkerInactive) {
+        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, gemCloseWorkerMode::gemCloseWorkerInactive) {
     }
 
     void overrideGemCloseWorkerOperationMode(gemCloseWorkerMode overrideValue) {

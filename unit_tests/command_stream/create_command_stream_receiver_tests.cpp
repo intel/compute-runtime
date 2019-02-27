@@ -30,8 +30,7 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
     VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
     DebugManager.flags.SetCommandStreamReceiver.set(csrType);
     executionEnvironment->commandStreamReceivers.resize(1);
-    executionEnvironment->commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(createCommandStream(hwInfo,
-                                                                                                                         *executionEnvironment)));
+    executionEnvironment->commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment)));
 
     if (csrType < CommandStreamReceiverType::CSR_TYPES_NUM) {
         EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[0][0].get());

@@ -30,11 +30,10 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn,
-                                                                  ExecutionEnvironment &executionEnvironment)
-    : BaseClass(hwInfoIn, executionEnvironment) {
+TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment)
+    : BaseClass(executionEnvironment) {
 
-    physicalAddressAllocator.reset(this->createPhysicalAddressAllocator(&hwInfoIn));
+    physicalAddressAllocator.reset(this->createPhysicalAddressAllocator(&this->peekHwInfo()));
     executionEnvironment.initAubCenter(this->localMemoryEnabled, "", this->getType());
     auto aubCenter = executionEnvironment.aubCenter.get();
     UNRECOVERABLE_IF(nullptr == aubCenter);
@@ -46,7 +45,7 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const Hardware
 
     auto debugDeviceId = DebugManager.flags.OverrideAubDeviceId.get();
     this->aubDeviceId = debugDeviceId == -1
-                            ? hwInfoIn.capabilityTable.aubDeviceId
+                            ? this->peekHwInfo().capabilityTable.aubDeviceId
                             : static_cast<uint32_t>(debugDeviceId);
     this->stream = &tbxStream;
 }
@@ -157,17 +156,18 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
 }
 
 template <typename GfxFamily>
-CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
+CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
     TbxCommandStreamReceiverHw<GfxFamily> *csr;
     if (withAubDump) {
-        auto &hwHelper = HwHelper::get(hwInfoIn.pPlatform->eRenderCoreFamily);
-        auto localMemoryEnabled = hwHelper.getEnableLocalMemory(hwInfoIn);
-        auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfoIn, baseName);
+        auto hwInfo = executionEnvironment.getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily);
+        auto localMemoryEnabled = hwHelper.getEnableLocalMemory(*hwInfo);
+        auto fullName = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, baseName);
         executionEnvironment.initAubCenter(localMemoryEnabled, fullName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 
-        csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(hwInfoIn, baseName, executionEnvironment);
+        csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(baseName, executionEnvironment);
     } else {
-        csr = new TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment);
+        csr = new TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment);
     }
 
     if (!csr->aubManager) {

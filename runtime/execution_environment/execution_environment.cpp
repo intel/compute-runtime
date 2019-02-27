@@ -23,7 +23,7 @@
 namespace OCLRT {
 ExecutionEnvironment::ExecutionEnvironment() = default;
 ExecutionEnvironment::~ExecutionEnvironment() = default;
-extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment);
 
 void ExecutionEnvironment::initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (!aubCenter) {
@@ -49,7 +49,7 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(uint32_t deviceIndex,
     if (this->commandStreamReceivers[deviceIndex][deviceCsrIndex]) {
         return true;
     }
-    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver(createCommandStream(this->hwInfo, *this));
+    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver(createCommandStream(*this));
     if (!commandStreamReceiver) {
         return false;
     }

@@ -124,32 +124,32 @@ HWTEST_F(TbxCommandStreamTests, DISABLED_getCsTraits) {
 }
 
 TEST(TbxCommandStreamReceiverTest, givenNullFactoryEntryWhenTbxCsrIsCreatedThenNullptrIsReturned) {
-    const HardwareInfo *hwInfo = platformDevices[0];
-    GFXCORE_FAMILY family = hwInfo->pPlatform->eRenderCoreFamily;
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    GFXCORE_FAMILY family = executionEnvironment->getHardwareInfo()->pPlatform->eRenderCoreFamily;
     VariableBackup<TbxCommandStreamReceiverCreateFunc> tbxCsrFactoryBackup(&tbxCommandStreamReceiverFactory[family]);
 
     tbxCommandStreamReceiverFactory[family] = nullptr;
-    ExecutionEnvironment executionEnvironment;
-    CommandStreamReceiver *csr = TbxCommandStreamReceiver::create(*hwInfo, "", false, executionEnvironment);
+
+    CommandStreamReceiver *csr = TbxCommandStreamReceiver::create("", false, *executionEnvironment);
     EXPECT_EQ(nullptr, csr);
 }
 
 TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedWithWrongGfxCoreFamilyThenNullPointerShouldBeReturned) {
-    HardwareInfo hwInfo = *platformDevices[0];
-    GFXCORE_FAMILY family = hwInfo.pPlatform->eRenderCoreFamily;
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    auto hwInfo = executionEnvironment->getHardwareInfo();
+    GFXCORE_FAMILY family = hwInfo->pPlatform->eRenderCoreFamily;
 
-    const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
-    ExecutionEnvironment executionEnvironment;
-    CommandStreamReceiver *csr = TbxCommandStreamReceiver::create(hwInfo, "", false, executionEnvironment);
+    const_cast<PLATFORM *>(hwInfo->pPlatform)->eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
+
+    CommandStreamReceiver *csr = TbxCommandStreamReceiver::create("", false, *executionEnvironment);
     EXPECT_EQ(nullptr, csr);
 
-    const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = family;
+    const_cast<PLATFORM *>(hwInfo->pPlatform)->eRenderCoreFamily = family;
 }
 
 TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenTypeIsCheckedThenTbxCsrIsReturned) {
-    HardwareInfo hwInfo = *platformDevices[0];
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create(hwInfo, "", false, *executionEnvironment));
+    std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create("", false, *executionEnvironment));
     EXPECT_NE(nullptr, csr);
     EXPECT_EQ(CommandStreamReceiverType::CSR_TBX, csr->getType());
 }
@@ -292,14 +292,13 @@ HWTEST_F(TbxCommandStreamTests, givenNoDbgDeviceIdFlagWhenTbxCsrIsCreatedThenUse
 HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThenUseDebugDeviceId) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.OverrideAubDeviceId.set(9); //this is Hsw, not used
-    const HardwareInfo &hwInfoIn = *platformDevices[0];
-    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(hwInfoIn, "", false, *pDevice->executionEnvironment)));
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment)));
     EXPECT_EQ(9u, tbxCsr->aubDeviceId);
 }
 
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenWaitBeforeMakeNonResidentWhenRequiredIsCalledWithBlockingFlagTrueThenFunctionStallsUntilMakeCoherentUpdatesTagAddress) {
     uint32_t tag = 0;
-    MockTbxCsrToTestWaitBeforeMakingNonResident<FamilyType> tbxCsr(*platformDevices[0], *pDevice->executionEnvironment);
+    MockTbxCsrToTestWaitBeforeMakingNonResident<FamilyType> tbxCsr(*pDevice->executionEnvironment);
 
     tbxCsr.setTagAllocation(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, sizeof(tag)}, &tag));
 
@@ -315,7 +314,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenWaitBeforeMakeNonResidentWhen
 }
 
 HWTEST_F(TbxCommandSteamSimpleTest, whenTbxCommandStreamReceiverIsCreatedThenPPGTTAndGGTTCreatedHavePhysicalAddressAllocatorSet) {
-    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], *pDevice->executionEnvironment);
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
 
     uintptr_t address = 0x20000;
     auto physicalAddress = tbxCsr.ppgtt->map(address, MemoryConstants::pageSize, 0, MemoryBanks::MainBank);
@@ -326,7 +325,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, whenTbxCommandStreamReceiverIsCreatedThenPPG
 }
 
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCommandStreamReceiverWhenPhysicalAddressAllocatorIsCreatedThenItIsNotNull) {
-    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], *pDevice->executionEnvironment);
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
     auto oldSkuTable = hwInfoHelper.pSkuTable;
     std::unique_ptr<FeatureTable, std::function<void(FeatureTable *)>> skuTable(new FeatureTable, [&](FeatureTable *ptr) { delete ptr;  hwInfoHelper.pSkuTable = oldSkuTable; });
     hwInfoHelper.pSkuTable = skuTable.get();
@@ -338,11 +337,10 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCommandStreamReceiverWhenPhysicalAdd
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenItIsCreatedWithUseAubStreamFalseThenDontInitializeAubManager) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.UseAubStream.set(false);
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
 
-    const HardwareInfo &hwInfo = *platformDevices[0];
-    ExecutionEnvironment executionEnvironment;
-    auto tbxCsr = std::make_unique<TbxCommandStreamReceiverHw<FamilyType>>(hwInfo, executionEnvironment);
-    EXPECT_EQ(nullptr, executionEnvironment.aubCenter->getAubManager());
+    auto tbxCsr = std::make_unique<TbxCommandStreamReceiverHw<FamilyType>>(*executionEnvironment);
+    EXPECT_EQ(nullptr, executionEnvironment->aubCenter->getAubManager());
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
@@ -350,7 +348,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
-    MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
     MockOsContext osContext(0, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
     tbxCsr.setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
@@ -380,7 +378,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverInBatchedModeWhenFl
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
-    MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
     MockOsContext osContext(0, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
     tbxCsr.setupContext(osContext);
 
@@ -402,7 +400,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledWi
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
-    MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
     MockOsContext osContext(0, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
     tbxCsr.setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
@@ -424,7 +422,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsC
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
-    MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
     MockOsContext osContext(0, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
     tbxCsr.setupContext(osContext);
 
@@ -440,7 +438,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeCoherentIsC
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
-    MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
     MockOsContext osContext(0, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
     tbxCsr.setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
@@ -452,28 +450,29 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeCoherentIsC
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenHardwareContextIsCreatedThenTbxStreamInCsrIsNotInitialized) {
-    const HardwareInfo &hwInfo = *platformDevices[0];
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(&hwInfo, false, "", CommandStreamReceiverType::CSR_TBX);
+    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->executionEnvironment->getHardwareInfo(), false, "", CommandStreamReceiverType::CSR_TBX);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+
+    pDevice->executionEnvironment->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
     auto tbxCsr = std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>>(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(
-        TbxCommandStreamReceiverHw<FamilyType>::create(hwInfo, "", false, executionEnvironment)));
+        TbxCommandStreamReceiverHw<FamilyType>::create("", false, *pDevice->executionEnvironment)));
 
     EXPECT_FALSE(tbxCsr->streamInitialized);
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareContext) {
-    MockOsContext osContext(0, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionMode::Disabled, false);
+    auto hwInfo = pDevice->executionEnvironment->getHardwareInfo();
+    MockOsContext osContext(0, 1, HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0],
+                            PreemptionMode::Disabled, false);
     std::string fileName = "";
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_TBX);
+    MockAubCenter *mockAubCenter = new MockAubCenter(hwInfo, false, fileName, CommandStreamReceiverType::CSR_TBX);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
-    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(*platformDevices[0], fileName, false, executionEnvironment)));
+    pDevice->executionEnvironment->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(fileName, false, *pDevice->executionEnvironment)));
     EXPECT_EQ(nullptr, tbxCsr->hardwareContextController.get());
 
     tbxCsr->setupContext(osContext);
@@ -481,7 +480,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareC
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenPollForCompletionImplIsCalledThenSimulatedCsrMethodIsCalled) {
-    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(*platformDevices[0], "", false, *pDevice->executionEnvironment)));
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment)));
     tbxCsr->pollForCompletionImpl();
 }
 
@@ -491,6 +490,6 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpThenFileNameIsE
 
     auto fullName = AUBCommandStreamReceiver::createFullFilePath(*platformDevices[0], "aubfile");
 
-    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(*platformDevices[0], "aubfile", true, executionEnvironment)));
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create("aubfile", true, executionEnvironment)));
     EXPECT_STREQ(fullName.c_str(), executionEnvironment.aubFileNameReceived.c_str());
 }

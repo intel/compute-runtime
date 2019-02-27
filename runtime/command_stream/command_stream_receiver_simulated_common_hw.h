@@ -25,7 +25,6 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
   protected:
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
     using CommandStreamReceiverHw<GfxFamily>::deviceIndex;
-    using CommandStreamReceiverHw<GfxFamily>::hwInfo;
     using CommandStreamReceiverHw<GfxFamily>::osContext;
     using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;

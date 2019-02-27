@@ -38,14 +38,14 @@ size_t CommandStreamReceiverHw<GfxFamily>::getSshHeapSize() {
 }
 
 template <typename GfxFamily>
-CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
-    : CommandStreamReceiver(executionEnvironment), hwInfo(hwInfoIn) {
+CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment)
+    : CommandStreamReceiver(executionEnvironment) {
 
-    auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
-    localMemoryEnabled = hwHelper.getEnableLocalMemory(hwInfo);
+    auto &hwHelper = HwHelper::get(peekHwInfo().pPlatform->eRenderCoreFamily);
+    localMemoryEnabled = hwHelper.getEnableLocalMemory(peekHwInfo());
 
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
-    resetKmdNotifyHelper(new KmdNotifyHelper(&hwInfoIn.capabilityTable.kmdNotifyProperties));
+    resetKmdNotifyHelper(new KmdNotifyHelper(&peekHwInfo().capabilityTable.kmdNotifyProperties));
     flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(executionEnvironment));
     defaultSshSize = getSshHeapSize();
 
@@ -53,7 +53,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &
     if (DebugManager.flags.EnableTimestampPacket.get() != -1) {
         timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
     }
-    createScratchSpaceController(hwInfoIn);
+    createScratchSpaceController(peekHwInfo());
 }
 
 template <typename GfxFamily>
@@ -739,7 +739,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &cs
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags) {
     if (mediaVfeStateDirty) {
-        PreambleHelper<GfxFamily>::programVFEState(&csr, hwInfo, requiredScratchSize, getScratchPatchAddress());
+        PreambleHelper<GfxFamily>::programVFEState(&csr, peekHwInfo(), requiredScratchSize, getScratchPatchAddress());
         setMediaVFEStateDirty(false);
     }
 }

@@ -298,7 +298,7 @@ TEST(ExecutionEnvironment, whenSpecialCsrExistsThenReturnSpecialEngineControl) {
     executionEnvironment->initializeMemoryManager(false, false);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 
-    executionEnvironment->specialCommandStreamReceiver.reset(createCommandStream(platformDevices[0], *executionEnvironment));
+    executionEnvironment->specialCommandStreamReceiver.reset(createCommandStream(*executionEnvironment));
     auto engineType = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(executionEnvironment->specialCommandStreamReceiver.get(),
                                                                                      engineType, 1,

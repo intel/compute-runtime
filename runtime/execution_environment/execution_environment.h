@@ -51,6 +51,9 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory);
     void initSourceLevelDebugger();
     void setHwInfo(const HardwareInfo *hwInfo);
+    const HardwareInfo *getHardwareInfo() const {
+        return this->hwInfo;
+    }
     bool isFullRangeSvm() const {
         return hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
     }

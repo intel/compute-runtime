@@ -12,6 +12,6 @@ extern bool overrideCommandStreamReceiverCreation;
 extern bool overrideDeviceWithDefaultHardwareInfo;
 extern bool overrideMemoryManagerCreation;
 
-extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment);
+extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment);
 extern bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
 } // namespace OCLRT
