@@ -14,9 +14,9 @@ class WddmMockInterface23 : public WddmInterface23 {
   public:
     using WddmInterface23::WddmInterface23;
 
-    bool createHwQueue(PreemptionMode preemptionMode, OsContextWin &osContext) override {
+    bool createHwQueue(OsContextWin &osContext) override {
         createHwQueueCalled++;
-        createHwQueueResult = forceCreateHwQueueFail ? false : WddmInterface23::createHwQueue(preemptionMode, osContext);
+        createHwQueueResult = forceCreateHwQueueFail ? false : WddmInterface23::createHwQueue(osContext);
         return createHwQueueResult;
     }
 

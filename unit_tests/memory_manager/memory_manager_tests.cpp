@@ -35,6 +35,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/mocks/mock_os_context.h"
 
 #include <future>
 #include <type_traits>
@@ -1556,8 +1557,8 @@ TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenIt
 
     MockResidencyData residency;
 
-    OsContext osContext(nullptr, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    OsContext osContext2(nullptr, 1u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[1], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    MockOsContext osContext(nullptr, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    MockOsContext osContext2(nullptr, 1u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[1], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
     auto lastFenceValue = 45llu;
     auto lastFenceValue2 = 23llu;
@@ -1616,9 +1617,10 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationWasNotUnlockedThenItIsUn
     EXPECT_EQ(1u, memoryManager.unlockResourceCalled);
 }
 
-TEST(OsContextTest, givenOsContextWithNumberOfSupportedDevicesWhenConstructingThenUsePassedValue) {
-    OsContext osContext(nullptr, 5, 7, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+TEST(OsContextTest, givenOsContextWithNumberOfSupportedDevicesAndPreemptiomModeWhenConstructingThenUsePassedValue) {
+    MockOsContext osContext(nullptr, 5, 7, {EngineType::ENGINE_RCS, 0}, PreemptionMode::MidThread);
     EXPECT_EQ(7u, osContext.getNumDevicesSupported());
+    EXPECT_EQ(PreemptionMode::MidThread, osContext.getPreemptionMode());
 }
 
 TEST(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {

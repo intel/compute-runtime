@@ -95,7 +95,7 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
         osContext = memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], 1, preemptionMode);
 
         osContext->incRefInternal();
-        residencyController = &osContext->get()->getResidencyController();
+        residencyController = &static_cast<OsContextWin *>(osContext)->getResidencyController();
     }
 
     void TearDown() {
@@ -127,7 +127,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
 
         osContext->incRefInternal();
 
-        residencyController = &osContext->get()->getResidencyController();
+        residencyController = &static_cast<OsContextWin *>(osContext)->getResidencyController();
     }
 
     void TearDown() {

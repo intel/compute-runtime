@@ -110,7 +110,7 @@ bool setupArbSyncObject(GLSharingFunctions &sharing, OSInterface &osInterface, C
 }
 
 void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
-    auto osContextWin = osContext.get();
+    auto osContextWin = static_cast<OsContextWin *>(&osContext);
     UNRECOVERABLE_IF(!osContextWin);
     auto wddm = osContextWin->getWddm();
 
@@ -127,7 +127,7 @@ void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
     }
 
     D3DKMT_SIGNALSYNCHRONIZATIONOBJECT signalSubmissionSyncInfo = {0};
-    signalSubmissionSyncInfo.hContext = osContext.get()->getContext();
+    signalSubmissionSyncInfo.hContext = osContextWin->getContext();
     signalSubmissionSyncInfo.Flags.SignalAtSubmission = 1; // Don't wait for GPU to complete processing command buffer
     signalSubmissionSyncInfo.ObjectHandleArray[0] = glSyncInfo.submissionSynchronizationObject;
     signalSubmissionSyncInfo.ObjectCount = 1;

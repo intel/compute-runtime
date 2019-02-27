@@ -12,12 +12,14 @@
 namespace OCLRT {
 
 class Wddm;
-using OsContextWin = OsContext::OsContextImpl;
-class OsContext::OsContextImpl {
+class OsContextWin : public OsContext {
   public:
-    OsContextImpl() = delete;
-    OsContextImpl(Wddm &wddm, uint32_t osContextId, EngineInstanceT engineType, PreemptionMode preemptionMode);
-    ~OsContextImpl();
+    OsContextWin() = delete;
+    ~OsContextWin() override;
+
+    OsContextWin(Wddm &wddm, uint32_t contextId, uint32_t numDevicesSupported,
+                 EngineInstanceT engineType, PreemptionMode preemptionMode);
+
     D3DKMT_HANDLE getContext() const {
         return context;
     }

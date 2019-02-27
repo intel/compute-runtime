@@ -9,7 +9,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
-#include "runtime/os_interface/os_interface.h"
+#include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
 
@@ -151,18 +151,20 @@ constexpr EngineInstanceT defaultEngine{ENGINE_RCS, 0};
 
 TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext) {
     DrmMock drmMock;
+
     uint32_t drmContextId1 = 123;
     uint32_t drmContextId2 = 456;
 
     {
         drmMock.StoredCtxId = drmContextId1;
-        OsContextLinux osContext1(drmMock, defaultEngine);
+        OsContextLinux osContext1(drmMock, 0u, 1, defaultEngine, PreemptionMode::Disabled);
+
         EXPECT_EQ(drmContextId1, osContext1.getDrmContextId());
         EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
 
         {
             drmMock.StoredCtxId = drmContextId2;
-            OsContextLinux osContext2(drmMock, defaultEngine);
+            OsContextLinux osContext2(drmMock, 0u, 1, defaultEngine, PreemptionMode::Disabled);
             EXPECT_EQ(drmContextId2, osContext2.getDrmContextId());
             EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
         }
@@ -178,16 +180,17 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     drmMock.StoredCtxId = 123;
     drmMock.preemptionSupported = false;
 
-    OsContextLinux osContext1(drmMock, defaultEngine);
-    OsContextLinux osContext2(drmMock, lowPriorityGpgpuEngine);
+    OsContextLinux osContext1(drmMock, 0u, 1, defaultEngine, PreemptionMode::Disabled);
+    OsContextLinux osContext2(drmMock, 0u, 1, lowPriorityGpgpuEngine, PreemptionMode::Disabled);
+
     EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
 
     drmMock.preemptionSupported = true;
 
-    OsContextLinux osContext3(drmMock, defaultEngine);
+    OsContextLinux osContext3(drmMock, 0u, 1, defaultEngine, PreemptionMode::Disabled);
     EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
 
-    OsContextLinux osContext4(drmMock, lowPriorityGpgpuEngine);
+    OsContextLinux osContext4(drmMock, 0u, 1, lowPriorityGpgpuEngine, PreemptionMode::Disabled);
     EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
     EXPECT_EQ(drmMock.StoredCtxId, drmMock.receivedContextParamRequest.ctx_id);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);

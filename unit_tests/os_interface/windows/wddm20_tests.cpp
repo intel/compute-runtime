@@ -164,7 +164,7 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
 }
 
 TEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
-    auto context = osContextWin->getContext();
+    auto context = osContext->getContext();
     EXPECT_TRUE(context != static_cast<D3DKMT_HANDLE>(0));
 }
 
@@ -179,7 +179,7 @@ TEST_F(Wddm20Tests, allocation) {
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
-    auto error = wddm->destroyAllocation(&allocation, osContextWin);
+    auto error = wddm->destroyAllocation(&allocation, osContext.get());
     EXPECT_TRUE(error);
 
     delete gmm;
@@ -209,7 +209,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
     EXPECT_EQ(alignedPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
     EXPECT_NE(underlyingPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
 
-    ret = wddm->destroyAllocation(&allocation, osContextWin);
+    ret = wddm->destroyAllocation(&allocation, osContext.get());
     EXPECT_TRUE(ret);
 
     delete gmm;
@@ -278,7 +278,7 @@ TEST_F(Wddm20Tests, createAllocation32bit) {
     EXPECT_LE(heap32baseAddress, allocation.gpuPtr);
     EXPECT_GT(heap32baseAddress + heap32Size, allocation.gpuPtr);
 
-    auto success = wddm->destroyAllocation(&allocation, osContextWin);
+    auto success = wddm->destroyAllocation(&allocation, osContext.get());
     EXPECT_TRUE(success);
 
     delete gmm;
@@ -354,7 +354,7 @@ TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.gpuPtr == 0);
 
-    error = wddm->destroyAllocation(&allocation, osContextWin);
+    error = wddm->destroyAllocation(&allocation, osContext.get());
     EXPECT_TRUE(error);
     delete gmm;
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
@@ -402,12 +402,12 @@ TEST_F(Wddm20Tests, makeResidentNonResident) {
     error = wddm->evict(&allocation.handle, 1, sizeToTrim);
     EXPECT_TRUE(error);
 
-    auto monitoredFence = osContextWin->getResidencyController().getMonitoredFence();
+    auto monitoredFence = osContext->getResidencyController().getMonitoredFence();
     UINT64 fenceValue = 100;
     monitoredFence.cpuAddress = &fenceValue;
     monitoredFence.currentFenceValue = 101;
 
-    error = wddm->destroyAllocation(&allocation, osContextWin);
+    error = wddm->destroyAllocation(&allocation, osContext.get());
 
     EXPECT_TRUE(error);
     delete gmm;
@@ -579,7 +579,7 @@ TEST_F(Wddm20WithMockGdiDllTests, whenCreateContextIsCalledThenDisableHwQueues) 
 }
 
 TEST_F(Wddm20Tests, whenCreateHwQueueIsCalledThenAlwaysReturnFalse) {
-    EXPECT_FALSE(wddm->wddmInterface->createHwQueue(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), *osContextWin));
+    EXPECT_FALSE(wddm->wddmInterface->createHwQueue(*osContext.get()));
 }
 
 TEST_F(Wddm20Tests, whenWddmIsInitializedThenGdiDoesntHaveHwQueueDDIs) {
@@ -657,10 +657,10 @@ TEST_F(Wddm20Tests, makeNonResidentCallsEvict) {
 
 TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedToDestroyAllocation) {
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, (void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, false);
-    allocation.getResidencyData().updateCompletionData(10, osContext.get()->getContextId());
+    allocation.getResidencyData().updateCompletionData(10, osContext->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
-    *osContextWin->getResidencyController().getMonitoredFence().cpuAddress = 10;
+    *osContext->getResidencyController().getMonitoredFence().cpuAddress = 10;
 
     gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
     gdi->getWaitFromCpuArg().Flags.Value = 0;
@@ -674,7 +674,7 @@ TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedTo
     gdi->getDestroyArg().hResource = (D3DKMT_HANDLE)0;
     gdi->getDestroyArg().phAllocationList = nullptr;
 
-    wddm->destroyAllocation(&allocation, osContextWin);
+    wddm->destroyAllocation(&allocation, osContext.get());
 
     EXPECT_EQ(wddm->getDevice(), gdi->getDestroyArg().hDevice);
     EXPECT_EQ(1u, gdi->getDestroyArg().AllocationCount);
@@ -683,10 +683,10 @@ TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedTo
 
 TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalled) {
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, (void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, false);
-    allocation.getResidencyData().updateCompletionData(10, osContext.get()->getContextId());
+    allocation.getResidencyData().updateCompletionData(10, osContext->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
-    *osContextWin->getResidencyController().getMonitoredFence().cpuAddress = 10;
+    *osContext->getResidencyController().getMonitoredFence().cpuAddress = 10;
 
     gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
     gdi->getWaitFromCpuArg().Flags.Value = 0;
@@ -694,7 +694,7 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
     gdi->getWaitFromCpuArg().ObjectCount = 0;
     gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    auto status = wddm->waitFromCpu(10, osContextWin->getResidencyController().getMonitoredFence());
+    auto status = wddm->waitFromCpu(10, osContext->getResidencyController().getMonitoredFence());
 
     EXPECT_TRUE(status);
 
@@ -706,10 +706,10 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
 
 TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, (void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, false);
-    allocation.getResidencyData().updateCompletionData(10, osContext.get()->getContextId());
+    allocation.getResidencyData().updateCompletionData(10, osContext->getContextId());
     allocation.handle = ALLOCATION_HANDLE;
 
-    *osContextWin->getResidencyController().getMonitoredFence().cpuAddress = 10;
+    *osContext->getResidencyController().getMonitoredFence().cpuAddress = 10;
 
     gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
     gdi->getWaitFromCpuArg().Flags.Value = 0;
@@ -717,7 +717,7 @@ TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     gdi->getWaitFromCpuArg().ObjectCount = 0;
     gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    auto status = wddm->waitFromCpu(20, osContextWin->getResidencyController().getMonitoredFence());
+    auto status = wddm->waitFromCpu(20, osContext->getResidencyController().getMonitoredFence());
 
     EXPECT_TRUE(status);
 
@@ -732,10 +732,10 @@ TEST_F(Wddm20Tests, createMonitoredFenceIsInitializedWithFenceValueZeroAndCurren
 
     gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue = 300;
 
-    wddm->wddmInterface->createMonitoredFence(osContextWin->getResidencyController());
+    wddm->wddmInterface->createMonitoredFence(osContext->getResidencyController());
 
     EXPECT_EQ(0u, gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue);
-    EXPECT_EQ(1u, osContextWin->getResidencyController().getMonitoredFence().currentFenceValue);
+    EXPECT_EQ(1u, osContext->getResidencyController().getMonitoredFence().currentFenceValue);
 }
 
 NTSTATUS APIENTRY queryResourceInfoMock(D3DKMT_QUERYRESOURCEINFO *pData) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,14 @@
 
 namespace OCLRT {
 class Drm;
-using OsContextLinux = OsContext::OsContextImpl;
 
-class OsContext::OsContextImpl {
+class OsContextLinux : public OsContext {
   public:
-    ~OsContextImpl();
-    OsContextImpl(Drm &drm, EngineInstanceT engineType);
+    OsContextLinux() = delete;
+    ~OsContextLinux() override;
+    OsContextLinux(Drm &drm, uint32_t contextId, uint32_t numDevicesSupported,
+                   EngineInstanceT engineType, PreemptionMode preemptionMode);
+
     unsigned int getEngineFlag() const { return engineFlag; }
     uint32_t getDrmContextId() const { return drmContextId; }
 

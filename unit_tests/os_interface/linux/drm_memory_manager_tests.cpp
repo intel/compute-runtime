@@ -228,7 +228,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmContextIdWhenAllocationIsCreatedThenPinWith
     mock->ioctl_expected.gemClose = 2;
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, true, false, *executionEnvironment);
-    auto drmContextId = memoryManager->getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId();
+    auto &osContextLinux = static_cast<OsContextLinux &>(memoryManager->getDefaultCommandStreamReceiver(0)->getOsContext());
+    auto drmContextId = osContextLinux.getDrmContextId();
     ASSERT_NE(nullptr, memoryManager->getPinBB());
     EXPECT_NE(0u, drmContextId);
 

@@ -38,8 +38,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture, publi
     void init() {
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
         EXPECT_TRUE(wddm->init(preemptionMode));
-        osContext = std::make_unique<OsContext>(osInterface.get(), 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
-        osContextWin = osContext->get();
+        osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
     }
 
     void TearDown() override {
@@ -48,8 +47,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture, publi
     }
 
     std::unique_ptr<OSInterface> osInterface;
-    std::unique_ptr<OsContext> osContext;
-    OsContextWin *osContextWin = nullptr;
+    std::unique_ptr<OsContextWin> osContext;
     WddmMock *wddm = nullptr;
     WddmMockInterface23 *wddmMockInterface = nullptr;
 };
@@ -68,28 +66,32 @@ TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
 }
 
 TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
-    wddm->wddmInterface->createHwQueue(PreemptionMode::Disabled, *osContextWin);
+    auto defaultEngine = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
+    OsContextWin osContextWithoutPreemption(*osInterface->get()->getWddm(), 0u, 1, defaultEngine, PreemptionMode::Disabled);
+    OsContextWin osContextWithPreemption(*osInterface->get()->getWddm(), 0u, 1, defaultEngine, PreemptionMode::MidBatch);
+
+    wddm->wddmInterface->createHwQueue(osContextWithoutPreemption);
     EXPECT_EQ(0u, getCreateHwQueueDataFcn()->Flags.DisableGpuTimeout);
 
-    wddm->wddmInterface->createHwQueue(PreemptionMode::MidBatch, *osContextWin);
+    wddm->wddmInterface->createHwQueue(osContextWithPreemption);
     EXPECT_EQ(1u, getCreateHwQueueDataFcn()->Flags.DisableGpuTimeout);
 }
 
 TEST_F(Wddm23Tests, whenDestroyHwQueueCalledThenPassExistingHandle) {
     D3DKMT_HANDLE hwQueue = 123;
-    osContextWin->setHwQueue(hwQueue);
-    wddmMockInterface->destroyHwQueue(osContextWin->getHwQueue());
+    osContext->setHwQueue(hwQueue);
+    wddmMockInterface->destroyHwQueue(osContext->getHwQueue());
     EXPECT_EQ(hwQueue, getDestroyHwQueueDataFcn()->hHwQueue);
 
     hwQueue = 0;
-    osContextWin->setHwQueue(hwQueue);
-    wddmMockInterface->destroyHwQueue(osContextWin->getHwQueue());
+    osContext->setHwQueue(hwQueue);
+    wddmMockInterface->destroyHwQueue(osContext->getHwQueue());
     EXPECT_NE(hwQueue, getDestroyHwQueueDataFcn()->hHwQueue); // gdi not called when 0
 }
 
 TEST_F(Wddm23Tests, whenObjectIsDestructedThenDestroyHwQueue) {
     D3DKMT_HANDLE hwQueue = 123;
-    osContextWin->setHwQueue(hwQueue);
+    osContext->setHwQueue(hwQueue);
     osContext.reset();
     EXPECT_EQ(hwQueue, getDestroyHwQueueDataFcn()->hHwQueue);
 }
@@ -97,35 +99,35 @@ TEST_F(Wddm23Tests, whenObjectIsDestructedThenDestroyHwQueue) {
 TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpdateMonitoredFence) {
     uint64_t cmdBufferAddress = 123;
     size_t cmdSize = 456;
-    auto hwQueue = osContextWin->getHwQueue();
+    auto hwQueue = osContext->getHwQueue();
     COMMAND_BUFFER_HEADER cmdBufferHeader = {};
 
-    EXPECT_EQ(1u, osContextWin->getResidencyController().getMonitoredFence().currentFenceValue);
-    EXPECT_EQ(0u, osContextWin->getResidencyController().getMonitoredFence().lastSubmittedFence);
+    EXPECT_EQ(1u, osContext->getResidencyController().getMonitoredFence().currentFenceValue);
+    EXPECT_EQ(0u, osContext->getResidencyController().getMonitoredFence().lastSubmittedFence);
 
-    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, *osContextWin);
+    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, *osContext);
 
     EXPECT_EQ(cmdBufferAddress, getSubmitCommandToHwQueueDataFcn()->CommandBuffer);
     EXPECT_EQ(static_cast<UINT>(cmdSize), getSubmitCommandToHwQueueDataFcn()->CommandLength);
     EXPECT_EQ(hwQueue, getSubmitCommandToHwQueueDataFcn()->hHwQueue);
-    EXPECT_EQ(osContextWin->getResidencyController().getMonitoredFence().fenceHandle, getSubmitCommandToHwQueueDataFcn()->HwQueueProgressFenceId);
+    EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().fenceHandle, getSubmitCommandToHwQueueDataFcn()->HwQueueProgressFenceId);
     EXPECT_EQ(&cmdBufferHeader, getSubmitCommandToHwQueueDataFcn()->pPrivateDriverData);
     EXPECT_EQ(static_cast<UINT>(MemoryConstants::pageSize), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
 
-    EXPECT_EQ(osContextWin->getResidencyController().getMonitoredFence().gpuAddress, cmdBufferHeader.MonitorFenceVA);
-    EXPECT_EQ(osContextWin->getResidencyController().getMonitoredFence().lastSubmittedFence, cmdBufferHeader.MonitorFenceValue);
-    EXPECT_EQ(2u, osContextWin->getResidencyController().getMonitoredFence().currentFenceValue);
-    EXPECT_EQ(1u, osContextWin->getResidencyController().getMonitoredFence().lastSubmittedFence);
+    EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().gpuAddress, cmdBufferHeader.MonitorFenceVA);
+    EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().lastSubmittedFence, cmdBufferHeader.MonitorFenceValue);
+    EXPECT_EQ(2u, osContext->getResidencyController().getMonitoredFence().currentFenceValue);
+    EXPECT_EQ(1u, osContext->getResidencyController().getMonitoredFence().lastSubmittedFence);
 }
 
 TEST_F(Wddm23Tests, whenMonitoredFenceIsCreatedThenSetupAllRequiredFields) {
-    wddm->wddmInterface->createMonitoredFence(osContextWin->getResidencyController());
+    wddm->wddmInterface->createMonitoredFence(osContext->getResidencyController());
 
-    EXPECT_NE(nullptr, osContextWin->getResidencyController().getMonitoredFence().cpuAddress);
-    EXPECT_EQ(1u, osContextWin->getResidencyController().getMonitoredFence().currentFenceValue);
-    EXPECT_NE(static_cast<D3DKMT_HANDLE>(0), osContextWin->getResidencyController().getMonitoredFence().fenceHandle);
-    EXPECT_NE(static_cast<D3DGPU_VIRTUAL_ADDRESS>(0), osContextWin->getResidencyController().getMonitoredFence().gpuAddress);
-    EXPECT_EQ(0u, osContextWin->getResidencyController().getMonitoredFence().lastSubmittedFence);
+    EXPECT_NE(nullptr, osContext->getResidencyController().getMonitoredFence().cpuAddress);
+    EXPECT_EQ(1u, osContext->getResidencyController().getMonitoredFence().currentFenceValue);
+    EXPECT_NE(static_cast<D3DKMT_HANDLE>(0), osContext->getResidencyController().getMonitoredFence().fenceHandle);
+    EXPECT_NE(static_cast<D3DGPU_VIRTUAL_ADDRESS>(0), osContext->getResidencyController().getMonitoredFence().gpuAddress);
+    EXPECT_EQ(0u, osContext->getResidencyController().getMonitoredFence().lastSubmittedFence);
 }
 
 TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhenSubmitCalledThenCallWaitOnGpu) {
@@ -135,11 +137,11 @@ TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhe
 
     *wddm->pagingFenceAddress = 1;
     wddm->currentPagingFenceValue = 1;
-    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, *osContextWin);
+    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, *osContext);
     EXPECT_EQ(0u, wddm->waitOnGPUResult.called);
 
     wddm->currentPagingFenceValue = 2;
-    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, *osContextWin);
+    wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader, *osContext);
     EXPECT_EQ(1u, wddm->waitOnGPUResult.called);
 }
 
@@ -159,7 +161,7 @@ TEST_F(Wddm23TestsWithoutWddmInit, whenInitCalledThenInitializeNewGdiDDIsAndCall
 TEST_F(Wddm23TestsWithoutWddmInit, whenCreateHwQueueFailedThenReturnFalseFromInit) {
     wddmMockInterface->forceCreateHwQueueFail = true;
     init();
-    EXPECT_FALSE(osContextWin->isInitialized());
+    EXPECT_FALSE(osContext->isInitialized());
 }
 
 TEST_F(Wddm23TestsWithoutWddmInit, givenFailureOnGdiInitializationWhenCreatingHwQueueThenReturnFailure) {
@@ -171,7 +173,7 @@ TEST_F(Wddm23TestsWithoutWddmInit, givenFailureOnGdiInitializationWhenCreatingHw
     auto myMockGdi = new MyMockGdi();
     wddm->gdi.reset(myMockGdi);
     init();
-    EXPECT_FALSE(osContextWin->isInitialized());
+    EXPECT_FALSE(osContext->isInitialized());
     EXPECT_EQ(1u, wddmMockInterface->createHwQueueCalled);
     EXPECT_FALSE(wddmMockInterface->createHwQueueResult);
 }

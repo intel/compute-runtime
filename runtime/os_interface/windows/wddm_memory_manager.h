@@ -20,9 +20,8 @@
 
 namespace OCLRT {
 class Gmm;
+class OsContextWin;
 class Wddm;
-
-using OsContextWin = OsContext::OsContextImpl;
 
 class WddmMemoryManager : public MemoryManager {
   public:

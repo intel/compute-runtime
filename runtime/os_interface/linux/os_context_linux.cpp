@@ -14,16 +14,18 @@
 
 namespace OCLRT {
 
-OsContext::OsContext(OSInterface *osInterface, uint32_t contextId, uint32_t numDevicesSupported, EngineInstanceT engineType, PreemptionMode preemptionMode)
-    : contextId(contextId), numDevicesSupported(numDevicesSupported), engineType(engineType) {
+OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, uint32_t numDevicesSupported,
+                             EngineInstanceT engineType, PreemptionMode preemptionMode) {
     if (osInterface) {
-        osContextImpl = std::make_unique<OsContextLinux>(*osInterface->get()->getDrm(), engineType);
+        return new OsContextLinux(*osInterface->get()->getDrm(), contextId, numDevicesSupported, engineType, preemptionMode);
     }
+    return new OsContext(contextId, numDevicesSupported, engineType, preemptionMode);
 }
 
-OsContext::~OsContext() = default;
+OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, uint32_t numDevicesSupported,
+                               EngineInstanceT engineType, PreemptionMode preemptionMode)
+    : OsContext(contextId, numDevicesSupported, engineType, preemptionMode), drm(drm) {
 
-OsContextLinux::OsContextImpl(Drm &drm, EngineInstanceT engineType) : drm(drm) {
     engineFlag = DrmEngineMapper::engineNodeMap(engineType.type);
     this->drmContextId = drm.createDrmContext();
     if (drm.isPreemptionSupported() &&
@@ -33,7 +35,7 @@ OsContextLinux::OsContextImpl(Drm &drm, EngineInstanceT engineType) : drm(drm) {
     }
 }
 
-OsContextLinux::~OsContextImpl() {
+OsContextLinux::~OsContextLinux() {
     drm.destroyDrmContext(drmContextId);
 }
 } // namespace OCLRT

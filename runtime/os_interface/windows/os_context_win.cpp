@@ -13,32 +13,36 @@
 
 namespace OCLRT {
 
-OsContextWin::OsContextImpl(Wddm &wddm, uint32_t osContextId, EngineInstanceT engineType, PreemptionMode preemptionMode) : wddm(wddm), residencyController(wddm, osContextId) {
+OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, uint32_t numDevicesSupported,
+                             EngineInstanceT engineType, PreemptionMode preemptionMode) {
+    if (osInterface) {
+        return new OsContextWin(*osInterface->get()->getWddm(), contextId, numDevicesSupported, engineType, preemptionMode);
+    }
+    return new OsContext(contextId, numDevicesSupported, engineType, preemptionMode);
+}
+
+OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, uint32_t numDevicesSupported,
+                           EngineInstanceT engineType, PreemptionMode preemptionMode)
+    : OsContext(contextId, numDevicesSupported, engineType, preemptionMode), wddm(wddm), residencyController(wddm, contextId) {
+
     UNRECOVERABLE_IF(!wddm.isInitialized());
+
     auto wddmInterface = wddm.getWddmInterface();
     if (!wddm.createContext(context, engineType, preemptionMode)) {
         return;
     }
     if (wddmInterface->hwQueuesSupported()) {
-        if (!wddmInterface->createHwQueue(preemptionMode, *this)) {
+        if (!wddmInterface->createHwQueue(*this)) {
             return;
         }
     }
-    initialized = wddmInterface->createMonitoredFence(this->residencyController);
-    this->residencyController.registerCallback();
+    initialized = wddmInterface->createMonitoredFence(residencyController);
+    residencyController.registerCallback();
 };
-OsContextWin::~OsContextImpl() {
+
+OsContextWin::~OsContextWin() {
     wddm.getWddmInterface()->destroyHwQueue(hwQueueHandle);
     wddm.destroyContext(context);
 }
-
-OsContext::OsContext(OSInterface *osInterface, uint32_t contextId, uint32_t numDevicesSupported, EngineInstanceT engineType, PreemptionMode preemptionMode)
-    : contextId(contextId), numDevicesSupported(numDevicesSupported), engineType(engineType) {
-    if (osInterface) {
-        osContextImpl = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), contextId, engineType, preemptionMode);
-    }
-}
-
-OsContext::~OsContext() = default;
 
 } // namespace OCLRT

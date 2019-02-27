@@ -326,14 +326,14 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
     FailSignalSyncObjectMock::reset();
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
     wddm->init(preemptionMode);
-    OsContext osContext(&osInterface, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
+    OsContextWin osContext(*osInterface.get()->getWddm(), 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
 
     CL_GL_SYNC_INFO syncInfo = {};
     syncInfo.serverSynchronizationObject = 0x5cU;
     syncInfo.clientSynchronizationObject = 0x6cU;
 
     gdi->signalSynchronizationObject.mFunc = FailSignalSyncObjectMock::signal;
-    FailSignalSyncObjectMock::getExpectedContextHandle() = osContext.get()->getContext();
+    FailSignalSyncObjectMock::getExpectedContextHandle() = osContext.getContext();
     FailSignalSyncObjectMock::getExpectedSynchHandle0() = syncInfo.serverSynchronizationObject;
     FailSignalSyncObjectMock::getExpectedSynchHandle1() = syncInfo.clientSynchronizationObject;
 
@@ -385,13 +385,13 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
     FailSignalSyncObjectMock::reset();
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
     wddm->init(preemptionMode);
-    OsContext osContext(&osInterface, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
+    OsContextWin osContext(*osInterface.get()->getWddm(), 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
 
     CL_GL_SYNC_INFO syncInfo = {};
     syncInfo.submissionSynchronizationObject = 0x7cU;
 
     gdi->signalSynchronizationObject.mFunc = FailSignalSyncObjectMock::signal;
-    FailSignalSyncObjectMock::getExpectedContextHandle() = osContext.get()->getContext();
+    FailSignalSyncObjectMock::getExpectedContextHandle() = osContext.getContext();
     FailSignalSyncObjectMock::getExpectedSynchHandle0() = syncInfo.submissionSynchronizationObject;
 
     signalArbSyncObject(osContext, syncInfo);

@@ -42,7 +42,7 @@ class DrmCommandStreamFixture {
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         executionEnvironment.osInterface->get()->setDrm(mock.get());
 
-        osContext = std::make_unique<OsContext>(executionEnvironment.osInterface.get(), 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+        osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
 
         csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], executionEnvironment,
                                                                      gemCloseWorkerMode::gemCloseWorkerActive);
@@ -79,7 +79,7 @@ class DrmCommandStreamFixture {
     static const uint64_t alignment = MemoryConstants::allocationAlignment;
     DebugManagerStateRestore dbgState;
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<OsContext> osContext;
+    std::unique_ptr<OsContextLinux> osContext;
 };
 
 typedef Test<DrmCommandStreamFixture> DrmCommandStreamTest;
@@ -254,8 +254,8 @@ TEST_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdToAllExecBuff
         .WillRepeatedly(::testing::Return(0))
         .RetiresOnSaturation();
 
-    osContext = std::make_unique<OsContext>(executionEnvironment.osInterface.get(), 1, 1,
-                                            HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    osContext = std::make_unique<OsContextLinux>(*mock, 1, 1,
+                                                 HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     csr->setupContext(*osContext);
 
     auto &cs = csr->getCS();
@@ -800,7 +800,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsAr
     int ioctlExecCnt = 1;
     int ioctlUserPtrCnt = 2;
 
-    auto engineFlag = csr->getOsContext().get()->getEngineFlag();
+    auto engineFlag = static_cast<OsContextLinux &>(csr->getOsContext()).getEngineFlag();
 
     EXPECT_EQ(ioctlExecCnt + ioctlUserPtrCnt, this->mock->ioctl_cnt.total);
     EXPECT_EQ(ioctlExecCnt, this->mock->ioctl_cnt.execbuffer2);

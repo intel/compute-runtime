@@ -22,6 +22,7 @@ class Gdi;
 class Gmm;
 class GmmMemory;
 class GmmPageTableMngr;
+class OsContextWin;
 class SettingsReader;
 class WddmAllocation;
 class WddmInterface;
@@ -34,8 +35,6 @@ struct MonitoredFence;
 struct OsHandleStorage;
 
 enum class HeapIndex : uint32_t;
-
-using OsContextWin = OsContext::OsContextImpl;
 
 enum class EvictionStatus {
     SUCCESS,

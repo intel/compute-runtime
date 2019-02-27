@@ -293,7 +293,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     DEBUG_BREAK_IF(!validateAllocation(input));
 
     for (auto &engine : this->registeredEngines) {
-        auto &residencyController = engine.osContext->get()->getResidencyController();
+        auto &residencyController = static_cast<OsContextWin *>(engine.osContext)->getResidencyController();
         auto lock = residencyController.acquireLock();
         residencyController.removeFromTrimCandidateListIfUsed(input, true);
     }
@@ -345,7 +345,7 @@ bool WddmMemoryManager::tryDeferDeletions(D3DKMT_HANDLE *handles, uint32_t alloc
 
 bool WddmMemoryManager::isMemoryBudgetExhausted() const {
     for (auto &engine : this->registeredEngines) {
-        if (engine.osContext->get()->getResidencyController().isMemoryBudgetExhausted()) {
+        if (static_cast<OsContextWin *>(engine.osContext)->getResidencyController().isMemoryBudgetExhausted()) {
             return true;
         }
     }

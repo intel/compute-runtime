@@ -211,7 +211,8 @@ OCLRT::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t si
 
 void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const {
     if (forcePinEnabled && pinBB != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
-        pinBB->pin(&bo, 1, getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId());
+        auto &osContextLinux = static_cast<OsContextLinux &>(getDefaultCommandStreamReceiver(0)->getOsContext());
+        pinBB->pin(&bo, 1, osContextLinux.getDrmContextId());
     }
 }
 
@@ -624,7 +625,8 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
     }
 
     if (validateHostPtrMemory) {
-        int result = pinBB->pin(allocatedBos, numberOfBosAllocated, getDefaultCommandStreamReceiver(0)->getOsContext().get()->getDrmContextId());
+        auto &osContextLinux = static_cast<OsContextLinux &>(getDefaultCommandStreamReceiver(0)->getOsContext());
+        int result = pinBB->pin(allocatedBos, numberOfBosAllocated, osContextLinux.getDrmContextId());
 
         if (result == EFAULT) {
             for (uint32_t i = 0; i < numberOfBosAllocated; i++) {

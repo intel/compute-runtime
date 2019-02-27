@@ -14,7 +14,7 @@
 
 using namespace OCLRT;
 
-bool WddmInterface20::createHwQueue(PreemptionMode preemptionMode, OsContextWin &osContext) {
+bool WddmInterface20::createHwQueue(OsContextWin &osContext) {
     return false;
 }
 void WddmInterface20::destroyHwQueue(D3DKMT_HANDLE hwQueue) {}
@@ -66,7 +66,7 @@ bool WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandH
     return STATUS_SUCCESS == status;
 }
 
-bool WddmInterface23::createHwQueue(PreemptionMode preemptionMode, OsContextWin &osContext) {
+bool WddmInterface23::createHwQueue(OsContextWin &osContext) {
     D3DKMT_CREATEHWQUEUE createHwQueue = {};
 
     if (!wddm.getGdi()->setupHwQueueProcAddresses()) {
@@ -74,7 +74,7 @@ bool WddmInterface23::createHwQueue(PreemptionMode preemptionMode, OsContextWin 
     }
 
     createHwQueue.hHwContext = osContext.getContext();
-    if (preemptionMode >= PreemptionMode::MidBatch) {
+    if (osContext.getPreemptionMode() >= PreemptionMode::MidBatch) {
         createHwQueue.Flags.DisableGpuTimeout = wddm.readEnablePreemptionRegKey();
     }
 

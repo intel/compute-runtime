@@ -14,9 +14,8 @@
 
 namespace OCLRT {
 
+class OsContextWin;
 class Wddm;
-
-using OsContextWin = OsContext::OsContextImpl;
 
 class DeferrableDeletionImpl : public DeferrableDeletion {
   public:

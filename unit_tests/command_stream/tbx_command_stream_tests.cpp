@@ -25,6 +25,7 @@
 #include "unit_tests/mocks/mock_aub_manager.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "unit_tests/mocks/mock_os_context.h"
 #include "unit_tests/mocks/mock_tbx_csr.h"
 
 #include "tbx_command_stream_fixture.h"
@@ -351,7 +352,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
-    OsContext osContext(nullptr, 0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    MockOsContext osContext(nullptr, 0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
     tbxCsr.setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
 
@@ -381,7 +382,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverInBatchedModeWhenFl
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
-    OsContext osContext(nullptr, 0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    MockOsContext osContext(nullptr, 0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
     tbxCsr.setupContext(osContext);
 
     auto commandBuffer = pDevice->executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -403,7 +404,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledWi
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
-    OsContext osContext(nullptr, 0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    MockOsContext osContext(nullptr, 0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
     tbxCsr.setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
 
@@ -425,7 +426,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsC
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
-    OsContext osContext(nullptr, 0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    MockOsContext osContext(nullptr, 0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
     tbxCsr.setupContext(osContext);
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
@@ -441,7 +442,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeCoherentIsC
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockTbxCsr<FamilyType> tbxCsr(**platformDevices, *pDevice->executionEnvironment);
-    OsContext osContext(nullptr, 0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    MockOsContext osContext(nullptr, 0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
     tbxCsr.setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
 
@@ -465,7 +466,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenHardwareContextIsCreatedThenTbxSt
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareContext) {
-    OsContext osContext(nullptr, 0, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionMode::Disabled);
+    MockOsContext osContext(nullptr, 0, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionMode::Disabled);
     std::string fileName = "";
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_TBX);

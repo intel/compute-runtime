@@ -30,7 +30,7 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextBeforeInitWddmThenOsContextIsNot
     auto wddm = new WddmMock;
     OSInterface osInterface;
     osInterface.get()->setWddm(wddm);
-    EXPECT_THROW(auto osContext = std::make_unique<OsContext>(&osInterface, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])), std::exception);
+    EXPECT_THROW(auto osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])), std::exception);
 }
 
 TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInitializedAndTrimCallbackIsRegistered) {
@@ -40,15 +40,8 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
     wddm->init(preemptionMode);
     EXPECT_EQ(0u, wddm->registerTrimCallbackResult.called);
-    auto osContext = std::make_unique<OsContext>(&osInterface, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
-    EXPECT_NE(nullptr, osContext->get());
-    EXPECT_TRUE(osContext->get()->isInitialized());
-    EXPECT_EQ(osContext->get()->getWddm(), wddm);
+    auto osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
+    EXPECT_TRUE(osContext->isInitialized());
+    EXPECT_EQ(osContext->getWddm(), wddm);
     EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);
-}
-
-TEST(OsContextTest, whenCreateOsContextWithoutOsInterfaceThenOsContextImplIsNotAvailable) {
-    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
-    auto osContext = std::make_unique<OsContext>(nullptr, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
-    EXPECT_EQ(nullptr, osContext->get());
 }

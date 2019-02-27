@@ -45,7 +45,7 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo
 
 template <typename GfxFamily>
 FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
-    unsigned int engineFlag = osContext->get()->getEngineFlag();
+    unsigned int engineFlag = static_cast<OsContextLinux *>(osContext)->getEngineFlag();
 
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
     DEBUG_BREAK_IF(!alloc);
@@ -70,7 +70,7 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
         bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
                  alignedStart, engineFlag | I915_EXEC_NO_RELOC,
                  batchBuffer.requiresCoherency,
-                 osContext->get()->getDrmContextId());
+                 static_cast<OsContextLinux *>(osContext)->getDrmContextId());
 
         bb->getResidency()->clear();
 

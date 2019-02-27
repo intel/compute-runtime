@@ -22,6 +22,7 @@
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/mocks/mock_os_context.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/utilities/base_object_utils.h"
 
@@ -69,7 +70,7 @@ constexpr EngineInstanceT defaultRcsEngine{ENGINE_RCS, 0};
 
 TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGettingTrimCandidatePositionThenReturnItsPositionAndUnusedPositionInOtherContexts) {
     WddmAllocation allocation{GraphicsAllocation::AllocationType::UNDECIDED, nullptr, 0, nullptr, MemoryPool::MemoryNull, false};
-    OsContext osContext(nullptr, 1u, 1, defaultRcsEngine, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    MockOsContext osContext(nullptr, 1u, 1, defaultRcsEngine, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     allocation.setTrimCandidateListPosition(osContext.getContextId(), 700u);
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(0u));
     EXPECT_EQ(700u, allocation.getTrimCandidateListPosition(1u));
@@ -1263,7 +1264,8 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithE
     memoryManager->createAndRegisterOsContext(nullptr, defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     memoryManager->createAndRegisterOsContext(nullptr, defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     memoryManager->createAndRegisterOsContext(nullptr, defaultRcsEngine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    memoryManager->getRegisteredEngines()[1].osContext->get()->getResidencyController().setMemoryBudgetExhausted();
+    auto osContext = static_cast<OsContextWin *>(memoryManager->getRegisteredEngines()[1].osContext);
+    osContext->getResidencyController().setMemoryBudgetExhausted();
     EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());
 }
 

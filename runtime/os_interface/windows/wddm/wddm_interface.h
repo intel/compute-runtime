@@ -17,16 +17,15 @@
 namespace OCLRT {
 class Gdi;
 class Wddm;
+class OsContextWin;
 class WddmResidencyController;
-
-using OsContextWin = OsContext::OsContextImpl;
 
 class WddmInterface {
   public:
     WddmInterface(Wddm &wddm) : wddm(wddm){};
     virtual ~WddmInterface() = default;
     WddmInterface() = delete;
-    virtual bool createHwQueue(PreemptionMode preemptionMode, OsContextWin &osContext) = 0;
+    virtual bool createHwQueue(OsContextWin &osContext) = 0;
     virtual void destroyHwQueue(D3DKMT_HANDLE hwQueue) = 0;
     bool createMonitoredFence(WddmResidencyController &residencyController);
     virtual const bool hwQueuesSupported() = 0;
@@ -37,7 +36,7 @@ class WddmInterface {
 class WddmInterface20 : public WddmInterface {
   public:
     using WddmInterface::WddmInterface;
-    bool createHwQueue(PreemptionMode preemptionMode, OsContextWin &osContext) override;
+    bool createHwQueue(OsContextWin &osContext) override;
     void destroyHwQueue(D3DKMT_HANDLE hwQueue) override;
     const bool hwQueuesSupported() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) override;
@@ -46,7 +45,7 @@ class WddmInterface20 : public WddmInterface {
 class WddmInterface23 : public WddmInterface {
   public:
     using WddmInterface::WddmInterface;
-    bool createHwQueue(PreemptionMode preemptionMode, OsContextWin &osContext) override;
+    bool createHwQueue(OsContextWin &osContext) override;
     void destroyHwQueue(D3DKMT_HANDLE hwQueue) override;
     const bool hwQueuesSupported() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) override;
