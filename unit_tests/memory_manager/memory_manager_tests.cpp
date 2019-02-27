@@ -7,6 +7,7 @@
 
 #include "runtime/command_stream/preemption.h"
 #include "runtime/event/event.h"
+#include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/mem_obj/image.h"
@@ -225,7 +226,7 @@ TEST_F(MemoryAllocatorTest, GivenAlignedHostPtrAndCacheAlignedSizeWhenAskedForL3
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, alignedSize}, ptr);
 
-    EXPECT_TRUE(graphicsAllocation->isL3Capable());
+    EXPECT_TRUE(isL3Capable(*graphicsAllocation));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -236,7 +237,7 @@ TEST_F(MemoryAllocatorTest, GivenAlignedHostPtrAndNotCacheAlignedSizeWhenAskedFo
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, alignedSize}, ptr);
 
-    EXPECT_FALSE(graphicsAllocation->isL3Capable());
+    EXPECT_FALSE(isL3Capable(*graphicsAllocation));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -247,7 +248,7 @@ TEST_F(MemoryAllocatorTest, GivenMisAlignedHostPtrAndNotCacheAlignedSizeWhenAske
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, alignedSize}, ptr);
 
-    EXPECT_FALSE(graphicsAllocation->isL3Capable());
+    EXPECT_FALSE(isL3Capable(*graphicsAllocation));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -258,7 +259,7 @@ TEST_F(MemoryAllocatorTest, GivenHostPtrAlignedToCacheLineWhenAskedForL3Allowanc
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, alignedSize}, ptr);
 
-    EXPECT_TRUE(graphicsAllocation->isL3Capable());
+    EXPECT_TRUE(isL3Capable(*graphicsAllocation));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

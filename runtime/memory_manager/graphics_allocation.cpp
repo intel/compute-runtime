@@ -17,14 +17,6 @@ void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
     this->allocationType = allocationType;
 }
 
-bool GraphicsAllocation::isL3Capable() {
-    auto ptr = ptrOffset(cpuPtr, static_cast<size_t>(this->allocationOffset));
-    if (alignUp(ptr, MemoryConstants::cacheLineSize) == ptr && alignUp(this->size, MemoryConstants::cacheLineSize) == this->size) {
-        return true;
-    }
-    return false;
-}
-
 GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress,
                                        size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable)
     : gpuBaseAddress(baseAddress),

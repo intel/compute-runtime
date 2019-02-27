@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,4 +14,8 @@ constexpr uint32_t l3CacheOff = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGN
 constexpr uint32_t unknownMocs = GMM_RESOURCE_USAGE_UNKNOWN;
 } // namespace CacheSettings
 
+namespace OCLRT {
+class GraphicsAllocation;
 bool isL3Capable(void *ptr, size_t size);
+bool isL3Capable(const GraphicsAllocation &graphicsAllocation);
+} // namespace OCLRT
