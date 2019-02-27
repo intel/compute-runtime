@@ -857,15 +857,9 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationThen
 
 TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHostPtrThen32BitBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    if (DebugManager.flags.UseNewHeapAllocator.get()) {
-        mock->ioctl_expected.gemUserptr = 1;
-        mock->ioctl_expected.gemWait = 1;
-        mock->ioctl_expected.gemClose = 1;
-    } else {
-        mock->ioctl_expected.gemUserptr = 2;
-        mock->ioctl_expected.gemWait = 2;
-        mock->ioctl_expected.gemClose = 2;
-    }
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
 
     DebugManager.flags.Force32bitAddressing.set(true);
     MockContext context;
@@ -907,11 +901,7 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHos
 
     auto bufferObject = drmAllocation->getBO();
 
-    if (DebugManager.flags.UseNewHeapAllocator.get()) {
-        EXPECT_NE(0u, bufferObject->peekUnmapSize());
-    } else {
-        EXPECT_EQ(0u, bufferObject->peekUnmapSize());
-    }
+    EXPECT_NE(0u, bufferObject->peekUnmapSize());
     EXPECT_EQ(drmAllocation->getUnderlyingBuffer(), reinterpret_cast<void *>(offsetedPtr));
 
     // Gpu address should be different
@@ -976,10 +966,6 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom64B
             auto bufferObject = drmAllocation->getBO();
 
             EXPECT_NE(0u, bufferObject->peekUnmapSize());
-
-            if (DebugManager.flags.UseNewHeapAllocator.get() == false) {
-                EXPECT_NE(drmAllocation->getUnderlyingBuffer(), reinterpret_cast<void *>(offsetedPtr));
-            }
 
             EXPECT_EQ(allocationPageOffset, ptrOffset);
             EXPECT_FALSE(bufferObject->peekIsAllocated());
@@ -1138,11 +1124,6 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCr
     if (is32BitOsAllocatorAvailable && buffer) {
         auto bufferPtr = buffer->getGraphicsAllocation()->getGpuAddress();
 
-        if (DebugManager.flags.UseNewHeapAllocator.get() == false) {
-            uintptr_t maxMmap32BitAddress = 0x80000000;
-            EXPECT_EQ((uintptr_t)bufferPtr, maxMmap32BitAddress);
-        }
-
         EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation);
         auto baseAddress = buffer->getGraphicsAllocation()->gpuBaseAddress;
         EXPECT_LT((uintptr_t)(bufferPtr - baseAddress), max32BitAddress);
@@ -1184,11 +1165,6 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCr
 
     if (is32BitOsAllocatorAvailable && buffer) {
         auto bufferPtr = buffer->getGraphicsAllocation()->getGpuAddress();
-
-        if (DebugManager.flags.UseNewHeapAllocator.get() == false) {
-            uintptr_t maxMmap32BitAddress = 0x80000000;
-            EXPECT_EQ((uintptr_t)bufferPtr, maxMmap32BitAddress);
-        }
 
         EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation);
         auto baseAddress = buffer->getGraphicsAllocation()->gpuBaseAddress;
@@ -2096,7 +2072,6 @@ TEST_F(DrmMemoryManagerTest, given32BitAllocatorWithHeapAllocatorWhenLargerFragm
     mock->ioctl_expected.gemClose = 1;
 
     DebugManagerStateRestore dbgFlagsKeeper;
-    DebugManager.flags.UseNewHeapAllocator.set(true);
     memoryManager->setForce32BitAllocations(true);
 
     size_t allocationSize = 4 * MemoryConstants::pageSize;
@@ -2359,9 +2334,6 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManage
 }
 
 TEST(Allocator32BitUsingHeapAllocator, given32BitAllocatorWhenMMapFailsThenNullptrIsReturned) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(true);
-
     MockAllocator32Bit::resetState();
     failMmap = true;
     MockAllocator32Bit::OsInternalsPublic *osInternals = MockAllocator32Bit::createOsInternals();
@@ -2375,9 +2347,6 @@ TEST(Allocator32BitUsingHeapAllocator, given32BitAllocatorWhenMMapFailsThenNullp
 }
 
 TEST(Allocator32BitUsingHeapAllocator, given32BitAllocatorWhenFirstMMapFailsThenSecondIsCalledWithSmallerSize) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(true);
-
     MockAllocator32Bit::resetState();
     maxMmapLength = getSizeToMap() - 1;
     MockAllocator32Bit::OsInternalsPublic *osInternals = MockAllocator32Bit::createOsInternals();
@@ -2393,178 +2362,10 @@ TEST(Allocator32BitUsingHeapAllocator, given32BitAllocatorWhenFirstMMapFailsThen
     EXPECT_NE(0u, osInternals->heapSize);
 }
 
-TEST(DrmAllocator32Bit, allocateReturnsPointer) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    size_t size = 100u;
-    auto ptr = mock32BitAllocator.allocate(size);
-    EXPECT_NE(0u, (uintptr_t)ptr);
-    EXPECT_EQ(1u, mmapCallCount);
-    mock32BitAllocator.free(ptr, size);
-}
-
-TEST(DrmAllocator32Bit, freeMapFailedPointer) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    size_t size = 100u;
-    int result = mock32BitAllocator.free(reinterpret_cast<uint64_t>(MAP_FAILED), size);
-    EXPECT_EQ(0, result);
-}
-
-TEST(DrmAllocator32Bit, freeNullPtrPointer) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    uint32_t size = 100u;
-    int result = mock32BitAllocator.free(0llu, size);
-    EXPECT_EQ(0, result);
-}
-
-TEST(DrmAllocator32Bit, freeLowerRangeAfterTwoMmapFails) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    mmapFailCount = 2;
-    size_t size = 100u;
-    auto ptr = mock32BitAllocator.allocate(size);
-    EXPECT_EQ(3u, mmapCallCount);
-    int result = mock32BitAllocator.free(ptr, size);
-    EXPECT_EQ(0, result);
-}
-
-TEST(DrmAllocator32Bit, given32BitAllocatorWhenMMapFailsThenUpperHeapIsBrowsedForAllocations) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    fail32BitMmap = true;
-    size_t size = 100u;
-    auto ptr = mock32BitAllocator.allocate(size);
-    EXPECT_EQ(maxMmap32BitAddress, (uintptr_t)ptr);
-    EXPECT_EQ(2u, mmapCallCount);
-}
-
-TEST(DrmAllocator32Bit, given32BitAllocatorWith32AndUpperHeapsExhaustedThenPointerFromLowerHeapIsReturned) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    fail32BitMmap = true;
-    failUpperRange = true;
-    size_t size = 100u;
-    auto ptr = mock32BitAllocator.allocate(size);
-    EXPECT_EQ(lowerRangeStart, (uintptr_t)ptr);
-    EXPECT_EQ(3u, mmapCallCount);
-}
-
-TEST(DrmAllocator32Bit, given32bitRegionExhaustedWhenTwoAllocationsAreCreatedThenSecondIsAfterFirst) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    fail32BitMmap = true;
-    size_t size = 100u;
-    auto ptr = (uintptr_t)mock32BitAllocator.allocate(size);
-    EXPECT_EQ(maxMmap32BitAddress, ptr);
-
-    auto alignedSize = alignUp(size, MemoryConstants::pageSize);
-    auto ptr2 = (uintptr_t)mock32BitAllocator.allocate(size);
-    EXPECT_EQ(maxMmap32BitAddress + alignedSize, ptr2);
-
-    EXPECT_EQ(4u, mmapCallCount);
-    mock32BitAllocator.free(ptr2, size);
-
-    auto getInternals = mock32BitAllocator.getOsInternals();
-    EXPECT_EQ(ptr2, getInternals->upperRangeAddress);
-
-    mock32BitAllocator.free(ptr, size);
-    EXPECT_EQ(ptr, getInternals->upperRangeAddress);
-
-    EXPECT_EQ(2u, unmapCallCount);
-}
-
-TEST(DrmAllocator32Bit, given32bitRegionAndUpperRegionExhaustedWhenTwoAllocationsAreCreatedThenSecondIsAfterFirst) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    fail32BitMmap = true;
-    failUpperRange = true;
-    size_t size = 100u;
-    auto ptr = (uintptr_t)mock32BitAllocator.allocate(size);
-    EXPECT_EQ(lowerRangeStart, ptr);
-
-    auto alignedSize = alignUp(size, MemoryConstants::pageSize);
-    auto ptr2 = (uintptr_t)mock32BitAllocator.allocate(size);
-    EXPECT_EQ(lowerRangeStart + alignedSize, ptr2);
-
-    EXPECT_EQ(6u, mmapCallCount);
-    mock32BitAllocator.free(ptr2, size);
-
-    auto getInternals = mock32BitAllocator.getOsInternals();
-    EXPECT_EQ(ptr2, getInternals->lowerRangeAddress);
-
-    mock32BitAllocator.free(ptr, size);
-    EXPECT_EQ(ptr, getInternals->lowerRangeAddress);
-
-    EXPECT_EQ(4u, unmapCallCount);
-}
-
-TEST(DrmAllocator32Bit, given32bitAllocatorWithAllHeapsExhaustedWhenAskedForAllocationThenNullptrIsReturned) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    fail32BitMmap = true;
-    failLowerRanger = true;
-    failUpperRange = true;
-    size_t size = 100u;
-
-    auto ptr = mock32BitAllocator.allocate(size);
-
-    EXPECT_EQ(0llu, ptr);
-
-    EXPECT_EQ(3u, mmapCallCount);
-    EXPECT_EQ(2u, unmapCallCount);
-}
-
-TEST(DrmAllocator32Bit, given32bitAllocatorWithUpperHeapCloseToFullWhenAskedForAllocationThenAllocationFromLowerHeapIsReturned) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    fail32BitMmap = true;
-    size_t size = 3 * 1024 * 1024 * 1029u;
-
-    auto ptr = mock32BitAllocator.allocate(size);
-
-    EXPECT_EQ(lowerRangeHeapStart, (uintptr_t)ptr);
-    EXPECT_EQ(3u, mmapCallCount);
-    EXPECT_EQ(1u, unmapCallCount);
-}
-
-TEST(DrmAllocator32Bit, givenMapFailedAsInputToFreeFunctionWhenItIsCalledThenUnmapIsNotCalled) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    mock32BitAllocator.free(reinterpret_cast<uint64_t>(MAP_FAILED), 100u);
-    EXPECT_EQ(0u, unmapCallCount);
-}
-
-TEST(DrmAllocator32Bit, givenNullptrAsInputToFreeFunctionWhenItIsCalledThenUnmapIsNotCalled) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.UseNewHeapAllocator.set(false);
-
-    MockAllocator32Bit mock32BitAllocator;
-    mock32BitAllocator.free(0llu, 100u);
-    EXPECT_EQ(0u, unmapCallCount);
+TEST(Allocator32BitUsingHeapAllocator, given32bitAllocatorWhenFreeIsCalledWithMapFailedThenZeroIsReturned) {
+    MockAllocator32Bit::OsInternalsPublic *osInternals = MockAllocator32Bit::createOsInternals();
+    MockAllocator32Bit mock32BitAllocator{osInternals};
+    EXPECT_EQ(0, mock32BitAllocator.free(castToUint64(MAP_FAILED), 4096u));
 }
 
 #include <chrono>

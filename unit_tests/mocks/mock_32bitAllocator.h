@@ -15,13 +15,7 @@ namespace OCLRT {
 
 constexpr uintptr_t startOf32MmapRegion = 0x40000000;
 static bool failMmap = false;
-static bool fail32BitMmap = false;
-static bool failUpperRange = false;
-static bool failLowerRanger = false;
 static size_t maxMmapLength = std::numeric_limits<size_t>::max();
-
-static uintptr_t startUpperHeap = maxMmap32BitAddress;
-static uintptr_t lowerRangeHeapStart = lowerRangeStart;
 
 static uintptr_t offsetIn32BitRange = 0;
 static uint32_t mmapCallCount = 0u;
@@ -31,10 +25,8 @@ static uint32_t mmapFailCount = 0u;
 void *MockMmap(void *addr, size_t length, int prot, int flags,
                int fd, off_t offset) noexcept {
 
-    bool return32bitRange = true;
-    bool returnUpperRange = false;
-    bool returnLowerRange = false;
     mmapCallCount++;
+    UNRECOVERABLE_IF(addr);
 
     if (failMmap || length > maxMmapLength) {
         return MAP_FAILED;
@@ -45,42 +37,10 @@ void *MockMmap(void *addr, size_t length, int prot, int flags,
         return MAP_FAILED;
     }
 
-    if (addr) {
-        return32bitRange = false;
-        if ((uintptr_t)addr >= maxMmap32BitAddress) {
-            if (failUpperRange) {
-                return MAP_FAILED;
-            }
-            returnUpperRange = true;
-        }
-        if ((uintptr_t)addr >= lowerRangeStart) {
-            if (failLowerRanger) {
-                return MAP_FAILED;
-            }
-            returnLowerRange = true;
-        }
-    }
+    uintptr_t ptrToReturn = startOf32MmapRegion + offsetIn32BitRange;
+    offsetIn32BitRange += alignUp(length, MemoryConstants::pageSize);
 
-    if (flags & MAP_32BIT) {
-        if (fail32BitMmap) {
-            return MAP_FAILED;
-        }
-        return32bitRange = true;
-    }
-
-    uintptr_t ptrToReturn = (uintptr_t)addr;
-    if (return32bitRange) {
-        ptrToReturn = startOf32MmapRegion + offsetIn32BitRange;
-        offsetIn32BitRange += alignUp(length, MemoryConstants::pageSize);
-    } else if (returnUpperRange) {
-        ptrToReturn = (uintptr_t)addr;
-    } else if (returnLowerRange) {
-        ptrToReturn = (uintptr_t)addr;
-    } else {
-        ptrToReturn = (uintptr_t)MAP_FAILED;
-    }
-
-    return (void *)ptrToReturn;
+    return reinterpret_cast<void *>(ptrToReturn);
 }
 int MockMunmap(void *addr, size_t length) noexcept {
     unmapCallCount++;
@@ -104,13 +64,8 @@ class MockAllocator32Bit : public Allocator32bit {
         resetState();
     }
     static void resetState() {
-        fail32BitMmap = false;
-        failUpperRange = false;
-        failLowerRanger = false;
         failMmap = false;
         maxMmapLength = std::numeric_limits<size_t>::max();
-        startUpperHeap = maxMmap32BitAddress;
-        lowerRangeHeapStart = lowerRangeStart;
         offsetIn32BitRange = 0u;
         mmapCallCount = 0u;
         unmapCallCount = 0u;

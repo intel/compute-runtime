@@ -74,7 +74,6 @@ DECLARE_DEBUG_VARIABLE(bool, ForceCsrFlushing, false, "Forces flushing of comman
 DECLARE_DEBUG_VARIABLE(bool, ForceCsrReprogramming, false, "Forces reprogramming of command stream receiver")
 DECLARE_DEBUG_VARIABLE(bool, DisableStatelessToStatefulOptimization, false, "Disables stateless to stateful optimization for buffers")
 DECLARE_DEBUG_VARIABLE(bool, DisableConcurrentBlockExecution, false, "disables concurrent block kernel execution")
-DECLARE_DEBUG_VARIABLE(bool, UseNewHeapAllocator, true, "Custom 4GB heap allocator is used")
 DECLARE_DEBUG_VARIABLE(bool, UseNoRingFlushesKmdMode, true, "Windows only, passes flag to KMD that informs KMD to not emit any ring buffer flushes.")
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForUseHostPtr, false, "When active all buffer allocations created with CL_MEM_USE_HOST_PTR flag will not share memory with CPU.")
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")
