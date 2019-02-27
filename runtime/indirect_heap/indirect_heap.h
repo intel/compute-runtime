@@ -70,7 +70,7 @@ inline uint64_t IndirectHeap::getHeapGpuStartOffset() const {
 
 inline uint64_t IndirectHeap::getHeapGpuBase() const {
     if (this->canBeUtilizedAs4GbHeap) {
-        return this->graphicsAllocation->gpuBaseAddress;
+        return this->graphicsAllocation->getGpuBaseAddress();
     } else {
         return this->graphicsAllocation->getGpuAddress();
     }

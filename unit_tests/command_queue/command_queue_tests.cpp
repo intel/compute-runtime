@@ -414,9 +414,9 @@ TEST_P(CommandQueueIndirectHeapTest, givenIndirectObjectHeapWhenItIsQueriedForIn
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 8192);
     if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT) {
-        EXPECT_TRUE(indirectHeap.getGraphicsAllocation()->is32BitAllocation);
+        EXPECT_TRUE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
     } else {
-        EXPECT_FALSE(indirectHeap.getGraphicsAllocation()->is32BitAllocation);
+        EXPECT_FALSE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
     }
 }
 

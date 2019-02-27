@@ -150,7 +150,7 @@ TEST_F(glSharingTests, givenContextAnd32BitAddressingWhenClCreateFromGlBufferIsC
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, glBuffer);
 
-    EXPECT_TRUE(castToObject<Buffer>(glBuffer)->getGraphicsAllocation()->is32BitAllocation);
+    EXPECT_TRUE(castToObject<Buffer>(glBuffer)->getGraphicsAllocation()->is32BitAllocation());
 
     retVal = clReleaseMemObject(glBuffer);
     EXPECT_EQ(CL_SUCCESS, retVal);

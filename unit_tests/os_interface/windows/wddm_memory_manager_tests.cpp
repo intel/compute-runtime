@@ -228,7 +228,7 @@ TEST_F(WddmMemoryManagerSimpleTest,
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(reinterpret_cast<void *>(0x5001), allocation->getUnderlyingBuffer());
     EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
-    EXPECT_EQ(1u, allocation->allocationOffset);
+    EXPECT_EQ(1u, allocation->getAllocationOffset());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -385,10 +385,10 @@ TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllocW
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, true);
     ASSERT_NE(nullptr, gpuAllocation);
     if (is64bit) {
-        EXPECT_TRUE(gpuAllocation->is32BitAllocation);
+        EXPECT_TRUE(gpuAllocation->is32BitAllocation());
 
         uint64_t base = memoryManager->allocator32Bit->getBase();
-        EXPECT_EQ(GmmHelper::canonize(base), gpuAllocation->gpuBaseAddress);
+        EXPECT_EQ(GmmHelper::canonize(base), gpuAllocation->getGpuBaseAddress());
     }
 
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -406,10 +406,10 @@ TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32Bit
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     ASSERT_NE(nullptr, gpuAllocation);
 
-    EXPECT_FALSE(gpuAllocation->is32BitAllocation);
+    EXPECT_FALSE(gpuAllocation->is32BitAllocation());
     if (is64bit) {
         uint64_t base = 0;
-        EXPECT_EQ(base, gpuAllocation->gpuBaseAddress);
+        EXPECT_EQ(base, gpuAllocation->getGpuBaseAddress());
     }
 
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -748,7 +748,7 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotDoT
     void *alignedPtr = alignDown(misalignedPtr, MemoryConstants::allocationAlignment);
     uint64_t offset = ptrDiff(misalignedPtr, alignedPtr);
 
-    EXPECT_EQ(offset, gpuAllocation->allocationOffset);
+    EXPECT_EQ(offset, gpuAllocation->getAllocationOffset());
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
@@ -758,7 +758,7 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemorySetsCannonizedGpuBaseAddress) {
     ASSERT_NE(nullptr, gpuAllocation);
 
     uint64_t cannonizedAddress = GmmHelper::canonize(wddm->getExternalHeapBase());
-    EXPECT_EQ(cannonizedAddress, gpuAllocation->gpuBaseAddress);
+    EXPECT_EQ(cannonizedAddress, gpuAllocation->getGpuBaseAddress());
 
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
@@ -874,7 +874,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
 TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeapInternal) {
     auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, nullptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, wddmAllocation);
-    EXPECT_EQ(wddmAllocation->gpuBaseAddress, GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress()));
+    EXPECT_EQ(wddmAllocation->getGpuBaseAddress(), GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress()));
     EXPECT_NE(nullptr, wddmAllocation->getUnderlyingBuffer());
     EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
     EXPECT_NE((uint64_t)wddmAllocation->getUnderlyingBuffer(), wddmAllocation->getGpuAddress());
@@ -884,8 +884,8 @@ TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocatio
     EXPECT_GE(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
     EXPECT_LE(wddmAllocation->getGpuAddress(), cannonizedHeapEnd);
 
-    EXPECT_NE(nullptr, wddmAllocation->driverAllocatedCpuPointer);
-    EXPECT_TRUE(wddmAllocation->is32BitAllocation);
+    EXPECT_NE(nullptr, wddmAllocation->getDriverAllocatedCpuPtr());
+    EXPECT_TRUE(wddmAllocation->is32BitAllocation());
     memoryManager->freeGraphicsMemory(wddmAllocation);
 }
 
@@ -893,7 +893,7 @@ TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhe
     auto ptr = reinterpret_cast<void *>(0x1000000);
     auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, ptr, GraphicsAllocation::AllocationType::INTERNAL_HEAP));
     ASSERT_NE(nullptr, wddmAllocation);
-    EXPECT_EQ(wddmAllocation->gpuBaseAddress, GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress()));
+    EXPECT_EQ(wddmAllocation->getGpuBaseAddress(), GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress()));
     EXPECT_EQ(ptr, wddmAllocation->getUnderlyingBuffer());
     EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
     EXPECT_NE((uint64_t)wddmAllocation->getUnderlyingBuffer(), wddmAllocation->getGpuAddress());
@@ -903,8 +903,8 @@ TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhe
     EXPECT_GE(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
     EXPECT_LE(wddmAllocation->getGpuAddress(), cannonizedHeapEnd);
 
-    EXPECT_EQ(nullptr, wddmAllocation->driverAllocatedCpuPointer);
-    EXPECT_TRUE(wddmAllocation->is32BitAllocation);
+    EXPECT_EQ(nullptr, wddmAllocation->getDriverAllocatedCpuPtr());
+    EXPECT_TRUE(wddmAllocation->is32BitAllocation());
     memoryManager->freeGraphicsMemory(wddmAllocation);
 }
 
@@ -1038,7 +1038,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(gpuAdress, allocation->getGpuAddress());
-    EXPECT_EQ(0ULL, allocation->allocationOffset);
+    EXPECT_EQ(0ULL, allocation->getAllocationOffset());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -1075,7 +1075,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     EXPECT_EQ(allocationPtr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(gpuAdress + offset, allocation->getGpuAddress()); // getGpuAddress returns gpuAddress + allocationOffset
-    EXPECT_EQ(offset, allocation->allocationOffset);
+    EXPECT_EQ(offset, allocation->getAllocationOffset());
     memoryManager->freeGraphicsMemory(allocation);
 }
 

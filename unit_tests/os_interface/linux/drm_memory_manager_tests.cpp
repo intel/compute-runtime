@@ -772,9 +772,9 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32
     }
     auto bo = allocation->getBO();
     EXPECT_GE(bo->peekUnmapSize(), 0u);
-    EXPECT_TRUE(allocation->is32BitAllocation);
+    EXPECT_TRUE(allocation->is32BitAllocation());
 
-    EXPECT_EQ(memoryManager->allocator32Bit->getBase(), allocation->gpuBaseAddress);
+    EXPECT_EQ(memoryManager->allocator32Bit->getBase(), allocation->getGpuBaseAddress());
 
     EXPECT_EQ(bo->peekAllocationType(), StorageAllocatorType::BIT32_ALLOCATOR_EXTERNAL);
 
@@ -844,7 +844,7 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationThen
 
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     auto bufferAddress = buffer->getGraphicsAllocation()->getGpuAddress();
-    auto baseAddress = buffer->getGraphicsAllocation()->gpuBaseAddress;
+    auto baseAddress = buffer->getGraphicsAllocation()->getGpuBaseAddress();
 
     uintptr_t address64bit = (uintptr_t)bufferAddress;
 
@@ -887,11 +887,11 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHos
     uintptr_t address64bitOnGpu = (uintptr_t)bufferAddress;
 
     if (is32BitOsAllocatorAvailable) {
-        auto baseAddress = buffer->getGraphicsAllocation()->gpuBaseAddress;
+        auto baseAddress = buffer->getGraphicsAllocation()->getGpuBaseAddress();
         EXPECT_LT(address64bitOnGpu - baseAddress, max32BitAddress);
     }
 
-    EXPECT_TRUE(drmAllocation->is32BitAllocation);
+    EXPECT_TRUE(drmAllocation->is32BitAllocation());
 
     auto allocationCpuPtr = (uintptr_t)drmAllocation->getUnderlyingBuffer();
     auto allocationPageOffset = allocationCpuPtr - alignDown(allocationCpuPtr, MemoryConstants::pageSize);
@@ -953,13 +953,13 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom64B
             uintptr_t address64bit = (uintptr_t)bufferAddress;
 
             if (is32BitOsAllocatorAvailable) {
-                auto baseAddress = buffer->getGraphicsAllocation()->gpuBaseAddress;
+                auto baseAddress = buffer->getGraphicsAllocation()->getGpuBaseAddress();
                 EXPECT_LT(address64bit - baseAddress, max32BitAddress);
             }
 
             auto drmAllocation = static_cast<DrmAllocation *>(buffer->getGraphicsAllocation());
 
-            EXPECT_TRUE(drmAllocation->is32BitAllocation);
+            EXPECT_TRUE(drmAllocation->is32BitAllocation());
 
             auto allocationCpuPtr = (uintptr_t)drmAllocation->getUnderlyingBuffer();
             auto allocationPageOffset = allocationCpuPtr - alignDown(allocationCpuPtr, MemoryConstants::pageSize);
@@ -1124,8 +1124,8 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCr
     if (is32BitOsAllocatorAvailable && buffer) {
         auto bufferPtr = buffer->getGraphicsAllocation()->getGpuAddress();
 
-        EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation);
-        auto baseAddress = buffer->getGraphicsAllocation()->gpuBaseAddress;
+        EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation());
+        auto baseAddress = buffer->getGraphicsAllocation()->getGpuBaseAddress();
         EXPECT_LT((uintptr_t)(bufferPtr - baseAddress), max32BitAddress);
     }
 
@@ -1166,8 +1166,8 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCr
     if (is32BitOsAllocatorAvailable && buffer) {
         auto bufferPtr = buffer->getGraphicsAllocation()->getGpuAddress();
 
-        EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation);
-        auto baseAddress = buffer->getGraphicsAllocation()->gpuBaseAddress;
+        EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation());
+        auto baseAddress = buffer->getGraphicsAllocation()->getGpuBaseAddress();
         EXPECT_LT((uintptr_t)(bufferPtr - baseAddress), max32BitAddress);
     }
 
@@ -1714,7 +1714,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndThreeOsHandlesWhenReuseCrea
     }
 }
 
-TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleAndBitnessRequiredIsCreatedThenItIs32BitAllocation) {
+TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleAndBitnessRequiredIsCreatedThenItis32BitAllocation) {
     mock->ioctl_expected.primeFdToHandle = 1;
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
@@ -1724,7 +1724,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleAndBi
     this->mock->outputHandle = 2u;
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, true);
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
-    EXPECT_TRUE(graphicsAllocation->is32BitAllocation);
+    EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
     EXPECT_EQ(1, lseekCalledCount);
     EXPECT_EQ(BIT32_ALLOCATOR_EXTERNAL, drmAllocation->getBO()->peekAllocationType());
     memoryManager->freeGraphicsMemory(graphicsAllocation);
@@ -1743,7 +1743,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleIsCre
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false);
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
 
-    EXPECT_FALSE(graphicsAllocation->is32BitAllocation);
+    EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
     EXPECT_EQ(1, lseekCalledCount);
 
     if (memoryManager->getDrmLimitedRangeAllocator() != nullptr) {
@@ -1769,7 +1769,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenBufferFromSharedHandl
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false);
-    EXPECT_FALSE(graphicsAllocation->is32BitAllocation);
+    EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     EXPECT_EQ(INTERNAL_ALLOCATOR_WITH_DYNAMIC_BITRANGE, drmAllocation->getBO()->peekAllocationType());
     EXPECT_EQ(1, lseekCalledCount);
@@ -1786,7 +1786,7 @@ TEST_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSharedHandleIs
     this->mock->outputHandle = 2u;
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, true);
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
-    EXPECT_FALSE(graphicsAllocation->is32BitAllocation);
+    EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
     EXPECT_EQ(1, lseekCalledCount);
 
     if (memoryManager->getDrmLimitedRangeAllocator() != nullptr) {
@@ -2177,7 +2177,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
     EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
     EXPECT_EQ(bufferSize, drmAllocation->getUnderlyingBufferSize());
 
-    EXPECT_TRUE(drmAllocation->is32BitAllocation);
+    EXPECT_TRUE(drmAllocation->is32BitAllocation());
 
     auto gpuPtr = drmAllocation->getGpuAddress();
 
@@ -2187,7 +2187,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
     EXPECT_GE(gpuPtr, heapBase);
     EXPECT_LE(gpuPtr, heapBase + heapSize);
 
-    EXPECT_EQ(drmAllocation->gpuBaseAddress, heapBase);
+    EXPECT_EQ(drmAllocation->getGpuBaseAddress(), heapBase);
 
     auto bo = drmAllocation->getBO();
     EXPECT_TRUE(bo->peekIsAllocated());
@@ -2214,10 +2214,10 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAlloc
     EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
     EXPECT_EQ(bufferSize, drmAllocation->getUnderlyingBufferSize());
 
-    ASSERT_NE(nullptr, drmAllocation->driverAllocatedCpuPointer);
-    EXPECT_EQ(drmAllocation->driverAllocatedCpuPointer, drmAllocation->getUnderlyingBuffer());
+    ASSERT_NE(nullptr, drmAllocation->getDriverAllocatedCpuPtr());
+    EXPECT_EQ(drmAllocation->getDriverAllocatedCpuPtr(), drmAllocation->getUnderlyingBuffer());
 
-    EXPECT_TRUE(drmAllocation->is32BitAllocation);
+    EXPECT_TRUE(drmAllocation->is32BitAllocation());
 
     auto gpuPtr = drmAllocation->getGpuAddress();
 
@@ -2227,7 +2227,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAlloc
     EXPECT_GE(gpuPtr, heapBase);
     EXPECT_LE(gpuPtr, heapBase + heapSize);
 
-    EXPECT_EQ(drmAllocation->gpuBaseAddress, heapBase);
+    EXPECT_EQ(drmAllocation->getGpuBaseAddress(), heapBase);
 
     auto bo = drmAllocation->getBO();
     EXPECT_TRUE(bo->peekIsAllocated());
@@ -2251,7 +2251,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForExternalAlloc
     ASSERT_NE(nullptr, drmAllocation);
 
     EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
-    EXPECT_TRUE(drmAllocation->is32BitAllocation);
+    EXPECT_TRUE(drmAllocation->is32BitAllocation());
 
     memoryManager->freeGraphicsMemory(drmAllocation);
 }
@@ -2281,7 +2281,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
     EXPECT_EQ(ptr, drmAllocation->getUnderlyingBuffer());
     EXPECT_EQ(bufferSize, drmAllocation->getUnderlyingBufferSize());
 
-    EXPECT_TRUE(drmAllocation->is32BitAllocation);
+    EXPECT_TRUE(drmAllocation->is32BitAllocation());
 
     auto gpuPtr = drmAllocation->getGpuAddress();
 
@@ -2291,7 +2291,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
     EXPECT_GE(gpuPtr, heapBase);
     EXPECT_LE(gpuPtr, heapBase + heapSize);
 
-    EXPECT_EQ(drmAllocation->gpuBaseAddress, heapBase);
+    EXPECT_EQ(drmAllocation->getGpuBaseAddress(), heapBase);
 
     auto bo = drmAllocation->getBO();
     EXPECT_FALSE(bo->peekIsAllocated());
@@ -2717,9 +2717,9 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForN
     auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
 
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()) + allocation->allocationOffset);
+    EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()) + allocation->getAllocationOffset());
     EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
-    EXPECT_EQ(1u, allocation->allocationOffset);
+    EXPECT_EQ(1u, allocation->getAllocationOffset());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -2985,9 +2985,9 @@ TEST_F(DrmMemoryManagerTest, givenDisabledHostPtrTrackingWhenAllocateGraphicsMem
     auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
 
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()) + allocation->allocationOffset);
+    EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()) + allocation->getAllocationOffset());
     EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
-    EXPECT_EQ(1u, allocation->allocationOffset);
+    EXPECT_EQ(1u, allocation->getAllocationOffset());
 
     memoryManager->freeGraphicsMemory(allocation);
 }

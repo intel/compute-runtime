@@ -18,7 +18,7 @@ class MemoryAllocation : public GraphicsAllocation {
     size_t sizeToFree = 0;
     bool uncacheable = false;
 
-    void setSharedHandle(osHandle handle) { this->sharedHandle = handle; }
+    void setSharedHandle(osHandle handle) { sharingInfo.sharedHandle = handle; }
 
     MemoryAllocation(AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count, MemoryPool::Type pool, bool multiOsContextCapable)
         : GraphicsAllocation(allocationType, pMem, gpuAddress, 0u, memSize, pool, multiOsContextCapable),
@@ -67,7 +67,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
 
-    void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override { return ptrOffset(graphicsAllocation.getUnderlyingBuffer(), static_cast<size_t>(graphicsAllocation.allocationOffset)); }
+    void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override { return ptrOffset(graphicsAllocation.getUnderlyingBuffer(), static_cast<size_t>(graphicsAllocation.getAllocationOffset())); }
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override {}
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;

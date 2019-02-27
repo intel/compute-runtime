@@ -1277,7 +1277,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenCacheFlushAfterWalkerEnable
 
     char buff[MemoryConstants::pageSize * 2];
     MockGraphicsAllocation svmAllocation1{alignUp(buff, MemoryConstants::pageSize), MemoryConstants::pageSize};
-    svmAllocation1.flushL3Required = true;
+    svmAllocation1.setFlushL3Required(true);
     mockKernelWithInternal->mockKernel->kernelSvmGfxAllocations.push_back(&svmAllocation1);
     MockGraphicsAllocation svmAllocation2{alignUp(buff, MemoryConstants::pageSize), MemoryConstants::pageSize};
     mockKernelWithInternal->mockKernel->kernelSvmGfxAllocations.push_back(&svmAllocation2);

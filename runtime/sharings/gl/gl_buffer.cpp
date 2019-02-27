@@ -47,7 +47,7 @@ void GlBuffer::synchronizeObject(UpdateData &updateData) {
 
     updateData.sharedHandle = bufferInfo.globalShareHandle;
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
-    updateData.memObject->getGraphicsAllocation()->allocationOffset = bufferInfo.bufferOffset;
+    updateData.memObject->getGraphicsAllocation()->setAllocationOffset(bufferInfo.bufferOffset);
 
     if (currentSharedHandle != updateData.sharedHandle) {
         updateData.updateData = new CL_GL_BUFFER_INFO(bufferInfo);
@@ -72,7 +72,7 @@ void GlBuffer::resolveGraphicsAllocationChange(osHandle currentSharedHandle, Upd
         memObject->resetGraphicsAllocation(newGraphicsAllocation);
 
         if (updateData->synchronizationStatus == SynchronizeStatus::ACQUIRE_SUCCESFUL) {
-            memObject->getGraphicsAllocation()->allocationOffset = bufferInfo->bufferOffset;
+            memObject->getGraphicsAllocation()->setAllocationOffset(bufferInfo->bufferOffset);
         }
     }
 }

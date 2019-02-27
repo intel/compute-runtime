@@ -229,7 +229,7 @@ TEST_F(CommandStreamReceiverTest, givenForced32BitAddressingWhenDebugSurfaceIsAl
     auto *memoryManager = commandStreamReceiver->getMemoryManager();
     memoryManager->setForce32BitAllocations(true);
     auto allocation = commandStreamReceiver->allocateDebugSurface(1024);
-    EXPECT_FALSE(allocation->is32BitAllocation);
+    EXPECT_FALSE(allocation->is32BitAllocation());
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenDefaultCommandStreamReceiverThenDefaultDispatchingPolicyIsImmediateSubmission) {

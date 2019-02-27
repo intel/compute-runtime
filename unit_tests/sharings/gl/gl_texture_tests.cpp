@@ -393,7 +393,7 @@ TEST_F(GlSharingTextureTests, verifyGlTextureBufferOffset) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto memObj = castToObject<MemObj>(glImage);
     EXPECT_NE(memObj, nullptr);
-    EXPECT_EQ(memObj->getGraphicsAllocation()->allocationOffset, 0u);
+    EXPECT_EQ(memObj->getGraphicsAllocation()->getAllocationOffset(), 0u);
 
     retVal = clEnqueueReleaseGLObjects(commandQueue, 1, &glImage, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -403,7 +403,7 @@ TEST_F(GlSharingTextureTests, verifyGlTextureBufferOffset) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     memObj = castToObject<MemObj>(glImage);
     EXPECT_NE(memObj, nullptr);
-    EXPECT_EQ(memObj->getGraphicsAllocation()->allocationOffset, 0x660u);
+    EXPECT_EQ(memObj->getGraphicsAllocation()->getAllocationOffset(), 0x660u);
 
     retVal = clEnqueueReleaseGLObjects(commandQueue, 1, &glImage, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);

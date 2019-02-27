@@ -172,7 +172,7 @@ TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPassedIsNullThenOnly4BytesAre
 TEST_F(KernelArgBufferTest, givenWritebleBufferWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
     auto buffer = std::make_unique<MockBuffer>();
     buffer->mockGfxAllocation.setMemObjectsAllocationWithWritableFlags(true);
-    buffer->mockGfxAllocation.flushL3Required = false;
+    buffer->mockGfxAllocation.setFlushL3Required(false);
 
     auto val = static_cast<cl_mem>(buffer.get());
     auto pVal = &val;
@@ -185,7 +185,7 @@ TEST_F(KernelArgBufferTest, givenWritebleBufferWhenSettingAsArgThenExpectAllocat
 TEST_F(KernelArgBufferTest, givenCacheFlushBufferWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
     auto buffer = std::make_unique<MockBuffer>();
     buffer->mockGfxAllocation.setMemObjectsAllocationWithWritableFlags(false);
-    buffer->mockGfxAllocation.flushL3Required = true;
+    buffer->mockGfxAllocation.setFlushL3Required(true);
 
     auto val = static_cast<cl_mem>(buffer.get());
     auto pVal = &val;
@@ -198,7 +198,7 @@ TEST_F(KernelArgBufferTest, givenCacheFlushBufferWhenSettingAsArgThenExpectAlloc
 TEST_F(KernelArgBufferTest, givenNoCacheFlushBufferWhenSettingAsArgThenNotExpectAllocationInCacheFlushVector) {
     auto buffer = std::make_unique<MockBuffer>();
     buffer->mockGfxAllocation.setMemObjectsAllocationWithWritableFlags(false);
-    buffer->mockGfxAllocation.flushL3Required = false;
+    buffer->mockGfxAllocation.setFlushL3Required(false);
 
     auto val = static_cast<cl_mem>(buffer.get());
     auto pVal = &val;

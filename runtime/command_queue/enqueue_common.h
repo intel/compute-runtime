@@ -604,7 +604,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     auto allocNeedsFlushDC = false;
     if (!device->isFullRangeSvm()) {
-        if (std::any_of(getCommandStreamReceiver().getResidencyAllocations().begin(), getCommandStreamReceiver().getResidencyAllocations().end(), [](const auto allocation) { return allocation->flushL3Required; })) {
+        if (std::any_of(getCommandStreamReceiver().getResidencyAllocations().begin(), getCommandStreamReceiver().getResidencyAllocations().end(), [](const auto allocation) { return allocation->isFlushL3Required(); })) {
             allocNeedsFlushDC = true;
         }
     }

@@ -183,7 +183,7 @@ TEST_F(BufferSetArgTest, setKernelArgBufferFor32BitAddressing) {
     auto tokenSize = pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size;
 
     uintptr_t gpuBase = (uintptr_t)buffer->getGraphicsAllocation()->getGpuAddress() >> 2;
-    buffer->getGraphicsAllocation()->gpuBaseAddress = gpuBase;
+    buffer->getGraphicsAllocation()->setGpuBaseAddress(gpuBase);
     buffer->setArgStateless(pKernelArg, tokenSize, true);
 
     EXPECT_EQ((uintptr_t)buffer->getGraphicsAllocation()->getGpuAddress() - gpuBase, (uintptr_t)*pKernelArg);

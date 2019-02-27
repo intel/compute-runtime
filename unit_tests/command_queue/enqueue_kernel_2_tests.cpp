@@ -471,9 +471,9 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
 
         enqueueKernel<FamilyType>(mockKernel);
         auto graphicsAllocation = csr->getScratchAllocation();
-        EXPECT_TRUE(graphicsAllocation->is32BitAllocation);
+        EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
         auto graphicsAddress = (uint64_t)graphicsAllocation->getGpuAddress();
-        auto baseAddress = graphicsAllocation->gpuBaseAddress;
+        auto baseAddress = graphicsAllocation->getGpuBaseAddress();
 
         // All state should be programmed before walker
         auto itorCmd = find<MEDIA_VFE_STATE *>(itorPipelineSelect, itorWalker);

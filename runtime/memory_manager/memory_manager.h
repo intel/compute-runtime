@@ -112,7 +112,7 @@ class MemoryManager {
         } else {
             auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(size, ptr);
             if (allocation) {
-                allocation->flushL3Required = requiresL3Flush;
+                allocation->setFlushL3Required(requiresL3Flush);
             }
             return allocation;
         }
@@ -245,7 +245,7 @@ class MemoryManager {
                 auto allocation = allocateGraphicsMemory(allocationData);
                 if (allocation) {
                     allocation->devicesBitfield = allocationData.devicesBitfield;
-                    allocation->flushL3Required = allocationData.flags.flushL3;
+                    allocation->setFlushL3Required(allocationData.flags.flushL3);
                     status = AllocationStatus::Success;
                 }
                 return allocation;

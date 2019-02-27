@@ -148,7 +148,7 @@ void GlTexture::synchronizeObject(UpdateData &updateData) {
     } else {
         sharingFunctions->acquireSharedTexture(&resourceInfo);
         // Set texture buffer offset acquired from OpenGL layer in graphics allocation
-        updateData.memObject->getGraphicsAllocation()->allocationOffset = resourceInfo.textureBufferOffset;
+        updateData.memObject->getGraphicsAllocation()->setAllocationOffset(resourceInfo.textureBufferOffset);
     }
     updateData.sharedHandle = resourceInfo.globalShareHandle;
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;

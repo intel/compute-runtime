@@ -263,7 +263,7 @@ TEST_F(Wddm20Tests, createAllocation32bit) {
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
     allocation.gmm = gmm;
-    allocation.is32BitAllocation = true; // mark 32 bit allocation
+    allocation.set32BitAllocation(true); // mark 32 bit allocation
 
     auto status = wddm->createAllocation(&allocation);
 

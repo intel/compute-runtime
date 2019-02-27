@@ -115,8 +115,8 @@ TEST(DirtyStateHelpers, givenDirtyStateHelperWhenTwoDifferentIndirectHeapsAreChe
     MockGraphicsAllocation firstHeapAllocation(reinterpret_cast<void *>(0x1234), 4192);
     MockGraphicsAllocation secondHeapAllocation(reinterpret_cast<void *>(0x9345), 1234);
     uint64_t commonBase = 0x8123456;
-    firstHeapAllocation.gpuBaseAddress = commonBase;
-    secondHeapAllocation.gpuBaseAddress = commonBase;
+    firstHeapAllocation.setGpuBaseAddress(commonBase);
+    secondHeapAllocation.setGpuBaseAddress(commonBase);
 
     IndirectHeap firstHeap(&firstHeapAllocation, true);
     IndirectHeap secondHeap(&secondHeapAllocation, true);

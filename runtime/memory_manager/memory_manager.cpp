@@ -374,7 +374,7 @@ HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, const 
     if (allocation) {
         if (useInternal32BitAllocator(allocation->getAllocationType())) {
             return internalHeapIndex;
-        } else if (allocation->is32BitAllocation) {
+        } else if (allocation->is32BitAllocation()) {
             return HeapIndex::HEAP_EXTERNAL;
         }
     }

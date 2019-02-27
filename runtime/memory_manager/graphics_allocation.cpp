@@ -19,23 +19,25 @@ void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
 
 GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress,
                                        size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable)
-    : gpuBaseAddress(baseAddress),
-      size(sizeIn),
+    : size(sizeIn),
       cpuPtr(cpuPtrIn),
+      gpuBaseAddress(baseAddress),
       gpuAddress(gpuAddress),
       memoryPool(pool),
-      allocationType(allocationType),
-      multiOsContextCapable(multiOsContextCapable) {}
+      allocationType(allocationType) {
+    allocationInfo.flags.multiOsContextCapable = multiOsContextCapable;
+}
 
 GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn,
                                        MemoryPool::Type pool, bool multiOsContextCapable)
     : size(sizeIn),
       cpuPtr(cpuPtrIn),
       gpuAddress(castToUint64(cpuPtrIn)),
-      sharedHandle(sharedHandleIn),
       memoryPool(pool),
-      allocationType(allocationType),
-      multiOsContextCapable(multiOsContextCapable) {}
+      allocationType(allocationType) {
+    sharingInfo.sharedHandle = sharedHandleIn;
+    allocationInfo.flags.multiOsContextCapable = multiOsContextCapable;
+}
 
 GraphicsAllocation::~GraphicsAllocation() = default;
 

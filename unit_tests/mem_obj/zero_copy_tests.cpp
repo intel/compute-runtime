@@ -113,7 +113,7 @@ TEST(ZeroCopyBufferTestWithSharedContext, GivenContextThatIsSharedWhenAskedForBu
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
 
-    if (buffer->getGraphicsAllocation()->is32BitAllocation == false) {
+    if (buffer->getGraphicsAllocation()->is32BitAllocation() == false) {
         EXPECT_EQ(host_ptr, buffer->getGraphicsAllocation()->getUnderlyingBuffer());
     }
 }
@@ -193,7 +193,7 @@ TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingWhen
 
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     if (is64bit) {
-        EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation);
+        EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation());
     }
     alignedFree(host_ptr);
 }

@@ -1283,7 +1283,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatAddressIsForcedTo32bitW
             retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        EXPECT_TRUE(is64bit ? buffer->getGraphicsAllocation()->is32BitAllocation : true);
+        EXPECT_TRUE(is64bit ? buffer->getGraphicsAllocation()->is32BitAllocation() : true);
 
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
         RENDER_SURFACE_STATE surfaceState = {};

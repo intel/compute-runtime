@@ -224,7 +224,7 @@ HWTEST_F(ImageSetArgTest, givenOffsetedBufferWhenSetKernelArgImageIscalledThenFu
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     auto graphicsAllocation = srcImage->getGraphicsAllocation();
-    graphicsAllocation->gpuBaseAddress = 12345u;
+    graphicsAllocation->setGpuBaseAddress(12345u);
 
     srcImage->setImageArg(const_cast<RENDER_SURFACE_STATE *>(surfaceState), false, 0);
 

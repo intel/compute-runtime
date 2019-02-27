@@ -710,7 +710,7 @@ TEST_F(KernelPrivateSurfaceTest, given32BitDeviceWhenKernelIsCreatedThenPrivateS
 
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-        EXPECT_TRUE(pKernel->getPrivateSurface()->is32BitAllocation);
+        EXPECT_TRUE(pKernel->getPrivateSurface()->is32BitAllocation());
 
         delete pKernel;
     }
@@ -2379,7 +2379,7 @@ TEST(KernelTest, whenAllocationRequiringCacheFlushThenAssignAllocationPointerToC
     kernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
 
     mockAllocation.setMemObjectsAllocationWithWritableFlags(false);
-    mockAllocation.flushL3Required = true;
+    mockAllocation.setFlushL3Required(true);
 
     kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation);
     EXPECT_EQ(&mockAllocation, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
@@ -2429,7 +2429,7 @@ TEST(KernelTest, whenAllocationWriteableThenAssignAllocationPointerToCacheFlushV
     kernel.mockKernel->kernelArgRequiresCacheFlush.resize(1);
 
     mockAllocation.setMemObjectsAllocationWithWritableFlags(true);
-    mockAllocation.flushL3Required = false;
+    mockAllocation.setFlushL3Required(false);
 
     kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation);
     EXPECT_EQ(&mockAllocation, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
@@ -2443,7 +2443,7 @@ TEST(KernelTest, whenAllocationReadOnlyNonFlushRequiredThenAssignNullPointerToCa
     kernel.mockKernel->kernelArgRequiresCacheFlush[0] = reinterpret_cast<GraphicsAllocation *>(0x1);
 
     mockAllocation.setMemObjectsAllocationWithWritableFlags(false);
-    mockAllocation.flushL3Required = false;
+    mockAllocation.setFlushL3Required(false);
 
     kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation);
     EXPECT_EQ(nullptr, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);

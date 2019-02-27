@@ -1266,7 +1266,7 @@ TYPED_TEST_P(D3DTests, inForced32BitAddressingBufferCreatedHas32BitAllocation) {
     auto *allocation = buffer->getGraphicsAllocation();
     EXPECT_NE(nullptr, allocation);
 
-    EXPECT_TRUE(allocation->is32BitAllocation);
+    EXPECT_TRUE(allocation->is32BitAllocation());
 }
 
 REGISTER_TYPED_TEST_CASE_P(D3DTests,

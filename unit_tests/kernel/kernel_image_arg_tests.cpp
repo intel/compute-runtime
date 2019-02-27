@@ -264,7 +264,7 @@ TEST_F(KernelImageArgTest, givenKernelWithSharedImageWhenSetArgCalledThenUsingSh
 TEST_F(KernelImageArgTest, givenWritebleImageWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
     MockImageBase image;
     image.graphicsAllocation->setMemObjectsAllocationWithWritableFlags(true);
-    image.graphicsAllocation->flushL3Required = false;
+    image.graphicsAllocation->setFlushL3Required(false);
 
     cl_mem imageObj = &image;
 
@@ -276,7 +276,7 @@ TEST_F(KernelImageArgTest, givenWritebleImageWhenSettingAsArgThenExpectAllocatio
 TEST_F(KernelImageArgTest, givenCacheFlushImageWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
     MockImageBase image;
     image.graphicsAllocation->setMemObjectsAllocationWithWritableFlags(false);
-    image.graphicsAllocation->flushL3Required = true;
+    image.graphicsAllocation->setFlushL3Required(true);
 
     cl_mem imageObj = &image;
 
@@ -288,7 +288,7 @@ TEST_F(KernelImageArgTest, givenCacheFlushImageWhenSettingAsArgThenExpectAllocat
 TEST_F(KernelImageArgTest, givenNoCacheFlushImageWhenSettingAsArgThenExpectAllocationInCacheFlushVector) {
     MockImageBase image;
     image.graphicsAllocation->setMemObjectsAllocationWithWritableFlags(false);
-    image.graphicsAllocation->flushL3Required = false;
+    image.graphicsAllocation->setFlushL3Required(false);
 
     cl_mem imageObj = &image;
 

@@ -174,10 +174,10 @@ TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedType
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
     if (is64bit) {
-        EXPECT_TRUE(allocation->is32BitAllocation);
+        EXPECT_TRUE(allocation->is32BitAllocation());
         EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
     } else {
-        EXPECT_FALSE(allocation->is32BitAllocation);
+        EXPECT_FALSE(allocation->is32BitAllocation());
         EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     }
 
@@ -197,7 +197,7 @@ TEST(MemoryManagerTest, givenForced32BitEnabledWhenGraphicsMemoryWihtoutAllow32B
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
-    EXPECT_FALSE(allocation->is32BitAllocation);
+    EXPECT_FALSE(allocation->is32BitAllocation());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -214,7 +214,7 @@ TEST(MemoryManagerTest, givenForced32BitDisabledWhenGraphicsMemoryWith32BitFlagF
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
-    EXPECT_FALSE(allocation->is32BitAllocation);
+    EXPECT_FALSE(allocation->is32BitAllocation());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -282,9 +282,9 @@ TEST(MemoryManagerTest, givenForced32BitAndEnabled64kbPagesWhenGraphicsMemoryMus
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
     if (is64bit) {
-        EXPECT_TRUE(allocation->is32BitAllocation);
+        EXPECT_TRUE(allocation->is32BitAllocation());
     } else {
-        EXPECT_FALSE(allocation->is32BitAllocation);
+        EXPECT_FALSE(allocation->is32BitAllocation());
     }
 
     memoryManager.freeGraphicsMemory(allocation);

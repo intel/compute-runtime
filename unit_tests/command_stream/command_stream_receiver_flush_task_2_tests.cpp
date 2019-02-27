@@ -490,7 +490,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     graphicsAddress = (uint64_t)graphicsAllocationScratch->getGpuAddressToPatch();
 
     if (pDevice->getDeviceInfo().force32BitAddressess == true && is64bit) {
-        EXPECT_TRUE(graphicsAllocationScratch->is32BitAllocation);
+        EXPECT_TRUE(graphicsAllocationScratch->is32BitAllocation());
         EXPECT_EQ((uint64_t)graphicsAllocationScratch->getGpuAddress() - GSHaddress, graphicsAddress);
     } else {
         EXPECT_EQ((uint64_t)graphicsAllocationScratch->getUnderlyingBuffer(), graphicsAddress);
@@ -600,7 +600,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
     graphicsAddress = (uint64_t)graphicsAllocationScratch->getGpuAddressToPatch();
 
     if (pDevice->getDeviceInfo().force32BitAddressess == true && is64bit) {
-        EXPECT_TRUE(graphicsAllocationScratch->is32BitAllocation);
+        EXPECT_TRUE(graphicsAllocationScratch->is32BitAllocation());
         EXPECT_EQ((uint64_t)graphicsAllocationScratch->getGpuAddress() - GSHaddress, graphicsAddress);
     } else {
         EXPECT_EQ((uint64_t)graphicsAllocationScratch->getUnderlyingBuffer(), graphicsAddress);

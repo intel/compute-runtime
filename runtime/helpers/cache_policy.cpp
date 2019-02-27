@@ -18,7 +18,7 @@ bool isL3Capable(void *ptr, size_t size) {
 }
 
 bool isL3Capable(const OCLRT::GraphicsAllocation &graphicsAllocation) {
-    auto ptr = ptrOffset(graphicsAllocation.getUnderlyingBuffer(), static_cast<size_t>(graphicsAllocation.allocationOffset));
+    auto ptr = ptrOffset(graphicsAllocation.getUnderlyingBuffer(), static_cast<size_t>(graphicsAllocation.getAllocationOffset()));
     return isL3Capable(ptr, graphicsAllocation.getUnderlyingBufferSize());
 }
 

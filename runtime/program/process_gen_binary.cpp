@@ -896,7 +896,7 @@ cl_int Program::parseProgramScopePatchList() {
                 auto patch = *(SPatchGlobalPointerProgramBinaryInfo *)pPatch;
                 if ((patch.GlobalBufferIndex == 0) && (patch.BufferIndex == 0) && (patch.BufferType == PROGRAM_SCOPE_GLOBAL_BUFFER)) {
                     void *pPtr = (void *)((uintptr_t)globalSurface->getUnderlyingBuffer() + (uintptr_t)patch.GlobalPointerOffset);
-                    if (globalSurface->is32BitAllocation) {
+                    if (globalSurface->is32BitAllocation()) {
                         *reinterpret_cast<uint32_t *>(pPtr) += static_cast<uint32_t>(globalSurface->getGpuAddressToPatch());
                     } else {
                         *reinterpret_cast<uintptr_t *>(pPtr) += reinterpret_cast<uintptr_t>(globalSurface->getUnderlyingBuffer());
@@ -919,7 +919,7 @@ cl_int Program::parseProgramScopePatchList() {
                 auto patch = *(SPatchConstantPointerProgramBinaryInfo *)pPatch;
                 if ((patch.ConstantBufferIndex == 0) && (patch.BufferIndex == 0) && (patch.BufferType == PROGRAM_SCOPE_CONSTANT_BUFFER)) {
                     void *pPtr = (uintptr_t *)((uintptr_t)constantSurface->getUnderlyingBuffer() + (uintptr_t)patch.ConstantPointerOffset);
-                    if (constantSurface->is32BitAllocation) {
+                    if (constantSurface->is32BitAllocation()) {
                         *reinterpret_cast<uint32_t *>(pPtr) += static_cast<uint32_t>(constantSurface->getGpuAddressToPatch());
                     } else {
                         *reinterpret_cast<uintptr_t *>(pPtr) += reinterpret_cast<uintptr_t>(constantSurface->getUnderlyingBuffer());
