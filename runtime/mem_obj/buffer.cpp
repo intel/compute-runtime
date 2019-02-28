@@ -353,10 +353,7 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const Memor
 
 bool Buffer::isReadOnlyMemoryPermittedByFlags(cl_mem_flags flags) {
     // Host won't access or will only read and kernel will only read
-    if ((flags & (CL_MEM_HOST_NO_ACCESS | CL_MEM_HOST_READ_ONLY)) && (flags & CL_MEM_READ_ONLY)) {
-        return true;
-    }
-    return false;
+    return (flags & (CL_MEM_HOST_NO_ACCESS | CL_MEM_HOST_READ_ONLY)) && (flags & CL_MEM_READ_ONLY);
 }
 
 Buffer *Buffer::createSubBuffer(cl_mem_flags flags,

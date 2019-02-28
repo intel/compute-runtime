@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,9 @@ constexpr Type System64KBPagesWith32BitGpuAddressing{4};
 constexpr Type SystemCpuInaccessible{5};
 
 inline bool isSystemMemoryPool(Type pool) {
-    if (pool == System4KBPages || pool == MemoryPool::System64KBPages || pool == System4KBPagesWith32BitGpuAddressing || pool == System64KBPagesWith32BitGpuAddressing) {
-        return true;
-    }
-    return false;
+    return pool == System4KBPages ||
+           pool == System64KBPages ||
+           pool == System4KBPagesWith32BitGpuAddressing ||
+           pool == System64KBPagesWith32BitGpuAddressing;
 }
 } // namespace MemoryPool

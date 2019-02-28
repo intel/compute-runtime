@@ -19,30 +19,22 @@ class VASharingFunctionsTested : public VASharingFunctions {
   public:
     VASharingFunctionsTested() : VASharingFunctions(nullptr) {}
 
-    bool wereFunctionsAssigned() {
-        if (
-            vaDisplayIsValidPFN != nullptr &&
-            vaDeriveImagePFN != nullptr &&
-            vaDestroyImagePFN != nullptr &&
-            vaSyncSurfacePFN != nullptr &&
-            vaGetLibFuncPFN != nullptr &&
-            vaExtGetSurfaceHandlePFN != nullptr) {
-            return true;
-        }
-        return false;
+    bool wereFunctionsAssigned() const {
+        return vaDisplayIsValidPFN != nullptr &&
+               vaDeriveImagePFN != nullptr &&
+               vaDestroyImagePFN != nullptr &&
+               vaSyncSurfacePFN != nullptr &&
+               vaGetLibFuncPFN != nullptr &&
+               vaExtGetSurfaceHandlePFN != nullptr;
     }
 
-    bool wereFunctionsAssignedNull() {
-        if (
-            vaDisplayIsValidPFN == nullptr &&
-            vaDeriveImagePFN == nullptr &&
-            vaDestroyImagePFN == nullptr &&
-            vaSyncSurfacePFN == nullptr &&
-            vaGetLibFuncPFN == nullptr &&
-            vaExtGetSurfaceHandlePFN == nullptr) {
-            return true;
-        }
-        return false;
+    bool wereFunctionsAssignedNull() const {
+        return vaDisplayIsValidPFN == nullptr &&
+               vaDeriveImagePFN == nullptr &&
+               vaDestroyImagePFN == nullptr &&
+               vaSyncSurfacePFN == nullptr &&
+               vaGetLibFuncPFN == nullptr &&
+               vaExtGetSurfaceHandlePFN == nullptr;
     }
 };
 

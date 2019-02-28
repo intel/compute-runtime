@@ -245,7 +245,7 @@ void DebugSettingsManager<DebugLevel>::dumpKernelArgs(const MultiDispatchInfo *m
         return;
     }
 
-    if ((flags.DumpKernelArgs.get() == false) || (multiDispatchInfo == nullptr)) {
+    if (flags.DumpKernelArgs.get() == false || multiDispatchInfo == nullptr) {
         return;
     }
 
@@ -274,55 +274,55 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
     auto type = graphicsAllocation->getAllocationType();
 
     switch (type) {
-    case OCLRT::GraphicsAllocation::AllocationType::UNKNOWN:
+    case GraphicsAllocation::AllocationType::UNKNOWN:
         return "UNKNOWN";
-    case OCLRT::GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
+    case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
         return "BUFFER_COMPRESSED";
-    case OCLRT::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
+    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
         return "BUFFER_HOST_MEMORY";
-    case OCLRT::GraphicsAllocation::AllocationType::BUFFER:
+    case GraphicsAllocation::AllocationType::BUFFER:
         return "BUFFER";
-    case OCLRT::GraphicsAllocation::AllocationType::IMAGE:
+    case GraphicsAllocation::AllocationType::IMAGE:
         return "IMAGE";
-    case OCLRT::GraphicsAllocation::AllocationType::TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::TAG_BUFFER:
         return "TAG_BUFFER";
-    case OCLRT::GraphicsAllocation::AllocationType::LINEAR_STREAM:
+    case GraphicsAllocation::AllocationType::LINEAR_STREAM:
         return "LINEAR_STREAM";
-    case OCLRT::GraphicsAllocation::AllocationType::FILL_PATTERN:
+    case GraphicsAllocation::AllocationType::FILL_PATTERN:
         return "FILL_PATTERN";
-    case OCLRT::GraphicsAllocation::AllocationType::PIPE:
+    case GraphicsAllocation::AllocationType::PIPE:
         return "PIPE";
-    case OCLRT::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
         return "TIMESTAMP_PACKET_TAG_BUFFER";
-    case OCLRT::GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
         return "PROFILING_TAG_BUFFER";
-    case OCLRT::GraphicsAllocation::AllocationType::COMMAND_BUFFER:
+    case GraphicsAllocation::AllocationType::COMMAND_BUFFER:
         return "COMMAND_BUFFER";
-    case OCLRT::GraphicsAllocation::AllocationType::PRINTF_SURFACE:
+    case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
         return "PRINTF_SURFACE";
-    case OCLRT::GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
+    case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
         return "GLOBAL_SURFACE";
-    case OCLRT::GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
+    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
         return "PRIVATE_SURFACE";
-    case OCLRT::GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
+    case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
         return "CONSTANT_SURFACE";
-    case OCLRT::GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
+    case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
         return "SCRATCH_SURFACE";
-    case OCLRT::GraphicsAllocation::AllocationType::INSTRUCTION_HEAP:
+    case GraphicsAllocation::AllocationType::INSTRUCTION_HEAP:
         return "INSTRUCTION_HEAP";
-    case OCLRT::GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP:
+    case GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP:
         return "INDIRECT_OBJECT_HEAP";
-    case OCLRT::GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP:
+    case GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP:
         return "SURFACE_STATE_HEAP";
-    case OCLRT::GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP:
+    case GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP:
         return "DYNAMIC_STATE_HEAP";
-    case OCLRT::GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
+    case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
         return "SHARED_RESOURCE_COPY";
-    case OCLRT::GraphicsAllocation::AllocationType::SVM:
+    case GraphicsAllocation::AllocationType::SVM:
         return "SVM";
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
         return "EXTERNAL_HOST_PTR";
-    case OCLRT::GraphicsAllocation::AllocationType::UNDECIDED:
+    case GraphicsAllocation::AllocationType::UNDECIDED:
         return "UNDECIDED";
     default:
         return "ILLEGAL_VALUE";

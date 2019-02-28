@@ -989,18 +989,15 @@ const SurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, co
 }
 
 bool Image::isImage2d(cl_mem_object_type imageType) {
-    return (imageType == CL_MEM_OBJECT_IMAGE2D);
+    return imageType == CL_MEM_OBJECT_IMAGE2D;
 }
 
 bool Image::isImage2dOr2dArray(cl_mem_object_type imageType) {
-    return (imageType == CL_MEM_OBJECT_IMAGE2D) || (imageType == CL_MEM_OBJECT_IMAGE2D_ARRAY);
+    return imageType == CL_MEM_OBJECT_IMAGE2D || imageType == CL_MEM_OBJECT_IMAGE2D_ARRAY;
 }
 
 bool Image::isDepthFormat(const cl_image_format &imageFormat) {
-    if (imageFormat.image_channel_order == CL_DEPTH || imageFormat.image_channel_order == CL_DEPTH_STENCIL) {
-        return true;
-    }
-    return false;
+    return imageFormat.image_channel_order == CL_DEPTH || imageFormat.image_channel_order == CL_DEPTH_STENCIL;
 }
 
 Image *Image::validateAndCreateImage(Context *context,

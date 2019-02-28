@@ -101,10 +101,7 @@ bool isInRange(double data, double reference, double multiplier) {
     double lower = reference / multiplier;
     double higher = reference * multiplier;
 
-    if ((data >= lower) && (data <= higher)) {
-        return true;
-    }
-    return false;
+    return data >= lower && data <= higher;
 }
 
 bool isLowerThanReference(double data, double reference, double multiplier) {

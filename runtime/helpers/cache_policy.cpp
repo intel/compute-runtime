@@ -13,11 +13,8 @@
 namespace OCLRT {
 
 bool isL3Capable(void *ptr, size_t size) {
-    if (alignUp(ptr, MemoryConstants::cacheLineSize) == ptr &&
-        alignUp(size, MemoryConstants::cacheLineSize) == size) {
-        return true;
-    }
-    return false;
+    return isAligned<MemoryConstants::cacheLineSize>(ptr) &&
+           isAligned<MemoryConstants::cacheLineSize>(size);
 }
 
 bool isL3Capable(const OCLRT::GraphicsAllocation &graphicsAllocation) {

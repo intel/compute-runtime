@@ -134,10 +134,7 @@ void WddmResidencyController::checkTrimCandidateCount() {
 }
 
 bool WddmResidencyController::checkTrimCandidateListCompaction() {
-    if (2 * trimCandidatesCount <= trimCandidateList.size()) {
-        return true;
-    }
-    return false;
+    return 2 * trimCandidatesCount <= trimCandidateList.size();
 }
 
 void WddmResidencyController::compactTrimCandidateList() {
