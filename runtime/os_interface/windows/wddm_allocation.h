@@ -33,16 +33,16 @@ class WddmAllocation : public GraphicsAllocation {
 
     D3DGPU_VIRTUAL_ADDRESS gpuPtr; // set by mapGpuVA
 
-    WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(AllocationType::UNKNOWN, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool, multiOsContextCapable),
+    WddmAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, bool multiOsContextCapable)
+        : GraphicsAllocation(allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool, multiOsContextCapable),
           handle(0),
           gpuPtr(0),
           trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
         reservedAddressSpace = reservedAddr;
     }
 
-    WddmAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(AllocationType::UNKNOWN, cpuPtrIn, sizeIn, sharedHandle, pool, multiOsContextCapable),
+    WddmAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, bool multiOsContextCapable)
+        : GraphicsAllocation(allocationType, cpuPtrIn, sizeIn, sharedHandle, pool, multiOsContextCapable),
           handle(0),
           gpuPtr(0),
           trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {

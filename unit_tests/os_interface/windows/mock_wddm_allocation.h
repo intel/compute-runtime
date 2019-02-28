@@ -12,7 +12,7 @@ namespace OCLRT {
 
 class MockWddmAllocation : public WddmAllocation {
   public:
-    MockWddmAllocation() : WddmAllocation(nullptr, 0, nullptr, MemoryPool::MemoryNull, false) {
+    MockWddmAllocation() : WddmAllocation(GraphicsAllocation::AllocationType::UNDECIDED, nullptr, 0, nullptr, MemoryPool::MemoryNull, false) {
     }
 
     void setMemoryPool(MemoryPool::Type pool) {
