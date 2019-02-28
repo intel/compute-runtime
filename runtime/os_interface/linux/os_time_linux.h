@@ -9,8 +9,6 @@
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/os_time.h"
 
-#include <sys/ioctl.h>
-
 #define OCLRT_NUM_TIMESTAMP_BITS (36)
 #define OCLRT_NUM_TIMESTAMP_BITS_FALLBACK (32)
 #define TIMESTAMP_HIGH_REG 0x0235C

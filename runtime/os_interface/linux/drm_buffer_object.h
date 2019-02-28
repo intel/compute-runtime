@@ -11,7 +11,6 @@
 #include <errno.h>
 #include <set>
 #include <stdint.h>
-#include <sys/ioctl.h>
 #include <vector>
 
 struct drm_i915_gem_exec_object2;

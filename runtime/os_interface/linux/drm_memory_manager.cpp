@@ -17,8 +17,6 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/os_interface/32bit_memory.h"
-#include "runtime/os_interface/linux/drm_allocation.h"
-#include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
 
 #include "drm/i915_drm.h"
