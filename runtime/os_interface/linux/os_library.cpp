@@ -31,7 +31,12 @@ OsLibrary::OsLibrary(const std::string &name) {
     if (name.empty()) {
         this->handle = dlopen(0, RTLD_LAZY);
     } else {
-        this->handle = dlopen(name.c_str(), RTLD_LAZY);
+#ifdef SANITIZER_BUILD
+        constexpr auto dlopenFlag = RTLD_LAZY;
+#else
+        constexpr auto dlopenFlag = RTLD_LAZY | RTLD_DEEPBIND;
+#endif
+        this->handle = dlopen(name.c_str(), dlopenFlag);
     }
 }
 
