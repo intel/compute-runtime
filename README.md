@@ -49,6 +49,7 @@ By default, please submit an issue using native github.com interface: https://gi
 
 Create a pull request on github.com with your patch. Make sure your change is cleanly building and passing ULTs.
 A maintainer will contact you if there are questions or concerns.
+See [contribution guidelines](https://github.com/intel/compute-runtime/blob/master/documentation/CONTRIB.md) for more details.
 
 ## See also
 * Building and installation:

@@ -13,7 +13,11 @@ or [Centos](https://github.com/intel/compute-runtime/blob/master/documentation/B
 Make sure you adhere to our coding standard - this will be verified by clang-format and clang-tidy
 (tool configuration is already included in NEO repository).
 
-### 2. Patch submission
+### 2. Certificate of origin
+In order to get a clear contribution chain of trust we use the [signed-off-by language](https://01.org/community/signed-process) used by the Linux kernel project. 
+Please make sure your commit message adheres to this guideline.
+
+### 3. Patch submission
 
 Create a pull request on github once you are confident that your changes are complete and fulfill
 the requirements above. Make sure your commit message follows these rules:
@@ -22,20 +26,20 @@ the requirements above. Make sure your commit message follows these rules:
 * additional description can be provided in the body
 * title and body need to be separated by an empty line
 
-### 3. Initial (cursory) review
+### 4. Initial (cursory) review
 
 One of NEO maintainers will do an initial (brief) review of your code. We will let you know if anything major is missing.
 
-### 4. Verification
+### 5. Verification
 
 We'll double-check that your code meets all of our minimal quality expectations (for every commit - see [RELEASES.md](https://github.com/intel/compute-runtime/blob/master/documentation/RELEASES.md)).
 When all the automated checks are confirmed to be passing, we will start actual code review process.
 
-### 5. Code review
+### 6. Code review
 
 We'll make sure that your code fits within the architecture and design of NEO, is readable and maintainable. Please make sure to address our questions and concerns. 
 
-### 6. Patch disposition
+### 7. Patch disposition
 
 We reserve, upon conclusion of the code review, the right to do one of the following:
 1. Merge the patch as submitted
