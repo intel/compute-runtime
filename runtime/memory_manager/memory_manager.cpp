@@ -289,7 +289,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     return true;
 }
 
-GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr) {
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, DevicesBitfield devicesBitfield, const void *hostPtr) {
     AllocationData allocationData;
     getAllocationData(allocationData, properties, devicesBitfield, hostPtr);
 

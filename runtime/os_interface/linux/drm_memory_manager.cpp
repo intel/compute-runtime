@@ -305,7 +305,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(size_t s
     return allocation;
 }
 
-DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(AllocationData allocationData) {
+DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
     return nullptr;
 }
 

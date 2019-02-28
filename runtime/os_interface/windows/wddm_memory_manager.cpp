@@ -59,7 +59,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
     return allocation.release();
 }
 
-GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(AllocationData allocationData) {
+GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
     size_t sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
 
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.type, nullptr, sizeAligned, nullptr, MemoryPool::System64KBPages, !!allocationData.flags.multiOsContextCapable);

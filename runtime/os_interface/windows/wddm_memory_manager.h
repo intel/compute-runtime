@@ -64,7 +64,7 @@ class WddmMemoryManager : public MemoryManager {
   protected:
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
-    GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
+    GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
 
     void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override;

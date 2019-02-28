@@ -70,10 +70,11 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHost
     return memoryAllocation;
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(AllocationData allocationData) {
-    allocationData.size = alignUp(allocationData.size, MemoryConstants::pageSize64k);
-    allocationData.alignment = MemoryConstants::pageSize64k;
-    auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationData);
+GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
+    AllocationData allocationData64kb = allocationData;
+    allocationData64kb.size = alignUp(allocationData.size, MemoryConstants::pageSize64k);
+    allocationData64kb.alignment = MemoryConstants::pageSize64k;
+    auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationData64kb);
     if (memoryAllocation) {
         static_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::System64KBPages);
     }

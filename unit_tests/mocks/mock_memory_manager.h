@@ -39,7 +39,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     MockMemoryManager(bool enable64pages, bool enableLocalMemory) : OsAgnosticMemoryManager(enable64pages, enableLocalMemory, *(new ExecutionEnvironment)) {
         mockExecutionEnvironment.reset(&executionEnvironment);
     }
-    GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override;
+    GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
     void setDeferredDeleter(DeferredDeleter *deleter);
     void overrideAsyncDeleterFlag(bool newValue);
     GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override;
@@ -127,7 +127,7 @@ class FailMemoryManager : public MockMemoryManager {
         return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
     };
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override { return nullptr; }
-    GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) override {
+    GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override {
         return nullptr;
     };
     GraphicsAllocation *allocateGraphicsMemory(const AllocationProperties &properties, const void *ptr) override {

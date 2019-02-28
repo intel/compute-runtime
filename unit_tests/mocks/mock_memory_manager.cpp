@@ -47,7 +47,7 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryForImage(const Allo
     return allocation;
 }
 
-GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(AllocationData allocationData) {
+GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
     allocation64kbPageCreated = true;
     preferRenderCompressedFlagPassed = allocationData.flags.preferRenderCompressed;
 

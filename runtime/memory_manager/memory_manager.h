@@ -118,7 +118,7 @@ class MemoryManager {
         }
     }
 
-    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationProperties properties, DevicesBitfield devicesBitfield, const void *hostPtr);
+    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, DevicesBitfield devicesBitfield, const void *hostPtr);
 
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) = 0;
 
@@ -232,7 +232,7 @@ class MemoryManager {
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) = 0;
-    virtual GraphicsAllocation *allocateGraphicsMemory64kb(AllocationData allocationData) = 0;
+    virtual GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) = 0;
     virtual GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) = 0;
     virtual GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
         status = AllocationStatus::Error;
