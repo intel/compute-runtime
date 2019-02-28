@@ -37,7 +37,7 @@ class Gmm {
 
     void applyAuxFlagsForImage(ImageInfo &imgInfo);
     void applyAuxFlagsForBuffer(bool preferRenderCompression);
-    void applyMemoryFlags(bool systemMemoryPool);
+    void applyMemoryFlags(bool systemMemoryPool, DevicesBitfield &devicesBitfield);
 
     bool unifiedAuxTranslationCapable() const;
     bool hasMultisampleControlSurface() const;

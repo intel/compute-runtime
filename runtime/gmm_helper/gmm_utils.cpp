@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,4 +38,4 @@ GMM_CUBE_FACE_ENUM GmmHelper::getCubeFaceIndex(uint32_t target) {
 void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {}
 void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {}
 
-void Gmm::applyMemoryFlags(bool systemMemoryPool) { this->useSystemMemoryPool = systemMemoryPool; }
+void Gmm::applyMemoryFlags(bool systemMemoryPool, DevicesBitfield &devicesBitfield) { this->useSystemMemoryPool = systemMemoryPool; }

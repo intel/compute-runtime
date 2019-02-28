@@ -47,7 +47,7 @@ Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool pref
     }
 
     applyAuxFlagsForBuffer(preferRenderCompressed);
-    applyMemoryFlags(systemMemoryPool);
+    applyMemoryFlags(systemMemoryPool, devicesBitfield);
 
     gmmResourceInfo.reset(GmmResourceInfo::create(&resourceParams));
 }
