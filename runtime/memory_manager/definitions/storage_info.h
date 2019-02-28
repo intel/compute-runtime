@@ -7,6 +7,6 @@
 
 #pragma once
 namespace OCLRT {
-struct DevicesBitfield {
+struct StorageInfo {
 };
 } // namespace OCLRT

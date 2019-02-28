@@ -8,7 +8,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 
 namespace OCLRT {
-DevicesBitfield GraphicsAllocation::createBitfieldFromProperties(const AllocationProperties &properties) {
+StorageInfo GraphicsAllocation::createStorageInfoFromProperties(const AllocationProperties &properties) {
     return {};
 }
 } // namespace OCLRT

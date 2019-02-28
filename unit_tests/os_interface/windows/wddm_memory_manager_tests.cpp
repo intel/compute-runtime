@@ -1120,9 +1120,8 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleter
     deleter->expectDrainBlockingValue(true);
 
     AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
-    DevicesBitfield devicesBitfield = {};
 
-    memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devicesBitfield, nullptr);
+    memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, {}, nullptr);
     EXPECT_EQ(1, deleter->drainCalled);
     EXPECT_EQ(2u, wddm->createAllocationResult.called);
 }
@@ -1140,9 +1139,8 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleter
     EXPECT_EQ(0u, wddm->mapGpuVirtualAddressResult.called);
 
     AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
-    DevicesBitfield devicesBitfield = {};
 
-    auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devicesBitfield, nullptr);
+    auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, {}, nullptr);
     EXPECT_EQ(0, deleter->drainCalled);
     EXPECT_EQ(1u, wddm->createAllocationResult.called);
     EXPECT_EQ(1u, wddm->mapGpuVirtualAddressResult.called);
@@ -1159,9 +1157,8 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDele
     EXPECT_EQ(0u, wddm->createAllocationResult.called);
 
     AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
-    DevicesBitfield devicesBitfield = {};
 
-    memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devicesBitfield, nullptr);
+    memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, {}, nullptr);
     EXPECT_EQ(1u, wddm->createAllocationResult.called);
 }
 

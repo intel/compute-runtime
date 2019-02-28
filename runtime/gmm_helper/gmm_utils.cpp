@@ -38,4 +38,4 @@ GMM_CUBE_FACE_ENUM GmmHelper::getCubeFaceIndex(uint32_t target) {
 void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {}
 void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {}
 
-void Gmm::applyMemoryFlags(bool systemMemoryPool, DevicesBitfield &devicesBitfield) { this->useSystemMemoryPool = systemMemoryPool; }
+void Gmm::applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo) { this->useSystemMemoryPool = systemMemoryPool; }

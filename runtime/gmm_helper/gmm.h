@@ -9,7 +9,7 @@
 #include "runtime/api/cl_types.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 
-#include "devices_bitfield.h"
+#include "storage_info.h"
 
 #include <cstdint>
 #include <cstdlib>
@@ -27,7 +27,7 @@ class Gmm {
     Gmm() = delete;
     Gmm(ImageInfo &inputOutputImgInfo);
     Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable);
-    Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, DevicesBitfield devicesBitfield);
+    Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo);
     Gmm(GMM_RESOURCE_INFO *inputGmm);
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);
@@ -37,7 +37,7 @@ class Gmm {
 
     void applyAuxFlagsForImage(ImageInfo &imgInfo);
     void applyAuxFlagsForBuffer(bool preferRenderCompression);
-    void applyMemoryFlags(bool systemMemoryPool, DevicesBitfield &devicesBitfield);
+    void applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo);
 
     bool unifiedAuxTranslationCapable() const;
     bool hasMultisampleControlSurface() const;

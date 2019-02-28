@@ -190,7 +190,7 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
     return osContext;
 }
 
-bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const DevicesBitfield devicesBitfield,
+bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const StorageInfo storageInfo,
                                       const void *hostPtr) {
     UNRECOVERABLE_IF(hostPtr == nullptr && !properties.flags.allocateMemory);
 
@@ -279,7 +279,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.hostPtr = hostPtr;
     allocationData.size = properties.size;
     allocationData.type = properties.allocationType;
-    allocationData.devicesBitfield = devicesBitfield;
+    allocationData.storageInfo = storageInfo;
     allocationData.alignment = properties.alignment ? properties.alignment : MemoryConstants::preferredAlignment;
     allocationData.imgInfo = properties.imgInfo;
 
@@ -289,9 +289,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     return true;
 }
 
-GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, DevicesBitfield devicesBitfield, const void *hostPtr) {
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, StorageInfo storageInfo, const void *hostPtr) {
     AllocationData allocationData;
-    getAllocationData(allocationData, properties, devicesBitfield, hostPtr);
+    getAllocationData(allocationData, properties, storageInfo, hostPtr);
 
     AllocationStatus status = AllocationStatus::Error;
     GraphicsAllocation *allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);

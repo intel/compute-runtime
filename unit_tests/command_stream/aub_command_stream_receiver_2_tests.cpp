@@ -492,9 +492,8 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
-    DevicesBitfield devicesBitfield = {};
 
-    auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devicesBitfield, nullptr);
+    auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, {}, nullptr);
     ASSERT_NE(nullptr, imageAllocation);
 
     EXPECT_TRUE(aubCsr->writeMemory(*imageAllocation));

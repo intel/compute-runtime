@@ -42,7 +42,7 @@ AllocationProperties MemObjHelper::getAllocationProperties(ImageInfo *imgInfo, b
     return AllocationProperties(imgInfo, allocateMemory);
 }
 
-DevicesBitfield MemObjHelper::getDevicesBitfield(const MemoryProperties &properties) {
+StorageInfo MemObjHelper::getStorageInfo(const MemoryProperties &properties) {
     return {};
 }
 

@@ -19,7 +19,7 @@
 namespace OCLRT {
 Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(alignedPtr, alignedSize, uncacheable, false, true, {}) {}
 
-Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, DevicesBitfield devicesBitfield) {
+Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth64 = static_cast<uint64_t>(alignedSize);
@@ -47,7 +47,7 @@ Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool pref
     }
 
     applyAuxFlagsForBuffer(preferRenderCompressed);
-    applyMemoryFlags(systemMemoryPool, devicesBitfield);
+    applyMemoryFlags(systemMemoryPool, storageInfo);
 
     gmmResourceInfo.reset(GmmResourceInfo::create(&resourceParams));
 }

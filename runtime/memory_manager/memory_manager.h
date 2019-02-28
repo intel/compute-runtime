@@ -99,11 +99,11 @@ class MemoryManager {
     virtual void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) = 0;
 
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
-        return allocateGraphicsMemoryInPreferredPool(properties, GraphicsAllocation::createBitfieldFromProperties(properties), nullptr);
+        return allocateGraphicsMemoryInPreferredPool(properties, GraphicsAllocation::createStorageInfoFromProperties(properties), nullptr);
     }
 
     virtual GraphicsAllocation *allocateGraphicsMemory(const AllocationProperties &properties, const void *ptr) {
-        return allocateGraphicsMemoryInPreferredPool(properties, GraphicsAllocation::createBitfieldFromProperties(properties), ptr);
+        return allocateGraphicsMemoryInPreferredPool(properties, GraphicsAllocation::createStorageInfoFromProperties(properties), ptr);
     }
 
     GraphicsAllocation *allocateGraphicsMemoryForHostPtr(size_t size, void *ptr, bool fullRangeSvm, bool requiresL3Flush) {
@@ -118,7 +118,8 @@ class MemoryManager {
         }
     }
 
-    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, DevicesBitfield devicesBitfield, const void *hostPtr);
+    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties,
+                                                              StorageInfo storageInfo, const void *hostPtr);
 
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) = 0;
 
@@ -218,11 +219,11 @@ class MemoryManager {
         const void *hostPtr = nullptr;
         size_t size = 0;
         size_t alignment = 0;
-        DevicesBitfield devicesBitfield = {};
+        StorageInfo storageInfo = {};
         ImageInfo *imgInfo = nullptr;
     };
 
-    static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const DevicesBitfield devicesBitfield,
+    static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const StorageInfo storageInfo,
                                   const void *hostPtr);
     static bool useInternal32BitAllocator(GraphicsAllocation::AllocationType allocationType) {
         return allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA ||
@@ -246,7 +247,7 @@ class MemoryManager {
             if (!allocationData.flags.useSystemMemory && !(allocationData.flags.allow32Bit && this->force32bitAllocations)) {
                 auto allocation = allocateGraphicsMemory(allocationData);
                 if (allocation) {
-                    allocation->devicesBitfield = allocationData.devicesBitfield;
+                    allocation->storageInfo = allocationData.storageInfo;
                     allocation->setFlushL3Required(allocationData.flags.flushL3);
                     status = AllocationStatus::Success;
                 }

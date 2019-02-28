@@ -17,7 +17,7 @@
 #include "runtime/utilities/idlist.h"
 #include "runtime/utilities/stackvec.h"
 
-#include "devices_bitfield.h"
+#include "storage_info.h"
 
 #include <array>
 #include <cstddef>
@@ -120,17 +120,17 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         return gpuAddress + allocationOffset - gpuBaseAddress;
     }
 
-    void lock(void *ptr) { this->lockedPtr = ptr; }
-    void unlock() { this->lockedPtr = nullptr; }
+    void lock(void *ptr) { lockedPtr = ptr; }
+    void unlock() { lockedPtr = nullptr; }
     bool isLocked() const { return lockedPtr != nullptr; }
     void *getLockedPtr() const { return lockedPtr; }
 
     bool isCoherent() const { return allocationInfo.flags.coherent; }
-    void setCoherent(bool coherentIn) { this->allocationInfo.flags.coherent = coherentIn; }
+    void setCoherent(bool coherentIn) { allocationInfo.flags.coherent = coherentIn; }
     void setEvictable(bool evictable) { allocationInfo.flags.evictable = evictable; }
     bool peekEvictable() const { return allocationInfo.flags.evictable; }
     bool isFlushL3Required() const { return allocationInfo.flags.flushL3Required; }
-    void setFlushL3Required(bool flushL3Required) { this->allocationInfo.flags.flushL3Required = flushL3Required; }
+    void setFlushL3Required(bool flushL3Required) { allocationInfo.flags.flushL3Required = flushL3Required; }
     bool isMultiOsContextCapable() const { return allocationInfo.flags.multiOsContextCapable; }
     bool is32BitAllocation() const { return allocationInfo.flags.is32BitAllocation; }
     void set32BitAllocation(bool is32BitAllocation) { allocationInfo.flags.is32BitAllocation = is32BitAllocation; }
@@ -176,11 +176,11 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER ||
                allocationType == AllocationType::COMMAND_BUFFER;
     }
-    static DevicesBitfield createBitfieldFromProperties(const AllocationProperties &properties);
+    static StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
 
     Gmm *gmm = nullptr;
     OsHandleStorage fragmentsStorage;
-    DevicesBitfield devicesBitfield = {};
+    StorageInfo storageInfo = {};
 
   protected:
     constexpr static uint32_t objectNotResident = std::numeric_limits<uint32_t>::max();

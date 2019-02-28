@@ -47,7 +47,7 @@ class MemObjHelper {
                                                         size_t size, GraphicsAllocation::AllocationType type);
     static AllocationProperties getAllocationProperties(ImageInfo *imgInfo, bool allocateMemory);
 
-    static DevicesBitfield getDevicesBitfield(const MemoryProperties &properties);
+    static StorageInfo getStorageInfo(const MemoryProperties &properties);
 
     static bool checkMemFlagsForSubBuffer(cl_mem_flags flags) {
         const cl_mem_flags allValidFlags =

@@ -201,8 +201,8 @@ Buffer *Buffer::create(Context *context,
 
     if (!memory) {
         AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(properties.flags_intel, allocateMemory, size, allocationType);
-        DevicesBitfield devices = MemObjHelper::getDevicesBitfield(properties);
-        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, hostPtr);
+        StorageInfo storageInfo = MemObjHelper::getStorageInfo(properties);
+        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, storageInfo, hostPtr);
     }
 
     if (allocateMemory && memory && MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
@@ -215,8 +215,8 @@ Buffer *Buffer::create(Context *context,
         zeroCopyAllowed = false;
         copyMemoryFromHostPtr = true;
         AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(properties.flags_intel, true, size, allocationType);
-        DevicesBitfield devices = MemObjHelper::getDevicesBitfield(properties);
-        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
+        StorageInfo storageInfo = MemObjHelper::getStorageInfo(properties);
+        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, storageInfo, nullptr);
     }
 
     if (!memory) {

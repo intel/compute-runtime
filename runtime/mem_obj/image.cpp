@@ -217,9 +217,9 @@ Image *Image::create(Context *context,
                     MemoryProperties properties = {};
                     properties.flags = flags;
                     AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, false);
-                    DevicesBitfield devices = MemObjHelper::getDevicesBitfield(properties);
+                    StorageInfo storageInfo = MemObjHelper::getStorageInfo(properties);
 
-                    memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, hostPtr);
+                    memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, storageInfo, hostPtr);
 
                     if (memory) {
                         if (memory->getUnderlyingBuffer() != hostPtr) {
@@ -240,9 +240,9 @@ Image *Image::create(Context *context,
                 MemoryProperties properties = {};
                 properties.flags = flags;
                 AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
-                DevicesBitfield devices = MemObjHelper::getDevicesBitfield(properties);
+                StorageInfo storageInfo = MemObjHelper::getStorageInfo(properties);
 
-                memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, devices, nullptr);
+                memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, storageInfo, nullptr);
 
                 if (memory && MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
                     zeroCopy = true;
