@@ -20,6 +20,7 @@
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_gfx_partition.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
@@ -994,5 +995,25 @@ TEST(WddmInternalHeapTest, whenConfigurationIs64BitThenInternalHeapIndexIsHeapIn
 TEST(WddmInternalHeapTest, whenConfigurationIs32BitThenInternalHeapIndexIsHeapInternal) {
     if (is32bit) {
         EXPECT_EQ(HeapIndex::HEAP_INTERNAL, internalHeapIndex);
+    }
+}
+
+using WddmGfxPartitionTest = Wddm20Tests;
+
+TEST_F(WddmGfxPartitionTest, initGfxPartition) {
+    MockGfxPartition gfxPartition;
+
+    for (auto heap : MockGfxPartition::allHeapNames) {
+        ASSERT_FALSE(gfxPartition.heapInitialized(heap));
+    }
+
+    wddm->initGfxPartition(gfxPartition);
+
+    for (auto heap : MockGfxPartition::allHeapNames) {
+        if (!gfxPartition.heapInitialized(heap)) {
+            EXPECT_TRUE(heap == HeapIndex::HEAP_SVM || heap == HeapIndex::HEAP_LIMITED);
+        } else {
+            EXPECT_TRUE(gfxPartition.heapInitialized(heap));
+        }
     }
 }

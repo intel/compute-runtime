@@ -34,7 +34,7 @@ namespace OCLRT {
 MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment)
     : allocator32Bit(nullptr), enable64kbpages(enable64kbpages), localMemorySupported(enableLocalMemory),
       executionEnvironment(executionEnvironment), hostPtrManager(std::make_unique<HostPtrManager>()),
-      multiContextResourceDestructor(std::make_unique<DeferredDeleter>()){};
+      multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {}
 
 MemoryManager::~MemoryManager() {
     for (auto &engine : registeredEngines) {

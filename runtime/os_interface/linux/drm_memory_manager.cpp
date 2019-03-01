@@ -12,6 +12,7 @@
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
+#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/surface_formats.h"
@@ -31,6 +32,7 @@ DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool force
                                                                                                                                                                       pinBB(nullptr),
                                                                                                                                                                       forcePinEnabled(forcePinAllowed),
                                                                                                                                                                       validateHostPtrMemory(validateHostPtrMemory) {
+    gfxPartition.init(platformDevices[0]->capabilityTable.gpuAddressSpace);
     MemoryManager::virtualPaddingAvailable = true;
     if (mode != gemCloseWorkerMode::gemCloseWorkerInactive) {
         gemCloseWorker.reset(new DrmGemCloseWorker(*this));

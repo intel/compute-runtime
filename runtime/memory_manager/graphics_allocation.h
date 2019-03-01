@@ -26,19 +26,7 @@
 namespace OCLRT {
 
 using osHandle = unsigned int;
-
-enum class HeapIndex : uint32_t {
-    HEAP_INTERNAL_DEVICE_MEMORY = 0u,
-    HEAP_INTERNAL = 1u,
-    HEAP_EXTERNAL_DEVICE_MEMORY = 2u,
-    HEAP_EXTERNAL = 3u,
-    HEAP_STANDARD,
-    HEAP_STANDARD64KB,
-    HEAP_SVM,
-    HEAP_LIMITED
-};
-
-constexpr auto internalHeapIndex = is32bit ? HeapIndex::HEAP_INTERNAL : HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
+enum class HeapIndex : uint32_t;
 
 namespace Sharing {
 constexpr auto nonSharedResource = 0u;

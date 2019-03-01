@@ -797,6 +797,21 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
     return status == STATUS_SUCCESS;
 }
 
+void Wddm::initGfxPartition(GfxPartition &outGfxPartition) const {
+    if (gfxPartition.SVM.Limit != 0) {
+        outGfxPartition.heapInit(HeapIndex::HEAP_SVM, gfxPartition.SVM.Base, gfxPartition.SVM.Limit - gfxPartition.SVM.Base + 1);
+    }
+
+    outGfxPartition.heapInit(HeapIndex::HEAP_STANDARD, gfxPartition.Standard.Base, gfxPartition.Standard.Limit - gfxPartition.Standard.Base + 1);
+
+    outGfxPartition.heapInit(HeapIndex::HEAP_STANDARD64KB, gfxPartition.Standard64KB.Base, gfxPartition.Standard64KB.Limit - gfxPartition.Standard64KB.Base + 1);
+
+    for (auto heap : GfxPartition::heap32Names) {
+        outGfxPartition.heapInit(heap, gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base,
+                                 gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + 1);
+    }
+}
+
 uint64_t Wddm::getSystemSharedMemory() const {
     return systemSharedMemory;
 }

@@ -9,6 +9,7 @@
 #include "runtime/command_stream/preemption_mode.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/memory_manager/gfx_partition.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/spinlock.h"
 
@@ -105,6 +106,8 @@ class Wddm {
     const GMM_GFX_PARTITIONING &getGfxPartition() const {
         return gfxPartition;
     }
+
+    void initGfxPartition(GfxPartition &outGfxPartition) const;
 
     const std::string &getDeviceRegistryPath() const {
         return deviceRegistryPath;

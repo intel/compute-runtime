@@ -40,6 +40,7 @@ WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemor
     if (asyncDeleterEnabled)
         deferredDeleter = createDeferredDeleter();
     mallocRestrictions.minAddress = wddm->getWddmMinAddress();
+    wddm->initGfxPartition(gfxPartition);
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {

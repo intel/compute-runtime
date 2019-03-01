@@ -10,6 +10,7 @@
 #include "runtime/command_stream/preemption_mode.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/engine_control.h"
+#include "runtime/memory_manager/gfx_partition.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/os_interface/32bit_memory.h"
@@ -279,6 +280,7 @@ class MemoryManager {
     uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
     uint32_t defaultEngineIndex = 0;
     std::unique_ptr<DeferredDeleter> multiContextResourceDestructor;
+    GfxPartition gfxPartition;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();
