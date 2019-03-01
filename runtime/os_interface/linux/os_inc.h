@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,3 @@
 
 #define PATH_SEPARATOR '/'
 #define __cdecl
-namespace OCLRT {
-class PerfProfiler;
-extern thread_local PerfProfiler *gPerfProfiler;
-}; // namespace OCLRT

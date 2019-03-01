@@ -3070,8 +3070,7 @@ clCreatePerfCountersCommandQueueINTEL(
     cl_command_queue_properties properties,
     cl_uint configuration,
     cl_int *errcodeRet) {
-    cl_int retVal = CL_SUCCESS;
-    API_ENTER(&retVal);
+    API_ENTER(nullptr);
 
     DBG_LOG_INPUTS("context", context,
                    "device", device,

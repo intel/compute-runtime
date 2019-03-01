@@ -7,7 +7,7 @@
 
 #include "runtime/utilities/perf_profiler.h"
 
-#include <runtime/utilities/stackvec.h>
+#include "runtime/utilities/stackvec.h"
 
 #include "os_inc.h"
 
@@ -21,6 +21,8 @@ using namespace std;
 namespace OCLRT {
 
 std::atomic<int> PerfProfiler::counter(0);
+
+thread_local PerfProfiler *gPerfProfiler = nullptr;
 
 PerfProfiler *PerfProfiler::objects[PerfProfiler::objectsNumber] = {
     nullptr,

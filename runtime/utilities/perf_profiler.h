@@ -99,6 +99,9 @@ class PerfProfiler {
 };
 
 #if OCL_RUNTIME_PROFILING == 1
+
+extern thread_local PerfProfiler *gPerfProfiler;
+
 struct PerfProfilerApiWrapper {
     PerfProfilerApiWrapper(const char *funcName)
         : funcName(funcName) {

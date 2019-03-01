@@ -28,10 +28,10 @@
 
 #define SYSTEM_ENTER()      \
     PerfProfiler::create(); \
-    gPerfProfiler->SystemEnter();
+    gPerfProfiler->systemEnter();
 
 #define SYSTEM_LEAVE(id) \
-    gPerfProfiler->SystemLeave(id);
+    gPerfProfiler->systemLeave(id);
 #define WAIT_ENTER() \
     SYSTEM_ENTER()
 #define WAIT_LEAVE() \
