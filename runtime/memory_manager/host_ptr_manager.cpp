@@ -108,7 +108,7 @@ OsHandleStorage HostPtrManager::populateAlreadyAllocatedFragments(AllocationRequ
             fragmentStorage = getFragmentAndCheckForOverlaps(const_cast<void *>(requirements.AllocationFragments[i].allocationPtr), requirements.AllocationFragments[i].allocationSize, overlapStatus);
 
         if (overlapStatus == OverlapStatus::FRAGMENT_WITHIN_STORED_FRAGMENT) {
-            DEBUG_BREAK_IF(fragmentStorage == nullptr);
+            UNRECOVERABLE_IF(fragmentStorage == nullptr);
             fragmentStorage->refCount++;
             handleStorage.fragmentStorageData[i].osHandleStorage = fragmentStorage->osInternalStorage;
             handleStorage.fragmentStorageData[i].cpuPtr = requirements.AllocationFragments[i].allocationPtr;
@@ -267,8 +267,8 @@ OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &mem
 }
 
 RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager &memoryManager, AllocationRequirements *requirements, CheckedFragments *checkedFragments) {
-    DEBUG_BREAK_IF(requirements == nullptr);
-    DEBUG_BREAK_IF(checkedFragments == nullptr);
+    UNRECOVERABLE_IF(requirements == nullptr);
+    UNRECOVERABLE_IF(checkedFragments == nullptr);
 
     RequirementsStatus status = RequirementsStatus::SUCCESS;
     checkedFragments->count = 0;
