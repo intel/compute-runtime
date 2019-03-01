@@ -164,7 +164,7 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
 }
 
 TEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
-    auto context = osContext->getContext();
+    auto context = osContext->getWddmContextHandle();
     EXPECT_TRUE(context != static_cast<D3DKMT_HANDLE>(0));
 }
 

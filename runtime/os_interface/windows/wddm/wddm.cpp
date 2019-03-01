@@ -677,7 +677,7 @@ void Wddm::kmDafLock(WddmAllocation *wddmAllocation) {
     kmDafListener->notifyLock(featureTable->ftrKmdDaf, adapter, device, wddmAllocation->handle, 0, gdi->escape);
 }
 
-bool Wddm::createContext(D3DKMT_HANDLE &context, EngineInstanceT engineType, PreemptionMode preemptionMode) {
+bool Wddm::createContext(OsContextWin &osContext) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_CREATECONTEXTVIRTUAL CreateContext = {0};
     CREATECONTEXT_PVTDATA PrivateData = {{0}};
@@ -689,24 +689,24 @@ bool Wddm::createContext(D3DKMT_HANDLE &context, EngineInstanceT engineType, Pre
     PrivateData.pHwContextId = &hwContextId;
     PrivateData.IsMediaUsage = false;
     PrivateData.NoRingFlushes = DebugManager.flags.UseNoRingFlushesKmdMode.get();
-    applyAdditionalContextFlags(PrivateData);
+    applyAdditionalContextFlags(PrivateData, osContext);
 
     CreateContext.EngineAffinity = 0;
     CreateContext.Flags.NullRendering = static_cast<UINT>(DebugManager.flags.EnableNullHardware.get());
     CreateContext.Flags.HwQueueSupported = wddmInterface->hwQueuesSupported();
 
-    if (preemptionMode >= PreemptionMode::MidBatch) {
+    if (osContext.getPreemptionMode() >= PreemptionMode::MidBatch) {
         CreateContext.Flags.DisableGpuTimeout = readEnablePreemptionRegKey();
     }
 
     CreateContext.PrivateDriverDataSize = sizeof(PrivateData);
-    CreateContext.NodeOrdinal = WddmEngineMapper::engineNodeMap(engineType.type);
+    CreateContext.NodeOrdinal = WddmEngineMapper::engineNodeMap(osContext.getEngineType().type);
     CreateContext.pPrivateDriverData = &PrivateData;
     CreateContext.ClientHint = D3DKMT_CLIENTHINT_OPENGL;
     CreateContext.hDevice = device;
 
     status = gdi->createContext(&CreateContext);
-    context = CreateContext.hContext;
+    osContext.setWddmContextHandle(CreateContext.hContext);
 
     return status == STATUS_SUCCESS;
 }
@@ -724,7 +724,7 @@ bool Wddm::destroyContext(D3DKMT_HANDLE context) {
 
 bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) {
     bool status = false;
-    if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU(osContext.getContext())) {
+    if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU(osContext.getWddmContextHandle())) {
         return false;
     }
     DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.getResidencyController().getMonitoredFence().currentFenceValue);

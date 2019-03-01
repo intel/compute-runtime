@@ -333,7 +333,7 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
     syncInfo.clientSynchronizationObject = 0x6cU;
 
     gdi->signalSynchronizationObject.mFunc = FailSignalSyncObjectMock::signal;
-    FailSignalSyncObjectMock::getExpectedContextHandle() = osContext.getContext();
+    FailSignalSyncObjectMock::getExpectedContextHandle() = osContext.getWddmContextHandle();
     FailSignalSyncObjectMock::getExpectedSynchHandle0() = syncInfo.serverSynchronizationObject;
     FailSignalSyncObjectMock::getExpectedSynchHandle1() = syncInfo.clientSynchronizationObject;
 
@@ -391,7 +391,7 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
     syncInfo.submissionSynchronizationObject = 0x7cU;
 
     gdi->signalSynchronizationObject.mFunc = FailSignalSyncObjectMock::signal;
-    FailSignalSyncObjectMock::getExpectedContextHandle() = osContext.getContext();
+    FailSignalSyncObjectMock::getExpectedContextHandle() = osContext.getWddmContextHandle();
     FailSignalSyncObjectMock::getExpectedSynchHandle0() = syncInfo.submissionSynchronizationObject;
 
     signalArbSyncObject(osContext, syncInfo);

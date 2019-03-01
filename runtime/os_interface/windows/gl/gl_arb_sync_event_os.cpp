@@ -115,7 +115,7 @@ void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
     auto wddm = osContextWin->getWddm();
 
     D3DKMT_SIGNALSYNCHRONIZATIONOBJECT signalServerClientSyncInfo = {0};
-    signalServerClientSyncInfo.hContext = osContextWin->getContext();
+    signalServerClientSyncInfo.hContext = osContextWin->getWddmContextHandle();
     signalServerClientSyncInfo.Flags.SignalAtSubmission = 0; // Wait for GPU to complete processing command buffer
     signalServerClientSyncInfo.ObjectHandleArray[0] = glSyncInfo.serverSynchronizationObject;
     signalServerClientSyncInfo.ObjectHandleArray[1] = glSyncInfo.clientSynchronizationObject;
@@ -127,7 +127,7 @@ void signalArbSyncObject(OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
     }
 
     D3DKMT_SIGNALSYNCHRONIZATIONOBJECT signalSubmissionSyncInfo = {0};
-    signalSubmissionSyncInfo.hContext = osContextWin->getContext();
+    signalSubmissionSyncInfo.hContext = osContextWin->getWddmContextHandle();
     signalSubmissionSyncInfo.Flags.SignalAtSubmission = 1; // Don't wait for GPU to complete processing command buffer
     signalSubmissionSyncInfo.ObjectHandleArray[0] = glSyncInfo.submissionSynchronizationObject;
     signalSubmissionSyncInfo.ObjectCount = 1;

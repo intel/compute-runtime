@@ -28,7 +28,7 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, uint32_t numDevicesSu
     UNRECOVERABLE_IF(!wddm.isInitialized());
 
     auto wddmInterface = wddm.getWddmInterface();
-    if (!wddm.createContext(context, engineType, preemptionMode)) {
+    if (!wddm.createContext(*this)) {
         return;
     }
     if (wddmInterface->hwQueuesSupported()) {
@@ -42,7 +42,7 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, uint32_t numDevicesSu
 
 OsContextWin::~OsContextWin() {
     wddm.getWddmInterface()->destroyHwQueue(hwQueueHandle);
-    wddm.destroyContext(context);
+    wddm.destroyContext(wddmContextHandle);
 }
 
 } // namespace OCLRT

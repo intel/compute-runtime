@@ -103,14 +103,14 @@ bool WddmMock::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     }
 }
 
-bool WddmMock::createContext(D3DKMT_HANDLE &context, EngineInstanceT engineType, PreemptionMode preemptionMode) {
+bool WddmMock::createContext(OsContextWin &osContext) {
     createContextResult.called++;
-    return createContextResult.success = Wddm::createContext(context, engineType, preemptionMode);
+    return createContextResult.success = Wddm::createContext(osContext);
 }
 
-void WddmMock::applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData) {
+void WddmMock::applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext) {
     applyAdditionalContextFlagsResult.called++;
-    Wddm::applyAdditionalContextFlags(privateData);
+    Wddm::applyAdditionalContextFlags(privateData, osContext);
 }
 
 bool WddmMock::destroyContext(D3DKMT_HANDLE context) {

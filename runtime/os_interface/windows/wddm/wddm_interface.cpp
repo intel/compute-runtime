@@ -49,7 +49,7 @@ bool WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandH
     SubmitCommand.Commands = commandBuffer;
     SubmitCommand.CommandLength = static_cast<UINT>(size);
     SubmitCommand.BroadcastContextCount = 1;
-    SubmitCommand.BroadcastContext[0] = osContext.getContext();
+    SubmitCommand.BroadcastContext[0] = osContext.getWddmContextHandle();
     SubmitCommand.Flags.NullRendering = (UINT)DebugManager.flags.EnableNullHardware.get();
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
@@ -73,7 +73,7 @@ bool WddmInterface23::createHwQueue(OsContextWin &osContext) {
         return false;
     }
 
-    createHwQueue.hHwContext = osContext.getContext();
+    createHwQueue.hHwContext = osContext.getWddmContextHandle();
     if (osContext.getPreemptionMode() >= PreemptionMode::MidBatch) {
         createHwQueue.Flags.DisableGpuTimeout = wddm.readEnablePreemptionRegKey();
     }

@@ -20,24 +20,17 @@ class OsContextWin : public OsContext {
     OsContextWin(Wddm &wddm, uint32_t contextId, uint32_t numDevicesSupported,
                  EngineInstanceT engineType, PreemptionMode preemptionMode);
 
-    D3DKMT_HANDLE getContext() const {
-        return context;
-    }
-    D3DKMT_HANDLE getHwQueue() const {
-        return hwQueueHandle;
-    }
-    void setHwQueue(D3DKMT_HANDLE hwQueue) {
-        hwQueueHandle = hwQueue;
-    }
-    bool isInitialized() const {
-        return initialized;
-    }
+    D3DKMT_HANDLE getWddmContextHandle() const { return wddmContextHandle; }
+    void setWddmContextHandle(D3DKMT_HANDLE wddmContextHandle) { this->wddmContextHandle = wddmContextHandle; }
+    D3DKMT_HANDLE getHwQueue() const { return hwQueueHandle; }
+    void setHwQueue(D3DKMT_HANDLE hwQueue) { hwQueueHandle = hwQueue; }
+    bool isInitialized() const { return initialized; }
     Wddm *getWddm() const { return &wddm; }
     WddmResidencyController &getResidencyController() { return residencyController; }
 
   protected:
     bool initialized = false;
-    D3DKMT_HANDLE context = 0;
+    D3DKMT_HANDLE wddmContextHandle = 0;
     D3DKMT_HANDLE hwQueueHandle = 0;
     Wddm &wddm;
     WddmResidencyController residencyController;
