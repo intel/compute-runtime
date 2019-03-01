@@ -17,8 +17,9 @@ extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX
 template <typename BaseCSR>
 CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn, const std::string &baseName, ExecutionEnvironment &executionEnvironment)
     : BaseCSR(hwInfoIn, executionEnvironment) {
-    bool createAubCsr = !executionEnvironment.aubCenter || executionEnvironment.aubCenter->getAubManager() == nullptr;
-
+    bool isAubManager = executionEnvironment.aubCenter && executionEnvironment.aubCenter->getAubManager();
+    bool isTbxMode = CommandStreamReceiverType::CSR_TBX == BaseCSR::getType();
+    bool createAubCsr = (isAubManager && isTbxMode) ? false : true;
     if (createAubCsr) {
         aubCSR.reset(AUBCommandStreamReceiver::create(hwInfoIn, baseName, false, executionEnvironment));
     }

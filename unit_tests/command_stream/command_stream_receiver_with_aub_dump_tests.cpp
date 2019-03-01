@@ -137,7 +137,7 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenSett
     EXPECT_EQ(&osContext, &csrWithAubDump.aubCSR->getOsContext());
 }
 
-HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailaleWhenTbxCsrWithAubDumpIsCreatedThenAubCsrIsNotCreated) {
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailableWhenTbxCsrWithAubDumpIsCreatedThenAubCsrIsNotCreated) {
     HardwareInfo hwInfo = *platformDevices[0];
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
@@ -150,7 +150,20 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailaleWhen
     ASSERT_EQ(nullptr, csrWithAubDump.aubCSR);
 }
 
-HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenNullAubManagerAvailaleWhenTbxCsrWithAubDumpIsCreatedThenAubCsrIsCreated) {
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerAvailableWhenHwCsrWithAubDumpIsCreatedThenAubCsrIsCreated) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    std::string fileName = "file_name.aub";
+    MockAubManager *mockManager = new MockAubManager();
+    MockAubCenter *mockAubCenter = new MockAubCenter(&hwInfo, false, fileName, CommandStreamReceiverType::CSR_HW_WITH_AUB);
+    mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+
+    CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump(*platformDevices[0], "aubfile", executionEnvironment);
+    ASSERT_NE(nullptr, csrWithAubDump.aubCSR);
+}
+
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenNullAubManagerAvailableWhenTbxCsrWithAubDumpIsCreatedThenAubCsrIsCreated) {
     MockAubCenter *mockAubCenter = new MockAubCenter();
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
