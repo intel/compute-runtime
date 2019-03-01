@@ -16,7 +16,7 @@ typedef api_tests clGetContextInfoTests;
 
 namespace ULT {
 
-TEST_F(clGetContextInfoTests, NumDevices) {
+TEST_F(clGetContextInfoTests, GivenContextNumDevicesParamWhenGettingContextInfoThenNumDevicesIsReturned) {
     cl_uint numDevices = 0;
 
     retVal = clGetContextInfo(
@@ -30,7 +30,7 @@ TEST_F(clGetContextInfoTests, NumDevices) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetContextInfoTests, SizeOfDevices) {
+TEST_F(clGetContextInfoTests, GivenContextWithSingleDeviceAndContextDevicesParamWhenGettingContextInfoThenListOfDevicesContainsOneDevice) {
     retVal = clGetContextInfo(
         pContext,
         CL_CONTEXT_DEVICES,
@@ -42,7 +42,7 @@ TEST_F(clGetContextInfoTests, SizeOfDevices) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetContextInfoTests, DeviceIDs) {
+TEST_F(clGetContextInfoTests, GivenContextWithMultipleDevicesAndContextDevicesParamWhenGettingContextInfoThenListOfDevicesContainsAllDevices) {
     auto devicesReturned = new cl_device_id[this->num_devices];
     cl_uint numDevices = this->num_devices;
 
@@ -72,7 +72,7 @@ TEST_F(clGetContextInfoTests, DeviceIDs) {
     delete[] devicesReturned;
 }
 
-TEST(clGetContextInfo, NullCommandQueue_returnsError) {
+TEST(clGetContextInfo, GivenNullContextWhenGettingContextInfoThenInvalidContextErrorIsReturned) {
     cl_device_id pDevices[1];
     cl_uint numDevices = 1;
 
