@@ -190,6 +190,7 @@ class MemoryManager {
     EngineControl *getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
     void setDefaultEngineIndex(uint32_t index) { defaultEngineIndex = index; }
+    virtual bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, uint32_t sizeToCopy) const;
 
     static HeapIndex selectHeap(const GraphicsAllocation *allocation, const void *ptr, const HardwareInfo &hwInfo);
 

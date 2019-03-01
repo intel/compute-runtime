@@ -60,6 +60,8 @@ class WddmMemoryManager : public MemoryManager {
 
     AlignedMallocRestrictions *getAlignedMallocRestrictions() override;
 
+    bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, uint32_t sizeToCopy) const override;
+
   protected:
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;

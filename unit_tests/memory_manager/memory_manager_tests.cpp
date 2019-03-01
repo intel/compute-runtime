@@ -1717,3 +1717,25 @@ TEST_F(MemoryAllocatorTest, whenCommandStreamerIsNotRegisteredThenReturnNullEngi
     auto engineControl = memoryManager->getRegisteredEngineForCsr(dummyCsr);
     EXPECT_EQ(nullptr, engineControl);
 }
+TEST(MemoryManagerCopyMemoryTest, givenNullPointerOrZeroSizeWhenCopyMemoryToAllocationThenReturnFalse) {
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    constexpr uint8_t allocationSize = 10;
+    uint8_t allocationStorage[allocationSize];
+    MockGraphicsAllocation allocation{allocationStorage, allocationSize};
+    uint8_t memory = 1;
+    EXPECT_FALSE(memoryManager.copyMemoryToAllocation(nullptr, &memory, sizeof(memory)));
+    EXPECT_FALSE(memoryManager.copyMemoryToAllocation(&allocation, nullptr, sizeof(memory)));
+    EXPECT_FALSE(memoryManager.copyMemoryToAllocation(&allocation, &memory, 0u));
+}
+TEST(MemoryManagerCopyMemoryTest, givenValidAllocationAndMemoryWhenCopyMemoryToAllocationThenDataIsCopied) {
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    constexpr uint8_t allocationSize = 10;
+    uint8_t allocationStorage[allocationSize] = {0};
+    MockGraphicsAllocation allocation{allocationStorage, allocationSize};
+    uint8_t memory = 1u;
+    EXPECT_EQ(0u, allocationStorage[0]);
+    EXPECT_TRUE(memoryManager.copyMemoryToAllocation(&allocation, &memory, sizeof(memory)));
+    EXPECT_EQ(memory, allocationStorage[0]);
+}

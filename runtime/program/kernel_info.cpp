@@ -488,12 +488,7 @@ bool KernelInfo::createKernelAllocation(MemoryManager *memoryManager) {
     UNRECOVERABLE_IF(kernelAllocation);
     auto kernelIsaSize = heapInfo.pKernelHeader->KernelHeapSize;
     kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties({kernelIsaSize, GraphicsAllocation::AllocationType::KERNEL_ISA});
-    if (kernelAllocation) {
-        memcpy_s(kernelAllocation->getUnderlyingBuffer(), kernelIsaSize, heapInfo.pKernelHeap, kernelIsaSize);
-    } else {
-        return false;
-    }
-    return true;
+    return memoryManager->copyMemoryToAllocation(kernelAllocation, heapInfo.pKernelHeap, kernelIsaSize);
 }
 
 } // namespace OCLRT
