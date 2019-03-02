@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,38 +20,7 @@ SettingsFileReader::SettingsFileReader(const char *filePath) {
         settingsFile.open(filePath);
 
     if (settingsFile.is_open()) {
-
-        stringstream ss;
-        string key;
-        int32_t value = 0;
-        char temp = 0;
-
-        while (!settingsFile.eof()) {
-            string tempString;
-            string tempStringValue;
-            getline(settingsFile, tempString);
-
-            ss << tempString;
-            ss >> key;
-            ss >> temp;
-            ss >> value;
-            if (!ss.fail()) {
-                settingValueMap.insert(pair<string, int32_t>(key, value));
-            } else {
-                stringstream ss2;
-                ss2 << tempString;
-                ss2 >> key;
-                ss2 >> temp;
-                ss2 >> tempStringValue;
-                if (!ss2.fail())
-                    settingStringMap.insert(pair<string, string>(key, tempStringValue));
-            }
-
-            ss.str(string()); // for reset string inside stringstream
-            ss.clear();
-            key.clear();
-        }
-
+        parseStream(settingsFile);
         settingsFile.close();
     }
 }
@@ -85,5 +54,40 @@ std::string SettingsFileReader::getSetting(const char *settingName, const std::s
 
 const char *SettingsFileReader::appSpecificLocation(const std::string &name) {
     return name.c_str();
+}
+
+void SettingsFileReader::parseStream(std::istream &inputStream) {
+    stringstream ss;
+    string key;
+    int32_t value = 0;
+    char temp = 0;
+
+    while (!inputStream.eof()) {
+        string tempString;
+        string tempStringValue;
+        getline(inputStream, tempString);
+
+        ss << tempString;
+        ss >> key;
+        ss >> temp;
+        ss >> value;
+
+        bool isEnd = ss.eof();
+        if (!ss.fail() && isEnd) {
+            settingValueMap.insert(pair<string, int32_t>(key, value));
+        } else {
+            stringstream ss2;
+            ss2 << tempString;
+            ss2 >> key;
+            ss2 >> temp;
+            ss2 >> tempStringValue;
+            if (!ss2.fail())
+                settingStringMap.insert(pair<string, string>(key, tempStringValue));
+        }
+
+        ss.str(string()); // for reset string inside stringstream
+        ss.clear();
+        key.clear();
+    }
 }
 }; // namespace OCLRT

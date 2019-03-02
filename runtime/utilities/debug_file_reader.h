@@ -14,8 +14,6 @@
 #include <stdint.h>
 #include <string>
 
-using namespace std;
-
 namespace OCLRT {
 
 class SettingsFileReader : public SettingsReader {
@@ -28,6 +26,7 @@ class SettingsFileReader : public SettingsReader {
     const char *appSpecificLocation(const std::string &name) override;
 
   protected:
+    void parseStream(std::istream &inputStream);
     std::map<std::string, int32_t> settingValueMap;
     std::map<std::string, std::string> settingStringMap;
 };

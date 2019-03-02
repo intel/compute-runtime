@@ -19,6 +19,8 @@ using namespace std;
 
 class TestSettingsFileReader : public SettingsFileReader {
   public:
+    using SettingsFileReader::parseStream;
+
     TestSettingsFileReader(const char *filePath = nullptr) : SettingsFileReader(filePath) {
     }
 
@@ -33,7 +35,6 @@ class TestSettingsFileReader : public SettingsFileReader {
         return settingStringMap.size();
     }
 
-  public:
     static const char *testPath;
     static const char *stringTestPath;
 };
@@ -122,4 +123,22 @@ TEST(SettingsFileReader, appSpecificLocation) {
     std::unique_ptr<TestSettingsFileReader> reader(new TestSettingsFileReader(TestSettingsFileReader::testPath));
     std::string appSpecific = "cl_cache_dir";
     EXPECT_EQ(appSpecific, reader->appSpecificLocation(appSpecific));
+}
+
+TEST(SettingsFileReader, givenHexNumbersSemiColonSeparatedListInInputStreamWhenParsingThenCorrectStringValueIsStored) {
+    std::unique_ptr<TestSettingsFileReader> reader = unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader());
+    ASSERT_NE(nullptr, reader);
+
+    //No settings should be parsed initially
+    EXPECT_EQ(0u, reader->getValueSettingsCount());
+    EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+    stringstream inputLineWithSemiColonList("KeyName = 0x1234;0x5555");
+
+    reader->parseStream(inputLineWithSemiColonList);
+
+    string defaultStringValue = "FailedToParse";
+    string returnedStringValue = reader->getSetting("KeyName", defaultStringValue);
+
+    EXPECT_STREQ("0x1234;0x5555", returnedStringValue.c_str());
 }
