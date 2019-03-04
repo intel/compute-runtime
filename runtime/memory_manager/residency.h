@@ -8,8 +8,10 @@
 #pragma once
 #include "engine_node.h"
 
+#include <array>
 #include <cinttypes>
 #include <vector>
+
 namespace OCLRT {
 
 struct ResidencyData {
@@ -24,6 +26,6 @@ struct ResidencyData {
     uint64_t getFenceValueForContextId(uint32_t contextId);
 
   protected:
-    std::vector<uint64_t> lastFenceValues;
+    std::array<uint64_t, maxOsContextCount> lastFenceValues = {};
 };
 } // namespace OCLRT

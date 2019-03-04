@@ -340,6 +340,18 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     delete gfxAllocation;
 }
 
+void WddmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
+    auto wddmAllocation = static_cast<WddmAllocation *>(allocation);
+    for (auto &engine : this->registeredEngines) {
+        const auto lastFenceValue = wddmAllocation->getResidencyData().getFenceValueForContextId(engine.osContext->getContextId());
+        if (lastFenceValue != 0u) {
+            const auto &monitoredFence = static_cast<OsContextWin *>(engine.osContext)->getResidencyController().getMonitoredFence();
+            const auto wddm = static_cast<OsContextWin *>(engine.osContext)->getWddm();
+            wddm->waitFromCpu(lastFenceValue, monitoredFence);
+        }
+    }
+}
+
 bool WddmMemoryManager::tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
     bool status = true;
     if (deferredDeleter) {

@@ -39,21 +39,28 @@ struct GetDevicesTest : ::testing::Test {
     DebugManagerStateRestore stateRestorer;
 };
 
-HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
-    for (int productFamily = 0; productFamily < IGFX_MAX_PRODUCT; productFamily++) {
-        const char *hwPrefix = hardwarePrefix[productFamily];
+HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
+    for (int productFamilyIndex = 0; productFamilyIndex < IGFX_MAX_PRODUCT; productFamilyIndex++) {
+        const char *hwPrefix = hardwarePrefix[productFamilyIndex];
         if (hwPrefix == nullptr) {
             continue;
         }
-        for (int csrTypes = 0; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
-            CommandStreamReceiverType csrType = static_cast<CommandStreamReceiverType>(csrTypes);
-            std::string productFamily(hwPrefix);
+        const std::string productFamily(hwPrefix);
 
-            DebugManager.flags.SetCommandStreamReceiver.set(csrType);
+        for (int csrTypes = -1; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
+            CommandStreamReceiverType csrType;
+            if (csrTypes != -1) {
+                csrType = static_cast<CommandStreamReceiverType>(csrTypes);
+                DebugManager.flags.SetCommandStreamReceiver.set(csrType);
+            } else {
+                csrType = CSR_HW;
+                DebugManager.flags.SetCommandStreamReceiver.set(-1);
+            }
+
             DebugManager.flags.ProductFamilyOverride.set(productFamily);
             ExecutionEnvironment exeEnv;
 
-            auto ret = getDevices(&hwInfo, numDevices, exeEnv);
+            const auto ret = getDevices(&hwInfo, numDevices, exeEnv);
 
             switch (csrType) {
             case CSR_HW:

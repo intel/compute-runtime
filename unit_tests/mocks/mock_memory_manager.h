@@ -65,11 +65,18 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
         unlockResourceCalled++;
         OsAgnosticMemoryManager::unlockResourceImpl(gfxAllocation);
     }
+
+    void handleFenceCompletion(GraphicsAllocation *graphicsAllocation) override {
+        handleFenceCompletionCalled++;
+        OsAgnosticMemoryManager::handleFenceCompletion(graphicsAllocation);
+    }
+
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
 
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
+    uint32_t handleFenceCompletionCalled = 0u;
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;
     bool allocationInDevicePoolCreated = false;

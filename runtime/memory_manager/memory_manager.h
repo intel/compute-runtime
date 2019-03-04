@@ -140,8 +140,8 @@ class MemoryManager {
     void freeSystemMemory(void *ptr);
 
     virtual void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) = 0;
-
     void freeGraphicsMemory(GraphicsAllocation *gfxAllocation);
+    virtual void handleFenceCompletion(GraphicsAllocation *allocation){};
 
     void checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation);
 

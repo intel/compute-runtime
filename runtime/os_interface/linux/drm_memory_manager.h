@@ -30,6 +30,7 @@ class DrmMemoryManager : public MemoryManager {
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
+    void handleFenceCompletion(GraphicsAllocation *allocation) override;
     DrmAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override;
     GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) override;

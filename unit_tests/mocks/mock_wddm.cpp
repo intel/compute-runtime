@@ -196,6 +196,7 @@ GMM_GFX_PARTITIONING *WddmMock::getGfxPartitionPtr() {
 bool WddmMock::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence) {
     waitFromCpuResult.called++;
     waitFromCpuResult.uint64ParamPassed = lastFenceValue;
+    waitFromCpuResult.monitoredFence = &monitoredFence;
     return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue, monitoredFence);
 }
 

@@ -101,18 +101,4 @@ namespace OCLRT {
 extern bool overrideDeviceWithDefaultHardwareInfo;
 extern bool overrideCommandStreamReceiverCreation;
 
-TEST(MultiDeviceTests, givenCreateMultipleDevicesAndLimitAmountOfReturnedDevicesFlagWhenClGetDeviceIdsIsCalledThenLowerValueIsReturned) {
-    platformImpl.reset(nullptr);
-    VariableBackup<bool> backup(&overrideCommandStreamReceiverCreation, true);
-    VariableBackup<bool> overrideHelper(&overrideDeviceWithDefaultHardwareInfo, false);
-    DeviceFactoryCleaner cleaner;
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.CreateMultipleDevices.set(2);
-    DebugManager.flags.LimitAmountOfReturnedDevices.set(1);
-    cl_uint numDevices = 0;
-
-    auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(1u, numDevices);
-}
 } // namespace OCLRT

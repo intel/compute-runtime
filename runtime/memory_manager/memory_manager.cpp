@@ -133,7 +133,15 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
     if (!gfxAllocation) {
         return;
     }
-    if (gfxAllocation->isLocked()) {
+
+    const bool hasFragments = gfxAllocation->fragmentsStorage.fragmentCount != 0;
+    const bool isLocked = gfxAllocation->isLocked();
+    DEBUG_BREAK_IF(hasFragments && isLocked);
+
+    if (!hasFragments) {
+        handleFenceCompletion(gfxAllocation);
+    }
+    if (isLocked) {
         freeAssociatedResourceImpl(*gfxAllocation);
     }
     freeGraphicsMemoryImpl(gfxAllocation);

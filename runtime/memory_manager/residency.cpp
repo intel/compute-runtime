@@ -12,9 +12,6 @@
 using namespace OCLRT;
 
 void ResidencyData::updateCompletionData(uint64_t newFenceValue, uint32_t contextId) {
-    if (contextId + 1 > lastFenceValues.size()) {
-        lastFenceValues.resize(contextId + 1);
-    }
     lastFenceValues[contextId] = newFenceValue;
 }
 

@@ -573,8 +573,11 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
 
     delete gfxAllocation;
 
-    search->wait(-1);
     unreference(search);
+}
+
+void DrmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
+    static_cast<DrmAllocation *>(allocation)->getBO()->wait(-1);
 }
 
 uint64_t DrmMemoryManager::getSystemSharedMemory() {

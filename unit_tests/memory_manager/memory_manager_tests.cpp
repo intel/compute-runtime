@@ -388,6 +388,29 @@ TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationWithPtr
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(MemoryAllocatorTest, givenAllocationWithFragmentsWhenCallingFreeGraphicsMemoryThenDoNotCallHandleFenceCompletion) {
+    auto size = 3u * MemoryConstants::pageSize;
+    auto *ptr = reinterpret_cast<void *>(0xbeef1);
+    AllocationProperties properties{size, GraphicsAllocation::AllocationType::UNDECIDED};
+    properties.flags.allocateMemory = false;
+
+    auto allocation = memoryManager->allocateGraphicsMemory(properties, ptr);
+    EXPECT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
+
+    EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
+}
+
+TEST_F(MemoryAllocatorTest, givenAllocationWithoutFragmentsWhenCallingFreeGraphicsMemoryThenCallHandleFenceCompletion) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    EXPECT_EQ(0u, allocation->fragmentsStorage.fragmentCount);
+
+    EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(1u, memoryManager->handleFenceCompletionCalled);
+}
+
 class MockPrintfHandler : public PrintfHandler {
   public:
     static MockPrintfHandler *create(const MultiDispatchInfo &multiDispatchInfo, Device &deviceArg) {
@@ -1564,16 +1587,16 @@ TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenIt
     auto lastFenceValue2 = 23llu;
     auto lastFenceValue3 = 373llu;
 
-    EXPECT_EQ(0u, residency.lastFenceValues.size());
+    EXPECT_EQ(maxOsContextCount, residency.lastFenceValues.size());
 
     residency.updateCompletionData(lastFenceValue, osContext.getContextId());
-    EXPECT_EQ(1u, residency.lastFenceValues.size());
+    EXPECT_EQ(maxOsContextCount, residency.lastFenceValues.size());
     EXPECT_EQ(lastFenceValue, residency.lastFenceValues[0]);
     EXPECT_EQ(lastFenceValue, residency.getFenceValueForContextId(osContext.getContextId()));
 
     residency.updateCompletionData(lastFenceValue2, osContext2.getContextId());
 
-    EXPECT_EQ(2u, residency.lastFenceValues.size());
+    EXPECT_EQ(maxOsContextCount, residency.lastFenceValues.size());
     EXPECT_EQ(lastFenceValue2, residency.lastFenceValues[1]);
     EXPECT_EQ(lastFenceValue2, residency.getFenceValueForContextId(osContext2.getContextId()));
 

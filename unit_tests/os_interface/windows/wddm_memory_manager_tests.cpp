@@ -232,14 +232,74 @@ TEST_F(WddmMemoryManagerSimpleTest,
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmMemoryManagerTest,
-       givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhencreateWddmAllocationFailsThenGraphicsAllocationIsNotCreated) {
+TEST_F(WddmMemoryManagerTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhencreateWddmAllocationFailsThenGraphicsAllocationIsNotCreated) {
     char hostPtr[64];
     memoryManager->setDeferredDeleter(nullptr);
     setMapGpuVaFailConfigFcn(0, 1);
 
     auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(64, hostPtr);
     EXPECT_EQ(nullptr, allocation);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenZeroFenceValueOnSingleEngineRegisteredWhenHandleFenceCompletionIsCalledThenDoNotWaitOnCpu) {
+    ASSERT_EQ(1u, memoryManager->getRegisteredEnginesCount());
+
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({32, GraphicsAllocation::AllocationType::BUFFER}));
+    allocation->getResidencyData().updateCompletionData(0u, 0u);
+
+    memoryManager->handleFenceCompletion(allocation);
+    EXPECT_EQ(0u, wddm->waitFromCpuResult.called);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSingleEngineRegisteredWhenHandleFenceCompletionIsCalledThenWaitOnCpuOnce) {
+    ASSERT_EQ(1u, memoryManager->getRegisteredEnginesCount());
+
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({32, GraphicsAllocation::AllocationType::BUFFER}));
+    auto fence = &static_cast<OsContextWin *>(memoryManager->getRegisteredEngines()[0].osContext)->getResidencyController().getMonitoredFence();
+    allocation->getResidencyData().updateCompletionData(129u, 0u);
+
+    memoryManager->handleFenceCompletion(allocation);
+    EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
+    EXPECT_EQ(129u, wddm->waitFromCpuResult.uint64ParamPassed);
+    EXPECT_EQ(fence, wddm->waitFromCpuResult.monitoredFence);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValuesOnMultipleEnginesRegisteredWhenHandleFenceCompletionIsCalledThenWaitOnCpuForEachEngine) {
+    memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[1], 2, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    ASSERT_EQ(2u, memoryManager->getRegisteredEnginesCount());
+
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({32, GraphicsAllocation::AllocationType::BUFFER}));
+    auto lastEngineFence = &static_cast<OsContextWin *>(memoryManager->getRegisteredEngines()[1].osContext)->getResidencyController().getMonitoredFence();
+    allocation->getResidencyData().updateCompletionData(129u, 0u);
+    allocation->getResidencyData().updateCompletionData(152u, 1u);
+
+    memoryManager->handleFenceCompletion(allocation);
+    EXPECT_EQ(2u, wddm->waitFromCpuResult.called);
+    EXPECT_EQ(152u, wddm->waitFromCpuResult.uint64ParamPassed);
+    EXPECT_EQ(lastEngineFence, wddm->waitFromCpuResult.monitoredFence);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEnginesRegisteredWhenHandleFenceCompletionIsCalledThenWaitOnCpuForTheseEngines) {
+    memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[1], 2, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    ASSERT_EQ(2u, memoryManager->getRegisteredEnginesCount());
+
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({32, GraphicsAllocation::AllocationType::BUFFER}));
+    auto lastEngineFence = &static_cast<OsContextWin *>(memoryManager->getRegisteredEngines()[0].osContext)->getResidencyController().getMonitoredFence();
+    allocation->getResidencyData().updateCompletionData(129u, 0u);
+    allocation->getResidencyData().updateCompletionData(0, 1u);
+
+    memoryManager->handleFenceCompletion(allocation);
+    EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
+    EXPECT_EQ(129, wddm->waitFromCpuResult.uint64ParamPassed);
+    EXPECT_EQ(lastEngineFence, wddm->waitFromCpuResult.monitoredFence);
+
     memoryManager->freeGraphicsMemory(allocation);
 }
 

@@ -173,6 +173,7 @@ TEST_F(DeviceCommandStreamTest, CreateWddmCSRWithAubDump) {
 
 TEST_F(WddmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedMonitoredFence) {
     uint64_t stampToWait = 123;
+    wddm->waitFromCpuResult.called = 0u;
     csr->waitForFlushStamp(stampToWait);
     EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
     EXPECT_TRUE(wddm->waitFromCpuResult.success);
