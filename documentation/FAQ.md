@@ -12,6 +12,8 @@ that provides support for that platform (e.g. Coffee Lake requires kernel 4.14 o
 
 Our default (most frequent) validation config is currently (as of Q4'18) Ubuntu 18.04 LTS.
 
+Note: Neo will not work correctly on legacy kernels with Intel patches (e.g. 4.7.0.intel.r4.0).
+
 ### What toolchain do you recommend for building NEO on CentOS?
 
 We recommend the following packages:
