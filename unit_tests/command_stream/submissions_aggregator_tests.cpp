@@ -500,11 +500,16 @@ TEST(SubmissionsAggregator, givenMultipleOsContextsWhenAggregatingGraphicsAlloca
 
     submissionsAggregator.recordCommandBuffer(cmdBuffer0);
     submissionsAggregator.recordCommandBuffer(cmdBuffer1);
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 3u);
-    EXPECT_EQ(1u, alloc0.getInspectionId(3u));
-    EXPECT_EQ(1u, alloc1.getInspectionId(3u));
-    EXPECT_EQ(1u, alloc2.getInspectionId(3u));
-    EXPECT_EQ(1u, alloc3.getInspectionId(3u));
+
+    EXPECT_EQ(0u, alloc0.getInspectionId(1u));
+    EXPECT_EQ(0u, alloc1.getInspectionId(1u));
+    EXPECT_EQ(0u, alloc2.getInspectionId(1u));
+    EXPECT_EQ(0u, alloc3.getInspectionId(1u));
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 1u);
+    EXPECT_EQ(1u, alloc0.getInspectionId(1u));
+    EXPECT_EQ(1u, alloc1.getInspectionId(1u));
+    EXPECT_EQ(1u, alloc2.getInspectionId(1u));
+    EXPECT_EQ(1u, alloc3.getInspectionId(1u));
 }
 
 TEST(SubmissionsAggregator, givenMultipleOsContextsWhenAggregatingGraphicsAllocationsThenDoNotUpdateInspectionIdsOfOtherContexts) {
@@ -524,15 +529,15 @@ TEST(SubmissionsAggregator, givenMultipleOsContextsWhenAggregatingGraphicsAlloca
 
     submissionsAggregator.recordCommandBuffer(cmdBuffer0);
     submissionsAggregator.recordCommandBuffer(cmdBuffer1);
-    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 3u);
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 1u);
 
     for (auto osContextId = 0u; osContextId < alloc1.usageInfos.size(); osContextId++) {
-        if (osContextId != 3u) {
+        if (osContextId != 1u) {
             EXPECT_EQ(0u, alloc0.getInspectionId(osContextId));
         }
     }
     for (auto osContextId = 0u; osContextId < alloc0.usageInfos.size(); osContextId++) {
-        if (osContextId != 3u) {
+        if (osContextId != 1u) {
             EXPECT_EQ(0u, alloc0.getInspectionId(osContextId));
         }
     }

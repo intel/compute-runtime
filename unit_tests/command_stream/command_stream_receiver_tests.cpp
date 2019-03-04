@@ -398,11 +398,10 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhe
 TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {
     auto executionEnvironment = new ExecutionEnvironment;
 
-    std::unique_ptr<MockDevice> device0(Device::create<MockDevice>(nullptr, executionEnvironment, 0u));
-    std::unique_ptr<MockDevice> device1(Device::create<MockDevice>(nullptr, executionEnvironment, 1u));
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(nullptr, executionEnvironment, 0u));
 
-    auto &commandStreamReceiver0 = device0->getCommandStreamReceiver();
-    auto &commandStreamReceiver1 = device1->getCommandStreamReceiver();
+    auto &commandStreamReceiver0 = *executionEnvironment->commandStreamReceivers[0][0];
+    auto &commandStreamReceiver1 = *executionEnvironment->commandStreamReceivers[0][1];
 
     auto csr0ContextId = commandStreamReceiver0.getOsContext().getContextId();
     auto csr1ContextId = commandStreamReceiver1.getOsContext().getContextId();

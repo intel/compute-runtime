@@ -12,8 +12,6 @@
 #include <vector>
 namespace OCLRT {
 
-constexpr uint32_t maxOsContextCount = (4u * static_cast<uint32_t>(EngineInstanceConstants::numGpgpuEngineInstances)) + 1;
-
 struct ResidencyData {
     ResidencyData() {
         std::fill_n(resident, sizeof(resident), false);

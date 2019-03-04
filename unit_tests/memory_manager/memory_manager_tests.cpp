@@ -1458,26 +1458,23 @@ HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultCsrWhenChec
 HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultDeviceWhenCheckingUsageBeforeDestroyThenStoreItAsTemporaryAllocation) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.incRefInternal();
-    auto defaultDevice = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], &executionEnvironment, 0u));
-    auto nonDefaultDevice = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], &executionEnvironment, 1u));
-    auto engine = nonDefaultDevice->getDefaultEngine();
-    auto commandStreamReceiver = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
-    auto osContextId = engine.osContext->getContextId();
+    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], &executionEnvironment, 0u));
+    auto &defaultCommandStreamReceiver = device->getCommandStreamReceiver();
+    auto &nonDefaultCommandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> &>(*executionEnvironment.commandStreamReceivers[0][1]);
     auto memoryManager = executionEnvironment.memoryManager.get();
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    auto notReadyTaskCount = *commandStreamReceiver->getTagAddress() + 1;
+    auto notReadyTaskCount = *nonDefaultCommandStreamReceiver.getTagAddress() + 1;
 
-    EXPECT_NE(defaultDevice->getDeviceIndex(), nonDefaultDevice->getDeviceIndex());
-    EXPECT_EQ(2u, executionEnvironment.commandStreamReceivers.size());
+    EXPECT_NE(defaultCommandStreamReceiver.getOsContext().getContextId(), nonDefaultCommandStreamReceiver.getOsContext().getContextId());
 
-    commandStreamReceiver->taskCount = notReadyTaskCount;
-    commandStreamReceiver->latestFlushedTaskCount = notReadyTaskCount;
-    graphicsAllocation->updateTaskCount(notReadyTaskCount, osContextId);
+    nonDefaultCommandStreamReceiver.taskCount = notReadyTaskCount;
+    nonDefaultCommandStreamReceiver.latestFlushedTaskCount = notReadyTaskCount;
+    graphicsAllocation->updateTaskCount(notReadyTaskCount, nonDefaultCommandStreamReceiver.getOsContext().getContextId());
 
-    EXPECT_TRUE(commandStreamReceiver->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(nonDefaultCommandStreamReceiver.getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
-    EXPECT_FALSE(commandStreamReceiver->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
-    (*commandStreamReceiver->getTagAddress())++;
+    EXPECT_FALSE(nonDefaultCommandStreamReceiver.getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    (*nonDefaultCommandStreamReceiver.getTagAddress())++;
     // no need to call freeGraphicsAllocation
 }
 
