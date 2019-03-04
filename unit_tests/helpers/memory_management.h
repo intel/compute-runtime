@@ -47,7 +47,7 @@ struct AllocationEvent {
     size_t size;
     int frames;
     void *callstack[CallStackSize];
-    int fastLeakDetectionMode = 0;
+    bool fastLeakDetectionEnabled = false;
 };
 enum : int {
     maxEvents = 1024 * 1024,
@@ -71,7 +71,7 @@ extern size_t breakOnAllocationEvent;
 extern size_t breakOnDeallocationEvent;
 extern bool logTraces;
 extern bool detailedAllocationLoggingActive;
-extern int fastLeakDetectionMode;
+extern bool fastLeakDetectionEnabled;
 extern void (*deleteCallback)(void *);
 
 int detectLeaks();

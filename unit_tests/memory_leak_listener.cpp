@@ -22,11 +22,11 @@ void MemoryLeakListener::OnTestStart(const TestInfo &testInfo) {
     if (OCLRT::captureCallStacks) {
         MemoryManagement::detailedAllocationLoggingActive = true;
     }
-    MemoryManagement::fastLeakDetectionMode = 1;
+    MemoryManagement::fastLeakDetectionEnabled = true;
 }
 
 void MemoryLeakListener::OnTestEnd(const TestInfo &testInfo) {
-    MemoryManagement::fastLeakDetectionMode = 0;
+    MemoryManagement::fastLeakDetectionEnabled = false;
     EXPECT_EQ(numInitialBaseObjects, numBaseObjects);
 
     if (MemoryManagement::fastLeaksDetectionMode != MemoryManagement::LeakDetectionMode::STANDARD) {

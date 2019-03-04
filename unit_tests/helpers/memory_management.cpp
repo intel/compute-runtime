@@ -30,7 +30,7 @@ std::atomic<size_t> numAllocations(0);
 std::atomic<size_t> indexAllocation(0);
 std::atomic<size_t> indexDeallocation(0);
 bool logTraces = false;
-int fastLeakDetectionMode = 0;
+bool fastLeakDetectionEnabled = false;
 
 AllocationEvent eventsAllocated[maxEvents];
 AllocationEvent eventsDeallocated[maxEvents];
@@ -83,7 +83,7 @@ static void *allocate(size_t size) {
         return nullptr;
     }
 
-    if (!fastLeakDetectionMode) {
+    if (!fastLeakDetectionEnabled) {
         return malloc(size);
     }
 
@@ -112,14 +112,14 @@ static void *allocate(size_t size) {
 #else
         eventAllocation.frames = 0;
 #endif
-        eventAllocation.fastLeakDetectionMode = fastLeakDetectionMode;
+        eventAllocation.fastLeakDetectionEnabled = fastLeakDetectionEnabled;
 
         numAllocations++;
     } else {
         p = malloc(size);
     }
 
-    if (fastLeakDetectionMode && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
+    if (fastLeakDetectionEnabled && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
         auto currentIndex = fastEventsAllocatedCount++;
         fastEventsAllocated[currentIndex] = p;
         assert(currentIndex <= fastEvents);
@@ -136,7 +136,7 @@ static void *allocate(size_t size, const std::nothrow_t &) {
         return nullptr;
     }
 
-    if (!fastLeakDetectionMode) {
+    if (!fastLeakDetectionEnabled) {
         return malloc(size);
     }
 
@@ -164,13 +164,13 @@ static void *allocate(size_t size, const std::nothrow_t &) {
 #else
         eventAllocation.frames = 0;
 #endif
-        eventAllocation.fastLeakDetectionMode = fastLeakDetectionMode;
+        eventAllocation.fastLeakDetectionEnabled = fastLeakDetectionEnabled;
         numAllocations += p ? 1 : 0;
     } else {
         p = malloc(size);
     }
 
-    if (fastLeakDetectionMode && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
+    if (fastLeakDetectionEnabled && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
         auto currentIndex = fastEventsAllocatedCount++;
         fastEventsAllocated[currentIndex] = p;
         assert(currentIndex <= fastEvents);
@@ -183,7 +183,7 @@ template <AllocationEvent::EventType typeValid>
 static void deallocate(void *p) {
     deleteCallback(p);
 
-    if (!fastLeakDetectionMode) {
+    if (!fastLeakDetectionEnabled) {
         if (p) {
             free(p);
         }
@@ -209,11 +209,11 @@ static void deallocate(void *p) {
 #else
             eventDeallocation.frames = 0;
 #endif
-            eventDeallocation.fastLeakDetectionMode = fastLeakDetectionMode;
+            eventDeallocation.fastLeakDetectionEnabled = fastLeakDetectionEnabled;
         }
         free(p);
 
-        if (fastLeakDetectionMode && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
+        if (fastLeakDetectionEnabled && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
             auto currentIndex = fastEventsDeallocatedCount++;
             fastEventsDeallocated[currentIndex] = p;
             assert(currentIndex <= fastEvents);

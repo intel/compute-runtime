@@ -75,7 +75,7 @@ size_t MemoryManagementFixture::enumerateLeak(size_t indexAllocationTop, size_t 
             continue;
         }
 
-        if (fastLookup && eventAllocation.fastLeakDetectionMode == 0) {
+        if (fastLookup && !eventAllocation.fastLeakDetectionEnabled) {
             continue;
         }
 
@@ -96,7 +96,7 @@ size_t MemoryManagementFixture::enumerateLeak(size_t indexAllocationTop, size_t 
                     }
 
                     //allocated with fast lookup, but deallocated other way, not a match
-                    if (fastLookup && eventDeallocation.fastLeakDetectionMode != 1) {
+                    if (fastLookup && !eventDeallocation.fastLeakDetectionEnabled) {
                         continue;
                     }
 
