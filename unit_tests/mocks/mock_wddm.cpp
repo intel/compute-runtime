@@ -20,7 +20,7 @@ WddmMock::~WddmMock() {
     EXPECT_EQ(0, reservedAddresses.size());
 }
 
-bool WddmMock::makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) {
+bool WddmMock::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) {
     makeResidentResult.called++;
     makeResidentResult.handleCount = count;
     for (auto i = 0u; i < count; i++) {
@@ -30,7 +30,7 @@ bool WddmMock::makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTri
     return makeResidentResult.success = Wddm::makeResident(handles, count, cantTrimFurther, numberOfBytesToTrim);
 }
 
-bool WddmMock::evict(D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) {
+bool WddmMock::evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) {
     makeNonResidentResult.called++;
     return makeNonResidentResult.success = Wddm::evict(handles, num, sizeToTrim);
 }
@@ -69,7 +69,7 @@ bool WddmMock::createAllocation64k(WddmAllocation *alloc) {
     return createAllocationResult.success = Wddm::createAllocation64k(alloc);
 }
 
-bool WddmMock::destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
+bool WddmMock::destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
     destroyAllocationResult.called++;
     if (callBaseDestroyAllocations) {
         return destroyAllocationResult.success = Wddm::destroyAllocations(handles, allocationCount, resourceHandle);

@@ -239,7 +239,7 @@ bool Wddm::openAdapter() {
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::evict(D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim) {
+bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_EVICT Evict = {0};
     Evict.AllocationList = handleList;
@@ -256,7 +256,7 @@ bool Wddm::evict(D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &siz
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) {
+bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DDDI_MAKERESIDENT makeResident = {0};
     UINT priority = 0;
@@ -290,7 +290,7 @@ bool Wddm::makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFur
 
 bool Wddm::mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr) {
     void *mapPtr = allocation->getReservedAddress() != nullptr ? allocation->getReservedAddress() : cpuPtr;
-    return mapGpuVirtualAddressImpl(allocation->gmm, allocation->handle, mapPtr, allocation->gpuPtr,
+    return mapGpuVirtualAddressImpl(allocation->gmm, allocation->handle, mapPtr, allocation->getGpuAddressToModify(),
                                     MemoryManager::selectHeap(allocation, mapPtr, *hardwareInfoTable[gfxPlatform->eProductFamily]));
 }
 
@@ -545,7 +545,7 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
     return status;
 }
 
-bool Wddm::destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
+bool Wddm::destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_DESTROYALLOCATION2 DestroyAllocation = {0};
     DEBUG_BREAK_IF(!(allocationCount <= 1 || resourceHandle == 0));

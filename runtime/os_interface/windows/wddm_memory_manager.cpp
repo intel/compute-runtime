@@ -77,7 +77,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const Allocati
     // 64kb map is not needed
     auto status = wddm->mapGpuVirtualAddress(wddmAllocation.get(), cpuPtr);
     DEBUG_BREAK_IF(!status);
-    wddmAllocation->setCpuPtrAndGpuAddress(cpuPtr, wddmAllocation->gpuPtr);
+    wddmAllocation->setCpuAddress(cpuPtr);
 
     DebugManager.logAllocation(wddmAllocation.get());
     return wddmAllocation.release();
@@ -236,7 +236,6 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
     }
     status = wddm->mapGpuVirtualAddress(allocation.get(), ptr);
     DEBUG_BREAK_IF(!status);
-    allocation->setGpuAddress(allocation->gpuPtr);
 
     DebugManager.logAllocation(allocation.get());
     return allocation.release();
@@ -305,7 +304,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 
     if (input->gmm) {
         if (input->gmm->isRenderCompressed && wddm->getPageTableManager()) {
-            auto status = wddm->updateAuxTable(input->gpuPtr, input->gmm, false);
+            auto status = wddm->updateAuxTable(input->getGpuAddress(), input->gmm, false);
             DEBUG_BREAK_IF(!status);
         }
         delete input->gmm;
@@ -333,7 +332,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     delete gfxAllocation;
 }
 
-bool WddmMemoryManager::tryDeferDeletions(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
+bool WddmMemoryManager::tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
     bool status = true;
     if (deferredDeleter) {
         deferredDeleter->deferDeletion(DeferrableDeletion::create(wddm, handles, allocationCount, resourceHandle));
@@ -476,7 +475,6 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation) {
             wddm->destroyAllocations(&allocation->handle, 1, allocation->resourceHandle);
             wddmSuccess = STATUS_UNSUCCESSFUL;
         }
-        allocation->setGpuAddress(allocation->gpuPtr);
     }
     return (wddmSuccess == STATUS_SUCCESS);
 }

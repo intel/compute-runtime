@@ -55,8 +55,8 @@ class Wddm {
     static Wddm *createWddm();
     bool enumAdapters(HardwareInfo &outHardwareInfo);
 
-    MOCKABLE_VIRTUAL bool evict(D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
-    MOCKABLE_VIRTUAL bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim);
+    MOCKABLE_VIRTUAL bool evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
+    MOCKABLE_VIRTUAL bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim);
     bool mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr);
     bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData);
     D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size);
@@ -66,7 +66,7 @@ class Wddm {
     MOCKABLE_VIRTUAL NTSTATUS createAllocation(WddmAllocation *alloc);
     MOCKABLE_VIRTUAL bool createAllocation64k(WddmAllocation *alloc);
     MOCKABLE_VIRTUAL NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles);
-    MOCKABLE_VIRTUAL bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
+    MOCKABLE_VIRTUAL bool destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
     MOCKABLE_VIRTUAL bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc);
     bool openNTHandle(HANDLE handle, WddmAllocation *alloc);
     MOCKABLE_VIRTUAL void *lockResource(WddmAllocation &wddmAllocation);

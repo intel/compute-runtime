@@ -712,7 +712,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetWaitsFromCpuWhenLastFence
 
     residencyController->addToTrimCandidateList(&allocation1);
 
-    gdi->getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
+    gdi->getWaitFromCpuArg().hDevice = 0;
 
     residencyController->trimResidencyToBudget(3 * 4096);
 
@@ -909,7 +909,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidency
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenDontMarkAllocationsAsResident) {
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
 
-    auto makeResidentWithOutBytesToTrim = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = 4 * 4096;  return false; };
+    auto makeResidentWithOutBytesToTrim = [](const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = 4 * 4096;  return false; };
 
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2);
@@ -931,7 +931,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
     WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 2 * MemoryConstants::pageSize}, ptr));
     ASSERT_NE(nullptr, allocationTriple);
 
-    auto makeResidentWithOutBytesToTrim = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = 4 * 4096;  return false; };
+    auto makeResidentWithOutBytesToTrim = [](const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = 4 * 4096;  return false; };
 
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2);
@@ -951,7 +951,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenCallItAgainWithCantTrimFurtherSetToTrue) {
     MockWddmAllocation allocation1;
 
-    auto makeResidentWithOutBytesToTrim = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = 4 * 4096;  return false; };
+    auto makeResidentWithOutBytesToTrim = [](const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = 4 * 4096;  return false; };
 
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, false, ::testing::_)).Times(1);
@@ -970,7 +970,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenAllocationPackPassedWhenCal
     allocation2.handle = 2;
     ResidencyContainer residencyPack{&allocation1, &allocation2};
 
-    auto makeResidentWithOutBytesToTrim = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool {
+    auto makeResidentWithOutBytesToTrim = [](const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool {
         EXPECT_EQ(1, handles[0]);
         EXPECT_EQ(2, handles[1]);
         return true;
@@ -990,7 +990,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
 
     allocationToTrim.getResidencyData().updateCompletionData(residencyController->getMonitoredFence().lastSubmittedFence, osContext->getContextId());
 
-    auto makeResidentWithOutBytesToTrim = [allocationSize](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = allocationSize;  return false; };
+    auto makeResidentWithOutBytesToTrim = [allocationSize](const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = allocationSize;  return false; };
 
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2).WillOnce(::testing::Invoke(makeResidentWithOutBytesToTrim)).WillOnce(::testing::Return(true));
 
@@ -1008,8 +1008,8 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
     MockWddmAllocation allocation1;
     ResidencyContainer residencyPack{&allocation1};
 
-    auto makeResidentThatFails = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { return false; };
-    auto makeResidentThatSucceds = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { return true; };
+    auto makeResidentThatFails = [](const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { return false; };
+    auto makeResidentThatSucceds = [](const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { return true; };
 
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2).WillOnce(::testing::Invoke(makeResidentThatFails)).WillOnce(::testing::Invoke(makeResidentThatSucceds));
 

@@ -1355,7 +1355,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenReleaseingT
     wddm->resetPageTableManager(mockMngr);
 
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
-    wddmAlloc->gpuPtr = gpuVa;
+    wddmAlloc->setGpuAddress(gpuVa);
     wddmAlloc->gmm->isRenderCompressed = true;
 
     GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};

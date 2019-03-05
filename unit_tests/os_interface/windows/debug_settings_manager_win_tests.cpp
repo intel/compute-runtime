@@ -23,7 +23,7 @@ TEST(DebugSettingsManager, GivenDebugSettingsManagerWithLogAllocationsThenLogsCo
     MockWddmAllocation allocation;
     allocation.handle = 4;
     allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-    allocation.setMemoryPool(MemoryPool::System64KBPages);
+    allocation.memoryPool = MemoryPool::System64KBPages;
     auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
     allocation.gmm = gmm.get();
     allocation.gmm->resourceParams.Flags.Info.NonLocalOnly = 0;
@@ -59,7 +59,7 @@ TEST(DebugSettingsManager, GivenDebugSettingsManagerWithoutLogAllocationsThenAll
     MockWddmAllocation allocation;
     allocation.handle = 4;
     allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-    allocation.setMemoryPool(MemoryPool::System64KBPages);
+    allocation.memoryPool = MemoryPool::System64KBPages;
     auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
     allocation.gmm = gmm.get();
     allocation.gmm->resourceParams.Flags.Info.NonLocalOnly = 0;

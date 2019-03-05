@@ -19,7 +19,7 @@ class Wddm;
 
 class DeferrableDeletionImpl : public DeferrableDeletion {
   public:
-    DeferrableDeletionImpl(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
+    DeferrableDeletionImpl(Wddm *wddm, const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
     bool apply() override;
     ~DeferrableDeletionImpl();
 

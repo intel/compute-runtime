@@ -86,21 +86,22 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenMapGpuVirtualAddressIsCalledThenKmDaf
     allocation.gmm = gmm.get();
 
     auto heapIndex = MemoryManager::selectHeap(&allocation, allocation.getUnderlyingBuffer(), *platformDevices[0]);
-    wddmWithKmDafMock->mapGpuVirtualAddressImpl(allocation.gmm, allocation.handle, allocation.getUnderlyingBuffer(), allocation.gpuPtr, heapIndex);
+    wddmWithKmDafMock->mapGpuVirtualAddressImpl(allocation.gmm, allocation.handle, allocation.getUnderlyingBuffer(), allocation.getGpuAddressToModify(), heapIndex);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAdapter);
     EXPECT_EQ(wddmWithKmDafMock->getDevice(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hDevice);
     EXPECT_EQ(allocation.handle, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAllocation);
-    EXPECT_EQ(GmmHelper::decanonize(allocation.gpuPtr), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.GpuVirtualAddress);
+    EXPECT_EQ(GmmHelper::decanonize(allocation.getGpuAddress()), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.GpuVirtualAddress);
     EXPECT_EQ(wddmWithKmDafMock->getGdi()->escape, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.pfnEscape);
 }
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenFreeGpuVirtualAddressIsCalledThenKmDafListenerNotifyUnmapGpuVAIsFedWithCorrectParams) {
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, (void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, false);
-    allocation.gpuPtr = GPUVA;
+    auto &gpuPtr = allocation.getGpuAddressToModify();
+    gpuPtr = GPUVA;
 
-    wddmWithKmDafMock->freeGpuVirtualAddress(allocation.gpuPtr, allocation.getUnderlyingBufferSize());
+    wddmWithKmDafMock->freeGpuVirtualAddress(gpuPtr, allocation.getUnderlyingBufferSize());
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyUnmapGpuVAParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyUnmapGpuVAParametrization.hAdapter);

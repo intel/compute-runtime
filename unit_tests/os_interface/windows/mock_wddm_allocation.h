@@ -12,12 +12,11 @@ namespace OCLRT {
 
 class MockWddmAllocation : public WddmAllocation {
   public:
-    MockWddmAllocation() : WddmAllocation(GraphicsAllocation::AllocationType::UNDECIDED, nullptr, 0, nullptr, MemoryPool::MemoryNull, false) {
+    MockWddmAllocation() : WddmAllocation(GraphicsAllocation::AllocationType::UNDECIDED, nullptr, 0, nullptr, MemoryPool::MemoryNull, false), gpuPtr(gpuAddress) {
     }
+    using WddmAllocation::memoryPool;
 
-    void setMemoryPool(MemoryPool::Type pool) {
-        memoryPool = pool;
-    }
+    D3DGPU_VIRTUAL_ADDRESS &gpuPtr;
 };
 
 } // namespace OCLRT

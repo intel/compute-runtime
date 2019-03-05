@@ -15,9 +15,9 @@ template <typename... Args>
 DeferrableDeletion *DeferrableDeletion::create(Args... args) {
     return new DeferrableDeletionImpl(std::forward<Args>(args)...);
 }
-template DeferrableDeletion *DeferrableDeletion::create(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
+template DeferrableDeletion *DeferrableDeletion::create(Wddm *wddm, const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
 
-DeferrableDeletionImpl::DeferrableDeletionImpl(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
+DeferrableDeletionImpl::DeferrableDeletionImpl(Wddm *wddm, const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
     this->wddm = wddm;
     if (handles) {
         this->handles = new D3DKMT_HANDLE[allocationCount];

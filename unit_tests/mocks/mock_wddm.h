@@ -58,13 +58,13 @@ class WddmMock : public Wddm {
     WddmMock() : Wddm(){};
     ~WddmMock();
 
-    bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override;
-    bool evict(D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) override;
+    bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override;
+    bool evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) override;
     bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, HeapIndex heapIndex) override;
     bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) override;
     NTSTATUS createAllocation(WddmAllocation *alloc) override;
     bool createAllocation64k(WddmAllocation *alloc) override;
-    bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) override;
+    bool destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) override;
     bool destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext);
     bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) override;
     bool createContext(OsContextWin &osContext) override;
@@ -154,8 +154,8 @@ struct GmockWddm : WddmMock {
 
     void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type);
     uintptr_t virtualAllocAddress;
-    MOCK_METHOD4(makeResident, bool(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim));
-    MOCK_METHOD3(evict, bool(D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim));
+    MOCK_METHOD4(makeResident, bool(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim));
+    MOCK_METHOD3(evict, bool(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim));
     MOCK_METHOD1(createAllocationsAndMapGpuVa, NTSTATUS(OsHandleStorage &osHandles));
 
     NTSTATUS baseCreateAllocationAndMapGpuVa(OsHandleStorage &osHandles) {

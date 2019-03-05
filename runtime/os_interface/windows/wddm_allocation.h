@@ -15,38 +15,28 @@
 
 namespace OCLRT {
 
-class Gmm;
-
 struct OsHandle {
     D3DKMT_HANDLE handle;
     D3DGPU_VIRTUAL_ADDRESS gpuPtr;
     Gmm *gmm;
 };
 
-const size_t trimListUnusedPosition = (size_t)-1;
+constexpr size_t trimListUnusedPosition = std::numeric_limits<size_t>::max();
 
 class WddmAllocation : public GraphicsAllocation {
   public:
     // OS assigned fields
-    D3DKMT_HANDLE handle;              // set by createAllocation
+    D3DKMT_HANDLE handle = 0u;         // set by createAllocation
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
 
-    D3DGPU_VIRTUAL_ADDRESS gpuPtr; // set by mapGpuVA
-
     WddmAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool, multiOsContextCapable),
-          handle(0),
-          gpuPtr(0),
-          trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
-        reservedAddressSpace = reservedAddr;
+        : GraphicsAllocation(allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool, multiOsContextCapable), reservedAddressSpace(reservedAddr) {
+        trimCandidateListPositions.fill(trimListUnusedPosition);
     }
 
     WddmAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(allocationType, cpuPtrIn, sizeIn, sharedHandle, pool, multiOsContextCapable),
-          handle(0),
-          gpuPtr(0),
-          trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
-        reservedAddressSpace = nullptr;
+        : GraphicsAllocation(allocationType, cpuPtrIn, sizeIn, sharedHandle, pool, multiOsContextCapable) {
+        trimCandidateListPositions.fill(trimListUnusedPosition);
     }
 
     void *getAlignedCpuPtr() const {
@@ -84,10 +74,11 @@ class WddmAllocation : public GraphicsAllocation {
     bool needsMakeResidentBeforeLock = false;
 
     std::string getAllocationInfoString() const override;
+    uint64_t &getGpuAddressToModify() { return gpuAddress; }
 
   protected:
     ResidencyData residency;
-    std::vector<size_t> trimCandidateListPositions;
-    void *reservedAddressSpace;
+    std::array<size_t, maxOsContextCount> trimCandidateListPositions;
+    void *reservedAddressSpace = nullptr;
 };
 } // namespace OCLRT

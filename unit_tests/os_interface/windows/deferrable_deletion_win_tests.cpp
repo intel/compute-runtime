@@ -36,7 +36,7 @@ class MockDeferrableDeletion : public DeferrableDeletionImpl {
 class DeferrableDeletionTest : public ::testing::Test {
   public:
     WddmMock wddm;
-    D3DKMT_HANDLE handle = 0;
+    const D3DKMT_HANDLE handle = 0;
     uint32_t allocationCount = 1;
     D3DKMT_HANDLE resourceHandle = 0;
 };

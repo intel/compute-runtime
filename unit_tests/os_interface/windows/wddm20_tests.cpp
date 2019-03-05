@@ -275,8 +275,8 @@ TEST_F(Wddm20Tests, createAllocation32bit) {
 
     EXPECT_EQ(1u, wddm->mapGpuVirtualAddressResult.called);
 
-    EXPECT_LE(heap32baseAddress, allocation.gpuPtr);
-    EXPECT_GT(heap32baseAddress + heap32Size, allocation.gpuPtr);
+    EXPECT_LE(heap32baseAddress, allocation.getGpuAddress());
+    EXPECT_GT(heap32baseAddress + heap32Size, allocation.getGpuAddress());
 
     auto success = wddm->destroyAllocation(&allocation, osContext.get());
     EXPECT_TRUE(success);
@@ -298,8 +298,8 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddr
     auto cannonizedHeapBase = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Base);
     auto cannonizedHeapEnd = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Limit);
 
-    EXPECT_GE(allocation.gpuPtr, cannonizedHeapBase);
-    EXPECT_LE(allocation.gpuPtr, cannonizedHeapEnd);
+    EXPECT_GE(allocation.getGpuAddress(), cannonizedHeapBase);
+    EXPECT_LE(allocation.getGpuAddress(), cannonizedHeapEnd);
     delete allocation.gmm;
 }
 
@@ -348,11 +348,11 @@ TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
 
     auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(error);
-    EXPECT_TRUE(allocation.gpuPtr != 0);
+    EXPECT_TRUE(allocation.getGpuAddress() != 0);
 
-    error = wddm->freeGpuVirtualAddress(allocation.gpuPtr, allocation.getUnderlyingBufferSize());
+    error = wddm->freeGpuVirtualAddress(allocation.getGpuAddressToModify(), allocation.getUnderlyingBufferSize());
     EXPECT_TRUE(error);
-    EXPECT_TRUE(allocation.gpuPtr == 0);
+    EXPECT_TRUE(allocation.getGpuAddress() == 0);
 
     error = wddm->destroyAllocation(&allocation, osContext.get());
     EXPECT_TRUE(error);
@@ -373,8 +373,8 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
     bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
 
-    EXPECT_NE(0u, allocation.gpuPtr);
-    EXPECT_EQ(allocation.gpuPtr, GmmHelper::canonize(allocation.gpuPtr));
+    EXPECT_NE(0u, allocation.getGpuAddress());
+    EXPECT_EQ(allocation.getGpuAddress(), GmmHelper::canonize(allocation.getGpuAddress()));
 
     delete gmm;
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
@@ -393,7 +393,7 @@ TEST_F(Wddm20Tests, makeResidentNonResident) {
 
     auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(error);
-    EXPECT_TRUE(allocation.gpuPtr != 0);
+    EXPECT_TRUE(allocation.getGpuAddress() != 0);
 
     error = wddm->makeResident(&allocation.handle, 1, false, nullptr);
     EXPECT_TRUE(error);
@@ -431,7 +431,6 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     EXPECT_NE(0u, wddmAllocation->handle);
     EXPECT_EQ(ALLOCATION_HANDLE, wddmAllocation->handle);
     EXPECT_NE(0u, wddmAllocation->getGpuAddress());
-    EXPECT_EQ(wddmAllocation->gpuPtr, wddmAllocation->getGpuAddress());
     EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(nullptr, wddmAllocation->getAlignedCpuPtr());
     EXPECT_NE(nullptr, wddmAllocation->gmm);
