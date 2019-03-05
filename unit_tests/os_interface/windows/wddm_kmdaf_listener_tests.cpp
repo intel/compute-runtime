@@ -142,7 +142,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafList
     auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     allocation.gmm = gmm.get();
 
-    wddmWithKmDafMock->createAllocation(&allocation);
+    wddmWithKmDafMock->createAllocation(allocation.getAlignedCpuPtr(), gmm.get(), allocation.handle);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hAdapter);
@@ -156,7 +156,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocation64IsCalledThenKmDafLi
     auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     allocation.gmm = gmm.get();
 
-    wddmWithKmDafMock->createAllocation64k(&allocation);
+    wddmWithKmDafMock->createAllocation64k(gmm.get(), allocation.handle);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hAdapter);

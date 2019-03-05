@@ -50,23 +50,34 @@ bool WddmMock::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t si
     freeGpuVirtualAddressResult.called++;
     return freeGpuVirtualAddressResult.success = Wddm::freeGpuVirtualAddress(gpuPtr, size);
 }
-
-NTSTATUS WddmMock::createAllocation(WddmAllocation *alloc) {
+NTSTATUS WddmMock::createAllocation(WddmAllocation *wddmAllocation) {
+    if (wddmAllocation) {
+        return createAllocation(wddmAllocation->getAlignedCpuPtr(), wddmAllocation->gmm, wddmAllocation->handle);
+    }
+    return false;
+}
+NTSTATUS WddmMock::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
     createAllocationResult.called++;
     if (callBaseDestroyAllocations) {
-        createAllocationStatus = Wddm::createAllocation(alloc);
+        createAllocationStatus = Wddm::createAllocation(alignedCpuPtr, gmm, outHandle);
         createAllocationResult.success = createAllocationStatus == STATUS_SUCCESS;
     } else {
         createAllocationResult.success = true;
-        alloc->handle = ALLOCATION_HANDLE;
+        outHandle = ALLOCATION_HANDLE;
         return createAllocationStatus;
     }
     return createAllocationStatus;
 }
 
-bool WddmMock::createAllocation64k(WddmAllocation *alloc) {
+bool WddmMock::createAllocation64k(WddmAllocation *wddmAllocation) {
+    if (wddmAllocation) {
+        return createAllocation64k(wddmAllocation->gmm, wddmAllocation->handle);
+    }
+    return false;
+}
+bool WddmMock::createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
     createAllocationResult.called++;
-    return createAllocationResult.success = Wddm::createAllocation64k(alloc);
+    return createAllocationResult.success = Wddm::createAllocation64k(gmm, outHandle);
 }
 
 bool WddmMock::destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {

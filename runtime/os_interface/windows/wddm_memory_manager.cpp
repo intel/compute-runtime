@@ -67,7 +67,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const Allocati
     auto gmm = new Gmm(nullptr, sizeAligned, false, allocationData.flags.preferRenderCompressed, true, {});
     wddmAllocation->gmm = gmm;
 
-    if (!wddm->createAllocation64k(wddmAllocation.get())) {
+    if (!wddm->createAllocation64k(gmm, wddmAllocation->handle)) {
         delete gmm;
         return nullptr;
     }
@@ -459,10 +459,10 @@ AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {
 }
 
 bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation) {
-    auto wddmSuccess = wddm->createAllocation(allocation);
+    auto wddmSuccess = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->gmm, allocation->handle);
     if (wddmSuccess == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
         deferredDeleter->drain(true);
-        wddmSuccess = wddm->createAllocation(allocation);
+        wddmSuccess = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->gmm, allocation->handle);
     }
 
     if (wddmSuccess == STATUS_SUCCESS) {
