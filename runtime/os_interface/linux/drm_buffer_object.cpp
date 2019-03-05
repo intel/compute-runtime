@@ -108,18 +108,18 @@ void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_
     execObject.rsvd2 = 0;
 }
 
-void BufferObject::processRelocs(int &idx, uint32_t drmContextId) {
-    for (size_t i = 0; i < this->residency.size(); i++) {
+void BufferObject::processRelocs(int &idx, uint32_t drmContextId, ResidencyVector &residency) {
+    for (size_t i = 0; i < residency.size(); i++) {
         residency[i]->fillExecObject(execObjectsStorage[idx], drmContextId);
         idx++;
     }
 }
 
-int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId) {
+int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId, ResidencyVector &residency) {
     drm_i915_gem_execbuffer2 execbuf = {};
 
     int idx = 0;
-    processRelocs(idx, drmContextId);
+    processRelocs(idx, drmContextId, residency);
     this->fillExecObject(execObjectsStorage[idx], drmContextId);
     idx++;
 

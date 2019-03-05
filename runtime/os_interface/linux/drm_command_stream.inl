@@ -63,16 +63,15 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
             this->execObjectsStorage.resize(requiredSize);
         }
 
-        bb->swapResidencyVector(&this->residency);
         bb->setExecObjectsStorage(this->execObjectsStorage.data());
-        this->residency.reserve(512);
 
         bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
                  alignedStart, engineFlag | I915_EXEC_NO_RELOC,
                  batchBuffer.requiresCoherency,
-                 static_cast<OsContextLinux *>(osContext)->getDrmContextId());
+                 static_cast<OsContextLinux *>(osContext)->getDrmContextId(),
+                 this->residency);
 
-        bb->getResidency()->clear();
+        this->residency.clear();
 
         if (this->gemCloseWorkerOperationMode == gemCloseWorkerActive) {
             bb->reference();

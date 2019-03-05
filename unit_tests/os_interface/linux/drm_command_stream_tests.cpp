@@ -637,9 +637,6 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWhenItIsFlushedWithGemC
     auto drmAllocation = static_cast<DrmAllocation *>(storedGraphicsAllocation);
     auto bo = drmAllocation->getBO();
 
-    //no allocations should be connected
-    EXPECT_EQ(bo->getResidency()->size(), 0u);
-
     //spin until gem close worker finishes execution
     while (bo->getRefCount() > 1)
         ;
@@ -740,12 +737,6 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsF
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(cs.getCpuBase(), storedBase);
     EXPECT_EQ(cs.getGraphicsAllocation(), storedGraphicsAllocation);
-
-    auto drmAllocation = static_cast<DrmAllocation *>(storedGraphicsAllocation);
-    auto bo = drmAllocation->getBO();
-
-    //no allocations should be connected
-    EXPECT_EQ(bo->getResidency()->size(), 0u);
 
     mm->freeGraphicsMemory(dummyAllocation);
     mm->freeGraphicsMemory(commandBuffer);

@@ -68,7 +68,8 @@ TEST_F(DrmBufferObjectTest, exec) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = 0;
 
-    auto ret = bo->exec(0, 0, 0, false, 1);
+    BufferObject::ResidencyVector residency;
+    auto ret = bo->exec(0, 0, 0, false, 1, residency);
     EXPECT_EQ(mock->ioctl_res, ret);
     EXPECT_EQ(0u, mock->execBuffer.flags);
 }
@@ -76,7 +77,8 @@ TEST_F(DrmBufferObjectTest, exec) {
 TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = -1;
-    EXPECT_THROW(bo->exec(0, 0, 0, false, 1), std::exception);
+    BufferObject::ResidencyVector residency;
+    EXPECT_THROW(bo->exec(0, 0, 0, false, 1, residency), std::exception);
 }
 
 TEST_F(DrmBufferObjectTest, setTiling_success) {
