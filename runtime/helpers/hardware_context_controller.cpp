@@ -7,22 +7,20 @@
 
 #include "runtime/helpers/hardware_context_controller.h"
 
+#include "common/helpers/bit_helpers.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_context.h"
 
+#include <limits>
+
 using namespace OCLRT;
 
-HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext,
-                                                     uint32_t deviceIndex, uint32_t engineIndex, uint32_t flags) {
-    UNRECOVERABLE_IF(osContext.getNumDevicesSupported() > 1);
-    hardwareContexts.emplace_back(aubManager.createHardwareContext(deviceIndex, engineIndex, flags));
-}
-
-HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext,
-                                                     uint32_t engineIndex, uint32_t flags) {
-    DEBUG_BREAK_IF(osContext.getNumDevicesSupported() < 2);
-    for (uint32_t deviceIndex = 0; deviceIndex < osContext.getNumDevicesSupported(); deviceIndex++) {
-        hardwareContexts.emplace_back(aubManager.createHardwareContext(deviceIndex, engineIndex, flags));
+HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext, uint32_t engineIndex, uint32_t flags) {
+    constexpr uint32_t maxIndex = std::numeric_limits<decltype(osContext.getDeviceBitfiled())>::digits;
+    for (uint32_t deviceIndex = 0; deviceIndex < maxIndex; deviceIndex++) {
+        if (isBitSet(osContext.getDeviceBitfiled(), deviceIndex)) {
+            hardwareContexts.emplace_back(aubManager.createHardwareContext(deviceIndex, engineIndex, flags));
+        }
     }
 }
 

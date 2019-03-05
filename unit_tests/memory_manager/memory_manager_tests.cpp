@@ -1528,13 +1528,16 @@ TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCo
     EXPECT_EQ(1, memoryManager.registeredEngines[0].osContext->getRefInternalCount());
 }
 
-TEST(ResidencyDataTest, givenNumberOfSupportedDevicesWhenCreatingOsContextThenSetValidValue) {
+TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValue) {
     ExecutionEnvironment executionEnvironment;
     MockMemoryManager memoryManager(false, false, executionEnvironment);
-    uint32_t numSupportedDevices = 3;
+    uint32_t deviceBitfield = 3;
+    PreemptionMode preemptionMode = PreemptionMode::MidThread;
     memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0],
-                                             numSupportedDevices, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    EXPECT_EQ(numSupportedDevices, memoryManager.registeredEngines[0].osContext->getNumDevicesSupported());
+                                             deviceBitfield, preemptionMode);
+    EXPECT_EQ(2u, memoryManager.registeredEngines[0].osContext->getNumSupportedDevices());
+    EXPECT_EQ(deviceBitfield, memoryManager.registeredEngines[0].osContext->getDeviceBitfiled());
+    EXPECT_EQ(preemptionMode, memoryManager.registeredEngines[0].osContext->getPreemptionMode());
 }
 
 TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegistredFromHigherToLowerThenProperSizeIsReturned) {
@@ -1612,12 +1615,6 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationWasNotUnlockedThenItIsUn
 
     memoryManager.freeGraphicsMemory(allocation);
     EXPECT_EQ(1u, memoryManager.unlockResourceCalled);
-}
-
-TEST(OsContextTest, givenOsContextWithNumberOfSupportedDevicesAndPreemptiomModeWhenConstructingThenUsePassedValue) {
-    MockOsContext osContext(nullptr, 5, 7, {EngineType::ENGINE_RCS, 0}, PreemptionMode::MidThread);
-    EXPECT_EQ(7u, osContext.getNumDevicesSupported());
-    EXPECT_EQ(PreemptionMode::MidThread, osContext.getPreemptionMode());
 }
 
 TEST(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {

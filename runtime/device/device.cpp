@@ -179,7 +179,7 @@ bool Device::createEngines(const HardwareInfo *pHwInfo) {
         auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[getDeviceIndex()][deviceCsrIndex].get();
 
         auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver, gpgpuEngines[deviceCsrIndex],
-                                                                                         1, preemptionMode);
+                                                                                         (1 << getDeviceIndex()), preemptionMode);
         commandStreamReceiver->setupContext(*osContext);
 
         if (!commandStreamReceiver->initializeTagAllocation()) {

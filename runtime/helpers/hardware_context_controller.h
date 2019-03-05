@@ -18,7 +18,6 @@ class OsContext;
 class HardwareContextController {
   public:
     HardwareContextController() = delete;
-    HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext, uint32_t deviceIndex, uint32_t engineIndex, uint32_t flags);
     HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext, uint32_t engineIndex, uint32_t flags);
 
     void initialize();
