@@ -25,10 +25,6 @@ constexpr size_t trimListUnusedPosition = std::numeric_limits<size_t>::max();
 
 class WddmAllocation : public GraphicsAllocation {
   public:
-    // OS assigned fields
-    D3DKMT_HANDLE handle = 0u;         // set by createAllocation
-    D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
-
     WddmAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, bool multiOsContextCapable)
         : GraphicsAllocation(allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool, multiOsContextCapable), reservedAddressSpace(reservedAddr) {
         trimCandidateListPositions.fill(trimListUnusedPosition);
@@ -50,6 +46,13 @@ class WddmAllocation : public GraphicsAllocation {
     ResidencyData &getResidencyData() {
         return residency;
     }
+    const std::array<D3DKMT_HANDLE, maxHandleCount> &getHandles() const { return handles; }
+    D3DKMT_HANDLE &getHandleToModify(uint32_t handleIndex) { return handles[handleIndex]; }
+    D3DKMT_HANDLE getDefaultHandle() const { return handles[0]; }
+    void setDefaultHandle(D3DKMT_HANDLE handle) {
+        handles[0] = handle;
+    }
+    uint32_t getNumHandles() const;
 
     void setTrimCandidateListPosition(uint32_t osContextId, size_t position) {
         trimCandidateListPositions[osContextId] = position;
@@ -71,12 +74,23 @@ class WddmAllocation : public GraphicsAllocation {
     }
     void setGpuAddress(uint64_t graphicsAddress) { this->gpuAddress = graphicsAddress; }
     void setCpuAddress(void *cpuPtr) { this->cpuPtr = cpuPtr; }
-    bool needsMakeResidentBeforeLock = false;
 
     std::string getAllocationInfoString() const override;
     uint64_t &getGpuAddressToModify() { return gpuAddress; }
 
+    // OS assigned fields
+    D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
+    bool needsMakeResidentBeforeLock = false;
+
   protected:
+    std::string getHandleInfoString() const {
+        std::stringstream ss;
+        for (auto &handle : handles) {
+            ss << " Handle: " << handle;
+        }
+        return ss.str();
+    }
+    std::array<D3DKMT_HANDLE, maxHandleCount> handles{};
     ResidencyData residency;
     std::array<size_t, maxOsContextCount> trimCandidateListPositions;
     void *reservedAddressSpace = nullptr;

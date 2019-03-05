@@ -9,8 +9,9 @@
 
 namespace OCLRT {
 std::string WddmAllocation::getAllocationInfoString() const {
-    std::stringstream ss;
-    ss << " Handle: " << handle;
-    return ss.str();
+    return getHandleInfoString();
+}
+uint32_t WddmAllocation::getNumHandles() const {
+    return 1u;
 }
 } // namespace OCLRT

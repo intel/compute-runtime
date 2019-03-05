@@ -43,4 +43,5 @@ static constexpr std::array<EngineInstanceT, EngineInstanceConstants::numAllEngi
 }};
 
 constexpr uint32_t maxOsContextCount = EngineInstanceConstants::numGpgpuEngineInstances;
+constexpr uint32_t maxHandleCount = 1u;
 } // namespace OCLRT

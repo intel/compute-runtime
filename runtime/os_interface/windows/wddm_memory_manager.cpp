@@ -67,7 +67,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const Allocati
     auto gmm = new Gmm(nullptr, sizeAligned, false, allocationData.flags.preferRenderCompressed, true, {});
     wddmAllocation->gmm = gmm;
 
-    if (!wddm->createAllocation64k(gmm, wddmAllocation->handle)) {
+    if (!wddm->createAllocation64k(gmm, wddmAllocation->getHandleToModify(0u))) {
         delete gmm;
         return nullptr;
     }
@@ -257,7 +257,7 @@ void WddmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAll
 
     fragment.osInternalStorage = new OsHandle();
     fragment.osInternalStorage->gpuPtr = gfxAllocation->getGpuAddress();
-    fragment.osInternalStorage->handle = wddmMemory->handle;
+    fragment.osInternalStorage->handle = wddmMemory->getDefaultHandle();
     fragment.osInternalStorage->gmm = gfxAllocation->gmm;
     fragment.residency = &wddmMemory->getResidencyData();
     hostPtrManager->storeFragment(fragment);
@@ -276,13 +276,13 @@ void WddmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *g
 
 void *WddmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
     auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
-    return wddm->lockResource(wddmAllocation.handle, wddmAllocation.needsMakeResidentBeforeLock);
+    return wddm->lockResource(wddmAllocation.getDefaultHandle(), wddmAllocation.needsMakeResidentBeforeLock);
 }
 void WddmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation) {
     auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
-    wddm->unlockResource(wddmAllocation.handle);
+    wddm->unlockResource(wddmAllocation.getDefaultHandle());
     if (wddmAllocation.needsMakeResidentBeforeLock) {
-        auto evictionStatus = wddm->evictTemporaryResource(wddmAllocation.handle);
+        auto evictionStatus = wddm->evictTemporaryResource(wddmAllocation.getDefaultHandle());
         DEBUG_BREAK_IF(evictionStatus == EvictionStatus::FAILED);
     }
 }
@@ -315,14 +315,14 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         input->fragmentsStorage.fragmentCount > 0) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
     } else {
-        D3DKMT_HANDLE *allocationHandles = nullptr;
+        const D3DKMT_HANDLE *allocationHandles = nullptr;
         uint32_t allocationCount = 0;
         D3DKMT_HANDLE resourceHandle = 0;
         if (input->peekSharedHandle()) {
             resourceHandle = input->resourceHandle;
         } else {
-            allocationHandles = &input->handle;
-            allocationCount = 1;
+            allocationHandles = input->getHandles().data();
+            allocationCount = input->getNumHandles();
         }
         auto status = tryDeferDeletions(allocationHandles, allocationCount, resourceHandle);
         DEBUG_BREAK_IF(!status);
@@ -355,7 +355,7 @@ bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
     if (alloc == nullptr)
         return false;
     auto size = alloc->getUnderlyingBufferSize();
-    if (alloc->getGpuAddress() == 0u || size == 0 || (alloc->handle == 0 && alloc->fragmentsStorage.fragmentCount == 0))
+    if (alloc->getGpuAddress() == 0u || size == 0 || (alloc->getDefaultHandle() == 0 && alloc->fragmentsStorage.fragmentCount == 0))
         return false;
     return true;
 }
@@ -459,10 +459,10 @@ AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {
 }
 
 bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation) {
-    auto wddmSuccess = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->gmm, allocation->handle);
+    auto wddmSuccess = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->gmm, allocation->getHandleToModify(0u));
     if (wddmSuccess == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
         deferredDeleter->drain(true);
-        wddmSuccess = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->gmm, allocation->handle);
+        wddmSuccess = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->gmm, allocation->getHandleToModify(0u));
     }
 
     if (wddmSuccess == STATUS_SUCCESS) {
@@ -472,7 +472,7 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation) {
             mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr());
         }
         if (!mapSuccess) {
-            wddm->destroyAllocations(&allocation->handle, 1, allocation->resourceHandle);
+            wddm->destroyAllocations(allocation->getHandles().data(), allocation->getNumHandles(), allocation->resourceHandle);
             wddmSuccess = STATUS_UNSUCCESSFUL;
         }
     }

@@ -268,8 +268,12 @@ TEST_F(WddmMemoryManagerTest, givenAllocationPropertiesWithMultiOsContextCapable
 TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationToHostPtrManagerThenfragmentHasCorrectValues) {
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
+    uint64_t gpuPtr = 0x123;
 
-    WddmAllocation gfxAllocation(GraphicsAllocation::AllocationType::UNDECIDED, cpuPtr, size, nullptr, MemoryPool::MemoryNull, false);
+    MockWddmAllocation gfxAllocation;
+    gfxAllocation.cpuPtr = cpuPtr;
+    gfxAllocation.size = size;
+    gfxAllocation.gpuPtr = gpuPtr;
     memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
     auto fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
     EXPECT_NE(fragment, nullptr);
@@ -279,7 +283,7 @@ TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationT
     EXPECT_EQ(fragment->fragmentSize, size);
     EXPECT_NE(fragment->osInternalStorage, nullptr);
     EXPECT_EQ(fragment->osInternalStorage->gmm, gfxAllocation.gmm);
-    EXPECT_NE(fragment->osInternalStorage->gpuPtr, 0ULL);
+    EXPECT_EQ(fragment->osInternalStorage->gpuPtr, gpuPtr);
     EXPECT_EQ(fragment->osInternalStorage->handle, gfxAllocation.handle);
     EXPECT_NE(fragment->residency, nullptr);
 
@@ -338,7 +342,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(RESOURCE_HANDLE, wddmAlloc->resourceHandle);
-    EXPECT_EQ(ALLOCATION_HANDLE, wddmAlloc->handle);
+    EXPECT_EQ(ALLOCATION_HANDLE, wddmAlloc->getDefaultHandle());
 
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
@@ -353,7 +357,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCall
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(NT_RESOURCE_HANDLE, wddmAlloc->resourceHandle);
-    EXPECT_EQ(NT_ALLOCATION_HANDLE, wddmAlloc->handle);
+    EXPECT_EQ(NT_ALLOCATION_HANDLE, wddmAlloc->getDefaultHandle());
 
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }

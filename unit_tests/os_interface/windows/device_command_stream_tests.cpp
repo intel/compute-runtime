@@ -415,7 +415,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithResi
 
     EXPECT_EQ(1u, wddm->kmDafLockResult.called);
     EXPECT_EQ(1u, wddm->kmDafLockResult.lockedAllocations.size());
-    EXPECT_EQ(linearStreamAllocation->handle, wddm->kmDafLockResult.lockedAllocations[0]);
+    EXPECT_EQ(linearStreamAllocation->getDefaultHandle(), wddm->kmDafLockResult.lockedAllocations[0]);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
     memoryManager->freeGraphicsMemory(linearStreamAllocation);
@@ -436,7 +436,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
 
     EXPECT_EQ(1u, wddm->kmDafLockResult.called);
     EXPECT_EQ(1u, wddm->kmDafLockResult.lockedAllocations.size());
-    EXPECT_EQ(linearStreamAllocation->handle, wddm->kmDafLockResult.lockedAllocations[0]);
+    EXPECT_EQ(linearStreamAllocation->getDefaultHandle(), wddm->kmDafLockResult.lockedAllocations[0]);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
     memoryManager->freeGraphicsMemory(linearStreamAllocation);
@@ -457,7 +457,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
 
     EXPECT_EQ(1u, wddm->kmDafLockResult.called);
     EXPECT_EQ(1u, wddm->kmDafLockResult.lockedAllocations.size());
-    EXPECT_EQ(fillPatternAllocation->handle, wddm->kmDafLockResult.lockedAllocations[0]);
+    EXPECT_EQ(fillPatternAllocation->getDefaultHandle(), wddm->kmDafLockResult.lockedAllocations[0]);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
     memoryManager->freeGraphicsMemory(fillPatternAllocation);
@@ -478,7 +478,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
 
     EXPECT_EQ(1u, wddm->kmDafLockResult.called);
     EXPECT_EQ(1u, wddm->kmDafLockResult.lockedAllocations.size());
-    EXPECT_EQ(commandBufferAllocation->handle, wddm->kmDafLockResult.lockedAllocations[0]);
+    EXPECT_EQ(commandBufferAllocation->getDefaultHandle(), wddm->kmDafLockResult.lockedAllocations[0]);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
     memoryManager->freeGraphicsMemory(commandBufferAllocation);
@@ -679,7 +679,7 @@ TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 
-    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, static_cast<WddmAllocation *>(commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
 
     csr->processResidency(csr->getResidencyAllocations());
 
@@ -688,7 +688,7 @@ TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 
-    EXPECT_EQ(0u, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_EQ(0u, static_cast<WddmAllocation *>(commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -744,12 +744,12 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     EXPECT_EQ(6u + csrSurfaceCount, wddm->makeResidentResult.handleCount);
 
     std::vector<D3DKMT_HANDLE> expectedHandles;
-    expectedHandles.push_back(((WddmAllocation *)tagAllocation)->handle);
-    expectedHandles.push_back(((WddmAllocation *)commandBuffer)->handle);
-    expectedHandles.push_back(((WddmAllocation *)dshAlloc)->handle);
-    expectedHandles.push_back(((WddmAllocation *)iohAlloc)->handle);
-    expectedHandles.push_back(((WddmAllocation *)sshAlloc)->handle);
-    expectedHandles.push_back(((WddmAllocation *)csrCommandStream)->handle);
+    expectedHandles.push_back(static_cast<WddmAllocation *>(tagAllocation)->getDefaultHandle());
+    expectedHandles.push_back(static_cast<WddmAllocation *>(commandBuffer)->getDefaultHandle());
+    expectedHandles.push_back(static_cast<WddmAllocation *>(dshAlloc)->getDefaultHandle());
+    expectedHandles.push_back(static_cast<WddmAllocation *>(iohAlloc)->getDefaultHandle());
+    expectedHandles.push_back(static_cast<WddmAllocation *>(sshAlloc)->getDefaultHandle());
+    expectedHandles.push_back(static_cast<WddmAllocation *>(csrCommandStream)->getDefaultHandle());
 
     for (auto i = 0u; i < wddm->makeResidentResult.handleCount; i++) {
         auto handle = wddm->makeResidentResult.handlePack[i];
@@ -762,12 +762,12 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
         EXPECT_TRUE(found);
     }
 
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)tagAllocation)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
-    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)dshAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
-    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)iohAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)sshAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)csrCommandStream)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_NE(trimListUnusedPosition, static_cast<WddmAllocation *>(tagAllocation)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_NE(trimListUnusedPosition, static_cast<WddmAllocation *>(commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, static_cast<WddmAllocation *>(dshAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, static_cast<WddmAllocation *>(iohAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_NE(trimListUnusedPosition, static_cast<WddmAllocation *>(sshAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_NE(trimListUnusedPosition, static_cast<WddmAllocation *>(csrCommandStream)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
 
     memoryManager->freeGraphicsMemory(dshAlloc);
     memoryManager->freeGraphicsMemory(iohAlloc);

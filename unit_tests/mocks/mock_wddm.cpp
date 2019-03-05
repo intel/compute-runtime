@@ -52,7 +52,7 @@ bool WddmMock::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t si
 }
 NTSTATUS WddmMock::createAllocation(WddmAllocation *wddmAllocation) {
     if (wddmAllocation) {
-        return createAllocation(wddmAllocation->getAlignedCpuPtr(), wddmAllocation->gmm, wddmAllocation->handle);
+        return createAllocation(wddmAllocation->getAlignedCpuPtr(), wddmAllocation->gmm, wddmAllocation->getHandleToModify(0u));
     }
     return false;
 }
@@ -71,7 +71,7 @@ NTSTATUS WddmMock::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D
 
 bool WddmMock::createAllocation64k(WddmAllocation *wddmAllocation) {
     if (wddmAllocation) {
-        return createAllocation64k(wddmAllocation->gmm, wddmAllocation->handle);
+        return createAllocation64k(wddmAllocation->gmm, wddmAllocation->getHandleToModify(0u));
     }
     return false;
 }
@@ -90,14 +90,14 @@ bool WddmMock::destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocat
 }
 
 bool WddmMock::destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext) {
-    D3DKMT_HANDLE *allocationHandles = nullptr;
+    const D3DKMT_HANDLE *allocationHandles = nullptr;
     uint32_t allocationCount = 0;
     D3DKMT_HANDLE resourceHandle = 0;
     void *reserveAddress = alloc->getReservedAddress();
     if (alloc->peekSharedHandle()) {
         resourceHandle = alloc->resourceHandle;
     } else {
-        allocationHandles = &alloc->handle;
+        allocationHandles = alloc->getHandles().data();
         allocationCount = 1;
     }
     auto success = destroyAllocations(allocationHandles, allocationCount, resourceHandle);

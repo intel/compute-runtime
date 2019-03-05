@@ -107,13 +107,13 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
 
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::makeResident(GraphicsAllocation &gfxAllocation) {
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", reinterpret_cast<WddmAllocation *>(&gfxAllocation));
+    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", static_cast<WddmAllocation *>(&gfxAllocation));
 
     if (gfxAllocation.fragmentsStorage.fragmentCount == 0) {
-        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation handle =", reinterpret_cast<WddmAllocation *>(&gfxAllocation)->handle);
+        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation default handle =", static_cast<WddmAllocation *>(&gfxAllocation)->getDefaultHandle());
     } else {
-        for (uint32_t allocationId = 0; allocationId < reinterpret_cast<WddmAllocation *>(&gfxAllocation)->fragmentsStorage.fragmentCount; allocationId++) {
-            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "fragment handle =", reinterpret_cast<WddmAllocation *>(&gfxAllocation)->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle);
+        for (uint32_t allocationId = 0; allocationId < static_cast<WddmAllocation *>(&gfxAllocation)->fragmentsStorage.fragmentCount; allocationId++) {
+            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "fragment handle =", static_cast<WddmAllocation *>(&gfxAllocation)->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle);
         }
     }
 
@@ -197,7 +197,7 @@ void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContain
         if ((GraphicsAllocation::AllocationType::LINEAR_STREAM == graphicsAllocation->getAllocationType()) ||
             (GraphicsAllocation::AllocationType::FILL_PATTERN == graphicsAllocation->getAllocationType()) ||
             (GraphicsAllocation::AllocationType::COMMAND_BUFFER == graphicsAllocation->getAllocationType())) {
-            wddm->kmDafLock(static_cast<WddmAllocation *>(graphicsAllocation)->handle);
+            wddm->kmDafLock(static_cast<WddmAllocation *>(graphicsAllocation)->getDefaultHandle());
         }
     }
 }

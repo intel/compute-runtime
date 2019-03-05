@@ -75,17 +75,17 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenUnlockResourceIsCalledThenKmDafListen
 
 TEST_F(WddmKmDafListenerTest, givenWddmWhenMapGpuVirtualAddressIsCalledThenKmDafListenerNotifyMapGpuVAIsFedWithCorrectParams) {
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, (void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, false);
-    allocation.handle = ALLOCATION_HANDLE;
+    allocation.setDefaultHandle(ALLOCATION_HANDLE);
     auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     allocation.gmm = gmm.get();
 
     auto heapIndex = MemoryManager::selectHeap(&allocation, allocation.getUnderlyingBuffer(), *platformDevices[0]);
-    wddmWithKmDafMock->mapGpuVirtualAddressImpl(allocation.gmm, allocation.handle, allocation.getUnderlyingBuffer(), allocation.getGpuAddressToModify(), heapIndex);
+    wddmWithKmDafMock->mapGpuVirtualAddressImpl(allocation.gmm, allocation.getDefaultHandle(), allocation.getUnderlyingBuffer(), allocation.getGpuAddressToModify(), heapIndex);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAdapter);
     EXPECT_EQ(wddmWithKmDafMock->getDevice(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hDevice);
-    EXPECT_EQ(allocation.handle, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAllocation);
+    EXPECT_EQ(allocation.getDefaultHandle(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAllocation);
     EXPECT_EQ(GmmHelper::decanonize(allocation.getGpuAddress()), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.GpuVirtualAddress);
     EXPECT_EQ(wddmWithKmDafMock->getGdi()->escape, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.pfnEscape);
 }
@@ -135,13 +135,14 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafList
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, (void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, false);
     auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     allocation.gmm = gmm.get();
+    auto &handle = allocation.getHandleToModify(0u);
 
-    wddmWithKmDafMock->createAllocation(allocation.getAlignedCpuPtr(), gmm.get(), allocation.handle);
+    wddmWithKmDafMock->createAllocation(allocation.getAlignedCpuPtr(), gmm.get(), handle);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hAdapter);
     EXPECT_EQ(wddmWithKmDafMock->getDevice(), wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hDevice);
-    EXPECT_EQ(allocation.handle, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hAllocation);
+    EXPECT_EQ(handle, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hAllocation);
     EXPECT_EQ(wddmWithKmDafMock->getGdi()->escape, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.pfnEscape);
 }
 
@@ -149,13 +150,14 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocation64IsCalledThenKmDafLi
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, (void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, false);
     auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     allocation.gmm = gmm.get();
+    auto &handle = allocation.getHandleToModify(0u);
 
-    wddmWithKmDafMock->createAllocation64k(gmm.get(), allocation.handle);
+    wddmWithKmDafMock->createAllocation64k(gmm.get(), handle);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hAdapter);
     EXPECT_EQ(wddmWithKmDafMock->getDevice(), wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hDevice);
-    EXPECT_EQ(allocation.handle, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hAllocation);
+    EXPECT_EQ(handle, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.hAllocation);
     EXPECT_EQ(wddmWithKmDafMock->getGdi()->escape, wddmWithKmDafMock->getKmDafListenerMock().notifyWriteTargetParametrization.pfnEscape);
 }
 

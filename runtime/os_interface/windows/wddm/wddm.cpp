@@ -290,7 +290,7 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
 
 bool Wddm::mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr) {
     void *mapPtr = allocation->getReservedAddress() != nullptr ? allocation->getReservedAddress() : cpuPtr;
-    return mapGpuVirtualAddressImpl(allocation->gmm, allocation->handle, mapPtr, allocation->getGpuAddressToModify(),
+    return mapGpuVirtualAddressImpl(allocation->gmm, allocation->getDefaultHandle(), mapPtr, allocation->getGpuAddressToModify(),
                                     MemoryManager::selectHeap(allocation, mapPtr, *hardwareInfoTable[gfxPlatform->eProductFamily]));
 }
 
@@ -466,8 +466,8 @@ bool Wddm::createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
     }
 
     outHandle = AllocationInfo.hAllocation;
-
     kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, adapter, device, outHandle, gdi->escape);
+
     return true;
 }
 
@@ -590,7 +590,7 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     status = gdi->openResource(&OpenResource);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
-    alloc->handle = allocationInfo[0].hAllocation;
+    alloc->setDefaultHandle(allocationInfo[0].hAllocation);
     alloc->resourceHandle = OpenResource.hResource;
 
     auto resourceInfo = const_cast<void *>(allocationInfo[0].pPrivateDriverData);
@@ -627,7 +627,7 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
     status = gdi->openResourceFromNtHandle(&openResourceFromNtHandle);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
-    alloc->handle = allocationInfo2[0].hAllocation;
+    alloc->setDefaultHandle(allocationInfo2[0].hAllocation);
     alloc->resourceHandle = openResourceFromNtHandle.hResource;
 
     auto resourceInfo = const_cast<void *>(allocationInfo2[0].pPrivateDriverData);
@@ -652,7 +652,6 @@ void *Wddm::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPrio
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
     kmDafLock(handle);
-
     return lock2.pData;
 }
 
