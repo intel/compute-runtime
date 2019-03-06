@@ -48,7 +48,6 @@ class DrmBufferObjectFixture {
         ASSERT_NE(nullptr, this->mock);
         bo = new TestedBufferObject(this->mock);
         ASSERT_NE(nullptr, bo);
-        bo->setExecObjectsStorage(execObjectsStorage);
     }
 
     void TearDown() {
@@ -69,7 +68,8 @@ TEST_F(DrmBufferObjectTest, exec) {
     mock->ioctl_res = 0;
 
     BufferObject::ResidencyVector residency;
-    auto ret = bo->exec(0, 0, 0, false, 1, residency);
+    drm_i915_gem_exec_object2 execObjectsStorage = {};
+    auto ret = bo->exec(0, 0, 0, false, 1, residency, &execObjectsStorage);
     EXPECT_EQ(mock->ioctl_res, ret);
     EXPECT_EQ(0u, mock->execBuffer.flags);
 }
@@ -78,7 +78,8 @@ TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = -1;
     BufferObject::ResidencyVector residency;
-    EXPECT_THROW(bo->exec(0, 0, 0, false, 1, residency), std::exception);
+    drm_i915_gem_exec_object2 execObjectsStorage = {};
+    EXPECT_THROW(bo->exec(0, 0, 0, false, 1, residency, &execObjectsStorage), std::exception);
 }
 
 TEST_F(DrmBufferObjectTest, setTiling_success) {
@@ -145,8 +146,6 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
     ASSERT_NE(nullptr, mock.get());
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, bo.get());
-    drm_i915_gem_exec_object2 execObjectsStorage[3];
-    bo->setExecObjectsStorage(execObjectsStorage);
 
     // fail DRM_IOCTL_I915_GEM_EXECBUFFER2 in pin
     mock->ioctl_res = -1;
@@ -168,8 +167,6 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
     ASSERT_NE(nullptr, mock.get());
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, bo.get());
-    drm_i915_gem_exec_object2 execObjectsStorage[4];
-    bo->setExecObjectsStorage(execObjectsStorage);
     mock->ioctl_res = 0;
 
     std::unique_ptr<TestedBufferObject> boToPin(new TestedBufferObject(mock.get()));

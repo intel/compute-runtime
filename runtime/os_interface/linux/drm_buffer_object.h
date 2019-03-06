@@ -42,7 +42,7 @@ class BufferObject {
 
     MOCKABLE_VIRTUAL int pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t drmContextId);
 
-    int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId, ResidencyVector &residency);
+    int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId, ResidencyVector &residency, drm_i915_gem_exec_object2 *execObjectsStorage);
 
     int wait(int64_t timeoutNs);
     bool close();
@@ -61,9 +61,6 @@ class BufferObject {
     void setLockedAddress(void *cpuAddress) { this->lockedAddress = cpuAddress; }
     void setUnmapSize(uint64_t unmapSize) { this->unmapSize = unmapSize; }
     uint64_t peekUnmapSize() const { return unmapSize; }
-    void setExecObjectsStorage(drm_i915_gem_exec_object2 *storage) {
-        execObjectsStorage = storage;
-    }
     StorageAllocatorType peekAllocationType() const { return storageAllocatorType; }
     void setAllocationType(StorageAllocatorType allocatorType) { this->storageAllocatorType = allocatorType; }
     bool peekIsReusableAllocation() { return this->isReused; }
@@ -75,8 +72,6 @@ class BufferObject {
 
     std::atomic<uint32_t> refCount;
 
-    drm_i915_gem_exec_object2 *execObjectsStorage;
-
     int handle; // i915 gem object handle
     bool isReused;
 
@@ -85,7 +80,7 @@ class BufferObject {
     uint32_t stride;
 
     MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t drmContextId);
-    void processRelocs(int &idx, uint32_t drmContextId, ResidencyVector &residency);
+    void processRelocs(int &idx, uint32_t drmContextId, ResidencyVector &residency, drm_i915_gem_exec_object2 *execObjectsStorage);
 
     uint64_t gpuAddress = 0llu;
 

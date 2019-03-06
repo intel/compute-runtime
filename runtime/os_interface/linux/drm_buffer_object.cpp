@@ -32,7 +32,6 @@ namespace OCLRT {
 BufferObject::BufferObject(Drm *drm, int handle, bool isAllocated) : drm(drm), refCount(1), handle(handle), isReused(false), isAllocated(isAllocated) {
     this->tiling_mode = I915_TILING_NONE;
     this->stride = 0;
-    execObjectsStorage = nullptr;
     this->size = 0;
     this->lockedAddress = nullptr;
 }
@@ -108,18 +107,18 @@ void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_
     execObject.rsvd2 = 0;
 }
 
-void BufferObject::processRelocs(int &idx, uint32_t drmContextId, ResidencyVector &residency) {
+void BufferObject::processRelocs(int &idx, uint32_t drmContextId, ResidencyVector &residency, drm_i915_gem_exec_object2 *execObjectsStorage) {
     for (size_t i = 0; i < residency.size(); i++) {
         residency[i]->fillExecObject(execObjectsStorage[idx], drmContextId);
         idx++;
     }
 }
 
-int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId, ResidencyVector &residency) {
+int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId, ResidencyVector &residency, drm_i915_gem_exec_object2 *execObjectsStorage) {
     drm_i915_gem_execbuffer2 execbuf = {};
 
     int idx = 0;
-    processRelocs(idx, drmContextId, residency);
+    processRelocs(idx, drmContextId, residency, execObjectsStorage);
     this->fillExecObject(execObjectsStorage[idx], drmContextId);
     idx++;
 

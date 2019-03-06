@@ -63,13 +63,12 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
             this->execObjectsStorage.resize(requiredSize);
         }
 
-        bb->setExecObjectsStorage(this->execObjectsStorage.data());
-
         bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
                  alignedStart, engineFlag | I915_EXEC_NO_RELOC,
                  batchBuffer.requiresCoherency,
                  static_cast<OsContextLinux *>(osContext)->getDrmContextId(),
-                 this->residency);
+                 this->residency,
+                 this->execObjectsStorage.data());
 
         this->residency.clear();
 
