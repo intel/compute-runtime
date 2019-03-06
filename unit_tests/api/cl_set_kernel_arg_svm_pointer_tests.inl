@@ -179,7 +179,9 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerWithOffset_invalidArgVal
     const DeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
-        auto svmAlloc = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSvm);
+        auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSvm);
+        ASSERT_NE(nullptr, svmData);
+        auto svmAlloc = svmData->gpuAllocation;
         EXPECT_NE(nullptr, svmAlloc);
 
         size_t offset = svmAlloc->getUnderlyingBufferSize() + 1;

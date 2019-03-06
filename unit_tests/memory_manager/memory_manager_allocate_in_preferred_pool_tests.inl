@@ -347,14 +347,14 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenBufferTypeIsPassedAndAllocateInDev
 
 TEST(MemoryManagerTest, givenSvmAllocationTypeWhenGetAllocationDataIsCalledThenZeroCopyIsRequested) {
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::SVM}, {}, nullptr);
+    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::SVM_ZERO_COPY}, {}, nullptr);
     EXPECT_TRUE(allocData.flags.mustBeZeroCopy);
     EXPECT_TRUE(allocData.flags.allocateMemory);
 }
 
 TEST(MemoryManagerTest, givenSvmAllocationTypeWhenGetAllocationDataIsCalledThen64kbPagesAreAllowedAnd32BitAllocationIsDisallowed) {
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::SVM}, {}, nullptr);
+    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::SVM_ZERO_COPY}, {}, nullptr);
     EXPECT_TRUE(allocData.flags.allow64kbPages);
     EXPECT_FALSE(allocData.flags.allow32Bit);
 }

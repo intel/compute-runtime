@@ -13,5 +13,6 @@ struct MockSVMAllocsManager : SVMAllocsManager {
     using SVMAllocsManager::memoryManager;
     using SVMAllocsManager::SVMAllocs;
     using SVMAllocsManager::SVMAllocsManager;
+    using SVMAllocsManager::svmMapOperations;
 };
 } // namespace NEO

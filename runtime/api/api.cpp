@@ -3628,11 +3628,12 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
 
     GraphicsAllocation *pSvmAlloc = nullptr;
     if (argValue != nullptr) {
-        pSvmAlloc = pKernel->getContext().getSVMAllocsManager()->getSVMAlloc(argValue);
-        if (pSvmAlloc == nullptr) {
+        auto svmData = pKernel->getContext().getSVMAllocsManager()->getSVMAlloc(argValue);
+        if (svmData == nullptr) {
             retVal = CL_INVALID_ARG_VALUE;
             return retVal;
         }
+        pSvmAlloc = svmData->gpuAllocation;
     }
     retVal = pKernel->setArgSvmAlloc(argIndex, const_cast<void *>(argValue), pSvmAlloc);
     return retVal;
@@ -3667,13 +3668,13 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
 
         pKernel->clearKernelExecInfo();
         for (uint32_t i = 0; i < numPointers; i++) {
-            NEO::GraphicsAllocation *pSvmAlloc =
-                pKernel->getContext().getSVMAllocsManager()->getSVMAlloc((const void *)pSvmPtrList[i]);
-            if (pSvmAlloc == nullptr) {
+            auto svmData = pKernel->getContext().getSVMAllocsManager()->getSVMAlloc((const void *)pSvmPtrList[i]);
+            if (svmData == nullptr) {
                 retVal = CL_INVALID_VALUE;
                 return retVal;
             }
-            pKernel->setKernelExecInfo(pSvmAlloc);
+            GraphicsAllocation *svmAlloc = svmData->gpuAllocation;
+            pKernel->setKernelExecInfo(svmAlloc);
         }
         break;
     }
@@ -4145,14 +4146,14 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
 
     for (uint32_t i = 0; i < numSvmPointers; i++) {
         SVMAllocsManager *pSvmAllocMgr = pCommandQueue->getContext().getSVMAllocsManager();
-        GraphicsAllocation *pSvmAlloc = pSvmAllocMgr->getSVMAlloc(svmPointers[i]);
-        if (pSvmAlloc == nullptr) {
+        auto svmData = pSvmAllocMgr->getSVMAlloc(svmPointers[i]);
+        if (svmData == nullptr) {
             retVal = CL_INVALID_VALUE;
             return retVal;
         }
         if (sizes != nullptr && sizes[i] != 0) {
-            pSvmAlloc = pSvmAllocMgr->getSVMAlloc(reinterpret_cast<void *>((size_t)svmPointers[i] + sizes[i] - 1));
-            if (pSvmAlloc == nullptr) {
+            svmData = pSvmAllocMgr->getSVMAlloc(reinterpret_cast<void *>((size_t)svmPointers[i] + sizes[i] - 1));
+            if (svmData == nullptr) {
                 retVal = CL_INVALID_VALUE;
                 return retVal;
             }

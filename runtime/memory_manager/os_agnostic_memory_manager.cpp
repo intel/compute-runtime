@@ -30,7 +30,6 @@ struct OsHandle {
 };
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
-
     auto sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize);
     MemoryAllocation *memoryAllocation = nullptr;
 
@@ -50,6 +49,19 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
         if (!memoryAllocation) {
             alignedFreeWrapper(ptr);
             return nullptr;
+        }
+        if (allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU) {
+            //add 2MB padding in case mapPtr is not 2MB aligned
+            size_t reserveSize = sizeAligned + allocationData.alignment;
+            void *gpuPtr = reserveCpuAddressRange(reserveSize);
+            if (!gpuPtr) {
+                delete memoryAllocation;
+                alignedFreeWrapper(ptr);
+                return nullptr;
+            }
+            memoryAllocation->setReservedAddressRange(gpuPtr, reserveSize);
+            gpuPtr = alignUp(gpuPtr, allocationData.alignment);
+            memoryAllocation->setCpuPtrAndGpuAddress(ptr, reinterpret_cast<uint64_t>(gpuPtr));
         }
     }
     counter++;

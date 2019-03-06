@@ -11,14 +11,18 @@
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_queue/enqueue_map_buffer_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_svm_manager.h"
 #include "unit_tests/utilities/base_object_utils.h"
 
 using namespace NEO;
@@ -454,7 +458,9 @@ TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThen
 }
 
 TEST_F(EnqueueSvmTest, enqueueTaskWithKernelExecInfo_success) {
-    GraphicsAllocation *pSvmAlloc = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
+    auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
+    ASSERT_NE(nullptr, svmData);
+    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocation;
     EXPECT_NE(nullptr, ptrSVM);
 
     std::unique_ptr<Program> program(Program::create("FillBufferBytes", context, *pDevice, true, &retVal));
@@ -481,7 +487,9 @@ TEST_F(EnqueueSvmTest, enqueueTaskWithKernelExecInfo_success) {
 }
 
 TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSurfacesAreMadeResident) {
-    GraphicsAllocation *pSvmAlloc = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
+    auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
+    ASSERT_NE(nullptr, svmData);
+    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocation;
     EXPECT_NE(nullptr, ptrSVM);
 
     auto program = clUniquePtr(Program::create("FillBufferBytes", context, *pDevice, true, &retVal));
@@ -528,7 +536,9 @@ TEST_F(EnqueueSvmTest, concurentMapAccess) {
     auto allocSvm = [&](uint32_t from, uint32_t to) {
         for (uint32_t i = from; i <= to; i++) {
             svmPtrs[i] = context->getSVMAllocsManager()->createSVMAlloc(1, 0);
-            auto ga = context->getSVMAllocsManager()->getSVMAlloc(svmPtrs[i]);
+            auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtrs[i]);
+            ASSERT_NE(nullptr, svmData);
+            auto ga = svmData->gpuAllocation;
             EXPECT_NE(nullptr, ga);
             EXPECT_EQ(ga->getUnderlyingBuffer(), svmPtrs[i]);
         }
@@ -581,4 +591,271 @@ TEST_F(EnqueueSvmTest, enqueueSVMMigrateMem_Success) {
         nullptr  // cL_event *event
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+struct EnqueueSvmTestLocalMemory : public DeviceFixture,
+                                   public ::testing::Test {
+    void SetUp() override {
+        dbgRestore = std::make_unique<DebugManagerStateRestore>();
+        DebugManager.flags.EnableLocalMemory.set(1);
+
+        DeviceFixture::SetUp();
+        context = std::make_unique<MockContext>(pDevice, true);
+        size = 256;
+        svmPtr = context->getSVMAllocsManager()->createSVMAlloc(size, 0);
+        ASSERT_NE(nullptr, svmPtr);
+        mockSvmManager = reinterpret_cast<MockSVMAllocsManager *>(context->getSVMAllocsManager());
+    }
+
+    void TearDown() override {
+        context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
+        context.reset(nullptr);
+        DeviceFixture::TearDown();
+    }
+
+    cl_int retVal = CL_SUCCESS;
+    void *svmPtr = nullptr;
+    size_t size;
+    MockSVMAllocsManager *mockSvmManager;
+    std::unique_ptr<DebugManagerStateRestore> dbgRestore;
+    std::unique_ptr<MockContext> context;
+    HardwareParse hwParse;
+};
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapValidSvmPtrThenExpectSingleWalker) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    LinearStream &stream = queue.getCS(0x1000);
+
+    cl_event event = nullptr;
+
+    uintptr_t offset = 64;
+    void *regionSvmPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(svmPtr) + offset);
+    size_t regionSize = 64;
+    retVal = queue.enqueueSVMMap(
+        CL_FALSE,
+        CL_MAP_READ,
+        regionSvmPtr,
+        regionSize,
+        0,
+        nullptr,
+        &event);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
+    ASSERT_NE(nullptr, svmMap);
+    EXPECT_EQ(regionSvmPtr, svmMap->regionSvmPtr);
+    EXPECT_EQ(svmPtr, svmMap->baseSvmPtr);
+    EXPECT_EQ(regionSize, svmMap->regionSize);
+    EXPECT_EQ(offset, svmMap->offset);
+    EXPECT_TRUE(svmMap->readOnlyMap);
+
+    queue.flush();
+    hwParse.parseCommands<FamilyType>(stream);
+    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    EXPECT_EQ(1u, walkerCount);
+
+    constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_MAP;
+    cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
+    EXPECT_EQ(expectedCmd, actualCmd);
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapSvmPtrTwiceThenExpectSingleWalker) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    LinearStream &stream = queue.getCS(0x1000);
+
+    uintptr_t offset = 64;
+    void *regionSvmPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(svmPtr) + offset);
+    size_t regionSize = 64;
+    retVal = queue.enqueueSVMMap(
+        CL_FALSE,
+        CL_MAP_WRITE,
+        regionSvmPtr,
+        regionSize,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
+    ASSERT_NE(nullptr, svmMap);
+    EXPECT_EQ(regionSvmPtr, svmMap->regionSvmPtr);
+    EXPECT_EQ(svmPtr, svmMap->baseSvmPtr);
+    EXPECT_EQ(regionSize, svmMap->regionSize);
+    EXPECT_EQ(offset, svmMap->offset);
+    EXPECT_FALSE(svmMap->readOnlyMap);
+
+    EXPECT_EQ(1u, mockSvmManager->svmMapOperations.getNumMapOperations());
+
+    cl_event event = nullptr;
+    retVal = queue.enqueueSVMMap(
+        CL_FALSE,
+        CL_MAP_WRITE,
+        regionSvmPtr,
+        regionSize,
+        0,
+        nullptr,
+        &event);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, mockSvmManager->svmMapOperations.getNumMapOperations());
+
+    queue.flush();
+    hwParse.parseCommands<FamilyType>(stream);
+    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    EXPECT_EQ(1u, walkerCount);
+
+    constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_MAP;
+    cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
+    EXPECT_EQ(expectedCmd, actualCmd);
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenNoMappedSvmPtrThenExpectNoUnmapCopyKernel) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    LinearStream &stream = queue.getCS(0x1000);
+
+    cl_event event = nullptr;
+    retVal = queue.enqueueSVMUnmap(
+        svmPtr,
+        0,
+        nullptr,
+        &event);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    queue.flush();
+    hwParse.parseCommands<FamilyType>(stream);
+    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    EXPECT_EQ(0u, walkerCount);
+
+    constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_UNMAP;
+    cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
+    EXPECT_EQ(expectedCmd, actualCmd);
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIsReadOnlyThenExpectNoUnmapCopyKernel) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    LinearStream &stream = queue.getCS(0x1000);
+
+    retVal = queue.enqueueSVMMap(
+        CL_FALSE,
+        CL_MAP_READ,
+        svmPtr,
+        size,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, mockSvmManager->svmMapOperations.getNumMapOperations());
+    auto svmMap = mockSvmManager->svmMapOperations.get(svmPtr);
+    ASSERT_NE(nullptr, svmMap);
+
+    queue.flush();
+    size_t offset = stream.getUsed();
+    hwParse.parseCommands<FamilyType>(stream);
+    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    EXPECT_EQ(1u, walkerCount);
+    hwParse.TearDown();
+
+    cl_event event = nullptr;
+    retVal = queue.enqueueSVMUnmap(
+        svmPtr,
+        0,
+        nullptr,
+        &event);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, mockSvmManager->svmMapOperations.getNumMapOperations());
+
+    queue.flush();
+    hwParse.parseCommands<FamilyType>(stream, offset);
+    walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    EXPECT_EQ(0u, walkerCount);
+
+    constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_UNMAP;
+    cl_command_type actualCmd = castToObjectOrAbort<Event>(event)->getCommandType();
+    EXPECT_EQ(expectedCmd, actualCmd);
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIsWritableThenExpectMapAndUnmapCopyKernel) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    LinearStream &stream = queue.getCS(0x1000);
+
+    cl_event eventMap = nullptr;
+    retVal = queue.enqueueSVMMap(
+        CL_FALSE,
+        CL_MAP_WRITE,
+        svmPtr,
+        size,
+        0,
+        nullptr,
+        &eventMap);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, mockSvmManager->svmMapOperations.getNumMapOperations());
+    auto svmMap = mockSvmManager->svmMapOperations.get(svmPtr);
+    ASSERT_NE(nullptr, svmMap);
+
+    cl_event eventUnmap = nullptr;
+    retVal = queue.enqueueSVMUnmap(
+        svmPtr,
+        0,
+        nullptr,
+        &eventUnmap);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, mockSvmManager->svmMapOperations.getNumMapOperations());
+
+    queue.flush();
+    hwParse.parseCommands<FamilyType>(stream);
+    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    EXPECT_EQ(2u, walkerCount);
+
+    constexpr cl_command_type expectedMapCmd = CL_COMMAND_SVM_MAP;
+    cl_command_type actualMapCmd = castToObjectOrAbort<Event>(eventMap)->getCommandType();
+    EXPECT_EQ(expectedMapCmd, actualMapCmd);
+
+    constexpr cl_command_type expectedUnmapCmd = CL_COMMAND_SVM_UNMAP;
+    cl_command_type actualUnmapCmd = castToObjectOrAbort<Event>(eventUnmap)->getCommandType();
+    EXPECT_EQ(expectedUnmapCmd, actualUnmapCmd);
+
+    clReleaseEvent(eventMap);
+    clReleaseEvent(eventUnmap);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionAndNoEventIsUsedIsWritableThenExpectMapAndUnmapCopyKernelAnNo) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    LinearStream &stream = queue.getCS(0x1000);
+
+    retVal = queue.enqueueSVMMap(
+        CL_FALSE,
+        CL_MAP_WRITE,
+        svmPtr,
+        size,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, mockSvmManager->svmMapOperations.getNumMapOperations());
+    auto svmMap = mockSvmManager->svmMapOperations.get(svmPtr);
+    ASSERT_NE(nullptr, svmMap);
+
+    retVal = queue.enqueueSVMUnmap(
+        svmPtr,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, mockSvmManager->svmMapOperations.getNumMapOperations());
+
+    queue.flush();
+    hwParse.parseCommands<FamilyType>(stream);
+    auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
+    EXPECT_EQ(2u, walkerCount);
 }

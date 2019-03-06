@@ -85,6 +85,13 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         OsAgnosticMemoryManager::handleFenceCompletion(graphicsAllocation);
     }
 
+    void *reserveCpuAddressRange(size_t size) override {
+        if (failReserveAddress) {
+            return nullptr;
+        }
+        return OsAgnosticMemoryManager::reserveCpuAddressRange(size);
+    }
+
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
 
     uint32_t freeGraphicsMemoryCalled = 0u;
@@ -99,6 +106,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failInAllocateWithSizeAndAlignment = false;
     bool preferRenderCompressedFlagPassed = false;
     bool allocateForImageCalled = false;
+    bool failReserveAddress = false;
+    bool failAllocateSystemMemory = false;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
 };
 
@@ -139,6 +148,7 @@ class FailMemoryManager : public MockMemoryManager {
     using MemoryManager::allocateGraphicsMemoryWithProperties;
     using MockMemoryManager::MockMemoryManager;
     FailMemoryManager(int32_t failedAllocationsCount, ExecutionEnvironment &executionEnvironment);
+    FailMemoryManager(int32_t failedAllocationsCount, ExecutionEnvironment &executionEnvironment, bool localMemory);
 
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
         if (failedAllocationsCount <= 0) {

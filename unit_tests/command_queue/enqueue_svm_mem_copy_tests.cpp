@@ -29,9 +29,13 @@ struct EnqueueSvmMemCopyTest : public DeviceFixture,
         ASSERT_NE(nullptr, srcSvmPtr);
         dstSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
         ASSERT_NE(nullptr, dstSvmPtr);
-        srcSvmAlloc = context->getSVMAllocsManager()->getSVMAlloc(srcSvmPtr);
+        auto srcSvmData = context->getSVMAllocsManager()->getSVMAlloc(srcSvmPtr);
+        ASSERT_NE(nullptr, srcSvmData);
+        srcSvmAlloc = srcSvmData->gpuAllocation;
         ASSERT_NE(nullptr, srcSvmAlloc);
-        dstSvmAlloc = context->getSVMAllocsManager()->getSVMAlloc(dstSvmPtr);
+        auto dstSvmData = context->getSVMAllocsManager()->getSVMAlloc(dstSvmPtr);
+        ASSERT_NE(nullptr, dstSvmData);
+        dstSvmAlloc = dstSvmData->gpuAllocation;
         ASSERT_NE(nullptr, dstSvmAlloc);
     }
 

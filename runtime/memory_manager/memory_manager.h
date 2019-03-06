@@ -212,7 +212,23 @@ class MemoryManager {
             break;
         default:
             if (!allocationData.flags.useSystemMemory && !(allocationData.flags.allow32Bit && this->force32bitAllocations)) {
-                auto allocation = allocateGraphicsMemory(allocationData);
+                GraphicsAllocation *allocation = nullptr;
+                if (allocationData.type == GraphicsAllocation::AllocationType::SVM_GPU) {
+                    void *cpuAllocation = allocateSystemMemory(allocationData.size, allocationData.alignment);
+                    if (!cpuAllocation) {
+                        return nullptr;
+                    }
+                    uint64_t gpuAddress = reinterpret_cast<uint64_t>(allocationData.hostPtr);
+                    allocation = new GraphicsAllocation(allocationData.type,
+                                                        cpuAllocation,
+                                                        gpuAddress,
+                                                        gpuAddress,
+                                                        allocationData.size, MemoryPool::LocalMemory, false);
+                    allocation->setDriverAllocatedCpuPtr(cpuAllocation);
+                } else {
+                    allocation = allocateGraphicsMemory(allocationData);
+                }
+
                 if (allocation) {
                     allocation->storageInfo = allocationData.storageInfo;
                     allocation->setFlushL3Required(allocationData.flags.flushL3);

@@ -29,7 +29,9 @@ struct EnqueueSvmMemFillTest : public DeviceFixture,
         ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
         svmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, CL_MEM_SVM_FINE_GRAIN_BUFFER);
         ASSERT_NE(nullptr, svmPtr);
-        svmAlloc = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
+        auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
+        ASSERT_NE(nullptr, svmData);
+        svmAlloc = svmData->gpuAllocation;
         ASSERT_NE(nullptr, svmAlloc);
     }
 

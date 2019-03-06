@@ -562,12 +562,12 @@ TEST_F(RenderCompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThen
 TEST_F(RenderCompressedBuffersTests, givenSvmAllocationWhenCreatingBufferThenForceDisableCompression) {
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
 
-    auto svmAlloc = context->getSVMAllocsManager()->createSVMAlloc(sizeof(uint32_t), 0);
+    auto svmPtr = context->getSVMAllocsManager()->createSVMAlloc(sizeof(uint32_t), 0);
+    auto expectedAllocationType = context->getSVMAllocsManager()->getSVMAlloc(svmPtr)->gpuAllocation->getAllocationType();
+    buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, sizeof(uint32_t), svmPtr, retVal));
+    EXPECT_EQ(expectedAllocationType, buffer->getGraphicsAllocation()->getAllocationType());
 
-    buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, sizeof(uint32_t), svmAlloc, retVal));
-    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
-
-    context->getSVMAllocsManager()->freeSVMAlloc(svmAlloc);
+    context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
 }
 
 struct RenderCompressedBuffersCopyHostMemoryTests : public RenderCompressedBuffersTests {
@@ -961,7 +961,9 @@ TEST_P(ValidHostPtr, SvmHostPtr) {
         auto bufferSvm = Buffer::create(context.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 64, ptr, retVal);
         EXPECT_NE(nullptr, bufferSvm);
         EXPECT_TRUE(bufferSvm->isMemObjWithHostPtrSVM());
-        EXPECT_EQ(context->getSVMAllocsManager()->getSVMAlloc(ptr), bufferSvm->getGraphicsAllocation());
+        auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptr);
+        ASSERT_NE(nullptr, svmData);
+        EXPECT_EQ(svmData->gpuAllocation, bufferSvm->getGraphicsAllocation());
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         context->getSVMAllocsManager()->freeSVMAlloc(ptr);

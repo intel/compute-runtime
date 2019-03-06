@@ -232,7 +232,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     switch (properties.allocationType) {
-    case GraphicsAllocation::AllocationType::SVM:
+    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
+    case GraphicsAllocation::AllocationType::SVM_GPU:
         allow64KbPages = true;
     default:
         break;
@@ -253,8 +254,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
-    case GraphicsAllocation::AllocationType::SVM:
+    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
+    case GraphicsAllocation::AllocationType::SVM_CPU:
         mustBeZeroCopy = true;
     default:
         break;
@@ -271,7 +273,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::SHARED_IMAGE:
     case GraphicsAllocation::AllocationType::SHARED_BUFFER:
     case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
-    case GraphicsAllocation::AllocationType::SVM:
+    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
+    case GraphicsAllocation::AllocationType::SVM_GPU:
+    case GraphicsAllocation::AllocationType::SVM_CPU:
     case GraphicsAllocation::AllocationType::UNDECIDED:
         mayRequireL3Flush = true;
     default:
@@ -283,6 +287,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
     case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
+    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
+    case GraphicsAllocation::AllocationType::SVM_CPU:
         allocationData.flags.useSystemMemory = true;
     default:
         break;

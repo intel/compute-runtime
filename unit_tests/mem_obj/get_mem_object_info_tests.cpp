@@ -8,9 +8,11 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
@@ -32,8 +34,8 @@ class GetMemObjectInfo : public ::testing::Test, public PlatformFixture, public 
 
     void TearDown() override {
         delete BufferDefaults::context;
-        PlatformFixture::TearDown();
         DeviceFixture::TearDown();
+        PlatformFixture::TearDown();
     }
 };
 
@@ -307,4 +309,62 @@ TEST_F(GetMemObjectInfo, MEM_REFERENCE_COUNT) {
         &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(refCount), sizeReturned);
+}
+
+class GetMemObjectInfoLocalMemory : public GetMemObjectInfo {
+    using GetMemObjectInfo::SetUp;
+
+  public:
+    void SetUp() override {
+        dbgRestore = std::make_unique<DebugManagerStateRestore>();
+        DebugManager.flags.EnableLocalMemory.set(1);
+        GetMemObjectInfo::SetUp();
+
+        delete BufferDefaults::context;
+        BufferDefaults::context = new MockContext(pDevice, true);
+    }
+
+    std::unique_ptr<DebugManagerStateRestore> dbgRestore;
+};
+
+TEST_F(GetMemObjectInfoLocalMemory, givenLocalMemoryEnabledWhenNoZeroCopySvmAllocationUsedThenBufferAllocationInheritsZeroCopyFlag) {
+    const DeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        auto hostPtr = clSVMAlloc(BufferDefaults::context, CL_MEM_READ_WRITE, BufferUseHostPtr<>::sizeInBytes, 64);
+        ASSERT_NE(nullptr, hostPtr);
+        cl_int retVal;
+
+        auto buffer = Buffer::create(
+            BufferDefaults::context,
+            CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+            BufferUseHostPtr<>::sizeInBytes,
+            hostPtr,
+            retVal);
+
+        size_t sizeReturned = 0;
+        cl_bool usesSVMPointer = false;
+
+        retVal = buffer->getMemObjectInfo(
+            CL_MEM_USES_SVM_POINTER,
+            0,
+            nullptr,
+            &sizeReturned);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(sizeof(usesSVMPointer), sizeReturned);
+
+        retVal = buffer->getMemObjectInfo(
+            CL_MEM_USES_SVM_POINTER,
+            sizeof(usesSVMPointer),
+            &usesSVMPointer,
+            nullptr);
+
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), usesSVMPointer);
+
+        EXPECT_TRUE(buffer->isMemObjWithHostPtrSVM());
+        EXPECT_FALSE(buffer->isMemObjZeroCopy());
+
+        delete buffer;
+        clSVMFree(BufferDefaults::context, hostPtr);
+    }
 }

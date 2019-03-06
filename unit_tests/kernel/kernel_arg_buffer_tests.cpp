@@ -169,7 +169,7 @@ TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPassedIsNullThenOnly4BytesAre
     EXPECT_NE(expValue, *pKernelArg64bit);
 }
 
-TEST_F(KernelArgBufferTest, givenWritebleBufferWhenSettingAsArgThenDoNotExpectAllocationInCacheFlushVector) {
+TEST_F(KernelArgBufferTest, givenWritableBufferWhenSettingAsArgThenDoNotExpectAllocationInCacheFlushVector) {
     auto buffer = std::make_unique<MockBuffer>();
     buffer->mockGfxAllocation.setMemObjectsAllocationWithWritableFlags(true);
     buffer->mockGfxAllocation.setFlushL3Required(false);

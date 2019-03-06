@@ -127,6 +127,7 @@ Buffer *Buffer::create(Context *context,
     errcodeRet = CL_SUCCESS;
 
     GraphicsAllocation *memory = nullptr;
+    GraphicsAllocation *mapAllocation = nullptr;
     bool zeroCopyAllowed = true;
     bool isHostPtrSVM = false;
 
@@ -173,13 +174,15 @@ Buffer *Buffer::create(Context *context,
             allocateMemory = true;
         }
 
-        memory = context->getSVMAllocsManager()->getSVMAlloc(hostPtr);
-        if (memory) {
-            allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+        auto svmData = context->getSVMAllocsManager()->getSVMAlloc(hostPtr);
+        if (svmData) {
+            memory = svmData->gpuAllocation;
+            allocationType = memory->getAllocationType();
             isHostPtrSVM = true;
-            zeroCopyAllowed = true;
+            zeroCopyAllowed = memory->getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY;
             copyMemoryFromHostPtr = false;
             allocateMemory = false;
+            mapAllocation = svmData->cpuAllocation;
         }
     }
 
@@ -231,7 +234,9 @@ Buffer *Buffer::create(Context *context,
     if (!MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
         zeroCopyAllowed = false;
         if (hostPtr) {
-            copyMemoryFromHostPtr = true;
+            if (!isHostPtrSVM) {
+                copyMemoryFromHostPtr = true;
+            }
         }
     } else if (allocationType == GraphicsAllocation::AllocationType::BUFFER) {
         allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
@@ -259,6 +264,7 @@ Buffer *Buffer::create(Context *context,
     }
 
     pBuffer->setHostPtrMinSize(size);
+    pBuffer->mapAllocation = mapAllocation;
 
     if (copyMemoryFromHostPtr) {
         auto gmm = memory->getDefaultGmm();

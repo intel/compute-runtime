@@ -287,7 +287,7 @@ void MemObj::releaseAllocatedMapPtr() {
 }
 
 void MemObj::releaseMapAllocation() {
-    if (mapAllocation) {
+    if (mapAllocation && !isHostPtrSVM) {
         destroyGraphicsAllocation(mapAllocation, false);
     }
 }
@@ -312,20 +312,20 @@ bool MemObj::checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t of
 
 void *MemObj::getBasePtrForMap() {
     if (associatedMemObject) {
-        TakeOwnershipWrapper<MemObj> memObjOwnership(*this);
         return associatedMemObject->getBasePtrForMap();
+    }
+    if (getMapAllocation()) {
+        return getMapAllocation()->getUnderlyingBuffer();
     }
     if (getFlags() & CL_MEM_USE_HOST_PTR) {
         return getHostPtr();
     } else {
         TakeOwnershipWrapper<MemObj> memObjOwnership(*this);
-        if (!getMapAllocation()) {
-            auto memory = memoryManager->allocateSystemMemory(getSize(), MemoryConstants::pageSize);
-            setAllocatedMapPtr(memory);
-            AllocationProperties properties{false, getSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR};
-            auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, memory);
-            setMapAllocation(allocation);
-        }
+        auto memory = memoryManager->allocateSystemMemory(getSize(), MemoryConstants::pageSize);
+        setAllocatedMapPtr(memory);
+        AllocationProperties properties{false, getSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR};
+        auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, memory);
+        setMapAllocation(allocation);
         return getAllocatedMapPtr();
     }
 }

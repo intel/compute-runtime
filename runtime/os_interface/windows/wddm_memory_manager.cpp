@@ -103,8 +103,21 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const
     gmm = new Gmm(pSysMem, sizeAligned, allocationData.flags.uncacheable);
 
     wddmAllocation->setDefaultGmm(gmm);
+    void *mapPtr = wddmAllocation->getAlignedCpuPtr();
+    if (allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU) {
+        //add 2MB padding in case mapPtr is not 2MB aligned
+        size_t reserveSizeAligned = sizeAligned + allocationData.alignment;
+        bool ret = wddm->reserveValidAddressRange(reserveSizeAligned, mapPtr);
+        if (!ret) {
+            delete gmm;
+            freeSystemMemory(pSysMem);
+            return nullptr;
+        }
+        wddmAllocation->setReservedAddressRange(mapPtr, reserveSizeAligned);
+        mapPtr = alignUp(mapPtr, newAlignment);
+    }
 
-    if (!createWddmAllocation(wddmAllocation.get(), wddmAllocation->getAlignedCpuPtr())) {
+    if (!createWddmAllocation(wddmAllocation.get(), mapPtr)) {
         delete gmm;
         freeSystemMemory(pSysMem);
         return nullptr;

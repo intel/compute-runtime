@@ -185,7 +185,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesDisabledWhenA
     memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
     auto size = MemoryConstants::pageSize;
 
-    auto svmAllocation = memoryManager->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::SVM});
+    auto svmAllocation = memoryManager->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::SVM_ZERO_COPY});
     EXPECT_NE(nullptr, svmAllocation);
     EXPECT_EQ(MemoryPool::System4KBPages, svmAllocation->getMemoryPool());
     EXPECT_TRUE(svmAllocation->getDefaultGmm()->useSystemMemoryPool);
@@ -196,7 +196,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAl
     memoryManager.reset(new MockWddmMemoryManager(true, false, *executionEnvironment));
     auto size = MemoryConstants::pageSize;
 
-    auto svmAllocation = memoryManager->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::SVM});
+    auto svmAllocation = memoryManager->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::SVM_ZERO_COPY});
     EXPECT_NE(nullptr, svmAllocation);
     EXPECT_EQ(MemoryPool::System64KBPages, svmAllocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(svmAllocation);
@@ -1670,4 +1670,22 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithPreferredGpuAddressWhenMa
     memoryManager->createWddmAllocation(&allocation, nullptr);
     EXPECT_EQ(1u, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(gpuAddress, wddm->freeGpuVirtualAddressResult.uint64ParamPassed);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedThenAllocateMemoryReserveGpuVa) {
+    size_t size = 2 * MemoryConstants::megaByte;
+    MockAllocationProperties properties{true, size, GraphicsAllocation::AllocationType::SVM_CPU};
+    properties.alignment = size;
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties));
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(allocation->getUnderlyingBuffer(), allocation->getDriverAllocatedCpuPtr());
+    //limited platforms will not use heap HeapIndex::HEAP_SVM
+    if (executionEnvironment->isFullRangeSvm()) {
+        EXPECT_EQ(alignUp(allocation->getReservedAddressPtr(), size), reinterpret_cast<void *>(allocation->getGpuAddress()));
+    }
+    EXPECT_EQ((2 * size), allocation->getReservedAddressSize());
+
+    memoryManager->freeGraphicsMemory(allocation);
 }

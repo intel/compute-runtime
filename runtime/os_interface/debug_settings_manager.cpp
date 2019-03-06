@@ -349,8 +349,12 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "SURFACE_STATE_HEAP";
     case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
         return "SHARED_RESOURCE_COPY";
-    case GraphicsAllocation::AllocationType::SVM:
-        return "SVM";
+    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
+        return "SVM_ZERO_COPY";
+    case GraphicsAllocation::AllocationType::SVM_CPU:
+        return "SVM_CPU";
+    case GraphicsAllocation::AllocationType::SVM_GPU:
+        return "SVM_GPU";
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
         return "EXTERNAL_HOST_PTR";
     case GraphicsAllocation::AllocationType::UNDECIDED:

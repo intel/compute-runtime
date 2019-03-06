@@ -44,3 +44,39 @@ TEST(MemoryManagerTest, givenImageOrSharedResourceCopyWhenGraphicsAllocationInDe
         EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
     }
 }
+
+TEST(MemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocationSystemMemoryFailsThenReturnNull) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.type = GraphicsAllocation::AllocationType::SVM_GPU;
+    allocData.hostPtr = reinterpret_cast<void *>(0x1000);
+
+    memoryManager.failAllocateSystemMemory = true;
+    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+}
+
+TEST(MemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocationSucceedThenReturnGpuAddressAsHostPtr) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.type = GraphicsAllocation::AllocationType::SVM_GPU;
+    allocData.hostPtr = reinterpret_cast<void *>(0x1000);
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(allocData.hostPtr), allocation->getGpuAddress());
+    EXPECT_NE(reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()), allocation->getGpuAddress());
+
+    memoryManager.freeGraphicsMemory(allocation);
+}

@@ -29,6 +29,9 @@ void MockMemoryManager::overrideAsyncDeleterFlag(bool newValue) {
 }
 
 void *MockMemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
+    if (failAllocateSystemMemory) {
+        return nullptr;
+    }
     return OsAgnosticMemoryManager::allocateSystemMemory(redundancyRatio * size, alignment);
 }
 
@@ -92,6 +95,11 @@ GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(size_t size, 
 }
 
 FailMemoryManager::FailMemoryManager(int32_t failedAllocationsCount, ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {
+    this->failedAllocationsCount = failedAllocationsCount;
+}
+
+FailMemoryManager::FailMemoryManager(int32_t failedAllocationsCount, ExecutionEnvironment &executionEnvironment, bool enableLocalMemory)
+    : MockMemoryManager(enableLocalMemory, executionEnvironment) {
     this->failedAllocationsCount = failedAllocationsCount;
 }
 

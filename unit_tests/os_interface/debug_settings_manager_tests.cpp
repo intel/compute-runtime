@@ -913,7 +913,9 @@ AllocationTypeTestCase allocationTypeValues[] = {
     {GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP, "INDIRECT_OBJECT_HEAP"},
     {GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP, "SURFACE_STATE_HEAP"},
     {GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY, "SHARED_RESOURCE_COPY"},
-    {GraphicsAllocation::AllocationType::SVM, "SVM"},
+    {GraphicsAllocation::AllocationType::SVM_ZERO_COPY, "SVM_ZERO_COPY"},
+    {GraphicsAllocation::AllocationType::SVM_CPU, "SVM_CPU"},
+    {GraphicsAllocation::AllocationType::SVM_GPU, "SVM_GPU"},
     {GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, "EXTERNAL_HOST_PTR"},
     {GraphicsAllocation::AllocationType::UNDECIDED, "UNDECIDED"}};
 

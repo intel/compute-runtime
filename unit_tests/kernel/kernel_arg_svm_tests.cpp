@@ -414,7 +414,7 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
     alignedFree(svmPtr);
 }
 
-TEST_F(KernelArgSvmTest, givenWritebleSvmAllocationWhenSettingAsArgThenDoNotExpectAllocationInCacheFlushVector) {
+TEST_F(KernelArgSvmTest, givenWritableSvmAllocationWhenSettingAsArgThenDoNotExpectAllocationInCacheFlushVector) {
     size_t svmSize = 4096;
     void *svmPtr = alignedMalloc(svmSize, MemoryConstants::pageSize);
     MockGraphicsAllocation svmAlloc(svmPtr, svmSize);

@@ -5,6 +5,7 @@
  *
  */
 
+#include "test.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_svm_manager.h"
@@ -13,100 +14,124 @@
 
 using namespace NEO;
 
-struct SVMMemoryAllocatorTest : ::testing::Test {
-    SVMMemoryAllocatorTest() : executionEnvironment(*platformDevices), memoryManager(false, false, executionEnvironment), svmManager(&memoryManager) {}
+template <bool enableLocalMemory>
+struct SVMMemoryAllocatorFixture {
+    SVMMemoryAllocatorFixture() : executionEnvironment(*platformDevices) {}
+
+    virtual void SetUp() {
+        memoryManager = std::make_unique<MockMemoryManager>(false, enableLocalMemory, executionEnvironment);
+        svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
+    }
+    virtual void TearDown() {
+    }
+
     MockExecutionEnvironment executionEnvironment;
-    MockMemoryManager memoryManager;
-    MockSVMAllocsManager svmManager;
+    std::unique_ptr<MockMemoryManager> memoryManager;
+    std::unique_ptr<MockSVMAllocsManager> svmManager;
 };
 
-TEST_F(SVMMemoryAllocatorTest, whenCreateZeroSizedSVMAllocationThenReturnNullptr) {
-    auto ptr = svmManager.createSVMAlloc(0, 0);
+using SVMMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<false>>;
 
-    EXPECT_EQ(0u, svmManager.SVMAllocs.getNumAllocs());
+using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true>>;
+
+TEST_F(SVMMemoryAllocatorTest, whenCreateZeroSizedSVMAllocationThenReturnNullptr) {
+    auto ptr = svmManager->createSVMAlloc(0, 0);
+
+    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
     EXPECT_EQ(ptr, nullptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {
-    auto ptr = svmManager.createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
     EXPECT_NE(nullptr, ptr);
-    EXPECT_NE(nullptr, svmManager.getSVMAlloc(ptr));
-    EXPECT_NE(nullptr, svmManager.getSVMAlloc(ptr));
-    EXPECT_EQ(1u, svmManager.SVMAllocs.getNumAllocs());
-    EXPECT_FALSE(svmManager.getSVMAlloc(ptr)->isCoherent());
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_NE(nullptr, svmData->gpuAllocation);
+    svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_NE(nullptr, svmData->gpuAllocation);
+    EXPECT_EQ(1u, svmManager->SVMAllocs.getNumAllocs());
+    auto svmAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocation;
+    EXPECT_FALSE(svmAllocation->isCoherent());
 
-    svmManager.freeSVMAlloc(ptr);
-    EXPECT_EQ(nullptr, svmManager.getSVMAlloc(ptr));
-    EXPECT_EQ(0u, svmManager.SVMAllocs.getNumAllocs());
+    svmManager->freeSVMAlloc(ptr);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromReturnedPointerAreaThenReturnSameAllocation) {
-    auto ptr = svmManager.createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
     EXPECT_NE(ptr, nullptr);
-    GraphicsAllocation *graphicsAllocation = svmManager.getSVMAlloc(ptr);
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    GraphicsAllocation *graphicsAllocation = svmData->gpuAllocation;
     EXPECT_NE(nullptr, graphicsAllocation);
 
     auto ptrInRange = ptrOffset(ptr, MemoryConstants::pageSize - 4);
-    GraphicsAllocation *graphicsAllocationInRange = svmManager.getSVMAlloc(ptrInRange);
+    svmData = svmManager->getSVMAlloc(ptrInRange);
+    ASSERT_NE(nullptr, svmData);
+    GraphicsAllocation *graphicsAllocationInRange = svmData->gpuAllocation;
     EXPECT_NE(nullptr, graphicsAllocationInRange);
 
     EXPECT_EQ(graphicsAllocation, graphicsAllocationInRange);
 
-    svmManager.freeSVMAlloc(ptr);
+    svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPointerAreaThenDontReturnThisAllocation) {
-    auto ptr = svmManager.createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
     EXPECT_NE(ptr, nullptr);
-    GraphicsAllocation *graphicsAllocation = svmManager.getSVMAlloc(ptr);
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    GraphicsAllocation *graphicsAllocation = svmData->gpuAllocation;
     EXPECT_NE(nullptr, graphicsAllocation);
 
     auto ptrBefore = ptrOffset(ptr, -4);
-    GraphicsAllocation *graphicsAllocationBefore = svmManager.getSVMAlloc(ptrBefore);
-    EXPECT_EQ(nullptr, graphicsAllocationBefore);
+    svmData = svmManager->getSVMAlloc(ptrBefore);
+    EXPECT_EQ(nullptr, svmData);
 
     auto ptrAfter = ptrOffset(ptr, MemoryConstants::pageSize);
-    GraphicsAllocation *graphicsAllocationAfter = svmManager.getSVMAlloc(ptrAfter);
-    EXPECT_EQ(nullptr, graphicsAllocationAfter);
+    svmData = svmManager->getSVMAlloc(ptrAfter);
+    EXPECT_EQ(nullptr, svmData);
 
-    svmManager.freeSVMAlloc(ptr);
+    svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
     FailMemoryManager failMemoryManager(executionEnvironment);
-    svmManager.memoryManager = &failMemoryManager;
-    auto ptr = svmManager.createSVMAlloc(MemoryConstants::pageSize, 0);
+    svmManager->memoryManager = &failMemoryManager;
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
     EXPECT_EQ(nullptr, ptr);
-    EXPECT_EQ(0u, svmManager.SVMAllocs.getNumAllocs());
-    svmManager.freeSVMAlloc(ptr);
+    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, given64kbAllowedWhenAllocatingSvmMemoryThenDontPreferRenderCompression) {
     MockMemoryManager memoryManager64Kb(true, false, executionEnvironment);
-    svmManager.memoryManager = &memoryManager64Kb;
-    auto ptr = svmManager.createSVMAlloc(MemoryConstants::pageSize, 0);
+    svmManager->memoryManager = &memoryManager64Kb;
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
     EXPECT_FALSE(memoryManager64Kb.preferRenderCompressedFlagPassed);
-    svmManager.freeSVMAlloc(ptr);
+    svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, given64kbAllowedwhenAllocatingSvmMemoryThenAllocationIsIn64kbPagePool) {
     MockMemoryManager memoryManager64Kb(true, false, executionEnvironment);
-    svmManager.memoryManager = &memoryManager64Kb;
-    auto ptr = svmManager.createSVMAlloc(MemoryConstants::pageSize, 0);
-    EXPECT_EQ(MemoryPool::System64KBPages, svmManager.getSVMAlloc(ptr)->getMemoryPool());
-    svmManager.freeSVMAlloc(ptr);
+    svmManager->memoryManager = &memoryManager64Kb;
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    EXPECT_EQ(MemoryPool::System64KBPages, svmManager->getSVMAlloc(ptr)->gpuAllocation->getMemoryPool());
+    svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, given64kbDisallowedWhenAllocatingSvmMemoryThenAllocationIsIn4kbPagePool) {
-    auto ptr = svmManager.createSVMAlloc(MemoryConstants::pageSize, 0);
-    EXPECT_EQ(MemoryPool::System4KBPages, svmManager.getSVMAlloc(ptr)->getMemoryPool());
-    svmManager.freeSVMAlloc(ptr);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    EXPECT_EQ(MemoryPool::System4KBPages, svmManager->getSVMAlloc(ptr)->gpuAllocation->getMemoryPool());
+    svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenCoherentFlagIsPassedThenAllocationIsCoherent) {
-    auto ptr = svmManager.createSVMAlloc(MemoryConstants::pageSize, CL_MEM_SVM_FINE_GRAIN_BUFFER);
-    EXPECT_TRUE(svmManager.getSVMAlloc(ptr)->isCoherent());
-    svmManager.freeSVMAlloc(ptr);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, CL_MEM_SVM_FINE_GRAIN_BUFFER);
+    EXPECT_TRUE(svmManager->getSVMAlloc(ptr)->gpuAllocation->isCoherent());
+    svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenReadOnlyFlagIsPresentThenReturnTrue) {
@@ -121,12 +146,74 @@ TEST_F(SVMMemoryAllocatorTest, whenNoReadOnlyFlagIsPresentThenReturnFalse) {
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenReadOnlySvmAllocationCreatedThenGraphicsAllocationHasWriteableFlagFalse) {
-    void *svm = svmManager.createSVMAlloc(4096, CL_MEM_READ_ONLY);
+    void *svm = svmManager->createSVMAlloc(4096, CL_MEM_READ_ONLY);
     EXPECT_NE(nullptr, svm);
 
-    GraphicsAllocation *svmAllocation = svmManager.getSVMAlloc(svm);
+    auto svmData = svmManager->getSVMAlloc(svm);
+    ASSERT_NE(nullptr, svmData);
+    GraphicsAllocation *svmAllocation = svmData->gpuAllocation;
     EXPECT_NE(nullptr, svmAllocation);
     EXPECT_FALSE(svmAllocation->isMemObjectsAllocationWithWritableFlags());
 
-    svmManager.freeSVMAlloc(svm);
+    svmManager->freeSVMAlloc(svm);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, whenAllocatingSvmThenExpectCpuAllocationWithPointerAndGpuAllocationWithSameGpuAddress) {
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    EXPECT_NE(ptr, nullptr);
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    GraphicsAllocation *cpuAllocation = svmData->cpuAllocation;
+    EXPECT_NE(nullptr, cpuAllocation);
+    EXPECT_EQ(ptr, cpuAllocation->getUnderlyingBuffer());
+
+    GraphicsAllocation *gpuAllocation = svmData->gpuAllocation;
+    EXPECT_NE(nullptr, gpuAllocation);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), gpuAllocation->getGpuAddress());
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPointerAreaThenDontReturnThisAllocation) {
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    EXPECT_NE(ptr, nullptr);
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    GraphicsAllocation *graphicsAllocation = svmData->gpuAllocation;
+    EXPECT_NE(nullptr, graphicsAllocation);
+
+    auto ptrBefore = ptrOffset(ptr, -4);
+    svmData = svmManager->getSVMAlloc(ptrBefore);
+    EXPECT_EQ(nullptr, svmData);
+
+    auto ptrAfter = ptrOffset(ptr, MemoryConstants::pageSize);
+    svmData = svmManager->getSVMAlloc(ptrAfter);
+    EXPECT_EQ(nullptr, svmData);
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateCpuAllocationInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
+    FailMemoryManager failMemoryManager(false, true, executionEnvironment);
+    svmManager->memoryManager = &failMemoryManager;
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateGpuAllocationInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
+    FailMemoryManager failMemoryManager(1, executionEnvironment, true);
+    svmManager->memoryManager = &failMemoryManager;
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotReserveCpuAddressRangeInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
+    memoryManager->failReserveAddress = true;
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
 }

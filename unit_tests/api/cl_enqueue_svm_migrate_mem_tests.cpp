@@ -97,7 +97,9 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNonZeroSizeIsNotContainedWithinAllocati
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
 
-        auto svmAlloc = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSvm);
+        auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSvm);
+        ASSERT_NE(nullptr, svmData);
+        auto svmAlloc = svmData->gpuAllocation;
         EXPECT_NE(nullptr, svmAlloc);
         size_t allocSize = svmAlloc->getUnderlyingBufferSize();
 
