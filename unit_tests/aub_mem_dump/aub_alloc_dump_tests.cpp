@@ -12,6 +12,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 
 using namespace OCLRT;
@@ -93,8 +94,7 @@ HWTEST_F(AubAllocDumpTests, givenNonWritableBufferWhenDumpAllocationIsCalledAndD
     DebugManager.flags.AUBDumpBufferFormat.set("BIN");
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), 0);
@@ -109,8 +109,7 @@ HWTEST_F(AubAllocDumpTests, givenNonWritableImageWhenDumpAllocationIsCalledAndDu
     DebugManager.flags.AUBDumpBufferFormat.set("BMP");
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+    auto gfxAllocation = MockGmm::allocateImage2d(*memoryManager);
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), 0);

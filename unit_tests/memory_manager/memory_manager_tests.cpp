@@ -1618,16 +1618,14 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationWasNotUnlockedThenItIsUn
 }
 
 TEST(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
-    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
+    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     allocation.set32BitAllocation(true);
-    allocation.setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA);
     EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 
 TEST(HeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
-    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
+    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     allocation.set32BitAllocation(false);
-    allocation.setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA);
     EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
 }
 

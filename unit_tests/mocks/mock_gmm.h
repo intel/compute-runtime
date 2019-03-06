@@ -37,5 +37,14 @@ class MockGmm : public Gmm {
         }
         return imgInfo;
     }
+
+    static GraphicsAllocation *allocateImage2d(MemoryManager &memoryManager) {
+        cl_image_desc imgDesc{};
+        imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        imgDesc.image_width = 5;
+        imgDesc.image_height = 5;
+        auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+        return memoryManager.allocateGraphicsMemoryWithProperties(AllocationProperties{&imgInfo, true});
+    }
 };
 } // namespace OCLRT

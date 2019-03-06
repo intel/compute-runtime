@@ -698,16 +698,16 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
-    GraphicsAllocation::AllocationType onlyOneTimeAubWritableTypes[] = {
+    const GraphicsAllocation::AllocationType onlyOneTimeAubWritableTypes[] = {
         GraphicsAllocation::AllocationType::BUFFER,
         GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
         GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
         GraphicsAllocation::AllocationType::IMAGE,
         GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER};
 
-    for (size_t i = 0; i < arrayCount(onlyOneTimeAubWritableTypes); i++) {
+    for (auto allocationType : onlyOneTimeAubWritableTypes) {
         gfxAllocation->setAubWritable(true);
-        gfxAllocation->setAllocationType(onlyOneTimeAubWritableTypes[i]);
+        gfxAllocation->setAllocationType(allocationType);
         aubCsr->writeMemory(*gfxAllocation);
 
         EXPECT_FALSE(gfxAllocation->isAubWritable());
@@ -721,13 +721,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     memoryManager.reset(aubCsr->createMemoryManager(false, false));
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
-    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
 
-    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-
-    auto gfxImageAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-
-    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+    auto gfxImageAllocation = MockGmm::allocateImage2d(*memoryManager);
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
     aubCsr->processResidency(allocationsForResidency);
@@ -746,14 +742,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     memoryManager.reset(aubCsr->createMemoryManager(false, false));
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
-    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-
-    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
     gfxBufferAllocation->setAubWritable(false);
 
-    auto gfxImageAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-
-    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+    auto gfxImageAllocation = MockGmm::allocateImage2d(*memoryManager);
     gfxImageAllocation->setAubWritable(false);
 
     aubCsr->dumpAubNonWritable = true;
@@ -775,14 +767,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     memoryManager.reset(aubCsr->createMemoryManager(false, false));
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
-    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-
-    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
     gfxBufferAllocation->setAubWritable(false);
 
-    auto gfxImageAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-
-    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+    auto gfxImageAllocation = MockGmm::allocateImage2d(*memoryManager);
     gfxImageAllocation->setAubWritable(false);
 
     aubCsr->dumpAubNonWritable = false;
