@@ -146,24 +146,25 @@ bool WddmMock::waitOnGPU(D3DKMT_HANDLE context) {
     return waitOnGPUResult.success = Wddm::waitOnGPU(context);
 }
 
-void *WddmMock::lockResource(WddmAllocation &allocation) {
+void *WddmMock::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock) {
     lockResult.called++;
-    auto ptr = Wddm::lockResource(allocation);
+    auto ptr = Wddm::lockResource(handle, applyMakeResidentPriorToLock);
     lockResult.success = ptr != nullptr;
+    lockResult.uint64ParamPassed = applyMakeResidentPriorToLock;
     return ptr;
 }
 
-void WddmMock::unlockResource(WddmAllocation &allocation) {
+void WddmMock::unlockResource(const D3DKMT_HANDLE &handle) {
     unlockResult.called++;
     unlockResult.success = true;
-    Wddm::unlockResource(allocation);
+    Wddm::unlockResource(handle);
 }
 
-void WddmMock::kmDafLock(WddmAllocation *allocation) {
+void WddmMock::kmDafLock(D3DKMT_HANDLE handle) {
     kmDafLockResult.called++;
     kmDafLockResult.success = true;
-    kmDafLockResult.lockedAllocations.push_back(allocation);
-    Wddm::kmDafLock(allocation);
+    kmDafLockResult.lockedAllocations.push_back(handle);
+    Wddm::kmDafLock(handle);
 }
 
 bool WddmMock::isKmDafEnabled() const {
@@ -242,15 +243,15 @@ EvictionStatus WddmMock::evictAllTemporaryResources() {
     return evictAllTemporaryResourcesResult.status;
 }
 
-EvictionStatus WddmMock::evictTemporaryResource(WddmAllocation &allocation) {
+EvictionStatus WddmMock::evictTemporaryResource(const D3DKMT_HANDLE &handle) {
     evictTemporaryResourceResult.called++;
-    evictTemporaryResourceResult.status = Wddm::evictTemporaryResource(allocation);
+    evictTemporaryResourceResult.status = Wddm::evictTemporaryResource(handle);
     return evictTemporaryResourceResult.status;
 }
 
-void WddmMock::applyBlockingMakeResident(WddmAllocation &allocation) {
+void WddmMock::applyBlockingMakeResident(const D3DKMT_HANDLE &handle) {
     applyBlockingMakeResidentResult.called++;
-    return Wddm::applyBlockingMakeResident(allocation);
+    return Wddm::applyBlockingMakeResident(handle);
 }
 
 std::unique_lock<SpinLock> WddmMock::acquireLock(SpinLock &lock) {

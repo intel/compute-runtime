@@ -276,13 +276,14 @@ void WddmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *g
 }
 
 void *WddmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
-    return wddm->lockResource(static_cast<WddmAllocation &>(graphicsAllocation));
+    auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
+    return wddm->lockResource(wddmAllocation.handle, wddmAllocation.needsMakeResidentBeforeLock);
 }
 void WddmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation) {
     auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
-    wddm->unlockResource(wddmAllocation);
+    wddm->unlockResource(wddmAllocation.handle);
     if (wddmAllocation.needsMakeResidentBeforeLock) {
-        auto evictionStatus = wddm->evictTemporaryResource(wddmAllocation);
+        auto evictionStatus = wddm->evictTemporaryResource(wddmAllocation.handle);
         DEBUG_BREAK_IF(evictionStatus == EvictionStatus::FAILED);
     }
 }

@@ -36,7 +36,7 @@ struct EvictCallResult : public CallResult {
     EvictionStatus status = EvictionStatus::UNKNOWN;
 };
 struct KmDafLockCall : public CallResult {
-    std::vector<GraphicsAllocation *> lockedAllocations;
+    std::vector<D3DKMT_HANDLE> lockedAllocations;
 };
 } // namespace WddmMockHelpers
 
@@ -76,9 +76,9 @@ class WddmMock : public Wddm {
     bool queryAdapterInfo() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) override;
     bool waitOnGPU(D3DKMT_HANDLE context) override;
-    void *lockResource(WddmAllocation &allocation) override;
-    void unlockResource(WddmAllocation &allocation) override;
-    void kmDafLock(WddmAllocation *allocation) override;
+    void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock) override;
+    void unlockResource(const D3DKMT_HANDLE &handle) override;
+    void kmDafLock(D3DKMT_HANDLE handle) override;
     bool isKmDafEnabled() const override;
     void setKmDafEnabled(bool state);
     void setHwContextId(unsigned long hwContextId);
@@ -91,8 +91,8 @@ class WddmMock : public Wddm {
     void releaseReservedAddress(void *reservedAddress) override;
     VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) override;
     EvictionStatus evictAllTemporaryResources() override;
-    EvictionStatus evictTemporaryResource(WddmAllocation &allocation) override;
-    void applyBlockingMakeResident(WddmAllocation &allocation) override;
+    EvictionStatus evictTemporaryResource(const D3DKMT_HANDLE &handle) override;
+    void applyBlockingMakeResident(const D3DKMT_HANDLE &handle) override;
     std::unique_lock<SpinLock> acquireLock(SpinLock &lock) override;
     bool reserveValidAddressRange(size_t size, void *&reservedMem);
     GmmMemory *getGmmMemory() const;
