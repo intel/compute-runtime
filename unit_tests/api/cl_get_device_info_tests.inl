@@ -18,7 +18,7 @@ typedef api_tests clGetDeviceInfoTests;
 
 namespace ULT {
 
-TEST_F(clGetDeviceInfoTests, DeviceType) {
+TEST_F(clGetDeviceInfoTests, GivenGpuDeviceWhenGettingDeviceInfoThenDeviceTypeGpuIsReturned) {
     cl_device_info paramName = 0;
     size_t paramSize = 0;
     void *paramValue = nullptr;
@@ -40,7 +40,7 @@ TEST_F(clGetDeviceInfoTests, DeviceType) {
     EXPECT_EQ(static_cast<cl_device_type>(CL_DEVICE_TYPE_GPU), deviceType);
 }
 
-TEST_F(clGetDeviceInfoTests, NullDevice) {
+TEST_F(clGetDeviceInfoTests, GivenNullDeviceWhenGettingDeviceInfoThenInvalidDeviceErrorIsReturned) {
     size_t paramRetSize = 0;
 
     retVal = clGetDeviceInfo(
@@ -50,7 +50,7 @@ TEST_F(clGetDeviceInfoTests, NullDevice) {
         nullptr,
         &paramRetSize);
 
-    EXPECT_NE(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
 TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeCorrectValueIsReturned) {
@@ -108,6 +108,85 @@ TEST_F(clGetDeviceInfoTests, givenNeoDeviceWhenAskedForDriverVersionThenNeoIsRet
     EXPECT_EQ((cl_uint)CL_DEVICE_DRIVER_VERSION_INTEL_NEO1, driverVersion);
 }
 
+TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoThenAllExtensionsAreListed) {
+    size_t paramRetSize = 0;
+
+    cl_int retVal = clGetDeviceInfo(
+        devices[0],
+        CL_DEVICE_EXTENSIONS,
+        0,
+        nullptr,
+        &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(0u, paramRetSize);
+
+    auto paramValue = std::make_unique<char[]>(paramRetSize);
+
+    retVal = clGetDeviceInfo(
+        devices[0],
+        CL_DEVICE_EXTENSIONS,
+        paramRetSize,
+        paramValue.get(),
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    std::string extensionString(paramValue.get());
+    std::string supportedExtensions[] = {
+        "cl_khr_3d_image_writes ",
+        "cl_khr_byte_addressable_store ",
+        "cl_khr_fp16 ",
+        "cl_khr_depth_images ",
+        "cl_khr_global_int32_base_atomics ",
+        "cl_khr_global_int32_extended_atomics ",
+        "cl_khr_local_int32_base_atomics ",
+        "cl_khr_local_int32_extended_atomics ",
+        "cl_intel_subgroups ",
+        "cl_intel_required_subgroup_size ",
+        "cl_intel_subgroups_short ",
+        "cl_khr_spir ",
+        "cl_intel_accelerator ",
+        "cl_intel_media_block_io ",
+        "cl_intel_driver_diagnostics ",
+        "cl_intel_device_side_avc_motion_estimation ",
+    };
+
+    for (auto element = 0u; element < sizeof(supportedExtensions) / sizeof(supportedExtensions[0]); element++) {
+        auto foundOffset = extensionString.find(supportedExtensions[element]);
+        EXPECT_TRUE(foundOffset != std::string::npos);
+    }
+}
+
+TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDeviceInfoThenSpirv10IsReturned) {
+    size_t paramRetSize = 0;
+
+    Device *pDevice = castToObject<Device>(devices[0]);
+
+    if (pDevice->getSupportedClVersion() < 21)
+        return;
+
+    cl_int retVal = clGetDeviceInfo(
+        devices[0],
+        CL_DEVICE_IL_VERSION,
+        0,
+        nullptr,
+        &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(0u, paramRetSize);
+
+    auto paramValue = std::make_unique<char[]>(paramRetSize);
+
+    retVal = clGetDeviceInfo(
+        devices[0],
+        CL_DEVICE_IL_VERSION,
+        paramRetSize,
+        paramValue.get(),
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_STREQ("SPIR-V_1.0 ", paramValue.get());
+}
+
 //------------------------------------------------------------------------------
 struct GetDeviceInfoP : public api_fixture,
                         public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
@@ -125,8 +204,7 @@ struct GetDeviceInfoP : public api_fixture,
 
 typedef GetDeviceInfoP GetDeviceInfoStr;
 
-TEST_P(GetDeviceInfoStr, StringType) {
-    char *paramValue = nullptr;
+TEST_P(GetDeviceInfoStr, GivenStringTypeParamWhenGettingDeviceInfoThenSuccessIsReturned) {
     size_t paramRetSize = 0;
 
     cl_int retVal = clGetDeviceInfo(
@@ -138,79 +216,21 @@ TEST_P(GetDeviceInfoStr, StringType) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(0u, paramRetSize);
 
-    paramValue = new char[paramRetSize];
+    auto paramValue = std::make_unique<char[]>(paramRetSize);
 
     retVal = clGetDeviceInfo(
         devices[0],
         param,
         paramRetSize,
-        paramValue,
+        paramValue.get(),
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_GE(std::strlen(paramValue), 0u);
-
-    // check for extensions
-    if (param == CL_DEVICE_EXTENSIONS) {
-        std::string extensionString(paramValue);
-        size_t currentOffset = 0u;
-        std::string supportedExtensions[] = {
-            "cl_khr_3d_image_writes ",
-            "cl_khr_byte_addressable_store ",
-            "cl_khr_fp16 ",
-            "cl_khr_depth_images ",
-            "cl_khr_global_int32_base_atomics ",
-            "cl_khr_global_int32_extended_atomics ",
-            "cl_khr_local_int32_base_atomics ",
-            "cl_khr_local_int32_extended_atomics ",
-            "cl_intel_subgroups ",
-            "cl_intel_required_subgroup_size ",
-            "cl_intel_subgroups_short ",
-            "cl_khr_spir ",
-            "cl_intel_accelerator ",
-            "cl_intel_media_block_io ",
-            "cl_intel_driver_diagnostics ",
-            "cl_intel_device_side_avc_motion_estimation ",
-        };
-
-        for (auto element = 0u; element < sizeof(supportedExtensions) / sizeof(supportedExtensions[0]); element++) {
-            auto foundOffset = extensionString.find(supportedExtensions[element]);
-            EXPECT_TRUE(foundOffset != std::string::npos);
-            EXPECT_GE(foundOffset, currentOffset);
-            currentOffset = foundOffset;
-        }
-    }
-
-    // check IL versions
-    if (param == CL_DEVICE_IL_VERSION) {
-        Device *pDevice = castToObject<Device>(devices[0]);
-
-        // do not test if not supported
-        if (pDevice->getSupportedClVersion() >= 21) {
-            std::string versionString(paramValue);
-            size_t currentOffset = 0u;
-            std::string supportedVersions[] = {
-                "SPIR-V_1.0 ",
-            };
-
-            for (auto element = 0u; element < sizeof(supportedVersions) / sizeof(supportedVersions[0]); element++) {
-                auto foundOffset = versionString.find(supportedVersions[element]);
-                EXPECT_TRUE(foundOffset != std::string::npos);
-                EXPECT_GE(foundOffset, currentOffset);
-                currentOffset = foundOffset;
-            }
-        }
-    }
-
-    delete[] paramValue;
 }
 
 static cl_device_info deviceInfoStrParams[] =
     {
-        //        CL_DEVICE_VERSION
         CL_DEVICE_BUILT_IN_KERNELS,
-        CL_DEVICE_EXTENSIONS,
-        CL_DEVICE_IL_VERSION, // OpenCL 2.1
         CL_DEVICE_NAME,
         CL_DEVICE_OPENCL_C_VERSION,
         CL_DEVICE_PROFILE,
@@ -225,7 +245,7 @@ INSTANTIATE_TEST_CASE_P(
 
 typedef GetDeviceInfoP GetDeviceInfoVectorWidth;
 
-TEST_P(GetDeviceInfoVectorWidth, GreatherThanZero) {
+TEST_P(GetDeviceInfoVectorWidth, GivenParamTypeVectorWhenGettingDeviceInfoThenSizeIsGreaterThanZeroAndValueIsGreaterThanZero) {
     cl_uint paramValue = 0;
     size_t paramRetSize = 0;
 
@@ -249,7 +269,7 @@ TEST_P(GetDeviceInfoVectorWidth, GreatherThanZero) {
     EXPECT_GT(paramValue, 0u);
 }
 
-cl_device_info devicePrefferredVector[] = {
+cl_device_info devicePreferredVector[] = {
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR,
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT,
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT,
@@ -259,6 +279,6 @@ cl_device_info devicePrefferredVector[] = {
 INSTANTIATE_TEST_CASE_P(
     api,
     GetDeviceInfoVectorWidth,
-    testing::ValuesIn(devicePrefferredVector));
+    testing::ValuesIn(devicePreferredVector));
 
 } // namespace ULT
