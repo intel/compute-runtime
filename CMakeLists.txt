@@ -265,7 +265,9 @@ else()
     set(IGDRCL__IGC_TARGETS "${IGC__IGC_TARGETS}")
     foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
         list(APPEND IGDRCL__IGC_INCLUDE_DIR $<TARGET_PROPERTY:${TARGET_tmp},INTERFACE_INCLUDE_DIRECTORIES>)
+        list(APPEND IGDRCL__IGC_LIBRARY_PATH $<TARGET_FILE_DIR:${TARGET_tmp}>)
     endforeach(TARGET_tmp)
+    string(REPLACE ";" ":" IGDRCL__IGC_LIBRARY_PATH "${IGDRCL__IGC_LIBRARY_PATH}")
     message(STATUS "IGC targets: ${IGDRCL__IGC_TARGETS}")
 endif()
 
@@ -695,7 +697,7 @@ include(package.cmake)
 add_subdirectory(scripts/lint)
 
 configure_file(config.h.in ${IGDRCL_BUILD_DIR}/config.h)
-if(NOT IGDRCL__IGC_FOUND)
+if(WIN32 AND NOT IGDRCL__IGC_FOUND)
     configure_file(igc.opencl.h.in ${IGDRCL_BUILD_DIR}/igc.opencl.h)
 endif()
 configure_file(driver_version.h.in ${IGDRCL_BUILD_DIR}/driver_version.h) # Put Driver version into define

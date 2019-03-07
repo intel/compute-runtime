@@ -104,12 +104,14 @@ set_target_properties(ocloc PROPERTIES FOLDER "offline_compiler")
 add_custom_target(copy_compiler_files DEPENDS ${IGDRCL__IGC_TARGETS})
 set_target_properties(copy_compiler_files PROPERTIES FOLDER "opencl runtime")
 
-foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
-  add_custom_command(
-    TARGET copy_compiler_files
-    PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:ocloc>
-)
-endforeach()
+if(WIN32)
+  foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
+    add_custom_command(
+      TARGET copy_compiler_files
+      PRE_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:ocloc>
+    )
+  endforeach()
+endif()
 
 set(CLOC_SRCS_LIB ${CLOC_SRCS_LIB} PARENT_SCOPE)
