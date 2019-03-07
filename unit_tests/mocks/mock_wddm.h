@@ -100,6 +100,7 @@ class WddmMock : public Wddm {
     void applyBlockingMakeResident(const D3DKMT_HANDLE &handle) override;
     void removeTemporaryResource(const D3DKMT_HANDLE &handle) override;
     std::unique_lock<SpinLock> acquireLock(SpinLock &lock) override;
+    D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) override;
     bool reserveValidAddressRange(size_t size, void *&reservedMem);
     GmmMemory *getGmmMemory() const;
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
@@ -141,6 +142,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult acquireLockResult;
     WddmMockHelpers::CallResult registerTrimCallbackResult;
     WddmMockHelpers::CallResult getPagingFenceAddressResult;
+    WddmMockHelpers::CallResult reserveGpuVirtualAddressResult;
 
     NTSTATUS createAllocationStatus;
     bool mapGpuVaStatus;

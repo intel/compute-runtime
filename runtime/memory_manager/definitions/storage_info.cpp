@@ -11,4 +11,5 @@ namespace OCLRT {
 StorageInfo GraphicsAllocation::createStorageInfoFromProperties(const AllocationProperties &properties) {
     return {};
 }
+uint32_t StorageInfo::getNumHandles() const { return 1u; }
 } // namespace OCLRT

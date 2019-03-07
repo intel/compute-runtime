@@ -11,7 +11,4 @@ namespace OCLRT {
 std::string WddmAllocation::getAllocationInfoString() const {
     return getHandleInfoString();
 }
-uint32_t WddmAllocation::getNumHandles() const {
-    return 1u;
-}
 } // namespace OCLRT

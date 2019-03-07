@@ -54,7 +54,7 @@ class WddmAllocation : public GraphicsAllocation {
     void setDefaultHandle(D3DKMT_HANDLE handle) {
         handles[0] = handle;
     }
-    uint32_t getNumHandles() const;
+    uint32_t getNumHandles() const { return storageInfo.getNumHandles(); }
 
     void setTrimCandidateListPosition(uint32_t osContextId, size_t position) {
         trimCandidateListPositions[osContextId] = position;
@@ -76,6 +76,7 @@ class WddmAllocation : public GraphicsAllocation {
     // OS assigned fields
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
     bool needsMakeResidentBeforeLock = false;
+    D3DGPU_VIRTUAL_ADDRESS preferredGpuAddress = 0u;
 
   protected:
     std::string getHandleInfoString() const {

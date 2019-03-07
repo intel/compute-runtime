@@ -60,3 +60,7 @@ TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCall
     allocationFlags = MemObjHelper::getAllocationProperties(0, false, 0, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_FALSE(allocationFlags.flags.uncacheable);
 }
+TEST(StorageInfoTest, whenStorageInfoIsCreatedWithDefaultConstructorThenReturnsOneHandle) {
+    StorageInfo storageInfo;
+    EXPECT_EQ(1u, storageInfo.getNumHandles());
+}

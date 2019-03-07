@@ -223,7 +223,7 @@ NTSTATUS __stdcall D3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS
             mapGpuVA->VirtualAddress = MemoryConstants::pageSize64k;
         }
     } else {
-        if (MemoryConstants::maxSvmAddress != mapGpuVA->MaximumAddress) {
+        if (MemoryConstants::maxSvmAddress != mapGpuVA->MaximumAddress && gLastCallReserveGpuVaArg.MinimumAddress != mapGpuVA->BaseAddress) {
             return STATUS_INVALID_PARAMETER;
         }
         mapGpuVA->VirtualAddress = mapGpuVA->BaseAddress;

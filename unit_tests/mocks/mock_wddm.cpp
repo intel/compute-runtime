@@ -47,6 +47,7 @@ bool WddmMock::mapGpuVirtualAddress(WddmAllocation *allocation) {
 bool WddmMock::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) {
     mapGpuVirtualAddressResult.called++;
     mapGpuVirtualAddressResult.cpuPtrPassed = reinterpret_cast<void *>(preferredAddress);
+    mapGpuVirtualAddressResult.uint64ParamPassed = preferredAddress;
     if (callBaseMapGpuVa) {
         return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddress(gmm, handle, minimumAddress, maximumAddress, preferredAddress, gpuPtr);
     } else {
@@ -57,6 +58,7 @@ bool WddmMock::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTU
 
 bool WddmMock::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
     freeGpuVirtualAddressResult.called++;
+    freeGpuVirtualAddressResult.uint64ParamPassed = gpuPtr;
     return freeGpuVirtualAddressResult.success = Wddm::freeGpuVirtualAddress(gpuPtr, size);
 }
 NTSTATUS WddmMock::createAllocation(WddmAllocation *wddmAllocation) {
@@ -273,6 +275,10 @@ std::unique_lock<SpinLock> WddmMock::acquireLock(SpinLock &lock) {
     acquireLockResult.called++;
     acquireLockResult.uint64ParamPassed = reinterpret_cast<uint64_t>(&lock);
     return Wddm::acquireLock(lock);
+}
+D3DGPU_VIRTUAL_ADDRESS WddmMock::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) {
+    reserveGpuVirtualAddressResult.called++;
+    return Wddm::reserveGpuVirtualAddress(minimumAddress, maximumAddress, size);
 }
 
 GmmMemory *WddmMock::getGmmMemory() const {

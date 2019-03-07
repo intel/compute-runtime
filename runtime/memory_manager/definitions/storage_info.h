@@ -6,7 +6,9 @@
  */
 
 #pragma once
+#include <cstdint>
 namespace OCLRT {
 struct StorageInfo {
+    uint32_t getNumHandles() const;
 };
 } // namespace OCLRT

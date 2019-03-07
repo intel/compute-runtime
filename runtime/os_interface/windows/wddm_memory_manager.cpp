@@ -346,6 +346,9 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     if (input->getReservedAddressPtr()) {
         releaseReservedCpuAddressRange(input->getReservedAddressPtr(), input->getReservedAddressSize());
     }
+    if (input->preferredGpuAddress) {
+        wddm->freeGpuVirtualAddress(input->preferredGpuAddress, input->getAlignedSize());
+    }
     delete gfxAllocation;
 }
 
@@ -488,21 +491,35 @@ AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {
 }
 
 bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr) {
-    auto wddmSuccess = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->getDefaultGmm(), allocation->getHandleToModify(0u));
-    if (wddmSuccess == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
-        deferredDeleter->drain(true);
-        wddmSuccess = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->getDefaultGmm(), allocation->getHandleToModify(0u));
+    auto status = createGpuAllocationsWithRetry(allocation);
+    if (!status) {
+        return false;
     }
+    obtainGpuAddressIfNeeded(allocation);
+    bool mapSuccess = mapGpuVirtualAddressWithRetry(allocation, requiredGpuPtr);
+    if (!mapSuccess) {
+        if (allocation->preferredGpuAddress) {
+            wddm->freeGpuVirtualAddress(allocation->preferredGpuAddress, allocation->getAlignedSize());
+        }
+        wddm->destroyAllocations(allocation->getHandles().data(), allocation->getNumHandles(), allocation->resourceHandle);
+        return false;
+    }
+    return true;
+}
 
-    if (wddmSuccess == STATUS_SUCCESS) {
-        bool mapSuccess = mapGpuVirtualAddressWithRetry(allocation, requiredGpuPtr);
-        if (!mapSuccess) {
-            wddm->destroyAllocations(allocation->getHandles().data(), allocation->getNumHandles(), allocation->resourceHandle);
+bool WddmMemoryManager::createGpuAllocationsWithRetry(WddmAllocation *allocation) {
+    for (auto handleId = 0u; handleId < allocation->getNumHandles(); handleId++) {
+        auto status = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->getGmm(handleId), allocation->getHandleToModify(handleId));
+        if (status == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
+            deferredDeleter->drain(true);
+            status = wddm->createAllocation(allocation->getAlignedCpuPtr(), allocation->getGmm(handleId), allocation->getHandleToModify(handleId));
+        }
+        if (status != STATUS_SUCCESS) {
+            wddm->destroyAllocations(allocation->getHandles().data(), handleId, allocation->resourceHandle);
             return false;
         }
-        return true;
     }
-    return false;
+    return true;
 }
 
 bool WddmMemoryManager::mapGpuVirtualAddressWithRetry(WddmAllocation *graphicsAllocation, const void *preferredGpuVirtualAddress) {
@@ -516,20 +533,32 @@ bool WddmMemoryManager::mapGpuVirtualAddressWithRetry(WddmAllocation *graphicsAl
 
 uint32_t WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *preferredGpuVirtualAddress, uint32_t startingIndex) {
     auto numMappedAllocations = 0u;
+    D3DGPU_VIRTUAL_ADDRESS addressToMap = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(preferredGpuVirtualAddress);
     auto heapIndex = selectHeap(graphicsAllocation, preferredGpuVirtualAddress != nullptr, executionEnvironment.isFullRangeSvm());
     if (!executionEnvironment.isFullRangeSvm()) {
-        preferredGpuVirtualAddress = nullptr;
+        addressToMap = 0u;
+    }
+    if (graphicsAllocation->preferredGpuAddress) {
+        addressToMap = graphicsAllocation->preferredGpuAddress;
     }
     for (auto handleId = startingIndex; handleId < graphicsAllocation->getNumHandles(); handleId++) {
 
         if (!wddm->mapGpuVirtualAddress(graphicsAllocation->getGmm(handleId), graphicsAllocation->getHandles()[handleId],
                                         gfxPartition.getHeapBase(heapIndex), gfxPartition.getHeapLimit(heapIndex),
-                                        reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(preferredGpuVirtualAddress), graphicsAllocation->getGpuAddressToModify())) {
+                                        addressToMap, graphicsAllocation->getGpuAddressToModify())) {
             return numMappedAllocations;
         }
         numMappedAllocations++;
     }
     return numMappedAllocations;
+}
+
+void WddmMemoryManager::obtainGpuAddressIfNeeded(WddmAllocation *allocation) {
+    if (allocation->getNumHandles() > 1u) {
+        auto heapIndex = selectHeap(allocation, false, executionEnvironment.isFullRangeSvm());
+        allocation->preferredGpuAddress = wddm->reserveGpuVirtualAddress(gfxPartition.getHeapBase(heapIndex), gfxPartition.getHeapLimit(heapIndex),
+                                                                         allocation->getAlignedSize());
+    }
 }
 
 void *WddmMemoryManager::reserveCpuAddressRange(size_t size) {
