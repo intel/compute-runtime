@@ -48,6 +48,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                                                const size_t globalOffsets[3],
                                                const size_t workItems[3],
                                                const size_t *localWorkSizesIn,
+                                               const size_t *enqueuedWorkSizes,
                                                cl_uint numEventsInWaitList,
                                                const cl_event *eventWaitList,
                                                cl_event *event) {
@@ -69,12 +70,12 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
 
         if (kernel->getKernelInfo().builtinDispatchBuilder == nullptr) {
             DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit> builder;
-            builder.setDispatchGeometry(workDim, workItems, localWorkSizesIn, globalOffsets);
+            builder.setDispatchGeometry(workDim, workItems, enqueuedWorkSizes, globalOffsets, Vec3<size_t>{0, 0, 0}, localWorkSizesIn);
             builder.setKernel(kernel);
             builder.bake(multiDispatchInfo);
         } else {
             auto builder = kernel->getKernelInfo().builtinDispatchBuilder;
-            builder->buildDispatchInfos(multiDispatchInfo, kernel, workDim, workItems, localWorkSizesIn, globalOffsets);
+            builder->buildDispatchInfos(multiDispatchInfo, kernel, workDim, workItems, enqueuedWorkSizes, globalOffsets);
 
             if (multiDispatchInfo.size() == 0) {
                 return;

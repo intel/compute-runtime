@@ -35,6 +35,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     size_t region[3] = {1, 1, 1};
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t workGroupSize[3] = {1, 1, 1};
+    size_t enqueuedLocalWorkSize[3] = {0, 0, 0};
 
     auto &kernel = *castToObject<Kernel>(clKernel);
     const auto &kernelInfo = kernel.getKernelInfo();
@@ -81,6 +82,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
             } else {
                 workGroupSize[i] = localWorkSizeIn[i];
             }
+            enqueuedLocalWorkSize[i] = localWorkSizeIn[i];
             totalWorkItems *= localWorkSizeIn[i];
         }
 
@@ -134,6 +136,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
         globalWorkOffset,
         region,
         localWkgSizeToPass,
+        enqueuedLocalWorkSize,
         numEventsInWaitList,
         eventWaitList,
         event);

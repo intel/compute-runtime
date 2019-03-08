@@ -40,8 +40,10 @@ class MyCommandQueueHw : public CommandQueueHw<GfxFamily> {
   public:
     MyCommandQueueHw(Context *context, Device *device, cl_queue_properties *properties) : BaseClass(context, device, properties){};
     Vec3<size_t> lws = {1, 1, 1};
+    Vec3<size_t> elws = {1, 1, 1};
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &multiDispatchInfo) override {
-        lws = multiDispatchInfo.begin()->getEnqueuedWorkgroupSize();
+        elws = multiDispatchInfo.begin()->getEnqueuedWorkgroupSize();
+        lws = multiDispatchInfo.begin()->getActualWorkgroupSize();
     }
 };
 
@@ -57,17 +59,23 @@ HWTEST_F(EnqueueHandlerTest, givenLocalWorkgroupSizeGreaterThenGlobalWorkgroupSi
     size_t lws1d[] = {4, 1, 1};
     size_t gws1d[] = {2, 1, 1};
     myCmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws1d, lws1d, 0, nullptr, nullptr);
+    EXPECT_EQ(myCmdQ.elws.x, lws1d[0]);
     EXPECT_EQ(myCmdQ.lws.x, gws1d[0]);
 
     size_t lws2d[] = {3, 3, 1};
     size_t gws2d[] = {2, 1, 1};
     myCmdQ.enqueueKernel(mockKernel.mockKernel, 2, nullptr, gws2d, lws2d, 0, nullptr, nullptr);
+    EXPECT_EQ(myCmdQ.elws.x, lws2d[0]);
+    EXPECT_EQ(myCmdQ.elws.y, lws2d[1]);
     EXPECT_EQ(myCmdQ.lws.x, gws2d[0]);
     EXPECT_EQ(myCmdQ.lws.y, gws2d[1]);
 
     size_t lws3d[] = {5, 4, 3};
     size_t gws3d[] = {2, 2, 2};
     myCmdQ.enqueueKernel(mockKernel.mockKernel, 3, nullptr, gws3d, lws3d, 0, nullptr, nullptr);
+    EXPECT_EQ(myCmdQ.elws.x, lws3d[0]);
+    EXPECT_EQ(myCmdQ.elws.y, lws3d[1]);
+    EXPECT_EQ(myCmdQ.elws.z, lws3d[2]);
     EXPECT_EQ(myCmdQ.lws.x, gws3d[0]);
     EXPECT_EQ(myCmdQ.lws.y, gws3d[1]);
     EXPECT_EQ(myCmdQ.lws.z, gws3d[2]);

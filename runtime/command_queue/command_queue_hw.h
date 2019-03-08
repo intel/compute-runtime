@@ -307,6 +307,7 @@ class CommandQueueHw : public CommandQueue {
                         const size_t globalOffsets[3],
                         const size_t workItems[3],
                         const size_t *localWorkSizesIn,
+                        const size_t *enqueuedWorkSizes,
                         cl_uint numEventsInWaitList,
                         const cl_event *eventWaitList,
                         cl_event *event);
