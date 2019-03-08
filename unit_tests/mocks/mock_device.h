@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/device/device.h"
+#include "runtime/helpers/hw_helper.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 
@@ -113,7 +114,17 @@ class MockDevice : public Device {
 
 template <>
 inline Device *MockDevice::createWithNewExecutionEnvironment<Device>(const HardwareInfo *pHwInfo) {
-    return Device::create<Device>(pHwInfo, new ExecutionEnvironment, 0u);
+    auto executionEnvironment = new ExecutionEnvironment();
+
+    bool enableLocalMemory = false;
+    bool enable64kbPages = false;
+    if (pHwInfo != nullptr) {
+        enableLocalMemory = HwHelper::get(pHwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*pHwInfo);
+        enable64kbPages = getEnabled64kbPages(*pHwInfo);
+    }
+    executionEnvironment->initializeMemoryManager(enable64kbPages, enableLocalMemory);
+
+    return Device::create<Device>(pHwInfo, executionEnvironment, 0u);
 }
 
 class FailDevice : public MockDevice {

@@ -104,6 +104,7 @@ TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManage
 TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillAvailable) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
     executionEnvironment->incRefInternal();
+    executionEnvironment->initializeMemoryManager(false, false);
     std::unique_ptr<Device> device(Device::create<OCLRT::Device>(nullptr, executionEnvironment.get(), 0u));
     device.reset(nullptr);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);

@@ -164,15 +164,12 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo) {
 
 bool Device::createEngines(const HardwareInfo *pHwInfo) {
     auto defaultEngineType = getChosenEngineType(*pHwInfo);
-    auto &hwHelper = HwHelper::get(pHwInfo->pPlatform->eRenderCoreFamily);
-    auto &gpgpuEngines = hwHelper.getGpgpuEngineInstances();
-    auto enableLocalMemory = hwHelper.getEnableLocalMemory(*pHwInfo);
+    auto &gpgpuEngines = HwHelper::get(pHwInfo->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances();
 
     for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngines.size(); deviceCsrIndex++) {
         if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo, getDeviceIndex(), deviceCsrIndex)) {
             return false;
         }
-        executionEnvironment->initializeMemoryManager(getEnabled64kbPages(), enableLocalMemory);
 
         auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[getDeviceIndex()][deviceCsrIndex].get();
 

@@ -159,8 +159,8 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqu
     const size_t numDevices = 2;
     const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size());
 
-    auto device1 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 0u));
-    auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 1u));
+    auto device1 = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, &executionEnvironment, 0u));
+    auto device2 = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
 
     auto &registeredEngines = executionEnvironment.memoryManager->getRegisteredEngines();
     EXPECT_EQ(numGpgpuEngines * numDevices, registeredEngines.size());
@@ -182,8 +182,8 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqu
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.incRefInternal();
-    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 0u));
-    auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 1u));
+    auto device = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, &executionEnvironment, 0u));
+    auto device2 = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
 
     EXPECT_EQ(0u, device->getDeviceIndex());
     EXPECT_EQ(1u, device2->getDeviceIndex());

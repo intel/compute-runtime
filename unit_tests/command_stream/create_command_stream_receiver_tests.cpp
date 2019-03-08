@@ -49,12 +49,10 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
 
     if (csrType < CommandStreamReceiverType::CSR_TYPES_NUM) {
         EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[0][0].get());
-        executionEnvironment->initializeMemoryManager(false, false);
-        EXPECT_NE(nullptr, executionEnvironment->memoryManager.get());
     } else {
         EXPECT_EQ(nullptr, executionEnvironment->commandStreamReceivers[0][0]);
-        EXPECT_EQ(nullptr, executionEnvironment->memoryManager.get());
     }
+    EXPECT_NE(nullptr, executionEnvironment->memoryManager.get());
 }
 
 static CommandStreamReceiverType commandStreamReceiverTypes[] = {
