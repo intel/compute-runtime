@@ -178,7 +178,7 @@ uint64_t OsAgnosticMemoryManager::getSystemSharedMemory() {
 }
 
 uint64_t OsAgnosticMemoryManager::getMaxApplicationAddress() {
-    return MemoryConstants::max32BitAppAddress + static_cast<uint64_t>(is64bit) * (MemoryConstants::max64BitAppAddress - MemoryConstants::max32BitAppAddress);
+    return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress;
 }
 
 uint64_t OsAgnosticMemoryManager::getInternalHeapBaseAddress() {

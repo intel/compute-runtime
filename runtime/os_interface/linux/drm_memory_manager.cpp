@@ -591,7 +591,7 @@ uint64_t DrmMemoryManager::getSystemSharedMemory() {
 }
 
 uint64_t DrmMemoryManager::getMaxApplicationAddress() {
-    return MemoryConstants::max32BitAppAddress + (uint64_t)is64bit * (MemoryConstants::max64BitAppAddress - MemoryConstants::max32BitAppAddress);
+    return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress;
 }
 
 uint64_t DrmMemoryManager::getInternalHeapBaseAddress() {
