@@ -406,7 +406,7 @@ HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, const 
     return HeapIndex::HEAP_LIMITED;
 }
 bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, uint32_t sizeToCopy) const {
-    if (!graphicsAllocation || !memoryToCopy || sizeToCopy == 0u) {
+    if (!graphicsAllocation->getUnderlyingBuffer()) {
         return false;
     }
     memcpy_s(graphicsAllocation->getUnderlyingBuffer(), graphicsAllocation->getUnderlyingBufferSize(), memoryToCopy, sizeToCopy);
