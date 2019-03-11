@@ -1559,7 +1559,7 @@ TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValu
     memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                              deviceBitfield, preemptionMode);
     EXPECT_EQ(2u, memoryManager.registeredEngines[0].osContext->getNumSupportedDevices());
-    EXPECT_EQ(deviceBitfield, memoryManager.registeredEngines[0].osContext->getDeviceBitfiled());
+    EXPECT_EQ(deviceBitfield, memoryManager.registeredEngines[0].osContext->getDeviceBitfield());
     EXPECT_EQ(preemptionMode, memoryManager.registeredEngines[0].osContext->getPreemptionMode());
 }
 

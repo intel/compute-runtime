@@ -25,13 +25,13 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     static OsContext *create(OSInterface *osInterface, uint32_t contextId, uint32_t deviceBitfiled, EngineInstanceT engineType, PreemptionMode preemptionMode);
     uint32_t getContextId() const { return contextId; }
     uint32_t getNumSupportedDevices() const { return numSupportedDevices; }
-    uint8_t getDeviceBitfiled() const { return deviceBitfiled; }
+    uint8_t getDeviceBitfield() const { return deviceBitfield; }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     EngineInstanceT &getEngineType() { return engineType; }
 
   protected:
     OsContext(uint32_t contextId, uint32_t deviceBitfiled, EngineInstanceT engineType, PreemptionMode preemptionMode)
-        : contextId(contextId), deviceBitfiled(deviceBitfiled), preemptionMode(preemptionMode), engineType(engineType) {
+        : contextId(contextId), deviceBitfield(deviceBitfiled), preemptionMode(preemptionMode), engineType(engineType) {
         constexpr uint32_t maxIndex = std::numeric_limits<decltype(deviceBitfiled)>::digits;
         for (uint32_t deviceIndex = 0; deviceIndex < maxIndex; deviceIndex++) {
             if (isBitSet(deviceBitfiled, deviceIndex)) {
@@ -41,7 +41,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     };
 
     const uint32_t contextId;
-    const uint32_t deviceBitfiled;
+    const uint32_t deviceBitfield;
     const PreemptionMode preemptionMode;
     uint32_t numSupportedDevices = 0;
     EngineInstanceT engineType = {EngineType::ENGINE_RCS, 0};

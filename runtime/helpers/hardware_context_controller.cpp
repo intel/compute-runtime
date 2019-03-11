@@ -16,9 +16,9 @@
 using namespace OCLRT;
 
 HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext, uint32_t engineIndex, uint32_t flags) {
-    constexpr uint32_t maxIndex = std::numeric_limits<decltype(osContext.getDeviceBitfiled())>::digits;
+    constexpr uint32_t maxIndex = std::numeric_limits<decltype(osContext.getDeviceBitfield())>::digits;
     for (uint32_t deviceIndex = 0; deviceIndex < maxIndex; deviceIndex++) {
-        if (isBitSet(osContext.getDeviceBitfiled(), deviceIndex)) {
+        if (isBitSet(osContext.getDeviceBitfield(), deviceIndex)) {
             hardwareContexts.emplace_back(aubManager.createHardwareContext(deviceIndex, engineIndex, flags));
         }
     }
