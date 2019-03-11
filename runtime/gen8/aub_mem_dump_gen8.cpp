@@ -28,12 +28,12 @@ template struct AubPageTableHelper64<Traits<device, 48>>;
 namespace OCLRT {
 using Family = BDWFamily;
 
-static AubMemDump::LrcaHelperRcs rcs(0x002000);
-static AubMemDump::LrcaHelperBcs bcs(0x022000);
-static AubMemDump::LrcaHelperVcs vcs(0x012000);
-static AubMemDump::LrcaHelperVecs vecs(0x01a000);
+static const AubMemDump::LrcaHelperRcs rcs(0x002000);
+static const AubMemDump::LrcaHelperBcs bcs(0x022000);
+static const AubMemDump::LrcaHelperVcs vcs(0x012000);
+static const AubMemDump::LrcaHelperVecs vecs(0x01a000);
 
-const AubMemDump::LrcaHelper *AUBFamilyMapper<Family>::csTraits[EngineType::NUM_ENGINES] = {
+const AubMemDump::LrcaHelper *const AUBFamilyMapper<Family>::csTraits[EngineType::NUM_ENGINES] = {
     &rcs,
     &bcs,
     &vcs,

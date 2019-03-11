@@ -21,8 +21,8 @@ enum EngineType : uint32_t {
 
 namespace EngineInstanceConstants {
 constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
-static const size_t numAllEngineInstances = 5;
-static const size_t numGpgpuEngineInstances = 2;
+constexpr size_t numAllEngineInstances = 5;
+constexpr uint32_t numGpgpuEngineInstances = 2;
 } // namespace EngineInstanceConstants
 
 struct EngineInstanceT {

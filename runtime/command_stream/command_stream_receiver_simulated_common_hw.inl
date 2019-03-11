@@ -90,11 +90,11 @@ template <typename GfxFamily>
 void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &osContext) {
     CommandStreamReceiverHw<GfxFamily>::setupContext(osContext);
 
-    engineIndex = getEngineIndex(osContext.getEngineType());
+    auto engineType = osContext.getEngineType();
+    engineIndex = getEngineIndex(engineType);
     uint32_t flags = 0;
-    getCsTraits(osContext.getEngineType()).setContextSaveRestoreFlags(flags);
+    getCsTraits(engineType).setContextSaveRestoreFlags(flags);
 
-    auto &engineType = osContext.getEngineType();
     if (aubManager && !(engineType.type == lowPriorityGpgpuEngine.type && engineType.id == lowPriorityGpgpuEngine.id)) {
         hardwareContextController = std::make_unique<HardwareContextController>(*aubManager, osContext, engineIndex, flags);
     }

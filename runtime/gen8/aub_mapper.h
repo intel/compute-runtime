@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ struct AUBFamilyMapper<BDWFamily> {
 
     using AubTraits = AubMemDump::Traits<device, MemoryConstants::GfxAddressBits>;
 
-    static const AubMemDump::LrcaHelper *csTraits[EngineType::NUM_ENGINES];
+    static const AubMemDump::LrcaHelper *const csTraits[EngineType::NUM_ENGINES];
 
     static const MMIOList globalMMIO;
     static const MMIOList *perEngineMMIO[EngineType::NUM_ENGINES];

@@ -211,7 +211,7 @@ TEST(DeviceCreation, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) 
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0));
 
-    auto &defaultEngine = device->getDefaultEngine().osContext->getEngineType();
+    auto defaultEngine = device->getDefaultEngine().osContext->getEngineType();
 
     EXPECT_EQ(platformDevices[0]->capabilityTable.defaultEngineType, defaultEngine.type);
     EXPECT_EQ(0, defaultEngine.id);

@@ -40,7 +40,9 @@ struct AUBFixture : public AUBCommandStreamFixture,
     }
 
     template <typename FamilyType>
-    void testNoopIdXcs() {
+    void testNoopIdXcs(EngineType engineType) {
+        pCommandStreamReceiver->getOsContext().getEngineType().type = engineType;
+
         typedef typename FamilyType::MI_NOOP MI_NOOP;
 
         auto pCmd = (MI_NOOP *)pCS->getSpace(sizeof(MI_NOOP) * 4);
@@ -61,8 +63,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
         pCommandStreamReceiver->flush(batchBuffer, allocationsForResidency);
 
         AUBCommandStreamFixture::getSimulatedCsr<FamilyType>()->pollForCompletionImpl();
-        auto engineType = pCommandStreamReceiver->getOsContext().getEngineType();
-        auto mmioBase = CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(engineType.type).mmioBase;
+        auto mmioBase = CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(engineType).mmioBase;
         AUBCommandStreamFixture::expectMMIO<FamilyType>(AubMemDump::computeRegisterOffset(mmioBase, 0x2094), noopId);
     }
 };
@@ -83,23 +84,19 @@ HWTEST_F(AUBcommandstreamTests, testFlushTwice) {
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdRcs) {
-    pCommandStreamReceiver->getOsContext().getEngineType().type = EngineType::ENGINE_RCS;
-    testNoopIdXcs<FamilyType>();
+    testNoopIdXcs<FamilyType>(EngineType::ENGINE_RCS);
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdBcs) {
-    pCommandStreamReceiver->getOsContext().getEngineType().type = EngineType::ENGINE_BCS;
-    testNoopIdXcs<FamilyType>();
+    testNoopIdXcs<FamilyType>(EngineType::ENGINE_BCS);
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdVcs) {
-    pCommandStreamReceiver->getOsContext().getEngineType().type = EngineType::ENGINE_VCS;
-    testNoopIdXcs<FamilyType>();
+    testNoopIdXcs<FamilyType>(EngineType::ENGINE_VCS);
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdVecs) {
-    pCommandStreamReceiver->getOsContext().getEngineType().type = EngineType::ENGINE_VECS;
-    testNoopIdXcs<FamilyType>();
+    testNoopIdXcs<FamilyType>(EngineType::ENGINE_VECS);
 }
 
 TEST_F(AUBcommandstreamTests, makeResident) {
