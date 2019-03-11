@@ -134,7 +134,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
         return;
     }
     if (gfxAllocation->isLocked()) {
-        unlockResource(gfxAllocation);
+        freeAssociatedResourceImpl(*gfxAllocation);
     }
     freeGraphicsMemoryImpl(gfxAllocation);
 }

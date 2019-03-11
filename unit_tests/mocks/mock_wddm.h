@@ -93,6 +93,7 @@ class WddmMock : public Wddm {
     EvictionStatus evictAllTemporaryResources() override;
     EvictionStatus evictTemporaryResource(const D3DKMT_HANDLE &handle) override;
     void applyBlockingMakeResident(const D3DKMT_HANDLE &handle) override;
+    void removeTemporaryResource(const D3DKMT_HANDLE &handle) override;
     std::unique_lock<SpinLock> acquireLock(SpinLock &lock) override;
     bool reserveValidAddressRange(size_t size, void *&reservedMem);
     GmmMemory *getGmmMemory() const;
@@ -131,6 +132,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::EvictCallResult evictAllTemporaryResourcesResult;
     WddmMockHelpers::EvictCallResult evictTemporaryResourceResult;
     WddmMockHelpers::CallResult applyBlockingMakeResidentResult;
+    WddmMockHelpers::CallResult removeTemporaryResourceResult;
     WddmMockHelpers::CallResult acquireLockResult;
     WddmMockHelpers::CallResult registerTrimCallbackResult;
     WddmMockHelpers::CallResult getPagingFenceAddressResult;

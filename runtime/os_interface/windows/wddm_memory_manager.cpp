@@ -286,6 +286,14 @@ void WddmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocatio
         DEBUG_BREAK_IF(evictionStatus == EvictionStatus::FAILED);
     }
 }
+void WddmMemoryManager::freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) {
+    auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
+    if (wddmAllocation.needsMakeResidentBeforeLock) {
+        for (auto i = 0u; i < wddmAllocation.getNumHandles(); i++) {
+            wddm->removeTemporaryResource(wddmAllocation.getHandles()[i]);
+        }
+    }
+}
 
 void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     WddmAllocation *input = static_cast<WddmAllocation *>(gfxAllocation);

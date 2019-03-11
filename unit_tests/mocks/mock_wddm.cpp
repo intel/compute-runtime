@@ -254,6 +254,11 @@ void WddmMock::applyBlockingMakeResident(const D3DKMT_HANDLE &handle) {
     return Wddm::applyBlockingMakeResident(handle);
 }
 
+void WddmMock::removeTemporaryResource(const D3DKMT_HANDLE &handle) {
+    removeTemporaryResourceResult.called++;
+    return Wddm::removeTemporaryResource(handle);
+}
+
 std::unique_lock<SpinLock> WddmMock::acquireLock(SpinLock &lock) {
     acquireLockResult.called++;
     acquireLockResult.uint64ParamPassed = reinterpret_cast<uint64_t>(&lock);

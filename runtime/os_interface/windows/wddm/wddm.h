@@ -150,6 +150,7 @@ class Wddm {
     MOCKABLE_VIRTUAL EvictionStatus evictTemporaryResource(const D3DKMT_HANDLE &handle);
     MOCKABLE_VIRTUAL void applyBlockingMakeResident(const D3DKMT_HANDLE &handle);
     MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock);
+    MOCKABLE_VIRTUAL void removeTemporaryResource(const D3DKMT_HANDLE &handle);
 
   protected:
     bool initialized = false;

@@ -1002,7 +1002,15 @@ void Wddm::applyBlockingMakeResident(const D3DKMT_HANDLE &handle) {
     while (currentPagingFenceValue > *getPagingFenceAddress())
         ;
 }
-
+void Wddm::removeTemporaryResource(const D3DKMT_HANDLE &handle) {
+    auto lock = acquireLock(temporaryResourcesLock);
+    auto position = std::find(temporaryResources.begin(), temporaryResources.end(), handle);
+    if (position == temporaryResources.end()) {
+        return;
+    }
+    *position = temporaryResources.back();
+    temporaryResources.pop_back();
+}
 std::unique_lock<SpinLock> Wddm::acquireLock(SpinLock &lock) {
     return std::unique_lock<SpinLock>{lock};
 }
