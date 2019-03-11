@@ -500,3 +500,39 @@ TEST_F(KernelArgSvmTest, givenNoCacheFlushReadOnlySvmAllocationWhenSettingKernel
 
     alignedFree(svmPtr);
 }
+
+TEST_F(KernelArgSvmTest, givenCpuAddressIsNullWhenGpuAddressIsValidThenExpectSvmArgUseGpuAddress) {
+    char svmPtr[256];
+
+    pKernelInfo->kernelArgInfo[0].offsetBufferOffset = 0u;
+
+    MockGraphicsAllocation svmAlloc(nullptr, reinterpret_cast<uint64_t>(svmPtr), 256);
+
+    auto retVal = pKernel->setArgSvmAlloc(0, svmPtr, &svmAlloc);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto pKernelArg = (void **)(pKernel->getCrossThreadData() +
+                                pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
+    EXPECT_EQ(svmPtr, *pKernelArg);
+}
+
+TEST_F(KernelArgSvmTest, givenCpuAddressIsNullWhenGpuAddressIsValidPatchBufferOffsetWithGpuAddress) {
+    std::vector<char> svmPtr;
+    svmPtr.resize(256);
+
+    pKernel->setCrossThreadData(nullptr, sizeof(uint32_t));
+
+    constexpr uint32_t initVal = 7U;
+
+    MockGraphicsAllocation svmAlloc(nullptr, reinterpret_cast<uint64_t>(svmPtr.data()), 256);
+    uint32_t *expectedPatchPtr = reinterpret_cast<uint32_t *>(pKernel->getCrossThreadData());
+
+    KernelArgInfo kai;
+    void *returnedPtr = nullptr;
+
+    kai.offsetBufferOffset = 0U;
+    *expectedPatchPtr = initVal;
+    returnedPtr = pKernel->patchBufferOffset(kai, svmPtr.data(), &svmAlloc);
+    EXPECT_EQ(svmPtr.data(), returnedPtr);
+    EXPECT_EQ(0U, *expectedPatchPtr);
+}

@@ -829,7 +829,7 @@ void *Kernel::patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, Grap
 
     void *ptrToPatch = svmPtr;
     if (svmAlloc != nullptr) {
-        ptrToPatch = svmAlloc->getUnderlyingBuffer();
+        ptrToPatch = reinterpret_cast<void *>(svmAlloc->getGpuAddressToPatch());
     }
 
     constexpr uint32_t minimumAlignment = 4;
@@ -883,7 +883,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
         size_t allocSize = 0;
         if (svmAlloc != nullptr) {
             allocSize = svmAlloc->getUnderlyingBufferSize();
-            size_t offset = ptrDiff(ptrToPatch, svmAlloc->getUnderlyingBuffer());
+            size_t offset = ptrDiff(ptrToPatch, svmAlloc->getGpuAddressToPatch());
             allocSize -= offset;
         }
         Buffer::setSurfaceState(&getDevice(), surfaceState, allocSize, ptrToPatch, nullptr);
