@@ -66,7 +66,11 @@ class DrmGemCloseWorkerFixture {
         this->drmMock->gem_close_cnt = 0;
         this->drmMock->gem_close_expected = 0;
 
-        this->mm = new DrmMemoryManager(this->drmMock, gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+        this->mm = new DrmMemoryManager(this->drmMock,
+                                        gemCloseWorkerMode::gemCloseWorkerInactive, false,
+                                        false,
+                                        false,
+                                        executionEnvironment);
     }
 
     void TearDown() {

@@ -54,7 +54,12 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
     using DrmMemoryManager::sharingBufferObjects;
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
 
-    TestedDrmMemoryManager(Drm *drm, ExecutionEnvironment &executionEnvironment) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
+    TestedDrmMemoryManager(Drm *drm, ExecutionEnvironment &executionEnvironment) : DrmMemoryManager(drm,
+                                                                                                    gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    executionEnvironment) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
         this->munmapFunction = &munmapMock;
@@ -65,7 +70,16 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
         munmapMockCallCount = 0;
         hostPtrManager.reset(new MockHostPtrManager);
     };
-    TestedDrmMemoryManager(Drm *drm, bool allowForcePin, bool validateHostPtrMemory, ExecutionEnvironment &executionEnvironment) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, allowForcePin, validateHostPtrMemory, executionEnvironment) {
+    TestedDrmMemoryManager(Drm *drm,
+                           bool enableLocalMemory,
+                           bool allowForcePin,
+                           bool validateHostPtrMemory,
+                           ExecutionEnvironment &executionEnvironment) : DrmMemoryManager(drm,
+                                                                                          gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                                          enableLocalMemory,
+                                                                                          allowForcePin,
+                                                                                          validateHostPtrMemory,
+                                                                                          executionEnvironment) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
         this->munmapFunction = &munmapMock;

@@ -27,11 +27,16 @@
 
 namespace OCLRT {
 
-DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory, ExecutionEnvironment &executionEnvironment) : MemoryManager(false, false, executionEnvironment),
-                                                                                                                                                                      drm(drm),
-                                                                                                                                                                      pinBB(nullptr),
-                                                                                                                                                                      forcePinEnabled(forcePinAllowed),
-                                                                                                                                                                      validateHostPtrMemory(validateHostPtrMemory) {
+DrmMemoryManager::DrmMemoryManager(Drm *drm,
+                                   gemCloseWorkerMode mode,
+                                   bool enableLocalMemory,
+                                   bool forcePinAllowed,
+                                   bool validateHostPtrMemory,
+                                   ExecutionEnvironment &executionEnvironment) : MemoryManager(false, enableLocalMemory, executionEnvironment),
+                                                                                 drm(drm),
+                                                                                 pinBB(nullptr),
+                                                                                 forcePinEnabled(forcePinAllowed),
+                                                                                 validateHostPtrMemory(validateHostPtrMemory) {
     gfxPartition.init(platformDevices[0]->capabilityTable.gpuAddressSpace);
     MemoryManager::virtualPaddingAvailable = true;
     if (mode != gemCloseWorkerMode::gemCloseWorkerInactive) {

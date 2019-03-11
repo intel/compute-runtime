@@ -99,7 +99,7 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenforcePinAllowedWhenMemoryManagerIsCreatedThenPinBbIsCreated) {
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock.get(), true, false, *executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock.get(), false, true, false, *executionEnvironment);
     EXPECT_NE(nullptr, memoryManager->getPinBB());
 }
 
@@ -107,19 +107,23 @@ TEST_F(DrmMemoryManagerTest, pinBBisCreated) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, true, false, *executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, true, false, *executionEnvironment);
     EXPECT_NE(nullptr, memoryManager->getPinBB());
 }
 
 TEST_F(DrmMemoryManagerTest, givenNotAllowedForcePinWhenMemoryManagerIsCreatedThenPinBBIsNotCreated) {
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, false, false, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock,
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    *executionEnvironment));
     EXPECT_EQ(nullptr, memoryManager->getPinBB());
 }
 
 TEST_F(DrmMemoryManagerTest, pinBBnotCreatedWhenIoctlFailed) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_res = -1;
-    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false, *executionEnvironment);
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, false, true, false, *executionEnvironment);
     EXPECT_EQ(nullptr, memoryManager->getPinBB());
     mock->ioctl_res = 0;
     delete memoryManager;
@@ -131,7 +135,7 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, true, false, *executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, true, false, *executionEnvironment);
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(10 * MemoryConstants::megaByte, true)));
@@ -147,7 +151,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmContextIdWhenAllocationIsCreatedThenPinWith
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, true, false, *executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, true, false, *executionEnvironment);
     auto &osContextLinux = static_cast<OsContextLinux &>(memoryManager->getDefaultCommandStreamReceiver(0)->getOsContext());
     auto drmContextId = osContextLinux.getDrmContextId();
     ASSERT_NE(nullptr, memoryManager->getPinBB());
@@ -164,7 +168,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedAndAllowedButSmallAll
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, true, false, *executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, true, false, *executionEnvironment);
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     // one page is too small for early pinning
@@ -180,7 +184,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenNotAskedButAllowed) {
     mock->ioctl_expected.gemClose = 2;
     mock->ioctl_expected.gemWait = 1;
 
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, true, false, *executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, true, false, *executionEnvironment);
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(MemoryConstants::pageSize, false)));
@@ -195,7 +199,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedButNotAllowed) {
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, false, *executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, false, false, *executionEnvironment);
 
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(MemoryConstants::pageSize, true)));
     ASSERT_NE(nullptr, alloc);
@@ -211,7 +215,7 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     mock->ioctl_expected.execbuffer2 = 1;
     mock->ioctl_expected.gemWait = 1;
 
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, true, false, *executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, true, false, *executionEnvironment);
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     allocationData.size = 10 * 1024 * 1024;
@@ -230,7 +234,7 @@ TEST_F(DrmMemoryManagerTest, givenSmallAllocationHostPtrAllocationWhenForcePinIs
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, true, false, *executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, true, false, *executionEnvironment);
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     // one page is too small for early pinning
@@ -251,7 +255,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenNotAskedButAllowedHostPtr)
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, true, false, *executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, true, false, *executionEnvironment);
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     allocationData.size = 4 * 1024;
@@ -270,7 +274,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedButNotAllowedHostPtr)
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, false, *executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(this->mock, false, false, false, *executionEnvironment);
 
     allocationData.size = 4 * 1024;
     allocationData.hostPtr = ::alignedMalloc(allocationData.size, 4096);
@@ -297,12 +301,12 @@ TEST_F(DrmMemoryManagerTest, UnreferenceNullPtr) {
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerModeInactiveThenGemCloseWorkerIsNotCreated) {
-    DrmMemoryManager drmMemoryManger(this->mock.get(), gemCloseWorkerMode::gemCloseWorkerInactive, false, false, *executionEnvironment);
+    DrmMemoryManager drmMemoryManger(this->mock.get(), gemCloseWorkerMode::gemCloseWorkerInactive, false, false, false, *executionEnvironment);
     EXPECT_EQ(nullptr, drmMemoryManger.peekGemCloseWorker());
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerActiveThenGemCloseWorkerIsCreated) {
-    DrmMemoryManager drmMemoryManger(this->mock.get(), gemCloseWorkerMode::gemCloseWorkerActive, false, false, *executionEnvironment);
+    DrmMemoryManager drmMemoryManger(this->mock.get(), gemCloseWorkerMode::gemCloseWorkerActive, false, false, false, *executionEnvironment);
     EXPECT_NE(nullptr, drmMemoryManger.peekGemCloseWorker());
 }
 
@@ -543,6 +547,7 @@ TEST_F(DrmMemoryManagerTest, NullOsHandleStorageAskedForPopulationReturnsFilledP
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesReturnsInvalidHostPointerError) {
     std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock.get(),
                                                                                                           false,
+                                                                                                          false,
                                                                                                           true,
                                                                                                           *executionEnvironment));
 
@@ -573,7 +578,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenPinningFailWithErrorDifferentThanEfaultThenPopulateOsHandlesReturnsError) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock.get(), false, true, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock.get(),
+                                                                                                          false,
+                                                                                                          false,
+                                                                                                          true,
+                                                                                                          *executionEnvironment));
 
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
@@ -2349,7 +2358,7 @@ TEST(MmapFlags, givenVariousMmapParametersGetTimeDeltaForTheOperation) {
 
 TEST(DrmMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncDeleterEnabledIsTrue) {
     ExecutionEnvironment executionEnvironment;
-    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false, true, executionEnvironment);
+    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false, false, true, executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
 }
@@ -2358,7 +2367,7 @@ TEST(DrmMemoryManager, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThe
     ExecutionEnvironment executionEnvironment;
     DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.EnableDeferredDeleter.set(true);
-    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false, true, executionEnvironment);
+    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false, false, true, executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
 }
@@ -2367,14 +2376,18 @@ TEST(DrmMemoryManager, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedTh
     ExecutionEnvironment executionEnvironment;
     DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.EnableDeferredDeleter.set(false);
-    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false, true, executionEnvironment);
+    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false, false, true, executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
 }
 
 TEST(DrmMemoryManager, givenDefaultDrmMemoryManagerWhenItIsQueriedForInternalHeapBaseThenInternalHeapBaseIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), true, true, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0),
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    true,
+                                                                                                    executionEnvironment));
     auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();
     auto heapBase = internalAllocator->getBase();
     EXPECT_EQ(heapBase, memoryManager->getInternalHeapBaseAddress());
@@ -2382,35 +2395,55 @@ TEST(DrmMemoryManager, givenDefaultDrmMemoryManagerWhenItIsQueriedForInternalHea
 
 TEST(DrmMemoryManager, givenMemoryManagerWithEnabledHostMemoryValidationWhenFeatureIsQueriedThenTrueIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0),
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    executionEnvironment));
     ASSERT_NE(nullptr, memoryManager.get());
     EXPECT_TRUE(memoryManager->isValidateHostMemoryEnabled());
 }
 
 TEST(DrmMemoryManager, givenMemoryManagerWithDisabledHostMemoryValidationWhenFeatureIsQueriedThenFalseIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0),
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    executionEnvironment));
     ASSERT_NE(nullptr, memoryManager.get());
     EXPECT_FALSE(memoryManager->isValidateHostMemoryEnabled());
 }
 
 TEST(DrmMemoryManager, givenEnabledHostMemoryValidationWhenMemoryManagerIsCreatedThenPinBBIsCreated) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0),
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    executionEnvironment));
     ASSERT_NE(nullptr, memoryManager.get());
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 }
 
 TEST(DrmMemoryManager, givenEnabledHostMemoryValidationAndForcePinWhenMemoryManagerIsCreatedThenPinBBIsCreated) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), true, true, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0),
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    true,
+                                                                                                    executionEnvironment));
     ASSERT_NE(nullptr, memoryManager.get());
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 }
 
 TEST(DrmMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0),
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    executionEnvironment));
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(MemoryConstants::pageSize, false));
     EXPECT_NE(nullptr, allocation);
@@ -2419,7 +2452,11 @@ TEST(DrmMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenM
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMemoryManagerWhenAllocateGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPages) {
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0),
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    *executionEnvironment));
 
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = 4096u;
@@ -2431,7 +2468,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMemoryManagerWhenAlloc
 
 TEST(DrmMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPagesWith32BitGpuAddressing) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0),
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    executionEnvironment));
 
     memoryManager->setForce32BitAllocations(true);
 
@@ -2448,7 +2489,11 @@ TEST(DrmMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithPtrI
 
 TEST(DrmMemoryManager, givenMemoryManagerWhenCreateAllocationFromHandleIsCalledThenMemoryPoolIsSystemCpuInaccessible) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0),
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    executionEnvironment));
     auto osHandle = 1u;
     auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     EXPECT_NE(nullptr, allocation);
@@ -2458,7 +2503,11 @@ TEST(DrmMemoryManager, givenMemoryManagerWhenCreateAllocationFromHandleIsCalledT
 
 TEST(DrmMemoryManager, DISABLED_givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0),
+                                                                                                    false,
+                                                                                                    false,
+                                                                                                    true,
+                                                                                                    executionEnvironment));
     AllocationData allocationData;
     allocationData.size = 4096u;
     auto allocation = memoryManager->allocateGraphicsMemory64kb(allocationData);
@@ -2472,7 +2521,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
     this->mock->ioctl_expected.gemUserptr = 1;
     EXPECT_THROW(
         {
-            std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, true, *executionEnvironment));
+            std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(),
+                                                                                                   false,
+                                                                                                   false,
+                                                                                                   true,
+                                                                                                   *executionEnvironment));
             EXPECT_NE(nullptr, testedMemoryManager.get());
         },
         std::exception);
@@ -2483,7 +2536,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEnabledValidateHostMemoryWhenPopulateOsHandlesIsCalledThenHostMemoryIsValidated) {
 
-    std::unique_ptr<DrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, true, *executionEnvironment));
+    std::unique_ptr<DrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, false, true, *executionEnvironment));
     ASSERT_NE(nullptr, testedMemoryManager.get());
     ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
 
@@ -2523,7 +2576,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
         size_t numberOfBosPinned;
     };
 
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, true, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, false, true, *executionEnvironment));
     ASSERT_NE(nullptr, testedMemoryManager.get());
     ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
 
@@ -2572,7 +2625,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryE
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock.get(), true, true, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock.get(), false, true, true, *executionEnvironment));
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     size_t size = 10 * 1024 * 1024;
@@ -2586,7 +2639,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryE
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenValidHostPointerIsPassedToPopulateThenSuccessIsReturned) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock.get(), false, true, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock.get(),
+                                                                                                          false,
+                                                                                                          false,
+                                                                                                          true,
+                                                                                                          *executionEnvironment));
 
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
@@ -2605,7 +2662,7 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledWhenSmal
     mock->ioctl_expected.gemWait = 1;     // in freeGraphicsAllocation
     mock->ioctl_expected.gemClose = 2;    // 1 pinBB, 1 small allocation
 
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, true, true, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, false, true, true, *executionEnvironment));
     ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     // one page is too small for early pinning but pinning is used for host memory validation
@@ -2624,7 +2681,7 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAllowedAndNoPinBBInMemoryManagerWhenAl
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
     mock->ioctl_res = -1;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, false, true, false, *executionEnvironment));
     EXPECT_EQ(nullptr, memoryManager->getPinBB());
     mock->ioctl_res = 0;
 
@@ -2649,7 +2706,7 @@ TEST_F(DrmMemoryManagerTest, givenNullptrOrZeroSizeWhenAllocateGraphicsMemoryFor
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWithNotAlignedPtrIsPassedThenAllocationIsCreated) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, false, executionEnvironment));
 
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
@@ -2667,7 +2724,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForN
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledButAllocationFailedThenNullPtrReturned) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, false, executionEnvironment));
 
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
@@ -2692,7 +2749,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForN
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndHostMemoryValidationEnabledWhenAllocationIsCreatedThenBufferObjectIsPinnedOnlyOnce) {
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(this->mock.get(), false, true, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(this->mock.get(), false, false, true, *executionEnvironment));
     mock->reset();
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.execbuffer2 = 1;
@@ -2714,7 +2771,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndHostMemoryValidationDisabledWhenAllocationIsCreatedThenBufferObjectIsNotPinned) {
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(this->mock.get(), false, false, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(this->mock.get(), false, false, false, *executionEnvironment));
     mock->reset();
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemClose = 1;
@@ -2735,7 +2792,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMemoryWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesMarksFragmentsToFree) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, true, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, false, true, *executionEnvironment));
     ASSERT_NE(nullptr, testedMemoryManager.get());
     ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
 
@@ -2782,7 +2839,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMemoryWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesDoesNotStoreTheFragments) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, true, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, false, true, *executionEnvironment));
     ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
 
     mock->reset();
@@ -2827,7 +2884,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMemoryWhenPopulateOsHandlesSucceedsThenFragmentIsStoredInHostPtrManager) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, true, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, false, true, *executionEnvironment));
     ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
 
     mock->reset();
@@ -2853,7 +2910,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCleanOsHandlesDeletesHandleDataThenOsHandleStorageAndResidencyIsSetToNullptr) {
-    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, true, *executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock.get(), false, false, true, *executionEnvironment));
     ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
 
     OsHandleStorage handleStorage;
@@ -2880,7 +2937,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCl
 
 TEST_F(DrmMemoryManagerTest, ifLimitedRangeAllocatorAvailableWhenAskedForAllocationThenLimitedRangePointerIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, false, executionEnvironment));
 
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
@@ -2917,7 +2974,7 @@ TEST_F(DrmMemoryManagerTest, givenDisabledHostPtrTrackingWhenAllocateGraphicsMem
     DebugManager.flags.EnableHostPtrTracking.set(false);
 
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, false, executionEnvironment));
 
     memoryManager->forceLimitedRangeAllocator(MemoryConstants::max48BitAddress);
 
@@ -2935,7 +2992,7 @@ TEST_F(DrmMemoryManagerTest, givenDisabledHostPtrTrackingWhenAllocateGraphicsMem
 
 TEST_F(DrmMemoryManagerTest, givenImageOrSharedResourceCopyWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, executionEnvironment));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false, false, executionEnvironment));
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;

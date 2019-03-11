@@ -23,7 +23,12 @@ class Drm;
 
 class DrmMemoryManager : public MemoryManager {
   public:
-    DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory, ExecutionEnvironment &executionEnvironment);
+    DrmMemoryManager(Drm *drm,
+                     gemCloseWorkerMode mode,
+                     bool enableLocalMemory,
+                     bool forcePinAllowed,
+                     bool validateHostPtrMemory,
+                     ExecutionEnvironment &executionEnvironment);
     ~DrmMemoryManager() override;
 
     BufferObject *getPinBB() const;

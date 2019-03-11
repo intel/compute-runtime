@@ -5,12 +5,16 @@
  *
  */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/linux/allocator_helper.h"
+#include "runtime/os_interface/linux/os_interface.h"
 #include "test.h"
 #include "unit_tests/custom_event_listener.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -330,6 +334,29 @@ TEST_F(DrmTests, failOnInvalidDeviceName) {
 
 TEST(AllocatorHelper, givenExpectedSizeToMapWhenGetSizetoMapCalledThenExpectedValueReturned) {
     EXPECT_EQ((alignUp(4 * GB - 8096, 4096)), OCLRT::getSizeToMap());
+}
+
+TEST(DrmMemoryManagerCreate, givenLocalMemoryEnabledWhenMemoryManagerIsCreatedThenLocalMemoryEnabledIsTrue) {
+    DrmMockSuccess mock;
+    ExecutionEnvironment executionEnvironment;
+
+    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.osInterface->get()->setDrm(&mock);
+
+    auto drmMemoryManager = MemoryManager::createMemoryManager(false, true, executionEnvironment);
+    EXPECT_TRUE(drmMemoryManager->isLocalMemorySupported());
+    executionEnvironment.memoryManager = std::move(drmMemoryManager);
+}
+
+TEST(DrmMemoryManagerCreate, givenLocalMemoryDisabledWhenMemoryManagerIsCreatedThenLocalMemoryEnabledIsFalse) {
+    DrmMockSuccess mock;
+    ExecutionEnvironment executionEnvironment;
+
+    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.osInterface->get()->setDrm(&mock);
+    auto drmMemoryManager = MemoryManager::createMemoryManager(false, false, executionEnvironment);
+    EXPECT_FALSE(drmMemoryManager->isLocalMemorySupported());
+    executionEnvironment.memoryManager = std::move(drmMemoryManager);
 }
 
 int main(int argc, char **argv) {

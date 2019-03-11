@@ -31,7 +31,12 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
     DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], executionEnvironment,
                                              gemCloseWorkerMode::gemCloseWorkerInactive);
 
-    auto memoryManager = new DrmMemoryManager(executionEnvironment.osInterface->get()->getDrm(), gemCloseWorkerInactive, DebugManager.flags.EnableForcePin.get(), true, executionEnvironment);
+    auto memoryManager = new DrmMemoryManager(executionEnvironment.osInterface->get()->getDrm(),
+                                              gemCloseWorkerInactive,
+                                              false,
+                                              DebugManager.flags.EnableForcePin.get(),
+                                              true,
+                                              executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
     ASSERT_NE(nullptr, memoryManager);
     EXPECT_NE(nullptr, memoryManager->getPinBB());
@@ -50,7 +55,12 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
     DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], executionEnvironment,
                                              gemCloseWorkerMode::gemCloseWorkerInactive);
 
-    auto memoryManager = new DrmMemoryManager(executionEnvironment.osInterface->get()->getDrm(), gemCloseWorkerInactive, DebugManager.flags.EnableForcePin.get(), true, executionEnvironment);
+    auto memoryManager = new DrmMemoryManager(executionEnvironment.osInterface->get()->getDrm(),
+                                              gemCloseWorkerInactive,
+                                              false,
+                                              DebugManager.flags.EnableForcePin.get(),
+                                              true,
+                                              executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
     ASSERT_NE(nullptr, memoryManager);
     EXPECT_NE(nullptr, memoryManager->getPinBB());
