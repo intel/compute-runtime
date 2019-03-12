@@ -3010,6 +3010,21 @@ TEST_F(DrmMemoryManagerTest, givenImageOrSharedResourceCopyWhenGraphicsAllocatio
     }
 }
 
+TEST(DrmMemoryManagerSimpleTest, givenLocalMemoryDisabledWhenAllocateInDevicePoolIsCalledThenNullptrAndStatusRetryIsReturned) {
+    ExecutionEnvironment executionEnvironment;
+    const bool localMemoryEnabled = false;
+    TestedDrmMemoryManager memoryManager(Drm::get(0), localMemoryEnabled, false, false, executionEnvironment);
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.useSystemMemory = false;
+    allocData.flags.allocateMemory = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
+}
+
 TEST(DrmAllocationTest, givenAllocationTypeWhenPassedToDrmAllocationConstructorThenAllocationTypeIsStored) {
     DrmAllocation allocation{GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::MemoryNull, false};
     EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, allocation.getAllocationType());

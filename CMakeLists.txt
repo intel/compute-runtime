@@ -136,7 +136,7 @@ endif()
 if(LIBDRM_DIR)
   get_filename_component(I915_INCLUDES_DIR "${LIBDRM_DIR}/include" ABSOLUTE)
 else()
-  get_filename_component(I915_INCLUDES_DIR "${IGDRCL_SOURCE_DIR}/third_party/uapi" ABSOLUTE)
+  get_filename_component(I915_INCLUDES_DIR "${IGDRCL_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}/uapi" ABSOLUTE)
 endif()
 message(STATUS "i915 includes dir: ${I915_INCLUDES_DIR}")
 

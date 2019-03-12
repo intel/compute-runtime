@@ -174,6 +174,10 @@ class DrmMock : public Drm {
             aperture->aper_available_size = gpuMemSize;
             aperture->aper_size = gpuMemSize;
         }
+        if (request == DRM_IOCTL_I915_GEM_MMAP) {
+            auto mmap_arg = static_cast<drm_i915_gem_mmap *>(arg);
+            mmap_arg->addr_ptr = reinterpret_cast<__u64>(lockedPtr);
+        }
 
         handleRemainingRequests(request, arg);
         return 0;
@@ -250,6 +254,8 @@ class DrmMock : public Drm {
     //DRM_IOCTL_I915_GEM_USERPTR
     __u32 returnHandle = 0;
     __u64 gpuMemSize = 3u * MemoryConstants::gigaByte;
+    //DRM_IOCTL_I915_GEM_MMAP
+    uint64_t lockedPtr[4];
 
     virtual void handleRemainingRequests(unsigned long request, void *arg){};
 

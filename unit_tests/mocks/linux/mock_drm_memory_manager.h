@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
