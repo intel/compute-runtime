@@ -1163,7 +1163,7 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     EXPECT_NE(0u, imageGraphicsAllocation->getGpuAddress());
     EXPECT_EQ(nullptr, imageGraphicsAllocation->getUnderlyingBuffer());
 
-    EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
@@ -1218,7 +1218,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountZero
     ASSERT_NE(nullptr, dstImage);
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
@@ -1265,7 +1265,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountNonZ
     EXPECT_EQ(static_cast<uint32_t>(imageDesc.num_mip_levels), dstImage->peekMipCount());
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
@@ -1344,7 +1344,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFr
     ASSERT_NE(nullptr, dstImage);
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
@@ -1430,7 +1430,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZer
     ASSERT_NE(nullptr, dstImage);
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     EXPECT_EQ(0u, this->mock->createParamsHandle);
@@ -1473,7 +1473,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNon
     EXPECT_EQ(static_cast<uint32_t>(imageDesc.num_mip_levels), dstImage->peekMipCount());
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
+    EXPECT_TRUE(imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
     EXPECT_EQ(0u, this->mock->createParamsHandle);
@@ -1999,7 +1999,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndUnifiedAuxCapableAllocation
 
     auto gmm = new Gmm(nullptr, 123, false);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    allocation->gmm = gmm;
+    allocation->setDefaultGmm(gmm);
 
     auto mockGmmRes = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockGmmRes->setUnifiedAuxTranslationCapable();

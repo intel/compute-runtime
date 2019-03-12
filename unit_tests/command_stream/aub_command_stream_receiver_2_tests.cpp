@@ -688,7 +688,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     gfxAllocation->setAubWritable(true);
 
     auto gmm = new Gmm(nullptr, 1, false);
-    gfxAllocation->gmm = gmm;
+    gfxAllocation->setDefaultGmm(gmm);
 
     for (bool compressed : {false, true}) {
         gmm->isRenderCompressed = compressed;
@@ -696,7 +696,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
         aubCsr->writeMemory(*gfxAllocation);
 
         if (compressed) {
-            EXPECT_EQ(gfxAllocation->gmm->gmmResourceInfo->getSizeAllocation(), ppgttMock->receivedSize);
+            EXPECT_EQ(gfxAllocation->getDefaultGmm()->gmmResourceInfo->getSizeAllocation(), ppgttMock->receivedSize);
         } else {
             EXPECT_EQ(gfxAllocation->getUnderlyingBufferSize(), ppgttMock->receivedSize);
         }

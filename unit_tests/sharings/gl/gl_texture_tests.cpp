@@ -28,7 +28,7 @@ class GlSharingTextureTests : public ::testing::Test {
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness);
             if (useForcedGmm) {
-                alloc->gmm = forceGmm.get();
+                alloc->setDefaultGmm(forceGmm.get());
             }
             return alloc;
         }
@@ -204,8 +204,8 @@ TEST_F(GlSharingTextureTests, givenGmmResourceAsInputeWhenTextureIsCreatedItHasG
     ASSERT_NE(nullptr, glTexture);
     EXPECT_NE(nullptr, glTexture->getGraphicsAllocation());
 
-    ASSERT_NE(nullptr, glTexture->getGraphicsAllocation()->gmm);
-    ASSERT_NE(nullptr, glTexture->getGraphicsAllocation()->gmm->gmmResourceInfo->peekHandle());
+    ASSERT_NE(nullptr, glTexture->getGraphicsAllocation()->getDefaultGmm());
+    ASSERT_NE(nullptr, glTexture->getGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo->peekHandle());
 
     delete glTexture;
 }

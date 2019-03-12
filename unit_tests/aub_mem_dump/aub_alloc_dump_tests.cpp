@@ -242,7 +242,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
 
     EXPECT_EQ(0u, cmd.Xmin);
     EXPECT_EQ(0u, cmd.Ymin);
-    auto gmm = gfxAllocation->gmm;
+    auto gmm = gfxAllocation->getDefaultGmm();
     EXPECT_EQ((8 * gmm->gmmResourceInfo->getRenderPitch()) / gmm->gmmResourceInfo->getBitsPerPixel(), cmd.BufferPitch);
     EXPECT_EQ(gmm->gmmResourceInfo->getBitsPerPixel(), cmd.BitsPerPixel);
     EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getResourceFormatSurfaceState()), cmd.Format);
@@ -285,12 +285,13 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     EXPECT_EQ(gfxAllocation->getGpuAddress(), cmd.getSurfaceAddress());
-    EXPECT_EQ(static_cast<uint32_t>(gfxAllocation->gmm->gmmResourceInfo->getBaseWidth()), cmd.surfaceWidth);
-    EXPECT_EQ(static_cast<uint32_t>(gfxAllocation->gmm->gmmResourceInfo->getBaseHeight()), cmd.surfaceHeight);
-    EXPECT_EQ(static_cast<uint32_t>(gfxAllocation->gmm->gmmResourceInfo->getRenderPitch()), cmd.surfacePitch);
-    EXPECT_EQ(static_cast<uint32_t>(gfxAllocation->gmm->gmmResourceInfo->getResourceFormatSurfaceState()), cmd.surfaceFormat);
+    auto gmm = gfxAllocation->getDefaultGmm();
+    EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseWidth()), cmd.surfaceWidth);
+    EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseHeight()), cmd.surfaceHeight);
+    EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getRenderPitch()), cmd.surfacePitch);
+    EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getResourceFormatSurfaceState()), cmd.surfaceFormat);
     EXPECT_EQ(AubMemDump::CmdServicesMemTraceDumpCompress::DumpTypeValues::Tre, cmd.dumpType);
-    EXPECT_EQ(gfxAllocation->gmm->gmmResourceInfo->getTileModeSurfaceState(), cmd.surfaceTilingType);
+    EXPECT_EQ(gmm->gmmResourceInfo->getTileModeSurfaceState(), cmd.surfaceTilingType);
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D, cmd.surfaceType);
 
     EXPECT_EQ(AubMemDump::CmdServicesMemTraceDumpCompress::AlgorithmValues::Uncompressed, cmd.algorithm);
@@ -308,7 +309,7 @@ HWTEST_F(AubAllocDumpTests, givenCompressedImageWritableWhenDumpAllocationIsCall
     ASSERT_NE(nullptr, image);
 
     auto gfxAllocation = image->getGraphicsAllocation();
-    gfxAllocation->gmm->isRenderCompressed = true;
+    gfxAllocation->getDefaultGmm()->isRenderCompressed = true;
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
@@ -326,7 +327,7 @@ HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWhenDumpAllocationIsCal
     ASSERT_NE(nullptr, image);
 
     auto gfxAllocation = image->getGraphicsAllocation();
-    auto mockGmmResourceInfo = reinterpret_cast<MockGmmResourceInfo *>(gfxAllocation->gmm->gmmResourceInfo.get());
+    auto mockGmmResourceInfo = reinterpret_cast<MockGmmResourceInfo *>(gfxAllocation->getDefaultGmm()->gmmResourceInfo.get());
     mockGmmResourceInfo->mockResourceCreateParams.MSAA.NumSamples = 2;
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());

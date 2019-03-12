@@ -208,7 +208,7 @@ Image *Image::create(Context *context,
             }
         } else if (parentImage != nullptr) {
             memory = parentImage->getGraphicsAllocation();
-            memory->gmm->queryImageParams(imgInfo);
+            memory->getDefaultGmm()->queryImageParams(imgInfo);
             isTilingAllowed = parentImage->allowTiling();
         } else {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;
@@ -233,7 +233,7 @@ Image *Image::create(Context *context,
                 } else {
                     gmm = new Gmm(imgInfo);
                     memory = memoryManager->allocateGraphicsMemoryWithProperties({false, imgInfo.size, GraphicsAllocation::AllocationType::UNDECIDED}, hostPtr);
-                    memory->gmm = gmm;
+                    memory->setDefaultGmm(gmm);
                     zeroCopy = true;
                 }
 
@@ -389,7 +389,7 @@ Image *Image::createImageHw(Context *context, cl_mem_flags flags, size_t size, v
 Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler, McsSurfaceInfo &mcsSurfaceInfo,
                                 GraphicsAllocation *graphicsAllocation, GraphicsAllocation *mcsAllocation,
                                 cl_mem_flags flags, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount) {
-    bool isTiledImage = graphicsAllocation->gmm->gmmResourceInfo->getTileModeSurfaceState() != 0;
+    bool isTiledImage = graphicsAllocation->getDefaultGmm()->gmmResourceInfo->getTileModeSurfaceState() != 0;
 
     auto sharedImage = createImageHw(context, flags, graphicsAllocation->getUnderlyingBufferSize(),
                                      nullptr, imgInfo.surfaceFormat->OCLImageFormat, *imgInfo.imgDesc, false, graphicsAllocation, false, isTiledImage, baseMipLevel, mipCount, imgInfo.surfaceFormat);

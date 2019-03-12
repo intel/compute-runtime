@@ -322,7 +322,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     if (!GmmHelper::allowTiling(*allocationData.imgInfo->imgDesc)) {
         auto alloc = allocateGraphicsMemoryWithAlignment(allocationData);
         if (alloc) {
-            alloc->gmm = gmm.release();
+            alloc->setDefaultGmm(gmm.release());
         }
         return alloc;
     }
@@ -353,7 +353,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
 
     auto allocation = new DrmAllocation(allocationData.type, bo, nullptr, (uint64_t)gpuRange, allocationData.imgInfo->size, MemoryPool::SystemCpuInaccessible, false);
     bo->setAllocationType(allocatorType);
-    allocation->gmm = gmm.release();
+    allocation->setDefaultGmm(gmm.release());
     return allocation;
 }
 
@@ -562,8 +562,8 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     DrmAllocation *input;
     input = static_cast<DrmAllocation *>(gfxAllocation);
-    if (input->gmm)
-        delete input->gmm;
+    if (input->getDefaultGmm())
+        delete input->getDefaultGmm();
 
     alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
 

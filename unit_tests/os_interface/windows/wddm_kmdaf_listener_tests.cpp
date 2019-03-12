@@ -77,10 +77,10 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenMapGpuVirtualAddressIsCalledThenKmDaf
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, (void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, false);
     allocation.setDefaultHandle(ALLOCATION_HANDLE);
     auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
-    allocation.gmm = gmm.get();
+    allocation.setDefaultGmm(gmm.get());
 
     auto heapIndex = MemoryManager::selectHeap(&allocation, allocation.getUnderlyingBuffer(), *platformDevices[0]);
-    wddmWithKmDafMock->mapGpuVirtualAddressImpl(allocation.gmm, allocation.getDefaultHandle(), allocation.getUnderlyingBuffer(), allocation.getGpuAddressToModify(), heapIndex);
+    wddmWithKmDafMock->mapGpuVirtualAddressImpl(allocation.getDefaultGmm(), allocation.getDefaultHandle(), allocation.getUnderlyingBuffer(), allocation.getGpuAddressToModify(), heapIndex);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAdapter);
@@ -134,7 +134,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenEvictIsCalledThenKmDafListenerNotifyE
 TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafListenerNotifyWriteTargetIsFedWithCorrectParams) {
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, (void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, false);
     auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
-    allocation.gmm = gmm.get();
+    allocation.setDefaultGmm(gmm.get());
     auto &handle = allocation.getHandleToModify(0u);
 
     wddmWithKmDafMock->createAllocation(allocation.getAlignedCpuPtr(), gmm.get(), handle);
@@ -149,7 +149,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafList
 TEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocation64IsCalledThenKmDafListenerNotifyWriteTargetIsFedWithCorrectParams) {
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, (void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull, false);
     auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
-    allocation.gmm = gmm.get();
+    allocation.setDefaultGmm(gmm.get());
     auto &handle = allocation.getHandleToModify(0u);
 
     wddmWithKmDafMock->createAllocation64k(gmm.get(), handle);

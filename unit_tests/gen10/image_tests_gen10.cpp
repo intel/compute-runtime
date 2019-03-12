@@ -38,7 +38,7 @@ GEN10TEST_F(gen10ImageTests, givenImageForGen10WhenClearColorParametersAreSetThe
 
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
 
-    imageHw->setClearColorParams(&surfaceStateAfter, imageHw->getGraphicsAllocation()->gmm);
+    imageHw->setClearColorParams(&surfaceStateAfter, imageHw->getGraphicsAllocation()->getDefaultGmm());
 
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
 }

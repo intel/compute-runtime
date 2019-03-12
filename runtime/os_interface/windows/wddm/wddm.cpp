@@ -290,7 +290,7 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
 
 bool Wddm::mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr) {
     void *mapPtr = allocation->getReservedAddress() != nullptr ? allocation->getReservedAddress() : cpuPtr;
-    return mapGpuVirtualAddressImpl(allocation->gmm, allocation->getDefaultHandle(), mapPtr, allocation->getGpuAddressToModify(),
+    return mapGpuVirtualAddressImpl(allocation->getDefaultGmm(), allocation->getDefaultHandle(), mapPtr, allocation->getGpuAddressToModify(),
                                     MemoryManager::selectHeap(allocation, mapPtr, *hardwareInfoTable[gfxPlatform->eProductFamily]));
 }
 
@@ -594,7 +594,7 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     alloc->resourceHandle = OpenResource.hResource;
 
     auto resourceInfo = const_cast<void *>(allocationInfo[0].pPrivateDriverData);
-    alloc->gmm = new Gmm(static_cast<GMM_RESOURCE_INFO *>(resourceInfo));
+    alloc->setDefaultGmm(new Gmm(static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
 
     return true;
 }
@@ -631,7 +631,7 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
     alloc->resourceHandle = openResourceFromNtHandle.hResource;
 
     auto resourceInfo = const_cast<void *>(allocationInfo2[0].pPrivateDriverData);
-    alloc->gmm = new Gmm(static_cast<GMM_RESOURCE_INFO *>(resourceInfo));
+    alloc->setDefaultGmm(new Gmm(static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
 
     return true;
 }

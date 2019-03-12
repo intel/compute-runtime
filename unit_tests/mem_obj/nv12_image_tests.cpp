@@ -29,7 +29,7 @@ class Nv12ImageTest : public testing::Test {
         GMM_REQ_OFFSET_INFO reqOffsetInfo = {};
         SurfaceOffsets requestedOffsets = {0};
 
-        auto mockResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(image->getGraphicsAllocation()->gmm->gmmResourceInfo.get());
+        auto mockResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(image->getGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo.get());
         mockResInfo->getOffset(reqOffsetInfo);
 
         if (image->getImageDesc().mem_object) {

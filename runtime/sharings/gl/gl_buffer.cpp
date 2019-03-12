@@ -141,8 +141,8 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
     if (!reusedAllocation) {
         sharingFunctions->graphicsAllocationsForGlBufferReuse.push_back(std::make_pair(bufferId, graphicsAllocation));
         if (bufferInfo.pGmmResInfo) {
-            DEBUG_BREAK_IF(graphicsAllocation->gmm != nullptr);
-            graphicsAllocation->gmm = new Gmm(bufferInfo.pGmmResInfo);
+            DEBUG_BREAK_IF(graphicsAllocation->getDefaultGmm() != nullptr);
+            graphicsAllocation->setDefaultGmm(new Gmm(bufferInfo.pGmmResInfo));
         }
     }
 

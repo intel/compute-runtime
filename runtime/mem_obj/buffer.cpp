@@ -257,7 +257,8 @@ Buffer *Buffer::create(Context *context,
     pBuffer->setHostPtrMinSize(size);
 
     if (copyMemoryFromHostPtr) {
-        if ((memory->gmm && memory->gmm->isRenderCompressed) || !MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
+        auto gmm = memory->getDefaultGmm();
+        if ((gmm && gmm->isRenderCompressed) || !MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
             auto cmdQ = context->getSpecialQueue();
             if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, 0, nullptr, nullptr)) {
                 errcodeRet = CL_OUT_OF_RESOURCES;
@@ -447,7 +448,7 @@ bool Buffer::isReadWriteOnCpuAllowed(cl_bool blocking, cl_uint numEventsInWaitLi
     return (blocking == CL_TRUE && numEventsInWaitList == 0 && !forceDisallowCPUCopy) && graphicsAllocation->peekSharedHandle() == 0 &&
            (isMemObjZeroCopy() || (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) != 0) &&
            (!context->getDevice(0)->getDeviceInfo().platformLP || (size <= maxBufferSizeForReadWriteOnCpu)) &&
-           !(graphicsAllocation->gmm && graphicsAllocation->gmm->isRenderCompressed) &&
+           !(graphicsAllocation->getDefaultGmm() && graphicsAllocation->getDefaultGmm()->isRenderCompressed) &&
            MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool());
 }
 

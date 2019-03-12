@@ -292,14 +292,14 @@ TEST(MemObj, givenRenderCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
     context.setMemoryManager(&memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    allocation->gmm = new Gmm(nullptr, 1, false);
+    allocation->setDefaultGmm(new Gmm(nullptr, 1, false));
 
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_READ_WRITE,
                   1, allocation->getUnderlyingBuffer(), nullptr, allocation, false, false, false);
 
-    allocation->gmm->isRenderCompressed = false;
+    allocation->getDefaultGmm()->isRenderCompressed = false;
     EXPECT_TRUE(memObj.mappingOnCpuAllowed());
-    allocation->gmm->isRenderCompressed = true;
+    allocation->getDefaultGmm()->isRenderCompressed = true;
     EXPECT_FALSE(memObj.mappingOnCpuAllowed());
 }
 
@@ -326,7 +326,7 @@ TEST(MemObj, givenNonCpuAccessibleMemoryWhenAskingForMappingOnCpuThenDisallow) {
     context.setMemoryManager(&memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    allocation->gmm = new Gmm(nullptr, 1, false);
+    allocation->setDefaultGmm(new Gmm(nullptr, 1, false));
 
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_READ_WRITE,
                   1, allocation->getUnderlyingBuffer(), nullptr, allocation, false, false, false);

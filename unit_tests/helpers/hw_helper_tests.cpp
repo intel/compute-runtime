@@ -349,8 +349,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenU
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
     GraphicsAllocation allocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, false);
-    allocation.gmm = new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false);
-    ASSERT_NE(nullptr, allocation.gmm);
+    allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, 0, type, true);
     EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
@@ -362,7 +361,7 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenU
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, state->getCoherencyType());
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
-    delete allocation.gmm;
+    delete allocation.getDefaultGmm();
     alignedFree(stateBuffer);
 }
 
@@ -387,15 +386,14 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     GraphicsAllocation allocation(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, false);
-    allocation.gmm = new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false);
-    ASSERT_NE(nullptr, allocation.gmm);
-    allocation.gmm->isRenderCompressed = true;
+    allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
+    allocation.getDefaultGmm()->isRenderCompressed = true;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, 0, type, false);
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, state->getCoherencyType());
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E, state->getAuxiliarySurfaceMode());
 
-    delete allocation.gmm;
+    delete allocation.getDefaultGmm();
     alignedFree(stateBuffer);
 }
 
@@ -420,15 +418,14 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionEnabledAn
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     GraphicsAllocation allocation(GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, false);
-    allocation.gmm = new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false);
-    ASSERT_NE(nullptr, allocation.gmm);
-    allocation.gmm->isRenderCompressed = true;
+    allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
+    allocation.getDefaultGmm()->isRenderCompressed = true;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, 0, type, false);
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, state->getCoherencyType());
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
-    delete allocation.gmm;
+    delete allocation.getDefaultGmm();
     alignedFree(stateBuffer);
 }
 
@@ -453,14 +450,13 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDisabledA
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     GraphicsAllocation allocation(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, false);
-    allocation.gmm = new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false);
-    ASSERT_NE(nullptr, allocation.gmm);
+    allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, 0, type, false);
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, state->getCoherencyType());
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
-    delete allocation.gmm;
+    delete allocation.getDefaultGmm();
     alignedFree(stateBuffer);
 }
 
@@ -485,15 +481,14 @@ HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationCompres
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     GraphicsAllocation allocation(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, false);
-    allocation.gmm = new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false);
-    ASSERT_NE(nullptr, allocation.gmm);
-    allocation.gmm->isRenderCompressed = true;
+    allocation.setDefaultGmm(new Gmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), false));
+    allocation.getDefaultGmm()->isRenderCompressed = true;
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     helper.setRenderSurfaceStateForBuffer(ee, stateBuffer, size, addr, 0, pitch, &allocation, 0, type, true);
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, state->getCoherencyType());
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
-    delete allocation.gmm;
+    delete allocation.getDefaultGmm();
     alignedFree(stateBuffer);
 }
 

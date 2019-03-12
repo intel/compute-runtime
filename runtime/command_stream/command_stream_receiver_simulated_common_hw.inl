@@ -105,8 +105,9 @@ bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForWriteMem
     cpuAddress = ptrOffset(graphicsAllocation.getUnderlyingBuffer(), static_cast<size_t>(graphicsAllocation.getAllocationOffset()));
     gpuAddress = GmmHelper::decanonize(graphicsAllocation.getGpuAddress());
     size = graphicsAllocation.getUnderlyingBufferSize();
-    if (graphicsAllocation.gmm && graphicsAllocation.gmm->isRenderCompressed) {
-        size = graphicsAllocation.gmm->gmmResourceInfo->getSizeAllocation();
+    auto gmm = graphicsAllocation.getDefaultGmm();
+    if (gmm && gmm->isRenderCompressed) {
+        size = gmm->gmmResourceInfo->getSizeAllocation();
     }
 
     if ((size == 0) || !graphicsAllocation.isAubWritable())

@@ -150,7 +150,7 @@ void OsAgnosticMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocat
 }
 
 void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
-    delete gfxAllocation->gmm;
+    delete gfxAllocation->getDefaultGmm();
 
     if ((uintptr_t)gfxAllocation->getUnderlyingBuffer() == dummyAddress) {
         delete gfxAllocation;
@@ -224,7 +224,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(
 
     if (!GmmHelper::allowTiling(*allocationData.imgInfo->imgDesc) && allocationData.imgInfo->mipCount == 0) {
         alloc = allocateGraphicsMemoryWithAlignment(allocationData);
-        alloc->gmm = gmm.release();
+        alloc->setDefaultGmm(gmm.release());
         return alloc;
     }
 
@@ -236,7 +236,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(
     }
 
     if (alloc) {
-        alloc->gmm = gmm.release();
+        alloc->setDefaultGmm(gmm.release());
     }
 
     return alloc;

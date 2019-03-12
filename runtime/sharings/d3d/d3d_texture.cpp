@@ -72,18 +72,18 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     }
     DEBUG_BREAK_IF(!alloc);
 
-    updateImgInfo(alloc->gmm, imgInfo, imgDesc, oclPlane, arrayIndex);
+    updateImgInfo(alloc->getDefaultGmm(), imgInfo, imgDesc, oclPlane, arrayIndex);
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
 
     if ((textureDesc.Format == DXGI_FORMAT_NV12) || (textureDesc.Format == DXGI_FORMAT_P010) || (textureDesc.Format == DXGI_FORMAT_P016)) {
         imgInfo.surfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, oclPlane, flags);
     } else {
-        imgInfo.surfaceFormat = findSurfaceFormatInfo(alloc->gmm->gmmResourceInfo->getResourceFormat(), flags);
+        imgInfo.surfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
     }
 
-    if (alloc->gmm->unifiedAuxTranslationCapable()) {
-        alloc->gmm->isRenderCompressed = context->getMemoryManager()->mapAuxGpuVA(alloc);
+    if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
+        alloc->getDefaultGmm()->isRenderCompressed = context->getMemoryManager()->mapAuxGpuVA(alloc);
     }
 
     return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
@@ -129,16 +129,16 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     }
     DEBUG_BREAK_IF(!alloc);
 
-    updateImgInfo(alloc->gmm, imgInfo, imgDesc, OCLPlane::NO_PLANE, 0u);
+    updateImgInfo(alloc->getDefaultGmm(), imgInfo, imgDesc, OCLPlane::NO_PLANE, 0u);
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
 
-    imgInfo.qPitch = alloc->gmm->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_3D);
+    imgInfo.qPitch = alloc->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_3D);
 
-    imgInfo.surfaceFormat = findSurfaceFormatInfo(alloc->gmm->gmmResourceInfo->getResourceFormat(), flags);
+    imgInfo.surfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags);
 
-    if (alloc->gmm->unifiedAuxTranslationCapable()) {
-        alloc->gmm->isRenderCompressed = context->getMemoryManager()->mapAuxGpuVA(alloc);
+    if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
+        alloc->getDefaultGmm()->isRenderCompressed = context->getMemoryManager()->mapAuxGpuVA(alloc);
     }
 
     return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);

@@ -19,7 +19,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenRenderCompressedGmmWhenAskingForCpuOpe
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     auto gmm = new Gmm(nullptr, 1, false);
     gmm->isRenderCompressed = false;
-    buffer->getGraphicsAllocation()->gmm = gmm;
+    buffer->getGraphicsAllocation()->setDefaultGmm(gmm);
 
     auto alignedPtr = alignedMalloc(2, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, 1);

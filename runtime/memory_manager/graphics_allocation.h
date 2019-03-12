@@ -166,7 +166,19 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     }
     static StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
 
-    Gmm *gmm = nullptr;
+    Gmm *getDefaultGmm() const {
+        return getGmm(0u);
+    }
+    Gmm *getGmm(uint32_t handleId) const {
+        return gmms[handleId];
+    }
+    void setDefaultGmm(Gmm *gmm) {
+        return setGmm(gmm, 0u);
+    }
+    void setGmm(Gmm *gmm, uint32_t handleId) {
+        gmms[handleId] = gmm;
+    }
+
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
 
@@ -230,5 +242,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     std::array<UsageInfo, maxOsContextCount> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};
+    std::array<Gmm *, maxHandleCount> gmms{};
 };
 } // namespace OCLRT

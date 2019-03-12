@@ -55,7 +55,7 @@ void dumpBufferInBinFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFil
 
 template <typename GfxFamily>
 void dumpImageInBmpFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context) {
-    auto gmm = gfxAllocation.gmm;
+    auto gmm = gfxAllocation.getDefaultGmm();
 
     AubMemDump::AubCmdDumpBmpHd cmd;
     memset(&cmd, 0, sizeof(cmd));
@@ -121,7 +121,7 @@ void dumpBufferInTreFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFil
 template <typename GfxFamily>
 void dumpImageInTreFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-    auto gmm = gfxAllocation.gmm;
+    auto gmm = gfxAllocation.getDefaultGmm();
     if ((gmm->gmmResourceInfo->getNumSamples() > 1) || (gmm->isRenderCompressed)) {
         DEBUG_BREAK_IF(true); //unsupported
         return;

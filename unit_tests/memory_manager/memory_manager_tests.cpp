@@ -563,8 +563,8 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
 
     auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(allocationData);
     ASSERT_NE(nullptr, imageAllocation);
-    EXPECT_TRUE(imageAllocation->gmm->resourceParams.Usage == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
-    EXPECT_TRUE(imageAllocation->gmm->useSystemMemoryPool);
+    EXPECT_TRUE(imageAllocation->getDefaultGmm()->resourceParams.Usage == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
+    EXPECT_TRUE(imageAllocation->getDefaultGmm()->useSystemMemoryPool);
     memoryManager.freeGraphicsMemory(imageAllocation);
 }
 
@@ -667,7 +667,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAlloc
 
     auto gmm = new Gmm(nullptr, 123, false);
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    allocation->gmm = gmm;
+    allocation->setDefaultGmm(gmm);
 
     auto mockGmmRes = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockGmmRes->setUnifiedAuxTranslationCapable();
@@ -1685,7 +1685,7 @@ TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocati
     auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = true;
-    allocation.gmm = gmm.get();
+    allocation.setDefaultGmm(gmm.get());
     if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
         return;
     }
@@ -1697,7 +1697,7 @@ TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocati
     auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = false;
-    allocation.gmm = gmm.get();
+    allocation.setDefaultGmm(gmm.get());
     if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
         return;
     }

@@ -77,7 +77,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
 
     surfaceState->setSurfaceBaseAddress(bufferAddressAligned);
 
-    Gmm *gmm = graphicsAllocation ? graphicsAllocation->gmm : nullptr;
+    Gmm *gmm = graphicsAllocation ? graphicsAllocation->getDefaultGmm() : nullptr;
 
     if (gmm && gmm->isRenderCompressed && !forceNonAuxMode &&
         GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == graphicsAllocation->getAllocationType()) {

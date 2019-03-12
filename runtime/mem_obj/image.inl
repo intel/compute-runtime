@@ -30,7 +30,7 @@ template <typename GfxFamily>
 void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel) {
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
-    auto gmm = getGraphicsAllocation()->gmm;
+    auto gmm = getGraphicsAllocation()->getDefaultGmm();
     auto gmmHelper = executionEnvironment->getGmmHelper();
 
     auto imageCount = std::max(getImageDesc().image_depth, getImageDesc().image_array_size);
@@ -164,7 +164,7 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
 
     if (getMcsAllocation()) {
-        auto mcsGmm = getMcsAllocation()->gmm;
+        auto mcsGmm = getMcsAllocation()->getDefaultGmm();
 
         if (mcsGmm->unifiedAuxTranslationCapable() && mcsGmm->hasMultisampleControlSurface()) {
             setAuxParamsForMCSCCS(surfaceState, mcsGmm);

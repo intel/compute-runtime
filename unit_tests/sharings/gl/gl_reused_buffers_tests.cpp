@@ -83,12 +83,12 @@ TEST_F(GlReusedBufferTests, givenMultipleBuffersWithReusedAllocationWhenReleasin
 
 TEST_F(GlReusedBufferTests, givenMultipleBuffersWithReusedAllocationWhenCreatingThenReuseGmmResourceToo) {
     std::unique_ptr<Buffer> glBuffer1(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
-    glBuffer1->getGraphicsAllocation()->gmm = new Gmm((void *)0x100, 1, false);
+    glBuffer1->getGraphicsAllocation()->setDefaultGmm(new Gmm((void *)0x100, 1, false));
 
     std::unique_ptr<Buffer> glBuffer2(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId1, &retVal));
 
-    EXPECT_EQ(glBuffer1->getGraphicsAllocation()->gmm->gmmResourceInfo->peekHandle(),
-              glBuffer2->getGraphicsAllocation()->gmm->gmmResourceInfo->peekHandle());
+    EXPECT_EQ(glBuffer1->getGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo->peekHandle(),
+              glBuffer2->getGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo->peekHandle());
 }
 
 TEST_F(GlReusedBufferTests, givenGlobalShareHandleChangedWhenAcquiringSharedBufferThenChangeGraphicsAllocation) {

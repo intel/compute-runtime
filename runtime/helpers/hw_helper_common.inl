@@ -145,7 +145,7 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(ExecutionEnvironment &ex
 
     surfaceState->setSurfaceBaseAddress(bufferStateAddress);
 
-    Gmm *gmm = gfxAlloc ? gfxAlloc->gmm : nullptr;
+    Gmm *gmm = gfxAlloc ? gfxAlloc->getDefaultGmm() : nullptr;
     if (gmm && gmm->isRenderCompressed && !forceNonAuxMode &&
         GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == gfxAlloc->getAllocationType()) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios

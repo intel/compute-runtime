@@ -380,7 +380,7 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Darray) {
     EXPECT_EQ(image1Darray->getImageDesc().image_array_size, surfaceState->getRenderTargetViewExtent());
     EXPECT_EQ(image1Darray->getImageDesc().image_row_pitch, surfaceState->getSurfacePitch());
     EXPECT_EQ(0u, surfaceState->getSurfaceQpitch() % 4);
-    EXPECT_EQ(image1Darray->getGraphicsAllocation()->gmm->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_1D), surfaceState->getSurfaceQpitch());
+    EXPECT_EQ(image1Darray->getGraphicsAllocation()->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_1D), surfaceState->getSurfaceQpitch());
 
     EXPECT_EQ(image1Darray->getSurfaceFormatInfo().GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, surfaceState->getSurfaceType());
@@ -404,7 +404,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAuxC
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    mcsAlloc->gmm = new Gmm(nullptr, 1, false);
+    mcsAlloc->setDefaultGmm(new Gmm(nullptr, 1, false));
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
@@ -413,7 +413,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAuxC
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image;
 
-    EXPECT_FALSE(mcsAlloc->gmm->unifiedAuxTranslationCapable());
+    EXPECT_FALSE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
 
     retVal = clSetKernelArg(
         pKernel,
@@ -503,12 +503,12 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationAndRenderCompressionWhenSetArgOnMult
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    mcsAlloc->gmm = new Gmm(nullptr, 1, false);
+    mcsAlloc->setDefaultGmm(new Gmm(nullptr, 1, false));
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
     auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc));
-    image->getGraphicsAllocation()->gmm->isRenderCompressed = true;
+    image->getGraphicsAllocation()->getDefaultGmm()->isRenderCompressed = true;
     image->setMcsSurfaceInfo(msi);
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
@@ -538,7 +538,7 @@ HWTEST_F(ImageSetArgTest, givenDepthFormatAndRenderCompressionWhenSetArgOnMultis
     imgDesc.num_samples = 8;
 
     auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc, &imgFormat));
-    image->getGraphicsAllocation()->gmm->isRenderCompressed = true;
+    image->getGraphicsAllocation()->getDefaultGmm()->isRenderCompressed = true;
     image->setMcsSurfaceInfo(msi);
     cl_mem memObj = image.get();
 
@@ -564,7 +564,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
 
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    mcsAlloc->gmm = new Gmm(nullptr, 1, false);
+    mcsAlloc->setDefaultGmm(new Gmm(nullptr, 1, false));
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
@@ -573,9 +573,9 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
 
-    auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->gmm->gmmResourceInfo.get());
+    auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
     mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
-    EXPECT_TRUE(mcsAlloc->gmm->unifiedAuxTranslationCapable());
+    EXPECT_TRUE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
 
     retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -594,7 +594,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
 
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    mcsAlloc->gmm = new Gmm(nullptr, 1, false);
+    mcsAlloc->setDefaultGmm(new Gmm(nullptr, 1, false));
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
@@ -603,10 +603,10 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
 
-    auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->gmm->gmmResourceInfo.get());
+    auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
     mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
     mockMcsGmmResInfo->setMultisampleControlSurface();
-    EXPECT_TRUE(mcsAlloc->gmm->unifiedAuxTranslationCapable());
+    EXPECT_TRUE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
 
     retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -623,7 +623,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
 
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    mcsAlloc->gmm = new Gmm(nullptr, 1, false);
+    mcsAlloc->setDefaultGmm(new Gmm(nullptr, 1, false));
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
@@ -632,7 +632,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
 
-    auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->gmm->gmmResourceInfo.get());
+    auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
     mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
     mockMcsGmmResInfo->setMultisampleControlSurface();
 
@@ -641,7 +641,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
 
     mockMcsGmmResInfo->setUnifiedAuxPitchTiles(pitchValue);
     mockMcsGmmResInfo->setAuxQPitch(qPitchValue);
-    EXPECT_TRUE(mcsAlloc->gmm->unifiedAuxTranslationCapable());
+    EXPECT_TRUE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
 
     retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -766,7 +766,7 @@ HWTEST_F(ImageSetArgTest, givenRenderCompressedResourceWhenSettingImgArgThenSetC
 
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
-    srcImage->getGraphicsAllocation()->gmm->isRenderCompressed = true;
+    srcImage->getGraphicsAllocation()->getDefaultGmm()->isRenderCompressed = true;
 
     srcImage->setImageArg(&surfaceState, false, 0);
 
@@ -780,7 +780,7 @@ HWTEST_F(ImageSetArgTest, givenNonRenderCompressedResourceWhenSettingImgArgThenD
     typedef typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE AUXILIARY_SURFACE_MODE;
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
-    auto gmm = srcImage->getGraphicsAllocation()->gmm;
+    auto gmm = srcImage->getGraphicsAllocation()->getDefaultGmm();
     auto mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
     gmm->isRenderCompressed = false;
 

@@ -346,7 +346,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImage(const Allocati
     auto hostPtrAllocation = allocateGraphicsMemoryForImageFromHostPtr(allocationDataWithSize);
 
     if (hostPtrAllocation) {
-        hostPtrAllocation->gmm = gmm.release();
+        hostPtrAllocation->setDefaultGmm(gmm.release());
         return hostPtrAllocation;
     }
 
@@ -405,7 +405,7 @@ HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, const 
         if (ptr) {
             return HeapIndex::HEAP_SVM;
         }
-        if (allocation && allocation->gmm->gmmResourceInfo->is64KBPageSuitable()) {
+        if (allocation && allocation->getDefaultGmm()->gmmResourceInfo->is64KBPageSuitable()) {
             return HeapIndex::HEAP_STANDARD64KB;
         }
         return HeapIndex::HEAP_STANDARD;

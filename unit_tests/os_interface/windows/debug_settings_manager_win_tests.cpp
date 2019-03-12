@@ -25,8 +25,8 @@ TEST(DebugSettingsManager, GivenDebugSettingsManagerWithLogAllocationsThenLogsCo
     allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
     allocation.memoryPool = MemoryPool::System64KBPages;
     auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
-    allocation.gmm = gmm.get();
-    allocation.gmm->resourceParams.Flags.Info.NonLocalOnly = 0;
+    allocation.setDefaultGmm(gmm.get());
+    allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
 
     debugManager.logAllocation(&allocation);
 
@@ -61,8 +61,8 @@ TEST(DebugSettingsManager, GivenDebugSettingsManagerWithoutLogAllocationsThenAll
     allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
     allocation.memoryPool = MemoryPool::System64KBPages;
     auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
-    allocation.gmm = gmm.get();
-    allocation.gmm->resourceParams.Flags.Info.NonLocalOnly = 0;
+    allocation.setDefaultGmm(gmm.get());
+    allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
 
     debugManager.logAllocation(&allocation);
 

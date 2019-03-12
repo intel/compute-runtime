@@ -29,9 +29,9 @@ class CreateFromGlTexture : public ::testing::Test {
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness);
             if (handle == CreateFromGlTexture::mcsHandle) {
-                alloc->gmm = forceMcsGmm;
+                alloc->setDefaultGmm(forceMcsGmm);
             } else {
-                alloc->gmm = forceGmm;
+                alloc->setDefaultGmm(forceGmm);
             }
             return alloc;
         }

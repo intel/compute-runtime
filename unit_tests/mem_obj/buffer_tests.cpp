@@ -1374,7 +1374,7 @@ HWTEST_F(BufferSetSurfaceTests, givenRenderCompressedGmmResourceWhenSurfaceState
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     auto gmm = new Gmm(nullptr, 1, false);
-    buffer->getGraphicsAllocation()->gmm = gmm;
+    buffer->getGraphicsAllocation()->setDefaultGmm(gmm);
     gmm->isRenderCompressed = true;
 
     buffer->setArgStateful(&surfaceState, false, false);
@@ -1398,7 +1398,7 @@ HWTEST_F(BufferSetSurfaceTests, givenNonRenderCompressedGmmResourceWhenSurfaceSt
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     auto gmm = new Gmm(nullptr, 1, false);
-    buffer->getGraphicsAllocation()->gmm = gmm;
+    buffer->getGraphicsAllocation()->setDefaultGmm(gmm);
     gmm->isRenderCompressed = false;
 
     buffer->setArgStateful(&surfaceState, false, false);

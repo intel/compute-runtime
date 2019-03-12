@@ -81,7 +81,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
         isSharedResource = true;
         alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)surfaceInfo->shared_handle),
                                                                                       false);
-        updateImgInfo(alloc->gmm, imgInfo, imgDesc, oclPlane, 0u);
+        updateImgInfo(alloc->getDefaultGmm(), imgInfo, imgDesc, oclPlane, 0u);
     } else {
         lockable = !(surfaceDesc.Usage & D3DResourceFlags::USAGE_RENDERTARGET) || oclPlane != OCLPlane::NO_PLANE;
         if (!lockable) {
@@ -126,7 +126,7 @@ void D3DSurface::synchronizeObject(UpdateData &updateData) {
         auto pitch = static_cast<ULONG>(lockedRect.Pitch);
         auto height = static_cast<ULONG>(image->getImageDesc().image_height);
 
-        image->getGraphicsAllocation()->gmm->resourceCopyBlt(sys, gpu, pitch, height, 1u, oclPlane);
+        image->getGraphicsAllocation()->getDefaultGmm()->resourceCopyBlt(sys, gpu, pitch, height, 1u, oclPlane);
 
         context->getMemoryManager()->unlockResource(updateData.memObject->getGraphicsAllocation());
 
@@ -161,7 +161,7 @@ void D3DSurface::releaseResource(MemObj *memObject) {
         auto pitch = static_cast<ULONG>(lockedRect.Pitch);
         auto height = static_cast<ULONG>(image->getImageDesc().image_height);
 
-        image->getGraphicsAllocation()->gmm->resourceCopyBlt(sys, gpu, pitch, height, 0u, oclPlane);
+        image->getGraphicsAllocation()->getDefaultGmm()->resourceCopyBlt(sys, gpu, pitch, height, 0u, oclPlane);
 
         context->getMemoryManager()->unlockResource(memObject->getGraphicsAllocation());
 

@@ -1438,7 +1438,7 @@ HWTEST_F(HwImageTest, givenImageHwWhenSettingCCSParamsThenSetClearColorParamsIsC
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
     EXPECT_FALSE(mockImage->setClearColorParamsCalled);
-    mockImage->setAuxParamsForCCS(&surfaceState, graphicsAllocation->gmm);
+    mockImage->setAuxParamsForCCS(&surfaceState, graphicsAllocation->getDefaultGmm());
     EXPECT_TRUE(mockImage->setClearColorParamsCalled);
 }
 
@@ -1463,13 +1463,13 @@ HWTEST_F(HwImageTest, givenImageHwWithUnifiedSurfaceAndMcsWhenSettingParamsForMu
 
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    mcsAlloc->gmm = new Gmm(nullptr, 1, false);
+    mcsAlloc->setDefaultGmm(new Gmm(nullptr, 1, false));
 
-    auto mockMcsGmmResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(mcsAlloc->gmm->gmmResourceInfo.get());
+    auto mockMcsGmmResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
     mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
     mockMcsGmmResInfo->setMultisampleControlSurface();
-    EXPECT_TRUE(mcsAlloc->gmm->unifiedAuxTranslationCapable());
-    EXPECT_TRUE(mcsAlloc->gmm->hasMultisampleControlSurface());
+    EXPECT_TRUE(mcsAlloc->getDefaultGmm()->unifiedAuxTranslationCapable());
+    EXPECT_TRUE(mcsAlloc->getDefaultGmm()->hasMultisampleControlSurface());
 
     mockImage->setMcsSurfaceInfo(msi);
     mockImage->setMcsAllocation(mcsAlloc);

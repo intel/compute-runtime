@@ -51,11 +51,11 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         return nullptr;
     }
     if (texInfo.pGmmResInfo) {
-        DEBUG_BREAK_IF(alloc->gmm != nullptr);
-        alloc->gmm = new Gmm(texInfo.pGmmResInfo);
+        DEBUG_BREAK_IF(alloc->getDefaultGmm() != nullptr);
+        alloc->setDefaultGmm(new Gmm(texInfo.pGmmResInfo));
     }
 
-    auto gmm = alloc->gmm;
+    auto gmm = alloc->getDefaultGmm();
 
     imgDesc.image_type = getClMemObjectType(target);
     if (target == GL_TEXTURE_BUFFER) {
@@ -114,11 +114,11 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     if (texInfo.globalShareHandleMCS) {
         mcsAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandleMCS, false);
         if (texInfo.pGmmResInfoMCS) {
-            DEBUG_BREAK_IF(mcsAlloc->gmm != nullptr);
-            mcsAlloc->gmm = new Gmm(texInfo.pGmmResInfoMCS);
+            DEBUG_BREAK_IF(mcsAlloc->getDefaultGmm() != nullptr);
+            mcsAlloc->setDefaultGmm(new Gmm(texInfo.pGmmResInfoMCS));
         }
-        mcsSurfaceInfo.pitch = getValidParam(static_cast<uint32_t>(mcsAlloc->gmm->gmmResourceInfo->getRenderPitch() / 128));
-        mcsSurfaceInfo.qPitch = mcsAlloc->gmm->gmmResourceInfo->getQPitch();
+        mcsSurfaceInfo.pitch = getValidParam(static_cast<uint32_t>(mcsAlloc->getDefaultGmm()->gmmResourceInfo->getRenderPitch() / 128));
+        mcsSurfaceInfo.qPitch = mcsAlloc->getDefaultGmm()->gmmResourceInfo->getQPitch();
     }
     mcsSurfaceInfo.multisampleCount = GmmHelper::getRenderMultisamplesCount(static_cast<uint32_t>(imgDesc.num_samples));
 
@@ -133,8 +133,8 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     auto glTexture = new GlTexture(sharingFunctions, getClGlObjectType(target), texture, texInfo, target, std::max(miplevel, 0));
 
-    if (alloc->gmm->unifiedAuxTranslationCapable()) {
-        alloc->gmm->isRenderCompressed = context->getMemoryManager()->mapAuxGpuVA(alloc);
+    if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
+        alloc->getDefaultGmm()->isRenderCompressed = context->getMemoryManager()->mapAuxGpuVA(alloc);
     }
     return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, alloc, mcsAlloc, flags, imgInfo, cubeFaceIndex,
                                     std::max(miplevel, 0), imgDesc.num_mip_levels);

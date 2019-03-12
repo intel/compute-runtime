@@ -328,7 +328,7 @@ bool MemObj::addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags,
 
 bool MemObj::mappingOnCpuAllowed() const {
     return !allowTiling() && !peekSharingHandler() && !isMipMapped(this) && !DebugManager.flags.DisableZeroCopyForBuffers.get() &&
-           !(graphicsAllocation->gmm && graphicsAllocation->gmm->isRenderCompressed) &&
+           !(graphicsAllocation->getDefaultGmm() && graphicsAllocation->getDefaultGmm()->isRenderCompressed) &&
            MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool());
 }
 } // namespace OCLRT

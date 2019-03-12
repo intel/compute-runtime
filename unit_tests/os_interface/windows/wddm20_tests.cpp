@@ -79,7 +79,7 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMapp
 
     void *fakePtr = reinterpret_cast<void *>(0x100);
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, fakePtr, 0x2100, nullptr, MemoryPool::MemoryNull, false);
-    allocation.gmm = gmm.get();
+    allocation.setDefaultGmm(gmm.get());
     allocation.getHandleToModify(0u) = ALLOCATION_HANDLE;
 
     EXPECT_TRUE(wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr()));
@@ -175,7 +175,7 @@ TEST_F(Wddm20Tests, allocation) {
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
-    allocation.gmm = gmm;
+    allocation.setDefaultGmm(gmm);
     auto status = wddm->createAllocation(&allocation);
 
     EXPECT_EQ(STATUS_SUCCESS, status);
@@ -199,7 +199,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, ptr, 0x2100, nullptr, MemoryPool::MemoryNull, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize());
 
-    allocation.gmm = gmm;
+    allocation.setDefaultGmm(gmm);
     auto status = wddm->createAllocation(&allocation);
 
     EXPECT_EQ(STATUS_SUCCESS, status);
@@ -240,7 +240,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmS
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, fakePtr, 100, nullptr, MemoryPool::MemoryNull, false);
     std::unique_ptr<Gmm> gmm(GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize()));
 
-    allocation.gmm = gmm.get();
+    allocation.setDefaultGmm(gmm.get());
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
 
@@ -261,7 +261,7 @@ TEST_F(Wddm20Tests, createAllocation32bit) {
     MockWddmAllocation allocation;
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
-    allocation.gmm = gmm;
+    allocation.setDefaultGmm(gmm);
     allocation.set32BitAllocation(true); // mark 32 bit allocation
 
     auto status = wddm->createAllocation(&allocation);
@@ -289,7 +289,7 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddr
     WddmAllocation allocation(GraphicsAllocation::AllocationType::KERNEL_ISA, alignedPtr, alignedSize, nullptr, MemoryPool::MemoryNull, false);
 
     allocation.getHandleToModify(0u) = ALLOCATION_HANDLE;
-    allocation.gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
+    allocation.setDefaultGmm(GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize()));
     EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, allocation.getAlignedCpuPtr(), *hardwareInfoTable[wddm->getGfxPlatform()->eProductFamily]));
     bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
@@ -299,7 +299,7 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddr
 
     EXPECT_GE(allocation.getGpuAddress(), cannonizedHeapBase);
     EXPECT_LE(allocation.getGpuAddress(), cannonizedHeapEnd);
-    delete allocation.gmm;
+    delete allocation.getDefaultGmm();
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocationsThenAllMarkedAllocationsAreDestroyed) {
@@ -339,7 +339,7 @@ TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
-    allocation.gmm = gmm;
+    allocation.setDefaultGmm(gmm);
     auto status = wddm->createAllocation(&allocation);
 
     EXPECT_EQ(STATUS_SUCCESS, status);
@@ -365,7 +365,7 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, nullptr, 100, nullptr, MemoryPool::MemoryNull, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
-    allocation.gmm = gmm;
+    allocation.setDefaultGmm(gmm);
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
 
@@ -384,7 +384,7 @@ TEST_F(Wddm20Tests, makeResidentNonResident) {
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull, false);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
-    allocation.gmm = gmm;
+    allocation.setDefaultGmm(gmm);
     auto status = wddm->createAllocation(&allocation);
 
     EXPECT_EQ(STATUS_SUCCESS, status);
@@ -432,9 +432,9 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     EXPECT_NE(0u, wddmAllocation->getGpuAddress());
     EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(nullptr, wddmAllocation->getAlignedCpuPtr());
-    EXPECT_NE(nullptr, wddmAllocation->gmm);
+    EXPECT_NE(nullptr, wddmAllocation->getDefaultGmm());
 
-    EXPECT_EQ(4096u, wddmAllocation->gmm->gmmResourceInfo->getSizeAllocation());
+    EXPECT_EQ(4096u, wddmAllocation->getDefaultGmm()->gmmResourceInfo->getSizeAllocation());
 
     mm.freeGraphicsMemory(graphicsAllocation);
     auto destroyWithResourceHandleCalled = 0u;
@@ -735,7 +735,7 @@ TEST_F(Wddm20Tests, whenCreateAllocation64kFailsThenReturnFalse) {
     void *fakePtr = reinterpret_cast<void *>(0x123);
     auto gmm = std::make_unique<Gmm>(fakePtr, 100, false);
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, fakePtr, 100, nullptr, MemoryPool::MemoryNull, false);
-    allocation.gmm = gmm.get();
+    allocation.setDefaultGmm(gmm.get());
 
     EXPECT_FALSE(wddm->createAllocation64k(&allocation));
 }

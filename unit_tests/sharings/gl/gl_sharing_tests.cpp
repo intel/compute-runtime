@@ -257,8 +257,8 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsCreatedAndGmmIsAvailableThenItIsUs
     auto memObject = castToObject<MemObj>(glBuffer);
 
     auto graphicsAllocation = memObject->getGraphicsAllocation();
-    ASSERT_NE(nullptr, graphicsAllocation->gmm);
-    EXPECT_NE(nullptr, graphicsAllocation->gmm->gmmResourceInfo->peekHandle());
+    ASSERT_NE(nullptr, graphicsAllocation->getDefaultGmm());
+    EXPECT_NE(nullptr, graphicsAllocation->getDefaultGmm()->gmmResourceInfo->peekHandle());
 
     retVal = clReleaseMemObject(glBuffer);
     EXPECT_EQ(CL_SUCCESS, retVal);

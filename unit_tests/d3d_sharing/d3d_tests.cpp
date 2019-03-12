@@ -61,13 +61,13 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness);
-            alloc->gmm = forceGmm;
+            alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;
         }
         GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override {
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)handle), false);
-            alloc->gmm = forceGmm;
+            alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;
         }

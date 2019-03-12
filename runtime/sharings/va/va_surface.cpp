@@ -61,8 +61,8 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false);
 
     Gmm *gmm = new Gmm(imgInfo);
-    DEBUG_BREAK_IF(alloc->gmm != nullptr);
-    alloc->gmm = gmm;
+    DEBUG_BREAK_IF(alloc->getDefaultGmm());
+    alloc->setDefaultGmm(gmm);
 
     imgDesc.image_row_pitch = imgInfo.rowPitch;
     imgDesc.image_slice_pitch = 0u;

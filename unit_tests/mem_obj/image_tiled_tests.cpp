@@ -98,7 +98,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
 
     auto gmm = MockGmm::queryImgParams(info);
 
-    alloc->gmm = gmm.release();
+    alloc->setDefaultGmm(gmm.release());
 
     auto image = Image::createSharedImage(
         &context,
@@ -136,7 +136,7 @@ TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
 
     auto gmm = MockGmm::queryImgParams(info);
 
-    alloc->gmm = gmm.release();
+    alloc->setDefaultGmm(gmm.release());
 
     auto image = Image::createSharedImage(
         &context,

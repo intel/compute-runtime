@@ -43,14 +43,14 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
         MockMM(const ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, const_cast<ExecutionEnvironment &>(executionEnvironment)){};
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness);
-            alloc->gmm = forceGmm;
+            alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;
         }
         GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
             auto gmm = std::make_unique<Gmm>(*allocationData.imgInfo);
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, false);
-            alloc->gmm = forceGmm;
+            alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;
         }
