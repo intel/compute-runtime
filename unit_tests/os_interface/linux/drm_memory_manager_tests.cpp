@@ -461,7 +461,7 @@ TEST_F(DrmMemoryManagerTest, Allocate_HostPtr) {
     void *ptr = ::alignedMalloc(1024, 4096);
     ASSERT_NE(nullptr, ptr);
 
-    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 1024}, ptr));
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, 1024}, ptr));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getUnderlyingBuffer());
     EXPECT_EQ(ptr, alloc->getUnderlyingBuffer());
@@ -507,7 +507,7 @@ TEST_F(DrmMemoryManagerTest, Allocate_HostPtr_MisAligned) {
 
     void *ptr = ptrOffset(ptrT, 128);
 
-    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 1024}, ptr));
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, 1024}, ptr));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getUnderlyingBuffer());
     EXPECT_EQ(ptr, alloc->getUnderlyingBuffer());
@@ -528,7 +528,7 @@ TEST_F(DrmMemoryManagerTest, Allocate_HostPtr_UserptrFail) {
     void *ptrT = ::alignedMalloc(1024, 4096);
     ASSERT_NE(nullptr, ptrT);
 
-    auto alloc = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 1024}, ptrT);
+    auto alloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, 1024}, ptrT);
     EXPECT_EQ(nullptr, alloc);
 
     ::alignedFree(ptrT);
@@ -753,7 +753,7 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
 
     auto ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize * 10;
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, ptr);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr);
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
 
@@ -2501,7 +2501,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMemoryManagerWhenAlloc
 
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = 4096u;
-    auto allocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, ptr);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
@@ -2655,7 +2655,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryE
 
     size_t size = 10 * 1024 * 1024;
     void *ptr = ::alignedMalloc(size, 4096);
-    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, ptr));
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -2711,12 +2711,18 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAllowedAndNoPinBBInMemoryManagerWhenAl
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledThenAllocationIsNotCreated) {
-    EXPECT_FALSE(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(0, nullptr));
-    uintptr_t ptr = 0x12345;
-    size_t size = 100u;
-    EXPECT_FALSE(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(size, nullptr));
-    EXPECT_FALSE(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(0, reinterpret_cast<void *>(ptr)));
+TEST_F(DrmMemoryManagerTest, givenNullptrOrZeroSizeWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledThenAllocationIsNotCreated) {
+    allocationData.size = 0;
+    allocationData.hostPtr = nullptr;
+    EXPECT_FALSE(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
+
+    allocationData.size = 100;
+    allocationData.hostPtr = nullptr;
+    EXPECT_FALSE(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
+
+    allocationData.size = 0;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x12345);
+    EXPECT_FALSE(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWithNotAlignedPtrIsPassedThenAllocationIsCreated) {
@@ -2725,8 +2731,9 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForN
 
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
-    void *hostPtr = reinterpret_cast<void *>(0x5001);
-    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
+    allocationData.size = 13;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
 
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()) + allocation->getAllocationOffset());
@@ -2742,22 +2749,21 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForN
 
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
-    size_t size = 64 * 1024 * 1024 * 1024llu;
-    void *hostPtr = reinterpret_cast<void *>(0x100000000000);
-    EXPECT_FALSE(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(size, hostPtr));
+    allocationData.size = 64llu * 1024 * 1024 * 1024;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x100000000000);
+    EXPECT_FALSE(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWithHostPtrIsPassedAndWhenAllocUserptrFailsThenFails) {
-    auto size = 10u;
-    void *hostPtr = reinterpret_cast<void *>(0x1000);
-
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
     mock->ioctl_expected.gemUserptr = 1;
     this->ioctlResExt = {mock->ioctl_cnt.total, -1};
     mock->ioctl_res_ext = &ioctlResExt;
 
-    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(size, hostPtr);
+    allocationData.size = 10;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x1000);
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
 
     EXPECT_EQ(nullptr, allocation);
     mock->ioctl_res_ext = &mock->NONE;
@@ -2993,8 +2999,9 @@ TEST_F(DrmMemoryManagerTest, givenDisabledHostPtrTrackingWhenAllocateGraphicsMem
 
     memoryManager->forceLimitedRangeAllocator(MemoryConstants::max48BitAddress);
 
-    void *hostPtr = reinterpret_cast<void *>(0x5001);
-    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
+    allocationData.size = 13;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
 
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()) + allocation->getAllocationOffset());

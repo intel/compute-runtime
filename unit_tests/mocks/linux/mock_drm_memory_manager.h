@@ -41,6 +41,7 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
     using DrmMemoryManager::allocateGraphicsMemory;
     using DrmMemoryManager::allocateGraphicsMemory64kb;
     using DrmMemoryManager::allocateGraphicsMemoryForImage;
+    using DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr;
     using DrmMemoryManager::allocateGraphicsMemoryWithAlignment;
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
     using DrmMemoryManager::AllocationData;

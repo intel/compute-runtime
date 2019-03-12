@@ -6,7 +6,9 @@
  */
 
 #pragma once
+#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/utilities/reference_tracked_object.h"
 
@@ -49,6 +51,9 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory);
     void initSourceLevelDebugger();
     void setHwInfo(const HardwareInfo *hwInfo);
+    bool isFullRangeSvm() const {
+        return hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
+    }
 
     GmmHelper *getGmmHelper() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();

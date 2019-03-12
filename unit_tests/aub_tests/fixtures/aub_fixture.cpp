@@ -14,7 +14,7 @@
 namespace OCLRT {
 
 GraphicsAllocation *AUBFixture::createHostPtrAllocationFromSvmPtr(void *svmPtr, size_t size) {
-    GraphicsAllocation *allocation = csr->getMemoryManager()->allocateGraphicsMemory(MockAllocationProperties{false, size}, svmPtr);
+    GraphicsAllocation *allocation = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, svmPtr);
     csr->makeResidentHostPtrAllocation(allocation);
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
     allocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);

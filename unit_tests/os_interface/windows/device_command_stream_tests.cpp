@@ -587,7 +587,7 @@ TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWhenMakeResidentThenAllocat
     void *hostPtr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1234);
     auto size = 1234u;
 
-    auto gfxAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, hostPtr);
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, hostPtr);
 
     ASSERT_NE(nullptr, gfxAllocation);
 
@@ -603,7 +603,7 @@ TEST_F(WddmCommandStreamTest, givenHostPtrWhenPtrBelowRestrictionThenCreateAlloc
     void *hostPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     auto size = 0x2000u;
 
-    auto gfxAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, hostPtr));
+    auto gfxAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, hostPtr));
 
     void *expectedReserve = reinterpret_cast<void *>(wddm->virtualAllocAddress);
 
@@ -623,8 +623,8 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
     void *host_ptr2 = (void *)0x2212341;
     auto size = 17262u;
 
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, host_ptr);
-    GraphicsAllocation *graphicsAllocation2 = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, host_ptr2);
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, host_ptr);
+    GraphicsAllocation *graphicsAllocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, host_ptr2);
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION);
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation2), TEMPORARY_ALLOCATION);
 

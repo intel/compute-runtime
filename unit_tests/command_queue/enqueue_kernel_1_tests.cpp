@@ -376,7 +376,9 @@ HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtr
     auto memoryManager = mockCsr->getMemoryManager();
     uint32_t hostPtr[10]{};
 
-    auto allocation = memoryManager->allocateGraphicsMemoryForHostPtr(1, hostPtr, device->isFullRangeSvm(), true);
+    AllocationProperties properties{false, 1, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR};
+    properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
     MockKernelWithInternals mockKernel(*device, context);
     size_t gws[3] = {1, 0, 0};
     mockCsr->makeResident(*allocation);
@@ -398,7 +400,9 @@ HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtr
     auto memoryManager = mockCsr->getMemoryManager();
     uint32_t hostPtr[10]{};
 
-    auto allocation = memoryManager->allocateGraphicsMemoryForHostPtr(1, hostPtr, device->isFullRangeSvm(), false);
+    AllocationProperties properties{false, 1, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR};
+    properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = false;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
     MockKernelWithInternals mockKernel(*device, context);
     size_t gws[3] = {1, 0, 0};
     mockCsr->makeResident(*allocation);
@@ -421,7 +425,9 @@ HWTEST_F(EnqueueKernelTest, givenFullAddressSpaceGraphicsAllocationWhenEnqueueKe
     auto memoryManager = mockCsr->getMemoryManager();
     uint32_t hostPtr[10]{};
 
-    auto allocation = memoryManager->allocateGraphicsMemoryForHostPtr(1, hostPtr, device->isFullRangeSvm(), false);
+    AllocationProperties properties{false, 1, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR};
+    properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = false;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
     MockKernelWithInternals mockKernel(*device, context);
     size_t gws[3] = {1, 0, 0};
     mockCsr->makeResident(*allocation);
@@ -431,7 +437,8 @@ HWTEST_F(EnqueueKernelTest, givenFullAddressSpaceGraphicsAllocationWhenEnqueueKe
     EXPECT_FALSE(mockCsr->passedDispatchFlags.dcFlush);
     memoryManager->freeGraphicsMemory(allocation);
 
-    allocation = (memoryManager->allocateGraphicsMemoryForHostPtr(1, hostPtr, device->isFullRangeSvm(), true));
+    properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = false;
+    allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
     mockCsr->makeResident(*allocation);
     cmdQ.reset(createCommandQueue(device.get()));
     ret = cmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);

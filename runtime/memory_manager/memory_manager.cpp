@@ -315,7 +315,14 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         UNRECOVERABLE_IF(allocationData.imgInfo == nullptr);
         return allocateGraphicsMemoryForImage(allocationData);
     }
-
+    if (allocationData.type == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR &&
+        (!executionEnvironment.isFullRangeSvm() || !DebugManager.flags.EnableHostPtrTracking.get())) {
+        auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+        if (allocation) {
+            allocation->setFlushL3Required(allocationData.flags.flushL3);
+        }
+        return allocation;
+    }
     if (useInternal32BitAllocator(allocationData.type) ||
         (force32bitAllocations && allocationData.flags.allow32Bit && is64bit)) {
         return allocate32BitGraphicsMemoryImpl(allocationData);

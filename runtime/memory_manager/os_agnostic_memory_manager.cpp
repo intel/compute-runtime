@@ -55,13 +55,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
     return memoryAllocation;
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) {
-    MemoryAllocation *memoryAllocation = nullptr;
-    auto alignedPtr = alignDown(reinterpret_cast<char *>(cpuPtr), MemoryConstants::pageSize);
-    auto offsetInPage = reinterpret_cast<char *>(cpuPtr) - alignedPtr;
+GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
+    auto alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
+    auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
 
-    memoryAllocation = new MemoryAllocation(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, nullptr, cpuPtr, reinterpret_cast<uint64_t>(alignedPtr),
-                                            size, counter, MemoryPool::System4KBPages, false);
+    auto memoryAllocation = new MemoryAllocation(allocationData.type, nullptr, const_cast<void *>(allocationData.hostPtr), reinterpret_cast<uint64_t>(alignedPtr),
+                                                 allocationData.size, counter, MemoryPool::System4KBPages, false);
 
     memoryAllocation->setAllocationOffset(offsetInPage);
     memoryAllocation->uncacheable = false;

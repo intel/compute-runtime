@@ -91,7 +91,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     Surface *surfaces[] = {&bufferSurf, &hostPtrSurf};
 
     if (size != 0) {
-        bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, getDevice(), false);
+        bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
         if (!status) {
             return CL_OUT_OF_RESOURCES;
         }

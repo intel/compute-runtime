@@ -413,7 +413,7 @@ struct UpdateEventTest : public ::testing::Test {
 TEST_F(UpdateEventTest, givenEventContainingCommandQueueWhenItsStatusIsUpdatedToCompletedThenTemporaryAllocationsAreDeleted) {
     void *ptr = (void *)0x1000;
     size_t size = 4096;
-    auto temporary = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, ptr);
+    auto temporary = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr);
     temporary->updateTaskCount(3, commandQueue->getCommandStreamReceiver().getOsContext().getContextId());
     commandQueue->getCommandStreamReceiver().getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporary), TEMPORARY_ALLOCATION);
     Event event(commandQueue.get(), CL_COMMAND_NDRANGE_KERNEL, 3, 3);

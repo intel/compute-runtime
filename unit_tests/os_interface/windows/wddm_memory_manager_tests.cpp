@@ -156,7 +156,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, *executionEnvironment));
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = 4096u;
-    auto allocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, ptr);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     for (size_t i = 0; i < allocation->fragmentsStorage.fragmentCount; i++) {
@@ -222,12 +222,16 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
 TEST_F(WddmMemoryManagerSimpleTest,
        givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhenNotAlignedPtrIsPassedThenAlignedGraphicsAllocationIsCreated) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, *executionEnvironment));
-    void *hostPtr = reinterpret_cast<void *>(0x5001);
+    auto size = 13u;
+    auto hostPtr = reinterpret_cast<const void *>(0x5001);
 
-    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
+    AllocationData allocationData;
+    allocationData.size = size;
+    allocationData.hostPtr = hostPtr;
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(reinterpret_cast<void *>(0x5001), allocation->getUnderlyingBuffer());
-    EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(hostPtr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(1u, allocation->getAllocationOffset());
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -237,7 +241,10 @@ TEST_F(WddmMemoryManagerTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalle
     memoryManager->setDeferredDeleter(nullptr);
     setMapGpuVaFailConfigFcn(0, 1);
 
-    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(64, hostPtr);
+    AllocationData allocationData;
+    allocationData.size = sizeof(hostPtr);
+    allocationData.hostPtr = hostPtr;
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
     EXPECT_EQ(nullptr, allocation);
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -373,7 +380,7 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtr) {
     void *ptr = alignedMalloc(3 * 4096, 4096);
     ASSERT_NE(nullptr, ptr);
 
-    auto *gpuAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, MemoryConstants::pageSize}, ptr);
+    auto *gpuAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, ptr);
     // Should be same cpu ptr and gpu ptr
     EXPECT_EQ(ptr, gpuAllocation->getUnderlyingBuffer());
 
@@ -677,7 +684,7 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
 
     size_t baseOffset = 1024;
     // misalligned buffer spanning accross 3 pages
-    auto *gpuAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 2 * MemoryConstants::pageSize}, (char *)ptr + baseOffset);
+    auto *gpuAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, 2 * MemoryConstants::pageSize}, (char *)ptr + baseOffset);
     // Should be same cpu ptr and gpu ptr
     EXPECT_EQ((char *)ptr + baseOffset, gpuAllocation->getUnderlyingBuffer());
 
@@ -694,8 +701,8 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
     EXPECT_EQ(nullptr, fragment2);
 
     // offseted by one page, still in boundary
-    void *offsetedPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + 4096);
-    auto *gpuAllocation2 = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, MemoryConstants::pageSize}, offsetedPtr);
+    void *offsetedPtr = ptrOffset(ptr, 4096);
+    auto *gpuAllocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, offsetedPtr);
     // Should be same cpu ptr and gpu ptr
     EXPECT_EQ(offsetedPtr, gpuAllocation2->getUnderlyingBuffer());
 
@@ -726,7 +733,7 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemCheckGmm) {
     MockWddmAllocation allocation;
     // three pages
     void *ptr = alignedMalloc(3 * 4096, 4096);
-    auto *gpuAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, 3 * MemoryConstants::pageSize}, ptr);
+    auto *gpuAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, 3 * MemoryConstants::pageSize}, ptr);
     // Should be same cpu ptr and gpu ptr
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(ptr, gpuAllocation->getUnderlyingBuffer());
@@ -879,7 +886,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestriction
     void *cpuPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     size_t size = 0x1000;
 
-    WddmAllocation *allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, cpuPtr));
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, cpuPtr));
 
     void *expectReserve = reinterpret_cast<void *>(wddm->virtualAllocAddress);
 
@@ -1015,7 +1022,7 @@ TEST_F(BufferWithWddmMemory, NullOsHandleStorageAskedForPopulationReturnsFilledP
 TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAskedForGraphicsAllcoationThenItContainsAllFragmentsWithProperGpuAdrresses) {
     auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1001);
     auto size = MemoryConstants::pageSize * 10;
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, ptr);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr);
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
 
@@ -1239,7 +1246,7 @@ TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledW
     EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     MockWddmMemoryManager memoryManager(wddm.get(), executionEnvironment);
 
-    auto wddmAlloc = (WddmAllocation *)memoryManager.allocateGraphicsMemory(MockAllocationProperties{false, MemoryConstants::pageSize}, reinterpret_cast<void *>(0x1000));
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, reinterpret_cast<void *>(0x1000)));
 
     EXPECT_TRUE(memoryManager.validateAllocationMock(wddmAlloc));
 

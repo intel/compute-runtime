@@ -11,7 +11,6 @@
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/command_stream/scratch_space_controller.h"
-#include "runtime/device/device.h"
 #include "runtime/event/event.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
@@ -350,15 +349,16 @@ std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtain
 AllocationsList &CommandStreamReceiver::getTemporaryAllocations() { return internalAllocationStorage->getTemporaryAllocations(); }
 AllocationsList &CommandStreamReceiver::getAllocationsForReuse() { return internalAllocationStorage->getAllocationsForReuse(); }
 
-bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surface, Device &device, bool requiresL3Flush) {
+bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) {
     auto memoryManager = getMemoryManager();
-    auto allocation = memoryManager->allocateGraphicsMemoryForHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), device.isFullRangeSvm(), requiresL3Flush);
+    AllocationProperties properties{false, surface.getSurfaceSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR};
+    properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = requiresL3Flush;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, surface.getMemoryPointer());
     if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
         // Try with no host pointer allocation and copy
-        AllocationProperties properties(true, surface.getSurfaceSize(), GraphicsAllocation::AllocationType::UNDECIDED);
+        AllocationProperties copyProperties{surface.getSurfaceSize(), GraphicsAllocation::AllocationType::UNDECIDED};
         properties.alignment = MemoryConstants::pageSize;
-        allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
-
+        allocation = memoryManager->allocateGraphicsMemoryWithProperties(copyProperties);
         if (allocation) {
             memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), surface.getMemoryPointer(), surface.getSurfaceSize());
         }

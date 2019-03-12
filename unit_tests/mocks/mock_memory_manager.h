@@ -16,8 +16,9 @@ namespace OCLRT {
 
 class MockMemoryManager : public OsAgnosticMemoryManager {
   public:
-    using MemoryManager::allocateGraphicsMemory;
+    using MemoryManager::allocateGraphicsMemoryForNonSvmHostPtr;
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
+    using MemoryManager::allocateGraphicsMemoryWithProperties;
     using MemoryManager::AllocationData;
     using MemoryManager::createGraphicsAllocation;
     using MemoryManager::getAllocationData;
@@ -94,7 +95,7 @@ class GMockMemoryManager : public MockMemoryManager {
   public:
     GMockMemoryManager(const ExecutionEnvironment &executionEnvironment) : MockMemoryManager(const_cast<ExecutionEnvironment &>(executionEnvironment)){};
     MOCK_METHOD1(populateOsHandles, MemoryManager::AllocationStatus(OsHandleStorage &handleStorage));
-    MOCK_METHOD2(allocateGraphicsMemoryForNonSvmHostPtr, GraphicsAllocation *(size_t, void *));
+    MOCK_METHOD1(allocateGraphicsMemoryForNonSvmHostPtr, GraphicsAllocation *(const AllocationData &));
 
     MemoryManager::AllocationStatus MemoryManagerPopulateOsHandles(OsHandleStorage &handleStorage) { return OsAgnosticMemoryManager::populateOsHandles(handleStorage); }
 };
@@ -122,7 +123,7 @@ class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {
 
 class FailMemoryManager : public MockMemoryManager {
   public:
-    using MemoryManager::allocateGraphicsMemory;
+    using MemoryManager::allocateGraphicsMemoryWithProperties;
     using MockMemoryManager::MockMemoryManager;
     FailMemoryManager(int32_t failedAllocationsCount);
 
@@ -132,23 +133,25 @@ class FailMemoryManager : public MockMemoryManager {
         }
         failedAllocationsCount--;
         return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
-    };
-    GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) override { return nullptr; }
+    }
+    GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override {
+        return nullptr;
+    }
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override {
         return nullptr;
-    };
-    GraphicsAllocation *allocateGraphicsMemory(const AllocationProperties &properties, const void *ptr) override {
+    }
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) override {
         return nullptr;
-    };
+    }
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override {
         return nullptr;
-    };
+    }
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
         return nullptr;
-    };
+    }
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override {
         return nullptr;
-    };
+    }
 
     void *lockResourceImpl(GraphicsAllocation &gfxAllocation) override { return nullptr; };
     void unlockResourceImpl(GraphicsAllocation &gfxAllocation) override{};

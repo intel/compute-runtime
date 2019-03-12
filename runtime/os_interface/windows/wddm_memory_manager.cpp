@@ -111,12 +111,13 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const
     return wddmAllocation.release();
 }
 
-GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) {
-    auto alignedPtr = alignDown(cpuPtr, MemoryConstants::pageSize);
-    auto offsetInPage = ptrDiff(cpuPtr, alignedPtr);
-    auto alignedSize = alignSizeWholePage(cpuPtr, size);
+GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
+    auto alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
+    auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
+    auto alignedSize = alignSizeWholePage(allocationData.hostPtr, allocationData.size);
 
-    auto wddmAllocation = std::make_unique<WddmAllocation>(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, cpuPtr, size, nullptr, MemoryPool::System4KBPages, false);
+    auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.type, const_cast<void *>(allocationData.hostPtr),
+                                                           allocationData.size, nullptr, MemoryPool::System4KBPages, false);
     wddmAllocation->setAllocationOffset(offsetInPage);
 
     auto gmm = new Gmm(alignedPtr, alignedSize, false);
@@ -132,7 +133,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(si
     return wddmAllocation.release();
 }
 
-GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(const AllocationProperties &properties, const void *ptrArg) {
+GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptrArg) {
     void *ptr = const_cast<void *>(ptrArg);
 
     if (ptr == nullptr) {
@@ -163,7 +164,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(const AllocationPr
         return nullptr;
     }
 
-    auto allocation = MemoryManager::allocateGraphicsMemory(properties, ptr);
+    auto allocation = MemoryManager::allocateGraphicsMemoryWithProperties(properties, ptr);
     DebugManager.logAllocation(allocation);
     return allocation;
 }

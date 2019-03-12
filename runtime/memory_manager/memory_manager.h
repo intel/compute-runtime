@@ -103,20 +103,8 @@ class MemoryManager {
         return allocateGraphicsMemoryInPreferredPool(properties, GraphicsAllocation::createStorageInfoFromProperties(properties), nullptr);
     }
 
-    virtual GraphicsAllocation *allocateGraphicsMemory(const AllocationProperties &properties, const void *ptr) {
+    virtual GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) {
         return allocateGraphicsMemoryInPreferredPool(properties, GraphicsAllocation::createStorageInfoFromProperties(properties), ptr);
-    }
-
-    GraphicsAllocation *allocateGraphicsMemoryForHostPtr(size_t size, void *ptr, bool fullRangeSvm, bool requiresL3Flush) {
-        if (fullRangeSvm && DebugManager.flags.EnableHostPtrTracking.get()) {
-            return allocateGraphicsMemory({false, size, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR}, ptr);
-        } else {
-            auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(size, ptr);
-            if (allocation) {
-                allocation->setFlushL3Required(requiresL3Flush);
-            }
-            return allocation;
-        }
     }
 
     GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties,
@@ -232,7 +220,7 @@ class MemoryManager {
     }
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) = 0;
-    virtual GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) = 0;
+    virtual GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) = 0;
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) = 0;

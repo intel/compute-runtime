@@ -157,7 +157,7 @@ HWTEST_F(CommandStreamReceiverTest, givenPtrAndSizeThatMeetL3CriteriaWhenMakeRes
     auto size = 0x2000u;
 
     auto memoryManager = commandStreamReceiver->getMemoryManager();
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, hostPtr);
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, hostPtr);
     ASSERT_NE(nullptr, graphicsAllocation);
     commandStreamReceiver->makeResidentHostPtrAllocation(graphicsAllocation);
 
@@ -172,7 +172,7 @@ HWTEST_F(CommandStreamReceiverTest, givenPtrAndSizeThatDoNotMeetL3CriteriaWhenMa
     auto size = 0x2001u;
 
     auto memoryManager = commandStreamReceiver->getMemoryManager();
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(MockAllocationProperties{false, size}, hostPtr);
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, hostPtr);
     ASSERT_NE(nullptr, graphicsAllocation);
     commandStreamReceiver->makeResidentHostPtrAllocation(graphicsAllocation);
 
@@ -435,6 +435,7 @@ TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesA
 struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
+        executionEnvironment->setHwInfo(&hwInfo);
         gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*executionEnvironment);
         executionEnvironment->memoryManager.reset(gmockMemoryManager);
         device.reset(MockDevice::create<MockDevice>(&hwInfo, executionEnvironment, 0u));
@@ -457,12 +458,12 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
     } else {
-        EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_, ::testing::_))
+        EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_))
             .Times(1)
             .WillOnce(::testing::Return(nullptr));
     }
 
-    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device, false);
+    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, false);
     EXPECT_TRUE(result);
 
     auto allocation = surface.getAllocation();
@@ -484,12 +485,12 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
     } else {
-        EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_, ::testing::_))
+        EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_))
             .Times(1)
             .WillOnce(::testing::Return(nullptr));
     }
 
-    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device, false);
+    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, false);
     EXPECT_FALSE(result);
 
     auto allocation = surface.getAllocation();
@@ -507,13 +508,13 @@ TEST_F(ReducedAddrSpaceCommandStreamReceiverTest,
        givenReducedGpuAddressSpaceWhenAllocationForHostSurfaceIsCreatedThenAllocateGraphicsMemoryForNonSvmHostPtrIsCalled) {
 
     char memory[8] = {};
-    HostPtrSurface surface(const_cast<char *>(memory), sizeof(memory), false);
+    HostPtrSurface surface(memory, sizeof(memory), false);
 
-    EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_, ::testing::_))
+    EXPECT_CALL(*gmockMemoryManager, allocateGraphicsMemoryForNonSvmHostPtr(::testing::_))
         .Times(1)
         .WillOnce(::testing::Return(nullptr));
 
-    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, *device, false);
+    bool result = commandStreamReceiver->createAllocationForHostSurface(surface, false);
     EXPECT_FALSE(result);
 }
 
