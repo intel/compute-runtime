@@ -633,6 +633,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
+    bool ownsLock = !gfxAllocation.isLocked();
+
     uint64_t gpuAddress;
     void *cpuAddress;
     size_t size;
@@ -646,13 +648,14 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation));
     }
 
-    if (gfxAllocation.isLocked()) {
+    if (gfxAllocation.isLocked() && ownsLock) {
         this->getMemoryManager()->unlockResource(&gfxAllocation);
     }
 
     if (AubHelper::isOneTimeAubWritableAllocationType(gfxAllocation.getAllocationType())) {
         gfxAllocation.setAubWritable(false);
     }
+
     return true;
 }
 
