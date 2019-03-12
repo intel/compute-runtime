@@ -19,6 +19,7 @@ set(IGDRCL_SRCS_tests_mem_obj
   ${CMAKE_CURRENT_SOURCE_DIR}/image2d_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image3d_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_array_size_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_compression_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/image_format_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_redescribe_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_release_mapped_ptr_tests.cpp

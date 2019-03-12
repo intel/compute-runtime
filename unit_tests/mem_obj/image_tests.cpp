@@ -20,6 +20,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/memory_management.h"
+#include "unit_tests/mem_obj/image_compression_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -902,37 +903,6 @@ TEST(ImageGetSurfaceFormatInfoTest, givenNullptrFormatWhenGetSurfaceFormatInfoIs
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, nullptr);
     EXPECT_EQ(nullptr, surfaceFormat);
 }
-
-class ImageCompressionTests : public ::testing::Test {
-  public:
-    class MyMemoryManager : public MockMemoryManager {
-      public:
-        using MockMemoryManager::MockMemoryManager;
-        GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
-            mockMethodCalled = true;
-            capturedImgInfo = *allocationData.imgInfo;
-            return OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(allocationData);
-        }
-        ImageInfo capturedImgInfo = {};
-        bool mockMethodCalled = false;
-    };
-
-    void SetUp() override {
-        mockDevice.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
-        myMemoryManager = new MyMemoryManager(*mockDevice->getExecutionEnvironment());
-        mockDevice->injectMemoryManager(myMemoryManager);
-        mockContext.reset(new MockContext(mockDevice.get()));
-    }
-
-    std::unique_ptr<MockDevice> mockDevice;
-    std::unique_ptr<MockContext> mockContext;
-    MyMemoryManager *myMemoryManager = nullptr;
-
-    cl_image_desc imageDesc = {};
-    cl_image_format imageFormat{CL_RGBA, CL_UNORM_INT8};
-    cl_mem_flags flags = CL_MEM_READ_WRITE;
-    cl_int retVal = CL_SUCCESS;
-};
 
 TEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferRenderCompression) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;

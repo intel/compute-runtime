@@ -81,7 +81,7 @@ void Buffer::validateInputAndCreateBuffer(cl_context &context,
         return;
     }
 
-    if (!MemObjHelper::validateMemoryProperties(properties)) {
+    if (!MemObjHelper::validateMemoryPropertiesForBuffer(properties)) {
         retVal = CL_INVALID_VALUE;
         return;
     }

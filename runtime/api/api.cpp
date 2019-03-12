@@ -711,63 +711,15 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
                    "hostPtr", hostPtr);
 
     cl_mem image = nullptr;
-
-    cl_mem_flags allValidFlags =
-        CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
-        CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR |
-        CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS |
-        CL_MEM_NO_ACCESS_INTEL | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL;
-
     do {
         /* Are there some invalid flag bits? */
-        if ((flags & (~allValidFlags)) != 0) {
+        if (!MemObjHelper::validateMemoryPropertiesForImage(flags, imageDesc->mem_object)) {
             retVal = CL_INVALID_VALUE;
             break;
         }
-        /* Check all the invalid flags combination. */
-        if (((((CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY) | flags) == flags) ||
-             (((CL_MEM_READ_WRITE | CL_MEM_READ_ONLY) | flags) == flags) ||
-             (((CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY) | flags) == flags) ||
-             (((CL_MEM_ALLOC_HOST_PTR | CL_MEM_USE_HOST_PTR) | flags) == flags) ||
-             (((CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR) | flags) == flags) ||
-             (((CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY) | flags) == flags) ||
-             (((CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS) | flags) == flags) ||
-             (((CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS) | flags) == flags) ||
-             (((CL_MEM_NO_ACCESS_INTEL | CL_MEM_READ_WRITE) | flags) == flags) ||
-             (((CL_MEM_NO_ACCESS_INTEL | CL_MEM_WRITE_ONLY) | flags) == flags) ||
-             (((CL_MEM_NO_ACCESS_INTEL | CL_MEM_READ_ONLY) | flags) == flags)) &&
-            (!(flags & CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL))) {
-            retVal = CL_INVALID_VALUE;
-            break;
-        }
-        MemObj *parentMemObj = castToObject<MemObj>(imageDesc->mem_object);
-        if (parentMemObj != nullptr) {
-            cl_mem_flags allValidFlags =
-                CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
-                CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS |
-                CL_MEM_NO_ACCESS_INTEL | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL;
-            /* Are there some invalid flag bits? */
-            if ((flags & (~allValidFlags)) != 0) {
-                retVal = CL_INVALID_VALUE;
-                break;
-            }
-            cl_mem_flags parentFlags = parentMemObj->getFlags();
-            /* Check whether flag is valid and compatible with parent. */
-            if (((!(flags & CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)) && (!(parentFlags & CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL))) &&
-                (flags &&
-                 (((parentFlags & CL_MEM_WRITE_ONLY) && (flags & (CL_MEM_READ_WRITE | CL_MEM_READ_ONLY))) ||
-                  ((parentFlags & CL_MEM_READ_ONLY) && (flags & (CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY))) ||
-                  ((parentFlags & CL_MEM_NO_ACCESS_INTEL) && (flags & (CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY))) ||
-                  ((parentFlags & CL_MEM_HOST_NO_ACCESS) && (flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY)))))) {
-                retVal = CL_INVALID_VALUE;
-                break;
-            }
-        }
-        if ((flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) && !hostPtr) {
-            retVal = CL_INVALID_HOST_PTR;
-            break;
-        }
-        if (!(flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) && hostPtr) {
+        bool isHostPtrUsed = (hostPtr != nullptr);
+        bool areHostPtrFlagsUsed = isValueSet(flags, CL_MEM_COPY_HOST_PTR) || isValueSet(flags, CL_MEM_USE_HOST_PTR);
+        if (isHostPtrUsed != areHostPtrFlagsUsed) {
             retVal = CL_INVALID_HOST_PTR;
             break;
         }

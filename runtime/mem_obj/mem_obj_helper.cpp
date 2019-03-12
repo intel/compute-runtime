@@ -46,8 +46,8 @@ StorageInfo MemObjHelper::getStorageInfo(const MemoryProperties &properties) {
     return {};
 }
 
-bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressedBuffers, const MemoryProperties &properties, ContextType contextType) {
-    return renderCompressedBuffers;
+bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, ContextType contextType) {
+    return renderCompressed;
 }
 
 bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &properties) {

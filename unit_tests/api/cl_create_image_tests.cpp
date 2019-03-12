@@ -172,7 +172,7 @@ TEST_F(clCreateImageTest, GivenInvalidFlagBitsWhenCreatingImageFromAnotherImageT
 
     imageFormat.image_channel_order = CL_RG;
     imageDesc.mem_object = image;
-    cl_mem_flags flags = (1 << 3);
+    cl_mem_flags flags = (1 << 30);
 
     auto imageFromImageObject = clCreateImage(
         pContext,
@@ -529,9 +529,14 @@ TEST_P(clCreateImageValidFlagsAndParentFlagsCombinations, GivenValidFlagsAndPare
 
 static ImageFlags invalidFlagsAndParentFlags[] = {
     {CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE},
+    {CL_MEM_WRITE_ONLY, CL_MEM_READ_ONLY},
     {CL_MEM_READ_ONLY, CL_MEM_READ_WRITE},
+    {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY},
     {CL_MEM_NO_ACCESS_INTEL, CL_MEM_READ_WRITE},
-    {CL_MEM_HOST_NO_ACCESS, CL_MEM_HOST_WRITE_ONLY}};
+    {CL_MEM_NO_ACCESS_INTEL, CL_MEM_WRITE_ONLY},
+    {CL_MEM_NO_ACCESS_INTEL, CL_MEM_READ_ONLY},
+    {CL_MEM_HOST_NO_ACCESS, CL_MEM_HOST_WRITE_ONLY},
+    {CL_MEM_HOST_NO_ACCESS, CL_MEM_HOST_READ_ONLY}};
 
 typedef clCreateImageTests<::testing::TestWithParam<ImageFlags>> clCreateImageInvalidFlagsAndParentFlagsCombinations;
 
