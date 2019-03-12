@@ -14,7 +14,7 @@ class OsContextLinux : public OsContext {
   public:
     OsContextLinux() = delete;
     ~OsContextLinux() override;
-    OsContextLinux(Drm &drm, uint32_t contextId, uint32_t deviceBitfiled,
+    OsContextLinux(Drm &drm, uint32_t contextId, uint32_t deviceBitfield,
                    EngineInstanceT engineType, PreemptionMode preemptionMode);
 
     unsigned int getEngineFlag() const { return engineFlag; }

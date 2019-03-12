@@ -22,7 +22,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
   public:
     OsContext() = delete;
 
-    static OsContext *create(OSInterface *osInterface, uint32_t contextId, uint32_t deviceBitfiled, EngineInstanceT engineType, PreemptionMode preemptionMode);
+    static OsContext *create(OSInterface *osInterface, uint32_t contextId, uint32_t deviceBitfield, EngineInstanceT engineType, PreemptionMode preemptionMode);
     uint32_t getContextId() const { return contextId; }
     uint32_t getNumSupportedDevices() const { return numSupportedDevices; }
     uint8_t getDeviceBitfield() const { return deviceBitfield; }
@@ -30,11 +30,11 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     EngineInstanceT &getEngineType() { return engineType; }
 
   protected:
-    OsContext(uint32_t contextId, uint32_t deviceBitfiled, EngineInstanceT engineType, PreemptionMode preemptionMode)
-        : contextId(contextId), deviceBitfield(deviceBitfiled), preemptionMode(preemptionMode), engineType(engineType) {
-        constexpr uint32_t maxIndex = std::numeric_limits<decltype(deviceBitfiled)>::digits;
+    OsContext(uint32_t contextId, uint32_t deviceBitfield, EngineInstanceT engineType, PreemptionMode preemptionMode)
+        : contextId(contextId), deviceBitfield(deviceBitfield), preemptionMode(preemptionMode), engineType(engineType) {
+        constexpr uint32_t maxIndex = std::numeric_limits<decltype(deviceBitfield)>::digits;
         for (uint32_t deviceIndex = 0; deviceIndex < maxIndex; deviceIndex++) {
-            if (isBitSet(deviceBitfiled, deviceIndex)) {
+            if (isBitSet(deviceBitfield, deviceIndex)) {
                 numSupportedDevices++;
             }
         }
