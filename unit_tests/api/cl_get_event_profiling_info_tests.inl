@@ -38,7 +38,7 @@ cl_int ProfilingInfo[] = {
     CL_PROFILING_COMMAND_END,
     CL_PROFILING_COMMAND_COMPLETE};
 
-TEST_F(clEventProfilingTests, clGetEventProfilingInfo_InvlidParams_CL_INVALID_VALUE) {
+TEST_F(clEventProfilingTests, GivenInvalidParamNameWhenGettingEventProfilingInfoThenInvalidValueErrorIsReturned) {
     Event *pEvent = new Event(nullptr, 0, 0, 0);
     pEvent->setStatus(CL_COMPLETE);
     size_t param_value_size = sizeof(cl_ulong);
@@ -55,6 +55,19 @@ TEST_F(clEventProfilingTests, clGetEventProfilingInfo_InvlidParams_CL_INVALID_VA
                                      &param_value_size_ret);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
+    delete pEvent;
+}
+
+TEST_F(clEventProfilingTests, GivenInvalidParamValueSizeWhenGettingEventProfilingInfoThenInvalidValueErrorIsReturned) {
+    Event *pEvent = new Event(nullptr, 0, 0, 0);
+    pEvent->setStatus(CL_COMPLETE);
+    size_t param_value_size = sizeof(cl_ulong);
+    cl_ulong param_value;
+    size_t param_value_size_ret;
+    cl_int retVal = CL_PROFILING_INFO_NOT_AVAILABLE;
+
+    cl_event event = (cl_event)pEvent;
+    pEvent->setProfilingEnabled(true);
     retVal = clGetEventProfilingInfo(event,
                                      ProfilingInfo[0],
                                      param_value_size - 1,
@@ -65,7 +78,7 @@ TEST_F(clEventProfilingTests, clGetEventProfilingInfo_InvlidParams_CL_INVALID_VA
     delete pEvent;
 }
 
-TEST_F(clEventProfilingTests, clGetEventProfilingInfo_ValidParams_CL_SUCCESS) {
+TEST_F(clEventProfilingTests, GivenValidParametersWhenGettingEventProfilingInfoThenSuccessIsReturned) {
     Event *pEvent = new Event(nullptr, 0, 0, 0);
     pEvent->setStatus(CL_COMPLETE);
     size_t param_value_size = sizeof(cl_ulong);
@@ -86,7 +99,7 @@ TEST_F(clEventProfilingTests, clGetEventProfilingInfo_ValidParams_CL_SUCCESS) {
     delete pEvent;
 }
 
-TEST_F(clEventProfilingTests, clGetEventProfilingInfo_ValidParams_CL_SUCCESS_no_size_ret) {
+TEST_F(clEventProfilingTests, GivenNullParamValueSizeRetWhenGettingEventProfilingInfoThenSuccessIsReturned) {
     Event *pEvent = new Event(nullptr, 0, 0, 0);
     pEvent->setStatus(CL_COMPLETE);
     size_t param_value_size = sizeof(cl_ulong);
@@ -105,33 +118,13 @@ TEST_F(clEventProfilingTests, clGetEventProfilingInfo_ValidParams_CL_SUCCESS_no_
     delete pEvent;
 }
 
-TEST_F(clEventProfilingTests, clGetEventProfilingInfo_InvalidEvent) {
+TEST_F(clEventProfilingTests, GivenNullEventWhenGettingEventProfilingInfoThenInvalidEventErrorIsReturned) {
 
     auto retVal = clGetEventProfilingInfo(nullptr, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), 0u, nullptr);
     EXPECT_EQ(CL_INVALID_EVENT, retVal);
 }
 
-TEST(clGetEventProfilingInfo, whenSizeIsTooSmallAndParamValueIsNotNullThenInvalidValueIsReturned) {
-    Event *pEvent = new Event(nullptr, 0, 0, 0);
-    size_t param_value_size = 0;
-    cl_ulong param_value;
-
-    pEvent->setStatus(CL_COMPLETE);
-    pEvent->setProfilingEnabled(true);
-
-    cl_event event = (cl_event)pEvent;
-    cl_int retVal = clGetEventProfilingInfo(event,
-                                            CL_PROFILING_COMMAND_QUEUED,
-                                            param_value_size,
-                                            &param_value,
-                                            nullptr);
-
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
-    delete pEvent;
-}
-
-TEST(clGetEventProfilingInfo, whenSizeIsTooSmallAndParamValueIsNullThenSuccessIsReturned) {
+TEST(clGetEventProfilingInfo, GivenNullParamValueAndZeroParamValueSizeWhenGettingEventProfilingInfoThenSuccessIsReturned) {
     Event *pEvent = new Event(nullptr, 0, 0, 0);
     size_t param_value_size = 0;
 
@@ -150,7 +143,7 @@ TEST(clGetEventProfilingInfo, whenSizeIsTooSmallAndParamValueIsNullThenSuccessIs
     delete pEvent;
 }
 
-TEST(clGetEventProfilingInfo, whenSizeIsCorrectAndParamValueIsNullThenSuccessIsReturned) {
+TEST(clGetEventProfilingInfo, GivenNullParamValueAndCorrectParamValueSizeWhenGettingEventProfilingInfoThenSuccessIsReturned) {
     Event *pEvent = new Event(nullptr, 0, 0, 0);
     size_t param_value_size = sizeof(cl_ulong);
 
@@ -169,7 +162,7 @@ TEST(clGetEventProfilingInfo, whenSizeIsCorrectAndParamValueIsNullThenSuccessIsR
     delete pEvent;
 }
 
-TEST(clGetEventProfilingInfo, UserEventOnQueryReturnsNotAvailable) {
+TEST(clGetEventProfilingInfo, GivenUserEventWhenGettingEventProfilingInfoThenProfilingInfoNotAvailableErrorIsReturned) {
     UserEvent *ue = new UserEvent();
     size_t param_value_size = sizeof(cl_ulong);
     cl_ulong param_value;
@@ -187,19 +180,27 @@ TEST(clGetEventProfilingInfo, UserEventOnQueryReturnsNotAvailable) {
     delete ue;
 }
 
-TEST(clGetEventProfilingInfo, GetDeltaBeetwenTimes) {
+TEST(clGetEventProfilingInfo, GivenStartAndEndTimeWhenGettingDeltaThenCorrectDeltaIsReturned) {
     Event *pEvent = new Event(nullptr, 0, 0, 0);
     cl_ulong startTime = 1;
     cl_ulong endTime = 2;
-    cl_ulong Delta = 0;
-    Delta = pEvent->getDelta(startTime, endTime);
-    EXPECT_EQ(endTime - startTime, Delta);
+    cl_ulong delta = 0;
 
-    startTime = 2;
-    endTime = 1;
-    cl_ulong TimeMax = 0xffffffffULL;
-    Delta = pEvent->getDelta(startTime, endTime);
-    EXPECT_EQ((TimeMax + (endTime - startTime)), Delta);
+    delta = pEvent->getDelta(startTime, endTime);
+    EXPECT_EQ(endTime - startTime, delta);
+
+    delete pEvent;
+}
+
+TEST(clGetEventProfilingInfo, GivenStartTimeGreaterThenEndTimeWhenGettingDeltaThenCorrectDeltaIsReturned) {
+    Event *pEvent = new Event(nullptr, 0, 0, 0);
+    cl_ulong startTime = 2;
+    cl_ulong endTime = 1;
+    cl_ulong delta = 0;
+    cl_ulong timeMax = 0xffffffffULL;
+
+    delta = pEvent->getDelta(startTime, endTime);
+    EXPECT_EQ((timeMax + (endTime - startTime)), delta);
     delete pEvent;
 }
 
@@ -216,13 +217,13 @@ TEST(clGetEventProfilingInfo, givenTimestampThatOverlapWhenGetDeltaIsCalledThenP
     delete pEvent;
 }
 
-TEST(clGetEventProfilingInfo, WHENCalcProfilingDataTHENFalse) {
+TEST(clGetEventProfilingInfo, GivenProfilingDisabledWhenCalculatingProfilingDataThenFalseIsReturned) {
     auto *pEvent = new MockEvent<Event>(nullptr, 0, 0, 0);
     EXPECT_FALSE(pEvent->calcProfilingData());
     delete pEvent;
 }
 
-TEST(clGetEventProfilingInfo, IsProfilingEnabledRegularEventTrue) {
+TEST(clGetEventProfilingInfo, GivenProfilingEnabledWhenCalculatingProfilingDataThenFalseIsNotReturned) {
     Event *pEvent = new Event(nullptr, 0, 0, 0);
     cl_bool Result = pEvent->isProfilingEnabled();
     EXPECT_EQ(((cl_bool)CL_FALSE), Result);
@@ -232,14 +233,14 @@ TEST(clGetEventProfilingInfo, IsProfilingEnabledRegularEventTrue) {
     delete pEvent;
 }
 
-TEST(clGetEventProfilingInfo, IsProfilingEnabledUserEventFalse) {
+TEST(clGetEventProfilingInfo, GivenProfilingEnabledAndUserEventsWhenCalculatingProfilingDataThenFalseIsReturned) {
     Event *pEvent = new UserEvent();
     cl_bool Result = pEvent->isProfilingEnabled();
     EXPECT_EQ(((cl_bool)CL_FALSE), Result);
     delete pEvent;
 }
 
-TEST(clGetEventProfilingInfo, IsPerfCountersEnabledRegularEvent) {
+TEST(clGetEventProfilingInfo, GivenPerfCountersEnabledWhenCheckingPerfCountersThenTrueIsReturned) {
     Event *pEvent = new Event(nullptr, 0, 0, 0);
     bool Result = pEvent->isPerfCountersEnabled();
     EXPECT_FALSE(Result);
@@ -261,6 +262,13 @@ class clEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixtur
         cl_int retVal = CL_SUCCESS;
         context = std::unique_ptr<Context>(Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1),
                                                                         nullptr, nullptr, retVal));
+        commandQueue = std::make_unique<CommandQueue>(context.get(), device.get(), nullptr);
+        event = std::make_unique<Event>(commandQueue.get(), 0, 0, 0);
+        event->setStatus(CL_COMPLETE);
+        commandQueue->getPerfCounters()->processEventReport(0, nullptr, &param_value_size, nullptr, nullptr, true);
+        event->setProfilingEnabled(true);
+
+        eventCl = static_cast<cl_event>(event.get());
     }
 
     void TearDown() override {
@@ -268,49 +276,40 @@ class clEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixtur
     }
 
     std::unique_ptr<Context> context;
+    std::unique_ptr<CommandQueue> commandQueue;
+    std::unique_ptr<Event> event;
+    size_t param_value_size = 0;
+    cl_event eventCl = nullptr;
+    cl_ulong param_value = 0;
+    size_t param_value_size_ret = 0;
 };
 
-TEST_F(clEventProfilingWithPerfCountersTests, clGetEventProfilingInfoGetPerfCounters) {
-    CommandQueue *pCommandQueue;
-    pCommandQueue = new CommandQueue(context.get(), device.get(), 0);
-    Event *pEvent = new Event(pCommandQueue, 0, 0, 0);
-    pEvent->setStatus(CL_COMPLETE);
-    size_t param_value_size;
-
-    //query size
-    pCommandQueue->getPerfCounters()->processEventReport(0, nullptr, &param_value_size, nullptr, nullptr, true);
-
-    pEvent->setProfilingEnabled(true);
-    bool Result = pEvent->isPerfCountersEnabled();
-    EXPECT_FALSE(Result);
-
-    cl_event event = (cl_event)pEvent;
-    cl_ulong param_value = 0;
-    size_t param_value_size_ret;
-    cl_int retVal = CL_PROFILING_INFO_NOT_AVAILABLE;
-
-    retVal = clGetEventProfilingInfo(event,
-                                     CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,
-                                     param_value_size,
-                                     &param_value,
-                                     &param_value_size_ret);
+TEST_F(clEventProfilingWithPerfCountersTests, GivenDisabledPerfCountersWhenGettingEventProfilingInfoThenInvalidValueErrorIsReturned) {
+    event->setPerfCountersEnabled(false);
+    cl_int retVal = clGetEventProfilingInfo(eventCl,
+                                            CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,
+                                            param_value_size,
+                                            &param_value,
+                                            &param_value_size_ret);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
 
-    pEvent->setPerfCountersEnabled(true);
-    retVal = clGetEventProfilingInfo(event,
-                                     CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,
-                                     param_value_size,
-                                     &param_value,
-                                     &param_value_size_ret);
+TEST_F(clEventProfilingWithPerfCountersTests, GivenEnabledPerfCountersWhenGettingEventProfilingInfoThenSuccessIsReturned) {
+    event->setPerfCountersEnabled(true);
+    cl_int retVal = clGetEventProfilingInfo(eventCl,
+                                            CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,
+                                            param_value_size,
+                                            &param_value,
+                                            &param_value_size_ret);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
 
-    retVal = clGetEventProfilingInfo(event,
-                                     CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,
-                                     param_value_size - 1,
-                                     &param_value,
-                                     &param_value_size_ret);
+TEST_F(clEventProfilingWithPerfCountersTests, GivenEnabledPerfCountersAndIncorrectParamValueSizeWhenGettingEventProfilingInfoThenProfilingInfoNotAvailableErrorIsReturned) {
+    event->setPerfCountersEnabled(true);
+    cl_int retVal = clGetEventProfilingInfo(eventCl,
+                                            CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL,
+                                            param_value_size - 1,
+                                            &param_value,
+                                            &param_value_size_ret);
     EXPECT_EQ(CL_PROFILING_INFO_NOT_AVAILABLE, retVal);
-
-    delete pEvent;
-    delete pCommandQueue;
 }
