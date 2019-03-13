@@ -174,6 +174,8 @@ class DrmMock : public Drm {
             aperture->aper_available_size = gpuMemSize;
             aperture->aper_size = gpuMemSize;
         }
+
+        handleRemainingRequests(request, arg);
         return 0;
     }
 
@@ -248,6 +250,8 @@ class DrmMock : public Drm {
     //DRM_IOCTL_I915_GEM_USERPTR
     __u32 returnHandle = 0;
     __u64 gpuMemSize = 3u * MemoryConstants::gigaByte;
+
+    virtual void handleRemainingRequests(unsigned long request, void *arg){};
 
   private:
     const char *sysFsDefaultGpuPathToRestore;
