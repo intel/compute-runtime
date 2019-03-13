@@ -10,11 +10,11 @@
 using namespace OCLRT;
 
 std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)>
-    MockGfxPartition::allHeapNames{HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
+    MockGfxPartition::allHeapNames{{HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
                                    HeapIndex::HEAP_INTERNAL,
                                    HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY,
                                    HeapIndex::HEAP_EXTERNAL,
                                    HeapIndex::HEAP_STANDARD,
                                    HeapIndex::HEAP_STANDARD64KB,
                                    HeapIndex::HEAP_SVM,
-                                   HeapIndex::HEAP_LIMITED};
+                                   HeapIndex::HEAP_LIMITED}};
