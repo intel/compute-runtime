@@ -288,6 +288,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
 
     auto alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
     auto alignedSize = alignSizeWholePage(allocationData.hostPtr, allocationData.size);
+    auto realAllocationSize = alignedSize;
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
 
     StorageAllocatorType allocType;
@@ -296,7 +297,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
         return nullptr;
     }
 
-    BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(alignedPtr), alignedSize, 0, true);
+    BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(alignedPtr), realAllocationSize, 0, true);
     if (!bo) {
         releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, allocType);
         return nullptr;
