@@ -230,7 +230,7 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
         if (!wddm->reserveValidAddressRange(size, ptr)) {
             return nullptr;
         }
-        allocation->setReservedAddress(ptr);
+        allocation->setReservedAddressRange(ptr, size);
     } else if (requireSpecificBitness && this->force32bitAllocations) {
         allocation->set32BitAllocation(true);
         allocation->setGpuBaseAddress(GmmHelper::canonize(allocator32Bit->getBase()));
@@ -339,7 +339,9 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         DEBUG_BREAK_IF(!status);
         alignedFreeWrapper(input->getDriverAllocatedCpuPtr());
     }
-    wddm->releaseReservedAddress(input->getReservedAddress());
+    if (input->getReservedAddressPtr()) {
+        releaseReservedCpuAddressRange(input->getReservedAddressPtr(), input->getReservedAddressSize());
+    }
     delete gfxAllocation;
 }
 
@@ -500,6 +502,16 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation) {
         }
     }
     return (wddmSuccess == STATUS_SUCCESS);
+}
+
+void *WddmMemoryManager::reserveCpuAddressRange(size_t size) {
+    void *reservePtr = nullptr;
+    wddm->reserveValidAddressRange(size, reservePtr);
+    return reservePtr;
+}
+
+void WddmMemoryManager::releaseReservedCpuAddressRange(void *reserved, size_t size) {
+    wddm->releaseReservedAddress(reserved);
 }
 
 } // namespace OCLRT

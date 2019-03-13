@@ -169,6 +169,9 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
     }
 
     alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
+    if (gfxAllocation->getReservedAddressPtr()) {
+        releaseReservedCpuAddressRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize());
+    }
     delete gfxAllocation;
 }
 
@@ -255,5 +258,14 @@ Allocator32bit *OsAgnosticMemoryManager::create32BitAllocator(bool aubUsage) {
     }
 
     return new Allocator32bit(heap32Base, allocatorSize);
+}
+
+void *OsAgnosticMemoryManager::reserveCpuAddressRange(size_t size) {
+    void *reservePtr = allocateSystemMemory(size, MemoryConstants::preferredAlignment);
+    return reservePtr;
+}
+
+void OsAgnosticMemoryManager::releaseReservedCpuAddressRange(void *reserved, size_t size) {
+    alignedFreeWrapper(reserved);
 }
 } // namespace OCLRT

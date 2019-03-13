@@ -170,12 +170,12 @@ uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, StorageAllocatorType &s
     }
 
     storageType = MMAP_ALLOCATOR;
-    return reinterpret_cast<uint64_t>(mmapFunction(nullptr, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0));
+    return reinterpret_cast<uint64_t>(reserveCpuAddressRange(size));
 }
 
 void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, StorageAllocatorType allocatorType) {
     if (allocatorType == MMAP_ALLOCATOR) {
-        munmapFunction(address, unmapSize);
+        releaseReservedCpuAddressRange(address, unmapSize);
         return;
     }
 
@@ -579,7 +579,10 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
     if (gfxAllocation->peekSharedHandle() != Sharing::nonSharedResource) {
         closeFunction(gfxAllocation->peekSharedHandle());
     }
-
+    void *reserveAddress = gfxAllocation->getReservedAddressPtr();
+    if (reserveAddress) {
+        releaseReservedCpuAddressRange(reserveAddress, gfxAllocation->getReservedAddressSize());
+    }
     delete gfxAllocation;
 
     unreference(search);
@@ -733,8 +736,16 @@ void DrmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation
     if (bo == nullptr)
         return;
 
-    munmapFunction(bo->peekLockedAddress(), bo->peekSize());
+    releaseReservedCpuAddressRange(bo->peekLockedAddress(), bo->peekSize());
 
     bo->setLockedAddress(nullptr);
+}
+void *DrmMemoryManager::reserveCpuAddressRange(size_t size) {
+    void *reservePtr = mmapFunction(nullptr, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
+    return reservePtr;
+}
+
+void DrmMemoryManager::releaseReservedCpuAddressRange(void *reserved, size_t size) {
+    munmapFunction(reserved, size);
 }
 } // namespace OCLRT

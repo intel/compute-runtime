@@ -93,7 +93,7 @@ bool WddmMock::destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext)
     const D3DKMT_HANDLE *allocationHandles = nullptr;
     uint32_t allocationCount = 0;
     D3DKMT_HANDLE resourceHandle = 0;
-    void *reserveAddress = alloc->getReservedAddress();
+    void *reserveAddress = alloc->getReservedAddressPtr();
     if (alloc->peekSharedHandle()) {
         resourceHandle = alloc->resourceHandle;
     } else {

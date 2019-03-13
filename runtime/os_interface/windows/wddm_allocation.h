@@ -26,8 +26,10 @@ constexpr size_t trimListUnusedPosition = std::numeric_limits<size_t>::max();
 class WddmAllocation : public GraphicsAllocation {
   public:
     WddmAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, bool multiOsContextCapable)
-        : GraphicsAllocation(allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool, multiOsContextCapable), reservedAddressSpace(reservedAddr) {
+        : GraphicsAllocation(allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool, multiOsContextCapable) {
         trimCandidateListPositions.fill(trimListUnusedPosition);
+        reservedAddressRangeInfo.addressPtr = reservedAddr;
+        reservedAddressRangeInfo.rangeSize = sizeIn;
     }
 
     WddmAllocation(AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool, bool multiOsContextCapable)
@@ -65,13 +67,6 @@ class WddmAllocation : public GraphicsAllocation {
         return trimListUnusedPosition;
     }
 
-    void *getReservedAddress() const {
-        return this->reservedAddressSpace;
-    }
-
-    void setReservedAddress(void *reserveMem) {
-        this->reservedAddressSpace = reserveMem;
-    }
     void setGpuAddress(uint64_t graphicsAddress) { this->gpuAddress = graphicsAddress; }
     void setCpuAddress(void *cpuPtr) { this->cpuPtr = cpuPtr; }
 
@@ -93,6 +88,5 @@ class WddmAllocation : public GraphicsAllocation {
     std::array<D3DKMT_HANDLE, maxHandleCount> handles{};
     ResidencyData residency;
     std::array<size_t, maxOsContextCount> trimCandidateListPositions;
-    void *reservedAddressSpace = nullptr;
 };
 } // namespace OCLRT

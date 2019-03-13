@@ -891,7 +891,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestriction
     void *expectReserve = reinterpret_cast<void *>(wddm->virtualAllocAddress);
 
     ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ(expectReserve, allocation->getReservedAddress());
+    EXPECT_EQ(expectReserve, allocation->getReservedAddressPtr());
     memoryManager->freeGraphicsMemory(allocation);
 }
 

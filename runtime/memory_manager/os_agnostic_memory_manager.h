@@ -63,6 +63,9 @@ class OsAgnosticMemoryManager : public MemoryManager {
 
     Allocator32bit *create32BitAllocator(bool enableLocalMemory);
 
+    void *reserveCpuAddressRange(size_t size) override;
+    void releaseReservedCpuAddressRange(void *reserved, size_t size) override;
+
   protected:
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;

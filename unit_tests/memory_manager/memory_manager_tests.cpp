@@ -1758,3 +1758,15 @@ TEST(MemoryManagerCopyMemoryTest, givenValidAllocationAndMemoryWhenCopyMemoryToA
     EXPECT_TRUE(memoryManager.copyMemoryToAllocation(&allocation, &memory, sizeof(memory)));
     EXPECT_EQ(memory, allocationStorage[0]);
 }
+
+TEST_F(MemoryAllocatorTest, whenReservingAddressRangeThenExpectProperAddressAndReleaseWhenFreeing) {
+    size_t size = 0x1000;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{size});
+    ASSERT_NE(nullptr, allocation);
+    void *reserve = memoryManager->reserveCpuAddressRange(size);
+    EXPECT_NE(nullptr, reserve);
+    allocation->setReservedAddressRange(reserve, size);
+    EXPECT_EQ(reserve, allocation->getReservedAddressPtr());
+    EXPECT_EQ(size, allocation->getReservedAddressSize());
+    memoryManager->freeGraphicsMemory(allocation);
+}

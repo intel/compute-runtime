@@ -613,7 +613,7 @@ TEST_F(WddmCommandStreamTest, givenHostPtrWhenPtrBelowRestrictionThenCreateAlloc
 
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(hostPtr, gfxAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(expectedReserve, gfxAllocation->getReservedAddress());
+    EXPECT_EQ(expectedReserve, gfxAllocation->getReservedAddressPtr());
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }

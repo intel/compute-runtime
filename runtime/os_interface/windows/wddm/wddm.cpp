@@ -289,7 +289,7 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
 }
 
 bool Wddm::mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr) {
-    void *mapPtr = allocation->getReservedAddress() != nullptr ? allocation->getReservedAddress() : cpuPtr;
+    void *mapPtr = allocation->getReservedAddressPtr() != nullptr ? allocation->getReservedAddressPtr() : cpuPtr;
     return mapGpuVirtualAddressImpl(allocation->getDefaultGmm(), allocation->getDefaultHandle(), mapPtr, allocation->getGpuAddressToModify(),
                                     MemoryManager::selectHeap(allocation, mapPtr, *hardwareInfoTable[gfxPlatform->eProductFamily]));
 }

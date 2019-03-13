@@ -185,6 +185,8 @@ class MemoryManager {
     virtual bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, uint32_t sizeToCopy) const;
     static HeapIndex selectHeap(const GraphicsAllocation *allocation, const void *ptr, const HardwareInfo &hwInfo);
     static std::unique_ptr<MemoryManager> createMemoryManager(bool enable64KBpages, bool enableLocalMemory, ExecutionEnvironment &exeEnv);
+    virtual void *reserveCpuAddressRange(size_t size) = 0;
+    virtual void releaseReservedCpuAddressRange(void *reserved, size_t size) = 0;
 
   protected:
     struct AllocationData {

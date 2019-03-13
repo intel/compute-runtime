@@ -55,6 +55,8 @@ class DrmMemoryManager : public MemoryManager {
     }
 
     DrmGemCloseWorker *peekGemCloseWorker() const { return this->gemCloseWorker.get(); }
+    void *reserveCpuAddressRange(size_t size) override;
+    void releaseReservedCpuAddressRange(void *reserved, size_t size) override;
 
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);

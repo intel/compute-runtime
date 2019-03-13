@@ -3025,3 +3025,15 @@ TEST(DrmAllocationTest, givenMemoryPoolWhenPassedToDrmAllocationConstructorThenM
     DrmAllocation allocation2{GraphicsAllocation::AllocationType::UNDECIDED, nullptr, nullptr, 0ULL, static_cast<size_t>(0), MemoryPool::SystemCpuInaccessible, false};
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation2.getMemoryPool());
 }
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, whenReservingAddressRangeThenExpectProperAddressAndReleaseWhenFreeing) {
+    constexpr size_t size = 0x1000;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{size});
+    ASSERT_NE(nullptr, allocation);
+    void *reserve = memoryManager->reserveCpuAddressRange(size);
+    EXPECT_NE(nullptr, reserve);
+    allocation->setReservedAddressRange(reserve, size);
+    EXPECT_EQ(reserve, allocation->getReservedAddressPtr());
+    EXPECT_EQ(size, allocation->getReservedAddressSize());
+    memoryManager->freeGraphicsMemory(allocation);
+}
