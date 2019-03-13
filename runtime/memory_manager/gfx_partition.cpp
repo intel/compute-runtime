@@ -11,10 +11,10 @@
 
 namespace OCLRT {
 
-const std::array<HeapIndex, 4> GfxPartition::heap32Names{HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
-                                                         HeapIndex::HEAP_INTERNAL,
-                                                         HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY,
-                                                         HeapIndex::HEAP_EXTERNAL};
+const std::array<HeapIndex, 4> GfxPartition::heap32Names{{HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
+                                                          HeapIndex::HEAP_INTERNAL,
+                                                          HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY,
+                                                          HeapIndex::HEAP_EXTERNAL}};
 
 void GfxPartition::init(uint64_t gpuAddressSpace) {
 
