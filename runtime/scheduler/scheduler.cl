@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -155,18 +155,18 @@ __global IGIL_KernelData* IGIL_GetKernelData( __global IGIL_KernelDataHeader* pK
 }
 
 
-inline __global IGIL_CommandHeader* TEMP_IGIL_GetCommandHeader( queue_t q, uint offset )
+inline __global IGIL_CommandHeader* TEMP_IGIL_GetCommandHeader( __global IGIL_CommandQueue* q, uint offset )
 {
-    __global uchar *pQueueRaw = __builtin_astype( q, __global uchar* );
+    __global uchar *pQueueRaw = (__global uchar *) q;
 
     __global IGIL_CommandHeader* pCommand = ( __global IGIL_CommandHeader* )( pQueueRaw + offset );
 
     return pCommand;
 }
 //Make sure enough command packets are in command queue before calling this function.
-__global IGIL_CommandHeader* TEMP_IGIL_GetNthCommandHeader( queue_t q, uint initialOffset, uint number )
+__global IGIL_CommandHeader* TEMP_IGIL_GetNthCommandHeader( __global IGIL_CommandQueue* q, uint initialOffset, uint number )
 {
-    __global uchar *pQueueRaw = __builtin_astype( q, __global uchar* );
+    __global uchar *pQueueRaw = (__global uchar *) q;
 
     __global IGIL_CommandHeader* pCommand = ( __global IGIL_CommandHeader* )( pQueueRaw + initialOffset );
     uint Offset = initialOffset;
@@ -182,9 +182,9 @@ __global IGIL_CommandHeader* TEMP_IGIL_GetNthCommandHeader( queue_t q, uint init
 }
 
 //Make sure enough command packets are in command queue before calling this function.
-uint TEMP_IGIL_GetNthCommandHeaderOffset( queue_t q, uint initialOffset, uint number )
+uint TEMP_IGIL_GetNthCommandHeaderOffset( __global IGIL_CommandQueue* q, uint initialOffset, uint number )
 {
-    __global uchar *pQueueRaw = __builtin_astype( q, __global uchar* );
+    __global uchar *pQueueRaw = (__global uchar *) q;
 
     __global IGIL_CommandHeader* pCommand = ( __global IGIL_CommandHeader* )( pQueueRaw + initialOffset );
     uint Offset = initialOffset;
@@ -2878,13 +2878,13 @@ void SchedulerParallel20(
         {
             if( CurrentPacket == GroupID )
             {
-                offset                  = TEMP_IGIL_GetNthCommandHeaderOffset( __builtin_astype( pQueue, queue_t ), InitialOffset, CurrentPacket );
+                offset                  = TEMP_IGIL_GetNthCommandHeaderOffset( pQueue, InitialOffset, CurrentPacket );
             }
             else
             {
-                offset                  = TEMP_IGIL_GetNthCommandHeaderOffset( __builtin_astype( pQueue, queue_t ), offset, get_num_groups( 0 ) );
+                offset                  = TEMP_IGIL_GetNthCommandHeaderOffset( pQueue, offset, get_num_groups( 0 ) );
             }
-            pCommand                    = TEMP_IGIL_GetCommandHeader( __builtin_astype( pQueue, queue_t ), offset );
+            pCommand                    = TEMP_IGIL_GetCommandHeader( pQueue, offset );
 
             //Initialize command packet with proper lws
             if( get_local_id( 0 ) == 0 )
