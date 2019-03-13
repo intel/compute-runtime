@@ -7,18 +7,15 @@
 
 #include "runtime/helpers/hardware_context_controller.h"
 
-#include "common/helpers/bit_helpers.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_context.h"
-
-#include <limits>
 
 using namespace OCLRT;
 
 HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext, uint32_t engineIndex, uint32_t flags) {
-    constexpr uint32_t maxIndex = std::numeric_limits<decltype(osContext.getDeviceBitfield())>::digits;
-    for (uint32_t deviceIndex = 0; deviceIndex < maxIndex; deviceIndex++) {
-        if (isBitSet(osContext.getDeviceBitfield(), deviceIndex)) {
+    auto deviceBitfield = osContext.getDeviceBitfield();
+    for (uint32_t deviceIndex = 0; deviceIndex < deviceBitfield.size(); deviceIndex++) {
+        if (deviceBitfield.test(deviceIndex)) {
             hardwareContexts.emplace_back(aubManager.createHardwareContext(deviceIndex, engineIndex, flags));
         }
     }

@@ -13,7 +13,7 @@
 
 namespace OCLRT {
 
-OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, uint32_t deviceBitfield,
+OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
                              EngineInstanceT engineType, PreemptionMode preemptionMode) {
     if (osInterface) {
         return new OsContextWin(*osInterface->get()->getWddm(), contextId, deviceBitfield, engineType, preemptionMode);
@@ -21,7 +21,7 @@ OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, uint3
     return new OsContext(contextId, deviceBitfield, engineType, preemptionMode);
 }
 
-OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, uint32_t deviceBitfield,
+OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield deviceBitfield,
                            EngineInstanceT engineType, PreemptionMode preemptionMode)
     : OsContext(contextId, deviceBitfield, engineType, preemptionMode), wddm(wddm), residencyController(wddm, contextId) {
 

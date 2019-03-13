@@ -17,6 +17,7 @@
 
 #include "engine_node.h"
 
+#include <bitset>
 #include <cstdint>
 #include <mutex>
 #include <vector>
@@ -34,6 +35,7 @@ struct ImageInfo;
 
 using CsrContainer = std::vector<std::vector<std::unique_ptr<CommandStreamReceiver>>>;
 using EngineControlContainer = std::vector<EngineControl>;
+using DeviceBitfield = std::bitset<32>;
 
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,
@@ -173,7 +175,7 @@ class MemoryManager {
     }
 
     OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver, EngineInstanceT engineType,
-                                          uint32_t deviceBitfield, PreemptionMode preemptionMode);
+                                          DeviceBitfield deviceBitfield, PreemptionMode preemptionMode);
     uint32_t getRegisteredEnginesCount() const { return static_cast<uint32_t>(registeredEngines.size()); }
     CommandStreamReceiver *getDefaultCommandStreamReceiver(uint32_t deviceId) const;
     EngineControlContainer &getRegisteredEngines();

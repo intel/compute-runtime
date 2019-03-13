@@ -784,7 +784,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenOsContextWithMultipleDevicesSupport
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
 
-    uint32_t deviceBitfield = 3;
+    DeviceBitfield deviceBitfield;
+    deviceBitfield.set(0);
+    deviceBitfield.set(1);
     MockOsContext osContext(nullptr, 1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
     aubCsr->setupContext(osContext);
@@ -1095,7 +1097,9 @@ using HardwareContextContainerTests = ::testing::Test;
 
 TEST_F(HardwareContextContainerTests, givenOsContextWithMultipleDevicesSupportedThenInitialzeHwContextsWithValidIndexes) {
     MockAubManager aubManager;
-    uint32_t deviceBitfield = 3;
+    DeviceBitfield deviceBitfield;
+    deviceBitfield.set(0);
+    deviceBitfield.set(1);
     MockOsContext osContext(nullptr, 1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
 
     HardwareContextController hwContextControler(aubManager, osContext, 0, 0);
@@ -1109,9 +1113,11 @@ TEST_F(HardwareContextContainerTests, givenOsContextWithMultipleDevicesSupported
 
 TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCalledThenUseAllContexts) {
     MockAubManager aubManager;
-    uint32_t deviceBitfield = 3;
+    DeviceBitfield deviceBitfield;
+    deviceBitfield.set(0);
+    deviceBitfield.set(1);
     MockOsContext osContext(nullptr, 1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
-    HardwareContextController hwContextContainer(aubManager, osContext, deviceBitfield, 0);
+    HardwareContextController hwContextContainer(aubManager, osContext, 3, 0);
     EXPECT_EQ(2u, hwContextContainer.hardwareContexts.size());
 
     auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
@@ -1148,7 +1154,9 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
 
 TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCalledThenUseFirstContext) {
     MockAubManager aubManager;
-    uint32_t deviceBitfield = 3;
+    DeviceBitfield deviceBitfield;
+    deviceBitfield.set(0);
+    deviceBitfield.set(1);
     MockOsContext osContext(nullptr, 1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
     HardwareContextController hwContextContainer(aubManager, osContext, 2, 0);
     EXPECT_EQ(2u, hwContextContainer.hardwareContexts.size());

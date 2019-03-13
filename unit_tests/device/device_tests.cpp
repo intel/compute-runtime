@@ -167,9 +167,9 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqu
 
     for (uint32_t i = 0; i < numGpgpuEngines; i++) {
         EXPECT_EQ(i, device1->getEngine(i).osContext->getContextId());
-        EXPECT_EQ(1u, device1->getEngine(i).osContext->getDeviceBitfield());
+        EXPECT_EQ(1u, device1->getEngine(i).osContext->getDeviceBitfield().to_ulong());
         EXPECT_EQ(i + numGpgpuEngines, device2->getEngine(i).osContext->getContextId());
-        EXPECT_EQ(2u, device2->getEngine(i).osContext->getDeviceBitfield());
+        EXPECT_EQ(2u, device2->getEngine(i).osContext->getDeviceBitfield().to_ulong());
 
         EXPECT_EQ(registeredEngines[i].commandStreamReceiver,
                   device1->getEngine(i).commandStreamReceiver);

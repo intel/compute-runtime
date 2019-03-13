@@ -14,7 +14,7 @@
 
 namespace OCLRT {
 
-OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, uint32_t deviceBitfield,
+OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
                              EngineInstanceT engineType, PreemptionMode preemptionMode) {
     if (osInterface) {
         return new OsContextLinux(*osInterface->get()->getDrm(), contextId, deviceBitfield, engineType, preemptionMode);
@@ -22,7 +22,7 @@ OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, uint3
     return new OsContext(contextId, deviceBitfield, engineType, preemptionMode);
 }
 
-OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, uint32_t deviceBitfield,
+OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield deviceBitfield,
                                EngineInstanceT engineType, PreemptionMode preemptionMode)
     : OsContext(contextId, deviceBitfield, engineType, preemptionMode), drm(drm) {
 
