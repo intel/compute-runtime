@@ -76,7 +76,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const Allocati
     auto cpuPtr = lockResource(wddmAllocation.get());
 
     // 64kb map is not needed
-    auto status = wddm->mapGpuVirtualAddress(wddmAllocation.get(), cpuPtr);
+    auto status = mapGpuVirtualAddressWithRetry(wddmAllocation.get(), cpuPtr);
     DEBUG_BREAK_IF(!status);
     wddmAllocation->setCpuAddress(cpuPtr);
 
@@ -225,8 +225,8 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
     size_t size = allocation->getDefaultGmm()->gmmResourceInfo->getSizeAllocation();
     allocation->setSize(size);
 
-    void *ptr = nullptr;
     if (is32bit) {
+        void *ptr = nullptr;
         if (!wddm->reserveValidAddressRange(size, ptr)) {
             return nullptr;
         }
@@ -235,7 +235,7 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
         allocation->set32BitAllocation(true);
         allocation->setGpuBaseAddress(GmmHelper::canonize(allocator32Bit->getBase()));
     }
-    status = wddm->mapGpuVirtualAddress(allocation.get(), ptr);
+    status = mapGpuVirtualAddressWithRetry(allocation.get(), allocation->getReservedAddressPtr());
     DEBUG_BREAK_IF(!status);
 
     DebugManager.logAllocation(allocation.get());
@@ -400,7 +400,7 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
             allocatedFragmentsCounter++;
         }
     }
-    NTSTATUS result = wddm->createAllocationsAndMapGpuVa(handleStorage);
+    auto result = wddm->createAllocationsAndMapGpuVa(handleStorage);
 
     if (result == STATUS_GRAPHICS_NO_VIDEO_MEMORY) {
         return AllocationStatus::InvalidHostPointer;
@@ -491,17 +491,33 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, void *r
     }
 
     if (wddmSuccess == STATUS_SUCCESS) {
-        bool mapSuccess = wddm->mapGpuVirtualAddress(allocation, requiredGpuPtr);
-        if (!mapSuccess && deferredDeleter) {
-            deferredDeleter->drain(true);
-            mapSuccess = wddm->mapGpuVirtualAddress(allocation, requiredGpuPtr);
-        }
+        bool mapSuccess = mapGpuVirtualAddressWithRetry(allocation, requiredGpuPtr);
         if (!mapSuccess) {
             wddm->destroyAllocations(allocation->getHandles().data(), allocation->getNumHandles(), allocation->resourceHandle);
-            wddmSuccess = STATUS_UNSUCCESSFUL;
+            return false;
         }
+        return true;
     }
-    return (wddmSuccess == STATUS_SUCCESS);
+    return false;
+}
+
+bool WddmMemoryManager::mapGpuVirtualAddressWithRetry(WddmAllocation *graphicsAllocation, const void *preferredGpuVirtualAddress) {
+    uint32_t numMappedAllocations = mapGpuVirtualAddress(graphicsAllocation, preferredGpuVirtualAddress, 0u);
+    if (numMappedAllocations < graphicsAllocation->getNumHandles() && deferredDeleter) {
+        deferredDeleter->drain(true);
+        numMappedAllocations += mapGpuVirtualAddress(graphicsAllocation, preferredGpuVirtualAddress, numMappedAllocations);
+    }
+    return numMappedAllocations == graphicsAllocation->getNumHandles();
+}
+uint32_t WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *preferredGpuVirtualAddress, uint32_t startingIndex) {
+    auto numMappedAllocations = 0;
+    for (auto i = startingIndex; i < graphicsAllocation->getNumHandles(); i++) {
+        if (!wddm->mapGpuVirtualAddress(graphicsAllocation, const_cast<void *>(preferredGpuVirtualAddress))) {
+            return numMappedAllocations;
+        }
+        numMappedAllocations++;
+    }
+    return numMappedAllocations;
 }
 
 void *WddmMemoryManager::reserveCpuAddressRange(size_t size) {
