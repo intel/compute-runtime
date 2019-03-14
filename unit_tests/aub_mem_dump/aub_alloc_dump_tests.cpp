@@ -45,6 +45,30 @@ HWTEST_F(AubAllocDumpTests, givenBufferOrImageWhenGraphicsAllocationIsKnownThenI
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
+    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
+    EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
+    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
+    EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
+    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
+    EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
+    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
+    EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
+    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
+    EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
+    gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
+    EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
     gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableImage(*gfxAllocation));

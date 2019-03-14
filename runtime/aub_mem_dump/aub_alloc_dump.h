@@ -19,7 +19,10 @@ using namespace OCLRT;
 namespace AubAllocDump {
 
 inline bool isWritableBuffer(GraphicsAllocation &gfxAllocation) {
-    return (gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER || gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) &&
+    return (gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER ||
+            gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED ||
+            gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY ||
+            gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR) &&
            gfxAllocation.isMemObjectsAllocationWithWritableFlags();
 }
 
