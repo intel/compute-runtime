@@ -58,7 +58,7 @@ class Wddm {
 
     MOCKABLE_VIRTUAL bool evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
     MOCKABLE_VIRTUAL bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim);
-    bool mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr);
+    bool mapGpuVirtualAddress(WddmAllocation *allocation, void *requiredGpuPtr);
     bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData);
     D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size);
     MOCKABLE_VIRTUAL bool createContext(OsContextWin &osContext);

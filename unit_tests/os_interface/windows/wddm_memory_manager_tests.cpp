@@ -905,7 +905,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuV
 
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, ptr, size, nullptr, MemoryPool::MemoryNull, false);
     allocation.setDefaultGmm(gmm.get());
-    bool ret = memoryManager->createWddmAllocation(&allocation);
+    bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_FALSE(ret);
 }
 
@@ -921,7 +921,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMap
 
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, ptr, size, nullptr, MemoryPool::MemoryNull, false);
     allocation.setDefaultGmm(gmm.get());
-    bool ret = memoryManager->createWddmAllocation(&allocation);
+    bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
 }
 
@@ -937,7 +937,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
 
     WddmAllocation allocation(GraphicsAllocation::AllocationType::UNDECIDED, ptr, size, nullptr, MemoryPool::MemoryNull, false);
     allocation.setDefaultGmm(gmm.get());
-    bool ret = memoryManager->createWddmAllocation(&allocation);
+    bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_FALSE(ret);
 }
 

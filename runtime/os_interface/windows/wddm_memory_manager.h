@@ -82,7 +82,7 @@ class WddmMemoryManager : public MemoryManager {
 
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle);
     static bool validateAllocation(WddmAllocation *alloc);
-    bool createWddmAllocation(WddmAllocation *allocation);
+    bool createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr);
     AlignedMallocRestrictions mallocRestrictions;
 
   private:
