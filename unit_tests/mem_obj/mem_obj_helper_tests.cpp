@@ -6,6 +6,8 @@
  */
 
 #include "runtime/mem_obj/mem_obj_helper.h"
+#include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/utilities/base_object_utils.h"
 
 #include "gtest/gtest.h"
 
@@ -109,4 +111,19 @@ TEST(MemObjHelper, givenInvalidPropertiesWhenValidatingMemoryPropertiesThenFalse
     properties.flags = 0;
     EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForBuffer(properties));
     EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, nullptr));
+}
+
+TEST(MemObjHelper, givenParentMemObjAndHostPtrFlagsWhenValidatingMemoryPropertiesForImageThenFalseIsReturned) {
+    MemoryProperties properties;
+    MockContext context;
+    auto image = clUniquePtr(Image1dHelper<>::create(&context));
+
+    properties.flags = CL_MEM_USE_HOST_PTR;
+    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, image.get()));
+
+    properties.flags = CL_MEM_ALLOC_HOST_PTR;
+    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, image.get()));
+
+    properties.flags = CL_MEM_COPY_HOST_PTR;
+    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, image.get()));
 }

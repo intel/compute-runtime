@@ -62,13 +62,16 @@ class MemObjHelper {
             return false;
         }
 
-        MemObj *parentMemObj = castToObject<MemObj>(parent);
+        auto parentMemObj = castToObject<MemObj>(parent);
         if (parentMemObj != nullptr && properties.flags) {
             auto parentFlags = parentMemObj->getFlags();
             /* Check whether flags are compatible with parent. */
             if ((!isValueSet(parentFlags, CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)) &&
                 (!isValueSet(properties.flags, CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)) &&
-                ((isValueSet(parentFlags, CL_MEM_WRITE_ONLY) && isValueSet(properties.flags, CL_MEM_READ_WRITE)) ||
+                (isValueSet(properties.flags, CL_MEM_ALLOC_HOST_PTR) ||
+                 isValueSet(properties.flags, CL_MEM_COPY_HOST_PTR) ||
+                 isValueSet(properties.flags, CL_MEM_USE_HOST_PTR) ||
+                 (isValueSet(parentFlags, CL_MEM_WRITE_ONLY) && isValueSet(properties.flags, CL_MEM_READ_WRITE)) ||
                  (isValueSet(parentFlags, CL_MEM_WRITE_ONLY) && isValueSet(properties.flags, CL_MEM_READ_ONLY)) ||
                  (isValueSet(parentFlags, CL_MEM_READ_ONLY) && isValueSet(properties.flags, CL_MEM_READ_WRITE)) ||
                  (isValueSet(parentFlags, CL_MEM_READ_ONLY) && isValueSet(properties.flags, CL_MEM_WRITE_ONLY)) ||
