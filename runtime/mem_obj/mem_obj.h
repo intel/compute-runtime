@@ -33,8 +33,8 @@ struct OpenCLObjectMapper<_cl_mem> {
 
 class MemObj : public BaseObject<_cl_mem> {
   public:
-    const static cl_ulong maskMagic = 0xFFFFFFFFFFFFFF00LL;
-    static const cl_ulong objectMagic = 0xAB2212340CACDD00LL;
+    constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFF00LL;
+    constexpr static cl_ulong objectMagic = 0xAB2212340CACDD00LL;
 
     MemObj(Context *context,
            cl_mem_object_type memObjectType,

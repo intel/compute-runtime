@@ -38,9 +38,9 @@ extern BufferFuncs bufferFactory[IGFX_MAX_CORE];
 
 class Buffer : public MemObj {
   public:
-    const static size_t maxBufferSizeForReadWriteOnCpu = 10 * MB;
-    const static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
-    static const cl_ulong objectMagic = MemObj::objectMagic | 0x02;
+    constexpr static size_t maxBufferSizeForReadWriteOnCpu = 10 * MB;
+    constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
+    constexpr static cl_ulong objectMagic = MemObj::objectMagic | 0x02;
     bool forceDisallowCPUCopy = false;
 
     ~Buffer() override;

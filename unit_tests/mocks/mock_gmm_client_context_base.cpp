@@ -14,8 +14,19 @@ MockGmmClientContextBase::MockGmmClientContextBase(GMM_CLIENT clientType, GmmExp
 MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {
     MEMORY_OBJECT_CONTROL_STATE retVal = {};
     memset(&retVal, 0, sizeof(MEMORY_OBJECT_CONTROL_STATE));
-    if (usage != GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) {
+    switch (usage) {
+    case GMM_RESOURCE_USAGE_OCL_BUFFER:
+        retVal.DwordValue = 6u;
+        break;
+    case GMM_RESOURCE_USAGE_OCL_BUFFER_CONST:
+        retVal.DwordValue = 5u;
+        break;
+    case GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED:
+        retVal.DwordValue = 0u;
+        break;
+    default:
         retVal.DwordValue = 4u;
+        break;
     }
     return retVal;
 }

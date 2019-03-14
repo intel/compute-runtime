@@ -1205,7 +1205,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryIsUnalignedToCach
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), mocs);
+    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST), mocs);
 
     alignedFree(ptr);
 }
@@ -1359,6 +1359,56 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisable
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
+
+    alignedFree(ptr);
+}
+
+HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableReadOnlyBufferThenChoseOclBufferConstPolicy) {
+    MockContext context;
+    const auto size = MemoryConstants::pageSize;
+    const auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
+    const auto flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY;
+
+    auto retVal = CL_SUCCESS;
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(
+        &context,
+        flags,
+        size,
+        ptr,
+        retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
+    buffer->setArgStateful(&surfaceState, false, false);
+
+    const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    const auto actualMocs = surfaceState.getMemoryObjectControlState();
+    EXPECT_EQ(expectedMocs, actualMocs);
+
+    alignedFree(ptr);
+}
+
+HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableNonReadOnlyBufferThenChooseOclBufferPolicy) {
+    MockContext context;
+    const auto size = MemoryConstants::pageSize;
+    const auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
+    const auto flags = CL_MEM_USE_HOST_PTR;
+
+    auto retVal = CL_SUCCESS;
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(
+        &context,
+        flags,
+        size,
+        ptr,
+        retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
+    buffer->setArgStateful(&surfaceState, false, false);
+
+    const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    const auto actualMocs = surfaceState.getMemoryObjectControlState();
+    EXPECT_EQ(expectedMocs, actualMocs);
 
     alignedFree(ptr);
 }
