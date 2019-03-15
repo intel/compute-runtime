@@ -16,7 +16,7 @@ class MockGfxPartition : public GfxPartition {
     }
 
     bool heapInitialized(HeapIndex heapIndex) {
-        return getHeapBase(heapIndex) && getHeapSize(heapIndex);
+        return getHeapSize(heapIndex) > 0;
     }
 
     static std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> allHeapNames;

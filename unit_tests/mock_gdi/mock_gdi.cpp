@@ -14,6 +14,7 @@ D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg = {0};
 D3DDDI_RESERVEGPUVIRTUALADDRESS gLastCallReserveGpuVaArg = {0};
 uint32_t gMapGpuVaFailConfigCount = 0;
 uint32_t gMapGpuVaFailConfigMax = 0;
+uint64_t gGpuAddressSpace = 0ull;
 
 #ifdef __cplusplus // If used by C++ code,
 extern "C" {       // we need to export the C interface
@@ -22,31 +23,7 @@ extern "C" {       // we need to export the C interface
 BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
                        IN DWORD nReason,
                        IN LPVOID Reserved) {
-    BOOLEAN bRet = TRUE;
-
-    switch (nReason) {
-    case DLL_PROCESS_ATTACH:
-        gAdapterInfo.GfxPartition.Standard.Base = 0x0000800400000000;
-        gAdapterInfo.GfxPartition.Standard.Limit = 0x0000eeffffffffff;
-        gAdapterInfo.GfxPartition.Standard64KB.Base = 0x0000b80200000000;
-        gAdapterInfo.GfxPartition.Standard64KB.Limit = 0x0000efffffffffff;
-        gAdapterInfo.GfxPartition.SVM.Base = 0;
-        gAdapterInfo.GfxPartition.SVM.Limit = 0x00007fffffffffff;
-        gAdapterInfo.GfxPartition.Heap32[0].Base = 0x0000800000000000;
-        gAdapterInfo.GfxPartition.Heap32[0].Limit = 0x00008000ffffefff;
-        gAdapterInfo.GfxPartition.Heap32[1].Base = 0x0000800100000000;
-        gAdapterInfo.GfxPartition.Heap32[1].Limit = 0x00008001ffffefff;
-        gAdapterInfo.GfxPartition.Heap32[2].Base = 0x0000800200000000;
-        gAdapterInfo.GfxPartition.Heap32[2].Limit = 0x00008002ffffefff;
-        gAdapterInfo.GfxPartition.Heap32[3].Base = 0x0000800300000000;
-        gAdapterInfo.GfxPartition.Heap32[3].Limit = 0x00008003ffffefff;
-        break;
-    case DLL_PROCESS_DETACH:
-        break;
-    default:
-        break;
-    }
-    return bRet;
+    return TRUE;
 }
 
 NTSTATUS __stdcall D3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
@@ -64,13 +41,15 @@ DECL_FUNCTIONS()
 
 UINT64 PagingFence = 0;
 
-void __stdcall MockSetAdapterInfo(const void *pGfxPlatform, const void *pGTSystemInfo) {
+void __stdcall MockSetAdapterInfo(const void *pGfxPlatform, const void *pGTSystemInfo, uint64_t gpuAddressSpace) {
     if (pGfxPlatform != NULL) {
         gAdapterInfo.GfxPlatform = *(PLATFORM *)pGfxPlatform;
     }
     if (pGTSystemInfo != NULL) {
         gAdapterInfo.SystemInfo = *(GT_SYSTEM_INFO *)pGTSystemInfo;
     }
+    gGpuAddressSpace = gpuAddressSpace;
+    InitGfxPartition();
 }
 
 NTSTATUS __stdcall D3DKMTOpenAdapterFromLuid(IN OUT CONST D3DKMT_OPENADAPTERFROMLUID *openAdapter) {

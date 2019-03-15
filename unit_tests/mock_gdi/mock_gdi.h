@@ -77,3 +77,4 @@ D3DKMT_CREATECONTEXTVIRTUAL *getCreateContextData();
 D3DKMT_CREATEHWQUEUE *getCreateHwQueueData();
 D3DKMT_DESTROYHWQUEUE *getDestroyHwQueueData();
 D3DKMT_SUBMITCOMMANDTOHWQUEUE *getSubmitCommandToHwQueueData();
+void InitGfxPartition();

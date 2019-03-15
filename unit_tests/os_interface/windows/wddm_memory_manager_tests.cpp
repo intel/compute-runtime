@@ -1406,14 +1406,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVa
     auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, MemoryManager::selectHeap(nullptr, nullptr, *hwInfo));
     ASSERT_TRUE(result);
 
-    auto gpuAddressRange = hwInfo->capabilityTable.gpuAddressSpace;
-    if (gpuAddressRange == MemoryConstants::max48BitAddress) {
-        EXPECT_EQ(GmmHelper::canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
-    } else {
-        EXPECT_GE(gpuAddressRange, gpuVa);
-        EXPECT_LE(0u, gpuVa);
-        expectedDdiUpdateAuxTable.BaseGpuVA = MemoryConstants::pageSize64k;
-    }
+    EXPECT_EQ(GmmHelper::canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
     EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
 }
 

@@ -23,7 +23,7 @@ void TestEnvironment::SetUp() {
     fclPushDebugVars(fclDefaultDebugVars);
     igcPushDebugVars(igcDefaultDebugVars);
     if (libraryOS == nullptr) {
-        libraryOS = setAdapterInfo(hwInfoDefaultDebugVars.pPlatform, hwInfoDefaultDebugVars.pSysInfo);
+        libraryOS = setAdapterInfo(hwInfoDefaultDebugVars.pPlatform, hwInfoDefaultDebugVars.pSysInfo, hwInfoDefaultDebugVars.capabilityTable.gpuAddressSpace);
     }
 }
 

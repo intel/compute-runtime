@@ -14,7 +14,7 @@
 
 using namespace OCLRT;
 
-OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo);
+OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
 
 class TestEnvironment : public ::testing::Environment {
   public:

@@ -328,7 +328,6 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
         MapGPUVA.MaximumAddress = gfxPartition.Heap32[static_cast<uint32_t>(heapIndex)].Limit;
         break;
     case HeapIndex::HEAP_STANDARD:
-        UNRECOVERABLE_IF(hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress);
         MapGPUVA.MinimumAddress = gfxPartition.Standard.Base;
         MapGPUVA.MaximumAddress = gfxPartition.Standard.Limit;
         break;
@@ -342,10 +341,6 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
         UNRECOVERABLE_IF(!cpuPtr);
         MapGPUVA.BaseAddress = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(cpuPtr);
         MapGPUVA.MaximumAddress = is64bit ? maxNBitValue<47> : maxNBitValue<32>;
-        break;
-    case HeapIndex::HEAP_LIMITED:
-        UNRECOVERABLE_IF(hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress);
-        MapGPUVA.MaximumAddress = hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace;
         break;
     }
 

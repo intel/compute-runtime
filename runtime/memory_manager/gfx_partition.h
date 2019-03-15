@@ -21,7 +21,6 @@ enum class HeapIndex : uint32_t {
     HEAP_STANDARD,
     HEAP_STANDARD64KB,
     HEAP_SVM,
-    HEAP_LIMITED,
 
     // Please put new heap indexes above this line
     TOTAL_HEAPS

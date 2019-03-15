@@ -13,12 +13,12 @@
 
 using namespace OCLRT;
 
-OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo);
+OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
 
 struct GdiDllFixture {
     virtual void SetUp() {
         const HardwareInfo hwInfo = *platformDevices[0];
-        mockGdiDll.reset(setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo));
+        mockGdiDll.reset(setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo, hwInfo.capabilityTable.gpuAddressSpace));
 
         setSizesFcn = reinterpret_cast<decltype(&MockSetSizes)>(mockGdiDll->getProcAddress("MockSetSizes"));
         getSizesFcn = reinterpret_cast<decltype(&GetMockSizes)>(mockGdiDll->getProcAddress("GetMockSizes"));

@@ -18,14 +18,14 @@
 
 using namespace OCLRT;
 
-OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo);
+OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
 
 struct DeviceFactoryTest : public ::testing::Test {
   public:
     void SetUp() override {
         const HardwareInfo hwInfo = *platformDevices[0];
         executionEnvironment = platformImpl->peekExecutionEnvironment();
-        mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
+        mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo, hwInfo.capabilityTable.gpuAddressSpace);
     }
 
     void TearDown() override {

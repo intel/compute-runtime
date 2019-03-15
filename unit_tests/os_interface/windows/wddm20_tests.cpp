@@ -89,7 +89,7 @@ TEST(Wddm20EnumAdaptersTest, expectTrue) {
     HardwareInfo outHwInfo;
 
     const HardwareInfo hwInfo = *platformDevices[0];
-    OsLibrary *mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
+    OsLibrary *mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo, hwInfo.capabilityTable.gpuAddressSpace);
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     bool success = wddm->enumAdapters(outHwInfo);
@@ -112,7 +112,7 @@ TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCa
     HardwareInfo outHwInfo = {};
 
     auto hwInfo = *platformDevices[0];
-    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo));
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo, hwInfo.capabilityTable.gpuAddressSpace));
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     bool success = wddm->enumAdapters(outHwInfo);
@@ -147,13 +147,13 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
     platform.eProductFamily = IGFX_UNKNOWN;
 
     std::unique_ptr<OsLibrary, std::function<void(OsLibrary *)>> mockGdiDll(
-        setAdapterInfo(&platform, hwInfo.pSysInfo),
+        setAdapterInfo(&platform, hwInfo.pSysInfo, hwInfo.capabilityTable.gpuAddressSpace),
         [&](OsLibrary *ptr) {
             platform.eProductFamily = bkp;
-            typedef void(__stdcall * pfSetAdapterInfo)(const void *, const void *);
+            typedef void(__stdcall * pfSetAdapterInfo)(const void *, const void *, uint64_t);
             pfSetAdapterInfo fSetAdpaterInfo = reinterpret_cast<pfSetAdapterInfo>(ptr->getProcAddress("MockSetAdapterInfo"));
 
-            fSetAdpaterInfo(&platform, hwInfo.pSysInfo);
+            fSetAdpaterInfo(&platform, hwInfo.pSysInfo, hwInfo.capabilityTable.gpuAddressSpace);
             delete ptr;
         });
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
@@ -1011,7 +1011,7 @@ TEST_F(WddmGfxPartitionTest, initGfxPartition) {
 
     for (auto heap : MockGfxPartition::allHeapNames) {
         if (!gfxPartition.heapInitialized(heap)) {
-            EXPECT_TRUE(heap == HeapIndex::HEAP_SVM || heap == HeapIndex::HEAP_LIMITED);
+            EXPECT_TRUE(heap == HeapIndex::HEAP_SVM);
         } else {
             EXPECT_TRUE(gfxPartition.heapInitialized(heap));
         }

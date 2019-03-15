@@ -16,5 +16,4 @@ std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)>
                                     HeapIndex::HEAP_EXTERNAL,
                                     HeapIndex::HEAP_STANDARD,
                                     HeapIndex::HEAP_STANDARD64KB,
-                                    HeapIndex::HEAP_SVM,
-                                    HeapIndex::HEAP_LIMITED}};
+                                    HeapIndex::HEAP_SVM}};
