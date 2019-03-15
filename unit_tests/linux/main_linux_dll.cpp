@@ -322,26 +322,14 @@ TEST(AllocatorHelper, givenExpectedSizeToMapWhenGetSizetoMapCalledThenExpectedVa
     EXPECT_EQ((alignUp(4 * GB - 8096, 4096)), OCLRT::getSizeToMap());
 }
 
-TEST(DrmMemoryManagerCreate, givenLocalMemoryEnabledWhenMemoryManagerIsCreatedThenLocalMemoryEnabledIsTrue) {
+TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {
     DrmMockSuccess mock;
     ExecutionEnvironment executionEnvironment;
 
     executionEnvironment.osInterface = std::make_unique<OSInterface>();
     executionEnvironment.osInterface->get()->setDrm(&mock);
-
-    auto drmMemoryManager = MemoryManager::createMemoryManager(false, true, executionEnvironment);
-    EXPECT_TRUE(drmMemoryManager->isLocalMemorySupported());
-    executionEnvironment.memoryManager = std::move(drmMemoryManager);
-}
-
-TEST(DrmMemoryManagerCreate, givenLocalMemoryDisabledWhenMemoryManagerIsCreatedThenLocalMemoryEnabledIsFalse) {
-    DrmMockSuccess mock;
-    ExecutionEnvironment executionEnvironment;
-
-    executionEnvironment.osInterface = std::make_unique<OSInterface>();
-    executionEnvironment.osInterface->get()->setDrm(&mock);
-    auto drmMemoryManager = MemoryManager::createMemoryManager(false, false, executionEnvironment);
-    EXPECT_FALSE(drmMemoryManager->isLocalMemorySupported());
+    auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment);
+    EXPECT_NE(nullptr, drmMemoryManager.get());
     executionEnvironment.memoryManager = std::move(drmMemoryManager);
 }
 

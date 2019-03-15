@@ -141,10 +141,7 @@ bool Platform::initialize() {
         return false;
     }
 
-    auto &hwHelper = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily);
-    auto enableLocalMemory = hwHelper.getEnableLocalMemory(*hwInfo);
-
-    executionEnvironment->initializeMemoryManager(Device::getEnabled64kbPages(*hwInfo), enableLocalMemory);
+    executionEnvironment->initializeMemoryManager();
 
     DEBUG_BREAK_IF(this->platformInfo);
     this->platformInfo.reset(new PlatformInfo);

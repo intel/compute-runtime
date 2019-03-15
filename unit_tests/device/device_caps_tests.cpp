@@ -19,6 +19,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_helper_tests.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_device.h"
 
@@ -836,37 +837,42 @@ TEST(Device_GetCaps, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenRet
 
 TEST(Device_GetCaps, GivenFlagEnabled64kbPagesWhenSetThenReturnCorrectValue) {
     DebugManagerStateRestore dbgRestore;
-    bool orgOsEnabled64kbPages = OSInterface::osEnabled64kbPages;
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    HardwareInfo &hwInfo = const_cast<HardwareInfo &>(device->getHardwareInfo());
-    bool orgftr64KBpages = hwInfo.capabilityTable.ftr64KBpages;
+    VariableBackup<bool> OsEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
+
+    HardwareInfo hwInfo = *platformDevices[0];
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.setHwInfo(&hwInfo);
+    std::unique_ptr<MemoryManager> memoryManager;
 
     DebugManager.flags.Enable64kbpages.set(-1);
 
     hwInfo.capabilityTable.ftr64KBpages = false;
     OSInterface::osEnabled64kbPages = false;
-    EXPECT_FALSE(device->getEnabled64kbPages());
+    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled());
 
     hwInfo.capabilityTable.ftr64KBpages = false;
     OSInterface::osEnabled64kbPages = true;
-    EXPECT_FALSE(device->getEnabled64kbPages());
+    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled());
 
     hwInfo.capabilityTable.ftr64KBpages = true;
     OSInterface::osEnabled64kbPages = false;
-    EXPECT_FALSE(device->getEnabled64kbPages());
+    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled());
 
     hwInfo.capabilityTable.ftr64KBpages = true;
     OSInterface::osEnabled64kbPages = true;
-    EXPECT_TRUE(device->getEnabled64kbPages());
+    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    EXPECT_TRUE(memoryManager->peek64kbPagesEnabled());
 
     DebugManager.flags.Enable64kbpages.set(0); // force false
-    EXPECT_FALSE(device->getEnabled64kbPages());
+    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    EXPECT_FALSE(memoryManager->peek64kbPagesEnabled());
 
     DebugManager.flags.Enable64kbpages.set(1); // force true
-    EXPECT_TRUE(device->getEnabled64kbPages());
-
-    OSInterface::osEnabled64kbPages = orgOsEnabled64kbPages;
-    hwInfo.capabilityTable.ftr64KBpages = orgftr64KBpages;
+    memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
+    EXPECT_TRUE(memoryManager->peek64kbPagesEnabled());
 }
 
 TEST(Device_GetCaps, givenDeviceWithNullSourceLevelDebuggerWhenCapsAreInitializedThenSourceLevelDebuggerActiveIsSetToFalse) {

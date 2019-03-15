@@ -109,7 +109,7 @@ TEST(KernelInfo, decodeImageKernelArgument) {
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKernelHeapToKernelAllocation) {
     KernelInfo kernelInfo;
     ExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
     SKernelBinaryHeaderCommon kernelHeader;
     const size_t heapSize = 0x40;
     char heap[heapSize];
@@ -138,7 +138,7 @@ class MyMemoryManager : public OsAgnosticMemoryManager {
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateMemoryThenReturnsFalse) {
     KernelInfo kernelInfo;
     ExecutionEnvironment executionEnvironment;
-    MyMemoryManager memoryManager(false, false, executionEnvironment);
+    MyMemoryManager memoryManager(executionEnvironment);
     SKernelBinaryHeaderCommon kernelHeader;
     kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
     auto retVal = kernelInfo.createKernelAllocation(&memoryManager);

@@ -279,7 +279,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
 
 TEST(TbxMemoryManagerTest, givenTbxMemoryManagerWhenItIsQueriedForSystemSharedMemoryThen1GBIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    TbxMemoryManager memoryManager(false, false, executionEnvironment);
+    TbxMemoryManager memoryManager(executionEnvironment);
     EXPECT_EQ(1 * GB, memoryManager.getSystemSharedMemory());
 }
 

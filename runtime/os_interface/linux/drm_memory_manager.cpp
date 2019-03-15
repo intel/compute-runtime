@@ -29,10 +29,9 @@ namespace OCLRT {
 
 DrmMemoryManager::DrmMemoryManager(Drm *drm,
                                    gemCloseWorkerMode mode,
-                                   bool enableLocalMemory,
                                    bool forcePinAllowed,
                                    bool validateHostPtrMemory,
-                                   ExecutionEnvironment &executionEnvironment) : MemoryManager(false, enableLocalMemory, executionEnvironment),
+                                   ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
                                                                                  drm(drm),
                                                                                  pinBB(nullptr),
                                                                                  forcePinEnabled(forcePinAllowed),

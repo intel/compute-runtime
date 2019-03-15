@@ -120,15 +120,8 @@ class MockDevice : public Device {
 template <>
 inline Device *MockDevice::createWithNewExecutionEnvironment<Device>(const HardwareInfo *pHwInfo) {
     auto executionEnvironment = new ExecutionEnvironment();
-
-    bool enableLocalMemory = false;
-    bool enable64kbPages = false;
-    if (pHwInfo != nullptr) {
-        enableLocalMemory = HwHelper::get(pHwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*pHwInfo);
-        enable64kbPages = getEnabled64kbPages(*pHwInfo);
-    }
     executionEnvironment->setHwInfo(*platformDevices);
-    executionEnvironment->initializeMemoryManager(enable64kbPages, enableLocalMemory);
+    executionEnvironment->initializeMemoryManager();
     return Device::create<Device>(pHwInfo, executionEnvironment, 0u);
 }
 

@@ -34,7 +34,6 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
 
     auto memoryManager = new DrmMemoryManager(executionEnvironment.osInterface->get()->getDrm(),
                                               gemCloseWorkerInactive,
-                                              false,
                                               DebugManager.flags.EnableForcePin.get(),
                                               true,
                                               executionEnvironment);
@@ -58,7 +57,6 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
 
     auto memoryManager = new DrmMemoryManager(executionEnvironment.osInterface->get()->getDrm(),
                                               gemCloseWorkerInactive,
-                                              false,
                                               DebugManager.flags.EnableForcePin.get(),
                                               true,
                                               executionEnvironment);

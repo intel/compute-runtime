@@ -15,13 +15,12 @@
 namespace OCLRT {
 bool overrideMemoryManagerCreation = true;
 
-std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(bool enable64KBpages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) {
+std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {
     if (overrideMemoryManagerCreation) {
-        return std::make_unique<OsAgnosticMemoryManager>(enable64KBpages, enableLocalMemory, executionEnvironment);
+        return std::make_unique<OsAgnosticMemoryManager>(executionEnvironment);
     }
     return std::make_unique<DrmMemoryManager>(executionEnvironment.osInterface->get()->getDrm(),
                                               gemCloseWorkerMode::gemCloseWorkerInactive,
-                                              enableLocalMemory,
                                               DebugManager.flags.EnableForcePin.get(),
                                               true,
                                               executionEnvironment);

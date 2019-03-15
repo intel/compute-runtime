@@ -30,10 +30,11 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executi
     : Device(hwInfo, executionEnvironment, deviceIndex) {
     bool enableLocalMemory = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily).getEnableLocalMemory(hwInfo);
     bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
-    this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, enableLocalMemory, aubUsage, *executionEnvironment));
+    this->mockMemoryManager.reset(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, enableLocalMemory, aubUsage, *executionEnvironment));
     this->osTime = MockOSTime::create();
     mockWaTable = *hwInfo.pWaTable;
-    executionEnvironment->initializeMemoryManager(getEnabled64kbPages(hwInfo), enableLocalMemory);
+    executionEnvironment->setHwInfo(&hwInfo);
+    executionEnvironment->initializeMemoryManager();
 }
 
 void MockDevice::setOSTime(OSTime *osTime) {

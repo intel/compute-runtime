@@ -13,7 +13,7 @@
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
 namespace OCLRT {
-std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(bool enable64KBpages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) {
-    return std::make_unique<WddmMemoryManager>(enable64KBpages, enableLocalMemory, executionEnvironment.osInterface->get()->getWddm(), executionEnvironment);
+std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {
+    return std::make_unique<WddmMemoryManager>(executionEnvironment.osInterface->get()->getWddm(), executionEnvironment);
 }
 } // namespace OCLRT

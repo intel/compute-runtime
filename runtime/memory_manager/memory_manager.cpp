@@ -16,6 +16,7 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/options.h"
@@ -31,10 +32,21 @@
 #include <algorithm>
 
 namespace OCLRT {
-MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment)
-    : allocator32Bit(nullptr), enable64kbpages(enable64kbpages), localMemorySupported(enableLocalMemory),
-      executionEnvironment(executionEnvironment), hostPtrManager(std::make_unique<HostPtrManager>()),
-      multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {}
+MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : allocator32Bit(nullptr),
+                                                                           executionEnvironment(executionEnvironment), hostPtrManager(std::make_unique<HostPtrManager>()),
+                                                                           multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {
+    this->localMemorySupported = false;
+    this->enable64kbpages = false;
+
+    auto hwInfo = executionEnvironment.getHardwareInfo();
+    if (hwInfo != nullptr) {
+        this->localMemorySupported = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
+        this->enable64kbpages = OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages;
+    }
+    if (DebugManager.flags.Enable64kbpages.get() > -1) {
+        this->enable64kbpages = DebugManager.flags.Enable64kbpages.get() != 0;
+    }
+}
 
 MemoryManager::~MemoryManager() {
     for (auto &engine : registeredEngines) {

@@ -14,7 +14,19 @@
 
 namespace OCLRT {
 
-class MockMemoryManager : public OsAgnosticMemoryManager {
+template <class T>
+class MemoryManagerCreate : public T {
+  public:
+    using T::T;
+
+    template <class... U>
+    MemoryManagerCreate(bool enable64kbPages, bool enableLocalMemory, U &&... args) : T(std::forward<U>(args)...) {
+        this->enable64kbpages = enable64kbPages;
+        this->localMemorySupported = enableLocalMemory;
+    }
+};
+
+class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
   public:
     using MemoryManager::allocateGraphicsMemoryForNonSvmHostPtr;
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
@@ -26,18 +38,18 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     using MemoryManager::registeredEngines;
     using MemoryManager::useInternal32BitAllocator;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
-    using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
+    using MemoryManagerCreate<OsAgnosticMemoryManager>::MemoryManagerCreate;
 
     MockMemoryManager(ExecutionEnvironment &executionEnvironment) : MockMemoryManager(false, executionEnvironment) {}
 
-    MockMemoryManager(bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, enableLocalMemory, executionEnvironment) {
+    MockMemoryManager(bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, enableLocalMemory, executionEnvironment) {
         hostPtrManager.reset(new MockHostPtrManager);
     };
 
     MockMemoryManager() : MockMemoryManager(*(new ExecutionEnvironment)) {
         mockExecutionEnvironment.reset(&executionEnvironment);
     };
-    MockMemoryManager(bool enable64pages, bool enableLocalMemory) : OsAgnosticMemoryManager(enable64pages, enableLocalMemory, *(new ExecutionEnvironment)) {
+    MockMemoryManager(bool enable64pages, bool enableLocalMemory) : MemoryManagerCreate(enable64pages, enableLocalMemory, *(new ExecutionEnvironment)) {
         mockExecutionEnvironment.reset(&executionEnvironment);
     }
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
@@ -102,7 +114,7 @@ class GMockMemoryManager : public MockMemoryManager {
 
 class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {
   public:
-    MockAllocSysMemAgnosticMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment) {
+    MockAllocSysMemAgnosticMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment) {
         ptrRestrictions = nullptr;
         testRestrictions.minAddress = 0;
     }

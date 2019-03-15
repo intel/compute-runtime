@@ -57,7 +57,6 @@ class DrmCommandStreamFixture {
             .Times(1);
         memoryManager = new DrmMemoryManager(executionEnvironment.osInterface->get()->getDrm(),
                                              gemCloseWorkerActive,
-                                             false,
                                              DebugManager.flags.EnableForcePin.get(),
                                              true,
                                              executionEnvironment);
@@ -587,7 +586,6 @@ class DrmCommandStreamEnhancedFixture
         ASSERT_NE(nullptr, csr);
         mm = new DrmMemoryManager(executionEnvironment->osInterface->get()->getDrm(),
                                   gemCloseWorkerInactive,
-                                  false,
                                   DebugManager.flags.EnableForcePin.get(),
                                   true,
                                   *executionEnvironment);

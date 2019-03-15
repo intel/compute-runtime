@@ -1413,7 +1413,7 @@ using HwImageTest = ::testing::Test;
 HWTEST_F(HwImageTest, givenImageHwWhenSettingCCSParamsThenSetClearColorParamsIsCalled) {
 
     MockContext context;
-    OsAgnosticMemoryManager memoryManager(false, false, *context.getDevice(0)->getExecutionEnvironment());
+    OsAgnosticMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
     context.setMemoryManager(&memoryManager);
 
     cl_image_desc imgDesc = {};
@@ -1446,7 +1446,7 @@ using HwImageTest = ::testing::Test;
 HWTEST_F(HwImageTest, givenImageHwWithUnifiedSurfaceAndMcsWhenSettingParamsForMultisampleImageThenSetParamsForCcsMcsIsCalled) {
 
     MockContext context;
-    OsAgnosticMemoryManager memoryManager(false, false, *context.getDevice(0)->getExecutionEnvironment());
+    OsAgnosticMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
     context.setMemoryManager(&memoryManager);
 
     cl_image_desc imgDesc = {};

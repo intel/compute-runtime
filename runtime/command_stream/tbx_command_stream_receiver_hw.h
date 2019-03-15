@@ -20,7 +20,7 @@ class TbxStream;
 
 class TbxMemoryManager : public OsAgnosticMemoryManager {
   public:
-    TbxMemoryManager(bool enable64kbPages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment) {}
+    TbxMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment) {}
     uint64_t getSystemSharedMemory() override {
         return 1 * GB;
     }

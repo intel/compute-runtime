@@ -9,6 +9,7 @@
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 
 #include <atomic>
 
@@ -37,7 +38,7 @@ inline int closeMock(int) {
     return 0;
 }
 
-class TestedDrmMemoryManager : public DrmMemoryManager {
+class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
   public:
     using DrmMemoryManager::allocateGraphicsMemory;
     using DrmMemoryManager::allocateGraphicsMemory64kb;
@@ -55,12 +56,11 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
     using DrmMemoryManager::sharingBufferObjects;
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
 
-    TestedDrmMemoryManager(Drm *drm, ExecutionEnvironment &executionEnvironment) : DrmMemoryManager(drm,
-                                                                                                    gemCloseWorkerMode::gemCloseWorkerInactive,
-                                                                                                    false,
-                                                                                                    false,
-                                                                                                    false,
-                                                                                                    executionEnvironment) {
+    TestedDrmMemoryManager(Drm *drm, ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(drm,
+                                                                                                       gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                                                       false,
+                                                                                                       false,
+                                                                                                       executionEnvironment) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
         this->munmapFunction = &munmapMock;
@@ -75,12 +75,11 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
                            bool enableLocalMemory,
                            bool allowForcePin,
                            bool validateHostPtrMemory,
-                           ExecutionEnvironment &executionEnvironment) : DrmMemoryManager(drm,
-                                                                                          gemCloseWorkerMode::gemCloseWorkerInactive,
-                                                                                          enableLocalMemory,
-                                                                                          allowForcePin,
-                                                                                          validateHostPtrMemory,
-                                                                                          executionEnvironment) {
+                           ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, enableLocalMemory, drm,
+                                                                                             gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                                             allowForcePin,
+                                                                                             validateHostPtrMemory,
+                                                                                             executionEnvironment) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
         this->munmapFunction = &munmapMock;

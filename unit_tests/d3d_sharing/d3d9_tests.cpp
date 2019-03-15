@@ -40,7 +40,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
 
     class MockMM : public OsAgnosticMemoryManager {
       public:
-        MockMM(const ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, const_cast<ExecutionEnvironment &>(executionEnvironment)){};
+        MockMM(const ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(const_cast<ExecutionEnvironment &>(executionEnvironment)){};
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness);
             alloc->setDefaultGmm(forceGmm);

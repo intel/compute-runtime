@@ -655,7 +655,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenSusbsequ
 }
 
 struct MockedMemoryManager : public OsAgnosticMemoryManager {
-    MockedMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment) {}
+    MockedMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment) {}
     bool isMemoryBudgetExhausted() const override { return budgetExhausted; }
     bool budgetExhausted = false;
 };

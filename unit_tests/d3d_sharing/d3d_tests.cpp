@@ -99,7 +99,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         PlatformFixture::SetUp();
         context = new MockContext(pPlatform->getDevice(0));
         context->forcePreferD3dSharedResources(true);
-        mockMM = std::make_unique<MockMM>(false, false, *context->getDevice(0)->getExecutionEnvironment());
+        mockMM = std::make_unique<MockMM>(*context->getDevice(0)->getExecutionEnvironment());
 
         mockSharingFcns = new NiceMock<MockD3DSharingFunctions<T>>();
         context->setSharingFunctions(mockSharingFcns);

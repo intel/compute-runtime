@@ -93,7 +93,7 @@ class MemoryManager {
         RetryInNonDevicePool
     };
 
-    MemoryManager(bool enable64kbpages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment);
+    MemoryManager(ExecutionEnvironment &executionEnvironment);
 
     virtual ~MemoryManager();
     MOCKABLE_VIRTUAL void *allocateSystemMemory(size_t size, size_t alignment);
@@ -185,7 +185,7 @@ class MemoryManager {
     void setDefaultEngineIndex(uint32_t index) { defaultEngineIndex = index; }
     virtual bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, uint32_t sizeToCopy) const;
     static HeapIndex selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM);
-    static std::unique_ptr<MemoryManager> createMemoryManager(bool enable64KBpages, bool enableLocalMemory, ExecutionEnvironment &exeEnv);
+    static std::unique_ptr<MemoryManager> createMemoryManager(ExecutionEnvironment &executionEnvironment);
     virtual void *reserveCpuAddressRange(size_t size) = 0;
     virtual void releaseReservedCpuAddressRange(void *reserved, size_t size) = 0;
 

@@ -50,7 +50,7 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
 
 TEST(BufferTests, doPinIsSet) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(false, false, executionEnvironment));
+    std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(executionEnvironment));
     {
         MockContext context;
         auto size = MemoryConstants::pageSize * 32;
@@ -73,7 +73,7 @@ TEST(BufferTests, doPinIsSet) {
 }
 TEST(BufferTests, doPinIsSetForHostPtr) {
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(false, false, executionEnvironment));
+    std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(executionEnvironment));
     {
         MockContext context;
         auto retVal = CL_INVALID_OPERATION;

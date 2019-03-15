@@ -37,10 +37,10 @@ class OsAgnosticMemoryManager : public MemoryManager {
   public:
     using MemoryManager::allocateGraphicsMemory;
 
-    OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, false, executionEnvironment) {}
+    OsAgnosticMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, executionEnvironment) {}
 
-    OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory, bool aubUsage, ExecutionEnvironment &executionEnvironment) : MemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment) {
-        allocator32Bit = std::unique_ptr<Allocator32bit>(create32BitAllocator(aubUsage));
+    OsAgnosticMemoryManager(bool aubUsage, ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment) {
+        allocator32Bit.reset(create32BitAllocator(aubUsage));
         gfxPartition.init(platformDevices[0]->capabilityTable.gpuAddressSpace);
     }
 

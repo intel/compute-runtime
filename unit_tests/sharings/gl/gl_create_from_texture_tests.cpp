@@ -23,7 +23,7 @@ class CreateFromGlTexture : public ::testing::Test {
     // temp solution - we need to query size from GMM:
     class TempMM : public OsAgnosticMemoryManager {
       public:
-        TempMM() : OsAgnosticMemoryManager(false, false, *(new ExecutionEnvironment)) {
+        TempMM() : OsAgnosticMemoryManager(*(new ExecutionEnvironment)) {
             mockExecutionEnvironment.reset(&executionEnvironment);
         }
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {

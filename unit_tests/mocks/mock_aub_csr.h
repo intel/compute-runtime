@@ -168,7 +168,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
 
     executionEnvironment->commandStreamReceivers.resize(1);
     executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<CsrType>("", standalone, *executionEnvironment));
-    executionEnvironment->initializeMemoryManager(false, false);
+    executionEnvironment->initializeMemoryManager();
     if (createTagAllocation) {
         executionEnvironment->commandStreamReceivers[0][0]->initializeTagAllocation();
     }

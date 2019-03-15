@@ -60,7 +60,7 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(uint32_t deviceIndex,
     this->commandStreamReceivers[deviceIndex][deviceCsrIndex] = std::move(commandStreamReceiver);
     return true;
 }
-void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory) {
+void ExecutionEnvironment::initializeMemoryManager() {
     if (this->memoryManager) {
         return;
     }
@@ -73,15 +73,15 @@ void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages, bool en
     switch (setCommandStreamReceiverType) {
     case CommandStreamReceiverType::CSR_TBX:
     case CommandStreamReceiverType::CSR_TBX_WITH_AUB:
-        memoryManager = std::make_unique<TbxMemoryManager>(enable64KBpages, enableLocalMemory, *this);
+        memoryManager = std::make_unique<TbxMemoryManager>(*this);
         break;
     case CommandStreamReceiverType::CSR_AUB:
-        memoryManager = std::make_unique<OsAgnosticMemoryManager>(enable64KBpages, enableLocalMemory, *this);
+        memoryManager = std::make_unique<OsAgnosticMemoryManager>(*this);
         break;
     case CommandStreamReceiverType::CSR_HW:
     case CommandStreamReceiverType::CSR_HW_WITH_AUB:
     default:
-        memoryManager = MemoryManager::createMemoryManager(enable64KBpages, enableLocalMemory, *this);
+        memoryManager = MemoryManager::createMemoryManager(*this);
         break;
     }
     DEBUG_BREAK_IF(!this->memoryManager);

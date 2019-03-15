@@ -48,7 +48,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void initGmm();
     bool initializeCommandStreamReceiver(uint32_t deviceIndex, uint32_t deviceCsrIndex);
     void initializeSpecialCommandStreamReceiver();
-    void initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory);
+    void initializeMemoryManager();
     void initSourceLevelDebugger();
     void setHwInfo(const HardwareInfo *hwInfo);
     const HardwareInfo *getHardwareInfo() const {

@@ -21,7 +21,7 @@ void TbxCommandStreamFixture::SetUp(MockDevice *pDevice) {
     // Create our TBX command stream receiver based on HW type
     pCommandStreamReceiver = TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCommandStreamReceiver);
-    mmTbx = new TbxMemoryManager(false, false, *pDevice->executionEnvironment);
+    mmTbx = new TbxMemoryManager(*pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(pCommandStreamReceiver);
 }
 

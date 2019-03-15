@@ -42,20 +42,6 @@ static constexpr cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_c
                                                                                        CL_FP_DENORM |
                                                                                        CL_FP_FMA);
 
-bool Device::getEnabled64kbPages() const {
-    return getEnabled64kbPages(this->hwInfo);
-}
-
-bool Device::getEnabled64kbPages(const HardwareInfo &hwInfo) {
-    if (DebugManager.flags.Enable64kbpages.get() == -1) {
-        // assign value according to os and hw configuration
-        return OSInterface::osEnabled64kbPages && hwInfo.capabilityTable.ftr64KBpages;
-    } else {
-        // force debug settings
-        return (DebugManager.flags.Enable64kbpages.get() != 0);
-    }
-}
-
 void Device::setupFp64Flags() {
     if (DebugManager.flags.OverrideDefaultFP64Settings.get() == -1) {
         if (hwInfo.capabilityTable.ftrSupportsFP64) {
