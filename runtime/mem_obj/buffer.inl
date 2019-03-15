@@ -69,8 +69,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     const bool readOnlyMemObj = isValueSet(getFlags(), CL_MEM_READ_ONLY);
     const bool alignedMemObj = isAligned<MemoryConstants::cacheLineSize>(bufferAddress) && isAligned<MemoryConstants::cacheLineSize>(bufferSize);
     if (!disableL3Cache && !this->isMemObjUncacheable() && (alignedMemObj || readOnlyMemObj || !this->isMemObjZeroCopy())) {
-        const auto usage = readOnlyMemObj ? GMM_RESOURCE_USAGE_OCL_BUFFER_CONST : GMM_RESOURCE_USAGE_OCL_BUFFER;
-        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(usage));
+        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
     } else {
         surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }

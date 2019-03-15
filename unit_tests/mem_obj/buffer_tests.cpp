@@ -1205,7 +1205,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryIsUnalignedToCach
 
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
-    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST), mocs);
+    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), mocs);
 
     alignedFree(ptr);
 }
@@ -1363,7 +1363,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisable
     alignedFree(ptr);
 }
 
-HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableReadOnlyBufferThenChoseOclBufferConstPolicy) {
+HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableReadOnlyBufferThenChoseOclBufferPolicy) {
     MockContext context;
     const auto size = MemoryConstants::pageSize;
     const auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
@@ -1381,7 +1381,7 @@ HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableReadOnlyBufferThenChoseOclB
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
     buffer->setArgStateful(&surfaceState, false, false);
 
-    const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 
