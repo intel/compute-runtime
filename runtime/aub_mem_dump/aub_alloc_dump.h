@@ -18,6 +18,14 @@ using namespace OCLRT;
 
 namespace AubAllocDump {
 
+enum DumpFormat {
+    NONE,
+    BUFFER_BIN,
+    BUFFER_TRE,
+    IMAGE_BMP,
+    IMAGE_TRE,
+};
+
 inline bool isWritableBuffer(GraphicsAllocation &gfxAllocation) {
     return (gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER ||
             gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED ||
@@ -29,6 +37,30 @@ inline bool isWritableBuffer(GraphicsAllocation &gfxAllocation) {
 inline bool isWritableImage(GraphicsAllocation &gfxAllocation) {
     return (gfxAllocation.getAllocationType() == GraphicsAllocation::AllocationType::IMAGE) &&
            gfxAllocation.isMemObjectsAllocationWithWritableFlags();
+}
+
+inline DumpFormat getDumpFormat(GraphicsAllocation &gfxAllocation) {
+    auto dumpBufferFormat = DebugManager.flags.AUBDumpBufferFormat.get();
+    auto dumpImageFormat = DebugManager.flags.AUBDumpImageFormat.get();
+    auto isDumpableBuffer = isWritableBuffer(gfxAllocation);
+    auto isDumpableImage = isWritableImage(gfxAllocation);
+    auto dumpFormat = DumpFormat::NONE;
+
+    if (isDumpableBuffer) {
+        if (0 == dumpBufferFormat.compare("BIN")) {
+            dumpFormat = DumpFormat::BUFFER_BIN;
+        } else if (0 == dumpBufferFormat.compare("TRE")) {
+            dumpFormat = DumpFormat::BUFFER_TRE;
+        }
+    } else if (isDumpableImage) {
+        if (0 == dumpImageFormat.compare("BMP")) {
+            dumpFormat = DumpFormat::IMAGE_BMP;
+        } else if (0 == dumpImageFormat.compare("TRE")) {
+            dumpFormat = DumpFormat::IMAGE_TRE;
+        }
+    }
+
+    return dumpFormat;
 }
 
 template <typename GfxFamily>
@@ -47,5 +79,5 @@ template <typename GfxFamily>
 void dumpImageInTreFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
 
 template <typename GfxFamily>
-void dumpAllocation(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
+void dumpAllocation(DumpFormat dumpFormat, GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context);
 } // namespace AubAllocDump

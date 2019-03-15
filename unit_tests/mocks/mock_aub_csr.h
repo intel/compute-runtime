@@ -58,6 +58,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
 
     using CommandStreamReceiverHw<GfxFamily>::defaultSshSize;
     using AUBCommandStreamReceiverHw<GfxFamily>::taskCount;
+    using AUBCommandStreamReceiverHw<GfxFamily>::latestSentTaskCount;
     using AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionTaskCount;
     using AUBCommandStreamReceiverHw<GfxFamily>::writeMemory;
 

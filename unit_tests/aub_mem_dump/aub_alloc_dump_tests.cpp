@@ -94,7 +94,8 @@ HWTEST_F(AubAllocDumpTests, givenGraphicsAllocationWhenDumpAllocationIsCalledInD
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), 0);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), 0);
 
     EXPECT_EQ(0u, mockAubFileStream->getSize());
 
@@ -106,7 +107,8 @@ HWTEST_F(AubAllocDumpTests, givenGraphicsAllocationWhenDumpAllocationIsCalledBut
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), 0);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), 0);
 
     EXPECT_EQ(0u, mockAubFileStream->getSize());
 
@@ -121,7 +123,8 @@ HWTEST_F(AubAllocDumpTests, givenNonWritableBufferWhenDumpAllocationIsCalledAndD
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), 0);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), 0);
 
     EXPECT_EQ(0u, mockAubFileStream->getSize());
 
@@ -136,7 +139,8 @@ HWTEST_F(AubAllocDumpTests, givenNonWritableImageWhenDumpAllocationIsCalledAndDu
     auto gfxAllocation = MockGmm::allocateImage2d(*memoryManager);
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), 0);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), 0);
 
     EXPECT_EQ(0u, mockAubFileStream->getSize());
 
@@ -153,7 +157,8 @@ HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubD
     auto gfxAllocation = buffer->getGraphicsAllocation();
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), handle);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), handle);
     EXPECT_EQ(0u, mockAubFileStream->getSize());
 }
 
@@ -165,7 +170,8 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
     auto gfxAllocation = image->getGraphicsAllocation();
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), handle);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), handle);
     EXPECT_EQ(0u, mockAubFileStream->getSize());
 }
 
@@ -182,7 +188,8 @@ HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubD
     auto gfxAllocation = buffer->getGraphicsAllocation();
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), handle);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), handle);
     ASSERT_EQ(sizeof(AubMemDump::AubCaptureBinaryDumpHD), mockAubFileStream->getSize());
 
     AubMemDump::AubCaptureBinaryDumpHD cmd;
@@ -214,7 +221,8 @@ HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubD
     auto gfxAllocation = buffer->getGraphicsAllocation();
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), handle);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), handle);
     ASSERT_EQ(sizeof(AubMemDump::CmdServicesMemTraceDumpCompress), mockAubFileStream->getSize());
 
     AubMemDump::CmdServicesMemTraceDumpCompress cmd;
@@ -253,7 +261,8 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
     auto gfxAllocation = image->getGraphicsAllocation();
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), handle);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), handle);
     ASSERT_EQ(sizeof(AubMemDump::AubCmdDumpBmpHd), mockAubFileStream->getSize());
 
     AubMemDump::AubCmdDumpBmpHd cmd;
@@ -295,7 +304,8 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
     auto gfxAllocation = image->getGraphicsAllocation();
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), handle);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), handle);
     ASSERT_EQ(sizeof(AubMemDump::CmdServicesMemTraceDumpCompress), mockAubFileStream->getSize());
 
     AubMemDump::CmdServicesMemTraceDumpCompress cmd;
@@ -337,7 +347,8 @@ HWTEST_F(AubAllocDumpTests, givenCompressedImageWritableWhenDumpAllocationIsCall
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), handle);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), handle);
 
     EXPECT_EQ(0u, mockAubFileStream->getSize());
 }
@@ -356,7 +367,8 @@ HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWhenDumpAllocationIsCal
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
-    AubAllocDump::dumpAllocation<FamilyType>(*gfxAllocation, mockAubFileStream.get(), handle);
+    auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
+    AubAllocDump::dumpAllocation<FamilyType>(format, *gfxAllocation, mockAubFileStream.get(), handle);
 
     EXPECT_EQ(0u, mockAubFileStream->getSize());
 }

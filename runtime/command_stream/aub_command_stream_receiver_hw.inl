@@ -560,7 +560,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBuff
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
     const auto lock = std::unique_lock<decltype(pollForCompletionLock)>{pollForCompletionLock};
-    if (this->pollForCompletionTaskCount == this->taskCount) {
+    if (this->pollForCompletionTaskCount == this->latestSentTaskCount) {
         return;
     }
     pollForCompletionImpl();
@@ -568,7 +568,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionImpl() {
-    this->pollForCompletionTaskCount = this->taskCount;
+    this->pollForCompletionTaskCount = this->latestSentTaskCount;
 
     if (hardwareContextController) {
         hardwareContextController->pollForCompletion();
@@ -732,18 +732,21 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         gfxAllocation.setAllocDumpable(false);
     }
 
+    auto dumpFormat = AubAllocDump::getDumpFormat(gfxAllocation);
+    if (dumpFormat > AubAllocDump::DumpFormat::NONE) {
+        pollForCompletion();
+    }
+
     if (hardwareContextController) {
-        if (AubAllocDump::isWritableBuffer(gfxAllocation)) {
-            if (0 == DebugManager.flags.AUBDumpBufferFormat.get().compare("BIN")) {
-                auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
-                auto size = gfxAllocation.getUnderlyingBufferSize();
-                hardwareContextController->dumpBufferBIN(gpuAddress, size);
-            }
+        if (AubAllocDump::DumpFormat::BUFFER_BIN == dumpFormat) {
+            auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
+            auto size = gfxAllocation.getUnderlyingBufferSize();
+            hardwareContextController->dumpBufferBIN(gpuAddress, size);
         }
         return;
     }
 
-    AubAllocDump::dumpAllocation<GfxFamily>(gfxAllocation, getAubStream(), getDumpHandle());
+    AubAllocDump::dumpAllocation<GfxFamily>(dumpFormat, gfxAllocation, getAubStream(), getDumpHandle());
 }
 
 template <typename GfxFamily>

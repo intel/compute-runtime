@@ -203,7 +203,7 @@ HWTEST_F(AubFileStreamTests, givenNewTaskSinceLastPollWhenCallingPollForCompleti
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     aubCsr->stream = aubStream.get();
 
-    aubCsr->taskCount = 50;
+    aubCsr->latestSentTaskCount = 50;
     aubCsr->pollForCompletionTaskCount = 49;
     ASSERT_FALSE(aubStream->registerPollCalled);
 
@@ -218,7 +218,7 @@ HWTEST_F(AubFileStreamTests, givenNoNewTasksSinceLastPollWhenCallingPollForCompl
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     aubCsr->stream = aubStream.get();
 
-    aubCsr->taskCount = 50;
+    aubCsr->latestSentTaskCount = 50;
     aubCsr->pollForCompletionTaskCount = 50;
     ASSERT_FALSE(aubStream->registerPollCalled);
 
@@ -233,7 +233,7 @@ HWTEST_F(AubFileStreamTests, givenNewTaskSinceLastPollWhenDeletingAubCsrThenCall
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     aubCsr->stream = aubStream.get();
 
-    aubCsr->taskCount = 50;
+    aubCsr->latestSentTaskCount = 50;
     aubCsr->pollForCompletionTaskCount = 49;
     ASSERT_FALSE(aubStream->registerPollCalled);
 
@@ -247,7 +247,7 @@ HWTEST_F(AubFileStreamTests, givenNoNewTaskSinceLastPollWhenDeletingAubCsrThenDo
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     aubCsr->stream = aubStream.get();
 
-    aubCsr->taskCount = 50;
+    aubCsr->latestSentTaskCount = 50;
     aubCsr->pollForCompletionTaskCount = 50;
     ASSERT_FALSE(aubStream->registerPollCalled);
 
@@ -267,7 +267,7 @@ HWTEST_F(AubFileStreamTests, givenNewTasksAndHardwareContextPresentWhenCallingPo
     auto hardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
     aubCsr.stream = aubStream.get();
 
-    aubCsr.taskCount = 50;
+    aubCsr.latestSentTaskCount = 50;
     aubCsr.pollForCompletionTaskCount = 49;
     ASSERT_FALSE(hardwareContext->pollForCompletionCalled);
 
@@ -287,7 +287,7 @@ HWTEST_F(AubFileStreamTests, givenNoNewTasksAndHardwareContextPresentWhenCalling
     auto hardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
     aubCsr.stream = aubStream.get();
 
-    aubCsr.taskCount = 50;
+    aubCsr.latestSentTaskCount = 50;
     aubCsr.pollForCompletionTaskCount = 50;
     ASSERT_FALSE(hardwareContext->pollForCompletionCalled);
 
@@ -301,7 +301,7 @@ HWTEST_F(AubFileStreamTests, givenNoNewTasksSinceLastPollWhenCallingExpectMemory
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     aubCsr->stream = aubStream.get();
 
-    aubCsr->taskCount = 50;
+    aubCsr->latestSentTaskCount = 50;
     aubCsr->pollForCompletionTaskCount = 50;
     ASSERT_FALSE(aubStream->registerPollCalled);
 
@@ -317,7 +317,7 @@ HWTEST_F(AubFileStreamTests, givenNewTasksSinceLastPollWhenCallingExpectMemoryTh
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     aubCsr->stream = aubStream.get();
 
-    aubCsr->taskCount = 50;
+    aubCsr->latestSentTaskCount = 50;
     aubCsr->pollForCompletionTaskCount = 49;
     ASSERT_FALSE(aubStream->registerPollCalled);
 
