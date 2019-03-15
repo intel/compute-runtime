@@ -27,6 +27,8 @@ T *Program::create(
 
     auto retVal = program->createProgramFromBinary(binaries[0], lengths[0]);
 
+    program->createdFrom = CreatedFrom::BINARY;
+
     if (binaryStatus) {
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
         *binaryStatus = CL_SUCCESS;
@@ -64,6 +66,7 @@ T *Program::create(
     if (CL_SUCCESS == retVal) {
         program = new T(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false);
         program->sourceCode.swap(combinedString);
+        program->createdFrom = CreatedFrom::SOURCE;
     }
 
     errcodeRet = retVal;
@@ -129,6 +132,7 @@ T *Program::createFromGenBinary(
         program->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
         program->isProgramBinaryResolved = true;
         program->buildStatus = CL_BUILD_SUCCESS;
+        program->createdFrom = CreatedFrom::BINARY;
     }
 
     if (errcodeRet) {
@@ -152,6 +156,9 @@ T *Program::createFromIL(Context *ctx,
 
     T *program = new T(*ctx->getDevice(0)->getExecutionEnvironment(), ctx, false);
     errcodeRet = program->createProgramFromBinary(il, length);
+
+    program->createdFrom = CreatedFrom::IL;
+
     if (errcodeRet != CL_SUCCESS) {
         delete program;
         program = nullptr;

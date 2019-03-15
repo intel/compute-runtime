@@ -91,8 +91,15 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_SOURCE:
-        pSrc = sourceCode.c_str();
-        retSize = srcSize = strlen(sourceCode.c_str()) + 1;
+        if (createdFrom == CreatedFrom::SOURCE) {
+            pSrc = sourceCode.c_str();
+            retSize = srcSize = strlen(sourceCode.c_str()) + 1;
+        } else {
+            if (paramValueSizeRet) {
+                *paramValueSizeRet = 0;
+            }
+            return CL_SUCCESS;
+        }
         break;
 
     case CL_PROGRAM_IL:

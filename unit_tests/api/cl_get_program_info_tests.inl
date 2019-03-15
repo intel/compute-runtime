@@ -76,7 +76,7 @@ TEST_F(clGetProgramInfoTests, SuccessfulProgramWithSource) {
     EXPECT_EQ(sourceSize + 1, length);
     retVal = clGetProgramInfo(pProgram, CL_PROGRAM_SOURCE, sizeof(buffer), buffer, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(strlen(buffer), strlen((const char *)pSource));
+    EXPECT_EQ(strlen((const char *)pSource), strlen(buffer));
 
     // try to get program info for invalid program object - should fail
     retVal = clGetProgramInfo(nullptr, CL_PROGRAM_SOURCE, 0, nullptr, nullptr);
@@ -98,14 +98,15 @@ TEST_F(clGetProgramInfoTests, SuccessfulProgramWithSource) {
 }
 
 TEST_F(clGetProgramInfoTests, SuccessfulProgramWithIL) {
-    const uint32_t spirv[16] = {0x03022307};
+    const size_t binarySize = 16;
+    const uint32_t spirv[binarySize] = {0x03022307};
 
     cl_int err = CL_INVALID_VALUE;
     cl_program pProgram = clCreateProgramWithIL(pContext, spirv, sizeof(spirv), &err);
     EXPECT_EQ(CL_SUCCESS, err);
     EXPECT_NE(nullptr, pProgram);
 
-    uint32_t output[16] = {};
+    uint32_t output[binarySize] = {};
     size_t outputSize = 0;
     retVal = clGetProgramInfo(pProgram, CL_PROGRAM_IL, sizeof(output), output, &outputSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -115,4 +116,30 @@ TEST_F(clGetProgramInfoTests, SuccessfulProgramWithIL) {
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST_F(clGetProgramInfoTests, GivenSPIRVProgramWhenGettingProgramSourceThenReturnNullString) {
+    const size_t binarySize = 16;
+    const uint32_t spirv[binarySize] = {0x03022307};
+
+    cl_int err = CL_INVALID_VALUE;
+    cl_program pProgram = clCreateProgramWithIL(pContext, spirv, sizeof(spirv), &err);
+    EXPECT_EQ(CL_SUCCESS, err);
+    EXPECT_NE(nullptr, pProgram);
+
+    size_t outputSize = 0;
+    uint32_t output[binarySize] = {};
+    const char reference[sizeof(output)] = {};
+
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_SOURCE, 0, nullptr, &outputSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, outputSize);
+
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_SOURCE, sizeof(output), output, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0, memcmp(output, reference, sizeof(output)));
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 } // namespace ULT

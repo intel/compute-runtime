@@ -40,6 +40,13 @@ class Program : public BaseObject<_cl_program> {
   public:
     static const cl_ulong objectMagic = 0x5651C89100AAACFELL;
 
+    enum class CreatedFrom {
+        SOURCE,
+        IL,
+        BINARY,
+        UNKNOWN
+    };
+
     // Create program from binary
     template <typename T = Program>
     static T *create(
@@ -289,6 +296,8 @@ class Program : public BaseObject<_cl_program> {
 
     char*                     debugData;
     size_t                    debugDataSize;
+
+    CreatedFrom               createdFrom = CreatedFrom::UNKNOWN;
 
     std::vector<KernelInfo*>  kernelInfoArray;
     std::vector<KernelInfo*>  parentKernelInfoArray;
