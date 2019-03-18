@@ -113,17 +113,25 @@ TEST(MemObjHelper, givenInvalidPropertiesWhenValidatingMemoryPropertiesThenFalse
     EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, nullptr));
 }
 
+struct Image1dWithAccessFlagsUnrestricted : public Image1dDefaults {
+    enum { flags = CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL };
+};
+
 TEST(MemObjHelper, givenParentMemObjAndHostPtrFlagsWhenValidatingMemoryPropertiesForImageThenFalseIsReturned) {
     MemoryProperties properties;
     MockContext context;
     auto image = clUniquePtr(Image1dHelper<>::create(&context));
+    auto imageWithAccessFlagsUnrestricted = clUniquePtr(ImageHelper<Image1dWithAccessFlagsUnrestricted>::create(&context));
 
-    properties.flags = CL_MEM_USE_HOST_PTR;
-    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, image.get()));
+    cl_mem_flags hostPtrFlags[] = {CL_MEM_USE_HOST_PTR, CL_MEM_ALLOC_HOST_PTR, CL_MEM_COPY_HOST_PTR};
 
-    properties.flags = CL_MEM_ALLOC_HOST_PTR;
-    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, image.get()));
+    for (auto hostPtrFlag : hostPtrFlags) {
+        properties.flags = hostPtrFlag;
+        EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, image.get()));
+        EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, imageWithAccessFlagsUnrestricted.get()));
 
-    properties.flags = CL_MEM_COPY_HOST_PTR;
-    EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, image.get()));
+        properties.flags |= CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL;
+        EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, image.get()));
+        EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, imageWithAccessFlagsUnrestricted.get()));
+    }
 }
