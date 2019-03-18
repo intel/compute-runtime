@@ -22,7 +22,12 @@ AubManager *AubManager::create(uint32_t productFamily, uint32_t devicesCount, ui
 extern "C" {
 void injectMMIOList(MMIOList mmioList){};
 void setTbxServerPort(uint16_t port) { aub_stream_stubs::tbxServerPort = port; };
-void setTbxServerIp(std::string server) { aub_stream_stubs::tbxServerIp = server; };
+void setTbxServerIp(std::string server) {
+    // better to avoid reassigning global variables which assume memory allocations since
+    // we could step into false-positive memory leak detection with embedded leak check helper
+    if (aub_stream_stubs::tbxServerIp != server)
+        aub_stream_stubs::tbxServerIp = server;
+};
 }
 
 } // namespace aub_stream
