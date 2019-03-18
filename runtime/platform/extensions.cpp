@@ -47,6 +47,7 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
         allExtensionsList += "cl_intel_spirv_device_side_avc_motion_estimation ";
         allExtensionsList += "cl_intel_spirv_media_block_io ";
         allExtensionsList += "cl_intel_spirv_subgroups ";
+        allExtensionsList += "cl_khr_spirv_no_integer_wrap_decoration ";
     }
 
     if (hwInfo.capabilityTable.ftrSupportsFP64) {

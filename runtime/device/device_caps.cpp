@@ -143,6 +143,7 @@ void Device::initializeCaps() {
         deviceExtensions += "cl_intel_spirv_device_side_avc_motion_estimation ";
         deviceExtensions += "cl_intel_spirv_media_block_io ";
         deviceExtensions += "cl_intel_spirv_subgroups ";
+        deviceExtensions += "cl_khr_spirv_no_integer_wrap_decoration ";
     } else {
         deviceInfo.independentForwardProgress = false;
     }
