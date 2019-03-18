@@ -188,9 +188,9 @@ bool MemoryManager::isMemoryBudgetExhausted() const {
 }
 
 OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver, EngineInstanceT engineType,
-                                                     DeviceBitfield deviceBitfield, PreemptionMode preemptionMode) {
+                                                     DeviceBitfield deviceBitfield, PreemptionMode preemptionMode, bool lowPriority) {
     auto contextId = ++latestContextId;
-    auto osContext = OsContext::create(executionEnvironment.osInterface.get(), contextId, deviceBitfield, engineType, preemptionMode);
+    auto osContext = OsContext::create(executionEnvironment.osInterface.get(), contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
     osContext->incRefInternal();
 
     registeredEngines.emplace_back(commandStreamReceiver, osContext);

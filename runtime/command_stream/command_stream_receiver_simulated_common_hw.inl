@@ -95,7 +95,7 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
     uint32_t flags = 0;
     getCsTraits(engineType).setContextSaveRestoreFlags(flags);
 
-    if (aubManager && !(engineType.type == lowPriorityGpgpuEngine.type && engineType.id == lowPriorityGpgpuEngine.id)) {
+    if (aubManager && !osContext.isLowPriority()) {
         hardwareContextController = std::make_unique<HardwareContextController>(*aubManager, osContext, engineIndex, flags);
     }
 }

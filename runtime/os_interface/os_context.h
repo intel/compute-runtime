@@ -21,25 +21,29 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
   public:
     OsContext() = delete;
 
-    static OsContext *create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield, EngineInstanceT engineType, PreemptionMode preemptionMode);
+    static OsContext *create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
+                             EngineInstanceT engineType, PreemptionMode preemptionMode, bool lowPriority);
     uint32_t getContextId() const { return contextId; }
     uint32_t getNumSupportedDevices() const { return numSupportedDevices; }
     DeviceBitfield getDeviceBitfield() const { return deviceBitfield; }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     EngineInstanceT &getEngineType() { return engineType; }
+    bool isLowPriority() const { return lowPriority; }
 
   protected:
-    OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, EngineInstanceT engineType, PreemptionMode preemptionMode)
+    OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, EngineInstanceT engineType, PreemptionMode preemptionMode, bool lowPriority)
         : contextId(contextId),
           deviceBitfield(deviceBitfield),
           preemptionMode(preemptionMode),
           numSupportedDevices(static_cast<uint32_t>(deviceBitfield.count())),
-          engineType(engineType) {}
+          engineType(engineType),
+          lowPriority(lowPriority) {}
 
     const uint32_t contextId;
     const DeviceBitfield deviceBitfield;
     const PreemptionMode preemptionMode;
     const uint32_t numSupportedDevices;
     EngineInstanceT engineType = {EngineType::ENGINE_RCS, 0};
+    const bool lowPriority;
 };
 } // namespace OCLRT

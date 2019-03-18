@@ -173,7 +173,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(executionEnvironment->commandStreamReceivers[0][0].get(),
                                                                                      getChosenEngineType(*platformDevices[0]), 1,
-                                                                                     PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+                                                                                     PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     executionEnvironment->commandStreamReceivers[0][0]->setupContext(*osContext);
 
     std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);

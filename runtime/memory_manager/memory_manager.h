@@ -175,7 +175,7 @@ class MemoryManager {
     }
 
     OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver, EngineInstanceT engineType,
-                                          DeviceBitfield deviceBitfield, PreemptionMode preemptionMode);
+                                          DeviceBitfield deviceBitfield, PreemptionMode preemptionMode, bool lowPriority);
     uint32_t getRegisteredEnginesCount() const { return static_cast<uint32_t>(registeredEngines.size()); }
     CommandStreamReceiver *getDefaultCommandStreamReceiver(uint32_t deviceId) const;
     EngineControlContainer &getRegisteredEngines();

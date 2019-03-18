@@ -248,7 +248,8 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
         std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(hwInfo[0], *executionEnvironment));
     executionEnvironment->memoryManager.reset(new WddmMemoryManager(false, false, wddm, *executionEnvironment));
     executionEnvironment->commandStreamReceivers[0][0]->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
-    OsContextWin osContext(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*hwInfo));
+    OsContextWin osContext(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0],
+                           PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
     executionEnvironment->commandStreamReceivers[0][0]->setupContext(osContext);
 
     auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -273,7 +274,8 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
                                                                                                                       *executionEnvironment));
     executionEnvironment->memoryManager.reset(new WddmMemoryManager(false, false, wddm, *executionEnvironment));
     executionEnvironment->commandStreamReceivers[0][0]->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
-    OsContextWin osContext(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*hwInfo));
+    OsContextWin osContext(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0],
+                           PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
     executionEnvironment->commandStreamReceivers[0][0]->setupContext(osContext);
 
     auto commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});

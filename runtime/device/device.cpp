@@ -175,8 +175,9 @@ bool Device::createEngines(const HardwareInfo *pHwInfo) {
 
         DeviceBitfield deviceBitfield;
         deviceBitfield.set(getDeviceIndex());
+        bool lowPriority = deviceCsrIndex == EngineInstanceConstants::lowPriorityGpgpuEngineIndex;
         auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver, gpgpuEngines[deviceCsrIndex],
-                                                                                         deviceBitfield, preemptionMode);
+                                                                                         deviceBitfield, preemptionMode, lowPriority);
         commandStreamReceiver->setupContext(*osContext);
 
         if (!commandStreamReceiver->initializeTagAllocation()) {

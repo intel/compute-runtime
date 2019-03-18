@@ -301,9 +301,8 @@ TEST(ExecutionEnvironment, whenSpecialCsrExistsThenReturnSpecialEngineControl) {
     executionEnvironment->specialCommandStreamReceiver.reset(createCommandStream(platformDevices[0], *executionEnvironment));
     auto engineType = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(executionEnvironment->specialCommandStreamReceiver.get(),
-                                                                                     engineType,
-                                                                                     1,
-                                                                                     PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+                                                                                     engineType, 1,
+                                                                                     PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     executionEnvironment->specialCommandStreamReceiver->setupContext(*osContext);
 
     auto engineControl = executionEnvironment->getEngineControlForSpecialCsr();

@@ -66,7 +66,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
     executionEnvironment.initializeMemoryManager(false, false);
     auto engine = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
-    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr, engine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    auto osContext = executionEnvironment.memoryManager->createAndRegisterOsContext(csr, engine, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     csr->setupContext(*osContext);
 
     Surface *surface = createSurface::Create<TypeParam>(this->data,

@@ -198,7 +198,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateH
     uint32_t engineIndex = 2;
     uint32_t deviceIndex = 3;
 
-    MockOsContext osContext(nullptr, 0, 8, allEngineInstances[engineIndex], PreemptionMode::Disabled);
+    MockOsContext osContext(0, 8, allEngineInstances[engineIndex], PreemptionMode::Disabled, false);
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_AUB);
@@ -218,7 +218,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateH
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSetThenDontCreateHardwareContext) {
-    MockOsContext osContext(nullptr, 0, 1, lowPriorityGpgpuEngine, PreemptionMode::Disabled);
+    MockOsContext osContext(0, 1, lowPriorityGpgpuEngine, PreemptionMode::Disabled, true);
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, fileName, CommandStreamReceiverType::CSR_AUB);
@@ -226,7 +226,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSet
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(AUBCommandStreamReceiver::create(*platformDevices[0], fileName, true, executionEnvironment)));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(AUBCommandStreamReceiver::create(*platformDevices[0], fileName, true, executionEnvironment)));
     EXPECT_EQ(nullptr, aubCsr->hardwareContextController.get());
 
     aubCsr->setupContext(osContext);
@@ -284,7 +284,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
     executionEnvironment.aubCenter.reset(new AubCenter());
 
     auto engineInstance = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
-    MockOsContext osContext(nullptr, 0, 1, engineInstance, PreemptionMode::Disabled);
+    MockOsContext osContext(0, 1, engineInstance, PreemptionMode::Disabled, false);
 
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
@@ -787,7 +787,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenOsContextWithMultipleDevicesSupport
     DeviceBitfield deviceBitfield;
     deviceBitfield.set(0);
     deviceBitfield.set(1);
-    MockOsContext osContext(nullptr, 1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    MockOsContext osContext(1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled, false);
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
     aubCsr->setupContext(osContext);
 
@@ -1100,7 +1100,7 @@ TEST_F(HardwareContextContainerTests, givenOsContextWithMultipleDevicesSupported
     DeviceBitfield deviceBitfield;
     deviceBitfield.set(0);
     deviceBitfield.set(1);
-    MockOsContext osContext(nullptr, 1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    MockOsContext osContext(1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled, false);
 
     HardwareContextController hwContextControler(aubManager, osContext, 0, 0);
     EXPECT_EQ(2u, hwContextControler.hardwareContexts.size());
@@ -1116,7 +1116,7 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     DeviceBitfield deviceBitfield;
     deviceBitfield.set(0);
     deviceBitfield.set(1);
-    MockOsContext osContext(nullptr, 1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    MockOsContext osContext(1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled, false);
     HardwareContextController hwContextContainer(aubManager, osContext, 3, 0);
     EXPECT_EQ(2u, hwContextContainer.hardwareContexts.size());
 
@@ -1157,7 +1157,7 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     DeviceBitfield deviceBitfield;
     deviceBitfield.set(0);
     deviceBitfield.set(1);
-    MockOsContext osContext(nullptr, 1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled);
+    MockOsContext osContext(1, deviceBitfield, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled, false);
     HardwareContextController hwContextContainer(aubManager, osContext, 2, 0);
     EXPECT_EQ(2u, hwContextContainer.hardwareContexts.size());
 

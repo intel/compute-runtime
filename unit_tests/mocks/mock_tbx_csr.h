@@ -104,7 +104,8 @@ std::unique_ptr<TbxExecutionEnvironment> getEnvironment(bool createTagAllocation
     }
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(executionEnvironment->commandStreamReceivers[0][0].get(),
-                                                                                     getChosenEngineType(*platformDevices[0]), 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+                                                                                     getChosenEngineType(*platformDevices[0]), 1,
+                                                                                     PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     executionEnvironment->commandStreamReceivers[0][0]->setupContext(*osContext);
 
     std::unique_ptr<TbxExecutionEnvironment> tbxExecutionEnvironment(new TbxExecutionEnvironment);

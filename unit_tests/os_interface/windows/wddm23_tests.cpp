@@ -38,7 +38,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
     void init() {
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
         EXPECT_TRUE(wddm->init(preemptionMode));
-        osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode);
+        osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode, false);
     }
 
     void TearDown() override {
@@ -67,8 +67,8 @@ TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
 
 TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
     auto defaultEngine = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
-    OsContextWin osContextWithoutPreemption(*osInterface->get()->getWddm(), 0u, 1, defaultEngine, PreemptionMode::Disabled);
-    OsContextWin osContextWithPreemption(*osInterface->get()->getWddm(), 0u, 1, defaultEngine, PreemptionMode::MidBatch);
+    OsContextWin osContextWithoutPreemption(*osInterface->get()->getWddm(), 0u, 1, defaultEngine, PreemptionMode::Disabled, false);
+    OsContextWin osContextWithPreemption(*osInterface->get()->getWddm(), 0u, 1, defaultEngine, PreemptionMode::MidBatch, false);
 
     wddm->wddmInterface->createHwQueue(osContextWithoutPreemption);
     EXPECT_EQ(0u, getCreateHwQueueDataFcn()->Flags.DisableGpuTimeout);
