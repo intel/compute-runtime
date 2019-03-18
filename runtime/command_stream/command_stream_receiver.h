@@ -177,6 +177,10 @@ class CommandStreamReceiver {
     }
     bool isMultiOsContextCapable() const;
 
+    void setLatestSentTaskCount(uint32_t latestSentTaskCount) {
+        this->latestSentTaskCount = latestSentTaskCount;
+    }
+
   protected:
     void cleanupResources();
 
