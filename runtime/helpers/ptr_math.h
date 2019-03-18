@@ -23,11 +23,21 @@ inline T ptrOffset(T ptrBefore, size_t offset) {
     return (T)addrAfter;
 }
 
+template <>
+inline uint64_t ptrOffset(uint64_t ptrBefore, size_t offset) {
+    return ptrBefore + offset;
+}
+
 template <typename TA, typename TB>
 inline size_t ptrDiff(TA ptrAfter, TB ptrBefore) {
     auto addrBefore = (uintptr_t)ptrBefore;
     auto addrAfter = (uintptr_t)ptrAfter;
     return addrAfter - addrBefore;
+}
+
+template <typename T>
+inline uint64_t ptrDiff(uint64_t ptrAfter, T ptrBefore) {
+    return ptrAfter - ptrBefore;
 }
 
 template <typename IntegerAddressType>

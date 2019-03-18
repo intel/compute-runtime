@@ -45,3 +45,23 @@ TEST(PtrMath, givenCastToUint64FunctionWhenItIsCalledThenProperValueIsReturned) 
     auto uintAddress = castToUint64(addressWithTrailingBitSet);
     EXPECT_EQ(uintAddress, expectedUint64Address);
 }
+
+TEST(ptrOffset, preserve64Bit) {
+    uint64_t ptrBefore = 0x800000000;
+    size_t offset = 0x1234;
+    auto ptrAfter = ptrOffset(ptrBefore, offset);
+    EXPECT_EQ(0x800001234ull, ptrAfter);
+}
+
+TEST(ptrDiff, preserve64Bit) {
+    auto ptrAfter = 0x800001234ull;
+
+    auto ptrBefore = ptrDiff(ptrAfter, (size_t)0x1234);
+    EXPECT_EQ(0x800000000ull, ptrBefore);
+
+    auto ptrBefore2 = ptrDiff(ptrAfter, 0x1234);
+    EXPECT_EQ(0x800000000ull, ptrBefore2);
+
+    auto ptrBefore3 = ptrDiff(ptrAfter, 0x1234ull);
+    EXPECT_EQ(0x800000000ull, ptrBefore3);
+}
