@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,8 @@ TEST(MemoryPool, givenSystemMemoryPoolTypesWhenIsSystemMemoryPoolIsCalledThenTru
 TEST(MemoryPool, givenNonSystemMemoryPoolTypesWhenIsSystemMemoryPoolIsCalledThenFalseIsReturned) {
 
     MemoryPool::Type memoryTypes[] = {MemoryPool::MemoryNull,
-                                      MemoryPool::SystemCpuInaccessible};
+                                      MemoryPool::SystemCpuInaccessible,
+                                      MemoryPool::LocalMemory};
 
     for (size_t i = 0; i < arrayCount(memoryTypes); i++) {
         EXPECT_FALSE(MemoryPool::isSystemMemoryPool(memoryTypes[i]));

@@ -19,6 +19,7 @@ constexpr Type System64KBPages{2};
 constexpr Type System4KBPagesWith32BitGpuAddressing{3};
 constexpr Type System64KBPagesWith32BitGpuAddressing{4};
 constexpr Type SystemCpuInaccessible{5};
+constexpr Type LocalMemory{6};
 
 inline bool isSystemMemoryPool(Type pool) {
     return pool == System4KBPages ||
