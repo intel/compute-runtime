@@ -393,7 +393,7 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
     graphicsAllocation->unlock();
 }
 
-HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, const void *ptr, const HardwareInfo &hwInfo) {
+HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM) {
     if (allocation) {
         if (useInternal32BitAllocator(allocation->getAllocationType())) {
             return internalHeapIndex;
@@ -401,8 +401,8 @@ HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, const 
             return HeapIndex::HEAP_EXTERNAL;
         }
     }
-    if (hwInfo.capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
-        if (ptr) {
+    if (isFullRangeSVM) {
+        if (hasPointer) {
             return HeapIndex::HEAP_SVM;
         }
         if (allocation && allocation->getDefaultGmm()->gmmResourceInfo->is64KBPageSuitable()) {

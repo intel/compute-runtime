@@ -118,7 +118,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
 
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
+        executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setWddm(wddm);
 
@@ -135,7 +135,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         osContext->decRefInternal();
     }
 
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
 
     WddmMock *wddm = nullptr;

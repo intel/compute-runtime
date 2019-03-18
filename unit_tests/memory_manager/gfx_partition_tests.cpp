@@ -18,7 +18,7 @@ void testGfxPartition(uint64_t gpuAddressSpace) {
     gfxPartition.init(gpuAddressSpace);
 
     uint64_t gfxTop = gpuAddressSpace + 1;
-    uint64_t gfxBase = is64bit ? MemoryConstants::max64BitAppAddress + 1 : MemoryConstants::max32BitAddress + 1;
+    uint64_t gfxBase = MemoryConstants::maxSvmAddress + 1;
     const uint64_t sizeHeap32 = 4 * MemoryConstants::gigaByte;
     const uint64_t gfxGranularity = 2 * MemoryConstants::megaByte;
 
@@ -27,6 +27,7 @@ void testGfxPartition(uint64_t gpuAddressSpace) {
         EXPECT_TRUE(gfxPartition.heapInitialized(HeapIndex::HEAP_SVM));
         EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::HEAP_SVM), gfxGranularity);
         EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::HEAP_SVM), gfxBase - gfxGranularity);
+        EXPECT_EQ(gfxPartition.getHeapLimit(HeapIndex::HEAP_SVM), MemoryConstants::maxSvmAddress);
     } else {
         // Limited range
         EXPECT_FALSE(gfxPartition.heapInitialized(HeapIndex::HEAP_SVM));

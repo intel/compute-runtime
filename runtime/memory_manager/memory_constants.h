@@ -43,4 +43,5 @@ static const uint64_t max48BitAddress = maxNBitValue<48>;
 static const uintptr_t page4kEntryMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::pageMask;
 static const uintptr_t page64kEntryMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::page64kMask;
 static const int GfxAddressBits = is64bit ? 48 : 32;
+static const uint64_t maxSvmAddress = is64bit ? maxNBitValue<47> : maxNBitValue<32>;
 } // namespace MemoryConstants

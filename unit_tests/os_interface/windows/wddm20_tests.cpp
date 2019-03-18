@@ -82,7 +82,7 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMapp
     allocation.setDefaultGmm(gmm.get());
     allocation.getHandleToModify(0u) = ALLOCATION_HANDLE;
 
-    EXPECT_TRUE(wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr()));
+    EXPECT_TRUE(wddm->mapGpuVirtualAddress(&allocation));
 }
 
 TEST(Wddm20EnumAdaptersTest, expectTrue) {
@@ -205,7 +205,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_NE(0, allocation.getDefaultHandle());
 
-    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
+    bool ret = wddm->mapGpuVirtualAddress(&allocation);
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(alignedPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
@@ -247,59 +247,27 @@ TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmS
     auto mockResourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockResourceInfo->overrideReturnedSize(allocation.getAlignedSize() + (2 * MemoryConstants::pageSize));
 
-    wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
+    wddm->mapGpuVirtualAddress(&allocation);
 
     uint64_t expectedSizeInPages = static_cast<uint64_t>(mockResourceInfo->getSizeAllocation() / MemoryConstants::pageSize);
     EXPECT_EQ(expectedSizeInPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
 }
 
-TEST_F(Wddm20Tests, createAllocation32bit) {
-    uint64_t heap32baseAddress = 0x40000;
-    uint64_t heap32Size = 0x40000;
-    wddm->setHeap32(heap32baseAddress, heap32Size);
-
-    MockWddmAllocation allocation;
-    Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
-
-    allocation.setDefaultGmm(gmm);
-    allocation.set32BitAllocation(true); // mark 32 bit allocation
-
-    auto status = wddm->createAllocation(&allocation);
-
-    EXPECT_EQ(STATUS_SUCCESS, status);
-    EXPECT_TRUE(allocation.handle != 0);
-
-    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
-    EXPECT_TRUE(ret);
-
-    EXPECT_EQ(1u, wddm->mapGpuVirtualAddressResult.called);
-
-    EXPECT_LE(heap32baseAddress, allocation.getGpuAddress());
-    EXPECT_GT(heap32baseAddress + heap32Size, allocation.getGpuAddress());
-
-    auto success = wddm->destroyAllocation(&allocation, osContext.get());
-    EXPECT_TRUE(success);
-
-    delete gmm;
-}
-
 TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap0ThenItHasGpuAddressWithinHeapInternalLimits) {
     void *alignedPtr = (void *)0x12000;
     size_t alignedSize = 0x2000;
-    WddmAllocation allocation(GraphicsAllocation::AllocationType::KERNEL_ISA, alignedPtr, alignedSize, nullptr, MemoryPool::MemoryNull, false);
+    std::unique_ptr<Gmm> gmm(GmmHelperFunctions::getGmm(alignedPtr, alignedSize));
+    uint64_t gpuAddress = 0u;
+    auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Base;
+    auto heapLimit = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Limit;
 
-    allocation.getHandleToModify(0u) = ALLOCATION_HANDLE;
-    allocation.setDefaultGmm(GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize()));
-    EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, allocation.getAlignedCpuPtr(), *hardwareInfoTable[wddm->getGfxPlatform()->eProductFamily]));
-    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
+    bool ret = wddm->mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, heapBase, heapLimit, 0u, gpuAddress);
     EXPECT_TRUE(ret);
+    auto cannonizedHeapBase = GmmHelper::canonize(heapBase);
+    auto cannonizedHeapEnd = GmmHelper::canonize(heapLimit);
 
-    auto cannonizedHeapBase = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Base);
-    auto cannonizedHeapEnd = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Limit);
-
-    EXPECT_GE(allocation.getGpuAddress(), cannonizedHeapBase);
-    EXPECT_LE(allocation.getGpuAddress(), cannonizedHeapEnd);
-    delete allocation.getDefaultGmm();
+    EXPECT_GE(gpuAddress, cannonizedHeapBase);
+    EXPECT_LE(gpuAddress, cannonizedHeapEnd);
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocationsThenAllMarkedAllocationsAreDestroyed) {
@@ -345,7 +313,7 @@ TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.getDefaultHandle() != 0);
 
-    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
+    auto error = wddm->mapGpuVirtualAddress(&allocation);
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.getGpuAddress() != 0);
 
@@ -369,7 +337,7 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
 
-    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
+    bool ret = wddm->mapGpuVirtualAddress(&allocation);
     EXPECT_TRUE(ret);
 
     EXPECT_NE(0u, allocation.getGpuAddress());
@@ -390,7 +358,7 @@ TEST_F(Wddm20Tests, makeResidentNonResident) {
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.getDefaultHandle() != 0);
 
-    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr());
+    auto error = wddm->mapGpuVirtualAddress(&allocation);
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.getGpuAddress() != 0);
 
@@ -461,7 +429,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
     ASSERT_NE(nullptr, wddmAllocation);
 
-    if (is32bit) {
+    if (is32bit && executionEnvironment->isFullRangeSvm()) {
         EXPECT_NE(wddm->mapGpuVirtualAddressResult.cpuPtrPassed, nullptr);
     } else {
         EXPECT_EQ(wddm->mapGpuVirtualAddressResult.cpuPtrPassed, nullptr);

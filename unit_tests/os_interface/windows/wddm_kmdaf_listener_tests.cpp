@@ -24,7 +24,7 @@ class WddmWithKmDafMock : public Wddm {
   public:
     using Wddm::featureTable;
     using Wddm::gdi;
-    using Wddm::mapGpuVirtualAddressImpl;
+    using Wddm::mapGpuVirtualAddress;
 
     WddmWithKmDafMock() : Wddm() {
         kmDafListener.reset(new KmDafListenerMock);
@@ -79,8 +79,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenMapGpuVirtualAddressIsCalledThenKmDaf
     auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     allocation.setDefaultGmm(gmm.get());
 
-    auto heapIndex = MemoryManager::selectHeap(&allocation, allocation.getUnderlyingBuffer(), *platformDevices[0]);
-    wddmWithKmDafMock->mapGpuVirtualAddressImpl(allocation.getDefaultGmm(), allocation.getDefaultHandle(), allocation.getUnderlyingBuffer(), allocation.getGpuAddressToModify(), heapIndex);
+    wddmWithKmDafMock->mapGpuVirtualAddress(allocation.getDefaultGmm(), allocation.getDefaultHandle(), wddmWithKmDafMock->getGfxPartition().Standard.Base, wddmWithKmDafMock->getGfxPartition().Standard.Limit, 0u, allocation.getGpuAddressToModify());
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAdapter);

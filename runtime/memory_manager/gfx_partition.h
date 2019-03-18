@@ -49,6 +49,9 @@ class GfxPartition {
     uint64_t getHeapBase(HeapIndex heapIndex) {
         return getHeap(heapIndex).getBase();
     }
+    uint64_t getHeapLimit(HeapIndex heapIndex) {
+        return getHeap(heapIndex).getBase() + getHeap(heapIndex).getSize() - 1;
+    }
 
     static const std::array<HeapIndex, 4> heap32Names;
 

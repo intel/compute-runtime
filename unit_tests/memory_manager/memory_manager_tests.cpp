@@ -1656,35 +1656,29 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationWasNotUnlockedThenItIsUn
 TEST(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     allocation.set32BitAllocation(true);
-    EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
+    EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, false, false));
 }
 
 TEST(HeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     allocation.set32BitAllocation(false);
-    EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
+    EXPECT_EQ(internalHeapIndex, MemoryManager::selectHeap(&allocation, false, false));
 }
 
 TEST(HeapSelectorTest, given32bitExternalAllocationWhenSelectingHeapThenExternalHeapIsUsed) {
     GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     allocation.set32BitAllocation(true);
-    EXPECT_EQ(HeapIndex::HEAP_EXTERNAL, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
+    EXPECT_EQ(HeapIndex::HEAP_EXTERNAL, MemoryManager::selectHeap(&allocation, false, false));
 }
 
 TEST(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForExternalAllocationThenStandardHeapIsUsed) {
     GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
-    if (platformDevices[0]->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
-        return;
-    }
-    EXPECT_EQ(HeapIndex::HEAP_STANDARD, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD, MemoryManager::selectHeap(&allocation, true, false));
 }
 
 TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithPtrThenSvmHeapIsUsed) {
     GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
-    if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
-        return;
-    }
-    EXPECT_EQ(HeapIndex::HEAP_SVM, MemoryManager::selectHeap(&allocation, &allocation, *platformDevices[0]));
+    EXPECT_EQ(HeapIndex::HEAP_SVM, MemoryManager::selectHeap(&allocation, true, true));
 }
 
 TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIs64KSuitableThenStandard64kHeapIsUsed) {
@@ -1693,10 +1687,7 @@ TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocati
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = true;
     allocation.setDefaultGmm(gmm.get());
-    if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
-        return;
-    }
-    EXPECT_EQ(HeapIndex::HEAP_STANDARD64KB, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD64KB, MemoryManager::selectHeap(&allocation, false, true));
 }
 
 TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIsNot64KSuitableThenStandardHeapIsUsed) {
@@ -1705,23 +1696,15 @@ TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocati
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = false;
     allocation.setDefaultGmm(gmm.get());
-    if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
-        return;
-    }
-    EXPECT_EQ(HeapIndex::HEAP_STANDARD, MemoryManager::selectHeap(&allocation, nullptr, *platformDevices[0]));
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD, MemoryManager::selectHeap(&allocation, false, true));
 }
 
 TEST(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForNullAllocationWithoutPtrThenStandardHeapIsUsed) {
-    if (platformDevices[0]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress) {
-        return;
-    }
-    EXPECT_EQ(HeapIndex::HEAP_STANDARD, MemoryManager::selectHeap(nullptr, nullptr, *platformDevices[0]));
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD, MemoryManager::selectHeap(nullptr, false, true));
 }
 
 TEST(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForNullAllocationWithoutPtrThenStandardHeapIsUsed) {
-    auto hwInfo = *platformDevices[0];
-    hwInfo.capabilityTable.gpuAddressSpace = MemoryConstants::max32BitAddress;
-    EXPECT_EQ(HeapIndex::HEAP_STANDARD, MemoryManager::selectHeap(nullptr, nullptr, hwInfo));
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD, MemoryManager::selectHeap(nullptr, false, false));
 }
 
 TEST(MemoryAllocationTest, givenAllocationTypeWhenPassedToMemoryAllocationConstructorThenAllocationTypeIsStored) {

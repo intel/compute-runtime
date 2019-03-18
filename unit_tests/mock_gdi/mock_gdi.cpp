@@ -19,7 +19,6 @@ uint64_t gGpuAddressSpace = 0ull;
 #ifdef __cplusplus // If used by C++ code,
 extern "C" {       // we need to export the C interface
 #endif
-
 BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
                        IN DWORD nReason,
                        IN LPVOID Reserved) {
@@ -194,7 +193,6 @@ NTSTATUS __stdcall D3DKMTDestroyAllocation2(IN CONST D3DKMT_DESTROYALLOCATION2 *
 }
 
 NTSTATUS __stdcall D3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS *mapGpuVA) {
-    uint64_t maxSvmAddress = sizeof(size_t) == 8 ? 0x7fffffffffff : 0xffffffff;
     if (mapGpuVA == nullptr) {
         memset(&gLastCallMapGpuVaArg, 0, sizeof(gLastCallMapGpuVaArg));
         return STATUS_INVALID_PARAMETER;
@@ -225,7 +223,7 @@ NTSTATUS __stdcall D3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS
             mapGpuVA->VirtualAddress = MemoryConstants::pageSize64k;
         }
     } else {
-        if (maxSvmAddress != mapGpuVA->MaximumAddress) {
+        if (MemoryConstants::maxSvmAddress != mapGpuVA->MaximumAddress) {
             return STATUS_INVALID_PARAMETER;
         }
         mapGpuVA->VirtualAddress = mapGpuVA->BaseAddress;

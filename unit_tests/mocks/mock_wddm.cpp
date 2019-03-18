@@ -34,14 +34,23 @@ bool WddmMock::evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeT
     makeNonResidentResult.called++;
     return makeNonResidentResult.success = Wddm::evict(handles, num, sizeToTrim);
 }
-
-bool WddmMock::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, HeapIndex heapIndex) {
+bool WddmMock::mapGpuVirtualAddress(WddmAllocation *allocation) {
+    D3DGPU_VIRTUAL_ADDRESS minimumAddress = gfxPartition.Standard.Base;
+    D3DGPU_VIRTUAL_ADDRESS maximumAddress = gfxPartition.Standard.Limit;
+    if (allocation->getAlignedCpuPtr()) {
+        minimumAddress = 0u;
+        maximumAddress = MemoryConstants::maxSvmAddress;
+    }
+    return mapGpuVirtualAddress(allocation->getDefaultGmm(), allocation->getDefaultHandle(), minimumAddress, maximumAddress,
+                                reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(allocation->getAlignedCpuPtr()), allocation->getGpuAddressToModify());
+}
+bool WddmMock::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) {
     mapGpuVirtualAddressResult.called++;
-    mapGpuVirtualAddressResult.cpuPtrPassed = cpuPtr;
+    mapGpuVirtualAddressResult.cpuPtrPassed = reinterpret_cast<void *>(preferredAddress);
     if (callBaseMapGpuVa) {
-        return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddressImpl(gmm, handle, cpuPtr, gpuPtr, heapIndex);
+        return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddress(gmm, handle, minimumAddress, maximumAddress, preferredAddress, gpuPtr);
     } else {
-        gpuPtr = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(cpuPtr);
+        gpuPtr = preferredAddress;
         return mapGpuVaStatus;
     }
 }
@@ -186,7 +195,7 @@ bool WddmMock::openAdapter() {
 
 void WddmMock::setHeap32(uint64_t base, uint64_t size) {
     gfxPartition.Heap32[3].Base = base;
-    gfxPartition.Heap32[3].Limit = size;
+    gfxPartition.Heap32[3].Limit = base + size;
 }
 
 GMM_GFX_PARTITIONING *WddmMock::getGfxPartitionPtr() {

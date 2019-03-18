@@ -48,9 +48,6 @@ class WddmMemoryManager : public MemoryManager {
 
     void obtainGpuAddressFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
 
-    static const D3DGPU_VIRTUAL_ADDRESS minimumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>(0x0);
-    static const D3DGPU_VIRTUAL_ADDRESS maximumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>((sizeof(size_t) == 8) ? 0x7ffffffffff : (D3DGPU_VIRTUAL_ADDRESS)0xffffffff);
-
     uint64_t getSystemSharedMemory() override;
     uint64_t getMaxApplicationAddress() override;
     uint64_t getInternalHeapBaseAddress() override;

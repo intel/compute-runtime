@@ -288,20 +288,14 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
     return success;
 }
 
-bool Wddm::mapGpuVirtualAddress(WddmAllocation *allocation, void *requiredGpuPtr) {
-    return mapGpuVirtualAddressImpl(allocation->getDefaultGmm(), allocation->getDefaultHandle(), requiredGpuPtr, allocation->getGpuAddressToModify(),
-                                    MemoryManager::selectHeap(allocation, requiredGpuPtr, *hardwareInfoTable[gfxPlatform->eProductFamily]));
-}
-
 bool Wddm::mapGpuVirtualAddress(AllocationStorageData *allocationStorageData) {
-    return mapGpuVirtualAddressImpl(allocationStorageData->osHandleStorage->gmm,
-                                    allocationStorageData->osHandleStorage->handle,
-                                    const_cast<void *>(allocationStorageData->cpuPtr),
-                                    allocationStorageData->osHandleStorage->gpuPtr,
-                                    MemoryManager::selectHeap(nullptr, allocationStorageData->cpuPtr, *hardwareInfoTable[gfxPlatform->eProductFamily]));
+    return mapGpuVirtualAddress(allocationStorageData->osHandleStorage->gmm,
+                                allocationStorageData->osHandleStorage->handle,
+                                0u, MemoryConstants::maxSvmAddress, reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(allocationStorageData->cpuPtr),
+                                allocationStorageData->osHandleStorage->gpuPtr);
 }
 
-bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, HeapIndex heapIndex) {
+bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) {
     D3DDDI_MAPGPUVIRTUALADDRESS MapGPUVA = {0};
     D3DDDIGPUVIRTUALADDRESS_PROTECTION_TYPE protectionType = {{{0}}};
     protectionType.Write = TRUE;
@@ -314,35 +308,9 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
     MapGPUVA.SizeInPages = size / MemoryConstants::pageSize;
     MapGPUVA.OffsetInPages = 0;
 
-    auto productFamily = gfxPlatform->eProductFamily;
-    UNRECOVERABLE_IF(!hardwareInfoTable[productFamily]);
-
-    MapGPUVA.BaseAddress = 0;
-    MapGPUVA.MinimumAddress = 0;
-    switch (heapIndex) {
-    case HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY:
-    case HeapIndex::HEAP_INTERNAL:
-    case HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY:
-    case HeapIndex::HEAP_EXTERNAL:
-        MapGPUVA.MinimumAddress = gfxPartition.Heap32[static_cast<uint32_t>(heapIndex)].Base + MemoryConstants::pageSize;
-        MapGPUVA.MaximumAddress = gfxPartition.Heap32[static_cast<uint32_t>(heapIndex)].Limit;
-        break;
-    case HeapIndex::HEAP_STANDARD:
-        MapGPUVA.MinimumAddress = gfxPartition.Standard.Base;
-        MapGPUVA.MaximumAddress = gfxPartition.Standard.Limit;
-        break;
-    case HeapIndex::HEAP_STANDARD64KB:
-        UNRECOVERABLE_IF(hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress);
-        MapGPUVA.MinimumAddress = gfxPartition.Standard64KB.Base;
-        MapGPUVA.MaximumAddress = gfxPartition.Standard64KB.Limit;
-        break;
-    case HeapIndex::HEAP_SVM:
-        UNRECOVERABLE_IF(hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace != MemoryConstants::max48BitAddress);
-        UNRECOVERABLE_IF(!cpuPtr);
-        MapGPUVA.BaseAddress = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(cpuPtr);
-        MapGPUVA.MaximumAddress = is64bit ? maxNBitValue<47> : maxNBitValue<32>;
-        break;
-    }
+    MapGPUVA.BaseAddress = preferredAddress;
+    MapGPUVA.MinimumAddress = minimumAddress;
+    MapGPUVA.MaximumAddress = maximumAddress;
 
     NTSTATUS status = gdi->mapGpuVirtualAddress(&MapGPUVA);
     gpuPtr = GmmHelper::canonize(MapGPUVA.VirtualAddress);
@@ -801,7 +769,7 @@ void Wddm::initGfxPartition(GfxPartition &outGfxPartition) const {
     outGfxPartition.heapInit(HeapIndex::HEAP_STANDARD64KB, gfxPartition.Standard64KB.Base, gfxPartition.Standard64KB.Limit - gfxPartition.Standard64KB.Base + 1);
 
     for (auto heap : GfxPartition::heap32Names) {
-        outGfxPartition.heapInit(heap, gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base,
+        outGfxPartition.heapInit(heap, gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + MemoryConstants::pageSize,
                                  gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + 1);
     }
 }
@@ -828,7 +796,7 @@ uint64_t Wddm::getExternalHeapBase() const {
 }
 
 uint64_t Wddm::getExternalHeapSize() const {
-    return alignDown(gfxPartition.Heap32[static_cast<uint32_t>(HeapIndex::HEAP_EXTERNAL)].Limit, MemoryConstants::pageSize);
+    return alignDown(gfxPartition.Heap32[static_cast<uint32_t>(HeapIndex::HEAP_EXTERNAL)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(HeapIndex::HEAP_EXTERNAL)].Base, MemoryConstants::pageSize);
 }
 
 VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) {

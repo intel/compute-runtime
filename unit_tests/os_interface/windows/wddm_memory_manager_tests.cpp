@@ -819,6 +819,8 @@ TEST_F(WddmMemoryManagerTest, given32BitAllocationWhenItIsCreatedThenItHasNonZer
 
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_NE(0llu, gpuAllocation->getGpuAddressToPatch());
+    EXPECT_LE(GmmHelper::canonize(wddm->getExternalHeapBase()), gpuAllocation->getGpuAddress());
+    EXPECT_GT(GmmHelper::canonize(wddm->getExternalHeapBase()) + wddm->getExternalHeapSize() - 1, gpuAllocation->getGpuAddress());
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
@@ -1173,18 +1175,19 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
 
 struct WddmMemoryManagerWithAsyncDeleterTest : ::testing::Test {
     void SetUp() {
+        executionEnvironment = platform()->peekExecutionEnvironment();
         wddm = std::make_unique<WddmMock>();
         wddm->gdi.reset(new MockGdi());
         wddm->callBaseDestroyAllocations = false;
         wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
         deleter = new MockDeferredDeleter;
-        memoryManager = std::make_unique<MockWddmMemoryManager>(wddm.get(), executionEnvironment);
+        memoryManager = std::make_unique<MockWddmMemoryManager>(wddm.get(), *executionEnvironment);
         memoryManager->setDeferredDeleter(deleter);
     }
     MockDeferredDeleter *deleter = nullptr;
     std::unique_ptr<WddmMock> wddm;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
-    ExecutionEnvironment executionEnvironment;
+    ExecutionEnvironment *executionEnvironment;
 };
 
 TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsEnabledThenCanDeferDeletions) {
@@ -1254,19 +1257,19 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDele
 }
 
 TEST(WddmMemoryManagerDefaults, givenDefaultWddmMemoryManagerWhenItIsQueriedForInternalHeapBaseThenHeapInternalBaseIsReturned) {
-    ExecutionEnvironment executionEnvironment;
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
     auto wddm = std::make_unique<WddmMock>();
     wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    MockWddmMemoryManager memoryManager(wddm.get(), executionEnvironment);
+    MockWddmMemoryManager memoryManager(wddm.get(), *executionEnvironment);
     auto heapBase = wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Base;
     EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress());
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledWithTripleAllocationThenSuccessIsReturned) {
-    ExecutionEnvironment executionEnvironment;
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
     auto wddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
-    MockWddmMemoryManager memoryManager(wddm.get(), executionEnvironment);
+    MockWddmMemoryManager memoryManager(wddm.get(), *executionEnvironment);
 
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, reinterpret_cast<void *>(0x1000)));
 
@@ -1313,12 +1316,12 @@ TEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocation
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLockResultAndmapGpuVirtualAddressIsCalled) {
-    ExecutionEnvironment executionEnvironment;
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.Enable64kbpages.set(true);
     auto wddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
-    MockWddmMemoryManager memoryManager64k(wddm.get(), executionEnvironment);
+    MockWddmMemoryManager memoryManager64k(wddm.get(), *executionEnvironment);
     uint32_t lockCount = wddm->lockResult.called;
     uint32_t mapGpuVirtualAddressResult = wddm->mapGpuVirtualAddressResult.called;
     AllocationData allocationData;
@@ -1326,7 +1329,11 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLoc
     GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemory64kb(allocationData);
     EXPECT_EQ(lockCount + 1, wddm->lockResult.called);
     EXPECT_EQ(mapGpuVirtualAddressResult + 1, wddm->mapGpuVirtualAddressResult.called);
-    EXPECT_NE(wddm->mapGpuVirtualAddressResult.cpuPtrPassed, nullptr);
+    if (executionEnvironment->isFullRangeSvm()) {
+        EXPECT_NE(nullptr, wddm->mapGpuVirtualAddressResult.cpuPtrPassed);
+    } else {
+        EXPECT_EQ(nullptr, wddm->mapGpuVirtualAddressResult.cpuPtrPassed);
+    }
     memoryManager64k.freeGraphicsMemory(galloc);
 }
 
@@ -1423,7 +1430,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVa
 
     auto hwInfo = hardwareInfoTable[wddm.getGfxPlatform()->eProductFamily];
     ASSERT_NE(nullptr, hwInfo);
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, MemoryManager::selectHeap(nullptr, nullptr, *hwInfo));
+    auto result = wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa);
     ASSERT_TRUE(result);
 
     EXPECT_EQ(GmmHelper::canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
@@ -1484,8 +1491,7 @@ TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMappedGp
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
-    auto heapIndex = MemoryManager::selectHeap(nullptr, nullptr, *hardwareInfoTable[wddm.getGfxPlatform()->eProductFamily]);
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, heapIndex);
+    auto result = wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa);
     ASSERT_TRUE(result);
 }
 
@@ -1496,8 +1502,7 @@ TEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenRetur
     WddmMock wddm;
     EXPECT_TRUE(wddm.init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
 
-    auto heapIndex = MemoryManager::selectHeap(nullptr, nullptr, *hardwareInfoTable[wddm.getGfxPlatform()->eProductFamily]);
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), 0, nullptr, gpuVa, heapIndex);
+    auto result = wddm.mapGpuVirtualAddress(gmm.get(), 0, 0, 0, 0, gpuVa);
     ASSERT_FALSE(result);
 }
 
@@ -1520,8 +1525,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnse
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
-    auto heapIndex = MemoryManager::selectHeap(nullptr, nullptr, *hardwareInfoTable[wddm->getGfxPlatform()->eProductFamily]);
-    auto result = wddm->mapGpuVirtualAddressImpl(myGmm, ALLOCATION_HANDLE, nullptr, gpuVa, heapIndex);
+    auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa);
     EXPECT_TRUE(result);
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }
@@ -1568,7 +1572,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
 }
 
 TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhenCleanupMemoryManagerThenDontAccessCsr) {
-    ExecutionEnvironment executionEnvironment;
+    ExecutionEnvironment &executionEnvironment = *platform()->peekExecutionEnvironment();
     auto csr = createCommandStream(*platformDevices, executionEnvironment);
     auto wddm = new WddmMock();
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
