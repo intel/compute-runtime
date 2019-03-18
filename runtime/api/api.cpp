@@ -3820,12 +3820,17 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             tokenValue != CL_QUEUE_SIZE &&
             tokenValue != CL_QUEUE_PRIORITY_KHR &&
             tokenValue != CL_QUEUE_THROTTLE_KHR &&
-            !processExtraTokens(pDevice, *pContext, propertiesAddress)) {
+            !isExtraToken(propertiesAddress)) {
             err.set(CL_INVALID_VALUE);
             return commandQueue;
         }
         propertiesAddress += 2;
         tokenValue = *propertiesAddress;
+    }
+
+    if (!verifyExtraTokens(pDevice, *pContext, properties)) {
+        err.set(CL_INVALID_VALUE);
+        return commandQueue;
     }
 
     auto commandQueueProperties = getCmdQueueProperties<cl_command_queue_properties>(properties);
