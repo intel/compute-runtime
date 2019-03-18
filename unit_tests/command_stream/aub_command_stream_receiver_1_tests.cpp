@@ -249,7 +249,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
     EXPECT_FALSE(gfxAllocation->isResident(osContextId));
     EXPECT_EQ(1u, aubCsr->getEvictionAllocations().size());
 
-    memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
+    memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesInitializeTheirEnginesThenUniqueGlobalGttAdressesAreGenerated) {
@@ -411,6 +411,35 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     EXPECT_EQ(aubCsr->peekLatestSentTaskCount(), *aubCsr->getTagAddress());
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneModeWhenFlushIsCalledThenItShouldUpdateAllocationsForResidencyWithCommandBufferAllocation) {
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+
+    ResidencyContainer allocationsForResidency = {};
+
+    aubCsr->flush(batchBuffer, allocationsForResidency);
+
+    EXPECT_EQ(1u, allocationsForResidency.size());
+    EXPECT_EQ(cs.getGraphicsAllocation(), allocationsForResidency[0]);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStandaloneModeWhenFlushIsCalledThenItShouldNotUpdateAllocationsForResidencyWithCommandBufferAllocation) {
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, false);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+
+    ResidencyContainer allocationsForResidency = {};
+
+    aubCsr->flush(batchBuffer, allocationsForResidency);
+
+    EXPECT_EQ(0u, allocationsForResidency.size());
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneAndSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldUpdateHwTagWithLatestSentTaskCount) {
     DebugManagerStateRestore stateRestore;
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
@@ -505,12 +534,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     EXPECT_TRUE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
     EXPECT_EQ(aubCsr->peekTaskCount() + 1, commandBuffer->getResidencyTaskCount(aubCsr->getOsContext().getContextId()));
 
-    aubCsr->makeSurfacePackNonResident(aubCsr->getResidencyAllocations());
+    aubCsr->makeSurfacePackNonResident(allocationsForResidency);
 
     EXPECT_FALSE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStandaloneModeWhenFlushIsCalledThenItShouldNotCallMakeResidentOnCommandBufferAllocation) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStandaloneModeWhenFlushIsCalledThenItShouldCallMakeResidentOnCommandBufferAllocation) {
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, false);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
     auto allocationsForResidency = aubCsr->getResidencyAllocations();
@@ -522,7 +551,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStanda
 
     aubCsr->flush(batchBuffer, allocationsForResidency);
 
-    EXPECT_FALSE(aubExecutionEnvironment->commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
+    EXPECT_TRUE(aubExecutionEnvironment->commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneModeWhenFlushIsCalledThenItShouldCallMakeResidentOnResidencyAllocations) {
@@ -580,9 +609,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStanda
     EXPECT_TRUE(gfxAllocation->isResident(aubCsr->getOsContext().getContextId()));
     EXPECT_EQ(aubCsr->peekTaskCount() + 1, gfxAllocation->getResidencyTaskCount(aubCsr->getOsContext().getContextId()));
 
-    EXPECT_FALSE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
+    EXPECT_TRUE(commandBuffer->isResident(aubCsr->getOsContext().getContextId()));
 
-    memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
+    memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneAndSubCaptureModeWhenFlushIsCalledAndSubCaptureIsEnabledThenItShouldCallMakeResidentOnCommandBufferAndResidencyAllocations) {
