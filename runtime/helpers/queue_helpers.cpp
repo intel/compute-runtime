@@ -18,4 +18,8 @@ bool verifyExtraTokens(Device *&device, Context &context, const cl_queue_propert
 
 void CommandQueue::processProperties(const cl_queue_properties *properties) {
 }
+
+void getIntelQueueInfo(CommandQueue *queue, cl_command_queue_info paramName, GetInfoHelper &getInfoHelper, cl_int &retVal) {
+    retVal = CL_INVALID_VALUE;
+}
 } // namespace OCLRT

@@ -1023,3 +1023,10 @@ TEST(CommandQueuePropertiesTests, whenDefaultCommandQueueIsCreatedThenItIsNotMul
     queue.multiEngineQueue = true;
     EXPECT_TRUE(queue.isMultiEngineQueue());
 }
+
+TEST(CommandQueuePropertiesTests, whenGetEngineIsCalledThenQueueEngineIsReturned) {
+    MockCommandQueue queue;
+    EngineControl engineControl;
+    queue.engine = &engineControl;
+    EXPECT_EQ(queue.engine, &queue.getEngine());
+}

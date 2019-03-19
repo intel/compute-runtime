@@ -104,6 +104,18 @@ TEST_P(GetCommandQueueInfoTest, QUEUE_DEVICE_DEFAULT) {
     EXPECT_NE(pCmdQ, commandQueueReturned);
 }
 
+TEST_P(GetCommandQueueInfoTest, GivenInvalidParameterWhenGettingCommandQueueInfoThenInvalidValueIsReturned) {
+    cl_uint parameterReturned = 0;
+    cl_command_queue_info invalidParameter = 0xdeadbeef;
+
+    auto retVal = pCmdQ->getCommandQueueInfo(
+        invalidParameter,
+        sizeof(parameterReturned),
+        &parameterReturned,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
 INSTANTIATE_TEST_CASE_P(
     GetCommandQueueInfoTest,
     GetCommandQueueInfoTest,

@@ -31,6 +31,8 @@ void retainQueue(cl_command_queue commandQueue, cl_int &retVal) {
     }
 }
 
+void getIntelQueueInfo(CommandQueue *queue, cl_command_queue_info paramName, GetInfoHelper &getInfoHelper, cl_int &retVal);
+
 template <typename QueueType>
 void releaseQueue(cl_command_queue commandQueue, cl_int &retVal) {
     using BaseType = typename QueueType::BaseType;
@@ -77,6 +79,11 @@ cl_int getQueueInfo(QueueType *queue,
         retVal = CL_INVALID_VALUE;
         break;
     default:
+        if (std::is_same<QueueType, class CommandQueue>::value) {
+            auto cmdQ = reinterpret_cast<CommandQueue *>(queue);
+            getIntelQueueInfo(cmdQ, paramName, getInfoHelper, retVal);
+            break;
+        }
         retVal = CL_INVALID_VALUE;
         break;
     }
