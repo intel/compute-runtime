@@ -264,6 +264,8 @@ NTSTATUS __stdcall D3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *quer
 
     adapterInfo->GfxPlatform = gAdapterInfo.GfxPlatform;
     adapterInfo->SystemInfo = gAdapterInfo.SystemInfo;
+    adapterInfo->SkuTable = gAdapterInfo.SkuTable;
+    adapterInfo->WaTable = gAdapterInfo.WaTable;
     adapterInfo->CacheLineSize = 64;
     adapterInfo->MinRenderFreq = 350;
     adapterInfo->MaxRenderFreq = 1150;
