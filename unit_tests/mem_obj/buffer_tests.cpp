@@ -294,7 +294,7 @@ TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrRende
 
 TEST(Buffer, givenRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturnedIn64Bit) {
     MemoryProperties properties;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, false, true);
     if (is32bit) {
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
     } else {
@@ -304,7 +304,7 @@ TEST(Buffer, givenRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenB
 
 TEST(Buffer, givenRenderCompressedBuffersDisabledLocalMemoryEnabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturnedIn64Bit) {
     MemoryProperties properties;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, true);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, true, true);
     if (is32bit) {
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
     } else {
@@ -314,27 +314,27 @@ TEST(Buffer, givenRenderCompressedBuffersDisabledLocalMemoryEnabledWhenAllocatio
 
 TEST(Buffer, givenSharedContextWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
     MemoryProperties properties;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, true, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, true, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, false, true);
     EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenSharedContextAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
     MemoryProperties properties;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, true, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, true, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, false, true);
     EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
     MemoryProperties properties;
     properties.flags = CL_MEM_USE_HOST_PTR;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, false, true);
     EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
     MemoryProperties properties;
     properties.flags = CL_MEM_USE_HOST_PTR;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, true);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, true, true);
     if (is64bit) {
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
     } else {
@@ -345,7 +345,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledWhenAllocationTypeIsQueried
 TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
     MemoryProperties properties;
     properties.flags = CL_MEM_ALLOC_HOST_PTR;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, false, true);
     if (is64bit) {
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
     } else {
@@ -356,14 +356,14 @@ TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferTypeIsRet
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferMemoryTypeIsReturned) {
     MemoryProperties properties;
     properties.flags = CL_MEM_USE_HOST_PTR;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, false, true);
     EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferMemoryTypeIsReturned) {
     MemoryProperties properties;
     properties.flags = CL_MEM_USE_HOST_PTR;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, true);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, true, true);
     if (is64bit) {
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, type);
     } else {
@@ -374,14 +374,14 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledAndRenderCompressedBuffersE
 TEST(Buffer, givenUseHostPointerFlagAndForceSharedPhysicalStorageWhenLocalMemoryIsEnabledThenBufferHostMemoryTypeIsReturned) {
     MemoryProperties properties;
     properties.flags = CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, true);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, true, true);
     EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
 }
 
 TEST(Buffer, givenAllocHostPtrFlagAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturned) {
     MemoryProperties properties;
     properties.flags = CL_MEM_ALLOC_HOST_PTR;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, true, false, true);
     if (is64bit) {
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, type);
     } else {
@@ -391,7 +391,7 @@ TEST(Buffer, givenAllocHostPtrFlagAndRenderCompressedBuffersEnabledWhenAllocatio
 
 TEST(Buffer, givenZeroFlagsNoSharedContextAndRenderCompressedBuffersDisabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
     MemoryProperties properties;
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(properties, false, ContextType::CONTEXT_TYPE_UNRESTRICTIVE, false, false, true);
     if (is32bit) {
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
     } else {

@@ -136,7 +136,8 @@ Buffer *Buffer::create(Context *context,
         context->isSharedContext,
         context->peekContextType(),
         HwHelper::renderCompressedBuffersSupported(context->getDevice(0)->getHardwareInfo()),
-        memoryManager->isLocalMemorySupported());
+        memoryManager->isLocalMemorySupported(),
+        HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo()));
 
     checkMemory(properties.flags, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager);
 
@@ -337,7 +338,7 @@ void Buffer::checkMemory(cl_mem_flags flags,
 
 GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const MemoryProperties &properties, bool sharedContext,
                                                                      ContextType contextType, bool renderCompressedBuffers,
-                                                                     bool isLocalMemoryEnabled) {
+                                                                     bool isLocalMemoryEnabled, bool preferCompression) {
     if (is32bit || sharedContext || isValueSet(properties.flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL)) {
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
@@ -346,7 +347,7 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const Memor
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
-    if (MemObjHelper::isSuitableForRenderCompression(renderCompressedBuffers, properties, contextType)) {
+    if (MemObjHelper::isSuitableForRenderCompression(renderCompressedBuffers, properties, contextType, preferCompression)) {
         return GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
     }
     return GraphicsAllocation::AllocationType::BUFFER;

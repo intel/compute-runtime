@@ -40,6 +40,7 @@ class HwHelper {
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance) const = 0;
     virtual bool supportsYTiling() const = 0;
+    virtual bool obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo) const = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
     static bool renderCompressedImagesSupported(const HardwareInfo &hwInfo);
     static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
@@ -119,6 +120,8 @@ class HwHelperHw : public HwHelper {
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override;
 
     bool supportsYTiling() const override;
+
+    bool obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo) const override;
 
     bool timestampPacketWriteSupported() const override;
 

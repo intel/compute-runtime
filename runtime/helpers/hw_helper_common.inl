@@ -33,6 +33,11 @@ bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const 
 }
 
 template <typename Family>
+bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <typename Family>
 void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) {
     caps->image3DMaxHeight = 16384;
     caps->image3DMaxWidth = 16384;

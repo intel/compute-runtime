@@ -101,7 +101,7 @@ class MemObjHelper {
         return isFieldValid(flags, allValidFlags);
     }
 
-    static bool isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, ContextType contextType);
+    static bool isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, ContextType contextType, bool preferCompression);
 
   protected:
     static bool checkUsedFlagsForBuffer(const MemoryProperties &properties) {

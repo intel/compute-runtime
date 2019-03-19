@@ -142,7 +142,7 @@ class Buffer : public MemObj {
                             MemoryManager *memMngr);
     static GraphicsAllocation::AllocationType getGraphicsAllocationType(const MemoryProperties &properties, bool sharedContext,
                                                                         ContextType contextType, bool renderCompressedBuffers,
-                                                                        bool localMemoryEnabled);
+                                                                        bool localMemoryEnabled, bool preferCompression);
     static bool isReadOnlyMemoryPermittedByFlags(cl_mem_flags flags);
 
     void transferData(void *dst, void *src, size_t copySize, size_t copyOffset);
