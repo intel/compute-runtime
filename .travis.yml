@@ -13,6 +13,9 @@ notifications:
 matrix:
     include:
         - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-16.04 COMPILER=gcc-5
+        - os: linux
           compiler: clang
           env: BUILD_OS=ubuntu-16.04 COMPILER=clang-4
         - os: linux
@@ -27,6 +30,9 @@ matrix:
         - os: linux
           compiler: clang
           env: BUILD_OS=ubuntu-18.04 COMPILER=clang-6
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-5
         - os: linux
           compiler: gcc
           env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-6
