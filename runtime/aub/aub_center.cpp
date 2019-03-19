@@ -8,6 +8,7 @@
 #include "runtime/aub/aub_center.h"
 
 #include "runtime/aub/aub_helper.h"
+#include "runtime/helpers/device_helpers.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -21,7 +22,7 @@ extern aub_stream::AubManager *createAubManager(uint32_t productFamily, uint32_t
 
 AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (DebugManager.flags.UseAubStream.get()) {
-        auto devicesCount = AubHelper::getDevicesCount(pHwInfo);
+        auto devicesCount = DeviceHelper::getDevicesCount(pHwInfo);
         auto memoryBankSize = AubHelper::getMemBankSize(pHwInfo);
         CommandStreamReceiverType type = csrType;
         if (DebugManager.flags.SetCommandStreamReceiver.get() >= CommandStreamReceiverType::CSR_HW) {

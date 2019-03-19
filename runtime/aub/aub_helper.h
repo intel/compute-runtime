@@ -33,7 +33,6 @@ class AubHelper : public NonCopyableOrMovableClass {
     static uint64_t getPTEntryBits(uint64_t pdEntryBits);
     static uint32_t getMemType(uint32_t addressSpace);
     static uint64_t getMemBankSize(const HardwareInfo *pHwInfo);
-    static uint32_t getDevicesCount(const HardwareInfo *pHwInfo);
     static MMIOList getAdditionalMmioList();
 
     virtual int getDataHintForPml4Entry() const = 0;

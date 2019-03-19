@@ -33,8 +33,4 @@ uint64_t AubHelper::getMemBankSize(const HardwareInfo *pHwInfo) {
     return getTotalMemBankSize();
 }
 
-uint32_t AubHelper::getDevicesCount(const HardwareInfo *pHwInfo) {
-    return DebugManager.flags.CreateMultipleDevices.get() > 0 ? DebugManager.flags.CreateMultipleDevices.get() : 1u;
-}
-
 } // namespace OCLRT

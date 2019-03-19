@@ -10,6 +10,7 @@
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/helpers/device_helpers.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -42,11 +43,11 @@ TEST(AubHelper, WhenCreateMultipleDevicesIsSetThenGetDevicesCountReturnedCorrect
     HardwareInfo hwInfo{&platform, &skuTable, &waTable, &sysInfo, capTable};
     DebugManager.flags.CreateMultipleDevices.set(2);
 
-    uint32_t devicesCount = AubHelper::getDevicesCount(&hwInfo);
+    uint32_t devicesCount = DeviceHelper::getDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 2u);
 
     DebugManager.flags.CreateMultipleDevices.set(0);
-    devicesCount = AubHelper::getDevicesCount(&hwInfo);
+    devicesCount = DeviceHelper::getDevicesCount(&hwInfo);
     EXPECT_EQ(devicesCount, 1u);
 }
 
