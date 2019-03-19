@@ -10,6 +10,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
+#include "unit_tests/fixtures/mock_aub_center_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/variable_backup.h"
@@ -36,8 +37,9 @@ struct MockPlatformWithMockExecutionEnvironment : public Platform {
 
     MockPlatformWithMockExecutionEnvironment() {
         this->executionEnvironment->decRefInternal();
-        mockExecutionEnvironment = new MockExecutionEnvironment;
+        mockExecutionEnvironment = new MockExecutionEnvironment(nullptr, false);
         executionEnvironment = mockExecutionEnvironment;
+        MockAubCenterFixture::setMockAubCenter(executionEnvironment);
         executionEnvironment->incRefInternal();
     }
 };

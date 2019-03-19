@@ -28,6 +28,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/fixtures/mock_aub_center_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -144,8 +145,9 @@ class WddmCommandStreamWithMockGdiFixture {
 using WddmCommandStreamTest = ::Test<WddmCommandStreamFixture>;
 using WddmCommandStreamMockGdiTest = ::Test<WddmCommandStreamWithMockGdiFixture>;
 using WddmDefaultTest = ::Test<DeviceFixture>;
+using DeviceCommandStreamTest = ::Test<MockAubCenterFixture>;
 
-TEST(DeviceCommandStreamTest, CreateWddmCSR) {
+TEST_F(DeviceCommandStreamTest, CreateWddmCSR) {
     auto wddm = Wddm::createWddm();
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
@@ -156,7 +158,7 @@ TEST(DeviceCommandStreamTest, CreateWddmCSR) {
     EXPECT_NE(nullptr, wddmFromCsr);
 }
 
-TEST(DeviceCommandStreamTest, CreateWddmCSRWithAubDump) {
+TEST_F(DeviceCommandStreamTest, CreateWddmCSRWithAubDump) {
     auto wddm = Wddm::createWddm();
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->osInterface = std::make_unique<OSInterface>();

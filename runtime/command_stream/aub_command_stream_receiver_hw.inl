@@ -114,7 +114,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName
     if (aubManager) {
         if (!aubManager->isOpen()) {
             aubManager->open(fileName);
-            DEBUG_BREAK_IF(!aubManager->isOpen());
+            UNRECOVERABLE_IF(!aubManager->isOpen());
         }
         return;
     }
@@ -124,9 +124,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName
         stream->open(fileName.c_str());
 
         if (!getAubStream()->isOpen()) {
-            // This DEBUG_BREAK_IF most probably means you are not executing aub tests with correct current directory (containing aub_out folder)
+            // This UNRECOVERABLE_IF most probably means you are not executing aub tests with correct current directory (containing aub_out folder)
             // try adding <familycodename>_aub
-            DEBUG_BREAK_IF(true);
+            UNRECOVERABLE_IF(true);
         }
         // Add the file header
         stream->init(AubMemDump::SteppingValues::A, aubDeviceId);

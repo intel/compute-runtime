@@ -15,10 +15,12 @@
 #include "runtime/os_interface/os_context.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
+#include "unit_tests/fixtures/mock_aub_center_fixture.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_os_context.h"
 
 using namespace NEO;
@@ -101,8 +103,9 @@ struct MyMockCsrWithAubDump : CommandStreamReceiverWithAUBDump<BaseCSR> {
     }
 };
 
-struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bool /*createAubCSR*/> {
+struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bool /*createAubCSR*/>, MockAubCenterFixture {
     void SetUp() override {
+        MockAubCenterFixture::SetUp();
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         createAubCSR = GetParam();
         csrWithAubDump = new MyMockCsrWithAubDump<MyMockCsr>(createAubCSR, *executionEnvironment);
@@ -118,6 +121,7 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
     }
 
     void TearDown() override {
+        MockAubCenterFixture::TearDown();
         delete csrWithAubDump;
     }
     ExecutionEnvironment *executionEnvironment;
@@ -126,7 +130,7 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
     bool createAubCSR;
 };
 
-using CommandStreamReceiverWithAubDumpSimpleTest = ::testing::Test;
+using CommandStreamReceiverWithAubDumpSimpleTest = Test<MockAubCenterFixture>;
 
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenSettingOsContextThenReplicateItToAubCsr) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
@@ -172,6 +176,14 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenNullAubManagerAvailabl
 
     CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> csrWithAubDump("aubfile", *executionEnvironment);
     EXPECT_NE(nullptr, csrWithAubDump.aubCSR);
+}
+
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenAubManagerNotAvailableWhenHwCsrWithAubDumpIsCreatedThenAubCsrIsCreated) {
+    std::string fileName = "file_name.aub";
+
+    MockExecutionEnvironment executionEnvironment(platformDevices[0]);
+    CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump("aubfile", executionEnvironment);
+    ASSERT_NE(nullptr, csrWithAubDump.aubCSR);
 }
 
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenCtorIsCalledThenAubCsrIsInitialized) {

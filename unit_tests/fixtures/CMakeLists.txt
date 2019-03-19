@@ -6,6 +6,7 @@
 
 set(IGDRCL_SRCS_tests_fixtures
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/buffer_enqueue_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/context_fixture.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/context_fixture.h
@@ -28,6 +29,7 @@ set(IGDRCL_SRCS_tests_fixtures
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_allocator_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_fixture.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_fixture.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_center_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/preemption_fixture.cpp

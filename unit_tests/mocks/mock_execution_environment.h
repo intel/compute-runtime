@@ -9,11 +9,13 @@
 
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/options.h"
+#include "unit_tests/fixtures/mock_aub_center_fixture.h"
 
 namespace NEO {
 struct MockExecutionEnvironment : ExecutionEnvironment {
     MockExecutionEnvironment() = default;
-    MockExecutionEnvironment(const HardwareInfo *hwInfo) {
+    MockExecutionEnvironment(const HardwareInfo *hwInfo) : MockExecutionEnvironment(hwInfo, true) {}
+    MockExecutionEnvironment(const HardwareInfo *hwInfo, bool useMockAubCenter) : useMockAubCenter(useMockAubCenter) {
         setHwInfo(hwInfo);
     }
     void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) override {
@@ -22,10 +24,14 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
             localMemoryEnabledReceived = localMemoryEnabled;
             aubFileNameReceived = aubFileName;
         }
+        if (useMockAubCenter) {
+            MockAubCenterFixture::setMockAubCenter(this);
+        }
         ExecutionEnvironment::initAubCenter(localMemoryEnabled, aubFileName, csrType);
     }
     bool initAubCenterCalled = false;
     bool localMemoryEnabledReceived = false;
     std::string aubFileNameReceived = "";
+    bool useMockAubCenter = true;
 };
 } // namespace NEO
