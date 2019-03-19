@@ -34,6 +34,9 @@ matrix:
           compiler: clang
           env: BUILD_OS=ubuntu-18.04 COMPILER=clang-7
         - os: linux
+          compiler: clang
+          env: BUILD_OS=ubuntu-18.04 COMPILER=clang-8
+        - os: linux
           compiler: gcc
           env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-5
         - os: linux
