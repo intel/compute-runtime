@@ -55,14 +55,6 @@ uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getMemoryBankForGtt(
 }
 
 template <typename GfxFamily>
-uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getEngineIndex(EngineInstanceT engineInstance) {
-    auto findCriteria = [&](const auto &it) { return it.type == engineInstance.type && it.id == engineInstance.id; };
-    auto findResult = std::find_if(allEngineInstances.begin(), allEngineInstances.end(), findCriteria);
-    UNRECOVERABLE_IF(findResult == allEngineInstances.end());
-    return static_cast<uint32_t>(findResult - allEngineInstances.begin());
-}
-
-template <typename GfxFamily>
 const AubMemDump::LrcaHelper &CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getCsTraits(EngineInstanceT engineInstance) {
     return *AUBFamilyMapper<GfxFamily>::csTraits[engineInstance.type];
 }
@@ -91,12 +83,11 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
     CommandStreamReceiverHw<GfxFamily>::setupContext(osContext);
 
     auto engineType = osContext.getEngineType();
-    engineIndex = getEngineIndex(engineType);
     uint32_t flags = 0;
     getCsTraits(engineType).setContextSaveRestoreFlags(flags);
 
     if (aubManager && !osContext.isLowPriority()) {
-        hardwareContextController = std::make_unique<HardwareContextController>(*aubManager, osContext, engineIndex, flags);
+        hardwareContextController = std::make_unique<HardwareContextController>(*aubManager, osContext, flags);
     }
 }
 

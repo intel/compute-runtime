@@ -90,7 +90,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
     }
 
     auto csTraits = this->getCsTraits(osContext->getEngineType());
-    auto &engineInfo = engineInfoTable[engineIndex];
+    auto &engineInfo = engineInfoTable[osContext->getEngineType().type];
 
     if (engineInfo.pLRCA) {
         return;
@@ -231,7 +231,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBuff
     }
 
     auto csTraits = this->getCsTraits(osContext->getEngineType());
-    auto &engineInfo = engineInfoTable[engineIndex];
+    auto &engineInfo = engineInfoTable[osContext->getEngineType().type];
 
     {
         auto physBatchBuffer = ppgtt->map(static_cast<uintptr_t>(batchBufferGpuAddress), batchBufferSize, entryBits, memoryBank);

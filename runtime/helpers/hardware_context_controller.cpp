@@ -12,11 +12,11 @@
 
 using namespace OCLRT;
 
-HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext, uint32_t engineIndex, uint32_t flags) {
+HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext, uint32_t flags) {
     auto deviceBitfield = osContext.getDeviceBitfield();
     for (uint32_t deviceIndex = 0; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {
-            hardwareContexts.emplace_back(aubManager.createHardwareContext(deviceIndex, engineIndex, flags));
+            hardwareContexts.emplace_back(aubManager.createHardwareContext(deviceIndex, osContext.getEngineType().type, flags));
         }
     }
 }

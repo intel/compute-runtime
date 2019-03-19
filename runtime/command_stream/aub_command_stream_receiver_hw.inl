@@ -150,13 +150,12 @@ const std::string AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
     if (hardwareContextController) {
-        DEBUG_BREAK_IF(allEngineInstances[engineIndex].type != osContext->getEngineType().type);
         hardwareContextController->initialize();
         return;
     }
 
     auto csTraits = this->getCsTraits(osContext->getEngineType());
-    auto &engineInfo = engineInfoTable[engineIndex];
+    auto &engineInfo = engineInfoTable[osContext->getEngineType().type];
 
     if (engineInfo.pLRCA) {
         return;
@@ -409,7 +408,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBuff
     }
 
     auto csTraits = this->getCsTraits(osContext->getEngineType());
-    auto &engineInfo = engineInfoTable[engineIndex];
+    auto &engineInfo = engineInfoTable[osContext->getEngineType().type];
 
     {
         {

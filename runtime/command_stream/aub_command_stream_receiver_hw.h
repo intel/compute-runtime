@@ -28,7 +28,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
     using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using ExternalAllocationsContainer = std::vector<AllocationView>;
-    using BaseClass::engineIndex;
     using BaseClass::getParametersForWriteMemory;
     using BaseClass::osContext;
 

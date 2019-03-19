@@ -30,7 +30,6 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     using AUB = typename AUBFamilyMapper<GfxFamily>::AUB;
     using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;
 
-    uint32_t engineIndex = 0;
     bool getParametersForWriteMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const;
 
   public:
@@ -42,7 +41,6 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
     void getGTTData(void *memory, AubGTTData &data);
     uint32_t getMemoryBankForGtt() const;
-    uint32_t getEngineIndex(EngineInstanceT engineInstance);
     static const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance);
     void initEngineMMIO();
     void submitLRCA(const MiContextDescriptorReg &contextDescriptor);
@@ -67,7 +65,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
         uint32_t ggttRingBuffer;
         size_t sizeRingBuffer;
         uint32_t tailRingBuffer;
-    } engineInfoTable[EngineInstanceConstants::numAllEngineInstances] = {};
+    } engineInfoTable[EngineType::NUM_ENGINES] = {};
 
     AubMemDump::AubStream *stream;
 };
