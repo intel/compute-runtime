@@ -32,9 +32,11 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo_create.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_neo_memory_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_null_device.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linux_inc.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h

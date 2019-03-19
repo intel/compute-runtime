@@ -6,12 +6,14 @@
  */
 
 #pragma once
+#include "runtime/os_interface/linux/memory_info.h"
 #include "runtime/utilities/api_intercept.h"
 
 #include "igfxfmid.h"
 
 #include <cerrno>
 #include <fcntl.h>
+#include <memory>
 #include <string>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -68,6 +70,7 @@ class Drm {
     MOCKABLE_VIRTUAL int getErrno();
     void setSimplifiedMocsTableUsage(bool value);
     bool getSimplifiedMocsTableUsage() const;
+    void queryMemoryInfo();
 
   protected:
     bool useSimplifiedMocsTable = false;
@@ -77,6 +80,7 @@ class Drm {
     int revisionId;
     GTTYPE eGtType;
     Drm(int fd) : fd(fd), deviceId(0), revisionId(0), eGtType(GTTYPE_UNDEFINED) {}
+    std::unique_ptr<MemoryInfo> memoryInfo;
 
     static bool isi915Version(int fd);
     static int getDeviceFd(const int devType);

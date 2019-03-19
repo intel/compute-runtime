@@ -27,6 +27,7 @@ static const int mockFd = 33;
 // Mock DRM class that responds to DRM_IOCTL_I915_GETPARAMs
 class DrmMock : public Drm {
   public:
+    using Drm::memoryInfo;
     using Drm::preemptionSupported;
 
     DrmMock() : Drm(mockFd) {
@@ -39,6 +40,8 @@ class DrmMock : public Drm {
         }
     }
     int ioctl(unsigned long request, void *arg) override {
+        ioctlCallsCount++;
+
         if ((request == DRM_IOCTL_I915_GETPARAM) && (arg != nullptr)) {
             drm_i915_getparam_t *gp = (drm_i915_getparam_t *)arg;
             if (false
@@ -243,6 +246,7 @@ class DrmMock : public Drm {
     int StoredExecSoftPin = 0;
     uint32_t StoredCtxId = 1;
     uint32_t receivedDestroyContextId = 0;
+    uint32_t ioctlCallsCount = 0;
 
     uint32_t receivedContextParamRequestCount = 0;
     drm_i915_gem_context_param receivedContextParamRequest = {};
