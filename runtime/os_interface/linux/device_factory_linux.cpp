@@ -20,12 +20,10 @@
 #include <vector>
 
 namespace OCLRT {
-
 size_t DeviceFactory::numDevices = 0;
-HardwareInfo *DeviceFactory::hwInfos = nullptr;
+HardwareInfo *DeviceFactory::hwInfo = nullptr;
 
 bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
-    std::vector<HardwareInfo> tHwInfos;
     unsigned int devNum = 0;
     size_t requiredDeviceCount = 1;
 
@@ -41,28 +39,19 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, Exec
     executionEnvironment.osInterface.reset(new OSInterface());
     executionEnvironment.osInterface->get()->setDrm(drm);
 
+    auto hardwareInfo = std::make_unique<HardwareInfo>();
     const HardwareInfo *pCurrDevice = platformDevices[devNum];
-
-    while (devNum < requiredDeviceCount) {
-        HardwareInfo tmpHwInfo;
-        HwInfoConfig *hwConfig = HwInfoConfig::get(pCurrDevice->pPlatform->eProductFamily);
-        if (hwConfig->configureHwInfo(pCurrDevice, &tmpHwInfo, executionEnvironment.osInterface.get())) {
-            return false;
-        }
-        tHwInfos.push_back(tmpHwInfo);
-        devNum++;
+    HwInfoConfig *hwConfig = HwInfoConfig::get(pCurrDevice->pPlatform->eProductFamily);
+    if (hwConfig->configureHwInfo(pCurrDevice, hardwareInfo.get(), executionEnvironment.osInterface.get())) {
+        return false;
     }
 
-    HardwareInfo *ptr = new HardwareInfo[devNum];
-    for (size_t i = 0; i < tHwInfos.size(); i++)
-        ptr[i] = tHwInfos[i];
-
-    numDevices = devNum;
-    *pHWInfos = ptr;
+    numDevices = requiredDeviceCount;
+    *pHWInfos = hardwareInfo.release();
     executionEnvironment.setHwInfo(*pHWInfos);
 
-    DeviceFactory::numDevices = devNum;
-    DeviceFactory::hwInfos = ptr;
+    DeviceFactory::numDevices = numDevices;
+    DeviceFactory::hwInfo = *pHWInfos;
 
     return true;
 }
@@ -71,14 +60,14 @@ void DeviceFactory::releaseDevices() {
     if (DeviceFactory::numDevices > 0) {
         for (unsigned int i = 0; i < DeviceFactory::numDevices; ++i) {
             Drm::closeDevice(i);
-            delete hwInfos[i].pSysInfo;
-            delete hwInfos[i].pSkuTable;
-            delete hwInfos[i].pWaTable;
-            delete hwInfos[i].pPlatform;
         }
-        delete[] hwInfos;
+        delete hwInfo->pSysInfo;
+        delete hwInfo->pSkuTable;
+        delete hwInfo->pWaTable;
+        delete hwInfo->pPlatform;
+        delete hwInfo;
     }
-    DeviceFactory::hwInfos = nullptr;
+    DeviceFactory::hwInfo = nullptr;
     DeviceFactory::numDevices = 0;
 }
 

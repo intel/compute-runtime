@@ -9,6 +9,7 @@
 
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
+#include "runtime/helpers/device_helpers.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/hw_info_config.h"
@@ -20,36 +21,31 @@ namespace OCLRT {
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 
 size_t DeviceFactory::numDevices = 0;
-HardwareInfo *DeviceFactory::hwInfos = nullptr;
+HardwareInfo *DeviceFactory::hwInfo = nullptr;
 
 bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
-    auto totalDeviceCount = 1u;
-    if (DebugManager.flags.CreateMultipleDevices.get()) {
-        totalDeviceCount = DebugManager.flags.CreateMultipleDevices.get();
-    }
-    std::unique_ptr<HardwareInfo[]> tempHwInfos(new HardwareInfo[totalDeviceCount]);
     numDevices = 0;
 
-    while (numDevices < totalDeviceCount) {
-        std::unique_ptr<Wddm> wddm(Wddm ::createWddm());
-        if (!wddm->enumAdapters(tempHwInfos[numDevices])) {
-            return false;
-        }
-
-        executionEnvironment.osInterface.reset(new OSInterface());
-        executionEnvironment.osInterface->get()->setWddm(wddm.release());
-
-        HwInfoConfig *hwConfig = HwInfoConfig::get(tempHwInfos[numDevices].pPlatform->eProductFamily);
-        if (hwConfig->configureHwInfo(&tempHwInfos[numDevices], &tempHwInfos[numDevices], nullptr)) {
-            return false;
-        }
-        numDevices++;
+    auto hardwareInfo = std::make_unique<HardwareInfo>();
+    std::unique_ptr<Wddm> wddm(Wddm ::createWddm());
+    if (!wddm->enumAdapters(*hardwareInfo)) {
+        return false;
     }
 
-    *pHWInfos = tempHwInfos.get();
+    auto totalDeviceCount = DeviceHelper::getDevicesCount(hardwareInfo.get());
+
+    executionEnvironment.osInterface.reset(new OSInterface());
+    executionEnvironment.osInterface->get()->setWddm(wddm.release());
+
+    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->pPlatform->eProductFamily);
+    if (hwConfig->configureHwInfo(hardwareInfo.get(), hardwareInfo.get(), nullptr)) {
+        return false;
+    }
+
+    *pHWInfos = hardwareInfo.release();
+    numDevices = totalDeviceCount;
     DeviceFactory::numDevices = numDevices;
-    DeviceFactory::hwInfos = tempHwInfos.get();
-    tempHwInfos.release();
+    DeviceFactory::hwInfo = *pHWInfos;
 
     executionEnvironment.setHwInfo(*pHWInfos);
     executionEnvironment.initGmm();
@@ -62,15 +58,13 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, Exec
 
 void DeviceFactory::releaseDevices() {
     if (DeviceFactory::numDevices > 0) {
-        for (unsigned int i = 0; i < DeviceFactory::numDevices; ++i) {
-            delete hwInfos[i].pPlatform;
-            delete hwInfos[i].pSkuTable;
-            delete hwInfos[i].pWaTable;
-            delete hwInfos[i].pSysInfo;
-        }
-        delete[] hwInfos;
+        delete hwInfo->pPlatform;
+        delete hwInfo->pSkuTable;
+        delete hwInfo->pWaTable;
+        delete hwInfo->pSysInfo;
+        delete hwInfo;
     }
-    DeviceFactory::hwInfos = nullptr;
+    DeviceFactory::hwInfo = nullptr;
     DeviceFactory::numDevices = 0;
 }
 

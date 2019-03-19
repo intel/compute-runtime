@@ -19,26 +19,26 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(HardwareInfo **pHWInfos, 
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
     auto hwInfoConst = *platformDevices;
     getHwInfoForPlatformString(productFamily.c_str(), hwInfoConst);
-    std::unique_ptr<HardwareInfo[]> tempHwInfos(new HardwareInfo[totalDeviceCount]);
     numDevices = 0;
     std::string hwInfoConfig;
     DebugManager.getHardwareInfoOverride(hwInfoConfig);
-    while (numDevices < totalDeviceCount) {
-        tempHwInfos[numDevices].pPlatform = new PLATFORM(*hwInfoConst->pPlatform);
-        tempHwInfos[numDevices].pSkuTable = new FeatureTable(*hwInfoConst->pSkuTable);
-        tempHwInfos[numDevices].pWaTable = new WorkaroundTable(*hwInfoConst->pWaTable);
-        tempHwInfos[numDevices].pSysInfo = new GT_SYSTEM_INFO(*hwInfoConst->pSysInfo);
-        tempHwInfos[numDevices].capabilityTable = hwInfoConst->capabilityTable;
-        hardwareInfoSetup[hwInfoConst->pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(tempHwInfos[numDevices].pSysInfo),
-                                                                  const_cast<FeatureTable *>(tempHwInfos[numDevices].pSkuTable),
-                                                                  true, hwInfoConfig);
-        numDevices++;
-    }
-    *pHWInfos = tempHwInfos.get();
+
+    auto hardwareInfo = std::make_unique<HardwareInfo>();
+    hardwareInfo->pPlatform = new PLATFORM(*hwInfoConst->pPlatform);
+    hardwareInfo->pSkuTable = new FeatureTable(*hwInfoConst->pSkuTable);
+    hardwareInfo->pWaTable = new WorkaroundTable(*hwInfoConst->pWaTable);
+    hardwareInfo->pSysInfo = new GT_SYSTEM_INFO(*hwInfoConst->pSysInfo);
+    hardwareInfo->capabilityTable = hwInfoConst->capabilityTable;
+    hardwareInfoSetup[hwInfoConst->pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(hardwareInfo->pSysInfo),
+                                                              const_cast<FeatureTable *>(hardwareInfo->pSkuTable),
+                                                              true, hwInfoConfig);
+
+    *pHWInfos = hardwareInfo.release();
     executionEnvironment.setHwInfo(*pHWInfos);
+    numDevices = totalDeviceCount;
     DeviceFactory::numDevices = numDevices;
-    DeviceFactory::hwInfos = tempHwInfos.get();
-    tempHwInfos.release();
+    DeviceFactory::hwInfo = *pHWInfos;
+
     return true;
 }
 

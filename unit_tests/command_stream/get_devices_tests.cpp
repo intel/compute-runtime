@@ -41,6 +41,8 @@ struct GetDevicesTest : ::testing::Test {
 };
 
 HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
+    uint32_t expectedDevices = 1;
+    DebugManager.flags.CreateMultipleDevices.set(expectedDevices);
     for (int productFamilyIndex = 0; productFamilyIndex < IGFX_MAX_PRODUCT; productFamilyIndex++) {
         const char *hwPrefix = hardwarePrefix[productFamilyIndex];
         if (hwPrefix == nullptr) {
@@ -68,7 +70,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
             case CSR_HW_WITH_AUB:
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
-                EXPECT_EQ(1u, numDevices);
+                EXPECT_EQ(expectedDevices, numDevices);
                 DeviceFactory::releaseDevices();
                 break;
             case CSR_AUB:
@@ -76,7 +78,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
             case CSR_TBX_WITH_AUB:
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
-                EXPECT_EQ(1u, numDevices);
+                EXPECT_EQ(expectedDevices, numDevices);
                 for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
                     auto hardwareInfo = hardwareInfoTable[i];
                     if (hardwareInfo == nullptr)
@@ -100,6 +102,8 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
 }
 
 HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
+    uint32_t expectedDevices = 1;
+    DebugManager.flags.CreateMultipleDevices.set(expectedDevices);
     for (int csrTypes = 0; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
         CommandStreamReceiverType csrType = static_cast<CommandStreamReceiverType>(csrTypes);
         std::string productFamily("unk");
@@ -115,7 +119,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
         case CSR_HW_WITH_AUB:
             EXPECT_TRUE(ret);
             EXPECT_NE(nullptr, hwInfo);
-            EXPECT_EQ(1u, numDevices);
+            EXPECT_EQ(expectedDevices, numDevices);
             DeviceFactory::releaseDevices();
             break;
         case CSR_AUB:
@@ -123,7 +127,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
         case CSR_TBX_WITH_AUB: {
             EXPECT_TRUE(ret);
             EXPECT_NE(nullptr, hwInfo);
-            EXPECT_EQ(1u, numDevices);
+            EXPECT_EQ(expectedDevices, numDevices);
             for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
                 auto hardwareInfo = hardwareInfoTable[i];
                 if (hardwareInfo == nullptr)
