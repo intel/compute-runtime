@@ -146,41 +146,50 @@ class DrmMock : public Drm {
         if (request == DRM_IOCTL_I915_GEM_EXECBUFFER2) {
             drm_i915_gem_execbuffer2 *execbuf = (drm_i915_gem_execbuffer2 *)arg;
             this->execBuffer = *execbuf;
+            return 0;
         }
         if (request == DRM_IOCTL_I915_GEM_USERPTR) {
             auto *userPtrParams = (drm_i915_gem_userptr *)arg;
             userPtrParams->handle = returnHandle;
             returnHandle++;
+            return 0;
         }
         if (request == DRM_IOCTL_I915_GEM_CREATE) {
             auto *createParams = (drm_i915_gem_create *)arg;
             this->createParamsSize = createParams->size;
             this->createParamsHandle = createParams->handle = 1u;
+            return 0;
         }
         if (request == DRM_IOCTL_I915_GEM_SET_TILING) {
             auto *setTilingParams = (drm_i915_gem_set_tiling *)arg;
             setTilingMode = setTilingParams->tiling_mode;
             setTilingHandle = setTilingParams->handle;
             setTilingStride = setTilingParams->stride;
+            return 0;
         }
         if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
             auto *primeToHandleParams = (drm_prime_handle *)arg;
             //return BO
             primeToHandleParams->handle = outputHandle;
             inputFd = primeToHandleParams->fd;
+            return 0;
         }
         if (request == DRM_IOCTL_I915_GEM_GET_APERTURE) {
             auto aperture = (drm_i915_gem_get_aperture *)arg;
             aperture->aper_available_size = gpuMemSize;
             aperture->aper_size = gpuMemSize;
+            return 0;
         }
         if (request == DRM_IOCTL_I915_GEM_MMAP) {
             auto mmap_arg = static_cast<drm_i915_gem_mmap *>(arg);
             mmap_arg->addr_ptr = reinterpret_cast<__u64>(lockedPtr);
+            return 0;
+        }
+        if (request == DRM_IOCTL_I915_GEM_WAIT) {
+            return 0;
         }
 
-        handleRemainingRequests(request, arg);
-        return 0;
+        return handleRemainingRequests(request, arg);
     }
 
     void setSysFsDefaultGpuPath(const char *path) {
@@ -257,7 +266,7 @@ class DrmMock : public Drm {
     //DRM_IOCTL_I915_GEM_MMAP
     uint64_t lockedPtr[4];
 
-    virtual void handleRemainingRequests(unsigned long request, void *arg){};
+    virtual int handleRemainingRequests(unsigned long request, void *arg);
 
   private:
     const char *sysFsDefaultGpuPathToRestore;
