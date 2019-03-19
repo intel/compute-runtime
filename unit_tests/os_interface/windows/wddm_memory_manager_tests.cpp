@@ -208,7 +208,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
 
     D3DDDI_OPENALLOCATIONINFO allocationInfo;
     allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
-    allocationInfo.hAllocation = static_cast<D3DKMT_HANDLE>(0x4000);
+    allocationInfo.hAllocation = ALLOCATION_HANDLE;
     allocationInfo.PrivateDriverDataSize = sizeof(GMM_RESOURCE_INFO);
 
     gdi->getOpenResourceArgOut().pOpenAllocationInfo = &allocationInfo;
@@ -217,6 +217,26 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, whenCreateAllocationFromHandleAndMapCallFailsThenFreeGraphicsMemoryIsCalled) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, *executionEnvironment));
+    auto osHandle = 1u;
+    gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
+    auto gmm = std::make_unique<Gmm>(nullptr, 0, false);
+
+    D3DDDI_OPENALLOCATIONINFO allocationInfo;
+    allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
+    allocationInfo.hAllocation = ALLOCATION_HANDLE;
+    allocationInfo.PrivateDriverDataSize = sizeof(GMM_RESOURCE_INFO);
+    wddm->mapGpuVaStatus = false;
+    wddm->callBaseMapGpuVa = false;
+
+    gdi->getOpenResourceArgOut().pOpenAllocationInfo = &allocationInfo;
+    EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryImplCalled);
+    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryImplCalled);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest,

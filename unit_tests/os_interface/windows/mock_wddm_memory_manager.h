@@ -41,5 +41,12 @@ class MockWddmMemoryManager : public WddmMemoryManager {
         getAllocationData(allocationData, MockAllocationProperties(allocateMemory, size, allocationType), {}, ptr);
         return allocate32BitGraphicsMemoryImpl(allocationData);
     }
+
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override {
+        freeGraphicsMemoryImplCalled++;
+        BaseClass::freeGraphicsMemoryImpl(gfxAllocation);
+    }
+
+    uint32_t freeGraphicsMemoryImplCalled = 0u;
 };
 } // namespace OCLRT

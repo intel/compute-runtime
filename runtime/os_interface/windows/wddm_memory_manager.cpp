@@ -214,7 +214,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
 GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle) {
     auto allocation = std::make_unique<WddmAllocation>(GraphicsAllocation::AllocationType::UNDECIDED, nullptr, 0, handle, MemoryPool::SystemCpuInaccessible, false);
 
-    bool status = ntHandle ? wddm->openNTHandle((HANDLE)((UINT_PTR)handle), allocation.get())
+    bool status = ntHandle ? wddm->openNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(handle)), allocation.get())
                            : wddm->openSharedHandle(handle, allocation.get());
 
     if (!status) {
@@ -237,6 +237,10 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
     }
     status = mapGpuVirtualAddressWithRetry(allocation.get(), allocation->getReservedAddressPtr());
     DEBUG_BREAK_IF(!status);
+    if (!status) {
+        freeGraphicsMemoryImpl(allocation.release());
+        return nullptr;
+    }
 
     DebugManager.logAllocation(allocation.get());
     return allocation.release();
