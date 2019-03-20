@@ -31,4 +31,5 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
 template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
+template struct PipeControlHelper<Family>;
 } // namespace OCLRT

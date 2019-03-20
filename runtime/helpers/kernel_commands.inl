@@ -23,6 +23,9 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
+bool KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() { return false; }
+
+template <typename GfxFamily>
 uint32_t KernelCommandsHelper<GfxFamily>::computeSlmValues(uint32_t valueIn) {
     auto value = std::max(valueIn, 1024u);
     value = Math::nextPowerOfTwo(value);

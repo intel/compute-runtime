@@ -85,7 +85,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags);
     virtual void initPageTableManagerRegisters(LinearStream &csr){};
 
-    void addPipeControlWA(LinearStream &commandStream, bool flushDC);
+    void addPipeControlWA(LinearStream &commandStream);
     void addDcFlushToPipeControl(typename GfxFamily::PIPE_CONTROL *pCmd, bool flushDC);
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);

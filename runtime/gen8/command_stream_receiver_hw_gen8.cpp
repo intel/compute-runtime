@@ -25,15 +25,6 @@ void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, D
 }
 
 template <>
-void CommandStreamReceiverHw<Family>::addPipeControlWA(LinearStream &commandStream, bool flushDC) {
-}
-
-template <>
-int CommandStreamReceiverHw<Family>::getRequiredPipeControlSize() const {
-    return 1 * sizeof(Family::PIPE_CONTROL);
-}
-
-template <>
 void CommandStreamReceiverHw<Family>::addDcFlushToPipeControl(Family::PIPE_CONTROL *pCmd, bool flushDC) {
     pCmd->setDcFlushEnable(flushDC);
 }

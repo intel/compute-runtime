@@ -16,9 +16,6 @@
 
 namespace OCLRT {
 
-template <>
-bool KernelCommandsHelper<BDWFamily>::isPipeControlWArequired() { return false; }
-
 static uint32_t slmSizeId[] = {0, 1, 2, 4, 4, 8, 8, 8, 8, 16, 16, 16, 16, 16, 16, 16};
 
 template <>

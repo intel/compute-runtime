@@ -14,6 +14,4 @@
 namespace OCLRT {
 template struct KernelCommandsHelper<CNLFamily>;
 
-template <>
-bool KernelCommandsHelper<CNLFamily>::isPipeControlWArequired() { return true; }
 } // namespace OCLRT

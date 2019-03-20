@@ -112,7 +112,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     uint64_t TimeStampAddress = hwTimeStamps.getBaseGraphicsAllocation()->getGpuAddress() +
                                 ptrDiff(&hwTimeStamps.tagForCpuAccess->GlobalStartTS, hwTimeStamps.getBaseGraphicsAllocation()->getUnderlyingBuffer());
 
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, TimeStampAddress, 0llu);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, TimeStampAddress, 0llu, false);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
     TimeStampAddress = hwTimeStamps.getBaseGraphicsAllocation()->getGpuAddress() +
@@ -316,7 +316,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
 
     address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWTimeStamp.GlobalStartTS));
 
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, 0llu);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, 0llu, false);
 
     GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(commandQueue, hwPerfCounter, commandStream, true);
 
@@ -346,7 +346,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
 
     //Timestamp: Global End
     address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWTimeStamp.GlobalEndTS));
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, 0llu);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, 0llu, false);
 
     auto pReportPerfCount = (MI_REPORT_PERF_COUNT *)commandStream->getSpace(sizeof(MI_REPORT_PERF_COUNT));
     *pReportPerfCount = GfxFamily::cmdInitReportPerfCount;

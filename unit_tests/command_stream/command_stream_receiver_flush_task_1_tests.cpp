@@ -919,10 +919,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itorPC);
 
-    if (::renderCoreFamily != IGFX_GEN8_CORE) {
+    if (::renderCoreFamily == IGFX_GEN9_CORE) {
         // Verify that the dcFlushEnabled bit is set in PC
         auto pCmdWA = reinterpret_cast<PIPE_CONTROL *>(*itorPC);
-        EXPECT_EQ(true, pCmdWA->getDcFlushEnable());
+        EXPECT_FALSE(pCmdWA->getDcFlushEnable());
 
         if (pipeControlCount > 1) {
             // Search taskCS for PC to analyze
@@ -932,12 +932,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
 
             // Verify that the dcFlushEnabled bit is not set in PC
             auto pCmd = reinterpret_cast<PIPE_CONTROL *>(pipeControlTask);
-            EXPECT_EQ(false, pCmd->getDcFlushEnable());
+            EXPECT_TRUE(pCmd->getDcFlushEnable());
         }
     } else {
-        // Verify that the dcFlushEnabled bit is not set in PC
         auto pCmd = reinterpret_cast<PIPE_CONTROL *>(*itorPC);
-        EXPECT_EQ(true, pCmd->getDcFlushEnable());
+        EXPECT_TRUE(pCmd->getDcFlushEnable());
     }
 }
 
@@ -973,10 +972,15 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlush
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itorPC);
+    if (::renderCoreFamily == IGFX_GEN9_CORE) {
+        itorPC++;
+        itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
+        EXPECT_NE(cmdList.end(), itorPC);
+    }
 
     // Verify that the dcFlushEnabled bit is set in PC
     auto pCmdWA = reinterpret_cast<PIPE_CONTROL *>(*itorPC);
-    EXPECT_EQ(true, pCmdWA->getDcFlushEnable());
+    EXPECT_TRUE(pCmdWA->getDcFlushEnable());
 
     buffer->release();
 }

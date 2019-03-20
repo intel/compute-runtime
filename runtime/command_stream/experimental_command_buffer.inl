@@ -76,7 +76,7 @@ void ExperimentalCommandBuffer::addTimeStampPipeControl() {
 
     uint64_t timeStampAddress = timestamps->getGpuAddress() + timestampsOffset;
 
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(currentStream.get(), PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, timeStampAddress, 0llu);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(currentStream.get(), PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, timeStampAddress, 0llu, false);
 
     //moving to next chunk
     timestampsOffset += sizeof(uint64_t);

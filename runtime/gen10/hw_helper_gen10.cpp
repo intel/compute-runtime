@@ -32,4 +32,5 @@ bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool en
 template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
+template struct PipeControlHelper<Family>;
 } // namespace OCLRT

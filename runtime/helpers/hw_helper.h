@@ -181,18 +181,8 @@ struct PipeControlHelper {
     static PIPE_CONTROL *obtainPipeControlAndProgramPostSyncOperation(LinearStream *commandStream,
                                                                       POST_SYNC_OPERATION operation,
                                                                       uint64_t gpuAddress,
-                                                                      uint64_t immediateData) {
-        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
-        *pipeControl = GfxFamily::cmdInitPipeControl;
-        pipeControl->setCommandStreamerStallEnable(true);
-        pipeControl->setPostSyncOperation(operation);
-        pipeControl->setAddress(static_cast<uint32_t>(gpuAddress & 0x0000FFFFFFFFULL));
-        pipeControl->setAddressHigh(static_cast<uint32_t>(gpuAddress >> 32));
-        if (operation == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            pipeControl->setImmediateData(immediateData);
-        }
-        return pipeControl;
-    }
+                                                                      uint64_t immediateData,
+                                                                      bool dcFlush);
 };
 
 union SURFACE_STATE_BUFFER_LENGTH {

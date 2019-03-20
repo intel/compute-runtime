@@ -231,13 +231,13 @@ void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKer
 
     addPipeControlCmdWa();
 
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&slbCS, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, criticalSectionAddress, ExecutionModelCriticalSection::Free);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&slbCS, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, criticalSectionAddress, ExecutionModelCriticalSection::Free, false);
 
     uint64_t tagAddress = reinterpret_cast<uint64_t>(device->getDefaultEngine().commandStreamReceiver->getTagAddress());
 
     addPipeControlCmdWa();
 
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&slbCS, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, tagAddress, taskCount);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&slbCS, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, tagAddress, taskCount, false);
 
     addMediaStateClearCmds();
 

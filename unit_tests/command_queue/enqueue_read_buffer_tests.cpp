@@ -263,15 +263,15 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, blockingRequiresPipeContr
     auto *cmd = (PIPE_CONTROL *)*itorCmd;
     EXPECT_NE(cmdList.end(), itorCmd);
 
-    if (::renderCoreFamily != IGFX_GEN8_CORE) {
-        // SKL+: two PIPE_CONTROLs following GPGPU_WALKER: first has DcFlush and second has Write HwTag
-        EXPECT_TRUE(cmd->getDcFlushEnable());
+    if (::renderCoreFamily == IGFX_GEN9_CORE) {
+        // SKL: two PIPE_CONTROLs following GPGPU_WALKER: first has DcFlush and second has Write HwTag
+        EXPECT_FALSE(cmd->getDcFlushEnable());
         // Move to next PPC
         auto itorCmdP = ++((GenCmdList::iterator)itorCmd);
         EXPECT_NE(cmdList.end(), itorCmdP);
         auto itorCmd2 = find<PIPE_CONTROL *>(itorCmdP, cmdList.end());
         cmd = (PIPE_CONTROL *)*itorCmd2;
-        EXPECT_FALSE(cmd->getDcFlushEnable());
+        EXPECT_TRUE(cmd->getDcFlushEnable());
     } else {
         // BDW: single PIPE_CONTROL following GPGPU_WALKER has DcFlush and Write HwTag
         EXPECT_TRUE(cmd->getDcFlushEnable());

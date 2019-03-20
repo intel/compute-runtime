@@ -33,24 +33,6 @@ void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, D
 }
 
 template <>
-void CommandStreamReceiverHw<Family>::addPipeControlWA(LinearStream &commandStream, bool flushDC) {
-    auto pCmd = (Family::PIPE_CONTROL *)commandStream.getSpace(sizeof(Family::PIPE_CONTROL));
-    *pCmd = Family::cmdInitPipeControl;
-
-    pCmd->setDcFlushEnable(flushDC);
-    pCmd->setCommandStreamerStallEnable(true);
-}
-
-template <>
-int CommandStreamReceiverHw<Family>::getRequiredPipeControlSize() const {
-    return 2 * sizeof(Family::PIPE_CONTROL);
-}
-
-template <>
-void CommandStreamReceiverHw<Family>::addDcFlushToPipeControl(Family::PIPE_CONTROL *pCmd, bool flushDC) {
-}
-
-template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;

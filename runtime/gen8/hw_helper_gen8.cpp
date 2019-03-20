@@ -31,4 +31,5 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
 template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
+template struct PipeControlHelper<Family>;
 } // namespace OCLRT

@@ -59,6 +59,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itorPC);
+    if (::renderCoreFamily == IGFX_GEN9_CORE) {
+        itorPC++;
+        itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
+        EXPECT_NE(cmdList.end(), itorPC);
+    }
 
     // Verify that the dcFlushEnabled bit is set in PC
     auto pCmdWA = reinterpret_cast<PIPE_CONTROL *>(*itorPC);
@@ -331,16 +336,16 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests,
     auto cmdPC = genCmdCast<PIPE_CONTROL *>(*itorCmd);
     ASSERT_NE(nullptr, cmdPC);
 
-    if (::renderCoreFamily != IGFX_GEN8_CORE) {
-        // SKL+: two PIPE_CONTROLs following GPGPU_WALKER: first has DcFlush and second has Write HwTag
-        EXPECT_TRUE(cmdPC->getDcFlushEnable());
+    if (::renderCoreFamily == IGFX_GEN9_CORE) {
+        // SKL: two PIPE_CONTROLs following GPGPU_WALKER: first has DcFlush and second has Write HwTag
+        EXPECT_FALSE(cmdPC->getDcFlushEnable());
         auto itorCmdP = ++((GenCmdList::iterator)itorCmd);
         EXPECT_NE(cmdList.end(), itorCmdP);
         auto itorCmd2 = find<PIPE_CONTROL *>(itorCmdP, cmdList.end());
         cmdPC = (PIPE_CONTROL *)*itorCmd2;
-        EXPECT_FALSE(cmdPC->getDcFlushEnable());
+        EXPECT_TRUE(cmdPC->getDcFlushEnable());
     } else {
-        // BDW: single PIPE_CONTROL following GPGPU_WALKER has DcFlush and Write HwTag
+        // single PIPE_CONTROL following GPGPU_WALKER has DcFlush and Write HwTag
         EXPECT_TRUE(cmdPC->getDcFlushEnable());
     }
 
