@@ -82,7 +82,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::~AUBCommandStreamReceiverHw() {
     if (osContext) {
         pollForCompletion();
     }
-    freeEngineInfoTable();
+    freeEngineInfo();
 }
 
 template <typename GfxFamily>
@@ -98,7 +98,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::reopenFile(const std::string &fileNa
     if (isFileOpen()) {
         if (fileName != getFileName()) {
             closeFile();
-            freeEngineInfoTable();
+            freeEngineInfo();
         }
     }
     if (!isFileOpen()) {
@@ -155,7 +155,6 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
     }
 
     auto csTraits = this->getCsTraits(osContext->getEngineType());
-    auto &engineInfo = engineInfoTable[osContext->getEngineType().type];
 
     if (engineInfo.pLRCA) {
         return;
@@ -269,20 +268,18 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::freeEngineInfoTable() {
-    for (auto &engineInfo : engineInfoTable) {
-        alignedFree(engineInfo.pLRCA);
-        gttRemap->unmap(engineInfo.pLRCA);
-        engineInfo.pLRCA = nullptr;
+void AUBCommandStreamReceiverHw<GfxFamily>::freeEngineInfo() {
+    alignedFree(engineInfo.pLRCA);
+    gttRemap->unmap(engineInfo.pLRCA);
+    engineInfo.pLRCA = nullptr;
 
-        alignedFree(engineInfo.pGlobalHWStatusPage);
-        gttRemap->unmap(engineInfo.pGlobalHWStatusPage);
-        engineInfo.pGlobalHWStatusPage = nullptr;
+    alignedFree(engineInfo.pGlobalHWStatusPage);
+    gttRemap->unmap(engineInfo.pGlobalHWStatusPage);
+    engineInfo.pGlobalHWStatusPage = nullptr;
 
-        alignedFree(engineInfo.pRingBuffer);
-        gttRemap->unmap(engineInfo.pRingBuffer);
-        engineInfo.pRingBuffer = nullptr;
-    }
+    alignedFree(engineInfo.pRingBuffer);
+    gttRemap->unmap(engineInfo.pRingBuffer);
+    engineInfo.pRingBuffer = nullptr;
 }
 
 template <typename GfxFamily>
@@ -404,7 +401,6 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBuff
     }
 
     auto csTraits = this->getCsTraits(osContext->getEngineType());
-    auto &engineInfo = engineInfoTable[osContext->getEngineType().type];
 
     {
         {

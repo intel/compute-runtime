@@ -35,7 +35,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContextController;
-    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::engineInfoTable;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::engineInfo;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::stream;
 
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
@@ -84,7 +84,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL const std::string getFileName();
 
     MOCKABLE_VIRTUAL void initializeEngine();
-    void freeEngineInfoTable();
+    void freeEngineInfo();
     AubSubCaptureManager *subCaptureManager = nullptr;
     uint32_t aubDeviceId;
     bool standalone;

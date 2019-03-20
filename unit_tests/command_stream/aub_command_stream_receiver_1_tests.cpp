@@ -261,22 +261,21 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
 
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
     auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
-    auto engineType = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0].type;
 
     aubCsr1->setupContext(osContext);
     aubCsr1->initializeEngine();
-    EXPECT_NE(0u, aubCsr1->engineInfoTable[engineType].ggttLRCA);
-    EXPECT_NE(0u, aubCsr1->engineInfoTable[engineType].ggttHWSP);
-    EXPECT_NE(0u, aubCsr1->engineInfoTable[engineType].ggttRingBuffer);
+    EXPECT_NE(0u, aubCsr1->engineInfo.ggttLRCA);
+    EXPECT_NE(0u, aubCsr1->engineInfo.ggttHWSP);
+    EXPECT_NE(0u, aubCsr1->engineInfo.ggttRingBuffer);
 
     aubCsr2->setupContext(osContext);
     aubCsr2->initializeEngine();
-    EXPECT_NE(aubCsr1->engineInfoTable[engineType].ggttLRCA, aubCsr2->engineInfoTable[engineType].ggttLRCA);
-    EXPECT_NE(aubCsr1->engineInfoTable[engineType].ggttHWSP, aubCsr2->engineInfoTable[engineType].ggttHWSP);
-    EXPECT_NE(aubCsr1->engineInfoTable[engineType].ggttRingBuffer, aubCsr2->engineInfoTable[engineType].ggttRingBuffer);
+    EXPECT_NE(aubCsr1->engineInfo.ggttLRCA, aubCsr2->engineInfo.ggttLRCA);
+    EXPECT_NE(aubCsr1->engineInfo.ggttHWSP, aubCsr2->engineInfo.ggttHWSP);
+    EXPECT_NE(aubCsr1->engineInfo.ggttRingBuffer, aubCsr2->engineInfo.ggttRingBuffer);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldInitializeEngineInfoTable) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldInitializeEngineInfo) {
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
     aubCsr->hardwareContextController.reset(nullptr);
@@ -284,11 +283,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     ResidencyContainer allocationsForResidency = {};
-    const auto &engineInfo = aubCsr->engineInfoTable[aubCsr->getOsContext().getEngineType().type];
     aubCsr->flush(batchBuffer, allocationsForResidency);
-    EXPECT_NE(nullptr, engineInfo.pLRCA);
-    EXPECT_NE(nullptr, engineInfo.pGlobalHWStatusPage);
-    EXPECT_NE(nullptr, engineInfo.pRingBuffer);
+    EXPECT_NE(nullptr, aubCsr->engineInfo.pLRCA);
+    EXPECT_NE(nullptr, aubCsr->engineInfo.pGlobalHWStatusPage);
+    EXPECT_NE(nullptr, aubCsr->engineInfo.pRingBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenProcessResidencyIsCalledButSubCaptureIsDisabledThenItShouldntWriteMemory) {
@@ -330,7 +328,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     EXPECT_FALSE(aubCsr->writeMemoryCalled);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldntInitializeEngineInfoTable) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldntInitializeEngineInfo) {
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
@@ -343,11 +341,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     ResidencyContainer allocationsForResidency = {};
-    auto engineType = aubCsr->getOsContext().getEngineType().type;
     aubCsr->flush(batchBuffer, allocationsForResidency);
-    EXPECT_EQ(nullptr, aubCsr->engineInfoTable[engineType].pLRCA);
-    EXPECT_EQ(nullptr, aubCsr->engineInfoTable[engineType].pGlobalHWStatusPage);
-    EXPECT_EQ(nullptr, aubCsr->engineInfoTable[engineType].pRingBuffer);
+    EXPECT_EQ(nullptr, aubCsr->engineInfo.pLRCA);
+    EXPECT_EQ(nullptr, aubCsr->engineInfo.pGlobalHWStatusPage);
+    EXPECT_EQ(nullptr, aubCsr->engineInfo.pRingBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldLeaveProperRingTailAlignment) {
@@ -359,16 +356,15 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
     auto ringTailAlignment = sizeof(uint64_t);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = aubCsr->getOsContext().getEngineType().type;
     // First flush typically includes a preamble and chain to command buffer
     aubCsr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
     aubCsr->flush(batchBuffer, allocationsForResidency);
-    EXPECT_EQ(0ull, aubCsr->engineInfoTable[engineType].tailRingBuffer % ringTailAlignment);
+    EXPECT_EQ(0ull, aubCsr->engineInfo.tailRingBuffer % ringTailAlignment);
 
     // Second flush should just submit command buffer
     cs.getSpace(sizeof(uint64_t));
     aubCsr->flush(batchBuffer, allocationsForResidency);
-    EXPECT_EQ(0ull, aubCsr->engineInfoTable[engineType].tailRingBuffer % ringTailAlignment);
+    EXPECT_EQ(0ull, aubCsr->engineInfo.tailRingBuffer % ringTailAlignment);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStandaloneModeWhenFlushIsCalledThenItShouldNotUpdateHwTagWithLatestSentTaskCount) {
@@ -933,7 +929,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     EXPECT_STREQ(newFileName.c_str(), aubCsr->getFileName().c_str());
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureIsActivatedForNewFileThenOldEngineInfoTableShouldBeFreed) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureIsActivatedForNewFileThenOldEngineInfoShouldBeFreed) {
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false, *pDevice->executionEnvironment));
     std::string newFileName = "new_file_name.aub";
@@ -956,11 +952,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->activateAubSubCapture(multiDispatchInfo);
     ASSERT_STREQ(newFileName.c_str(), aubCsr->getFileName().c_str());
 
-    for (auto &engineInfo : aubCsr->engineInfoTable) {
-        EXPECT_EQ(nullptr, engineInfo.pLRCA);
-        EXPECT_EQ(nullptr, engineInfo.pGlobalHWStatusPage);
-        EXPECT_EQ(nullptr, engineInfo.pRingBuffer);
-    }
+    EXPECT_EQ(nullptr, aubCsr->engineInfo.pLRCA);
+    EXPECT_EQ(nullptr, aubCsr->engineInfo.pGlobalHWStatusPage);
+    EXPECT_EQ(nullptr, aubCsr->engineInfo.pRingBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureIsActivatedThenForceDumpingAllocationsAubNonWritable) {

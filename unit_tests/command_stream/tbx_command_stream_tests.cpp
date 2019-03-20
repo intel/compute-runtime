@@ -104,16 +104,15 @@ HWTEST_F(TbxCommandStreamTests, DISABLED_flushUntilTailRingBufferLargerThanSizeR
     LinearStream cs(buffer, 4096);
     size_t startOffset = 0;
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
-    auto &engineInfo = tbxCsr->engineInfoTable[EngineType::ENGINE_RCS];
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), startOffset, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
-    auto size = engineInfo.sizeRingBuffer;
-    engineInfo.sizeRingBuffer = 64;
+    auto size = tbxCsr->engineInfo.sizeRingBuffer;
+    tbxCsr->engineInfo.sizeRingBuffer = 64;
     pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
     pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
     pCommandStreamReceiver->flush(batchBuffer, pCommandStreamReceiver->getResidencyAllocations());
-    engineInfo.sizeRingBuffer = size;
+    tbxCsr->engineInfo.sizeRingBuffer = size;
 }
 
 HWTEST_F(TbxCommandStreamTests, DISABLED_getCsTraits) {

@@ -44,16 +44,6 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const Hardware
     ppgtt = std::make_unique<std::conditional<is64bit, PML4, PDPE>::type>(physicalAddressAllocator.get());
     ggtt = std::make_unique<PDPE>(physicalAddressAllocator.get());
 
-    for (auto &engineInfo : engineInfoTable) {
-        engineInfo.pLRCA = nullptr;
-        engineInfo.ggttLRCA = 0u;
-        engineInfo.pGlobalHWStatusPage = nullptr;
-        engineInfo.ggttHWSP = 0u;
-        engineInfo.pRingBuffer = nullptr;
-        engineInfo.ggttRingBuffer = 0u;
-        engineInfo.sizeRingBuffer = 0;
-        engineInfo.tailRingBuffer = 0;
-    }
     auto debugDeviceId = DebugManager.flags.OverrideAubDeviceId.get();
     this->aubDeviceId = debugDeviceId == -1
                             ? hwInfoIn.capabilityTable.aubDeviceId
@@ -67,19 +57,17 @@ TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
         tbxStream.close();
     }
 
-    for (auto &engineInfo : engineInfoTable) {
-        alignedFree(engineInfo.pLRCA);
-        gttRemap.unmap(engineInfo.pLRCA);
-        engineInfo.pLRCA = nullptr;
+    alignedFree(engineInfo.pLRCA);
+    gttRemap.unmap(engineInfo.pLRCA);
+    engineInfo.pLRCA = nullptr;
 
-        alignedFree(engineInfo.pGlobalHWStatusPage);
-        gttRemap.unmap(engineInfo.pGlobalHWStatusPage);
-        engineInfo.pGlobalHWStatusPage = nullptr;
+    alignedFree(engineInfo.pGlobalHWStatusPage);
+    gttRemap.unmap(engineInfo.pGlobalHWStatusPage);
+    engineInfo.pGlobalHWStatusPage = nullptr;
 
-        alignedFree(engineInfo.pRingBuffer);
-        gttRemap.unmap(engineInfo.pRingBuffer);
-        engineInfo.pRingBuffer = nullptr;
-    }
+    alignedFree(engineInfo.pRingBuffer);
+    gttRemap.unmap(engineInfo.pRingBuffer);
+    engineInfo.pRingBuffer = nullptr;
 }
 
 template <typename GfxFamily>
@@ -90,7 +78,6 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
     }
 
     auto csTraits = this->getCsTraits(osContext->getEngineType());
-    auto &engineInfo = engineInfoTable[osContext->getEngineType().type];
 
     if (engineInfo.pLRCA) {
         return;
@@ -231,7 +218,6 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBuff
     }
 
     auto csTraits = this->getCsTraits(osContext->getEngineType());
-    auto &engineInfo = engineInfoTable[osContext->getEngineType().type];
 
     {
         auto physBatchBuffer = ppgtt->map(static_cast<uintptr_t>(batchBufferGpuAddress), batchBufferSize, entryBits, memoryBank);

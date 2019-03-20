@@ -65,7 +65,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
         uint32_t ggttRingBuffer;
         size_t sizeRingBuffer;
         uint32_t tailRingBuffer;
-    } engineInfoTable[EngineType::NUM_ENGINES] = {};
+    } engineInfo = {};
 
     AubMemDump::AubStream *stream;
 };
