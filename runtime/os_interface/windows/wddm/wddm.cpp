@@ -657,7 +657,7 @@ bool Wddm::createContext(OsContextWin &osContext) {
     }
 
     CreateContext.PrivateDriverDataSize = sizeof(PrivateData);
-    CreateContext.NodeOrdinal = WddmEngineMapper::engineNodeMap(osContext.getEngineType().type);
+    CreateContext.NodeOrdinal = WddmEngineMapper::engineNodeMap(osContext.getEngineType());
     CreateContext.pPrivateDriverData = &PrivateData;
     CreateContext.ClientHint = D3DKMT_CLIENTHINT_OPENGL;
     CreateContext.hDevice = device;

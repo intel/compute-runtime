@@ -90,7 +90,7 @@ TEST_F(DeviceTest, retainAndRelease) {
 TEST_F(DeviceTest, getEngineTypeDefault) {
     auto pTestDevice = std::unique_ptr<Device>(createWithUsDeviceId(0));
 
-    EngineType actualEngineType = pDevice->getDefaultEngine().osContext->getEngineType().type;
+    EngineType actualEngineType = pDevice->getDefaultEngine().osContext->getEngineType();
     EngineType defaultEngineType = pDevice->getHardwareInfo().capabilityTable.defaultEngineType;
 
     EXPECT_EQ(&pDevice->getDefaultEngine().commandStreamReceiver->getOsContext(), pDevice->getDefaultEngine().osContext);
@@ -210,11 +210,10 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperate
 TEST(DeviceCreation, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0));
+    auto osContext = device->getDefaultEngine().osContext;
 
-    auto defaultEngine = device->getDefaultEngine().osContext->getEngineType();
-
-    EXPECT_EQ(platformDevices[0]->capabilityTable.defaultEngineType, defaultEngine.type);
-    EXPECT_EQ(0, defaultEngine.id);
+    EXPECT_EQ(platformDevices[0]->capabilityTable.defaultEngineType, osContext->getEngineType());
+    EXPECT_FALSE(osContext->isLowPriority());
 }
 
 TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsArePresentThenIsSimulationReturnsTrue) {

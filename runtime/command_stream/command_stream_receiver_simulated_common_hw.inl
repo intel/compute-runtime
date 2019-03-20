@@ -55,13 +55,13 @@ uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getMemoryBankForGtt(
 }
 
 template <typename GfxFamily>
-const AubMemDump::LrcaHelper &CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getCsTraits(EngineInstanceT engineInstance) {
-    return *AUBFamilyMapper<GfxFamily>::csTraits[engineInstance.type];
+const AubMemDump::LrcaHelper &CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getCsTraits(EngineType engineType) {
+    return *AUBFamilyMapper<GfxFamily>::csTraits[engineType];
 }
 
 template <typename GfxFamily>
 void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initEngineMMIO() {
-    auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[osContext->getEngineType().type];
+    auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[osContext->getEngineType()];
 
     DEBUG_BREAK_IF(!mmioList);
     for (auto &mmioPair : *mmioList) {

@@ -31,7 +31,7 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
         flushParametrization.wasCalled = true;
         flushParametrization.receivedBatchBuffer = &batchBuffer;
-        flushParametrization.receivedEngine = osContext->getEngineType().type;
+        flushParametrization.receivedEngine = osContext->getEngineType();
         flushParametrization.receivedAllocationsForResidency = &allocationsForResidency;
         processResidency(allocationsForResidency);
         return flushParametrization.flushStampToReturn;
@@ -189,7 +189,7 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    auto engineType = csrWithAubDump->getOsContext().getEngineType().type;
+    auto engineType = csrWithAubDump->getOsContext().getEngineType();
 
     ResidencyContainer allocationsForResidency;
     FlushStamp flushStamp = csrWithAubDump->flush(batchBuffer, allocationsForResidency);

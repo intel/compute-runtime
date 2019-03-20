@@ -15,7 +15,7 @@
 namespace OCLRT {
 
 OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             EngineInstanceT engineType, PreemptionMode preemptionMode, bool lowPriority) {
+                             EngineType engineType, PreemptionMode preemptionMode, bool lowPriority) {
     if (osInterface) {
         return new OsContextLinux(*osInterface->get()->getDrm(), contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
     }
@@ -23,10 +23,10 @@ OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, Devic
 }
 
 OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                               EngineInstanceT engineType, PreemptionMode preemptionMode, bool lowPriority)
+                               EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
     : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority), drm(drm) {
 
-    engineFlag = DrmEngineMapper::engineNodeMap(engineType.type);
+    engineFlag = DrmEngineMapper::engineNodeMap(engineType);
     this->drmContextId = drm.createDrmContext();
     if (drm.isPreemptionSupported() && lowPriority) {
         drm.setLowPriorityContextParam(this->drmContextId);

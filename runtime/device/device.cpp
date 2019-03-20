@@ -184,7 +184,7 @@ bool Device::createEngines(const HardwareInfo *pHwInfo) {
             return false;
         }
 
-        if (gpgpuEngines[deviceCsrIndex].type == defaultEngineType && gpgpuEngines[deviceCsrIndex].id == 0) {
+        if (gpgpuEngines[deviceCsrIndex] == defaultEngineType && !lowPriority) {
             defaultEngineIndex = deviceCsrIndex;
         }
 

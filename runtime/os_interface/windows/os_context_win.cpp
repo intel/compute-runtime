@@ -14,7 +14,7 @@
 namespace OCLRT {
 
 OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             EngineInstanceT engineType, PreemptionMode preemptionMode, bool lowPriority) {
+                             EngineType engineType, PreemptionMode preemptionMode, bool lowPriority) {
     if (osInterface) {
         return new OsContextWin(*osInterface->get()->getWddm(), contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
     }
@@ -22,7 +22,7 @@ OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, Devic
 }
 
 OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                           EngineInstanceT engineType, PreemptionMode preemptionMode, bool lowPriority)
+                           EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
     : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority), wddm(wddm), residencyController(wddm, contextId) {
 
     UNRECOVERABLE_IF(!wddm.isInitialized());

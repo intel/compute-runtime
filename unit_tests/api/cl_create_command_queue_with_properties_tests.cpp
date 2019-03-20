@@ -355,14 +355,14 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingComman
     EXPECT_EQ(retVal, CL_SUCCESS);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingCommandQueueThenSelectRcs1Engine) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingCommandQueueThenSelectRcsEngine) {
     cl_queue_properties properties[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
     auto cmdQ = clCreateCommandQueueWithProperties(pContext, devices[0], properties, nullptr);
 
     auto commandQueueObj = castToObject<CommandQueue>(cmdQ);
-    auto engine = commandQueueObj->getCommandStreamReceiver().getOsContext().getEngineType();
-    EXPECT_EQ(EngineType::ENGINE_RCS, engine.type);
-    EXPECT_EQ(1, engine.id);
+    auto &osContext = commandQueueObj->getCommandStreamReceiver().getOsContext();
+    EXPECT_EQ(EngineType::ENGINE_RCS, osContext.getEngineType());
+    EXPECT_TRUE(osContext.isLowPriority());
 
     clReleaseCommandQueue(cmdQ);
 }

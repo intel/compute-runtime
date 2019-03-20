@@ -12,7 +12,7 @@ namespace OCLRT {
 class MockOsContext : public OsContext {
   public:
     MockOsContext(uint32_t contextId, DeviceBitfield deviceBitfield,
-                  EngineInstanceT engineType, PreemptionMode preemptionMode, bool lowPriority)
+                  EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
         : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority) {}
 };
 } // namespace OCLRT

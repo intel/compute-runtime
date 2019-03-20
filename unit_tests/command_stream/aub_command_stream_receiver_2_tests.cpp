@@ -894,7 +894,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
-    MockOsContext osContext(0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
     aubCsr.setupContext(osContext);
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
@@ -919,7 +919,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
-    MockOsContext osContext(0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
     aubCsr.setupContext(osContext);
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
@@ -946,7 +946,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationNonWritableWhenDu
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
-    MockOsContext osContext(0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
     aubCsr.setupContext(osContext);
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
@@ -974,7 +974,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationNotDumpableWhenDu
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
-    MockOsContext osContext(0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
     aubCsr.setupContext(osContext);
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
@@ -1003,7 +1003,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationDumpableWhenDumpA
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
-    MockOsContext osContext(0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
     aubCsr.setupContext(osContext);
 
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
@@ -1031,7 +1031,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
 
     pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
     MockAubCsr<FamilyType> aubCsr(**platformDevices, "", true, *pDevice->executionEnvironment);
-    MockOsContext osContext(0, 1, {EngineType::ENGINE_RCS, 0}, PreemptionMode::Disabled, false);
+    MockOsContext osContext(0, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
     aubCsr.setupContext(osContext);
     aubCsr.latestSentTaskCount = 1;
 

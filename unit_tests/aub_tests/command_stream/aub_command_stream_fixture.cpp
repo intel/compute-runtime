@@ -31,7 +31,7 @@ void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
     std::stringstream strfilename;
     auto engineType = pCmdQ->getCommandStreamReceiver().getOsContext().getEngineType();
-    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType.type).name;
+    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
 
     if (testMode == TestMode::AubTestsWithTbx) {
         pCommandStreamReceiver = TbxCommandStreamReceiver::create(hwInfo, strfilename.str(), true, *device.executionEnvironment);

@@ -38,7 +38,7 @@ class HwHelper {
     virtual uint32_t getConfigureAddressSpaceMode() = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance) const = 0;
+    virtual const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType) const = 0;
     virtual bool supportsYTiling() const = 0;
     virtual bool obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo) const = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
@@ -57,7 +57,7 @@ class HwHelper {
                                                 uint32_t surfaceType,
                                                 bool forceNonAuxMode) = 0;
     virtual size_t getScratchSpaceOffsetFor64bit() = 0;
-    virtual const std::vector<EngineInstanceT> getGpgpuEngineInstances() const = 0;
+    virtual const std::vector<EngineType> getGpgpuEngineInstances() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
 
   protected:
@@ -99,7 +99,7 @@ class HwHelperHw : public HwHelper {
         return sizeof(RENDER_SURFACE_STATE);
     }
 
-    const AubMemDump::LrcaHelper &getCsTraits(EngineInstanceT engineInstance) const override;
+    const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType) const override;
 
     size_t getMaxBarrierRegisterPerSlice() const override;
 
@@ -140,7 +140,7 @@ class HwHelperHw : public HwHelper {
 
     size_t getScratchSpaceOffsetFor64bit() override;
 
-    const std::vector<EngineInstanceT> getGpgpuEngineInstances() const override;
+    const std::vector<EngineType> getGpgpuEngineInstances() const override;
 
     bool getEnableLocalMemory(const HardwareInfo &hwInfo) const override;
 

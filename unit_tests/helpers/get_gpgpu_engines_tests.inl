@@ -12,18 +12,8 @@ using namespace OCLRT;
 
 template <typename FamilyType>
 void whenGetGpgpuEnginesThenReturnTwoRcsEngines() {
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
-    auto &gpgpuEngines = hwHelper.getGpgpuEngineInstances();
+    auto gpgpuEngines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances();
     EXPECT_EQ(2u, gpgpuEngines.size());
-    int numRcsEngines = 0;
-    for (auto &engine : gpgpuEngines) {
-        if (ENGINE_RCS == engine.type) {
-            EXPECT_EQ(numRcsEngines, engine.id);
-            numRcsEngines++;
-        }
-        EXPECT_EQ(ENGINE_RCS, engine.type);
-    }
-    EXPECT_EQ(2, numRcsEngines);
-    EXPECT_EQ(gpgpuEngines[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].type, lowPriorityGpgpuEngine.type);
-    EXPECT_EQ(gpgpuEngines[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].id, lowPriorityGpgpuEngine.id);
+    EXPECT_EQ(ENGINE_RCS, gpgpuEngines[0]);
+    EXPECT_EQ(ENGINE_RCS, gpgpuEngines[1]);
 }

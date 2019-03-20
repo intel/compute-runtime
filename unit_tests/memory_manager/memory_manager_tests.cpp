@@ -1524,8 +1524,8 @@ HWTEST_F(GraphicsAllocationTests, givenAllocationUsedByManyOsContextsWhenCheckin
     auto defaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
     auto defaultOsContext = device->getDefaultEngine().osContext;
 
-    EXPECT_FALSE(defaultOsContext->getEngineType().id == nonDefaultOsContext->getEngineType().id &&
-                 defaultOsContext->getEngineType().type == nonDefaultOsContext->getEngineType().type);
+    EXPECT_FALSE(defaultOsContext->isLowPriority());
+    EXPECT_TRUE(nonDefaultOsContext->isLowPriority());
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 

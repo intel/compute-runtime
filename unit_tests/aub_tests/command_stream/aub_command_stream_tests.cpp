@@ -41,7 +41,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
 
     template <typename FamilyType>
     void testNoopIdXcs(EngineType engineType) {
-        pCommandStreamReceiver->getOsContext().getEngineType().type = engineType;
+        pCommandStreamReceiver->getOsContext().getEngineType() = engineType;
 
         typedef typename FamilyType::MI_NOOP MI_NOOP;
 

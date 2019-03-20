@@ -16,7 +16,7 @@ HardwareContextController::HardwareContextController(aub_stream::AubManager &aub
     auto deviceBitfield = osContext.getDeviceBitfield();
     for (uint32_t deviceIndex = 0; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {
-            hardwareContexts.emplace_back(aubManager.createHardwareContext(deviceIndex, osContext.getEngineType().type, flags));
+            hardwareContexts.emplace_back(aubManager.createHardwareContext(deviceIndex, osContext.getEngineType(), flags));
         }
     }
 }
