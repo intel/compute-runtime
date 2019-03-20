@@ -177,8 +177,8 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
             break;
         }
 
-        Device **allDevs = pPlatform->getDevices();
-        DEBUG_BREAK_IF(allDevs == nullptr);
+        Device *device = pPlatform->getDevice(0);
+        DEBUG_BREAK_IF(device == nullptr);
 
         if (deviceType == CL_DEVICE_TYPE_ALL) {
             /* According to Spec, set it to all except TYPE_CUSTOM. */
@@ -190,18 +190,12 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         }
 
         cl_uint retNum = 0;
-        for (cl_uint i = 0; i < numDev; i++) {
-            if (deviceType & allDevs[i]->getDeviceInfo().deviceType) {
-                if (devices) {
-                    devices[retNum] = allDevs[i];
-                }
 
-                retNum++;
-                if (numEntries > 0 && retNum >= numEntries) {
-                    /* find enough, get out. */
-                    break;
-                }
+        if (deviceType & device->getDeviceInfo().deviceType) {
+            if (devices) {
+                devices[retNum] = device;
             }
+            retNum++;
         }
 
         if (DebugManager.flags.LimitAmountOfReturnedDevices.get()) {
