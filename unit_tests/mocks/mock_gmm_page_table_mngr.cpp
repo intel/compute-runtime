@@ -1,11 +1,9 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
-
-#pragma once
 
 #include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 
