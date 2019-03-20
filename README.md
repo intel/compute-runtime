@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source project to
+The Intel(R) Graphics Compute Runtime for OpenCL(TM) is an open source project to
 converge Intel's development efforts on OpenCL(TM) compute stacks supporting the
 GEN graphics hardware architecture.
 
@@ -62,4 +62,4 @@ See [contribution guidelines](https://github.com/intel/compute-runtime/blob/mast
 * Frequently asked questions: [FAQ.md](https://github.com/intel/compute-runtime/blob/master/documentation/FAQ.md)
 * Quality expectations: [RELEASES.md](https://github.com/intel/compute-runtime/blob/master/documentation/RELEASES.md)
 
-___(*) Other names and brands my be claimed as property of others.___
+___(*) Other names and brands may be claimed as property of others.___

@@ -445,7 +445,7 @@ include(version.cmake)
 # Get available platfroms
 include(platforms.cmake)
 
-# Enable/Disable BuiltIns compilatoin during build
+# Enable/Disable BuiltIns compilation during build
 set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
 
 # Changing the default executable and library output directories
