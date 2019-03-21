@@ -29,8 +29,9 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
 
     void createAndInitWddm(unsigned int forceReturnPreemptionRegKeyValue) {
         wddm = static_cast<WddmMock *>(Wddm::createWddm());
-        osInterface = std::make_unique<OSInterface>();
-        osInterface->get()->setWddm(wddm);
+        executionEnvironment->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->osInterface->get()->setWddm(wddm);
+        osInterface = executionEnvironment->osInterface.get();
         auto regReader = new RegistryReaderMock();
         wddm->registryReader.reset(regReader);
         regReader->forceRetValue = forceReturnPreemptionRegKeyValue;

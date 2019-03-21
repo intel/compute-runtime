@@ -24,7 +24,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::createWddmAllocation;
     using MemoryManagerCreate<WddmMemoryManager>::MemoryManagerCreate;
 
-    MockWddmMemoryManager(Wddm *wddm, ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, false, wddm, executionEnvironment) {
+    MockWddmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, false, executionEnvironment) {
         hostPtrManager.reset(new MockHostPtrManager);
     };
     void setDeferredDeleter(DeferredDeleter *deleter) {

@@ -9,6 +9,7 @@
 
 #include "runtime/os_interface/windows/os_interface.h"
 #include "test.h"
+#include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
@@ -54,7 +55,7 @@ class MockWddmMemoryManagerFixture {
         executionEnvironment->osInterface.reset(new OSInterface());
         executionEnvironment->osInterface->get()->setWddm(wddm);
 
-        memoryManager = std::make_unique<MockWddmMemoryManager>(wddm, *executionEnvironment);
+        memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
         osContext = memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                                               1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
 
@@ -90,13 +91,14 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
     void SetUp() override {
         // wddm is deleted by memory manager
         wddm = new NiceMock<GmockWddm>;
-        osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->osInterface = std::make_unique<OSInterface>();
         ASSERT_NE(nullptr, wddm);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
         EXPECT_TRUE(wddm->init(preemptionMode));
-        osInterface->get()->setWddm(wddm);
+        executionEnvironment->osInterface->get()->setWddm(wddm);
+        osInterface = executionEnvironment->osInterface.get();
         wddm->init(preemptionMode);
-        memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm, *executionEnvironment);
+        memoryManager = new (std::nothrow) MockWddmMemoryManager(*executionEnvironment);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
         osContext = memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0], 1, preemptionMode, false);
@@ -112,7 +114,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
     }
 
     NiceMock<GmockWddm> *wddm = nullptr;
-    std::unique_ptr<OSInterface> osInterface;
+    OSInterface *osInterface;
     OsContext *osContext;
 };
 
@@ -151,5 +153,17 @@ class WddmMemoryManagerSimpleTest : public MockWddmMemoryManagerFixture, public 
     }
 };
 
-using MockWddmMemoryManagerTest = ExecutionEnvironmentFixture;
+class MockWddmMemoryManagerTest : public ::testing::Test {
+  public:
+    void SetUp() override {
+        executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+        wddm = new WddmMock();
+        executionEnvironment->osInterface->get()->setWddm(wddm);
+    }
+
+    HardwareInfo *hwInfo;
+    WddmMock *wddm;
+    ExecutionEnvironment *executionEnvironment;
+};
+
 using OsAgnosticMemoryManagerUsingWddmTest = MockWddmMemoryManagerTest;

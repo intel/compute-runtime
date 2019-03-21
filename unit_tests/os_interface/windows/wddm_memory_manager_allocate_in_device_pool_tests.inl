@@ -14,7 +14,7 @@ using namespace OCLRT;
 using namespace ::testing;
 
 TEST_F(WddmMemoryManagerSimpleTest, givenUseSystemMemorySetToTrueWhenAllocateInDevicePoolIsCalledThenNullptrIsReturned) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, *executionEnvironment));
+    memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
     allocData.size = MemoryConstants::pageSize;

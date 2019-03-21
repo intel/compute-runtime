@@ -9,6 +9,7 @@
 
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/device/device.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
@@ -18,7 +19,9 @@
 #include "runtime/memory_manager/deferrable_deletion.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
+#include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
+#include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
@@ -32,9 +35,10 @@ WddmMemoryManager::~WddmMemoryManager() {
     applyCommonCleanup();
 }
 
-WddmMemoryManager::WddmMemoryManager(Wddm *wddm, ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment) {
+WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment) {
     DEBUG_BREAK_IF(wddm == nullptr);
-    this->wddm = wddm;
+
+    wddm = executionEnvironment.osInterface->get()->getWddm();
     allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(wddm->getExternalHeapBase(), wddm->getExternalHeapSize()));
     asyncDeleterEnabled = DebugManager.flags.EnableDeferredDeleter.get();
     if (asyncDeleterEnabled)

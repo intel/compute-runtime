@@ -28,7 +28,7 @@ class WddmMemoryManager : public MemoryManager {
     using MemoryManager::allocateGraphicsMemoryWithProperties;
 
     ~WddmMemoryManager() override;
-    WddmMemoryManager(Wddm *wddm, ExecutionEnvironment &executionEnvironment);
+    WddmMemoryManager(ExecutionEnvironment &executionEnvironment);
 
     WddmMemoryManager(const WddmMemoryManager &) = delete;
     WddmMemoryManager &operator=(const WddmMemoryManager &) = delete;

@@ -19,6 +19,6 @@ std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvir
     if (overrideMemoryManagerCreation) {
         return std::make_unique<OsAgnosticMemoryManager>(executionEnvironment);
     }
-    return std::make_unique<WddmMemoryManager>(executionEnvironment.osInterface->get()->getWddm(), executionEnvironment);
+    return std::make_unique<WddmMemoryManager>(executionEnvironment);
 }
 } // namespace OCLRT

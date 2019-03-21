@@ -14,6 +14,6 @@
 
 namespace OCLRT {
 std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {
-    return std::make_unique<WddmMemoryManager>(executionEnvironment.osInterface->get()->getWddm(), executionEnvironment);
+    return std::make_unique<WddmMemoryManager>(executionEnvironment);
 }
 } // namespace OCLRT

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "runtime/command_stream/preemption.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
@@ -25,8 +26,9 @@ struct WddmFixture : ::testing::Test {
     void SetUp() {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         wddm = static_cast<WddmMock *>(Wddm::createWddm());
-        osInterface = std::make_unique<OSInterface>();
-        osInterface->get()->setWddm(wddm);
+        executionEnvironment->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->osInterface->get()->setWddm(wddm);
+        osInterface = executionEnvironment->osInterface.get();
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
@@ -36,7 +38,7 @@ struct WddmFixture : ::testing::Test {
     }
 
     WddmMock *wddm = nullptr;
-    std::unique_ptr<OSInterface> osInterface;
+    OSInterface *osInterface;
     std::unique_ptr<OsContextWin> osContext;
     ExecutionEnvironment *executionEnvironment;
 
@@ -48,8 +50,9 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         GdiDllFixture::SetUp();
         wddm = static_cast<WddmMock *>(Wddm::createWddm());
-        osInterface = std::make_unique<OSInterface>();
-        osInterface->get()->setWddm(wddm);
+        executionEnvironment->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->osInterface->get()->setWddm(wddm);
+        osInterface = executionEnvironment->osInterface.get();
     }
 
     void init() {
@@ -64,7 +67,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
     }
 
     WddmMock *wddm = nullptr;
-    std::unique_ptr<OSInterface> osInterface;
+    OSInterface *osInterface;
     std::unique_ptr<OsContextWin> osContext;
     ExecutionEnvironment *executionEnvironment;
 };
