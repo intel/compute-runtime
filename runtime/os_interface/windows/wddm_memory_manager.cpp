@@ -316,13 +316,15 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
                    this->getDefaultCommandStreamReceiver(0) && this->getDefaultCommandStreamReceiver(0)->getTagAddress() &&
                    gfxAllocation->getTaskCount(defaultEngineIndex) > *this->getDefaultCommandStreamReceiver(0)->getTagAddress());
 
-    auto gmm = input->getDefaultGmm();
-    if (gmm) {
-        if (gmm->isRenderCompressed && wddm->getPageTableManager()) {
-            auto status = wddm->updateAuxTable(input->getGpuAddress(), gmm, false);
+    auto defaultGmm = gfxAllocation->getDefaultGmm();
+    if (defaultGmm) {
+        if (defaultGmm->isRenderCompressed && wddm->getPageTableManager()) {
+            auto status = wddm->updateAuxTable(input->getGpuAddress(), defaultGmm, false);
             DEBUG_BREAK_IF(!status);
         }
-        delete gmm;
+    }
+    for (auto handleId = 0u; handleId < maxHandleCount; handleId++) {
+        delete gfxAllocation->getGmm(handleId);
     }
 
     if (input->peekSharedHandle() == false &&

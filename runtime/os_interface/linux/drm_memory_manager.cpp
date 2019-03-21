@@ -563,8 +563,11 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     DrmAllocation *input;
     input = static_cast<DrmAllocation *>(gfxAllocation);
-    if (input->getDefaultGmm())
-        delete input->getDefaultGmm();
+    for (auto handleId = 0u; handleId < maxHandleCount; handleId++) {
+        if (gfxAllocation->getGmm(handleId)) {
+            delete gfxAllocation->getGmm(handleId);
+        }
+    }
 
     alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
 
