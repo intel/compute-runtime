@@ -25,6 +25,7 @@ namespace OCLRT {
 class MockKernel : public Kernel {
   public:
     using Kernel::addAllocationToCacheFlushVector;
+    using Kernel::allBufferArgsStateful;
     using Kernel::auxTranslationRequired;
     using Kernel::isSchedulerKernel;
     using Kernel::kernelArgRequiresCacheFlush;

@@ -131,6 +131,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     cl_int getInfo(cl_kernel_info paramName, size_t paramValueSize,
                    void *paramValue, size_t *paramValueSizeRet) const;
+    void getAdditionalInfo(cl_kernel_info paramName, const void *&paramValue, size_t &paramValueSizeRet) const;
 
     cl_int getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName,
                       size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
@@ -334,6 +335,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     static uint32_t dummyPatchLocation;
 
     std::vector<size_t> slmSizes;
+
+    uint32_t allBufferArgsStateful = CL_TRUE;
 
     uint32_t slmTotalSize;
     bool isBuiltIn;

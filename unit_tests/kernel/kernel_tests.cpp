@@ -2444,3 +2444,51 @@ TEST(KernelTest, givenKernelUsesPrivateMemoryWhenDeviceReleasedBeforeKernelThenK
     mockKernel.reset(nullptr);
     executionEnvironment->decRefInternal();
 }
+
+TEST(KernelTest, givenAllArgumentsAreStatefulBuffersWhenInitializingThenAllBufferArgsStatefulIsTrue) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+
+    std::vector<KernelArgInfo> kernelArgInfo(2);
+    kernelArgInfo[0].isBuffer = true;
+    kernelArgInfo[1].isBuffer = true;
+    kernelArgInfo[0].pureStatefulBufferAccess = true;
+    kernelArgInfo[1].pureStatefulBufferAccess = true;
+
+    MockKernelWithInternals kernel{*device};
+    kernel.kernelInfo.kernelArgInfo = kernelArgInfo;
+
+    kernel.mockKernel->initialize();
+    EXPECT_TRUE(kernel.mockKernel->allBufferArgsStateful);
+}
+
+TEST(KernelTest, givenAllArgumentsAreBuffersButNotAllAreStatefulWhenInitializingThenAllBufferArgsStatefulIsFalse) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+
+    std::vector<KernelArgInfo> kernelArgInfo(2);
+    kernelArgInfo[0].isBuffer = true;
+    kernelArgInfo[1].isBuffer = true;
+    kernelArgInfo[0].pureStatefulBufferAccess = true;
+    kernelArgInfo[1].pureStatefulBufferAccess = false;
+
+    MockKernelWithInternals kernel{*device};
+    kernel.kernelInfo.kernelArgInfo = kernelArgInfo;
+
+    kernel.mockKernel->initialize();
+    EXPECT_FALSE(kernel.mockKernel->allBufferArgsStateful);
+}
+
+TEST(KernelTest, givenNotAllArgumentsAreBuffersButAllBuffersAreStatefulWhenInitializingThenAllBufferArgsStatefulIsTrue) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+
+    std::vector<KernelArgInfo> kernelArgInfo(2);
+    kernelArgInfo[0].isBuffer = true;
+    kernelArgInfo[1].isBuffer = false;
+    kernelArgInfo[0].pureStatefulBufferAccess = true;
+    kernelArgInfo[1].pureStatefulBufferAccess = false;
+
+    MockKernelWithInternals kernel{*device};
+    kernel.kernelInfo.kernelArgInfo = kernelArgInfo;
+
+    kernel.mockKernel->initialize();
+    EXPECT_TRUE(kernel.mockKernel->allBufferArgsStateful);
+}

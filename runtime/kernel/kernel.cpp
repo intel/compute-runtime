@@ -330,6 +330,7 @@ cl_int Kernel::initialize() {
                 kernelArgHandlers[i] = &Kernel::setArgBuffer;
                 kernelArguments[i].type = BUFFER_OBJ;
                 usingBuffers = true;
+                allBufferArgsStateful &= static_cast<uint32_t>(argInfo.pureStatefulBufferAccess);
                 this->auxTranslationRequired |= !kernelInfo.kernelArgInfo[i].pureStatefulBufferAccess &&
                                                 HwHelper::renderCompressedBuffersSupported(getDevice().getHardwareInfo());
             } else if (argInfo.isImage) {
@@ -459,6 +460,7 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
         break;
 
     default:
+        getAdditionalInfo(paramName, pSrc, srcSize);
         break;
     }
 
