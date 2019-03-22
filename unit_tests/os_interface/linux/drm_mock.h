@@ -107,12 +107,10 @@ class DrmMock : public Drm {
                 }
                 return this->StoredRetValForMinEUinPool;
             }
-#if defined(I915_PARAM_HAS_PREEMPTION)
-            if (gp->param == I915_PARAM_HAS_PREEMPTION) {
+            if (gp->param == I915_PARAM_HAS_SCHEDULER) {
                 *((int *)(gp->value)) = this->StoredPreemptionSupport;
                 return this->StoredRetVal;
             }
-#endif
             if (gp->param == I915_PARAM_HAS_ALIASING_PPGTT) {
                 *((int *)(gp->value)) = this->StoredPPGTT;
                 return this->StoredRetVal;
@@ -224,10 +222,6 @@ class DrmMock : public Drm {
     void setDeviceID(int deviceId) { this->deviceId = deviceId; }
     void setDeviceRevID(int revisionId) { this->revisionId = revisionId; }
 
-    void checkPreemptionSupport() override {
-        preemptionSupported = StoredPreemptionSupport;
-    }
-
     int StoredEUVal = -1;
     int StoredSSVal = -1;
     int StoredDeviceID = 1;
@@ -242,7 +236,10 @@ class DrmMock : public Drm {
     int StoredRetValForPooledEU = 0;
     int StoredRetValForMinEUinPool = 0;
     int StoredPPGTT = 3;
-    int StoredPreemptionSupport = 0;
+    int StoredPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
     int StoredExecSoftPin = 0;
     uint32_t StoredCtxId = 1;
     uint32_t receivedDestroyContextId = 0;

@@ -26,14 +26,12 @@ int HwInfoConfigHw<IGFX_BROXTON>::configureHardwareCustom(HardwareInfo *hwInfo, 
     pSysInfo->VEBoxInfo.IsValid = true;
     pSkuTable->ftrVEBOX = true;
     pSkuTable->ftrULT = true;
-
     pSkuTable->ftrGpGpuMidBatchPreempt = true;
     pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = false;
+    pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;
     pSkuTable->ftr3dMidBatchPreempt = true;
     pSkuTable->ftr3dObjectLevelPreempt = true;
     pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
-
     pSkuTable->ftrLCIA = true;
     pSkuTable->ftrPPGTT = true;
     pSkuTable->ftrL3IACoherency = true;

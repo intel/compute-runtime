@@ -129,13 +129,30 @@ TEST(DrmTest, GivenDrmWhenAskedFor48BitAddressCorrectValueReturned) {
 
 TEST(DrmTest, GivenDrmWhenAskedForPreemptionCorrectValueReturned) {
     DrmMock *pDrm = new DrmMock;
-    pDrm->StoredPreemptionSupport = 1;
+    pDrm->StoredRetVal = 0;
+    pDrm->StoredPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
     pDrm->checkPreemptionSupport();
     EXPECT_TRUE(pDrm->isPreemptionSupported());
 
     pDrm->StoredPreemptionSupport = 0;
     pDrm->checkPreemptionSupport();
     EXPECT_FALSE(pDrm->isPreemptionSupported());
+
+    pDrm->StoredRetVal = -1;
+    pDrm->StoredPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
+    pDrm->checkPreemptionSupport();
+    EXPECT_FALSE(pDrm->isPreemptionSupported());
+
+    pDrm->StoredPreemptionSupport = 0;
+    pDrm->checkPreemptionSupport();
+    EXPECT_FALSE(pDrm->isPreemptionSupported());
+
     delete pDrm;
 }
 

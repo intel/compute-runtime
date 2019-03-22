@@ -132,11 +132,9 @@ bool Drm::is48BitAddressRangeSupported() {
 }
 
 void Drm::checkPreemptionSupport() {
-#if defined(I915_PARAM_HAS_PREEMPTION)
     int value = 0;
-    auto ret = getParam(I915_PARAM_HAS_PREEMPTION, &value);
-    preemptionSupported = (ret == 0 && value == 1);
-#endif
+    auto ret = getParamIoctl(I915_PARAM_HAS_SCHEDULER, &value);
+    preemptionSupported = ((0 == ret) && (value & I915_SCHEDULER_CAP_PREEMPTION));
 }
 
 void Drm::setLowPriorityContextParam(uint32_t drmContextId) {

@@ -27,14 +27,12 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     pSysInfo->VDBoxInfo.Instances.Bits.VDBox0Enabled = 1;
     pSysInfo->VEBoxInfo.IsValid = true;
     pSysInfo->VDBoxInfo.IsValid = true;
-
     pSkuTable->ftrGpGpuMidBatchPreempt = true;
     pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = false;
+    pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;
     pSkuTable->ftr3dMidBatchPreempt = true;
     pSkuTable->ftr3dObjectLevelPreempt = true;
     pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
-
     pSkuTable->ftrPPGTT = true;
     pSkuTable->ftrSVM = true;
     pSkuTable->ftrL3IACoherency = true;
