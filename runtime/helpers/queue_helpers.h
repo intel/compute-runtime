@@ -21,6 +21,8 @@ inline void releaseVirtualEvent(CommandQueue &commandQueue) {
 inline void releaseVirtualEvent(DeviceQueue &commandQueue) {
 }
 
+bool isCommandWithoutKernel(uint32_t commandType);
+
 template <typename QueueType>
 void retainQueue(cl_command_queue commandQueue, cl_int &retVal) {
     using BaseType = typename QueueType::BaseType;

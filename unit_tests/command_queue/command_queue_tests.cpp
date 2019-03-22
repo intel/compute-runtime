@@ -1030,3 +1030,21 @@ TEST(CommandQueuePropertiesTests, whenGetEngineIsCalledThenQueueEngineIsReturned
     queue.engine = &engineControl;
     EXPECT_EQ(queue.engine, &queue.getEngine());
 }
+TEST(CommandQueue, GivenCommandQueueWhenEnqueueResourceBarrierCalledThenSuccessReturned) {
+    MockContext context;
+    CommandQueue cmdQ(&context, nullptr, 0);
+
+    cl_int result = cmdQ.enqueueResourceBarrier(
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, result);
+}
+TEST(CommandQueue, GivenCommandQueueWhenCheckingIfIsCacheFlushCommandCalledThenFalseReturned) {
+    MockContext context;
+    CommandQueue cmdQ(&context, nullptr, 0);
+
+    bool isCommandCacheFlush = cmdQ.isCacheFlushCommand(0u);
+    EXPECT_FALSE(isCommandCacheFlush);
+}

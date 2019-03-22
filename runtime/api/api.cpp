@@ -8,6 +8,7 @@
 #include "api.h"
 
 #include "runtime/accelerators/intel_motion_estimation.h"
+#include "runtime/api/additional_extensions.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
@@ -3253,15 +3254,15 @@ cl_program CL_API_CALL clCreateProgramWithILKHR(cl_context context,
     return program;
 }
 
-#define RETURN_FUNC_PTR_IF_EXIST(name)   \
-    {                                    \
-        if (!strcmp(func_name, #name)) { \
-            return ((void *)(name));     \
-        }                                \
+#define RETURN_FUNC_PTR_IF_EXIST(name)  \
+    {                                   \
+        if (!strcmp(funcName, #name)) { \
+            return ((void *)(name));    \
+        }                               \
     }
-void *CL_API_CALL clGetExtensionFunctionAddress(const char *func_name) {
+void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
 
-    DBG_LOG_INPUTS("func_name", func_name);
+    DBG_LOG_INPUTS("funcName", funcName);
     // Support an internal call by the ICD
     RETURN_FUNC_PTR_IF_EXIST(clIcdGetPlatformIDsKHR);
 
@@ -3277,7 +3278,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *func_name) {
     RETURN_FUNC_PTR_IF_EXIST(clAddCommentINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueVerifyMemory);
 
-    void *ret = sharingFactory.getExtensionFunctionAddress(func_name);
+    void *ret = sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr)
         return ret;
 
@@ -3285,7 +3286,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *func_name) {
     RETURN_FUNC_PTR_IF_EXIST(clCreateProgramWithILKHR);
     RETURN_FUNC_PTR_IF_EXIST(clCreateCommandQueueWithPropertiesKHR);
 
-    return nullptr;
+    return getAdditionalExtensionFunctionAddress(funcName);
 }
 
 // OpenCL 1.2

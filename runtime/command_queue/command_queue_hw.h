@@ -277,6 +277,11 @@ class CommandQueueHw : public CommandQueue {
                                     cl_uint numEventsInWaitList,
                                     const cl_event *eventWaitList,
                                     cl_event *event) override;
+    cl_int enqueueResourceBarrier(BarrierCommand *resourceBarrier,
+                                  cl_uint numEventsInWaitList,
+                                  const cl_event *eventWaitList,
+                                  cl_event *event) override;
+
     cl_int finish(bool dcFlush) override;
     cl_int flush() override;
 
@@ -337,6 +342,21 @@ class CommandQueueHw : public CommandQueue {
                         bool slmUsed,
                         EventBuilder &externalEventBuilder,
                         std::unique_ptr<PrintfHandler> printfHandler);
+
+    CompletionStamp enqueueCommandWithoutKernel(Surface **surfaces,
+                                                size_t surfaceCount,
+                                                LinearStream &commandStream,
+                                                size_t commandStreamStart,
+                                                bool &blocking,
+                                                TimestampPacketContainer *previousTimestampPacketNodes,
+                                                EventsRequest &eventsRequest,
+                                                EventBuilder &eventBuilder,
+                                                uint32_t taskLevel);
+    void processDispatchForCacheFlush(Surface **surfaces,
+                                      size_t numSurfaces,
+                                      LinearStream *commandStream);
+
+    bool isCacheFlushCommand(uint32_t commandType) override;
 
   protected:
     MOCKABLE_VIRTUAL void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo){};

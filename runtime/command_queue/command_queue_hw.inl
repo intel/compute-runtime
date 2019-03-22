@@ -45,4 +45,13 @@ template <typename Family>
 bool CommandQueueHw<Family>::requiresCacheFlushAfterWalkerBasedOnProperties(const cl_queue_properties *properties) {
     return false;
 }
+template <typename GfxFamily>
+void CommandQueueHw<GfxFamily>::processDispatchForCacheFlush(Surface **surfaces,
+                                                             size_t numSurfaces,
+                                                             LinearStream *commandStream) {
+}
+template <typename GfxFamily>
+bool CommandQueueHw<GfxFamily>::isCacheFlushCommand(uint32_t commandType) {
+    return false;
+}
 } // namespace NEO

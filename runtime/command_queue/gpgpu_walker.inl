@@ -17,6 +17,7 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/queue_helpers.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/mem_obj/mem_obj.h"

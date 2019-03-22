@@ -18,6 +18,7 @@
 #include <cstdint>
 
 namespace NEO {
+class BarrierCommand;
 class Buffer;
 class LinearStream;
 class Context;
@@ -45,14 +46,6 @@ inline bool shouldFlushDC(uint32_t commandType, PrintfHandler *printfHandler) {
             commandType == CL_COMMAND_READ_IMAGE ||
             commandType == CL_COMMAND_SVM_MAP ||
             printfHandler);
-}
-
-inline bool isCommandWithoutKernel(uint32_t commandType) {
-    return ((commandType == CL_COMMAND_BARRIER) || (commandType == CL_COMMAND_MARKER) ||
-            (commandType == CL_COMMAND_MIGRATE_MEM_OBJECTS) ||
-            (commandType == CL_COMMAND_SVM_MAP) ||
-            (commandType == CL_COMMAND_SVM_UNMAP) ||
-            (commandType == CL_COMMAND_SVM_FREE));
 }
 
 template <>
@@ -306,11 +299,20 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     MOCKABLE_VIRTUAL void *cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal);
 
+    virtual cl_int enqueueResourceBarrier(BarrierCommand *resourceBarrier,
+                                          cl_uint numEventsInWaitList,
+                                          const cl_event *eventWaitList,
+                                          cl_event *event) {
+        return CL_SUCCESS;
+    }
+
     virtual cl_int finish(bool dcFlush) { return CL_SUCCESS; }
 
     virtual cl_int flush() { return CL_SUCCESS; }
 
     MOCKABLE_VIRTUAL void updateFromCompletionStamp(const CompletionStamp &completionStamp);
+
+    virtual bool isCacheFlushCommand(uint32_t commandType) { return false; }
 
     cl_int getCommandQueueInfo(cl_command_queue_info paramName,
                                size_t paramValueSize, void *paramValue,

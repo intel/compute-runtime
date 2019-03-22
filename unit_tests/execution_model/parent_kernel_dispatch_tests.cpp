@@ -231,7 +231,7 @@ HWTEST_F(ParentKernelCommandStreamFixture, GivenDispatchInfoWithParentKernelWhen
 
         size_t totalKernelSize = alignUp(numOfKernels * size, MemoryConstants::pageSize);
 
-        LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(), false, false, multiDispatchInfo);
+        LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(), false, false, multiDispatchInfo, nullptr, 0);
 
         EXPECT_LT(totalKernelSize, commandStream.getMaxAvailableSpace());
 

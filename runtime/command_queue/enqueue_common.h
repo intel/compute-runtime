@@ -148,7 +148,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     if (isProfilingEnabled() && event) {
         this->getDevice().getOSTime()->getCpuGpuTime(&queueTimeStamp);
     }
-
     EventBuilder eventBuilder;
     if (event) {
         eventBuilder.create<Event>(this, commandType, Event::eventNotReady, 0);
@@ -206,13 +205,15 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
     }
 
-    auto &commandStream = getCommandStream<GfxFamily, commandType>(*this, csrDeps, profilingRequired, perfCountersRequired, multiDispatchInfo);
+    auto &commandStream = getCommandStream<GfxFamily, commandType>(*this, csrDeps, profilingRequired, perfCountersRequired, multiDispatchInfo, surfacesForResidency, numSurfaceForResidency);
     auto commandStreamStart = commandStream.getUsed();
 
     if (multiDispatchInfo.empty() == false) {
         processDispatchForKernels<commandType>(multiDispatchInfo, printfHandler, eventBuilder.getEvent(),
                                                hwTimeStamps, parentKernel, blockQueue, devQueueHw, csrDeps, blockedCommandsData,
                                                previousTimestampPacketNodes, preemption);
+    } else if (isCacheFlushCommand(commandType)) {
+        processDispatchForCacheFlush(surfacesForResidency, numSurfaceForResidency, &commandStream);
     } else if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         if (CL_COMMAND_BARRIER == commandType) {
             getCommandStreamReceiver().requestStallingPipeControlOnNextFlush();
@@ -274,6 +275,17 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                       devQueueHw->getDebugQueue());
                 }
             }
+        } else if (isCacheFlushCommand(commandType)) {
+            enqueueCommandWithoutKernel(
+                surfacesForResidency,
+                numSurfaceForResidency,
+                commandStream,
+                commandStreamStart,
+                blocking,
+                &previousTimestampPacketNodes,
+                eventsRequest,
+                eventBuilder,
+                taskLevel);
         } else {
             auto maxTaskCount = this->taskCount;
             for (auto eventId = 0u; eventId < numEventsInWaitList; eventId++) {
@@ -743,6 +755,39 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     }
 
     this->virtualEvent = eventBuilder->getEvent();
+}
+
+template <typename GfxFamily>
+CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
+    Surface **surfaces,
+    size_t surfaceCount,
+    LinearStream &commandStream,
+    size_t commandStreamStart,
+    bool &blocking,
+    TimestampPacketContainer *previousTimestampPacketNodes,
+    EventsRequest &eventsRequest,
+    EventBuilder &eventBuilder,
+    uint32_t taskLevel) {
+
+    auto requiresCoherency = false;
+    for (auto surface : CreateRange(surfaces, surfaceCount)) {
+        surface->makeResident(getCommandStreamReceiver());
+        requiresCoherency |= surface->IsCoherent;
+    }
+
+    DispatchFlags dispatchFlags = {};
+
+    CompletionStamp completionStamp = getCommandStreamReceiver().flushTask(
+        commandStream,
+        commandStreamStart,
+        getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
+        getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
+        getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
+        taskLevel,
+        dispatchFlags,
+        *device);
+
+    return completionStamp;
 }
 
 template <typename GfxFamily>
