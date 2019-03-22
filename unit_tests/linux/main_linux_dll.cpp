@@ -268,20 +268,6 @@ TEST_F(DrmTests, givenKernelSupportingTurboPatchWhenDeviceIsCreatedThenSimplifie
     EXPECT_FALSE(drm->getSimplifiedMocsTableUsage());
 }
 
-TEST_F(DrmTests, checkPreemption) {
-    auto drm = DrmWrap::createDrm(0);
-    EXPECT_NE(drm, nullptr);
-    drm->checkPreemptionSupport();
-#if defined(I915_PARAM_HAS_PREEMPTION)
-    EXPECT_TRUE(drm->isPreemptionSupported());
-#else
-    EXPECT_FALSE(drm->isPreemptionSupported());
-#endif
-    DrmWrap::closeDevice(0);
-    drm = DrmWrap::get(0);
-    EXPECT_EQ(drm, nullptr);
-}
-
 TEST_F(DrmTests, failOnContextCreate) {
     auto drm = DrmWrap::createDrm(0);
     EXPECT_NE(drm, nullptr);

@@ -26,14 +26,12 @@ int HwInfoConfigHw<IGFX_KABYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo,
     pSysInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled = 1;
     pSysInfo->VEBoxInfo.IsValid = true;
     pSkuTable->ftrVEBOX = true;
-
     pSkuTable->ftrGpGpuMidBatchPreempt = true;
     pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = false;
+    pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;
     pSkuTable->ftr3dMidBatchPreempt = true;
     pSkuTable->ftr3dObjectLevelPreempt = true;
     pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
-
     pSkuTable->ftrPPGTT = true;
     pSkuTable->ftrSVM = true;
     pSkuTable->ftrL3IACoherency = true;

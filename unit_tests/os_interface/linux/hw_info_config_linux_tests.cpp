@@ -247,7 +247,10 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyNegativeUnknownDeviceId) {
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidThreadOn) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
     drm->StoredDeviceID = hwConfigTestMidThreadBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -257,7 +260,10 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidThreadOn) {
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledThreadGroupOn) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
     drm->StoredDeviceID = hwConfigTestThreadGroupBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -267,7 +273,10 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledThreadGroupOn)
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidBatchOn) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
     drm->StoredDeviceID = hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -277,7 +286,10 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidBatchOn) {
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledNoPreemption) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
     drm->StoredDeviceID = 1;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -297,7 +309,10 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmDisabledAllPreemption
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionDriverThreadGroup) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::ThreadGroup;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
     drm->StoredDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -307,7 +322,10 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionD
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionDriverMidBatch) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidBatch;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
     drm->StoredDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
@@ -317,7 +335,10 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionD
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionDriverDisabled) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
     drm->StoredDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);

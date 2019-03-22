@@ -640,6 +640,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         gtpinNotifyPreFlushTask(this);
     }
 
+    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout, "preemption = %d.\n", static_cast<int>(dispatchFlags.preemptionMode));
     CompletionStamp completionStamp = getCommandStreamReceiver().flushTask(
         commandStream,
         commandStreamStart,

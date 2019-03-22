@@ -36,6 +36,8 @@ extern int failOnSoftPin;
 extern int failOnParamBoost;
 extern int failOnContextCreate;
 extern int failOnSetPriority;
+extern int failOnPreemption;
+extern int havePreemption;
 extern int failOnDrmVersion;
 extern char providedDrmVersion[5];
 extern int ioctlSeq[8];

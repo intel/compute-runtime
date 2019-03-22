@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,10 @@
 typedef DeviceFactoryLinuxTest DeviceFactoryLinuxTestSkl;
 
 GEN9TEST_F(DeviceFactoryLinuxTestSkl, queryWhitelistedPreemptionRegister) {
-    pDrm->StoredPreemptionSupport = 1;
+    pDrm->StoredPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
     HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
 

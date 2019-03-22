@@ -46,7 +46,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfo) {
     EXPECT_TRUE(outHwInfo.pSysInfo->VDBoxInfo.IsValid);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuMidBatchPreempt);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuThreadGroupLevelPreempt);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGpGpuMidThreadLevelPreempt);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuMidThreadLevelPreempt);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftr3dMidBatchPreempt);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftr3dObjectLevelPreempt);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrPerCtxtPreemptionGranularityControl);
