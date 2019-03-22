@@ -18,6 +18,7 @@ struct AubStream;
 } // namespace aub_stream
 
 namespace OCLRT {
+class AddressMapper;
 class GraphicsAllocation;
 class HardwareContextController;
 template <typename GfxFamily>
@@ -30,6 +31,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     using MiContextDescriptorReg = typename AUB::MiContextDescriptorReg;
 
     bool getParametersForWriteMemory(GraphicsAllocation &graphicsAllocation, uint64_t &gpuAddress, void *&cpuAddress, size_t &size) const;
+    void freeEngineInfo(AddressMapper &gttRemap);
 
   public:
     uint64_t getGTTBits() const {

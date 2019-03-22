@@ -56,17 +56,7 @@ TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
         tbxStream.close();
     }
 
-    alignedFree(engineInfo.pLRCA);
-    gttRemap.unmap(engineInfo.pLRCA);
-    engineInfo.pLRCA = nullptr;
-
-    alignedFree(engineInfo.pGlobalHWStatusPage);
-    gttRemap.unmap(engineInfo.pGlobalHWStatusPage);
-    engineInfo.pGlobalHWStatusPage = nullptr;
-
-    alignedFree(engineInfo.pRingBuffer);
-    gttRemap.unmap(engineInfo.pRingBuffer);
-    engineInfo.pRingBuffer = nullptr;
+    this->freeEngineInfo(gttRemap);
 }
 
 template <typename GfxFamily>

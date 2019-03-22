@@ -12,6 +12,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/hardware_context_controller.h"
+#include "runtime/memory_manager/address_mapper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_context.h"
@@ -119,6 +120,21 @@ template <typename GfxFamily>
 void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) {
     this->expectMemory(gfxAddress, srcAddress, length,
                        AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual);
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::freeEngineInfo(AddressMapper &gttRemap) {
+    alignedFree(engineInfo.pLRCA);
+    gttRemap.unmap(engineInfo.pLRCA);
+    engineInfo.pLRCA = nullptr;
+
+    alignedFree(engineInfo.pGlobalHWStatusPage);
+    gttRemap.unmap(engineInfo.pGlobalHWStatusPage);
+    engineInfo.pGlobalHWStatusPage = nullptr;
+
+    alignedFree(engineInfo.pRingBuffer);
+    gttRemap.unmap(engineInfo.pRingBuffer);
+    engineInfo.pRingBuffer = nullptr;
 }
 
 } // namespace OCLRT

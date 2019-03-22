@@ -82,7 +82,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::~AUBCommandStreamReceiverHw() {
     if (osContext) {
         pollForCompletion();
     }
-    freeEngineInfo();
+    this->freeEngineInfo(*gttRemap);
 }
 
 template <typename GfxFamily>
@@ -98,7 +98,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::reopenFile(const std::string &fileNa
     if (isFileOpen()) {
         if (fileName != getFileName()) {
             closeFile();
-            freeEngineInfo();
+            this->freeEngineInfo(*gttRemap);
         }
     }
     if (!isFileOpen()) {
@@ -265,21 +265,6 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
     addContextToken(getDumpHandle());
 
     DEBUG_BREAK_IF(!engineInfo.pLRCA);
-}
-
-template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::freeEngineInfo() {
-    alignedFree(engineInfo.pLRCA);
-    gttRemap->unmap(engineInfo.pLRCA);
-    engineInfo.pLRCA = nullptr;
-
-    alignedFree(engineInfo.pGlobalHWStatusPage);
-    gttRemap->unmap(engineInfo.pGlobalHWStatusPage);
-    engineInfo.pGlobalHWStatusPage = nullptr;
-
-    alignedFree(engineInfo.pRingBuffer);
-    gttRemap->unmap(engineInfo.pRingBuffer);
-    engineInfo.pRingBuffer = nullptr;
 }
 
 template <typename GfxFamily>
@@ -678,7 +663,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
         UNRECOVERABLE_IF(offset > length);
 
         this->getAubStream()->expectMemory(physAddress,
-                                           reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
+                                           ptrOffset(srcAddress, offset),
                                            size,
                                            this->getAddressSpaceFromPTEBits(entryBits),
                                            compareOperation);

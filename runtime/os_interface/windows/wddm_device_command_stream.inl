@@ -22,8 +22,6 @@
 #include "hw_cmds.h"
 #pragma warning(pop)
 
-#undef max
-
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
