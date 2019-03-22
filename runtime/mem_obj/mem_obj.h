@@ -99,7 +99,6 @@ class MemObj : public BaseObject<_cl_mem> {
     unsigned int acquireCount = 0;
     Context *getContext() const { return context; }
 
-    void waitForCsrCompletion();
     void destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy);
     bool checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t offsetInHostPtr, const void *ptr, cl_command_type cmdType);
     bool mappingOnCpuAllowed() const;

@@ -69,7 +69,7 @@ MemObj::~MemObj() {
                 needWait = true;
             }
             if (needWait && graphicsAllocation->isUsed()) {
-                waitForCsrCompletion();
+                memoryManager->waitForEnginesCompletion(*graphicsAllocation);
             }
             destroyGraphicsAllocation(graphicsAllocation, doAsyncDestrucions);
             graphicsAllocation = nullptr;
@@ -281,11 +281,6 @@ void MemObj::releaseAllocatedMapPtr() {
         memoryManager->freeSystemMemory(allocatedMapPtr);
     }
     allocatedMapPtr = nullptr;
-}
-
-void MemObj::waitForCsrCompletion() {
-    auto osContextId = context->getDevice(0)->getDefaultEngine().osContext->getContextId();
-    memoryManager->getDefaultCommandStreamReceiver(0)->waitForCompletionWithTimeout(false, TimeoutControls::maxTimeout, graphicsAllocation->getTaskCount(osContextId));
 }
 
 void MemObj::destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy) {

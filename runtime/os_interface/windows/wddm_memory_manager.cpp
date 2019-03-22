@@ -311,11 +311,6 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         residencyController.removeFromTrimCandidateListIfUsed(input, true);
     }
 
-    DEBUG_BREAK_IF(DebugManager.flags.CreateMultipleDevices.get() == 0 &&
-                   gfxAllocation->isUsed() && this->executionEnvironment.commandStreamReceivers.size() > 0 &&
-                   this->getDefaultCommandStreamReceiver(0) && this->getDefaultCommandStreamReceiver(0)->getTagAddress() &&
-                   gfxAllocation->getTaskCount(defaultEngineIndex) > *this->getDefaultCommandStreamReceiver(0)->getTagAddress());
-
     auto defaultGmm = gfxAllocation->getDefaultGmm();
     if (defaultGmm) {
         if (defaultGmm->isRenderCompressed && wddm->getPageTableManager()) {

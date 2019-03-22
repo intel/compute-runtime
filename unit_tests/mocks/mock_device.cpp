@@ -53,14 +53,18 @@ void MockDevice::injectMemoryManager(MemoryManager *memoryManager) {
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()][defaultEngineIndex].reset(newCsr);
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()][defaultEngineIndex]->initializeTagAllocation();
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()][defaultEngineIndex]->setPreemptionCsrAllocation(preemptionAllocation);
-    this->engines[defaultEngineIndex].commandStreamReceiver = newCsr;
+    resetCommandStreamReceiver(newCsr, defaultEngineIndex);
+}
 
-    auto osContext = this->engines[defaultEngineIndex].osContext;
+void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex) {
+    executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex].reset(newCsr);
+    executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex]->initializeTagAllocation();
+    executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex]->setPreemptionCsrAllocation(preemptionAllocation);
+    this->engines[engineIndex].commandStreamReceiver = newCsr;
+
+    auto osContext = this->engines[engineIndex].osContext;
     executionEnvironment->memoryManager->getRegisteredEngines()[osContext->getContextId()].commandStreamReceiver = newCsr;
-    this->engines[defaultEngineIndex].commandStreamReceiver->setupContext(*osContext);
+    this->engines[engineIndex].commandStreamReceiver->setupContext(*osContext);
     UNRECOVERABLE_IF(getDeviceIndex() != 0u);
 }
 

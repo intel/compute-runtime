@@ -76,6 +76,7 @@ class MockDevice : public Device {
     CommandStreamReceiver &getCommandStreamReceiver() const { return *engines[defaultEngineIndex].commandStreamReceiver; }
 
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
+    void resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex);
 
     void setSourceLevelDebuggerActive(bool active) {
         this->deviceInfo.sourceLevelDebuggerActive = active;

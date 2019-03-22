@@ -123,30 +123,49 @@ TEST_P(MemObjAsyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyn
 }
 
 HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabledThatHasDestructorCallbacksWhenItIsDestroyedThenDestructorWaitsOnTaskCount) {
-    makeMemObjUsed();
-
     bool hasCallbacks = GetParam();
 
     if (hasCallbacks) {
         memObj->setDestructorCallback(emptyDestructorCallback, nullptr);
     }
 
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
-    device->resetCommandStreamReceiver(mockCsr);
+    auto mockCsr0 = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    auto mockCsr1 = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    device->resetCommandStreamReceiver(mockCsr0, 0);
+    device->resetCommandStreamReceiver(mockCsr1, 1);
+    *mockCsr0->getTagAddress() = 0;
+    *mockCsr1->getTagAddress() = 0;
 
-    bool desired = true;
+    auto waitForCompletionWithTimeoutMock0 = [&mockCsr0](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool {
+        *mockCsr0->getTagAddress() = taskCountReady;
+        return true;
+    };
+    auto waitForCompletionWithTimeoutMock1 = [&mockCsr1](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool {
+        *mockCsr1->getTagAddress() = taskCountReady;
+        return true;
+    };
+    auto osContextId0 = mockCsr0->getOsContext().getContextId();
+    auto osContextId1 = mockCsr1->getOsContext().getContextId();
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
-    auto osContextId = mockCsr->getOsContext().getContextId();
+    memObj->getGraphicsAllocation()->updateTaskCount(taskCountReady, osContextId0);
+    memObj->getGraphicsAllocation()->updateTaskCount(taskCountReady, osContextId1);
 
-    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
-        .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
+    ON_CALL(*mockCsr0, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock0));
+    ON_CALL(*mockCsr1, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock1));
 
     if (hasCallbacks) {
-        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->getTaskCount(osContextId)))
+        EXPECT_CALL(*mockCsr0, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->getTaskCount(osContextId0)))
+            .Times(1);
+        EXPECT_CALL(*mockCsr1, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->getTaskCount(osContextId1)))
             .Times(1);
     } else {
-        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+        *mockCsr0->getTagAddress() = taskCountReady;
+        *mockCsr1->getTagAddress() = taskCountReady;
+        EXPECT_CALL(*mockCsr0, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+            .Times(0);
+        EXPECT_CALL(*mockCsr1, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
             .Times(0);
     }
     delete memObj;
@@ -164,6 +183,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr);
+    *mockCsr->getTagAddress() = 0;
     auto osContextId = mockCsr->getOsContext().getContextId();
 
     bool desired = true;
@@ -206,6 +226,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     makeMemObjUsed();
     auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr);
+    *mockCsr->getTagAddress() = 0;
 
     bool desired = true;
 
@@ -240,6 +261,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     }
     auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr);
+    *mockCsr->getTagAddress() = 0;
 
     bool desired = true;
 
@@ -266,6 +288,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     }
     auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr);
+    *mockCsr->getTagAddress() = 0;
 
     bool desired = true;
 

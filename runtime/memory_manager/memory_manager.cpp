@@ -420,4 +420,16 @@ bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocatio
     memcpy_s(graphicsAllocation->getUnderlyingBuffer(), graphicsAllocation->getUnderlyingBufferSize(), memoryToCopy, sizeToCopy);
     return true;
 }
+
+void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) {
+    for (auto &engine : getRegisteredEngines()) {
+        auto osContextId = engine.osContext->getContextId();
+        auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
+        if (graphicsAllocation.isUsedByOsContext(osContextId) &&
+            allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+            engine.commandStreamReceiver->waitForCompletionWithTimeout(false, TimeoutControls::maxTimeout, allocationTaskCount);
+        }
+    }
+}
+
 } // namespace OCLRT
