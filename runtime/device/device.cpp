@@ -277,4 +277,14 @@ void Device::initMaxPowerSavingMode() {
         engine.commandStreamReceiver->peekKmdNotifyHelper()->initMaxPowerSavingMode();
     }
 }
+
+EngineControl &Device::getEngine(EngineType engineType, bool lowPriority) {
+    for (auto &engine : engines) {
+        if (engine.osContext->getEngineType() == engineType &&
+            engine.osContext->isLowPriority() == lowPriority) {
+            return engine;
+        }
+    }
+    UNRECOVERABLE_IF(true);
+}
 } // namespace OCLRT

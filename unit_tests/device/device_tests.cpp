@@ -47,12 +47,24 @@ TEST_F(DeviceTest, getSupportedClVersion) {
     EXPECT_EQ(version, version2);
 }
 
-TEST_F(DeviceTest, getTagAddress) {
-    for (uint32_t i = 0; i < static_cast<uint32_t>(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size()); i++) {
-        auto tagAddress = pDevice->getEngine(i).commandStreamReceiver->getTagAddress();
+TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
+    for (auto &engine : pDevice->engines) {
+        auto tagAddress = engine.commandStreamReceiver->getTagAddress();
         ASSERT_NE(nullptr, const_cast<uint32_t *>(tagAddress));
         EXPECT_EQ(initialHardwareTag, *tagAddress);
     }
+}
+
+TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
+    auto &engines = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances();
+    for (uint32_t i = 0; i < engines.size(); i++) {
+        bool lowPriority = (EngineInstanceConstants::lowPriorityGpgpuEngineIndex == i);
+        auto &deviceEngine = pDevice->getEngine(engines[i], lowPriority);
+        EXPECT_EQ(deviceEngine.osContext->getEngineType(), engines[i]);
+        EXPECT_EQ(deviceEngine.osContext->isLowPriority(), lowPriority);
+    }
+
+    EXPECT_THROW(pDevice->getEngine(EngineType::ENGINE_VCS, false), std::exception);
 }
 
 TEST_F(DeviceTest, WhenGetOSTimeThenNotNull) {
@@ -159,22 +171,22 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqu
     const size_t numDevices = 2;
     const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size());
 
-    auto device1 = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, executionEnvironment, 0u));
-    auto device2 = std::unique_ptr<Device>(Device::create<MockDevice>(nullptr, executionEnvironment, 1u));
+    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, executionEnvironment, 0u));
+    auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, executionEnvironment, 1u));
 
     auto &registeredEngines = executionEnvironment->memoryManager->getRegisteredEngines();
     EXPECT_EQ(numGpgpuEngines * numDevices, registeredEngines.size());
 
     for (uint32_t i = 0; i < numGpgpuEngines; i++) {
-        EXPECT_EQ(i, device1->getEngine(i).osContext->getContextId());
-        EXPECT_EQ(1u, device1->getEngine(i).osContext->getDeviceBitfield().to_ulong());
-        EXPECT_EQ(i + numGpgpuEngines, device2->getEngine(i).osContext->getContextId());
-        EXPECT_EQ(2u, device2->getEngine(i).osContext->getDeviceBitfield().to_ulong());
+        EXPECT_EQ(i, device1->engines[i].osContext->getContextId());
+        EXPECT_EQ(1u, device1->engines[i].osContext->getDeviceBitfield().to_ulong());
+        EXPECT_EQ(i + numGpgpuEngines, device2->engines[i].osContext->getContextId());
+        EXPECT_EQ(2u, device2->engines[i].osContext->getDeviceBitfield().to_ulong());
 
         EXPECT_EQ(registeredEngines[i].commandStreamReceiver,
-                  device1->getEngine(i).commandStreamReceiver);
+                  device1->engines[i].commandStreamReceiver);
         EXPECT_EQ(registeredEngines[i + numGpgpuEngines].commandStreamReceiver,
-                  device2->getEngine(i).commandStreamReceiver);
+                  device2->engines[i].commandStreamReceiver);
     }
     EXPECT_EQ(numGpgpuEngines * numDevices, executionEnvironment->memoryManager->getRegisteredEnginesCount());
 }
@@ -202,8 +214,8 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperate
     for (uint32_t i = 0; i < static_cast<uint32_t>(numGpgpuEngines); i++) {
         EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[0][i]);
         EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[1][i]);
-        EXPECT_EQ(executionEnvironment->commandStreamReceivers[0][i].get(), device1->getEngine(i).commandStreamReceiver);
-        EXPECT_EQ(executionEnvironment->commandStreamReceivers[1][i].get(), device2->getEngine(i).commandStreamReceiver);
+        EXPECT_EQ(executionEnvironment->commandStreamReceivers[0][i].get(), device1->engines[i].commandStreamReceiver);
+        EXPECT_EQ(executionEnvironment->commandStreamReceivers[1][i].get(), device2->engines[i].commandStreamReceiver);
     }
 }
 

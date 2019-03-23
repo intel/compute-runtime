@@ -1472,8 +1472,8 @@ using GraphicsAllocationTests = ::testing::Test;
 
 HWTEST_F(GraphicsAllocationTests, givenAllocationUsedOnlyByNonDefaultCsrWhenCheckingUsageBeforeDestroyThenStoreItAsTemporaryAllocation) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    auto nonDefaultOsContext = device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).osContext;
-    auto nonDefaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).commandStreamReceiver);
+    auto nonDefaultOsContext = device->engines[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].osContext;
+    auto nonDefaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->engines[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].commandStreamReceiver);
 
     auto memoryManager = device->getExecutionEnvironment()->memoryManager.get();
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -1519,8 +1519,8 @@ HWTEST_F(GraphicsAllocationTests, givenAllocationUsedByManyOsContextsWhenCheckin
     memoryManager->multiContextResourceDestructor.reset(multiContextDestructor);
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
-    auto nonDefaultOsContext = device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).osContext;
-    auto nonDefaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getEngine(EngineInstanceConstants::lowPriorityGpgpuEngineIndex).commandStreamReceiver);
+    auto nonDefaultOsContext = device->engines[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].osContext;
+    auto nonDefaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->engines[EngineInstanceConstants::lowPriorityGpgpuEngineIndex].commandStreamReceiver);
     auto defaultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
     auto defaultOsContext = device->getDefaultEngine().osContext;
 

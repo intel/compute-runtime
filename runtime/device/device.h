@@ -72,7 +72,7 @@ class Device : public BaseObject<_cl_device_id> {
         deviceInfo.force32BitAddressess = value;
     }
 
-    EngineControl &getEngine(uint32_t engineId);
+    EngineControl &getEngine(EngineType engineType, bool lowPriority);
     EngineControl &getDefaultEngine();
 
     const char *getProductAbbrev() const;
@@ -173,12 +173,8 @@ inline void Device::getCap(const void *&src,
     retSize = size = DeviceInfoTable::Map<Param>::size;
 }
 
-inline EngineControl &Device::getEngine(uint32_t engineId) {
-    return engines[engineId];
-}
-
 inline EngineControl &Device::getDefaultEngine() {
-    return getEngine(defaultEngineIndex);
+    return engines[defaultEngineIndex];
 }
 
 inline MemoryManager *Device::getMemoryManager() const {

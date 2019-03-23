@@ -19,6 +19,7 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 
 class MockDevice : public Device {
   public:
+    using Device::engines;
     using Device::executionEnvironment;
     using Device::initializeCaps;
 
