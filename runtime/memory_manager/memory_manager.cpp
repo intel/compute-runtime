@@ -439,4 +439,14 @@ void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocat
     }
 }
 
+void MemoryManager::cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion) {
+    for (auto &engine : getRegisteredEngines()) {
+        auto csr = engine.commandStreamReceiver;
+        if (waitForCompletion) {
+            csr->waitForCompletionWithTimeout(false, 0, csr->peekLatestSentTaskCount());
+        }
+        csr->getInternalAllocationStorage()->cleanAllocationList(*csr->getTagAddress(), AllocationUsage::TEMPORARY_ALLOCATION);
+    }
+}
+
 } // namespace NEO

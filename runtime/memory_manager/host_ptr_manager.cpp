@@ -7,8 +7,6 @@
 
 #include "runtime/memory_manager/host_ptr_manager.h"
 
-#include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 using namespace NEO;
@@ -282,22 +280,14 @@ RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager 
         checkedFragments->fragments[i] = getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
         if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
             // clean temporary allocations
-
-            auto commandStreamReceiver = memoryManager.getDefaultCommandStreamReceiver(0);
-            auto allocationStorage = commandStreamReceiver->getInternalAllocationStorage();
-            uint32_t taskCount = *commandStreamReceiver->getTagAddress();
-            allocationStorage->cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
+            memoryManager.cleanTemporaryAllocationListOnAllEngines(false);
 
             // check overlapping again
             checkedFragments->fragments[i] = getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
             if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
 
                 // Wait for completion
-                while (*commandStreamReceiver->getTagAddress() < commandStreamReceiver->peekLatestSentTaskCount())
-                    ;
-
-                taskCount = *commandStreamReceiver->getTagAddress();
-                allocationStorage->cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
+                memoryManager.cleanTemporaryAllocationListOnAllEngines(true);
 
                 // check overlapping last time
                 checkedFragments->fragments[i] = getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);

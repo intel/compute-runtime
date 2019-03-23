@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/memory_constants.h"
@@ -859,6 +860,61 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
         EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_CHECKED, checkedFragments.status[i]);
         EXPECT_EQ(nullptr, checkedFragments.fragments[i]);
     }
+}
+
+HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWaitAndCleanOnAllEngines) {
+    uint32_t taskCountReady = 2;
+    uint32_t taskCountNotReady = 1;
+
+    auto &engines = memoryManager->getRegisteredEngines();
+    EXPECT_EQ(1u, engines.size());
+
+    auto csr0 = static_cast<MockCommandStreamReceiver *>(engines[0].commandStreamReceiver);
+    auto csr1 = new MockCommandStreamReceiver(executionEnvironment);
+    uint32_t csr0GpuTag = taskCountNotReady;
+    uint32_t csr1GpuTag = taskCountNotReady;
+    csr0->tagAddress = &csr0GpuTag;
+    csr1->tagAddress = &csr1GpuTag;
+    executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr1));
+    auto osContext = memoryManager->createAndRegisterOsContext(csr1, aub_stream::EngineType::ENGINE_RCS, 0, PreemptionMode::Disabled, true);
+    csr1->setupContext(*osContext);
+
+    void *cpuPtr = reinterpret_cast<void *>(0x100004);
+
+    auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
+    auto graphicsAllocation0 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, cpuPtr);
+    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, cpuPtr);
+
+    auto storage0 = new MockInternalAllocationStorage(*csr0);
+    auto storage1 = new MockInternalAllocationStorage(*csr1);
+    csr0->internalAllocationStorage.reset(storage0);
+    storage0->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation0), TEMPORARY_ALLOCATION, taskCountReady);
+    storage0->updateCompletionAfterCleaningList(taskCountReady);
+    csr1->internalAllocationStorage.reset(storage1);
+    storage1->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation1), TEMPORARY_ALLOCATION, taskCountReady);
+    storage1->updateCompletionAfterCleaningList(taskCountReady);
+
+    csr0->setLatestSentTaskCount(taskCountNotReady);
+    csr1->setLatestSentTaskCount(taskCountNotReady);
+
+    AllocationRequirements requirements;
+    CheckedFragments checkedFragments;
+
+    requirements.requiredFragmentsCount = 1;
+    requirements.totalRequiredSize = MemoryConstants::pageSize * 10;
+
+    requirements.AllocationFragments[0].allocationPtr = alignDown(cpuPtr, MemoryConstants::pageSize);
+    requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
+    requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::NONE;
+
+    hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements, &checkedFragments);
+
+    EXPECT_EQ(1u, csr0->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(1u, csr1->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(2u, storage0->cleanAllocationsCalled);
+    EXPECT_EQ(2u, storage0->lastCleanAllocationsTaskCount);
+    EXPECT_EQ(2u, storage1->cleanAllocationsCalled);
+    EXPECT_EQ(2u, storage1->lastCleanAllocationsTaskCount);
 }
 
 TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredFragmentCannotBeDestroyedThenCheckForOverlappingReturnsError) {

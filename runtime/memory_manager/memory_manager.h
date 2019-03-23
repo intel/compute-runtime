@@ -165,6 +165,7 @@ class MemoryManager {
 
     void waitForDeletions();
     void waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation);
+    void cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion);
 
     bool isAsyncDeleterEnabled() const;
     bool isLocalMemorySupported() const;
