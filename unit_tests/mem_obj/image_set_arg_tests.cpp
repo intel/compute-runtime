@@ -273,8 +273,8 @@ HWTEST_F(ImageSetArgTest, givenOffsetedBufferWhenSetKernelArgImageIscalledThenFu
 
     srcImage->setImageArg(const_cast<RENDER_SURFACE_STATE *>(surfaceState), false, 0);
 
-    void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
-    EXPECT_EQ(srcImage->getCpuAddress(), surfaceAddress);
+    auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
+    EXPECT_EQ(srcImage->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
@@ -302,8 +302,8 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage) {
 
     SetupChannels<FamilyType>(srcImage->getImageFormat().image_channel_order);
 
-    void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
-    EXPECT_EQ(srcImage->getCpuAddress(), surfaceAddress);
+    auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
+    EXPECT_EQ(srcImage->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
     EXPECT_EQ(srcImage->getImageDesc().image_width, surfaceState->getWidth());
     EXPECT_EQ(srcImage->getImageDesc().image_height, surfaceState->getHeight());
     EXPECT_EQ(srcImage->getImageDesc().image_depth, surfaceState->getDepth());
@@ -367,13 +367,13 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage2Darray) {
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
-    void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
+    auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     size_t rPitch = srcImage->getImageDesc().image_row_pitch;
 
     SetupChannels<FamilyType>(image2Darray->getImageFormat().image_channel_order);
 
-    EXPECT_EQ(image2Darray->getCpuAddress(), surfaceAddress);
+    EXPECT_EQ(image2Darray->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
     EXPECT_EQ(image2Darray->getImageDesc().image_width, surfaceState->getWidth());
     EXPECT_EQ(image2Darray->getImageDesc().image_height, surfaceState->getHeight());
     EXPECT_EQ(image2Darray->getImageDesc().image_array_size, surfaceState->getDepth());
@@ -414,11 +414,11 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Darray) {
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
-    void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
+    auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     SetupChannels<FamilyType>(image1Darray->getImageFormat().image_channel_order);
 
-    EXPECT_EQ(image1Darray->getCpuAddress(), surfaceAddress);
+    EXPECT_EQ(image1Darray->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
     EXPECT_EQ(image1Darray->getImageDesc().image_width, surfaceState->getWidth());
     EXPECT_EQ(1u, surfaceState->getHeight());
     EXPECT_EQ(image1Darray->getImageDesc().image_array_size, surfaceState->getDepth());
@@ -726,10 +726,10 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Dbuffer) {
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
-    void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
+    auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
     auto image = castToObject<Image>(imageFromBuffer);
 
-    EXPECT_EQ((void *)((uintptr_t)image->getGraphicsAllocation()->getGpuAddress()), surfaceAddress);
+    EXPECT_EQ(image->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
     // Width is 7 bits
     EXPECT_EQ(128u, surfaceState->getWidth());
     // Height is 14 bits
@@ -899,8 +899,8 @@ HWTEST_F(ImageMediaBlockSetArgTest, clSetKernelArgImage) {
 
     size_t rPitch = srcImage->getImageDesc().image_row_pitch;
 
-    void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
-    EXPECT_EQ(srcImage->getCpuAddress(), surfaceAddress);
+    auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
+    EXPECT_EQ(srcImage->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
 
     uint32_t element_size = static_cast<uint32_t>(srcImage->getSurfaceFormatInfo().ImageElementSizeInBytes);
 
