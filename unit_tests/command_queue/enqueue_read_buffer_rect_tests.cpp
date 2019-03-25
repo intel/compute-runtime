@@ -12,6 +12,7 @@
 #include "runtime/memory_manager/memory_constants.h"
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_read_buffer_rect_fixture.h"
+#include "unit_tests/fixtures/buffer_enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 
 #include "reg_configs_common.h"
@@ -529,6 +530,53 @@ HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrAndNonZ
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 1u);
+}
+
+HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtrWhenEnqueueReadBufferRectForNon3DCaseIsCalledThenAddressInStateBaseAddressIsAlignedAndMatchesKernelDispatchInfoParams) {
+    initializeFixture<FamilyType>();
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), &properties);
+
+    buffer->forceDisallowCPUCopy = true;
+    Vec3<size_t> hostOffset(hostOrigin);
+    auto misalignedDstPtr = ptrOffset(reinterpret_cast<void *>(memory), hostOffset.z * hostSlicePitch);
+
+    auto retVal = cmdQ->enqueueReadBufferRect(buffer.get(), CL_FALSE,
+                                              bufferOrigin, hostOrigin, region,
+                                              bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch,
+                                              memory, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(0u, cmdQ->lastEnqueuedKernels.size());
+    Kernel *kernel = cmdQ->lastEnqueuedKernels[0];
+
+    cmdQ->finish(true);
+
+    parseCommands<FamilyType>(*cmdQ);
+
+    if (hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
+        const auto &surfaceStateDst = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 1);
+
+        if (kernel->getKernelInfo().kernelArgInfo[1].kernelArgPatchInfoVector[0].size == sizeof(uint64_t)) {
+            auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() +
+                                           kernel->getKernelInfo().kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
+            EXPECT_EQ(reinterpret_cast<uint64_t>(alignDown(misalignedDstPtr, 4)), *pKernelArg);
+            EXPECT_EQ(*pKernelArg, surfaceStateDst.getSurfaceBaseAddress());
+
+        } else if (kernel->getKernelInfo().kernelArgInfo[1].kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
+            auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData() +
+                                           kernel->getKernelInfo().kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset);
+            EXPECT_EQ(reinterpret_cast<uint64_t>(alignDown(misalignedDstPtr, 4)), static_cast<uint64_t>(*pKernelArg));
+            EXPECT_EQ(static_cast<uint64_t>(*pKernelArg), surfaceStateDst.getSurfaceBaseAddress());
+        }
+    }
+
+    if (kernel->getKernelInfo().kernelArgInfo[3].kernelArgPatchInfoVector[0].size == 4 * sizeof(uint32_t)) { // size of  uint4 DstOrigin
+        auto dstOffset = (uint32_t *)(kernel->getCrossThreadData() +
+                                      kernel->getKernelInfo().kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset);
+        EXPECT_EQ(hostOffset.x + ptrDiff(misalignedDstPtr, alignDown(misalignedDstPtr, 4)), *dstOffset);
+    } else {
+        // DstOrigin arg should be 16 bytes in size, if that changes, above if path should be modified
+        EXPECT_TRUE(false);
+    }
 }
 
 using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;

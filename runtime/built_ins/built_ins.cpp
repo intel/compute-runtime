@@ -323,26 +323,41 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyBufferRect> : public BuiltinDispatchI
         int dimensions = is3D ? 3 : 2;
         kernelNoSplit3DBuilder.setKernel(kernelBytes[dimensions - 1]);
 
+        size_t srcOffsetFromAlignedPtr = 0;
+        size_t dstOffsetFromAlignedPtr = 0;
+
         // arg0 = src
         if (operationParams.srcMemObj) {
             kernelNoSplit3DBuilder.setArg(0, operationParams.srcMemObj);
         } else {
-            kernelNoSplit3DBuilder.setArgSvm(0, hostPtrSize, is3D ? operationParams.srcPtr : ptrOffset(operationParams.srcPtr, operationParams.srcOffset.z * operationParams.srcSlicePitch), nullptr, CL_MEM_READ_ONLY);
+            void *srcPtrToSet = operationParams.srcPtr;
+            if (!is3D) {
+                auto srcPtr = ptrOffset(operationParams.srcPtr, operationParams.srcOffset.z * operationParams.srcSlicePitch);
+                srcPtrToSet = alignDown(srcPtr, 4);
+                srcOffsetFromAlignedPtr = ptrDiff(srcPtr, srcPtrToSet);
+            }
+            kernelNoSplit3DBuilder.setArgSvm(0, hostPtrSize, srcPtrToSet, nullptr, CL_MEM_READ_ONLY);
         }
 
         // arg1 = dst
         if (operationParams.dstMemObj) {
             kernelNoSplit3DBuilder.setArg(1, operationParams.dstMemObj);
         } else {
-            kernelNoSplit3DBuilder.setArgSvm(1, hostPtrSize, is3D ? operationParams.dstPtr : ptrOffset(operationParams.dstPtr, operationParams.dstOffset.z * operationParams.dstSlicePitch), nullptr, 0u);
+            void *dstPtrToSet = operationParams.dstPtr;
+            if (!is3D) {
+                auto dstPtr = ptrOffset(operationParams.dstPtr, operationParams.dstOffset.z * operationParams.dstSlicePitch);
+                dstPtrToSet = alignDown(dstPtr, 4);
+                dstOffsetFromAlignedPtr = ptrDiff(dstPtr, dstPtrToSet);
+            }
+            kernelNoSplit3DBuilder.setArgSvm(1, hostPtrSize, dstPtrToSet, nullptr, 0u);
         }
 
         // arg2 = srcOrigin
-        uint32_t kSrcOrigin[4] = {(uint32_t)operationParams.srcOffset.x, (uint32_t)operationParams.srcOffset.y, (uint32_t)operationParams.srcOffset.z, 0};
+        uint32_t kSrcOrigin[4] = {static_cast<uint32_t>(operationParams.srcOffset.x + srcOffsetFromAlignedPtr), (uint32_t)operationParams.srcOffset.y, (uint32_t)operationParams.srcOffset.z, 0};
         kernelNoSplit3DBuilder.setArg(2, sizeof(uint32_t) * 4, kSrcOrigin);
 
         // arg3 = dstOrigin
-        uint32_t kDstOrigin[4] = {(uint32_t)operationParams.dstOffset.x, (uint32_t)operationParams.dstOffset.y, (uint32_t)operationParams.dstOffset.z, 0};
+        uint32_t kDstOrigin[4] = {static_cast<uint32_t>(operationParams.dstOffset.x + dstOffsetFromAlignedPtr), (uint32_t)operationParams.dstOffset.y, (uint32_t)operationParams.dstOffset.z, 0};
         kernelNoSplit3DBuilder.setArg(3, sizeof(uint32_t) * 4, kDstOrigin);
 
         // arg4 = srcPitch
