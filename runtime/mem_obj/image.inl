@@ -38,11 +38,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         imageCount = 1;
     }
 
-    bool isImageArray = (getImageDesc().image_array_size > 0 &&
-                         (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY ||
-                          getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY))
-                            ? true
-                            : false;
+    bool isImageArray = getImageDesc().image_array_size > 1;
 
     uint32_t renderTargetViewExtent = static_cast<uint32_t>(imageCount);
     uint32_t minimumArrayElement = 0;
