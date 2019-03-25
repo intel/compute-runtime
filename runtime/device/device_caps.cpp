@@ -159,6 +159,8 @@ void Device::initializeCaps() {
     simultaneousInterops = {0};
     appendOSExtensions(deviceExtensions);
 
+    deviceExtensions += hwHelper.getExtensions();
+
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 
     exposedBuiltinKernels = builtInKernels;

@@ -14,6 +14,7 @@
 #include "CL/cl.h"
 
 #include <cstdint>
+#include <string>
 #include <type_traits>
 
 namespace OCLRT {
@@ -59,6 +60,7 @@ class HwHelper {
     virtual size_t getScratchSpaceOffsetFor64bit() = 0;
     virtual const std::vector<EngineType> getGpgpuEngineInstances() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
+    virtual std::string getExtensions() const = 0;
 
     static constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
 
@@ -145,6 +147,8 @@ class HwHelperHw : public HwHelper {
     const std::vector<EngineType> getGpgpuEngineInstances() const override;
 
     bool getEnableLocalMemory(const HardwareInfo &hwInfo) const override;
+
+    std::string getExtensions() const override;
 
   protected:
     HwHelperHw() = default;

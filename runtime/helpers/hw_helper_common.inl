@@ -186,6 +186,11 @@ bool HwHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const 
 }
 
 template <typename Family>
+std::string HwHelperHw<Family>::getExtensions() const {
+    return "";
+}
+
+template <typename Family>
 typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndProgramPostSyncOperation(LinearStream *commandStream,
                                                                                                        POST_SYNC_OPERATION operation,
                                                                                                        uint64_t gpuAddress,
