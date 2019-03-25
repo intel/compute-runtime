@@ -38,6 +38,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     void flushBatchedSubmissions() override;
 
+    PIPE_CONTROL *addPipeControlBase(LinearStream &commandStream, bool dcFlush);
     void addPipeControl(LinearStream &commandStream, bool dcFlush) override;
     int getRequiredPipeControlSize() const;
 
@@ -86,7 +87,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     virtual void initPageTableManagerRegisters(LinearStream &csr){};
 
     void addPipeControlWA(LinearStream &commandStream);
-    void addDcFlushToPipeControl(typename GfxFamily::PIPE_CONTROL *pCmd, bool flushDC);
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);
     size_t getSshHeapSize();

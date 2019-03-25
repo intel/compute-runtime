@@ -584,18 +584,13 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
-    typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
-
+typename GfxFamily::PIPE_CONTROL *CommandStreamReceiverHw<GfxFamily>::addPipeControlBase(LinearStream &commandStream, bool dcFlush) {
     addPipeControlWA(commandStream);
 
-    // Add a PIPE_CONTROL w/ CS_stall
     auto pCmd = reinterpret_cast<PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
     *pCmd = GfxFamily::cmdInitPipeControl;
     pCmd->setCommandStreamerStallEnable(true);
     pCmd->setDcFlushEnable(dcFlush);
-    //Some architectures (BDW) requires to have at least one flush bit set
-    addDcFlushToPipeControl(pCmd, true);
 
     if (DebugManager.flags.FlushAllCaches.get()) {
         pCmd->setDcFlushEnable(true);
@@ -607,6 +602,12 @@ void CommandStreamReceiverHw<GfxFamily>::addPipeControl(LinearStream &commandStr
         pCmd->setConstantCacheInvalidationEnable(true);
         pCmd->setStateCacheInvalidationEnable(true);
     }
+    return pCmd;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
+    CommandStreamReceiverHw<GfxFamily>::addPipeControlBase(commandStream, dcFlush);
 }
 
 template <typename GfxFamily>
@@ -803,10 +804,6 @@ bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(cons
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::addPipeControlWA(LinearStream &commandStream) {
-}
-
-template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::addDcFlushToPipeControl(typename GfxFamily::PIPE_CONTROL *pCmd, bool flushDC) {
 }
 
 template <typename GfxFamily>
