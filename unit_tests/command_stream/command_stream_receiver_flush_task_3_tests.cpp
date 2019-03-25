@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/helpers/kernel_commands.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -1454,4 +1455,33 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWhenItIsUnblocke
     event->submitCommand(false);
 
     EXPECT_EQ(numGrfRequired, csr->savedDispatchFlags.numGrfRequired);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsTrueWhenCallingAddPipeControlThenDcFlushIsEnabled) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    LinearStream commandStream(buffer.get(), 128);
+
+    pDevice->getCommandStreamReceiver().addPipeControl(commandStream, true);
+    auto pipeControlOffset = KernelCommandsHelper<FamilyType>::isPipeControlWArequired() ? sizeof(PIPE_CONTROL) : 0u;
+    auto pipeControlAddress = buffer.get() + pipeControlOffset;
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(pipeControlAddress);
+
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsFalseWhenCallingAddPipeControlThenDcFlushIsEnabledOnlyOnGen8) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    LinearStream commandStream(buffer.get(), 128);
+
+    pDevice->getCommandStreamReceiver().addPipeControl(commandStream, false);
+    auto pipeControlOffset = KernelCommandsHelper<FamilyType>::isPipeControlWArequired() ? sizeof(PIPE_CONTROL) : 0u;
+    auto pipeControlAddress = buffer.get() + pipeControlOffset;
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(pipeControlAddress);
+
+    const bool expectedDcFlush = ::renderCoreFamily == IGFX_GEN8_CORE;
+    EXPECT_EQ(expectedDcFlush, pipeControl->getDcFlushEnable());
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
 }

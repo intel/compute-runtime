@@ -593,6 +593,7 @@ void CommandStreamReceiverHw<GfxFamily>::addPipeControl(LinearStream &commandStr
     auto pCmd = reinterpret_cast<PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
     *pCmd = GfxFamily::cmdInitPipeControl;
     pCmd->setCommandStreamerStallEnable(true);
+    pCmd->setDcFlushEnable(dcFlush);
     //Some architectures (BDW) requires to have at least one flush bit set
     addDcFlushToPipeControl(pCmd, true);
 
