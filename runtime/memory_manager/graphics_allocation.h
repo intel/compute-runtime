@@ -17,6 +17,7 @@
 #include "runtime/utilities/idlist.h"
 #include "runtime/utilities/stackvec.h"
 
+#include "engine_limits.h"
 #include "storage_info.h"
 
 #include <array>

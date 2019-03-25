@@ -6,21 +6,15 @@
  */
 
 #pragma once
-#include "engine_node.h"
+#include "engine_limits.h"
 
 #include <array>
-#include <cinttypes>
-#include <vector>
+#include <cstdint>
 
 namespace OCLRT {
 
 struct ResidencyData {
-    ResidencyData() {
-        std::fill_n(resident, sizeof(resident), false);
-    }
-
-    ~ResidencyData() = default;
-    bool resident[maxOsContextCount];
+    bool resident[maxOsContextCount] = {};
 
     void updateCompletionData(uint64_t newFenceValue, uint32_t contextId);
     uint64_t getFenceValueForContextId(uint32_t contextId);

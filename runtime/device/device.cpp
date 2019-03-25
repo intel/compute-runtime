@@ -175,7 +175,7 @@ bool Device::createEngines(const HardwareInfo *pHwInfo) {
 
         DeviceBitfield deviceBitfield;
         deviceBitfield.set(getDeviceIndex());
-        bool lowPriority = deviceCsrIndex == EngineInstanceConstants::lowPriorityGpgpuEngineIndex;
+        bool lowPriority = deviceCsrIndex == HwHelper::lowPriorityGpgpuEngineIndex;
         auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver, gpgpuEngines[deviceCsrIndex],
                                                                                          deviceBitfield, preemptionMode, lowPriority);
         commandStreamReceiver->setupContext(*osContext);

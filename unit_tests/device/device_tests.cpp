@@ -58,7 +58,7 @@ TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
 TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
     auto &engines = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances();
     for (uint32_t i = 0; i < engines.size(); i++) {
-        bool lowPriority = (EngineInstanceConstants::lowPriorityGpgpuEngineIndex == i);
+        bool lowPriority = (HwHelper::lowPriorityGpgpuEngineIndex == i);
         auto &deviceEngine = pDevice->getEngine(engines[i], lowPriority);
         EXPECT_EQ(deviceEngine.osContext->getEngineType(), engines[i]);
         EXPECT_EQ(deviceEngine.osContext->isLowPriority(), lowPriority);

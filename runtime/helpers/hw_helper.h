@@ -60,6 +60,8 @@ class HwHelper {
     virtual const std::vector<EngineType> getGpgpuEngineInstances() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
 
+    static constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
+
   protected:
     HwHelper() = default;
 };

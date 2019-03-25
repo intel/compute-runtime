@@ -10,12 +10,8 @@
 
 namespace OCLRT {
 
-enum EngineType : uint32_t {
-    ENGINE_RCS = 0,
-    ENGINE_BCS,
-    ENGINE_VCS,
-    ENGINE_VECS,
-    NUM_ENGINES
-};
+constexpr uint32_t numGpgpuEngineInstances = 2u;
+constexpr uint32_t maxOsContextCount = numGpgpuEngineInstances;
+constexpr uint32_t maxHandleCount = 1u;
 
 } // namespace OCLRT
