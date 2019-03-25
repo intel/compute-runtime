@@ -119,8 +119,8 @@ HWTEST_F(MediaImageSetArgTest, clSetKernelArgImage) {
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
-    void *surfaceAddress = reinterpret_cast<void *>(pSurfaceState->getSurfaceBaseAddress());
-    ASSERT_EQ(srcImage->getCpuAddress(), surfaceAddress);
+    uint64_t surfaceAddress = pSurfaceState->getSurfaceBaseAddress();
+    ASSERT_EQ(srcImage->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
     EXPECT_EQ(srcImage->getImageDesc().image_width, pSurfaceState->getWidth());
     EXPECT_EQ(srcImage->getImageDesc().image_height, pSurfaceState->getHeight());
 
