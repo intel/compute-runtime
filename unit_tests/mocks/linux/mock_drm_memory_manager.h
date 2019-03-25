@@ -56,11 +56,10 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::sharingBufferObjects;
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
 
-    TestedDrmMemoryManager(Drm *drm, ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(drm,
-                                                                                                       gemCloseWorkerMode::gemCloseWorkerInactive,
-                                                                                                       false,
-                                                                                                       false,
-                                                                                                       executionEnvironment) {
+    TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(gemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                                             false,
+                                                                                             false,
+                                                                                             executionEnvironment) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
         this->munmapFunction = &munmapMock;
@@ -71,11 +70,10 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
         munmapMockCallCount = 0;
         hostPtrManager.reset(new MockHostPtrManager);
     };
-    TestedDrmMemoryManager(Drm *drm,
-                           bool enableLocalMemory,
+    TestedDrmMemoryManager(bool enableLocalMemory,
                            bool allowForcePin,
                            bool validateHostPtrMemory,
-                           ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, enableLocalMemory, drm,
+                           ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, enableLocalMemory,
                                                                                              gemCloseWorkerMode::gemCloseWorkerInactive,
                                                                                              allowForcePin,
                                                                                              validateHostPtrMemory,

@@ -13,6 +13,7 @@
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_gem_close_worker.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "runtime/os_interface/linux/os_interface.h"
 #include "test.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
@@ -66,8 +67,10 @@ class DrmGemCloseWorkerFixture {
         this->drmMock->gem_close_cnt = 0;
         this->drmMock->gem_close_expected = 0;
 
-        this->mm = new DrmMemoryManager(this->drmMock,
-                                        gemCloseWorkerMode::gemCloseWorkerInactive,
+        executionEnvironment.osInterface = std::make_unique<OSInterface>();
+        executionEnvironment.osInterface->get()->setDrm(drmMock);
+
+        this->mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
                                         false,
                                         false,
                                         executionEnvironment);

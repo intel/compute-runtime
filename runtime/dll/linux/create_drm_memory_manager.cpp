@@ -13,8 +13,7 @@
 
 namespace OCLRT {
 std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {
-    return std::make_unique<DrmMemoryManager>(executionEnvironment.osInterface->get()->getDrm(),
-                                              gemCloseWorkerMode::gemCloseWorkerActive,
+    return std::make_unique<DrmMemoryManager>(gemCloseWorkerMode::gemCloseWorkerActive,
                                               DebugManager.flags.EnableForcePin.get(),
                                               true,
                                               executionEnvironment);

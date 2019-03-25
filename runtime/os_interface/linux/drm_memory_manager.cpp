@@ -9,6 +9,7 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
@@ -19,6 +20,7 @@
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
+#include "runtime/os_interface/linux/os_interface.h"
 
 #include "drm/i915_drm.h"
 
@@ -27,12 +29,11 @@
 
 namespace OCLRT {
 
-DrmMemoryManager::DrmMemoryManager(Drm *drm,
-                                   gemCloseWorkerMode mode,
+DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                    bool forcePinAllowed,
                                    bool validateHostPtrMemory,
                                    ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
-                                                                                 drm(drm),
+                                                                                 drm(executionEnvironment.osInterface->get()->getDrm()),
                                                                                  pinBB(nullptr),
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {

@@ -18,6 +18,16 @@ namespace OCLRT {
 
 using AllocationData = TestedDrmMemoryManager::AllocationData;
 
+class DrmMemoryManagerBasic : public ::testing::Test {
+  public:
+    void SetUp() override {
+        executionEnvironment.osInterface = std::make_unique<OSInterface>();
+        executionEnvironment.osInterface->get()->setDrm(Drm::get(0));
+    }
+
+    ExecutionEnvironment executionEnvironment;
+};
+
 class DrmMemoryManagerFixture : public MemoryManagementFixture {
   public:
     TestedDrmMemoryManager *memoryManager = nullptr;
@@ -32,7 +42,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setDrm(mock);
 
-        memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, *executionEnvironment);
+        memoryManager = new (std::nothrow) TestedDrmMemoryManager(*executionEnvironment);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
         if (memoryManager->getgemCloseWorker()) {
@@ -68,14 +78,14 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->setHwInfo(*platformDevices);
         mock = std::make_unique<DrmMockCustom>();
-        memoryManager.reset(new TestedDrmMemoryManager(mock.get(), *executionEnvironment));
+        executionEnvironment->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->osInterface->get()->setDrm(mock.get());
+        memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));
 
         ASSERT_NE(nullptr, memoryManager);
         if (memoryManager->getgemCloseWorker()) {
             memoryManager->getgemCloseWorker()->close(true);
         }
-        executionEnvironment->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->osInterface->get()->setDrm(mock.get());
         device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, executionEnvironment, 0));
     }
 

@@ -19,8 +19,7 @@ std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvir
     if (overrideMemoryManagerCreation) {
         return std::make_unique<OsAgnosticMemoryManager>(executionEnvironment);
     }
-    return std::make_unique<DrmMemoryManager>(executionEnvironment.osInterface->get()->getDrm(),
-                                              gemCloseWorkerMode::gemCloseWorkerInactive,
+    return std::make_unique<DrmMemoryManager>(gemCloseWorkerMode::gemCloseWorkerInactive,
                                               DebugManager.flags.EnableForcePin.get(),
                                               true,
                                               executionEnvironment);

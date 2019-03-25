@@ -7,6 +7,7 @@
 
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
 
 #include "gtest/gtest.h"
@@ -17,7 +18,9 @@ using AllocationData = TestedDrmMemoryManager::AllocationData;
 
 TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenAllocateInDevicePoolIsCalledThenNullptrAndStatusRetryIsReturned) {
     ExecutionEnvironment executionEnvironment;
-    TestedDrmMemoryManager memoryManager(Drm::get(0), executionEnvironment);
+    executionEnvironment.osInterface = std::make_unique<OSInterface>();
+    executionEnvironment.osInterface->get()->setDrm(Drm::get(0));
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
     allocData.size = MemoryConstants::pageSize;
