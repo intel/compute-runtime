@@ -1586,6 +1586,11 @@ TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLower
     EXPECT_EQ(1, memoryManager.registeredEngines[1].osContext->getRefInternalCount());
 }
 
+TEST(ResidencyDataTest, givenGpgpuEnginesWhenAskedForMaxOscontextCountThenValueIsGreaterOrEqual) {
+    auto &engines = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances();
+    EXPECT_TRUE(maxOsContextCount >= engines.size());
+}
+
 TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenItIsProperlyUpdated) {
     struct MockResidencyData : public ResidencyData {
         using ResidencyData::lastFenceValues;
