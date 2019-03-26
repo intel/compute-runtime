@@ -29,6 +29,7 @@
 #include "driver_version.h"
 #include "hw_cmds.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
+#include "third_party/aub_stream/headers/aubstream.h"
 
 #include <algorithm>
 #include <cstring>
@@ -714,10 +715,19 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
     }
 
     if (hardwareContextController) {
-        if (AubAllocDump::DumpFormat::BUFFER_BIN == dumpFormat) {
-            auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
-            auto size = gfxAllocation.getUnderlyingBufferSize();
-            hardwareContextController->dumpBufferBIN(gpuAddress, size);
+        auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
+        auto size = gfxAllocation.getUnderlyingBufferSize();
+        auto compressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == gfxAllocation.getAllocationType();
+
+        switch (dumpFormat) {
+        case AubAllocDump::DumpFormat::BUFFER_BIN:
+            hardwareContextController->dumpBuffer(gpuAddress, size, aub_stream::dumpFormat::bin, compressed);
+            break;
+        case AubAllocDump::DumpFormat::BUFFER_TRE:
+            hardwareContextController->dumpBuffer(gpuAddress, size, aub_stream::dumpFormat::tre, compressed);
+            break;
+        default:
+            break;
         }
         return;
     }

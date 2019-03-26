@@ -26,7 +26,7 @@
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_os_context.h"
 
-#include "third_party/aub_stream/headers/options.h"
+#include "third_party/aub_stream/headers/aubstream.h"
 
 using namespace NEO;
 
@@ -901,7 +901,33 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
 
     aubCsr.dumpAllocation(*gfxAllocation);
 
-    EXPECT_TRUE(mockHardwareContext->dumpBufferBINCalled);
+    EXPECT_TRUE(mockHardwareContext->dumpBufferCalled);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenCompressedGraphicsAllocationWritableWhenDumpAllocationIsCalledAndDumpFormatIsSpecifiedThenGraphicsAllocationShouldBeDumped) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AUBDumpBufferFormat.set("TRE");
+
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
+    mockAubCenter->aubManager = std::make_unique<MockAubManager>();
+
+    pDevice->executionEnvironment->aubCenter.reset(mockAubCenter);
+    MockAubCsr<FamilyType> aubCsr("", true, *pDevice->executionEnvironment);
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    aubCsr.setupContext(osContext);
+
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED});
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
+    EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
+    aubCsr.dumpAllocation(*gfxAllocation);
+
+    EXPECT_TRUE(mockHardwareContext->dumpBufferCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -927,7 +953,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
 
     aubCsr.dumpAllocation(*gfxAllocation);
 
-    EXPECT_FALSE(mockHardwareContext->dumpBufferBINCalled);
+    EXPECT_FALSE(mockHardwareContext->dumpBufferCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -954,7 +980,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationNonWritableWhenDu
 
     aubCsr.dumpAllocation(*gfxAllocation);
 
-    EXPECT_FALSE(mockHardwareContext->dumpBufferBINCalled);
+    EXPECT_FALSE(mockHardwareContext->dumpBufferCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -983,7 +1009,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationNotDumpableWhenDu
     aubCsr.dumpAllocation(*gfxAllocation);
 
     EXPECT_FALSE(gfxAllocation->isAllocDumpable());
-    EXPECT_FALSE(mockHardwareContext->dumpBufferBINCalled);
+    EXPECT_FALSE(mockHardwareContext->dumpBufferCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -1012,7 +1038,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationDumpableWhenDumpA
     aubCsr.dumpAllocation(*gfxAllocation);
 
     EXPECT_FALSE(gfxAllocation->isAllocDumpable());
-    EXPECT_TRUE(mockHardwareContext->dumpBufferBINCalled);
+    EXPECT_TRUE(mockHardwareContext->dumpBufferCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }

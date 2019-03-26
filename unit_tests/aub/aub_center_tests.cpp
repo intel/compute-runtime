@@ -14,7 +14,8 @@
 #include "unit_tests/mocks/mock_aub_manager.h"
 
 #include "gtest/gtest.h"
-#include "third_party/aub_stream/headers/modes.h"
+#include "third_party/aub_stream/headers/aubstream.h"
+
 using namespace NEO;
 
 TEST(AubCenter, GivenUseAubStreamDebugVariableNotSetWhenAubCenterIsCreatedThenAubCenterDoesNotCreateAubManager) {

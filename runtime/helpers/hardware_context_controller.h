@@ -27,6 +27,7 @@ class HardwareContextController {
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize);
 
     void dumpBufferBIN(uint64_t gfxAddress, size_t size);
+    void dumpBuffer(uint64_t gfxAddress, size_t size, uint32_t format, bool compressed);
     void readMemory(uint64_t gfxAddress, void *memory, size_t size, uint32_t memoryBanks, size_t pageSize);
 
     std::vector<std::unique_ptr<aub_stream::HardwareContext>> hardwareContexts;

@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/aub_mem_dump/aub_alloc_dump.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/helpers/hw_helper.h"
@@ -1154,14 +1155,19 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
 
     EXPECT_FALSE(mockHwContext0->dumpBufferBINCalled);
     EXPECT_FALSE(mockHwContext1->dumpBufferBINCalled);
+    EXPECT_FALSE(mockHwContext0->dumpBufferCalled);
+    EXPECT_FALSE(mockHwContext1->dumpBufferCalled);
     EXPECT_FALSE(mockHwContext0->readMemoryCalled);
     EXPECT_FALSE(mockHwContext1->readMemoryCalled);
 
     hwContextContainer.dumpBufferBIN(1, 2);
+    hwContextContainer.dumpBuffer(1, 2, AubAllocDump::DumpFormat::BUFFER_BIN, false);
     hwContextContainer.readMemory(1, reinterpret_cast<void *>(0x123), 1, 2, 0);
 
     EXPECT_TRUE(mockHwContext0->dumpBufferBINCalled);
     EXPECT_FALSE(mockHwContext1->dumpBufferBINCalled);
+    EXPECT_TRUE(mockHwContext0->dumpBufferCalled);
+    EXPECT_FALSE(mockHwContext1->dumpBufferCalled);
     EXPECT_TRUE(mockHwContext0->readMemoryCalled);
     EXPECT_FALSE(mockHwContext1->readMemoryCalled);
 }

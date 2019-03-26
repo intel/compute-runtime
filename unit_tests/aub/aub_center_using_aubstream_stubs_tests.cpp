@@ -13,7 +13,8 @@
 #include "unit_tests/mocks/mock_aub_center.h"
 
 #include "gtest/gtest.h"
-#include "third_party/aub_stream/headers/options.h"
+#include "third_party/aub_stream/headers/aubstream.h"
+
 using namespace NEO;
 
 namespace aub_stream_stubs {
