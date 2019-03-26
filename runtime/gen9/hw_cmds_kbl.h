@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/gen9/hw_cmds_base.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct KBL : public SKLFamily {
     static const PLATFORM platform;
@@ -67,4 +67,4 @@ class KBL_3x3x8 : public KBL {
   private:
     static GT_SYSTEM_INFO gtSystemInfo;
 };
-} // namespace OCLRT
+} // namespace NEO

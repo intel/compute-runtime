@@ -31,7 +31,7 @@
 #include <functional>
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 namespace GmmHelperFunctions {
 Gmm *getGmm(void *ptr, size_t size) {
@@ -58,7 +58,7 @@ struct Wddm20WithMockGdiDllTests : public Wddm20WithMockGdiDllTestsWithoutWddmIn
 
 TEST_F(Wddm20Tests, givenMinWindowsAddressWhenWddmIsInitializedThenWddmUseThisAddress) {
     uintptr_t expectedAddress = 0x200000;
-    EXPECT_EQ(expectedAddress, OCLRT::windowsMinAddress);
+    EXPECT_EQ(expectedAddress, NEO::windowsMinAddress);
     EXPECT_EQ(expectedAddress, wddm->getWddmMinAddress());
 }
 

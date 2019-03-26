@@ -17,7 +17,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 namespace SipKernelTests {
 std::string getDebugSipKernelNameWithBitnessAndProductSuffix(std::string &base, const char *product) {

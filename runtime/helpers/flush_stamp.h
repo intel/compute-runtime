@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "runtime/utilities/reference_tracked_object.h"
 #include "runtime/utilities/stackvec.h"
 
-namespace OCLRT {
+namespace NEO {
 struct FlushStampTrackingObj : public ReferenceTrackedObject<FlushStampTrackingObj> {
     FlushStamp flushStamp = 0;
     std::atomic<bool> initialized{false};
@@ -45,4 +45,4 @@ class FlushStampUpdateHelper {
   private:
     StackVec<FlushStampTrackingObj *, 64> flushStampsToUpdate;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -15,7 +15,7 @@
 #include <sstream>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class PerfProfiler {
 
     struct SystemLog {
@@ -116,4 +116,4 @@ struct PerfProfilerApiWrapper {
     const char *funcName;
 };
 #endif
-}; // namespace OCLRT
+}; // namespace NEO

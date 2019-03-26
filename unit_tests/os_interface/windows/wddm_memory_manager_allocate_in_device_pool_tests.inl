@@ -10,7 +10,7 @@
 #include "unit_tests/os_interface/windows/wddm_memory_manager_tests.h"
 
 #include "gtest/gtest.h"
-using namespace OCLRT;
+using namespace NEO;
 using namespace ::testing;
 
 TEST_F(WddmMemoryManagerSimpleTest, givenUseSystemMemorySetToTrueWhenAllocateInDevicePoolIsCalledThenNullptrIsReturned) {

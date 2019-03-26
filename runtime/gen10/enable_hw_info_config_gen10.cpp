@@ -9,10 +9,10 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 #ifdef SUPPORT_CNL
 static EnableProductHwInfoConfig<IGFX_CANNONLAKE> enableCNL;
 #endif
 
-} // namespace OCLRT
+} // namespace NEO

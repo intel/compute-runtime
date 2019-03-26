@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,6 @@
 #include "hw_info_cnl.inl"
 #endif
 
-namespace OCLRT {
+namespace NEO {
 const char *GfxFamilyMapper<IGFX_GEN10_CORE>::name = "Gen10";
-} // namespace OCLRT
+} // namespace NEO

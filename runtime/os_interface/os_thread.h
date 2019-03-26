@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 #include <memory>
-namespace OCLRT {
+namespace NEO {
 
 class Thread {
   public:
@@ -15,4 +15,4 @@ class Thread {
     virtual void join() = 0;
     virtual ~Thread() = default;
 };
-} // namespace OCLRT
+} // namespace NEO

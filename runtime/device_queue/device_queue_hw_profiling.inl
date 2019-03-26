@@ -5,7 +5,7 @@
  *
  */
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::addProfilingEndCmds(uint64_t timestampAddress) {
@@ -21,4 +21,4 @@ void DeviceQueueHw<GfxFamily>::addProfilingEndCmds(uint64_t timestampAddress) {
     pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
     pMICmdLow->setMemoryAddress(timestampAddress);
 }
-} // namespace OCLRT
+} // namespace NEO

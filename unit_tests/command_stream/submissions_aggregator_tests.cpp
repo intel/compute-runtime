@@ -16,7 +16,7 @@
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct MockSubmissionAggregator : public SubmissionAggregator {
     CommandBufferList &peekCommandBuffersList() {

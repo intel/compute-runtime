@@ -13,7 +13,7 @@
 #include <mutex>
 #include <utility>
 
-namespace OCLRT {
+namespace NEO {
 class DeferrableDeletion;
 class Thread;
 class DeferredDeleter {
@@ -51,4 +51,4 @@ class DeferredDeleter {
     std::mutex threadMutex;
     std::condition_variable condition;
 };
-} // namespace OCLRT
+} // namespace NEO

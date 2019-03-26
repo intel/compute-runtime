@@ -8,8 +8,8 @@
 #include "runtime/os_interface/windows/os_interface.h"
 
 #include "runtime/memory_manager/memory_constants.h"
-namespace OCLRT {
+namespace NEO {
 
 bool OSInterface::osEnableLocalMemory = true && is64bit;
 
-} // namespace OCLRT
+} // namespace NEO

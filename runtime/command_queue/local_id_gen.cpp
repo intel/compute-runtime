@@ -12,7 +12,7 @@
 
 #include <array>
 
-namespace OCLRT {
+namespace NEO {
 
 struct uint16x8_t;
 struct uint16x16_t;
@@ -114,4 +114,4 @@ inline void generateLocalIDsWithLayoutForImages(void *b, const std::array<uint16
         offset += 3 * rowWidth;
     }
 }
-} // namespace OCLRT
+} // namespace NEO

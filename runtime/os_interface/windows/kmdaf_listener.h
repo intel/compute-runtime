@@ -10,7 +10,7 @@
 
 #include <d3dkmthk.h>
 
-namespace OCLRT {
+namespace NEO {
 
 struct KmDafListener {
 
@@ -28,4 +28,4 @@ struct KmDafListener {
 
     MOCKABLE_VIRTUAL void notifyWriteTarget(bool ftrKmdDaf, D3DKMT_HANDLE hAdapter, D3DKMT_HANDLE hDevice, const D3DKMT_HANDLE hAllocation, PFND3DKMT_ESCAPE pfnEscape);
 };
-} // namespace OCLRT
+} // namespace NEO

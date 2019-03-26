@@ -33,7 +33,7 @@
 #include <algorithm>
 #include <cstring>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment)
@@ -814,4 +814,4 @@ int AUBCommandStreamReceiverHw<GfxFamily>::getAddressSpaceFromPTEBits(uint64_t e
     return AubMemDump::AddressSpaceValues::TraceNonlocal;
 }
 
-} // namespace OCLRT
+} // namespace NEO

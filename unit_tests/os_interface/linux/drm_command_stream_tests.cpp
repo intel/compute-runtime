@@ -28,7 +28,7 @@
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class DrmCommandStreamFixture {
   public:

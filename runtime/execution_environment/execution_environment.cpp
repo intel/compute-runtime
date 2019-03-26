@@ -20,7 +20,7 @@
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
-namespace OCLRT {
+namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() = default;
 ExecutionEnvironment::~ExecutionEnvironment() = default;
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment);
@@ -125,4 +125,4 @@ EngineControl *ExecutionEnvironment::getEngineControlForSpecialCsr() {
     return engine;
 }
 
-} // namespace OCLRT
+} // namespace NEO

@@ -12,7 +12,7 @@
 
 #include <algorithm>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(TimerTest, Get) {
     Timer::setFreq();

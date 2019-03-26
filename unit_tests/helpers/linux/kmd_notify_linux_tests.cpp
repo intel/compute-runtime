@@ -9,7 +9,7 @@
 #include "runtime/helpers/options.h"
 #include "test.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class MockKmdNotifyHelper : public KmdNotifyHelper {
   public:
@@ -26,4 +26,4 @@ TEST(KmdNotifyLinuxTests, givenTaskCountDiffGreaterThanOneWhenBaseTimeoutRequest
     MockKmdNotifyHelper helper(&localProperties);
     EXPECT_EQ(localProperties.delayKmdNotifyMicroseconds * multiplier, helper.getBaseTimeout(multiplier));
 }
-} // namespace OCLRT
+} // namespace NEO

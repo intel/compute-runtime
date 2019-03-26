@@ -11,7 +11,7 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/program/kernel_info.h"
 
-namespace OCLRT {
+namespace NEO {
 
 void BlockKernelManager::addBlockKernelInfo(KernelInfo *blockKernelInfo) {
     blockKernelInfoArray.push_back(blockKernelInfo);
@@ -61,4 +61,4 @@ void BlockKernelManager::makeInternalAllocationsResident(CommandStreamReceiver &
         }
     }
 }
-} // namespace OCLRT
+} // namespace NEO

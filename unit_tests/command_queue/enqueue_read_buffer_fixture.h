@@ -13,7 +13,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct EnqueueReadBufferTypeTest : public CommandEnqueueFixture,
                                    public ::testing::Test {
@@ -51,4 +51,4 @@ struct EnqueueReadBufferTypeTest : public CommandEnqueueFixture,
     std::unique_ptr<Buffer> srcBuffer;
     std::unique_ptr<Buffer> nonZeroCopyBuffer;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -36,7 +36,7 @@
 
 #include <string>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class BuiltInTests
     : public BuiltInFixture,

@@ -36,7 +36,7 @@ int resolutionFuncTrue(clockid_t clkId, struct timespec *res) throw() {
     return 0;
 }
 
-using namespace OCLRT;
+using namespace NEO;
 struct DrmTimeTest : public ::testing::Test {
   public:
     void SetUp() override {

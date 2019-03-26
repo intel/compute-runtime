@@ -12,7 +12,7 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/utilities/base_object_utils.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class ImageCompressionTests : public ::testing::Test {
   public:

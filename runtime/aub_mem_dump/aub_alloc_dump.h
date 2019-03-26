@@ -14,7 +14,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 namespace AubAllocDump {
 

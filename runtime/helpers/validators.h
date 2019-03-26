@@ -12,7 +12,7 @@
 
 #include <utility>
 
-namespace OCLRT {
+namespace NEO {
 
 // Provide some aggregators...
 typedef std::pair<uint32_t, const cl_event *> EventWaitList;
@@ -25,7 +25,7 @@ enum PatternSize : size_t;
 
 template <typename CLType, typename InternalType>
 CLType WithCastToInternal(CLType clObject, InternalType **internalObject) {
-    *internalObject = OCLRT::castToObject<InternalType>(clObject);
+    *internalObject = NEO::castToObject<InternalType>(clObject);
     return (*internalObject) ? clObject : nullptr;
 }
 
@@ -86,4 +86,4 @@ bool areNotNullptr(T t, RT... rt) {
 cl_int validateYuvOperation(const size_t *origin, const size_t *region);
 bool IsPackedYuvImage(const cl_image_format *imageFormat);
 bool IsNV12Image(const cl_image_format *imageFormat);
-} // namespace OCLRT
+} // namespace NEO

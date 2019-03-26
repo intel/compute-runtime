@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/os_interface/os_time.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockOSTime : public OSTime {
   public:
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime) override {
@@ -35,4 +35,4 @@ class MockOSTime : public OSTime {
         return std::unique_ptr<OSTime>(new MockOSTime());
     }
 };
-} // namespace OCLRT
+} // namespace NEO

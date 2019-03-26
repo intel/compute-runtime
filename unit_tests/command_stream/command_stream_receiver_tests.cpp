@@ -32,7 +32,7 @@
 
 #include "gmock/gmock.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct CommandStreamReceiverTest : public DeviceFixture,
                                    public ::testing::Test {

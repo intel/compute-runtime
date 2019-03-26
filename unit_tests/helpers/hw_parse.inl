@@ -7,7 +7,7 @@
 
 #include "unit_tests/helpers/hw_parse.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename FamilyType>
 void HardwareParse::findHardwareCommands(IndirectHeap *dsh) {
@@ -115,4 +115,4 @@ const void *HardwareParse::getStatelessArgumentPointer(const Kernel &kernel, uin
     return nullptr;
 }
 
-} // namespace OCLRT
+} // namespace NEO

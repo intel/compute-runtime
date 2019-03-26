@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,9 @@
 
 using namespace std;
 
-namespace OCLRT {
+namespace NEO {
 
 OsLibrary *SourceLevelDebugger::loadDebugger() {
     return OsLibrary::load(SourceLevelDebugger::dllName);
 }
-} // namespace OCLRT
+} // namespace NEO

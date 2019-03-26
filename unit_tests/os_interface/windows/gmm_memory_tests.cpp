@@ -12,7 +12,7 @@
 #include "gmm_memory.h"
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 class PublicGmmMemory : public GmmMemory {
   public:
     using GmmMemory::clientContext;

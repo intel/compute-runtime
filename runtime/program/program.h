@@ -25,7 +25,7 @@
 
 #define OCLRT_ALIGN(a, b) ((((a) % (b)) != 0) ? ((a) - ((a) % (b)) + (b)) : (a))
 
-namespace OCLRT {
+namespace NEO {
 class Context;
 class CompilerInterface;
 class ExecutionEnvironment;
@@ -338,4 +338,4 @@ class Program : public BaseObject<_cl_program> {
     friend class OfflineCompiler;
     // clang-format on
 };
-} // namespace OCLRT
+} // namespace NEO

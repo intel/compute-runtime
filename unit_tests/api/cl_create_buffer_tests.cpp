@@ -15,7 +15,7 @@
 
 #include "cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef api_tests clCreateBufferTests;
 
@@ -250,7 +250,7 @@ TEST_F(clCreateBufferTestsWithRestrictions, GivenMemoryManagerRestrictionsWhenMi
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
-    Buffer *bufferObj = OCLRT::castToObject<Buffer>(buffer);
+    Buffer *bufferObj = NEO::castToObject<Buffer>(buffer);
     EXPECT_TRUE(bufferObj->isMemObjZeroCopy());
 
     retVal = clReleaseMemObject(buffer);
@@ -280,7 +280,7 @@ TEST_F(clCreateBufferTestsWithRestrictions, GivenMemoryManagerRestrictionsWhenMi
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
-    Buffer *bufferObj = OCLRT::castToObject<Buffer>(buffer);
+    Buffer *bufferObj = NEO::castToObject<Buffer>(buffer);
     EXPECT_FALSE(bufferObj->isMemObjZeroCopy());
 
     retVal = clReleaseMemObject(buffer);

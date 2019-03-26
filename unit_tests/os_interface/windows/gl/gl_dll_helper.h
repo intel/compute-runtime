@@ -11,11 +11,11 @@
 
 #include "Gl/gl.h"
 
-using namespace OCLRT;
+using namespace NEO;
 namespace Os {
 extern const char *openglDllName;
 }
-namespace OCLRT {
+namespace NEO {
 struct GLMockReturnedValues;
 }
 

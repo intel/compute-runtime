@@ -8,7 +8,7 @@
 #pragma once
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 enum ContextType : uint32_t {
     CONTEXT_TYPE_DEFAULT,
@@ -16,4 +16,4 @@ enum ContextType : uint32_t {
     CONTEXT_TYPE_UNRESTRICTIVE
 };
 
-} // namespace OCLRT
+} // namespace NEO

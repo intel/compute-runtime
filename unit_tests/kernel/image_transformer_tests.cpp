@@ -10,7 +10,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/image_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class ImageTransformerTest : public ::testing::Test {
   public:

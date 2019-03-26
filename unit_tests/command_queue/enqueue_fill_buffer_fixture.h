@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/mocks/mock_context.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
 
@@ -46,4 +46,4 @@ struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
     MockContext context;
     Buffer *buffer;
 };
-} // namespace OCLRT
+} // namespace NEO

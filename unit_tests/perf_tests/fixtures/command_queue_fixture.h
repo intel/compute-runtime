@@ -11,7 +11,7 @@
 #include "CL/cl.h"
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class Context;
 class Device;
@@ -53,4 +53,4 @@ static const cl_command_queue_properties DefaultCommandQueueProperties[] = {
     0,
     CL_QUEUE_PROFILING_ENABLE,
 };
-} // namespace OCLRT
+} // namespace NEO

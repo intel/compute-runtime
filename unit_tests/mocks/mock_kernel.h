@@ -17,7 +17,7 @@
 
 #include <cassert>
 
-namespace OCLRT {
+namespace NEO {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Kernel - Core implementation
@@ -597,4 +597,4 @@ class MockDebugKernel : public MockKernel {
     bool systemThreadSurfaceAllocated = false;
 };
 
-} // namespace OCLRT
+} // namespace NEO

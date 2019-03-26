@@ -20,7 +20,7 @@
 #include <cstring>
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 const DeviceDescriptor deviceDescriptorTable[] = {
 #define DEVICE(devId, gt, gtType) {devId, &gt::hwInfo, &gt::setupHardwareInfo, gtType},
@@ -193,4 +193,4 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     drms[deviceOrdinal % drms.size()] = drmObject.release();
     return drms[deviceOrdinal % drms.size()];
 }
-} // namespace OCLRT
+} // namespace NEO

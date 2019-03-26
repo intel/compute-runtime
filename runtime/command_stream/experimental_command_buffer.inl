@@ -11,7 +11,7 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 void ExperimentalCommandBuffer::injectBufferStart(LinearStream &parentStream, size_t cmdBufferOffset) {
@@ -106,4 +106,4 @@ size_t ExperimentalCommandBuffer::getExperimentalCommandsSize() noexcept {
     return sizeof(MI_SEMAPHORE_WAIT);
 }
 
-} // namespace OCLRT
+} // namespace NEO

@@ -27,7 +27,7 @@
 #include <mutex>
 #include <thread>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class DrmMockForWorker : public Drm {
   public:

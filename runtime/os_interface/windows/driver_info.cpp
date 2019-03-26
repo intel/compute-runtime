@@ -12,7 +12,7 @@
 #include "runtime/os_interface/windows/registry_reader.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
-namespace OCLRT {
+namespace NEO {
 
 DriverInfo *DriverInfo::create(OSInterface *osInterface) {
     if (osInterface) {
@@ -51,4 +51,4 @@ std::string DriverInfoWindows::getDeviceName(std::string defaultName) {
 std::string DriverInfoWindows::getVersion(std::string defaultVersion) {
     return registryReader.get()->getSetting("DriverVersion", defaultVersion);
 };
-} // namespace OCLRT
+} // namespace NEO

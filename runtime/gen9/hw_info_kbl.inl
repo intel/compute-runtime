@@ -12,7 +12,7 @@
 #include "hw_cmds.h"
 #include "hw_info_kbl.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const char *HwMapper<IGFX_KABYLAKE>::abbreviation = "kbl";
 
@@ -230,4 +230,4 @@ void setupKBLHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTa
 }
 
 void (*KBL::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupKBLHardwareInfoImpl;
-} // namespace OCLRT
+} // namespace NEO

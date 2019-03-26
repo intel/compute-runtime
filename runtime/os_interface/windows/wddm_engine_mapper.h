@@ -11,11 +11,11 @@
 
 #include "engine_node.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class WddmEngineMapper {
   public:
     static GPUNODE_ORDINAL engineNodeMap(EngineType engineType);
 };
 
-} // namespace OCLRT
+} // namespace NEO

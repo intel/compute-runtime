@@ -21,7 +21,7 @@
 
 using namespace ::testing;
 
-namespace OCLRT {
+namespace NEO {
 TEST(DeviceOsTest, osSpecificExtensions) {
     auto hwInfo = *platformDevices;
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfo);
@@ -102,4 +102,4 @@ TEST(DeviceOsTest, DeviceCreationFailMidThreadPreemption) {
 
     EXPECT_THAT(pDevice, nullptr);
 }
-} // namespace OCLRT
+} // namespace NEO

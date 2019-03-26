@@ -26,7 +26,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class MockWddmResidencyController : public WddmResidencyController {
   public:

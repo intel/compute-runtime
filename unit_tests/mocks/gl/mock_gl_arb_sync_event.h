@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,8 @@
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 
 template <bool FailCreation>
-struct DummyArbEvent : OCLRT::GlArbSyncEvent {
-    DummyArbEvent(OCLRT::Context &ctx)
+struct DummyArbEvent : NEO::GlArbSyncEvent {
+    DummyArbEvent(NEO::Context &ctx)
         : GlArbSyncEvent(ctx) {
     }
 
@@ -38,13 +38,13 @@ struct DummyArbEvent : OCLRT::GlArbSyncEvent {
     }
 };
 
-inline void glArbSyncObjectCleanupMockDoNothing(OCLRT::OSInterface &osInterface, CL_GL_SYNC_INFO *glSyncInfo) {
+inline void glArbSyncObjectCleanupMockDoNothing(NEO::OSInterface &osInterface, CL_GL_SYNC_INFO *glSyncInfo) {
 }
 
-inline void glArbSyncObjectSignalMockDoNothing(OCLRT::OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
+inline void glArbSyncObjectSignalMockDoNothing(NEO::OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo) {
 }
 
 template <bool Fail>
-inline bool mockGlArbSyncObjectSetup(OCLRT::GLSharingFunctions &sharing, OCLRT::OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo) {
+inline bool mockGlArbSyncObjectSetup(NEO::GLSharingFunctions &sharing, NEO::OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo) {
     return (Fail == false);
 }

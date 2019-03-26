@@ -17,7 +17,7 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct OOMSetting {
     bool oomCS;

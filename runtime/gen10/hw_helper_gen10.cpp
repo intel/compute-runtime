@@ -11,7 +11,7 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_helper_common.inl"
 
-namespace OCLRT {
+namespace NEO {
 typedef CNLFamily Family;
 
 template <>
@@ -33,4 +33,4 @@ template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct PipeControlHelper<Family>;
-} // namespace OCLRT
+} // namespace NEO

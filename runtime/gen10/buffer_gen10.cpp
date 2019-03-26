@@ -9,10 +9,10 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 typedef CNLFamily Family;
 static auto gfxCore = IGFX_GEN10_CORE;
 
 #include "runtime/mem_obj/buffer_factory_init.inl"
-} // namespace OCLRT
+} // namespace NEO

@@ -11,7 +11,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "unit_tests/aub_tests/fixtures/aub_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct AubWriteCopyReadBuffer : public AUBFixture,
                                 public ::testing::Test {

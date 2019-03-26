@@ -7,7 +7,7 @@
 
 #include "gdi_interface.h"
 
-namespace OCLRT {
+namespace NEO {
 
 inline const std::string getGdiName() {
     if (DebugManager.flags.OverrideGdiPath.get() != "unk") {
@@ -99,4 +99,4 @@ bool Gdi::getAllProcAddresses() {
     // clang-format on
     return false;
 }
-} // namespace OCLRT
+} // namespace NEO

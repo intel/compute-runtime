@@ -13,7 +13,7 @@
 
 #include <new>
 
-namespace OCLRT {
+namespace NEO {
 
 using SvmFreeClbT = void(CL_CALLBACK *)(cl_command_queue queue,
                                         cl_uint numSvmPointers,
@@ -67,7 +67,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
                                                 const cl_event *eventWaitList,
                                                 cl_event *event) {
 
-    OCLRT::GraphicsAllocation *svmAllocation = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
+    NEO::GraphicsAllocation *svmAllocation = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
     if (svmAllocation == nullptr) {
         return CL_INVALID_VALUE;
     }
@@ -94,7 +94,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
                                                   const cl_event *eventWaitList,
                                                   cl_event *event) {
 
-    OCLRT::GraphicsAllocation *svmAllocation = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
+    NEO::GraphicsAllocation *svmAllocation = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
     if (svmAllocation == nullptr) {
         return CL_INVALID_VALUE;
     }
@@ -203,7 +203,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
                                                     const cl_event *eventWaitList,
                                                     cl_event *event) {
 
-    OCLRT::GraphicsAllocation *pSvmAlloc = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
+    NEO::GraphicsAllocation *pSvmAlloc = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
     if (pSvmAlloc == nullptr) {
         return CL_INVALID_VALUE;
     }
@@ -285,4 +285,4 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMigrateMem(cl_uint numSvmPointers,
 
     return CL_SUCCESS;
 }
-} // namespace OCLRT
+} // namespace NEO

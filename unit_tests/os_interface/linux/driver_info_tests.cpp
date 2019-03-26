@@ -12,7 +12,7 @@
 #include <memory>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 TEST(DriverInfo, GivenCreateDriverInfoWhenLinuxThenReturnNewInstance) {
     std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(nullptr));
@@ -33,4 +33,4 @@ TEST(DriverInfo, GivenDriverInfoWhenLinuxThenReturnDefault) {
     EXPECT_STREQ(defaultVersion.c_str(), resultVersion.c_str());
 }
 
-} // namespace OCLRT
+} // namespace NEO

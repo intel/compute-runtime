@@ -10,10 +10,10 @@
 
 #include <cassert>
 
-namespace OCLRT {
+namespace NEO {
 struct HardwareInfo;
 extern const HardwareInfo **platformDevices;
-} // namespace OCLRT
+} // namespace NEO
 
 // Even though there aren't any defaults, this pattern is used
 // throughout testing.  Included here for consistency.
@@ -22,8 +22,8 @@ struct DeviceDefaults {
 
 template <typename DeviceTraits = DeviceDefaults>
 struct DeviceHelper {
-    static OCLRT::Device *create(const OCLRT::HardwareInfo *hardwareInfo = nullptr) {
-        auto device = OCLRT::Device::create(hardwareInfo);
+    static NEO::Device *create(const NEO::HardwareInfo *hardwareInfo = nullptr) {
+        auto device = NEO::Device::create(hardwareInfo);
         assert(device != nullptr);
         return device;
     }
@@ -38,6 +38,6 @@ struct DeviceFixture {
     void SetUp();
     void TearDown();
 
-    OCLRT::Device *pDevice;
+    NEO::Device *pDevice;
     volatile uint32_t *pTagMemory;
 };

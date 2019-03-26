@@ -11,11 +11,11 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/gtest_helpers.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
-namespace OCLRT {
+namespace NEO {
 bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
-} // namespace OCLRT
+} // namespace NEO
 
 TEST(CSRTests, getDevices) {
     HardwareInfo *hwInfo = nullptr;
@@ -24,7 +24,7 @@ TEST(CSRTests, getDevices) {
     DebugManagerStateRestore dbgState;
     DebugManager.flags.SetCommandStreamReceiver.set(2);
     ExecutionEnvironment executionEnvironment;
-    OCLRT::getDevices(&hwInfo, numDevicesReturned, executionEnvironment);
+    NEO::getDevices(&hwInfo, numDevicesReturned, executionEnvironment);
 
     ASSERT_NE(nullptr, hwInfo);
     ASSERT_NE(nullptr, hwInfo->pSysInfo);

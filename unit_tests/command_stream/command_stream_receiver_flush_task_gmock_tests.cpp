@@ -40,7 +40,7 @@
 #include "gtest/gtest.h"
 #include "reg_configs_common.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 using ::testing::_;
 using ::testing::Invoke;

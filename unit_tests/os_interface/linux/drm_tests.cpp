@@ -17,7 +17,7 @@
 
 #include <fstream>
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 TEST(DrmTest, GetDeviceID) {

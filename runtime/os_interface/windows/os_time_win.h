@@ -11,7 +11,7 @@
 
 #include "gfxEscape.h"
 
-namespace OCLRT {
+namespace NEO {
 class Wddm;
 
 class OSTimeWin : public OSTime {
@@ -72,4 +72,4 @@ struct TimeStampDataHeader {
     } m_Data;
 };
 
-} // namespace OCLRT
+} // namespace NEO

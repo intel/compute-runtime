@@ -12,7 +12,7 @@
 
 using HwParseTest = ::testing::Test;
 
-using namespace OCLRT;
+using namespace NEO;
 
 HWTEST_F(HwParseTest, WhenEmptyBufferThenDontExpectCommands) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

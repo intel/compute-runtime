@@ -7,9 +7,9 @@
 
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 StorageInfo GraphicsAllocation::createStorageInfoFromProperties(const AllocationProperties &properties) {
     return {};
 }
 uint32_t StorageInfo::getNumHandles() const { return 1u; }
-} // namespace OCLRT
+} // namespace NEO

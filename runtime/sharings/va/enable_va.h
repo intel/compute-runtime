@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 class Context;
 
 struct VaCreateContextProperties {
@@ -35,4 +35,4 @@ class VaSharingBuilderFactory : public SharingBuilderFactory {
     void fillGlobalDispatchTable() override;
     void *getExtensionFunctionAddress(const std::string &functionName) override;
 };
-} // namespace OCLRT
+} // namespace NEO

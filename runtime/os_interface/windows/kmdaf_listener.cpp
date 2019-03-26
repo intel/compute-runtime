@@ -11,7 +11,7 @@
 #include "kmdaf.h"
 #pragma warning(pop) // restore state.
 
-namespace OCLRT {
+namespace NEO {
 
 void KmDafListener::notifyLock(bool ftrKmdDaf, D3DKMT_HANDLE hAdapter, D3DKMT_HANDLE hDevice, const D3DKMT_HANDLE hAllocation, D3DDDICB_LOCKFLAGS *pLockFlags, PFND3DKMT_ESCAPE pfnEscape) {
     KM_DAF_NOTIFY_LOCK(ftrKmdDaf, hAdapter, hDevice, hAllocation, pLockFlags, pfnEscape);
@@ -40,4 +40,4 @@ void KmDafListener::notifyEvict(bool ftrKmdDaf, D3DKMT_HANDLE hAdapter, D3DKMT_H
 void KmDafListener::notifyWriteTarget(bool ftrKmdDaf, D3DKMT_HANDLE hAdapter, D3DKMT_HANDLE hDevice, const D3DKMT_HANDLE hAllocation, PFND3DKMT_ESCAPE pfnEscape) {
     KM_DAF_NOTIFY_WRITE_TARGET(ftrKmdDaf, hAdapter, hDevice, hAllocation, pfnEscape);
 }
-} // namespace OCLRT
+} // namespace NEO

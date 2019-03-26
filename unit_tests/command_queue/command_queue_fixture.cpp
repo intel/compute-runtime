@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 // Global table of create functions
 extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];
@@ -106,4 +106,4 @@ void CommandQueueFixture::TearDown() {
     delete pCmdQ;
     pCmdQ = nullptr;
 }
-} // namespace OCLRT
+} // namespace NEO

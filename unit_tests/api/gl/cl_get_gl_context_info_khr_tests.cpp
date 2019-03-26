@@ -11,7 +11,7 @@
 #include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/os_interface/windows/gl/gl_dll_helper.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef api_tests clGetGLContextInfoKHR_;
 

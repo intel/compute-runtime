@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/utilities/debug_settings_reader_creator.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <DebugFunctionalityLevel DebugLevel>
 DebugSettingsManager<DebugLevel>::DebugSettingsManager() {
@@ -45,4 +45,4 @@ bool familyEnabled[IGFX_MAX_CORE] = {
     false,
 };
 
-} // namespace OCLRT
+} // namespace NEO

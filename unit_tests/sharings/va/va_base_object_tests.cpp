@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename TypeParam>
 struct VABaseObjectTests : public ::testing::Test {
@@ -61,4 +61,4 @@ TYPED_TEST(VABaseObjectTests, commonRuntimeExpectsDispatchTableAtFirstPointerInO
     EXPECT_EQ(reinterpret_cast<void *>(clGetDeviceIDsFromVA_APIMediaAdapterINTEL),
               genericObject->dispatch.crtDispatch->clGetDeviceIDsFromVA_APIMediaAdapterINTEL);
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -13,7 +13,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 TEST(OsInterfaceTest, GivenLinuxWhenare64kbPagesEnabledThenFalse) {
     EXPECT_FALSE(OSInterface::are64kbPagesEnabled());
@@ -24,4 +24,4 @@ TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenDeviceHandleQueriedthenZeroIsRetu
     EXPECT_EQ(0u, osInterface.getDeviceHandle());
 }
 
-} // namespace OCLRT
+} // namespace NEO

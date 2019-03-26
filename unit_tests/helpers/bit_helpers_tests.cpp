@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(IsBitSetTests, givenDifferentValuesWhenTestingIsBitSetThenCorrectValueIsReturned) {
     size_t field1 = 0;

@@ -16,7 +16,7 @@
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/libult/create_command_stream.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct CreateCommandStreamReceiverTest : public ::testing::TestWithParam<CommandStreamReceiverType> {};
 

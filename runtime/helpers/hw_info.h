@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 struct WhitelistedRegisters {
     bool csChicken1_0x2580;
@@ -102,4 +102,4 @@ struct EnableGfxFamilyHw {
 const char *getPlatformType(const HardwareInfo &hwInfo);
 bool getHwInfoForPlatformString(const char *str, const HardwareInfo *&hwInfoIn);
 EngineType getChosenEngineType(const HardwareInfo &hwInfo);
-} // namespace OCLRT
+} // namespace NEO

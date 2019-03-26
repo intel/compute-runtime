@@ -10,7 +10,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_source_level_debugger.h"
 
-using namespace OCLRT;
+using namespace NEO;
 struct BdwDeviceTest : public DeviceFixture,
                        public ::testing::Test {
     void SetUp() override {

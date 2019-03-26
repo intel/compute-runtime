@@ -7,17 +7,17 @@
 
 #pragma once
 
-namespace OCLRT {
+namespace NEO {
 class BuiltIns;
 class Device;
-} // namespace OCLRT
+} // namespace NEO
 
 class BuiltInFixture {
   public:
     BuiltInFixture();
 
-    void SetUp(OCLRT::Device *pDevice);
+    void SetUp(NEO::Device *pDevice);
     void TearDown();
 
-    OCLRT::BuiltIns *pBuiltIns;
+    NEO::BuiltIns *pBuiltIns;
 };

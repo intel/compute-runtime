@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 #include <GL/gl.h>
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct MockOSInterfaceImpl : OSInterface::OSInterfaceImpl {
     HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,

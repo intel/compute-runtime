@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "runtime/command_stream/preemption.inl"
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 
 typedef CNLFamily GfxFamily;
 
@@ -58,4 +58,4 @@ void PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(INTER
         idd->setThreadPreemptionDisable(INTERFACE_DESCRIPTOR_DATA::THREAD_PREEMPTION_DISABLE_ENABLE);
     }
 }
-} // namespace OCLRT
+} // namespace NEO

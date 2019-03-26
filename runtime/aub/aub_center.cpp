@@ -17,7 +17,7 @@
 #include "third_party/aub_stream/headers/modes.h"
 #include "third_party/aub_stream/headers/options.h"
 
-namespace OCLRT {
+namespace NEO {
 extern aub_stream::AubManager *createAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, uint32_t streamMode);
 
 AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
@@ -87,4 +87,4 @@ uint32_t AubCenter::getAubStreamMode(const std::string &aubFileName, uint32_t cs
 
     return mode;
 }
-} // namespace OCLRT
+} // namespace NEO

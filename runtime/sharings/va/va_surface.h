@@ -9,7 +9,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/sharings/va/va_sharing.h"
 
-namespace OCLRT {
+namespace NEO {
 class Context;
 class Image;
 
@@ -32,4 +32,4 @@ class VASurface : VASharing {
     VASurfaceID *surfaceId;
     bool interopUserSync;
 };
-} // namespace OCLRT
+} // namespace NEO

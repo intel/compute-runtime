@@ -19,7 +19,7 @@
 #include <map>
 #include <mutex>
 
-namespace OCLRT {
+namespace NEO {
 class Device;
 class Program;
 
@@ -100,4 +100,4 @@ class CompilerInterface {
         return (fclMain != nullptr) && (igcMain != nullptr);
     }
 };
-} // namespace OCLRT
+} // namespace NEO

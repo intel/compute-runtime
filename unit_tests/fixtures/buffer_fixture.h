@@ -18,7 +18,7 @@ struct BufferDefaults {
     enum { flags = CL_MEM_READ_WRITE };
     static const size_t sizeInBytes;
     static void *hostPtr;
-    static OCLRT::Context *context;
+    static NEO::Context *context;
 };
 
 template <typename BaseClass = BufferDefaults>
@@ -38,9 +38,9 @@ struct BufferWriteOnly : public BaseClass {
 
 template <typename Traits = BufferDefaults>
 struct BufferHelper {
-    using Buffer = OCLRT::Buffer;
-    using Context = OCLRT::Context;
-    using MockContext = OCLRT::MockContext;
+    using Buffer = NEO::Buffer;
+    using Context = NEO::Context;
+    using MockContext = NEO::MockContext;
 
     static Buffer *create(Context *context = Traits::context) {
         auto retVal = CL_SUCCESS;

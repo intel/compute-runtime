@@ -11,7 +11,7 @@
 #include "runtime/helpers/basic_math.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 uint64_t AubHelper::getTotalMemBankSize() {
     return 2 * GB;
@@ -33,4 +33,4 @@ uint64_t AubHelper::getMemBankSize(const HardwareInfo *pHwInfo) {
     return getTotalMemBankSize();
 }
 
-} // namespace OCLRT
+} // namespace NEO

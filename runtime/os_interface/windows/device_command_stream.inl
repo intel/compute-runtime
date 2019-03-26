@@ -16,7 +16,7 @@
 #include "hw_cmds.h"
 #pragma warning(pop)
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(bool withAubDump, ExecutionEnvironment &executionEnvironment) {
@@ -26,4 +26,4 @@ CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(bool withA
         return new WddmCommandStreamReceiver<GfxFamily>(executionEnvironment);
     }
 }
-} // namespace OCLRT
+} // namespace NEO

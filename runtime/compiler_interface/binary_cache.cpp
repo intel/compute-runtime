@@ -23,7 +23,7 @@
 #include <sstream>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 std::mutex BinaryCache::cacheAccessMtx;
 const std::string BinaryCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
                                                  const ArrayRef<const char> options, const ArrayRef<const char> internalOptions) {
@@ -98,4 +98,4 @@ bool BinaryCache::loadCachedBinary(const std::string kernelFileHash, Program &pr
     return true;
 }
 
-} // namespace OCLRT
+} // namespace NEO

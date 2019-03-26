@@ -17,12 +17,12 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 void pushDrmMock(Drm *mock);
 void popDrmMock();
-}; // namespace OCLRT
+}; // namespace NEO
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct DeviceFactoryLinuxTest : public ::testing::Test {
     void SetUp() override {

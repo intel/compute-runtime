@@ -10,7 +10,7 @@
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/execution_environment/execution_environment.h"
 
-namespace OCLRT {
+namespace NEO {
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
@@ -60,4 +60,4 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::setupContext(OsContext &osContex
         aubCSR->setupContext(osContext);
     }
 }
-} // namespace OCLRT
+} // namespace NEO

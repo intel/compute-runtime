@@ -12,7 +12,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 struct LinearStreamFixture {
     LinearStreamFixture(void)
@@ -30,4 +30,4 @@ struct LinearStreamFixture {
 };
 
 typedef Test<LinearStreamFixture> LinearStreamTest;
-} // namespace OCLRT
+} // namespace NEO

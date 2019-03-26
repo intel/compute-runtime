@@ -20,7 +20,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 class CommandStreamReceiver;
 
 class AUBCommandStreamFixture : public CommandStreamFixture {
@@ -105,4 +105,4 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
   private:
     CommandQueue *commandQueue = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

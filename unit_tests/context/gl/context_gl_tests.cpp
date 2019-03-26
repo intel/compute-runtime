@@ -21,7 +21,7 @@
 #include "gtest/gtest.h"
 #include <GL/gl.h>
 
-using namespace OCLRT;
+using namespace NEO;
 
 // use mockGlSharing class for cl-gl sharing tests
 typedef bool (*MockGlIoctlFcn)();
@@ -58,7 +58,7 @@ TEST_F(ContextTest, GlSharingAreIstPresentByDefault) { ASSERT_EQ(context->getSha
 
 TEST_F(ContextTest, GivenPropertiesWhenContextIsCreatedThenSuccess) {
     cl_device_id deviceID = devices[0];
-    auto pPlatform = OCLRT::platform();
+    auto pPlatform = NEO::platform();
     cl_platform_id pid[1];
     pid[0] = pPlatform;
 
@@ -94,7 +94,7 @@ TEST_F(ContextTest, GivenPropertiesWhenContextIsCreatedThenSuccess) {
 
 TEST_F(ContextTest, GivenTwoGlPropertiesWhenContextIsCreatedThenSuccess) {
     cl_device_id deviceID = devices[0];
-    auto pPlatform = OCLRT::platform();
+    auto pPlatform = NEO::platform();
     cl_platform_id pid[1];
     pid[0] = pPlatform;
 
@@ -125,7 +125,7 @@ TEST_F(ContextTest, GivenTwoGlPropertiesWhenContextIsCreatedThenSuccess) {
 
 TEST_F(ContextTest, GivenGlContextParamWhenCreateContextThenInitSharingFunctions) {
     cl_device_id deviceID = devices[0];
-    auto pPlatform = OCLRT::platform();
+    auto pPlatform = NEO::platform();
     cl_platform_id pid[1];
     pid[0] = pPlatform;
 

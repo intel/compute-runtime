@@ -19,9 +19,9 @@
 
 #include "hw_cmds.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
-namespace OCLRT {
+namespace NEO {
 class Surface;
 };
 

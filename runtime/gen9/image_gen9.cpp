@@ -13,7 +13,7 @@
 
 #include <map>
 
-namespace OCLRT {
+namespace NEO {
 
 typedef SKLFamily Family;
 static auto gfxCore = IGFX_GEN9_CORE;
@@ -41,4 +41,4 @@ void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void
 }
 
 #include "runtime/mem_obj/image_factory_init.inl"
-} // namespace OCLRT
+} // namespace NEO

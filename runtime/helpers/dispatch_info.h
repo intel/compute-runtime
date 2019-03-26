@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 class Kernel;
 
@@ -169,4 +169,4 @@ struct MultiDispatchInfo {
     StackVec<MemObj *, 2> redescribedSurfaces;
     Kernel *mainKernel = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

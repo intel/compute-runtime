@@ -10,7 +10,7 @@
 #include "runtime/event/event_builder.h"
 #include "runtime/event/user_event.h"
 
-namespace OCLRT {
+namespace NEO {
 
 #define FORWARD_CONSTRUCTOR(THIS_CLASS, BASE_CLASS)                           \
     template <typename... ArgsT>                                              \
@@ -58,4 +58,4 @@ struct MockEventBuilder : EventBuilder {
         return static_cast<EventType *>(mb.finalizeAndRelease());
     }
 };
-} // namespace OCLRT
+} // namespace NEO

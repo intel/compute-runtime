@@ -10,7 +10,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 class AddressMapper {
   public:
@@ -31,4 +31,4 @@ class AddressMapper {
     std::vector<MapInfo *> mapping;
     std::atomic<uint32_t> nextPage;
 };
-} // namespace OCLRT
+} // namespace NEO

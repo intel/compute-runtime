@@ -10,10 +10,10 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 typedef SKLFamily Family;
 static auto gfxCore = IGFX_GEN9_CORE;
 
 #include "runtime/sampler/sampler_factory_init.inl"
-} // namespace OCLRT
+} // namespace NEO

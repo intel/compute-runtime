@@ -28,7 +28,7 @@
 
 #include "third_party/aub_stream/headers/options.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef Test<DeviceFixture> AubCommandStreamReceiverTests;
 

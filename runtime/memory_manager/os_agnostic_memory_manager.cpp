@@ -20,7 +20,7 @@
 
 #include <cassert>
 
-namespace OCLRT {
+namespace NEO {
 
 OsAgnosticMemoryManager::~OsAgnosticMemoryManager() {
     applyCommonCleanup();
@@ -270,4 +270,4 @@ void *OsAgnosticMemoryManager::reserveCpuAddressRange(size_t size) {
 void OsAgnosticMemoryManager::releaseReservedCpuAddressRange(void *reserved, size_t size) {
     alignedFreeWrapper(reserved);
 }
-} // namespace OCLRT
+} // namespace NEO

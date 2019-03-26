@@ -13,7 +13,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 
-namespace OCLRT {
+namespace NEO {
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
@@ -74,4 +74,4 @@ bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned, Execution
     return result;
 }
 
-} // namespace OCLRT
+} // namespace NEO

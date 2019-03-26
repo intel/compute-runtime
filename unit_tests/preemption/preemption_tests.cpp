@@ -20,7 +20,7 @@
 
 #include "gmock/gmock.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class ThreadGroupPreemptionTests : public DevicePreemptionTests {
     void SetUp() override {
@@ -310,7 +310,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturns0WhenPreemptionModeIsN
     {
         auto builtIns = new MockBuiltins();
 
-        builtIns->overrideSipKernel(std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel{SipKernelType::Csr, GlobalMockSipProgram::getSipProgramWithCustomBinary()}));
+        builtIns->overrideSipKernel(std::unique_ptr<NEO::SipKernel>(new NEO::SipKernel{SipKernelType::Csr, GlobalMockSipProgram::getSipProgramWithCustomBinary()}));
         mockDevice->getExecutionEnvironment()->builtins.reset(builtIns);
         PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, mode,
                                                        nullptr, *mockDevice);

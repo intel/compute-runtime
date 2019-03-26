@@ -13,7 +13,7 @@
 #include "runtime/helpers/string.h"
 #include "runtime/kernel/kernel.h"
 
-namespace OCLRT {
+namespace NEO {
 
 bool PreemptionHelper::allowThreadGroupPreemption(Kernel *kernel, const WorkaroundTable *waTable) {
     if (waTable->waDisablePerCtxtPreemptionGranularityControl) {
@@ -97,4 +97,4 @@ PreemptionMode PreemptionHelper::getDefaultPreemptionMode(const HardwareInfo &hw
                : static_cast<PreemptionMode>(DebugManager.flags.ForcePreemptionMode.get());
 }
 
-} // namespace OCLRT
+} // namespace NEO

@@ -9,7 +9,7 @@
 
 #include "runtime/os_interface/debug_settings_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 HwHelper *hwHelperFactory[IGFX_MAX_CORE] = {};
 
 HwHelper &HwHelper::get(GFXCORE_FAMILY gfxCore) {
@@ -40,4 +40,4 @@ bool HwHelper::cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo) {
     return hwInfo.capabilityTable.supportCacheFlushAfterWalker;
 }
 
-} // namespace OCLRT
+} // namespace NEO

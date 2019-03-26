@@ -9,10 +9,10 @@
 
 #include <exception>
 
-namespace OCLRT {
+namespace NEO {
 void debugBreak(int line, const char *file) {
 }
 void abortUnrecoverable(int line, const char *file) {
     throw std::exception();
 }
-} // namespace OCLRT
+} // namespace NEO

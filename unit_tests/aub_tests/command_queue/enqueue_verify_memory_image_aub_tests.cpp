@@ -16,7 +16,7 @@
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct TestOffset {
     size_t offset[3];

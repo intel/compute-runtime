@@ -10,7 +10,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct SVMMemoryAllocatorTest : ::testing::Test {
     SVMMemoryAllocatorTest() : memoryManager(false, false, executionEnvironment), svmManager(&memoryManager) {}

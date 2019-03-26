@@ -9,7 +9,7 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 
-namespace OCLRT {
+namespace NEO {
 template <typename... KernelsDescArgsT>
 void BuiltinDispatchInfoBuilder::populate(Context &context, Device &device, EBuiltInOps op, const char *options, KernelsDescArgsT &&... desc) {
     auto src = kernelsLib.getBuiltinsLib().getBuiltinCode(op, BuiltinCode::ECodeType::Any, device);
@@ -74,4 +74,4 @@ void BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::resizeKernelInstances(siz
     }
 }
 
-} // namespace OCLRT
+} // namespace NEO

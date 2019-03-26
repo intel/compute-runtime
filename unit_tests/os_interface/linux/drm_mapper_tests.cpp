@@ -10,7 +10,7 @@
 
 #include "drm/i915_drm.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(DrmMapperTests, engineNodeMapPass) {
     unsigned int flag = DrmEngineMapper::engineNodeMap(EngineType::ENGINE_RCS);

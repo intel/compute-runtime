@@ -22,7 +22,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace DeviceHostQueue;
 
 HWTEST_F(DeviceQueueHwTest, resetOnlyExpected) {

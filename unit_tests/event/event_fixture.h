@@ -22,7 +22,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct EventTest
     : public DeviceFixture,

@@ -13,7 +13,7 @@
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/sharing_factory.h"
 
-namespace OCLRT {
+namespace NEO {
 const uint32_t GLSharingFunctions::sharingId = SharingType::CLGL_SHARING;
 
 int GlSharing::synchronizeHandler(UpdateData &updateData) {
@@ -65,4 +65,4 @@ char *createArbSyncEventName() {
 }
 
 void destroyArbSyncEventName(char *name) { delete[] name; }
-} // namespace OCLRT
+} // namespace NEO

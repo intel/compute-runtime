@@ -11,7 +11,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(GetSamplerInfo, InvalidFlags_returnsError) {
     MockContext context;

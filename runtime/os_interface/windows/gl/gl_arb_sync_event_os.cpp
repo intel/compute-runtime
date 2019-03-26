@@ -19,7 +19,7 @@
 
 #include <GL/gl.h>
 
-namespace OCLRT {
+namespace NEO {
 
 void destroySync(Gdi &gdi, D3DKMT_HANDLE sync) {
     if (!sync) {
@@ -150,4 +150,4 @@ void serverWaitForArbSyncObject(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyn
     }
     glSyncInfo.waitCalled = true;
 }
-} // namespace OCLRT
+} // namespace NEO

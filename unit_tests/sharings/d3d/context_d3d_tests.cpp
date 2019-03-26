@@ -13,7 +13,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(D3DContextTest, sharingAreNotPresentByDefault) {
     MockContext context;

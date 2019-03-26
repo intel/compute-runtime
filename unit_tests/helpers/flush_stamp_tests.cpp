@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(FlushStampTest, referenceTrackedFlushStamp) {
     FlushStampTracker *flushStampTracker = new FlushStampTracker(true);

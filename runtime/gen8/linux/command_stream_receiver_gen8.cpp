@@ -9,9 +9,9 @@
 #include "runtime/os_interface/linux/device_command_stream.inl"
 #include "runtime/os_interface/linux/drm_command_stream.inl"
 
-namespace OCLRT {
+namespace NEO {
 
 template class DeviceCommandStreamReceiver<BDWFamily>;
 template class DrmCommandStreamReceiver<BDWFamily>;
 template class CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<BDWFamily>>;
-} // namespace OCLRT
+} // namespace NEO

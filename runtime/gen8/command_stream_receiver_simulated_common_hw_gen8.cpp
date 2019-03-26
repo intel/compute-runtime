@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "runtime/command_stream/command_stream_receiver_simulated_common_hw.inl"
 
-namespace OCLRT {
+namespace NEO {
 typedef BDWFamily Family;
 
 template class CommandStreamReceiverSimulatedCommonHw<Family>;
-} // namespace OCLRT
+} // namespace NEO

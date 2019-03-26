@@ -13,7 +13,7 @@
 
 #include <type_traits>
 
-namespace OCLRT {
+namespace NEO {
 
 class Event;
 
@@ -63,4 +63,4 @@ class EventBuilder {
     StackVec<Event *, 16> parentEvents;
     bool doNotRegister = false;
 };
-} // namespace OCLRT
+} // namespace NEO

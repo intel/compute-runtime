@@ -10,7 +10,7 @@
 #include "runtime/device_queue/device_queue_hw_profiling.inl"
 #include "runtime/gen10/hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 typedef CNLFamily Family;
 static auto gfxCore = IGFX_GEN10_CORE;
 
@@ -43,4 +43,4 @@ template <>
 void DeviceQueueHw<Family>::addPipeControlCmdWa(bool isNoopCmd) {}
 
 template class DeviceQueueHw<Family>;
-} // namespace OCLRT
+} // namespace NEO

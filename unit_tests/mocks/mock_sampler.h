@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/sampler/sampler.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct MockSampler : public Sampler {
   public:
@@ -41,4 +41,4 @@ struct MockSampler : public Sampler {
     void setArg(void *memory) override {
     }
 };
-} // namespace OCLRT
+} // namespace NEO

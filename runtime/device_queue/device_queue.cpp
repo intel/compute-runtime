@@ -14,7 +14,7 @@
 #include "runtime/helpers/queue_helpers.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 DeviceQueueCreateFunc deviceQueueFactory[IGFX_MAX_CORE] = {};
 
 const uint32_t DeviceQueue::numberOfDeviceEnqueues = 128;
@@ -168,4 +168,4 @@ void DeviceQueue::dispatchScheduler(CommandQueue &cmdQ, LinearStream &commandStr
 IndirectHeap *DeviceQueue::getIndirectHeap(IndirectHeap::Type type) {
     return nullptr;
 }
-} // namespace OCLRT
+} // namespace NEO

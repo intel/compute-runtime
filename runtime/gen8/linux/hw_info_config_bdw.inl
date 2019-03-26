@@ -8,7 +8,7 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/hw_info_config.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <>
 int HwInfoConfigHw<IGFX_BROADWELL>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
@@ -51,4 +51,4 @@ int HwInfoConfigHw<IGFX_BROADWELL>::configureHardwareCustom(HardwareInfo *hwInfo
 
 template class HwInfoConfigHw<IGFX_BROADWELL>;
 
-} // namespace OCLRT
+} // namespace NEO

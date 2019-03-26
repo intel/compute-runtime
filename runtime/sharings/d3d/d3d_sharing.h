@@ -11,7 +11,7 @@
 #include "d3d_sharing_functions.h"
 
 enum GMM_RESOURCE_FORMAT_ENUM;
-namespace OCLRT {
+namespace NEO {
 enum class OCLPlane;
 class Context;
 class Gmm;
@@ -49,4 +49,4 @@ class D3DSharing : public SharingHandler {
     bool sharedResource = false;
     unsigned int subresource = 0;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class KernelSlmArgTest : public Test<DeviceFixture> {
   protected:

@@ -16,7 +16,7 @@
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #endif
 
-namespace OCLRT {
+namespace NEO {
 struct SurfaceFormatInfo;
 
 class MockGmmResourceInfo : public GmmResourceInfo {
@@ -108,7 +108,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     uint32_t unifiedAuxPitch = 0;
     uint32_t auxQPitch = 0;
 };
-} // namespace OCLRT
+} // namespace NEO
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

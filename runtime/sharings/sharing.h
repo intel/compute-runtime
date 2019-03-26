@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 class Context;
 class MemObj;
 
@@ -50,4 +50,4 @@ class SharingHandler {
     virtual void releaseResource(MemObj *memObject){};
     unsigned int acquireCount = 0u;
 };
-} // namespace OCLRT
+} // namespace NEO

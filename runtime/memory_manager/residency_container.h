@@ -9,9 +9,9 @@
 #include <utility>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class GraphicsAllocation;
 using ResidencyContainer = std::vector<GraphicsAllocation *>;
 using AllocationView = std::pair<uint64_t /*address*/, size_t /*size*/>;
 
-} // namespace OCLRT
+} // namespace NEO

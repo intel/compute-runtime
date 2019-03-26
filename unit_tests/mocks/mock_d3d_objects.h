@@ -13,7 +13,7 @@ using ::testing::_;
 using ::testing::NiceMock;
 using ::testing::SetArgPointee;
 
-namespace OCLRT {
+namespace NEO {
 template <typename D3D>
 class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
     typedef typename D3D::D3DDevice D3DDevice;
@@ -75,4 +75,4 @@ class MockD3DSharingFunctions : public D3DSharingFunctions<D3D> {
         *dxgiDesc = mockDxgiDesc;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

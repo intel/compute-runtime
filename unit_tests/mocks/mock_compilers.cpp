@@ -20,7 +20,7 @@
 
 #include <fstream>
 #include <map>
-namespace OCLRT {
+namespace NEO {
 
 std::unique_ptr<MockCompilerDebugVars> fclDebugVars;
 std::unique_ptr<MockCompilerDebugVars> igcDebugVars;
@@ -71,8 +71,8 @@ void MockCompilerEnableGuard::Enable() {
         this->oldIgcDllName = Os::igcDllName;
         Os::frontEndDllName = "";
         Os::igcDllName = "";
-        MockCIFMain::setGlobalCreatorFunc<OCLRT::MockIgcOclDeviceCtx>(OCLRT::MockIgcOclDeviceCtx::Create);
-        MockCIFMain::setGlobalCreatorFunc<OCLRT::MockFclOclDeviceCtx>(OCLRT::MockFclOclDeviceCtx::Create);
+        MockCIFMain::setGlobalCreatorFunc<NEO::MockIgcOclDeviceCtx>(NEO::MockIgcOclDeviceCtx::Create);
+        MockCIFMain::setGlobalCreatorFunc<NEO::MockFclOclDeviceCtx>(NEO::MockFclOclDeviceCtx::Create);
         if (fclDebugVars == nullptr) {
             fclDebugVars.reset(new MockCompilerDebugVars);
         }
@@ -89,8 +89,8 @@ void MockCompilerEnableGuard::Disable() {
         Os::frontEndDllName = this->oldFclDllName;
         Os::igcDllName = this->oldIgcDllName;
 
-        MockCIFMain::removeGlobalCreatorFunc<OCLRT::MockIgcOclDeviceCtx>();
-        MockCIFMain::removeGlobalCreatorFunc<OCLRT::MockFclOclDeviceCtx>();
+        MockCIFMain::removeGlobalCreatorFunc<NEO::MockIgcOclDeviceCtx>();
+        MockCIFMain::removeGlobalCreatorFunc<NEO::MockFclOclDeviceCtx>();
 
         clearFclDebugVars();
         clearIgcDebugVars();
@@ -98,7 +98,7 @@ void MockCompilerEnableGuard::Disable() {
         enabled = false;
     }
 }
-} // namespace OCLRT
+} // namespace NEO
 
 namespace IGC {
 
@@ -319,7 +319,7 @@ CodeType::CodeType_t CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 2)::GetPreferredIn
 
 #include "cif/macros/disable.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename StrT>
 std::unique_ptr<unsigned char[]> loadBinaryFile(StrT &&fileName, size_t &fileSize) {
@@ -340,7 +340,7 @@ std::unique_ptr<unsigned char[]> loadBinaryFile(StrT &&fileName, size_t &fileSiz
 
 void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::BufferSimple *options,
                CIF::Builtins::BufferSimple *internalOptions, MockOclTranslationOutput *out) {
-    MockCompilerDebugVars &debugVars = (usingIgc) ? *OCLRT::igcDebugVars : *fclDebugVars;
+    MockCompilerDebugVars &debugVars = (usingIgc) ? *NEO::igcDebugVars : *fclDebugVars;
     if (debugVars.receivedInput != nullptr) {
         if (src != nullptr) {
             debugVars.receivedInput->assign(src->GetMemory<char>(),
@@ -549,4 +549,4 @@ IGC::FclOclTranslationCtxBase *MockFclOclDeviceCtx::CreateTranslationCtxImpl(CIF
 std::vector<char> MockCompilerInterface::getDummyGenBinary() {
     return MockSipKernel::getDummyGenBinary();
 }
-} // namespace OCLRT
+} // namespace NEO

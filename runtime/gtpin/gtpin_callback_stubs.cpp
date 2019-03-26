@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 bool isGTPinInitialized = false;
 
 void gtpinNotifyContextCreate(cl_context context) {
@@ -52,4 +52,4 @@ void setIgcInfo(const void *igcInfo) {
 const void *gtpinGetIgcInfo() {
     return nullptr;
 }
-} // namespace OCLRT
+} // namespace NEO

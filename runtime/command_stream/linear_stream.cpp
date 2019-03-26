@@ -9,7 +9,7 @@
 
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 
 LinearStream::LinearStream(void *buffer, size_t bufferSize)
     : sizeUsed(0), maxAvailableSpace(bufferSize), buffer(buffer), graphicsAllocation(nullptr) {
@@ -29,4 +29,4 @@ LinearStream::LinearStream(GraphicsAllocation *gfxAllocation)
 LinearStream::LinearStream()
     : LinearStream(nullptr) {
 }
-} // namespace OCLRT
+} // namespace NEO

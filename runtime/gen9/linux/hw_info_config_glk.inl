@@ -10,7 +10,7 @@
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/os_interface.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <>
 int HwInfoConfigHw<IGFX_GEMINILAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
@@ -89,4 +89,4 @@ int HwInfoConfigHw<IGFX_GEMINILAKE>::configureHardwareCustom(HardwareInfo *hwInf
 }
 
 template class HwInfoConfigHw<IGFX_GEMINILAKE>;
-} // namespace OCLRT
+} // namespace NEO

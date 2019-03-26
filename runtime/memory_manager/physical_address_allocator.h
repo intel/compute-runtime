@@ -14,7 +14,7 @@
 #include <atomic>
 #include <mutex>
 
-namespace OCLRT {
+namespace NEO {
 
 class PhysicalAddressAllocator {
   public:
@@ -49,4 +49,4 @@ class PhysicalAddressAllocator {
     const uint64_t initialPageAddress = 0x1000;
 };
 
-} // namespace OCLRT
+} // namespace NEO

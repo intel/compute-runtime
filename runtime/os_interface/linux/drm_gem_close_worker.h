@@ -14,7 +14,7 @@
 #include <queue>
 #include <set>
 
-namespace OCLRT {
+namespace NEO {
 class DrmMemoryManager;
 class BufferObject;
 class Thread;
@@ -54,4 +54,4 @@ class DrmGemCloseWorker {
     std::condition_variable condition;
     std::atomic<bool> workerDone{false};
 };
-} // namespace OCLRT
+} // namespace NEO

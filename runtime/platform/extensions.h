@@ -11,7 +11,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 extern const char *deviceExtensionsList;
 
@@ -19,4 +19,4 @@ std::string getExtensionsList(const HardwareInfo &hwInfo);
 std::string removeLastSpace(std::string &s);
 std::string convertEnabledExtensionsToCompilerInternalOptions(const char *deviceExtensions);
 
-} // namespace OCLRT
+} // namespace NEO

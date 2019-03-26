@@ -10,7 +10,7 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/get_info.h"
 
-namespace OCLRT {
+namespace NEO {
 
 inline void releaseVirtualEvent(CommandQueue &commandQueue) {
     if (commandQueue.getRefApiCount() == 1) {
@@ -122,4 +122,4 @@ returnType getCmdQueueProperties(const cl_queue_properties *properties,
 }
 bool isExtraToken(const cl_queue_properties *property);
 bool verifyExtraTokens(Device *&device, Context &context, const cl_queue_properties *properties);
-} // namespace OCLRT
+} // namespace NEO

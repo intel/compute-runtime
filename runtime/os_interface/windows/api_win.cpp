@@ -18,9 +18,9 @@
 #include "runtime/sharings/d3d/d3d_texture.h"
 #include "runtime/utilities/api_intercept.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
-void OCLRT::MemObj::getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam) {
+void NEO::MemObj::getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam) {
     switch (paramName) {
     case CL_MEM_D3D10_RESOURCE_KHR:
         *srcParamSize = sizeof(ID3D10Resource *);
@@ -49,7 +49,7 @@ void OCLRT::MemObj::getOsSpecificMemObjectInfo(const cl_mem_info &paramName, siz
     }
 }
 
-void OCLRT::Image::getOsSpecificImageInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam) {
+void NEO::Image::getOsSpecificImageInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam) {
     switch (paramName) {
     case CL_IMAGE_D3D10_SUBRESOURCE_KHR:
         *srcParamSize = sizeof(unsigned int);
@@ -67,7 +67,7 @@ void OCLRT::Image::getOsSpecificImageInfo(const cl_mem_info &paramName, size_t *
     }
 }
 
-void *OCLRT::Context::getOsContextInfo(cl_context_info &paramName, size_t *srcParamSize) {
+void *NEO::Context::getOsContextInfo(cl_context_info &paramName, size_t *srcParamSize) {
     switch (paramName) {
     case CL_CONTEXT_D3D10_PREFER_SHARED_RESOURCES_KHR:
     case CL_CONTEXT_D3D11_PREFER_SHARED_RESOURCES_KHR:

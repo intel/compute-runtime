@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/helpers/hw_info.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct BDWFamily;
 
@@ -17,4 +17,4 @@ struct GfxFamilyMapper<IGFX_GEN8_CORE> {
     typedef BDWFamily GfxFamily;
     static const char *name;
 };
-} // namespace OCLRT
+} // namespace NEO

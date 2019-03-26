@@ -9,7 +9,7 @@
 
 #include "runtime/helpers/ptr_math.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const std::array<HeapIndex, 4> GfxPartition::heap32Names{{HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,
                                                           HeapIndex::HEAP_INTERNAL,
@@ -62,4 +62,4 @@ void GfxPartition::init(uint64_t gpuAddressSpace) {
     heapInit(HeapIndex::HEAP_STANDARD64KB, gfxBaseAligned, gfxStandardSize - ptrDiff(gfxBaseAligned, gfxBase));
 }
 
-} // namespace OCLRT
+} // namespace NEO

@@ -17,7 +17,7 @@
 
 #include "command_stream_receiver_simulated_hw.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class AubSubCaptureManager;
 
@@ -113,4 +113,4 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     uint32_t pollForCompletionTaskCount = 0u;
     SpinLock pollForCompletionLock;
 };
-} // namespace OCLRT
+} // namespace NEO

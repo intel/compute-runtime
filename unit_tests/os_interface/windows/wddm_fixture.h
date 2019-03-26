@@ -21,7 +21,7 @@
 
 #include "mock_gmm_memory.h"
 
-namespace OCLRT {
+namespace NEO {
 struct WddmFixture : ::testing::Test {
     void SetUp() {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
@@ -91,4 +91,4 @@ using WddmTest = WddmFixture;
 using WddmTestWithMockGdiDll = Test<WddmFixtureWithMockGdiDll>;
 using WddmInstrumentationTest = Test<WddmInstrumentationGmmFixture>;
 using WddmTestSingle = ::testing::Test;
-} // namespace OCLRT
+} // namespace NEO

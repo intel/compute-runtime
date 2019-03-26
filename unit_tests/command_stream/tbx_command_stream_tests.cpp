@@ -33,11 +33,11 @@
 
 #include <cstdint>
 
-using namespace OCLRT;
+using namespace NEO;
 
-namespace OCLRT {
+namespace NEO {
 extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE];
-} // namespace OCLRT
+} // namespace NEO
 
 namespace Os {
 extern const char *tbxLibName;

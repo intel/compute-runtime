@@ -15,7 +15,7 @@
 #include "unit_tests/program/program_tests.h"
 #include "unit_tests/program/program_with_source.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class KernelArgInfoTest : public ProgramFromSourceTest {
   public:

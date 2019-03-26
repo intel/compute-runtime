@@ -10,7 +10,7 @@
 
 #include "cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class KernelExecInfoFixture : public api_fixture {
   protected:

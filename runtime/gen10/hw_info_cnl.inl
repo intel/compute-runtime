@@ -12,7 +12,7 @@
 #include "hw_cmds.h"
 #include "hw_info.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const char *HwMapper<IGFX_CANNONLAKE>::abbreviation = "cnl";
 
@@ -232,4 +232,4 @@ void setupCNLHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTa
 }
 
 void (*CNL::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupCNLHardwareInfoImpl;
-} // namespace OCLRT
+} // namespace NEO

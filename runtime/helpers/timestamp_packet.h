@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class CommandStreamReceiver;
 class LinearStream;
 
@@ -141,4 +141,4 @@ struct TimestampPacketHelper {
         return totalNodesCount * (sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT) + sizeof(typename GfxFamily::MI_ATOMIC));
     }
 };
-} // namespace OCLRT
+} // namespace NEO

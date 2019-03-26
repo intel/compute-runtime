@@ -19,7 +19,7 @@
 
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 class GraphicsAllocation;
 class MemoryManager;
@@ -183,4 +183,4 @@ inline GmmHelper *Device::getGmmHelper() const {
     return executionEnvironment->getGmmHelper();
 }
 
-} // namespace OCLRT
+} // namespace NEO

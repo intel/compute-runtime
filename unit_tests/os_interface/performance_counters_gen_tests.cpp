@@ -12,15 +12,15 @@
 #include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct PerformanceCountersGenTest : public ::testing::Test {
 };
 
-namespace OCLRT {
+namespace NEO {
 extern decltype(&instrGetPerfCountersQueryData) getPerfCountersQueryDataFactory[IGFX_MAX_CORE];
 extern size_t perfCountersQuerySize[IGFX_MAX_CORE];
-} // namespace OCLRT
+} // namespace NEO
 
 class MockPerformanceCountersGen : public PerformanceCounters {
   public:

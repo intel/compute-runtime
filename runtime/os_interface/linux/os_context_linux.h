@@ -7,7 +7,7 @@
 
 #include "runtime/os_interface/os_context.h"
 
-namespace OCLRT {
+namespace NEO {
 class Drm;
 
 class OsContextLinux : public OsContext {
@@ -25,4 +25,4 @@ class OsContextLinux : public OsContext {
     uint32_t drmContextId = 0;
     Drm &drm;
 };
-} // namespace OCLRT
+} // namespace NEO

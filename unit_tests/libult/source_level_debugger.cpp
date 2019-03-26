@@ -9,9 +9,9 @@
 
 #include "unit_tests/libult/source_level_debugger_library.h"
 
-namespace OCLRT {
+namespace NEO {
 OsLibrary *SourceLevelDebugger::loadDebugger() {
     return DebuggerLibrary::load(SourceLevelDebugger::dllName);
 }
 
-} // namespace OCLRT
+} // namespace NEO

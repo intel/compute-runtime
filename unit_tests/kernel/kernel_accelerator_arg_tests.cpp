@@ -22,7 +22,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture {
 

@@ -12,7 +12,7 @@
 
 #include "cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class KernelArgSvmFixture : public api_fixture, public DeviceFixture {
   public:

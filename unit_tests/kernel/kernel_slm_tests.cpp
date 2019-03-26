@@ -16,7 +16,7 @@
 
 #include "hw_cmds.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct KernelSLMAndBarrierTest : public DeviceFixture,
                                  public ::testing::TestWithParam<uint32_t> {

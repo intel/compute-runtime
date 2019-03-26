@@ -32,7 +32,7 @@
 #include "gtest/gtest.h"
 #include "mem_obj_types.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 static const unsigned int g_scTestBufferSizeInBytes = 16;
 
@@ -667,7 +667,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
                bool,
                bool,
                bool)
-            -> OCLRT::Buffer * { return nullptr; };
+            -> NEO::Buffer * { return nullptr; };
     }
 
     auto buffer = Buffer::create(

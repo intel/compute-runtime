@@ -18,7 +18,7 @@
 #include <mutex>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class Gmm;
 class OsContextWin;
 class Wddm;
@@ -89,4 +89,4 @@ class WddmMemoryManager : public MemoryManager {
   private:
     Wddm *wddm;
 };
-} // namespace OCLRT
+} // namespace NEO

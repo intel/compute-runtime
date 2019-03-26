@@ -12,7 +12,7 @@
 #include "hw_cmds.h"
 #include "hw_info.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const char *HwMapper<IGFX_BROADWELL>::abbreviation = "bdw";
 
@@ -207,4 +207,4 @@ void setupBDWHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTa
 }
 
 void (*BDW::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupBDWHardwareInfoImpl;
-} // namespace OCLRT
+} // namespace NEO

@@ -18,7 +18,7 @@
 
 extern GFXCORE_FAMILY renderCoreFamily;
 
-using namespace OCLRT;
+using namespace NEO;
 
 static const unsigned int testImageDimensions = 17;
 auto const elementSize = 4; //sizeof CL_RGBA * CL_UNORM_INT8

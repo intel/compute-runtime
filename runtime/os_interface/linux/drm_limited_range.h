@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <sys/mman.h>
 
-namespace OCLRT {
+namespace NEO {
 class AllocatorLimitedRange {
   public:
     AllocatorLimitedRange(uint64_t base, uint64_t size);
@@ -31,4 +31,4 @@ class AllocatorLimitedRange {
     uint64_t size = 0;
     std::unique_ptr<HeapAllocator> heapAllocator;
 };
-} // namespace OCLRT
+} // namespace NEO

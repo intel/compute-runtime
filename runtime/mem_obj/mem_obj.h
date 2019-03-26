@@ -19,7 +19,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class ExecutionEnvironment;
 class GraphicsAllocation;
 struct KernelInfo;
@@ -149,4 +149,4 @@ class MemObj : public BaseObject<_cl_mem> {
 
     std::vector<DestructorCallback *> destructorCallbacks;
 };
-} // namespace OCLRT
+} // namespace NEO

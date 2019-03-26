@@ -17,7 +17,7 @@
 
 #include <sstream>
 
-namespace OCLRT {
+namespace NEO {
 
 const std::string Program::clOptNameClVer("-cl-std=CL");
 const std::string Program::clOptNameUniformWgs{"-cl-uniform-work-group-size"};
@@ -438,4 +438,4 @@ void Program::updateNonUniformFlag(const Program **inputPrograms, size_t numInpu
     }
     this->allowNonUniform = allowNonUniform;
 }
-} // namespace OCLRT
+} // namespace NEO

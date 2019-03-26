@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include <array>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename Vec, int simd>
 inline void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup,
@@ -149,4 +149,4 @@ inline void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWo
 
     } while (++pass < passes);
 }
-} // namespace OCLRT
+} // namespace NEO

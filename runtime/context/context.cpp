@@ -32,7 +32,7 @@
 #include <algorithm>
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 Context::Context(
     void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
@@ -304,4 +304,4 @@ cl_int Context::getSupportedImageFormats(
     return CL_SUCCESS;
 }
 
-} // namespace OCLRT
+} // namespace NEO

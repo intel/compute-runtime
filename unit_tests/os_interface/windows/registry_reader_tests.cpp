@@ -9,7 +9,7 @@
 
 #include "test.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 using RegistryReaderTest = ::testing::Test;
 

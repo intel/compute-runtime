@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,12 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/options.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class MockCommandStreamReceiver;
-namespace OCLRT {
+namespace NEO {
 class MockMemoryManager;
-}; // namespace OCLRT
+}; // namespace NEO
 
 class MemoryManagerWithCsrFixture {
   public:

@@ -8,7 +8,7 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/printf_handler.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <bool mockable>
 void Kernel::patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printfHandler) {
@@ -83,4 +83,4 @@ void Kernel::patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printf
     ReflectionSurfaceHelper::setParentImageParams(reflectionSurface, this->kernelArguments, this->kernelInfo);
     ReflectionSurfaceHelper::setParentSamplerParams(reflectionSurface, this->kernelArguments, this->kernelInfo);
 }
-} // namespace OCLRT
+} // namespace NEO

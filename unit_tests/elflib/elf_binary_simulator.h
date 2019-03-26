@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "elf/types.h"
 #include "elf/writer.h"
 
-namespace OCLRT {
+namespace NEO {
 
 void MockElfBinary(CLElfLib::ElfBinaryStorage &elfBinary) {
     CLElfLib::CElfWriter elfWriter(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
@@ -19,4 +19,4 @@ void MockElfBinary(CLElfLib::ElfBinaryStorage &elfBinary) {
 
     elfWriter.resolveBinary(elfBinary);
 }
-} // namespace OCLRT
+} // namespace NEO

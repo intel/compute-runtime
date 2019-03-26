@@ -22,7 +22,7 @@
 #include <memory>
 #include <string>
 
-using namespace OCLRT;
+using namespace NEO;
 using std::string;
 using std::unique_ptr;
 
@@ -530,12 +530,12 @@ TEST(SourceLevelDebugger, givenTwoDevicesWhenSecondIsCreatedThenNotCreatingNewSo
 
         ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
 
-        std::unique_ptr<Device> device1(Device::create<OCLRT::MockDevice>(nullptr, executionEnvironment, 0u));
+        std::unique_ptr<Device> device1(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 0u));
         EXPECT_NE(nullptr, executionEnvironment->memoryManager);
         EXPECT_TRUE(interceptor.initCalled);
 
         interceptor.initCalled = false;
-        std::unique_ptr<Device> device2(Device::create<OCLRT::MockDevice>(nullptr, executionEnvironment, 1u));
+        std::unique_ptr<Device> device2(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 1u));
         EXPECT_NE(nullptr, executionEnvironment->memoryManager);
         EXPECT_FALSE(interceptor.initCalled);
     }
@@ -549,9 +549,9 @@ TEST(SourceLevelDebugger, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheS
         DebuggerLibrary::setDebuggerActive(true);
 
         ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-        std::unique_ptr<Device> device1(Device::create<OCLRT::MockDevice>(nullptr, executionEnvironment, 0u));
+        std::unique_ptr<Device> device1(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 0u));
         auto sourceLevelDebugger = device1->getSourceLevelDebugger();
-        std::unique_ptr<Device> device2(Device::create<OCLRT::MockDevice>(nullptr, executionEnvironment, 1u));
+        std::unique_ptr<Device> device2(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 1u));
         EXPECT_EQ(sourceLevelDebugger, device2->getSourceLevelDebugger());
     }
 }

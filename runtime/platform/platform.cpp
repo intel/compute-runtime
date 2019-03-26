@@ -30,7 +30,7 @@
 
 #include "CL/cl_ext.h"
 
-namespace OCLRT {
+namespace NEO {
 
 std::unique_ptr<Platform> platformImpl;
 
@@ -135,7 +135,7 @@ bool Platform::initialize() {
             this->initializationLoopHelper();
     }
 
-    state = OCLRT::getDevices(&hwInfo, numDevicesReturned, *executionEnvironment) ? StateIniting : StateNone;
+    state = NEO::getDevices(&hwInfo, numDevicesReturned, *executionEnvironment) ? StateIniting : StateNone;
 
     if (state == StateNone) {
         return false;
@@ -148,7 +148,7 @@ bool Platform::initialize() {
 
     this->devices.resize(numDevicesReturned);
     for (uint32_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
-        auto pDevice = Device::create<OCLRT::Device>(hwInfo, executionEnvironment, deviceOrdinal);
+        auto pDevice = Device::create<NEO::Device>(hwInfo, executionEnvironment, deviceOrdinal);
         DEBUG_BREAK_IF(!pDevice);
         if (pDevice) {
             this->devices[deviceOrdinal] = pDevice;
@@ -249,4 +249,4 @@ std::unique_ptr<AsyncEventsHandler> Platform::setAsyncEventsHandler(std::unique_
     return handler;
 }
 
-} // namespace OCLRT
+} // namespace NEO

@@ -19,7 +19,7 @@
 #include <cstring>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 size_t DeviceFactory::numDevices = 0;
 HardwareInfo *DeviceFactory::hwInfo = nullptr;
 
@@ -73,4 +73,4 @@ void DeviceFactory::releaseDevices() {
 
 void Device::appendOSExtensions(std::string &deviceExtensions) {
 }
-} // namespace OCLRT
+} // namespace NEO

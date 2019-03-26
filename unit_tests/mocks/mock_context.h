@@ -11,7 +11,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 class MockContext : public Context {
   public:
     using Context::sharingFunctions;
@@ -42,4 +42,4 @@ class MockContext : public Context {
   private:
     Device *device;
 };
-} // namespace OCLRT
+} // namespace NEO

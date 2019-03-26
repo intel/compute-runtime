@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/os_interface/windows/os_time_win.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockOSTimeWin : public OSTimeWin {
   public:
     MockOSTimeWin(Wddm *inWddm) {
@@ -19,4 +19,4 @@ class MockOSTimeWin : public OSTimeWin {
         return OSTimeWin::getDynamicDeviceTimerResolution(hwInfo);
     };
 };
-} // namespace OCLRT
+} // namespace NEO

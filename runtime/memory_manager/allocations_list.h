@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 class CommandStreamReceiver;
 
 class AllocationsList : public IDList<GraphicsAllocation, true, true> {
@@ -18,4 +18,4 @@ class AllocationsList : public IDList<GraphicsAllocation, true, true> {
   private:
     GraphicsAllocation *detachAllocationImpl(GraphicsAllocation *, void *);
 };
-} // namespace OCLRT
+} // namespace NEO

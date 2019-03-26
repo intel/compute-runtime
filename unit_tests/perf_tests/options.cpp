@@ -10,7 +10,7 @@
 #include "hw_cmds.h"
 #include "hw_info.h"
 
-namespace OCLRT {
+namespace NEO {
 // IP address for TBX server
 const char *tbxServerIp = "127.0.0.1";
 
@@ -28,6 +28,6 @@ static const HardwareInfo *DefaultPlatformDevices[] = {
 
 size_t numPlatformDevices = ARRAY_COUNT(DefaultPlatformDevices);
 const HardwareInfo **platformDevices = DefaultPlatformDevices;
-} // namespace OCLRT
+} // namespace NEO
 
 bool printMemoryOpCallStack = true;

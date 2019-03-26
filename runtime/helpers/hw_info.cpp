@@ -11,7 +11,7 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *skuTable, const WorkaroundTable *waTable,
                            const GT_SYSTEM_INFO *sysInfo, const RuntimeCapabilityTable &capabilityTable)
     : pPlatform(platform), pSkuTable(skuTable), pWaTable(waTable), pSysInfo(sysInfo), capabilityTable(capabilityTable) {
@@ -51,4 +51,4 @@ EngineType getChosenEngineType(const HardwareInfo &hwInfo) {
                ? hwInfo.capabilityTable.defaultEngineType
                : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
 }
-} // namespace OCLRT
+} // namespace NEO

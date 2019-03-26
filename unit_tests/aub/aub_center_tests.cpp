@@ -15,7 +15,7 @@
 
 #include "gtest/gtest.h"
 #include "third_party/aub_stream/headers/modes.h"
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(AubCenter, GivenUseAubStreamDebugVariableNotSetWhenAubCenterIsCreatedThenAubCenterDoesNotCreateAubManager) {
     DebugManagerStateRestore restorer;

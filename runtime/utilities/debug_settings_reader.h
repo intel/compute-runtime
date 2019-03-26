@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 class SettingsReader {
   public:
@@ -31,4 +31,4 @@ class SettingsReader {
     virtual const char *appSpecificLocation(const std::string &name) = 0;
     static const char *settingsFileName;
 };
-}; // namespace OCLRT
+}; // namespace NEO

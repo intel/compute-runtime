@@ -14,8 +14,8 @@ constexpr uint32_t l3CacheOff = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGN
 constexpr uint32_t unknownMocs = GMM_RESOURCE_USAGE_UNKNOWN;
 } // namespace CacheSettings
 
-namespace OCLRT {
+namespace NEO {
 class GraphicsAllocation;
 bool isL3Capable(void *ptr, size_t size);
 bool isL3Capable(const GraphicsAllocation &graphicsAllocation);
-} // namespace OCLRT
+} // namespace NEO

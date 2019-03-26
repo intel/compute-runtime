@@ -10,7 +10,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 struct HeapInfo {
     const SKernelBinaryHeaderCommon *pKernelHeader;
@@ -34,4 +34,4 @@ struct HeapInfo {
     }
 };
 
-} // namespace OCLRT
+} // namespace NEO

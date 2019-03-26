@@ -14,7 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 struct HeapChunk {
     HeapChunk(uint64_t ptr, size_t size) : ptr(ptr), size(size) {}
@@ -246,4 +246,4 @@ class HeapAllocator {
         DBG_LOG(PrintDebugMessages, __FUNCTION__, "Allocator usage == ", this->getUsage());
     }
 };
-} // namespace OCLRT
+} // namespace NEO

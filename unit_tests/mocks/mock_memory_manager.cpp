@@ -15,7 +15,7 @@
 
 #include <cstring>
 
-namespace OCLRT {
+namespace NEO {
 
 void MockMemoryManager::setDeferredDeleter(DeferredDeleter *deleter) {
     deferredDeleter.reset(deleter);
@@ -95,4 +95,4 @@ FailMemoryManager::FailMemoryManager(int32_t failedAllocationsCount) {
     this->failedAllocationsCount = failedAllocationsCount;
 }
 
-} // namespace OCLRT
+} // namespace NEO

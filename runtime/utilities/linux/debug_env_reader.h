@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/utilities/debug_settings_reader.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class EnvironmentVariableReader : public SettingsReader {
   public:
@@ -19,4 +19,4 @@ class EnvironmentVariableReader : public SettingsReader {
     std::string getSetting(const char *settingName, const std::string &value) override;
     const char *appSpecificLocation(const std::string &name) override;
 };
-} // namespace OCLRT
+} // namespace NEO

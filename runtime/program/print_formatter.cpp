@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-namespace OCLRT {
+namespace NEO {
 
 PrintFormatter::PrintFormatter(Kernel &kernelArg, GraphicsAllocation &dataArg) : kernel(kernelArg),
                                                                                  data(dataArg),
@@ -196,4 +196,4 @@ bool PrintFormatter::isConversionSpecifier(char c) {
         return false;
     }
 }
-} // namespace OCLRT
+} // namespace NEO

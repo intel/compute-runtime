@@ -19,7 +19,7 @@
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_program.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 static const char *binaryFile = "simple_block_kernel";
 static const char *KernelNames[] = {"kernel_reflection", "simple_block_kernel"};

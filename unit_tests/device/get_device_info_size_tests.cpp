@@ -12,7 +12,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct GetDeviceInfoSize : public ::testing::TestWithParam<std::pair<uint32_t /*cl_device_info*/, size_t>> {
     void SetUp() override {

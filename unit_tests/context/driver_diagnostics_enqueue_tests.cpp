@@ -11,7 +11,7 @@
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingReadWhenEnqueueReadBufferIsCallingWithCPUCopyThenContextProvidesProperHint) {
 

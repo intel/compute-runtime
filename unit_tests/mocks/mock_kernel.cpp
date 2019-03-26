@@ -10,7 +10,7 @@
 #include "runtime/kernel/kernel.inl"
 #include "runtime/program/printf_handler.h"
 
-namespace OCLRT {
+namespace NEO {
 
 MockKernel::BlockPatchValues MockKernel::ReflectionSurfaceHelperPublic::devQueue;
 MockKernel::BlockPatchValues MockKernel::ReflectionSurfaceHelperPublic::defaultQueue;
@@ -56,4 +56,4 @@ void MockKernel::getResidency(std::vector<Surface *> &dst) {
 bool MockKernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
     return DebugManager.flags.EnableCacheFlushAfterWalker.get();
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -9,7 +9,7 @@
 
 #include <CL/cl_va_api_media_sharing_intel.h>
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef api_tests clCreateFromVaMediaSurfaceTests;
 

@@ -14,7 +14,7 @@
 #include <map>
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 class GmmPageTableMngr;
 
@@ -148,4 +148,4 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::unique_ptr<GraphicsAllocation> tempPreemptionLocation;
 };
 
-} // namespace OCLRT
+} // namespace NEO

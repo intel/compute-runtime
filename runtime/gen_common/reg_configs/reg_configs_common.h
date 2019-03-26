@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 namespace RowChickenReg4 {
 const uint32_t address = 0xE48C;
 const uint32_t regDataForArbitrationPolicy[3] = {
@@ -37,4 +37,4 @@ constexpr uint32_t maskUpdate = regUpdate << maskShift;
 constexpr uint32_t regVal = regUpdate | maskUpdate;
 
 } // namespace FfSliceCsChknReg2
-} // namespace OCLRT
+} // namespace NEO

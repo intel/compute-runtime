@@ -12,7 +12,7 @@
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 
-namespace OCLRT {
+namespace NEO {
 
 UserEvent::UserEvent(Context *ctx)
     : Event(ctx, nullptr, CL_COMMAND_USER, eventNotReady, eventNotReady) {
@@ -81,4 +81,4 @@ bool VirtualEvent::setStatus(cl_int status) {
     }
     return Event::setStatus(status);
 }
-} // namespace OCLRT
+} // namespace NEO

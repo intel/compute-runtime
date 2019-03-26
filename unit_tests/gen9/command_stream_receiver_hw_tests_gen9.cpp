@@ -23,7 +23,7 @@
 
 #include "gtest/gtest.h"
 #include "reg_configs_common.h"
-using namespace OCLRT;
+using namespace NEO;
 
 #include "unit_tests/command_stream/command_stream_receiver_hw_tests.inl"
 

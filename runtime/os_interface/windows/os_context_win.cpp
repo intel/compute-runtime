@@ -11,7 +11,7 @@
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
 
-namespace OCLRT {
+namespace NEO {
 
 OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
                              EngineType engineType, PreemptionMode preemptionMode, bool lowPriority) {
@@ -45,4 +45,4 @@ OsContextWin::~OsContextWin() {
     wddm.destroyContext(wddmContextHandle);
 }
 
-} // namespace OCLRT
+} // namespace NEO

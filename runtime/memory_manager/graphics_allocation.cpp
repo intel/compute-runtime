@@ -10,7 +10,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
     DebugManager.logAllocation(this);
@@ -57,4 +57,4 @@ std::string GraphicsAllocation::getAllocationInfoString() const {
 
 constexpr uint32_t GraphicsAllocation::objectNotUsed;
 constexpr uint32_t GraphicsAllocation::objectNotResident;
-} // namespace OCLRT
+} // namespace NEO

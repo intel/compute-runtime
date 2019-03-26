@@ -15,7 +15,7 @@
 #include <atomic>
 #include <mutex>
 
-namespace OCLRT {
+namespace NEO {
 
 class GraphicsAllocation;
 class WddmAllocation;
@@ -74,4 +74,4 @@ class WddmResidencyController {
 
     VOID *trimCallbackHandle = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

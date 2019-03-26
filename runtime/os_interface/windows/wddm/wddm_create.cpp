@@ -7,8 +7,8 @@
 
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
-namespace OCLRT {
+namespace NEO {
 Wddm *Wddm::createWddm() {
     return new Wddm();
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -22,7 +22,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef Test<DeviceFixture> DeviceTest;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 struct _tagGLCLSyncInfo;
 typedef _tagGLCLSyncInfo GL_CL_SYNC_INFO;
 
-namespace OCLRT {
+namespace NEO {
 class Context;
 
 class GlSyncEvent : public Event {
@@ -31,4 +31,4 @@ class GlSyncEvent : public Event {
   protected:
     std::unique_ptr<GL_CL_SYNC_INFO> glSync;
 };
-} // namespace OCLRT
+} // namespace NEO

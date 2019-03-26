@@ -12,7 +12,7 @@
 #include "runtime/os_interface/os_interface.h"
 #include "unit_tests/libult/create_command_stream.h"
 
-namespace OCLRT {
+namespace NEO {
 bool overrideMemoryManagerCreation = true;
 
 std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {
@@ -24,4 +24,4 @@ std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvir
                                               true,
                                               executionEnvironment);
 }
-} // namespace OCLRT
+} // namespace NEO

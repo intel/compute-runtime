@@ -11,7 +11,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 extern GFXCORE_FAMILY renderCoreFamily;
 
@@ -40,15 +40,15 @@ struct MockProgramRecordUnhandledTokens : public Program {
 
 inline cl_int GetDecodeErrorCode(const std::vector<char> &binary, bool allowUnhandledTokens,
                                  int defaultUnhandledTokenId, int &foundUnhandledTokenId) {
-    OCLRT::ExecutionEnvironment executionEnvironment;
+    NEO::ExecutionEnvironment executionEnvironment;
     using PT = MockProgramRecordUnhandledTokens;
     std::unique_ptr<PT> prog;
     cl_int errorCode = CL_INVALID_BINARY;
-    prog.reset(OCLRT::Program::createFromGenBinary<PT>(executionEnvironment,
-                                                       nullptr,
-                                                       binary.data(),
-                                                       binary.size(),
-                                                       false, &errorCode));
+    prog.reset(NEO::Program::createFromGenBinary<PT>(executionEnvironment,
+                                                     nullptr,
+                                                     binary.data(),
+                                                     binary.size(),
+                                                     false, &errorCode));
     prog->allowUnhandledTokens = allowUnhandledTokens;
     prog->lastUnhandledTokenFound = defaultUnhandledTokenId;
     auto ret = prog->processGenBinary();

@@ -10,7 +10,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_device_queue.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef ::testing::Test DeviceQueueHwMtTest;
 

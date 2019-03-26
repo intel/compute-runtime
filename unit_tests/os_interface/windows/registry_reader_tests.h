@@ -5,7 +5,7 @@
  *
  */
 
-using namespace OCLRT;
+using namespace NEO;
 
 #include "runtime/os_interface/windows/registry_reader.h"
 

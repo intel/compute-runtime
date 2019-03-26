@@ -15,7 +15,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sharingFunctions,
                                         cl_mem_flags flags, VASurfaceID *surface,
                                         cl_uint plane, cl_int *errcodeRet) {
@@ -97,4 +97,4 @@ void VASurface::getMemObjectInfo(size_t &paramValueSize, void *&paramValue) {
     paramValue = &surfaceId;
 }
 
-} // namespace OCLRT
+} // namespace NEO

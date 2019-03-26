@@ -16,7 +16,7 @@
 #include <memory>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class CommandQueue;
 class CommandStreamReceiver;
 class InternalAllocationStorage;
@@ -131,4 +131,4 @@ class CommandMarker : public Command {
     uint32_t clCommandType;
     uint32_t commandSize;
 };
-} // namespace OCLRT
+} // namespace NEO

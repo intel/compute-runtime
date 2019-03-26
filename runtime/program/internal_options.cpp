@@ -9,6 +9,6 @@
 
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 const std::vector<std::string> Program::internalOptionsToExtract = {"-cl-intel-gtpin-rera"};
 };

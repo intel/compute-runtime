@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/tbx/tbx_sockets.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class MockTbxSockets : public TbxSockets {
   public:
@@ -31,4 +31,4 @@ class MockTbxSockets : public TbxSockets {
 
     uint32_t typeCapturedFromWriteMemory = 0;
 };
-} // namespace OCLRT
+} // namespace NEO

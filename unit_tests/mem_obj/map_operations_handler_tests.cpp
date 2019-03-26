@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 #include <tuple>
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct MockMapOperationsHandler : public MapOperationsHandler {
     using MapOperationsHandler::isOverlapping;

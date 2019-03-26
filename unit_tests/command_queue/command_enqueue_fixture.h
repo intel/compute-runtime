@@ -15,7 +15,7 @@
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct CommandDeviceFixture : public DeviceFixture,
                               public CommandQueueHwFixture {
@@ -92,4 +92,4 @@ struct NegativeFailAllocationCommandEnqueueBaseFixture : public CommandEnqueueBa
     MemoryManager *oldMemManager;
 };
 
-} // namespace OCLRT
+} // namespace NEO

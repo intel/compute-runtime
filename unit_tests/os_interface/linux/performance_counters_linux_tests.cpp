@@ -12,7 +12,7 @@
 #include "gtest/gtest.h"
 #include "mock_performance_counters_linux.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct PerformanceCountersLinuxTest : public PerformanceCountersFixture,
                                       public ::testing::Test {

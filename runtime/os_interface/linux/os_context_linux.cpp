@@ -12,7 +12,7 @@
 #include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/os_context.h"
 
-namespace OCLRT {
+namespace NEO {
 
 OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
                              EngineType engineType, PreemptionMode preemptionMode, bool lowPriority) {
@@ -36,4 +36,4 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
 OsContextLinux::~OsContextLinux() {
     drm.destroyDrmContext(drmContextId);
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -13,7 +13,7 @@
 #include <thread>
 
 using namespace std;
-using namespace OCLRT;
+using namespace NEO;
 
 namespace BuiltinKernelsSimulation {
 

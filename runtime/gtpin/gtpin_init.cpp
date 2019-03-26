@@ -15,12 +15,12 @@
 #include "gtpin_helpers.h"
 
 using namespace gtpin;
-using namespace OCLRT;
+using namespace NEO;
 
-namespace OCLRT {
+namespace NEO {
 bool isGTPinInitialized = false;
 gtpin::ocl::gtpin_events_t GTPinCallbacks = {0};
-} // namespace OCLRT
+} // namespace NEO
 
 GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, driver_services_t *pDriverServices,
                            interface_version_t *pDriverVersion) {
@@ -48,10 +48,10 @@ GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, driver_serv
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
 
-    pDriverServices->bufferAllocate = OCLRT::gtpinCreateBuffer;
-    pDriverServices->bufferDeallocate = OCLRT::gtpinFreeBuffer;
-    pDriverServices->bufferMap = OCLRT::gtpinMapBuffer;
-    pDriverServices->bufferUnMap = OCLRT::gtpinUnmapBuffer;
+    pDriverServices->bufferAllocate = NEO::gtpinCreateBuffer;
+    pDriverServices->bufferDeallocate = NEO::gtpinFreeBuffer;
+    pDriverServices->bufferMap = NEO::gtpinMapBuffer;
+    pDriverServices->bufferUnMap = NEO::gtpinUnmapBuffer;
 
     GTPinCallbacks = *pGtpinEvents;
     isGTPinInitialized = true;

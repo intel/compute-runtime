@@ -18,7 +18,7 @@
 #include "runtime/helpers/kernel_commands_base.inl"
 #include "runtime/helpers/preamble.inl"
 
-namespace OCLRT {
+namespace NEO {
 
 static AubMemDump::LrcaHelperRcs rcs(0x000000);
 static AubMemDump::LrcaHelperBcs bcs(0x020000);
@@ -187,4 +187,4 @@ struct L3CNTLRegisterOffset<GENX> {
 
 template struct PreambleHelper<GENX>;
 
-} // namespace OCLRT
+} // namespace NEO

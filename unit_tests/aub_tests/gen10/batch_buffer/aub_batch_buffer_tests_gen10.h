@@ -10,14 +10,14 @@
 #include "unit_tests/aub_tests/command_stream/aub_mem_dump_tests.h"
 
 template <typename FamilyType>
-void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType engineType, uint64_t gpuBatchBufferAddr) {
-    typedef typename OCLRT::AUBFamilyMapper<FamilyType>::AUB AUB;
-    const auto &csTraits = OCLRT::AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineType);
+void setupAUBWithBatchBuffer(const NEO::Device *pDevice, NEO::EngineType engineType, uint64_t gpuBatchBufferAddr) {
+    typedef typename NEO::AUBFamilyMapper<FamilyType>::AUB AUB;
+    const auto &csTraits = NEO::AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineType);
     auto mmioBase = csTraits.mmioBase;
     uint64_t physAddress = 0x10000;
 
-    OCLRT::AUBCommandStreamReceiver::AubFileStream aubFile;
-    std::string filePath(OCLRT::folderAUB);
+    NEO::AUBCommandStreamReceiver::AubFileStream aubFile;
+    std::string filePath(NEO::folderAUB);
     filePath.append(Os::fileSeparator);
     std::string baseName("simple");
     baseName.append(csTraits.name);
@@ -53,7 +53,7 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
     auto gpuBatchBuffer = static_cast<uintptr_t>(gpuBatchBufferAddr);
     physAddress += sizeBatchBuffer;
 
-    OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
+    NEO::AubHelperHw<FamilyType> aubHelperHw(false);
 
     AUB::reserveAddressPPGTT(aubFile, gpuBatchBuffer, sizeBatchBuffer, physBatchBuffer, 7, aubHelperHw);
     uint8_t batchBuffer[sizeBatchBuffer];

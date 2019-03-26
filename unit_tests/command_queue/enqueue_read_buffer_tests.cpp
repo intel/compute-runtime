@@ -20,7 +20,7 @@
 
 #include "reg_configs_common.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 HWTEST_F(EnqueueReadBufferTypeTest, null_mem_object) {
     auto data = 1;

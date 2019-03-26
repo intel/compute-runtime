@@ -11,7 +11,7 @@
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_program.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const SipKernel &initSipKernel(SipKernelType type, Device &device) {
     auto mockCompilerInterface = new MockCompilerInterface();
@@ -30,4 +30,4 @@ Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
     GlobalMockSipProgram::sipProgram->resetAllocationState();
     return GlobalMockSipProgram::sipProgram;
 }
-} // namespace OCLRT
+} // namespace NEO

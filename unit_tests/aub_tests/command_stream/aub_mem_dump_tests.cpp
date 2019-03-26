@@ -13,14 +13,14 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
 
-using OCLRT::AUBCommandStreamReceiver;
-using OCLRT::AUBCommandStreamReceiverHw;
-using OCLRT::AUBFamilyMapper;
-using OCLRT::DeviceFixture;
-using OCLRT::EngineType;
-using OCLRT::folderAUB;
+using NEO::AUBCommandStreamReceiver;
+using NEO::AUBCommandStreamReceiverHw;
+using NEO::AUBFamilyMapper;
+using NEO::DeviceFixture;
+using NEO::EngineType;
+using NEO::folderAUB;
 
-std::string getAubFileName(const OCLRT::Device *pDevice, const std::string baseName) {
+std::string getAubFileName(const NEO::Device *pDevice, const std::string baseName) {
     const auto pGtSystemInfo = pDevice->getHardwareInfo().pSysInfo;
     std::stringstream strfilename;
     uint32_t subSlicesPerSlice = pGtSystemInfo->SubSliceCount / pGtSystemInfo->SliceCount;
@@ -86,7 +86,7 @@ HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
     auto pAddress = static_cast<uint64_t>(gAddress) & 0xFFFFFFFF;
 
     auto enableLocalMemory = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily).getEnableLocalMemory(hwInfo);
-    OCLRT::AubHelperHw<FamilyType> aubHelperHw(enableLocalMemory);
+    NEO::AubHelperHw<FamilyType> aubHelperHw(enableLocalMemory);
     AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress, 7, aubHelperHw);
 
     aubFile.fileHandle.close();
@@ -108,7 +108,7 @@ HWTEST_F(AubMemDumpTests, DISABLED_writeVerifyOneBytePPGTT) {
     auto gAddress = reinterpret_cast<uintptr_t>(&byte);
     uint64_t physAddress = reinterpret_cast<uint64_t>(&byte) & 0xFFFFFFFF;
 
-    OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
+    NEO::AubHelperHw<FamilyType> aubHelperHw(false);
     AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(byte), physAddress, 7, aubHelperHw);
     AUB::addMemoryWrite(aubFile, physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal,
@@ -156,7 +156,7 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesPPGTT) {
     auto gAddress = reinterpret_cast<uintptr_t>(bytes);
     auto physAddress = reinterpret_cast<uint64_t>(bytes) & 0xFFFFFFFF;
 
-    OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
+    NEO::AubHelperHw<FamilyType> aubHelperHw(false);
     AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(bytes), physAddress, 7, aubHelperHw);
     AUB::addMemoryWrite(aubFile, physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal,

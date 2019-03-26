@@ -42,7 +42,7 @@
 #define GetCurrentWorkingDirectory getcwd
 #endif
 
-namespace OCLRT {
+namespace NEO {
 
 CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 
@@ -133,8 +133,8 @@ int OfflineCompiler::buildSourceCode() {
             auto fclTranslationCtx = fclDeviceCtx->CreateTranslationCtx(IGC::CodeType::oclC, intermediateRepresentation);
             auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(intermediateRepresentation, IGC::CodeType::oclGenBin);
 
-            if (false == OCLRT::areNotNullptr(fclSrc.get(), fclOptions.get(), fclInternalOptions.get(),
-                                              fclTranslationCtx.get(), igcTranslationCtx.get())) {
+            if (false == NEO::areNotNullptr(fclSrc.get(), fclOptions.get(), fclInternalOptions.get(),
+                                            fclTranslationCtx.get(), igcTranslationCtx.get())) {
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;
             }
@@ -584,7 +584,7 @@ std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, s
     out << std::endl
         << "#include \"runtime/built_ins/registry/built_ins_registry.h\"\n"
         << std::endl;
-    out << "namespace OCLRT {" << std::endl;
+    out << "namespace NEO {" << std::endl;
     out << "static RegisterEmbeddedResource register" << builtinName << "Bin(" << std::endl;
     out << "    createBuiltinResourceName(" << std::endl;
     out << "        EBuiltInOps::" << builtinName << "," << std::endl;
@@ -827,4 +827,4 @@ std::string generateFilePath(const std::string &directory, const std::string &fi
     return ret;
 }
 
-} // namespace OCLRT
+} // namespace NEO

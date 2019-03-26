@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct EnqueueCopyImageTest : public CommandEnqueueFixture,
                               public ::testing::Test {
@@ -69,4 +69,4 @@ struct EnqueueCopyImageMipMapTest : public CommandEnqueueFixture,
 
     MockContext *context;
 };
-} // namespace OCLRT
+} // namespace NEO

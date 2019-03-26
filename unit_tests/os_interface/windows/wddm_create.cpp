@@ -7,8 +7,8 @@
 
 #include "unit_tests/mocks/mock_wddm.h"
 
-namespace OCLRT {
+namespace NEO {
 Wddm *Wddm::createWddm() {
     return new WddmMock();
 }
-} // namespace OCLRT
+} // namespace NEO

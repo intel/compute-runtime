@@ -17,7 +17,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 class MockTbxCsrToTestWaitBeforeMakingNonResident : public TbxCommandStreamReceiverHw<GfxFamily> {
@@ -115,4 +115,4 @@ std::unique_ptr<TbxExecutionEnvironment> getEnvironment(bool createTagAllocation
     tbxExecutionEnvironment->executionEnvironment = std::move(executionEnvironment);
     return tbxExecutionEnvironment;
 }
-} // namespace OCLRT
+} // namespace NEO

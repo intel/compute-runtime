@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/command_stream/scratch_space_controller.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class ScratchSpaceControllerBase : public ScratchSpaceController {
   public:
@@ -28,4 +28,4 @@ class ScratchSpaceControllerBase : public ScratchSpaceController {
   protected:
     void createScratchSpaceAllocation();
 };
-} // namespace OCLRT
+} // namespace NEO

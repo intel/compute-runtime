@@ -7,7 +7,7 @@
 
 #pragma once
 
-namespace OCLRT {
+namespace NEO {
 
 class Kernel;
 struct HardwareInfo;
@@ -28,4 +28,4 @@ struct UnitTestHelper {
 
     static bool evaluateGshAddressForScratchSpace(uint64_t usedScratchGpuAddress, uint64_t retrievedGshAddress);
 };
-} // namespace OCLRT
+} // namespace NEO

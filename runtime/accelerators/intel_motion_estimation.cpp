@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "runtime/accelerators/intel_motion_estimation.h"
 
-namespace OCLRT {
+namespace NEO {
 
 cl_int VmeAccelerator::validateVmeArgs(Context *context,
                                        cl_accelerator_type_intel typeId,
@@ -61,4 +61,4 @@ cl_int VmeAccelerator::validateVmeArgs(Context *context,
 
     return CL_SUCCESS;
 }
-} // namespace OCLRT
+} // namespace NEO

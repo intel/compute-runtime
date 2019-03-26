@@ -14,7 +14,7 @@
 #include "unit_tests/helpers/static_size3.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
-namespace OCLRT {
+namespace NEO {
 
 using Gen9EnqueueTest = Test<DeviceFixture>;
 GEN9TEST_F(Gen9EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKernelIsSubmittedThenRoundRobinPolicyIsProgrammed) {
@@ -50,4 +50,4 @@ GEN9TEST_F(Gen9EnqueueTest, givenKernelNotRequiringIndependentForwardProgressWhe
     EXPECT_EQ(DebugControlReg2::getRegData(ThreadArbitrationPolicy::AgeBased), cmd->getDataDword());
     EXPECT_EQ(1U, countMmio<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), DebugControlReg2::address));
 }
-} // namespace OCLRT
+} // namespace NEO

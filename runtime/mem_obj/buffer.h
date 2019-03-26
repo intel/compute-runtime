@@ -14,7 +14,7 @@
 
 #include "igfxfmid.h"
 
-namespace OCLRT {
+namespace NEO {
 class Buffer;
 class Device;
 class MemoryManager;
@@ -191,4 +191,4 @@ class BufferHw : public Buffer {
     typedef typename GfxFamily::RENDER_SURFACE_STATE SURFACE_STATE;
     typename SURFACE_STATE::SURFACE_TYPE surfaceType;
 };
-} // namespace OCLRT
+} // namespace NEO

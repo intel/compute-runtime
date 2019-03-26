@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include <memory>
 #include <type_traits>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename CT = int32_t>
 class RefCounter {
@@ -175,4 +175,4 @@ template <typename DerivedClass>
 inline ReferenceTrackedObject<DerivedClass>::~ReferenceTrackedObject() {
     DEBUG_BREAK_IF(refInternal.peek() > 1);
 }
-} // namespace OCLRT
+} // namespace NEO

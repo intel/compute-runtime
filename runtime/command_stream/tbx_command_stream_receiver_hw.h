@@ -14,7 +14,7 @@
 
 #include "command_stream_receiver_simulated_hw.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class TbxStream;
 
@@ -82,4 +82,4 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
         return CommandStreamReceiverType::CSR_TBX;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

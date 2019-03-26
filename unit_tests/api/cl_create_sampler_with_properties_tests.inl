@@ -11,7 +11,7 @@
 #include "CL/cl_ext.h"
 #include "cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 namespace ULT {
 

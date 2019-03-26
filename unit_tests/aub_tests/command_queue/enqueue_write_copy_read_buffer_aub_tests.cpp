@@ -10,7 +10,7 @@
 #include "runtime/memory_manager/allocations_list.h"
 #include "test.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 template <typename FamilyType>
 void AubWriteCopyReadBuffer::runTest() {

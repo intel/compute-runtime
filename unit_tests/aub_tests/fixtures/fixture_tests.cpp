@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct SimpleTest : public CommandDeviceFixture,
                     public AUBCommandStreamFixture,

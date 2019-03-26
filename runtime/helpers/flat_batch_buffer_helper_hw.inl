@@ -11,7 +11,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer,
@@ -190,4 +190,4 @@ void FlatBatchBufferHelperHw<GfxFamily>::removePipeControlData(size_t pipeContro
     }
 }
 
-}; // namespace OCLRT
+}; // namespace NEO

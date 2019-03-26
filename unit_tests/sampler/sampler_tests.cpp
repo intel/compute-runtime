@@ -15,7 +15,7 @@
 
 #include <tuple>
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct CreateSampler : public ::testing::TestWithParam<
                            std::tuple<uint32_t /*cl_bool*/, uint32_t /*cl_addressing_mode*/, uint32_t /*cl_filter_mode*/>> {

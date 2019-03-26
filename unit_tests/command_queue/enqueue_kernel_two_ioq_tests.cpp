@@ -11,7 +11,7 @@
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFactory>,
                                     public HardwareParse {

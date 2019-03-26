@@ -9,8 +9,8 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/hw_info.h"
 
-namespace OCLRT {
+namespace NEO {
 class ExecutionEnvironment;
 extern CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEnvironment);
 extern bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
-} // namespace OCLRT
+} // namespace NEO

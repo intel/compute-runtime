@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/memory_manager/deferrable_deletion.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class GraphicsAllocation;
 class MemoryManager;
@@ -22,4 +22,4 @@ class DeferrableAllocationDeletion : public DeferrableDeletion {
     MemoryManager &memoryManager;
     GraphicsAllocation &graphicsAllocation;
 };
-} // namespace OCLRT
+} // namespace NEO

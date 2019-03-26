@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #define BIT(x) (1ull << (x))
 #endif
 
-namespace OCLRT {
+namespace NEO {
 struct CpuInfo {
     static const uint64_t featureNone = 0x000000000ULL;
     static const uint64_t featureGenericIA32 = 0x000000001ULL;
@@ -192,4 +192,4 @@ struct CpuInfo {
     static const CpuInfo instance;
 };
 
-} // namespace OCLRT
+} // namespace NEO

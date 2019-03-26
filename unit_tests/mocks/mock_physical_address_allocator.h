@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/memory_manager/physical_address_allocator.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class MockPhysicalAddressAllocator : public PhysicalAddressAllocator {
   public:

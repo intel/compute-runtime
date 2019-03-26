@@ -22,7 +22,7 @@
 
 #include <algorithm>
 
-namespace OCLRT {
+namespace NEO {
 
 MemObj::MemObj(Context *context,
                cl_mem_object_type memObjectType,
@@ -326,4 +326,4 @@ bool MemObj::mappingOnCpuAllowed() const {
            !(graphicsAllocation->getDefaultGmm() && graphicsAllocation->getDefaultGmm()->isRenderCompressed) &&
            MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool());
 }
-} // namespace OCLRT
+} // namespace NEO

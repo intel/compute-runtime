@@ -38,7 +38,7 @@ CL_GL_BUFFER_INFO bufferInfoInput = {0};
 CL_GL_BUFFER_INFO bufferInfoOutput = {0};
 CL_GL_RESOURCE_INFO textureInfoInput = {0};
 CL_GL_RESOURCE_INFO textureInfoOutput = {0};
-OCLRT::GLMockReturnedValues glMockReturnedValues = {0};
+NEO::GLMockReturnedValues glMockReturnedValues = {0};
 GLboolean GLSetSharedOCLContextStateReturnedValue = 1u;
 
 const unsigned char *WINAPI glGetString(unsigned int name) {
@@ -50,8 +50,8 @@ const unsigned char *WINAPI glGetString(unsigned int name) {
 };
 GLboolean WINAPI wglSetSharedOCLContextStateINTELMock(HDC HDCHandle, HGLRC ContextHandle, unsigned char State,
                                                       void *pContextInfo) {
-    ((OCLRT::ContextInfo *)pContextInfo)->ContextHandle = 1;
-    ((OCLRT::ContextInfo *)pContextInfo)->DeviceHandle = 2;
+    ((NEO::ContextInfo *)pContextInfo)->ContextHandle = 1;
+    ((NEO::ContextInfo *)pContextInfo)->DeviceHandle = 2;
     return GLSetSharedOCLContextStateReturnedValue;
 };
 GLboolean WINAPI mockGLAcquireSharedBuffer(GLDisplay, GLContext, GLContext, GLvoid *pResourceInfo) {
@@ -178,7 +178,7 @@ BOOL WINAPI wglDeleteContext(HGLRC Arg1) {
     GLDeleteContextCalled++;
     return (GLboolean)1;
 };
-void WINAPI glGetIntegerv(GLenum pname, GLint *params) { return OCLRT::MockGLSharingFunctions::glGetIntegervTest(pname, params); };
+void WINAPI glGetIntegerv(GLenum pname, GLint *params) { return NEO::MockGLSharingFunctions::glGetIntegervTest(pname, params); };
 BOOL WINAPI wglShareLists(HGLRC arg1, HGLRC arg2) {
     WGLShareListsCalled++;
     return 1;
@@ -331,8 +331,8 @@ void memParam() {
 };
 void loadBuffer(CL_GL_BUFFER_INFO buff) { bufferInfoOutput = buff; };
 void loadTexture(CL_GL_RESOURCE_INFO texture) { textureInfoOutput = texture; };
-OCLRT::GLMockReturnedValues getGlMockReturnedValues() { return glMockReturnedValues; };
-void setGlMockReturnedValues(OCLRT::GLMockReturnedValues value) { glMockReturnedValues = value; };
+NEO::GLMockReturnedValues getGlMockReturnedValues() { return glMockReturnedValues; };
+void setGlMockReturnedValues(NEO::GLMockReturnedValues value) { glMockReturnedValues = value; };
 void setGetSyncivReturnValue(int val) { glMockReturnedValues.syncivRetVal = val; }
 void glSetString(const char *name, unsigned int var) {
     if (var == GL_VENDOR) {

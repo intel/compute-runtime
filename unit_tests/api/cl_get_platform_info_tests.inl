@@ -14,7 +14,7 @@
 #include "CL/cl_ext.h"
 #include "cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct clGetPlatformInfoTests : public api_tests {
     void SetUp() override {

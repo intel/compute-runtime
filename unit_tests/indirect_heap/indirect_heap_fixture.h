@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "runtime/indirect_heap/indirect_heap.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class CommandQueue;
 
@@ -27,4 +27,4 @@ struct IndirectHeapFixture {
     IndirectHeap *pIOH;
     IndirectHeap *pSSH;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -9,7 +9,7 @@
 
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 bool containsHint(const char *providedHint, char *userData) {
     for (auto i = 0; i < maxHintCounter; i++) {

@@ -22,7 +22,7 @@
 
 #include <type_traits>
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace ::testing;
 
 class WddmMemoryManagerFixture : public GdiDllFixture {

@@ -19,7 +19,7 @@
 
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 struct CompletionStamp;
 class Buffer;
 class GraphicsAllocation;
@@ -516,4 +516,4 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool svmAllocationsRequireCacheFlush = false;
     std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
 };
-} // namespace OCLRT
+} // namespace NEO

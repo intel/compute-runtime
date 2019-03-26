@@ -12,7 +12,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/libult/mock_gfx_family.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <>
 int HwInfoConfigHw<IGFX_UNKNOWN>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
@@ -65,4 +65,4 @@ TEST_F(HwInfoConfigTestWindows, givenInstrumentationForHardwareIsEnabledOrDisabl
     EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled == haveInstrumentation);
 }
 
-} // namespace OCLRT
+} // namespace NEO

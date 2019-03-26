@@ -20,17 +20,17 @@ namespace Os {
 extern const char *fileSeparator;
 }
 
-extern std::string getAubFileName(const OCLRT::Device *pDevice, const std::string baseName);
+extern std::string getAubFileName(const NEO::Device *pDevice, const std::string baseName);
 
 template <typename FamilyType>
-void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
-    typedef typename OCLRT::AUBFamilyMapper<FamilyType>::AUB AUB;
-    const auto &csTraits = OCLRT::CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(engineType);
+void setupAUB(const NEO::Device *pDevice, NEO::EngineType engineType) {
+    typedef typename NEO::AUBFamilyMapper<FamilyType>::AUB AUB;
+    const auto &csTraits = NEO::CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(engineType);
     auto mmioBase = csTraits.mmioBase;
     uint64_t physAddress = 0x10000;
 
-    OCLRT::AUBCommandStreamReceiver::AubFileStream aubFile;
-    std::string filePath(OCLRT::folderAUB);
+    NEO::AUBCommandStreamReceiver::AubFileStream aubFile;
+    std::string filePath(NEO::folderAUB);
     filePath.append(Os::fileSeparator);
     std::string baseName("simple");
     baseName.append(csTraits.name);

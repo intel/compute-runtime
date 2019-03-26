@@ -20,7 +20,7 @@
 
 #include <type_traits>
 
-namespace OCLRT {
+namespace NEO {
 
 extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 
@@ -42,4 +42,4 @@ struct EnableGen8 {
 };
 
 static EnableGen8 enable;
-} // namespace OCLRT
+} // namespace NEO

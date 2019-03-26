@@ -13,7 +13,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 class GraphicsAllocation;
 
 class LinearStream {
@@ -86,4 +86,4 @@ inline GraphicsAllocation *LinearStream::getGraphicsAllocation() const {
 inline void LinearStream::replaceGraphicsAllocation(GraphicsAllocation *gfxAllocation) {
     graphicsAllocation = gfxAllocation;
 }
-} // namespace OCLRT
+} // namespace NEO

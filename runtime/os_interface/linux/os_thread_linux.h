@@ -9,7 +9,7 @@
 
 #include <pthread.h>
 
-namespace OCLRT {
+namespace NEO {
 class ThreadLinux : public Thread {
   public:
     ThreadLinux(pthread_t threadId);
@@ -18,4 +18,4 @@ class ThreadLinux : public Thread {
   protected:
     pthread_t threadId;
 };
-} // namespace OCLRT
+} // namespace NEO

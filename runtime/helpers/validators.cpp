@@ -18,7 +18,7 @@
 #include "runtime/program/program.h"
 #include "runtime/sampler/sampler.h"
 
-namespace OCLRT {
+namespace NEO {
 
 cl_int validateObject(void *ptr) {
     return ptr != nullptr
@@ -155,4 +155,4 @@ bool IsPackedYuvImage(const cl_image_format *imageFormat) {
 bool IsNV12Image(const cl_image_format *imageFormat) {
     return imageFormat->image_channel_order == CL_NV12_INTEL;
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "unit_tests/os_interface/mock_performance_counters.h"
 #include "unit_tests/os_interface/windows/mock_os_time_win.h"
 
-namespace OCLRT {
+namespace NEO {
 
 bool setAvailable(bool value);
 void verifyEnable(InstrEscCbData cbData);
@@ -34,4 +34,4 @@ class MockPerformanceCountersWin : public PerformanceCountersWin,
         return PerformanceCountersWin::initialize(hwInfo);
     }
 };
-} // namespace OCLRT
+} // namespace NEO

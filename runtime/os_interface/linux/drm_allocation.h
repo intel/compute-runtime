@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 class BufferObject;
 
 struct OsHandle {
@@ -39,4 +39,4 @@ class DrmAllocation : public GraphicsAllocation {
   protected:
     BufferObject *bo;
 };
-} // namespace OCLRT
+} // namespace NEO

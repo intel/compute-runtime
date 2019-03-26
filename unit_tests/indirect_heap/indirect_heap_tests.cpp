@@ -9,7 +9,7 @@
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct IndirectHeapTest : public ::testing::Test {
     uint8_t buffer[256];

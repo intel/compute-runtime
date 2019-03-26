@@ -18,7 +18,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class SharingFactoryStateRestore : public SharingFactory {
   public:

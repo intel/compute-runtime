@@ -11,7 +11,7 @@
 
 #include "igfxfmid.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct HardwareInfo;
 class OSInterface;
@@ -55,4 +55,4 @@ struct EnableProductHwInfoConfig {
     }
 };
 
-} // namespace OCLRT
+} // namespace NEO

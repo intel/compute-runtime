@@ -23,9 +23,9 @@ const char *gmmEntryName = "openMockGmm";
 const char *testDllName = "test_dynamic_lib.dll";
 } // namespace Os
 
-OCLRT::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
-    OCLRT::OsLibrary *mockGdiDll;
-    mockGdiDll = OCLRT::OsLibrary::load("gdi32_mock.dll");
+NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
+    NEO::OsLibrary *mockGdiDll;
+    mockGdiDll = NEO::OsLibrary::load("gdi32_mock.dll");
 
     typedef void(__stdcall * pfSetAdapterInfo)(const void *, const void *, uint64_t);
     pfSetAdapterInfo setAdpaterInfo = reinterpret_cast<pfSetAdapterInfo>(mockGdiDll->getProcAddress("MockSetAdapterInfo"));

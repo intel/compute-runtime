@@ -7,7 +7,7 @@
 
 #include "public/cl_ext_private.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct MemoryPropertiesBase {
     MemoryPropertiesBase(cl_mem_flags flags) : flags(flags) {}
@@ -15,4 +15,4 @@ struct MemoryPropertiesBase {
     cl_mem_flags_intel flags_intel = 0;
 };
 
-} // namespace OCLRT
+} // namespace NEO

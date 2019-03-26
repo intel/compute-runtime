@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(TbxStreamTests, givenTbxStreamWhenWriteMemoryIsCalledThenTypeIsZero) {
     std::unique_ptr<TbxCommandStreamReceiver::TbxStream> mockTbxStream(new MockTbxStream());

@@ -25,7 +25,7 @@
 #include "gmock/gmock.h"
 #include "hw_cmds.h"
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace ::testing;
 
 class ImageSetArgTest : public DeviceFixture,

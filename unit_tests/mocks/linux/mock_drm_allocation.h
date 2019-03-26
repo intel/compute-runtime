@@ -9,7 +9,7 @@
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class MockBufferObject : public BufferObject {
   public:
@@ -28,4 +28,4 @@ class MockDrmAllocation : public DrmAllocation {
     }
 };
 
-} // namespace OCLRT
+} // namespace NEO

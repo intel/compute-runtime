@@ -9,7 +9,7 @@
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class Wddm;
 class OsContextWin : public OsContext {
@@ -35,4 +35,4 @@ class OsContextWin : public OsContext {
     Wddm &wddm;
     WddmResidencyController residencyController;
 };
-} // namespace OCLRT
+} // namespace NEO

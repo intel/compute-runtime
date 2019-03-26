@@ -17,7 +17,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class GetMemObjectInfo : public ::testing::Test, public PlatformFixture, public DeviceFixture {
     using DeviceFixture::SetUp;

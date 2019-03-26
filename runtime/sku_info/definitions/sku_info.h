@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #pragma once
 #include "runtime/sku_info/sku_info_base.h"
 
-namespace OCLRT {
+namespace NEO {
 struct FeatureTable : FeatureTableBase {};
 
 struct WorkaroundTable : WorkaroundTableBase {};
-} // namespace OCLRT
+} // namespace NEO

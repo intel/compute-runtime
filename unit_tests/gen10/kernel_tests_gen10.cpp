@@ -10,7 +10,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 using Gen10KernelTest = Test<DeviceFixture>;
 GEN10TEST_F(Gen10KernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturnsTrue) {

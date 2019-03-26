@@ -12,14 +12,14 @@
 #include "unit_tests/helpers/memory_management.h"
 
 using ::testing::TestInfo;
-using namespace OCLRT;
+using namespace NEO;
 
 extern unsigned int numBaseObjects;
 
 void MemoryLeakListener::OnTestStart(const TestInfo &testInfo) {
     numInitialBaseObjects = numBaseObjects;
-    MemoryManagement::logTraces = OCLRT::captureCallStacks;
-    if (OCLRT::captureCallStacks) {
+    MemoryManagement::logTraces = NEO::captureCallStacks;
+    if (NEO::captureCallStacks) {
         MemoryManagement::detailedAllocationLoggingActive = true;
     }
     MemoryManagement::fastLeakDetectionEnabled = true;
@@ -34,7 +34,7 @@ void MemoryLeakListener::OnTestEnd(const TestInfo &testInfo) {
             EXPECT_GT(MemoryManagement::fastEventsAllocatedCount, MemoryManagement::fastEventsDeallocatedCount);
         }
         MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::STANDARD;
-    } else if (OCLRT::captureCallStacks && (MemoryManagement::fastEventsAllocatedCount != MemoryManagement::fastEventsDeallocatedCount)) {
+    } else if (NEO::captureCallStacks && (MemoryManagement::fastEventsAllocatedCount != MemoryManagement::fastEventsDeallocatedCount)) {
         auto leak = MemoryManagementFixture::enumerateLeak(MemoryManagement::indexAllocation.load(), MemoryManagement::indexDeallocation.load(), true, true);
         if (leak != MemoryManagement::failingAllocation) {
             printf("\n %s ", printCallStack(MemoryManagement::eventsAllocated[leak]).c_str());

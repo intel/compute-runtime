@@ -12,7 +12,7 @@
 #include <mutex>
 #include <thread>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(SpinLockTest, givenTwoThreadsThenVerifyThatTheySynchronizeWithSpinLock) {
     std::atomic<bool> threadStarted(false);

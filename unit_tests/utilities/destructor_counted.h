@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "test.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename BaseType, uint32_t ordinal>
 struct DestructorCounted : public BaseType {
@@ -24,4 +24,4 @@ struct DestructorCounted : public BaseType {
   private:
     uint32_t &destructorId;
 };
-} // namespace OCLRT
+} // namespace NEO

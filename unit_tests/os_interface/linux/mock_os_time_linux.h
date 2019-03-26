@@ -9,7 +9,7 @@
 #include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/linux/os_time_linux.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockOSTimeLinux : public OSTimeLinux {
   public:
     MockOSTimeLinux(OSInterface *osInterface) : OSTimeLinux(osInterface){};
@@ -28,4 +28,4 @@ class MockOSTimeLinux : public OSTimeLinux {
         return std::unique_ptr<MockOSTimeLinux>(new MockOSTimeLinux(osInterface));
     }
 };
-} // namespace OCLRT
+} // namespace NEO

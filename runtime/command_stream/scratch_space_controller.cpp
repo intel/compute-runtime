@@ -13,7 +13,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 ScratchSpaceController::ScratchSpaceController(const HardwareInfo &info, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)
     : hwInfo(info), executionEnvironment(environment), csrAllocationStorage(allocationStorage) {
     auto &hwHelper = HwHelper::get(info.pPlatform->eRenderCoreFamily);
@@ -30,4 +30,4 @@ MemoryManager *ScratchSpaceController::getMemoryManager() const {
     UNRECOVERABLE_IF(executionEnvironment.memoryManager.get() == nullptr);
     return executionEnvironment.memoryManager.get();
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-namespace OCLRT {
+namespace NEO {
 
 BufferObject::BufferObject(Drm *drm, int handle, bool isAllocated) : drm(drm), refCount(1), handle(handle), isReused(false), isAllocated(isAllocated) {
     this->tiling_mode = I915_TILING_NONE;
@@ -170,4 +170,4 @@ int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_
     return err;
 }
 
-} // namespace OCLRT
+} // namespace NEO

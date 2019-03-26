@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
 #include "test.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(WddmMapperTests, givenRcsEngineTypeWhenAskedForNodeOrdinalThenReturn3d) {
     GPUNODE_ORDINAL gpuNode = WddmEngineMapper::engineNodeMap(EngineType::ENGINE_RCS);

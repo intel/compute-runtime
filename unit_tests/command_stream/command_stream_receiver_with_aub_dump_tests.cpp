@@ -21,7 +21,7 @@
 #include "unit_tests/mocks/mock_aub_manager.h"
 #include "unit_tests/mocks/mock_os_context.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
     MyMockCsr(ExecutionEnvironment &executionEnvironment)

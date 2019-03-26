@@ -11,7 +11,7 @@
 #include <map>
 #include <mutex>
 
-namespace OCLRT {
+namespace NEO {
 
 using HostPtrFragmentsContainer = std::map<const void *, FragmentStorage>;
 class MemoryManager;
@@ -34,4 +34,4 @@ class HostPtrManager {
     HostPtrFragmentsContainer partialAllocations;
     std::recursive_mutex allocationsMutex;
 };
-} // namespace OCLRT
+} // namespace NEO

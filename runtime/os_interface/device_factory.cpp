@@ -9,7 +9,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 bool DeviceFactory::getDevicesForProductFamilyOverride(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
     auto totalDeviceCount = 1u;
@@ -42,4 +42,4 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(HardwareInfo **pHWInfos, 
     return true;
 }
 
-} // namespace OCLRT
+} // namespace NEO

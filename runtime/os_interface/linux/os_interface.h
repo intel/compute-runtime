@@ -10,7 +10,7 @@
 
 #include "drm_neo.h"
 
-namespace OCLRT {
+namespace NEO {
 class Drm;
 class OSInterface::OSInterfaceImpl {
   public:
@@ -27,4 +27,4 @@ class OSInterface::OSInterfaceImpl {
   protected:
     Drm *drm;
 };
-} // namespace OCLRT
+} // namespace NEO

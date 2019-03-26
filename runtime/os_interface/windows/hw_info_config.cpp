@@ -16,7 +16,7 @@
 
 #include "instrumentation.h"
 
-namespace OCLRT {
+namespace NEO {
 
 HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT] = {};
 
@@ -58,4 +58,4 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     return ret;
 }
 
-} // namespace OCLRT
+} // namespace NEO

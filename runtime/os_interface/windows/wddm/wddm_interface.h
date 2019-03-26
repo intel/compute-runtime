@@ -14,7 +14,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 class Gdi;
 class Wddm;
 class OsContextWin;
@@ -50,4 +50,4 @@ class WddmInterface23 : public WddmInterface {
     const bool hwQueuesSupported() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) override;
 };
-} // namespace OCLRT
+} // namespace NEO

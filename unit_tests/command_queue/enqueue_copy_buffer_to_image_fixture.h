@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct EnqueueCopyBufferToImageTest : public CommandEnqueueFixture,
                                       public ::testing::Test {
@@ -81,4 +81,4 @@ struct EnqueueCopyBufferToImageMipMapTest : public CommandEnqueueFixture,
     Buffer *srcBuffer;
 };
 
-} // namespace OCLRT
+} // namespace NEO

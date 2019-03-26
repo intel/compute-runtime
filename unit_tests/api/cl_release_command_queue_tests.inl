@@ -11,7 +11,7 @@
 
 #include "cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 namespace DeviceHostQueue {
 typedef ::testing::Types<CommandQueue, DeviceQueue> QueueTypes;
 

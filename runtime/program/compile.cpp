@@ -16,7 +16,7 @@
 
 #include <cstring>
 
-namespace OCLRT {
+namespace NEO {
 
 cl_int Program::compile(
     cl_uint numDevices,
@@ -173,4 +173,4 @@ cl_int Program::compile(
 
     return retVal;
 }
-} // namespace OCLRT
+} // namespace NEO

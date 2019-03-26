@@ -17,7 +17,7 @@
 #include <cstdio>
 #include <fstream>
 
-using namespace OCLRT;
+using namespace NEO;
 
 #if !defined(I915_PARAM_HAS_PREEMPTION)
 #define I915_PARAM_HAS_PREEMPTION 0x806

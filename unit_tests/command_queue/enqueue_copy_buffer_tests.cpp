@@ -20,7 +20,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 HWTEST_F(EnqueueCopyBufferTest, null_src_mem_object) {
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());

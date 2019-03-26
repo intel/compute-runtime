@@ -12,12 +12,12 @@
 
 #include "reg_configs_common.h"
 
-namespace OCLRT {
+namespace NEO {
 struct HardwareInfo;
 extern const HardwareInfo **platformDevices;
-} // namespace OCLRT
+} // namespace NEO
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef PreambleFixture CnlSlm;
 
@@ -43,7 +43,7 @@ struct CnlPreambleWaCmds : public PreambleFixture {
         memset(reinterpret_cast<void *>(&waTable), 0, sizeof(waTable));
     }
     void SetUp() override {
-        pHwInfo = const_cast<HardwareInfo *>(*OCLRT::platformDevices);
+        pHwInfo = const_cast<HardwareInfo *>(*NEO::platformDevices);
         pOldWaTable = pHwInfo->pWaTable;
         pHwInfo->pWaTable = &waTable;
 

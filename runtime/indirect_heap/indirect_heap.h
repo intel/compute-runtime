@@ -13,7 +13,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_constants.h"
 
-namespace OCLRT {
+namespace NEO {
 class GraphicsAllocation;
 
 constexpr size_t defaultHeapSize = 64 * KB;
@@ -75,4 +75,4 @@ inline uint64_t IndirectHeap::getHeapGpuBase() const {
         return this->graphicsAllocation->getGpuAddress();
     }
 }
-} // namespace OCLRT
+} // namespace NEO

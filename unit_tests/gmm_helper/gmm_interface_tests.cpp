@@ -69,10 +69,10 @@ namespace Os {
 extern const char *gmmDllName;
 extern const char *gmmEntryName;
 } // namespace Os
-namespace OCLRT {
+namespace NEO {
 extern const HardwareInfo **platformDevices;
 }
-using namespace OCLRT;
+using namespace NEO;
 struct GmmInterfaceTest : public ::testing::Test {
 
     void SetUp() override {

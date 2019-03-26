@@ -11,7 +11,7 @@
 
 #include "hello_world_fixture.h"
 
-namespace OCLRT {
+namespace NEO {
 
 // Generates two back-to-back walkers using the same kernel for testing purposes
 template <typename FactoryType>
@@ -65,4 +65,4 @@ struct TwoWalkerTest
     GenCmdList::iterator itorWalker1;
     GenCmdList::iterator itorWalker2;
 };
-} // namespace OCLRT
+} // namespace NEO

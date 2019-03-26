@@ -10,7 +10,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 class MockOfflineCompiler : public OfflineCompiler {
   public:
@@ -95,4 +95,4 @@ class MockOfflineCompiler : public OfflineCompiler {
         return genBinarySize;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

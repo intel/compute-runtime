@@ -8,7 +8,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef Test<DeviceFixture> Gen9DeviceCaps;
 
@@ -47,7 +47,7 @@ GLKTEST_F(GlkUsDeviceIdTest, isSimulationCap) {
         IGLK_GT2_ULT_12EU_DEVICE_F0_ID,
         0, // default, non-simulation
     };
-    OCLRT::MockDevice *mockDevice = nullptr;
+    NEO::MockDevice *mockDevice = nullptr;
     for (auto id : glkSimulationIds) {
         mockDevice = createWithUsDeviceId(id);
         ASSERT_NE(mockDevice, nullptr);

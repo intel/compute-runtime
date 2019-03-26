@@ -11,7 +11,7 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/string.h"
 
-namespace OCLRT {
+namespace NEO {
 
 cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
                                  size_t paramValueSize,
@@ -64,4 +64,4 @@ cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
 
     return result;
 }
-} // namespace OCLRT
+} // namespace NEO

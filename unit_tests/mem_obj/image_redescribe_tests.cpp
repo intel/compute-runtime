@@ -17,7 +17,7 @@
 
 extern GFXCORE_FAMILY renderCoreFamily;
 
-using namespace OCLRT;
+using namespace NEO;
 
 class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uint32_t>> {
   protected:

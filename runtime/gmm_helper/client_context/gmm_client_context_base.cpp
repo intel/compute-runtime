@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "runtime/gmm_helper/client_context/gmm_client_context_base.h"
 
-namespace OCLRT {
+namespace NEO {
 GmmClientContextBase::GmmClientContextBase(GMM_CLIENT clientType, GmmExportEntries &gmmEntries) : gmmEntries(gmmEntries) {
     clientContext = gmmEntries.pfnCreateClientContext(clientType);
 }
@@ -34,4 +34,4 @@ void GmmClientContextBase::destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) {
 GMM_CLIENT_CONTEXT *GmmClientContextBase::getHandle() const {
     return clientContext;
 }
-} // namespace OCLRT
+} // namespace NEO

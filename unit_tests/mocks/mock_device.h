@@ -11,7 +11,7 @@
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 
-namespace OCLRT {
+namespace NEO {
 class OSTime;
 class FailMemoryManager;
 
@@ -139,4 +139,4 @@ class MockAlignedMallocManagerDevice : public MockDevice {
   public:
     MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -11,7 +11,7 @@
 
 #include <sstream>
 
-namespace OCLRT {
+namespace NEO {
 std::string DrmAllocation::getAllocationInfoString() const {
     std::stringstream ss;
     if (bo != nullptr) {
@@ -19,4 +19,4 @@ std::string DrmAllocation::getAllocationInfoString() const {
     }
     return ss.str();
 }
-} // namespace OCLRT
+} // namespace NEO

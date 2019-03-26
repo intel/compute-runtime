@@ -15,7 +15,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/utilities/tag_allocator.h"
 
-namespace OCLRT {
+namespace NEO {
 template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::allocateSlbBuffer() {
     auto slbSize = getMinimumSlbSize() + getWaCommandsSize();
@@ -453,4 +453,4 @@ size_t DeviceQueueHw<GfxFamily>::getProfilingEndCmdsSize() {
 template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::addDcFlushToPipeControlWa(PIPE_CONTROL *pc) {}
 
-} // namespace OCLRT
+} // namespace NEO

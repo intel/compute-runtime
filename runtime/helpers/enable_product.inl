@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "hw_info.h"
 
-namespace OCLRT {
+namespace NEO {
 template <PRODUCT_FAMILY gfxProduct>
 struct EnableGfxProductHw {
     typedef typename HwMapper<gfxProduct>::GfxProduct GfxProduct;
@@ -21,4 +21,4 @@ struct EnableGfxProductHw {
         hardwareInfoSetup[gfxProduct] = GfxProduct::setupHardwareInfo;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

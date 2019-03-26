@@ -17,7 +17,7 @@
 
 #include <cstddef>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy) {
@@ -121,4 +121,4 @@ uint32_t PreambleHelper<GfxFamily>::getMaxThreadsForVfe(const HardwareInfo &hwIn
     return hwInfo.pSysInfo->EUCount * threadsPerEU;
 }
 
-} // namespace OCLRT
+} // namespace NEO

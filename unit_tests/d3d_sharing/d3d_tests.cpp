@@ -28,7 +28,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 template <>
 uint32_t MockD3DSharingFunctions<D3DTypesHelper::D3D10>::getDxgiDescCalled = 0;
 template <>
@@ -1708,4 +1708,4 @@ TEST_F(clIntelSharingFormatQueryDX11, givenValidParametersWhenRequestedDX11Textu
     ASSERT_EQ(memcmp(&retrievedFormats[0], &formatsRetrievedForTheSecondTime[0], numImageFormats * sizeof(DXGI_FORMAT)), 0);
 }
 
-} // namespace OCLRT
+} // namespace NEO

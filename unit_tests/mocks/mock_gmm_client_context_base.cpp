@@ -7,7 +7,7 @@
 
 #include "unit_tests/mocks/mock_gmm_client_context.h"
 
-namespace OCLRT {
+namespace NEO {
 MockGmmClientContextBase::MockGmmClientContextBase(GMM_CLIENT clientType, GmmExportEntries &gmmExportEntries) : GmmClientContext(clientType, gmmExportEntries) {
 }
 
@@ -42,4 +42,4 @@ GMM_RESOURCE_INFO *MockGmmClientContextBase::copyResInfoObject(GMM_RESOURCE_INFO
 void MockGmmClientContextBase::destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) {
     delete[] reinterpret_cast<char *>(pResInfo);
 }
-} // namespace OCLRT
+} // namespace NEO

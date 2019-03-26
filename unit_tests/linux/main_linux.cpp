@@ -10,7 +10,7 @@
 #include "test.h"
 #include "unit_tests/custom_event_listener.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 int main(int argc, char **argv) {
     bool useDefaultListener = false;

@@ -8,7 +8,7 @@
 #include "runtime/utilities/vec.h"
 #include "test.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(VecTest, operators) {
     Vec3<size_t> v0(nullptr);

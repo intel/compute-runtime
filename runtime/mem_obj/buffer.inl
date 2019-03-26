@@ -16,7 +16,7 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 union SURFACE_STATE_BUFFER_LENGTH {
     uint32_t Length;
@@ -94,4 +94,4 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
 template <typename GfxFamily>
 void BufferHw<GfxFamily>::appendBufferState(void *memory, Context *context, GraphicsAllocation *gfxAllocation) {
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -11,7 +11,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 void SVMAllocsManager::MapBasedAllocationTracker::insert(GraphicsAllocation &ga) {
     allocs.insert(std::make_pair(ga.getUnderlyingBuffer(), &ga));
@@ -83,4 +83,4 @@ void SVMAllocsManager::freeSVMAlloc(void *ptr) {
 bool SVMAllocsManager::memFlagIsReadOnly(cl_svm_mem_flags flags) {
     return (flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)) != 0;
 }
-} // namespace OCLRT
+} // namespace NEO

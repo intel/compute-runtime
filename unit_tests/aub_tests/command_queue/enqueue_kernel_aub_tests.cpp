@@ -18,7 +18,7 @@
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 extern const HardwareInfo **platformDevices;
 
@@ -354,7 +354,7 @@ INSTANTIATE_TEST_CASE_P(
 
 struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUniformKernelFixture> {
     void SetUp() override {
-        deviceClVersionSupport = OCLRT::platformDevices[0]->capabilityTable.clVersionSupport;
+        deviceClVersionSupport = NEO::platformDevices[0]->capabilityTable.clVersionSupport;
         if (deviceClVersionSupport < 20) {
             return;
         }

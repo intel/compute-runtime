@@ -44,7 +44,7 @@
 #include <string>
 #include <vector>
 
-using namespace OCLRT;
+using namespace NEO;
 
 void ProgramTests::SetUp() {
     DeviceFixture::SetUp();
@@ -2836,8 +2836,8 @@ TEST_F(ProgramTests, givenCompilerInterfaceWhenCompileIsCalledThenProperIntermed
     compilerInterface->SetFclMain(compilerMain);
     compilerMain->Retain();
     compilerInterface->SetIgcMain(compilerMain);
-    compilerMain->setDefaultCreatorFunc<OCLRT::MockIgcOclDeviceCtx>(OCLRT::MockIgcOclDeviceCtx::Create);
-    compilerMain->setDefaultCreatorFunc<OCLRT::MockFclOclDeviceCtx>(OCLRT::MockFclOclDeviceCtx::Create);
+    compilerMain->setDefaultCreatorFunc<NEO::MockIgcOclDeviceCtx>(NEO::MockIgcOclDeviceCtx::Create);
+    compilerMain->setDefaultCreatorFunc<NEO::MockFclOclDeviceCtx>(NEO::MockFclOclDeviceCtx::Create);
     pDevice->getExecutionEnvironment()->compilerInterface.reset(compilerInterface);
 
     compilerInterface->useLlvmText = true;
@@ -2869,8 +2869,8 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     compilerInterface->SetFclMain(compilerMain);
     compilerMain->Retain();
     compilerInterface->SetIgcMain(compilerMain);
-    compilerMain->setDefaultCreatorFunc<OCLRT::MockIgcOclDeviceCtx>(OCLRT::MockIgcOclDeviceCtx::Create);
-    compilerMain->setDefaultCreatorFunc<OCLRT::MockFclOclDeviceCtx>(OCLRT::MockFclOclDeviceCtx::Create);
+    compilerMain->setDefaultCreatorFunc<NEO::MockIgcOclDeviceCtx>(NEO::MockIgcOclDeviceCtx::Create);
+    compilerMain->setDefaultCreatorFunc<NEO::MockFclOclDeviceCtx>(NEO::MockFclOclDeviceCtx::Create);
     pDevice->getExecutionEnvironment()->compilerInterface.reset(compilerInterface);
 
     std::string receivedInput;

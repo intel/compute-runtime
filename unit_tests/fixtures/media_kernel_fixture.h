@@ -10,7 +10,7 @@
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename FactoryType>
 struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
@@ -89,4 +89,4 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
 
     Kernel *pVmeKernel = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -12,7 +12,7 @@
 #include <mutex>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class Event;
 class Thread;
 
@@ -38,4 +38,4 @@ class AsyncEventsHandler {
     std::condition_variable asyncCond;
     std::atomic<bool> allowAsyncProcess;
 };
-} // namespace OCLRT
+} // namespace NEO

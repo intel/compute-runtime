@@ -11,7 +11,7 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
 
-namespace OCLRT {
+namespace NEO {
 
 namespace SplitDispatch {
 enum class Dim : uint32_t {
@@ -438,4 +438,4 @@ class DispatchInfoBuilder {
         return x % y ? 1 : 0;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -43,12 +43,12 @@ extern char providedDrmVersion[5];
 extern int ioctlSeq[8];
 extern size_t ioctlCnt;
 
-extern std::array<OCLRT::Drm *, 1> drms;
+extern std::array<NEO::Drm *, 1> drms;
 
 inline void resetOSMockGlobalState() {
     fakeFd = 1023;
     haveDri = 0;
-    deviceId = OCLRT::deviceDescriptorTable[0].deviceId;
+    deviceId = NEO::deviceDescriptorTable[0].deviceId;
     haveSoftPin = 1;
     failOnDeviceId = 0;
     failOnRevisionId = 0;

@@ -12,7 +12,7 @@
 
 #include "cl_api_tests.h"
 
-namespace OCLRT {
+namespace NEO {
 
 api_fixture::api_fixture()
     : retVal(CL_SUCCESS),
@@ -44,4 +44,4 @@ void api_fixture::TearDown() {
     DeviceFixture::TearDown();
     PlatformFixture::TearDown();
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -7,7 +7,7 @@
 
 #pragma once
 
-namespace OCLRT {
+namespace NEO {
 
 struct MemoryInfo {
     MemoryInfo() = default;
@@ -16,4 +16,4 @@ struct MemoryInfo {
 
 inline MemoryInfo::~MemoryInfo(){};
 
-} // namespace OCLRT
+} // namespace NEO

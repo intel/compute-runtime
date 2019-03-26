@@ -8,7 +8,7 @@
 #include "unit_tests/aub_tests/fixtures/run_kernel_fixture.h"
 #include "unit_tests/fixtures/two_walker_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 namespace ULT {
 

@@ -10,7 +10,7 @@
 #include "runtime/os_interface/windows/windows_wrapper.h"
 #include "unit_tests/mocks/mock_wddm.h"
 
-namespace OCLRT {
+namespace NEO {
 MockPerformanceCountersWin::MockPerformanceCountersWin(OSTime *osTime)
     : PerformanceCounters(osTime), PerformanceCountersWin(osTime), MockPerformanceCounters(osTime) {
     setAvailableFunc = setAvailable;
@@ -50,4 +50,4 @@ void PerformanceCountersFixture::fillOsInterface() {
 }
 void PerformanceCountersFixture::releaseOsInterface() {
 }
-} // namespace OCLRT
+} // namespace NEO

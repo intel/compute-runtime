@@ -22,7 +22,7 @@
 
 #include <algorithm>
 
-namespace OCLRT {
+namespace NEO {
 extern const char *familyName[];
 
 static std::string vendor = "Intel(R) Corporation";
@@ -338,4 +338,4 @@ void Device::initializeCaps() {
         this->preemptionMode = PreemptionMode::Disabled;
     }
 }
-} // namespace OCLRT
+} // namespace NEO

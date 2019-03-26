@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/kernel/kernel.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class ImageTransformer {
   public:
@@ -22,4 +22,4 @@ class ImageTransformer {
     bool transformed = false;
     std::vector<uint32_t> argIndexes;
 };
-} // namespace OCLRT
+} // namespace NEO

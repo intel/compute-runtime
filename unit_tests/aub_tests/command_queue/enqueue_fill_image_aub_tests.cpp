@@ -16,7 +16,7 @@
 
 #include <algorithm>
 
-using namespace OCLRT;
+using namespace NEO;
 
 // clang-format off
 struct FillImageParams {

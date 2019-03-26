@@ -10,7 +10,7 @@
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_read_buffer_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef EnqueueReadBufferTypeTest ReadWriteBufferCpuCopyTest;
 

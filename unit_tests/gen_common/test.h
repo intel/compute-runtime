@@ -20,22 +20,22 @@ extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
 
 #ifdef TESTS_GEN8
-#define BDW_TYPED_TEST_BODY testBodyHw<typename OCLRT::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily>();
-#define BDW_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename OCLRT::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily>();
+#define BDW_TYPED_TEST_BODY testBodyHw<typename NEO::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily>();
+#define BDW_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename NEO::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily>();
 #else
 #define BDW_TYPED_TEST_BODY
 #define BDW_TYPED_CMDTEST_BODY
 #endif
 #ifdef TESTS_GEN9
-#define SKL_TYPED_TEST_BODY testBodyHw<typename OCLRT::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily>();
-#define SKL_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename OCLRT::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily>();
+#define SKL_TYPED_TEST_BODY testBodyHw<typename NEO::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily>();
+#define SKL_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename NEO::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily>();
 #else
 #define SKL_TYPED_TEST_BODY
 #define SKL_TYPED_CMDTEST_BODY
 #endif
 #ifdef TESTS_GEN10
-#define CNL_TYPED_TEST_BODY testBodyHw<typename OCLRT::GfxFamilyMapper<IGFX_GEN10_CORE>::GfxFamily>();
-#define CNL_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename OCLRT::GfxFamilyMapper<IGFX_GEN10_CORE>::GfxFamily>();
+#define CNL_TYPED_TEST_BODY testBodyHw<typename NEO::GfxFamilyMapper<IGFX_GEN10_CORE>::GfxFamily>();
+#define CNL_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename NEO::GfxFamilyMapper<IGFX_GEN10_CORE>::GfxFamily>();
 #else
 #define CNL_TYPED_TEST_BODY
 #define CNL_TYPED_CMDTEST_BODY
@@ -264,7 +264,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
                                                                                                         \
         void TestBody() override {                                                                      \
             CALL_IF_MATCH(match_core, match_product,                                                    \
-                          testBodyHw<typename OCLRT::GfxFamilyMapper<match_core>::GfxFamily>())         \
+                          testBodyHw<typename NEO::GfxFamilyMapper<match_core>::GfxFamily>())           \
         }                                                                                               \
         void SetUp() override {                                                                         \
             CALL_IF_MATCH(match_core, match_product, parent_class::SetUp())                             \
@@ -402,7 +402,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
                                                                                                                         \
         void TestBody() override {                                                                                      \
             CALL_IF_MATCH(match_core, match_product,                                                                    \
-                          testBodyHw<typename OCLRT::GfxFamilyMapper<match_core>::GfxFamily>())                         \
+                          testBodyHw<typename NEO::GfxFamilyMapper<match_core>::GfxFamily>())                           \
         }                                                                                                               \
         void SetUp() override {                                                                                         \
             CALL_IF_MATCH(match_core, match_product, test_case_name::SetUp())                                           \

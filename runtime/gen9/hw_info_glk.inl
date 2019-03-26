@@ -12,7 +12,7 @@
 #include "hw_cmds.h"
 #include "hw_info_glk.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const char *HwMapper<IGFX_GEMINILAKE>::abbreviation = "glk";
 
@@ -137,4 +137,4 @@ void setupGLKHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTa
 }
 
 void (*GLK::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupGLKHardwareInfoImpl;
-} // namespace OCLRT
+} // namespace NEO

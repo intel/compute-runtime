@@ -11,7 +11,7 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) {
@@ -55,4 +55,4 @@ void *GTPinHwHelperHw<GfxFamily>::getSurfaceState(Kernel *pKernel, size_t bti) {
     return pSurfaceState;
 }
 
-} // namespace OCLRT
+} // namespace NEO

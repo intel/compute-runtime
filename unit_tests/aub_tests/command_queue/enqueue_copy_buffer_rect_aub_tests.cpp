@@ -15,7 +15,7 @@
 
 #include <algorithm>
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct CopyBufferRectHw
     : public CommandEnqueueAUBFixture,

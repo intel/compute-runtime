@@ -10,7 +10,7 @@
 #include "unit_tests/os_interface/linux/drm_mock.h"
 #include "unit_tests/os_interface/linux/mock_os_time_linux.h"
 
-namespace OCLRT {
+namespace NEO {
 MockPerformanceCountersLinux::MockPerformanceCountersLinux(OSTime *osTime)
     : PerformanceCounters(osTime), PerformanceCountersLinux(osTime), MockPerformanceCounters(osTime) {
     dlopenFunc = dlopenMockPassing;
@@ -86,4 +86,4 @@ void PerformanceCountersFixture::fillOsInterface() {
 void PerformanceCountersFixture::releaseOsInterface() {
     delete static_cast<DrmMock *>(osInterfaceBase->get()->getDrm());
 }
-} // namespace OCLRT
+} // namespace NEO

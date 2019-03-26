@@ -30,7 +30,7 @@
 #include <cstring>
 #include <map>
 
-namespace OCLRT {
+namespace NEO {
 
 decltype(&PerformanceCounters::create) Device::createPerformanceCountersFunc = PerformanceCounters::create;
 
@@ -287,4 +287,4 @@ EngineControl &Device::getEngine(EngineType engineType, bool lowPriority) {
     }
     UNRECOVERABLE_IF(true);
 }
-} // namespace OCLRT
+} // namespace NEO

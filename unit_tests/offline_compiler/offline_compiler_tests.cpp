@@ -22,7 +22,7 @@
 
 extern Environment *gEnvironment;
 
-namespace OCLRT {
+namespace NEO {
 
 std::string getCompilerOutputFileName(const std::string &fileName, const std::string &type) {
     std::string fName(fileName);
@@ -152,7 +152,7 @@ TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
                                               "    0x40032302, 0x90800756, 0x05340301, 0x66097860, 0x101010ff, 0x40032302, 0x90800756, 0x05340301, \n"
                                               "    0x66097860, 0xff000000};\n\n"
                                               "#include \"runtime/built_ins/registry/built_ins_registry.h\"\n\n"
-                                              "namespace OCLRT {\n"
+                                              "namespace NEO {\n"
                                               "static RegisterEmbeddedResource registerSchedulerBin(\n"
                                               "    createBuiltinResourceName(\n"
                                               "        EBuiltInOps::Scheduler,\n"
@@ -641,7 +641,7 @@ TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCo
         gEnvironment->devicePrefix.c_str()};
 
     auto retVal = mockOfflineCompiler.initialize(argv.size(), argv.begin());
-    auto mockIgcOclDeviceCtx = new OCLRT::MockIgcOclDeviceCtx();
+    auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
     mockOfflineCompiler.igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxLatest>(mockIgcOclDeviceCtx);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -649,7 +649,7 @@ TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCo
     retVal = mockOfflineCompiler.buildSourceCode();
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_EQ(1U, mockIgcOclDeviceCtx->requestedTranslationCtxs.size());
-    OCLRT::MockIgcOclDeviceCtx::TranslationOpT expectedTranslation = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
+    NEO::MockIgcOclDeviceCtx::TranslationOpT expectedTranslation = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
     ASSERT_EQ(expectedTranslation, mockIgcOclDeviceCtx->requestedTranslationCtxs[0]);
 
     mockOfflineCompiler.inputFileSpirV = false;
@@ -724,7 +724,7 @@ TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataF
     igcDebugVars.debugDataToReturn = debugData;
     igcDebugVars.debugDataToReturnSize = sizeof(debugData);
 
-    OCLRT::setIgcDebugVars(igcDebugVars);
+    NEO::setIgcDebugVars(igcDebugVars);
 
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
@@ -751,7 +751,7 @@ TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataF
     compilerOutputRemove("myOutputFileName", "gen");
     compilerOutputRemove("myOutputFileName", "dbg");
 
-    OCLRT::setIgcDebugVars(gEnvironment->igcDebugVars);
+    NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
 }
 
 TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreAppendedToInternalOptionsString) {
@@ -872,4 +872,4 @@ TEST(OfflineCompilerTest, givenEnabledOptsSuffixWhenGenerateOptsSuffixIsCalledTh
     EXPECT_STREQ("A_B_C", suffix.c_str());
 }
 
-} // namespace OCLRT
+} // namespace NEO

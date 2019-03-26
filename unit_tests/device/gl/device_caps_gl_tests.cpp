@@ -20,7 +20,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(Device_GetCaps, givenForceClGlSharingWhenCapsAreCreatedThenDeviceReporstClGlSharingExtension) {
     DebugManagerStateRestore dbgRestorer;

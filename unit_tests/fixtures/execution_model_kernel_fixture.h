@@ -13,7 +13,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/program/program_from_binary.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
                                     public PlatformFixture {

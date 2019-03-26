@@ -28,11 +28,11 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 extern const char *familyName[];
 }
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef Test<DeviceFixture> DeviceGetCapsF;
 

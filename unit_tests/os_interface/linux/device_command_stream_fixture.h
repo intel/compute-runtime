@@ -23,7 +23,7 @@
 
 #define RENDER_DEVICE_NAME_MATCHER ::testing::StrEq("/dev/dri/renderD128")
 
-using OCLRT::Drm;
+using NEO::Drm;
 
 static const int mockFd = 33;
 
@@ -273,7 +273,7 @@ class DrmMockCustom : public Drm {
 
     DrmMockCustom() : Drm(mockFd) {
         reset();
-        ioctl_expected.contextCreate = static_cast<int>(OCLRT::HwHelper::get(OCLRT::platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size());
+        ioctl_expected.contextCreate = static_cast<int>(NEO::HwHelper::get(NEO::platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size());
         ioctl_expected.contextDestroy = ioctl_expected.contextCreate.load();
     }
     int getErrno() override {

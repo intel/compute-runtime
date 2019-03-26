@@ -13,7 +13,7 @@
 #include "runtime/command_queue/hardware_interface_base.inl"
 #include "runtime/gen10/hw_info.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template class HardwareInterface<CNLFamily>;
 
@@ -21,4 +21,4 @@ template class GpgpuWalkerHelper<CNLFamily>;
 
 template struct EnqueueOperation<CNLFamily>;
 
-} // namespace OCLRT
+} // namespace NEO

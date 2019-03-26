@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 ////////////////////////////////////////////////////////////////////////////////
 // ProgramFromBinaryTest Test Fixture
@@ -97,4 +97,4 @@ class ProgramSimpleFixture : public DeviceFixture,
   protected:
     cl_int retVal;
 };
-} // namespace OCLRT
+} // namespace NEO

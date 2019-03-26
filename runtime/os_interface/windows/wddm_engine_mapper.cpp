@@ -9,7 +9,7 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 GPUNODE_ORDINAL WddmEngineMapper::engineNodeMap(EngineType engineType) {
     if (EngineType::ENGINE_RCS == engineType) {
@@ -18,4 +18,4 @@ GPUNODE_ORDINAL WddmEngineMapper::engineNodeMap(EngineType engineType) {
     UNRECOVERABLE_IF(true);
 }
 
-} // namespace OCLRT
+} // namespace NEO

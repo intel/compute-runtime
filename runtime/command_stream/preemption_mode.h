@@ -8,7 +8,7 @@
 #pragma once
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 enum PreemptionMode : uint32_t {
     // Keep in sync with ForcePreemptionMode debug variable
     Initial = 0,
@@ -17,4 +17,4 @@ enum PreemptionMode : uint32_t {
     ThreadGroup,
     MidThread,
 };
-} // namespace OCLRT
+} // namespace NEO

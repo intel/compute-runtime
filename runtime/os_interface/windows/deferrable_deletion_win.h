@@ -12,7 +12,7 @@
 
 #include <d3dkmthk.h>
 
-namespace OCLRT {
+namespace NEO {
 
 class OsContextWin;
 class Wddm;
@@ -32,4 +32,4 @@ class DeferrableDeletionImpl : public DeferrableDeletion {
     uint32_t allocationCount;
     D3DKMT_HANDLE resourceHandle;
 };
-} // namespace OCLRT
+} // namespace NEO

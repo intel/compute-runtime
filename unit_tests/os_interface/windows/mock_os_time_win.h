@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/os_interface/windows/os_time_win.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockOSTimeWin : public OSTimeWin {
   public:
     MockOSTimeWin(OSInterface *osInterface) : OSTimeWin(osInterface){};
@@ -21,4 +21,4 @@ class MockOSTimeWin : public OSTimeWin {
         this->frequency = frequency;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

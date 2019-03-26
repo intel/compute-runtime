@@ -31,7 +31,7 @@
 
 #include <algorithm>
 
-namespace OCLRT {
+namespace NEO {
 MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : allocator32Bit(nullptr),
                                                                            executionEnvironment(executionEnvironment), hostPtrManager(std::make_unique<HostPtrManager>()),
                                                                            multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {
@@ -444,4 +444,4 @@ void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocat
     }
 }
 
-} // namespace OCLRT
+} // namespace NEO

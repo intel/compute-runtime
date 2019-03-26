@@ -23,7 +23,7 @@
 
 #include "reg_configs_common.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskTests;
 
@@ -400,7 +400,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, CreateCommandStreamReceiverHw) {
     int32_t GetCsr = DebugManager.flags.SetCommandStreamReceiver.get();
     EXPECT_EQ(0, GetCsr);
 
-    auto csr = OCLRT::createCommandStream(*pDevice->executionEnvironment);
+    auto csr = NEO::createCommandStream(*pDevice->executionEnvironment);
     EXPECT_NE(nullptr, csr);
     delete csr;
     DebugManager.flags.SetCommandStreamReceiver.set(0);
@@ -912,7 +912,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenSamplerCacheFlushSentT
     auto samplerCacheFlushBeforeSize = commandStreamReceiver.getRequiredCmdStreamSize(flags, *pDevice);
     EXPECT_EQ(samplerCacheNotFlushedSize, samplerCacheFlushBeforeSize);
 
-    OCLRT::WorkaroundTable *waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
+    NEO::WorkaroundTable *waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
     bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
     waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 

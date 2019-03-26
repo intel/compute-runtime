@@ -23,7 +23,7 @@
 struct _tagCLGLSyncInfo;
 typedef struct _tagCLGLSyncInfo CL_GL_SYNC_INFO, *PCL_GL_SYNC_INFO;
 
-namespace OCLRT {
+namespace NEO {
 class Event;
 class GlArbSyncEvent;
 class GLSharingFunctions;
@@ -284,4 +284,4 @@ class GLContextGuard {
     GLDisplay currentDisplayHandle;
 };
 
-} // namespace OCLRT
+} // namespace NEO

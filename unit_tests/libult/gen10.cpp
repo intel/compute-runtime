@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "runtime/helpers/base_object.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 
-namespace OCLRT {
+namespace NEO {
 
 typedef CNLFamily Family;
 
@@ -30,4 +30,4 @@ struct enableGen10 {
 static enableGen10 enable;
 
 template class UltCommandStreamReceiver<CNLFamily>;
-} // namespace OCLRT
+} // namespace NEO

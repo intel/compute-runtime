@@ -15,7 +15,7 @@
 #include <fstream>
 #include <string>
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 TEST(SettingsReader, Create) {

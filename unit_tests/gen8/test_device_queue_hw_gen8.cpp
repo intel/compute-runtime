@@ -10,7 +10,7 @@
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_device_queue.h"
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace DeviceHostQueue;
 
 typedef DeviceQueueHwTest Gen8DeviceQueueSlb;

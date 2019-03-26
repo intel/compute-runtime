@@ -16,7 +16,7 @@
 #include <map>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 namespace D3DTypesHelper {
 struct D3D9 {
     typedef IDirect3DDevice9 D3DDevice;
@@ -179,4 +179,4 @@ static inline cl_int getSupportedDXTextureFormats(cl_context context, cl_mem_obj
     return CL_SUCCESS;
 }
 
-} // namespace OCLRT
+} // namespace NEO

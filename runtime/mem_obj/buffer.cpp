@@ -24,7 +24,7 @@
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 BufferFuncs bufferFactory[IGFX_MAX_CORE] = {};
 
@@ -507,4 +507,4 @@ void Buffer::setSurfaceState(const Device *device,
     buffer->graphicsAllocation = nullptr;
     delete buffer;
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -11,7 +11,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class ProcessSpirBinaryTests : public ::testing::Test {
   public:

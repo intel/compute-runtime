@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "runtime/os_interface/linux/os_thread_linux.h"
 
-namespace OCLRT {
+namespace NEO {
 ThreadLinux::ThreadLinux(pthread_t threadId) : threadId(threadId){};
 
 std::unique_ptr<Thread> Thread::create(void *(*func)(void *), void *arg) {
@@ -19,4 +19,4 @@ std::unique_ptr<Thread> Thread::create(void *(*func)(void *), void *arg) {
 void ThreadLinux::join() {
     pthread_join(threadId, nullptr);
 }
-} // namespace OCLRT
+} // namespace NEO

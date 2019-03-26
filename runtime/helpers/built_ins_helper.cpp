@@ -10,7 +10,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/program/program.h"
 
-namespace OCLRT {
+namespace NEO {
 const SipKernel &initSipKernel(SipKernelType type, Device &device) {
     return device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(type, device);
 }
@@ -30,4 +30,4 @@ Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
     DEBUG_BREAK_IF(retVal != 0);
     return program;
 }
-} // namespace OCLRT
+} // namespace NEO

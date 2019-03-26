@@ -11,7 +11,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 class DebugEnvReaderTests : public ::testing::Test {
   public:
@@ -82,4 +82,4 @@ TEST_F(DebugEnvReaderTests, givenEnvironmentVariableReaderWhenCreateOsReaderWith
     std::unique_ptr<SettingsReader> evr(SettingsReader::createOsReader(""));
     EXPECT_NE(nullptr, evr);
 }
-} // namespace OCLRT
+} // namespace NEO

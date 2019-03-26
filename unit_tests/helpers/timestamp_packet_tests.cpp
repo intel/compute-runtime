@@ -25,7 +25,7 @@
 
 #include "gmock/gmock.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct TimestampPacketSimpleTests : public ::testing::Test {
     class MockTimestampPacket : public TimestampPacket {
@@ -591,7 +591,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrT
 
     auto sizeWithoutEvents = csr.getRequiredCmdStreamSize(flags, *device);
 
-    flags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, csr, OCLRT::CsrDependencies::DependenciesType::OutOfCsr);
+    flags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, csr, NEO::CsrDependencies::DependenciesType::OutOfCsr);
     auto sizeWithEvents = csr.getRequiredCmdStreamSize(flags, *device);
 
     size_t extendedSize = sizeWithoutEvents + ((1 + 2 + 3 + 4 + 5) * (sizeof(typename FamilyType::MI_SEMAPHORE_WAIT) + sizeof(typename FamilyType::MI_ATOMIC)));
@@ -633,7 +633,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForDiff
 
     auto sizeWithoutEvents = csr.getRequiredCmdStreamSize(flags, *device.get());
 
-    flags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, csr, OCLRT::CsrDependencies::DependenciesType::OutOfCsr);
+    flags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, csr, NEO::CsrDependencies::DependenciesType::OutOfCsr);
     auto sizeWithEvents = csr.getRequiredCmdStreamSize(flags, *device.get());
 
     size_t extendedSize = sizeWithoutEvents + ((1 + 2 + 3 + 4 + 5) * (sizeof(typename FamilyType::MI_SEMAPHORE_WAIT) + sizeof(typename FamilyType::MI_ATOMIC)));

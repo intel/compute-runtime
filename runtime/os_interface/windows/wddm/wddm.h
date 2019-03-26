@@ -18,7 +18,7 @@
 #include <memory>
 #include <mutex>
 
-namespace OCLRT {
+namespace NEO {
 class Gdi;
 class Gmm;
 class GmmMemory;
@@ -206,4 +206,4 @@ class Wddm {
     std::vector<D3DKMT_HANDLE> temporaryResources;
     SpinLock temporaryResourcesLock;
 };
-} // namespace OCLRT
+} // namespace NEO

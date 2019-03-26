@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 #include <stdint.h>
-namespace OCLRT {
+namespace NEO {
 struct ThreadArbitrationPolicy {
     enum {
         AgeBased = 0x0u,
@@ -16,4 +16,4 @@ struct ThreadArbitrationPolicy {
         NotPresent = 0xffffffffu
     };
 };
-} // namespace OCLRT
+} // namespace NEO

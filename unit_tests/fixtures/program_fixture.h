@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class ProgramFixture {
   public:
@@ -86,4 +86,4 @@ class ProgramFixture {
     void *knownSource;
     size_t knownSourceSize;
 };
-} // namespace OCLRT
+} // namespace NEO

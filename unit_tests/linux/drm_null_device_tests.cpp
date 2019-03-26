@@ -10,7 +10,7 @@
 
 #include "mock_os_layer.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class DrmWrap : public Drm {
   public:

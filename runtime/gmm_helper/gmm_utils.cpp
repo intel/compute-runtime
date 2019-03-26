@@ -14,8 +14,8 @@
 #include "GL/gl.h"
 #include "GL/glext.h"
 
-using namespace OCLRT;
-namespace OCLRT {
+using namespace NEO;
+namespace NEO {
 GMM_CUBE_FACE_ENUM GmmHelper::getCubeFaceIndex(uint32_t target) {
     switch (target) {
     case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
@@ -33,7 +33,7 @@ GMM_CUBE_FACE_ENUM GmmHelper::getCubeFaceIndex(uint32_t target) {
     }
     return __GMM_NO_CUBE_MAP;
 }
-} // namespace OCLRT
+} // namespace NEO
 
 void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {}
 void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {}

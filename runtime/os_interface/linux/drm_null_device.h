@@ -13,7 +13,7 @@
 
 #include <cstdio>
 
-namespace OCLRT {
+namespace NEO {
 
 class DrmNullDevice : public Drm {
     friend Drm;
@@ -45,4 +45,4 @@ class DrmNullDevice : public Drm {
 
     uint64_t gpuTimestamp;
 };
-} // namespace OCLRT
+} // namespace NEO

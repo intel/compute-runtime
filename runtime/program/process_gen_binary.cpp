@@ -22,7 +22,7 @@
 
 using namespace iOpenCL;
 
-namespace OCLRT {
+namespace NEO {
 extern bool familyEnabled[];
 
 const KernelInfo *Program::getKernelInfo(
@@ -1037,4 +1037,4 @@ void Program::processDebugData() {
     }
 }
 
-} // namespace OCLRT
+} // namespace NEO

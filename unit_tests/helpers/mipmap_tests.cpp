@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 constexpr size_t testOrigin[]{2, 3, 5, 7};
 
@@ -56,20 +56,20 @@ INSTANTIATE_TEST_CASE_P(MipLevelOriginIdx,
 TEST(MipmapHelper, givenClImageDescWithoutMipLevelsWhenIsMipMappedIsCalledThenFalseIsReturned) {
     cl_image_desc desc = {};
     desc.num_mip_levels = 0;
-    EXPECT_FALSE(OCLRT::isMipMapped(desc));
+    EXPECT_FALSE(NEO::isMipMapped(desc));
     desc.num_mip_levels = 1;
-    EXPECT_FALSE(OCLRT::isMipMapped(desc));
+    EXPECT_FALSE(NEO::isMipMapped(desc));
 }
 
 TEST(MipmapHelper, givenClImageDescWithMipLevelsWhenIsMipMappedIsCalledThenTrueIsReturned) {
     cl_image_desc desc = {};
     desc.num_mip_levels = 2;
-    EXPECT_TRUE(OCLRT::isMipMapped(desc));
+    EXPECT_TRUE(NEO::isMipMapped(desc));
 }
 
 TEST(MipmapHelper, givenBufferWhenIsMipMappedIsCalledThenFalseIsReturned) {
     MockBuffer buffer;
-    EXPECT_FALSE(OCLRT::isMipMapped(&buffer));
+    EXPECT_FALSE(NEO::isMipMapped(&buffer));
 }
 
 struct MockImage : MockImageBase {
@@ -82,15 +82,15 @@ struct MockImage : MockImageBase {
 TEST(MipmapHelper, givenImageWithoutMipLevelsWhenIsMipMappedIsCalledThenFalseIsReturned) {
     MockImage image;
     image.imageDesc.num_mip_levels = 0;
-    EXPECT_FALSE(OCLRT::isMipMapped(&image));
+    EXPECT_FALSE(NEO::isMipMapped(&image));
     image.imageDesc.num_mip_levels = 1;
-    EXPECT_FALSE(OCLRT::isMipMapped(&image));
+    EXPECT_FALSE(NEO::isMipMapped(&image));
 }
 
 TEST(MipmapHelper, givenImageWithMipLevelsWhenIsMipMappedIsCalledThenTrueIsReturned) {
     MockImage image;
     image.imageDesc.num_mip_levels = 2;
-    EXPECT_TRUE(OCLRT::isMipMapped(&image));
+    EXPECT_TRUE(NEO::isMipMapped(&image));
 }
 
 TEST(MipmapHelper, givenImageWithoutMipLevelsWhenGetMipOffsetIsCalledThenZeroIsReturned) {

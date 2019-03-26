@@ -8,7 +8,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef Test<DeviceFixture> SklDeviceCaps;
 
@@ -52,7 +52,7 @@ SKLTEST_F(SklUsDeviceIdTest, isSimulationCap) {
         ISKL_GT4_DESK_DEVICE_F0_ID,
         0, // default, non-simulation
     };
-    OCLRT::MockDevice *mockDevice = nullptr;
+    NEO::MockDevice *mockDevice = nullptr;
 
     for (auto id : sklSimulationIds) {
         mockDevice = createWithUsDeviceId(id);

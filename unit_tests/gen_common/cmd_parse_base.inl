@@ -6,7 +6,7 @@
  */
 
 // clang-format off
-using namespace OCLRT;
+using namespace NEO;
 using MI_ARB_CHECK                    = GenStruct::MI_ARB_CHECK;
 using MI_ATOMIC                       = GenStruct::MI_ATOMIC;
 using MI_BATCH_BUFFER_END             = GenStruct::MI_BATCH_BUFFER_END;

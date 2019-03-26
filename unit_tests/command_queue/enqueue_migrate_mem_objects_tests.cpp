@@ -13,7 +13,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class MigrateMemObjectsFixture
     : public DeviceFixture,

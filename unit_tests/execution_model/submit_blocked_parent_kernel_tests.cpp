@@ -17,7 +17,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class SubmitBlockedParentKernelFixture : public ExecutionModelSchedulerTest,
                                          public testing::Test {

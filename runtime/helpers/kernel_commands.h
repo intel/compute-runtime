@@ -18,7 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 class LinearStream;
 class IndirectHeap;
@@ -213,4 +213,4 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
     static bool inlineDataProgrammingRequired(const Kernel &kernel);
     static bool kernelUsesLocalIds(const Kernel &kernel);
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -11,7 +11,7 @@
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class AubHelper : public NonCopyableOrMovableClass {
   public:
@@ -68,4 +68,4 @@ class AubHelperHw : public AubHelper {
     bool localMemoryEnabled;
 };
 
-} // namespace OCLRT
+} // namespace NEO

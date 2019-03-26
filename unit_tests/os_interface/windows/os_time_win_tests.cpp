@@ -13,7 +13,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 LARGE_INTEGER valueToSet = {0};
 

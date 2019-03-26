@@ -12,7 +12,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct EnqueueSvmMemFillTest : public DeviceFixture,
                                public CommandQueueHwFixture,
@@ -75,7 +75,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
         EBuiltInOps::FillBuffer,
         pCmdQ->getContext(),
         pCmdQ->getDevice(),
-        std::unique_ptr<OCLRT::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(builtIns, &origBuilder, pattern, patternSize)));
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(builtIns, &origBuilder, pattern, patternSize)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
     // call enqueue on mock builder

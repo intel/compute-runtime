@@ -11,7 +11,7 @@
 #include "CL/cl.h"
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct GTPinKernelExec {
     Kernel *pKernel;
@@ -34,4 +34,4 @@ struct GTPinKernelExec {
 };
 typedef struct GTPinKernelExec gtpinkexec_t;
 
-} // namespace OCLRT
+} // namespace NEO

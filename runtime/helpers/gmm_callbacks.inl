@@ -11,7 +11,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 long __stdcall DeviceCallbacks<GfxFamily>::notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate) {
@@ -23,4 +23,4 @@ int __stdcall TTCallbacks<GfxFamily>::writeL3Address(void *queueHandle, uint64_t
     return 0;
 }
 
-} // namespace OCLRT
+} // namespace NEO

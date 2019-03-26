@@ -22,7 +22,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 void KernelArgBufferFixture::SetUp() {
     DeviceFixture::SetUp();

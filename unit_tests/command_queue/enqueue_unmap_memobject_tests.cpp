@@ -14,7 +14,7 @@
 
 #include <algorithm>
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct EnqueueUnmapMemObjTest : public DeviceFixture,
                                 public CommandQueueHwFixture,

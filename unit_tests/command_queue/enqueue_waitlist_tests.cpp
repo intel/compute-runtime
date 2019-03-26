@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ class clEventWrapper {
     cl_event mMem;
 };
 
-using namespace OCLRT;
+using namespace NEO;
 
 namespace ULT {
 

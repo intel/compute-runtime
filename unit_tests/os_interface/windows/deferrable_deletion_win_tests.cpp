@@ -12,7 +12,7 @@
 
 #include <type_traits>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(DeferrableDeletionImpl, NonCopyable) {
     EXPECT_FALSE(std::is_move_constructible<DeferrableDeletionImpl>::value);

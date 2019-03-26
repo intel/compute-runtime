@@ -16,7 +16,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/surface_formats.h"
 
-namespace OCLRT {
+namespace NEO {
 Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(alignedPtr, alignedSize, uncacheable, false, true, {}) {}
 
 Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo) {
@@ -260,4 +260,4 @@ uint32_t Gmm::getUnifiedAuxPitchTiles() {
 uint32_t Gmm::getAuxQPitch() {
     return this->gmmResourceInfo->getAuxQPitch();
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -9,7 +9,7 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/program/program.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename T>
 T *Program::create(
@@ -166,4 +166,4 @@ T *Program::createFromIL(Context *ctx,
 
     return program;
 }
-} // namespace OCLRT
+} // namespace NEO

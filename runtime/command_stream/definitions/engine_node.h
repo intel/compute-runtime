@@ -8,7 +8,7 @@
 #pragma once
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 enum EngineType : uint32_t {
     ENGINE_RCS = 0,
@@ -18,4 +18,4 @@ enum EngineType : uint32_t {
     NUM_ENGINES
 };
 
-} // namespace OCLRT
+} // namespace NEO

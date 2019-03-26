@@ -11,7 +11,7 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/utilities/debug_settings_reader.h"
 
-namespace OCLRT {
+namespace NEO {
 
 AubSubCaptureManager::AubSubCaptureManager(const std::string &fileName)
     : initialFileName(fileName) {
@@ -138,4 +138,4 @@ void AubSubCaptureManager::setDebugManagerFlags() const {
         DebugManager.flags.ForceCsrReprogramming.set(true);
     }
 }
-} // namespace OCLRT
+} // namespace NEO

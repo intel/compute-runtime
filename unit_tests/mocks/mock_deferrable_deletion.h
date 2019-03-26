@@ -10,7 +10,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockDeferrableDeletion : public DeferrableDeletion {
   public:
     bool apply() override;
@@ -18,4 +18,4 @@ class MockDeferrableDeletion : public DeferrableDeletion {
     virtual ~MockDeferrableDeletion();
     int applyCalled = 0;
 };
-} // namespace OCLRT
+} // namespace NEO

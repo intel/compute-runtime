@@ -14,7 +14,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 class OSInterface;
 
 class OsContext : public ReferenceTrackedObject<OsContext> {
@@ -46,4 +46,4 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     EngineType engineType = EngineType::ENGINE_RCS;
     const bool lowPriority;
 };
-} // namespace OCLRT
+} // namespace NEO

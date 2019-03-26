@@ -16,7 +16,7 @@
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 
-namespace OCLRT {
+namespace NEO {
 
 // ProgramFromSource Test Fixture
 //      Used to test the Program class
@@ -63,4 +63,4 @@ class ProgramFromSourceTest : public ContextFixture,
     const char *KernelName;
     cl_int retVal;
 };
-} // namespace OCLRT
+} // namespace NEO

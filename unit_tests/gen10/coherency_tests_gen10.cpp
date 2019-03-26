@@ -12,7 +12,7 @@
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_device.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct Gen10CoherencyRequirements : public ::testing::Test {
     typedef typename CNLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;

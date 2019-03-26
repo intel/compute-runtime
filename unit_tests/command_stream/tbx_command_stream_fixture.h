@@ -11,7 +11,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 class CommandStreamReceiver;
 class MockDevice;
@@ -25,4 +25,4 @@ class TbxCommandStreamFixture : public CommandStreamFixture {
 
     MemoryManager *mmTbx;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -13,7 +13,7 @@
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/utilities/tag_allocator.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 void TimestampPacketContainer::add(Node *timestampPacketNode) {
     timestampPacketNodes.push_back(timestampPacketNode);

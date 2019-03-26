@@ -9,7 +9,7 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 #ifdef SUPPORT_BXT
 static EnableProductHwInfoConfig<IGFX_BROXTON> enableBXT;
@@ -27,4 +27,4 @@ static EnableProductHwInfoConfig<IGFX_KABYLAKE> enableKBL;
 static EnableProductHwInfoConfig<IGFX_SKYLAKE> enableSKL;
 #endif
 
-} // namespace OCLRT
+} // namespace NEO

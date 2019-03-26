@@ -20,7 +20,7 @@
 #include <algorithm>
 #include <new>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
@@ -116,4 +116,4 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
 
     return CL_SUCCESS;
 }
-} // namespace OCLRT
+} // namespace NEO

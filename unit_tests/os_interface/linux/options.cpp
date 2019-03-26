@@ -26,6 +26,6 @@ const char *gmmEntryName = "openMockGmm";
 const char *sysFsPciPath = "./test_files";
 } // namespace Os
 
-OCLRT::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
+NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
     return nullptr;
 }

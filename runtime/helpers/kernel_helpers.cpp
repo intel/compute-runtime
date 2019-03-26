@@ -7,10 +7,10 @@
 
 #include "runtime/kernel/kernel.h"
 
-namespace OCLRT {
+namespace NEO {
 bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
     return false;
 }
 void Kernel::reconfigureKernel() {
 }
-} // namespace OCLRT
+} // namespace NEO

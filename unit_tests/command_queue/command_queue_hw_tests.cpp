@@ -21,7 +21,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/utilities/base_object_utils.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct CommandQueueHwTest
     : public DeviceFixture,
@@ -678,7 +678,7 @@ void CloneMdi(MultiDispatchInfo &dst, const MultiDispatchInfo &src) {
 }
 
 struct MockBuilder : BuiltinDispatchInfoBuilder {
-    MockBuilder(OCLRT::BuiltIns &builtins) : BuiltinDispatchInfoBuilder(builtins) {
+    MockBuilder(NEO::BuiltIns &builtins) : BuiltinDispatchInfoBuilder(builtins) {
     }
     bool buildDispatchInfos(MultiDispatchInfo &d, const BuiltinOpParams &conf) const override {
         wasBuildDispatchInfosWithBuiltinOpParamsCalled = true;
@@ -692,7 +692,7 @@ struct MockBuilder : BuiltinDispatchInfoBuilder {
         paramsReceived.offset = offset;
         wasBuildDispatchInfosWithKernelParamsCalled = true;
 
-        DispatchInfoBuilder<OCLRT::SplitDispatch::Dim::d3D, OCLRT::SplitDispatch::SplitMode::NoSplit> dib;
+        DispatchInfoBuilder<NEO::SplitDispatch::Dim::d3D, NEO::SplitDispatch::SplitMode::NoSplit> dib;
         dib.setKernel(paramsToUse.kernel);
         dib.setDispatchGeometry(dim, paramsToUse.gws, paramsToUse.elws, paramsToUse.offset);
         dib.bake(d);

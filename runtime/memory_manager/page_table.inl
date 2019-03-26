@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-namespace OCLRT {
+namespace NEO {
 
 template <>
 inline uintptr_t PageTable<void, 0, 9>::map(uintptr_t vm, size_t size, uint64_t entryBits, uint32_t memoryBank) {
@@ -68,4 +68,4 @@ inline void PageTable<T, level, bits>::pageWalk(uintptr_t vm, size_t size, size_
         offset += (vmEnd - vmStart + 1);
     }
 }
-} // namespace OCLRT
+} // namespace NEO

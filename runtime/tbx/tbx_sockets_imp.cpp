@@ -30,7 +30,7 @@ typedef struct sockaddr SOCKADDR;
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 TbxSocketsImp::TbxSocketsImp(std::ostream &err)
     : cerrStream(err) {
@@ -317,4 +317,4 @@ bool TbxSocketsImp::getResponseData(void *buffer, size_t sizeInBytes) {
     return true;
 }
 
-} // namespace OCLRT
+} // namespace NEO

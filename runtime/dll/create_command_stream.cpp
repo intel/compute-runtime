@@ -12,10 +12,10 @@
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 #include "runtime/helpers/hw_info.h"
 
-namespace OCLRT {
+namespace NEO {
 
 CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment) {
     return createCommandStreamImpl(executionEnvironment);
 }
 
-} // namespace OCLRT
+} // namespace NEO

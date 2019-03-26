@@ -16,7 +16,7 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 class DeviceQueueHw : public DeviceQueue {
@@ -91,4 +91,4 @@ class DeviceQueueHw : public DeviceQueue {
     LinearStream slbCS;
     IGIL_CommandQueue *igilQueue = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

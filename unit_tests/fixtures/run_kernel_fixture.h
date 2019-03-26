@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/test_files.h"
 
-namespace OCLRT {
+namespace NEO {
 struct CommandQueueHwFixture;
 struct CommandStreamFixture;
 
@@ -39,8 +39,8 @@ inline void restoreBuiltInBinaryName(Device *pDevice) {
 }
 
 struct RunKernelFixtureFactory {
-    typedef OCLRT::CommandStreamFixture CommandStreamFixture;
-    typedef OCLRT::CommandQueueHwFixture CommandQueueFixture;
+    typedef NEO::CommandStreamFixture CommandStreamFixture;
+    typedef NEO::CommandQueueHwFixture CommandQueueFixture;
 };
 
-} // namespace OCLRT
+} // namespace NEO

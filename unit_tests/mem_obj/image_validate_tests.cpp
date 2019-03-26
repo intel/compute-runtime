@@ -15,7 +15,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef decltype(&Image::redescribe) RedescribeMethod;
 

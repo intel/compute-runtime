@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct HardwareParse {
     HardwareParse() : previousCS(nullptr),
@@ -68,7 +68,7 @@ struct HardwareParse {
     void findHardwareCommands(IndirectHeap *dsh);
 
     template <typename FamilyType>
-    void parseCommands(OCLRT::LinearStream &commandStream, size_t startOffset = 0) {
+    void parseCommands(NEO::LinearStream &commandStream, size_t startOffset = 0) {
         ASSERT_LE(startOffset, commandStream.getUsed());
         auto sizeToParse = commandStream.getUsed() - startOffset;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -78,7 +78,7 @@ struct HardwareParse {
     }
 
     template <typename FamilyType>
-    void parseCommands(OCLRT::CommandQueue &commandQueue) {
+    void parseCommands(NEO::CommandQueue &commandQueue) {
         auto &commandStreamReceiver = commandQueue.getCommandStreamReceiver();
         auto &commandStreamCSR = commandStreamReceiver.getCS();
 
@@ -217,4 +217,4 @@ struct HardwareParse {
     void *cmdGpgpuCsrBaseAddress;
 };
 
-} // namespace OCLRT
+} // namespace NEO

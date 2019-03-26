@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "runtime/api/cl_types.h"
 #include "runtime/platform/platform.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct HardwareInfo;
 
@@ -30,4 +30,4 @@ class PlatformFixture {
     cl_uint num_devices;
     cl_device_id *devices;
 };
-} // namespace OCLRT
+} // namespace NEO

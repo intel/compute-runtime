@@ -13,7 +13,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 class OfflineCompilerTests : public ::testing::Test {
   public:
@@ -26,4 +26,4 @@ class OfflineCompilerTests : public ::testing::Test {
     int retVal;
 };
 
-} // namespace OCLRT
+} // namespace NEO

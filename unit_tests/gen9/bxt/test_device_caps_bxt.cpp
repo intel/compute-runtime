@@ -8,7 +8,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef Test<DeviceFixture> BxtDeviceCaps;
 
@@ -55,7 +55,7 @@ BXTTEST_F(BxtUsDeviceIdTest, isSimulationCap) {
         IBXT_C_DEVICE_F0_ID,
         0, // default, non-simulation
     };
-    OCLRT::MockDevice *mockDevice = nullptr;
+    NEO::MockDevice *mockDevice = nullptr;
 
     for (auto id : bxtSimulationIds) {
         mockDevice = createWithUsDeviceId(id);

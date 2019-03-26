@@ -9,7 +9,7 @@
 
 #include <intrin.h>
 
-namespace OCLRT {
+namespace NEO {
 
 void cpuidex_windows_wrapper(int *cpuInfo, int functionId, int subfunctionId) {
     __cpuidex(cpuInfo, functionId, subfunctionId);
@@ -32,4 +32,4 @@ void CpuInfo::cpuidex(
     cpuidexFunc(reinterpret_cast<int *>(cpuInfo), functionId, subfunctionId);
 }
 
-} // namespace OCLRT
+} // namespace NEO

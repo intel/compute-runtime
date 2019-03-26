@@ -17,7 +17,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class TestedMemoryManager : public OsAgnosticMemoryManager {
   public:

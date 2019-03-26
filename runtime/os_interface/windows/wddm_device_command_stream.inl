@@ -26,7 +26,7 @@
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
-namespace OCLRT {
+namespace NEO {
 
 // Initialize COMMAND_BUFFER_HEADER         Type PatchList  Streamer Perf Tag
 DECLARE_COMMAND_BUFFER(CommandBufferHeader, UMD_OCL, FALSE, FALSE, PERFTAG_OCL);
@@ -193,4 +193,4 @@ void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContain
         }
     }
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -15,7 +15,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class OsInterfaceTest : public ::testing::Test {
   public:

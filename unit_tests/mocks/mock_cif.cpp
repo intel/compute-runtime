@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "cif/builtins/memory/buffer/buffer.h"
 #include "cif/export/library_api.h"
 
-namespace OCLRT {
+namespace NEO {
 
 bool failCreateCifMain = false;
 }
@@ -84,7 +84,7 @@ bool BufferSimple::IsConst() const {
 } // namespace Builtins
 } // namespace CIF
 
-namespace OCLRT {
+namespace NEO {
 
 std::map<CIF::InterfaceId_t, CreatorFuncT> MockCIFMain::globalCreators;
 
@@ -120,12 +120,12 @@ CIF::ICIF *MockCIFMain::CreateInterfaceImpl(CIF::InterfaceId_t intId, CIF::Versi
 
     return it->second(intId, version);
 }
-} // namespace OCLRT
+} // namespace NEO
 
 extern CIF::CIFMain *CreateCIFMainImpl() {
-    if (OCLRT::failCreateCifMain) {
+    if (NEO::failCreateCifMain) {
         return nullptr;
     }
 
-    return new OCLRT::MockCIFMain;
+    return new NEO::MockCIFMain;
 }

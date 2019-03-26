@@ -15,7 +15,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST_F(EnqueueWriteBufferTypeTest, eventShouldBeReturned) {
     cl_bool blockingWrite = CL_TRUE;

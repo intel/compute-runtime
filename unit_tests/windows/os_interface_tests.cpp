@@ -10,5 +10,5 @@
 #include "test.h"
 
 TEST(osInterfaceTests, osInterfaceLocalMemoryEnabledByDefault) {
-    EXPECT_EQ(is64bit, OCLRT::OSInterface::osEnableLocalMemory);
+    EXPECT_EQ(is64bit, NEO::OSInterface::osEnableLocalMemory);
 }

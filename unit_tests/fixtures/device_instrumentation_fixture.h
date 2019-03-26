@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 class Device;
 struct HardwareInfo;
@@ -18,4 +18,4 @@ struct DeviceInstrumentationFixture {
     std::unique_ptr<Device> device = nullptr;
     HardwareInfo *hwInfo = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -12,7 +12,7 @@
 #include <cwchar>
 #include <dxgi.h>
 
-namespace OCLRT {
+namespace NEO {
 class UltIDXGIAdapter1 : public IDXGIAdapter1 {
   public:
     // IDXGIAdapter1
@@ -186,4 +186,4 @@ class UltIDXGIFactory1 : public IDXGIFactory1 {
 HRESULT WINAPI ULTCreateDXGIFactory(REFIID riid, void **ppFactory);
 void WINAPI ULTGetSystemInfo(SYSTEM_INFO *pSystemInfo);
 
-} // namespace OCLRT
+} // namespace NEO

@@ -13,7 +13,7 @@
 // MockCommandQueue - Core implementation
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace OCLRT {
+namespace NEO {
 class MockCommandQueue : public CommandQueue {
   public:
     using CommandQueue::device;
@@ -153,4 +153,4 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         completionStampTaskCount = referenceToCompletionStampTaskCount;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

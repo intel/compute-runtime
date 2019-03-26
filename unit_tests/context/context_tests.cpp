@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class WhiteBoxContext : public Context {
   public:
@@ -249,7 +249,7 @@ TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextDeletedTh
 
 TEST_F(ContextTest, GivenInteropSyncParamWhenCreateContextThenSetContextParam) {
     cl_device_id deviceID = devices[0];
-    auto pPlatform = OCLRT::platform();
+    auto pPlatform = NEO::platform();
     cl_platform_id pid[1];
     pid[0] = pPlatform;
 

@@ -10,7 +10,7 @@
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/memory_manager/page_table.inl"
 
-namespace OCLRT {
+namespace NEO {
 
 uintptr_t PTE::map(uintptr_t vm, size_t size, uint64_t entryBits, uint32_t memoryBank) {
     const size_t shift = 12;
@@ -66,4 +66,4 @@ void PTE::pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits,
 
 template class PageTable<class PDP, 3, 9>;
 template class PageTable<class PDE, 2, 2>;
-} // namespace OCLRT
+} // namespace NEO

@@ -9,7 +9,7 @@
 
 #include "debug_file_reader.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const char *SettingsReader::settingsFileName = "igdrcl.config";
 
@@ -22,4 +22,4 @@ SettingsReader *SettingsReader::createFileReader() {
     }
     return nullptr;
 }
-}; // namespace OCLRT
+}; // namespace NEO

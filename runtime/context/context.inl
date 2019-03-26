@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "runtime/context/context.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename Sharing>
 void Context::registerSharing(Sharing *sharing) {
@@ -23,4 +23,4 @@ Sharing *Context::getSharing() {
 
     return reinterpret_cast<Sharing *>(sharingFunctions[Sharing::sharingId].get());
 }
-} // namespace OCLRT
+} // namespace NEO

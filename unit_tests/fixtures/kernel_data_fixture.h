@@ -13,7 +13,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace iOpenCL;
 
 class KernelDataTest : public testing::Test {

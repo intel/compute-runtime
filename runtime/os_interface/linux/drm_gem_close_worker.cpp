@@ -18,7 +18,7 @@
 #include <queue>
 #include <stdio.h>
 
-namespace OCLRT {
+namespace NEO {
 
 DrmGemCloseWorker::DrmGemCloseWorker(DrmMemoryManager &memoryManager) : memoryManager(memoryManager) {
     thread = Thread::create(worker, reinterpret_cast<void *>(this));
@@ -104,4 +104,4 @@ void *DrmGemCloseWorker::worker(void *arg) {
     self->workerDone.store(true);
     return nullptr;
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -28,7 +28,7 @@
 
 using namespace ::testing;
 
-namespace OCLRT {
+namespace NEO {
 struct GmmTests : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
@@ -46,11 +46,11 @@ TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
 
     uint32_t maxVal = 0;
     for (auto p : v) {
-        EXPECT_TRUE(p.first == OCLRT::GmmHelper::getCubeFaceIndex(p.second));
+        EXPECT_TRUE(p.first == NEO::GmmHelper::getCubeFaceIndex(p.second));
         maxVal = std::max(maxVal, p.second);
     }
     maxVal++;
-    EXPECT_TRUE(__GMM_NO_CUBE_MAP == OCLRT::GmmHelper::getCubeFaceIndex(maxVal));
+    EXPECT_TRUE(__GMM_NO_CUBE_MAP == NEO::GmmHelper::getCubeFaceIndex(maxVal));
 }
 
 TEST_F(GmmTests, resourceCreation) {
@@ -730,4 +730,4 @@ TEST_F(GmmQueryInfoWithoutYTilingTest, givenPlatformThatDoesntSupportYTilingWhen
     EXPECT_EQ(queryGmm->resourceParams.Flags.Info.Linear, 1u);
     EXPECT_EQ(queryGmm->resourceParams.Flags.Info.TiledY, 0u);
 }
-} // namespace OCLRT
+} // namespace NEO

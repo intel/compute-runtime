@@ -18,7 +18,7 @@
 #include "unit_tests/os_interface/windows/mock_kmdaf_listener.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class WddmWithKmDafMock : public Wddm {
   public:

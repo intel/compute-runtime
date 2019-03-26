@@ -15,7 +15,7 @@
 
 #include "reg_configs_common.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 const size_t EnqueueCopyBufferRectTest::BufferRect::sizeInBytes = 100 * 100 * 100 * sizeof(cl_char);
 

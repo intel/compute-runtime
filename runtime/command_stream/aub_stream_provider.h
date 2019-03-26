@@ -10,7 +10,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 class AubStreamProvider {
   public:
@@ -28,4 +28,4 @@ class AubFileStreamProvider : public AubStreamProvider {
   protected:
     AubMemDump::AubFileStream stream;
 };
-} // namespace OCLRT
+} // namespace NEO

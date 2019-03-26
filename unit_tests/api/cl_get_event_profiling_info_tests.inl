@@ -15,7 +15,7 @@
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 template <typename T>
 class EventFixture : public api_fixture, public T {

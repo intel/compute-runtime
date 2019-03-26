@@ -12,7 +12,7 @@
 #include "test.h"
 #include "unit_tests/api/cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 namespace DeviceHostQueue {
 struct deviceQueueProperties {

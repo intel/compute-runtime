@@ -7,7 +7,7 @@
 
 #include "runtime/aub/aub_center.h"
 
-class MockAubCenter : public OCLRT::AubCenter {
+class MockAubCenter : public NEO::AubCenter {
   public:
     using AubCenter::AubCenter;
     using AubCenter::aubManager;

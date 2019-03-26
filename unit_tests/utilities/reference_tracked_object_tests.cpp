@@ -11,7 +11,7 @@
 
 #include <thread>
 
-namespace OCLRT {
+namespace NEO {
 TEST(RefCounter, referenceCount) {
     RefCounter<> rc;
     ASSERT_EQ(0, rc.peek());
@@ -253,4 +253,4 @@ TEST(ReferenceTrackedObject, whenNewReferenceTrackedObjectIsCreatedRefcountsAreZ
     EXPECT_EQ(0, obj.getRefApiCount());
     EXPECT_EQ(0, obj.getRefInternalCount());
 }
-} // namespace OCLRT
+} // namespace NEO

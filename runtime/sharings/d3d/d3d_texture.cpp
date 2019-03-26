@@ -16,7 +16,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 template class D3DTexture<D3DTypesHelper::D3D10>;
 template class D3DTexture<D3DTypesHelper::D3D11>;

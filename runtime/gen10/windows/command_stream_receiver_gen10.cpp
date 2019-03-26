@@ -9,9 +9,9 @@
 #include "runtime/os_interface/windows/device_command_stream.inl"
 #include "runtime/os_interface/windows/wddm_device_command_stream.inl"
 
-namespace OCLRT {
+namespace NEO {
 
 template class DeviceCommandStreamReceiver<CNLFamily>;
 template class WddmCommandStreamReceiver<CNLFamily>;
 template class CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<CNLFamily>>;
-} // namespace OCLRT
+} // namespace NEO

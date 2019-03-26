@@ -15,7 +15,7 @@
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct CommandEnqueueAUBFixture : public CommandEnqueueBaseFixture,
                                   public AUBCommandStreamFixture {
@@ -30,4 +30,4 @@ struct CommandEnqueueAUBFixture : public CommandEnqueueBaseFixture,
         CommandEnqueueBaseFixture::TearDown();
     }
 };
-} // namespace OCLRT
+} // namespace NEO

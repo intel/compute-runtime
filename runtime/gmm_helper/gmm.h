@@ -15,7 +15,7 @@
 #include <cstdlib>
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 enum class OCLPlane;
 struct HardwareInfo;
 struct ImageInfo;
@@ -55,4 +55,4 @@ class Gmm {
     bool isRenderCompressed = false;
     bool useSystemMemoryPool = true;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -8,7 +8,7 @@
 #include "runtime/aub_mem_dump/aub_alloc_dump.h"
 #include "runtime/gmm_helper/gmm.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 namespace AubAllocDump {
 

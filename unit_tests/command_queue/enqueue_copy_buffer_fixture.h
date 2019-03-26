@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct EnqueueCopyBufferHelper {
     cl_int enqueueCopyBuffer(
@@ -90,4 +90,4 @@ struct EnqueueCopyBufferTest : public CommandEnqueueFixture,
     Buffer *srcBuffer;
     Buffer *dstBuffer;
 };
-} // namespace OCLRT
+} // namespace NEO

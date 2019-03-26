@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@
 unsigned int numBaseObjects = 0;
 std::mutex numBaseObjectsMutex;
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename B>
 void *BaseObject<B>::operator new(size_t sz) {
@@ -71,4 +71,4 @@ template class BaseObject<_cl_mem>;
 template class BaseObject<_cl_platform_id>;
 template class BaseObject<_cl_program>;
 template class BaseObject<_cl_sampler>;
-} // namespace OCLRT
+} // namespace NEO

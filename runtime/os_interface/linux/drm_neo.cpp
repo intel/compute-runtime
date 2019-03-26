@@ -16,7 +16,7 @@
 #include <cstring>
 #include <fstream>
 
-namespace OCLRT {
+namespace NEO {
 
 const char *Drm::sysFsDefaultGpuPath = "/drm/card0";
 const char *Drm::maxGpuFrequencyFile = "/gt_max_freq_mhz";
@@ -204,4 +204,4 @@ void Drm::setSimplifiedMocsTableUsage(bool value) {
     useSimplifiedMocsTable = value;
 }
 
-} // namespace OCLRT
+} // namespace NEO

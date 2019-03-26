@@ -13,7 +13,7 @@
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct CopyBufferHw
     : public CommandEnqueueAUBFixture,

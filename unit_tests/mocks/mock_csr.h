@@ -27,7 +27,7 @@
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #endif
 
-using namespace OCLRT;
+using namespace NEO;
 
 template <typename GfxFamily>
 class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {

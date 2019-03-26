@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockInternalAllocationStorage : public InternalAllocationStorage {
   public:
     using InternalAllocationStorage::InternalAllocationStorage;
@@ -27,4 +27,4 @@ class MockInternalAllocationStorage : public InternalAllocationStorage {
     bool doUpdateCompletion = false;
     uint32_t valueToUpdateCompletion;
 };
-} // namespace OCLRT
+} // namespace NEO

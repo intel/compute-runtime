@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/hw_info_config.inl"
 
-namespace OCLRT {
+namespace NEO {
 
 #ifdef SUPPORT_BXT
 template <>
@@ -52,4 +52,4 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
 template class HwInfoConfigHw<IGFX_SKYLAKE>;
 #endif
 
-} // namespace OCLRT
+} // namespace NEO

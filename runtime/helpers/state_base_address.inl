@@ -13,7 +13,7 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     LinearStream &commandStream,
@@ -82,4 +82,4 @@ void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStr
     UNRECOVERABLE_IF(sbaCommand->getSurfaceStateBaseAddress() != ssh.getGraphicsAllocation()->getGpuAddress());
 }
 
-} // namespace OCLRT
+} // namespace NEO

@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <cstdlib>
 
-namespace OCLRT {
+namespace NEO {
 class IndirectHeap;
 
 class HeapDirtyState {
@@ -20,4 +20,4 @@ class HeapDirtyState {
     uint64_t gpuBaseAddress = 0llu;
     size_t sizeInPages = 0u;
 };
-} // namespace OCLRT
+} // namespace NEO

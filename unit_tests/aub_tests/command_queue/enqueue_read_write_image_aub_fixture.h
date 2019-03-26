@@ -13,7 +13,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_context.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct AUBImageUnaligned
     : public CommandEnqueueAUBFixture,

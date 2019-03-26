@@ -17,7 +17,7 @@ namespace Os {
 extern const char *openglDllName;
 }
 
-namespace OCLRT {
+namespace NEO {
 
 GLboolean GLSharingFunctions::makeCurrent(GLContext contextHandle, GLDisplay displayHandle) {
     if (displayHandle == 0) {
@@ -133,4 +133,4 @@ void GLSharingFunctions::createBackupContext() {
         pfnWglShareLists(GLHGLRCHandle, GLHGLRCHandleBkpCtx);
     }
 }
-} // namespace OCLRT
+} // namespace NEO

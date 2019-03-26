@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 class Context;
 
 struct GlCreateContextProperties {
@@ -36,4 +36,4 @@ class GlSharingBuilderFactory : public SharingBuilderFactory {
     void fillGlobalDispatchTable() override;
     void *getExtensionFunctionAddress(const std::string &functionName) override;
 };
-} // namespace OCLRT
+} // namespace NEO

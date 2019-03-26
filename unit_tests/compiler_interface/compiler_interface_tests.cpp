@@ -27,7 +27,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 #if defined(_WIN32)
 const char *gBadDompilerDllName = "bad_compiler.dll";
@@ -109,19 +109,19 @@ class MyCompilerInterface : public CompilerInterface {
             compilerInterface->mockDebugData[n] = (char)n;
         }
 
-        auto vars = OCLRT::getIgcDebugVars();
+        auto vars = NEO::getIgcDebugVars();
         vars.debugDataToReturn = compilerInterface->mockDebugData;
         vars.debugDataToReturnSize = sizeof(compilerInterface->mockDebugData);
-        OCLRT::setIgcDebugVars(vars);
+        NEO::setIgcDebugVars(vars);
 
         return compilerInterface;
     }
 
     ~MyCompilerInterface() override {
-        auto vars = OCLRT::getIgcDebugVars();
+        auto vars = NEO::getIgcDebugVars();
         vars.debugDataToReturn = nullptr;
         vars.debugDataToReturnSize = 0;
-        OCLRT::setIgcDebugVars(vars);
+        NEO::setIgcDebugVars(vars);
     }
 
     bool initializePub() {
@@ -217,7 +217,7 @@ TEST_F(CompilerInterfaceTest, CompileClToIsa) {
 TEST_F(CompilerInterfaceTest, WhenBuildIsInvokedThenFclReceivesListOfExtensionsInInternalOptions) {
     std::string receivedInternalOptions;
 
-    auto debugVars = OCLRT::getFclDebugVars();
+    auto debugVars = NEO::getFclDebugVars();
     debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
     gEnvironment->fclPushDebugVars(debugVars);
     retVal = pCompilerInterface->build(*pProgram, inputArgs, false);
@@ -583,7 +583,7 @@ TEST(TranslateTest, whenArgsAreValidAndTranslatorReturnsValidOutputThenValidOutp
     auto mockOpt = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
     auto mockIntOpt = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
 
-    auto ret = OCLRT::translate(&mockTranslationCtx, mockSrc.get(), mockOpt.get(), mockIntOpt.get());
+    auto ret = NEO::translate(&mockTranslationCtx, mockSrc.get(), mockOpt.get(), mockIntOpt.get());
     EXPECT_NE(nullptr, ret);
 
     EXPECT_EQ(mockSrc.get(), mockTranslationCtx.receivedSrc);
@@ -596,7 +596,7 @@ TEST(TranslateTest, whenTranslatorReturnsNullptrThenNullptrIsReturned) {
     mockTranslationCtx.returnNullptr = true;
     auto mockCifBuffer = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
 
-    auto ret = OCLRT::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get());
+    auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get());
     EXPECT_EQ(nullptr, ret);
 }
 
@@ -605,7 +605,7 @@ TEST(TranslateTest, givenNullPtrAsGtPinInputWhenTranslatorReturnsNullptrThenNull
     mockTranslationCtx.returnNullptr = true;
     auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
 
-    auto ret = OCLRT::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
+    auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
     EXPECT_EQ(nullptr, ret);
 }
 
@@ -616,7 +616,7 @@ TEST(TranslateTest, whenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
         mockTranslationCtx.returnNullptrDebugData = (i & 1) != 0;
         mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
         mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
-        auto ret = OCLRT::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get());
+        auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get());
         EXPECT_EQ(nullptr, ret);
     }
 }
@@ -628,7 +628,7 @@ TEST(TranslateTest, givenNullPtrAsGtPinInputWhenTranslatorReturnsInvalidOutputTh
         mockTranslationCtx.returnNullptrDebugData = (i & 1) != 0;
         mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
         mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
-        auto ret = OCLRT::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
+        auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
         EXPECT_EQ(nullptr, ret);
     }
 }
@@ -641,7 +641,7 @@ TEST(TranslateTest, whenAnyArgIsNullThenNullptrIsReturnedAndTranslatorIsNotInvok
         auto opts = (i & (1 << 1)) ? mockCifBuffer.get() : nullptr;
         auto intOpts = (i & (1 << 2)) ? mockCifBuffer.get() : nullptr;
 
-        auto ret = OCLRT::translate(&mockTranslationCtx, src, opts, intOpts);
+        auto ret = NEO::translate(&mockTranslationCtx, src, opts, intOpts);
         EXPECT_EQ(nullptr, ret);
     }
 
@@ -653,7 +653,7 @@ TEST(TranslateTest, whenAnyArgIsNullThenNullptrIsReturnedAndTranslatorIsNotInvok
 
 TEST(LoadCompilerTest, whenEverythingIsOkThenReturnsTrueAndValidOutputs) {
     MockCompilerEnableGuard mock;
-    std::unique_ptr<OCLRT::OsLibrary> retLib;
+    std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
     EXPECT_TRUE(retVal);
@@ -663,7 +663,7 @@ TEST(LoadCompilerTest, whenEverythingIsOkThenReturnsTrueAndValidOutputs) {
 
 TEST(LoadCompilerTest, whenCouldNotLoadLibraryThenReturnFalseAndNullOutputs) {
     MockCompilerEnableGuard mock;
-    std::unique_ptr<OCLRT::OsLibrary> retLib;
+    std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("falseName.notRealLib", retLib, retMain);
     EXPECT_FALSE(retVal);
@@ -672,22 +672,22 @@ TEST(LoadCompilerTest, whenCouldNotLoadLibraryThenReturnFalseAndNullOutputs) {
 }
 
 TEST(LoadCompilerTest, whenCreateMainFailsThenReturnFalseAndNullOutputs) {
-    OCLRT::failCreateCifMain = true;
+    NEO::failCreateCifMain = true;
 
     MockCompilerEnableGuard mock;
-    std::unique_ptr<OCLRT::OsLibrary> retLib;
+    std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
     EXPECT_FALSE(retVal);
     EXPECT_EQ(nullptr, retLib.get());
     EXPECT_EQ(nullptr, retMain.get());
 
-    OCLRT::failCreateCifMain = false;
+    NEO::failCreateCifMain = false;
 }
 
 TEST(LoadCompilerTest, whenEntrypointInterfaceIsNotCompatibleThenReturnFalseAndNullOutputs) {
     MockCompilerEnableGuard mock;
-    std::unique_ptr<OCLRT::OsLibrary> retLib;
+    std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::GTSystemInfo>("", retLib, retMain);
     EXPECT_FALSE(retVal);
@@ -708,7 +708,7 @@ struct MockCompilerDeviceCtx : DeviceCtxBase {
 
 template <typename DeviceCtx, typename MockDeviceCtx>
 struct LockListener {
-    LockListener(OCLRT::Device *device)
+    LockListener(NEO::Device *device)
         : device(device) {
     }
 
@@ -720,7 +720,7 @@ struct LockListener {
         data->createdDeviceCtx = deviceCtx.get();
     }
 
-    OCLRT::Device *device = nullptr;
+    NEO::Device *device = nullptr;
     MockDeviceCtx *createdDeviceCtx = nullptr;
 };
 
@@ -764,7 +764,7 @@ TEST_F(CompilerInterfaceTest, GivenSimultaneousRequestForNewFclTranslationContex
 }
 
 TEST_F(CompilerInterfaceTest, GivenRequestForNewTranslationCtxWhenFclMainIsNotAvailableThenReturnNullptr) {
-    OCLRT::failCreateCifMain = true;
+    NEO::failCreateCifMain = true;
 
     auto device = this->pContext->getDevice(0);
     MockCompilerInterface tempCompilerInterface;
@@ -773,16 +773,16 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewTranslationCtxWhenFclMainIsNotAv
     auto retIgc = tempCompilerInterface.createIgcTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_EQ(nullptr, retIgc);
 
-    OCLRT::failCreateCifMain = false;
+    NEO::failCreateCifMain = false;
 }
 
 TEST_F(CompilerInterfaceTest, GivenRequestForNewTranslationCtxWhenCouldNotCreateDeviceCtxThenReturnNullptr) {
     auto device = this->pContext->getDevice(0);
 
-    auto befFclMock = OCLRT::MockCIFMain::getGlobalCreatorFunc<OCLRT::MockFclOclDeviceCtx>();
-    auto befIgcMock = OCLRT::MockCIFMain::getGlobalCreatorFunc<OCLRT::MockIgcOclDeviceCtx>();
-    OCLRT::MockCIFMain::setGlobalCreatorFunc<OCLRT::MockFclOclDeviceCtx>(nullptr);
-    OCLRT::MockCIFMain::setGlobalCreatorFunc<OCLRT::MockIgcOclDeviceCtx>(nullptr);
+    auto befFclMock = NEO::MockCIFMain::getGlobalCreatorFunc<NEO::MockFclOclDeviceCtx>();
+    auto befIgcMock = NEO::MockCIFMain::getGlobalCreatorFunc<NEO::MockIgcOclDeviceCtx>();
+    NEO::MockCIFMain::setGlobalCreatorFunc<NEO::MockFclOclDeviceCtx>(nullptr);
+    NEO::MockCIFMain::setGlobalCreatorFunc<NEO::MockIgcOclDeviceCtx>(nullptr);
 
     auto retFcl = pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_EQ(nullptr, retFcl);
@@ -790,8 +790,8 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewTranslationCtxWhenCouldNotCreate
     auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_EQ(nullptr, retIgc);
 
-    OCLRT::MockCIFMain::setGlobalCreatorFunc<OCLRT::MockFclOclDeviceCtx>(befFclMock);
-    OCLRT::MockCIFMain::setGlobalCreatorFunc<OCLRT::MockIgcOclDeviceCtx>(befIgcMock);
+    NEO::MockCIFMain::setGlobalCreatorFunc<NEO::MockFclOclDeviceCtx>(befFclMock);
+    NEO::MockCIFMain::setGlobalCreatorFunc<NEO::MockIgcOclDeviceCtx>(befIgcMock);
 }
 
 TEST_F(CompilerInterfaceTest, GivenRequestForNewIgcTranslationCtxWhenDeviceCtxIsAlreadyAvailableThenUseItToReturnValidTranslationCtx) {

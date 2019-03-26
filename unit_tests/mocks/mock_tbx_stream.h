@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,9 @@
 
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct MockTbxStream : public TbxCommandStreamReceiver::TbxStream {
     using TbxCommandStreamReceiver::TbxStream::socket;
 };
-} // namespace OCLRT
+} // namespace NEO

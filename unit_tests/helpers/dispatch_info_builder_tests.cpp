@@ -12,7 +12,7 @@
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
-namespace OCLRT {
+namespace NEO {
 
 using namespace SplitDispatch;
 
@@ -1006,4 +1006,4 @@ TEST_F(DispatchInfoBuilderTest, setKernelArgNullKernel) {
     delete diBuilder;
     delete buffer;
 }
-} // namespace OCLRT
+} // namespace NEO

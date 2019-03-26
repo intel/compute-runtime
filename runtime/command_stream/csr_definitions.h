@@ -14,7 +14,7 @@
 
 #include <limits>
 
-namespace OCLRT {
+namespace NEO {
 struct FlushStampTrackingObj;
 
 namespace CSRequirements {
@@ -60,4 +60,4 @@ struct CsrSizeRequestFlags {
     bool numGrfRequiredChanged = false;
     bool specialPipelineSelectModeChanged = false;
 };
-} // namespace OCLRT
+} // namespace NEO

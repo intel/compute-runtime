@@ -27,7 +27,7 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/utilities/destructor_counted.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(ExecutionEnvironment, givenDefaultConstructorWhenItIsCalledThenExecutionEnvironmentHasInitialRefCountZero) {
     ExecutionEnvironment environment;
@@ -104,7 +104,7 @@ TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManage
 TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillAvailable) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
-    std::unique_ptr<Device> device(Device::create<OCLRT::Device>(nullptr, executionEnvironment, 0u));
+    std::unique_ptr<Device> device(Device::create<NEO::Device>(nullptr, executionEnvironment, 0u));
     device.reset(nullptr);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
@@ -248,11 +248,11 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
 
 TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    std::unique_ptr<MockDevice> device(Device::create<OCLRT::MockDevice>(nullptr, executionEnvironment, 0u));
+    std::unique_ptr<MockDevice> device(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 0u));
     auto &commandStreamReceiver = device->getCommandStreamReceiver();
     auto memoryManager = device->getMemoryManager();
 
-    std::unique_ptr<MockDevice> device2(Device::create<OCLRT::MockDevice>(nullptr, executionEnvironment, 1u));
+    std::unique_ptr<MockDevice> device2(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 1u));
     EXPECT_NE(&commandStreamReceiver, &device2->getCommandStreamReceiver());
     EXPECT_EQ(memoryManager, device2->getMemoryManager());
 }

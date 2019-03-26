@@ -12,7 +12,7 @@
 #include "hw_cmds.h"
 #include "hw_info_cfl.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const char *HwMapper<IGFX_COFFEELAKE>::abbreviation = "cfl";
 
@@ -230,4 +230,4 @@ void setupCFLHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTa
 }
 
 void (*CFL::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupCFLHardwareInfoImpl;
-} // namespace OCLRT
+} // namespace NEO

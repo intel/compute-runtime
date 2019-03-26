@@ -13,7 +13,7 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 size_t PreemptionHelper::getPreemptionWaCsSize(const Device &device) {
@@ -137,4 +137,4 @@ template <typename GfxFamily>
 void PreemptionHelper::programInterfaceDescriptorDataPreemption(INTERFACE_DESCRIPTOR_DATA<GfxFamily> *idd, PreemptionMode preemptionMode) {
 }
 
-} // namespace OCLRT
+} // namespace NEO

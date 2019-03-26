@@ -14,7 +14,7 @@
 
 #include "third_party/aub_stream/headers/aub_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 struct HardwareInfo;
 
 class AubCenter {
@@ -59,4 +59,4 @@ class AubCenter {
     std::unique_ptr<aub_stream::AubManager> aubManager;
     uint32_t aubStreamMode = 0;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -13,10 +13,10 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 template <>
 bool KernelCommandsHelper<SKLFamily>::isPipeControlWArequired() { return true; }
 
 template struct KernelCommandsHelper<SKLFamily>;
-} // namespace OCLRT
+} // namespace NEO

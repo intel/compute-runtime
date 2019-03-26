@@ -13,7 +13,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/hw_info_helper.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class HwHelperFixture : public DeviceFixture {
   protected:

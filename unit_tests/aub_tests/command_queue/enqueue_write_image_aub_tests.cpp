@@ -15,7 +15,7 @@
 #include "unit_tests/aub_tests/command_queue/enqueue_read_write_image_aub_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct WriteImageParams {
     cl_mem_object_type imageType;

@@ -11,7 +11,7 @@
 #include <functional>
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 class GmmPageTableMngr {
   public:
     MOCKABLE_VIRTUAL ~GmmPageTableMngr();
@@ -37,4 +37,4 @@ class GmmPageTableMngr {
     GMM_CLIENT_CONTEXT *clientContext = nullptr;
     GMM_PAGETABLE_MGR *pageTableManager = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

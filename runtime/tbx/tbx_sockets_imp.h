@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-namespace OCLRT {
+namespace NEO {
 
 class TbxSocketsImp : public TbxSockets {
   public:
@@ -44,4 +44,4 @@ class TbxSocketsImp : public TbxSockets {
 
     uint32_t transID = 0;
 };
-} // namespace OCLRT
+} // namespace NEO

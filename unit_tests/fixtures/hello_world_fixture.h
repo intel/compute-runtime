@@ -17,14 +17,14 @@
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 
-namespace OCLRT {
+namespace NEO {
 
 // Factory used to pick various ingredients for use in aggregate tests
 struct HelloWorldFixtureFactory {
-    typedef OCLRT::IndirectHeapFixture IndirectHeapFixture;
-    typedef OCLRT::CommandStreamFixture CommandStreamFixture;
-    typedef OCLRT::CommandQueueHwFixture CommandQueueFixture;
-    typedef OCLRT::HelloWorldKernelFixture KernelFixture;
+    typedef NEO::IndirectHeapFixture IndirectHeapFixture;
+    typedef NEO::CommandStreamFixture CommandStreamFixture;
+    typedef NEO::CommandQueueHwFixture CommandQueueFixture;
+    typedef NEO::HelloWorldKernelFixture KernelFixture;
 };
 
 //  Instantiates a fixture based on the supplied fixture factory.
@@ -144,4 +144,4 @@ struct HelloWorldTest : Test<HelloWorldFixture<FixtureFactory>> {
 template <typename FixtureFactory>
 struct HelloWorldTestWithParam : HelloWorldFixture<FixtureFactory> {
 };
-} // namespace OCLRT
+} // namespace NEO

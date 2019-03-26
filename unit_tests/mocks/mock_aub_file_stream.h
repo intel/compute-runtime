@@ -16,7 +16,7 @@
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #endif
 
-namespace OCLRT {
+namespace NEO {
 
 struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     bool init(uint32_t stepping, uint32_t device) override {
@@ -82,7 +82,7 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
 struct GmockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     MOCK_METHOD1(addComment, bool(const char *message));
 };
-} // namespace OCLRT
+} // namespace NEO
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 class GmmHelper;
 class IndirectHeap;
@@ -44,4 +44,4 @@ struct StateBaseAddressHelper {
     static void programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, size_t stateBaseAddressCmdOffset,
                                                GmmHelper *gmmHelper);
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -17,7 +17,7 @@
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTaskTests;
 
@@ -281,7 +281,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenHigherTaskLevelWhenTimestampP
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushNotRequiredThenDontSendPipecontrol) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    OCLRT::WorkaroundTable *waTable = nullptr;
+    NEO::WorkaroundTable *waTable = nullptr;
     waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
 
     commandStreamReceiver.isPreambleSent = true;
@@ -309,7 +309,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeThenSen
     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
     configureCSRtoNonDirtyState<FamilyType>();
     commandStreamReceiver.taskLevel = taskLevel;
-    OCLRT::WorkaroundTable *waTable = nullptr;
+    NEO::WorkaroundTable *waTable = nullptr;
     waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
 
     bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
@@ -335,7 +335,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeAndWaSa
     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
     configureCSRtoNonDirtyState<FamilyType>();
     commandStreamReceiver.taskLevel = taskLevel;
-    OCLRT::WorkaroundTable *waTable = nullptr;
+    NEO::WorkaroundTable *waTable = nullptr;
     waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
 
     bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
@@ -359,7 +359,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushAfterThenSend
     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushAfter);
     configureCSRtoNonDirtyState<FamilyType>();
     commandStreamReceiver.taskLevel = taskLevel;
-    OCLRT::WorkaroundTable *waTable = nullptr;
+    NEO::WorkaroundTable *waTable = nullptr;
     waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
 
     bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;

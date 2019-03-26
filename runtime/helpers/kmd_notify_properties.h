@@ -12,7 +12,7 @@
 #include <chrono>
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 struct KmdNotifyProperties {
     int64_t delayKmdNotifyMicroseconds;
     int64_t delayQuickKmdSleepMicroseconds;
@@ -64,4 +64,4 @@ class KmdNotifyHelper {
     std::atomic<bool> acLineConnected{true};
     bool maxPowerSavingMode = false;
 };
-} // namespace OCLRT
+} // namespace NEO

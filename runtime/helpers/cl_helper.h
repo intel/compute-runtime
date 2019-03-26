@@ -10,7 +10,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 inline const std::string cmdTypetoString(cl_command_type cmd) {
     switch (cmd) {
     case CL_COMMAND_NDRANGE_KERNEL:
@@ -81,4 +81,4 @@ inline const std::string cmdTypetoString(cl_command_type cmd) {
     }
     }
 }
-} // namespace OCLRT
+} // namespace NEO

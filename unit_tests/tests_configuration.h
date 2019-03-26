@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-namespace OCLRT {
+namespace NEO {
 enum class TestMode { NotSpecified,
                       UnitTests,
                       AubTests,
@@ -15,4 +15,4 @@ enum class TestMode { NotSpecified,
                       TbxTests };
 
 extern TestMode testMode;
-} // namespace OCLRT
+} // namespace NEO

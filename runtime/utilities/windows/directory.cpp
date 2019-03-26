@@ -9,7 +9,7 @@
 
 #include "runtime/os_interface/windows/windows_wrapper.h"
 
-namespace OCLRT {
+namespace NEO {
 
 std::vector<std::string> Directory::getFiles(std::string &path) {
     std::vector<std::string> files;
@@ -37,4 +37,4 @@ std::vector<std::string> Directory::getFiles(std::string &path) {
     FindClose(hFind);
     return files;
 }
-}; // namespace OCLRT
+}; // namespace NEO

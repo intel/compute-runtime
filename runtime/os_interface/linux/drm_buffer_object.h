@@ -16,7 +16,7 @@
 struct drm_i915_gem_exec_object2;
 struct drm_i915_gem_relocation_entry;
 
-namespace OCLRT {
+namespace NEO {
 
 class DrmMemoryManager;
 class Drm;
@@ -91,4 +91,4 @@ class BufferObject {
     uint64_t unmapSize = 0;
     StorageAllocatorType storageAllocatorType = UNKNOWN_ALLOCATOR;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -7,7 +7,7 @@
 
 #include "runtime/kernel/kernel.h"
 
-namespace OCLRT {
+namespace NEO {
 void Kernel::getAdditionalInfo(cl_kernel_info paramName, const void *&paramValue, size_t &paramValueSizeRet) const {
 }
-} // namespace OCLRT
+} // namespace NEO

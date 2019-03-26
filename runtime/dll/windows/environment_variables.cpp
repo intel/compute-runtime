@@ -12,7 +12,7 @@
 #include <Windows.h>
 
 uint32_t getEnvironmentVariable(const char *name, char *outBuffer, uint32_t outBufferSize) {
-    if (OCLRT::DebugManager.registryReadAvailable() == false) {
+    if (NEO::DebugManager.registryReadAvailable() == false) {
         return 0;
     }
     return GetEnvironmentVariableA(name, outBuffer, outBufferSize);

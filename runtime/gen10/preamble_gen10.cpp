@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "runtime/command_stream/csr_definitions.h"
 #include "runtime/helpers/preamble.inl"
 
-namespace OCLRT {
+namespace NEO {
 
 template <>
 uint32_t PreambleHelper<CNLFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
@@ -81,4 +81,4 @@ void PreambleHelper<CNLFamily>::programPipelineSelect(LinearStream *pCommandStre
 }
 
 template struct PreambleHelper<CNLFamily>;
-} // namespace OCLRT
+} // namespace NEO

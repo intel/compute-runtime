@@ -21,7 +21,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 class AllocationsList;
 class Device;
 class EventBuilder;
@@ -249,4 +249,4 @@ class CommandStreamReceiver {
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump, ExecutionEnvironment &executionEnvironment);
-} // namespace OCLRT
+} // namespace NEO

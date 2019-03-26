@@ -12,7 +12,7 @@
 #include <map>
 #include <mutex>
 
-namespace OCLRT {
+namespace NEO {
 class Device;
 class GraphicsAllocation;
 class CommandStreamReceiver;
@@ -43,4 +43,4 @@ class SVMAllocsManager {
     MemoryManager *memoryManager;
     std::mutex mtx;
 };
-} // namespace OCLRT
+} // namespace NEO

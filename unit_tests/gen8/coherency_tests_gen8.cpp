@@ -10,7 +10,7 @@
 #include "runtime/platform/platform.h"
 #include "test.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef ::testing::Test Gen8CoherencyRequirements;
 

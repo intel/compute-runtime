@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct MockImage : public Image {
     using Image::hasAlphaChannel;

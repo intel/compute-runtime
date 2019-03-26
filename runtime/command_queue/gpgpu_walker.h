@@ -25,7 +25,7 @@
 #include "runtime/utilities/tag_allocator.h"
 #include "runtime/utilities/vec.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
@@ -143,50 +143,50 @@ class GpgpuWalkerHelper {
 
     static void dispatchProfilingCommandsStart(
         TagNode<HwTimeStamps> &hwTimeStamps,
-        OCLRT::LinearStream *commandStream);
+        NEO::LinearStream *commandStream);
 
     static void dispatchProfilingCommandsEnd(
         TagNode<HwTimeStamps> &hwTimeStamps,
-        OCLRT::LinearStream *commandStream);
+        NEO::LinearStream *commandStream);
 
     static void dispatchPerfCountersNoopidRegisterCommands(
         CommandQueue &commandQueue,
-        OCLRT::HwPerfCounter &hwPerfCounter,
-        OCLRT::LinearStream *commandStream,
+        NEO::HwPerfCounter &hwPerfCounter,
+        NEO::LinearStream *commandStream,
         bool start);
 
     static void dispatchPerfCountersReadFreqRegisterCommands(
         CommandQueue &commandQueue,
-        OCLRT::HwPerfCounter &hwPerfCounter,
-        OCLRT::LinearStream *commandStream,
+        NEO::HwPerfCounter &hwPerfCounter,
+        NEO::LinearStream *commandStream,
         bool start);
 
     static void dispatchPerfCountersGeneralPurposeCounterCommands(
         CommandQueue &commandQueue,
-        OCLRT::HwPerfCounter &hwPerfCounter,
-        OCLRT::LinearStream *commandStream,
+        NEO::HwPerfCounter &hwPerfCounter,
+        NEO::LinearStream *commandStream,
         bool start);
 
     static void dispatchPerfCountersUserCounterCommands(
         CommandQueue &commandQueue,
-        OCLRT::HwPerfCounter &hwPerfCounter,
-        OCLRT::LinearStream *commandStream,
+        NEO::HwPerfCounter &hwPerfCounter,
+        NEO::LinearStream *commandStream,
         bool start);
 
     static void dispatchPerfCountersOABufferStateCommands(
         CommandQueue &commandQueue,
-        OCLRT::HwPerfCounter &hwPerfCounter,
-        OCLRT::LinearStream *commandStream);
+        NEO::HwPerfCounter &hwPerfCounter,
+        NEO::LinearStream *commandStream);
 
     static void dispatchPerfCountersCommandsStart(
         CommandQueue &commandQueue,
-        OCLRT::HwPerfCounter &hwPerfCounter,
-        OCLRT::LinearStream *commandStream);
+        NEO::HwPerfCounter &hwPerfCounter,
+        NEO::LinearStream *commandStream);
 
     static void dispatchPerfCountersCommandsEnd(
         CommandQueue &commandQueue,
-        OCLRT::HwPerfCounter &hwPerfCounter,
-        OCLRT::LinearStream *commandStream);
+        NEO::HwPerfCounter &hwPerfCounter,
+        NEO::LinearStream *commandStream);
 
     static void setupTimestampPacket(
         LinearStream *cmdStream,
@@ -260,4 +260,4 @@ IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const MultiDispatchInf
     return *ih;
 }
 
-} // namespace OCLRT
+} // namespace NEO

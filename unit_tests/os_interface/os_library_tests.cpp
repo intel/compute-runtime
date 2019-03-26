@@ -27,7 +27,7 @@ extern const char *testDllName;
 const std::string fakeLibName = "_fake_library_name_";
 const std::string fnName = "testDynamicLibraryFunc";
 
-using namespace OCLRT;
+using namespace NEO;
 
 class OSLibraryFixture : public MemoryManagementFixture
 

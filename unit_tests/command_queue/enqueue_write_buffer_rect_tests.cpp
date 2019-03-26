@@ -17,7 +17,7 @@
 
 #include "reg_configs_common.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 HWTEST_F(EnqueueWriteBufferRectTest, nullBufferReturnsError) {
     auto retVal = CL_SUCCESS;

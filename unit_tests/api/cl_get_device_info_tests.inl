@@ -12,7 +12,7 @@
 
 #include <cstring>
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef api_tests clGetDeviceInfoTests;
 

@@ -10,7 +10,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename BaseCSR>
 class CommandStreamReceiverWithAUBDump : public BaseCSR {
@@ -32,4 +32,4 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     std::unique_ptr<CommandStreamReceiver> aubCSR;
 };
 
-} // namespace OCLRT
+} // namespace NEO

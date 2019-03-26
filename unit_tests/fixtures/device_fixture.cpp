@@ -9,13 +9,13 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 void DeviceFixture::SetUp() {
     hwInfoHelper = *platformDevices[0];
     SetUpImpl(&hwInfoHelper);
 }
 
-void DeviceFixture::SetUpImpl(const OCLRT::HardwareInfo *hardwareInfo) {
+void DeviceFixture::SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo);
     ASSERT_NE(nullptr, pDevice);
 
@@ -36,4 +36,4 @@ MockDevice *DeviceFixture::createWithUsDeviceId(unsigned short usDeviceId) {
     hwInfoHelper.pPlatform = &platformHelper;
     return MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper);
 }
-} // namespace OCLRT
+} // namespace NEO

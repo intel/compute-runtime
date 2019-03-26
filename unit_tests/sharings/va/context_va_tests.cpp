@@ -13,7 +13,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct VAContextTest : public PlatformFixture,
                        public ::testing::Test {
@@ -53,7 +53,7 @@ TEST_F(VAContextTest, sharingAreNotPresentByDefault) {
 
 TEST_F(VAContextTest, GivenVaContextParamWhenCreateContextThenReturnError) {
     cl_device_id deviceID = devices[0];
-    auto pPlatform = OCLRT::platform();
+    auto pPlatform = NEO::platform();
     cl_platform_id pid[1];
     pid[0] = pPlatform;
     DebugManagerStateRestore dbgRestorer;

@@ -14,14 +14,14 @@
 class SchedulerSourceTest : public testing::Test {
   public:
     void SetUp() override {
-        pDevice = OCLRT::MockDevice::createWithNewExecutionEnvironment<OCLRT::MockDevice>(nullptr);
+        pDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(nullptr);
     }
     void TearDown() override {
         delete pDevice;
     }
 
-    OCLRT::Device *pDevice;
-    OCLRT::MockContext context;
+    NEO::Device *pDevice;
+    NEO::MockContext context;
 
     template <typename GfxFamily>
     void givenDeviceQueueThenNumberOfEnqueuesEqualsNumberOfEnqueuesInSchedulerKernelCodeTest();

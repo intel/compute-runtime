@@ -17,7 +17,7 @@
 
 #include "runtime/aub_mem_dump/aub_data.h"
 
-namespace OCLRT {
+namespace NEO {
 class AubHelper;
 }
 
@@ -243,7 +243,7 @@ struct AubPageTableHelper32 : public AubPageTableHelper<Traits>, PageTableTraits
     static void createContext(typename Traits::Stream &stream, uint32_t context);
     static uint64_t reserveAddressPPGTT(typename Traits::Stream &stream, uintptr_t gfxAddress,
                                         size_t blockSize, uint64_t physAddress,
-                                        uint64_t additionalBits, const OCLRT::AubHelper &aubHelper);
+                                        uint64_t additionalBits, const NEO::AubHelper &aubHelper);
 
     static void fixupLRC(uint8_t *pLrc);
 };
@@ -259,7 +259,7 @@ struct AubPageTableHelper64 : public AubPageTableHelper<Traits>, PageTableTraits
     static void createContext(typename Traits::Stream &stream, uint32_t context);
     static uint64_t reserveAddressPPGTT(typename Traits::Stream &stream, uintptr_t gfxAddress,
                                         size_t blockSize, uint64_t physAddress,
-                                        uint64_t additionalBits, const OCLRT::AubHelper &aubHelper);
+                                        uint64_t additionalBits, const NEO::AubHelper &aubHelper);
 
     static void fixupLRC(uint8_t *pLrc);
 };
@@ -294,7 +294,7 @@ struct AubDump : public std::conditional<TraitsIn::addressingBits == 32, AubPage
     static uint64_t reserveAddressGGTT(Stream &stream, uint32_t addr, size_t size, uint64_t physStart, AubGTTData data);
     static uint64_t reserveAddressGGTT(Stream &stream, const void *memory, size_t size, uint64_t physStart, AubGTTData data);
     static void reserveAddressGGTTAndWriteMmeory(Stream &stream, uintptr_t gfxAddress, const void *memory, uint64_t physAddress,
-                                                 size_t size, size_t offset, uint64_t additionalBits, const OCLRT::AubHelper &aubHelper);
+                                                 size_t size, size_t offset, uint64_t additionalBits, const NEO::AubHelper &aubHelper);
 
     static void setGttEntry(MiGttEntry &entry, uint64_t address, AubGTTData data);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,10 @@
 #define UMDF_USING_NTSTATUS
 #include "runtime/os_interface/windows/windows_wrapper.h"
 
-namespace OCLRT {
+namespace NEO {
 namespace Windows {
 
-class OsLibrary : public OCLRT::OsLibrary {
+class OsLibrary : public NEO::OsLibrary {
   private:
     HMODULE handle;
 
@@ -32,4 +32,4 @@ class OsLibrary : public OCLRT::OsLibrary {
     static decltype(&GetModuleFileNameA) getModuleFileNameA;
 };
 } // namespace Windows
-} // namespace OCLRT
+} // namespace NEO

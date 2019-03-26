@@ -22,7 +22,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 const int maxHintCounter = 4;
 
@@ -77,7 +77,7 @@ struct PerformanceHintTest : public DriverDiagnosticsTest,
         DriverDiagnosticsTest::SetUp();
         cl_device_id deviceID = devices[0];
         cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
-        context = Context::create<OCLRT::MockContext>(validProperties, DeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
+        context = Context::create<NEO::MockContext>(validProperties, DeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 

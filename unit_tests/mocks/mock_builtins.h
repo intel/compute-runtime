@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,9 @@
 
 #include <memory>
 
-class MockBuiltins : public OCLRT::BuiltIns {
+class MockBuiltins : public NEO::BuiltIns {
   public:
-    const OCLRT::SipKernel &getSipKernel(OCLRT::SipKernelType type, OCLRT::Device &device) override {
+    const NEO::SipKernel &getSipKernel(NEO::SipKernelType type, NEO::Device &device) override {
         if (sipKernelsOverride.find(type) != sipKernelsOverride.end()) {
             return *sipKernelsOverride[type];
         }
@@ -24,12 +24,12 @@ class MockBuiltins : public OCLRT::BuiltIns {
         return BuiltIns::getSipKernel(type, device);
     }
 
-    void overrideSipKernel(std::unique_ptr<OCLRT::SipKernel> kernel) {
+    void overrideSipKernel(std::unique_ptr<NEO::SipKernel> kernel) {
         sipKernelsOverride[kernel->getType()] = std::move(kernel);
     }
 
-    OCLRT::BuiltIns *originalGlobalBuiltins = nullptr;
-    std::map<OCLRT::SipKernelType, std::unique_ptr<OCLRT::SipKernel>> sipKernelsOverride;
+    NEO::BuiltIns *originalGlobalBuiltins = nullptr;
+    std::map<NEO::SipKernelType, std::unique_ptr<NEO::SipKernel>> sipKernelsOverride;
     bool getSipKernelCalled = false;
-    OCLRT::SipKernelType getSipKernelType = OCLRT::SipKernelType::COUNT;
+    NEO::SipKernelType getSipKernelType = NEO::SipKernelType::COUNT;
 };

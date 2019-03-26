@@ -17,7 +17,7 @@
 #include <memory>
 #include <thread>
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFromMultipleThreadsThenSingleBoIsReused) {

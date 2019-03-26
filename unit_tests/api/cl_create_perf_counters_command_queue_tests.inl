@@ -14,7 +14,7 @@
 
 #include "cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct clCreatePerfCountersCommandQueueINTELTests : public DeviceInstrumentationFixture,
                                                     public PerformanceCountersDeviceFixture,

@@ -9,9 +9,9 @@
 
 #include "runtime/helpers/hw_info.h"
 
-namespace OCLRT {
+namespace NEO {
 
 double OSTime::getDeviceTimerResolution(HardwareInfo const &hwInfo) {
     return hwInfo.capabilityTable.defaultProfilingTimerResolution;
 };
-} // namespace OCLRT
+} // namespace NEO

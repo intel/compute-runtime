@@ -14,7 +14,7 @@
 #include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/tests_configuration.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 MockDevice::MockDevice(const HardwareInfo &hwInfo)
     : MockDevice(hwInfo, new MockExecutionEnvironment(&hwInfo), 0u) {

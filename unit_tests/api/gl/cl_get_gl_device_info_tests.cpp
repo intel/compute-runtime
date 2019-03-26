@@ -11,7 +11,7 @@
 
 #include <cstring>
 
-using namespace OCLRT;
+using namespace NEO;
 
 namespace ULT {
 

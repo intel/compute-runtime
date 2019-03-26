@@ -14,7 +14,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class AddressMapperFixture {
   public:

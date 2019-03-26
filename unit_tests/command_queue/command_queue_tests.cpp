@@ -37,7 +37,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct CommandQueueMemoryDevice
     : public MemoryManagementFixture,

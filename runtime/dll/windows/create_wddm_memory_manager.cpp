@@ -12,8 +12,8 @@
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {
     return std::make_unique<WddmMemoryManager>(executionEnvironment);
 }
-} // namespace OCLRT
+} // namespace NEO

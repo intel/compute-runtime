@@ -12,7 +12,7 @@
 
 #include "gmm_client_context.h"
 
-namespace OCLRT {
+namespace NEO {
 GmmMemoryBase::GmmMemoryBase() {
     clientContext = GmmHelper::getClientContext()->getHandle();
 }
@@ -43,4 +43,4 @@ bool GmmMemoryBase::configureDevice(GMM_ESCAPE_HANDLE hAdapter,
     minAddress = windowsMinAddress;
     return configureDeviceAddressSpace(hAdapter, hDevice, pfnEscape, SvmSize, BDWL3Coherency);
 }
-}; // namespace OCLRT
+}; // namespace NEO

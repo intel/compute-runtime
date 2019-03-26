@@ -14,7 +14,7 @@
 
 #include <cstdint>
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef Test<MemoryAllocatorFixture> TagAllocatorTest;
 

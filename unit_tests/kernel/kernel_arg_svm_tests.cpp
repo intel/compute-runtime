@@ -20,7 +20,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class KernelArgSvmFixture_ : public ContextFixture, public DeviceFixture {
 

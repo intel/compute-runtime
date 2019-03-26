@@ -14,7 +14,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 class CommandQueue;
 class Context;
@@ -68,4 +68,4 @@ struct api_fixture_using_aligned_memory_manager {
 
 using api_test_using_aligned_memory_manager = Test<api_fixture_using_aligned_memory_manager>;
 
-} // namespace OCLRT
+} // namespace NEO

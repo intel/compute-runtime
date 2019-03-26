@@ -22,7 +22,7 @@
 #include <memory>
 #include <string>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST_F(ProgramTests, givenDeafultProgramObjectWhenKernelDebugEnabledIsQueriedThenFalseIsReturned) {
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
@@ -68,7 +68,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
     if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
         std::string receivedInternalOptions;
 
-        auto debugVars = OCLRT::getFclDebugVars();
+        auto debugVars = NEO::getFclDebugVars();
         debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
         gEnvironment->fclPushDebugVars(debugVars);
 
@@ -130,7 +130,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
     if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
         std::string receivedInternalOptions;
 
-        auto debugVars = OCLRT::getFclDebugVars();
+        auto debugVars = NEO::getFclDebugVars();
         debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
         gEnvironment->fclPushDebugVars(debugVars);
 

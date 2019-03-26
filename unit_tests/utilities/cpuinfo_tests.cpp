@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(CpuInfo, detectsSSE4) {
     const CpuInfo &cpuInfo = CpuInfo::getInstance();

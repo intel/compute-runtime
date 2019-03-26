@@ -9,7 +9,7 @@
 
 #include "unit_tests/mocks/mock_context.h"
 
-using OCLRT::MockContext;
+using NEO::MockContext;
 
 static const size_t imageWidth = 7;
 static const size_t imageHeight = 9;
@@ -88,4 +88,4 @@ static float imageMemory[imageWidth * imageHeight * imageDepth] = {};
 
 void *Image1dDefaults::hostPtr = imageMemory;
 
-OCLRT::Context *Image1dDefaults::context = nullptr;
+NEO::Context *Image1dDefaults::context = nullptr;

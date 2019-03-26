@@ -13,7 +13,7 @@
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 BuiltInFixture::BuiltInFixture() : pBuiltIns(nullptr) {
 }

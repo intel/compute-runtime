@@ -13,7 +13,7 @@
 #include "decoder/binary_encoder.h"
 #include <CL/cl.h>
 
-using namespace OCLRT;
+using namespace NEO;
 
 int main(int numArgs, const char *argv[]) {
     try {

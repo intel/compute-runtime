@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ extern const char *gmmDllName;
 extern const char *gmmEntryName;
 } // namespace Os
 
-namespace OCLRT {
+namespace NEO {
 
 void GmmHelper::loadLib() {
     gmmLib.reset(OsLibrary::load(Os::gmmDllName));
@@ -30,4 +30,4 @@ void GmmHelper::loadLib() {
     }
     UNRECOVERABLE_IF(!isLoaded);
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -11,7 +11,7 @@
 #include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/mocks/mock_csr.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(CheckVerifyMemoryRelatedApiConstants, givenVerifyMemoryRelatedApiConstantsWhenVerifyingTheirValueThenCorrectValuesAreReturned) {
     EXPECT_EQ(AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual, CL_MEM_COMPARE_EQUAL);

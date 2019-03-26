@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "indirect_heap.h"
 
-namespace OCLRT {
+namespace NEO {
 
 IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation) : BaseClass(gfxAllocation) {
 }
@@ -18,4 +18,4 @@ IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation, bool canBeUtilized
 IndirectHeap::IndirectHeap(void *buffer, size_t bufferSize) : BaseClass(buffer, bufferSize) {
 }
 
-} // namespace OCLRT
+} // namespace NEO

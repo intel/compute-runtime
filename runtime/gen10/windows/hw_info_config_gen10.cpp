@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/hw_info_config.inl"
 
-namespace OCLRT {
+namespace NEO {
 
 #ifdef SUPPORT_CNL
 template <>
@@ -20,4 +20,4 @@ int HwInfoConfigHw<IGFX_CANNONLAKE>::configureHardwareCustom(HardwareInfo *hwInf
 template class HwInfoConfigHw<IGFX_CANNONLAKE>;
 #endif
 
-} // namespace OCLRT
+} // namespace NEO

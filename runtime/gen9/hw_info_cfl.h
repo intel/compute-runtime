@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "hw_info_gen9.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct CFL;
 
@@ -20,4 +20,4 @@ struct HwMapper<IGFX_COFFEELAKE> {
     typedef GfxFamilyMapper<static_cast<GFXCORE_FAMILY>(gfxFamily)>::GfxFamily GfxFamily;
     typedef CFL GfxProduct;
 };
-} // namespace OCLRT
+} // namespace NEO

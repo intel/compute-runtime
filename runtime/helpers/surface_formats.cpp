@@ -14,7 +14,7 @@
 
 #include "validators.h"
 
-namespace OCLRT {
+namespace NEO {
 
 // clang-format off
 
@@ -246,7 +246,7 @@ ArrayRef<const SurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags fl
 }
 
 ArrayRef<const SurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat) noexcept {
-    if (OCLRT::IsNV12Image(imageFormat)) {
+    if (NEO::IsNV12Image(imageFormat)) {
         return planarYuv();
     }
     else if (IsPackedYuvImage(imageFormat)) {
@@ -272,4 +272,4 @@ ArrayRef<const SurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags fl
 }
 
 // clang-format on
-} // namespace OCLRT
+} // namespace NEO

@@ -9,7 +9,7 @@
 #include "runtime/gen_common/aub_mapper_base.h"
 #include "runtime/memory_manager/memory_constants.h"
 
-namespace OCLRT {
+namespace NEO {
 struct CNLFamily;
 
 template <>
@@ -25,4 +25,4 @@ struct AUBFamilyMapper<CNLFamily> {
 
     typedef AubMemDump::AubDump<AubTraits> AUB;
 };
-} // namespace OCLRT
+} // namespace NEO

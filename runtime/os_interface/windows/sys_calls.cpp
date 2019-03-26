@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "sys_calls.h"
 
-namespace OCLRT {
+namespace NEO {
 
 namespace SysCalls {
 
@@ -25,4 +25,4 @@ BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr) {
 
 } // namespace SysCalls
 
-} // namespace OCLRT
+} // namespace NEO

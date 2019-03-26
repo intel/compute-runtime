@@ -10,7 +10,7 @@
 #include <cstdio>
 #include <dirent.h>
 
-namespace OCLRT {
+namespace NEO {
 
 std::vector<std::string> Directory::getFiles(std::string &path) {
     std::vector<std::string> files;
@@ -37,4 +37,4 @@ std::vector<std::string> Directory::getFiles(std::string &path) {
     closedir(dir);
     return files;
 }
-}; // namespace OCLRT
+}; // namespace NEO

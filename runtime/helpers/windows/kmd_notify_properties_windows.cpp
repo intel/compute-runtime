@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "runtime/helpers/kmd_notify_properties.h"
 #include "runtime/os_interface/windows/sys_calls.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 void KmdNotifyHelper::updateAcLineStatus() {
     SYSTEM_POWER_STATUS systemPowerStatus = {};

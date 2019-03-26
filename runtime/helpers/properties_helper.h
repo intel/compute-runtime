@@ -12,7 +12,7 @@
 #include <array>
 #include <unordered_set>
 
-namespace OCLRT {
+namespace NEO {
 class MemObj;
 class Buffer;
 
@@ -86,4 +86,4 @@ class NonCopyableOrMovableClass {
     NonCopyableOrMovableClass(NonCopyableOrMovableClass &&) = delete;
     NonCopyableOrMovableClass &operator=(NonCopyableOrMovableClass &&) = delete;
 };
-} // namespace OCLRT
+} // namespace NEO

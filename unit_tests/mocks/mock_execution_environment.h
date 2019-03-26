@@ -10,7 +10,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/options.h"
 
-namespace OCLRT {
+namespace NEO {
 struct MockExecutionEnvironment : ExecutionEnvironment {
     MockExecutionEnvironment() = default;
     MockExecutionEnvironment(const HardwareInfo *hwInfo) {
@@ -28,4 +28,4 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
     bool localMemoryEnabledReceived = false;
     std::string aubFileNameReceived = "";
 };
-} // namespace OCLRT
+} // namespace NEO

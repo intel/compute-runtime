@@ -27,7 +27,7 @@
 #include "runtime/command_queue/flush.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 
-namespace OCLRT {
+namespace NEO {
 template <typename Family>
 void CommandQueueHw<Family>::notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead) {
     if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
@@ -45,4 +45,4 @@ template <typename Family>
 bool CommandQueueHw<Family>::requiresCacheFlushAfterWalkerBasedOnProperties(const cl_queue_properties *properties) {
     return false;
 }
-} // namespace OCLRT
+} // namespace NEO

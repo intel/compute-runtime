@@ -13,7 +13,7 @@
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 class CommandQueue;
 class Context;
 class Device;
@@ -131,4 +131,4 @@ class DeviceQueue : public BaseObject<_device_queue> {
 
 typedef DeviceQueue *(*DeviceQueueCreateFunc)(
     Context *context, Device *device, cl_queue_properties &properties);
-} // namespace OCLRT
+} // namespace NEO

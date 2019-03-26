@@ -17,7 +17,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 ////////////////////////////////////////////////////////////////////////////////
 typedef Test<MemoryManagementFixture> ContextFailureInjection;
@@ -48,7 +48,7 @@ TEST_F(ContextFailureInjection, failedAllocationInjection) {
 TEST(InvalidPropertyContextTest, GivenInvalidPropertiesWhenContextIsCreatedThenErrorIsReturned) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     cl_device_id deviceID = device.get();
-    auto pPlatform = OCLRT::platform();
+    auto pPlatform = NEO::platform();
     cl_platform_id pid[1];
     pid[0] = pPlatform;
     cl_context_properties invalidProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0], CL_CGL_SHAREGROUP_KHR, 0x10000, 0};

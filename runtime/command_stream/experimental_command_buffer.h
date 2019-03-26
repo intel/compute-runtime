@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include <memory>
 #include <stdint.h>
 
-namespace OCLRT {
+namespace NEO {
 
 class CommandStreamReceiver;
 class GraphicsAllocation;
@@ -63,4 +63,4 @@ class ExperimentalCommandBuffer {
     double timerResolution;
 };
 
-} // namespace OCLRT
+} // namespace NEO

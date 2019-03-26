@@ -10,7 +10,7 @@
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/platform/platform.h"
 
-namespace OCLRT {
+namespace NEO {
 
 ExecutionEnvironment *getExecutionEnvironmentImpl(HardwareInfo *&hwInfo) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
@@ -21,4 +21,4 @@ ExecutionEnvironment *getExecutionEnvironmentImpl(HardwareInfo *&hwInfo) {
 
     return executionEnvironment;
 }
-} // namespace OCLRT
+} // namespace NEO

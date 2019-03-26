@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "mock_gmm_memory.h"
 
-namespace OCLRT {
+namespace NEO {
 GmmMemory *GmmMemory::create() {
     return new MockGmmMemory();
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -12,7 +12,7 @@
 
 #include "gmock/gmock.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <class T>
 class MemoryManagerCreate : public T {
@@ -209,4 +209,4 @@ class GMockMemoryManagerFailFirstAllocation : public MockMemoryManager {
     }
 };
 
-} // namespace OCLRT
+} // namespace NEO

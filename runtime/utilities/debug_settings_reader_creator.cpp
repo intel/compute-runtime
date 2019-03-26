@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "runtime/utilities/debug_settings_reader_creator.h"
 
-namespace OCLRT {
+namespace NEO {
 std::unique_ptr<SettingsReader> SettingsReaderCreator::create() {
     return std::unique_ptr<SettingsReader>(SettingsReader::create());
 }
-}; // namespace OCLRT
+}; // namespace NEO

@@ -15,7 +15,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 void TbxCommandStreamFixture::SetUp(MockDevice *pDevice) {
     // Create our TBX command stream receiver based on HW type
@@ -29,4 +29,4 @@ void TbxCommandStreamFixture::TearDown() {
     delete mmTbx;
     CommandStreamFixture::TearDown();
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -9,7 +9,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/media_kernel_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 typedef MediaKernelFixture<HelloWorldFixtureFactory> MediaKernelTest;
 
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueBlockedVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {

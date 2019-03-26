@@ -17,7 +17,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 class CreateFromGlTexture : public ::testing::Test {
   public:
     // temp solution - we need to query size from GMM:
@@ -323,4 +323,4 @@ TEST_F(CreateFromGlTextureTests, GivenGlTextureTargetAndMipLevelNonNegativeWhenC
     EXPECT_GE(1u, glImage->getImageDesc().num_mip_levels);
     EXPECT_EQ(glImage->peekBaseMipLevel(), 2);
 }
-} // namespace OCLRT
+} // namespace NEO

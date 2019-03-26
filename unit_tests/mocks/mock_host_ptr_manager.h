@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/memory_manager/host_ptr_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockHostPtrManager : public HostPtrManager {
   public:
     using HostPtrManager::checkAllocationsForOverlapping;
@@ -17,4 +17,4 @@ class MockHostPtrManager : public HostPtrManager {
     using HostPtrManager::populateAlreadyAllocatedFragments;
     size_t getFragmentCount() { return partialAllocations.size(); }
 };
-} // namespace OCLRT
+} // namespace NEO

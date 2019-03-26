@@ -14,7 +14,7 @@
 
 #include <map>
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 #undef DECLARE_DEBUG_VARIABLE

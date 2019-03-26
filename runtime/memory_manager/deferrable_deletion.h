@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/utilities/idlist.h"
 
-namespace OCLRT {
+namespace NEO {
 class DeferrableDeletion : public IDNode<DeferrableDeletion> {
   public:
     template <typename... Args>
@@ -16,4 +16,4 @@ class DeferrableDeletion : public IDNode<DeferrableDeletion> {
     virtual bool apply() = 0;
     virtual ~DeferrableDeletion() = default;
 };
-} // namespace OCLRT
+} // namespace NEO

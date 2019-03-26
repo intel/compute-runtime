@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,8 @@
 
 #include <cstdlib>
 
-namespace OCLRT {
+namespace NEO {
 void abortExecution() {
     abort();
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/utilities/stackvec.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class TimestampPacketContainer;
 class CommandStreamReceiver;
@@ -25,4 +25,4 @@ class CsrDependencies : public StackVec<TimestampPacketContainer *, 32> {
                                               CommandStreamReceiver &currentCsr,
                                               DependenciesType depsType);
 };
-} // namespace OCLRT
+} // namespace NEO

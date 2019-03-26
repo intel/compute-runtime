@@ -25,7 +25,7 @@ struct Image1dDefaults {
     static const cl_image_format imageFormat;
     static const cl_image_desc imageDesc;
     static void *hostPtr;
-    static OCLRT::Context *context;
+    static NEO::Context *context;
 };
 
 struct Image2dDefaults : public Image1dDefaults {
@@ -65,9 +65,9 @@ struct ImageWriteOnly : public BaseClass {
 
 template <typename Traits>
 struct ImageHelper {
-    using Context = OCLRT::Context;
-    using Image = OCLRT::Image;
-    using MockContext = OCLRT::MockContext;
+    using Context = NEO::Context;
+    using Image = NEO::Image;
+    using MockContext = NEO::MockContext;
 
     static Image *create(Context *context = Traits::context, const cl_image_desc *imgDesc = &Traits::imageDesc,
                          const cl_image_format *imgFormat = &Traits::imageFormat) {
@@ -109,19 +109,19 @@ struct Image1dArrayHelper : public ImageHelper<Traits> {
 template <typename FamilyType>
 class ImageClearColorFixture {
   public:
-    using GmmHelper = OCLRT::GmmHelper;
-    using MockContext = OCLRT::MockContext;
-    using Image = OCLRT::Image;
-    using ImageHw = OCLRT::ImageHw<FamilyType>;
+    using GmmHelper = NEO::GmmHelper;
+    using MockContext = NEO::MockContext;
+    using Image = NEO::Image;
+    using ImageHw = NEO::ImageHw<FamilyType>;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     void SetUp() {
         hwInfoHelper.hwInfo.capabilityTable.ftrRenderCompressedImages = true;
 
-        OCLRT::platformImpl.reset();
-        OCLRT::constructPlatform()->peekExecutionEnvironment()->setHwInfo(&hwInfoHelper.hwInfo);
-        OCLRT::platform()->peekExecutionEnvironment()->initGmm();
+        NEO::platformImpl.reset();
+        NEO::constructPlatform()->peekExecutionEnvironment()->setHwInfo(&hwInfoHelper.hwInfo);
+        NEO::platform()->peekExecutionEnvironment()->initGmm();
 
         surfaceState = FamilyType::cmdInitRenderSurfaceState;
         surfaceState.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);

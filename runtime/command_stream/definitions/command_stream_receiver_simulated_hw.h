@@ -10,7 +10,7 @@
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
 
-namespace OCLRT {
+namespace NEO {
 class GraphicsAllocation;
 template <typename GfxFamily>
 class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCommonHw<GfxFamily> {
@@ -30,4 +30,4 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
     }
     void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) override{};
 };
-} // namespace OCLRT
+} // namespace NEO

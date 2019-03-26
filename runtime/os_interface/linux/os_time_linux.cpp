@@ -14,7 +14,7 @@
 
 #include <time.h>
 
-namespace OCLRT {
+namespace NEO {
 
 OSTimeLinux::OSTimeLinux(OSInterface *osInterface) {
     this->osInterface = osInterface;
@@ -154,4 +154,4 @@ uint64_t OSTimeLinux::getCpuRawTimestamp() {
     }
     return timesInNsec / ticksInNsec;
 }
-} // namespace OCLRT
+} // namespace NEO

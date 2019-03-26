@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include <stdint.h>
 
-namespace OCLRT {
+namespace NEO {
 
 enum PatchInfoAllocationType {
     Default = 0,
@@ -76,4 +76,4 @@ struct CommandChunk {
     uint64_t batchBufferStartLocation = 0;
     uint64_t batchBufferStartAddress = 0;
 };
-} // namespace OCLRT
+} // namespace NEO

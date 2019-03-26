@@ -16,7 +16,7 @@
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_interface.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename Family>
 void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
@@ -209,4 +209,4 @@ typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndPr
     return pipeControl;
 }
 
-} // namespace OCLRT
+} // namespace NEO

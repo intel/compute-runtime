@@ -11,7 +11,7 @@
 #include <map>
 
 struct ErrorCodeHelper;
-namespace OCLRT {
+namespace NEO {
 enum class OCLPlane;
 class Image;
 class Context;
@@ -50,4 +50,4 @@ class D3DSurface : public D3DSharing<D3DTypesHelper::D3D9> {
     D3D9Surface *d3d9SurfaceStaging = nullptr;
     D3DDevice *resourceDevice = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

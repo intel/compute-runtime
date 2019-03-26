@@ -15,7 +15,7 @@
 
 #include <cstring>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class ProcessElfBinaryTests : public ::testing::Test {
   public:

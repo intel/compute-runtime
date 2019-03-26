@@ -15,10 +15,10 @@
 
 #include "CL/cl.h"
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace BuiltinKernelsSimulation;
 
-namespace OCLRT {
+namespace NEO {
 struct SKLFamily;
 }
 

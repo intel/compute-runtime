@@ -18,7 +18,7 @@
 
 #include <cstdint>
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct AUBFixture : public AUBCommandStreamFixture,
                     public CommandQueueFixture,

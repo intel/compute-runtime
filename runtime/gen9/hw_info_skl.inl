@@ -12,7 +12,7 @@
 #include "hw_cmds.h"
 #include "hw_info_skl.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const char *HwMapper<IGFX_SKYLAKE>::abbreviation = "skl";
 
@@ -238,4 +238,4 @@ void setupSKLHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTa
 }
 
 void (*SKL::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupSKLHardwareInfoImpl;
-} // namespace OCLRT
+} // namespace NEO

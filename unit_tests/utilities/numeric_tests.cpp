@@ -10,7 +10,7 @@
 
 #include <type_traits>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(StorageTypeTest, whenGivenNumberOfBitsThenPicksIntegerTypeThatIsLargeEnough) {
     static_assert(std::is_same<uint8_t, StorageTypeT<0>>::value, "");

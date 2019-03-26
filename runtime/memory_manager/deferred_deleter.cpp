@@ -10,7 +10,7 @@
 #include "runtime/memory_manager/deferrable_deletion.h"
 #include "runtime/os_interface/os_thread.h"
 
-namespace OCLRT {
+namespace NEO {
 DeferredDeleter::DeferredDeleter() {
     doWorkInBackground = false;
     elementsToRelease = 0;
@@ -124,4 +124,4 @@ void DeferredDeleter::clearQueue() {
         }
     } while (!queue.peekIsEmpty());
 }
-} // namespace OCLRT
+} // namespace NEO

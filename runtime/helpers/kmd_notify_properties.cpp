@@ -11,7 +11,7 @@
 
 #include <cstdint>
 
-using namespace OCLRT;
+using namespace NEO;
 
 bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
                                           bool quickKmdSleepRequest,

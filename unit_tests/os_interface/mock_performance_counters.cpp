@@ -9,7 +9,7 @@
 
 #include "runtime/os_interface/os_interface.h"
 
-namespace OCLRT {
+namespace NEO {
 MockPerformanceCounters::MockPerformanceCounters(OSTime *osTime)
     : PerformanceCounters(osTime) {
     autoSamplingStartFunc = autoSamplingStart;
@@ -144,4 +144,4 @@ void PerformanceCountersFixture::SetUp() {
     fillOsInterface();
     PerfCounterFlags::resetPerfCountersFlags();
 }
-} // namespace OCLRT
+} // namespace NEO

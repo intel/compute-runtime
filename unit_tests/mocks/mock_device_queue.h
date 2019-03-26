@@ -9,7 +9,7 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/device_queue/device_queue_hw.h"
 
-namespace OCLRT {
+namespace NEO {
 template <typename GfxFamily>
 class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
     using BaseClass = DeviceQueueHw<GfxFamily>;
@@ -174,4 +174,4 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
         return igilCmdQueue;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -10,10 +10,10 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 #ifdef SUPPORT_CNL
 static EnableGfxProductHw<IGFX_CANNONLAKE> enableGfxProductHwCNL;
 #endif
 
-} // namespace OCLRT
+} // namespace NEO

@@ -16,7 +16,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct EnqueueMapImageTest : public DeviceFixture,
                              public CommandQueueHwFixture,

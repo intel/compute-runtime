@@ -24,7 +24,7 @@
 
 #include <fstream>
 
-namespace OCLRT {
+namespace NEO {
 bool CompilerInterface::useLlvmText = false;
 std::mutex CompilerInterface::mtx;
 
@@ -339,8 +339,8 @@ cl_int CompilerInterface::getSipKernelBinary(SipKernelType kernel, const Device 
 
 bool CompilerInterface::initialize() {
     bool compilersModulesSuccessfulyLoaded = true;
-    compilersModulesSuccessfulyLoaded &= OCLRT::loadCompiler<IGC::FclOclDeviceCtx>(Os::frontEndDllName, fclLib, fclMain);
-    compilersModulesSuccessfulyLoaded &= OCLRT::loadCompiler<IGC::IgcOclDeviceCtx>(Os::igcDllName, igcLib, igcMain);
+    compilersModulesSuccessfulyLoaded &= NEO::loadCompiler<IGC::FclOclDeviceCtx>(Os::frontEndDllName, fclLib, fclMain);
+    compilersModulesSuccessfulyLoaded &= NEO::loadCompiler<IGC::IgcOclDeviceCtx>(Os::igcDllName, igcLib, igcMain);
 
     cache.reset(new BinaryCache());
 
@@ -431,7 +431,7 @@ CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createIgcT
         auto igcPlatform = newDeviceCtx->GetPlatformHandle();
         auto igcGtSystemInfo = newDeviceCtx->GetGTSystemInfoHandle();
         auto igcFeWa = newDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
-        if (false == OCLRT::areNotNullptr(igcPlatform.get(), igcGtSystemInfo.get(), igcFeWa.get())) {
+        if (false == NEO::areNotNullptr(igcPlatform.get(), igcGtSystemInfo.get(), igcFeWa.get())) {
             DEBUG_BREAK_IF(true); // could not acquire handles to device descriptors
             return nullptr;
         }
@@ -479,4 +479,4 @@ CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createIgcT
     }
 }
 
-} // namespace OCLRT
+} // namespace NEO

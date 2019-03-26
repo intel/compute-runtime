@@ -9,7 +9,7 @@
 #include "gtest/gtest.h"
 #include "instrumentation.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct InstrumentationTest : public ::testing::Test {
     InstrumentationTest() {}

@@ -18,7 +18,7 @@
 
 #include "d3d_sharing_functions.h"
 
-namespace OCLRT {
+namespace NEO {
 
 MockContext::MockContext(Device *device, bool noSpecialQueue) {
     memoryManager = device->getMemoryManager();
@@ -95,4 +95,4 @@ void MockContext::clearSharingFunctions() {
     std::vector<decltype(this->sharingFunctions)::value_type> v;
     this->sharingFunctions.swap(v);
 }
-} // namespace OCLRT
+} // namespace NEO

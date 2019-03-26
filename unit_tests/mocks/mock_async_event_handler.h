@@ -15,7 +15,7 @@
 #include <mutex>
 #include <vector>
 
-using namespace OCLRT;
+using namespace NEO;
 namespace MockAsyncEventHandlerGlobals {
 extern bool destructorCalled;
 }

@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <cstdint>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(LocalID, GRFsPerThread_SIMD8) {
     uint32_t simd = 8;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 struct _tagCLGLSyncInfo;
 typedef _tagCLGLSyncInfo CL_GL_SYNC_INFO;
 
-namespace OCLRT {
+namespace NEO {
 class Context;
 class GLSharingFunctions;
 class OsInterface;
@@ -46,7 +46,7 @@ class GlArbSyncEvent : public Event {
     OSInterface *osInterface = nullptr;
     std::unique_ptr<CL_GL_SYNC_INFO> glSyncInfo;
 };
-} // namespace OCLRT
+} // namespace NEO
 
 extern "C" CL_API_ENTRY cl_int CL_API_CALL
 clEnqueueMarkerWithSyncObjectINTEL(cl_command_queue commandQueue,

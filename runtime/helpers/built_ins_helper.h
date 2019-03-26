@@ -9,7 +9,7 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/execution_environment/execution_environment.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const SipKernel &initSipKernel(SipKernelType type, Device &device);
 Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
@@ -17,4 +17,4 @@ Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
                              std::vector<char> &binary,
                              size_t size,
                              cl_int *errcodeRet);
-} // namespace OCLRT
+} // namespace NEO

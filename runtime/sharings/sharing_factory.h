@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class Context;
 
 enum SharingType {
@@ -61,4 +61,4 @@ class SharingFactory {
 };
 
 extern SharingFactory sharingFactory;
-} // namespace OCLRT
+} // namespace NEO

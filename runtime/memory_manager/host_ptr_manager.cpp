@@ -11,7 +11,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 HostPtrFragmentsContainer::iterator HostPtrManager::findElement(const void *ptr) {
     auto nextElement = partialAllocations.lower_bound(ptr);

@@ -10,7 +10,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 typedef CNLFamily GfxFamily;
 
 #include "unit_tests/source_level_debugger/source_level_debugger_preamble_test.inl"

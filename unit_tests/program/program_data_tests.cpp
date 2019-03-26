@@ -17,7 +17,7 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/program/program_with_source.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 using namespace iOpenCL;
 static const char constValue[] = "11223344";

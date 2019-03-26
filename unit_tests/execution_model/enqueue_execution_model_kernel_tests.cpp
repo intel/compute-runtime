@@ -25,7 +25,7 @@
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 #include "unit_tests/utilities/base_object_utils.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 static const char *binaryFile = "simple_block_kernel";
 static const char *KernelNames[] = {"kernel_reflection", "simple_block_kernel"};

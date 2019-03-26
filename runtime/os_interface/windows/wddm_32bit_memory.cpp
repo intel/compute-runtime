@@ -7,9 +7,9 @@
 
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/os_interface/32bit_memory.h"
-using namespace OCLRT;
+using namespace NEO;
 
-bool OCLRT::is32BitOsAllocatorAvailable = is64bit;
+bool NEO::is32BitOsAllocatorAvailable = is64bit;
 
 class Allocator32bit::OsInternals {
   public:
@@ -20,7 +20,7 @@ Allocator32bit::Allocator32bit(uint64_t base, uint64_t size) : base(base), size(
     heapAllocator = std::make_unique<HeapAllocator>(base, size);
 }
 
-OCLRT::Allocator32bit::Allocator32bit() {
+NEO::Allocator32bit::Allocator32bit() {
     size_t sizeToMap = 100 * 4096;
     this->base = (uint64_t)alignedMalloc(sizeToMap, 4096);
     osInternals = std::make_unique<OsInternals>();
@@ -29,7 +29,7 @@ OCLRT::Allocator32bit::Allocator32bit() {
     heapAllocator = std::make_unique<HeapAllocator>(this->base, sizeToMap);
 }
 
-OCLRT::Allocator32bit::~Allocator32bit() {
+NEO::Allocator32bit::~Allocator32bit() {
     if (this->osInternals.get() != nullptr) {
         alignedFree(this->osInternals->allocatedRange);
     }

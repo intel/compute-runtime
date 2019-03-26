@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,11 @@
 
 #include "engine_node.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class DrmEngineMapper {
   public:
     static unsigned int engineNodeMap(EngineType engineType);
 };
 
-} // namespace OCLRT
+} // namespace NEO

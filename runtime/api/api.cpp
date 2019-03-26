@@ -43,7 +43,7 @@
 #include <algorithm>
 #include <cstring>
 
-using namespace OCLRT;
+using namespace NEO;
 
 cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                                     cl_platform_id *platforms,
@@ -3663,7 +3663,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
 
         pKernel->clearKernelExecInfo();
         for (uint32_t i = 0; i < numPointers; i++) {
-            OCLRT::GraphicsAllocation *pSvmAlloc =
+            NEO::GraphicsAllocation *pSvmAlloc =
                 pKernel->getContext().getSVMAllocsManager()->getSVMAlloc((const void *)pSvmPtrList[i]);
             if (pSvmAlloc == nullptr) {
                 retVal = CL_INVALID_VALUE;

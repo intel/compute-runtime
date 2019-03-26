@@ -14,7 +14,7 @@
 
 #include <cstring>
 
-namespace OCLRT {
+namespace NEO {
 
 constexpr uint32_t hwConfigTestMidThreadBit = 1 << 8;
 constexpr uint32_t hwConfigTestThreadGroupBit = 1 << 9;
@@ -44,12 +44,12 @@ template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
 }
 
-} // namespace OCLRT
+} // namespace NEO
 
 struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
 };
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 void mockCpuidex(int *cpuInfo, int functionId, int subfunctionId);

@@ -16,7 +16,7 @@
 
 #include <type_traits>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class DispatchInfoFixture : public ContextFixture, public DeviceFixture {
     using ContextFixture::SetUp;

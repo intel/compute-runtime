@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/gen_common/hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 class Kernel;
 
 class GTPinHwHelper {
@@ -36,4 +36,4 @@ class GTPinHwHelperHw : public GTPinHwHelper {
   private:
     GTPinHwHelperHw(){};
 };
-} // namespace OCLRT
+} // namespace NEO

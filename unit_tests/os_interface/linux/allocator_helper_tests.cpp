@@ -10,5 +10,5 @@
 #include "gtest/gtest.h"
 
 TEST(AllocatorHelper, givenExpectedSizeToMapWhenGetSizetoMapCalledThenExpectedValueReturned) {
-    EXPECT_EQ(1 * 1024 * 1024u, OCLRT::getSizeToMap());
+    EXPECT_EQ(1 * 1024 * 1024u, NEO::getSizeToMap());
 }

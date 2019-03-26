@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename Family>
 int AubHelperHw<Family>::getDataHintForPml4Entry() const {
@@ -58,4 +58,4 @@ int AubHelperHw<Family>::getMemTraceForPtEntry() const {
     return AubMemDump::AddressSpaceValues::TracePpgttEntry;
 }
 
-} // namespace OCLRT
+} // namespace NEO

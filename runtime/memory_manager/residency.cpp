@@ -9,7 +9,7 @@
 
 #include "runtime/os_interface/os_context.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 void ResidencyData::updateCompletionData(uint64_t newFenceValue, uint32_t contextId) {
     lastFenceValues[contextId] = newFenceValue;

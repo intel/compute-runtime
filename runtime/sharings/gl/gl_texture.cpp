@@ -22,7 +22,7 @@
 #include "config.h"
 #include <GL/gl.h>
 
-namespace OCLRT {
+namespace NEO {
 Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel, cl_GLuint texture,
                                         cl_int *errcodeRet) {
     ErrorCodeHelper errorCode(errcodeRet, CL_INVALID_GL_OBJECT);
@@ -243,4 +243,4 @@ void GlTexture::releaseResource(MemObj *memObject) {
     }
 }
 
-} // namespace OCLRT
+} // namespace NEO

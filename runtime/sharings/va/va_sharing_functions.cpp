@@ -15,7 +15,7 @@ namespace Os {
 extern const char *libvaDllName;
 }
 
-namespace OCLRT {
+namespace NEO {
 std::function<void *(const char *, int)> VASharingFunctions::fdlopen = dlopen;
 std::function<void *(void *handle, const char *symbol)> VASharingFunctions::fdlsym = dlsym;
 std::function<int(void *handle)> VASharingFunctions::fdlclose = dlclose;
@@ -60,4 +60,4 @@ void VASharingFunctions::initFunctions() {
         }
     }
 }
-} // namespace OCLRT
+} // namespace NEO

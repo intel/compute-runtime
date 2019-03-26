@@ -19,7 +19,7 @@
 #include <mutex>
 #include <thread>
 
-namespace OCLRT {
+namespace NEO {
 
 #if defined(__clang__)
 #define NO_SANITIZE __attribute__((no_sanitize("undefined")))
@@ -257,4 +257,4 @@ class BaseObject : public B, public ReferenceTrackedObject<DerivedType_t<B>> {
 template <typename Type>
 void populateFactoryTable();
 
-} // namespace OCLRT
+} // namespace NEO

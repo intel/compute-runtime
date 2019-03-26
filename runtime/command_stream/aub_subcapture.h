@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include <memory>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 struct MultiDispatchInfo;
 class SettingsReader;
@@ -66,4 +66,4 @@ class AubSubCaptureManager {
     std::string currentFileName;
     std::unique_ptr<SettingsReader> settingsReader;
 };
-} // namespace OCLRT
+} // namespace NEO

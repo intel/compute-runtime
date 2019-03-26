@@ -15,7 +15,7 @@
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 ScratchSpaceControllerBase::ScratchSpaceControllerBase(const HardwareInfo &info, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)
     : ScratchSpaceController(info, environment, allocationStorage) {
 }
@@ -72,4 +72,4 @@ uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
 void ScratchSpaceControllerBase::reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) {
 }
 
-} // namespace OCLRT
+} // namespace NEO

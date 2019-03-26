@@ -10,7 +10,7 @@
 
 #include "gmm_client_context.h"
 
-namespace OCLRT {
+namespace NEO {
 void GmmResourceInfo::customDeleter(GMM_RESOURCE_INFO *gmmResourceInfo) {
     GmmHelper::getClientContext()->destroyResInfoObject(gmmResourceInfo);
 }
@@ -25,4 +25,4 @@ GmmResourceInfo::GmmResourceInfo(GMM_RESOURCE_INFO *inputGmmResourceInfo) {
     this->resourceInfo = UniquePtrType(resourceInfoPtr, GmmResourceInfo::customDeleter);
 }
 
-} // namespace OCLRT
+} // namespace NEO

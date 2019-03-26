@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/memory_manager/allocations_list.h"
 
-namespace OCLRT {
+namespace NEO {
 class CommandStreamReceiver;
 
 class InternalAllocationStorage {
@@ -29,4 +29,4 @@ class InternalAllocationStorage {
     AllocationsList temporaryAllocations;
     AllocationsList allocationsForReuse;
 };
-} // namespace OCLRT
+} // namespace NEO

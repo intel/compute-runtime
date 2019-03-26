@@ -10,7 +10,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 struct CommandStreamFixture {
     CommandStreamFixture(void)
@@ -29,4 +29,4 @@ struct CommandStreamFixture {
     LinearStream *pCS;
     void *pCmdBuffer;
 };
-} // namespace OCLRT
+} // namespace NEO

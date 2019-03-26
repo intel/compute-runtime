@@ -21,7 +21,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class KernelArgPipeFixture : public ContextFixture, public DeviceFixture {
 

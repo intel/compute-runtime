@@ -15,7 +15,7 @@ int (*c_ioctl)(int fd, unsigned long int request, ...) = nullptr;
 
 int fakeFd = 1023;
 int haveDri = 0;                                         // index of dri to serve, -1 - none
-int deviceId = OCLRT::deviceDescriptorTable[0].deviceId; // default supported DeviceID
+int deviceId = NEO::deviceDescriptorTable[0].deviceId;   // default supported DeviceID
 int haveSoftPin = 1;
 int havePreemption = I915_SCHEDULER_CAP_ENABLED |
                      I915_SCHEDULER_CAP_PRIORITY |

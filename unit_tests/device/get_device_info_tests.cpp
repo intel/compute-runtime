@@ -12,7 +12,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(GetDeviceInfo, InvalidFlags_returnsError) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

@@ -14,7 +14,7 @@
 #include <memory>
 #include <mutex>
 
-namespace OCLRT {
+namespace NEO {
 struct HardwareInfo;
 class OSInterface;
 class OSTime;
@@ -74,4 +74,4 @@ class PerformanceCounters {
     decltype(&instrEscSetPmRegsCfg) setPmRegsCfgFunc = instrEscSetPmRegsCfg;
     decltype(&instrEscSendReadRegsCfg) sendReadRegsCfgFunc = instrEscSendReadRegsCfg;
 };
-} // namespace OCLRT
+} // namespace NEO

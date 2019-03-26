@@ -19,7 +19,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct EnqueueMapBufferTest : public DeviceFixture,
                               public CommandQueueHwFixture,

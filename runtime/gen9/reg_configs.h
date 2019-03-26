@@ -9,7 +9,7 @@
 #include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/helpers/preamble.h"
 
-namespace OCLRT {
+namespace NEO {
 struct SKLFamily;
 template <>
 struct L3CNTLREGConfig<IGFX_SKYLAKE> {
@@ -35,4 +35,4 @@ constexpr uint32_t getRegData(const uint32_t &policy) {
 };
 } // namespace DebugControlReg2
 
-} // namespace OCLRT
+} // namespace NEO

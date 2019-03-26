@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 struct CmdValidator {
     CmdValidator() {
@@ -338,11 +338,11 @@ inline bool expectCmdBuff(GenCmdList::iterator begin, GenCmdList::iterator end,
 }
 
 template <typename FamilyType>
-inline bool expectCmdBuff(OCLRT::LinearStream &commandStream, size_t startOffset,
+inline bool expectCmdBuff(NEO::LinearStream &commandStream, size_t startOffset,
                           std::vector<MatchCmd *> &&expectedCmdBuffMatchers, std::string *outReason = nullptr) {
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStream, startOffset);
     return expectCmdBuff<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), std::move(expectedCmdBuffMatchers), outReason);
 }
 
-} // namespace OCLRT
+} // namespace NEO

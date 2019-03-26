@@ -11,7 +11,7 @@
 #include <array>
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 struct ResidencyData {
     bool resident[maxOsContextCount] = {};
@@ -22,4 +22,4 @@ struct ResidencyData {
   protected:
     std::array<uint64_t, maxOsContextCount> lastFenceValues = {};
 };
-} // namespace OCLRT
+} // namespace NEO

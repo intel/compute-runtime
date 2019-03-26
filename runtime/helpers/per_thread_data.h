@@ -14,7 +14,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 class LinearStream;
 
 struct PerThreadDataHelper {
@@ -47,4 +47,4 @@ struct PerThreadDataHelper {
 
     static uint32_t getThreadPayloadSize(const iOpenCL::SPatchThreadPayload &threadPayload, uint32_t simd);
 };
-} // namespace OCLRT
+} // namespace NEO

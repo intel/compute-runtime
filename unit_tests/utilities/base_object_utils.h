@@ -8,7 +8,7 @@
 #pragma once
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename T>
 struct ReleaseObject {
@@ -31,4 +31,4 @@ template <class _Ty, class... _Types>
 inline ReleaseableObjectPtr<_Ty> make_releaseable(_Types &&... _Args) {
     return (ReleaseableObjectPtr<_Ty>(new _Ty(std::forward<_Types>(_Args)...)));
 }
-} // namespace OCLRT
+} // namespace NEO

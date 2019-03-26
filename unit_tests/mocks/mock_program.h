@@ -15,7 +15,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 class GraphicsAllocation;
 
@@ -161,4 +161,4 @@ class GMockProgram : public Program {
     MOCK_METHOD0(appendKernelDebugOptions, bool(void));
 };
 
-} // namespace OCLRT
+} // namespace NEO

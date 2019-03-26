@@ -10,7 +10,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(debugBreak, whenDebugBreakCalledInTestThenNothingIsThrown) {
     DEBUG_BREAK_IF(!false);

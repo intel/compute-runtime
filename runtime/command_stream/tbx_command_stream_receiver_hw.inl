@@ -27,7 +27,7 @@
 
 #include <cstring>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment)
@@ -427,4 +427,4 @@ template <typename GfxFamily>
 bool TbxCommandStreamReceiverHw<GfxFamily>::getpollNotEqualValueForPollForCompletion() const {
     return false;
 }
-} // namespace OCLRT
+} // namespace NEO

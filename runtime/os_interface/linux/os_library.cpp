@@ -13,7 +13,7 @@
 
 #include <dlfcn.h>
 
-namespace OCLRT {
+namespace NEO {
 OsLibrary *OsLibrary::load(const std::string &name) {
     auto ptr = new (std::nothrow) Linux::OsLibrary(name);
     if (ptr == nullptr)
@@ -52,4 +52,4 @@ void *OsLibrary::getProcAddress(const std::string &procName) {
     return dlsym(this->handle, procName.c_str());
 }
 } // namespace Linux
-} // namespace OCLRT
+} // namespace NEO

@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <ctime>
 
-namespace OCLRT {
+namespace NEO {
 
 //threshold used to determine what kind of device is underneath
 //big cores like SKL have 8EU * 7 HW threads per subslice and are considered as highThreadCount devices
@@ -473,4 +473,4 @@ void provideLocalWorkGroupSizeHints(Context *context, uint32_t maxWorkGroupSize,
         }
     }
 }
-} // namespace OCLRT
+} // namespace NEO

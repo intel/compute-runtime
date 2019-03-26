@@ -16,7 +16,7 @@
 #include <cstring>
 #include <type_traits>
 
-namespace OCLRT {
+namespace NEO {
 
 ExperimentalCommandBuffer::ExperimentalCommandBuffer(CommandStreamReceiver *csr, double profilingTimerResolution) : commandStreamReceiver(csr),
                                                                                                                     currentStream(nullptr),
@@ -64,4 +64,4 @@ void ExperimentalCommandBuffer::makeResidentAllocations() {
     commandStreamReceiver->makeResident(*experimentalAllocation);
 }
 
-} // namespace OCLRT
+} // namespace NEO

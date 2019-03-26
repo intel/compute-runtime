@@ -9,7 +9,7 @@
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/two_walker_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct OOQFixtureFactory : public HelloWorldFixtureFactory {
     typedef OOQueueFixture CommandQueueFixture;

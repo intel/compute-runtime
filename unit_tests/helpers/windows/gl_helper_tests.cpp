@@ -17,7 +17,7 @@
 
 typedef const char *(__cdecl *funcType)();
 
-namespace OCLRT {
+namespace NEO {
 class glFunctionHelperMock : public glFunctionHelper {
   public:
     glFunctionHelperMock(OsLibrary *glLibrary, const std::string &functionName) : glFunctionHelper(glLibrary, functionName) {}
@@ -48,4 +48,4 @@ TEST(glFunctionHelper, givenRealFunctionNameWhenCreateGlFunctionHelperThenGetPoi
     funcType function = loader["realFunction"];
     EXPECT_STREQ(realFunction(), function());
 }
-}; // namespace OCLRT
+}; // namespace NEO

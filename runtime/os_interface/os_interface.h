@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-namespace OCLRT {
+namespace NEO {
 
 class OSInterface {
 
@@ -30,4 +30,4 @@ class OSInterface {
   protected:
     OSInterfaceImpl *osInterfaceImpl = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

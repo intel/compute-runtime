@@ -14,7 +14,7 @@
 
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 class CommandQueue;
 class Device;
@@ -139,4 +139,4 @@ class Context : public BaseObject<_cl_context> {
     cl_bool preferD3dSharedResources = 0u;
     ContextType contextType = ContextType::CONTEXT_TYPE_DEFAULT;
 };
-} // namespace OCLRT
+} // namespace NEO

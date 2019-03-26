@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/libult/create_command_stream.h"
 
-namespace OCLRT {
+namespace NEO {
 class OSInterface;
 
 bool hwMetricsEnableFuncPassing(InstrEscCbData cbData, bool enable);
@@ -146,4 +146,4 @@ struct PerformanceCountersFixture {
     std::unique_ptr<OSTime> osTimeBase;
     std::unique_ptr<MockPerformanceCounters> performanceCountersBase;
 };
-} // namespace OCLRT
+} // namespace NEO

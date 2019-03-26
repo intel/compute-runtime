@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 struct DeviceCallbacks {
@@ -22,4 +22,4 @@ struct TTCallbacks {
     static int __stdcall writeL3Address(void *queueHandle, uint64_t l3GfxAddress, uint64_t regOffset);
 };
 
-} // namespace OCLRT
+} // namespace NEO

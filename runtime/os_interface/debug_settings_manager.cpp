@@ -22,7 +22,7 @@
 #include <cstdio>
 #include <sstream>
 
-namespace OCLRT {
+namespace NEO {
 
 DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
 
@@ -332,4 +332,4 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
 template class DebugSettingsManager<DebugFunctionalityLevel::None>;
 template class DebugSettingsManager<DebugFunctionalityLevel::Full>;
 template class DebugSettingsManager<DebugFunctionalityLevel::RegKeys>;
-}; // namespace OCLRT
+}; // namespace NEO

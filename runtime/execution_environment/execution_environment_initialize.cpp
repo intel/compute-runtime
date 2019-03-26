@@ -7,8 +7,8 @@
 
 #include "runtime/execution_environment/execution_environment.h"
 
-namespace OCLRT {
+namespace NEO {
 void ExecutionEnvironment::initializeSpecialCommandStreamReceiver() {
 }
 
-} // namespace OCLRT
+} // namespace NEO

@@ -30,7 +30,7 @@
 #include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/tag_allocator.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getSshHeapSize() {
@@ -811,4 +811,4 @@ int CommandStreamReceiverHw<GfxFamily>::getRequiredPipeControlSize() const {
     const auto pipeControlCount = KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2u : 1u;
     return pipeControlCount * sizeof(typename GfxFamily::PIPE_CONTROL);
 }
-} // namespace OCLRT
+} // namespace NEO

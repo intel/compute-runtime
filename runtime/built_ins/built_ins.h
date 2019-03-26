@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 typedef std::vector<char> BuiltinResourceT;
 
 class Context;
@@ -235,4 +235,4 @@ class BuiltInOwnershipWrapper : public NonCopyableOrMovableClass {
 template <typename HWFamily, EBuiltInOps OpCode>
 class BuiltInOp;
 
-} // namespace OCLRT
+} // namespace NEO

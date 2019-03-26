@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "runtime/context/context.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 namespace DeviceHostQueue {
 typedef ::testing::Types<CommandQueue, DeviceQueue> QueueTypes;
 

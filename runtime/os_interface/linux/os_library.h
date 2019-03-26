@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,10 @@
 #pragma once
 #include "runtime/os_interface/os_library.h"
 
-namespace OCLRT {
+namespace NEO {
 namespace Linux {
 
-class OsLibrary : public OCLRT::OsLibrary {
+class OsLibrary : public NEO::OsLibrary {
   private:
     void *handle;
 
@@ -23,4 +23,4 @@ class OsLibrary : public OCLRT::OsLibrary {
     void *getProcAddress(const std::string &procName) override;
 };
 } // namespace Linux
-} // namespace OCLRT
+} // namespace NEO

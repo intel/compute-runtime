@@ -13,7 +13,7 @@
 
 #include <iterator>
 
-namespace OCLRT {
+namespace NEO {
 AsyncEventsHandler::AsyncEventsHandler() {
     allowAsyncProcess = false;
     registerList.reserve(64);
@@ -115,4 +115,4 @@ void AsyncEventsHandler::releaseEvents() {
     list.clear();
     UNRECOVERABLE_IF(!registerList.empty()) // transferred before release
 }
-} // namespace OCLRT
+} // namespace NEO

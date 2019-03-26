@@ -11,7 +11,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 ContextFixture::ContextFixture()
     : pContext(nullptr) {
@@ -30,4 +30,4 @@ void ContextFixture::TearDown() {
         pContext->release();
     }
 }
-} // namespace OCLRT
+} // namespace NEO

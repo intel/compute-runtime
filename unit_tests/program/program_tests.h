@@ -18,11 +18,11 @@ extern std::vector<const char *> SourceFileNames;
 extern std::vector<const char *> BinaryForSourceFileNames;
 extern std::vector<const char *> KernelNames;
 
-class ProgramTests : public OCLRT::DeviceFixture,
+class ProgramTests : public NEO::DeviceFixture,
                      public ::testing::Test,
-                     public OCLRT::ContextFixture {
+                     public NEO::ContextFixture {
 
-    using OCLRT::ContextFixture::SetUp;
+    using NEO::ContextFixture::SetUp;
 
   public:
     void SetUp() override;

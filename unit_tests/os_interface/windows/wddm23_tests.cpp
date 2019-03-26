@@ -18,7 +18,7 @@
 #include "unit_tests/mocks/mock_wddm_interface23.h"
 #include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
     void SetUp() override {

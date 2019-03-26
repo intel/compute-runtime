@@ -13,7 +13,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetDebugSurfaceBtiIsCalledThenCorrectValueIsReturned) {
     auto device = std::make_unique<MockDevice>(*platformDevices[0]);

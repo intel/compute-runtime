@@ -13,7 +13,7 @@
 
 #include <functional>
 
-using namespace OCLRT;
+using namespace NEO;
 
 using ImageEnqueueCall = std::function<void(MockCommandQueue *, Image *, size_t *, size_t *, int32_t &)>;
 

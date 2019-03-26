@@ -19,7 +19,7 @@
 
 #include "hw_cmds.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class MediaImageSetArgTest : public DeviceFixture,
                              public testing::Test {

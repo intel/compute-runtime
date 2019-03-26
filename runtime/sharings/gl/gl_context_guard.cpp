@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "runtime/sharings/gl/gl_sharing.h"
 
-namespace OCLRT {
+namespace NEO {
 GLContextGuard::GLContextGuard(GLSharingFunctions &sharingFcns) : sharingFunctions(&sharingFcns) {
     currentContextHandle = sharingFcns.getCurrentContext();
     currentDisplayHandle = sharingFcns.getCurrentDisplay();
@@ -31,4 +31,4 @@ GLContextGuard::~GLContextGuard() {
         sharingFunctions->makeCurrent(currentContextHandle, currentDisplayHandle);
     }
 }
-} // namespace OCLRT
+} // namespace NEO

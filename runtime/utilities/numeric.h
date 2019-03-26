@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 template <uint8_t NumBits>
 struct StorageType;
@@ -87,4 +87,4 @@ struct UnsignedFixedPointValue {
 };
 
 using FixedU4D8 = UnsignedFixedPointValue<4, 8>;
-} // namespace OCLRT
+} // namespace NEO

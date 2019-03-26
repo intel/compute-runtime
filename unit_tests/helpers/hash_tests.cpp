@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(HashTests, givenSamePointersWhenHashIsCalculatedThenSame32BitValuesAreGenerated) {
     uintptr_t ptr1UI = 1;

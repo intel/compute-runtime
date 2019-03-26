@@ -15,7 +15,7 @@
 //      <or, on Windows systems, edit HAVE_TBX_SERVER settings using>
 //    notepad build_runtime_vs2013.bat
 
-namespace OCLRT {
+namespace NEO {
 class CommandStreamReceiver;
 class TbxSockets;
 class ExecutionEnvironment;
@@ -46,8 +46,8 @@ class TbxStream : public AubMemDump::AubStream {
 struct TbxCommandStreamReceiver {
     static CommandStreamReceiver *create(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 
-    using TbxStream = OCLRT::TbxStream;
+    using TbxStream = NEO::TbxStream;
 };
 
 typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment);
-} // namespace OCLRT
+} // namespace NEO

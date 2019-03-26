@@ -24,7 +24,7 @@
 #include <sstream>
 #include <unordered_map>
 
-namespace OCLRT {
+namespace NEO {
 
 const uint32_t WorkloadInfo::undefinedOffset = (uint32_t)-1;
 const uint32_t WorkloadInfo::invalidParentEvent = (uint32_t)-1;
@@ -494,4 +494,4 @@ bool KernelInfo::createKernelAllocation(MemoryManager *memoryManager) {
     return memoryManager->copyMemoryToAllocation(kernelAllocation, heapInfo.pKernelHeap, kernelIsaSize);
 }
 
-} // namespace OCLRT
+} // namespace NEO

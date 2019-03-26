@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 MockDeferredDeleter::MockDeferredDeleter() {
     shouldStopCalled = 0;
@@ -129,4 +129,4 @@ void MockDeferredDeleter::expectDrainBlockingValue(bool value) {
     expectedDrainValue = value;
     expectDrainCalled = true;
 }
-} // namespace OCLRT
+} // namespace NEO

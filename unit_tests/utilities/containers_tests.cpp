@@ -21,7 +21,7 @@
 #include <type_traits>
 #include <vector>
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct DummyFNode : IFNode<DummyFNode> {
     DummyFNode(uint32_t *destructorsCounter = nullptr)

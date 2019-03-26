@@ -12,7 +12,7 @@
 #include <set>
 #include <unordered_map>
 
-namespace OCLRT {
+namespace NEO {
 
 class CommandQueue;
 
@@ -55,4 +55,4 @@ class EventsTracker {
                           const EventIdMap &eventsIdMapping);
 };
 
-} // namespace OCLRT
+} // namespace NEO

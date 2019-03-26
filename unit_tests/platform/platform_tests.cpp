@@ -23,7 +23,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct PlatformTest : public ::testing::Test {
     void SetUp() override { pPlatform.reset(new Platform()); }
@@ -173,7 +173,7 @@ TEST(PlatformTestSimple, shutdownClosesAsyncEventHandlerThread) {
     EXPECT_TRUE(MockAsyncEventHandlerGlobals::destructorCalled);
 }
 
-namespace OCLRT {
+namespace NEO {
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 }
 

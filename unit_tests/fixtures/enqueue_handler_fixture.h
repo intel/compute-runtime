@@ -11,17 +11,17 @@
 
 #include "gtest/gtest.h"
 
-class EnqueueHandlerTest : public OCLRT::DeviceFixture,
+class EnqueueHandlerTest : public NEO::DeviceFixture,
                            public testing::Test {
   public:
     void SetUp() override {
         DeviceFixture::SetUp();
-        context = new OCLRT::MockContext(pDevice);
+        context = new NEO::MockContext(pDevice);
     }
 
     void TearDown() override {
         context->decRefInternal();
         DeviceFixture::TearDown();
     }
-    OCLRT::MockContext *context;
+    NEO::MockContext *context;
 };

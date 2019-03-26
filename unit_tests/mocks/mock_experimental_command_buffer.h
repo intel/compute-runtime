@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/command_stream/experimental_command_buffer.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class MockExperimentalCommandBuffer : public ExperimentalCommandBuffer {
     using BaseClass = ExperimentalCommandBuffer;
@@ -25,4 +25,4 @@ class MockExperimentalCommandBuffer : public ExperimentalCommandBuffer {
     }
 };
 
-} // namespace OCLRT
+} // namespace NEO

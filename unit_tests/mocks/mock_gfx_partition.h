@@ -7,7 +7,7 @@
 
 #include "runtime/memory_manager/gfx_partition.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class MockGfxPartition : public GfxPartition {
   public:

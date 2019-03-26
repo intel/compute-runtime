@@ -11,7 +11,7 @@
 #include <mutex>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 class MapOperationsHandler {
   public:
@@ -28,4 +28,4 @@ class MapOperationsHandler {
     mutable std::mutex mtx;
 };
 
-} // namespace OCLRT
+} // namespace NEO

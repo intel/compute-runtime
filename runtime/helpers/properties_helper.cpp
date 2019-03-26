@@ -12,7 +12,7 @@
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking,
                                        size_t *offsetPtr, size_t *sizePtr, void *ptr)
     : memObj(memObj), cmdType(cmdType), mapFlags(mapFlags), blocking(blocking), ptr(ptr) {
@@ -45,4 +45,4 @@ void *TransferProperties::getCpuPtrForReadWrite() {
     return ptrOffset(lockedPtr ? ptrOffset(lockedPtr, memObj->getOffset()) : memObj->getCpuAddressForMemoryTransfer(), offset[0]);
 }
 
-} // namespace OCLRT
+} // namespace NEO

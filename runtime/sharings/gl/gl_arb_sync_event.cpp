@@ -18,7 +18,7 @@
 
 #include <GL/gl.h>
 
-namespace OCLRT {
+namespace NEO {
 GlArbSyncEvent::GlArbSyncEvent(Context &context)
     : Event(&context, nullptr, CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR, eventNotReady, eventNotReady),
       glSyncInfo(new CL_GL_SYNC_INFO{}) {
@@ -31,7 +31,7 @@ bool GlArbSyncEvent::setBaseEvent(Event &ev) {
     auto cmdQueue = ev.getCommandQueue();
     auto osInterface = cmdQueue->getCommandStreamReceiver().getOSInterface();
     UNRECOVERABLE_IF(osInterface == nullptr);
-    if (false == ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectSetup(*osInterface, *glSyncInfo)) {
+    if (false == ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectSetup(*osInterface, *glSyncInfo)) {
         return false;
     }
 
@@ -46,7 +46,7 @@ bool GlArbSyncEvent::setBaseEvent(Event &ev) {
 
 GlArbSyncEvent::~GlArbSyncEvent() {
     if (baseEvent != nullptr) {
-        ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectCleanup(*osInterface, glSyncInfo.get());
+        ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectCleanup(*osInterface, glSyncInfo.get());
         baseEvent->decRefInternal();
     }
 }
@@ -70,10 +70,10 @@ void GlArbSyncEvent::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tr
         return;
     }
 
-    ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectSignal(event.getCommandQueue()->getCommandStreamReceiver().getOsContext(), *glSyncInfo);
-    ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectWaitServer(*osInterface, *glSyncInfo);
+    ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectSignal(event.getCommandQueue()->getCommandStreamReceiver().getOsContext(), *glSyncInfo);
+    ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectWaitServer(*osInterface, *glSyncInfo);
 }
-} // namespace OCLRT
+} // namespace NEO
 
 extern "C" CL_API_ENTRY cl_int CL_API_CALL
 clEnqueueMarkerWithSyncObjectINTEL(cl_command_queue commandQueue,
@@ -94,7 +94,7 @@ clGetCLEventInfoINTEL(cl_event event, PCL_GL_SYNC_INFO *pSyncInfoHandleRet, cl_c
         return CL_INVALID_ARG_VALUE;
     }
 
-    auto neoEvent = OCLRT::castToObject<OCLRT::Event>(event);
+    auto neoEvent = NEO::castToObject<NEO::Event>(event);
     if (nullptr == neoEvent) {
         return CL_INVALID_EVENT;
     }
@@ -105,12 +105,12 @@ clGetCLEventInfoINTEL(cl_event event, PCL_GL_SYNC_INFO *pSyncInfoHandleRet, cl_c
         return CL_SUCCESS;
     }
 
-    auto sharing = neoEvent->getContext()->getSharing<OCLRT::GLSharingFunctions>();
+    auto sharing = neoEvent->getContext()->getSharing<NEO::GLSharingFunctions>();
     if (sharing == nullptr) {
         return CL_INVALID_OPERATION;
     }
 
-    OCLRT::GlArbSyncEvent *arbSyncEvent = sharing->getOrCreateGlArbSyncEvent(*neoEvent);
+    NEO::GlArbSyncEvent *arbSyncEvent = sharing->getOrCreateGlArbSyncEvent(*neoEvent);
     if (nullptr == arbSyncEvent) {
         return CL_OUT_OF_RESOURCES;
     }
@@ -125,12 +125,12 @@ clGetCLEventInfoINTEL(cl_event event, PCL_GL_SYNC_INFO *pSyncInfoHandleRet, cl_c
 
 extern "C" CL_API_ENTRY cl_int CL_API_CALL
 clReleaseGlSharedEventINTEL(cl_event event) {
-    auto neoEvent = OCLRT::castToObject<OCLRT::Event>(event);
+    auto neoEvent = NEO::castToObject<NEO::Event>(event);
     if (nullptr == neoEvent) {
         return CL_INVALID_EVENT;
     }
-    auto arbSyncEvent = neoEvent->getContext()->getSharing<OCLRT::GLSharingFunctions>()->getGlArbSyncEvent(*neoEvent);
-    neoEvent->getContext()->getSharing<OCLRT::GLSharingFunctions>()->removeGlArbSyncEventMapping(*neoEvent);
+    auto arbSyncEvent = neoEvent->getContext()->getSharing<NEO::GLSharingFunctions>()->getGlArbSyncEvent(*neoEvent);
+    neoEvent->getContext()->getSharing<NEO::GLSharingFunctions>()->removeGlArbSyncEventMapping(*neoEvent);
     if (nullptr != arbSyncEvent) {
         arbSyncEvent->release();
     }

@@ -27,7 +27,7 @@
 #include "CL/cl_gl.h"
 #include "config.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 cl_mem CL_API_CALL clCreateFromGLBuffer(cl_context context, cl_mem_flags flags, cl_GLuint bufobj, cl_int *errcodeRet) {
 

@@ -7,7 +7,7 @@
 
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
-namespace OCLRT {
+namespace NEO {
 void Wddm::applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext) {
 }
-} // namespace OCLRT
+} // namespace NEO

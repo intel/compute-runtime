@@ -12,7 +12,7 @@
 #include "unit_tests/aub_tests/fixtures/aub_parent_kernel_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 GEN9TEST_F(AUBParentKernelFixture, EnqueueParentKernel) {
     if (pDevice->getSupportedClVersion() >= 20) {

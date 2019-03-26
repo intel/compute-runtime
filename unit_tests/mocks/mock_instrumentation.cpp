@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-using namespace OCLRT;
+using namespace NEO;
 
 bool InstrAutoSamplingStart(
     InstrEscCbData cbData,

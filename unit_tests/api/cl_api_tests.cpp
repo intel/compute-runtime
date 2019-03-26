@@ -14,7 +14,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 api_fixture::api_fixture()
     : retVal(CL_SUCCESS), retSize(0), pCommandQueue(nullptr),
@@ -76,4 +76,4 @@ void api_fixture_using_aligned_memory_manager::TearDown() {
     program->release();
     delete device;
 }
-} // namespace OCLRT
+} // namespace NEO

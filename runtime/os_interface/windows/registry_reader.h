@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 class RegistryReader : public SettingsReader {
   public:
     int32_t getSetting(const char *settingName, int32_t defaultValue) override;
@@ -31,4 +31,4 @@ class RegistryReader : public SettingsReader {
     void setUpProcessName();
     std::string processName;
 };
-} // namespace OCLRT
+} // namespace NEO

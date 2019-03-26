@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "CL/cl.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockContext;
 
 class ContextFixture {
@@ -21,4 +21,4 @@ class ContextFixture {
 
     MockContext *pContext;
 };
-} // namespace OCLRT
+} // namespace NEO

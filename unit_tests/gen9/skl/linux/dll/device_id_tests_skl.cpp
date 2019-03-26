@@ -12,7 +12,7 @@
 
 #include <array>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(SklDeviceIdTest, supportedDeviceId) {
     std::array<DeviceDescriptor, 30> expectedDescriptors = {{

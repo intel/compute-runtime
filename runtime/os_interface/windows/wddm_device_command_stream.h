@@ -10,7 +10,7 @@
 
 struct COMMAND_BUFFER_HEADER_REC;
 
-namespace OCLRT {
+namespace NEO {
 class GmmPageTableMngr;
 class GraphicsAllocation;
 class WddmMemoryManager;
@@ -44,4 +44,4 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     COMMAND_BUFFER_HEADER_REC *commandBufferHeader;
     bool pageTableManagerInitialized = false;
 };
-} // namespace OCLRT
+} // namespace NEO

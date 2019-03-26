@@ -11,7 +11,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 GraphicsAllocation *AUBFixture::createHostPtrAllocationFromSvmPtr(void *svmPtr, size_t size) {
     GraphicsAllocation *allocation = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, svmPtr);
@@ -22,4 +22,4 @@ GraphicsAllocation *AUBFixture::createHostPtrAllocationFromSvmPtr(void *svmPtr, 
     return allocation;
 }
 
-} // namespace OCLRT
+} // namespace NEO

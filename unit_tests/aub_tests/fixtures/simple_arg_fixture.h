@@ -15,7 +15,7 @@
 #include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 
-namespace OCLRT {
+namespace NEO {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Factory where all command stream traffic funnels to an AUB file
@@ -107,4 +107,4 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
     size_t sizeUserMemory;
     GraphicsAllocation *outBuffer;
 };
-} // namespace OCLRT
+} // namespace NEO

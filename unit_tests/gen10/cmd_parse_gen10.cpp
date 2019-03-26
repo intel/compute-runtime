@@ -8,8 +8,8 @@
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 
 #include "gtest/gtest.h"
-using GenStruct = OCLRT::GEN10;
-using GenGfxFamily = OCLRT::CNLFamily;
+using GenStruct = NEO::GEN10;
+using GenGfxFamily = NEO::CNLFamily;
 #include "unit_tests/gen_common/cmd_parse_base.inl"
 #include "unit_tests/gen_common/cmd_parse_base_mi_arb.inl"
 #include "unit_tests/gen_common/cmd_parse_gpgpu_walker.inl"
@@ -82,8 +82,8 @@ const char *CmdParse<GenGfxFamily>::getCommandNameHwSpecific(void *cmd) {
 
 template struct CmdParse<GenGfxFamily>;
 
-namespace OCLRT {
+namespace NEO {
 template void HardwareParse::findHardwareCommands<CNLFamily>();
 template void HardwareParse::findHardwareCommands<CNLFamily>(IndirectHeap *);
 template const void *HardwareParse::getStatelessArgumentPointer<CNLFamily>(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh);
-} // namespace OCLRT
+} // namespace NEO

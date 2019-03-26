@@ -11,7 +11,7 @@
 
 #include <array>
 
-namespace OCLRT {
+namespace NEO {
 
 enum class HeapIndex : uint32_t {
     HEAP_INTERNAL_DEVICE_MEMORY = 0u,
@@ -81,4 +81,4 @@ class GfxPartition {
     std::array<Heap, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> heap;
 };
 
-} // namespace OCLRT
+} // namespace NEO

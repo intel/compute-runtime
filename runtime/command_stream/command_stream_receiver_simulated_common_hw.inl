@@ -20,7 +20,7 @@
 #include "aub_mapper.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initGlobalMMIO() {
@@ -137,4 +137,4 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::freeEngineInfo(AddressMa
     engineInfo.pRingBuffer = nullptr;
 }
 
-} // namespace OCLRT
+} // namespace NEO

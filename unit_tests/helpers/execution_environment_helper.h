@@ -12,6 +12,6 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 ExecutionEnvironment *getExecutionEnvironmentImpl(HardwareInfo *&hwInfo);
-} // namespace OCLRT
+} // namespace NEO

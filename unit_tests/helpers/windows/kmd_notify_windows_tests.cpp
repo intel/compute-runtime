@@ -11,7 +11,7 @@
 #include "test.h"
 #include "unit_tests/helpers/variable_backup.h"
 
-namespace OCLRT {
+namespace NEO {
 
 namespace SysCalls {
 extern BOOL systemPowerStatusRetVal;
@@ -69,4 +69,4 @@ TEST(KmdNotifyWindowsTests, givenTaskCountDiffGreaterThanOneWhenBaseTimeoutReque
     EXPECT_EQ(localProperties.delayKmdNotifyMicroseconds, helper.getBaseTimeout(multiplier));
 }
 
-} // namespace OCLRT
+} // namespace NEO

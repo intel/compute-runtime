@@ -14,12 +14,12 @@
 #include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct SimpleArgFixtureFactory {
-    typedef OCLRT::IndirectHeapFixture IndirectHeapFixture;
-    typedef OCLRT::CommandStreamFixture CommandStreamFixture;
-    typedef OCLRT::CommandQueueHwFixture CommandQueueFixture;
-    typedef OCLRT::SimpleArgKernelFixture KernelFixture;
+    typedef NEO::IndirectHeapFixture IndirectHeapFixture;
+    typedef NEO::CommandStreamFixture CommandStreamFixture;
+    typedef NEO::CommandQueueHwFixture CommandQueueFixture;
+    typedef NEO::SimpleArgKernelFixture KernelFixture;
 };
-} // namespace OCLRT
+} // namespace NEO

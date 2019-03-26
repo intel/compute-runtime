@@ -13,7 +13,7 @@
 #include <map>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 enum class DispatchMode;
 class MemoryManager;
@@ -47,4 +47,4 @@ class FlatBatchBufferHelper {
     std::map<uint64_t, uint64_t> batchBufferStartAddressSequence;
 };
 
-} // namespace OCLRT
+} // namespace NEO

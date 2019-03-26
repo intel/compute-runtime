@@ -13,7 +13,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct EnqueueMapBufferTypeTest : public CommandEnqueueFixture,
                                   public ::testing::Test {
@@ -52,4 +52,4 @@ struct EnqueueMapBufferTypeTest : public CommandEnqueueFixture,
 
     Buffer *srcBuffer;
 };
-} // namespace OCLRT
+} // namespace NEO

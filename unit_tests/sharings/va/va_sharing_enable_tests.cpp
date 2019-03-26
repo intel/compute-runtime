@@ -13,7 +13,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 static int vaDisplayIsValidRet = 1;
 extern "C" int vaDisplayIsValid(VADisplay vaDisplay) {

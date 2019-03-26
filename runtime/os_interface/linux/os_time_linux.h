@@ -14,7 +14,7 @@
 #define TIMESTAMP_HIGH_REG 0x0235C
 #define TIMESTAMP_LOW_REG 0x02358
 
-namespace OCLRT {
+namespace NEO {
 
 class OSTimeLinux : public OSTime {
   public:
@@ -41,4 +41,4 @@ class OSTimeLinux : public OSTime {
     getTimeFunc_t getTimeFunc;
 };
 
-} // namespace OCLRT
+} // namespace NEO

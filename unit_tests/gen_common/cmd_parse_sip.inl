@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 // clang-format off
-using namespace OCLRT;
+using namespace NEO;
 using GPGPU_CSR_BASE_ADDRESS          = GenStruct::GPGPU_CSR_BASE_ADDRESS;
 using STATE_SIP                       = GenStruct::STATE_SIP;
 // clang-format on

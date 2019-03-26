@@ -10,7 +10,7 @@
 #include "runtime/built_ins/sip.h"
 
 #include <vector>
-namespace OCLRT {
+namespace NEO {
 class MockSipKernel : public SipKernel {
   public:
     static std::vector<char> dummyBinaryForSip;
@@ -19,4 +19,4 @@ class MockSipKernel : public SipKernel {
     static void initDummyBinary();
     static void shutDown();
 };
-} // namespace OCLRT
+} // namespace NEO

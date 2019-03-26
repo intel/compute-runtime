@@ -10,7 +10,7 @@
 
 #include "hw_cmds.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 template struct DeviceCallbacks<BDWFamily>;
 template struct TTCallbacks<BDWFamily>;

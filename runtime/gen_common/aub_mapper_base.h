@@ -11,7 +11,7 @@
 
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 struct AUBFamilyMapper {
@@ -20,4 +20,4 @@ struct AUBFamilyMapper {
 using MMIOPair = std::pair<uint32_t, uint32_t>;
 using MMIOList = std::vector<MMIOPair>;
 
-} // namespace OCLRT
+} // namespace NEO

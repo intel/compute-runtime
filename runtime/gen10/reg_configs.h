@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/helpers/preamble.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct CNLFamily;
 template <>
@@ -24,4 +24,4 @@ struct L3CNTLRegisterOffset<CNLFamily> {
 
 const uint32_t gen10HdcModeRegisterAddresss = 0xE5F0;
 
-} // namespace OCLRT
+} // namespace NEO

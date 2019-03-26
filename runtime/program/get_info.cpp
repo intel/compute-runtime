@@ -13,7 +13,7 @@
 
 #include "program.h"
 
-namespace OCLRT {
+namespace NEO {
 
 cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
                         void *paramValue, size_t *paramValueSizeRet) {
@@ -215,4 +215,4 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
 
     return retVal;
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -7,7 +7,7 @@
 
 #include "runtime/helpers/preamble.inl"
 
-namespace OCLRT {
+namespace NEO {
 
 template <>
 void PreambleHelper<BDWFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo) {
@@ -46,4 +46,4 @@ size_t PreambleHelper<BDWFamily>::getAdditionalCommandsSize(const Device &device
 }
 
 template struct PreambleHelper<BDWFamily>;
-} // namespace OCLRT
+} // namespace NEO

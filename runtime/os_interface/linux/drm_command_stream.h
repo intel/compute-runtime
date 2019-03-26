@@ -13,7 +13,7 @@
 
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class BufferObject;
 class Drm;
 class DrmMemoryManager;
@@ -56,4 +56,4 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     Drm *drm;
     gemCloseWorkerMode gemCloseWorkerOperationMode;
 };
-} // namespace OCLRT
+} // namespace NEO

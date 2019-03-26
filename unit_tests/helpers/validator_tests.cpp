@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 template <typename TypeParam>
 struct ValidatorFixture : public ::testing::Test {

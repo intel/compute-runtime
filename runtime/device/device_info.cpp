@@ -17,7 +17,7 @@
 
 using DeviceInfoTable::Map;
 
-namespace OCLRT {
+namespace NEO {
 
 template <cl_device_info Param>
 inline void Device::getStr(const void *&src,
@@ -234,4 +234,4 @@ bool Device::getHostTimer(uint64_t *hostTimestamp) const {
     return getOSTime()->getCpuTime(hostTimestamp);
 }
 
-} // namespace OCLRT
+} // namespace NEO

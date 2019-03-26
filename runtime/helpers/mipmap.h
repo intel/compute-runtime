@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 class MemObj;
 class Image;
@@ -27,4 +27,4 @@ bool isMipMapped(const MemObj *memObj);
 
 uint32_t getMipOffset(Image *image, const size_t *origin);
 
-} // namespace OCLRT
+} // namespace NEO

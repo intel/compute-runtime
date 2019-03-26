@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <sys/mman.h>
-using namespace OCLRT;
+using namespace NEO;
 
 class Allocator32bit::OsInternals {
   public:
@@ -24,16 +24,16 @@ class Allocator32bit::OsInternals {
     size_t heapSize = 0;
 };
 
-bool OCLRT::is32BitOsAllocatorAvailable = true;
+bool NEO::is32BitOsAllocatorAvailable = true;
 
 Allocator32bit::Allocator32bit(uint64_t base, uint64_t size) : base(base), size(size) {
     heapAllocator = std::make_unique<HeapAllocator>(base, size);
 }
 
-OCLRT::Allocator32bit::Allocator32bit() : Allocator32bit(new OsInternals) {
+NEO::Allocator32bit::Allocator32bit() : Allocator32bit(new OsInternals) {
 }
 
-OCLRT::Allocator32bit::Allocator32bit(Allocator32bit::OsInternals *osInternalsIn) : osInternals(osInternalsIn) {
+NEO::Allocator32bit::Allocator32bit(Allocator32bit::OsInternals *osInternalsIn) : osInternals(osInternalsIn) {
     size_t sizeToMap = getSizeToMap();
     void *ptr = this->osInternals->mmapFunction(nullptr, sizeToMap, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
 
@@ -59,14 +59,14 @@ OCLRT::Allocator32bit::Allocator32bit(Allocator32bit::OsInternals *osInternalsIn
     heapAllocator = std::unique_ptr<HeapAllocator>(new HeapAllocator(base, sizeToMap));
 }
 
-OCLRT::Allocator32bit::~Allocator32bit() {
+NEO::Allocator32bit::~Allocator32bit() {
     if (this->osInternals.get() != nullptr) {
         if (this->osInternals->heapBasePtr != nullptr)
             this->osInternals->munmapFunction(this->osInternals->heapBasePtr, this->osInternals->heapSize);
     }
 }
 
-uint64_t OCLRT::Allocator32bit::allocate(size_t &size) {
+uint64_t NEO::Allocator32bit::allocate(size_t &size) {
     return this->heapAllocator->allocate(size);
 }
 

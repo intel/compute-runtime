@@ -8,12 +8,12 @@
 #pragma once
 #include "unit_tests/mocks/mock_device.h"
 
-namespace OCLRT {
+namespace NEO {
 struct HardwareInfo;
 
 struct DeviceFixture {
     void SetUp();
-    void SetUpImpl(const OCLRT::HardwareInfo *hardwareInfo);
+    void SetUpImpl(const NEO::HardwareInfo *hardwareInfo);
     void TearDown();
 
     MockDevice *createWithUsDeviceId(unsigned short usDeviceId);
@@ -23,4 +23,4 @@ struct DeviceFixture {
     HardwareInfo hwInfoHelper = {};
     PLATFORM platformHelper = {};
 };
-} // namespace OCLRT
+} // namespace NEO

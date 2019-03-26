@@ -32,8 +32,8 @@ struct EnqueueCopyBufferTraits : public EnqueueTraits {
 template <typename T = EnqueueCopyBufferTraits>
 struct EnqueueCopyBufferHelper {
     typedef T Traits;
-    using Buffer = OCLRT::Buffer;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Buffer = NEO::Buffer;
+    using CommandQueue = NEO::CommandQueue;
 
     static cl_int enqueueCopyBuffer(CommandQueue *pCmdQ,
                                     Buffer *srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create()).get(),
@@ -72,9 +72,9 @@ struct EnqueueCopyBufferToImageTraits : public EnqueueTraits {
 template <typename T = EnqueueCopyBufferToImageTraits>
 struct EnqueueCopyBufferToImageHelper {
     typedef T Traits;
-    using Buffer = OCLRT::Buffer;
-    using Image = OCLRT::Image;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Buffer = NEO::Buffer;
+    using Image = NEO::Image;
+    using CommandQueue = NEO::CommandQueue;
 
     static cl_int enqueueCopyBufferToImage(CommandQueue *pCmdQ,
                                            Buffer *srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create()).get(),
@@ -120,9 +120,9 @@ struct EnqueueCopyImageToBufferTraits : public EnqueueTraits {
 template <typename T = EnqueueCopyImageToBufferTraits>
 struct EnqueueCopyImageToBufferHelper {
     typedef T Traits;
-    using Buffer = OCLRT::Buffer;
-    using Image = OCLRT::Image;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Buffer = NEO::Buffer;
+    using Image = NEO::Image;
+    using CommandQueue = NEO::CommandQueue;
 
     static cl_int enqueueCopyImageToBuffer(CommandQueue *pCmdQ,
                                            Image *srcImage = nullptr,
@@ -168,8 +168,8 @@ struct EnqueueCopyImageTraits : public EnqueueTraits {
 template <typename T = EnqueueCopyImageTraits>
 struct EnqueueCopyImageHelper {
     typedef T Traits;
-    using Image = OCLRT::Image;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Image = NEO::Image;
+    using CommandQueue = NEO::CommandQueue;
 
     static cl_int enqueueCopyImage(CommandQueue *pCmdQ,
                                    Image *srcImage = nullptr,
@@ -218,8 +218,8 @@ struct EnqueueFillBufferTraits : public EnqueueTraits {
 template <typename T = EnqueueFillBufferTraits>
 struct EnqueueFillBufferHelper {
     typedef T Traits;
-    using Buffer = OCLRT::Buffer;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Buffer = NEO::Buffer;
+    using CommandQueue = NEO::CommandQueue;
 
     static cl_int enqueueFillBuffer(CommandQueue *pCmdQ,
                                     Buffer *buffer = std::unique_ptr<Buffer>(BufferHelper<>::create()).get(),
@@ -252,8 +252,8 @@ struct EnqueueFillImageTraits : public EnqueueTraits {
 template <typename T = EnqueueFillImageTraits>
 struct EnqueueFillImageHelper {
     typedef T Traits;
-    using Image = OCLRT::Image;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Image = NEO::Image;
+    using CommandQueue = NEO::CommandQueue;
 
     static cl_int enqueueFillImage(CommandQueue *pCmdQ,
                                    Image *image = nullptr,
@@ -298,8 +298,8 @@ struct EnqueueKernelTraits : public EnqueueTraits {
 template <typename T = EnqueueKernelTraits>
 struct EnqueueKernelHelper {
     typedef T Traits;
-    using CommandQueue = OCLRT::CommandQueue;
-    using Kernel = OCLRT::Kernel;
+    using CommandQueue = NEO::CommandQueue;
+    using Kernel = NEO::Kernel;
 
     static cl_int enqueueKernel(CommandQueue *pCmdQ,
                                 Kernel *kernel,
@@ -334,8 +334,8 @@ struct EnqueueMapBufferTraits : public EnqueueTraits {
 template <typename T = EnqueueMapBufferTraits>
 struct EnqueueMapBufferHelper {
     typedef T Traits;
-    using Buffer = OCLRT::Buffer;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Buffer = NEO::Buffer;
+    using CommandQueue = NEO::CommandQueue;
 
     static void *enqueueMapBuffer(CommandQueue *pCmdQ,
                                   Buffer *buffer = std::unique_ptr<Buffer>(BufferHelper<>::create()).get(),
@@ -395,8 +395,8 @@ struct EnqueueReadBufferTraits : public EnqueueTraits {
 template <typename T = EnqueueReadBufferTraits>
 struct EnqueueReadBufferHelper {
     typedef T Traits;
-    using Buffer = OCLRT::Buffer;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Buffer = NEO::Buffer;
+    using CommandQueue = NEO::CommandQueue;
 
     static cl_int enqueueReadBuffer(CommandQueue *pCmdQ,
                                     Buffer *buffer = std::unique_ptr<Buffer>(BufferHelper<>::create()).get(),
@@ -443,8 +443,8 @@ struct EnqueueReadImageTraits : public EnqueueTraits {
 template <typename T = EnqueueReadImageTraits>
 struct EnqueueReadImageHelper {
     typedef T Traits;
-    using Image = OCLRT::Image;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Image = NEO::Image;
+    using CommandQueue = NEO::CommandQueue;
 
     static cl_int enqueueReadImage(CommandQueue *pCmdQ,
                                    Image *image = nullptr,
@@ -495,8 +495,8 @@ struct EnqueueWriteBufferTraits : public EnqueueTraits {
 template <typename T = EnqueueWriteBufferTraits>
 struct EnqueueWriteBufferHelper {
     typedef T Traits;
-    using Buffer = OCLRT::Buffer;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Buffer = NEO::Buffer;
+    using CommandQueue = NEO::CommandQueue;
 
     static cl_int enqueueWriteBuffer(CommandQueue *pCmdQ,
                                      Buffer *buffer = std::unique_ptr<Buffer>(BufferHelper<>::create()).get(),
@@ -547,8 +547,8 @@ struct EnqueueWriteBufferRectTraits : public EnqueueTraits {
 template <typename T = EnqueueWriteBufferRectTraits>
 struct EnqueueWriteBufferRectHelper {
     typedef T Traits;
-    using Buffer = OCLRT::Buffer;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Buffer = NEO::Buffer;
+    using CommandQueue = NEO::CommandQueue;
 
     static cl_int enqueueWriteBufferRect(CommandQueue *pCmdQ,
                                          Buffer *buffer = std::unique_ptr<Buffer>(BufferHelper<>::create()).get(),
@@ -599,8 +599,8 @@ struct EnqueueWriteImageTraits : public EnqueueTraits {
 template <typename T = EnqueueWriteImageTraits>
 struct EnqueueWriteImageHelper {
     typedef T Traits;
-    using Image = OCLRT::Image;
-    using CommandQueue = OCLRT::CommandQueue;
+    using Image = NEO::Image;
+    using CommandQueue = NEO::CommandQueue;
 
     static cl_int enqueueWriteImage(CommandQueue *pCmdQ,
                                     Image *image = nullptr,

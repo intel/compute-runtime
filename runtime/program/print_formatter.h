@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 
 extern int memcpy_s(void *dst, size_t destSize, const void *src, size_t count);
 
-namespace OCLRT {
+namespace NEO {
 
 enum class PRINTF_DATA_TYPE : int {
     INVALID,
@@ -114,4 +114,4 @@ class PrintFormatter {
     uint32_t bufferSize; // size of the data contained in the buffer
     uint32_t offset;     // current position in currently parsed buffer
 };
-}; // namespace OCLRT
+}; // namespace NEO

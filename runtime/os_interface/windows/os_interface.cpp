@@ -10,7 +10,7 @@
 #include "runtime/os_interface/windows/sys_calls.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
-namespace OCLRT {
+namespace NEO {
 
 bool OSInterface::osEnabled64kbPages = true;
 
@@ -71,4 +71,4 @@ HANDLE OSInterface::OSInterfaceImpl::createEvent(LPSECURITY_ATTRIBUTES lpEventAt
 BOOL OSInterface::OSInterfaceImpl::closeHandle(HANDLE hObject) {
     return SysCalls::closeHandle(hObject);
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -10,7 +10,7 @@
 
 #include "third_party/aub_stream/headers/options.h"
 
-namespace OCLRT {
+namespace NEO {
 
 MMIOList AubHelper::getAdditionalMmioList() {
     return splitMMIORegisters(DebugManager.flags.AubDumpAddMmioRegistersList.get(), ';');
@@ -52,4 +52,4 @@ MMIOList AubHelper::splitMMIORegisters(const std::string &registers, char delimi
     return result;
 }
 
-} // namespace OCLRT
+} // namespace NEO

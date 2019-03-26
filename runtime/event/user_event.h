@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "event.h"
 
-namespace OCLRT {
+namespace NEO {
 class CommandQueue;
 class Context;
 
@@ -41,4 +41,4 @@ class VirtualEvent : public Event {
 
     uint32_t getTaskLevel() override;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -12,7 +12,7 @@
 #include "hw_cmds.h"
 #include "hw_info_bxt.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const char *HwMapper<IGFX_BROXTON>::abbreviation = "bxt";
 
@@ -142,4 +142,4 @@ void setupBXTHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTa
 }
 
 void (*BXT::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupBXTHardwareInfoImpl;
-} // namespace OCLRT
+} // namespace NEO

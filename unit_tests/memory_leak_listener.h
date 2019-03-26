@@ -8,7 +8,7 @@
 #pragma once
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 // capture allocations call stacks to print them during memory leak in ULTs
 constexpr bool captureCallStacks = false;
@@ -20,4 +20,4 @@ class MemoryLeakListener : public ::testing::EmptyTestEventListener {
 
     unsigned int numInitialBaseObjects;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -28,12 +28,12 @@
 #include <algorithm>
 #include <cmath>
 
-namespace OCLRT {
+namespace NEO {
 
 // Performs ReadModifyWrite operation on value of a register: Register = Register Operation Mask
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
-    OCLRT::LinearStream *pCommandStream,
+    NEO::LinearStream *pCommandStream,
     uint32_t aluRegister,
     uint32_t operation,
     uint32_t mask) {
@@ -105,7 +105,7 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     TagNode<HwTimeStamps> &hwTimeStamps,
-    OCLRT::LinearStream *commandStream) {
+    NEO::LinearStream *commandStream) {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp
@@ -129,7 +129,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     TagNode<HwTimeStamps> &hwTimeStamps,
-    OCLRT::LinearStream *commandStream) {
+    NEO::LinearStream *commandStream) {
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
@@ -153,8 +153,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersNoopidRegisterCommands(
     CommandQueue &commandQueue,
-    OCLRT::HwPerfCounter &hwPerfCounter,
-    OCLRT::LinearStream *commandStream,
+    NEO::HwPerfCounter &hwPerfCounter,
+    NEO::LinearStream *commandStream,
     bool start) {
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
@@ -164,15 +164,15 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersNoopidRegisterCommands(
 
     auto pNoopIdRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
     *pNoopIdRegister = GfxFamily::cmdInitStoreRegisterMem;
-    pNoopIdRegister->setRegisterAddress(OCLRT::INSTR_MMIO_NOOPID);
+    pNoopIdRegister->setRegisterAddress(NEO::INSTR_MMIO_NOOPID);
     pNoopIdRegister->setMemoryAddress(address);
 }
 
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersReadFreqRegisterCommands(
     CommandQueue &commandQueue,
-    OCLRT::HwPerfCounter &hwPerfCounter,
-    OCLRT::LinearStream *commandStream,
+    NEO::HwPerfCounter &hwPerfCounter,
+    NEO::LinearStream *commandStream,
     bool start) {
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
@@ -182,15 +182,15 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersReadFreqRegisterCommands(
 
     auto pCoreFreqRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
     *pCoreFreqRegister = GfxFamily::cmdInitStoreRegisterMem;
-    pCoreFreqRegister->setRegisterAddress(OCLRT::INSTR_MMIO_RPSTAT1);
+    pCoreFreqRegister->setRegisterAddress(NEO::INSTR_MMIO_RPSTAT1);
     pCoreFreqRegister->setMemoryAddress(address);
 }
 
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterCommands(
     CommandQueue &commandQueue,
-    OCLRT::HwPerfCounter &hwPerfCounter,
-    OCLRT::LinearStream *commandStream,
+    NEO::HwPerfCounter &hwPerfCounter,
+    NEO::LinearStream *commandStream,
     bool start) {
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
@@ -199,7 +199,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterComm
                                        : reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.HwPerfReportEnd.Gp));
 
     // Read General Purpose counters
-    for (uint16_t i = 0; i < OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT; i++) {
+    for (uint16_t i = 0; i < NEO::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT; i++) {
         auto pGeneralPurposeRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
         *pGeneralPurposeRegister = GfxFamily::cmdInitStoreRegisterMem;
         uint32_t regAddr = INSTR_GFX_OFFSETS::INSTR_PERF_CNT_1_DW0 + i * sizeof(cl_uint);
@@ -213,8 +213,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterComm
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(
     CommandQueue &commandQueue,
-    OCLRT::HwPerfCounter &hwPerfCounter,
-    OCLRT::LinearStream *commandStream,
+    NEO::HwPerfCounter &hwPerfCounter,
+    NEO::LinearStream *commandStream,
     bool start) {
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
@@ -254,8 +254,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersOABufferStateCommands(
     CommandQueue &commandQueue,
-    OCLRT::HwPerfCounter &hwPerfCounter,
-    OCLRT::LinearStream *commandStream) {
+    NEO::HwPerfCounter &hwPerfCounter,
+    NEO::LinearStream *commandStream) {
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
@@ -285,8 +285,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersOABufferStateCommands(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     CommandQueue &commandQueue,
-    OCLRT::HwPerfCounter &hwPerfCounter,
-    OCLRT::LinearStream *commandStream) {
+    NEO::HwPerfCounter &hwPerfCounter,
+    NEO::LinearStream *commandStream) {
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_REPORT_PERF_COUNT = typename GfxFamily::MI_REPORT_PERF_COUNT;
@@ -326,8 +326,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     CommandQueue &commandQueue,
-    OCLRT::HwPerfCounter &hwPerfCounter,
-    OCLRT::LinearStream *commandStream) {
+    NEO::HwPerfCounter &hwPerfCounter,
+    NEO::LinearStream *commandStream) {
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_REPORT_PERF_COUNT = typename GfxFamily::MI_REPORT_PERF_COUNT;
@@ -368,7 +368,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
 }
 
 template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(OCLRT::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
+void GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(NEO::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
 }
 
 template <typename GfxFamily>
@@ -429,7 +429,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
         //SRM NOOPID & Frequency
         size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
         //gp registers
-        size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        size += NEO::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
         //report perf count
         size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
         //user registers
@@ -443,7 +443,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
         //report perf count
         size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
         //gp registers
-        size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        size += NEO::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
         //SRM NOOPID & Frequency
         size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
         //user registers
@@ -468,4 +468,4 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite() {
     return sizeof(PIPE_CONTROL);
 }
 
-} // namespace OCLRT
+} // namespace NEO

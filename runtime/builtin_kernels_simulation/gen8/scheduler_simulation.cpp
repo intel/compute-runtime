@@ -15,7 +15,7 @@
 
 #include "CL/cl.h"
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace BuiltinKernelsSimulation;
 
 namespace Gen8SchedulerSimulation {

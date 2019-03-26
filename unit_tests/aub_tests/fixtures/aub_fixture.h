@@ -20,7 +20,7 @@
 
 #include <sstream>
 
-namespace OCLRT {
+namespace NEO {
 
 class AUBFixture : public CommandQueueHwFixture {
   public:
@@ -106,7 +106,7 @@ class AUBFixture : public CommandQueueHwFixture {
 
   private:
     using CommandQueueHwFixture::SetUp;
-}; // namespace OCLRT
+}; // namespace NEO
 
 template <typename KernelFixture>
 struct KernelAUBFixture : public AUBFixture,
@@ -121,4 +121,4 @@ struct KernelAUBFixture : public AUBFixture,
         AUBFixture::TearDown();
     }
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 class DeviceCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
@@ -22,4 +22,4 @@ class DeviceCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
   public:
     static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment);
 };
-} // namespace OCLRT
+} // namespace NEO

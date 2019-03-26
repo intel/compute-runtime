@@ -31,7 +31,7 @@
 
 #include <map>
 
-namespace OCLRT {
+namespace NEO {
 
 ImageFuncs imageFactory[IGFX_MAX_CORE] = {};
 
@@ -1301,4 +1301,4 @@ bool Image::hasValidParentImageFormat(const cl_image_format &imageFormat) const 
         return false;
     }
 }
-} // namespace OCLRT
+} // namespace NEO

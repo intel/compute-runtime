@@ -12,7 +12,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 template <typename HWFamily>
 class BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder {
   public:
@@ -27,4 +27,4 @@ class BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation> : public BuiltinDispatchI
     mutable std::vector<std::unique_ptr<Kernel>> convertToAuxKernel;
 };
 
-} // namespace OCLRT
+} // namespace NEO

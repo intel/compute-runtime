@@ -10,10 +10,10 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/device_factory.h"
 
-namespace OCLRT {
+namespace NEO {
 
 bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnviornment) {
     return getDevicesImpl(hwInfo, numDevicesReturned, executionEnviornment);
 }
 
-} // namespace OCLRT
+} // namespace NEO

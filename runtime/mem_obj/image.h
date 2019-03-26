@@ -11,7 +11,7 @@
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/mem_obj.h"
 
-namespace OCLRT {
+namespace NEO {
 class Image;
 struct KernelInfo;
 struct SurfaceFormatInfo;
@@ -345,4 +345,4 @@ class ImageHw : public Image {
     }
     typename RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType;
 };
-} // namespace OCLRT
+} // namespace NEO

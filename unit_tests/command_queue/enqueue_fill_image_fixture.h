@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct EnqueueFillImageTestFixture : public CommandEnqueueFixture {
 
@@ -43,4 +43,4 @@ struct EnqueueFillImageTestFixture : public CommandEnqueueFixture {
     MockContext *context;
     Image *image;
 };
-} // namespace OCLRT
+} // namespace NEO

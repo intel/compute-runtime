@@ -20,7 +20,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/sampler/sampler.h"
 
-namespace OCLRT {
+namespace NEO {
 
 #ifdef HAVE_INSTRUMENTATION
 static_assert(std::is_same<SInstrQueryPerfCountersLayout, SInstrQueryPerfCountersLayout_Gen10>::value, "SInstrQueryPerfCountersLayout_Gen10 mismatch");
@@ -46,4 +46,4 @@ struct EnableGen10 {
 };
 
 static EnableGen10 enable;
-} // namespace OCLRT
+} // namespace NEO

@@ -10,7 +10,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/sharings/d3d/d3d_sharing.h"
 
-namespace OCLRT {
+namespace NEO {
 class Buffer;
 class Context;
 
@@ -50,4 +50,4 @@ class D3DBuffer : public D3DSharing<D3D> {
     D3DBuffer(Context *context, D3DBufferObj *d3dBuffer, D3DBufferObj *bufferStaging, bool sharedResource)
         : D3DSharing(context, d3dBuffer, bufferStaging, 0, sharedResource){};
 };
-} // namespace OCLRT
+} // namespace NEO

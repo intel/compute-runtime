@@ -39,7 +39,7 @@ void MemoryManagementFixture::SetUp() {
     MemoryManagement::indexDeallocation = 0;
     MemoryManagement::failingAllocation = -1;
     previousAllocations = MemoryManagement::numAllocations.load();
-    MemoryManagement::logTraces = OCLRT::captureCallStacks;
+    MemoryManagement::logTraces = NEO::captureCallStacks;
 }
 
 void MemoryManagementFixture::TearDown() {
@@ -127,7 +127,7 @@ std::string printCallStack(const MemoryManagement::AllocationEvent &event) {
     std::string result = "";
 
     printf("printCallStack.%d.%d\n", printMemoryOpCallStack, event.frames);
-    if (!OCLRT::captureCallStacks) {
+    if (!NEO::captureCallStacks) {
         printf("for detailed stack information turn on captureCallStacks in memory_management_fixture.h\n");
     }
     if (printMemoryOpCallStack && event.frames > 0) {

@@ -13,7 +13,7 @@
 #include "runtime/utilities/stackvec.h"
 
 #include <vector>
-namespace OCLRT {
+namespace NEO {
 class Device;
 class Event;
 class FlushStampTracker;
@@ -70,4 +70,4 @@ class SubmissionAggregator {
     CommandBufferList cmdBuffers;
     uint32_t inspectionId = 1;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
     ASSERT_NE(pCmdQ, nullptr);
@@ -51,4 +51,4 @@ void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
 void AUBCommandStreamFixture::TearDown() {
     CommandStreamFixture::TearDown();
 }
-} // namespace OCLRT
+} // namespace NEO

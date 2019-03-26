@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 // clang-format off
-using namespace OCLRT;
+using namespace NEO;
 using GPGPU_WALKER                    = GenStruct::GPGPU_WALKER;
 using MEDIA_INTERFACE_DESCRIPTOR_LOAD = GenStruct::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
 using MEDIA_STATE_FLUSH               = GenStruct::MEDIA_STATE_FLUSH;

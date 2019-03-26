@@ -14,7 +14,7 @@
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct TimestampPacketAubTests : public CommandEnqueueAUBFixture, public ::testing::Test {
     void SetUp() override {

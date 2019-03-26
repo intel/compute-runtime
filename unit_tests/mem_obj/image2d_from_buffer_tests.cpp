@@ -13,7 +13,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 // Tests for cl_khr_image2d_from_buffer
 class Image2dFromBufferTest : public DeviceFixture, public ::testing::Test {

@@ -10,7 +10,7 @@
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/base_object.h"
 
-namespace OCLRT {
+namespace NEO {
 
 typedef SKLFamily Family;
 static auto gfxCore = IGFX_GEN9_CORE;
@@ -23,4 +23,4 @@ void populateFactoryTable<AUBCommandStreamReceiverHw<Family>>() {
 }
 
 template class AUBCommandStreamReceiverHw<Family>;
-} // namespace OCLRT
+} // namespace NEO

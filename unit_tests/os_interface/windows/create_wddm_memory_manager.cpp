@@ -12,7 +12,7 @@
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 #include "unit_tests/libult/create_command_stream.h"
 
-namespace OCLRT {
+namespace NEO {
 bool overrideMemoryManagerCreation = true;
 
 std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvironment &executionEnvironment) {
@@ -21,4 +21,4 @@ std::unique_ptr<MemoryManager> MemoryManager::createMemoryManager(ExecutionEnvir
     }
     return std::make_unique<WddmMemoryManager>(executionEnvironment);
 }
-} // namespace OCLRT
+} // namespace NEO

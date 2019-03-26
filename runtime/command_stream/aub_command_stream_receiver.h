@@ -10,7 +10,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 struct HardwareInfo;
 class CommandStreamReceiver;
 class ExecutionEnvironment;
@@ -23,4 +23,4 @@ struct AUBCommandStreamReceiver {
 };
 
 typedef CommandStreamReceiver *(*AubCommandStreamReceiverCreateFunc)(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment);
-} // namespace OCLRT
+} // namespace NEO

@@ -5,7 +5,7 @@
  *
  */
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setClearColorParams(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm) {
@@ -14,4 +14,4 @@ void ImageHw<GfxFamily>::setClearColorParams(RENDER_SURFACE_STATE *surfaceState,
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setAuxParamsForMCSCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
 }
-} // namespace OCLRT
+} // namespace NEO

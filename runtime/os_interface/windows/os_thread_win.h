@@ -9,7 +9,7 @@
 
 #include <thread>
 
-namespace OCLRT {
+namespace NEO {
 class ThreadWin : public Thread {
   public:
     ThreadWin(std::thread *thread);
@@ -18,4 +18,4 @@ class ThreadWin : public Thread {
   protected:
     std::unique_ptr<std::thread> thread;
 };
-} // namespace OCLRT
+} // namespace NEO

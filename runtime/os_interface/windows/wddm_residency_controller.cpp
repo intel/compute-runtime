@@ -13,7 +13,7 @@
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 #include "runtime/utilities/spinlock.h"
 
-namespace OCLRT {
+namespace NEO {
 
 WddmResidencyController::WddmResidencyController(Wddm &wddm, uint32_t osContextId) : wddm(wddm), osContextId(osContextId) {
 }
@@ -382,4 +382,4 @@ void WddmResidencyController::makeNonResidentEvictionAllocations(ResidencyContai
     }
 }
 
-} // namespace OCLRT
+} // namespace NEO

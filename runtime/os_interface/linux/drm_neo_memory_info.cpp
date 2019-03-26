@@ -7,9 +7,9 @@
 
 #include "drm_neo.h"
 
-namespace OCLRT {
+namespace NEO {
 
 void Drm::queryMemoryInfo() {
 }
 
-} // namespace OCLRT
+} // namespace NEO

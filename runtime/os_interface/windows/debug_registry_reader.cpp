@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 
-namespace OCLRT {
+namespace NEO {
 
 SettingsReader *SettingsReader::createOsReader(bool userScope) {
     return new RegistryReader(userScope);
@@ -126,4 +126,4 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     return keyValue;
 }
 
-}; // namespace OCLRT
+}; // namespace NEO

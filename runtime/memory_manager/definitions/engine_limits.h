@@ -8,10 +8,10 @@
 #pragma once
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 constexpr uint32_t numGpgpuEngineInstances = 2u;
 constexpr uint32_t maxOsContextCount = numGpgpuEngineInstances;
 constexpr uint32_t maxHandleCount = 1u;
 
-} // namespace OCLRT
+} // namespace NEO

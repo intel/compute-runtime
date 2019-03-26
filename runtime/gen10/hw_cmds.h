@@ -17,7 +17,7 @@
 #define TILERESOURCE_CHICKENBIT_VECTOR_BITMASK (1UL << 8)
 template <class T>
 struct CmdParse;
-namespace OCLRT {
+namespace NEO {
 
 struct GEN10 {
 #include "runtime/gen10/hw_cmds_generated.h"
@@ -112,4 +112,4 @@ class CNL_4x9x8 : public CNL {
   private:
     static GT_SYSTEM_INFO gtSystemInfo;
 };
-} // namespace OCLRT
+} // namespace NEO

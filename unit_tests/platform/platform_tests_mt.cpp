@@ -10,7 +10,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct PlatformTestMt : public ::testing::Test {
     void SetUp() override { pPlatform.reset(new Platform); }

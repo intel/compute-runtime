@@ -22,7 +22,7 @@
 #include <cstdint>
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 class MockSchedulerKernel : public SchedulerKernel {

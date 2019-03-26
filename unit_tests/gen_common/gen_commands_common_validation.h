@@ -16,7 +16,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 template <typename FamilyType>
 void validateStateBaseAddress(uint64_t internalHeapBase, IndirectHeap *pDSH,
                               IndirectHeap *pIOH,
@@ -106,4 +106,4 @@ void validateMediaVFEState(const HardwareInfo *hwInfo, void *cmdMediaVfeState, G
     // Generically validate this command
     FamilyType::PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorMediaVfeState);
 }
-} // namespace OCLRT
+} // namespace NEO

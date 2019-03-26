@@ -15,7 +15,7 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 union SURFACE_STATE_BUFFER_LENGTH {
     uint32_t Length;
@@ -261,4 +261,4 @@ void ImageHw<GfxFamily>::transformImage3dTo2dArray(void *memory) {
     surfaceState->setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
     surfaceState->setSurfaceArray(true);
 }
-} // namespace OCLRT
+} // namespace NEO

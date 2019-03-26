@@ -12,9 +12,9 @@
 
 #include "gtest/gtest.h"
 
-using OCLRT::Device;
-using OCLRT::HardwareInfo;
-using OCLRT::platformDevices;
+using NEO::Device;
+using NEO::HardwareInfo;
+using NEO::platformDevices;
 
 void DeviceFixture::SetUp() {
     pDevice = DeviceHelper<>::create();

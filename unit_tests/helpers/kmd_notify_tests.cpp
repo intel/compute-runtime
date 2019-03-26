@@ -20,7 +20,7 @@
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #endif
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct KmdNotifyTests : public ::testing::Test {
     void SetUp() override {

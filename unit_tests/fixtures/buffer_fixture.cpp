@@ -9,7 +9,7 @@
 
 #include "unit_tests/mocks/mock_context.h"
 
-using OCLRT::Context;
+using NEO::Context;
 
 // clang-format off
 static char bufferMemory[] = {

@@ -12,7 +12,7 @@
 
 #include <array>
 
-namespace OCLRT {
+namespace NEO {
 
 size_t PerThreadDataHelper::sendPerThreadData(
     LinearStream &indirectHeap,
@@ -48,4 +48,4 @@ uint32_t PerThreadDataHelper::getThreadPayloadSize(const iOpenCL::SPatchThreadPa
     threadPayloadSize += (threadPayload.UnusedPerThreadConstantPresent) ? (sizeof(GRF)) : 0;
     return threadPayloadSize;
 }
-} // namespace OCLRT
+} // namespace NEO

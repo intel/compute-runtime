@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef Test<DeviceFixture> Gen10DeviceCaps;
 
@@ -76,7 +76,7 @@ CNLTEST_F(CnlUsDeviceIdTest, isSimulationCap) {
         ICNL_13x8_DESK_DEVICE_F0_ID,
         0, // default, non-simulation
     };
-    OCLRT::MockDevice *mockDevice = nullptr;
+    NEO::MockDevice *mockDevice = nullptr;
 
     for (auto id : cnlSimulationIds) {
         mockDevice = createWithUsDeviceId(id);

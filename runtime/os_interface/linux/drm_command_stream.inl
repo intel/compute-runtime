@@ -25,7 +25,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, gemCloseWorkerMode mode)
@@ -156,4 +156,4 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSta
     return true;
 }
 
-} // namespace OCLRT
+} // namespace NEO

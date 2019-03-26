@@ -17,7 +17,7 @@
 #include <mutex>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class AubCenter;
 class BuiltIns;
 class CommandStreamReceiver;
@@ -72,4 +72,4 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;
 };
-} // namespace OCLRT
+} // namespace NEO

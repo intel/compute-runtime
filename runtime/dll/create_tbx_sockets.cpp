@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #include "runtime/tbx/tbx_sockets_imp.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
-namespace OCLRT {
+namespace NEO {
 TbxSockets *TbxSockets::create() {
     return new TbxSocketsImp;
 }
-} // namespace OCLRT
+} // namespace NEO

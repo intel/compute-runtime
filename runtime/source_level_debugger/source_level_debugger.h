@@ -11,7 +11,7 @@
 #include <memory>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 struct KernelInfo;
 
 class SourceLevelDebugger {
@@ -51,4 +51,4 @@ class SourceLevelDebugger {
     // OS specific library name
     static const char *dllName;
 };
-} // namespace OCLRT
+} // namespace NEO

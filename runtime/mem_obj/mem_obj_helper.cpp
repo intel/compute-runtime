@@ -9,7 +9,7 @@
 
 #include "common/helpers/bit_helpers.h"
 
-namespace OCLRT {
+namespace NEO {
 
 bool MemObjHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &propertiesStruct) {
     if (properties == nullptr) {
@@ -57,4 +57,4 @@ bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &propert
 void MemObjHelper::addExtraMemoryProperties(MemoryProperties &properties) {
 }
 
-} // namespace OCLRT
+} // namespace NEO

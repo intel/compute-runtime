@@ -12,7 +12,7 @@
 
 #include "sku_info.h"
 
-namespace OCLRT {
+namespace NEO {
 class Kernel;
 class Device;
 class GraphicsAllocation;
@@ -74,4 +74,4 @@ struct PreemptionConfig {
     static const uint32_t midThreadVal;
 };
 
-} // namespace OCLRT
+} // namespace NEO

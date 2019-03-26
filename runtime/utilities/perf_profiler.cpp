@@ -18,7 +18,7 @@
 
 using namespace std;
 
-namespace OCLRT {
+namespace NEO {
 
 std::atomic<int> PerfProfiler::counter(0);
 
@@ -178,4 +178,4 @@ void PerfProfiler::logTimes(long long start, long long end, long long span, unsi
 void PerfProfiler::logSysTimes(long long start, unsigned long long time, unsigned int id) {
     systemLogs.emplace_back(SystemLog{id, start, time});
 }
-} // namespace OCLRT
+} // namespace NEO

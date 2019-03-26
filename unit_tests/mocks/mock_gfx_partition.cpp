@@ -7,7 +7,7 @@
 
 #include "unit_tests/mocks/mock_gfx_partition.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)>
     MockGfxPartition::allHeapNames{{HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY,

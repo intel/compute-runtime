@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/helpers/unit_test_helper.inl"
 
-namespace OCLRT {
+namespace NEO {
 
 template struct UnitTestHelper<BDWFamily>;
-} // namespace OCLRT
+} // namespace NEO

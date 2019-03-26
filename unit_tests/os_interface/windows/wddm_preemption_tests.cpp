@@ -11,7 +11,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
   public:

@@ -14,7 +14,7 @@
 
 #include "reg_configs_common.h"
 
-namespace OCLRT {
+namespace NEO {
 
 using Gen10EnqueueTest = Test<DeviceFixture>;
 GEN10TEST_F(Gen10EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKernelIsSubmittedThenDefaultPolicyIsProgrammed) {
@@ -50,4 +50,4 @@ GEN10TEST_F(Gen10EnqueueTest, givenKernelNotRequiringIndependentForwardProgressW
     EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[ThreadArbitrationPolicy::AgeBased], cmd->getDataDword());
     EXPECT_EQ(1U, countMmio<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), RowChickenReg4::address));
 }
-} // namespace OCLRT
+} // namespace NEO

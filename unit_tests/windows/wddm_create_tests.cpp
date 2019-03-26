@@ -12,7 +12,7 @@
 
 #include <typeinfo>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(wddmCreateTests, givenInputVersionWhenCreatingThenCreateRequestedObject) {
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());

@@ -13,7 +13,7 @@
 
 #include <atomic>
 
-namespace OCLRT {
+namespace NEO {
 static off_t lseekReturn = 4096u;
 static std::atomic<int> lseekCalledCount(0);
 static std::atomic<int> mmapMockCallCount(0);
@@ -111,4 +111,4 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
         return allocate32BitGraphicsMemoryImpl(allocationData);
     }
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -18,7 +18,7 @@
 #include <cstring>
 #include <sstream>
 
-namespace OCLRT {
+namespace NEO {
 AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[IGFX_MAX_CORE] = {};
 
 std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename) {
@@ -58,7 +58,7 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseN
     auto pCreate = aubCommandStreamReceiverFactory[hwInfo->pPlatform->eRenderCoreFamily];
     return pCreate ? pCreate(filePath, standalone, executionEnvironment) : nullptr;
 }
-} // namespace OCLRT
+} // namespace NEO
 
 namespace AubMemDump {
 using CmdServicesMemTraceMemoryCompare = AubMemDump::CmdServicesMemTraceMemoryCompare;

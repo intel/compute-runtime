@@ -11,7 +11,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(DeferredDeleter, NonCopyable) {
     EXPECT_FALSE(std::is_move_constructible<DeferredDeleter>::value);

@@ -11,7 +11,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 PlatformFixture::PlatformFixture()
     : pPlatform(nullptr), num_devices(0), devices(nullptr)
@@ -45,4 +45,4 @@ void PlatformFixture::TearDown() {
     pPlatform->shutdown();
     delete[] devices;
 }
-} // namespace OCLRT
+} // namespace NEO

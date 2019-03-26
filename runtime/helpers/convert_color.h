@@ -12,7 +12,7 @@
 
 #include <utility>
 
-namespace OCLRT {
+namespace NEO {
 
 inline int32_t selectNormalizingFactor(const cl_channel_type &channelType) {
     if (channelType == CL_UNORM_INT8) {
@@ -100,4 +100,4 @@ inline void convertFillColor(const void *fillColor,
         }
     }
 }
-} // namespace OCLRT
+} // namespace NEO

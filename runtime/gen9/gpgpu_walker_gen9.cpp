@@ -13,10 +13,10 @@
 #include "runtime/command_queue/hardware_interface_base.inl"
 #include "runtime/gen9/hw_cmds_base.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <>
-void GpgpuWalkerHelper<SKLFamily>::applyWADisableLSQCROPERFforOCL(OCLRT::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
+void GpgpuWalkerHelper<SKLFamily>::applyWADisableLSQCROPERFforOCL(NEO::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
     if (disablePerfMode) {
         if (kernel.getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages) {
             // Set bit L3SQC_BIT_LQSC_RO_PERF_DIS in L3SQC_REG4
@@ -61,4 +61,4 @@ template class GpgpuWalkerHelper<SKLFamily>;
 
 template struct EnqueueOperation<SKLFamily>;
 
-} // namespace OCLRT
+} // namespace NEO

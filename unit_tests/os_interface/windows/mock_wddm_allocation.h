@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/os_interface/windows/wddm_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class MockWddmAllocation : public WddmAllocation {
   public:
@@ -22,4 +22,4 @@ class MockWddmAllocation : public WddmAllocation {
     D3DKMT_HANDLE &handle;
 };
 
-} // namespace OCLRT
+} // namespace NEO

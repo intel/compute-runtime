@@ -12,7 +12,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace OCLRT {
+namespace NEO {
 
 struct RegisterEmbeddedResource {
     RegisterEmbeddedResource(const char *name, const char *resource, size_t resourceLength) {
@@ -25,4 +25,4 @@ struct RegisterEmbeddedResource {
     }
 };
 
-} // namespace OCLRT
+} // namespace NEO

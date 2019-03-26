@@ -9,7 +9,7 @@
 
 #include "runtime/kernel/kernel.h"
 
-namespace OCLRT {
+namespace NEO {
 bool DispatchInfo::usesSlm() const {
     return (kernel == nullptr) ? false : kernel->slmTotalSize > 0;
 }
@@ -32,4 +32,4 @@ Kernel *MultiDispatchInfo::peekMainKernel() const {
 Kernel *MultiDispatchInfo::peekParentKernel() const {
     return (mainKernel && mainKernel->isParentKernel) ? mainKernel : nullptr;
 }
-} // namespace OCLRT
+} // namespace NEO

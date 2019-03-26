@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct PerformanceCountersWinTest : public PerformanceCountersFixture,
                                     public ::testing::Test {

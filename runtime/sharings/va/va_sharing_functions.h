@@ -11,7 +11,7 @@
 
 #include <functional>
 
-namespace OCLRT {
+namespace NEO {
 class VASharingFunctions : public SharingFunctions {
   public:
     VASharingFunctions(VADisplay vaDisplay);
@@ -66,4 +66,4 @@ class VASharingFunctions : public SharingFunctions {
     VAExtGetSurfaceHandlePFN vaExtGetSurfaceHandlePFN;
     VAGetLibFuncPFN vaGetLibFuncPFN;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -10,7 +10,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(Memory32Bit, Given32bitAllocatorWhenAskedForAllocationThen32BitPointerIsReturned) {
     size_t size = 100u;

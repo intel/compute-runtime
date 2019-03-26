@@ -11,7 +11,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 class GmmClientContext;
 class GmmClientContextBase {
   public:
@@ -32,4 +32,4 @@ class GmmClientContextBase {
     GmmClientContextBase(GMM_CLIENT clientType, GmmExportEntries &gmmEntries);
     GmmExportEntries &gmmEntries;
 };
-} // namespace OCLRT
+} // namespace NEO

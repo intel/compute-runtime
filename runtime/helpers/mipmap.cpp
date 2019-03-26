@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace OCLRT {
+namespace NEO {
 
 uint32_t getMipLevelOriginIdx(cl_mem_object_type imageType) {
     switch (imageType) {
@@ -95,4 +95,4 @@ uint32_t getMipOffset(Image *image, const size_t *origin) {
     }
     return static_cast<uint32_t>(bytesPerPixel * offset);
 }
-} // namespace OCLRT
+} // namespace NEO

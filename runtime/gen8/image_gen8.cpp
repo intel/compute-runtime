@@ -13,7 +13,7 @@
 
 #include <map>
 
-namespace OCLRT {
+namespace NEO {
 
 typedef BDWFamily Family;
 static auto gfxCore = IGFX_GEN8_CORE;
@@ -25,4 +25,4 @@ template <typename GfxFamily>
 void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void *, uint32_t) {}
 
 #include "runtime/mem_obj/image_factory_init.inl"
-} // namespace OCLRT
+} // namespace NEO

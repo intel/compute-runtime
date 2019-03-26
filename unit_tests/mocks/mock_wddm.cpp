@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 WddmMock::~WddmMock() {
     EXPECT_EQ(0, reservedAddresses.size());

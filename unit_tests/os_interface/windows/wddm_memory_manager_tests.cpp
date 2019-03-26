@@ -27,7 +27,7 @@
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/utilities/base_object_utils.h"
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace ::testing;
 
 void WddmMemoryManagerFixture::SetUp() {
@@ -906,7 +906,7 @@ TEST_F(WddmMemoryManagerTest, freeNullAllocationNoCrash) {
 TEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForAlignedMallocRestrictionsThenValueIsReturned) {
     AlignedMallocRestrictions *mallocRestrictions = memoryManager->getAlignedMallocRestrictions();
     ASSERT_NE(nullptr, mallocRestrictions);
-    EXPECT_EQ(OCLRT::windowsMinAddress, mallocRestrictions->minAddress);
+    EXPECT_EQ(NEO::windowsMinAddress, mallocRestrictions->minAddress);
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestrictionsThenReserveMemRangeForMap) {

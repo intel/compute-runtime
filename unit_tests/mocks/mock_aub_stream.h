@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/gen_common/aub_mapper_base.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct MockAubStreamMockMmioWrite : AubMemDump::AubStream {
     void open(const char *filePath) override{};
@@ -38,4 +38,4 @@ struct MockAubStreamMockMmioWrite : AubMemDump::AubStream {
 
     std::vector<std::pair<uint32_t, uint32_t>> mmioList;
 };
-} // namespace OCLRT
+} // namespace NEO

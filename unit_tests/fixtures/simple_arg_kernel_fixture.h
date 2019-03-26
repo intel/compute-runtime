@@ -22,7 +22,7 @@
 
 #include <type_traits>
 
-namespace OCLRT {
+namespace NEO {
 
 class Kernel;
 class Program;
@@ -243,4 +243,4 @@ class SimpleKernelFixture : public ProgramFixture {
     std::array<std::unique_ptr<Kernel>, maxKernelsCount> kernels;
 };
 
-} // namespace OCLRT
+} // namespace NEO

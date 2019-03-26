@@ -7,7 +7,7 @@
 
 #include "unit_tests/os_interface/windows/ult_dxgi_factory.h"
 
-namespace OCLRT {
+namespace NEO {
 
 HRESULT WINAPI ULTCreateDXGIFactory(REFIID riid, void **ppFactory) {
 
@@ -22,4 +22,4 @@ void WINAPI ULTGetSystemInfo(SYSTEM_INFO *pSystemInfo) {
     pSystemInfo->lpMaximumApplicationAddress = is32bit ? (LPVOID)MemoryConstants::max32BitAppAddress : (LPVOID)MemoryConstants::max64BitAppAddress;
 }
 
-} // namespace OCLRT
+} // namespace NEO

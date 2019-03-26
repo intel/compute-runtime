@@ -7,7 +7,7 @@
 
 #include "runtime/program/program.h"
 
-namespace OCLRT {
+namespace NEO {
 void Program::applyAdditionalOptions() {
 }
-}; // namespace OCLRT
+}; // namespace NEO

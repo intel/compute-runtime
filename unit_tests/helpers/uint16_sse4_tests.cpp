@@ -10,7 +10,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(Uint16_Sse4, booleanOperator) {
     EXPECT_TRUE(static_cast<bool>(uint16x8_t::mask()));

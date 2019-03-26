@@ -13,7 +13,7 @@
 
 struct _tagCLGLBufferInfo;
 
-namespace OCLRT {
+namespace NEO {
 class Buffer;
 class Context;
 
@@ -34,4 +34,4 @@ class GlBuffer : public GlSharing {
 
     static GraphicsAllocation *createGraphicsAllocation(Context *context, unsigned int bufferId, _tagCLGLBufferInfo &bufferInfo);
 };
-} // namespace OCLRT
+} // namespace NEO

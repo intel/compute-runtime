@@ -14,7 +14,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class DrmCommandStreamMMTest : public ::testing::Test {
 };

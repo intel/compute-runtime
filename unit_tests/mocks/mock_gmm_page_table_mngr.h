@@ -11,7 +11,7 @@
 
 #include "gmock/gmock.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockGmmPageTableMngr : public GmmPageTableMngr {
   public:
     MockGmmPageTableMngr() = default;
@@ -30,4 +30,4 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
     unsigned int translationTableFlags = 0;
 };
 
-} // namespace OCLRT
+} // namespace NEO

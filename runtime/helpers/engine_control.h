@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-namespace OCLRT {
+namespace NEO {
 class CommandStreamReceiver;
 class OsContext;
 
@@ -19,4 +19,4 @@ struct EngineControl {
     CommandStreamReceiver *commandStreamReceiver = nullptr;
     OsContext *osContext = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

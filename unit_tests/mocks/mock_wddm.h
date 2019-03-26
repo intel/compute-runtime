@@ -16,7 +16,7 @@
 #include <set>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class GraphicsAllocation;
 
 namespace WddmMockHelpers {
@@ -150,14 +150,14 @@ class WddmMock : public Wddm {
     bool failOpenSharedHandle = false;
     bool callBaseMapGpuVa = true;
     std::set<void *> reservedAddresses;
-    uintptr_t virtualAllocAddress = OCLRT::windowsMinAddress;
+    uintptr_t virtualAllocAddress = NEO::windowsMinAddress;
     bool kmDafEnabled = false;
     uint64_t mockPagingFence = 0u;
 };
 
 struct GmockWddm : WddmMock {
     GmockWddm() {
-        virtualAllocAddress = OCLRT::windowsMinAddress;
+        virtualAllocAddress = NEO::windowsMinAddress;
     }
     ~GmockWddm() = default;
     bool virtualFreeWrapper(void *ptr, size_t size, uint32_t flags) {
@@ -174,4 +174,4 @@ struct GmockWddm : WddmMock {
         return Wddm::createAllocationsAndMapGpuVa(osHandles);
     }
 };
-} // namespace OCLRT
+} // namespace NEO

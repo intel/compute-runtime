@@ -9,17 +9,17 @@
 #include "runtime/helpers/hw_info.h"
 #include "test.h"
 
-namespace OCLRT {
+namespace NEO {
 bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
-} // namespace OCLRT
+} // namespace NEO
 
 using GetDevicesTests = ::testing::Test;
 
 HWTEST_F(GetDevicesTests, WhenGetDevicesIsCalledThenSuccessIsReturned) {
-    OCLRT::HardwareInfo *hwInfo;
+    NEO::HardwareInfo *hwInfo;
     size_t numDevicesReturned = 0;
-    OCLRT::ExecutionEnvironment executionEnviornment;
+    NEO::ExecutionEnvironment executionEnviornment;
 
-    auto returnValue = OCLRT::getDevices(&hwInfo, numDevicesReturned, executionEnviornment);
+    auto returnValue = NEO::getDevices(&hwInfo, numDevicesReturned, executionEnviornment);
     EXPECT_EQ(true, returnValue);
 }

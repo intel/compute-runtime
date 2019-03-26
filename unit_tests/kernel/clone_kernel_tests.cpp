@@ -27,7 +27,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class CloneKernelFixture : public ContextFixture, public DeviceFixture {
     using ContextFixture::SetUp;

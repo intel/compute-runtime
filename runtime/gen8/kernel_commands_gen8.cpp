@@ -14,7 +14,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 static uint32_t slmSizeId[] = {0, 1, 2, 4, 4, 8, 8, 8, 8, 16, 16, 16, 16, 16, 16, 16};
 
@@ -29,4 +29,4 @@ uint32_t KernelCommandsHelper<BDWFamily>::computeSlmValues(uint32_t valueIn) {
 
 // Explicitly instantiate KernelCommandsHelper for BDW device family
 template struct KernelCommandsHelper<BDWFamily>;
-} // namespace OCLRT
+} // namespace NEO

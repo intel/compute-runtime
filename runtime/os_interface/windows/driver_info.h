@@ -12,7 +12,7 @@
 #include <memory>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 class SettingsReader;
 
@@ -28,4 +28,4 @@ class DriverInfoWindows : public DriverInfo {
     std::unique_ptr<SettingsReader> registryReader;
 };
 
-} // namespace OCLRT
+} // namespace NEO

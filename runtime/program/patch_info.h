@@ -12,7 +12,7 @@
 #include <map>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 using iOpenCL::SKernelBinaryHeaderCommon;
 using iOpenCL::SPatchAllocateLocalSurface;
 using iOpenCL::SPatchAllocateStatelessConstantMemorySurfaceWithInitialization;
@@ -81,4 +81,4 @@ struct PatchInfo {
     }
 };
 
-} // namespace OCLRT
+} // namespace NEO

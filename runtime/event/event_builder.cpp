@@ -13,7 +13,7 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/timestamp_packet.h"
 
-namespace OCLRT {
+namespace NEO {
 EventBuilder::~EventBuilder() {
     UNRECOVERABLE_IF((this->event == nullptr) && ((parentEvents.size() != 0U)));
     finalize();
@@ -74,4 +74,4 @@ void EventBuilder::clear() {
 
     parentEvents.clear();
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -25,7 +25,7 @@
 
 #include "gmm_memory.h"
 
-namespace OCLRT {
+namespace NEO {
 extern Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory();
 extern Wddm::GetSystemInfoFcn getGetSystemInfo();
 extern Wddm::VirtualAllocFcn getVirtualAlloc();
@@ -992,4 +992,4 @@ std::unique_lock<SpinLock> Wddm::acquireLock(SpinLock &lock) {
     return std::unique_lock<SpinLock>{lock};
 }
 
-} // namespace OCLRT
+} // namespace NEO

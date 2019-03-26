@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <immintrin.h>
 
-namespace OCLRT {
+namespace NEO {
 
 #if __AVX2__
 struct uint16x16_t {
@@ -109,4 +109,4 @@ struct uint16x16_t {
     }
 };
 #endif // __AVX2__
-} // namespace OCLRT
+} // namespace NEO

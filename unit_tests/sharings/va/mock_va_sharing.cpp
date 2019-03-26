@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "unit_tests/sharings/va/mock_va_sharing.h"
 
-namespace OCLRT {
+namespace NEO {
 int vaDisplayIsValidCalled = 0;
 int vaDeriveImageCalled = 0;
 int vaDestroyImageCalled = 0;
@@ -39,4 +39,4 @@ void VASharingFunctionsMock::initMembers() {
     vaSharingFunctionsMockWidth = 256u;
     vaSharingFunctionsMockHeight = 256u;
 }
-} // namespace OCLRT
+} // namespace NEO

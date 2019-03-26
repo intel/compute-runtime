@@ -10,7 +10,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 class GmmMemoryBase {
   public:
     virtual ~GmmMemoryBase() = default;
@@ -33,4 +33,4 @@ class GmmMemoryBase {
     GmmMemoryBase();
     GMM_CLIENT_CONTEXT *clientContext = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

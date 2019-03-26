@@ -9,7 +9,7 @@
 #include "runtime/command_queue/command_queue_hw.inl"
 #include "runtime/memory_manager/svm_memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 typedef CNLFamily Family;
 static auto gfxCore = IGFX_GEN10_CORE;
@@ -21,4 +21,4 @@ void populateFactoryTable<CommandQueueHw<Family>>() {
     extern CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE];
     commandQueueFactory[gfxCore] = CommandQueueHw<Family>::create;
 }
-} // namespace OCLRT
+} // namespace NEO

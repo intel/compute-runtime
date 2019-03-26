@@ -7,7 +7,7 @@
 
 #include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 
-namespace OCLRT {
+namespace NEO {
 using namespace ::testing;
 
 GmmPageTableMngr *GmmPageTableMngr::create(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
@@ -17,4 +17,4 @@ GmmPageTableMngr *GmmPageTableMngr::create(GMM_DEVICE_CALLBACKS_INT *deviceCb, u
     ON_CALL(*pageTableMngr, updateAuxTable(_)).WillByDefault(Return(GMM_SUCCESS));
     return pageTableMngr;
 }
-} // namespace OCLRT
+} // namespace NEO

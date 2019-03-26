@@ -19,7 +19,7 @@
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/gl/gl_sharing.h"
 
-namespace OCLRT {
+namespace NEO {
 GlSyncEvent::GlSyncEvent(Context &context, const GL_CL_SYNC_INFO &sync)
     : Event(&context, nullptr, CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR, eventNotReady, eventNotReady), glSync(new GL_CL_SYNC_INFO(sync)) {
     transitionExecutionStatus(CL_SUBMITTED);
@@ -57,4 +57,4 @@ uint32_t GlSyncEvent::getTaskLevel() {
     }
     return Event::eventNotReady;
 }
-} // namespace OCLRT
+} // namespace NEO

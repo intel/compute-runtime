@@ -9,7 +9,7 @@
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/mocks/mock_csr.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct OOQFixtureFactory : public HelloWorldFixtureFactory {
     typedef OOQueueFixture CommandQueueFixture;

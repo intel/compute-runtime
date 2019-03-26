@@ -12,7 +12,7 @@
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct BarrierTest : public CommandEnqueueFixture,
                      public ::testing::Test {
@@ -265,7 +265,7 @@ HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEve
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Consume all memory except what is needed for this enqueue
-    size_t barrierCmdStreamSize = OCLRT::EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_BARRIER, false, false, *pCmdQ, nullptr);
+    size_t barrierCmdStreamSize = NEO::EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_BARRIER, false, false, *pCmdQ, nullptr);
     commandStream.getSpace(commandStream.getMaxAvailableSpace() - barrierCmdStreamSize);
 
     //now trigger event

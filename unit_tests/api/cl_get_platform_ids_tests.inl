@@ -11,11 +11,11 @@
 
 #include "cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
-namespace OCLRT {
+namespace NEO {
 extern bool getDevicesResult;
-}; // namespace OCLRT
+}; // namespace NEO
 
 typedef api_tests clGetPlatformIDsTests;
 

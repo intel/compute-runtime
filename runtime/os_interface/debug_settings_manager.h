@@ -28,7 +28,7 @@ constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctiona
 constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::None;
 #endif
 
-namespace OCLRT {
+namespace NEO {
 template <typename... Args>
 void printDebugString(bool showDebugLogs, Args &&... args) {
     if (showDebugLogs) {
@@ -283,7 +283,7 @@ class DebugSettingsApiEnterWrapper {
     const char *funcName;
     const int *errorCode;
 };
-}; // namespace OCLRT
+}; // namespace NEO
 
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 
@@ -291,7 +291,7 @@ class DebugSettingsApiEnterWrapper {
     DBG_MANAGER.logLazyEvaluateArgs(DBG_MANAGER.flags.PREDICATE.get(), [&] { DBG_MANAGER.LOG_FUNCTION(__VA_ARGS__); })
 
 #define DBG_LOG(PREDICATE, ...) \
-    DBG_LOG_LAZY_EVALUATE_ARGS(OCLRT::DebugManager, PREDICATE, log, OCLRT::DebugManager.flags.PREDICATE.get(), __VA_ARGS__)
+    DBG_LOG_LAZY_EVALUATE_ARGS(NEO::DebugManager, PREDICATE, log, NEO::DebugManager.flags.PREDICATE.get(), __VA_ARGS__)
 
 #define DBG_LOG_INPUTS(...) \
-    DBG_LOG_LAZY_EVALUATE_ARGS(OCLRT::DebugManager, LogApiCalls, logInputs, __VA_ARGS__)
+    DBG_LOG_LAZY_EVALUATE_ARGS(NEO::DebugManager, LogApiCalls, logInputs, __VA_ARGS__)

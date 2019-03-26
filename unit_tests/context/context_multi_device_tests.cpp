@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 #include "hw_cmds.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(ContextMultiDevice, singleDevice) {
     cl_device_id devices[] = {

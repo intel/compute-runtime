@@ -9,7 +9,7 @@
 #include "runtime/device_queue/device_queue_hw.inl"
 #include "runtime/gen8/hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 typedef BDWFamily Family;
 static auto gfxCore = IGFX_GEN8_CORE;
 
@@ -71,4 +71,4 @@ void DeviceQueueHw<Family>::addDcFlushToPipeControlWa(PIPE_CONTROL *pc) {
 }
 
 template class DeviceQueueHw<Family>;
-} // namespace OCLRT
+} // namespace NEO

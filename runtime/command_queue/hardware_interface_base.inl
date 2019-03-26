@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/command_queue/hardware_interface.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 inline void HardwareInterface<GfxFamily>::getDefaultDshSpace(
@@ -137,4 +137,4 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                            *kernel.getKernelInfo().patchInfo.threadPayload);
 }
 
-} // namespace OCLRT
+} // namespace NEO

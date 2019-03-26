@@ -10,22 +10,22 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/linux/allocator_helper.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
-OCLRT::AllocatorLimitedRange::AllocatorLimitedRange(uint64_t base, uint64_t size) : base(base), size(size), heapAllocator(std::make_unique<HeapAllocator>(base, size)) {
+NEO::AllocatorLimitedRange::AllocatorLimitedRange(uint64_t base, uint64_t size) : base(base), size(size), heapAllocator(std::make_unique<HeapAllocator>(base, size)) {
 }
 
-uint64_t OCLRT::AllocatorLimitedRange::allocate(size_t &size) {
+uint64_t NEO::AllocatorLimitedRange::allocate(size_t &size) {
     if (size >= this->size) {
         return 0llu;
     }
     return this->heapAllocator->allocate(size);
 }
 
-void OCLRT::AllocatorLimitedRange::free(uint64_t ptr, size_t size) {
+void NEO::AllocatorLimitedRange::free(uint64_t ptr, size_t size) {
     this->heapAllocator->free(ptr, size);
 }
 
-uint64_t OCLRT::AllocatorLimitedRange::getBase() const {
+uint64_t NEO::AllocatorLimitedRange::getBase() const {
     return base;
 }

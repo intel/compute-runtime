@@ -11,7 +11,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename TypeParam>
 struct BaseObjectTestsMt : public ::testing::Test {
@@ -64,4 +64,4 @@ TYPED_TEST(BaseObjectTestsMt, takeOwner) {
 
     object->release();
 }
-} // namespace OCLRT
+} // namespace NEO

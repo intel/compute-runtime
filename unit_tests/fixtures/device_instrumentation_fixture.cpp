@@ -10,11 +10,11 @@
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/mocks/mock_device.h"
 
-namespace OCLRT {
+namespace NEO {
 void DeviceInstrumentationFixture::SetUp(bool instrumentation) {
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
     if (instrumentation)
         hwInfo->capabilityTable.instrumentationEnabled = true;
     device = std::unique_ptr<Device>(Device::create<Device>(&hwInfo[0], executionEnvironment, 0));
 }
-} // namespace OCLRT
+} // namespace NEO

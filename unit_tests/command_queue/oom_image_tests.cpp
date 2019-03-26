@@ -13,7 +13,7 @@
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct OOMSetting {
     bool oomCS;

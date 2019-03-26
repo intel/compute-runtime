@@ -47,7 +47,7 @@
 
 using namespace iOpenCL;
 
-namespace OCLRT {
+namespace NEO {
 class Surface;
 
 uint32_t Kernel::dummyPatchLocation = 0xbaddf00d;
@@ -2195,4 +2195,4 @@ void Kernel::addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocati
         }
     }
 }
-} // namespace OCLRT
+} // namespace NEO

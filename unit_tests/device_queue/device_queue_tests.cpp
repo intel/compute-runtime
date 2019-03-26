@@ -13,7 +13,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace DeviceHostQueue;
 
 TEST(DeviceQueueSimpleTest, setupExecutionModelDispatchDoesNothing) {

@@ -17,7 +17,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct DeferredDeleterPublic : DeferredDeleter {
   public:

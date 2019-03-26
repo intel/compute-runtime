@@ -23,7 +23,7 @@
 
 #include "reg_configs_common.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef Test<EnqueueFillBufferFixture> EnqueueFillBufferCmdTests;
 

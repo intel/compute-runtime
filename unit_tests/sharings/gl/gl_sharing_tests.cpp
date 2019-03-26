@@ -33,7 +33,7 @@
 
 #include "gl/gl_sharing_os.h"
 
-using namespace OCLRT;
+using namespace NEO;
 bool MockGLSharingFunctions::SharingEnabled = false;
 
 class glSharingTests : public ::testing::Test {
@@ -373,7 +373,7 @@ TEST_F(glSharingTests, givenEnabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalle
     DebugManager.flags.EnableAsyncEventsHandler.set(true);
 
     auto handler = new MockHandler(false);
-    auto oldHandler = OCLRT::platform()->setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(handler));
+    auto oldHandler = NEO::platform()->setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(handler));
 
     struct ExternallySynchronizedEvent : Event {
         ExternallySynchronizedEvent()
@@ -424,7 +424,7 @@ TEST_F(glSharingTests, givenEnabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalle
 
     event->release();
 
-    OCLRT::platform()->setAsyncEventsHandler(std::move(oldHandler));
+    NEO::platform()->setAsyncEventsHandler(std::move(oldHandler));
 }
 
 TEST_F(glSharingTests, givenDisabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalledWithIncompleteExternallySynchronizedEventThenItIsNotAddedToAsyncEventsHandler) {
@@ -432,7 +432,7 @@ TEST_F(glSharingTests, givenDisabledAsyncEventsHandlerWhenAcquireGlObjectsIsCall
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
 
     auto handler = new MockHandler(false);
-    auto oldHandler = OCLRT::platform()->setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(handler));
+    auto oldHandler = NEO::platform()->setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(handler));
 
     struct ExternallySynchronizedEvent : Event {
         ExternallySynchronizedEvent()
@@ -459,7 +459,7 @@ TEST_F(glSharingTests, givenDisabledAsyncEventsHandlerWhenAcquireGlObjectsIsCall
 
     event->release();
 
-    OCLRT::platform()->setAsyncEventsHandler(std::move(oldHandler));
+    NEO::platform()->setAsyncEventsHandler(std::move(oldHandler));
 }
 
 TEST_F(glSharingTests, givenEnabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalledWithIncompleteButNotExternallySynchronizedEventThenItIsNotAddedToAsyncEventsHandler) {
@@ -467,7 +467,7 @@ TEST_F(glSharingTests, givenEnabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalle
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
 
     auto handler = new MockHandler(false);
-    auto oldHandler = OCLRT::platform()->setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(handler));
+    auto oldHandler = NEO::platform()->setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(handler));
 
     auto *event = new UserEvent;
     cl_event clEvent = static_cast<cl_event>(event);
@@ -484,7 +484,7 @@ TEST_F(glSharingTests, givenEnabledAsyncEventsHandlerWhenAcquireGlObjectsIsCalle
 
     event->release();
 
-    OCLRT::platform()->setAsyncEventsHandler(std::move(oldHandler));
+    NEO::platform()->setAsyncEventsHandler(std::move(oldHandler));
 }
 
 TEST_F(glSharingTests, givenHwCommandQueueWhenReleaseIsCalledWithIncorrectWaitlistThenReturnError) {

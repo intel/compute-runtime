@@ -13,7 +13,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 const char *getBuiltinAsString(EBuiltInOps builtin) {
     switch (builtin) {
@@ -210,4 +210,4 @@ BuiltinResourceT BuiltinsLib::getBuiltinResource(EBuiltInOps builtin, BuiltinCod
     return bc;
 }
 
-} // namespace OCLRT
+} // namespace NEO

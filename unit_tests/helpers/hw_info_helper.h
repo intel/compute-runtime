@@ -9,7 +9,7 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct HwInfoHelper {
     HwInfoHelper() {

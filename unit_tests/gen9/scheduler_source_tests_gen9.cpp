@@ -16,7 +16,7 @@
 // Keep this include below scheduler_definitions.h and device_enqueue.h headers as it depends on defines defined in them
 #include "unit_tests/scheduler/scheduler_source_tests.inl"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef SchedulerSourceTest SchedulerSourceTestGen9;
 GEN9TEST_F(SchedulerSourceTestGen9, GivenDeviceQueueWhenCommandsSizeIsCalculatedThenItEqualsSpaceForEachEnqueueInSchedulerKernelCode) {

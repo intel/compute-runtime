@@ -55,7 +55,7 @@ class SafetyGuardLinux {
             if (onSigSegv) {
                 onSigSegv();
             } else {
-                OCLRT::abortExecution();
+                NEO::abortExecution();
             }
         }
         return retValueOnCrash;

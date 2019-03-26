@@ -7,10 +7,10 @@
 
 #include "runtime/os_interface/definitions/translate_debug_settings.h"
 
-namespace OCLRT {
+namespace NEO {
 
 void translateDebugSettings(DebugVariables &debugVariables) {
     translateDebugSettingsBase(debugVariables);
 }
 
-} // namespace OCLRT
+} // namespace NEO

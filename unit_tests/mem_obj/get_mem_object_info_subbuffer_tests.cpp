@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct GetMemObjectSubBufferInfo : public ::testing::Test {
     GetMemObjectSubBufferInfo()

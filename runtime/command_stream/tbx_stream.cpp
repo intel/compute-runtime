@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/tbx/tbx_sockets.h"
 
-namespace OCLRT {
+namespace NEO {
 
 TbxStream::TbxStream() {
 }
@@ -72,4 +72,4 @@ void TbxStream::readMemory(uint64_t physAddress, void *memory, size_t size) {
     socket->readMemory(physAddress, memory, size);
 }
 
-} // namespace OCLRT
+} // namespace NEO

@@ -21,7 +21,7 @@
 
 #include "reg_configs_common.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct TestParam2 {
     cl_uint ScratchSize;

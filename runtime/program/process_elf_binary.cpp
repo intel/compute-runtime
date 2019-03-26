@@ -12,7 +12,7 @@
 
 #include "program.h"
 
-namespace OCLRT {
+namespace NEO {
 
 cl_int Program::processElfBinary(
     const void *pBinary,
@@ -159,4 +159,4 @@ cl_int Program::resolveProgramBinary() {
     }
     return CL_SUCCESS;
 }
-} // namespace OCLRT
+} // namespace NEO

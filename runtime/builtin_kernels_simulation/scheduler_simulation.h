@@ -10,7 +10,7 @@
 
 #include <cstdint>
 #include <thread>
-namespace OCLRT {
+namespace NEO {
 class GraphicsAllocation;
 }
 
@@ -22,38 +22,38 @@ extern std::thread threads[];
 template <typename GfxFamily>
 class SchedulerSimulation {
   public:
-    void runSchedulerSimulation(OCLRT::GraphicsAllocation *queue,
-                                OCLRT::GraphicsAllocation *commandsStack,
-                                OCLRT::GraphicsAllocation *eventsPool,
-                                OCLRT::GraphicsAllocation *secondaryBatchBuffer,
-                                OCLRT::GraphicsAllocation *dsh,
-                                OCLRT::GraphicsAllocation *reflectionSurface,
-                                OCLRT::GraphicsAllocation *queueStorageBuffer,
-                                OCLRT::GraphicsAllocation *ssh,
-                                OCLRT::GraphicsAllocation *debugQueue);
+    void runSchedulerSimulation(NEO::GraphicsAllocation *queue,
+                                NEO::GraphicsAllocation *commandsStack,
+                                NEO::GraphicsAllocation *eventsPool,
+                                NEO::GraphicsAllocation *secondaryBatchBuffer,
+                                NEO::GraphicsAllocation *dsh,
+                                NEO::GraphicsAllocation *reflectionSurface,
+                                NEO::GraphicsAllocation *queueStorageBuffer,
+                                NEO::GraphicsAllocation *ssh,
+                                NEO::GraphicsAllocation *debugQueue);
 
     void cleanSchedulerSimulation();
 
     static void startScheduler(uint32_t index,
-                               OCLRT::GraphicsAllocation *queue,
-                               OCLRT::GraphicsAllocation *commandsStack,
-                               OCLRT::GraphicsAllocation *eventsPool,
-                               OCLRT::GraphicsAllocation *secondaryBatchBuffer,
-                               OCLRT::GraphicsAllocation *dsh,
-                               OCLRT::GraphicsAllocation *reflectionSurface,
-                               OCLRT::GraphicsAllocation *queueStorageBuffer,
-                               OCLRT::GraphicsAllocation *ssh,
-                               OCLRT::GraphicsAllocation *debugQueue);
+                               NEO::GraphicsAllocation *queue,
+                               NEO::GraphicsAllocation *commandsStack,
+                               NEO::GraphicsAllocation *eventsPool,
+                               NEO::GraphicsAllocation *secondaryBatchBuffer,
+                               NEO::GraphicsAllocation *dsh,
+                               NEO::GraphicsAllocation *reflectionSurface,
+                               NEO::GraphicsAllocation *queueStorageBuffer,
+                               NEO::GraphicsAllocation *ssh,
+                               NEO::GraphicsAllocation *debugQueue);
 
-    void initializeSchedulerSimulation(OCLRT::GraphicsAllocation *queue,
-                                       OCLRT::GraphicsAllocation *commandsStack,
-                                       OCLRT::GraphicsAllocation *eventsPool,
-                                       OCLRT::GraphicsAllocation *secondaryBatchBuffer,
-                                       OCLRT::GraphicsAllocation *dsh,
-                                       OCLRT::GraphicsAllocation *reflectionSurface,
-                                       OCLRT::GraphicsAllocation *queueStorageBuffer,
-                                       OCLRT::GraphicsAllocation *ssh,
-                                       OCLRT::GraphicsAllocation *debugQueue);
+    void initializeSchedulerSimulation(NEO::GraphicsAllocation *queue,
+                                       NEO::GraphicsAllocation *commandsStack,
+                                       NEO::GraphicsAllocation *eventsPool,
+                                       NEO::GraphicsAllocation *secondaryBatchBuffer,
+                                       NEO::GraphicsAllocation *dsh,
+                                       NEO::GraphicsAllocation *reflectionSurface,
+                                       NEO::GraphicsAllocation *queueStorageBuffer,
+                                       NEO::GraphicsAllocation *ssh,
+                                       NEO::GraphicsAllocation *debugQueue);
 
     static void patchGpGpuWalker(uint secondLevelBatchOffset,
                                  __global uint *secondaryBatchBuffer,

@@ -13,7 +13,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE] = {};
 
@@ -29,4 +29,4 @@ CommandStreamReceiver *TbxCommandStreamReceiver::create(const std::string &baseN
 
     return pCreate ? pCreate(baseName, withAubDump, executionEnvironment) : nullptr;
 }
-} // namespace OCLRT
+} // namespace NEO

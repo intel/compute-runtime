@@ -14,7 +14,7 @@
 #include <memory>
 #include <string>
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 class TestSettingsFileReader : public SettingsFileReader {

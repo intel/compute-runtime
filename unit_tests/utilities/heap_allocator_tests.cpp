@@ -13,7 +13,7 @@
 #include <iostream>
 #include <random>
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 const size_t sizeThreshold = 16 * 4096;

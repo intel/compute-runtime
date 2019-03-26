@@ -15,7 +15,7 @@
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class MemoryAllocatorFixture : public MemoryManagementFixture {
   public:

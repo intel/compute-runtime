@@ -14,13 +14,13 @@
 #include "cif/import/library_api.h"
 #include "ocl_igc_interface/ocl_translation_output.h"
 
-namespace OCLRT {
+namespace NEO {
 using CIFBuffer = CIF::Builtins::BufferSimple;
 
 template <typename TranslationCtx>
 inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
                                                                     CIFBuffer *internalOptions) {
-    if (false == OCLRT::areNotNullptr(tCtx, src, options, internalOptions)) {
+    if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
         return nullptr;
     }
 
@@ -38,7 +38,7 @@ inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationC
 template <typename TranslationCtx>
 inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
                                                                     CIFBuffer *internalOptions, void *gtpinInit) {
-    if (false == OCLRT::areNotNullptr(tCtx, src, options, internalOptions)) {
+    if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
         return nullptr;
     }
 
@@ -85,4 +85,4 @@ inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib
     return true;
 }
 
-} // namespace OCLRT
+} // namespace NEO

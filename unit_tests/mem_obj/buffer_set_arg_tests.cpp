@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class BufferSetArgTest : public ContextFixture,
                          public DeviceFixture,

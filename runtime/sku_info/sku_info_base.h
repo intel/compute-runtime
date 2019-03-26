@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-namespace OCLRT {
+namespace NEO {
 struct FeatureTableBase {
     bool ftrDesktop = false;
     bool ftrChannelSwizzlingXOREnabled = false;
@@ -108,4 +108,4 @@ struct WorkaroundTableBase {
     bool waCSRUncachable = false;
     bool waSamplerCacheFlushBetweenRedescribedSurfaceReads = false;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -44,7 +44,7 @@
 #include <iostream>
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 AllocationProperties createAllocationProperties(size_t size, bool forcePin) {
     MockAllocationProperties properties(size);

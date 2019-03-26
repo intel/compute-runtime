@@ -14,7 +14,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(KernelWithCasheFlushTests, givenDeviceWhichDoesntRequireCasheFlushWhenCheckIfKernelRequierFlushThenReturnedFalse) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));

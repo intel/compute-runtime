@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 #include <memory>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 class GraphicsAllocation;
 
@@ -84,4 +84,4 @@ class PDPE : public PageTable<class PDE, 2, 2> {
     PDPE(PhysicalAddressAllocator *physicalAddressAllocator) : PageTable<class PDE, 2, 2>(physicalAddressAllocator) {
     }
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -8,7 +8,7 @@
 #include "runtime/command_stream/csr_definitions.h"
 #include "runtime/helpers/preamble.inl"
 
-namespace OCLRT {
+namespace NEO {
 
 template <>
 uint32_t PreambleHelper<SKLFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
@@ -78,4 +78,4 @@ size_t PreambleHelper<SKLFamily>::getThreadArbitrationCommandsSize() {
 }
 
 template struct PreambleHelper<SKLFamily>;
-} // namespace OCLRT
+} // namespace NEO

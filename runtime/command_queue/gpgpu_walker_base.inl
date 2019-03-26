@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/command_queue/gpgpu_walker.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
@@ -181,4 +181,4 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     }
 }
 
-} // namespace OCLRT
+} // namespace NEO

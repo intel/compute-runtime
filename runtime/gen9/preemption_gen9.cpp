@@ -12,7 +12,7 @@
 
 #include <cstring>
 
-namespace OCLRT {
+namespace NEO {
 
 typedef SKLFamily GfxFamily;
 
@@ -42,4 +42,4 @@ template size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device 
 template void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pCommandStream, const Device &device);
 template void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pCommandStream, const Device &device);
 template void PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(INTERFACE_DESCRIPTOR_DATA<GfxFamily> *idd, PreemptionMode preemptionMode);
-} // namespace OCLRT
+} // namespace NEO

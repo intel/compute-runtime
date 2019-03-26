@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct CallbackData {
     cl_kernel kernel;

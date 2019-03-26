@@ -38,7 +38,7 @@ const char *fSeparator = "\\";
 const char *fSeparator = "/";
 #endif
 
-namespace OCLRT {
+namespace NEO {
 extern const char *hardwarePrefix[];
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 
@@ -48,13 +48,13 @@ extern TestMode testMode;
 extern const char *executionDirectorySuffix;
 
 std::thread::id tempThreadID;
-} // namespace OCLRT
+} // namespace NEO
 namespace Os {
 extern const char *gmmDllName;
 extern const char *gmmEntryName;
 } // namespace Os
 
-using namespace OCLRT;
+using namespace NEO;
 TestEnvironment *gEnvironment;
 
 PRODUCT_FAMILY productFamily = IGFX_SKYLAKE;
@@ -347,7 +347,7 @@ int main(int argc, char **argv) {
     clFiles = nClFiles;
 
     std::string executionDirectory(hardwarePrefix[productFamily]);
-    executionDirectory += OCLRT::executionDirectorySuffix; // _aub for aub_tests, empty otherwise
+    executionDirectory += NEO::executionDirectorySuffix; // _aub for aub_tests, empty otherwise
 
 #ifdef WIN32
 #include <direct.h>
@@ -396,7 +396,7 @@ int main(int argc, char **argv) {
 #if defined(__linux__)
     //ULTs timeout
     if (enable_alarm) {
-        unsigned int alarmTime = OCLRT::ultIterationMaxTime * ::testing::GTEST_FLAG(repeat);
+        unsigned int alarmTime = NEO::ultIterationMaxTime * ::testing::GTEST_FLAG(repeat);
 
         struct sigaction sa;
         sa.sa_handler = &handle_SIGALRM;

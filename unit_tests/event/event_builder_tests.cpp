@@ -19,7 +19,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct SmallEventBuilderEventMock : MockEvent<Event> {
     SmallEventBuilderEventMock(int param1, float param2)
@@ -366,4 +366,4 @@ TEST(EventBuilder, parentListDoesNotHaveDuplicates) {
     delete eventBuilder;
 }
 
-} // namespace OCLRT
+} // namespace NEO

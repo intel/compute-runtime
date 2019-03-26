@@ -12,7 +12,7 @@
 
 #include "instrumentation.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct HwPerfCounter {
     void initialize() {
@@ -26,4 +26,4 @@ struct HwPerfCounter {
     HwPerfCounters HWPerfCounters;
     HwTimeStamps HWTimeStamp;
 };
-} // namespace OCLRT
+} // namespace NEO

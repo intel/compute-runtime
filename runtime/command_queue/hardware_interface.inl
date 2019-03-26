@@ -11,7 +11,7 @@
 #include "runtime/helpers/task_information.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 inline WALKER_TYPE<GfxFamily> *HardwareInterface<GfxFamily>::allocateWalkerSpace(LinearStream &commandStream,
@@ -224,4 +224,4 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
 }
 
-} // namespace OCLRT
+} // namespace NEO

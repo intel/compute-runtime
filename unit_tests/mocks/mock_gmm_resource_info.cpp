@@ -12,7 +12,7 @@
 
 using namespace ::testing;
 
-namespace OCLRT {
+namespace NEO {
 GmmResourceInfo *GmmResourceInfo::create(GMM_RESCREATE_PARAMS *resourceCreateParams) {
     return new ::testing::NiceMock<MockGmmResourceInfo>(resourceCreateParams);
 }
@@ -138,4 +138,4 @@ uint32_t MockGmmResourceInfo::getTileModeSurfaceState() {
 
 MockGmmResourceInfo::MockGmmResourceInfo() {}
 MockGmmResourceInfo::~MockGmmResourceInfo() {}
-} // namespace OCLRT
+} // namespace NEO

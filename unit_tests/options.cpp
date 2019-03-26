@@ -11,7 +11,7 @@
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/hw_info.h"
 
-namespace OCLRT {
+namespace NEO {
 const char *folderAUB = "aub_out";
 
 uint32_t initialHardwareTag = static_cast<uint32_t>(0xFFFFFF00);
@@ -22,4 +22,4 @@ static const HardwareInfo *DefaultPlatformDevices[] = {
 
 size_t numPlatformDevices = arrayCount(DefaultPlatformDevices);
 const HardwareInfo **platformDevices = DefaultPlatformDevices;
-} // namespace OCLRT
+} // namespace NEO

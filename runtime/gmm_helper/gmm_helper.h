@@ -13,7 +13,7 @@
 #include <cstdlib>
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 enum class OCLPlane;
 struct HardwareInfo;
 struct FeatureTable;
@@ -63,4 +63,4 @@ class GmmHelper {
     std::unique_ptr<GmmClientContext> gmmClientContext;
     GmmExportEntries gmmEntries = {};
 };
-} // namespace OCLRT
+} // namespace NEO

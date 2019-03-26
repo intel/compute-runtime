@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/sharings/va/va_sharing.h"
 
-namespace OCLRT {
+namespace NEO {
 
 extern int vaDisplayIsValidCalled;
 extern int vaDeriveImageCalled;
@@ -87,4 +87,4 @@ class MockVaSharing {
     VASharingFunctionsMock m_sharingFunctions;
     osHandle sharingHandle = 0;
 };
-} // namespace OCLRT
+} // namespace NEO

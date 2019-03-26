@@ -11,7 +11,7 @@
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/mem_obj/image.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 template class D3DSharing<D3DTypesHelper::D3D9>;
 template class D3DSharing<D3DTypesHelper::D3D10>;

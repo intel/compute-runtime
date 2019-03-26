@@ -18,7 +18,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 static const bool is64Bit = (sizeof(void *) == 8);
 

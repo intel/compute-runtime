@@ -21,18 +21,18 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_event.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(GlArbSyncEvent, whenCreateArbSyncEventNameIsCalledMultipleTimesThenEachCallReturnsUniqueName) {
-    char *name1 = OCLRT::createArbSyncEventName();
+    char *name1 = NEO::createArbSyncEventName();
     EXPECT_NE(nullptr, name1);
     EXPECT_STRNE("", name1);
 
-    char *name2 = OCLRT::createArbSyncEventName();
+    char *name2 = NEO::createArbSyncEventName();
     EXPECT_NE(nullptr, name2);
     EXPECT_STRNE("", name2);
 
-    char *name3 = OCLRT::createArbSyncEventName();
+    char *name3 = NEO::createArbSyncEventName();
     EXPECT_NE(nullptr, name3);
     EXPECT_STRNE("", name3);
 
@@ -40,13 +40,13 @@ TEST(GlArbSyncEvent, whenCreateArbSyncEventNameIsCalledMultipleTimesThenEachCall
     EXPECT_STRNE(name1, name3);
     EXPECT_STRNE(name2, name3);
 
-    OCLRT::destroyArbSyncEventName(name1);
-    OCLRT::destroyArbSyncEventName(name2);
-    OCLRT::destroyArbSyncEventName(name3);
+    NEO::destroyArbSyncEventName(name1);
+    NEO::destroyArbSyncEventName(name2);
+    NEO::destroyArbSyncEventName(name3);
 }
 
 template <bool SignalWaited>
-inline void glArbSyncObjectWaitServerMock(OCLRT::OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo) {
+inline void glArbSyncObjectWaitServerMock(NEO::OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo) {
     glSyncInfo.waitCalled = SignalWaited;
 }
 
@@ -302,7 +302,7 @@ TEST_F(GlArbSyncEventTest, givenDisabledSharingWhenClGetCLEventInfoINTELIsCalled
     cl_event ev = baseEvent;
     CL_GL_SYNC_INFO *synInfoRet = reinterpret_cast<CL_GL_SYNC_INFO *>(static_cast<uintptr_t>(0xFF));
     cl_context ctxRet = {};
-    auto sharing = ctx->getSharing<OCLRT::GLSharingFunctions>();
+    auto sharing = ctx->getSharing<NEO::GLSharingFunctions>();
     ctx->sharingFunctions[sharing->getId()] = nullptr;
     auto ret = clGetCLEventInfoINTEL(ev, &synInfoRet, &ctxRet);
     ctx->setSharingFunctions(new GlSharingFunctionsMock());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
 };
@@ -26,4 +26,4 @@ struct HwInfoConfigTestWindows : public HwInfoConfigTest {
     DummyHwConfig hwConfig;
 };
 
-} // namespace OCLRT
+} // namespace NEO

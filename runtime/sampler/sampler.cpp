@@ -16,7 +16,7 @@
 
 #include <limits>
 
-namespace OCLRT {
+namespace NEO {
 
 SamplerCreateFunc samplerFactory[IGFX_MAX_CORE] = {};
 getSamplerStateSizeHwFunc getSamplerStateSizeHw[IGFX_MAX_CORE] = {};
@@ -226,4 +226,4 @@ bool Sampler::isTransformable() const {
            normalizedCoordinates == CL_FALSE;
 }
 
-} // namespace OCLRT
+} // namespace NEO

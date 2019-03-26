@@ -11,7 +11,7 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 template struct KernelCommandsHelper<CNLFamily>;
 
-} // namespace OCLRT
+} // namespace NEO

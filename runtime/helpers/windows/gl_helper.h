@@ -13,7 +13,7 @@ namespace Os {
 extern const char *openglDllName;
 }
 
-namespace OCLRT {
+namespace NEO {
 class glFunctionHelper {
   public:
     glFunctionHelper::glFunctionHelper(OsLibrary *glLibrary, const std::string &functionName) {
@@ -29,4 +29,4 @@ class glFunctionHelper {
     PROC(__stdcall *glFunctionPtr)(LPCSTR Arg1) = nullptr;
     // clang-format on
 };
-}; // namespace OCLRT
+}; // namespace NEO

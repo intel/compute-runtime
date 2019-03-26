@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include <type_traits>
 
-namespace OCLRT {
+namespace NEO {
 
 class Timer {
   public:
@@ -34,4 +34,4 @@ class Timer {
     class TimerImpl;
     TimerImpl *timerImpl;
 };
-}; // namespace OCLRT
+}; // namespace NEO

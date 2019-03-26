@@ -11,7 +11,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 void testGfxPartition(uint64_t gpuAddressSpace) {
     MockGfxPartition gfxPartition;

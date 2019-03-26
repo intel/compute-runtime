@@ -12,7 +12,7 @@
 #include "runtime/helpers/hw_helper_common.inl"
 #include "runtime/memory_manager/memory_constants.h"
 
-namespace OCLRT {
+namespace NEO {
 typedef BDWFamily Family;
 
 template <>
@@ -32,4 +32,4 @@ template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct PipeControlHelper<Family>;
-} // namespace OCLRT
+} // namespace NEO

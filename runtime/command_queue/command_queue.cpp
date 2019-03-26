@@ -37,7 +37,7 @@
 
 #include <map>
 
-namespace OCLRT {
+namespace NEO {
 
 // Global table of create functions
 CommandQueueCreateFunc commandQueueFactory[IGFX_MAX_CORE] = {};
@@ -566,4 +566,4 @@ size_t CommandQueue::estimateTimestampPacketNodesCount(const MultiDispatchInfo &
     }
     return nodesCount;
 }
-} // namespace OCLRT
+} // namespace NEO

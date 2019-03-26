@@ -15,7 +15,7 @@
 #include "CL/cl.h"
 #include "mem_obj_types.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class MemObjHelper {
   public:
@@ -138,4 +138,4 @@ class MemObjHelper {
     static void addExtraMemoryProperties(MemoryProperties &properties);
     static bool validateExtraMemoryProperties(const MemoryProperties &properties);
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -22,7 +22,7 @@
 
 #include <string>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class DrmWrap : public Drm {
   public:
@@ -319,7 +319,7 @@ TEST_F(DrmTests, failOnInvalidDeviceName) {
 }
 
 TEST(AllocatorHelper, givenExpectedSizeToMapWhenGetSizetoMapCalledThenExpectedValueReturned) {
-    EXPECT_EQ((alignUp(4 * GB - 8096, 4096)), OCLRT::getSizeToMap());
+    EXPECT_EQ((alignUp(4 * GB - 8096, 4096)), NEO::getSizeToMap());
 }
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {

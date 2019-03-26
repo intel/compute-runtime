@@ -9,7 +9,7 @@
 #include "runtime/command_queue/command_queue_hw.inl"
 #include "runtime/memory_manager/svm_memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 typedef BDWFamily Family;
 static auto gfxCore = IGFX_GEN8_CORE;
@@ -22,4 +22,4 @@ void populateFactoryTable<CommandQueueHw<Family>>() {
     commandQueueFactory[gfxCore] = CommandQueueHw<Family>::create;
 }
 
-} // namespace OCLRT
+} // namespace NEO

@@ -13,7 +13,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 int SharingHandler::acquire(MemObj *memObj) {
     if (acquireCount == 0) {
@@ -58,4 +58,4 @@ void SharingHandler::release(MemObj *memObject) {
         releaseResource(memObject);
     }
 }
-} // namespace OCLRT
+} // namespace NEO

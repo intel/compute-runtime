@@ -24,7 +24,7 @@
 #include <fstream>
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 using ::testing::_;
 using ::testing::Invoke;

@@ -17,7 +17,7 @@
 //forward declaration for parsing logic
 template <class T>
 struct CmdParse;
-namespace OCLRT {
+namespace NEO {
 
 struct GEN8 {
 #include "runtime/gen8/hw_cmds_generated.h"
@@ -61,4 +61,4 @@ struct BDWFamily : public GEN8 {
     }
 };
 
-} // namespace OCLRT
+} // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/mocks/gl/mock_gl_sharing.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef api_tests clCreateFromGLTexture_;
 

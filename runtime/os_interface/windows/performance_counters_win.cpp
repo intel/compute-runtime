@@ -10,7 +10,7 @@
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
 
-namespace OCLRT {
+namespace NEO {
 std::unique_ptr<PerformanceCounters> PerformanceCounters::create(OSTime *osTime) {
     return std::unique_ptr<PerformanceCounters>(new PerformanceCountersWin(osTime));
 }
@@ -34,4 +34,4 @@ void PerformanceCountersWin::initialize(const HardwareInfo *hwInfo) {
     verifyEnableFunc(cbData);
 }
 
-} // namespace OCLRT
+} // namespace NEO

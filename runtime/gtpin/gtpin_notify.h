@@ -11,7 +11,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 extern bool isGTPinInitialized;
 
 void gtpinNotifyContextCreate(cl_context context);
@@ -26,4 +26,4 @@ void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResidencyVector);
 void gtpinNotifyPlatformShutdown();
 inline bool gtpinIsGTPinInitialized() { return isGTPinInitialized; }
 void *gtpinGetIgcInit();
-} // namespace OCLRT
+} // namespace NEO

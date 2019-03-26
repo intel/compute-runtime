@@ -7,8 +7,8 @@
 
 #include "runtime/os_interface/windows/wddm_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 std::string WddmAllocation::getAllocationInfoString() const {
     return getHandleInfoString();
 }
-} // namespace OCLRT
+} // namespace NEO

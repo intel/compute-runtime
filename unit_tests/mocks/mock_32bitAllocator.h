@@ -11,7 +11,7 @@
 #include "runtime/os_interface/linux/drm_32bit_memory.cpp"
 
 #include <limits>
-namespace OCLRT {
+namespace NEO {
 
 constexpr uintptr_t startOf32MmapRegion = 0x40000000;
 static bool failMmap = false;
@@ -78,4 +78,4 @@ class MockAllocator32Bit : public Allocator32bit {
 
     OsInternals *getOsInternals() const { return this->osInternals.get(); }
 };
-} // namespace OCLRT
+} // namespace NEO

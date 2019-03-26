@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,
                                     public ::testing::Test {
@@ -65,4 +65,4 @@ struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,
     std::unique_ptr<Buffer> srcBuffer;
     std::unique_ptr<Buffer> zeroCopyBuffer;
 };
-} // namespace OCLRT
+} // namespace NEO

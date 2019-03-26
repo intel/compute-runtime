@@ -8,27 +8,27 @@
 #pragma once
 #include "runtime/helpers/abort.h"
 
-#define UNRECOVERABLE_IF(expression)                   \
-                                                       \
-    if (expression) {                                  \
-        OCLRT::abortUnrecoverable(__LINE__, __FILE__); \
+#define UNRECOVERABLE_IF(expression)                 \
+                                                     \
+    if (expression) {                                \
+        NEO::abortUnrecoverable(__LINE__, __FILE__); \
     }
 
 #define UNREACHABLE(...) std::abort()
 
 #ifndef DEBUG_BREAK_IF
 #ifdef _DEBUG
-#define DEBUG_BREAK_IF(expression)             \
-                                               \
-    if (expression) {                          \
-        OCLRT::debugBreak(__LINE__, __FILE__); \
+#define DEBUG_BREAK_IF(expression)           \
+                                             \
+    if (expression) {                        \
+        NEO::debugBreak(__LINE__, __FILE__); \
     }
 #else
 #define DEBUG_BREAK_IF(expression) (void)0
 #endif // _DEBUG
 #endif // !DEBUG_BREAK_IF
 
-namespace OCLRT {
+namespace NEO {
 void debugBreak(int line, const char *file);
 [[noreturn]] void abortUnrecoverable(int line, const char *file);
-} // namespace OCLRT
+} // namespace NEO

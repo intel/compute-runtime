@@ -10,7 +10,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(DrmTest, whenQueryingMemoryInfoThenMemoryInfoIsNotCreatedAndNoIoctlIsCalled) {
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
@@ -23,7 +23,7 @@ TEST(DrmTest, whenQueryingMemoryInfoThenMemoryInfoIsNotCreatedAndNoIoctlIsCalled
 }
 
 TEST(MemoryInfo, givenMemoryInfoImplementationWhenDestructingThenDestructorIsCalled) {
-    struct MemoryInfoImpl : public OCLRT::MemoryInfo {
+    struct MemoryInfoImpl : public NEO::MemoryInfo {
         MemoryInfoImpl() {}
         ~MemoryInfoImpl() override{};
     };

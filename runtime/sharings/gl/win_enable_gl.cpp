@@ -15,7 +15,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue,
                                                 cl_int &errcodeRet) {
@@ -101,4 +101,4 @@ std::string GlSharingBuilderFactory::getExtensions() {
 void *GlSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) { return nullptr; }
 
 static SharingFactory::RegisterSharing<GlSharingBuilderFactory, GLSharingFunctions> glSharing;
-} // namespace OCLRT
+} // namespace NEO

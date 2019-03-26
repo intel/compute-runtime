@@ -7,7 +7,7 @@
 
 #include "unit_tests/fixtures/program_fixture.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename T>
 void ProgramFixture::CreateProgramFromBinary(cl_context context,
@@ -54,4 +54,4 @@ void ProgramFixture::CreateProgramFromBinary(cl_context pContext,
     ASSERT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
-} // namespace OCLRT
+} // namespace NEO

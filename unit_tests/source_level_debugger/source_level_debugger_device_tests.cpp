@@ -15,7 +15,7 @@
 #include "unit_tests/mocks/mock_source_level_debugger.h"
 
 using PreambleTest = ::testing::Test;
-using namespace OCLRT;
+using namespace NEO;
 
 class MockOsLibrary : public OsLibrary {
   public:

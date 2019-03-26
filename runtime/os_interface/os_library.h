@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include <string>
 #include <type_traits>
 
-namespace OCLRT {
+namespace NEO {
 
 struct ConvertibleProcAddr {
     template <typename T>
@@ -39,4 +39,4 @@ class OsLibrary {
     virtual void *getProcAddress(const std::string &procName) = 0;
     virtual bool isLoaded() = 0;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -43,7 +43,7 @@ struct DebuggerLibraryInterceptor {
     int deviceDestructionRetVal = 0;
 };
 
-class DebuggerLibrary : public OCLRT::OsLibrary {
+class DebuggerLibrary : public NEO::OsLibrary {
   public:
     DebuggerLibrary() = default;
     void *getProcAddress(const std::string &procName) override;

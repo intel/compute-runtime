@@ -22,7 +22,7 @@
 #include <mutex>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class CommandStreamReceiver;
 class DeferredDeleter;
 class ExecutionEnvironment;
@@ -277,4 +277,4 @@ class MemoryManager {
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();
-} // namespace OCLRT
+} // namespace NEO

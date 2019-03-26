@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/memory_manager/deferred_deleter.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockDeferredDeleter : public DeferredDeleter {
   public:
     MockDeferredDeleter();
@@ -73,4 +73,4 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     void clearQueue() override;
 };
-} // namespace OCLRT
+} // namespace NEO

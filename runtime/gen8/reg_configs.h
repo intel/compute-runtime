@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/helpers/preamble.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct BDWFamily;
 template <>
@@ -21,4 +21,4 @@ template <>
 struct L3CNTLRegisterOffset<BDWFamily> {
     static const uint32_t registerOffset = 0x7034;
 };
-} // namespace OCLRT
+} // namespace NEO

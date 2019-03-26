@@ -13,7 +13,7 @@
 #include "unit_tests/os_interface/hw_info_config_tests.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 struct HwInfoConfigTestLinux : public HwInfoConfigTest {

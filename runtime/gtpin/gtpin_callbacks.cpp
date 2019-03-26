@@ -28,7 +28,7 @@
 
 using namespace gtpin;
 
-namespace OCLRT {
+namespace NEO {
 
 extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
 
@@ -230,4 +230,4 @@ void gtpinNotifyPlatformShutdown() {
 void *gtpinGetIgcInit() {
     return pIgcInit;
 }
-} // namespace OCLRT
+} // namespace NEO

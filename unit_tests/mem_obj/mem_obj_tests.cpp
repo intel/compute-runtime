@@ -21,7 +21,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct MySharingHandler : public SharingHandler {
     MySharingHandler(MemObj *memObj) : memObj(memObj) {

@@ -12,7 +12,7 @@
 #include <memory>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class OsContext;
 
 class HardwareContextController {
@@ -31,4 +31,4 @@ class HardwareContextController {
 
     std::vector<std::unique_ptr<aub_stream::HardwareContext>> hardwareContexts;
 };
-} // namespace OCLRT
+} // namespace NEO

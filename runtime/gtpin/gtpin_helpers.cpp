@@ -17,7 +17,7 @@
 
 using namespace gtpin;
 
-namespace OCLRT {
+namespace NEO {
 
 GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinCreateBuffer(context_handle_t context, uint32_t reqSize, resource_handle_t *pResource) {
     cl_int diag = CL_SUCCESS;
@@ -76,4 +76,4 @@ GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinUnmapBuffer(context_handle_t context,
     }
     return GTPIN_DI_SUCCESS;
 }
-} // namespace OCLRT
+} // namespace NEO

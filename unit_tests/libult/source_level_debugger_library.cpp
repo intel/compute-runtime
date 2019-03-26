@@ -9,7 +9,7 @@
 
 #include "runtime/helpers/string.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 bool DebuggerLibrary::debuggerActive = false;
 bool DebuggerLibrary::isLibraryAvailable = false;

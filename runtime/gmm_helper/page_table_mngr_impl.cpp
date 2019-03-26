@@ -10,7 +10,7 @@
 
 #include "gmm_client_context.h"
 
-namespace OCLRT {
+namespace NEO {
 GmmPageTableMngr::~GmmPageTableMngr() {
     if (clientContext) {
         clientContext->DestroyPageTblMgrObject(pageTableManager);
@@ -22,4 +22,4 @@ GmmPageTableMngr::GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned 
     pageTableManager = clientContext->CreatePageTblMgrObject(deviceCb, translationTableCb, translationTableFlags);
 }
 
-} // namespace OCLRT
+} // namespace NEO

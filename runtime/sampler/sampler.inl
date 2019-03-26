@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include <algorithm>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 void SamplerHw<GfxFamily>::setArg(void *memory) {
@@ -100,4 +100,4 @@ size_t SamplerHw<GfxFamily>::getSamplerStateSize() {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
     return sizeof(SAMPLER_STATE);
 }
-} // namespace OCLRT
+} // namespace NEO

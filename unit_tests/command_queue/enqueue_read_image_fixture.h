@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct EnqueueReadImageTest : public CommandEnqueueFixture,
                               public ::testing::Test {
@@ -59,4 +59,4 @@ struct EnqueueReadImageTest : public CommandEnqueueFixture,
 struct EnqueueReadImageMipMapTest : public EnqueueReadImageTest,
                                     public ::testing::WithParamInterface<uint32_t> {
 };
-} // namespace OCLRT
+} // namespace NEO

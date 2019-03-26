@@ -15,7 +15,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/program/print_formatter.h"
 
-namespace OCLRT {
+namespace NEO {
 
 PrintfHandler::PrintfHandler(Device &deviceArg) : device(deviceArg) {}
 
@@ -61,4 +61,4 @@ void PrintfHandler::printEnqueueOutput() {
     PrintFormatter printFormatter(*kernel, *printfSurface);
     printFormatter.printKernelOutput();
 }
-} // namespace OCLRT
+} // namespace NEO

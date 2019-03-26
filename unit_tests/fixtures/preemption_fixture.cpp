@@ -24,7 +24,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 DevicePreemptionTests::DevicePreemptionTests() = default;
 DevicePreemptionTests::~DevicePreemptionTests() = default;

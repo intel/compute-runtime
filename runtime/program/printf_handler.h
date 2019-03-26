@@ -10,7 +10,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/kernel/kernel.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct MultiDispatchInfo;
 
@@ -36,4 +36,4 @@ class PrintfHandler {
     Kernel *kernel = nullptr;
     GraphicsAllocation *printfSurface = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

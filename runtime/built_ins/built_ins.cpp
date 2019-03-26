@@ -24,7 +24,7 @@
 #include <cstdint>
 #include <sstream>
 
-namespace OCLRT {
+namespace NEO {
 
 const char *mediaKernelsBuildOptions = {
     "-D cl_intel_device_side_advanced_vme_enable "
@@ -822,4 +822,4 @@ void BuiltInOwnershipWrapper::takeOwnership(BuiltinDispatchInfoBuilder &inputBui
     }
 }
 
-} // namespace OCLRT
+} // namespace NEO

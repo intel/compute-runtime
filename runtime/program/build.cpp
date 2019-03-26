@@ -17,7 +17,7 @@
 
 #include <cstring>
 
-namespace OCLRT {
+namespace NEO {
 
 cl_int Program::build(
     cl_uint numDevices,
@@ -194,4 +194,4 @@ void Program::extractInternalOptions(std::string &options) {
         }
     }
 }
-} // namespace OCLRT
+} // namespace NEO

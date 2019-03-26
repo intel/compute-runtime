@@ -9,7 +9,7 @@
 
 #include "runtime/helpers/ptr_math.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 size_t MapOperationsHandler::size() const {
     std::lock_guard<std::mutex> lock(mtx);

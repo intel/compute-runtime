@@ -9,7 +9,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 static RegisterEmbeddedResource registerCopyBufferToBufferSrc(
     createBuiltinResourceName(
@@ -119,4 +119,4 @@ static RegisterEmbeddedResource registerAuxTranslationSrc(
 #include "runtime/built_ins/kernels/aux_translation.igdrcl_built_in"
         ));
 
-} // namespace OCLRT
+} // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "runtime/command_stream/experimental_command_buffer.inl"
 #include "runtime/helpers/hw_helper.h"
 
-namespace OCLRT {
+namespace NEO {
 typedef SKLFamily GfxFamily;
 
 template void ExperimentalCommandBuffer::injectBufferStart<GfxFamily>(LinearStream &parentStream, size_t cmdBufferOffset);
@@ -23,4 +23,4 @@ template size_t ExperimentalCommandBuffer::getTimeStampPipeControlSize<GfxFamily
 
 template void ExperimentalCommandBuffer::addExperimentalCommands<GfxFamily>();
 template size_t ExperimentalCommandBuffer::getExperimentalCommandsSize<GfxFamily>() noexcept;
-} // namespace OCLRT
+} // namespace NEO

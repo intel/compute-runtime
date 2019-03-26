@@ -10,11 +10,11 @@
 #include "test.h"
 #include "unit_tests/helpers/variable_backup.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
-namespace OCLRT {
+namespace NEO {
 extern bool getDevicesResult;
-}; // namespace OCLRT
+}; // namespace NEO
 
 struct PlatformNegativeTest : public ::testing::Test {
     void SetUp() override {

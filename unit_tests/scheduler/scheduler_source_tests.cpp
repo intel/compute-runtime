@@ -22,7 +22,7 @@
 
 extern PRODUCT_FAMILY defaultProductFamily;
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace BuiltinKernelsSimulation;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, SchedulerSourceTest, PatchGpgpuWalker) {

@@ -11,9 +11,9 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 class SettingsReaderCreator {
   public:
     static std::unique_ptr<SettingsReader> create();
 };
-} // namespace OCLRT
+} // namespace NEO

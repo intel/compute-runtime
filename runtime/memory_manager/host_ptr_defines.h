@@ -11,7 +11,7 @@
 #include <cinttypes>
 #include <cstdlib>
 
-namespace OCLRT {
+namespace NEO {
 
 struct OsHandle;
 
@@ -84,4 +84,4 @@ struct CheckedFragments {
     OverlapStatus status[maxFragmentsCount];
     size_t count = 0;
 };
-} // namespace OCLRT
+} // namespace NEO

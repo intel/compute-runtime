@@ -44,13 +44,13 @@ TEST(ClHelper, whenCallGetStringWithCmdTypeFunctionThenGetProperCmdTypeAsString)
                                              "CL_COMMAND_SVM_UNMAP"}};
 
     for (int i = CL_COMMAND_NDRANGE_KERNEL; i <= CL_COMMAND_SVM_UNMAP; i++) {
-        EXPECT_STREQ(expected[i - CL_COMMAND_NDRANGE_KERNEL].c_str(), OCLRT::cmdTypetoString(i).c_str());
+        EXPECT_STREQ(expected[i - CL_COMMAND_NDRANGE_KERNEL].c_str(), NEO::cmdTypetoString(i).c_str());
     }
 
     std::stringstream stream;
     stream << "CMD_UNKNOWN:" << (cl_command_type)-1;
 
-    EXPECT_STREQ(stream.str().c_str(), OCLRT::cmdTypetoString(-1).c_str());
+    EXPECT_STREQ(stream.str().c_str(), NEO::cmdTypetoString(-1).c_str());
 
-    EXPECT_STREQ("CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR", OCLRT::cmdTypetoString(CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR).c_str());
+    EXPECT_STREQ("CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR", NEO::cmdTypetoString(CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR).c_str());
 }

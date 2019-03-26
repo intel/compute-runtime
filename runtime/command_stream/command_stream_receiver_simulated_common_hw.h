@@ -17,7 +17,7 @@ class AubManager;
 struct AubStream;
 } // namespace aub_stream
 
-namespace OCLRT {
+namespace NEO {
 class AddressMapper;
 class GraphicsAllocation;
 class HardwareContextController;
@@ -70,4 +70,4 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
 
     AubMemDump::AubStream *stream;
 };
-} // namespace OCLRT
+} // namespace NEO

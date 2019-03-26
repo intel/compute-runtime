@@ -14,7 +14,7 @@
 
 #include <cassert>
 
-namespace OCLRT {
+namespace NEO {
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 bool getDevicesResult = true;
@@ -48,4 +48,4 @@ bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvi
 
     return getDevicesImpl(hwInfo, numDevicesReturned, executionEnvironment);
 }
-} // namespace OCLRT
+} // namespace NEO

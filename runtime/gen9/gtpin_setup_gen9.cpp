@@ -10,7 +10,7 @@
 
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 
-namespace OCLRT {
+namespace NEO {
 
 extern GTPinHwHelper *gtpinHwHelperFactory[IGFX_MAX_CORE];
 
@@ -32,4 +32,4 @@ struct GTPinEnableGen9 {
 
 static GTPinEnableGen9 gtpinEnable;
 
-} // namespace OCLRT
+} // namespace NEO

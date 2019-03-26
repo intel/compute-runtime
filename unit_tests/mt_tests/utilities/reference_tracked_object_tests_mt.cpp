@@ -12,7 +12,7 @@
 #include <atomic>
 #include <thread>
 
-namespace OCLRT {
+namespace NEO {
 
 struct MockReferenceTrackedObject : ReferenceTrackedObject<MockReferenceTrackedObject> {
     MockReferenceTrackedObject(std::atomic<int> &marker,
@@ -130,4 +130,4 @@ TEST(ReferenceTrackedObject, whenDecreasingInternalRefcountSimultaneouslyWillRet
 
     EXPECT_EQ(MockReferenceTrackedObjectDerivative::GetMarker(), marker);
 }
-} // namespace OCLRT
+} // namespace NEO

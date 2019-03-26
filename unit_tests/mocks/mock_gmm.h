@@ -13,7 +13,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 
-namespace OCLRT {
+namespace NEO {
 namespace MockGmmParams {
 static SurfaceFormatInfo mockSurfaceFormat;
 }
@@ -47,4 +47,4 @@ class MockGmm : public Gmm {
         return memoryManager.allocateGraphicsMemoryWithProperties(AllocationProperties{&imgInfo, true});
     }
 };
-} // namespace OCLRT
+} // namespace NEO

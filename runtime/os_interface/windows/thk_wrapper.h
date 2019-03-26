@@ -10,7 +10,7 @@
 
 #include <d3dkmthk.h>
 
-namespace OCLRT {
+namespace NEO {
 // IDs for easy system times identification
 enum SystemCallsIds {
     SYSTIMER_ID_OPENADAPTERFROMHDC = 1,
@@ -165,4 +165,4 @@ class ThkWrapper {
     GET_ID(CONST D3DKMT_DESTROYHWQUEUE *, SYSTIMER_ID_DESTROYHWQUEUE)
     GET_ID(CONST D3DKMT_SUBMITCOMMANDTOHWQUEUE *, SYSTIMER_ID_SUBMITCOMMANDTOHWQUEUE)
 };
-} // namespace OCLRT
+} // namespace NEO

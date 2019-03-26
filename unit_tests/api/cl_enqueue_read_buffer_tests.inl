@@ -12,7 +12,7 @@
 
 #include "cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef api_tests clEnqueueReadBufferTests;
 

@@ -42,7 +42,7 @@
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace ::testing;
 
 class WddmCommandStreamFixture {

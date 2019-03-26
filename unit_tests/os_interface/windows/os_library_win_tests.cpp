@@ -17,7 +17,7 @@ namespace Os {
 extern const char *testDllName;
 }
 
-using namespace OCLRT;
+using namespace NEO;
 
 class OsLibraryBackup : public Windows::OsLibrary {
     using Type = decltype(Windows::OsLibrary::loadLibraryExA);

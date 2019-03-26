@@ -18,7 +18,7 @@
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/test_files.h"
 
-namespace OCLRT {
+namespace NEO {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Factory where all command stream traffic funnels to an AUB file
@@ -82,4 +82,4 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
         return pProgram;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

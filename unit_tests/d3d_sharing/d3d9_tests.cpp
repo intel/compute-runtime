@@ -20,7 +20,7 @@
 #include "unit_tests/mocks/mock_d3d_objects.h"
 #include "unit_tests/mocks/mock_gmm.h"
 
-namespace OCLRT {
+namespace NEO {
 template <>
 uint32_t MockD3DSharingFunctions<D3DTypesHelper::D3D9>::getDxgiDescCalled = 0;
 template <>
@@ -1056,4 +1056,4 @@ TEST_P(D3D9ImageFormatTests, validFormat) {
     EXPECT_EQ(imgFormat.image_channel_order, expectedClChannelOrder);
     EXPECT_TRUE(oclPlane == expectedOclPlane);
 }
-} // namespace OCLRT
+} // namespace NEO

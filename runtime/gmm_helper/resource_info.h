@@ -11,7 +11,7 @@
 #include <functional>
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 class GmmResourceInfo {
   public:
     static GmmResourceInfo *create(GMM_RESCREATE_PARAMS *resourceCreateParams);
@@ -82,4 +82,4 @@ class GmmResourceInfo {
 
     UniquePtrType resourceInfo;
 };
-} // namespace OCLRT
+} // namespace NEO

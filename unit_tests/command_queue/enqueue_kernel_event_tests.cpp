@@ -11,7 +11,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> EventTests;
 TEST_F(EventTests, eventShouldBeReturned) {

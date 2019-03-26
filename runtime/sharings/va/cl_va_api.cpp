@@ -19,7 +19,7 @@
 
 #include <cstring>
 
-using namespace OCLRT;
+using namespace NEO;
 
 cl_mem CL_API_CALL
 clCreateFromVA_APIMediaSurfaceINTEL(cl_context context, cl_mem_flags flags, VASurfaceID *surface,

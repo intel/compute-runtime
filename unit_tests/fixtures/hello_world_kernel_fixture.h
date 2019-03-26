@@ -21,7 +21,7 @@
 #include "CL/cl.h"
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class Kernel;
 class Program;
@@ -100,4 +100,4 @@ struct HelloWorldKernelFixture : public ProgramFixture {
     Kernel *pKernel = nullptr;
     MockContext *pContext = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -10,11 +10,11 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 typedef uint64_t FlushStamp;
 struct CompletionStamp {
     uint32_t taskCount;
     uint32_t taskLevel;
     FlushStamp flushStamp;
 };
-} // namespace OCLRT
+} // namespace NEO

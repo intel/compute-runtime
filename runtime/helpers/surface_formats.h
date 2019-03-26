@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 #include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/utilities/arrayref.h"
 
-namespace OCLRT {
+namespace NEO {
 enum GFX3DSTATE_SURFACEFORMAT : unsigned short {
     GFX3DSTATE_SURFACEFORMAT_R32G32B32A32_FLOAT = 0x000,
     GFX3DSTATE_SURFACEFORMAT_R32G32B32A32_SINT = 0x001,
@@ -254,4 +254,4 @@ class SurfaceFormats {
     static ArrayRef<const SurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat) noexcept;
 };
 
-} // namespace OCLRT
+} // namespace NEO

@@ -18,7 +18,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 bool VaSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
     if (contextData.get() == nullptr) {
@@ -84,5 +84,5 @@ void *VaSharingBuilderFactory::getExtensionFunctionAddress(const std::string &fu
 }
 
 static SharingFactory::RegisterSharing<VaSharingBuilderFactory, VASharingFunctions> vaSharing;
-} // namespace OCLRT
+} // namespace NEO
 #endif

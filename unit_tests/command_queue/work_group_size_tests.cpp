@@ -13,7 +13,7 @@
 #include "hw_cmds.h"
 #include "patch_shared.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct WorkGroupSizeBase {
     template <typename FamilyType>

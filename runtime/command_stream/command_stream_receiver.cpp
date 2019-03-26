@@ -25,7 +25,7 @@
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/utilities/tag_allocator.h"
 
-namespace OCLRT {
+namespace NEO {
 // Global table of CommandStreamReceiver factories for HW and tests
 CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE] = {};
 
@@ -397,4 +397,4 @@ void CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *src
                                          size_t length, uint32_t compareOperation) {
 }
 
-} // namespace OCLRT
+} // namespace NEO

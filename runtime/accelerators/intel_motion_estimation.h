@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 // VmeAccelerator Class Stuff
 //------------------------------------------------------------------------------
 
-namespace OCLRT {
+namespace NEO {
 
 class Context;
 
@@ -54,4 +54,4 @@ class VmeAccelerator : public IntelAccelerator {
                                   size_t descriptorSize,
                                   const void *descriptor);
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -26,8 +26,8 @@ class Environment : public ::testing::Environment {
         retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".gen");
         retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".bc");
 
-        OCLRT::setIgcDebugVars(igcDebugVars);
-        OCLRT::setFclDebugVars(fclDebugVars);
+        NEO::setIgcDebugVars(igcDebugVars);
+        NEO::setFclDebugVars(fclDebugVars);
     }
 
     void SetUp() override {
@@ -41,16 +41,16 @@ class Environment : public ::testing::Environment {
         mockCompilerGuard.Disable();
     }
 
-    OCLRT::OsLibrary *libraryFrontEnd;
-    OCLRT::OsLibrary *libraryIGC;
+    NEO::OsLibrary *libraryFrontEnd;
+    NEO::OsLibrary *libraryIGC;
 
-    OCLRT::MockCompilerDebugVars igcDebugVars;
-    OCLRT::MockCompilerDebugVars fclDebugVars;
+    NEO::MockCompilerDebugVars igcDebugVars;
+    NEO::MockCompilerDebugVars fclDebugVars;
 
-    void (*igcSetDebugVarsFPtr)(OCLRT::MockCompilerDebugVars &debugVars);
-    void (*fclSetDebugVarsFPtr)(OCLRT::MockCompilerDebugVars &debugVars);
+    void (*igcSetDebugVarsFPtr)(NEO::MockCompilerDebugVars &debugVars);
+    void (*fclSetDebugVarsFPtr)(NEO::MockCompilerDebugVars &debugVars);
 
-    OCLRT::MockCompilerEnableGuard mockCompilerGuard;
+    NEO::MockCompilerEnableGuard mockCompilerGuard;
 
     const std::string devicePrefix;
     const std::string familyNameWithType;

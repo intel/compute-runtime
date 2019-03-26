@@ -14,7 +14,7 @@
 
 #undef WIN32_NO_STATUS
 
-namespace OCLRT {
+namespace NEO {
 
 bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo) {
     if (wddm) {
@@ -109,4 +109,4 @@ uint64_t OSTimeWin::getCpuRawTimestamp() {
     this->QueryPerfomanceCounterFnc(&cpuRawTimestamp);
     return cpuRawTimestamp.QuadPart;
 }
-} // namespace OCLRT
+} // namespace NEO

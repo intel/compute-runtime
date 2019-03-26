@@ -14,7 +14,7 @@
 
 #include <thread>
 
-using namespace OCLRT;
+using namespace NEO;
 
 HWTEST_F(AsyncGPUoperations, MapBufferAfterWriteBuffer) {
 

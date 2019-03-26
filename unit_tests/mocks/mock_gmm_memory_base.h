@@ -11,7 +11,7 @@
 #include "gmm_memory.h"
 #include "gmock/gmock.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class MockGmmMemoryBase : public GmmMemory {
   public:
@@ -41,4 +41,4 @@ class GmockGmmMemoryBase : public GmmMemory {
                       GMM_GFX_SIZE_T SvmSize,
                       BOOLEAN BDWL3Coherency));
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -8,7 +8,7 @@
 #include "runtime/helpers/hw_helper.h"
 #include "test.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 template <typename FamilyType>
 void whenGetGpgpuEnginesThenReturnTwoRcsEngines() {

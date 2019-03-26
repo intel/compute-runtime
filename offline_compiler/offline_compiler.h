@@ -16,7 +16,7 @@
 #include <memory>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 struct HardwareInfo;
 class OsLibrary;
@@ -112,4 +112,4 @@ class OfflineCompiler {
     CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> fclDeviceCtx = nullptr;
     IGC::CodeType::CodeType_t preferredIntermediateRepresentation;
 };
-} // namespace OCLRT
+} // namespace NEO

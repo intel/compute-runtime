@@ -9,7 +9,7 @@
 
 #include "os_library.h"
 
-namespace OCLRT {
+namespace NEO {
 
 OsLibrary *OsLibrary::load(const std::string &name) {
     Windows::OsLibrary *ptr = new Windows::OsLibrary(name);
@@ -68,4 +68,4 @@ void *OsLibrary::getProcAddress(const std::string &procName) {
     return ::GetProcAddress(this->handle, procName.c_str());
 }
 } // namespace Windows
-} // namespace OCLRT
+} // namespace NEO

@@ -16,7 +16,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct CallbackData {
     static void CL_CALLBACK callback(cl_event event, cl_int status, void *userData) {

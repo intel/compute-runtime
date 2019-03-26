@@ -14,7 +14,7 @@
 #include <mutex>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 struct HardwareInfo;
 class Program;
 
@@ -31,4 +31,4 @@ class BinaryCache {
     static std::mutex cacheAccessMtx;
     std::string clCacheLocation;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -10,7 +10,7 @@
 
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class GraphicsAllocation;
 class CommandStreamReceiver;
 struct KernelInfo;
@@ -38,4 +38,4 @@ class BlockKernelManager {
     std::vector<KernelInfo *> blockKernelInfoArray;
     std::vector<GraphicsAllocation *> blockPrivateSurfaceArray;
 };
-} // namespace OCLRT
+} // namespace NEO

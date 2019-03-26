@@ -10,7 +10,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef HelloWorldTest<HelloWorldFixtureFactory> EnqueueKernelLocalWorkSize;
 

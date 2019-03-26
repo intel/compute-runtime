@@ -13,7 +13,7 @@
 #include <cstdio>
 #include <fstream>
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 TEST(Directory, GetFiles) {

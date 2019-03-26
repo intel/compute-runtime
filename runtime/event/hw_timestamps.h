@@ -10,7 +10,7 @@
 
 #include <cinttypes>
 
-namespace OCLRT {
+namespace NEO {
 
 struct HwTimeStamps {
     void initialize() {
@@ -32,4 +32,4 @@ struct HwTimeStamps {
     uint64_t GlobalCompleteTS;
     uint64_t ContextCompleteTS;
 };
-} // namespace OCLRT
+} // namespace NEO

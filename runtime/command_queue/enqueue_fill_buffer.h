@@ -19,7 +19,7 @@
 
 #include <new>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
@@ -79,4 +79,4 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
 
     return CL_SUCCESS;
 }
-} // namespace OCLRT
+} // namespace NEO

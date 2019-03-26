@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockGraphicsAllocation : public GraphicsAllocation {
   public:
     using GraphicsAllocation::GraphicsAllocation;
@@ -38,4 +38,4 @@ class MockGraphicsAllocation : public GraphicsAllocation {
         this->memoryPool = pool;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

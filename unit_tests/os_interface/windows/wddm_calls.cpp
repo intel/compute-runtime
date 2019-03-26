@@ -9,7 +9,7 @@
 #include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/ult_dxgi_factory.h"
 
-namespace OCLRT {
+namespace NEO {
 
 BOOL WINAPI ULTVirtualFree(LPVOID ptr, SIZE_T size, DWORD flags) {
     free(ptr);
@@ -35,4 +35,4 @@ Wddm::VirtualFreeFcn getVirtualFree() {
 Wddm::VirtualAllocFcn getVirtualAlloc() {
     return ULTVirtualAlloc;
 }
-} // namespace OCLRT
+} // namespace NEO

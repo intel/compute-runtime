@@ -14,7 +14,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_event.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 template <typename Family>
 class MyMockCommandQueue : public CommandQueueHw<Family> {

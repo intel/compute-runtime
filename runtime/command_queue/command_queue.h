@@ -17,7 +17,7 @@
 #include <atomic>
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 class Buffer;
 class LinearStream;
 class Context;
@@ -481,4 +481,4 @@ LinearStream &getCommandStream(CommandQueue &commandQueue,
 
 template <typename GfxFamily, IndirectHeap::Type heapType>
 IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const Kernel &kernel);
-} // namespace OCLRT
+} // namespace NEO

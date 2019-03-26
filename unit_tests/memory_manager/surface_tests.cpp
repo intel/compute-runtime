@@ -19,7 +19,7 @@
 
 #include <type_traits>
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef ::testing::Types<NullSurface, HostPtrSurface, MemObjSurface, GeneralSurface> SurfaceTypes;
 

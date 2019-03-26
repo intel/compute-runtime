@@ -7,9 +7,9 @@
 
 #include "runtime/gmm_helper/page_table_mngr.h"
 
-namespace OCLRT {
+namespace NEO {
 GmmPageTableMngr *GmmPageTableMngr::create(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
     return new GmmPageTableMngr(deviceCb, translationTableFlags, translationTableCb);
 }
 
-} // namespace OCLRT
+} // namespace NEO

@@ -20,7 +20,7 @@
 
 struct GT_SYSTEM_INFO;
 
-namespace OCLRT {
+namespace NEO {
 #define I915_CONTEXT_PRIVATE_PARAM_BOOST 0x80000000
 
 class DeviceFactory;
@@ -124,4 +124,4 @@ class Drm {
   private:
     int getParamIoctl(int param, int *dstValue);
 };
-} // namespace OCLRT
+} // namespace NEO

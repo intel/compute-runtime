@@ -13,7 +13,7 @@
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 GlobalMockSipProgram *GlobalMockSipProgram::sipProgram;
 ExecutionEnvironment GlobalMockSipProgram::executionEnvironment;
 std::string MockProgram::getCachedFileName() const {
@@ -123,4 +123,4 @@ Program *GlobalMockSipProgram::getSipProgramWithCustomBinary() {
     UNRECOVERABLE_IF(errCode != CL_SUCCESS);
     return program;
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -9,10 +9,10 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 #ifdef SUPPORT_BDW
 static EnableProductHwInfoConfig<IGFX_BROADWELL> enableBDW;
 #endif
 
-} // namespace OCLRT
+} // namespace NEO

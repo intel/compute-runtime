@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/simple_arg_fixture.h"
 
-namespace OCLRT {
+namespace NEO {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Factory where all command stream traffic funnels to an AUB file
@@ -19,4 +19,4 @@ namespace OCLRT {
 struct AUBHelloWorldFixtureFactory : public HelloWorldFixtureFactory {
     typedef AUBCommandStreamFixture CommandStreamFixture;
 };
-} // namespace OCLRT
+} // namespace NEO

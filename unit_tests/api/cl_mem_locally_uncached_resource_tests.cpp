@@ -19,7 +19,7 @@
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/utilities/base_object_utils.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 namespace clMemLocallyUncachedResourceTests {
 

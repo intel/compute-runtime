@@ -14,7 +14,7 @@
 
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 static std::vector<Drm *> drmMockStack;
 
@@ -58,4 +58,4 @@ Drm *Drm::create(int32_t deviceOrdinal) {
 }
 
 void Drm::closeDevice(int32_t deviceOrdinal) { drmMockStack[drmMockStack.size() - 1]->fd = -1; }
-} // namespace OCLRT
+} // namespace NEO

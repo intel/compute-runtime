@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 class ProgramWithBlockKernelsTest : public ContextFixture,
                                     public PlatformFixture,
@@ -128,4 +128,4 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLink
         EXPECT_EQ(nullptr, pProgram);
     }
 }
-} // namespace OCLRT
+} // namespace NEO

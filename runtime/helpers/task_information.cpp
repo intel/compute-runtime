@@ -22,7 +22,7 @@
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/surface.h"
 
-namespace OCLRT {
+namespace NEO {
 KernelOperation::~KernelOperation() {
     storageForAllocations.storeAllocation(std::unique_ptr<GraphicsAllocation>(dsh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
     if (ioh.get() == dsh.get()) {
@@ -289,4 +289,4 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
 
     return completionStamp;
 }
-} // namespace OCLRT
+} // namespace NEO

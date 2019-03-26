@@ -14,7 +14,7 @@
 
 #include <map>
 
-namespace OCLRT {
+namespace NEO {
 
 extern bool failCreateCifMain;
 
@@ -212,4 +212,4 @@ struct MockCIFBuffer : MockCIF<CIF::Builtins::BufferSimple> {
 
     std::vector<char> data;
 };
-} // namespace OCLRT
+} // namespace NEO

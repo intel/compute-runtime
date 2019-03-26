@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(BlockKernelManagerTest, pushPrivateSurfaceResizesArray) {
     MockGraphicsAllocation allocation(0, 0);

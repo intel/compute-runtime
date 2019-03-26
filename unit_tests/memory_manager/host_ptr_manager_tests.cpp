@@ -16,7 +16,7 @@
 #include "unit_tests/mocks/mock_internal_allocation_storage.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(HostPtrManager, AlignedPointerAndAlignedSizeAskedForAllocationCountReturnsOne) {
     auto size = MemoryConstants::pageSize * 10;

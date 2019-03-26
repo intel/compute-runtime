@@ -20,7 +20,7 @@
 
 #include <cstring>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 bool KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() { return false; }
@@ -420,4 +420,4 @@ bool KernelCommandsHelper<GfxFamily>::kernelUsesLocalIds(const Kernel &kernel) {
             kernel.getKernelInfo().patchInfo.threadPayload->LocalIDZPresent);
 }
 
-} // namespace OCLRT
+} // namespace NEO

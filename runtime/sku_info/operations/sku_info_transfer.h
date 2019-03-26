@@ -11,14 +11,14 @@
 
 #include "sku_info.h"
 
-namespace OCLRT {
+namespace NEO {
 class SkuInfoTransfer {
   public:
     static void transferFtrTableForGmm(_SKU_FEATURE_TABLE *dstFtrTable, const FeatureTable *srcFtrTable);
     static void transferWaTableForGmm(_WA_TABLE *dstWaTable, const WorkaroundTable *srcWaTable);
 
   protected:
-    static void transferFtrTableForGmmBase(_SKU_FEATURE_TABLE *dstFtrTable, const OCLRT::FeatureTable *srcFtrTable) {
+    static void transferFtrTableForGmmBase(_SKU_FEATURE_TABLE *dstFtrTable, const NEO::FeatureTable *srcFtrTable) {
 #define TRANSFER_FTR_TO_GMM(VAL_NAME) dstFtrTable->Ftr##VAL_NAME = srcFtrTable->ftr##VAL_NAME
         TRANSFER_FTR_TO_GMM(StandardMipTailFormat);
         TRANSFER_FTR_TO_GMM(ULT);
@@ -40,7 +40,7 @@ class SkuInfoTransfer {
 #undef TRANSFER_FTR_TO_GMM
     }
 
-    static void transferWaTableForGmmBase(_WA_TABLE *dstWaTable, const OCLRT::WorkaroundTable *srcWaTable) {
+    static void transferWaTableForGmmBase(_WA_TABLE *dstWaTable, const NEO::WorkaroundTable *srcWaTable) {
 #define TRANSFER_WA_TO_GMM(VAL_NAME) dstWaTable->Wa##VAL_NAME = srcWaTable->wa##VAL_NAME
         TRANSFER_WA_TO_GMM(FbcLinearSurfaceStride);
         TRANSFER_WA_TO_GMM(DisableEdramForDisplayRT);
@@ -50,4 +50,4 @@ class SkuInfoTransfer {
     }
 };
 
-} // namespace OCLRT
+} // namespace NEO

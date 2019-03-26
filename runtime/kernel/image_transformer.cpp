@@ -11,7 +11,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/program/kernel_info.h"
 
-namespace OCLRT {
+namespace NEO {
 void ImageTransformer::registerImage3d(uint32_t argIndex) {
     if (std::find(argIndexes.begin(), argIndexes.end(), argIndex) == argIndexes.end()) {
         argIndexes.push_back(argIndex);
@@ -43,4 +43,4 @@ bool ImageTransformer::didTransform() const {
 bool ImageTransformer::hasRegisteredImages3d() const {
     return !argIndexes.empty();
 }
-} // namespace OCLRT
+} // namespace NEO

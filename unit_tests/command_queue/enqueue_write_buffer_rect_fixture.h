@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
                                     public ::testing::Test {
@@ -91,4 +91,4 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
     static const size_t rowPitch = 100;
     static const size_t slicePitch = 100 * 100;
 };
-} // namespace OCLRT
+} // namespace NEO

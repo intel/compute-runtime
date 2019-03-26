@@ -10,7 +10,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/helpers/cl_helper.h"
 
-namespace OCLRT {
+namespace NEO {
 
 std::unique_ptr<EventsTracker> EventsTracker::globalEvTracker = nullptr;
 
@@ -79,7 +79,7 @@ void EventsTracker::dumpNode(Event *node, std::ostream &out, const EventIdMap &e
     std::string eventType = isUserEvent ? "USER_EVENT" : (node->isCurrentCmdQVirtualEvent() ? "---V_EVENT " : "-----EVENT ");
     std::string commandType = "";
     if (isUserEvent == false) {
-        commandType = OCLRT::cmdTypetoString(node->getCommandType());
+        commandType = NEO::cmdTypetoString(node->getCommandType());
     }
 
     static const char *status[] = {
@@ -246,4 +246,4 @@ std::unique_ptr<std::ostream> EventsTracker::createDumpStream(const std::string 
     return std::make_unique<std::fstream>(filename, std::ios::binary | std::ios::out);
 }
 
-} // namespace OCLRT
+} // namespace NEO

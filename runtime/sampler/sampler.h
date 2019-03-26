@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
 
-namespace OCLRT {
+namespace NEO {
 class Context;
 struct HardwareInfo;
 
@@ -137,4 +137,4 @@ inline Sampler *castToObject<Sampler>(const void *object) {
     auto clSamplerObj = reinterpret_cast<const _cl_sampler *>(object);
     return castToObject<Sampler>(const_cast<cl_sampler>(clSamplerObj));
 }
-} // namespace OCLRT
+} // namespace NEO

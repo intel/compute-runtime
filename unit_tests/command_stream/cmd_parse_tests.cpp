@@ -9,7 +9,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct CommandParse
     : public DeviceFixture,

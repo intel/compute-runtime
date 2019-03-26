@@ -16,7 +16,7 @@
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <>
 void HardwareParse::findCsrBaseAddress<CNLFamily>() {
@@ -26,9 +26,9 @@ void HardwareParse::findCsrBaseAddress<CNLFamily>() {
         cmdGpgpuCsrBaseAddress = *itorGpgpuCsrBaseAddress;
     }
 }
-} // namespace OCLRT
+} // namespace NEO
 
-using namespace OCLRT;
+using namespace NEO;
 
 using Gen10PreemptionTests = DevicePreemptionTests;
 using Gen10PreemptionEnqueueKernelTest = PreemptionEnqueueKernelTest;

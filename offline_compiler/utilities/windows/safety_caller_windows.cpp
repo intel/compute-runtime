@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "offline_compiler/offline_compiler.h"
 #include "offline_compiler/utilities/windows/safety_guard_windows.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 int buildWithSafetyGuard(OfflineCompiler *compiler) {
     SafetyGuardWindows safetyGuard;

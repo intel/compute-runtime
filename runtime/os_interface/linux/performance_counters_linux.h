@@ -14,7 +14,7 @@
 
 typedef struct _drm_intel_context drm_intel_context;
 
-namespace OCLRT {
+namespace NEO {
 
 class PerformanceCountersLinux : virtual public PerformanceCounters {
   public:
@@ -39,4 +39,4 @@ class PerformanceCountersLinux : virtual public PerformanceCounters {
     decltype(&dlclose) dlcloseFunc = dlclose;
     decltype(&instrSetPlatformInfo) setPlatformInfoFunc = instrSetPlatformInfo;
 };
-} // namespace OCLRT
+} // namespace NEO

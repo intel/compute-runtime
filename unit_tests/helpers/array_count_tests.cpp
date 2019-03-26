@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 TEST(ArrayCountTests, arrayCount) {
     int a[10];
@@ -22,4 +22,4 @@ TEST(ArrayCountTests, isInRange) {
     EXPECT_FALSE(isInRange(10, a));
 }
 
-} // namespace OCLRT
+} // namespace NEO

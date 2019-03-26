@@ -9,7 +9,7 @@
 
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename... Args>
 DeferrableDeletion *DeferrableDeletion::create(Args... args) {
@@ -38,4 +38,4 @@ DeferrableDeletionImpl::~DeferrableDeletionImpl() {
         delete[] handles;
     }
 }
-} // namespace OCLRT
+} // namespace NEO

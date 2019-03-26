@@ -19,7 +19,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 class EventBuilder;
 
@@ -345,7 +345,7 @@ class CommandQueueHw : public CommandQueue {
   private:
     bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
     void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueue, unsigned int commandType) override;
-    void forceDispatchScheduler(OCLRT::MultiDispatchInfo &multiDispatchInfo);
+    void forceDispatchScheduler(NEO::MultiDispatchInfo &multiDispatchInfo);
     static void computeOffsetsValueForRectCommands(size_t *bufferOffset,
                                                    size_t *hostOffset,
                                                    const size_t *bufferOrigin,
@@ -366,7 +366,7 @@ class CommandQueueHw : public CommandQueue {
     void processDispatchForKernels(const MultiDispatchInfo &multiDispatchInfo,
                                    std::unique_ptr<PrintfHandler> &printfHandler,
                                    Event *event,
-                                   TagNode<OCLRT::HwTimeStamps> *&hwTimeStamps,
+                                   TagNode<NEO::HwTimeStamps> *&hwTimeStamps,
                                    Kernel *parentKernel,
                                    bool blockQueue,
                                    DeviceQueueHw<GfxFamily> *devQueueHw,
@@ -375,4 +375,4 @@ class CommandQueueHw : public CommandQueue {
                                    TimestampPacketContainer &previousTimestampPacketNodes,
                                    PreemptionMode preemption);
 };
-} // namespace OCLRT
+} // namespace NEO

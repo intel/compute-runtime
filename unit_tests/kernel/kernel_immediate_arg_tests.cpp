@@ -15,7 +15,7 @@
 #include "CL/cl.h"
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 template <typename T>
 class KernelArgImmediateTest : public Test<DeviceFixture> {

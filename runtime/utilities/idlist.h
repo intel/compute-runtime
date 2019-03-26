@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include <thread>
 #include <type_traits>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename NodeObjectType>
 struct IDNode {
@@ -468,4 +468,4 @@ class IDRefList : public IDList<IDNodeRef<NodeObjectType>, ThreadSafe, OwnsNodes
         refNode.release();
     }
 };
-} // namespace OCLRT
+} // namespace NEO

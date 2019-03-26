@@ -16,7 +16,7 @@
 
 #include "patch_shared.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 template <bool localIdX = true, bool localIdY = true, bool localIdZ = true, bool flattenedId = false>
 struct PerThreadDataTests : public DeviceFixture,

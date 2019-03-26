@@ -9,7 +9,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct Gen8PlatformCaps : public PlatformFixture, public ::testing::Test {
     void SetUp() override {

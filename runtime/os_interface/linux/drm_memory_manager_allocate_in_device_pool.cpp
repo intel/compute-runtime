@@ -7,9 +7,9 @@
 
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
     status = AllocationStatus::RetryInNonDevicePool;
     return nullptr;
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -11,7 +11,7 @@
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct MarkerFixture : public CommandEnqueueFixture {
   public:

@@ -10,7 +10,7 @@
 
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class Device;
 class DeviceVector : public std::vector<Device *> {
   public:
@@ -22,4 +22,4 @@ class DeviceVector : public std::vector<Device *> {
     void toDeviceIDs(std::vector<cl_device_id> &devIDs);
 };
 
-} // namespace OCLRT
+} // namespace NEO

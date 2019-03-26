@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "runtime/utilities/linux/debug_env_reader.h"
 
-namespace OCLRT {
+namespace NEO {
 
 SettingsReader *SettingsReader::createOsReader(bool userScope) {
     return new EnvironmentVariableReader;
@@ -46,4 +46,4 @@ std::string EnvironmentVariableReader::getSetting(const char *settingName, const
     }
     return keyValue;
 }
-} // namespace OCLRT
+} // namespace NEO

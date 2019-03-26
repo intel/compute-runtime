@@ -13,7 +13,7 @@
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
     template <typename T>

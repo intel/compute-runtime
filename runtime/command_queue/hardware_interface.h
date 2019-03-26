@@ -12,7 +12,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 class CommandQueue;
 class DispatchInfo;
@@ -100,4 +100,4 @@ class HardwareInterface {
                                                        const Kernel &kernel);
 };
 
-} // namespace OCLRT
+} // namespace NEO

@@ -27,7 +27,7 @@
 
 #include "hw_cmds.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, public ::testing::Test {
 

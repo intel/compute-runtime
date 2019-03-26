@@ -12,7 +12,7 @@
 #include "drm_command_stream.h"
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(bool withAubDump, ExecutionEnvironment &executionEnvironment) {
@@ -22,4 +22,4 @@ CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(bool withA
         return new DrmCommandStreamReceiver<GfxFamily>(executionEnvironment);
     }
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -9,7 +9,7 @@
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/kernel/kernel.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 typename KernelCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *KernelCommandsHelper<GfxFamily>::getInterfaceDescriptor(
@@ -170,4 +170,4 @@ void KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Linear
     pipeControl->setCommandStreamerStallEnable(true);
     pipeControl->setDcFlushEnable(true);
 }
-} // namespace OCLRT
+} // namespace NEO

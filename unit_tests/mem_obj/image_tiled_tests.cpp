@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 static const auto dimension = 16;
 static auto channelType = CL_UNORM_INT8;

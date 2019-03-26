@@ -11,7 +11,7 @@
 
 #include "buffer_operations_fixture.h"
 
-namespace OCLRT {
+namespace NEO {
 struct AsyncGPUoperations : public EnqueueWriteBufferTypeTest {
     void SetUp() override {
         storeInitHWTag = initialHardwareTag;
@@ -27,4 +27,4 @@ struct AsyncGPUoperations : public EnqueueWriteBufferTypeTest {
   protected:
     int storeInitHWTag;
 };
-} // namespace OCLRT
+} // namespace NEO

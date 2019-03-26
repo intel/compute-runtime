@@ -12,7 +12,7 @@
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 bool WddmInterface20::createHwQueue(OsContextWin &osContext) {
     return false;

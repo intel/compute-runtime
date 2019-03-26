@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,6 @@
 
 #include "unit_tests/tests_configuration.h"
 
-namespace OCLRT {
+namespace NEO {
 TestMode testMode = TestMode::TbxTests;
-} // namespace OCLRT
+} // namespace NEO

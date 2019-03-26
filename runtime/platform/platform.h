@@ -15,7 +15,7 @@
 #include <condition_variable>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 class CompilerInterface;
 class Device;
@@ -76,4 +76,4 @@ class Platform : public BaseObject<_cl_platform_id> {
 extern std::unique_ptr<Platform> platformImpl;
 Platform *platform();
 Platform *constructPlatform();
-} // namespace OCLRT
+} // namespace NEO

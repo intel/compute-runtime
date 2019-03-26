@@ -27,7 +27,7 @@ template struct AubPageTableHelper32<Traits<device, 32>>;
 template struct AubPageTableHelper64<Traits<device, 48>>;
 } // namespace AubMemDump
 
-namespace OCLRT {
+namespace NEO {
 using Family = CNLFamily;
 
 static const AubMemDump::LrcaHelperRcs rcs(0x002000);
@@ -78,10 +78,10 @@ const MMIOList *AUBFamilyMapper<Family>::perEngineMMIO[EngineType::NUM_ENGINES] 
     &mmioListBCS,
     &mmioListVCS,
     &mmioListVECS};
-} // namespace OCLRT
+} // namespace NEO
 
 namespace AubAllocDump {
-using namespace OCLRT;
+using namespace NEO;
 
 template uint32_t getImageSurfaceTypeFromGmmResourceType<Family>(GMM_RESOURCE_TYPE gmmResourceType);
 

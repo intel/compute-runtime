@@ -25,7 +25,7 @@
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 static const unsigned int testImageDimensions = 45;
 auto channelType = CL_UNORM_INT8;
@@ -666,11 +666,11 @@ struct ModifyableImage {
     static cl_image_format imageFormat;
     static cl_image_desc imageDesc;
     static void *hostPtr;
-    static OCLRT::Context *context;
+    static NEO::Context *context;
 };
 
 void *ModifyableImage::hostPtr = nullptr;
-OCLRT::Context *ModifyableImage::context = nullptr;
+NEO::Context *ModifyableImage::context = nullptr;
 cl_image_format ModifyableImage::imageFormat;
 cl_image_desc ModifyableImage::imageDesc;
 

@@ -20,7 +20,7 @@
 
 using PreambleTest = ::testing::Test;
 
-using namespace OCLRT;
+using namespace NEO;
 
 HWTEST_F(PreambleTest, givenDisabledPreemptioWhenPreambleAdditionalCommandsSizeIsQueriedThenZeroIsReturned) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

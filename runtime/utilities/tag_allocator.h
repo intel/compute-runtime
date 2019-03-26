@@ -16,7 +16,7 @@
 #include <mutex>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class GraphicsAllocation;
 
 template <typename TagType>
@@ -177,4 +177,4 @@ class TagAllocator {
         }
     }
 };
-} // namespace OCLRT
+} // namespace NEO

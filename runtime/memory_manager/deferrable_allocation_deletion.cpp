@@ -12,7 +12,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_context.h"
 
-namespace OCLRT {
+namespace NEO {
 
 DeferrableAllocationDeletion::DeferrableAllocationDeletion(MemoryManager &memoryManager, GraphicsAllocation &graphicsAllocation) : memoryManager(memoryManager),
                                                                                                                                    graphicsAllocation(graphicsAllocation) {}
@@ -36,4 +36,4 @@ bool DeferrableAllocationDeletion::apply() {
     memoryManager.freeGraphicsMemory(&graphicsAllocation);
     return true;
 }
-} // namespace OCLRT
+} // namespace NEO

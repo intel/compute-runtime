@@ -11,7 +11,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 constexpr size_t bigAllocation = 1 * MB;
 constexpr uintptr_t dummyAddress = 0xFFFFF000u;
 class MemoryAllocation : public GraphicsAllocation {
@@ -82,4 +82,4 @@ class OsAgnosticMemoryManager : public MemoryManager {
     unsigned long long counter = 0;
     bool fakeBigAllocations = false;
 };
-} // namespace OCLRT
+} // namespace NEO

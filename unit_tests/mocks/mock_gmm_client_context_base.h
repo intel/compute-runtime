@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "gmm_client_context.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockGmmClientContextBase : public GmmClientContext {
   public:
     MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) override;
@@ -19,4 +19,4 @@ class MockGmmClientContextBase : public GmmClientContext {
   protected:
     MockGmmClientContextBase(GMM_CLIENT clientType, GmmExportEntries &gmmExportEntries);
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -8,7 +8,7 @@
 #pragma once
 #include <cstdlib>
 
-namespace OCLRT {
+namespace NEO {
 
 struct HardwareInfo;
 class ExecutionEnvironment;
@@ -29,4 +29,4 @@ class DeviceFactoryCleaner {
     ~DeviceFactoryCleaner() { DeviceFactory::releaseDevices(); }
 };
 
-} // namespace OCLRT
+} // namespace NEO

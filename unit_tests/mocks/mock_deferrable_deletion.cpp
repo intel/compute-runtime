@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "unit_tests/mocks/mock_deferrable_deletion.h"
 
-namespace OCLRT {
+namespace NEO {
 bool MockDeferrableDeletion::apply() {
     applyCalled++;
     return true;
@@ -15,4 +15,4 @@ bool MockDeferrableDeletion::apply() {
 MockDeferrableDeletion::~MockDeferrableDeletion() {
     EXPECT_EQ(1, applyCalled);
 }
-} // namespace OCLRT
+} // namespace NEO

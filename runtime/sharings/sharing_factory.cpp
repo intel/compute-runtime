@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "sharing_factory.h"
 
-namespace OCLRT {
+namespace NEO {
 
 std::unique_ptr<SharingFactory> SharingFactory::build() {
     std::unique_ptr<SharingFactory> res(new SharingFactory());
@@ -71,4 +71,4 @@ SharingBuilderFactory *SharingFactory::sharingContextBuilder[SharingType::MAX_SH
     nullptr,
 };
 SharingFactory sharingFactory;
-} // namespace OCLRT
+} // namespace NEO

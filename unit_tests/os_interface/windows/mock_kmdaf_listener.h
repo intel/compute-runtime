@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/os_interface/windows/kmdaf_listener.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct KmDafListenerMock : public KmDafListener {
 
@@ -134,4 +134,4 @@ struct KmDafListenerMock : public KmDafListener {
         PFND3DKMT_ESCAPE pfnEscape = nullptr;
     } notifyWriteTargetParametrization;
 };
-} // namespace OCLRT
+} // namespace NEO

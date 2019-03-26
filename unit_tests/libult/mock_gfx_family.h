@@ -9,7 +9,7 @@
 #include "runtime/gen_common/aub_mapper_base.h"
 #include "runtime/helpers/hw_helper.h"
 
-namespace OCLRT {
+namespace NEO {
 
 extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 
@@ -540,4 +540,4 @@ struct AUBFamilyMapper<GENX> {
     static const MMIOList *perEngineMMIO[EngineType::NUM_ENGINES];
 };
 
-} // namespace OCLRT
+} // namespace NEO

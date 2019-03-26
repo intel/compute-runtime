@@ -21,7 +21,7 @@
 #include <tuple>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 typedef std::vector<char> BuiltinResourceT;
 
 class Context;
@@ -99,4 +99,4 @@ class BuiltinDispatchInfoBuilder {
     BuiltIns &kernelsLib;
 };
 
-} // namespace OCLRT
+} // namespace NEO

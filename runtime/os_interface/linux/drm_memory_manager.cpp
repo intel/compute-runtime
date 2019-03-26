@@ -27,7 +27,7 @@
 #include <cstring>
 #include <iostream>
 
-namespace OCLRT {
+namespace NEO {
 
 DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                    bool forcePinAllowed,
@@ -103,19 +103,19 @@ void DrmMemoryManager::initInternalRangeAllocator(size_t gpuRange) {
     }
 }
 
-void DrmMemoryManager::eraseSharedBufferObject(OCLRT::BufferObject *bo) {
+void DrmMemoryManager::eraseSharedBufferObject(NEO::BufferObject *bo) {
     auto it = std::find(sharingBufferObjects.begin(), sharingBufferObjects.end(), bo);
     //If an object isReused = true, it must be in the vector
     DEBUG_BREAK_IF(it == sharingBufferObjects.end());
     sharingBufferObjects.erase(it);
 }
 
-void DrmMemoryManager::pushSharedBufferObject(OCLRT::BufferObject *bo) {
+void DrmMemoryManager::pushSharedBufferObject(NEO::BufferObject *bo) {
     bo->isReused = true;
     sharingBufferObjects.push_back(bo);
 }
 
-uint32_t DrmMemoryManager::unreference(OCLRT::BufferObject *bo, bool synchronousDestroy) {
+uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDestroy) {
     if (!bo)
         return -1;
 
@@ -195,7 +195,7 @@ void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, StorageA
     limitedGpuAddressRangeAllocator->free(graphicsAddress, unmapSize);
 }
 
-OCLRT::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint64_t flags, bool softpin) {
+NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint64_t flags, bool softpin) {
     drm_i915_gem_userptr userptr = {};
     userptr.user_ptr = address;
     userptr.user_size = size;
@@ -751,4 +751,4 @@ void *DrmMemoryManager::reserveCpuAddressRange(size_t size) {
 void DrmMemoryManager::releaseReservedCpuAddressRange(void *reserved, size_t size) {
     munmapFunction(reserved, size);
 }
-} // namespace OCLRT
+} // namespace NEO

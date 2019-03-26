@@ -180,10 +180,10 @@ TEST_F(MockEventTests, blockedUserEventPassedToEnqueueNdRangeWithoutReturnEventI
     auto taskCountAfter = csr.peekTaskCount();
 
     //queue should be in blocked state at this moment, task level should be inherited from user event
-    EXPECT_EQ(OCLRT::Event::eventNotReady, pCmdQ->taskLevel);
+    EXPECT_EQ(NEO::Event::eventNotReady, pCmdQ->taskLevel);
 
     //queue should be in blocked state at this moment, task count should be inherited from user event
-    EXPECT_EQ(OCLRT::Event::eventNotReady, pCmdQ->taskCount);
+    EXPECT_EQ(NEO::Event::eventNotReady, pCmdQ->taskCount);
 
     //queue should be in blocked state
     EXPECT_EQ(pCmdQ->isQueueBlocked(), true);
@@ -213,10 +213,10 @@ TEST_F(MockEventTests, blockedUserEventPassedToEnqueueNdRangeWithReturnEventIsNo
     auto taskCountAfter = csr.peekTaskCount();
 
     //queue should be in blocked state at this moment, task level should be inherited from user event
-    EXPECT_EQ(OCLRT::Event::eventNotReady, pCmdQ->taskLevel);
+    EXPECT_EQ(NEO::Event::eventNotReady, pCmdQ->taskLevel);
 
     //queue should be in blocked state at this moment, task count should be inherited from user event
-    EXPECT_EQ(OCLRT::Event::eventNotReady, pCmdQ->taskCount);
+    EXPECT_EQ(NEO::Event::eventNotReady, pCmdQ->taskCount);
 
     //queue should be in blocked state
     EXPECT_EQ(pCmdQ->isQueueBlocked(), true);
@@ -232,7 +232,7 @@ TEST_F(MockEventTests, blockedUserEventPassedToEnqueueNdRangeWithReturnEventIsNo
 
     //and if normal event inherited status from user event
     Event *returnEvent = castToObject<Event>(retEvent);
-    EXPECT_EQ(returnEvent->taskLevel, OCLRT::Event::eventNotReady);
+    EXPECT_EQ(returnEvent->taskLevel, NEO::Event::eventNotReady);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 

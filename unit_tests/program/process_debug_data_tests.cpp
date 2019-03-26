@@ -13,7 +13,7 @@
 
 #include <memory>
 using namespace iOpenCL;
-using namespace OCLRT;
+using namespace NEO;
 
 TEST_F(ProgramTests, GivenProgramWithDebugDataForTwoKernelsWhenPorcessedThenDebugDataIsSetInKernelInfos) {
     const char kernelName1[] = "kernel1";

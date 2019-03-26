@@ -13,7 +13,7 @@
 
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 typedef SKLFamily Family;
 static auto gfxCore = IGFX_GEN9_CORE;
@@ -27,4 +27,4 @@ void populateFactoryTable<TbxCommandStreamReceiverHw<Family>>() {
 
 template class TbxCommandStreamReceiverHw<Family>;
 template class CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<Family>>;
-} // namespace OCLRT
+} // namespace NEO

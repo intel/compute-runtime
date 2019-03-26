@@ -12,7 +12,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 constexpr uintptr_t windowsMinAddress = 0x200000;
 
@@ -24,4 +24,4 @@ struct MonitoredFence {
     uint64_t lastSubmittedFence = 0;
 };
 
-} // namespace OCLRT
+} // namespace NEO

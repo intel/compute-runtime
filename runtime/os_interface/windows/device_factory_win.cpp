@@ -16,7 +16,7 @@
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
-namespace OCLRT {
+namespace NEO {
 
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 
@@ -83,6 +83,6 @@ void Device::appendOSExtensions(std::string &deviceExtensions) {
                             CL_CONTEXT_D3D11_DEVICE_KHR,
                             0};
 }
-} // namespace OCLRT
+} // namespace NEO
 
 #endif

@@ -9,7 +9,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 static RegisterEmbeddedResource registerVmeSrc(
     createBuiltinResourceName(
@@ -38,4 +38,4 @@ static RegisterEmbeddedResource registerVmeAdvancedBidirectionalSrc(
 #include "runtime/built_ins/kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel.igdrcl_built_in"
         ));
 
-} // namespace OCLRT
+} // namespace NEO

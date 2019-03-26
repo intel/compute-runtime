@@ -17,7 +17,7 @@
 #include <string>
 #include <type_traits>
 
-namespace OCLRT {
+namespace NEO {
 class ExecutionEnvironment;
 class GraphicsAllocation;
 struct HardwareCapabilities;
@@ -200,4 +200,4 @@ union SURFACE_STATE_BUFFER_LENGTH {
     } SurfaceState;
 };
 
-} // namespace OCLRT
+} // namespace NEO

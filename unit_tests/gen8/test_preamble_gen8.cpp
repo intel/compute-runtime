@@ -12,7 +12,7 @@
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/preamble/preamble_fixture.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef PreambleFixture BdwSlm;
 

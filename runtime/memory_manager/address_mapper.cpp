@@ -12,7 +12,7 @@
 #include <inttypes.h>
 #include <iostream>
 
-namespace OCLRT {
+namespace NEO {
 
 AddressMapper::AddressMapper() : nextPage(1) {
 }
@@ -64,4 +64,4 @@ void AddressMapper::unmap(void *vm) {
         mapping.erase(it);
     }
 }
-} // namespace OCLRT
+} // namespace NEO

@@ -16,7 +16,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 class Wddm;
 
 class OSInterface::OSInterfaceImpl {
@@ -37,4 +37,4 @@ class OSInterface::OSInterfaceImpl {
   protected:
     std::unique_ptr<Wddm> wddm;
 };
-} // namespace OCLRT
+} // namespace NEO

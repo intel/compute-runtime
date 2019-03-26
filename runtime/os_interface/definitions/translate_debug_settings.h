@@ -7,7 +7,7 @@
 
 #pragma once
 
-namespace OCLRT {
+namespace NEO {
 
 struct DebugVariables;
 
@@ -16,4 +16,4 @@ inline void translateDebugSettingsBase(DebugVariables &) {
 
 void translateDebugSettings(DebugVariables &);
 
-} // namespace OCLRT
+} // namespace NEO

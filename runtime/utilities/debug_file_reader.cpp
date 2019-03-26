@@ -9,7 +9,7 @@
 
 using namespace std;
 
-namespace OCLRT {
+namespace NEO {
 
 SettingsFileReader::SettingsFileReader(const char *filePath) {
     std::ifstream settingsFile;
@@ -90,4 +90,4 @@ void SettingsFileReader::parseStream(std::istream &inputStream) {
         key.clear();
     }
 }
-}; // namespace OCLRT
+}; // namespace NEO

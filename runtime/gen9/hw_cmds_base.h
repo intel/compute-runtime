@@ -17,7 +17,7 @@
 template <class T>
 struct CmdParse;
 
-namespace OCLRT {
+namespace NEO {
 
 struct GEN9 {
 #include "runtime/gen9/hw_cmds_generated.h"
@@ -62,4 +62,4 @@ struct SKLFamily : public GEN9 {
     }
 };
 
-} // namespace OCLRT
+} // namespace NEO

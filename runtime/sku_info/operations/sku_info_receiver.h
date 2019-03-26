@@ -11,7 +11,7 @@
 #include "sku_info.h"
 #include "umKmInc/sharedata.h"
 
-namespace OCLRT {
+namespace NEO {
 class SkuInfoReceiver {
   public:
     static void receiveFtrTableFromAdapterInfo(FeatureTable *ftrTable, _ADAPTER_INFO *adapterInfo);
@@ -123,4 +123,4 @@ class SkuInfoReceiver {
     }
 };
 
-} // namespace OCLRT
+} // namespace NEO

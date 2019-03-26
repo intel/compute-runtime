@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct EnqueueCopyBufferRectHelper {
     cl_int enqueueCopyBufferRect(
@@ -135,4 +135,4 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
     static const size_t rowPitch = 100;
     static const size_t slicePitch = 100 * 100;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -13,7 +13,7 @@
 
 #include <cstddef>
 
-namespace OCLRT {
+namespace NEO {
 // AUB file folder location
 const char *folderAUB = ".";
 
@@ -26,4 +26,4 @@ static const HardwareInfo *DefaultPlatformDevices[] = {
 
 size_t numPlatformDevices = arrayCount(DefaultPlatformDevices);
 const HardwareInfo **platformDevices = DefaultPlatformDevices;
-} // namespace OCLRT
+} // namespace NEO

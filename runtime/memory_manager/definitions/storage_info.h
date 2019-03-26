@@ -7,8 +7,8 @@
 
 #pragma once
 #include <cstdint>
-namespace OCLRT {
+namespace NEO {
 struct StorageInfo {
     uint32_t getNumHandles() const;
 };
-} // namespace OCLRT
+} // namespace NEO

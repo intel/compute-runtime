@@ -19,7 +19,7 @@
 
 #include <cstring>
 
-namespace OCLRT {
+namespace NEO {
 
 HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT] = {};
 
@@ -186,4 +186,4 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     return 0;
 }
 
-} // namespace OCLRT
+} // namespace NEO

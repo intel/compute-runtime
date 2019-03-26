@@ -12,11 +12,11 @@
 #include <type_traits>
 
 TEST(OSInterface, NonCopyable) {
-    EXPECT_FALSE(std::is_move_constructible<OCLRT::OSInterface>::value);
-    EXPECT_FALSE(std::is_copy_constructible<OCLRT::OSInterface>::value);
+    EXPECT_FALSE(std::is_move_constructible<NEO::OSInterface>::value);
+    EXPECT_FALSE(std::is_copy_constructible<NEO::OSInterface>::value);
 }
 
 TEST(OSInterface, NonAssignable) {
-    EXPECT_FALSE(std::is_move_assignable<OCLRT::OSInterface>::value);
-    EXPECT_FALSE(std::is_copy_assignable<OCLRT::OSInterface>::value);
+    EXPECT_FALSE(std::is_move_assignable<NEO::OSInterface>::value);
+    EXPECT_FALSE(std::is_copy_assignable<NEO::OSInterface>::value);
 }

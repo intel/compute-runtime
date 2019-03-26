@@ -11,7 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 class Device;
 class ExecutionEnvironment;
@@ -50,4 +50,4 @@ class ScratchSpaceController {
     bool force32BitAllocation = false;
     uint32_t computeUnitsUsedForScratch = 0;
 };
-} // namespace OCLRT
+} // namespace NEO

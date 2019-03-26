@@ -11,7 +11,7 @@
 
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 // clang-format off
 #define HASH_JENKINS_MIX(a,b,c) \
 { \
@@ -114,4 +114,4 @@ uint32_t hashPtrToU32(const T *src) {
 
     return static_cast<uint32_t>(asInt);
 }
-} // namespace OCLRT
+} // namespace NEO

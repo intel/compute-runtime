@@ -9,7 +9,7 @@
 
 #include "config.h"
 
-namespace OCLRT {
+namespace NEO {
 int EGLCreateContextCalled = 0;
 int EGLChooseConfigCalled = 0;
 int EGLDeleteContextCalled = 0;
@@ -47,4 +47,4 @@ GlSharingFunctionsMock::GlSharingFunctionsMock() {
 MockGlSharing::MockGlSharing(GLType glhdcType, GLContext glhglrcHandle, GLContext glhglrcHandleBkpCtx, GLDisplay glhdcHandle) {
     sharingFunctions->setHandles(glhdcType, glhglrcHandle, glhglrcHandleBkpCtx, glhdcHandle);
 }
-} // namespace OCLRT
+} // namespace NEO

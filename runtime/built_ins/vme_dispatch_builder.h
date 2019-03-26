@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 
-namespace OCLRT {
+namespace NEO {
 template <typename HWFamily>
 class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
   public:
@@ -475,4 +475,4 @@ class BuiltInOp<HWFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirection
         return true;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

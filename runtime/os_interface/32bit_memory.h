@@ -11,7 +11,7 @@
 #include <memory>
 #include <stdint.h>
 
-namespace OCLRT {
+namespace NEO {
 const uintptr_t max32BitAddress = 0xffffffff;
 extern bool is32BitOsAllocatorAvailable;
 class Allocator32bit {
@@ -34,4 +34,4 @@ class Allocator32bit {
     uint64_t base = 0;
     uint64_t size = 0;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -12,7 +12,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj.h"
 
-void OCLRT::MemObj::getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam) {
+void NEO::MemObj::getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam) {
     switch (paramName) {
 #ifdef LIBVA
     case CL_MEM_VA_API_MEDIA_SURFACE_INTEL:
@@ -24,7 +24,7 @@ void OCLRT::MemObj::getOsSpecificMemObjectInfo(const cl_mem_info &paramName, siz
     }
 }
 
-void OCLRT::Image::getOsSpecificImageInfo(const cl_image_info &paramName, size_t *srcParamSize, void **srcParam) {
+void NEO::Image::getOsSpecificImageInfo(const cl_image_info &paramName, size_t *srcParamSize, void **srcParam) {
     switch (paramName) {
 #ifdef LIBVA
     case CL_IMAGE_VA_API_PLANE_INTEL:
@@ -37,6 +37,6 @@ void OCLRT::Image::getOsSpecificImageInfo(const cl_image_info &paramName, size_t
     }
 }
 
-void *OCLRT::Context::getOsContextInfo(cl_context_info &paramName, size_t *srcParamSize) {
+void *NEO::Context::getOsContextInfo(cl_context_info &paramName, size_t *srcParamSize) {
     return nullptr;
 }

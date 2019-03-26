@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 class SettingsFileReader : public SettingsReader {
   public:
@@ -30,4 +30,4 @@ class SettingsFileReader : public SettingsReader {
     std::map<std::string, int32_t> settingValueMap;
     std::map<std::string, std::string> settingStringMap;
 };
-}; // namespace OCLRT
+}; // namespace NEO

@@ -17,7 +17,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct EnqueueBufferWindowsTest : public HardwareParse,
                                   public ::testing::Test {

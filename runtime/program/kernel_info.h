@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 class BuiltinDispatchInfoBuilder;
 class Device;
 class Kernel;
@@ -244,4 +244,4 @@ struct KernelInfo {
     bool computeMode = false;
     const gtpin::igc_info_t *igcInfoForGtpin = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

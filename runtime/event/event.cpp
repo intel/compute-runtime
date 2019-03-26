@@ -26,7 +26,7 @@
 #include "runtime/utilities/stackvec.h"
 #include "runtime/utilities/tag_allocator.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const cl_uint Event::eventNotReady = 0xFFFFFFF0;
 
@@ -45,7 +45,7 @@ Event::Event(
       cmdType(cmdType),
       dataCalculated(false),
       taskCount(taskCount) {
-    if (OCLRT::DebugManager.flags.EventsTrackerEnable.get()) {
+    if (NEO::DebugManager.flags.EventsTrackerEnable.get()) {
         EventsTracker::getEventsTracker().notifyCreation(this);
     }
     parentCount = 0;
@@ -95,7 +95,7 @@ Event::Event(
 }
 
 Event::~Event() {
-    if (OCLRT::DebugManager.flags.EventsTrackerEnable.get()) {
+    if (NEO::DebugManager.flags.EventsTrackerEnable.get()) {
         EventsTracker::getEventsTracker().notifyDestruction(this);
     }
 
@@ -221,7 +221,7 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
     }
 
     return retVal;
-} // namespace OCLRT
+} // namespace NEO
 
 uint32_t Event::getCompletionStamp() const {
     return this->taskCount;
@@ -463,7 +463,7 @@ void Event::transitionExecutionStatus(int32_t newExecutionStatus) const {
     while (prevStatus > newExecutionStatus) {
         executionStatus.compare_exchange_weak(prevStatus, newExecutionStatus);
     }
-    if (OCLRT::DebugManager.flags.EventsTrackerEnable.get()) {
+    if (NEO::DebugManager.flags.EventsTrackerEnable.get()) {
         EventsTracker::getEventsTracker().notifyTransitionedExecutionStatus();
     }
 }
@@ -730,4 +730,4 @@ bool Event::checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_eve
     return userEventsDependencies;
 }
 
-} // namespace OCLRT
+} // namespace NEO

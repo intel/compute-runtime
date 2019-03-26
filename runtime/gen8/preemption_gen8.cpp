@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/command_stream/preemption.inl"
 
-namespace OCLRT {
+namespace NEO {
 
 typedef BDWFamily GfxFamily;
 
@@ -65,4 +65,4 @@ template void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStre
 template void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pCommandStream, const Device &device);
 template void PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(INTERFACE_DESCRIPTOR_DATA<GfxFamily> *idd, PreemptionMode preemptionMode);
 
-} // namespace OCLRT
+} // namespace NEO

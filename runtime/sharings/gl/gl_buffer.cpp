@@ -16,7 +16,7 @@
 
 #include "config.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, unsigned int bufferId, cl_int *errcodeRet) {
     ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);

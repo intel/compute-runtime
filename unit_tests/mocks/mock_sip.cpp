@@ -20,7 +20,7 @@
 #include <fstream>
 #include <map>
 
-namespace OCLRT {
+namespace NEO {
 std::vector<char> MockSipKernel::dummyBinaryForSip;
 std::vector<char> MockSipKernel::getDummyGenBinary() {
     if (dummyBinaryForSip.size() == 0) {
@@ -48,4 +48,4 @@ void MockSipKernel::initDummyBinary() {
 void MockSipKernel::shutDown() {
     MockSipKernel::dummyBinaryForSip.clear();
 }
-} // namespace OCLRT
+} // namespace NEO

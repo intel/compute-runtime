@@ -12,7 +12,7 @@
 
 #include "CL/cl_gl.h"
 
-namespace OCLRT {
+namespace NEO {
 class Context;
 class Image;
 class GlTexture : GlSharing {
@@ -43,4 +43,4 @@ class GlTexture : GlSharing {
     cl_GLint miplevel;
     CL_GL_RESOURCE_INFO textureInfo;
 };
-} // namespace OCLRT
+} // namespace NEO

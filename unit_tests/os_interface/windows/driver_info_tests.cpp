@@ -23,7 +23,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
@@ -164,4 +164,4 @@ TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoWindowsThenSetRe
     EXPECT_STREQ(driverInfo->getRegistryReaderRegKey(), reader->getRegKey());
 };
 
-} // namespace OCLRT
+} // namespace NEO

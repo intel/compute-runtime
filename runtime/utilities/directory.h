@@ -9,10 +9,10 @@
 #include <string>
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 class Directory {
   public:
     static std::vector<std::string> getFiles(std::string &path);
 };
-}; // namespace OCLRT
+}; // namespace NEO

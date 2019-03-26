@@ -9,7 +9,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 
 #include "cl_api_tests.h"
-using namespace OCLRT;
+using namespace NEO;
 
 namespace ClSetEventCallbackTests {
 

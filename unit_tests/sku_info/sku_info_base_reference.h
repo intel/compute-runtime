@@ -11,7 +11,7 @@
 
 #include "sku_info.h"
 
-namespace OCLRT {
+namespace NEO {
 struct SkuInfoBaseReference {
     static void fillReferenceFtrForTransfer(_SKU_FEATURE_TABLE &refFtrTable) {
         memset(&refFtrTable, 0, sizeof(refFtrTable));
@@ -145,4 +145,4 @@ struct SkuInfoBaseReference {
         refWaTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
     }
 }; // namespace SkuInfoBaseReference
-} // namespace OCLRT
+} // namespace NEO

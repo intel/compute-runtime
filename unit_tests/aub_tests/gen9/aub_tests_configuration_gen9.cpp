@@ -8,6 +8,6 @@
 #include "runtime/gen_common/hw_cmds.h"
 #include "unit_tests/aub_tests/aub_tests_configuration.inl"
 
-using namespace OCLRT;
+using namespace NEO;
 
 template AubTestsConfig GetAubTestsConfig<SKLFamily>();

@@ -9,7 +9,7 @@
 
 #include "runtime/indirect_heap/indirect_heap.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 bool HeapDirtyState::updateAndCheck(const IndirectHeap *heap) {
     if (!heap->getGraphicsAllocation()) {

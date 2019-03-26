@@ -17,7 +17,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class GlSharingTextureTests : public ::testing::Test {
   public:

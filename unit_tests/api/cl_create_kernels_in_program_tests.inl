@@ -11,7 +11,7 @@
 
 #include "cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct clCreateKernelsInProgramTests : public api_tests {
     void SetUp() override {

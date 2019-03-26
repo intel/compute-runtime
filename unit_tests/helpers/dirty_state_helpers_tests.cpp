@@ -16,7 +16,7 @@
 #include <memory>
 
 namespace DirtyStateHelpers {
-using namespace OCLRT;
+using namespace NEO;
 size_t getSizeInPages(size_t sizeInBytes) {
     return (sizeInBytes + MemoryConstants::pageSize) / MemoryConstants::pageSize;
 }

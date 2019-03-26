@@ -10,7 +10,7 @@
 
 #include <dxgi.h>
 
-namespace OCLRT {
+namespace NEO {
 Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory() {
     return CreateDXGIFactory;
 }
@@ -26,4 +26,4 @@ Wddm::VirtualFreeFcn getVirtualFree() {
 Wddm::VirtualAllocFcn getVirtualAlloc() {
     return VirtualAlloc;
 }
-} // namespace OCLRT
+} // namespace NEO

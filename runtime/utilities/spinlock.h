@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 #include <atomic>
 
-namespace OCLRT {
+namespace NEO {
 
 class SpinLock : NonCopyableOrMovableClass {
   public:
@@ -35,4 +35,4 @@ class SpinLock : NonCopyableOrMovableClass {
     std::atomic_flag flag = ATOMIC_FLAG_INIT;
 };
 
-} // namespace OCLRT
+} // namespace NEO

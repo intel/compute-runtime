@@ -31,7 +31,7 @@
 #include <memory>
 #include <vector>
 
-using namespace OCLRT;
+using namespace NEO;
 
 class MyMockProgram : public MockProgram {
   public:
@@ -159,7 +159,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniformOutcomeUniformFlag) {
 
 #include <vector>
 
-namespace OCLRT {
+namespace NEO {
 
 class ProgramNonUniformTest : public ContextFixture,
                               public PlatformFixture,
@@ -315,4 +315,4 @@ TEST_F(ProgramNonUniformTest, ExecuteKernelNonUniform12) {
 
     delete pKernel;
 }
-} // namespace OCLRT
+} // namespace NEO

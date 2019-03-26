@@ -30,7 +30,7 @@ enum CommandStreamReceiverType {
     CSR_TYPES_NUM
 };
 
-namespace OCLRT {
+namespace NEO {
 struct HardwareInfo;
 
 // AUB file folder location
@@ -43,4 +43,4 @@ extern uint32_t initialHardwareTag;
 // Number of devices in the platform
 extern size_t numPlatformDevices;
 extern const HardwareInfo **platformDevices;
-} // namespace OCLRT
+} // namespace NEO

@@ -13,7 +13,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace OCLRT {
+namespace NEO {
 
 struct HardwareInfo;
 class Device;
@@ -77,4 +77,4 @@ static constexpr uint32_t registerOffset = 0xe400;
 static constexpr uint32_t debugEnabledValue = (1 << 4) | (1 << 7);
 }; // namespace TdDebugControlRegisterOffset
 
-} // namespace OCLRT
+} // namespace NEO

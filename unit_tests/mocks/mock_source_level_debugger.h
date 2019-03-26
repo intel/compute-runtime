@@ -18,7 +18,7 @@
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #endif
 
-using namespace OCLRT;
+using namespace NEO;
 
 class MockSourceLevelDebugger : public SourceLevelDebugger {
   public:

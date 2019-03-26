@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 
 struct api_fixture : public PlatformFixture,
                      public CommandQueueHwFixture,
@@ -46,4 +46,4 @@ struct api_tests : public api_fixture,
         api_fixture::TearDown();
     }
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -17,7 +17,7 @@
 
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(CommandTest, mapUnmapSubmitWithoutTerminateFlagFlushesCsr) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

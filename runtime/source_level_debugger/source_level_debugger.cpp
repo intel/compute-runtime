@@ -16,7 +16,7 @@
 
 #define IGFXDBG_CURRENT_VERSION 4
 
-namespace OCLRT {
+namespace NEO {
 const char *SourceLevelDebugger::notifyNewDeviceSymbol = "notifyNewDevice";
 const char *SourceLevelDebugger::notifySourceCodeSymbol = "notifySourceCode";
 const char *SourceLevelDebugger::getDebuggerOptionSymbol = "getDebuggerOption";
@@ -209,4 +209,4 @@ bool SourceLevelDebugger::initialize(bool useLocalMemory) {
     }
     return false;
 }
-} // namespace OCLRT
+} // namespace NEO

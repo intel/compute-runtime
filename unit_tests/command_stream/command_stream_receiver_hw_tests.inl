@@ -5,7 +5,7 @@
  *
  */
 
-using namespace OCLRT;
+using namespace NEO;
 
 template <typename GfxFamily>
 struct CommandStreamReceiverHwTest : public DeviceFixture,

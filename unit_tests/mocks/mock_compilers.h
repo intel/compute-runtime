@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 #include <map>
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 struct MockCompilerDebugVars {
     bool forceBuildFailure = false;
@@ -360,4 +360,4 @@ template <>
 inline std::map<const Device *, MockCompilerInterface::fclDevCtxUptr> &MockCompilerInterface::getDeviceContexts<IGC::FclOclDeviceCtxTagOCL>() {
     return getFclDeviceContexts();
 }
-} // namespace OCLRT
+} // namespace NEO

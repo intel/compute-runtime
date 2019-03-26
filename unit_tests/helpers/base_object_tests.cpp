@@ -24,7 +24,7 @@
 
 #include "gmock/gmock.h"
 
-namespace OCLRT {
+namespace NEO {
 typedef struct _cl_object_for_test2 *cl_object_for_test2;
 
 struct _cl_object_for_test2 : public ClDispatch {
@@ -40,7 +40,7 @@ struct OpenCLObjectMapper<ObjectForTest2> {
     typedef _cl_object_for_test2 BaseType;
 };
 
-struct ObjectForTest2 : public OCLRT::BaseObject<_cl_object_for_test2> {
+struct ObjectForTest2 : public NEO::BaseObject<_cl_object_for_test2> {
     static const cl_ulong objectMagic = 0x13650a12b79ce4dfLL;
 };
 
@@ -325,13 +325,13 @@ TYPED_TEST(BaseObjectTests, getCond) {
 }
 
 TYPED_TEST(BaseObjectTests, convertToInternalObject) {
-    class ObjectForTest : public OCLRT::MemObj {
+    class ObjectForTest : public NEO::MemObj {
       public:
         ObjectForTest() : MemObj(nullptr, 0, 0, 0u, nullptr, nullptr, nullptr, false, false, false) {
         }
 
         void convertToInternalObject(void) {
-            OCLRT::BaseObject<_cl_mem>::convertToInternalObject();
+            NEO::BaseObject<_cl_mem>::convertToInternalObject();
         }
     };
     ObjectForTest *object = new ObjectForTest;
@@ -362,4 +362,4 @@ TYPED_TEST(BaseObjectTests, castToOrAbortDifferentTypeAborts) {
     auto notOriginalType = reinterpret_cast<ObjectForTest2::BaseType *>(baseObject);
     EXPECT_ANY_THROW(castToObjectOrAbort<ObjectForTest2>(notOriginalType));
 }
-} // namespace OCLRT
+} // namespace NEO

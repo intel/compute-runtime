@@ -15,7 +15,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/program/program.h"
 
-namespace OCLRT {
+namespace NEO {
 
 const size_t SipKernel::maxDbgSurfaceSize = 0x49c000; // proper value should be taken from compiler when it's ready
 
@@ -89,4 +89,4 @@ SipKernelType SipKernel::getSipKernelType(GFXCORE_FAMILY family, bool debuggingA
     auto &hwHelper = HwHelper::get(family);
     return hwHelper.getSipKernelType(debuggingActive);
 }
-} // namespace OCLRT
+} // namespace NEO

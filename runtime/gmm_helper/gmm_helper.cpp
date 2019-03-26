@@ -22,7 +22,7 @@
 
 #include "gmm_client_context.h"
 
-namespace OCLRT {
+namespace NEO {
 
 GmmClientContext *GmmHelper::getClientContext() {
     return getInstance()->gmmClientContext.get();
@@ -149,4 +149,4 @@ GmmHelper::~GmmHelper() {
     gmmEntries.pfnDestroySingletonContext();
 };
 decltype(GmmHelper::createGmmContextWrapperFunc) GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<GmmClientContext>;
-} // namespace OCLRT
+} // namespace NEO

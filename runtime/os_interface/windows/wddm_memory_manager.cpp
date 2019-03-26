@@ -29,7 +29,7 @@
 
 #include <algorithm>
 
-namespace OCLRT {
+namespace NEO {
 
 WddmMemoryManager::~WddmMemoryManager() {
     applyCommonCleanup();
@@ -572,4 +572,4 @@ void WddmMemoryManager::releaseReservedCpuAddressRange(void *reserved, size_t si
     wddm->releaseReservedAddress(reserved);
 }
 
-} // namespace OCLRT
+} // namespace NEO

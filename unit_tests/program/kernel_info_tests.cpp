@@ -14,7 +14,7 @@
 #include <memory>
 #include <type_traits>
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(KernelInfo, NonCopyable) {
     EXPECT_FALSE(std::is_move_constructible<KernelInfo>::value);

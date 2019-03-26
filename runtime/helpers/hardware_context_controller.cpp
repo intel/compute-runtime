@@ -10,7 +10,7 @@
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_context.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 HardwareContextController::HardwareContextController(aub_stream::AubManager &aubManager, OsContext &osContext, uint32_t flags) {
     auto deviceBitfield = osContext.getDeviceBitfield();

@@ -15,7 +15,7 @@
 
 #include "cl_api_tests.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 struct clGetKernelWorkGroupInfoTests : public api_fixture,
                                        public ::testing::TestWithParam<uint32_t /*cl_kernel_work_group_info*/> {

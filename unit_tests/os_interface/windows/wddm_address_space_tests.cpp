@@ -10,7 +10,7 @@
 #include "test.h"
 #include "unit_tests/mocks/mock_wddm.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 class WddmMockReserveAddress : public WddmMock {
   public:

@@ -12,7 +12,7 @@
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/helpers/timestamp_packet.h"
 
-namespace OCLRT {
+namespace NEO {
 void CsrDependencies::fillFromEventsRequestAndMakeResident(const EventsRequest &eventsRequest,
                                                            CommandStreamReceiver &currentCsr,
                                                            DependenciesType depsType) {
@@ -35,4 +35,4 @@ void CsrDependencies::fillFromEventsRequestAndMakeResident(const EventsRequest &
         }
     }
 }
-} // namespace OCLRT
+} // namespace NEO

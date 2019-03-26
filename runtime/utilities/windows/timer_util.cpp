@@ -10,7 +10,7 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
 
-namespace OCLRT {
+namespace NEO {
 
 class Timer::TimerImpl {
   public:
@@ -109,4 +109,4 @@ Timer &Timer::operator=(const Timer &t) {
 void Timer::setFreq() {
     TimerImpl::setFreq();
 }
-}; // namespace OCLRT
+}; // namespace NEO

@@ -14,7 +14,7 @@
 
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 using AllocationData = TestedDrmMemoryManager::AllocationData;
 
@@ -97,4 +97,4 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     std::unique_ptr<MockDevice> device;
     DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
 };
-} // namespace OCLRT
+} // namespace NEO

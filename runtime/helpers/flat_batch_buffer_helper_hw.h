@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "runtime/helpers/flat_batch_buffer_helper.h"
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 class FlatBatchBufferHelperHw : public FlatBatchBufferHelper {
@@ -20,4 +20,4 @@ class FlatBatchBufferHelperHw : public FlatBatchBufferHelper {
     void removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping) override;
 };
 
-} // namespace OCLRT
+} // namespace NEO

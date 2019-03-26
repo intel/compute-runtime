@@ -11,7 +11,7 @@
 #include "config.h"
 #include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace NEO {
 namespace glTypes {
 static const std::tuple<int, uint32_t /*cl_channel_type*/, uint32_t /*cl_channel_order*/> allImageFormats[] = {
     // input, output, output
@@ -116,4 +116,4 @@ TEST_P(GlClObjTypesTests, typeConversion) {
     EXPECT_EQ(expectedClGlObjType, clGlObjType);
     EXPECT_EQ(clMemObjType, expectedClMemObjType);
 }
-} // namespace OCLRT
+} // namespace NEO

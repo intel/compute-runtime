@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include <cinttypes>
 #include <memory>
 
-namespace OCLRT {
+namespace NEO {
 
 class Device;
 class Program;
@@ -54,4 +54,4 @@ class SipKernel {
     SipKernelType type = SipKernelType::COUNT;
     Program *program = nullptr;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -9,7 +9,7 @@
 
 #include <iterator>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename DataType>
 struct Range {
@@ -80,4 +80,4 @@ template <typename T>
 inline Range<T> CreateRange(T *base, size_t count) {
     return Range<T>(base, count);
 }
-} // namespace OCLRT
+} // namespace NEO

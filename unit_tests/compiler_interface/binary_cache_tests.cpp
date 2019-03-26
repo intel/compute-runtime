@@ -21,7 +21,7 @@
 #include <list>
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 class BinaryCacheFixture

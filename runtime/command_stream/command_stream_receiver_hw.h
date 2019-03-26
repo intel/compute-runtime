@@ -14,7 +14,7 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 
-namespace OCLRT {
+namespace NEO {
 template <typename GfxFamily>
 class DeviceCommandStreamReceiver;
 
@@ -106,4 +106,4 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     bool localMemoryEnabled;
 };
 
-} // namespace OCLRT
+} // namespace NEO

@@ -11,7 +11,7 @@
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass = WddmMemoryManager;
 
@@ -50,4 +50,4 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
 
     uint32_t freeGraphicsMemoryImplCalled = 0u;
 };
-} // namespace OCLRT
+} // namespace NEO

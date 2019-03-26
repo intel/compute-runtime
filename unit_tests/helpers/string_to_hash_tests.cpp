@@ -10,7 +10,7 @@
 
 #include "gtest/gtest.h"
 
-using OCLRT::Hash;
+using NEO::Hash;
 
 TEST(CreateCombinedStrings, singleString) {
     std::string dstString;

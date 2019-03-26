@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <immintrin.h>
 
-namespace OCLRT {
+namespace NEO {
 
 struct uint16x8_t {
     enum { numChannels = 8 };
@@ -107,4 +107,4 @@ struct uint16x8_t {
         return result;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

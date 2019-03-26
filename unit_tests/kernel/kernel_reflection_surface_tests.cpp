@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <memory>
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef ExecutionModelKernelFixture KernelReflectionSurfaceTest;
 typedef ExecutionModelKernelTest KernelReflectionSurfaceWithQueueTest;

@@ -42,7 +42,7 @@
 #include <future>
 #include <type_traits>
 
-using namespace OCLRT;
+using namespace NEO;
 
 typedef Test<MemoryAllocatorFixture> MemoryAllocatorTest;
 

@@ -15,7 +15,7 @@
 
 #include <cstring>
 
-namespace OCLRT {
+namespace NEO {
 struct EGLBkpContextParams {
     int32_t configAttrs;
     int32_t contextAttrs[3];
@@ -192,4 +192,4 @@ class MockGLSharingFunctions : public GLSharingFunctions {
         MockGLSharingFunctions::SharingEnabled = 1;
     }
 };
-} // namespace OCLRT
+} // namespace NEO

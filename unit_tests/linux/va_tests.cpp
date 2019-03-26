@@ -9,7 +9,7 @@
 #include "test.h"
 #include "unit_tests/helpers/variable_backup.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 TEST(VaTests, whenLibvaSo2IsNotInstalledThenFail) {
     VariableBackup<decltype(VASharingFunctions::fdlopen)> dlopenBackup(&VASharingFunctions::fdlopen);

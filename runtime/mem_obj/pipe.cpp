@@ -12,7 +12,7 @@
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 
 Pipe::Pipe(Context *context,
            cl_mem_flags flags,
@@ -114,4 +114,4 @@ void Pipe::setPipeArg(void *memory, uint32_t patchSize) {
 }
 
 Pipe::~Pipe() = default;
-} // namespace OCLRT
+} // namespace NEO

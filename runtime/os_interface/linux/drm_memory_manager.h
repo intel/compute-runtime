@@ -17,7 +17,7 @@
 #include <map>
 #include <sys/mman.h>
 
-namespace OCLRT {
+namespace NEO {
 class BufferObject;
 class Drm;
 
@@ -95,4 +95,4 @@ class DrmMemoryManager : public MemoryManager {
     std::unique_ptr<Allocator32bit> internal32bitAllocator;
     std::unique_ptr<AllocatorLimitedRange> limitedGpuAddressRangeAllocator;
 };
-} // namespace OCLRT
+} // namespace NEO

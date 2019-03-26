@@ -12,7 +12,7 @@
 #include <assert.h>
 #include <cstdio>
 
-namespace OCLRT {
+namespace NEO {
 void debugBreak(int line, const char *file) {
     if (DebugManager.flags.EnableDebugBreak.get()) {
         printf("Assert was called at %d line in file:\n%s\n", line, file);
@@ -23,4 +23,4 @@ void abortUnrecoverable(int line, const char *file) {
     printf("Abort was called at %d line in file:\n%s\n", line, file);
     abortExecution();
 }
-} // namespace OCLRT
+} // namespace NEO

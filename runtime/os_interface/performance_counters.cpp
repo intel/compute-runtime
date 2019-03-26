@@ -13,7 +13,7 @@
 
 #include "CL/cl.h"
 
-namespace OCLRT {
+namespace NEO {
 decltype(&instrGetPerfCountersQueryData) getPerfCountersQueryDataFactory[IGFX_MAX_CORE] = {
     nullptr,
 };
@@ -178,4 +178,4 @@ int PerformanceCounters::sendPerfConfiguration(uint32_t count, uint32_t *pOffset
 uint32_t PerformanceCounters::getCurrentReportId() {
     return (osInterface->getHwContextId() << 12) | getReportId();
 }
-} // namespace OCLRT
+} // namespace NEO

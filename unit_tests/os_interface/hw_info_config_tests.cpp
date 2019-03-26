@@ -10,7 +10,7 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 
-using namespace OCLRT;
+using namespace NEO;
 using namespace std;
 
 void HwInfoConfigTest::SetUp() {

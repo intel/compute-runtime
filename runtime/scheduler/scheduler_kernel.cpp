@@ -11,7 +11,7 @@
 
 #include <cinttypes>
 
-namespace OCLRT {
+namespace NEO {
 
 void SchedulerKernel::setArgs(GraphicsAllocation *queue,
                               GraphicsAllocation *commandsStack,
@@ -61,4 +61,4 @@ void SchedulerKernel::computeGws() {
     DBG_LOG(PrintEMDebugInformation, "Scheduler GWS: ", gws);
     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Scheduler GWS: %" PRIu64, static_cast<uint64_t>(gws));
 }
-} // namespace OCLRT
+} // namespace NEO

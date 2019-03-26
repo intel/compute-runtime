@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include <memory>
 #include <type_traits>
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename NodeObjectType, bool Atomic>
 struct PtrType {
@@ -191,4 +191,4 @@ class IFRefList : public IFList<IFNodeRef<NodeObjectType>, ThreadSafe, OwnsNodes
         up.release();
     }
 };
-} // namespace OCLRT
+} // namespace NEO

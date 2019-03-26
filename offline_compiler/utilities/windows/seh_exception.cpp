@@ -89,7 +89,7 @@ void SehException::getCallStack(unsigned int code, struct _EXCEPTION_POINTERS *e
     DWORD displacement = 0;
     DWORD64 displacement64 = 0;
 
-    unique_ptr<OCLRT::OsLibrary> psApiLib(OCLRT::OsLibrary::load("psapi.dll"));
+    unique_ptr<NEO::OsLibrary> psApiLib(NEO::OsLibrary::load("psapi.dll"));
     auto getMappedFileName = reinterpret_cast<getMappedFileNameFunction>(psApiLib->getProcAddress("GetMappedFileNameA"));
 
     size_t callstackCounter = 0;

@@ -40,23 +40,23 @@ void TestEnvironment::TearDown() {
 void TestEnvironment::fclPushDebugVars(
     MockCompilerDebugVars &newDebugVars) {
     fclDebugVarStack.push_back(newDebugVars);
-    OCLRT::setFclDebugVars(newDebugVars);
+    NEO::setFclDebugVars(newDebugVars);
 }
 
 void TestEnvironment::fclPopDebugVars() {
     fclDebugVarStack.pop_back();
-    OCLRT::setFclDebugVars(fclDebugVarStack.back());
+    NEO::setFclDebugVars(fclDebugVarStack.back());
 }
 
 void TestEnvironment::igcPushDebugVars(
     MockCompilerDebugVars &newDebugVars) {
     igcDebugVarStack.push_back(newDebugVars);
-    OCLRT::setIgcDebugVars(newDebugVars);
+    NEO::setIgcDebugVars(newDebugVars);
 }
 
 void TestEnvironment::igcPopDebugVars() {
     igcDebugVarStack.pop_back();
-    OCLRT::setIgcDebugVars(igcDebugVarStack.back());
+    NEO::setIgcDebugVars(igcDebugVarStack.back());
 }
 
 void TestEnvironment::setDefaultDebugVars(

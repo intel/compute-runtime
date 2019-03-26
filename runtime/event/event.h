@@ -23,7 +23,7 @@
 
 #define OCLRT_NUM_TIMESTAMP_BITS (32)
 
-namespace OCLRT {
+namespace NEO {
 template <typename TagType>
 struct TagNode;
 class CommandQueue;
@@ -385,4 +385,4 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // can be accessed only with updateTaskCount
     std::atomic<uint32_t> taskCount;
 };
-} // namespace OCLRT
+} // namespace NEO

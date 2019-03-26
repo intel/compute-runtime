@@ -12,7 +12,7 @@
 #include "hw_info.h"
 #include "reg_configs_common.h"
 
-namespace OCLRT {
+namespace NEO {
 typedef CNLFamily Family;
 static auto gfxCore = IGFX_GEN10_CORE;
 
@@ -68,4 +68,4 @@ const Family::GPGPU_CSR_BASE_ADDRESS Family::cmdInitGpgpuCsrBaseAddress = Family
 const Family::STATE_SIP Family::cmdInitStateSip = Family::STATE_SIP::sInit();
 const Family::BINDING_TABLE_STATE Family::cmdInitBindingTableState = Family::BINDING_TABLE_STATE::sInit();
 const Family::MI_USER_INTERRUPT Family::cmdInitUserInterrupt = Family::MI_USER_INTERRUPT::sInit();
-} // namespace OCLRT
+} // namespace NEO

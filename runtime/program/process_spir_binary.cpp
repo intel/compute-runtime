@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "program.h"
 
-namespace OCLRT {
+namespace NEO {
 
 bool Program::isValidSpirvBinary(
     const void *pBinary,
@@ -39,4 +39,4 @@ cl_int Program::processSpirBinary(
 
     return CL_SUCCESS;
 }
-} // namespace OCLRT
+} // namespace NEO

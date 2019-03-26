@@ -17,7 +17,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 class Gdi {
   public:
@@ -83,6 +83,6 @@ class Gdi {
   protected:
     MOCKABLE_VIRTUAL bool getAllProcAddresses();
     bool initialized;
-    OCLRT::Windows::OsLibrary gdiDll;
+    NEO::Windows::OsLibrary gdiDll;
 };
-} // namespace OCLRT
+} // namespace NEO

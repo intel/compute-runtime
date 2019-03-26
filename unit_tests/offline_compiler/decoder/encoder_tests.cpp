@@ -14,7 +14,7 @@
 
 #include <fstream>
 
-namespace OCLRT {
+namespace NEO {
 TEST(EncoderTests, WhenParsingValidListOfParametersThenReturnValueIsZero) {
     const char *argv[] = {
         "ocloc",
@@ -243,4 +243,4 @@ TEST(EncoderTests, GivenCorrectPTMFileWhileProcessingThenCorrectBinaryIsExpected
     EXPECT_EQ(-1, retVal);
     EXPECT_EQ(expectedBinary.str(), binary.str());
 }
-} // namespace OCLRT
+} // namespace NEO

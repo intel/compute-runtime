@@ -22,7 +22,7 @@
 #pragma clang diagnostic ignored "-Winconsistent-missing-override"
 #endif
 
-namespace OCLRT {
+namespace NEO {
 
 struct MockAubFileStreamMockMmioWrite : public AubMemDump::AubFileStream {
     void writeMMIOImpl(uint32_t offset, uint32_t value) override {
@@ -185,7 +185,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
     aubExecutionEnvironment->executionEnvironment = std::move(executionEnvironment);
     return aubExecutionEnvironment;
 }
-} // namespace OCLRT
+} // namespace NEO
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

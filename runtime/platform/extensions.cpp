@@ -11,7 +11,7 @@
 
 #include <string>
 
-namespace OCLRT {
+namespace NEO {
 
 const char *deviceExtensionsList = "cl_khr_3d_image_writes "
                                    "cl_khr_byte_addressable_store "
@@ -78,4 +78,4 @@ std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enable
     return extensionsList;
 }
 
-} // namespace OCLRT
+} // namespace NEO

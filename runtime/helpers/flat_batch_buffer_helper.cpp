@@ -10,7 +10,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
-namespace OCLRT {
+namespace NEO {
 
 bool FlatBatchBufferHelper::setPatchInfoData(const PatchInfoData &data) {
     patchInfoCollection.push_back(data);
@@ -67,4 +67,4 @@ void FlatBatchBufferHelper::fixCrossThreadDataInfo(std::vector<PatchInfoData> &d
 MemoryManager *FlatBatchBufferHelper::getMemoryManager() const {
     return executionEnvironemnt.memoryManager.get();
 }
-}; // namespace OCLRT
+}; // namespace NEO

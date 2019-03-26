@@ -10,7 +10,7 @@
 #include "drm/i915_drm.h"
 #include "hw_cmds.h"
 
-namespace OCLRT {
+namespace NEO {
 
 unsigned int DrmEngineMapper::engineNodeMap(EngineType engineType) {
     if (EngineType::ENGINE_RCS == engineType) {
@@ -18,4 +18,4 @@ unsigned int DrmEngineMapper::engineNodeMap(EngineType engineType) {
     }
     UNRECOVERABLE_IF(true);
 }
-} // namespace OCLRT
+} // namespace NEO

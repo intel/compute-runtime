@@ -8,7 +8,7 @@
 #pragma once
 #include "runtime/memory_manager/memory_manager.h"
 
-namespace OCLRT {
+namespace NEO {
 struct MockAllocationProperties : public AllocationProperties {
   public:
     MockAllocationProperties(size_t size, GraphicsAllocation::AllocationType allocationType) : AllocationProperties(size, allocationType) {}
@@ -16,4 +16,4 @@ struct MockAllocationProperties : public AllocationProperties {
     MockAllocationProperties(bool allocateMemory, size_t size) : AllocationProperties(allocateMemory, size, GraphicsAllocation::AllocationType::UNDECIDED) {}
     MockAllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType) : AllocationProperties(allocateMemory, size, allocationType) {}
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -13,7 +13,7 @@
 
 #include <d3dkmthk.h>
 
-namespace OCLRT {
+namespace NEO {
 
 struct OsHandle {
     D3DKMT_HANDLE handle;
@@ -89,4 +89,4 @@ class WddmAllocation : public GraphicsAllocation {
     ResidencyData residency;
     std::array<size_t, maxOsContextCount> trimCandidateListPositions;
 };
-} // namespace OCLRT
+} // namespace NEO

@@ -7,7 +7,7 @@
 
 #include "runtime/os_interface/linux/drm_neo.h"
 
-namespace OCLRT {
+namespace NEO {
 
 Drm::~Drm() = default;
 
@@ -22,4 +22,4 @@ Drm *Drm::create(int32_t deviceOrdinal) {
 void Drm::closeDevice(int32_t deviceOrdinal) {
     return;
 }
-} // namespace OCLRT
+} // namespace NEO

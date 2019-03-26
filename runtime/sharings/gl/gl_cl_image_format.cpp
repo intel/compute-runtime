@@ -12,7 +12,7 @@
 #include "GL/gl.h"
 #include "config.h"
 
-namespace OCLRT {
+namespace NEO {
 bool GlTexture::setClImageFormat(int glFormat, cl_image_format &clImgFormat) {
     switch (glFormat) {
     case GL_RGBA8:
@@ -198,4 +198,4 @@ bool GlTexture::setClImageFormat(int glFormat, cl_image_format &clImgFormat) {
     }
     return true;
 }
-} // namespace OCLRT
+} // namespace NEO

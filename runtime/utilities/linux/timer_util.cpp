@@ -9,7 +9,7 @@
 
 #include <chrono>
 
-namespace OCLRT {
+namespace NEO {
 
 class Timer::TimerImpl {
 
@@ -94,4 +94,4 @@ Timer &Timer::operator=(const Timer &t) {
 void Timer::setFreq() {
     TimerImpl::setFreq();
 }
-}; // namespace OCLRT
+}; // namespace NEO

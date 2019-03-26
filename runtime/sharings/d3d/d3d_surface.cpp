@@ -18,7 +18,7 @@
 
 #include "mmsystem.h"
 
-using namespace OCLRT;
+using namespace NEO;
 
 D3DSurface::D3DSurface(Context *context, cl_dx9_surface_info_khr *surfaceInfo, D3D9Surface *surfaceStaging, cl_uint plane,
                        OCLPlane oclPlane, cl_dx9_media_adapter_type_khr adapterType, bool sharedResource, bool lockable)

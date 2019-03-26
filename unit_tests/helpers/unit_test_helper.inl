@@ -5,7 +5,7 @@
  *
  */
 
-namespace OCLRT {
+namespace NEO {
 
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isL3ConfigProgrammable() {
@@ -44,4 +44,4 @@ template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::evaluateGshAddressForScratchSpace(uint64_t usedScratchGpuAddress, uint64_t retrievedGshAddress) {
     return usedScratchGpuAddress == retrievedGshAddress;
 }
-} // namespace OCLRT
+} // namespace NEO
