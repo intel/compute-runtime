@@ -178,7 +178,7 @@ HWTEST_F(EnqueueWriteImageTest, surfaceState) {
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_FORMAT_R32_UINT, surfaceState.getSurfaceFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4, surfaceState.getSurfaceHorizontalAlignment());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState.getSurfaceVerticalAlignment());
-    EXPECT_EQ(reinterpret_cast<uint64_t>(dstImage->getCpuAddress()), surfaceState.getSurfaceBaseAddress());
+    EXPECT_EQ(dstImage->getGraphicsAllocation()->getGpuAddress(), surfaceState.getSurfaceBaseAddress());
 }
 
 HWTEST_F(EnqueueWriteImageTest, pipelineSelect) {

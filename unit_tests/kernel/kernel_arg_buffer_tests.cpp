@@ -79,8 +79,8 @@ HWTEST_F(KernelArgBufferTest, SetKernelArgValidSvmPtrStateful) {
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
         ptrOffset(pKernel->getSurfaceStateHeap(), pKernelInfo->kernelArgInfo[0].offsetHeap));
 
-    void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
-    EXPECT_EQ(buffer->getCpuAddress(), surfaceAddress);
+    auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
 
     delete buffer;
 }

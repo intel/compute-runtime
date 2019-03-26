@@ -126,8 +126,8 @@ HWTEST_F(ImageSetArgTest, setKernelArgImage) {
 
     srcImage->setImageArg(const_cast<RENDER_SURFACE_STATE *>(surfaceState), false, 0);
 
-    void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
-    EXPECT_EQ(srcImage->getCpuAddress(), surfaceAddress);
+    auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
+    EXPECT_EQ(srcImage->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);

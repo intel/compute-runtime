@@ -177,10 +177,10 @@ HWTEST_F(EnqueueCopyImageTest, surfaceState) {
     }
 
     const auto &srcSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 0);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(srcImage->getCpuAddress()), srcSurfaceState.getSurfaceBaseAddress());
+    EXPECT_EQ(srcImage->getGraphicsAllocation()->getGpuAddress(), srcSurfaceState.getSurfaceBaseAddress());
 
     const auto &dstSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 1);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(dstImage->getCpuAddress()), dstSurfaceState.getSurfaceBaseAddress());
+    EXPECT_EQ(dstImage->getGraphicsAllocation()->getGpuAddress(), dstSurfaceState.getSurfaceBaseAddress());
 }
 
 HWTEST_F(EnqueueCopyImageTest, pipelineSelect) {
