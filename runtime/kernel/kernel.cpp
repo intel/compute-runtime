@@ -16,6 +16,7 @@
 #include "runtime/context/context.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/execution_model/device_enqueue.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
@@ -418,6 +419,7 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
     const _cl_program *prog;
     const _cl_context *ctxt;
     cl_uint refCount = 0;
+    uint64_t nonCannonizedGpuAddress = 0llu;
 
     switch (paramName) {
     case CL_KERNEL_FUNCTION_NAME:
@@ -458,7 +460,11 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
         pSrc = getKernelHeap();
         srcSize = getKernelHeapSize();
         break;
-
+    case CL_KERNEL_BINARY_GPU_ADDRESS_INTEL:
+        nonCannonizedGpuAddress = GmmHelper::decanonize(kernelInfo.kernelAllocation->getGpuAddress());
+        pSrc = &nonCannonizedGpuAddress;
+        srcSize = sizeof(nonCannonizedGpuAddress);
+        break;
     default:
         getAdditionalInfo(paramName, pSrc, srcSize);
         break;

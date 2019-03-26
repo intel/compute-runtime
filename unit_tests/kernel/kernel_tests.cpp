@@ -7,6 +7,7 @@
 
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
@@ -180,6 +181,24 @@ TEST_P(KernelTest, GetInfo_BinaryProgramIntel) {
     EXPECT_EQ(0, memcmp(paramValue, pKernelData, paramValueSize));
 
     delete[] paramValue;
+}
+
+TEST_P(KernelTest, givenBinaryWhenItIsQueriedForGpuAddressThenAbsoluteAddressIsReturned) {
+    cl_kernel_info paramName = CL_KERNEL_BINARY_GPU_ADDRESS_INTEL;
+    uint64_t paramValue = 0llu;
+    size_t paramValueSize = sizeof(paramValue);
+    size_t paramValueSizeRet = 0;
+
+    retVal = pKernel->getInfo(
+        paramName,
+        paramValueSize,
+        &paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto expectedGpuAddress = GmmHelper::decanonize(pKernel->getKernelInfo().kernelAllocation->getGpuAddress());
+    EXPECT_EQ(expectedGpuAddress, paramValue);
+    EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }
 
 TEST_P(KernelTest, GetInfo_NumArgs) {

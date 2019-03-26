@@ -29,6 +29,7 @@
 #define CL_KERNEL_BINARY_PROGRAM_INTEL 0x407D
 #define CL_KERNEL_BINARIES_INTEL 0x4102
 #define CL_KERNEL_BINARY_SIZES_INTEL 0x4103
+#define CL_KERNEL_BINARY_GPU_ADDRESS_INTEL 0x10010
 
 /********************************************
  * event properties for performance counter *
