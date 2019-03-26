@@ -6,6 +6,7 @@
  */
 
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -188,7 +189,9 @@ Drm *Drm::create(int32_t deviceOrdinal) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
-    drmObject->queryMemoryInfo();
+    if (HwHelper::get(device->pHwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*device->pHwInfo)) {
+        drmObject->queryMemoryInfo();
+    }
 
     drms[deviceOrdinal % drms.size()] = drmObject.release();
     return drms[deviceOrdinal % drms.size()];
