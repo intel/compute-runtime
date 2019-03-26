@@ -54,7 +54,6 @@ class WddmAllocation : public GraphicsAllocation {
     void setDefaultHandle(D3DKMT_HANDLE handle) {
         handles[0] = handle;
     }
-    uint32_t getNumHandles() const { return storageInfo.getNumHandles(); }
 
     void setTrimCandidateListPosition(uint32_t osContextId, size_t position) {
         trimCandidateListPositions[osContextId] = position;
