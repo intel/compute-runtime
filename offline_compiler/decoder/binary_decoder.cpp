@@ -16,6 +16,10 @@
 #include <cstring>
 #include <fstream>
 
+void BinaryDecoder::setMessagePrinter(const MessagePrinter &messagePrinter) {
+    this->messagePrinter = messagePrinter;
+}
+
 template <typename T>
 T readUnaligned(void *ptr) {
     T retVal = 0;
@@ -32,7 +36,7 @@ int BinaryDecoder::decode() {
     std::ofstream ptmFile(pathToDump + "PTM.txt");
     auto devBinPtr = getDevBinary();
     if (devBinPtr == nullptr) {
-        printf("Error! Device Binary section was not found.\n");
+        messagePrinter.printf("Error! Device Binary section was not found.\n");
         exit(1);
     }
     return processBinary(devBinPtr, ptmFile);
@@ -62,7 +66,7 @@ void BinaryDecoder::dumpField(void *&binaryPtr, const PTField &field, std::ostre
         break;
     }
     default:
-        printf("Error! Unknown size.\n");
+        messagePrinter.printf("Error! Unknown size.\n");
         exit(1);
     }
     binaryPtr = ptrOffset(binaryPtr, field.size);
@@ -110,7 +114,7 @@ uint8_t BinaryDecoder::getSize(const std::string &typeStr) {
     } else if (typeStr == "uint64_t") {
         return 8;
     } else {
-        printf("Unhandled type : %s\n", typeStr.c_str());
+        messagePrinter.printf("Unhandled type : %s\n", typeStr.c_str());
         exit(1);
     }
 }
@@ -128,22 +132,22 @@ void BinaryDecoder::parseTokens() {
 
     size_t pos = findPos(patchList, "struct SProgramBinaryHeader");
     if (pos == patchList.size()) {
-        printf("While parsing patchtoken definitions: couldn't find SProgramBinaryHeader.");
+        messagePrinter.printf("While parsing patchtoken definitions: couldn't find SProgramBinaryHeader.");
         exit(1);
     }
     pos = findPos(patchList, "enum PATCH_TOKEN");
     if (pos == patchList.size()) {
-        printf("While parsing patchtoken definitions: couldn't find enum PATCH_TOKEN.");
+        messagePrinter.printf("While parsing patchtoken definitions: couldn't find enum PATCH_TOKEN.");
         exit(1);
     }
     pos = findPos(patchList, "struct SKernelBinaryHeader");
     if (pos == patchList.size()) {
-        printf("While parsing patchtoken definitions: couldn't find SKernelBinaryHeader.");
+        messagePrinter.printf("While parsing patchtoken definitions: couldn't find SKernelBinaryHeader.");
         exit(1);
     }
     pos = findPos(patchList, "struct SKernelBinaryHeaderCommon :");
     if (pos == patchList.size()) {
-        printf("While parsing patchtoken definitions: couldn't find SKernelBinaryHeaderCommon.");
+        messagePrinter.printf("While parsing patchtoken definitions: couldn't find SKernelBinaryHeaderCommon.");
         exit(1);
     }
 
@@ -200,8 +204,8 @@ void BinaryDecoder::parseTokens() {
 }
 
 void BinaryDecoder::printHelp() {
-    printf("Usage:\n-file <Opencl elf binary file> -patch <path to folder containing patchlist> -dump <path to dumping folder>\n");
-    printf("e.g. -file C:/my_folder/my_binary.bin -patch C:/igc/inc -dump C:/my_folder/dump\n");
+    messagePrinter.printf("Usage:\n-file <Opencl elf binary file> -patch <path to folder containing patchlist> -dump <path to dumping folder>\n");
+    messagePrinter.printf("e.g. -file C:/my_folder/my_binary.bin -patch C:/igc/inc -dump C:/my_folder/dump\n");
 }
 
 int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {
@@ -216,10 +220,10 @@ int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {
         dumpField(ptr, v, ptmFile);
     }
     if (patchListSize == 0) {
-        printf("Warning! Program's patch list size is 0.\n");
+        messagePrinter.printf("Warning! Program's patch list size is 0.\n");
     }
     if (numberOfKernels == 0) {
-        printf("Warning! Number of Kernels is 0.\n");
+        messagePrinter.printf("Warning! Number of Kernels is 0.\n");
     }
 
     readPatchTokens(ptr, patchListSize, ptmFile);
@@ -254,7 +258,7 @@ void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
     }
 
     if (KernelNameSize == 0) {
-        printf("Error! KernelNameSize was 0.\n");
+        messagePrinter.printf("Error! KernelNameSize was 0.\n");
         exit(1);
     }
 
@@ -268,7 +272,7 @@ void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
     ptr = ptrOffset(ptr, KernelHeapSize);
 
     if (GeneralStateHeapSize != 0) {
-        printf("Warning! GeneralStateHeapSize wasn't 0.\n");
+        messagePrinter.printf("Warning! GeneralStateHeapSize wasn't 0.\n");
         fileName = pathToDump + kernelName + "_GeneralStateHeap.bin";
         writeDataToFile(fileName.c_str(), ptr, DynamicStateHeapSize);
         ptr = ptrOffset(ptr, GeneralStateHeapSize);
@@ -283,7 +287,7 @@ void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
     ptr = ptrOffset(ptr, SurfaceStateHeapSize);
 
     if (KernelPatchListSize == 0) {
-        printf("Warning! Kernel's patch list size was 0.\n");
+        messagePrinter.printf("Warning! Kernel's patch list size was 0.\n");
     }
     readPatchTokens(ptr, KernelPatchListSize, ptmFile);
 }
@@ -379,21 +383,21 @@ int BinaryDecoder::validateInput(uint32_t argc, const char **argv) {
                 pathToDump = std::string(argv[++i]);
                 addSlash(pathToDump);
             } else {
-                printf("Unknown argument %s\n", argv[i]);
+                messagePrinter.printf("Unknown argument %s\n", argv[i]);
                 printHelp();
                 return -1;
             }
         }
         if (binaryFile.find(".bin") == std::string::npos) {
-            printf(".bin extension is expected for binary file.\n");
+            messagePrinter.printf(".bin extension is expected for binary file.\n");
             printHelp();
             return -1;
         } else if (pathToPatch.empty()) {
-            printf("Path to patch list folder can't be empty.\n");
+            messagePrinter.printf("Path to patch list folder can't be empty.\n");
             printHelp();
             return -1;
         } else if (pathToDump.empty()) {
-            printf("Path to dump folder can't be empty.\n");
+            messagePrinter.printf("Path to dump folder can't be empty.\n");
             printHelp();
             return -1;
         }

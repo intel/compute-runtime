@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,11 @@
 #include "offline_compiler/decoder/binary_encoder.h"
 
 struct MockEncoder : public BinaryEncoder {
-    MockEncoder() : BinaryEncoder("", ""){};
+    MockEncoder() : MockEncoder("", ""){};
     MockEncoder(const std::string &dump, const std::string &elf)
-        : BinaryEncoder(dump, elf){};
+        : BinaryEncoder(dump, elf) {
+        setMessagePrinter(MessagePrinter{true});
+    };
     using BinaryEncoder::calculatePatchListSizes;
     using BinaryEncoder::copyBinaryToBinary;
     using BinaryEncoder::createElf;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #pragma once
 #include "elf/types.h"
+
+#include "helper.h"
 
 #include <memory>
 #include <string>
@@ -36,11 +38,15 @@ class BinaryDecoder {
     int decode();
     int validateInput(uint32_t argc, const char **argv);
 
+    void setMessagePrinter(const MessagePrinter &messagePrinter);
+
   protected:
     BinaryHeader programHeader, kernelHeader;
     CLElfLib::ElfBinaryStorage binary;
     PTMap patchTokens;
     std::string binaryFile, pathToPatch, pathToDump;
+    MessagePrinter messagePrinter;
+
     void dumpField(void *&binaryPtr, const PTField &field, std::ostream &ptmFile);
     uint8_t getSize(const std::string &typeStr);
     void *getDevBinary();

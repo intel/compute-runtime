@@ -17,6 +17,10 @@
 #include <cstring>
 #include <fstream>
 
+void BinaryEncoder::setMessagePrinter(const MessagePrinter &messagePrinter) {
+    this->messagePrinter = messagePrinter;
+}
+
 void BinaryEncoder::calculatePatchListSizes(std::vector<std::string> &ptmFile) {
     size_t patchListPos = 0;
     for (size_t i = 0; i < ptmFile.size(); ++i) {
@@ -37,7 +41,7 @@ void BinaryEncoder::calculatePatchListSizes(std::vector<std::string> &ptmFile) {
             }
             uint32_t size = static_cast<uint32_t>(std::stoul(ptmFile[patchListPos].substr(ptmFile[patchListPos].find_last_of(' ') + 1)));
             if (size != calcSize) {
-                printf("Warning! Calculated PatchListSize ( %u ) differs from file ( %u ) - changing it. Line %d\n", calcSize, size, static_cast<int>(patchListPos + 1));
+                messagePrinter.printf("Warning! Calculated PatchListSize ( %u ) differs from file ( %u ) - changing it. Line %d\n", calcSize, size, static_cast<int>(patchListPos + 1));
                 ptmFile[patchListPos] = ptmFile[patchListPos].substr(0, ptmFile[patchListPos].find_last_of(' ') + 1);
                 ptmFile[patchListPos] += std::to_string(calcSize);
             }
@@ -48,7 +52,7 @@ void BinaryEncoder::calculatePatchListSizes(std::vector<std::string> &ptmFile) {
 int BinaryEncoder::copyBinaryToBinary(const std::string &srcFileName, std::ostream &outBinary) {
     std::ifstream ifs(srcFileName, std::ios::binary);
     if (!ifs.good()) {
-        printf("Cannot open %s.\n", srcFileName.c_str());
+        messagePrinter.printf("Cannot open %s.\n", srcFileName.c_str());
         return -1;
     }
     ifs.seekg(0, ifs.end);
@@ -73,7 +77,7 @@ int BinaryEncoder::createElf() {
                                                     data,
                                                     static_cast<uint32_t>(data.size())));
     } else {
-        printf("Warning! Missing build section.\n");
+        messagePrinter.printf("Warning! Missing build section.\n");
     }
 
     //LLVM or SPIRV
@@ -94,7 +98,7 @@ int BinaryEncoder::createElf() {
                                                     data,
                                                     static_cast<uint32_t>(data.size())));
     } else {
-        printf("Warning! Missing llvm/spirv section.\n");
+        messagePrinter.printf("Warning! Missing llvm/spirv section.\n");
     }
 
     //Device Binary
@@ -107,7 +111,7 @@ int BinaryEncoder::createElf() {
                                                     data,
                                                     static_cast<uint32_t>(data.size())));
     } else {
-        printf("Missing device_binary.bin\n");
+        messagePrinter.printf("Missing device_binary.bin\n");
         return -1;
     }
 
@@ -117,7 +121,7 @@ int BinaryEncoder::createElf() {
 
     std::ofstream elfFile(elfName, std::ios::binary);
     if (!elfFile.good()) {
-        printf("Couldn't create %s.\n", elfName.c_str());
+        messagePrinter.printf("Couldn't create %s.\n", elfName.c_str());
         return -1;
     }
 
@@ -126,8 +130,8 @@ int BinaryEncoder::createElf() {
 }
 
 void BinaryEncoder::printHelp() {
-    printf("Usage:\n-dump <path to dumping folder> -out <new elf file>\n");
-    printf("e.g. -dump C:/my_folder/dump -out C:/my_folder/new_binary.bin\n");
+    messagePrinter.printf("Usage:\n-dump <path to dumping folder> -out <new elf file>\n");
+    messagePrinter.printf("e.g. -dump C:/my_folder/dump -out C:/my_folder/new_binary.bin\n");
 }
 
 int BinaryEncoder::encode() {
@@ -137,7 +141,7 @@ int BinaryEncoder::encode() {
 
     std::ofstream deviceBinary(pathToDump + "device_binary.bin", std::ios::binary);
     if (!deviceBinary.good()) {
-        printf("Error! Couldn't create device_binary.bin.\n");
+        messagePrinter.printf("Error! Couldn't create device_binary.bin.\n");
         return -1;
     }
     int retVal = processBinary(ptmFile, deviceBinary);
@@ -154,11 +158,11 @@ int BinaryEncoder::processBinary(const std::vector<std::string> &ptmFile, std::o
     while (i < ptmFile.size()) {
         if (ptmFile[i].find("Kernel #") != std::string::npos) {
             if (processKernel(++i, ptmFile, deviceBinary)) {
-                printf("Error while processing kernel!\n");
+                messagePrinter.printf("Warning while processing kernel!\n");
                 return -1;
             }
         } else if (writeDeviceBinary(ptmFile[i++], deviceBinary)) {
-            printf("Error while writing to binary!\n");
+            messagePrinter.printf("Error while writing to binary!\n");
             return -1;
         }
     }
@@ -177,13 +181,13 @@ int BinaryEncoder::processKernel(size_t &i, const std::vector<std::string> &ptmF
             ss >> kernelNameSize;
         }
         if (writeDeviceBinary(ptmFile[i++], deviceBinary)) {
-            printf("Error while writing to binary.\n");
+            messagePrinter.printf("Error while writing to binary.\n");
             return -1;
         }
     }
     //KernelName
     if (i == ptmFile.size()) {
-        printf("Couldn't find KernelName line.\n");
+        messagePrinter.printf("Couldn't find KernelName line.\n");
         return -1;
     }
     std::string kernelName(ptmFile[i], ptmFile[i].find(' ') + 1);
@@ -197,22 +201,22 @@ int BinaryEncoder::processKernel(size_t &i, const std::vector<std::string> &ptmF
 
     // Writing KernelHeap, DynamicStateHeap, SurfaceStateHeap
     if (fileExists(pathToDump + kernelName + "_GeneralStateHeap.bin")) {
-        printf("Warning! Adding GeneralStateHeap.\n");
+        messagePrinter.printf("Warning! Adding GeneralStateHeap.\n");
         if (copyBinaryToBinary(pathToDump + kernelName + "_GeneralStateHeap.bin", deviceBinary)) {
-            printf("Error! Couldn't copy %s_GeneralStateHeap.bin\n", kernelName.c_str());
+            messagePrinter.printf("Couldn't copy %s_GeneralStateHeap.bin\n", kernelName.c_str());
             return -1;
         }
     }
     if (copyBinaryToBinary(pathToDump + kernelName + "_KernelHeap.bin", deviceBinary)) {
-        printf("Error! Couldn't copy %s_KernelHeap.bin\n", kernelName.c_str());
+        messagePrinter.printf("Couldn't copy %s_KernelHeap.bin\n", kernelName.c_str());
         return -1;
     }
     if (copyBinaryToBinary(pathToDump + kernelName + "_DynamicStateHeap.bin", deviceBinary)) {
-        printf("Error! Couldn't copy %s_DynamicStateHeap.bin\n", kernelName.c_str());
+        messagePrinter.printf("Couldn't copy %s_DynamicStateHeap.bin\n", kernelName.c_str());
         return -1;
     }
     if (copyBinaryToBinary(pathToDump + kernelName + "_SurfaceStateHeap.bin", deviceBinary)) {
-        printf("Error! Couldn't copy %s_SurfaceStateHeap.bin\n", kernelName.c_str());
+        messagePrinter.printf("Couldn't copy %s_SurfaceStateHeap.bin\n", kernelName.c_str());
         return -1;
     }
     return 0;
@@ -230,17 +234,17 @@ int BinaryEncoder::validateInput(uint32_t argc, const char **argv) {
             } else if (!strcmp(argv[i], "-out")) {
                 elfName = std::string(argv[++i]);
             } else {
-                printf("Unknown argument %s\n", argv[i]);
+                messagePrinter.printf("Unknown argument %s\n", argv[i]);
                 printHelp();
                 return -1;
             }
         }
         if (pathToDump.empty()) {
-            printf("Path to dump folder can't be empty.\n");
+            messagePrinter.printf("Path to dump folder can't be empty.\n");
             printHelp();
             return -1;
         } else if (elfName.find(".bin") == std::string::npos) {
-            printf(".bin extension is expected for binary file.\n");
+            messagePrinter.printf(".bin extension is expected for binary file.\n");
             printHelp();
             return -1;
         }
@@ -299,7 +303,7 @@ int BinaryEncoder::writeDeviceBinary(const std::string &line, std::ostream &devi
             write<uint64_t>(ss, deviceBinary);
             break;
         default:
-            printf("Unknown size in line: %s\n", line.c_str());
+            messagePrinter.printf("Unknown size in line: %s\n", line.c_str());
             return -1;
         }
     }

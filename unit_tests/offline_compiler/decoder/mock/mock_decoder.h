@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,11 @@
 #include "offline_compiler/decoder/binary_decoder.h"
 
 struct MockDecoder : public BinaryDecoder {
-    MockDecoder() : BinaryDecoder("", "", ""){};
+    MockDecoder() : MockDecoder("", "", ""){};
     MockDecoder(const std::string &file, const std::string &patch, const std::string &dump)
-        : BinaryDecoder(file, patch, dump){};
+        : BinaryDecoder(file, patch, dump) {
+        setMessagePrinter(MessagePrinter{true});
+    };
     using BinaryDecoder::binaryFile;
     using BinaryDecoder::decode;
     using BinaryDecoder::getSize;
