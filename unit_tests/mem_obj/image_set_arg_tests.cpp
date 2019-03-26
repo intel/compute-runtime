@@ -189,13 +189,13 @@ HWTEST_F(ImageSetArgTest, givenCubeMapIndexWhenSetKernelArgImageIsCalledThenModi
 
 struct ImageSetArgSurfaceArrayTest : ImageSetArgTest {
     template <typename FamilyType>
-    void testSurfaceArrayProgramming(cl_mem_object_type image_type, size_t image_array_size, bool expectedSurfaceArray) {
+    void testSurfaceArrayProgramming(cl_mem_object_type imageType, size_t imageArraySize, bool expectedSurfaceArray) {
         using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
         RENDER_SURFACE_STATE surfaceState;
 
         cl_image_desc imageDesc = Image2dDefaults::imageDesc;
-        imageDesc.image_array_size = image_array_size;
-        imageDesc.image_type = image_type;
+        imageDesc.image_array_size = imageArraySize;
+        imageDesc.image_type = imageType;
         std::unique_ptr<Image> image{Image2dHelper<>::create(context, &imageDesc)};
         image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
 
