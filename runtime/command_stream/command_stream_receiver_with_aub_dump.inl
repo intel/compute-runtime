@@ -39,8 +39,8 @@ template <typename BaseCSR>
 void CommandStreamReceiverWithAUBDump<BaseCSR>::makeNonResident(GraphicsAllocation &gfxAllocation) {
     auto residencyTaskCount = gfxAllocation.getResidencyTaskCount(this->osContext->getContextId());
     BaseCSR::makeNonResident(gfxAllocation);
-    gfxAllocation.updateResidencyTaskCount(residencyTaskCount, this->osContext->getContextId());
     if (aubCSR) {
+        gfxAllocation.updateResidencyTaskCount(residencyTaskCount, this->osContext->getContextId());
         aubCSR->makeNonResident(gfxAllocation);
     }
 }
