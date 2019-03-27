@@ -39,7 +39,6 @@ if(UNIX)
 
   set(OCL_ICD_RUNTIME_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}${NEO_DLL_NAME_BASE}${CMAKE_SHARED_LIBRARY_SUFFIX})
   install(
-    CODE "file( WRITE ${IGDRCL_BINARY_DIR}/libintelopencl.conf \"${CMAKE_INSTALL_FULL_LIBDIR}\n\" )"
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/intel.icd \"${CMAKE_INSTALL_FULL_LIBDIR}/intel-opencl/${OCL_ICD_RUNTIME_NAME}\n\" )"
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/tmp/postinst \"/sbin/ldconfig\n\" )"
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/tmp/postrm \"/sbin/ldconfig\n\" )"
@@ -47,7 +46,6 @@ if(UNIX)
     CODE "file( COPY ${IGDRCL_BINARY_DIR}/tmp/postrm DESTINATION ${IGDRCL_BINARY_DIR} FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE )"
     COMPONENT opencl
   )
-  install(FILES ${IGDRCL_BINARY_DIR}/libintelopencl.conf DESTINATION ${_dir_etc}/ld.so.conf.d COMPONENT opencl)
   install(FILES ${IGDRCL_BINARY_DIR}/intel.icd DESTINATION ${_dir_etc}/OpenCL/vendors/ COMPONENT opencl)
 
   install(FILES $<TARGET_FILE:ocloc>
