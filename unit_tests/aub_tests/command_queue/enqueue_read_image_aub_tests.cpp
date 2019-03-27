@@ -134,10 +134,6 @@ HWTEST_P(AUBReadImage, simpleUnalignedMemory) {
         memcpy(dstMemoryUnaligned + i, &origValue, sizeof(origValue));
     }
 
-    // Since we're testing for overwrite, we need to ensure
-    // the complete memory is made resident for AUB testing.
-    auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(dstMemoryUnaligned, (numPixels * elementSize));
-    pCommandStreamReceiver->makeNonResident(*graphicsAllocation);
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto retVal = CL_INVALID_VALUE;
