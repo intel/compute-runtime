@@ -17,7 +17,6 @@ using NEO::AUBCommandStreamReceiver;
 using NEO::AUBCommandStreamReceiverHw;
 using NEO::AUBFamilyMapper;
 using NEO::DeviceFixture;
-using NEO::EngineType;
 using NEO::folderAUB;
 
 std::string getAubFileName(const NEO::Device *pDevice, const std::string baseName) {
@@ -189,19 +188,19 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesGGTT) {
 }
 
 HWTEST_F(AubMemDumpTests, simpleRCS) {
-    setupAUB<FamilyType>(pDevice, EngineType::ENGINE_RCS);
+    setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_RCS);
 }
 
 HWTEST_F(AubMemDumpTests, simpleBCS) {
-    setupAUB<FamilyType>(pDevice, EngineType::ENGINE_BCS);
+    setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_BCS);
 }
 
 HWTEST_F(AubMemDumpTests, simpleVCS) {
-    setupAUB<FamilyType>(pDevice, EngineType::ENGINE_VCS);
+    setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_VCS);
 }
 
 HWTEST_F(AubMemDumpTests, simpleVECS) {
-    setupAUB<FamilyType>(pDevice, EngineType::ENGINE_VECS);
+    setupAUB<FamilyType>(pDevice, aub_stream::ENGINE_VECS);
 }
 
 TEST(AubMemDumpBasic, givenDebugOverrideMmioWhenMmioNotMatchThenDoNotAlterValue) {

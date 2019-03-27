@@ -45,7 +45,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationBXT,                              // isSimulation
     PreemptionMode::MidThread,                     // defaultPreemptionMode
-    EngineType::ENGINE_RCS,                        // defaultEngineType
+    aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
     12,                                            // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Bxt, // aubDeviceId

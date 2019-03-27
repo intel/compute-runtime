@@ -136,6 +136,7 @@ endif()
 
 target_include_directories(igdrcl_tests PRIVATE
   ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
+  ${ENGINE_NODE_DIR}
   ${KHRONOS_GL_HEADERS_DIR}
 )
 

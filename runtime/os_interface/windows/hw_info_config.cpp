@@ -26,10 +26,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     outHwInfo->capabilityTable.ftrSvm = outHwInfo->pSkuTable->ftrSVM;
 
     hwHelper.adjustDefaultEngineType(outHwInfo);
-    const auto nodeOrdinal = DebugManager.flags.NodeOrdinal.get();
-    outHwInfo->capabilityTable.defaultEngineType = nodeOrdinal == -1
-                                                       ? outHwInfo->capabilityTable.defaultEngineType
-                                                       : static_cast<EngineType>(nodeOrdinal);
+    outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
     hwHelper.setCapabilityCoherencyFlag(outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
 

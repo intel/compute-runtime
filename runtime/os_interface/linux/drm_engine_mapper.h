@@ -13,7 +13,7 @@ namespace NEO {
 
 class DrmEngineMapper {
   public:
-    static unsigned int engineNodeMap(EngineType engineType);
+    static unsigned int engineNodeMap(aub_stream::EngineType engineType);
 };
 
 } // namespace NEO

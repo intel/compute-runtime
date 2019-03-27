@@ -9,6 +9,8 @@
 #include "runtime/gen_common/aub_mapper_base.h"
 #include "runtime/memory_manager/memory_constants.h"
 
+#include "engine_node.h"
+
 namespace NEO {
 struct BDWFamily;
 
@@ -18,10 +20,10 @@ struct AUBFamilyMapper<BDWFamily> {
 
     using AubTraits = AubMemDump::Traits<device, MemoryConstants::GfxAddressBits>;
 
-    static const AubMemDump::LrcaHelper *const csTraits[EngineType::NUM_ENGINES];
+    static const AubMemDump::LrcaHelper *const csTraits[aub_stream::NUM_ENGINES];
 
     static const MMIOList globalMMIO;
-    static const MMIOList *perEngineMMIO[EngineType::NUM_ENGINES];
+    static const MMIOList *perEngineMMIO[aub_stream::NUM_ENGINES];
 
     typedef AubMemDump::AubDump<AubTraits> AUB;
 };

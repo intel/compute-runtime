@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -51,6 +51,7 @@ set_target_properties(${BUILTINS_BINARIES_LIB_NAME} PROPERTIES POSITION_INDEPEND
 set_target_properties(${BUILTINS_BINARIES_LIB_NAME} PROPERTIES FOLDER "built_ins")
 
 target_include_directories(${BUILTINS_BINARIES_LIB_NAME} PRIVATE
+  ${ENGINE_NODE_DIR}
   ${KHRONOS_HEADERS_DIR}
   ${KHRONOS_GL_HEADERS_DIR}
   ${UMKM_SHAREDDATA_INCLUDE_PATHS}

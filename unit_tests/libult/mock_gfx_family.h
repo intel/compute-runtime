@@ -535,9 +535,9 @@ struct GENX {
 
 template <>
 struct AUBFamilyMapper<GENX> {
-    static const AubMemDump::LrcaHelper *csTraits[EngineType::NUM_ENGINES];
+    static const AubMemDump::LrcaHelper *csTraits[aub_stream::NUM_ENGINES];
     static const MMIOList globalMMIO;
-    static const MMIOList *perEngineMMIO[EngineType::NUM_ENGINES];
+    static const MMIOList *perEngineMMIO[aub_stream::NUM_ENGINES];
 };
 
 } // namespace NEO

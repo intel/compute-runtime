@@ -40,7 +40,7 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationKBL,                              // isSimulation
     PreemptionMode::MidThread,                     // defaultPreemptionMode
-    EngineType::ENGINE_RCS,                        // defaultEngineType
+    aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
     21,                                            // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Kbl, // aubDeviceId

@@ -42,7 +42,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
     void getGTTData(void *memory, AubGTTData &data);
     uint32_t getMemoryBankForGtt() const;
-    static const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType);
+    static const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType);
     void initEngineMMIO();
     void submitLRCA(const MiContextDescriptorReg &contextDescriptor);
     void setupContext(OsContext &osContext) override;

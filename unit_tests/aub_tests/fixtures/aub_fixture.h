@@ -29,7 +29,7 @@ class AUBFixture : public CommandQueueHwFixture {
         uint32_t deviceIndex = 0;
 
         auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
-        EngineType engineType = getChosenEngineType(hwInfo);
+        auto engineType = getChosenEngineType(hwInfo);
 
         const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
         std::stringstream strfilename;

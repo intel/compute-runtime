@@ -65,7 +65,7 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         bool wasCalled = false;
         FlushStamp flushStampToReturn = 1;
         BatchBuffer *receivedBatchBuffer = nullptr;
-        EngineType receivedEngine = EngineType::ENGINE_RCS;
+        aub_stream::EngineType receivedEngine = aub_stream::ENGINE_RCS;
         ResidencyContainer *receivedAllocationsForResidency = nullptr;
     } flushParametrization;
 

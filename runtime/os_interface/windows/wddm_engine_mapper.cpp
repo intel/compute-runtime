@@ -11,8 +11,8 @@
 
 namespace NEO {
 
-GPUNODE_ORDINAL WddmEngineMapper::engineNodeMap(EngineType engineType) {
-    if (EngineType::ENGINE_RCS == engineType) {
+GPUNODE_ORDINAL WddmEngineMapper::engineNodeMap(aub_stream::EngineType engineType) {
+    if (aub_stream::ENGINE_RCS == engineType) {
         return GPUNODE_3D;
     }
     UNRECOVERABLE_IF(true);

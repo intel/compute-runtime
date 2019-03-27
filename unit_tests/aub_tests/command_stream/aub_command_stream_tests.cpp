@@ -40,7 +40,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
     }
 
     template <typename FamilyType>
-    void testNoopIdXcs(EngineType engineType) {
+    void testNoopIdXcs(aub_stream::EngineType engineType) {
         pCommandStreamReceiver->getOsContext().getEngineType() = engineType;
 
         typedef typename FamilyType::MI_NOOP MI_NOOP;
@@ -84,19 +84,19 @@ HWTEST_F(AUBcommandstreamTests, testFlushTwice) {
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdRcs) {
-    testNoopIdXcs<FamilyType>(EngineType::ENGINE_RCS);
+    testNoopIdXcs<FamilyType>(aub_stream::ENGINE_RCS);
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdBcs) {
-    testNoopIdXcs<FamilyType>(EngineType::ENGINE_BCS);
+    testNoopIdXcs<FamilyType>(aub_stream::ENGINE_BCS);
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdVcs) {
-    testNoopIdXcs<FamilyType>(EngineType::ENGINE_VCS);
+    testNoopIdXcs<FamilyType>(aub_stream::ENGINE_VCS);
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdVecs) {
-    testNoopIdXcs<FamilyType>(EngineType::ENGINE_VECS);
+    testNoopIdXcs<FamilyType>(aub_stream::ENGINE_VECS);
 }
 
 TEST_F(AUBcommandstreamTests, makeResident) {

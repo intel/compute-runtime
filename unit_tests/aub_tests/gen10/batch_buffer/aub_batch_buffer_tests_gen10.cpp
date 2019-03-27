@@ -14,5 +14,5 @@ using Gen10AubBatchBufferTests = Test<NEO::DeviceFixture>;
 static constexpr auto gpuBatchBufferAddr = 0x800400001000; // 48-bit GPU address
 
 GEN10TEST_F(Gen10AubBatchBufferTests, givenSimpleRCSWithBatchBufferWhenItHasMSBSetInGpuAddressThenAUBShouldBeSetupSuccessfully) {
-    setupAUBWithBatchBuffer<FamilyType>(pDevice, NEO::EngineType::ENGINE_RCS, gpuBatchBufferAddr);
+    setupAUBWithBatchBuffer<FamilyType>(pDevice, aub_stream::ENGINE_RCS, gpuBatchBufferAddr);
 }

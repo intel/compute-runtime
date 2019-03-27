@@ -64,7 +64,7 @@ TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
         EXPECT_EQ(deviceEngine.osContext->isLowPriority(), lowPriority);
     }
 
-    EXPECT_THROW(pDevice->getEngine(EngineType::ENGINE_VCS, false), std::exception);
+    EXPECT_THROW(pDevice->getEngine(aub_stream::ENGINE_VCS, false), std::exception);
 }
 
 TEST_F(DeviceTest, WhenGetOSTimeThenNotNull) {
@@ -102,8 +102,8 @@ TEST_F(DeviceTest, retainAndRelease) {
 TEST_F(DeviceTest, getEngineTypeDefault) {
     auto pTestDevice = std::unique_ptr<Device>(createWithUsDeviceId(0));
 
-    EngineType actualEngineType = pDevice->getDefaultEngine().osContext->getEngineType();
-    EngineType defaultEngineType = pDevice->getHardwareInfo().capabilityTable.defaultEngineType;
+    auto actualEngineType = pDevice->getDefaultEngine().osContext->getEngineType();
+    auto defaultEngineType = pDevice->getHardwareInfo().capabilityTable.defaultEngineType;
 
     EXPECT_EQ(&pDevice->getDefaultEngine().commandStreamReceiver->getOsContext(), pDevice->getDefaultEngine().osContext);
     EXPECT_EQ(defaultEngineType, actualEngineType);

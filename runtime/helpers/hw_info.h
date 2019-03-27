@@ -32,7 +32,7 @@ struct RuntimeCapabilityTable {
     size_t requiredPreemptionSurfaceSize;
     bool (*isSimulation)(unsigned short);
     PreemptionMode defaultPreemptionMode;
-    EngineType defaultEngineType;
+    aub_stream::EngineType defaultEngineType;
     uint32_t maxRenderFrequency;
     unsigned int clVersionSupport;
     uint32_t aubDeviceId;
@@ -101,5 +101,5 @@ struct EnableGfxFamilyHw {
 
 const char *getPlatformType(const HardwareInfo &hwInfo);
 bool getHwInfoForPlatformString(const char *str, const HardwareInfo *&hwInfoIn);
-EngineType getChosenEngineType(const HardwareInfo &hwInfo);
+aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
 } // namespace NEO

@@ -15,7 +15,7 @@ namespace NEO {
 
 class WddmEngineMapper {
   public:
-    static GPUNODE_ORDINAL engineNodeMap(EngineType engineType);
+    static GPUNODE_ORDINAL engineNodeMap(aub_stream::EngineType engineType);
 };
 
 } // namespace NEO

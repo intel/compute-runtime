@@ -112,7 +112,7 @@ TEST_F(HwHelperTest, givenEngineTypeRcsWhenCsTraitsAreQueiredThenCorrectNameInTr
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_NE(nullptr, &helper);
 
-    auto &csTraits = helper.getCsTraits(EngineType::ENGINE_RCS);
+    auto &csTraits = helper.getCsTraits(aub_stream::ENGINE_RCS);
     EXPECT_STREQ("RCS", csTraits.name);
 }
 
@@ -246,18 +246,18 @@ TEST(HwInfoTest, givenHwInfoWhenIsNotCoreThenPlatformTypeIsLp) {
 
 TEST(HwInfoTest, givenHwInfoWhenChosenEngineTypeQueriedThenDefaultIsReturned) {
     HardwareInfo hwInfo;
-    hwInfo.capabilityTable.defaultEngineType = EngineType::ENGINE_RCS;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     auto engineType = getChosenEngineType(hwInfo);
-    EXPECT_EQ(EngineType::ENGINE_RCS, engineType);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engineType);
 }
 
 TEST(HwInfoTest, givenNodeOrdinalSetWhenChosenEngineTypeQueriedThenSetValueIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.NodeOrdinal.set(EngineType::ENGINE_VECS);
+    DebugManager.flags.NodeOrdinal.set(aub_stream::ENGINE_VECS);
     HardwareInfo hwInfo;
-    hwInfo.capabilityTable.defaultEngineType = EngineType::ENGINE_RCS;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     auto engineType = getChosenEngineType(hwInfo);
-    EXPECT_EQ(EngineType::ENGINE_VECS, engineType);
+    EXPECT_EQ(aub_stream::ENGINE_VECS, engineType);
 }
 
 HWTEST_F(HwHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvidedThenUseArgumentsasInput) {

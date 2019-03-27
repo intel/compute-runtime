@@ -363,7 +363,7 @@ if(NOT INSTRUMENTATION_LIB_NAME)
         endif()
     endif()
     if(IS_DIRECTORY "${INSTRUMENTATION_SOURCE_DIR}")
-        message(STATUS "Intrumentation source dir is: ${INSTRUMENTATION_SOURCE_DIR}")
+        message(STATUS "Instrumentation source dir is: ${INSTRUMENTATION_SOURCE_DIR}")
         add_subdirectory("${INSTRUMENTATION_SOURCE_DIR}" "${IGDRCL_BUILD_DIR}/instrumentation")
         set(INSTRUMENTATION_LIB_NAME "instrumentation_umd")
         set(HAVE_INSTRUMENTATION TRUE)
@@ -428,11 +428,16 @@ endif()
 
 
 add_subdirectory(third_party/gtest)
+
 message(STATUS "AUB_STREAM_DIR = ${AUB_STREAM_DIR}" )
 if(DEFINED AUB_STREAM_DIR)
     set(AUB_STREAM_PROJECT_NAME "aub_stream")
     add_subdirectory(${AUB_STREAM_DIR} ${CMAKE_BINARY_DIR}/aub_stream EXCLUDE_FROM_ALL)
+    set(ENGINE_NODE_DIR ${AUB_STREAM_DIR}/aub_mem_dump${BRANCH_DIR_SUFFIX}/includes)
+else()
+    set(ENGINE_NODE_DIR ${AUB_STREAM_HEADERS_DIR})
 endif()
+message(STATUS "Engine node dir: ${ENGINE_NODE_DIR}")
 
 add_definitions(-DGMM_OCL)
 

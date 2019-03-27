@@ -35,7 +35,7 @@ static const AubMemDump::LrcaHelperBcs bcs(0x022000);
 static const AubMemDump::LrcaHelperVcs vcs(0x012000);
 static const AubMemDump::LrcaHelperVecs vecs(0x01a000);
 
-const AubMemDump::LrcaHelper *const AUBFamilyMapper<Family>::csTraits[EngineType::NUM_ENGINES] = {
+const AubMemDump::LrcaHelper *const AUBFamilyMapper<Family>::csTraits[aub_stream::NUM_ENGINES] = {
     &rcs,
     &bcs,
     &vcs,
@@ -73,7 +73,7 @@ static const MMIOList mmioListVECS = {
     MMIOPair(AubMemDump::computeRegisterOffset(vecs.mmioBase, 0x229c), 0xffff8280),
 };
 
-const MMIOList *AUBFamilyMapper<Family>::perEngineMMIO[EngineType::NUM_ENGINES] = {
+const MMIOList *AUBFamilyMapper<Family>::perEngineMMIO[aub_stream::NUM_ENGINES] = {
     &mmioListRCS,
     &mmioListBCS,
     &mmioListVCS,

@@ -15,7 +15,7 @@
 namespace NEO {
 
 OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             EngineType engineType, PreemptionMode preemptionMode, bool lowPriority) {
+                             aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority) {
     if (osInterface) {
         return new OsContextLinux(*osInterface->get()->getDrm(), contextId, deviceBitfield, engineType, preemptionMode, lowPriority);
     }
@@ -23,7 +23,7 @@ OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, Devic
 }
 
 OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                               EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
+                               aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
     : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority), drm(drm) {
 
     engineFlag = DrmEngineMapper::engineNodeMap(engineType);

@@ -172,14 +172,14 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
 
     {
         drmMock.StoredCtxId = drmContextId1;
-        OsContextLinux osContext1(drmMock, 0u, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
+        OsContextLinux osContext1(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
 
         EXPECT_EQ(drmContextId1, osContext1.getDrmContextId());
         EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
 
         {
             drmMock.StoredCtxId = drmContextId2;
-            OsContextLinux osContext2(drmMock, 0u, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
+            OsContextLinux osContext2(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
             EXPECT_EQ(drmContextId2, osContext2.getDrmContextId());
             EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
         }
@@ -195,17 +195,17 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     drmMock.StoredCtxId = 123;
     drmMock.preemptionSupported = false;
 
-    OsContextLinux osContext1(drmMock, 0u, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
-    OsContextLinux osContext2(drmMock, 0u, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, true);
+    OsContextLinux osContext1(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    OsContextLinux osContext2(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, true);
 
     EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
 
     drmMock.preemptionSupported = true;
 
-    OsContextLinux osContext3(drmMock, 0u, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, false);
+    OsContextLinux osContext3(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
     EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
 
-    OsContextLinux osContext4(drmMock, 0u, 1, EngineType::ENGINE_RCS, PreemptionMode::Disabled, true);
+    OsContextLinux osContext4(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, true);
     EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
     EXPECT_EQ(drmMock.StoredCtxId, drmMock.receivedContextParamRequest.ctx_id);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);

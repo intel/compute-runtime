@@ -47,7 +47,7 @@ const RuntimeCapabilityTable CNL::capabilityTable{
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationCNL,                              // isSimulation
     PreemptionMode::MidThread,                     // defaultPreemptionMode
-    EngineType::ENGINE_RCS,                        // defaultEngineType
+    aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
     21,                                            // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Cnl, // aubDeviceId

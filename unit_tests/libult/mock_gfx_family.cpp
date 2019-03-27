@@ -25,7 +25,7 @@ static AubMemDump::LrcaHelperBcs bcs(0x020000);
 static AubMemDump::LrcaHelperVcs vcs(0x010000);
 static AubMemDump::LrcaHelperVecs vecs(0x018000);
 
-const AubMemDump::LrcaHelper *AUBFamilyMapper<GENX>::csTraits[EngineType::NUM_ENGINES] = {
+const AubMemDump::LrcaHelper *AUBFamilyMapper<GENX>::csTraits[aub_stream::NUM_ENGINES] = {
     &rcs,
     &bcs,
     &vcs,
@@ -80,7 +80,7 @@ bool HwHelperHw<GENX>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enab
 }
 
 template <>
-const AubMemDump::LrcaHelper &HwHelperHw<GENX>::getCsTraits(EngineType engineType) const {
+const AubMemDump::LrcaHelper &HwHelperHw<GENX>::getCsTraits(aub_stream::EngineType engineType) const {
     return *AUBFamilyMapper<GENX>::csTraits[engineType];
 }
 

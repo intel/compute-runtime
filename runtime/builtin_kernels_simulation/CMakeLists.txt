@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -44,6 +44,7 @@ apply_macro_for_each_gen("SUPPORTED")
 
 add_library(${BIKSIM_LIB_NAME} OBJECT ${BUILTIN_KERNELS_SIMULATION_SRCS})
 target_include_directories(${BIKSIM_LIB_NAME} BEFORE PRIVATE
+  ${ENGINE_NODE_DIR}
   ${UMKM_SHAREDDATA_INCLUDE_PATHS}
   ${KHRONOS_HEADERS_DIR}
   ${KHRONOS_GL_HEADERS_DIR}

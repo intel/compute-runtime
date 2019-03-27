@@ -35,7 +35,7 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfo) {
     EXPECT_EQ((uint32_t)drm->StoredMinEUinPool, outHwInfo.pSysInfo->EuCountPerPoolMin);
     EXPECT_EQ((outHwInfo.pSysInfo->EUCount - outHwInfo.pSysInfo->EuCountPerPoolMin), outHwInfo.pSysInfo->EuCountPerPoolMax);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGttCacheInvalidation);
-    EXPECT_EQ(EngineType::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     //constant sysInfo/ftr flags
     EXPECT_EQ(1u, outHwInfo.pSysInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled);
@@ -88,7 +88,7 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfo) {
     EXPECT_EQ((uint32_t)drm->StoredMinEUinPool, outHwInfo.pSysInfo->EuCountPerPoolMin);
     EXPECT_EQ((outHwInfo.pSysInfo->EUCount - outHwInfo.pSysInfo->EuCountPerPoolMin), outHwInfo.pSysInfo->EuCountPerPoolMax);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGttCacheInvalidation);
-    EXPECT_EQ(EngineType::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GTC, outHwInfo.pPlatform->eGTType);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT1);
@@ -114,7 +114,7 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfo) {
     EXPECT_EQ((unsigned int)drm->StoredHasPooledEU, outHwInfo.pSkuTable->ftrPooledEuEnabled);
     EXPECT_EQ((uint32_t)drm->StoredMinEUinPool, outHwInfo.pSysInfo->EuCountPerPoolMin);
     EXPECT_EQ((outHwInfo.pSysInfo->EUCount - outHwInfo.pSysInfo->EuCountPerPoolMin), outHwInfo.pSysInfo->EuCountPerPoolMax);
-    EXPECT_EQ(EngineType::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GTX, outHwInfo.pPlatform->eGTType);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT1);

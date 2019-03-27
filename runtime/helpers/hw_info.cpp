@@ -46,9 +46,9 @@ bool getHwInfoForPlatformString(const char *str, const HardwareInfo *&hwInfoIn) 
     return ret;
 }
 
-EngineType getChosenEngineType(const HardwareInfo &hwInfo) {
+aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo) {
     return DebugManager.flags.NodeOrdinal.get() == -1
                ? hwInfo.capabilityTable.defaultEngineType
-               : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
+               : static_cast<aub_stream::EngineType>(DebugManager.flags.NodeOrdinal.get());
 }
 } // namespace NEO

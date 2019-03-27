@@ -361,7 +361,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingComman
 
     auto commandQueueObj = castToObject<CommandQueue>(cmdQ);
     auto &osContext = commandQueueObj->getCommandStreamReceiver().getOsContext();
-    EXPECT_EQ(EngineType::ENGINE_RCS, osContext.getEngineType());
+    EXPECT_EQ(aub_stream::ENGINE_RCS, osContext.getEngineType());
     EXPECT_TRUE(osContext.isLowPriority());
 
     clReleaseCommandQueue(cmdQ);

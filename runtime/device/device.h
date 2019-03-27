@@ -72,7 +72,7 @@ class Device : public BaseObject<_cl_device_id> {
         deviceInfo.force32BitAddressess = value;
     }
 
-    EngineControl &getEngine(EngineType engineType, bool lowPriority);
+    EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
     EngineControl &getDefaultEngine();
 
     const char *getProductAbbrev() const;

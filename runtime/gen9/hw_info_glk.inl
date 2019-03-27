@@ -40,7 +40,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationGLK,                              // isSimulation
     PreemptionMode::MidThread,                     // defaultPreemptionMode
-    EngineType::ENGINE_RCS,                        // defaultEngineType
+    aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
     12,                                            // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Glk, // aubDeviceId

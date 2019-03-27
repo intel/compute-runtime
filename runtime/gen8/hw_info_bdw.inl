@@ -48,7 +48,7 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationBDW,                              // isSimulation
     PreemptionMode::Disabled,                      // defaultPreemptionMode
-    EngineType::ENGINE_RCS,                        // defaultEngineType
+    aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
     21,                                            // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Bdw, // aubDeviceId

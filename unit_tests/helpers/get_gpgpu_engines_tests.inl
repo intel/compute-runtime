@@ -14,6 +14,6 @@ template <typename FamilyType>
 void whenGetGpgpuEnginesThenReturnTwoRcsEngines() {
     auto gpgpuEngines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances();
     EXPECT_EQ(2u, gpgpuEngines.size());
-    EXPECT_EQ(ENGINE_RCS, gpgpuEngines[0]);
-    EXPECT_EQ(ENGINE_RCS, gpgpuEngines[1]);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[0]);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[1]);
 }

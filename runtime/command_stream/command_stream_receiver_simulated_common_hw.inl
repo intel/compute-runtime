@@ -56,7 +56,7 @@ uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getMemoryBankForGtt(
 }
 
 template <typename GfxFamily>
-const AubMemDump::LrcaHelper &CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getCsTraits(EngineType engineType) {
+const AubMemDump::LrcaHelper &CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getCsTraits(aub_stream::EngineType engineType) {
     return *AUBFamilyMapper<GfxFamily>::csTraits[engineType];
 }
 

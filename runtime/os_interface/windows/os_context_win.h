@@ -18,7 +18,7 @@ class OsContextWin : public OsContext {
     ~OsContextWin() override;
 
     OsContextWin(Wddm &wddm, uint32_t contextId, DeviceBitfield deviceBitfield,
-                 EngineType engineType, PreemptionMode preemptionMode, bool lowPriority);
+                 aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority);
 
     D3DKMT_HANDLE getWddmContextHandle() const { return wddmContextHandle; }
     void setWddmContextHandle(D3DKMT_HANDLE wddmContextHandle) { this->wddmContextHandle = wddmContextHandle; }

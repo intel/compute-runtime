@@ -36,7 +36,7 @@ class CommandQueueHw : public CommandQueue {
 
         if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) {
             priority = QueuePriority::LOW;
-            this->engine = &device->getEngine(EngineType::ENGINE_RCS, true);
+            this->engine = &device->getEngine(aub_stream::ENGINE_RCS, true);
         } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_MED_KHR)) {
             priority = QueuePriority::MEDIUM;
         } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_HIGH_KHR)) {

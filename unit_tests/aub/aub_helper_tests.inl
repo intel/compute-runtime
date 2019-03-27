@@ -126,7 +126,7 @@ HWTEST_F(AubHelperHwTest, GivenEnabledLocalMemoryWhenGetMemTraceForPtEntryIsCall
 }
 
 HWTEST_F(AubHelperHwTest, giverLrcaHelperWhenContextIsInitializedThenContextFlagsAreSet) {
-    const auto &csTraits = CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(EngineType::ENGINE_RCS);
+    const auto &csTraits = CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(aub_stream::ENGINE_RCS);
     MockLrcaHelper lrcaHelper(csTraits.mmioBase);
 
     std::unique_ptr<void, std::function<void(void *)>> lrcaBase(alignedMalloc(csTraits.sizeLRCA, csTraits.alignLRCA), alignedFree);

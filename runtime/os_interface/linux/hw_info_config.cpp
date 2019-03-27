@@ -153,9 +153,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
     hwHelper.adjustDefaultEngineType(outHwInfo);
-    outHwInfo->capabilityTable.defaultEngineType = DebugManager.flags.NodeOrdinal.get() == -1
-                                                       ? outHwInfo->capabilityTable.defaultEngineType
-                                                       : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
+    outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
     outHwInfo->capabilityTable.instrumentationEnabled = false;
     outHwInfo->capabilityTable.ftrRenderCompressedBuffers = false;

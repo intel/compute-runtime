@@ -77,7 +77,7 @@ size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
 }
 
 template <typename Family>
-const AubMemDump::LrcaHelper &HwHelperHw<Family>::getCsTraits(EngineType engineType) const {
+const AubMemDump::LrcaHelper &HwHelperHw<Family>::getCsTraits(aub_stream::EngineType engineType) const {
     return *AUBFamilyMapper<Family>::csTraits[engineType];
 }
 
@@ -168,10 +168,10 @@ size_t HwHelperHw<Family>::getScratchSpaceOffsetFor64bit() {
 }
 
 template <typename Family>
-const std::vector<EngineType> HwHelperHw<Family>::getGpgpuEngineInstances() const {
-    constexpr std::array<EngineType, 2> gpgpuEngineInstances = {{ENGINE_RCS,
-                                                                 ENGINE_RCS}}; // low priority
-    return std::vector<EngineType>(gpgpuEngineInstances.begin(), gpgpuEngineInstances.end());
+const std::vector<aub_stream::EngineType> HwHelperHw<Family>::getGpgpuEngineInstances() const {
+    constexpr std::array<aub_stream::EngineType, 2> gpgpuEngineInstances = {{aub_stream::ENGINE_RCS,
+                                                                             aub_stream::ENGINE_RCS}}; // low priority
+    return std::vector<aub_stream::EngineType>(gpgpuEngineInstances.begin(), gpgpuEngineInstances.end());
 }
 
 template <typename Family>

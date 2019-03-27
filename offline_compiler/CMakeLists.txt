@@ -75,6 +75,7 @@ add_subdirectories()
 create_project_source_tree(ocloc ${IGDRCL_SOURCE_DIR}/runtime)
 
 set(CLOC_INCLUDES
+  ${ENGINE_NODE_DIR}
   ${IGC_OCL_ADAPTOR_DIR}
   ${CIF_BASE_DIR}
   ${HW_SRC_INCLUDE_PATH}

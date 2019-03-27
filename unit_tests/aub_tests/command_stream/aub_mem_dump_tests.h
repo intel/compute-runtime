@@ -23,7 +23,7 @@ extern const char *fileSeparator;
 extern std::string getAubFileName(const NEO::Device *pDevice, const std::string baseName);
 
 template <typename FamilyType>
-void setupAUB(const NEO::Device *pDevice, NEO::EngineType engineType) {
+void setupAUB(const NEO::Device *pDevice, aub_stream::EngineType engineType) {
     typedef typename NEO::AUBFamilyMapper<FamilyType>::AUB AUB;
     const auto &csTraits = NEO::CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(engineType);
     auto mmioBase = csTraits.mmioBase;

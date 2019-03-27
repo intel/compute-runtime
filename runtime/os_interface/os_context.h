@@ -22,16 +22,16 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     OsContext() = delete;
 
     static OsContext *create(OSInterface *osInterface, uint32_t contextId, DeviceBitfield deviceBitfield,
-                             EngineType engineType, PreemptionMode preemptionMode, bool lowPriority);
+                             aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority);
     uint32_t getContextId() const { return contextId; }
     uint32_t getNumSupportedDevices() const { return numSupportedDevices; }
     DeviceBitfield getDeviceBitfield() const { return deviceBitfield; }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
-    EngineType &getEngineType() { return engineType; }
+    aub_stream::EngineType &getEngineType() { return engineType; }
     bool isLowPriority() const { return lowPriority; }
 
   protected:
-    OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
+    OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
         : contextId(contextId),
           deviceBitfield(deviceBitfield),
           preemptionMode(preemptionMode),
@@ -43,7 +43,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const DeviceBitfield deviceBitfield;
     const PreemptionMode preemptionMode;
     const uint32_t numSupportedDevices;
-    EngineType engineType = EngineType::ENGINE_RCS;
+    aub_stream::EngineType engineType = aub_stream::ENGINE_RCS;
     const bool lowPriority;
 };
 } // namespace NEO

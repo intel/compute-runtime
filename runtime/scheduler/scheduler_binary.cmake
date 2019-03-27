@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -89,6 +89,7 @@ set_target_properties(${SCHEDULER_BINARY_LIB_NAME} PROPERTIES FOLDER "scheduler"
 add_dependencies(${SCHEDULER_BINARY_LIB_NAME} scheduler)
 
 target_include_directories(${SCHEDULER_BINARY_LIB_NAME} PRIVATE
+  ${ENGINE_NODE_DIR}
   ${KHRONOS_HEADERS_DIR}
   ${UMKM_SHAREDDATA_INCLUDE_PATHS}
   ${IGDRCL__IGC_INCLUDE_DIR}

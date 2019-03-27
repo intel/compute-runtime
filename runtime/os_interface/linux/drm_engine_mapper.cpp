@@ -12,8 +12,8 @@
 
 namespace NEO {
 
-unsigned int DrmEngineMapper::engineNodeMap(EngineType engineType) {
-    if (EngineType::ENGINE_RCS == engineType) {
+unsigned int DrmEngineMapper::engineNodeMap(aub_stream::EngineType engineType) {
+    if (aub_stream::ENGINE_RCS == engineType) {
         return I915_EXEC_RENDER;
     }
     UNRECOVERABLE_IF(true);
