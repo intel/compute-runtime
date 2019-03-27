@@ -64,14 +64,14 @@ MemObj::~MemObj() {
         }
         if (graphicsAllocation && !associatedMemObject && !isHostPtrSVM && graphicsAllocation->peekReuseCount() == 0) {
             memoryManager->removeAllocationFromHostPtrManager(graphicsAllocation);
-            bool doAsyncDestrucions = DebugManager.flags.EnableAsyncDestroyAllocations.get();
-            if (!doAsyncDestrucions) {
+            bool doAsyncDestructions = DebugManager.flags.EnableAsyncDestroyAllocations.get();
+            if (!doAsyncDestructions) {
                 needWait = true;
             }
             if (needWait && graphicsAllocation->isUsed()) {
                 memoryManager->waitForEnginesCompletion(*graphicsAllocation);
             }
-            destroyGraphicsAllocation(graphicsAllocation, doAsyncDestrucions);
+            destroyGraphicsAllocation(graphicsAllocation, doAsyncDestructions);
             graphicsAllocation = nullptr;
         }
 
