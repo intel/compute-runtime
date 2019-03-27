@@ -482,3 +482,26 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpThenFileNameIsE
     std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create("aubfile", true, executionEnvironment)));
     EXPECT_STREQ(fullName.c_str(), executionEnvironment.aubFileNameReceived.c_str());
 }
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpThenOpenIsCalledOnAubManagerToOpenFileStream) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.setHwInfo(*platformDevices);
+
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsrWithAubDump(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(
+        TbxCommandStreamReceiver::create("aubfile", true, executionEnvironment)));
+    EXPECT_TRUE(tbxCsrWithAubDump->aubManager->isOpen());
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpSeveralTimesThenOpenIsCalledOnAubManagerOnceOnly) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices, true);
+    executionEnvironment.setHwInfo(*platformDevices);
+
+    auto tbxCsrWithAubDump1 = std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>>(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(
+        TbxCommandStreamReceiverHw<FamilyType>::create("aubfile", true, executionEnvironment)));
+
+    auto tbxCsrWithAubDump2 = std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>>(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(
+        TbxCommandStreamReceiverHw<FamilyType>::create("aubfile", true, executionEnvironment)));
+
+    auto mockManager = reinterpret_cast<MockAubManager *>(executionEnvironment.aubCenter->getAubManager());
+    EXPECT_EQ(1u, mockManager->openCalledCnt);
+}

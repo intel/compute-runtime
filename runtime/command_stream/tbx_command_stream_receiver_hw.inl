@@ -156,6 +156,12 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
         executionEnvironment.initAubCenter(localMemoryEnabled, fullName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 
         csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(baseName, executionEnvironment);
+        if (csr->aubManager) {
+            if (!csr->aubManager->isOpen()) {
+                csr->aubManager->open(fullName);
+                UNRECOVERABLE_IF(!csr->aubManager->isOpen());
+            }
+        }
     } else {
         csr = new TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment);
     }
