@@ -18,6 +18,7 @@ set(IGDRCL_SRCS_linux_dll_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/linux_tests_configuration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/main_linux_dll.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_null_device_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrap.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.h
   ${IGDRCL_SOURCE_DIR}/runtime/os_interface/debug_settings_manager.cpp

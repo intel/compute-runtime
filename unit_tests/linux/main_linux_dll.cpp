@@ -15,6 +15,7 @@
 #include "unit_tests/custom_event_listener.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/variable_backup.h"
+#include "unit_tests/linux/drm_wrap.h"
 #include "unit_tests/linux/mock_os_layer.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
@@ -24,16 +25,6 @@
 #include <string>
 
 using namespace NEO;
-
-class DrmWrap : public Drm {
-  public:
-    static Drm *createDrm(int32_t deviceOrdinal) {
-        return Drm::create(deviceOrdinal);
-    }
-    static void closeDevice(int32_t deviceOrdinal) {
-        Drm::closeDevice(deviceOrdinal);
-    };
-};
 
 class DrmTestsFixture {
   public:
@@ -46,6 +37,15 @@ class DrmTestsFixture {
 };
 
 typedef Test<DrmTestsFixture> DrmTests;
+
+void initializeTestedDevice() {
+    for (uint32_t i = 0; deviceDescriptorTable[i].eGtType != GTTYPE::GTTYPE_UNDEFINED; i++) {
+        if (platformDevices[0]->pPlatform->eProductFamily == deviceDescriptorTable[i].pHwInfo->pPlatform->eProductFamily) {
+            deviceId = deviceDescriptorTable[i].deviceId;
+            break;
+        }
+    }
+}
 
 TEST_F(DrmTests, getReturnsNull) {
     auto drm = Drm::get(0);
@@ -393,6 +393,8 @@ int main(int argc, char **argv) {
         listeners.Release(defaultListener);
         listeners.Append(customEventListener);
     }
+
+    initializeTestedDevice();
 
     auto retVal = RUN_ALL_TESTS();
 

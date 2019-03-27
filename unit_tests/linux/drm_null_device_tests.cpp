@@ -8,22 +8,12 @@
 #include "runtime/os_interface/linux/drm_null_device.h"
 #include "test.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/linux/drm_wrap.h"
 #include "unit_tests/linux/mock_os_layer.h"
 
 #include <memory>
 
 using namespace NEO;
-
-class DrmWrap : public Drm {
-  public:
-    static Drm *createDrm(int32_t deviceOrdinal) {
-        return Drm::create(deviceOrdinal);
-    }
-
-    static void closeDevice(int32_t deviceOrdinal) {
-        Drm::closeDevice(deviceOrdinal);
-    };
-};
 
 class DrmNullDeviceTestsFixture {
   public:
@@ -51,10 +41,10 @@ class DrmNullDeviceTestsFixture {
 typedef Test<DrmNullDeviceTestsFixture> DrmNullDeviceTests;
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallGetDeviceIdTHENreturnProperDeviceId) {
-    int deviceId = 0;
-    int ret = drmNullDevice->getDeviceID(deviceId);
+    int deviceIdQueried = 0;
+    int ret = drmNullDevice->getDeviceID(deviceIdQueried);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(deviceDescriptorTable[0].deviceId, deviceId);
+    EXPECT_EQ(deviceId, deviceIdQueried);
 }
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallIoctlTHENalwaysSuccess) {
