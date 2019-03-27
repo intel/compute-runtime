@@ -63,7 +63,7 @@ constexpr uint64_t prevPowerOfTwo(uint64_t value) {
 }
 
 inline uint32_t getMinLsbSet(uint32_t value) {
-    static const int multiplyDeBruijnBitPosition[32] = {
+    static const uint8_t multiplyDeBruijnBitPosition[32] = {
         0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8,
         31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9};
     auto invert = -static_cast<int64_t>(value);
@@ -72,33 +72,23 @@ inline uint32_t getMinLsbSet(uint32_t value) {
 }
 
 constexpr uint32_t log2(uint32_t value) {
-    uint32_t exponent = 0u;
-    uint32_t startVal = value;
     if (value == 0) {
         return 32;
     }
-    startVal >>= 1;
-    startVal &= 0x7fffffffu;
-    while ((startVal & 0xffffffffu) && (exponent < 32)) {
-        exponent = exponent + 1;
-        startVal >>= 1;
-        startVal &= 0x7fffffffu;
+    uint32_t exponent = 0u;
+    while (value >>= 1) {
+        exponent++;
     }
     return exponent;
 }
 
-constexpr uint64_t log2(uint64_t value) {
-    uint64_t exponent = 0;
-    uint64_t startVal = value;
+constexpr uint32_t log2(uint64_t value) {
     if (value == 0) {
         return 64;
     }
-    startVal >>= 1;
-    startVal &= 0x7fffffffffffffff;
-    while ((startVal & 0xffffffffffffffff) && (exponent < 64)) {
-        exponent = exponent + 1;
-        startVal >>= 1;
-        startVal &= 0x7fffffffffffffff;
+    uint32_t exponent = 0;
+    while (value >>= 1) {
+        exponent++;
     }
     return exponent;
 }
@@ -153,13 +143,8 @@ inline uint16_t float2Half(float f) {
     return (u.u >> (24 - 11)) | fsign;
 }
 
-inline bool isDivisableByPowerOfTwoDivisor(uint32_t number, uint32_t divisor) {
-    uint32_t mask = 0xffffffff;
-    mask = mask - (divisor - 1);
-    if ((number & mask) == number)
-        return true;
-    else
-        return false;
+constexpr bool isDivisibleByPowerOfTwoDivisor(uint32_t number, uint32_t divisor) {
+    return (number & (divisor - 1)) == 0;
 }
 
 constexpr size_t computeTotalElementsCount(const Vec3<size_t> &inputVector) {
@@ -172,12 +157,7 @@ constexpr size_t computeTotalElementsCount(const Vec3<size_t> &inputVector) {
 
 template <typename T>
 constexpr bool isPow2(T val) {
-    if (val != 0) {
-        if ((val & (val - 1)) == 0) {
-            return true;
-        }
-    }
-    return false;
+    return val != 0 && (val & (val - 1)) == 0;
 }
 
 template <typename T>

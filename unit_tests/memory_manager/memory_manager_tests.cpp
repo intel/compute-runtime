@@ -1546,9 +1546,7 @@ TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCo
 TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValue) {
     ExecutionEnvironment executionEnvironment;
     MockMemoryManager memoryManager(false, false, executionEnvironment);
-    DeviceBitfield deviceBitfield;
-    deviceBitfield.set(0);
-    deviceBitfield.set(1);
+    DeviceBitfield deviceBitfield = getDeviceBitfieldForNDevices(2);
     PreemptionMode preemptionMode = PreemptionMode::MidThread;
     memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                              deviceBitfield, preemptionMode, false);

@@ -296,16 +296,16 @@ void computeWorkgroupSizeSquared(uint32_t maxWorkGroupSize, size_t workGroupSize
     size_t itemsPowerOfTwoDivisors[3] = {1, 1, 1};
     for (auto i = 0u; i < workDim; i++) {
         uint32_t requiredWorkItemsCount = maxWorkGroupSize;
-        while (requiredWorkItemsCount > 1 && !(Math::isDivisableByPowerOfTwoDivisor(uint32_t(workItems[i]), requiredWorkItemsCount)))
-            requiredWorkItemsCount = requiredWorkItemsCount >> 1;
+        while (requiredWorkItemsCount > 1 && !(Math::isDivisibleByPowerOfTwoDivisor(uint32_t(workItems[i]), requiredWorkItemsCount)))
+            requiredWorkItemsCount >>= 1;
         itemsPowerOfTwoDivisors[i] = requiredWorkItemsCount;
     }
     if (itemsPowerOfTwoDivisors[0] * itemsPowerOfTwoDivisors[1] >= maxWorkGroupSize) {
         while (itemsPowerOfTwoDivisors[0] * itemsPowerOfTwoDivisors[1] > maxWorkGroupSize) {
             if (itemsPowerOfTwoDivisors[0] > itemsPowerOfTwoDivisors[1])
-                itemsPowerOfTwoDivisors[0] = itemsPowerOfTwoDivisors[0] >> 1;
+                itemsPowerOfTwoDivisors[0] >>= 1;
             else
-                itemsPowerOfTwoDivisors[1] = itemsPowerOfTwoDivisors[1] >> 1;
+                itemsPowerOfTwoDivisors[1] >>= 1;
         }
         for (auto i = 0u; i < 3; i++)
             workGroupSize[i] = itemsPowerOfTwoDivisors[i];
@@ -338,8 +338,8 @@ void computeWorkgroupSizeND(WorkSizeInfo wsInfo, size_t workGroupSize[3], const 
         size_t itemsPowerOfTwoDivisors[3] = {1, 1, 1};
         for (auto i = 0u; i < workDim; i++) {
             uint32_t requiredWorkItemsCount = uint32_t(wsInfo.simdSize * optimalHardwareThreadCountGeneric[0]);
-            while (requiredWorkItemsCount > 1 && !(Math::isDivisableByPowerOfTwoDivisor(uint32_t(workItems[i]), requiredWorkItemsCount)))
-                requiredWorkItemsCount = requiredWorkItemsCount >> 1;
+            while (requiredWorkItemsCount > 1 && !(Math::isDivisibleByPowerOfTwoDivisor(uint32_t(workItems[i]), requiredWorkItemsCount)))
+                requiredWorkItemsCount >>= 1;
             itemsPowerOfTwoDivisors[i] = requiredWorkItemsCount;
         }
 
