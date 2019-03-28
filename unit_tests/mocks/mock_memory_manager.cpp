@@ -91,7 +91,7 @@ GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     return allocate32BitGraphicsMemoryImpl(allocationData);
 }
 
-FailMemoryManager::FailMemoryManager(int32_t failedAllocationsCount) {
+FailMemoryManager::FailMemoryManager(int32_t failedAllocationsCount, ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {
     this->failedAllocationsCount = failedAllocationsCount;
 }
 

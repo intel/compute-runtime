@@ -9,6 +9,7 @@
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
 #include "gtest/gtest.h"
@@ -33,7 +34,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
             return 0;
         }
     };
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
     executionEnvironment.osInterface = std::make_unique<OSInterface>();
     auto mock = make_unique<MockDrm>(0);
     executionEnvironment.osInterface->get()->setDrm(mock.get());
@@ -97,7 +98,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
         }
     };
 
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
     executionEnvironment.osInterface = std::make_unique<OSInterface>();
     auto mock = make_unique<MockDrm>(0);
     executionEnvironment.osInterface->get()->setDrm(mock.get());

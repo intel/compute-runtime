@@ -10,6 +10,7 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
 #include <memory>
@@ -20,12 +21,13 @@ using AllocationData = TestedDrmMemoryManager::AllocationData;
 
 class DrmMemoryManagerBasic : public ::testing::Test {
   public:
+    DrmMemoryManagerBasic() : executionEnvironment(*platformDevices){};
     void SetUp() override {
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         executionEnvironment.osInterface->get()->setDrm(Drm::get(0));
     }
 
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
 };
 
 class DrmMemoryManagerFixture : public MemoryManagementFixture {
@@ -37,7 +39,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     void SetUp() override {
         MemoryManagementFixture::SetUp();
         this->mock = new DrmMockCustom;
-        executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment = new MockExecutionEnvironment(*platformDevices);
         executionEnvironment->incRefInternal();
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setDrm(mock);

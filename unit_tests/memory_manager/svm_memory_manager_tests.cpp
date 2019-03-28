@@ -5,6 +5,7 @@
  *
  */
 
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_svm_manager.h"
 
@@ -13,8 +14,8 @@
 using namespace NEO;
 
 struct SVMMemoryAllocatorTest : ::testing::Test {
-    SVMMemoryAllocatorTest() : memoryManager(false, false, executionEnvironment), svmManager(&memoryManager) {}
-    ExecutionEnvironment executionEnvironment;
+    SVMMemoryAllocatorTest() : executionEnvironment(*platformDevices), memoryManager(false, false, executionEnvironment), svmManager(&memoryManager) {}
+    MockExecutionEnvironment executionEnvironment;
     MockMemoryManager memoryManager;
     MockSVMAllocsManager svmManager;
 };

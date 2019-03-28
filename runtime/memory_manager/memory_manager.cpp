@@ -35,14 +35,9 @@ namespace NEO {
 MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : allocator32Bit(nullptr),
                                                                            executionEnvironment(executionEnvironment), hostPtrManager(std::make_unique<HostPtrManager>()),
                                                                            multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {
-    this->localMemorySupported = false;
-    this->enable64kbpages = false;
-
     auto hwInfo = executionEnvironment.getHardwareInfo();
-    if (hwInfo != nullptr) {
-        this->localMemorySupported = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
-        this->enable64kbpages = OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages;
-    }
+    this->localMemorySupported = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
+    this->enable64kbpages = OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages;
     if (DebugManager.flags.Enable64kbpages.get() > -1) {
         this->enable64kbpages = DebugManager.flags.Enable64kbpages.get() != 0;
     }

@@ -16,6 +16,7 @@
 using namespace NEO;
 
 void MemoryManagerWithCsrFixture::SetUp() {
+    executionEnvironment.setHwInfo(*platformDevices);
     csr = new MockCommandStreamReceiver(this->executionEnvironment);
     memoryManager = new MockMemoryManager(executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);

@@ -9,6 +9,7 @@
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
 using namespace NEO;
@@ -17,7 +18,7 @@ using namespace ::testing;
 using AllocationData = TestedDrmMemoryManager::AllocationData;
 
 TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenAllocateInDevicePoolIsCalledThenNullptrAndStatusRetryIsReturned) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
     executionEnvironment.osInterface = std::make_unique<OSInterface>();
     executionEnvironment.osInterface->get()->setDrm(Drm::get(0));
     TestedDrmMemoryManager memoryManager(executionEnvironment);

@@ -14,6 +14,8 @@
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 
 #include "gtest/gtest.h"
 
@@ -49,8 +51,8 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
 };
 
 TEST(BufferTests, doPinIsSet) {
-    ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(executionEnvironment));
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    std::unique_ptr<TestedMemoryManager> mm(new MemoryManagerCreate<TestedMemoryManager>(false, false, executionEnvironment));
     {
         MockContext context;
         auto size = MemoryConstants::pageSize * 32;
@@ -72,7 +74,7 @@ TEST(BufferTests, doPinIsSet) {
     }
 }
 TEST(BufferTests, doPinIsSetForHostPtr) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
     std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(executionEnvironment));
     {
         MockContext context;

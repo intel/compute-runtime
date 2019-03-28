@@ -78,5 +78,5 @@ FailDevice::FailDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executi
 }
 FailDeviceAfterOne::FailDeviceAfterOne(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : MockDevice(hwInfo, executionEnvironment, deviceIndex) {
-    this->mockMemoryManager.reset(new FailMemoryManager(1));
+    this->mockMemoryManager.reset(new FailMemoryManager(1, *executionEnvironment));
 }

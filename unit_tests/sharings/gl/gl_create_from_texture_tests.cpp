@@ -13,6 +13,7 @@
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/gl/mock_gl_sharing.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_gmm.h"
 
 #include "gtest/gtest.h"
@@ -23,7 +24,7 @@ class CreateFromGlTexture : public ::testing::Test {
     // temp solution - we need to query size from GMM:
     class TempMM : public OsAgnosticMemoryManager {
       public:
-        TempMM() : OsAgnosticMemoryManager(*(new ExecutionEnvironment)) {
+        TempMM() : OsAgnosticMemoryManager(*(new MockExecutionEnvironment(*platformDevices))) {
             mockExecutionEnvironment.reset(&executionEnvironment);
         }
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {

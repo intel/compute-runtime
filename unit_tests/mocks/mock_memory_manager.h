@@ -8,6 +8,7 @@
 #pragma once
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
 
 #include "gmock/gmock.h"
@@ -46,10 +47,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         hostPtrManager.reset(new MockHostPtrManager);
     };
 
-    MockMemoryManager() : MockMemoryManager(*(new ExecutionEnvironment)) {
+    MockMemoryManager() : MockMemoryManager(*(new MockExecutionEnvironment(*platformDevices))) {
         mockExecutionEnvironment.reset(&executionEnvironment);
     };
-    MockMemoryManager(bool enable64pages, bool enableLocalMemory) : MemoryManagerCreate(enable64pages, enableLocalMemory, *(new ExecutionEnvironment)) {
+    MockMemoryManager(bool enable64pages, bool enableLocalMemory) : MemoryManagerCreate(enable64pages, enableLocalMemory, *(new MockExecutionEnvironment(*platformDevices))) {
         mockExecutionEnvironment.reset(&executionEnvironment);
     }
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
@@ -137,7 +138,7 @@ class FailMemoryManager : public MockMemoryManager {
   public:
     using MemoryManager::allocateGraphicsMemoryWithProperties;
     using MockMemoryManager::MockMemoryManager;
-    FailMemoryManager(int32_t failedAllocationsCount);
+    FailMemoryManager(int32_t failedAllocationsCount, ExecutionEnvironment &executionEnvironment);
 
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
         if (failedAllocationsCount <= 0) {

@@ -15,6 +15,7 @@
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "test.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
 #include "drm/i915_drm.h"
@@ -54,6 +55,7 @@ class DrmMockForWorker : public Drm {
 
 class DrmGemCloseWorkerFixture {
   public:
+    DrmGemCloseWorkerFixture() : executionEnvironment(*platformDevices){};
     //max loop count for while
     static const uint32_t deadCntInit = 10 * 1000 * 1000;
 
@@ -99,7 +101,7 @@ class DrmGemCloseWorkerFixture {
             : DrmAllocation(GraphicsAllocation::AllocationType::UNDECIDED, bo, nullptr, 0, MemoryPool::MemoryNull, 1u, false) {
         }
     };
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment;
 };
 
 typedef Test<DrmGemCloseWorkerFixture> DrmGemCloseWorkerTests;

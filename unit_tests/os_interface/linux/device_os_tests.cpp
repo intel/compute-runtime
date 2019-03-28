@@ -98,7 +98,7 @@ TEST(ApiOsTest, notSupportedApiList) {
 TEST(DeviceOsTest, DeviceCreationFailMidThreadPreemption) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
-    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(nullptr);
+    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(*platformDevices);
 
     EXPECT_THAT(pDevice, nullptr);
 }

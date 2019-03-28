@@ -8,6 +8,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/program/kernel_info.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
 
@@ -108,7 +109,7 @@ TEST(KernelInfo, decodeImageKernelArgument) {
 
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKernelHeapToKernelAllocation) {
     KernelInfo kernelInfo;
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     SKernelBinaryHeaderCommon kernelHeader;
     const size_t heapSize = 0x40;
@@ -137,7 +138,7 @@ class MyMemoryManager : public OsAgnosticMemoryManager {
 
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateMemoryThenReturnsFalse) {
     KernelInfo kernelInfo;
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
     MyMemoryManager memoryManager(executionEnvironment);
     SKernelBinaryHeaderCommon kernelHeader;
     kernelInfo.heapInfo.pKernelHeader = &kernelHeader;

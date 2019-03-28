@@ -18,6 +18,7 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -197,7 +198,8 @@ TEST_F(TimestampPacketSimpleTests, givenImplicitDependencyWhenEndTagIsWrittenThe
 }
 
 TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
-    MockMemoryManager memoryManager;
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockMemoryManager memoryManager(executionEnvironment);
     MockTagAllocator<TimestampPacket> allocator(&memoryManager, 1);
 
     auto firstNode = allocator.getTag();
@@ -238,7 +240,8 @@ TEST_F(TimestampPacketSimpleTests, whenObjectIsCreatedThenInitializeAllStamps) {
 }
 
 TEST_F(TimestampPacketSimpleTests, whenAskedForStampAddressThenReturnWithValidOffset) {
-    MockMemoryManager memoryManager;
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockMemoryManager memoryManager(executionEnvironment);
     MockTagAllocator<TimestampPacket> allocator(&memoryManager, 1);
 
     auto node = allocator.getTag();

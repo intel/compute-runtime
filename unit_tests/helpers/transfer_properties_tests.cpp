@@ -8,6 +8,7 @@
 #include "runtime/helpers/properties_helper.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
 #include "gtest/gtest.h"
@@ -24,7 +25,7 @@ TEST(TransferPropertiesTest, givenTransferPropertiesCreatedWhenDefaultDebugSetti
 }
 
 TEST(TransferPropertiesTest, givenAllocationInNonSystemPoolWhenTransferPropertiesAreCreatedForMapBufferThenLockPtrIsSet) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
 
     MockContext ctx;
@@ -41,7 +42,7 @@ TEST(TransferPropertiesTest, givenAllocationInNonSystemPoolWhenTransferPropertie
 }
 
 TEST(TransferPropertiesTest, givenAllocationInSystemPoolWhenTransferPropertiesAreCreatedForMapBufferThenLockPtrIsNotSet) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
 
     MockContext ctx;
@@ -67,7 +68,7 @@ TEST(TransferPropertiesTest, givenTransferPropertiesCreatedWhenMemoryManagerInMe
 }
 
 TEST(TransferPropertiesTest, givenTransferPropertiesWhenLockedPtrIsSetThenItIsReturnedForReadWrite) {
-    ExecutionEnvironment executionEnvironment;
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
 
     MockContext ctx;

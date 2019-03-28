@@ -209,7 +209,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         OsInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 6> {
-        MemoryMangerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
+        MemoryMangerMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}
     };
     struct AubCenterMock : public DestructorCounted<AubCenter, 5> {
         AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB) {}
@@ -231,10 +231,11 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     };
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->setHwInfo(*platformDevices);
     executionEnvironment->commandStreamReceivers.resize(1);
     executionEnvironment->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, platformDevices[0]);
     executionEnvironment->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
-    executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId);
+    executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId, *executionEnvironment);
     executionEnvironment->aubCenter = std::make_unique<AubCenterMock>(destructorId);
     executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<CommandStreamReceiverMock>(destructorId, *executionEnvironment));
     executionEnvironment->specialCommandStreamReceiver = std::make_unique<SpecialCommandStreamReceiverMock>(destructorId, *executionEnvironment);
@@ -314,7 +315,7 @@ TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryMan
     DebugManagerStateRestore restorer;
     DebugManager.flags.SetCommandStreamReceiver.set(10);
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>(*platformDevices);
     executionEnvironment->initializeMemoryManager();
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
