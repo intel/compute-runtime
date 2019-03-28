@@ -4225,7 +4225,6 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemory(cl_command_queue commandQu
     }
 
     auto &csr = pCommandQueue->getCommandStreamReceiver();
-    csr.expectMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode);
-    retVal = CL_SUCCESS;
+    retVal = csr.expectMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode);
     return retVal;
 }

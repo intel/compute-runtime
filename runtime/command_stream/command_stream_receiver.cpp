@@ -7,6 +7,7 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 
+#include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/preemption.h"
@@ -393,8 +394,12 @@ TagAllocator<TimestampPacket> *CommandStreamReceiver::getTimestampPacketAllocato
     return timestampPacketAllocator.get();
 }
 
-void CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
-                                         size_t length, uint32_t compareOperation) {
+cl_int CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
+                                           size_t length, uint32_t compareOperation) {
+    auto isMemoryEqual = (memcmp(gfxAddress, srcAddress, length) == 0);
+    auto isEqualMemoryExpected = (compareOperation == CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
+
+    return (isMemoryEqual == isEqualMemoryExpected) ? CL_SUCCESS : CL_INVALID_VALUE;
 }
 
 } // namespace NEO

@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
@@ -393,6 +394,30 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhe
     csr.waitBeforeMakingNonResidentWhenRequired();
 
     EXPECT_EQ(0u, tag);
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenVariousDataSetsWhenVerifyingMemoryThenCorrectValueIsReturned) {
+    ExecutionEnvironment executionEnvironment;
+    MockCommandStreamReceiver csr(executionEnvironment);
+
+    constexpr size_t setSize = 6;
+    uint8_t setA1[setSize] = {4, 3, 2, 1, 2, 10};
+    uint8_t setA2[setSize] = {4, 3, 2, 1, 2, 10};
+    uint8_t setB1[setSize] = {40, 15, 3, 11, 17, 4};
+    uint8_t setB2[setSize] = {40, 15, 3, 11, 17, 4};
+
+    constexpr auto compareEqual = CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+    constexpr auto compareNotEqual = CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual;
+
+    EXPECT_EQ(CL_SUCCESS, csr.expectMemory(setA1, setA2, setSize, compareEqual));
+    EXPECT_EQ(CL_SUCCESS, csr.expectMemory(setB1, setB2, setSize, compareEqual));
+    EXPECT_EQ(CL_INVALID_VALUE, csr.expectMemory(setA1, setA2, setSize, compareNotEqual));
+    EXPECT_EQ(CL_INVALID_VALUE, csr.expectMemory(setB1, setB2, setSize, compareNotEqual));
+
+    EXPECT_EQ(CL_INVALID_VALUE, csr.expectMemory(setA1, setB1, setSize, compareEqual));
+    EXPECT_EQ(CL_INVALID_VALUE, csr.expectMemory(setA2, setB2, setSize, compareEqual));
+    EXPECT_EQ(CL_SUCCESS, csr.expectMemory(setA1, setB1, setSize, compareNotEqual));
+    EXPECT_EQ(CL_SUCCESS, csr.expectMemory(setA2, setB2, setSize, compareNotEqual));
 }
 
 TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {

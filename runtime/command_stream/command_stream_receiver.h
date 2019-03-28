@@ -170,7 +170,7 @@ class CommandStreamReceiver {
     TagAllocator<HwPerfCounter> *getEventPerfCountAllocator();
     TagAllocator<TimestampPacket> *getTimestampPacketAllocator();
 
-    virtual void expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
+    virtual cl_int expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
 
     void setDisableL3Cache(bool val) {
         disableL3Cache = val;

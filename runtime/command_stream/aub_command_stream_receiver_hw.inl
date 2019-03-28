@@ -652,8 +652,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMMIO(uint32_t mmioRegister, ui
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
-                                                         size_t length, uint32_t compareOperation) {
+cl_int AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
+                                                           size_t length, uint32_t compareOperation) {
     pollForCompletion();
 
     if (hardwareContextController) {
@@ -671,6 +671,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
     };
 
     this->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);
+
+    return CL_SUCCESS;
 }
 
 template <typename GfxFamily>
