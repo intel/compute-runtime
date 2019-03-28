@@ -30,7 +30,7 @@ struct FeatureTable;
 struct DeviceDescriptor {
     unsigned short deviceId;
     const HardwareInfo *pHwInfo;
-    void (*setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool);
+    void (*setupHardwareInfo)(HardwareInfo *, bool);
     GTTYPE eGtType;
 };
 

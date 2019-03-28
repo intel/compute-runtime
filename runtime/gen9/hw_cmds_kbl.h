@@ -13,19 +13,21 @@ namespace NEO {
 struct KBL : public SKLFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
-
+    static FeatureTable featureTable;
+    static WorkaroundTable workaroundTable;
     static const uint32_t threadsPerEu = 7;
     static const uint32_t maxEuPerSubslice = 8;
     static const uint32_t maxSlicesSupported = 3;
     static const uint32_t maxSubslicesSupported = 9;
 
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig);
+    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig);
+    static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
 };
 
 class KBL_1x2x6 : public KBL {
   public:
-    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -34,7 +36,7 @@ class KBL_1x2x6 : public KBL {
 
 class KBL_1x3x6 : public KBL {
   public:
-    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -43,7 +45,7 @@ class KBL_1x3x6 : public KBL {
 
 class KBL_1x3x8 : public KBL {
   public:
-    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -52,7 +54,7 @@ class KBL_1x3x8 : public KBL {
 
 class KBL_2x3x8 : public KBL {
   public:
-    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -61,7 +63,7 @@ class KBL_2x3x8 : public KBL {
 
 class KBL_3x3x8 : public KBL {
   public:
-    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
 
   private:

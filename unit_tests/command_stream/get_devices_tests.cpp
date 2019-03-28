@@ -39,6 +39,7 @@ struct GetDevicesTest : ::testing::Test {
     size_t numDevices = 0;
     HardwareInfo *hwInfo = nullptr;
     FeatureTable featureTable = {};
+    WorkaroundTable workaroundTable = {};
     GT_SYSTEM_INFO sysInfo = {};
     DebugManagerStateRestore stateRestorer;
 };
@@ -91,17 +92,17 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
                 }
                 EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
                 ASSERT_NE(nullptr, hardwarePrefix[i]);
+
                 HardwareInfo hwInfoFromTable = *hardwareInfoTable[i];
                 hwInfoFromTable.pSkuTable = &featureTable;
+                hwInfoFromTable.pWaTable = &workaroundTable;
                 hwInfoFromTable.pSysInfo = &sysInfo;
-                hardwareInfoSetup[hwInfoFromTable.pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(hwInfoFromTable.pSysInfo),
-                                                                             const_cast<FeatureTable *>(hwInfoFromTable.pSkuTable),
-                                                                             true, "default");
+                hardwareInfoSetup[hwInfoFromTable.pPlatform->eProductFamily](&hwInfoFromTable, true, "default");
                 HwInfoConfig *hwConfig = HwInfoConfig::get(hwInfoFromTable.pPlatform->eProductFamily);
                 hwConfig->configureHardwareCustom(&hwInfoFromTable, nullptr);
                 EXPECT_EQ(0, memcmp(hwInfoFromTable.pPlatform, hwInfo->pPlatform, sizeof(PLATFORM)));
                 EXPECT_EQ(0, memcmp(&hwInfoFromTable.capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
-                EXPECT_EQ(0, memcmp(hwInfoFromTable.pWaTable, hwInfo->pWaTable, sizeof(WorkaroundTable)));
+
                 EXPECT_STREQ(hardwarePrefix[i], productFamily.c_str());
                 DeviceFactory::releaseDevices();
                 break;
@@ -151,16 +152,15 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
             ASSERT_NE(nullptr, hardwarePrefix[i]);
             HardwareInfo defaultHwInfo = **platformDevices;
             defaultHwInfo.pSkuTable = &featureTable;
+            defaultHwInfo.pWaTable = &workaroundTable;
             defaultHwInfo.pSysInfo = &sysInfo;
-            hardwareInfoSetup[defaultHwInfo.pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(defaultHwInfo.pSysInfo),
-                                                                       const_cast<FeatureTable *>(defaultHwInfo.pSkuTable),
-                                                                       true, "default");
+            hardwareInfoSetup[defaultHwInfo.pPlatform->eProductFamily](&defaultHwInfo, true, "default");
             HwInfoConfig *hwConfig = HwInfoConfig::get(defaultHwInfo.pPlatform->eProductFamily);
             hwConfig->configureHardwareCustom(&defaultHwInfo, nullptr);
             EXPECT_EQ(0, memcmp(defaultHwInfo.pPlatform, hwInfo->pPlatform, sizeof(PLATFORM)));
             EXPECT_EQ(0, memcmp(&defaultHwInfo.capabilityTable, &hwInfo->capabilityTable, sizeof(RuntimeCapabilityTable)));
-            EXPECT_EQ(0, memcmp(defaultHwInfo.pWaTable, hwInfo->pWaTable, sizeof(WorkaroundTable)));
             DeviceFactory::releaseDevices();
+
             break;
         }
         default:

@@ -30,14 +30,13 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(HardwareInfo **pHWInfos, 
     hardwareInfo->pWaTable = new WorkaroundTable(*hwInfoConst->pWaTable);
     hardwareInfo->pSysInfo = new GT_SYSTEM_INFO(*hwInfoConst->pSysInfo);
     hardwareInfo->capabilityTable = hwInfoConst->capabilityTable;
-    hardwareInfoSetup[hwInfoConst->pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(hardwareInfo->pSysInfo),
-                                                              const_cast<FeatureTable *>(hardwareInfo->pSkuTable),
-                                                              true, hwInfoConfig);
+    hardwareInfoSetup[hwInfoConst->pPlatform->eProductFamily](hardwareInfo.get(), true, hwInfoConfig);
 
     HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->pPlatform->eProductFamily);
     hwConfig->configureHardwareCustom(hardwareInfo.get(), nullptr);
 
     *pHWInfos = hardwareInfo.release();
+
     executionEnvironment.setHwInfo(*pHWInfos);
     numDevices = totalDeviceCount;
     DeviceFactory::numDevices = numDevices;

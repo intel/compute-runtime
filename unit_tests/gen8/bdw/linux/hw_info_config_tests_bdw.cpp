@@ -41,8 +41,6 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTC);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTX);
 
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrTileY);
-
     ReleaseOutHwInfoStructs();
 
     drm->StoredDeviceID = IBDW_GT1_HALO_MOBL_DEVICE_F0_ID;
@@ -131,7 +129,6 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, configureHwInfoWaFlags) {
     drm->StoredDeviceRevID = 0;
     int ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
 
     ReleaseOutHwInfoStructs();
 }
@@ -176,8 +173,15 @@ TYPED_TEST_CASE(BdwHwInfoTests, bdwTestTypes);
 TYPED_TEST(BdwHwInfoTests, gtSetupIsCorrect) {
     GT_SYSTEM_INFO gtSystemInfo;
     FeatureTable featureTable;
+    WorkaroundTable pWaTable;
+    PLATFORM pPlatform;
+    HardwareInfo hwInfo;
+    hwInfo.pSysInfo = &gtSystemInfo;
+    hwInfo.pSkuTable = &featureTable;
+    hwInfo.pWaTable = &pWaTable;
+    hwInfo.pPlatform = &pPlatform;
     memset(&gtSystemInfo, 0, sizeof(gtSystemInfo));
-    TypeParam::setupHardwareInfo(&gtSystemInfo, &featureTable, false);
+    TypeParam::setupHardwareInfo(&hwInfo, false);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
     EXPECT_GT(gtSystemInfo.ThreadCount, 0u);
     EXPECT_GT(gtSystemInfo.SliceCount, 0u);

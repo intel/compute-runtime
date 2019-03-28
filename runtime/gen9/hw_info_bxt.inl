@@ -69,15 +69,58 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     false                                          // supportCacheFlushAfterWalker
 };
 
+WorkaroundTable BXT::workaroundTable = {};
+FeatureTable BXT::featureTable = {};
+
+void BXT::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    PLATFORM *pPlatform = const_cast<PLATFORM *>(hwInfo->pPlatform);
+    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
+    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+
+    pSkuTable->ftrVEBOX = true;
+    pSkuTable->ftrULT = true;
+    pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;
+    pSkuTable->ftr3dMidBatchPreempt = true;
+    pSkuTable->ftr3dObjectLevelPreempt = true;
+    pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
+    pSkuTable->ftrLCIA = true;
+    pSkuTable->ftrPPGTT = true;
+    pSkuTable->ftrIA32eGfxPTEs = true;
+    pSkuTable->ftrDisplayYTiling = true;
+    pSkuTable->ftrTranslationTable = true;
+    pSkuTable->ftrUserModeTranslationTable = true;
+    pSkuTable->ftrEnableGuC = true;
+    pSkuTable->ftrFbc = true;
+    pSkuTable->ftrFbc2AddressTranslation = true;
+    pSkuTable->ftrFbcBlitterTracking = true;
+    pSkuTable->ftrFbcCpuTracking = true;
+    pSkuTable->ftrTileY = true;
+
+    if (pPlatform->usRevId >= 3) {
+        pSkuTable->ftrGttCacheInvalidation = true;
+    }
+
+    pWaTable->waLLCCachingUnsupported = true;
+    pWaTable->waMsaa8xTileYDepthPitchAlignment = true;
+    pWaTable->waFbcLinearSurfaceStride = true;
+    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = true;
+    pWaTable->waEnablePreemptionGranularityControlByUMD = true;
+    pWaTable->waSendMIFLUSHBeforeVFE = true;
+    pWaTable->waForcePcBbFullCfgRestore = true;
+    pWaTable->waReportPerfCountUseGlobalContextID = true;
+    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+}
+
 const HardwareInfo BXT_1x2x6::hwInfo = {
     &BXT::platform,
-    &emptySkuTable,
-    &emptyWaTable,
+    &BXT::featureTable,
+    &BXT::workaroundTable,
     &BXT_1x2x6::gtSystemInfo,
     BXT::capabilityTable,
 };
 GT_SYSTEM_INFO BXT_1x2x6::gtSystemInfo = {0};
-void BXT_1x2x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
+void BXT_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
     gtSysInfo->EUCount = 12;
     gtSysInfo->ThreadCount = 12 * BXT::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -96,17 +139,21 @@ void BXT_1x2x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featu
     gtSysInfo->MaxSubSlicesSupported = BXT::maxSubslicesSupported;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
 };
 
 const HardwareInfo BXT_1x3x6::hwInfo = {
     &BXT::platform,
-    &emptySkuTable,
-    &emptyWaTable,
+    &BXT::featureTable,
+    &BXT::workaroundTable,
     &BXT_1x3x6::gtSystemInfo,
     BXT::capabilityTable,
 };
 GT_SYSTEM_INFO BXT_1x3x6::gtSystemInfo = {0};
-void BXT_1x3x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
+void BXT_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
     gtSysInfo->EUCount = 18;
     gtSysInfo->ThreadCount = 18 * BXT::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -125,22 +172,25 @@ void BXT_1x3x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featu
     gtSysInfo->MaxSubSlicesSupported = BXT::maxSubslicesSupported;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
 };
 
 const HardwareInfo BXT::hwInfo = BXT_1x3x6::hwInfo;
 
-void setupBXTHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig) {
+void setupBXTHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
     if (hwInfoConfig == "1x2x6") {
-        BXT_1x2x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+        BXT_1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == "1x3x6") {
-        BXT_1x3x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+        BXT_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == "default") {
         // Default config
-        BXT_1x3x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+        BXT_1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }
 }
 
-void (*BXT::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupBXTHardwareInfoImpl;
+void (*BXT::setupHardwareInfo)(HardwareInfo *, bool, const std::string &) = setupBXTHardwareInfoImpl;
 } // namespace NEO

@@ -39,7 +39,7 @@ TEST_F(HwInfoConfigTestLinuxLkf, configureHwInfoLkf) {
     EXPECT_FALSE(outHwInfo.pSkuTable->ftrGTA);
     EXPECT_FALSE(outHwInfo.pSkuTable->ftrGTC);
     EXPECT_FALSE(outHwInfo.pSkuTable->ftrGTX);
-    EXPECT_TRUE(outHwInfo.pSkuTable->ftrTileY);
+    EXPECT_FALSE(outHwInfo.pSkuTable->ftrTileY);
 
     ReleaseOutHwInfoStructs();
 }
@@ -80,8 +80,15 @@ TYPED_TEST_CASE(LkfHwInfoTests, lkfTestTypes);
 TYPED_TEST(LkfHwInfoTests, gtSetupIsCorrect) {
     GT_SYSTEM_INFO gtSystemInfo;
     FeatureTable featureTable = {};
+    WorkaroundTable pWaTable;
+    PLATFORM pPlatform;
+    HardwareInfo hwInfo;
+    hwInfo.pSysInfo = &gtSystemInfo;
+    hwInfo.pSkuTable = &featureTable;
+    hwInfo.pWaTable = &pWaTable;
+    hwInfo.pPlatform = &pPlatform;
     memset(&gtSystemInfo, 0, sizeof(gtSystemInfo));
-    TypeParam::setupHardwareInfo(&gtSystemInfo, &featureTable, false);
+    TypeParam::setupHardwareInfo(&hwInfo, false);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
     EXPECT_GT(gtSystemInfo.ThreadCount, 0u);
     EXPECT_GT(gtSystemInfo.SliceCount, 0u);

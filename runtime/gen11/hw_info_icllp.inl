@@ -68,16 +68,48 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     false                                            // supportCacheFlushAfterWalker
 };
 
+WorkaroundTable ICLLP::workaroundTable = {};
+FeatureTable ICLLP::featureTable = {};
+
+void ICLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
+    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+
+    pSkuTable->ftrPPGTT = true;
+    pSkuTable->ftrSVM = true;
+    pSkuTable->ftrIA32eGfxPTEs = true;
+    pSkuTable->ftrStandardMipTailFormat = true;
+
+    pSkuTable->ftrDisplayYTiling = true;
+    pSkuTable->ftrTranslationTable = true;
+    pSkuTable->ftrUserModeTranslationTable = true;
+    pSkuTable->ftrTileMappedResource = true;
+    pSkuTable->ftrEnableGuC = true;
+
+    pSkuTable->ftrFbc = true;
+    pSkuTable->ftrFbc2AddressTranslation = true;
+    pSkuTable->ftrFbcBlitterTracking = true;
+    pSkuTable->ftrFbcCpuTracking = true;
+    pSkuTable->ftrTileY = true;
+
+    pSkuTable->ftrAstcHdr2D = true;
+    pSkuTable->ftrAstcLdr2D = true;
+
+    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = true;
+    pWaTable->waReportPerfCountUseGlobalContextID = true;
+};
+
 const HardwareInfo ICLLP_1x8x8::hwInfo = {
     &ICLLP::platform,
-    &emptySkuTable,
-    &emptyWaTable,
+    &ICLLP::featureTable,
+    &ICLLP::workaroundTable,
     &ICLLP_1x8x8::gtSystemInfo,
     ICLLP::capabilityTable,
 };
 
 GT_SYSTEM_INFO ICLLP_1x8x8::gtSystemInfo = {0};
-void ICLLP_1x8x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
+void ICLLP_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
     gtSysInfo->EUCount = 63;
     gtSysInfo->ThreadCount = 63 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -96,18 +128,22 @@ void ICLLP_1x8x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *fea
     gtSysInfo->MaxSubSlicesSupported = ICLLP::maxSubslicesSupported;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
 };
 
 const HardwareInfo ICLLP_1x4x8::hwInfo = {
     &ICLLP::platform,
-    &emptySkuTable,
-    &emptyWaTable,
+    &ICLLP::featureTable,
+    &ICLLP::workaroundTable,
     &ICLLP_1x4x8::gtSystemInfo,
     ICLLP::capabilityTable,
 };
 
 GT_SYSTEM_INFO ICLLP_1x4x8::gtSystemInfo = {0};
-void ICLLP_1x4x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
+void ICLLP_1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
     gtSysInfo->EUCount = 31;
     gtSysInfo->ThreadCount = 31 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -126,17 +162,21 @@ void ICLLP_1x4x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *fea
     gtSysInfo->MaxSubSlicesSupported = 4;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
 };
 const HardwareInfo ICLLP_1x6x8::hwInfo = {
     &ICLLP::platform,
-    &emptySkuTable,
-    &emptyWaTable,
+    &ICLLP::featureTable,
+    &ICLLP::workaroundTable,
     &ICLLP_1x6x8::gtSystemInfo,
     ICLLP::capabilityTable,
 };
 
 GT_SYSTEM_INFO ICLLP_1x6x8::gtSystemInfo = {0};
-void ICLLP_1x6x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
+void ICLLP_1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
     gtSysInfo->EUCount = 47;
     gtSysInfo->ThreadCount = 47 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -155,17 +195,21 @@ void ICLLP_1x6x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *fea
     gtSysInfo->MaxSubSlicesSupported = 4;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
 };
 
 const HardwareInfo ICLLP_1x1x8::hwInfo = {
     &ICLLP::platform,
-    &emptySkuTable,
-    &emptyWaTable,
+    &ICLLP::featureTable,
+    &ICLLP::workaroundTable,
     &ICLLP_1x1x8::gtSystemInfo,
     ICLLP::capabilityTable,
 };
 GT_SYSTEM_INFO ICLLP_1x1x8::gtSystemInfo = {0};
-void ICLLP_1x1x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
+void ICLLP_1x1x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
     gtSysInfo->EUCount = 8;
     gtSysInfo->ThreadCount = 8 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -184,26 +228,29 @@ void ICLLP_1x1x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *fea
     gtSysInfo->MaxSubSlicesSupported = 4;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
 };
 
 const HardwareInfo ICLLP::hwInfo = ICLLP_1x8x8::hwInfo;
 
-void setupICLLPHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig) {
+void setupICLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
     if (hwInfoConfig == "1x8x8") {
-        ICLLP_1x8x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+        ICLLP_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == "1x4x8") {
-        ICLLP_1x4x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+        ICLLP_1x4x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == "1x6x8") {
-        ICLLP_1x6x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+        ICLLP_1x6x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == "1x1x8") {
-        ICLLP_1x1x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+        ICLLP_1x1x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == "default") {
         // Default config
-        ICLLP_1x8x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+        ICLLP_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }
-} // namespace NEO
+}
 
-void (*ICLLP::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupICLLPHardwareInfoImpl;
+void (*ICLLP::setupHardwareInfo)(HardwareInfo *, bool, const std::string &) = setupICLLPHardwareInfoImpl;
 } // namespace NEO

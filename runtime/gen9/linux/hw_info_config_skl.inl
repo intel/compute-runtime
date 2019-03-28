@@ -16,10 +16,12 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     if (nullptr == osIface) {
         return 0;
     }
-
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
-    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
+
+    pSkuTable->ftrGpGpuMidBatchPreempt = true;
+    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    pSkuTable->ftrL3IACoherency = true;
 
     if (pSysInfo->SubSliceCount > 3) {
         pSysInfo->SliceCount = 2;
@@ -31,56 +33,6 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     pSysInfo->VDBoxInfo.Instances.Bits.VDBox0Enabled = 1;
     pSysInfo->VEBoxInfo.IsValid = true;
     pSysInfo->VDBoxInfo.IsValid = true;
-    pSkuTable->ftrGpGpuMidBatchPreempt = true;
-    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;
-    pSkuTable->ftr3dMidBatchPreempt = true;
-    pSkuTable->ftr3dObjectLevelPreempt = true;
-    pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
-    pSkuTable->ftrPPGTT = true;
-    pSkuTable->ftrSVM = true;
-    pSkuTable->ftrL3IACoherency = true;
-    pSkuTable->ftrIA32eGfxPTEs = true;
-
-    pSkuTable->ftrDisplayYTiling = true;
-    pSkuTable->ftrTranslationTable = true;
-    pSkuTable->ftrUserModeTranslationTable = true;
-
-    pSkuTable->ftrEnableGuC = true;
-
-    pSkuTable->ftrFbc = true;
-    pSkuTable->ftrFbc2AddressTranslation = true;
-    pSkuTable->ftrFbcBlitterTracking = true;
-    pSkuTable->ftrFbcCpuTracking = true;
-
-    pSkuTable->ftrVcs2 = pSkuTable->ftrGT3 || pSkuTable->ftrGT4;
-    pSkuTable->ftrVEBOX = true;
-    pSkuTable->ftrSingleVeboxSlice = pSkuTable->ftrGT1 || pSkuTable->ftrGT2;
-    pSkuTable->ftrTileY = true;
-
-    pWaTable->waEnablePreemptionGranularityControlByUMD = true;
-    pWaTable->waSendMIFLUSHBeforeVFE = true;
-    pWaTable->waReportPerfCountUseGlobalContextID = true;
-    pWaTable->waDisableLSQCROPERFforOCL = true;
-    pWaTable->waMsaa8xTileYDepthPitchAlignment = true;
-    pWaTable->waLosslessCompressionSurfaceStride = true;
-    pWaTable->waFbcLinearSurfaceStride = true;
-    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = true;
-    pWaTable->waEncryptedEdramOnlyPartials = true;
-    pWaTable->waDisableEdramForDisplayRT = true;
-    pWaTable->waForcePcBbFullCfgRestore = true;
-    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
-
-    if ((1 << hwInfo->pPlatform->usRevId) & 0x0eu) {
-        pWaTable->waCompressedResourceRequiresConstVA21 = true;
-    }
-    if ((1 << hwInfo->pPlatform->usRevId) & 0x0fu) {
-        pWaTable->waDisablePerCtxtPreemptionGranularityControl = true;
-        pWaTable->waModifyVFEStateAfterGPGPUPreemption = true;
-    }
-    if ((1 << hwInfo->pPlatform->usRevId) & 0x3f) {
-        pWaTable->waCSRUncachable = true;
-    }
 
     if (hwInfo->pPlatform->usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_540 ||
         hwInfo->pPlatform->usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_550 ||

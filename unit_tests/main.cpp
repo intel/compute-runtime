@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
     bool enable_alarm = true;
-    bool setupFeatureTable = testMode == TestMode::AubTests ? true : false;
+    bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
     bool enableMemoryDumps = false;
 
     applyWorkarounds();
@@ -196,9 +196,10 @@ int main(int argc, char **argv) {
     std::string hwInfoConfig = "default";
     auto numDevices = numPlatformDevices;
     HardwareInfo device = DEFAULT_TEST_PLATFORM::hwInfo;
-    hardwareInfoSetup[device.pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(device.pSysInfo), const_cast<FeatureTable *>(device.pSkuTable), setupFeatureTable, hwInfoConfig);
+    hardwareInfoSetup[device.pPlatform->eProductFamily](&device, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
     GT_SYSTEM_INFO gtSystemInfo = *device.pSysInfo;
     FeatureTable featureTable = *device.pSkuTable;
+    WorkaroundTable workaroundTable = *device.pWaTable;
 
     size_t revisionId = device.pPlatform->usRevId;
     uint32_t euPerSubSlice = 0;
@@ -307,13 +308,15 @@ int main(int argc, char **argv) {
         return -1;
     }
     platform = *hardwareInfo->pPlatform;
-    featureTable = *hardwareInfo->pSkuTable;
-    gtSystemInfo = *hardwareInfo->pSysInfo;
 
     platform.usRevId = (uint16_t)revisionId;
-
+    HardwareInfo hwInfo = *hardwareInfo;
     // set Gt and FeatureTable to initial state
-    hardwareInfoSetup[productFamily](&gtSystemInfo, &featureTable, setupFeatureTable, hwInfoConfig);
+    hardwareInfoSetup[productFamily](&hwInfo, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
+    featureTable = *hwInfo.pSkuTable;
+    gtSystemInfo = *hwInfo.pSysInfo;
+    workaroundTable = *hwInfo.pWaTable;
+
     // and adjust dynamic values if not secified
     sliceCount = sliceCount > 0 ? sliceCount : gtSystemInfo.SliceCount;
     subSlicePerSliceCount = subSlicePerSliceCount > 0 ? subSlicePerSliceCount : (gtSystemInfo.SubSliceCount / sliceCount);
@@ -335,6 +338,7 @@ int main(int argc, char **argv) {
     device.pPlatform = &platform;
     device.pSysInfo = &gtSystemInfo;
     device.pSkuTable = &featureTable;
+    device.pWaTable = &workaroundTable;
     device.capabilityTable = hardwareInfo->capabilityTable;
 
     binaryNameSuffix.append(familyName[device.pPlatform->eRenderCoreFamily]);

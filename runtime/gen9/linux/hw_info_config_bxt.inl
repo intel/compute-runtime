@@ -19,52 +19,17 @@ int HwInfoConfigHw<IGFX_BROXTON>::configureHardwareCustom(HardwareInfo *hwInfo, 
     }
 
     Drm *drm = osIface->get()->getDrm();
-    PLATFORM *pPlatform = const_cast<PLATFORM *>(hwInfo->pPlatform);
     FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
-    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+
+    pSkuTable->ftrGpGpuMidBatchPreempt = true;
+    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    pSkuTable->ftrL3IACoherency = true;
 
     pSysInfo->SliceCount = 1;
 
     pSysInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled = 1;
     pSysInfo->VEBoxInfo.IsValid = true;
-    pSkuTable->ftrVEBOX = true;
-    pSkuTable->ftrULT = true;
-    pSkuTable->ftrGpGpuMidBatchPreempt = true;
-    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;
-    pSkuTable->ftr3dMidBatchPreempt = true;
-    pSkuTable->ftr3dObjectLevelPreempt = true;
-    pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
-    pSkuTable->ftrLCIA = true;
-    pSkuTable->ftrPPGTT = true;
-    pSkuTable->ftrL3IACoherency = true;
-    pSkuTable->ftrIA32eGfxPTEs = true;
-
-    pSkuTable->ftrDisplayYTiling = true;
-    pSkuTable->ftrTranslationTable = true;
-    pSkuTable->ftrUserModeTranslationTable = true;
-    pSkuTable->ftrEnableGuC = true;
-
-    pSkuTable->ftrFbc = true;
-    pSkuTable->ftrFbc2AddressTranslation = true;
-    pSkuTable->ftrFbcBlitterTracking = true;
-    pSkuTable->ftrFbcCpuTracking = true;
-    pSkuTable->ftrTileY = true;
-
-    if (pPlatform->usRevId >= 3) {
-        pSkuTable->ftrGttCacheInvalidation = true;
-    }
-
-    pWaTable->waLLCCachingUnsupported = true;
-    pWaTable->waMsaa8xTileYDepthPitchAlignment = true;
-    pWaTable->waFbcLinearSurfaceStride = true;
-    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = true;
-    pWaTable->waEnablePreemptionGranularityControlByUMD = true;
-    pWaTable->waSendMIFLUSHBeforeVFE = true;
-    pWaTable->waForcePcBbFullCfgRestore = true;
-    pWaTable->waReportPerfCountUseGlobalContextID = true;
-    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
     int enabled = 0;
     int retVal = drm->getEnabledPooledEu(enabled);

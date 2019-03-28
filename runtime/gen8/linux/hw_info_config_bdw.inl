@@ -15,10 +15,10 @@ int HwInfoConfigHw<IGFX_BROADWELL>::configureHardwareCustom(HardwareInfo *hwInfo
     if (nullptr == osIface) {
         return 0;
     }
-
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
-    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
+
+    pSkuTable->ftrL3IACoherency = true;
 
     // There is no interface to read total slice count from drm/i915, so we
     // derive this from the number of EUs and subslices.
@@ -28,23 +28,6 @@ int HwInfoConfigHw<IGFX_BROADWELL>::configureHardwareCustom(HardwareInfo *hwInfo
     } else {
         pSysInfo->SliceCount = 1;
     }
-
-    pSkuTable->ftrPPGTT = true;
-    pSkuTable->ftrSVM = true;
-    pSkuTable->ftrL3IACoherency = true;
-    pSkuTable->ftrIA32eGfxPTEs = true;
-
-    pSkuTable->ftrFbc = true;
-    pSkuTable->ftrFbc2AddressTranslation = true;
-    pSkuTable->ftrFbcBlitterTracking = true;
-    pSkuTable->ftrFbcCpuTracking = true;
-    pSkuTable->ftrTileY = true;
-
-    pWaTable->waDisableLSQCROPERFforOCL = true;
-    pWaTable->waReportPerfCountUseGlobalContextID = true;
-    pWaTable->waUseVAlign16OnTileXYBpp816 = true;
-    pWaTable->waModifyVFEStateAfterGPGPUPreemption = true;
-    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
     if (hwInfo->pPlatform->usDeviceID == IBDW_GT3_HALO_MOBL_DEVICE_F0_ID ||
         hwInfo->pPlatform->usDeviceID == IBDW_GT3_SERV_DEVICE_F0_ID) {

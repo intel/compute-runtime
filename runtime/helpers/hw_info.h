@@ -76,9 +76,6 @@ struct HardwareInfo {
     RuntimeCapabilityTable capabilityTable = {};
 };
 
-extern const WorkaroundTable emptyWaTable;
-extern const FeatureTable emptySkuTable;
-
 template <PRODUCT_FAMILY product>
 struct HwMapper {};
 
@@ -90,7 +87,7 @@ extern bool familyEnabled[IGFX_MAX_CORE];
 extern const char *familyName[IGFX_MAX_CORE];
 extern const char *hardwarePrefix[];
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
-extern void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(GT_SYSTEM_INFO *gtSystemInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig);
+extern void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig);
 
 template <GFXCORE_FAMILY gfxFamily>
 struct EnableGfxFamilyHw {

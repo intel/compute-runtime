@@ -18,12 +18,9 @@ HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *skuTabl
 }
 
 const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT] = {};
-void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = {
+void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, const std::string &) = {
     nullptr,
 };
-
-const FeatureTable emptySkuTable = {};
-const WorkaroundTable emptyWaTable = {};
 
 const char *getPlatformType(const HardwareInfo &hwInfo) {
     if (hwInfo.capabilityTable.isCore) {

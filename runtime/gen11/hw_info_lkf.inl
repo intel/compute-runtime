@@ -67,15 +67,47 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     false                                          // supportCacheFlushAfterWalker
 };
 
+WorkaroundTable LKF::workaroundTable = {};
+FeatureTable LKF::featureTable = {};
+
+void LKF::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
+    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+
+    pSkuTable->ftrPPGTT = true;
+    pSkuTable->ftrSVM = true;
+    pSkuTable->ftrIA32eGfxPTEs = true;
+    pSkuTable->ftrStandardMipTailFormat = true;
+
+    pSkuTable->ftrDisplayYTiling = true;
+    pSkuTable->ftrTranslationTable = true;
+    pSkuTable->ftrUserModeTranslationTable = true;
+    pSkuTable->ftrTileMappedResource = true;
+    pSkuTable->ftrEnableGuC = true;
+
+    pSkuTable->ftrFbc = true;
+    pSkuTable->ftrFbc2AddressTranslation = true;
+    pSkuTable->ftrFbcBlitterTracking = true;
+    pSkuTable->ftrFbcCpuTracking = true;
+    pSkuTable->ftrTileY = true;
+
+    pSkuTable->ftrAstcHdr2D = true;
+    pSkuTable->ftrAstcLdr2D = true;
+
+    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = true;
+    pWaTable->waReportPerfCountUseGlobalContextID = true;
+};
+
 const HardwareInfo LKF_1x8x8::hwInfo = {
     &LKF::platform,
-    &emptySkuTable,
-    &emptyWaTable,
+    &LKF::featureTable,
+    &LKF::workaroundTable,
     &LKF_1x8x8::gtSystemInfo,
     LKF::capabilityTable,
 };
 GT_SYSTEM_INFO LKF_1x8x8::gtSystemInfo = {0};
-void LKF_1x8x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
+void LKF_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
     gtSysInfo->EUCount = 64;
     gtSysInfo->ThreadCount = 64 * LKF::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -94,20 +126,23 @@ void LKF_1x8x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featu
     gtSysInfo->MaxSubSlicesSupported = LKF::maxSubslicesSupported;
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
+    if (setupFeatureTableAndWorkaroundTable) {
+        setupFeatureAndWorkaroundTable(hwInfo);
+    }
 };
 
 const HardwareInfo LKF::hwInfo = LKF_1x8x8::hwInfo;
 
-void setupLKFHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig) {
+void setupLKFHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig) {
     if (hwInfoConfig == "1x8x8") {
-        LKF_1x8x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+        LKF_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else if (hwInfoConfig == "default") {
         // Default config
-        LKF_1x8x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+        LKF_1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     } else {
         UNRECOVERABLE_IF(true);
     }
-} // namespace NEO
+}
 
-void (*LKF::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupLKFHardwareInfoImpl;
+void (*LKF::setupHardwareInfo)(HardwareInfo *, bool, const std::string &) = setupLKFHardwareInfoImpl;
 } // namespace NEO

@@ -155,8 +155,7 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     }
     if (device) {
         platformDevices[0] = device->pHwInfo;
-        device->setupHardwareInfo(const_cast<GT_SYSTEM_INFO *>(platformDevices[0]->pSysInfo),
-                                  const_cast<FeatureTable *>(platformDevices[0]->pSkuTable), true);
+        device->setupHardwareInfo(const_cast<HardwareInfo *>(platformDevices[0]), true);
         drmObject->setGtType(eGtType);
     } else {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr,

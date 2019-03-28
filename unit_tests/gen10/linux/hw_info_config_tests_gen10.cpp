@@ -45,29 +45,9 @@ CNLTEST_F(HwInfoConfigTestLinuxCnl, configureHwInfo) {
     //constant sysInfo/ftr flags
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuMidBatchPreempt);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuThreadGroupLevelPreempt);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGpGpuMidThreadLevelPreempt);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftr3dMidBatchPreempt);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftr3dObjectLevelPreempt);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftr3dMidBatchPreempt);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuThreadGroupLevelPreempt);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrPerCtxtPreemptionGranularityControl);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrPPGTT);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrSVM);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrL3IACoherency);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrIA32eGfxPTEs);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrStandardMipTailFormat);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrDisplayYTiling);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrTranslationTable);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrUserModeTranslationTable);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrTileMappedResource);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrEnableGuC);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrFbc);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrFbc2AddressTranslation);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrFbcBlitterTracking);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrFbcCpuTracking);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrAstcHdr2D);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrAstcLdr2D);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrTileY);
 
     ReleaseOutHwInfoStructs();
 
@@ -153,18 +133,13 @@ CNLTEST_F(HwInfoConfigTestLinuxCnl, configureHwInfoWaFlags) {
     drm->StoredDeviceRevID = 0;
     int ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(1u, outHwInfo.pWaTable->waFbcLinearSurfaceStride);
-    EXPECT_EQ(1u, outHwInfo.pWaTable->waEncryptedEdramOnlyPartials);
-    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
 
     ReleaseOutHwInfoStructs();
 
     drm->StoredDeviceRevID = 1;
     ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(1u, outHwInfo.pWaTable->waFbcLinearSurfaceStride);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waEncryptedEdramOnlyPartials);
-    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
 
     ReleaseOutHwInfoStructs();
 
@@ -173,7 +148,6 @@ CNLTEST_F(HwInfoConfigTestLinuxCnl, configureHwInfoWaFlags) {
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waFbcLinearSurfaceStride);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waEncryptedEdramOnlyPartials);
-    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
 }
 
 CNLTEST_F(HwInfoConfigTestLinuxCnl, configureHwInfoIsL3HashModeEnabled) {
@@ -199,8 +173,15 @@ TYPED_TEST_CASE(CnlHwInfoTests, cnlTestTypes);
 TYPED_TEST(CnlHwInfoTests, gtSetupIsCorrect) {
     GT_SYSTEM_INFO gtSystemInfo;
     FeatureTable featureTable;
+    WorkaroundTable pWaTable;
+    PLATFORM pPlatform;
+    HardwareInfo hwInfo;
+    hwInfo.pSysInfo = &gtSystemInfo;
+    hwInfo.pSkuTable = &featureTable;
+    hwInfo.pWaTable = &pWaTable;
+    hwInfo.pPlatform = &pPlatform;
     memset(&gtSystemInfo, 0, sizeof(gtSystemInfo));
-    TypeParam::setupHardwareInfo(&gtSystemInfo, &featureTable, false);
+    TypeParam::setupHardwareInfo(&hwInfo, false);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
     EXPECT_GT(gtSystemInfo.ThreadCount, 0u);
     EXPECT_GT(gtSystemInfo.SliceCount, 0u);

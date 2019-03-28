@@ -68,16 +68,19 @@ struct CNLFamily : public GEN10 {
 struct CNL : public CNLFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
+    static FeatureTable featureTable;
+    static WorkaroundTable workaroundTable;
     static const uint32_t threadsPerEu = 7;
     static const uint32_t maxEuPerSubslice = 8;
     static const uint32_t maxSlicesSupported = 4;
     static const uint32_t maxSubslicesSupported = 9;
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig);
+    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const std::string &hwInfoConfig);
+    static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
 };
 class CNL_2x5x8 : public CNL {
   public:
-    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -85,7 +88,7 @@ class CNL_2x5x8 : public CNL {
 };
 class CNL_2x4x8 : public CNL {
   public:
-    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -93,7 +96,7 @@ class CNL_2x4x8 : public CNL {
 };
 class CNL_1x3x8 : public CNL {
   public:
-    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -101,7 +104,7 @@ class CNL_1x3x8 : public CNL {
 };
 class CNL_1x2x8 : public CNL {
   public:
-    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -109,7 +112,7 @@ class CNL_1x2x8 : public CNL {
 };
 class CNL_4x9x8 : public CNL {
   public:
-    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;
 
   private:
