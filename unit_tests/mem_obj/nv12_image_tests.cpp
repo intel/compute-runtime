@@ -11,6 +11,7 @@
 #include "runtime/mem_obj/image.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -418,6 +419,23 @@ HWTEST_F(Nv12ImageTest, setImageArg) {
     EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA_ONE, surfaceState.getShaderChannelSelectAlpha());
 
     delete image;
+}
+
+HWTEST_F(Nv12ImageTest, givenNv12ImageArrayAndImageArraySizeIsZeroWhenCallingSetImageArgThenProgramSurfaceArray) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    RENDER_SURFACE_STATE surfaceState;
+
+    cl_image_desc imageDesc = Image2dDefaults::imageDesc;
+    imageDesc.image_array_size = 1;
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    cl_image_format imageFormat = Image2dDefaults::imageFormat;
+    imageFormat.image_channel_order = CL_NV12_INTEL;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    std::unique_ptr<Image> image{Image2dHelper<>::create(&context, &imageDesc, &imageFormat)};
+    image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
+
+    image->setImageArg(&surfaceState, false, 0);
+    EXPECT_TRUE(surfaceState.getSurfaceArray());
 }
 
 HWTEST_F(Nv12ImageTest, setImageArgUVPlaneImageSetsOffsetedSurfaceBaseAddressAndSetsCorrectTileMode) {
