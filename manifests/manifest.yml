@@ -35,7 +35,7 @@ components:
     clean_on_sync: true
     dest_dir: libva
     repository: https://github.com/intel/libva.git
-    revision: c9bb65b
+    revision: 25b3307
     type: git
   wdk:
     branch: wdk
