@@ -53,7 +53,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
     if (DebugManager.flags.EnableTimestampPacket.get() != -1) {
         timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
     }
-    createScratchSpaceController(peekHwInfo());
+    createScratchSpaceController();
 }
 
 template <typename GfxFamily>
@@ -761,8 +761,8 @@ void CommandStreamReceiverHw<GfxFamily>::addClearSLMWorkAround(typename GfxFamil
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceController(const HardwareInfo &hwInfoIn) {
-    scratchSpaceController = std::make_unique<ScratchSpaceControllerBase>(hwInfoIn, executionEnvironment, *internalAllocationStorage.get());
+void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceController() {
+    scratchSpaceController = std::make_unique<ScratchSpaceControllerBase>(executionEnvironment, *internalAllocationStorage.get());
 }
 
 template <typename GfxFamily>

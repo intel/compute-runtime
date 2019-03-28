@@ -87,7 +87,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getSshHeapSize();
 
     uint64_t getScratchPatchAddress();
-    void createScratchSpaceController(const HardwareInfo &hwInfoIn);
+    void createScratchSpaceController();
 
     static void emitNoop(LinearStream &commandStream, size_t bytesToUpdate);
 

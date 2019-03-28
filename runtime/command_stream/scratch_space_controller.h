@@ -22,7 +22,7 @@ struct HardwareInfo;
 
 class ScratchSpaceController {
   public:
-    ScratchSpaceController(const HardwareInfo &info, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage);
+    ScratchSpaceController(ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage);
     virtual ~ScratchSpaceController();
 
     GraphicsAllocation *getScratchSpaceAllocation() {
@@ -42,7 +42,6 @@ class ScratchSpaceController {
   protected:
     MemoryManager *getMemoryManager() const;
 
-    const HardwareInfo &hwInfo;
     ExecutionEnvironment &executionEnvironment;
     GraphicsAllocation *scratchAllocation = nullptr;
     InternalAllocationStorage &csrAllocationStorage;

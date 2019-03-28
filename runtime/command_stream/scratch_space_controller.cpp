@@ -14,10 +14,11 @@
 #include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
-ScratchSpaceController::ScratchSpaceController(const HardwareInfo &info, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)
-    : hwInfo(info), executionEnvironment(environment), csrAllocationStorage(allocationStorage) {
-    auto &hwHelper = HwHelper::get(info.pPlatform->eRenderCoreFamily);
-    computeUnitsUsedForScratch = hwHelper.getComputeUnitsUsedForScratch(&hwInfo);
+ScratchSpaceController::ScratchSpaceController(ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)
+    : executionEnvironment(environment), csrAllocationStorage(allocationStorage) {
+    auto hwInfo = executionEnvironment.getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily);
+    computeUnitsUsedForScratch = hwHelper.getComputeUnitsUsedForScratch(hwInfo);
 }
 
 ScratchSpaceController::~ScratchSpaceController() {
