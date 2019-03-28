@@ -189,6 +189,10 @@ struct PipeControlHelper {
                                                                       uint64_t gpuAddress,
                                                                       uint64_t immediateData,
                                                                       bool dcFlush);
+    static void addPipeControlWA(LinearStream &commandStream);
+    static PIPE_CONTROL *addPipeControlBase(LinearStream &commandStream, bool dcFlush);
+    static void addPipeControl(LinearStream &commandStream, bool dcFlush);
+    static int getRequiredPipeControlSize();
 };
 
 union SURFACE_STATE_BUFFER_LENGTH {

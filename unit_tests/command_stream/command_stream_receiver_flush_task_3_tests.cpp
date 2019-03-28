@@ -1462,7 +1462,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsTrueWhenCall
     std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
     LinearStream commandStream(buffer.get(), 128);
 
-    pDevice->getCommandStreamReceiver().addPipeControl(commandStream, true);
+    PipeControlHelper<FamilyType>::addPipeControl(commandStream, true);
     auto pipeControlOffset = KernelCommandsHelper<FamilyType>::isPipeControlWArequired() ? sizeof(PIPE_CONTROL) : 0u;
     auto pipeControlAddress = buffer.get() + pipeControlOffset;
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(pipeControlAddress);
@@ -1476,7 +1476,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsFalseWhenCal
     std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
     LinearStream commandStream(buffer.get(), 128);
 
-    pDevice->getCommandStreamReceiver().addPipeControl(commandStream, false);
+    PipeControlHelper<FamilyType>::addPipeControl(commandStream, false);
     auto pipeControlOffset = KernelCommandsHelper<FamilyType>::isPipeControlWArequired() ? sizeof(PIPE_CONTROL) : 0u;
     auto pipeControlAddress = buffer.get() + pipeControlOffset;
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(pipeControlAddress);

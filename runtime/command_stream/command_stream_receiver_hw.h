@@ -38,10 +38,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     void flushBatchedSubmissions() override;
 
-    PIPE_CONTROL *addPipeControlBase(LinearStream &commandStream, bool dcFlush);
-    void addPipeControl(LinearStream &commandStream, bool dcFlush) override;
-    int getRequiredPipeControlSize() const;
-
     static void addBatchBufferEnd(LinearStream &commandStream, void **patchLocation);
     void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress, bool secondary);
     static void alignToCacheLine(LinearStream &commandStream);
@@ -86,7 +82,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags);
     virtual void initPageTableManagerRegisters(LinearStream &csr){};
 
-    void addPipeControlWA(LinearStream &commandStream);
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);
     size_t getSshHeapSize();

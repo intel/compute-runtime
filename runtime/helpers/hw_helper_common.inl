@@ -12,6 +12,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/kernel_commands.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_interface.h"
@@ -207,6 +208,43 @@ typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndPr
         pipeControl->setImmediateData(immediateData);
     }
     return pipeControl;
+}
+
+template <typename GfxFamily>
+typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::addPipeControlBase(LinearStream &commandStream, bool dcFlush) {
+    PipeControlHelper<GfxFamily>::addPipeControlWA(commandStream);
+
+    auto pCmd = reinterpret_cast<PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
+    *pCmd = GfxFamily::cmdInitPipeControl;
+    pCmd->setCommandStreamerStallEnable(true);
+    pCmd->setDcFlushEnable(dcFlush);
+
+    if (DebugManager.flags.FlushAllCaches.get()) {
+        pCmd->setDcFlushEnable(true);
+        pCmd->setRenderTargetCacheFlushEnable(true);
+        pCmd->setInstructionCacheInvalidateEnable(true);
+        pCmd->setTextureCacheInvalidationEnable(true);
+        pCmd->setPipeControlFlushEnable(true);
+        pCmd->setVfCacheInvalidationEnable(true);
+        pCmd->setConstantCacheInvalidationEnable(true);
+        pCmd->setStateCacheInvalidationEnable(true);
+    }
+    return pCmd;
+}
+
+template <typename GfxFamily>
+void PipeControlHelper<GfxFamily>::addPipeControlWA(LinearStream &commandStream) {
+}
+
+template <typename GfxFamily>
+void PipeControlHelper<GfxFamily>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
+    PipeControlHelper<GfxFamily>::addPipeControlBase(commandStream, dcFlush);
+}
+
+template <typename GfxFamily>
+int PipeControlHelper<GfxFamily>::getRequiredPipeControlSize() {
+    const auto pipeControlCount = KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2u : 1u;
+    return pipeControlCount * sizeof(typename GfxFamily::PIPE_CONTROL);
 }
 
 } // namespace NEO

@@ -240,9 +240,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
     }
 
-    void addPipeControl(LinearStream &commandStream, bool dcFlush) override {
-    }
-
     void setOSInterface(OSInterface *osInterface);
 
     CommandStreamReceiverType getType() override {

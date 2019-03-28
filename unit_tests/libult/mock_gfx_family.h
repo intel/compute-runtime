@@ -170,6 +170,14 @@ struct GENX {
         }
         inline void setGenericMediaStateClear(const bool value) {
         }
+        inline void setRenderTargetCacheFlushEnable(const bool value) {
+        }
+        inline void setInstructionCacheInvalidateEnable(const bool value) {
+        }
+        inline void setVfCacheInvalidationEnable(const bool value) {
+        }
+        inline void setConstantCacheInvalidationEnable(const bool value) {
+        }
     } PIPE_CONTROL;
 
     typedef struct tagMI_LOAD_REGISTER_IMM {

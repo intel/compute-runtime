@@ -189,7 +189,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
 
         //Some architectures (SKL) requires to have pipe control prior to pipe control with tag write, add it here
-        addPipeControlWA(commandStreamTask);
+        PipeControlHelper<GfxFamily>::addPipeControlWA(commandStreamTask);
 
         auto address = getTagAllocation()->getGpuAddress();
         auto pCmd = PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&commandStreamTask, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, taskCount + 1, dispatchFlags.dcFlush);
@@ -362,7 +362,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     // Add a PC if we have a dependency on a previous walker to avoid concurrency issues.
     if (taskLevel > this->taskLevel) {
         if (!timestampPacketWriteEnabled) {
-            addPipeControl(commandStreamCSR, false);
+            PipeControlHelper<GfxFamily>::addPipeControl(commandStreamCSR, false);
         }
         this->taskLevel = taskLevel;
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", this->taskCount);
@@ -507,7 +507,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
-        auto pipeControlLocationSize = getRequiredPipeControlSize();
+        auto pipeControlLocationSize = PipeControlHelper<GfxFamily>::getRequiredPipeControlSize();
         void *currentPipeControlForNooping = nullptr;
         void *epiloguePipeControlLocation = nullptr;
 
@@ -584,33 +584,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 }
 
 template <typename GfxFamily>
-typename GfxFamily::PIPE_CONTROL *CommandStreamReceiverHw<GfxFamily>::addPipeControlBase(LinearStream &commandStream, bool dcFlush) {
-    addPipeControlWA(commandStream);
-
-    auto pCmd = reinterpret_cast<PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
-    *pCmd = GfxFamily::cmdInitPipeControl;
-    pCmd->setCommandStreamerStallEnable(true);
-    pCmd->setDcFlushEnable(dcFlush);
-
-    if (DebugManager.flags.FlushAllCaches.get()) {
-        pCmd->setDcFlushEnable(true);
-        pCmd->setRenderTargetCacheFlushEnable(true);
-        pCmd->setInstructionCacheInvalidateEnable(true);
-        pCmd->setTextureCacheInvalidationEnable(true);
-        pCmd->setPipeControlFlushEnable(true);
-        pCmd->setVfCacheInvalidationEnable(true);
-        pCmd->setConstantCacheInvalidationEnable(true);
-        pCmd->setStateCacheInvalidationEnable(true);
-    }
-    return pCmd;
-}
-
-template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
-    CommandStreamReceiverHw<GfxFamily>::addPipeControlBase(commandStream, dcFlush);
-}
-
-template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSizeAligned(const DispatchFlags &dispatchFlags, Device &device) {
     size_t size = getRequiredCmdStreamSize(dispatchFlags, device);
     return alignUp(size, MemoryConstants::cacheLineSize);
@@ -628,7 +601,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (!this->isStateSipSent || device.isSourceLevelDebuggerActive()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device);
     }
-    size += getRequiredPipeControlSize();
+    size += PipeControlHelper<GfxFamily>::getRequiredPipeControlSize();
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
     size += getCmdSizeForL3Config();
@@ -802,13 +775,4 @@ bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(cons
     return DebugManager.flags.ForceCsrReprogramming.get();
 }
 
-template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::addPipeControlWA(LinearStream &commandStream) {
-}
-
-template <typename GfxFamily>
-int CommandStreamReceiverHw<GfxFamily>::getRequiredPipeControlSize() const {
-    const auto pipeControlCount = KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2u : 1u;
-    return pipeControlCount * sizeof(typename GfxFamily::PIPE_CONTROL);
-}
 } // namespace NEO

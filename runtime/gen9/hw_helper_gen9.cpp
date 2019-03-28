@@ -28,6 +28,13 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
     return SipKernelType::DbgCsrLocal;
 }
 
+template <>
+void PipeControlHelper<Family>::addPipeControlWA(LinearStream &commandStream) {
+    auto pCmd = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(Family::PIPE_CONTROL)));
+    *pCmd = Family::cmdInitPipeControl;
+    pCmd->setCommandStreamerStallEnable(true);
+}
+
 template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;

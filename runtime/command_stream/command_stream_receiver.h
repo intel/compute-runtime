@@ -80,8 +80,6 @@ class CommandStreamReceiver {
     void makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation);
     virtual void waitBeforeMakingNonResidentWhenRequired() {}
 
-    virtual void addPipeControl(LinearStream &commandStream, bool dcFlush) = 0;
-
     void ensureCommandBufferAllocation(LinearStream &commandStream, size_t minimumRequiredSize, size_t additionalAllocationSize);
 
     MemoryManager *getMemoryManager() const;

@@ -28,6 +28,12 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
     caps->isStatelesToStatefullWithOffsetSupported = false;
 }
 
+template <>
+void PipeControlHelper<Family>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
+    auto pCmd = PipeControlHelper<Family>::addPipeControlBase(commandStream, dcFlush);
+    pCmd->setDcFlushEnable(true);
+}
+
 template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;

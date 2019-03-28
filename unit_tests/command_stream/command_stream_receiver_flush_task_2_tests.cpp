@@ -742,12 +742,10 @@ HWTEST_F(UltCommandStreamReceiverTest, addPipeControlWithFlushAllCaches) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.FlushAllCaches.set(true);
 
-    auto &csr = pDevice->getCommandStreamReceiver();
-
     char buff[sizeof(PIPE_CONTROL) * 3];
     LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
 
-    csr.addPipeControl(stream, false);
+    PipeControlHelper<FamilyType>::addPipeControl(stream, false);
 
     parseCommands<FamilyType>(stream, 0);
 

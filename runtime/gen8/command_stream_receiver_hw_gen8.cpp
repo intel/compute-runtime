@@ -25,12 +25,6 @@ void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, D
 }
 
 template <>
-void CommandStreamReceiverHw<Family>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
-    auto pCmd = CommandStreamReceiverHw<Family>::addPipeControlBase(commandStream, dcFlush);
-    pCmd->setDcFlushEnable(true);
-}
-
-template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
