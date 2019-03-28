@@ -160,7 +160,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     static bool isCpuAccessRequired(AllocationType allocationType) {
         return allocationType == AllocationType::LINEAR_STREAM ||
-               allocationType == AllocationType::KERNEL_ISA ||
                allocationType == AllocationType::INTERNAL_HEAP ||
                allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER ||
                allocationType == AllocationType::COMMAND_BUFFER;

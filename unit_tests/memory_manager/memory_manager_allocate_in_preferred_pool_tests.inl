@@ -430,7 +430,6 @@ TEST(MemoryManagerTest, givenKernelIsaTypeWhenGetAllocationDataIsCalledThenSyste
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::KERNEL_ISA}, {}, nullptr);
     EXPECT_FALSE(allocData.flags.useSystemMemory);
-    EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 
 TEST(MemoryManagerTest, givenLinearStreamWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
