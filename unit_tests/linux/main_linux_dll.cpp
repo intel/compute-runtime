@@ -218,7 +218,7 @@ TEST_F(DrmTests, failOnParamBoost) {
     EXPECT_NE(drm, nullptr);
 }
 
-#ifdef SUPPORT_BDW
+#ifdef TESTS_BDW
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenBdwDeviceIsCreatedThenSimplifiedMocsSelectionIsFalse) {
     VariableBackup<decltype(deviceId)> backupDeviceId(&deviceId);
     VariableBackup<decltype(failOnParamBoost)> backupFailOnParamBoost(&failOnParamBoost);
@@ -231,7 +231,7 @@ TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenBdwDeviceIsCreatedThenSim
 }
 #endif
 
-#ifdef SUPPORT_SKL
+#ifdef TESTS_SKL
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenSklDeviceIsCreatedThenSimplifiedMocsSelectionIsTrue) {
     VariableBackup<decltype(deviceId)> backupDeviceId(&deviceId);
     VariableBackup<decltype(failOnParamBoost)> backupFailOnParamBoost(&failOnParamBoost);
@@ -243,7 +243,7 @@ TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenSklDeviceIsCreatedThenSim
     EXPECT_TRUE(drm->getSimplifiedMocsTableUsage());
 }
 #endif
-#ifdef SUPPORT_KBL
+#ifdef TESTS_KBL
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenKblDeviceIsCreatedThenSimplifiedMocsSelectionIsTrue) {
     VariableBackup<decltype(deviceId)> backupDeviceId(&deviceId);
     VariableBackup<decltype(failOnParamBoost)> backupFailOnParamBoost(&failOnParamBoost);
@@ -255,7 +255,7 @@ TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenKblDeviceIsCreatedThenSim
     EXPECT_TRUE(drm->getSimplifiedMocsTableUsage());
 }
 #endif
-#ifdef SUPPORT_BXT
+#ifdef TESTS_BXT
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenBxtDeviceIsCreatedThenSimplifiedMocsSelectionIsTrue) {
     VariableBackup<decltype(deviceId)> backupDeviceId(&deviceId);
     VariableBackup<decltype(failOnParamBoost)> backupFailOnParamBoost(&failOnParamBoost);
@@ -267,7 +267,7 @@ TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenBxtDeviceIsCreatedThenSim
     EXPECT_TRUE(drm->getSimplifiedMocsTableUsage());
 }
 #endif
-#ifdef SUPPORT_GLK
+#ifdef TESTS_GLK
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenGlkDeviceIsCreatedThenSimplifiedMocsSelectionIsTrue) {
     VariableBackup<decltype(deviceId)> backupDeviceId(&deviceId);
     VariableBackup<decltype(failOnParamBoost)> backupFailOnParamBoost(&failOnParamBoost);
@@ -279,7 +279,7 @@ TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenGlkDeviceIsCreatedThenSim
     EXPECT_TRUE(drm->getSimplifiedMocsTableUsage());
 }
 #endif
-#ifdef SUPPORT_CFL
+#ifdef TESTS_CFL
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenCflDeviceIsCreatedThenSimplifiedMocsSelectionIsTrue) {
     VariableBackup<decltype(deviceId)> backupDeviceId(&deviceId);
     VariableBackup<decltype(failOnParamBoost)> backupFailOnParamBoost(&failOnParamBoost);
