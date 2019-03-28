@@ -7,8 +7,10 @@
 
 #include "runtime/os_interface/linux/drm_null_device.h"
 #include "test.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/linux/mock_os_layer.h"
 
-#include "mock_os_layer.h"
+#include <memory>
 
 using namespace NEO;
 
@@ -26,12 +28,6 @@ class DrmWrap : public Drm {
 class DrmNullDeviceTestsFixture {
   public:
     void SetUp() {
-        oldFlag = DebugManager.flags.EnableNullHardware.get();
-
-        // Make global staff into init state
-        DrmWrap::closeDevice(0);
-        resetOSMockGlobalState();
-
         // Create nullDevice drm
         DebugManager.flags.EnableNullHardware.set(true);
         DrmWrap::createDrm(0);
@@ -44,13 +40,12 @@ class DrmNullDeviceTestsFixture {
     void TearDown() {
         // Close drm
         DrmWrap::closeDevice(0);
-        DebugManager.flags.EnableNullHardware.set(oldFlag);
     }
 
     Drm *drmNullDevice;
 
   protected:
-    bool oldFlag;
+    DebugManagerStateRestore dbgRestorer;
 };
 
 typedef Test<DrmNullDeviceTestsFixture> DrmNullDeviceTests;

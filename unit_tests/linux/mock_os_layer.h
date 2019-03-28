@@ -44,16 +44,3 @@ extern int ioctlSeq[8];
 extern size_t ioctlCnt;
 
 extern std::array<NEO::Drm *, 1> drms;
-
-inline void resetOSMockGlobalState() {
-    fakeFd = 1023;
-    haveDri = 0;
-    deviceId = NEO::deviceDescriptorTable[0].deviceId;
-    haveSoftPin = 1;
-    failOnDeviceId = 0;
-    failOnRevisionId = 0;
-    failOnSoftPin = 0;
-    failOnParamBoost = 0;
-    std::memset(ioctlSeq, 0, sizeof(ioctlSeq));
-    ioctlCnt = 0;
-}
