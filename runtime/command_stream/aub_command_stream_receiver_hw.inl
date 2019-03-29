@@ -327,6 +327,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     if (subCaptureManager->isSubCaptureMode()) {
+        pollForCompletion();
         subCaptureManager->disableSubCapture();
     }
 
@@ -546,6 +547,12 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionImpl() {
     this->pollForCompletionTaskCount = this->latestSentTaskCount;
+
+    if (subCaptureManager->isSubCaptureMode()) {
+        if (!subCaptureManager->isSubCaptureEnabled()) {
+            return;
+        }
+    }
 
     if (hardwareContextController) {
         hardwareContextController->pollForCompletion();
