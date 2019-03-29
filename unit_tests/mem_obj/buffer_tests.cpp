@@ -511,7 +511,7 @@ TEST_F(RenderCompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHost
             EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
         } else {
             EXPECT_TRUE(buffer->isMemObjZeroCopy());
-            EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+            EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
         }
     }
 }

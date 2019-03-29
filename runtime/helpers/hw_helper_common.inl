@@ -97,6 +97,10 @@ bool HwHelperHw<Family>::timestampPacketWriteSupported() const {
     return false;
 }
 
+template <typename GfxFamily>
+inline void HwHelperHw<GfxFamily>::checkResourceCompatibility(Buffer *buffer, cl_int &errorCode) {
+}
+
 template <typename Family>
 void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(ExecutionEnvironment &executionEnvironment,
                                                         void *surfaceStateBuffer,
