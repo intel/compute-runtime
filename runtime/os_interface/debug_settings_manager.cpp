@@ -314,8 +314,6 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "INDIRECT_OBJECT_HEAP";
     case GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP:
         return "SURFACE_STATE_HEAP";
-    case GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP:
-        return "DYNAMIC_STATE_HEAP";
     case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
         return "SHARED_RESOURCE_COPY";
     case GraphicsAllocation::AllocationType::SVM:

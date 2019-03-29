@@ -45,7 +45,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         BUFFER_HOST_MEMORY,
         COMMAND_BUFFER,
         CONSTANT_SURFACE,
-        DYNAMIC_STATE_HEAP,
         EXTERNAL_HOST_PTR,
         FILL_PATTERN,
         GLOBAL_SURFACE,
