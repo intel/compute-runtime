@@ -59,7 +59,7 @@ struct DebugVar##variableName                                                   
      void set(dataType data) {                                                    \
          value = data;                                                            \
      }                                                                            \
-     dataType& getRef() {                                                \
+     dataType &getRef() {                                                         \
          return value;                                                            \
      }                                                                            \
   private:                                                                        \
@@ -262,9 +262,17 @@ class DebugSettingsManager {
             print(ss, params...);
         }
     }
+
+    template <typename DataType>
+    static void dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValue);
+    void dumpFlags() const;
+    static const char *settingsDumpFileName;
 };
 
 extern DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager;
+
+template <DebugFunctionalityLevel DebugLevel>
+const char *DebugSettingsManager<DebugLevel>::settingsDumpFileName = "igdrcl_dumped.config";
 
 template <bool Enabled>
 class DebugSettingsApiEnterWrapper {
@@ -284,8 +292,6 @@ class DebugSettingsApiEnterWrapper {
     const int *errorCode;
 };
 }; // namespace NEO
-
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)
 
 #define DBG_LOG_LAZY_EVALUATE_ARGS(DBG_MANAGER, PREDICATE, LOG_FUNCTION, ...) \
     DBG_MANAGER.logLazyEvaluateArgs(DBG_MANAGER.flags.PREDICATE.get(), [&] { DBG_MANAGER.LOG_FUNCTION(__VA_ARGS__); })

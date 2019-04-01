@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/utilities/debug_file_reader.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -862,6 +863,27 @@ TEST(DebugSettingsManager, givenReaderImplInDebugManagerWhenSettingDifferentRead
     auto readerImpl2 = SettingsReader::create();
     debugManager.setReaderImpl(readerImpl2);
     EXPECT_EQ(readerImpl2, debugManager.getReaderImpl());
+}
+
+TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
+    FullyEnabledTestDebugManager debugManager;
+    debugManager.flags.PrintDebugSettings.set(true);
+    debugManager.flags.LoopAtPlatformInitialize.set(true);
+    debugManager.flags.Enable64kbpages.set(1);
+    debugManager.flags.TbxServer.set("192.168.0.1");
+
+    // Clear dump files and generate new
+    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    debugManager.dumpFlags();
+
+    // Validate allSettingsDumpFile
+    SettingsFileReader allSettingsReader{FullyEnabledTestDebugManager::settingsDumpFileName};
+#define DECLARE_DEBUG_VARIABLE(dataType, varName, defaultValue, description) \
+    EXPECT_EQ(debugManager.flags.varName.get(), allSettingsReader.getSetting(#varName, defaultValue));
+
+#include "debug_variables.inl"
+#undef DECLARE_DEBUG_VARIABLE
+    std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
 }
 
 struct AllocationTypeTestCase {

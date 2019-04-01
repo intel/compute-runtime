@@ -60,6 +60,9 @@ class TestDebugFlagsChecker {
 template <DebugFunctionalityLevel DebugLevel>
 class TestDebugSettingsManager : public DebugSettingsManager<DebugLevel> {
   public:
+    using DebugSettingsManager<DebugLevel>::dumpFlags;
+    using DebugSettingsManager<DebugLevel>::settingsDumpFileName;
+
     ~TestDebugSettingsManager() {
         remove(DebugSettingsManager<DebugLevel>::logFileName.c_str());
     }
