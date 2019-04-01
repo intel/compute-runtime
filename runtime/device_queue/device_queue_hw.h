@@ -59,7 +59,7 @@ class DeviceQueueHw : public DeviceQueue {
 
     void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint32_t taskCount) override;
     void resetDeviceQueue() override;
-    void dispatchScheduler(CommandQueue &cmdQ, LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) override;
+    void dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) override;
 
     uint32_t getSchedulerReturnInstance() {
         return igilQueue->m_controls.m_SchedulerEarlyReturn;

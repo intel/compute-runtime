@@ -59,7 +59,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
-            *pCmdQ,
             pCmdQ->getCS(0),
             *pDevQueueHw,
             pDevice->getPreemptionMode(),
@@ -178,7 +177,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoe
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
-            *pCmdQ,
             pCmdQ->getCS(0),
             *pDevQueueHw,
             pDevice->getPreemptionMode(),
@@ -212,7 +210,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWi
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
-            *pCmdQ,
             pCmdQ->getCS(0),
             mockDevQueue,
             device->getPreemptionMode(),

@@ -307,7 +307,7 @@ TEST_F(DeviceQueueTest, dispatchScheduler) {
     MockSchedulerKernel *kernel = new MockSchedulerKernel(&program, info, *device);
     LinearStream cmdStream;
 
-    devQueue.dispatchScheduler(cmdQ, cmdStream, *kernel, device->getPreemptionMode(), nullptr, nullptr);
+    devQueue.dispatchScheduler(cmdStream, *kernel, device->getPreemptionMode(), nullptr, nullptr);
     delete kernel;
 }
 

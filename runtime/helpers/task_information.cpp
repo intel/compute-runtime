@@ -182,7 +182,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                           devQueue->getDebugQueue());
 
         devQueue->dispatchScheduler(
-            commandQueue,
             *kernelOperation->commandStream,
             scheduler,
             preemptionMode,

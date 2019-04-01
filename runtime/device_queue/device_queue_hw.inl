@@ -368,9 +368,8 @@ size_t DeviceQueueHw<GfxFamily>::setSchedulerCrossThreadData(SchedulerKernel &sc
 }
 
 template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::dispatchScheduler(CommandQueue &cmdQ, LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) {
-    GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(cmdQ,
-                                                    commandStream,
+void DeviceQueueHw<GfxFamily>::dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) {
+    GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(commandStream,
                                                     *this,
                                                     preemptionMode,
                                                     scheduler,

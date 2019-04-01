@@ -52,7 +52,6 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
 
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
-    CommandQueue &commandQueue,
     LinearStream &commandStream,
     DeviceQueueHw<GfxFamily> &devQueueHw,
     PreemptionMode preemptionMode,

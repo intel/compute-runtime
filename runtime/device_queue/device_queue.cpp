@@ -161,7 +161,7 @@ void DeviceQueue::resetDeviceQueue() {
     return;
 }
 
-void DeviceQueue::dispatchScheduler(CommandQueue &cmdQ, LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) {
+void DeviceQueue::dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) {
     return;
 }
 

@@ -80,7 +80,7 @@ class DeviceQueue : public BaseObject<_device_queue> {
     }
 
     virtual void resetDeviceQueue();
-    virtual void dispatchScheduler(CommandQueue &cmdQ, LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh);
+    virtual void dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh);
     virtual IndirectHeap *getIndirectHeap(IndirectHeap::Type type);
 
     void acquireEMCriticalSection() {

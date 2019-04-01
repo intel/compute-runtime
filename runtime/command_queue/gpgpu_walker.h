@@ -195,7 +195,6 @@ class GpgpuWalkerHelper {
         TimestampPacket::WriteOperationType writeOperationType);
 
     static void dispatchScheduler(
-        CommandQueue &commandQueue,
         LinearStream &commandStream,
         DeviceQueueHw<GfxFamily> &devQueueHw,
         PreemptionMode preemptionMode,

@@ -37,7 +37,6 @@ BDWTEST_F(BdwSchedulerTest, givenCallToDispatchSchedulerWhenPipeControlWithCSSta
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
-            *pCmdQ,
             commandStream,
             *pDevQueueHw,
             pDevice->getPreemptionMode(),
