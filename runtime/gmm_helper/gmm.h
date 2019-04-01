@@ -35,7 +35,6 @@ class Gmm {
     uint32_t getRenderHAlignment();
     uint32_t getRenderVAlignment();
 
-    void applyAuxFlagsForImage(ImageInfo &imgInfo);
     void applyAuxFlagsForBuffer(bool preferRenderCompression);
     void applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo);
 
@@ -54,5 +53,9 @@ class Gmm {
 
     bool isRenderCompressed = false;
     bool useSystemMemoryPool = true;
+
+  protected:
+    void applyAuxFlagsForImage(ImageInfo &imgInfo);
+    void setupImageResourceParams(ImageInfo &imgInfo);
 };
 } // namespace NEO

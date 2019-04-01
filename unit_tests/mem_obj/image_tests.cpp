@@ -1450,6 +1450,10 @@ HWTEST_F(HwImageTest, givenImageHwWithUnifiedSurfaceAndMcsWhenSettingParamsForMu
     context.setMemoryManager(&memoryManager);
 
     cl_image_desc imgDesc = {};
+    imgDesc.image_height = 1;
+    imgDesc.image_width = 4;
+    imgDesc.image_depth = 1;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imgDesc.num_samples = 8;
     cl_image_format format = {};
 
