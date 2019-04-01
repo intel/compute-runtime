@@ -80,6 +80,9 @@ struct AllocationProperties {
     AllocationProperties(ImageInfo *imgInfo, bool allocateMemory) : AllocationProperties(allocateMemory, 0, GraphicsAllocation::AllocationType::IMAGE) {
         this->imgInfo = imgInfo;
     }
+    AllocationProperties(ImageInfo *imgInfo, bool allocateMemory, GraphicsAllocation::AllocationType allocationType) : AllocationProperties(allocateMemory, 0, allocationType) {
+        this->imgInfo = imgInfo;
+    }
 };
 
 struct AlignedMallocRestrictions {
@@ -116,7 +119,7 @@ class MemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties,
                                                               StorageInfo storageInfo, const void *hostPtr);
 
-    virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) = 0;
+    virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) = 0;
 
     virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) = 0;
 

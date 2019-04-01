@@ -45,7 +45,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     }
 
     ~OsAgnosticMemoryManager() override;
-    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override;
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override { return nullptr; }
 
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;

@@ -468,7 +468,7 @@ BufferObject *DrmMemoryManager::createSharedBufferObject(int boHandle, size_t si
     return bo;
 }
 
-GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) {
+GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) {
     std::unique_lock<std::mutex> lock(mtx);
 
     drm_prime_handle openFd = {0, 0, 0};

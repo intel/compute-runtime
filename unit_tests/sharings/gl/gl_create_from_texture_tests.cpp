@@ -27,8 +27,8 @@ class CreateFromGlTexture : public ::testing::Test {
         TempMM() : OsAgnosticMemoryManager(*(new MockExecutionEnvironment(*platformDevices))) {
             mockExecutionEnvironment.reset(&executionEnvironment);
         }
-        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness);
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness);
             if (handle == CreateFromGlTexture::mcsHandle) {
                 alloc->setDefaultGmm(forceMcsGmm);
             } else {

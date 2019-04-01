@@ -49,7 +49,8 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
 
     auto createFunction = [&]() {
         size_t indexFree = index++;
-        createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false);
+        AllocationProperties properties(false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER);
+        createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false);
         EXPECT_NE(nullptr, createdAllocations[indexFree]);
     };
 
@@ -113,7 +114,8 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
 
     auto createFunction = [&]() {
         size_t indexFree = index++;
-        createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false);
+        AllocationProperties properties(false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER);
+        createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false);
         EXPECT_NE(nullptr, createdAllocations[indexFree]);
 
         this_thread::yield();

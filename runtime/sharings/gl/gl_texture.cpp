@@ -45,7 +45,9 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     errorCode.set(CL_SUCCESS);
 
-    auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandle, false);
+    AllocationProperties allocProperties(nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+    auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandle, allocProperties, false);
+
     if (alloc == nullptr) {
         errorCode.set(CL_INVALID_GL_OBJECT);
         return nullptr;
@@ -112,7 +114,8 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     GraphicsAllocation *mcsAlloc = nullptr;
     if (texInfo.globalShareHandleMCS) {
-        mcsAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandleMCS, false);
+        AllocationProperties allocProperties(0, GraphicsAllocation::AllocationType::UNDECIDED);
+        mcsAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandleMCS, allocProperties, false);
         if (texInfo.pGmmResInfoMCS) {
             DEBUG_BREAK_IF(mcsAlloc->getDefaultGmm() != nullptr);
             mcsAlloc->setDefaultGmm(new Gmm(texInfo.pGmmResInfoMCS));
@@ -138,7 +141,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     }
     return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, alloc, mcsAlloc, flags, imgInfo, cubeFaceIndex,
                                     std::max(miplevel, 0), imgDesc.num_mip_levels);
-}
+} // namespace NEO
 
 void GlTexture::synchronizeObject(UpdateData &updateData) {
     CL_GL_RESOURCE_INFO resourceInfo = {0};

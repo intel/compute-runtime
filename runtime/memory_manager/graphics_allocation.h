@@ -59,6 +59,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         PRIVATE_SURFACE,
         PROFILING_TAG_BUFFER,
         SCRATCH_SURFACE,
+        SHARED_IMAGE,
+        SHARED_BUFFER,
         SHARED_RESOURCE_COPY,
         SURFACE_STATE_HEAP,
         SVM,

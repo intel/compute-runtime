@@ -59,14 +59,15 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     class MockMM : public OsAgnosticMemoryManager {
       public:
         using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
-        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness);
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) override {
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness);
             alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;
         }
         GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override {
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)handle), false);
+            AllocationProperties properties(0, GraphicsAllocation::AllocationType::UNDECIDED);
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)handle), properties, false);
             alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;

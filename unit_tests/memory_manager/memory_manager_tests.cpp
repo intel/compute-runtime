@@ -784,7 +784,8 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
     osHandle handle = 1;
     auto size = 4096u;
-    auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, false);
+    AllocationProperties properties(false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER);
+    auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, false);
     EXPECT_NE(nullptr, sharedAllocation);
     EXPECT_FALSE(sharedAllocation->isCoherent());
     EXPECT_NE(nullptr, sharedAllocation->getUnderlyingBuffer());

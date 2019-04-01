@@ -250,7 +250,7 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
     return allocation.release();
 }
 
-GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) {
+GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) {
     return createAllocationFromHandle(handle, requireSpecificBitness, false);
 }
 
