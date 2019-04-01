@@ -5,12 +5,12 @@
  *
  */
 
-#include "unit_tests/tests_configuration.h"
+#include "test_mode.h"
 
 namespace NEO {
 // max time per single test iteration
 unsigned int ultIterationMaxTime = 180;
 bool useMockGmm = false;
 const char *executionDirectorySuffix = "_aub";
-TestMode testMode = TestMode::AubTests;
+TestMode testMode = defaultTestMode;
 } // namespace NEO

@@ -11,6 +11,7 @@
 
 #include "gtest/gtest.h"
 #include "igfxfmid.h"
+#include "test_mode.h"
 
 #include <cstdint>
 #include <memory>
@@ -40,10 +41,63 @@ extern GFXCORE_FAMILY renderCoreFamily;
 #define CNL_TYPED_TEST_BODY
 #define CNL_TYPED_CMDTEST_BODY
 #endif
+#define TO_STR2(x) #x
+#define TO_STR(x) TO_STR2(x)
+
+#define TEST_MAX_LENGTH 140
+#define CHECK_TEST_NAME_LENGTH_WITH_MAX(test_fixture, test_name, max_length) \
+    static_assert((NEO::defaultTestMode != NEO::TestMode::AubTests && NEO::defaultTestMode != NEO::TestMode::AubTestsWithTbx) || (sizeof(#test_fixture) + sizeof(#test_name) <= max_length), "Test and fixture names length exceeds max allowed size: " TO_STR(max_length));
+#define CHECK_TEST_NAME_LENGTH(test_fixture, test_name) \
+    CHECK_TEST_NAME_LENGTH_WITH_MAX(test_fixture, test_name, TEST_MAX_LENGTH)
+
+#ifdef TEST_F
+#undef TEST_F
+#endif
+
+// Taken from gtest.h
+#define TEST_F(test_fixture, test_name)                \
+    CHECK_TEST_NAME_LENGTH(test_fixture, test_name)    \
+    GTEST_TEST_(test_fixture, test_name, test_fixture, \
+                ::testing::internal::GetTypeId<test_fixture>())
+
+#ifdef TEST_P
+#undef TEST_P
+#endif
+
+// Taken from gtest.h
+#define TEST_P(test_case_name, test_name)                                                                               \
+    CHECK_TEST_NAME_LENGTH(test_fixture, test_name)                                                                     \
+    class GTEST_TEST_CLASS_NAME_(test_case_name, test_name)                                                             \
+        : public test_case_name {                                                                                       \
+      public:                                                                                                           \
+        GTEST_TEST_CLASS_NAME_(test_case_name, test_name)                                                               \
+        () {}                                                                                                           \
+        virtual void TestBody();                                                                                        \
+                                                                                                                        \
+      private:                                                                                                          \
+        static int AddToRegistry() {                                                                                    \
+            ::testing::UnitTest::GetInstance()->parameterized_test_registry().GetTestCasePatternHolder<test_case_name>( \
+                                                                                 #test_case_name, __FILE__, __LINE__)   \
+                ->AddTestPattern(                                                                                       \
+                    #test_case_name,                                                                                    \
+                    #test_name,                                                                                         \
+                    new ::testing::internal::TestMetaFactory<                                                           \
+                        GTEST_TEST_CLASS_NAME_(test_case_name, test_name)>());                                          \
+            return 0;                                                                                                   \
+        }                                                                                                               \
+        static int gtest_registering_dummy_;                                                                            \
+        GTEST_DISALLOW_COPY_AND_ASSIGN_(                                                                                \
+            GTEST_TEST_CLASS_NAME_(test_case_name, test_name));                                                         \
+    };                                                                                                                  \
+    int GTEST_TEST_CLASS_NAME_(test_case_name,                                                                          \
+                               test_name)::gtest_registering_dummy_ =                                                   \
+        GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::AddToRegistry();                                             \
+    void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::TestBody()
 
 // Macros to provide template based testing.
 // Test can use FamilyType in the test -- equivalent to SKLFamily
 #define HWTEST_TEST_(test_case_name, test_name, parent_class, parent_id)                       \
+    CHECK_TEST_NAME_LENGTH(test_case_name, test_name)                                          \
     class PLATFORM_EXCLUDES_CLASS_NAME(test_case_name, test_name) {                            \
       public:                                                                                  \
         static std::unique_ptr<std::unordered_set<uint32_t>> &getExcludes() {                  \
@@ -131,6 +185,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
 // Macros to provide template based testing.
 // Test can use FamilyType in the test -- equivalent to SKLFamily
 #define HWCMDTEST_TEST_(cmdset_gen_base, test_case_name, test_name, parent_class, parent_id)              \
+    CHECK_TEST_NAME_LENGTH(test_case_name, test_name)                                                     \
     class PLATFORM_EXCLUDES_CLASS_NAME(test_case_name, test_name) {                                       \
       public:                                                                                             \
         static std::unique_ptr<std::unordered_set<uint32_t>> &getExcludes() {                             \
@@ -219,6 +274,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
     void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::testBodyHw()
 
 #define HWCMDTEST_EXCLUDE_FAMILY(test_case_name, test_name, family)                      \
+    CHECK_TEST_NAME_LENGTH(test_case_name, test_name)                                    \
     class PLATFORM_EXCLUDES_CLASS_NAME(test_case_name, test_name) {                      \
       public:                                                                            \
         static std::unique_ptr<std::unordered_set<uint32_t>> &getExcludes() {            \
@@ -253,6 +309,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
     }
 
 #define FAMILYTEST_TEST_(test_case_name, test_name, parent_class, parent_id, match_core, match_product) \
+    CHECK_TEST_NAME_LENGTH(test_case_name, test_name)                                                   \
     class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public parent_class {                     \
       public:                                                                                           \
         GTEST_TEST_CLASS_NAME_(test_case_name, test_name)                                               \
@@ -291,6 +348,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
 // Equivalent Hw specific macro for permuted tests
 // Test can use FamilyType in the test -- equivalent to SKLFamily
 #define HWTEST_P(test_case_name, test_name)                                                                             \
+    CHECK_TEST_NAME_LENGTH(test_case_name, test_name)                                                                   \
     class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public test_case_name {                                   \
       public:                                                                                                           \
         GTEST_TEST_CLASS_NAME_(test_case_name, test_name)                                                               \
@@ -337,6 +395,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
     void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::testBodyHw()
 
 #define HWCMDTEST_P(cmdset_gen_base, test_case_name, test_name)                                                         \
+    CHECK_TEST_NAME_LENGTH(test_case_name, test_name)                                                                   \
     class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public test_case_name {                                   \
       public:                                                                                                           \
         GTEST_TEST_CLASS_NAME_(test_case_name, test_name)                                                               \
@@ -393,6 +452,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
     void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::testBodyHw()
 
 #define FAMILYTEST_TEST_P(test_case_name, test_name, match_core, match_product)                                         \
+    CHECK_TEST_NAME_LENGTH(test_case_name, test_name)                                                                   \
     class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public test_case_name {                                   \
       public:                                                                                                           \
         GTEST_TEST_CLASS_NAME_(test_case_name, test_name)                                                               \
@@ -533,6 +593,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
                       IGFX_CANNONLAKE)
 #endif
 #define HWTEST_TYPED_TEST(CaseName, TestName)                                              \
+    CHECK_TEST_NAME_LENGTH(CaseName, TestName)                                             \
     template <typename gtest_TypeParam_>                                                   \
     class GTEST_TEST_CLASS_NAME_(CaseName, TestName) : public CaseName<gtest_TypeParam_> { \
       private:                                                                             \

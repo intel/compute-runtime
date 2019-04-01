@@ -5,8 +5,8 @@
  *
  */
 
-#include "unit_tests/tests_configuration.h"
+#include "test_mode.h"
 
 namespace NEO {
-TestMode testMode = TestMode::NotSpecified;
+TestMode testMode = defaultTestMode;
 } // namespace NEO

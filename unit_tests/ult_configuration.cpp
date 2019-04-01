@@ -5,11 +5,11 @@
  *
  */
 
-#include "unit_tests/tests_configuration.h"
+#include "test_mode.h"
 
 namespace NEO {
 unsigned int ultIterationMaxTime = 45;
 bool useMockGmm = true;
 const char *executionDirectorySuffix = "";
-TestMode testMode = TestMode::UnitTests;
+TestMode testMode = defaultTestMode;
 } // namespace NEO

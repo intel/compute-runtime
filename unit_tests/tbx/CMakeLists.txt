@@ -21,6 +21,7 @@ if(WIN32)
   target_include_directories(igdrcl_tbx_tests PRIVATE
     ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
   )
+  target_include_directories(igdrcl_tbx_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_sources(igdrcl_tbx_tests PRIVATE
     ${IGDRCL_SOURCE_DIR}/runtime/dll/windows/options.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/create_wddm_memory_manager.cpp
@@ -28,6 +29,7 @@ if(WIN32)
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_calls.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
   )
 else()
   target_sources(igdrcl_tbx_tests PRIVATE

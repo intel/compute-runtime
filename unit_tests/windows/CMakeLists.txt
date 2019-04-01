@@ -23,12 +23,14 @@ add_executable(igdrcl_windows_dll_tests
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_devices_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_create_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
 )
 
 target_link_libraries(igdrcl_windows_dll_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks gmock-gtest ${IGDRCL_EXTRA_LIBS})
 
 target_include_directories(igdrcl_windows_dll_tests PRIVATE
   ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX}
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 create_project_source_tree(igdrcl_windows_dll_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)

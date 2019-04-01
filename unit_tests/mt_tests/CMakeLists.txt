@@ -11,11 +11,14 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/os_interface.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/ult_configuration.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/aub/aub_stream_interface.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
   $<TARGET_OBJECTS:igdrcl_libult>
   $<TARGET_OBJECTS:igdrcl_libult_cs>
   $<TARGET_OBJECTS:igdrcl_libult_env>
   $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
 )
+
+target_include_directories(igdrcl_mt_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectories()
 
