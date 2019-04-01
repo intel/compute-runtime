@@ -47,7 +47,7 @@ struct TransferProperties {
     TransferProperties() = delete;
 
     TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking, size_t *offsetPtr, size_t *sizePtr,
-                       void *ptr);
+                       void *ptr, bool doTransferOnCpu);
 
     MemObj *memObj = nullptr;
     cl_command_type cmdType = 0;

@@ -14,7 +14,7 @@
 
 namespace NEO {
 TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking,
-                                       size_t *offsetPtr, size_t *sizePtr, void *ptr)
+                                       size_t *offsetPtr, size_t *sizePtr, void *ptr, bool doTransferOnCpu)
     : memObj(memObj), cmdType(cmdType), mapFlags(mapFlags), blocking(blocking), ptr(ptr) {
 
     // no size or offset passed for unmap operation
@@ -22,7 +22,9 @@ TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, 
         if (memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
             size[0] = *sizePtr;
             offset[0] = *offsetPtr;
-            if ((false == MemoryPool::isSystemMemoryPool(memObj->getGraphicsAllocation()->getMemoryPool())) && (memObj->getMemoryManager() != nullptr)) {
+            if (doTransferOnCpu &&
+                (false == MemoryPool::isSystemMemoryPool(memObj->getGraphicsAllocation()->getMemoryPool())) &&
+                (memObj->getMemoryManager() != nullptr)) {
                 this->lockedPtr = memObj->getMemoryManager()->lockResource(memObj->getGraphicsAllocation());
             }
         } else {
