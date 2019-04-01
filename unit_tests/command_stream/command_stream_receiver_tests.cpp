@@ -325,6 +325,12 @@ HWTEST_F(CommandStreamReceiverTest, givenTimestampPacketAllocatorWhenAskingForTa
     EXPECT_NE(node1, node2);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenAddAubCommentIsCalledThenCallAddAubCommentOnCsr) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.addAubComment("message");
+    EXPECT_TRUE(csr.addAubCommentCalled);
+}
+
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllocationIsCalledThenCorrectAllocationIsReturned) {
     ExecutionEnvironment executionEnvironment;
     MockCommandStreamReceiver csr(executionEnvironment);

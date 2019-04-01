@@ -57,6 +57,11 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
         addressSpaceCapturedFromExpectMemory = addressSpace;
         compareOperationFromExpectMemory = compareOperation;
     }
+    bool addComment(const char *message) override {
+        receivedComment.assign(message);
+        addCommentCalled = true;
+        return true;
+    }
     void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) override {
         registerPollCalled = true;
         AUBCommandStreamReceiver::AubFileStream::registerPoll(registerOffset, mask, value, pollNotEqual, timeoutAction);
@@ -68,6 +73,8 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     mutable bool isOpenCalled = false;
     mutable bool getFileNameCalled = false;
     bool registerPollCalled = false;
+    bool addCommentCalled = false;
+    std::string receivedComment = "";
     bool flushCalled = false;
     bool lockStreamCalled = false;
     uint32_t mmioRegisterFromExpectMMIO = 0;

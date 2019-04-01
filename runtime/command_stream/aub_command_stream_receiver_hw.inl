@@ -16,6 +16,7 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/helpers/hash.h"
+#include "runtime/helpers/neo_driver_version.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
@@ -115,6 +116,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName
         if (!aubManager->isOpen()) {
             aubManager->open(fileName);
             UNRECOVERABLE_IF(!aubManager->isOpen());
+
+            std::ostringstream str;
+            str << "driver version: " << driverVersion;
+            aubManager->addComment(str.str().c_str());
         }
         return;
     }
@@ -167,11 +172,6 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
 
     // Write driver version
     {
-#define QTR(a) #a
-#define TOSTR(b) QTR(b)
-        const std::string driverVersion = TOSTR(NEO_DRIVER_VERSION);
-#undef QTR
-#undef TOSTR
         std::ostringstream str;
         str << "driver version: " << driverVersion;
         getAubStream()->addComment(str.str().c_str());
@@ -771,6 +771,15 @@ void AUBCommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(const MultiDis
             this->initProgrammingFlags();
         }
     }
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::addAubComment(const char *message) {
+    if (aubManager) {
+        aubManager->addComment(message);
+        return;
+    }
+    getAubStream()->addComment(message);
 }
 
 template <typename GfxFamily>

@@ -245,6 +245,8 @@ ResidencyContainer &CommandStreamReceiver::getEvictionAllocations() {
 
 void CommandStreamReceiver::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {}
 
+void CommandStreamReceiver::addAubComment(const char *comment) {}
+
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
     debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::UNDECIDED});

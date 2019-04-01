@@ -74,6 +74,11 @@ class MockAubManager : public aub_stream::AubManager {
         return fileName;
     }
 
+    void addComment(const char *message) override {
+        receivedComment.assign(message);
+        addCommentCalled = true;
+    }
+
     void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize = 65536) override {
         writeMemoryCalled = true;
     }
@@ -83,6 +88,8 @@ class MockAubManager : public aub_stream::AubManager {
     bool closeCalled = false;
     bool isOpenCalled = false;
     bool getFileNameCalled = false;
+    bool addCommentCalled = false;
+    std::string receivedComment = "";
     bool writeMemoryCalled = false;
     uint32_t contextFlags = 0;
 

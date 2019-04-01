@@ -123,6 +123,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         CommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(dispatchInfo);
         activateAubSubCaptureCalled = true;
     }
+    void addAubComment(const char *message) override {
+        CommandStreamReceiverHw<GfxFamily>::addAubComment(message);
+        addAubCommentCalled = true;
+    }
     void flushBatchedSubmissions() override {
         CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions();
         flushBatchedSubmissionsCalled = true;
@@ -140,6 +144,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::atomic<uint32_t> recursiveLockCounter;
     bool createPageTableManagerCalled = false;
     bool activateAubSubCaptureCalled = false;
+    bool addAubCommentCalled = false;
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;
     LinearStream *lastFlushedCommandStream = nullptr;

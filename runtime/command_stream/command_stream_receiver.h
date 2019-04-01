@@ -136,6 +136,7 @@ class CommandStreamReceiver {
 
     MOCKABLE_VIRTUAL void initProgrammingFlags();
     virtual void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo);
+    virtual void addAubComment(const char *comment);
 
     IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize);
     void allocateHeapMemory(IndirectHeap::Type heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap);
