@@ -8,6 +8,7 @@
 #include "api.h"
 
 #include "runtime/accelerators/intel_motion_estimation.h"
+#include "runtime/aub/aub_center.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -3273,6 +3274,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *func_name) {
     RETURN_FUNC_PTR_IF_EXIST(clRetainAcceleratorINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clReleaseAcceleratorINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clCreateBufferWithPropertiesINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clAddCommentINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueVerifyMemory);
 
     void *ret = sharingFactory.getExtensionFunctionAddress(func_name);
@@ -4225,5 +4227,22 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemory(cl_command_queue commandQu
 
     auto &csr = pCommandQueue->getCommandStreamReceiver();
     retVal = csr.expectMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode);
+    return retVal;
+}
+
+cl_int CL_API_CALL clAddCommentINTEL(const char *comment) {
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    auto aubCenter = executionEnvironment->aubCenter.get();
+
+    if (!comment || !aubCenter || !aubCenter->getAubManager()) {
+        retVal = CL_INVALID_VALUE;
+    }
+
+    if (retVal == CL_SUCCESS) {
+        aubCenter->getAubManager()->addComment(comment);
+    }
     return retVal;
 }

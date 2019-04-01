@@ -848,6 +848,8 @@ cl_int CL_API_CALL clEnqueueVerifyMemory(
     size_t sizeOfComparison,
     cl_uint comparisonMode);
 
+cl_int CL_API_CALL clAddCommentINTEL(const char *comment);
+
 // OpenCL 2.1
 
 cl_int CL_API_CALL clGetDeviceAndHostTimer(cl_device_id device,

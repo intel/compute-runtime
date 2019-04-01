@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "unit_tests/api/cl_add_comment_to_aub_tests.inl"
 #include "unit_tests/api/cl_build_program_tests.inl"
 #include "unit_tests/api/cl_clone_kernel_tests.inl"
 #include "unit_tests/api/cl_compile_program_tests.inl"

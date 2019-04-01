@@ -47,13 +47,20 @@ TEST_F(clGetExtensionFunctionAddressTests, GivenClCreatePerfCountersCommandQueue
     auto retVal = clGetExtensionFunctionAddress("clCreatePerfCountersCommandQueueINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clCreatePerfCountersCommandQueueINTEL));
 }
+
 TEST_F(clGetExtensionFunctionAddressTests, GivenClSetPerformanceConfigurationINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clSetPerformanceConfigurationINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clSetPerformanceConfigurationINTEL));
 }
+
 TEST_F(clGetExtensionFunctionAddressTests, GivenClCreateBufferWithPropertiesINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto functionPointer = clGetExtensionFunctionAddress("clCreateBufferWithPropertiesINTEL");
     EXPECT_EQ(functionPointer, reinterpret_cast<void *>(clCreateBufferWithPropertiesINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressTests, givenClAddCommentToAubIntelAsInputWhenFunctionIsCalledThenProperPointerIsReturned) {
+    auto functionPointer = clGetExtensionFunctionAddress("clAddCommentINTEL");
+    EXPECT_EQ(functionPointer, reinterpret_cast<void *>(clAddCommentINTEL));
 }
 
 } // namespace ULT
