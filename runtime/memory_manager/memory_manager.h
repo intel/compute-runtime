@@ -47,6 +47,7 @@ enum AllocationUsage {
 };
 
 struct AllocationProperties {
+    constexpr static uint32_t noDeviceSpecified = std::numeric_limits<uint32_t>::max();
     union {
         struct {
             uint32_t allocateMemory : 1;
@@ -64,13 +65,18 @@ struct AllocationProperties {
     size_t alignment = 0;
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
     ImageInfo *imgInfo = nullptr;
+    uint32_t deviceIndex = AllocationProperties::noDeviceSpecified;
 
     AllocationProperties(size_t size, GraphicsAllocation::AllocationType allocationType)
         : AllocationProperties(true, size, allocationType) {}
+
+    AllocationProperties(size_t size, GraphicsAllocation::AllocationType allocationType, uint32_t deviceIndex)
+        : AllocationProperties(true, size, allocationType, false, deviceIndex) {}
     AllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(allocateMemory, size, allocationType, false) {}
-    AllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType, bool multiOsContextCapable)
-        : size(size), allocationType(allocationType) {
+        : AllocationProperties(allocateMemory, size, allocationType, false, AllocationProperties::noDeviceSpecified) {}
+    AllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType,
+                         bool multiOsContextCapable, uint32_t deviceIndex)
+        : size(size), allocationType(allocationType), deviceIndex(deviceIndex) {
         allFlags = 0;
         flags.flushL3RequiredForRead = 1;
         flags.flushL3RequiredForWrite = 1;
