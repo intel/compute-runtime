@@ -9,7 +9,6 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
-#include "runtime/os_interface/linux/drm_limited_range.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 
 #include "drm_gem_close_worker.h"
@@ -18,6 +17,7 @@
 #include <sys/mman.h>
 
 namespace NEO {
+
 class BufferObject;
 class Drm;
 
@@ -56,6 +56,7 @@ class DrmMemoryManager : public MemoryManager {
     DrmGemCloseWorker *peekGemCloseWorker() const { return this->gemCloseWorker.get(); }
     void *reserveCpuAddressRange(size_t size) override;
     void releaseReservedCpuAddressRange(void *reserved, size_t size) override;
+    bool isLimitedRange() { return gfxPartition.isLimitedRange(); }
 
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
@@ -66,7 +67,6 @@ class DrmMemoryManager : public MemoryManager {
     bool setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable);
     uint64_t acquireGpuRange(size_t &size, StorageAllocatorType &allocType, bool requireSpecificBitness);
     void releaseGpuRange(void *address, size_t unmapSize, StorageAllocatorType allocatorType);
-    void initInternalRangeAllocator(size_t range);
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
 
     DrmAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
@@ -93,7 +93,5 @@ class DrmMemoryManager : public MemoryManager {
     decltype(&close) closeFunction = close;
     std::vector<BufferObject *> sharingBufferObjects;
     std::mutex mtx;
-    std::unique_ptr<Allocator32bit> internal32bitAllocator;
-    std::unique_ptr<AllocatorLimitedRange> limitedGpuAddressRangeAllocator;
 };
 } // namespace NEO

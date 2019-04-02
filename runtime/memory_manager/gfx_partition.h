@@ -58,6 +58,8 @@ class GfxPartition {
         return getHeapBase(heapIndex) + heapGranularity;
     }
 
+    bool isLimitedRange() { return getHeap(HeapIndex::HEAP_SVM).getSize() == 0ull; }
+
     static const uint64_t heapGranularity = MemoryConstants::pageSize64k;
 
     static const std::array<HeapIndex, 4> heap32Names;
