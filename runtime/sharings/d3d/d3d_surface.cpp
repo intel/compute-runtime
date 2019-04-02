@@ -79,7 +79,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
     GraphicsAllocation *alloc = nullptr;
     if (surfaceInfo->shared_handle) {
         isSharedResource = true;
-        AllocationProperties allocProperties(&imgInfo, false, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+        AllocationProperties allocProperties(nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE);
         alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)surfaceInfo->shared_handle), allocProperties,
                                                                                       false);
         updateImgInfo(alloc->getDefaultGmm(), imgInfo, imgDesc, oclPlane, 0u);

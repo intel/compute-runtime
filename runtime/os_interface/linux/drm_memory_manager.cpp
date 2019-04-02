@@ -21,6 +21,7 @@
 #include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/os_interface/linux/os_interface.h"
+#include "runtime/os_interface/linux/tiling_mode_helper.h"
 
 #include "drm/i915_drm.h"
 
@@ -500,7 +501,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
     lock.unlock();
 
-    auto drmAllocation = new DrmAllocation(GraphicsAllocation::AllocationType::UNDECIDED, bo, reinterpret_cast<void *>(bo->gpuAddress), bo->size,
+    auto drmAllocation = new DrmAllocation(properties.allocationType, bo, reinterpret_cast<void *>(bo->gpuAddress), bo->size,
                                            handle, MemoryPool::SystemCpuInaccessible, false);
 
     if (requireSpecificBitness && this->force32bitAllocations) {
@@ -508,6 +509,19 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         drmAllocation->setGpuBaseAddress(allocator32Bit->getBase());
     } else if (this->limitedGpuAddressRangeAllocator.get()) {
         drmAllocation->setGpuBaseAddress(this->limitedGpuAddressRangeAllocator->getBase());
+    }
+
+    if (properties.imgInfo) {
+        drm_i915_gem_get_tiling getTiling = {0};
+        getTiling.handle = boHandle;
+        ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_GET_TILING, &getTiling);
+
+        DEBUG_BREAK_IF(ret != 0);
+        ((void)(ret));
+
+        properties.imgInfo->tilingMode = TilingModeHelper::convert(getTiling.tiling_mode);
+        Gmm *gmm = new Gmm(*properties.imgInfo);
+        drmAllocation->setDefaultGmm(gmm);
     }
     return drmAllocation;
 }

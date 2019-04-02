@@ -78,6 +78,7 @@ class DrmMockCustom : public Drm {
             gemUserptr = 0;
             gemCreate = 0;
             gemSetTiling = 0;
+            gemGetTiling = 0;
             primeFdToHandle = 0;
             gemMmap = 0;
             gemSetDomain = 0;
@@ -94,6 +95,7 @@ class DrmMockCustom : public Drm {
         std::atomic<int32_t> gemUserptr;
         std::atomic<int32_t> gemCreate;
         std::atomic<int32_t> gemSetTiling;
+        std::atomic<int32_t> gemGetTiling;
         std::atomic<int32_t> primeFdToHandle;
         std::atomic<int32_t> gemMmap;
         std::atomic<int32_t> gemSetDomain;
@@ -122,6 +124,7 @@ class DrmMockCustom : public Drm {
         NEO_IOCTL_EXPECT_EQ(gemUserptr);
         NEO_IOCTL_EXPECT_EQ(gemCreate);
         NEO_IOCTL_EXPECT_EQ(gemSetTiling);
+        NEO_IOCTL_EXPECT_EQ(gemGetTiling);
         NEO_IOCTL_EXPECT_EQ(primeFdToHandle);
         NEO_IOCTL_EXPECT_EQ(gemMmap);
         NEO_IOCTL_EXPECT_EQ(gemSetDomain);
@@ -144,6 +147,9 @@ class DrmMockCustom : public Drm {
     __u32 setTilingMode = 0;
     __u32 setTilingHandle = 0;
     __u32 setTilingStride = 0;
+    //DRM_IOCTL_I915_GEM_GET_TILING
+    __u32 getTilingModeOut = I915_TILING_NONE;
+    __u32 getTilingHandleIn = 0;
     //DRM_IOCTL_PRIME_FD_TO_HANDLE
     __u32 outputHandle = 0;
     __s32 inputFd = 0;
@@ -196,6 +202,12 @@ class DrmMockCustom : public Drm {
             setTilingHandle = setTilingParams->handle;
             setTilingStride = setTilingParams->stride;
             ioctl_cnt.gemSetTiling++;
+        } break;
+        case DRM_IOCTL_I915_GEM_GET_TILING: {
+            auto *getTilingParams = (drm_i915_gem_get_tiling *)arg;
+            getTilingParams->tiling_mode = getTilingModeOut;
+            getTilingHandleIn = getTilingParams->handle;
+            ioctl_cnt.gemGetTiling++;
         } break;
         case DRM_IOCTL_PRIME_FD_TO_HANDLE: {
             auto *primeToHandleParams = (drm_prime_handle *)arg;

@@ -123,6 +123,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedH
                                                    4096u, static_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible, false);
     graphicsAllocation->setSharedHandle(handle);
     graphicsAllocation->set32BitAllocation(requireSpecificBitness);
+
+    if (properties.imgInfo) {
+        Gmm *gmm = new Gmm(*properties.imgInfo);
+        graphicsAllocation->setDefaultGmm(gmm);
+    }
+
     return graphicsAllocation;
 }
 
