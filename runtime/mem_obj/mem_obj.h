@@ -63,7 +63,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     bool addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel);
     bool findMappedPtr(void *mappedPtr, MapInfo &outMapInfo) { return mapOperationsHandler.find(mappedPtr, outMapInfo); }
-    void removeMappedPtr(void *mappedPtr) { return mapOperationsHandler.remove(mappedPtr); }
+    void removeMappedPtr(void *mappedPtr) { mapOperationsHandler.remove(mappedPtr); }
     void *getBasePtrForMap();
 
     MOCKABLE_VIRTUAL void setAllocatedMapPtr(void *allocatedMapPtr);
