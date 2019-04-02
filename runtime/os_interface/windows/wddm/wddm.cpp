@@ -769,7 +769,7 @@ void Wddm::initGfxPartition(GfxPartition &outGfxPartition) const {
     outGfxPartition.heapInit(HeapIndex::HEAP_STANDARD64KB, gfxPartition.Standard64KB.Base, gfxPartition.Standard64KB.Limit - gfxPartition.Standard64KB.Base + 1);
 
     for (auto heap : GfxPartition::heap32Names) {
-        outGfxPartition.heapInit(heap, gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + MemoryConstants::pageSize,
+        outGfxPartition.heapInit(heap, gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base,
                                  gfxPartition.Heap32[static_cast<uint32_t>(heap)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(heap)].Base + 1);
     }
 }
@@ -789,14 +789,6 @@ NTSTATUS Wddm::escape(D3DKMT_ESCAPE &escapeCommand) {
 
 PFND3DKMT_ESCAPE Wddm::getEscapeHandle() const {
     return gdi->escape;
-}
-
-uint64_t Wddm::getExternalHeapBase() const {
-    return alignUp(gfxPartition.Heap32[static_cast<uint32_t>(HeapIndex::HEAP_EXTERNAL)].Base, MemoryConstants::pageSize);
-}
-
-uint64_t Wddm::getExternalHeapSize() const {
-    return alignDown(gfxPartition.Heap32[static_cast<uint32_t>(HeapIndex::HEAP_EXTERNAL)].Limit - gfxPartition.Heap32[static_cast<uint32_t>(HeapIndex::HEAP_EXTERNAL)].Base, MemoryConstants::pageSize);
 }
 
 VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) {

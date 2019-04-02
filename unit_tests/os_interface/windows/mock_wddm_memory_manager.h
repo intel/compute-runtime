@@ -22,6 +22,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::allocateGraphicsMemoryWithProperties;
     using BaseClass::createGraphicsAllocation;
     using BaseClass::createWddmAllocation;
+    using BaseClass::gfxPartition;
     using MemoryManagerCreate<WddmMemoryManager>::MemoryManagerCreate;
 
     MockWddmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, false, executionEnvironment) {

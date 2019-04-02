@@ -49,7 +49,6 @@ class WddmMemoryManager : public MemoryManager {
 
     uint64_t getSystemSharedMemory() override;
     uint64_t getMaxApplicationAddress() override;
-    uint64_t getInternalHeapBaseAddress() override;
 
     bool tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
 

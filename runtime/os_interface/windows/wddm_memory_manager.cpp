@@ -39,7 +39,6 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
                                                                                    wddm(executionEnvironment.osInterface->get()->getWddm()) {
     DEBUG_BREAK_IF(wddm == nullptr);
 
-    allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(wddm->getExternalHeapBase(), wddm->getExternalHeapSize()));
     asyncDeleterEnabled = DebugManager.flags.EnableDeferredDeleter.get();
     if (asyncDeleterEnabled)
         deferredDeleter = createDeferredDeleter();
@@ -199,7 +198,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
         return nullptr;
     }
 
-    auto baseAddress = useInternal32BitAllocator(allocationData.type) ? getInternalHeapBaseAddress() : allocator32Bit->getBase();
+    auto baseAddress = useInternal32BitAllocator(allocationData.type) ? getInternalHeapBaseAddress() : getExternalHeapBaseAddress();
     wddmAllocation->setGpuBaseAddress(GmmHelper::canonize(baseAddress));
 
     DebugManager.logAllocation(wddmAllocation.get());
@@ -228,7 +227,7 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
         allocation->setReservedAddressRange(ptr, size);
     } else if (requireSpecificBitness && this->force32bitAllocations) {
         allocation->set32BitAllocation(true);
-        allocation->setGpuBaseAddress(GmmHelper::canonize(allocator32Bit->getBase()));
+        allocation->setGpuBaseAddress(GmmHelper::canonize(getExternalHeapBaseAddress()));
     }
     status = mapGpuVirtualAddressWithRetry(allocation.get(), allocation->getReservedAddressPtr());
     DEBUG_BREAK_IF(!status);
@@ -470,10 +469,6 @@ uint64_t WddmMemoryManager::getMaxApplicationAddress() {
     return wddm->getMaxApplicationAddress();
 }
 
-uint64_t WddmMemoryManager::getInternalHeapBaseAddress() {
-    return wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Base;
-}
-
 bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
     return wddm->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->getDefaultGmm(), true);
 }
@@ -536,7 +531,7 @@ uint32_t WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *graphicsAllocat
     for (auto handleId = startingIndex; handleId < graphicsAllocation->getNumHandles(); handleId++) {
 
         if (!wddm->mapGpuVirtualAddress(graphicsAllocation->getGmm(handleId), graphicsAllocation->getHandles()[handleId],
-                                        gfxPartition.getHeapBase(heapIndex), gfxPartition.getHeapLimit(heapIndex),
+                                        gfxPartition.getHeapMinimalAddress(heapIndex), gfxPartition.getHeapLimit(heapIndex),
                                         addressToMap, graphicsAllocation->getGpuAddressToModify())) {
             return numMappedAllocations;
         }
@@ -548,8 +543,8 @@ uint32_t WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *graphicsAllocat
 void WddmMemoryManager::obtainGpuAddressIfNeeded(WddmAllocation *allocation) {
     if (allocation->getNumHandles() > 1u) {
         auto heapIndex = selectHeap(allocation, false, executionEnvironment.isFullRangeSvm());
-        allocation->preferredGpuAddress = wddm->reserveGpuVirtualAddress(gfxPartition.getHeapBase(heapIndex), gfxPartition.getHeapLimit(heapIndex),
-                                                                         allocation->getAlignedSize());
+        allocation->preferredGpuAddress = wddm->reserveGpuVirtualAddress(gfxPartition.getHeapMinimalAddress(heapIndex),
+                                                                         gfxPartition.getHeapLimit(heapIndex), allocation->getAlignedSize());
     }
 }
 

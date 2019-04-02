@@ -129,9 +129,6 @@ class Wddm {
         return static_cast<uint32_t>(hwContextId);
     }
 
-    uint64_t getExternalHeapBase() const;
-    uint64_t getExternalHeapSize() const;
-
     std::unique_ptr<SettingsReader> registryReader;
 
     GmmPageTableMngr *getPageTableManager() const { return pageTableManager.get(); }
