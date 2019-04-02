@@ -41,10 +41,6 @@ AllocationProperties MemObjHelper::getAllocationProperties(ImageInfo *imgInfo, b
     return AllocationProperties(imgInfo, allocateMemory);
 }
 
-StorageInfo MemObjHelper::getStorageInfo(const MemoryProperties &properties) {
-    return {};
-}
-
 bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, ContextType contextType, bool preferCompression) {
     return renderCompressed;
 }

@@ -47,10 +47,10 @@ TEST(MemoryManagerTest, givenAllowed32BitAndFroce32BitWhenGraphicsAllocationInDe
 }
 
 TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledThenAllocateFlagIsCorrectlySet) {
-    auto allocationProperties = MemObjHelper::getAllocationProperties(0, true, 0, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocationProperties = MemObjHelper::getAllocationProperties({}, true, 0, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_TRUE(allocationProperties.flags.allocateMemory);
 
-    allocationProperties = MemObjHelper::getAllocationProperties(0, false, 0, GraphicsAllocation::AllocationType::BUFFER);
+    allocationProperties = MemObjHelper::getAllocationProperties({}, false, 0, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_FALSE(allocationProperties.flags.allocateMemory);
 }
 
@@ -60,7 +60,8 @@ TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCall
     auto allocationFlags = MemObjHelper::getAllocationProperties(memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_TRUE(allocationFlags.flags.uncacheable);
 
-    allocationFlags = MemObjHelper::getAllocationProperties(0, false, 0, GraphicsAllocation::AllocationType::BUFFER);
+    memoryProperties.flags_intel = 0;
+    allocationFlags = MemObjHelper::getAllocationProperties(memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_FALSE(allocationFlags.flags.uncacheable);
 }
 

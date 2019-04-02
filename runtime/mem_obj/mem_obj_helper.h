@@ -91,8 +91,6 @@ class MemObjHelper {
                                                         size_t size, GraphicsAllocation::AllocationType type);
     static AllocationProperties getAllocationProperties(ImageInfo *imgInfo, bool allocateMemory);
 
-    static StorageInfo getStorageInfo(const MemoryProperties &properties);
-
     static bool checkMemFlagsForSubBuffer(cl_mem_flags flags) {
         const cl_mem_flags allValidFlags =
             CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
