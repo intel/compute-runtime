@@ -61,12 +61,17 @@ bool Buffer::isSubBuffer() {
 }
 
 bool Buffer::isValidSubBufferOffset(size_t offset) {
-    for (size_t i = 0; i < context->getNumDevices(); ++i) {
-        cl_uint address_align = 32; // 4 byte alignment
-        if ((offset & (address_align / 8 - 1)) == 0) {
-            return true;
+    if (this->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+        // From spec: "origin value is aligned to the CL_DEVICE_MEM_BASE_ADDR_ALIGN value"
+        if (!isAligned(offset, this->getContext()->getDevice(0)->getDeviceInfo().memBaseAddressAlign)) {
+            return false;
         }
     }
+    cl_uint address_align = 32; // 4 byte alignment
+    if ((offset & (address_align / 8 - 1)) == 0) {
+        return true;
+    }
+
     return false;
 }
 

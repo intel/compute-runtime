@@ -98,6 +98,11 @@ inline bool isAligned(T *ptr) {
     return ((reinterpret_cast<uintptr_t>(ptr)) % alignment) == 0;
 }
 
+template <typename T1, typename T2>
+inline bool isAligned(T1 ptr, T2 alignment) {
+    return ((static_cast<size_t>(ptr)) & (static_cast<size_t>(alignment) - 1u)) == 0;
+}
+
 template <typename T>
 inline bool isAligned(T *ptr) {
     return (reinterpret_cast<uintptr_t>(ptr) & (alignof(T) - 1)) == 0;

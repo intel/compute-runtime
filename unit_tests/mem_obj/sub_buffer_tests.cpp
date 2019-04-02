@@ -85,6 +85,14 @@ TEST_F(SubBufferTest, GivenAlignmentThatIsHigherThen4BytesWhenCheckedForValidity
     EXPECT_TRUE(buffer->isValidSubBufferOffset(region2.origin));
     cl_buffer_region region3 = {8, 4};
     EXPECT_TRUE(buffer->isValidSubBufferOffset(region3.origin));
+
+    buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    EXPECT_FALSE(buffer->isValidSubBufferOffset(region.origin));
+    EXPECT_FALSE(buffer->isValidSubBufferOffset(region2.origin));
+    cl_buffer_region region4 = {1025, 4};
+    EXPECT_FALSE(buffer->isValidSubBufferOffset(region4.origin));
+    cl_buffer_region region5 = {1024, 4};
+    EXPECT_TRUE(buffer->isValidSubBufferOffset(region5.origin));
 }
 
 TEST_F(SubBufferTest, givenSharingHandlerFromParentBufferWhenCreateThenShareHandler) {
