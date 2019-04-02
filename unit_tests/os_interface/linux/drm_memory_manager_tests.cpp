@@ -2799,6 +2799,32 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrObjectAlignedSizeIsUsedByAllocUserPtrWhenBiggerSizeAllocatedInHeap) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+
+    memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    allocationData.size = 4llu * 1024 * 1024 + 16 * 1024;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x10000000);
+    auto allocation0 = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x20000000);
+    auto allocation1 = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+
+    memoryManager->freeGraphicsMemory(allocation0);
+
+    allocationData.size = 4llu * 1024 * 1024 + 12 * 1024;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x30000000);
+    allocation0 = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+
+    EXPECT_EQ((uint64_t)(allocation0->getBO()->peekUnmapSize()), 4llu * 1024 * 1024 + 16 * 1024);
+    EXPECT_EQ((uint64_t)(allocation0->getBO()->peekSize()), 4llu * 1024 * 1024 + 12 * 1024);
+
+    memoryManager->freeGraphicsMemory(allocation0);
+    memoryManager->freeGraphicsMemory(allocation1);
+}
+
 TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledButAllocationFailedThenNullPtrReturned) {
     AllocationData allocationData;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
