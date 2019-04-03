@@ -82,14 +82,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
             }
         }
         if (kernel->isAuxTranslationRequired()) {
-            if (kernel->isParentKernel) {
-                for (auto &buffer : memObjsForAuxTranslation) {
-                    buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-                }
-            } else {
-                if (!memObjsForAuxTranslation.empty()) {
-                    dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
-                }
+            UNRECOVERABLE_IF(kernel->isParentKernel);
+            if (!memObjsForAuxTranslation.empty()) {
+                dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
             }
         }
     }
@@ -466,9 +461,6 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(Kernel *parentKernel,
     scheduler.makeResident(getCommandStreamReceiver());
 
     parentKernel->getProgram()->getBlockKernelManager()->makeInternalAllocationsResident(getCommandStreamReceiver());
-    if (parentKernel->isAuxTranslationRequired()) {
-        blocking = true;
-    }
 }
 
 template <typename GfxFamily>
