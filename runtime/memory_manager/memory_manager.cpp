@@ -212,10 +212,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     bool allow64KbPages = false;
     bool allow32Bit = false;
     bool forcePin = properties.flags.forcePin;
-    bool uncacheable = properties.flags.uncacheable;
     bool mustBeZeroCopy = false;
     bool mayRequireL3Flush = false;
-    bool multiOsContextCapable = properties.flags.multiOsContextCapable;
 
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER:
@@ -229,7 +227,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
         allow64KbPages = true;
         allow32Bit = true;
-        break;
     default:
         break;
     }
@@ -237,7 +234,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::SVM:
         allow64KbPages = true;
-        break;
     default:
         break;
     }
@@ -247,7 +243,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
         forcePin = true;
-        break;
     default:
         break;
     }
@@ -261,7 +256,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::SVM:
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
         mustBeZeroCopy = true;
-        break;
     default:
         break;
     }
@@ -280,7 +274,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::SVM:
     case GraphicsAllocation::AllocationType::UNDECIDED:
         mayRequireL3Flush = true;
-        break;
     default:
         break;
     }
@@ -291,7 +284,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
         allocationData.flags.useSystemMemory = true;
-        break;
     default:
         break;
     }
@@ -302,11 +294,11 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.allow32Bit = allow32Bit;
     allocationData.flags.allow64kbPages = allow64KbPages;
     allocationData.flags.forcePin = forcePin;
-    allocationData.flags.uncacheable = uncacheable;
+    allocationData.flags.uncacheable = properties.flags.uncacheable;
     allocationData.flags.flushL3 =
         (mayRequireL3Flush ? properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite : 0u);
     allocationData.flags.preferRenderCompressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == properties.allocationType;
-    allocationData.flags.multiOsContextCapable = multiOsContextCapable;
+    allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
 
     if (allocationData.flags.mustBeZeroCopy) {
         allocationData.flags.useSystemMemory = true;
