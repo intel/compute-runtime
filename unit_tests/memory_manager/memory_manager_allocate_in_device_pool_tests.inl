@@ -55,12 +55,26 @@ TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledT
 }
 
 TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCalledThenUncacheableFlagIsCorrectlySet) {
-    auto allocationFlags = MemObjHelper::getAllocationProperties(CL_MEM_LOCALLY_UNCACHED_RESOURCE, false, 0, GraphicsAllocation::AllocationType::BUFFER);
+    MemoryProperties memoryProperties;
+    memoryProperties.flags_intel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
+    auto allocationFlags = MemObjHelper::getAllocationProperties(memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_TRUE(allocationFlags.flags.uncacheable);
 
     allocationFlags = MemObjHelper::getAllocationProperties(0, false, 0, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_FALSE(allocationFlags.flags.uncacheable);
 }
+
+TEST(AllocationFlagsTest, givenReadOnlyResourceFlagWhenGetAllocationFlagsIsCalledThenFlushL3FlagsAreCorrectlySet) {
+    auto allocationFlags =
+        MemObjHelper::getAllocationProperties(CL_MEM_READ_ONLY, true, 0, GraphicsAllocation::AllocationType::BUFFER);
+    EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForRead);
+    EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForWrite);
+
+    allocationFlags = MemObjHelper::getAllocationProperties(0, true, 0, GraphicsAllocation::AllocationType::BUFFER);
+    EXPECT_TRUE(allocationFlags.flags.flushL3RequiredForRead);
+    EXPECT_TRUE(allocationFlags.flags.flushL3RequiredForWrite);
+}
+
 TEST(StorageInfoTest, whenStorageInfoIsCreatedWithDefaultConstructorThenReturnsOneHandle) {
     StorageInfo storageInfo;
     EXPECT_EQ(1u, storageInfo.getNumHandles());

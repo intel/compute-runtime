@@ -261,7 +261,7 @@ TEST_F(BufferSetArgTest, clSetKernelArgBuffer) {
 }
 
 TEST_F(BufferSetArgTest, clSetKernelArgSVMPointer) {
-    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, false, false);
+    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, 0);
     EXPECT_NE(nullptr, ptrSVM);
 
     GraphicsAllocation *pSvmAlloc = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSVM);

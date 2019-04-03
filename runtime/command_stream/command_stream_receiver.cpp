@@ -126,7 +126,7 @@ void CommandStreamReceiver::ensureCommandBufferAllocation(LinearStream &commandS
     constexpr static auto allocationType = GraphicsAllocation::AllocationType::COMMAND_BUFFER;
     auto allocation = this->getInternalAllocationStorage()->obtainReusableAllocation(allocationSize, allocationType).release();
     if (allocation == nullptr) {
-        const AllocationProperties commandStreamAllocationProperties{true, allocationSize, allocationType, this->isMultiOsContextCapable(), this->deviceIndex};
+        const AllocationProperties commandStreamAllocationProperties{true, allocationSize, allocationType, this->isMultiOsContextCapable(), this->deviceIndex, 0};
         allocation = this->getMemoryManager()->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     }
     DEBUG_BREAK_IF(allocation == nullptr);

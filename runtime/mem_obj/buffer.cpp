@@ -206,7 +206,7 @@ Buffer *Buffer::create(Context *context,
     }
 
     if (!memory) {
-        AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(properties.flags_intel, allocateMemory, size, allocationType);
+        AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(properties, allocateMemory, size, allocationType);
         StorageInfo storageInfo = MemObjHelper::getStorageInfo(properties);
         memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, storageInfo, hostPtr);
     }
@@ -220,7 +220,7 @@ Buffer *Buffer::create(Context *context,
         allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
         zeroCopyAllowed = false;
         copyMemoryFromHostPtr = true;
-        AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(properties.flags_intel, true, size, allocationType);
+        AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(properties, true, size, allocationType);
         StorageInfo storageInfo = MemObjHelper::getStorageInfo(properties);
         memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, storageInfo, nullptr);
     }

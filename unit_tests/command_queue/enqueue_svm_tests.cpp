@@ -34,7 +34,7 @@ struct EnqueueSvmTest : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pDevice, 0);
-        ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, false, false);
+        ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
     }
 
     void TearDown() override {
@@ -239,7 +239,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueDstPtrIsNull) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     void *pDstSVM = nullptr;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, false, false);
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -270,7 +270,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueSrcPtrIsNull) {
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_Success) {
     void *pDstSVM = ptrSVM;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, false, false);
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -286,7 +286,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_Success) {
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlocking_Success) {
     void *pDstSVM = ptrSVM;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, false, false);
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         true,    // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -302,7 +302,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlocking_Success) {
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlockedOnEvent_Success) {
     void *pDstSVM = ptrSVM;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, false, false);
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
     auto uEvent = make_releaseable<UserEvent>();
     cl_event eventWaitList[] = {uEvent.get()};
     retVal = this->pCmdQ->enqueueSVMMemcpy(
@@ -321,7 +321,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlockedOnEvent_Success) {
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherent_Success) {
     void *pDstSVM = ptrSVM;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, true, false);
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, CL_MEM_SVM_FINE_GRAIN_BUFFER);
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -337,7 +337,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherent_Success) {
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherentBlockedOnEvent_Success) {
     void *pDstSVM = ptrSVM;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, true, false);
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, CL_MEM_SVM_FINE_GRAIN_BUFFER);
     auto uEvent = make_releaseable<UserEvent>();
     cl_event eventWaitList[] = {uEvent.get()};
     retVal = this->pCmdQ->enqueueSVMMemcpy(
@@ -527,7 +527,7 @@ TEST_F(EnqueueSvmTest, concurentMapAccess) {
 
     auto allocSvm = [&](uint32_t from, uint32_t to) {
         for (uint32_t i = from; i <= to; i++) {
-            svmPtrs[i] = context->getSVMAllocsManager()->createSVMAlloc(1, false, false);
+            svmPtrs[i] = context->getSVMAllocsManager()->createSVMAlloc(1, 0);
             auto ga = context->getSVMAllocsManager()->getSVMAlloc(svmPtrs[i]);
             EXPECT_NE(nullptr, ga);
             EXPECT_EQ(ga->getUnderlyingBuffer(), svmPtrs[i]);

@@ -50,17 +50,18 @@ GraphicsAllocation *SVMAllocsManager::MapBasedAllocationTracker::get(const void 
 SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager) : memoryManager(memoryManager) {
 }
 
-void *SVMAllocsManager::createSVMAlloc(size_t size, bool coherent, bool readOnly) {
+void *SVMAllocsManager::createSVMAlloc(size_t size, cl_mem_flags flags) {
     if (size == 0)
         return nullptr;
 
     std::unique_lock<std::mutex> lock(mtx);
-    GraphicsAllocation *GA = memoryManager->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::SVM});
+    GraphicsAllocation *GA = memoryManager->allocateGraphicsMemoryWithProperties(
+        {true, size, GraphicsAllocation::AllocationType::SVM, flags});
     if (!GA) {
         return nullptr;
     }
-    GA->setMemObjectsAllocationWithWritableFlags(!readOnly);
-    GA->setCoherent(coherent);
+    GA->setMemObjectsAllocationWithWritableFlags(!SVMAllocsManager::memFlagIsReadOnly(flags));
+    GA->setCoherent(isValueSet(flags, CL_MEM_SVM_FINE_GRAIN_BUFFER));
     this->SVMAllocs.insert(*GA);
 
     return GA->getUnderlyingBuffer();

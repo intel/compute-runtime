@@ -52,7 +52,8 @@ Pipe *Pipe::create(Context *context,
     memoryProperties.flags = flags;
     while (true) {
         auto size = static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace);
-        AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(flags, true, size, GraphicsAllocation::AllocationType::PIPE);
+        AllocationProperties allocProperties =
+            MemObjHelper::getAllocationProperties(memoryProperties, true, size, GraphicsAllocation::AllocationType::PIPE);
         StorageInfo storageInfo = MemObjHelper::getStorageInfo(memoryProperties);
         GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, storageInfo, nullptr);
         if (!memory) {

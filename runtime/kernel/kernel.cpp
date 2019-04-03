@@ -2181,7 +2181,7 @@ void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
 }
 
 bool Kernel::allocationForCacheFlush(GraphicsAllocation *argAllocation) const {
-    return argAllocation->isFlushL3Required() || argAllocation->isMemObjectsAllocationWithWritableFlags();
+    return argAllocation->isFlushL3Required();
 }
 
 void Kernel::addAllocationToCacheFlushVector(uint32_t argIndex, GraphicsAllocation *argAllocation) {

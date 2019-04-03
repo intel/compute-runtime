@@ -2420,7 +2420,7 @@ TEST(KernelTest, whenCacheFlushEnabledForAllQueuesAndKernelRequireCacheFlushAfte
     EXPECT_TRUE(kernel.mockKernel->requiresCacheFlushCommand(queue));
 }
 
-TEST(KernelTest, whenAllocationWriteableThenAssignAllocationPointerToCacheFlushVector) {
+TEST(KernelTest, whenAllocationWriteableThenDoNotAssignAllocationPointerToCacheFlushVector) {
     MockGraphicsAllocation mockAllocation;
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockKernelWithInternals kernel(*device);
@@ -2430,7 +2430,7 @@ TEST(KernelTest, whenAllocationWriteableThenAssignAllocationPointerToCacheFlushV
     mockAllocation.setFlushL3Required(false);
 
     kernel.mockKernel->addAllocationToCacheFlushVector(0, &mockAllocation);
-    EXPECT_EQ(&mockAllocation, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
+    EXPECT_EQ(nullptr, kernel.mockKernel->kernelArgRequiresCacheFlush[0]);
 }
 
 TEST(KernelTest, whenAllocationReadOnlyNonFlushRequiredThenAssignNullPointerToCacheFlushVector) {

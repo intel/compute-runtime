@@ -7,17 +7,20 @@
 
 #include "unit_tests/helpers/kernel_commands_tests.h"
 
+#include "runtime/api/api.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "unit_tests/fixtures/execution_model_kernel_fixture.h"
+#include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "unit_tests/utilities/base_object_utils.h"
 
 #include "hw_cmds.h"
 
@@ -1359,4 +1362,32 @@ TEST_F(KernelCommandsTest, givenCacheFlushAfterWalkerEnabledWhenPlatformNotSuppo
     StackVec<GraphicsAllocation *, 32> allocationsForCacheFlush;
     mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocationsForCacheFlush);
     EXPECT_EQ(0U, allocationsForCacheFlush.size());
+}
+
+using KernelCacheFlushTests = Test<HelloWorldFixture<HelloWorldFixtureFactory>>;
+
+HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocationsForFlushThenEmptyVectorIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
+
+    auto kernel = clUniquePtr(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal));
+
+    cl_mem_properties_intel bufferPropertiesUncachedResource[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0};
+    auto bufferLocallyUncached = clCreateBufferWithPropertiesINTEL(context, bufferPropertiesUncachedResource, 1, nullptr, nullptr);
+    kernel->setArg(0, sizeof(bufferLocallyUncached), &bufferLocallyUncached);
+
+    using CacheFlushAllocationsVec = StackVec<GraphicsAllocation *, 32>;
+    CacheFlushAllocationsVec cacheFlushVec;
+    kernel->getAllocationsForCacheFlush(cacheFlushVec);
+    EXPECT_EQ(0u, cacheFlushVec.size());
+
+    auto bufferRegular = clCreateBufferWithPropertiesINTEL(context, nullptr, 1, nullptr, nullptr);
+    kernel->setArg(1, sizeof(bufferRegular), &bufferRegular);
+
+    kernel->getAllocationsForCacheFlush(cacheFlushVec);
+    size_t expectedCacheFlushVecSize = (hwInfoHelper.capabilityTable.supportCacheFlushAfterWalker ? 1u : 0u);
+    EXPECT_EQ(expectedCacheFlushVecSize, cacheFlushVec.size());
+
+    clReleaseMemObject(bufferLocallyUncached);
+    clReleaseMemObject(bufferRegular);
 }

@@ -32,7 +32,7 @@ class SVMAllocsManager {
     };
 
     SVMAllocsManager(MemoryManager *memoryManager);
-    void *createSVMAlloc(size_t size, bool coherent, bool readOnly);
+    void *createSVMAlloc(size_t size, cl_mem_flags flags);
     GraphicsAllocation *getSVMAlloc(const void *ptr);
     void freeSVMAlloc(void *ptr);
     size_t getNumAllocs() const { return SVMAllocs.getNumAllocs(); }

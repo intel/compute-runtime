@@ -1644,6 +1644,36 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationWasNotUnlockedThenItIsUn
     EXPECT_EQ(1u, memoryManager.unlockResourceCalled);
 }
 
+TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllocationDataThenFlushL3FlagIsCorrectlySet) {
+    AllocationData allocData;
+    AllocationProperties properties(1, GraphicsAllocation::AllocationType::UNDECIDED);
+    properties.flags.flushL3RequiredForRead = 1;
+    properties.flags.flushL3RequiredForWrite = 1;
+
+    GraphicsAllocation::AllocationType allocationTypesThatMayNeedL3Flush[] = {
+        GraphicsAllocation::AllocationType::BUFFER, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
+        GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,
+        GraphicsAllocation::AllocationType::GLOBAL_SURFACE, GraphicsAllocation::AllocationType::IMAGE,
+        GraphicsAllocation::AllocationType::PIPE, GraphicsAllocation::AllocationType::SHARED_IMAGE,
+        GraphicsAllocation::AllocationType::SHARED_BUFFER, GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY,
+        GraphicsAllocation::AllocationType::SVM, GraphicsAllocation::AllocationType::UNDECIDED};
+
+    for (auto allocationType : allocationTypesThatMayNeedL3Flush) {
+        properties.allocationType = allocationType;
+        MockMemoryManager::getAllocationData(allocData, properties, {}, nullptr);
+        EXPECT_TRUE(allocData.flags.flushL3);
+    }
+
+    properties.flags.flushL3RequiredForRead = 0;
+    properties.flags.flushL3RequiredForWrite = 0;
+
+    for (auto allocationType : allocationTypesThatMayNeedL3Flush) {
+        properties.allocationType = allocationType;
+        MockMemoryManager::getAllocationData(allocData, properties, {}, nullptr);
+        EXPECT_FALSE(allocData.flags.flushL3);
+    }
+}
+
 TEST(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     allocation.set32BitAllocation(true);
@@ -1699,12 +1729,14 @@ TEST(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForNullAllocatio
 }
 
 TEST(MemoryAllocationTest, givenAllocationTypeWhenPassedToMemoryAllocationConstructorThenAllocationTypeIsStored) {
-    MemoryAllocation allocation{GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
+    MemoryAllocation allocation{GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, 0, 0, 0,
+                                MemoryPool::MemoryNull, false, false, false};
     EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, allocation.getAllocationType());
 }
 
 TEST(MemoryAllocationTest, givenMemoryPoolWhenPassedToMemoryAllocationConstructorThenMemoryPoolIsStored) {
-    MemoryAllocation allocation{GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, 0, 0, 0, MemoryPool::System64KBPages, false};
+    MemoryAllocation allocation{GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, 0, 0, 0,
+                                MemoryPool::System64KBPages, false, false, false};
     EXPECT_EQ(MemoryPool::System64KBPages, allocation.getMemoryPool());
 }
 

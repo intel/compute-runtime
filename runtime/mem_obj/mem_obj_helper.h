@@ -87,7 +87,7 @@ class MemObjHelper {
         return validateExtraMemoryProperties(properties);
     }
 
-    static AllocationProperties getAllocationProperties(cl_mem_flags_intel flags, bool allocateMemory,
+    static AllocationProperties getAllocationProperties(MemoryProperties properties, bool allocateMemory,
                                                         size_t size, GraphicsAllocation::AllocationType type);
     static AllocationProperties getAllocationProperties(ImageInfo *imgInfo, bool allocateMemory);
 

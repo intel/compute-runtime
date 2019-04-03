@@ -181,7 +181,7 @@ TEST_F(clSetKernelExecInfoTests, success_SvmPtrListWithMultiplePointers) {
     }
 }
 
-TEST_F(clSetKernelExecInfoTests, givenReadOnlySvmPtrListWhenUsedAsKernelPointersThenNoCacheFlushRequire) {
+TEST_F(clSetKernelExecInfoTests, givenReadOnlySvmPtrListWhenUsedAsKernelPointersThenCacheFlushIsNotRequired) {
     if (svmCapabilities != 0) {
         void *ptrSvm1 = clSVMAlloc(pContext, CL_MEM_READ_ONLY, 256, 4);
         EXPECT_NE(nullptr, ptrSvm1);

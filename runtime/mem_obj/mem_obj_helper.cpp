@@ -31,10 +31,9 @@ bool MemObjHelper::parseMemoryProperties(const cl_mem_properties_intel *properti
     return true;
 }
 
-AllocationProperties MemObjHelper::getAllocationProperties(cl_mem_flags_intel flags, bool allocateMemory,
+AllocationProperties MemObjHelper::getAllocationProperties(MemoryProperties properties, bool allocateMemory,
                                                            size_t size, GraphicsAllocation::AllocationType type) {
-    AllocationProperties allocationProperties(allocateMemory, size, type);
-    allocationProperties.flags.uncacheable = isValueSet(flags, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
+    AllocationProperties allocationProperties(allocateMemory, size, type, properties);
     return allocationProperties;
 }
 

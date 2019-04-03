@@ -509,7 +509,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgImmediate) {
 }
 
 TEST_F(CloneKernelTest, cloneKernelWithExecInfo) {
-    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, false, false);
+    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, 0);
     ASSERT_NE(nullptr, ptrSVM);
 
     GraphicsAllocation *pSvmAlloc = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSVM);

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "common/helpers/bit_helpers.h"
 #include "public/cl_ext_private.h"
 #include "runtime/command_stream/preemption_mode.h"
 #include "runtime/helpers/aligned_memory.h"
@@ -16,6 +17,7 @@
 #include "runtime/os_interface/32bit_memory.h"
 
 #include "engine_node.h"
+#include "mem_obj_types.h"
 
 #include <bitset>
 #include <cstdint>
@@ -67,26 +69,51 @@ struct AllocationProperties {
     ImageInfo *imgInfo = nullptr;
     uint32_t deviceIndex = AllocationProperties::noDeviceSpecified;
 
-    AllocationProperties(size_t size, GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(true, size, allocationType) {}
+    AllocationProperties(size_t size,
+                         GraphicsAllocation::AllocationType allocationType)
+        : AllocationProperties(true, size, allocationType, 0) {}
 
-    AllocationProperties(size_t size, GraphicsAllocation::AllocationType allocationType, uint32_t deviceIndex)
-        : AllocationProperties(true, size, allocationType, false, deviceIndex) {}
-    AllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(allocateMemory, size, allocationType, false, AllocationProperties::noDeviceSpecified) {}
-    AllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType,
-                         bool multiOsContextCapable, uint32_t deviceIndex)
+    AllocationProperties(size_t size,
+                         GraphicsAllocation::AllocationType allocationType,
+                         uint32_t deviceIndex)
+        : AllocationProperties(true, size, allocationType, false, deviceIndex, 0) {}
+
+    AllocationProperties(bool allocateMemory,
+                         size_t size,
+                         GraphicsAllocation::AllocationType allocationType)
+        : AllocationProperties(allocateMemory, size, allocationType, 0) {}
+
+    AllocationProperties(bool allocateMemory,
+                         size_t size,
+                         GraphicsAllocation::AllocationType allocationType,
+                         MemoryProperties memoryProperties)
+        : AllocationProperties(allocateMemory, size, allocationType, false, AllocationProperties::noDeviceSpecified,
+                               memoryProperties) {}
+
+    AllocationProperties(bool allocateMemory,
+                         size_t size,
+                         GraphicsAllocation::AllocationType allocationType,
+                         bool multiOsContextCapable,
+                         uint32_t deviceIndex,
+                         MemoryProperties memoryProperties)
         : size(size), allocationType(allocationType), deviceIndex(deviceIndex) {
         allFlags = 0;
-        flags.flushL3RequiredForRead = 1;
-        flags.flushL3RequiredForWrite = 1;
+        flags.uncacheable = isValueSet(memoryProperties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
+        auto cacheFlushRequired = !flags.uncacheable && !isValueSet(memoryProperties.flags, CL_MEM_READ_ONLY);
+        flags.flushL3RequiredForRead = cacheFlushRequired;
+        flags.flushL3RequiredForWrite = cacheFlushRequired;
         flags.allocateMemory = allocateMemory;
         flags.multiOsContextCapable = multiOsContextCapable;
     }
-    AllocationProperties(ImageInfo *imgInfo, bool allocateMemory) : AllocationProperties(allocateMemory, 0, GraphicsAllocation::AllocationType::IMAGE) {
+    AllocationProperties(ImageInfo *imgInfo,
+                         bool allocateMemory)
+        : AllocationProperties(allocateMemory, 0, GraphicsAllocation::AllocationType::IMAGE, 0) {
         this->imgInfo = imgInfo;
     }
-    AllocationProperties(ImageInfo *imgInfo, bool allocateMemory, GraphicsAllocation::AllocationType allocationType) : AllocationProperties(allocateMemory, 0, allocationType) {
+    AllocationProperties(ImageInfo *imgInfo,
+                         bool allocateMemory,
+                         GraphicsAllocation::AllocationType allocationType)
+        : AllocationProperties(allocateMemory, 0, allocationType, 0) {
         this->imgInfo = imgInfo;
     }
 };

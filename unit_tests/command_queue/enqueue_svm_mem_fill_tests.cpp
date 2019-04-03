@@ -27,7 +27,7 @@ struct EnqueueSvmMemFillTest : public DeviceFixture,
         CommandQueueFixture::SetUp(pDevice, 0);
         patternSize = (size_t)GetParam();
         ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
-        svmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, true, false);
+        svmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, CL_MEM_SVM_FINE_GRAIN_BUFFER);
         ASSERT_NE(nullptr, svmPtr);
         svmAlloc = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
         ASSERT_NE(nullptr, svmAlloc);

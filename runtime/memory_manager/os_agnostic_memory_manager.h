@@ -16,18 +16,20 @@ constexpr size_t bigAllocation = 1 * MB;
 constexpr uintptr_t dummyAddress = 0xFFFFF000u;
 class MemoryAllocation : public GraphicsAllocation {
   public:
-    unsigned long long id;
+    const unsigned long long id;
     size_t sizeToFree = 0;
-    bool uncacheable = false;
+    const bool uncacheable;
 
     void setSharedHandle(osHandle handle) { sharingInfo.sharedHandle = handle; }
 
-    MemoryAllocation(AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count, MemoryPool::Type pool, bool multiOsContextCapable)
+    MemoryAllocation(AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize,
+                     uint64_t count, MemoryPool::Type pool, bool multiOsContextCapable, bool uncacheable, bool flushL3Required)
         : GraphicsAllocation(allocationType, pMem, gpuAddress, 0u, memSize, pool, multiOsContextCapable),
-          id(count) {
+          id(count), uncacheable(uncacheable) {
 
         this->driverAllocatedCpuPointer = driverAllocatedCpuPointer;
         overrideMemoryPool(pool);
+        allocationInfo.flags.flushL3Required = flushL3Required;
     }
 
     void overrideMemoryPool(MemoryPool::Type pool);

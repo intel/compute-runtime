@@ -214,6 +214,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     bool forcePin = properties.flags.forcePin;
     bool uncacheable = properties.flags.uncacheable;
     bool mustBeZeroCopy = false;
+    bool mayRequireL3Flush = false;
     bool multiOsContextCapable = properties.flags.multiOsContextCapable;
 
     switch (properties.allocationType) {
@@ -266,6 +267,25 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     switch (properties.allocationType) {
+    case GraphicsAllocation::AllocationType::BUFFER:
+    case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
+    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
+    case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
+    case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
+    case GraphicsAllocation::AllocationType::IMAGE:
+    case GraphicsAllocation::AllocationType::PIPE:
+    case GraphicsAllocation::AllocationType::SHARED_IMAGE:
+    case GraphicsAllocation::AllocationType::SHARED_BUFFER:
+    case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
+    case GraphicsAllocation::AllocationType::SVM:
+    case GraphicsAllocation::AllocationType::UNDECIDED:
+        mayRequireL3Flush = true;
+        break;
+    default:
+        break;
+    }
+
+    switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::UNDECIDED:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
     case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
@@ -283,7 +303,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.allow64kbPages = allow64KbPages;
     allocationData.flags.forcePin = forcePin;
     allocationData.flags.uncacheable = uncacheable;
-    allocationData.flags.flushL3 = properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite;
+    allocationData.flags.flushL3 =
+        (mayRequireL3Flush ? properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite : 0u);
     allocationData.flags.preferRenderCompressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == properties.allocationType;
     allocationData.flags.multiOsContextCapable = multiOsContextCapable;
 
