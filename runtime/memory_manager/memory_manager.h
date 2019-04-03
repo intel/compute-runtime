@@ -145,7 +145,7 @@ class MemoryManager {
         return allocateGraphicsMemoryInPreferredPool(properties, GraphicsAllocation::createStorageInfoFromProperties(properties), nullptr);
     }
 
-    virtual GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) {
+    MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) {
         return allocateGraphicsMemoryInPreferredPool(properties, GraphicsAllocation::createStorageInfoFromProperties(properties), ptr);
     }
 

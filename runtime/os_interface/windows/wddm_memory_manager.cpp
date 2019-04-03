@@ -137,25 +137,19 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
     return wddmAllocation.release();
 }
 
-GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptrArg) {
-    void *ptr = const_cast<void *>(ptrArg);
-
-    if (ptr == nullptr) {
-        DEBUG_BREAK_IF(true);
-        return nullptr;
-    }
-
-    if (mallocRestrictions.minAddress > reinterpret_cast<uintptr_t>(ptrArg)) {
+GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
+    if (mallocRestrictions.minAddress > reinterpret_cast<uintptr_t>(allocationData.hostPtr)) {
+        auto inputPtr = allocationData.hostPtr;
         void *reserve = nullptr;
-        void *ptrAligned = alignDown(ptr, MemoryConstants::allocationAlignment);
-        size_t sizeAligned = alignSizeWholePage(ptr, properties.size);
-        size_t offset = ptrDiff(ptr, ptrAligned);
+        auto ptrAligned = alignDown(inputPtr, MemoryConstants::allocationAlignment);
+        size_t sizeAligned = alignSizeWholePage(inputPtr, allocationData.size);
+        size_t offset = ptrDiff(inputPtr, ptrAligned);
 
         if (!wddm->reserveValidAddressRange(sizeAligned, reserve)) {
             return nullptr;
         }
 
-        auto allocation = new WddmAllocation(properties.allocationType, ptr, properties.size, reserve, MemoryPool::System4KBPages, false);
+        auto allocation = new WddmAllocation(allocationData.type, const_cast<void *>(inputPtr), allocationData.size, reserve, MemoryPool::System4KBPages, false);
         allocation->setAllocationOffset(offset);
 
         Gmm *gmm = new Gmm(ptrAligned, sizeAligned, false);
@@ -167,10 +161,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithProperties(cons
         freeGraphicsMemory(allocation);
         return nullptr;
     }
-
-    auto allocation = MemoryManager::allocateGraphicsMemoryWithProperties(properties, ptr);
-    DebugManager.logAllocation(allocation);
-    return allocation;
+    return MemoryManager::allocateGraphicsMemoryWithHostPtr(allocationData);
 }
 
 GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) {
