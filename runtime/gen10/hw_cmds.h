@@ -28,6 +28,7 @@ struct CNLFamily : public GEN10 {
     using PARSE = CmdParse<CNLFamily>;
     using GfxFamily = CNLFamily;
     using WALKER_TYPE = GPGPU_WALKER;
+    using XY_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
@@ -56,6 +57,8 @@ struct CNLFamily : public GEN10 {
     static const STATE_SIP cmdInitStateSip;
     static const BINDING_TABLE_STATE cmdInitBindingTableState;
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
+    static const XY_SRC_COPY_BLT cmdInitXyCopyBlt;
+    static const MI_FLUSH_DW cmdInitMiFlushDw;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_GEN8_CORE;
