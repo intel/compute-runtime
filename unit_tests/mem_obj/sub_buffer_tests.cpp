@@ -93,6 +93,12 @@ TEST_F(SubBufferTest, GivenAlignmentThatIsHigherThen4BytesWhenCheckedForValidity
     EXPECT_FALSE(buffer->isValidSubBufferOffset(region4.origin));
     cl_buffer_region region5 = {1024, 4};
     EXPECT_TRUE(buffer->isValidSubBufferOffset(region5.origin));
+    cl_buffer_region region6 = {127, 4};
+    EXPECT_FALSE(buffer->isValidSubBufferOffset(region6.origin));
+    cl_buffer_region region7 = {128, 4};
+    EXPECT_TRUE(buffer->isValidSubBufferOffset(region7.origin));
+    cl_buffer_region region8 = {129, 4};
+    EXPECT_FALSE(buffer->isValidSubBufferOffset(region8.origin));
 }
 
 TEST_F(SubBufferTest, givenSharingHandlerFromParentBufferWhenCreateThenShareHandler) {
