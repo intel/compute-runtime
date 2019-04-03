@@ -35,10 +35,10 @@ WddmMemoryManager::~WddmMemoryManager() {
     applyCommonCleanup();
 }
 
-WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment) {
+WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
+                                                                                   wddm(executionEnvironment.osInterface->get()->getWddm()) {
     DEBUG_BREAK_IF(wddm == nullptr);
 
-    wddm = executionEnvironment.osInterface->get()->getWddm();
     allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(wddm->getExternalHeapBase(), wddm->getExternalHeapSize()));
     asyncDeleterEnabled = DebugManager.flags.EnableDeferredDeleter.get();
     if (asyncDeleterEnabled)
