@@ -109,7 +109,10 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
                                             eventWaitList,
                                             event);
     }
-
+    void *cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal) override {
+        cpuDataTransferHandlerCalled = true;
+        return BaseClass::cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    }
     cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t size,
                               const void *ptr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
         EnqueueWriteBufferCounter++;
@@ -138,6 +141,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     bool blockingWriteBuffer = false;
     bool notifyEnqueueReadBufferCalled = false;
     bool notifyEnqueueReadImageCalled = false;
+    bool cpuDataTransferHandlerCalled = false;
     uint32_t completionStampTaskCount = 0;
     uint32_t deltaTaskCount = 0;
 

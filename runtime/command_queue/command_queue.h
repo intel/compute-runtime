@@ -304,7 +304,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                        cl_event *oclEvent,
                                        cl_uint cmdType);
 
-    void *cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal);
+    MOCKABLE_VIRTUAL void *cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal);
 
     virtual cl_int finish(bool dcFlush) { return CL_SUCCESS; }
 
