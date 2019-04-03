@@ -14,6 +14,7 @@
 #include "runtime/device/device.h"
 #include "runtime/event/event.h"
 #include "runtime/gtpin/gtpin_notify.h"
+#include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/helpers/flush_stamp.h"
@@ -773,6 +774,36 @@ uint64_t CommandStreamReceiverHw<GfxFamily>::getScratchPatchAddress() {
 template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const {
     return DebugManager.flags.ForceCsrReprogramming.get();
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::blitFromHostPtr(MemObj &destinationMemObj, void *sourceHostPtr, uint64_t sourceSize) {
+    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
+    using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
+
+    UNRECOVERABLE_IF(osContext->getEngineType() != aub_stream::EngineType::ENGINE_BCS);
+
+    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(sourceSize));
+
+    HostPtrSurface hostPtrSurface(sourceHostPtr, static_cast<size_t>(sourceSize), true);
+    bool success = createAllocationForHostSurface(hostPtrSurface, false);
+    UNRECOVERABLE_IF(!success);
+
+    UNRECOVERABLE_IF(destinationMemObj.peekClMemObjType() != CL_MEM_OBJECT_BUFFER);
+    BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(static_cast<Buffer &>(destinationMemObj), commandStream, *hostPtrSurface.getAllocation(), sourceSize);
+
+    auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(commandStream.getSpace(sizeof(MI_FLUSH_DW)));
+    *miFlushDwCmd = GfxFamily::cmdInitMiFlushDw;
+    miFlushDwCmd->setPostSyncOperation(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
+    miFlushDwCmd->setDestinationAddress(tagAllocation->getGpuAddress());
+    miFlushDwCmd->setImmediateData(taskCount + 1);
+
+    auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(commandStream.getSpace(sizeof(MI_BATCH_BUFFER_END)));
+    *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;
+
+    alignToCacheLine(commandStream);
+
+    taskCount++;
 }
 
 } // namespace NEO

@@ -104,7 +104,11 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
     auto gpuAddress = allocator32Bit->allocate(allocationSize);
 
     if (allocationData.size < 0xfffff000) {
-        ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
+        if (fakeBigAllocations) {
+            ptrAlloc = reinterpret_cast<void *>(dummyAddress);
+        } else {
+            ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
+        }
     }
 
     MemoryAllocation *memoryAllocation = nullptr;

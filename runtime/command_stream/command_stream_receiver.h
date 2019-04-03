@@ -180,6 +180,8 @@ class CommandStreamReceiver {
         this->latestSentTaskCount = latestSentTaskCount;
     }
 
+    virtual void blitFromHostPtr(MemObj &destinationMemObj, void *sourceHostPtr, uint64_t sourceSize) = 0;
+
   protected:
     void cleanupResources();
 

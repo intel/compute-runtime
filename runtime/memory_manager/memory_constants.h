@@ -45,4 +45,11 @@ static const uintptr_t page4kEntryMask = std::numeric_limits<uintptr_t>::max() &
 static const uintptr_t page64kEntryMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::page64kMask;
 static const int GfxAddressBits = is64bit ? 48 : 32;
 static const uint64_t maxSvmAddress = is64bit ? maxNBitValue<47> : maxNBitValue<32>;
+
 } // namespace MemoryConstants
+
+namespace BlitterConstants {
+static constexpr uint64_t maxBlitWidth = 0x7FFF;
+static constexpr uint64_t maxBlitHeight = 0x7FFF;
+static constexpr uint64_t max2dBlitSize = maxBlitWidth * maxBlitHeight;
+} // namespace BlitterConstants

@@ -14,6 +14,7 @@
 #include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/event/user_event.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/helpers/ptr_math.h"
@@ -21,6 +22,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/linux/debug_env_reader.h"
 #include "test.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
@@ -38,6 +40,7 @@
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
+#include "unit_tests/utilities/base_object_utils.h"
 
 #include "reg_configs_common.h"
 
@@ -249,4 +252,85 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddre
     uint64_t expectedScratchAddress = 0xAAABBBCCCDDD000ull;
     scratchController->getScratchSpaceAllocation()->setCpuPtrAndGpuAddress(scratchController->getScratchSpaceAllocation()->getUnderlyingBuffer(), expectedScratchAddress);
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateGshAddressForScratchSpace((expectedScratchAddress - MemoryConstants::pageSize), scratchController->calculateNewGSH()));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredCommands) {
+    uint64_t alignedBltSize = (3 * BlitterConstants::max2dBlitSize) + 1;
+    uint64_t notAlignedBltSize = (3 * BlitterConstants::max2dBlitSize);
+    uint32_t alignedNumberOfBlts = 4;
+    uint32_t notAlignedNumberOfBlts = 3;
+
+    size_t expectedSize = sizeof(typename FamilyType::MI_FLUSH_DW) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+
+    auto expectedAlignedSize = alignUp(expectedSize + (sizeof(typename FamilyType::XY_COPY_BLT) * alignedNumberOfBlts), MemoryConstants::cacheLineSize);
+    auto expectedNotAlignedSize = alignUp(expectedSize + (sizeof(typename FamilyType::XY_COPY_BLT) * notAlignedNumberOfBlts), MemoryConstants::cacheLineSize);
+
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(alignedBltSize);
+    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(notAlignedBltSize);
+
+    EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
+    EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommands) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    MockContext context(pDevice);
+    static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
+    auto engine = csr.getMemoryManager()->getRegisteredEngineForCsr(&csr);
+    auto contextId = engine->osContext->getContextId();
+
+    delete engine->osContext;
+    engine->osContext = OsContext::create(nullptr, contextId, 0, aub_stream::EngineType::ENGINE_BCS, PreemptionMode::Disabled, false);
+    engine->osContext->incRefInternal();
+    csr.setupContext(*engine->osContext);
+
+    uint32_t bltLeftover = 17;
+    uint64_t bltSize = (2 * BlitterConstants::max2dBlitSize) + bltLeftover;
+    uint32_t numberOfBlts = 3;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, static_cast<size_t>(bltSize), nullptr, retVal));
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    uint32_t newTaskCount = 19;
+    csr.taskCount = newTaskCount - 1;
+    csr.blitFromHostPtr(*buffer, hostPtr, bltSize);
+    EXPECT_EQ(newTaskCount, csr.taskCount);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr.commandStream);
+    auto &cmdList = hwParser.cmdList;
+
+    auto cmdIterator = cmdList.begin();
+
+    for (uint32_t i = 0; i < numberOfBlts; i++) {
+        auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*(cmdIterator++));
+        EXPECT_NE(nullptr, bltCmd);
+
+        EXPECT_EQ(0u, bltCmd->getDestinationX1CoordinateLeft());
+        EXPECT_EQ(0u, bltCmd->getDestinationY1CoordinateTop());
+        EXPECT_EQ(0u, bltCmd->getSourceX1CoordinateLeft());
+        EXPECT_EQ(0u, bltCmd->getSourceY1CoordinateTop());
+        if (i == (numberOfBlts - 1)) {
+            EXPECT_EQ(bltLeftover, bltCmd->getDestinationX2CoordinateRight());
+            EXPECT_EQ(1u, bltCmd->getDestinationY2CoordinateBottom());
+        } else {
+            EXPECT_EQ(static_cast<uint32_t>(BlitterConstants::maxBlitWidth), bltCmd->getDestinationX2CoordinateRight());
+            EXPECT_EQ(static_cast<uint32_t>(BlitterConstants::maxBlitWidth), bltCmd->getDestinationY2CoordinateBottom());
+        }
+    }
+
+    auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*(cmdIterator++));
+    EXPECT_NE(nullptr, miFlushCmd);
+    EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, miFlushCmd->getPostSyncOperation());
+    EXPECT_EQ(csr.getTagAllocation()->getGpuAddress(), miFlushCmd->getDestinationAddress());
+    EXPECT_EQ(newTaskCount, miFlushCmd->getImmediateData());
+
+    EXPECT_NE(nullptr, genCmdCast<typename FamilyType::MI_BATCH_BUFFER_END *>(*(cmdIterator++)));
+
+    // padding
+    while (cmdIterator != cmdList.end()) {
+        EXPECT_NE(nullptr, genCmdCast<typename FamilyType::MI_NOOP *>(*(cmdIterator++)));
+    }
 }

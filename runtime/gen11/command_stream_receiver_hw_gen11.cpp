@@ -8,6 +8,7 @@
 #include "runtime/command_stream/command_stream_receiver_hw.inl"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/gen11/reg_configs.h"
+#include "runtime/helpers/blit_commands_helper.inl"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 namespace NEO {
@@ -141,8 +142,8 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
 }
 
-// Explicitly instantiate CommandStreamReceiverHw for this device family
 template class CommandStreamReceiverHw<Family>;
+template struct BlitCommandsHelper<Family>;
 
 const Family::GPGPU_WALKER Family::cmdInitGpgpuWalker = Family::GPGPU_WALKER::sInit();
 const Family::INTERFACE_DESCRIPTOR_DATA Family::cmdInitInterfaceDescriptorData = Family::INTERFACE_DESCRIPTOR_DATA::sInit();
