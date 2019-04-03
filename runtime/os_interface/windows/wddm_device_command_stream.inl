@@ -82,8 +82,6 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
     const uint32_t maxRequestedSubsliceCount = 7;
     switch (batchBuffer.throttle) {
     case QueueThrottle::LOW:
-        pHeader->UmdRequestedSubsliceCount = 1;
-        break;
     case QueueThrottle::MEDIUM:
         pHeader->UmdRequestedSubsliceCount = 0;
         break;

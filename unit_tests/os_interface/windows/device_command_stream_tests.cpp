@@ -325,7 +325,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToLowThenS
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
 
     EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
-    EXPECT_EQ(1, pHeader->UmdRequestedSubsliceCount);
+    EXPECT_EQ(0, pHeader->UmdRequestedSubsliceCount);
     EXPECT_EQ(wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount, pHeader->UmdRequestedEUCount);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
