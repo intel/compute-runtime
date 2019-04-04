@@ -11,11 +11,14 @@
 using namespace NEO;
 
 TEST(WddmMapperTests, givenRcsEngineTypeWhenAskedForNodeOrdinalThenReturn3d) {
-    GPUNODE_ORDINAL gpuNode = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_RCS);
-    GPUNODE_ORDINAL expected = GPUNODE_3D;
-    EXPECT_EQ(expected, gpuNode);
+    GPUNODE_ORDINAL rcsNode = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_RCS);
+    GPUNODE_ORDINAL bcsNode = WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_BCS);
+    GPUNODE_ORDINAL expectedRcsNode = GPUNODE_3D;
+    GPUNODE_ORDINAL expectedBcsNode = GPUNODE_BLT;
+    EXPECT_EQ(expectedRcsNode, rcsNode);
+    EXPECT_EQ(expectedBcsNode, bcsNode);
 }
 
 TEST(WddmMapperTests, givenNotSupportedEngineWhenAskedForNodeThenAbort) {
-    EXPECT_THROW(WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_BCS), std::exception);
+    EXPECT_THROW(WddmEngineMapper::engineNodeMap(aub_stream::ENGINE_VCS), std::exception);
 }

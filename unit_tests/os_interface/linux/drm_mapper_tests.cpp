@@ -13,11 +13,14 @@
 using namespace NEO;
 
 TEST(DrmMapperTests, engineNodeMapPass) {
-    unsigned int flag = DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_RCS);
-    unsigned int expected = I915_EXEC_RENDER;
-    EXPECT_EQ(expected, flag);
+    unsigned int rcsFlag = DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_RCS);
+    unsigned int bcsFlag = DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_BCS);
+    unsigned int expectedRcsFlag = I915_EXEC_RENDER;
+    unsigned int expectedBcsFlag = I915_EXEC_BLT;
+    EXPECT_EQ(expectedRcsFlag, rcsFlag);
+    EXPECT_EQ(expectedBcsFlag, bcsFlag);
 }
 
 TEST(DrmMapperTests, engineNodeMapNegative) {
-    EXPECT_THROW(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_BCS), std::exception);
+    EXPECT_THROW(DrmEngineMapper::engineNodeMap(aub_stream::ENGINE_VCS), std::exception);
 }
