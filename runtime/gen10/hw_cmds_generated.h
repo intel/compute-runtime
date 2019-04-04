@@ -4407,6 +4407,12 @@ typedef struct tagXY_SRC_COPY_BLT {
         CLIPPING_ENABLED_DISABLED = 0x0,
         CLIPPING_ENABLED_ENABLED = 0x1,
     } CLIPPING_ENABLED;
+    typedef enum tagINSTRUCTIONTARGET_OPCODE {
+        INSTRUCTIONTARGET_OPCODE_OPCODE = 0x53,
+    } INSTRUCTIONTARGET_OPCODE;
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x8,
+    } DWORD_LENGTH;
     inline void init(void) {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DestTilingEnable = DEST_TILING_ENABLE_TILING_DISABLED_LINEAR_BLIT;
@@ -4414,6 +4420,8 @@ typedef struct tagXY_SRC_COPY_BLT {
         TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
         TheStructure.Common.ColorDepth = COLOR_DEPTH_8_BIT_COLOR;
         TheStructure.Common.ClippingEnabled = CLIPPING_ENABLED_DISABLED;
+        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE_OPCODE;
+        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
     }
     static tagXY_SRC_COPY_BLT sInit(void) {
         XY_SRC_COPY_BLT state;

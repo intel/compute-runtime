@@ -31,17 +31,17 @@ HWTEST_F(CommandParse, parseCommandBufferWithNULLBuffer) {
 
 HWTEST_F(CommandParse, parseCommandBufferWithGarbage) {
     typedef typename FamilyType::PARSE PARSE;
-    uint32_t buffer = 0xbaadf00d;
+    uint32_t buffer[30] = {0xbaadf00d};
     GenCmdList cmds;
 
-    EXPECT_FALSE(PARSE::parseCommandBuffer(cmds, &buffer, sizeof(buffer)));
+    EXPECT_FALSE(PARSE::parseCommandBuffer(cmds, buffer, sizeof(uint32_t)));
 }
 
 HWTEST_F(CommandParse, getCommandLengthWithGarbage) {
     typedef typename FamilyType::PARSE PARSE;
-    uint32_t buffer = 0xbaadf00d;
+    uint32_t buffer[30] = {0xbaadf00d};
 
-    EXPECT_EQ(0u, PARSE::getCommandLength(&buffer));
+    EXPECT_EQ(0u, PARSE::getCommandLength(buffer));
 }
 
 HWTEST_F(CommandParse, parseCommandBufferWithLength) {

@@ -23,6 +23,8 @@ using MI_MATH                         = GenStruct::MI_MATH;
 using MI_LOAD_REGISTER_REG            = GenStruct::MI_LOAD_REGISTER_REG;
 using MI_SEMAPHORE_WAIT               = GenStruct::MI_SEMAPHORE_WAIT;
 using MI_STORE_DATA_IMM               = GenStruct::MI_STORE_DATA_IMM;
+using MI_FLUSH_DW                     = GenStruct::MI_FLUSH_DW;
+using XY_COPY_BLT                     = GenGfxFamily::XY_COPY_BLT;
 // clang-format on
 
 template <>
@@ -181,6 +183,26 @@ MI_STORE_DATA_IMM *genCmdCast<MI_STORE_DATA_IMM *>(void *buffer) {
                : nullptr;
 }
 
+template <>
+MI_FLUSH_DW *genCmdCast<MI_FLUSH_DW *>(void *buffer) {
+    auto pCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
+
+    return MI_FLUSH_DW::COMMAND_TYPE_MI_COMMAND == pCmd->TheStructure.Common.CommandType &&
+                   MI_FLUSH_DW::MI_COMMAND_OPCODE_MI_FLUSH_DW == pCmd->TheStructure.Common.MiCommandOpcode
+               ? pCmd
+               : nullptr;
+}
+
+template <>
+XY_COPY_BLT *genCmdCast<XY_COPY_BLT *>(void *buffer) {
+    auto pCmd = reinterpret_cast<XY_COPY_BLT *>(buffer);
+
+    return XY_COPY_BLT::INSTRUCTIONTARGET_OPCODE_OPCODE == pCmd->TheStructure.Common.InstructionTarget_Opcode &&
+                   XY_COPY_BLT::CLIENT_2D_PROCESSOR == pCmd->TheStructure.Common.Client
+               ? pCmd
+               : nullptr;
+}
+
 template <class T>
 size_t CmdParse<T>::getCommandLength(void *cmd) {
     {
@@ -263,6 +285,16 @@ size_t CmdParse<T>::getCommandLength(void *cmd) {
         if (pCmd)
             return pCmd->TheStructure.Common.DwordLength + 3;
     }
+    {
+        auto pCmd = genCmdCast<MI_FLUSH_DW *>(cmd);
+        if (pCmd)
+            return pCmd->TheStructure.Common.DwordLength + 2;
+    }
+    {
+        auto pCmd = genCmdCast<XY_COPY_BLT *>(cmd);
+        if (pCmd)
+            return pCmd->TheStructure.Common.DwordLength + 2;
+    }
     return getCommandLengthHwSpecific(cmd);
 }
 
@@ -288,6 +320,8 @@ const char *CmdParse<T>::getCommandName(void *cmd) {
     RETURN_NAME_IF(MI_LOAD_REGISTER_REG);
     RETURN_NAME_IF(MI_SEMAPHORE_WAIT);
     RETURN_NAME_IF(MI_STORE_DATA_IMM);
+    RETURN_NAME_IF(MI_FLUSH_DW);
+    RETURN_NAME_IF(XY_COPY_BLT);
 
 #undef RETURN_NAME_IF
 
