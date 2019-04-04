@@ -1615,7 +1615,7 @@ TEST_F(DrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShared
     imgInfo.surfaceFormat = gmmSurfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
-    AllocationProperties properties(&imgInfo, false, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+    AllocationProperties properties(false, imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE);
 
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false);
     ASSERT_NE(nullptr, graphicsAllocation);
@@ -1659,7 +1659,7 @@ TEST_F(DrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedHan
         imgInfo.surfaceFormat = gmmSurfaceFormat;
         imgInfo.plane = GMM_PLANE_Y;
 
-        AllocationProperties properties(&imgInfo, false, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+        AllocationProperties properties(false, imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE);
 
         auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false);
         ASSERT_NE(nullptr, graphicsAllocation);

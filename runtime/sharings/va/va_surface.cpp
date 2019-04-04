@@ -57,7 +57,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
 
     sharingFunctions->extGetSurfaceHandle(surface, &sharedHandle);
-    AllocationProperties properties(&imgInfo, false, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+    AllocationProperties properties(false, imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE);
 
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false);
 

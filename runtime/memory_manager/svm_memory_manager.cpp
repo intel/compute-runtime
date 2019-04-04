@@ -9,6 +9,7 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
@@ -55,16 +56,17 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, cl_mem_flags flags) {
         return nullptr;
 
     std::unique_lock<std::mutex> lock(mtx);
-    GraphicsAllocation *GA = memoryManager->allocateGraphicsMemoryWithProperties(
-        {true, size, GraphicsAllocation::AllocationType::SVM, flags});
-    if (!GA) {
+    AllocationProperties properties{true, size, GraphicsAllocation::AllocationType::SVM};
+    MemObjHelper::fillCachePolicyInProperties(properties, flags);
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    if (!allocation) {
         return nullptr;
     }
-    GA->setMemObjectsAllocationWithWritableFlags(!SVMAllocsManager::memFlagIsReadOnly(flags));
-    GA->setCoherent(isValueSet(flags, CL_MEM_SVM_FINE_GRAIN_BUFFER));
-    this->SVMAllocs.insert(*GA);
+    allocation->setMemObjectsAllocationWithWritableFlags(!SVMAllocsManager::memFlagIsReadOnly(flags));
+    allocation->setCoherent(isValueSet(flags, CL_MEM_SVM_FINE_GRAIN_BUFFER));
+    this->SVMAllocs.insert(*allocation);
 
-    return GA->getUnderlyingBuffer();
+    return allocation->getUnderlyingBuffer();
 }
 
 GraphicsAllocation *SVMAllocsManager::getSVMAlloc(const void *ptr) {

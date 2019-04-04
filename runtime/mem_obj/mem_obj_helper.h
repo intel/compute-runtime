@@ -89,7 +89,16 @@ class MemObjHelper {
 
     static AllocationProperties getAllocationProperties(MemoryProperties properties, bool allocateMemory,
                                                         size_t size, GraphicsAllocation::AllocationType type);
-    static AllocationProperties getAllocationProperties(ImageInfo *imgInfo, bool allocateMemory);
+    static AllocationProperties getAllocationProperties(ImageInfo &imgInfo, bool allocateMemory) {
+        return {allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE};
+    }
+
+    static void fillCachePolicyInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties) {
+        allocationProperties.flags.uncacheable = isValueSet(memoryProperties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
+        auto cacheFlushRequired = !allocationProperties.flags.uncacheable && !isValueSet(memoryProperties.flags, CL_MEM_READ_ONLY);
+        allocationProperties.flags.flushL3RequiredForRead = cacheFlushRequired;
+        allocationProperties.flags.flushL3RequiredForWrite = cacheFlushRequired;
+    }
 
     static bool checkMemFlagsForSubBuffer(cl_mem_flags flags) {
         const cl_mem_flags allValidFlags =

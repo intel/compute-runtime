@@ -44,7 +44,7 @@ class MockGmm : public Gmm {
         imgDesc.image_width = 5;
         imgDesc.image_height = 5;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        return memoryManager.allocateGraphicsMemoryWithProperties(AllocationProperties{&imgInfo, true});
+        return memoryManager.allocateGraphicsMemoryWithProperties({true, imgInfo, GraphicsAllocation::AllocationType::IMAGE});
     }
 };
 } // namespace NEO

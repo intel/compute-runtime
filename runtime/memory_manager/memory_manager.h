@@ -71,50 +71,31 @@ struct AllocationProperties {
 
     AllocationProperties(size_t size,
                          GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(true, size, allocationType, 0) {}
+        : AllocationProperties(true, size, allocationType) {}
 
-    AllocationProperties(size_t size,
-                         GraphicsAllocation::AllocationType allocationType,
-                         uint32_t deviceIndex)
-        : AllocationProperties(true, size, allocationType, false, deviceIndex, 0) {}
+    AllocationProperties(bool allocateMemory,
+                         ImageInfo &imgInfo,
+                         GraphicsAllocation::AllocationType allocationType)
+        : AllocationProperties(allocateMemory, 0u, allocationType) {
+        this->imgInfo = &imgInfo;
+    }
 
     AllocationProperties(bool allocateMemory,
                          size_t size,
                          GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(allocateMemory, size, allocationType, 0) {}
-
-    AllocationProperties(bool allocateMemory,
-                         size_t size,
-                         GraphicsAllocation::AllocationType allocationType,
-                         MemoryProperties memoryProperties)
-        : AllocationProperties(allocateMemory, size, allocationType, false, AllocationProperties::noDeviceSpecified,
-                               memoryProperties) {}
+        : AllocationProperties(allocateMemory, size, allocationType, false, AllocationProperties::noDeviceSpecified) {}
 
     AllocationProperties(bool allocateMemory,
                          size_t size,
                          GraphicsAllocation::AllocationType allocationType,
                          bool multiOsContextCapable,
-                         uint32_t deviceIndex,
-                         MemoryProperties memoryProperties)
+                         uint32_t deviceIndex)
         : size(size), allocationType(allocationType), deviceIndex(deviceIndex) {
         allFlags = 0;
-        flags.uncacheable = isValueSet(memoryProperties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
-        auto cacheFlushRequired = !flags.uncacheable && !isValueSet(memoryProperties.flags, CL_MEM_READ_ONLY);
-        flags.flushL3RequiredForRead = cacheFlushRequired;
-        flags.flushL3RequiredForWrite = cacheFlushRequired;
+        flags.flushL3RequiredForRead = 1;
+        flags.flushL3RequiredForWrite = 1;
         flags.allocateMemory = allocateMemory;
         flags.multiOsContextCapable = multiOsContextCapable;
-    }
-    AllocationProperties(ImageInfo *imgInfo,
-                         bool allocateMemory)
-        : AllocationProperties(allocateMemory, 0, GraphicsAllocation::AllocationType::IMAGE, 0) {
-        this->imgInfo = imgInfo;
-    }
-    AllocationProperties(ImageInfo *imgInfo,
-                         bool allocateMemory,
-                         GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(allocateMemory, 0, allocationType, 0) {
-        this->imgInfo = imgInfo;
     }
 };
 
