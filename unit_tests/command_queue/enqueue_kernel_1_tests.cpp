@@ -636,6 +636,24 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandIsFlushedThenFlushS
     status = clReleaseEvent(event);
 }
 
+HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenNonBlockingMapFollowsNdrCallThenFlushStampIsUpdatedProperly) {
+    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment);
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    EXPECT_TRUE(this->destBuffer->isMemObjZeroCopy());
+    MockKernelWithInternals mockKernel(*pDevice);
+    size_t gws[3] = {1, 0, 0};
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cl_event event;
+    pCmdQ->enqueueMapBuffer(this->destBuffer, false, CL_MAP_READ, 0u, 1u, 0, nullptr, &event, this->retVal);
+
+    pCmdQ->flush();
+    auto neoEvent = castToObject<Event>(event);
+    EXPECT_EQ(1u, neoEvent->flushStamp->peekStamp());
+    clReleaseEvent(event);
+}
+
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandWithEventIsFollowedByCommandWithoutEventThenFlushStampIsUpdatedInCommandQueueCsrAndEvent) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
