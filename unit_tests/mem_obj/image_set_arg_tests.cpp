@@ -18,7 +18,9 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 
@@ -230,6 +232,40 @@ HWTEST_F(ImageSetArgSurfaceArrayTest, givenImage2DArrayAndImageArraySizeIsGreate
 
 HWTEST_F(ImageSetArgSurfaceArrayTest, givenNonArrayImageWhenCallingSetImageArgThenDoNotProgramSurfaceArray) {
     testSurfaceArrayProgramming<FamilyType>(CL_MEM_OBJECT_IMAGE1D_BUFFER, 2u, false);
+}
+
+HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArrayWhenCallingSetImageArgThenDoNotProgramSurfaceArray) {
+    MockContext context;
+    McsSurfaceInfo mcsSurfaceInfo = {};
+    MockGraphicsAllocation *allocation = new MockGraphicsAllocation(0, 0x1000);
+    ImageInfo imageInfo = {};
+
+    SurfaceFormatInfo surfaceFormatInfo{};
+    surfaceFormatInfo.GMMSurfaceFormat = GMM_FORMAT_B8G8R8A8_UNORM;
+    imageInfo.surfaceFormat = &surfaceFormatInfo;
+    cl_image_desc imageDesc = Image2dDefaults::imageDesc;
+    imageDesc.image_array_size = 3u;
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    imageInfo.imgDesc = &imageDesc;
+    imageInfo.plane = GMM_NO_PLANE;
+
+    auto gmm = MockGmm::queryImgParams(imageInfo);
+    allocation->setDefaultGmm(gmm.release());
+
+    auto image = std::unique_ptr<Image>{Image::createSharedImage(
+        &context,
+        nullptr,
+        mcsSurfaceInfo,
+        allocation,
+        nullptr,
+        CL_MEM_READ_WRITE,
+        imageInfo,
+        0, 0, 0)};
+    image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
+
+    typename FamilyType::RENDER_SURFACE_STATE surfaceState{};
+    image->setImageArg(&surfaceState, false, 0);
+    EXPECT_FALSE(surfaceState.getSurfaceArray());
 }
 
 HWTEST_F(ImageSetArgTest, givenNonCubeMapIndexWhenSetKernelArgImageIsCalledThenDontModifySurfaceState) {

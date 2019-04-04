@@ -421,7 +421,7 @@ HWTEST_F(Nv12ImageTest, setImageArg) {
     delete image;
 }
 
-HWTEST_F(Nv12ImageTest, givenNv12ImageArrayAndImageArraySizeIsZeroWhenCallingSetImageArgThenProgramSurfaceArray) {
+HWTEST_F(Nv12ImageTest, givenNv12ImageArrayAndImageArraySizeIsZeroWhenCallingSetImageArgThenDoNotProgramSurfaceArray) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState;
 
@@ -435,7 +435,7 @@ HWTEST_F(Nv12ImageTest, givenNv12ImageArrayAndImageArraySizeIsZeroWhenCallingSet
     image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
 
     image->setImageArg(&surfaceState, false, 0);
-    EXPECT_TRUE(surfaceState.getSurfaceArray());
+    EXPECT_FALSE(surfaceState.getSurfaceArray());
 }
 
 HWTEST_F(Nv12ImageTest, setImageArgUVPlaneImageSetsOffsetedSurfaceBaseAddressAndSetsCorrectTileMode) {
