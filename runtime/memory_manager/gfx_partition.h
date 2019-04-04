@@ -49,9 +49,12 @@ class GfxPartition {
     uint64_t getHeapBase(HeapIndex heapIndex) {
         return getHeap(heapIndex).getBase();
     }
+
     uint64_t getHeapLimit(HeapIndex heapIndex) {
         return getHeap(heapIndex).getBase() + getHeap(heapIndex).getSize() - 1;
     }
+
+    static const uint64_t heapGranularity = MemoryConstants::pageSize64k;
 
     static const std::array<HeapIndex, 4> heap32Names;
 
@@ -64,7 +67,7 @@ class GfxPartition {
         void init(uint64_t base, uint64_t size) {
             this->base = base;
             this->size = size;
-            alloc = std::make_unique<HeapAllocator>(base, size);
+            alloc = std::make_unique<HeapAllocator>(base + heapGranularity, size ? size - heapGranularity : 0ull);
         }
         uint64_t allocate(size_t &size) { return alloc->allocate(size); }
         void free(uint64_t ptr, size_t size) { alloc->free(ptr, size); }

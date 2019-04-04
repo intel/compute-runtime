@@ -7,7 +7,7 @@
 
 #include "runtime/memory_manager/gfx_partition.h"
 
-#include "runtime/helpers/ptr_math.h"
+#include "runtime/helpers/aligned_memory.h"
 
 namespace NEO {
 
@@ -37,29 +37,24 @@ void GfxPartition::init(uint64_t gpuAddressSpace) {
     uint64_t gfxTop = gpuAddressSpace + 1;
     uint64_t gfxBase = is64bit ? MemoryConstants::max64BitAppAddress + 1 : MemoryConstants::max32BitAddress + 1;
     const uint64_t gfxHeap32Size = 4 * MemoryConstants::gigaByte;
-    const uint64_t gfxGranularity = 2 * MemoryConstants::megaByte;
 
-    if (gpuAddressSpace == MemoryConstants::max48BitAddress) { // Full Range SVM
-        // Heap base should be greater than zero and 2MB aligned
-        heapInit(HeapIndex::HEAP_SVM, gfxGranularity, gfxBase - gfxGranularity);
-    } else {
-        // There is no SVM in LimitedRange - all memory except 4 32-bit heaps
-        // goes to STANDARD and STANDARD64KB partitions
+    if (gpuAddressSpace < MemoryConstants::max48BitAddress) {
         gfxBase = 0ull;
     }
 
+    heapInit(HeapIndex::HEAP_SVM, 0ull, gfxBase);
+
     for (auto heap : GfxPartition::heap32Names) {
-        heapInit(heap, gfxBase ? gfxBase : gfxGranularity, gfxBase ? gfxHeap32Size : gfxHeap32Size - gfxGranularity);
+        heapInit(heap, gfxBase, gfxHeap32Size);
         gfxBase += gfxHeap32Size;
     }
 
-    uint64_t gfxStandardSize = (gfxTop - gfxBase) >> 1;
+    uint64_t gfxStandardSize = alignDown((gfxTop - gfxBase) >> 1, heapGranularity);
 
     heapInit(HeapIndex::HEAP_STANDARD, gfxBase, gfxStandardSize);
     gfxBase += gfxStandardSize;
 
-    auto gfxBaseAligned = alignUp(gfxBase, gfxGranularity);
-    heapInit(HeapIndex::HEAP_STANDARD64KB, gfxBaseAligned, gfxStandardSize - ptrDiff(gfxBaseAligned, gfxBase));
+    heapInit(HeapIndex::HEAP_STANDARD64KB, gfxBase, gfxStandardSize);
 }
 
 } // namespace NEO
