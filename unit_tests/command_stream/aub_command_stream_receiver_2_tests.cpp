@@ -490,7 +490,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
 
     AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
 
-    auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, {}, nullptr);
+    auto imageAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     ASSERT_NE(nullptr, imageAllocation);
 
     EXPECT_TRUE(aubCsr->writeMemory(*imageAllocation));

@@ -325,8 +325,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     return true;
 }
 
-GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, StorageInfo storageInfo, const void *hostPtr) {
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr) {
     AllocationData allocationData;
+    auto storageInfo = GraphicsAllocation::createStorageInfoFromProperties(properties);
     getAllocationData(allocationData, properties, storageInfo, hostPtr);
 
     AllocationStatus status = AllocationStatus::Error;

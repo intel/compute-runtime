@@ -1227,7 +1227,7 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleter
 
     AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
 
-    memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, {}, nullptr);
+    memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     EXPECT_EQ(1, deleter->drainCalled);
     EXPECT_EQ(2u, wddm->createAllocationResult.called);
 }
@@ -1246,7 +1246,7 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleter
 
     AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
 
-    auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, {}, nullptr);
+    auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     EXPECT_EQ(0, deleter->drainCalled);
     EXPECT_EQ(1u, wddm->createAllocationResult.called);
     EXPECT_EQ(1u, wddm->mapGpuVirtualAddressResult.called);
@@ -1264,7 +1264,7 @@ TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDele
 
     AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(&imgInfo, true);
 
-    memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, {}, nullptr);
+    memoryManager->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
     EXPECT_EQ(1u, wddm->createAllocationResult.called);
 }
 
