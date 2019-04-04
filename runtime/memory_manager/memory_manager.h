@@ -11,13 +11,13 @@
 #include "runtime/command_stream/preemption_mode.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/engine_control.h"
+#include "runtime/memory_manager/allocation_properties.h"
 #include "runtime/memory_manager/gfx_partition.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/os_interface/32bit_memory.h"
 
 #include "engine_node.h"
-#include "mem_obj_types.h"
 
 #include <bitset>
 #include <cstdint>
@@ -29,11 +29,8 @@ class CommandStreamReceiver;
 class DeferredDeleter;
 class ExecutionEnvironment;
 class Gmm;
-class GraphicsAllocation;
 class HostPtrManager;
 class OsContext;
-struct HardwareInfo;
-struct ImageInfo;
 
 using CsrContainer = std::vector<std::vector<std::unique_ptr<CommandStreamReceiver>>>;
 using EngineControlContainer = std::vector<EngineControl>;
@@ -46,57 +43,6 @@ inline DeviceBitfield getDeviceBitfieldForNDevices(uint32_t numDevices) {
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,
     REUSABLE_ALLOCATION
-};
-
-struct AllocationProperties {
-    constexpr static uint32_t noDeviceSpecified = std::numeric_limits<uint32_t>::max();
-    union {
-        struct {
-            uint32_t allocateMemory : 1;
-            uint32_t flushL3RequiredForRead : 1;
-            uint32_t flushL3RequiredForWrite : 1;
-            uint32_t forcePin : 1;
-            uint32_t uncacheable : 1;
-            uint32_t multiOsContextCapable : 1;
-            uint32_t reserved : 26;
-        } flags;
-        uint32_t allFlags = 0;
-    };
-    static_assert(sizeof(AllocationProperties::flags) == sizeof(AllocationProperties::allFlags), "");
-    size_t size = 0;
-    size_t alignment = 0;
-    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
-    ImageInfo *imgInfo = nullptr;
-    uint32_t deviceIndex = AllocationProperties::noDeviceSpecified;
-
-    AllocationProperties(size_t size,
-                         GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(true, size, allocationType) {}
-
-    AllocationProperties(bool allocateMemory,
-                         ImageInfo &imgInfo,
-                         GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(allocateMemory, 0u, allocationType) {
-        this->imgInfo = &imgInfo;
-    }
-
-    AllocationProperties(bool allocateMemory,
-                         size_t size,
-                         GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(allocateMemory, size, allocationType, false, AllocationProperties::noDeviceSpecified) {}
-
-    AllocationProperties(bool allocateMemory,
-                         size_t size,
-                         GraphicsAllocation::AllocationType allocationType,
-                         bool multiOsContextCapable,
-                         uint32_t deviceIndex)
-        : size(size), allocationType(allocationType), deviceIndex(deviceIndex) {
-        allFlags = 0;
-        flags.flushL3RequiredForRead = 1;
-        flags.flushL3RequiredForWrite = 1;
-        flags.allocateMemory = allocateMemory;
-        flags.multiOsContextCapable = multiOsContextCapable;
-    }
 };
 
 struct AlignedMallocRestrictions {
