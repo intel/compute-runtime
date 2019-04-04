@@ -27,6 +27,8 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/internal_allocation_storage.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_banks.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_constants.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.cpp
