@@ -14,6 +14,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 
 using namespace NEO;
 
@@ -372,3 +373,100 @@ HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWhenDumpAllocationIsCal
 
     EXPECT_EQ(0u, mockAubFileStream->getSize());
 }
+
+HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWheGetDumpSurfaceIsCalledAndDumpFormatIsSpecifiedThenNullSurfaceInfoIsReturned) {
+    MockContext context;
+    std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
+    ASSERT_NE(nullptr, image);
+
+    auto gfxAllocation = image->getGraphicsAllocation();
+    auto mockGmmResourceInfo = reinterpret_cast<MockGmmResourceInfo *>(gfxAllocation->getDefaultGmm()->gmmResourceInfo.get());
+    mockGmmResourceInfo->mockResourceCreateParams.MSAA.NumSamples = 2;
+
+    EXPECT_EQ(nullptr, AubAllocDump::getDumpSurfaceInfo<FamilyType>(*gfxAllocation, AubAllocDump::DumpFormat::IMAGE_BMP));
+    EXPECT_EQ(nullptr, AubAllocDump::getDumpSurfaceInfo<FamilyType>(*gfxAllocation, AubAllocDump::DumpFormat::IMAGE_TRE));
+}
+
+struct AubSurfaceDumpTests : public AubAllocDumpTests,
+                             public ::testing::WithParamInterface<std::tuple<bool /*isCompressed*/, AubAllocDump::DumpFormat>> {
+    void SetUp() override {
+        AubAllocDumpTests::SetUp();
+        isCompressed = std::get<0>(GetParam());
+        dumpFormat = std::get<1>(GetParam());
+    }
+    void TearDown() override {
+        AubAllocDumpTests::TearDown();
+    }
+
+    bool isCompressed = false;
+    AubAllocDump::DumpFormat dumpFormat = AubAllocDump::DumpFormat::NONE;
+};
+
+HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledAndDumpFormatIsSpecifiedThenSurfaceInfoIsReturned) {
+    ExecutionEnvironment *executionEnvironment = pDevice->executionEnvironment;
+    MockMemoryManager memoryManager(*executionEnvironment);
+
+    if (AubAllocDump::isBufferDumpFormat(dumpFormat)) {
+        auto bufferAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+        ASSERT_NE(nullptr, bufferAllocation);
+
+        bufferAllocation->setAllocationType(isCompressed ? GraphicsAllocation::AllocationType::BUFFER_COMPRESSED : GraphicsAllocation::AllocationType::BUFFER);
+
+        std::unique_ptr<aub_stream::SurfaceInfo> surfaceInfo(AubAllocDump::getDumpSurfaceInfo<FamilyType>(*bufferAllocation, dumpFormat));
+        if (nullptr != surfaceInfo) {
+            using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+            using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
+            EXPECT_EQ(GmmHelper::decanonize(bufferAllocation->getGpuAddress()), surfaceInfo->address);
+            EXPECT_EQ(static_cast<uint32_t>(bufferAllocation->getUnderlyingBufferSize()), surfaceInfo->width);
+            EXPECT_EQ(1u, surfaceInfo->height);
+            EXPECT_EQ(static_cast<uint32_t>(bufferAllocation->getUnderlyingBufferSize()), surfaceInfo->pitch);
+            EXPECT_EQ(SURFACE_FORMAT::SURFACE_FORMAT_RAW, surfaceInfo->format);
+            EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfaceInfo->surftype);
+            EXPECT_EQ(RENDER_SURFACE_STATE::TILE_MODE_LINEAR, surfaceInfo->tilingType);
+            EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == bufferAllocation->getAllocationType(), surfaceInfo->compressed);
+            EXPECT_EQ((AubAllocDump::DumpFormat::BUFFER_TRE == dumpFormat) ? aub_stream::dumpType::tre : aub_stream::dumpType::bin, surfaceInfo->dumpType);
+        }
+        memoryManager.freeGraphicsMemory(bufferAllocation);
+    }
+
+    if (AubAllocDump::isImageDumpFormat(dumpFormat)) {
+        cl_image_desc imgDesc = {};
+        imgDesc.image_width = 512;
+        imgDesc.image_height = 1;
+        imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+        MockGmm::queryImgParams(imgInfo);
+        MockMemoryManager::AllocationData allocationData;
+        allocationData.imgInfo = &imgInfo;
+        auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(allocationData);
+        ASSERT_NE(nullptr, imageAllocation);
+
+        auto gmm = imageAllocation->getDefaultGmm();
+        gmm->isRenderCompressed = isCompressed;
+
+        std::unique_ptr<aub_stream::SurfaceInfo> surfaceInfo(AubAllocDump::getDumpSurfaceInfo<FamilyType>(*imageAllocation, dumpFormat));
+        if (nullptr != surfaceInfo) {
+            EXPECT_EQ(GmmHelper::decanonize(imageAllocation->getGpuAddress()), surfaceInfo->address);
+            EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseWidth()), surfaceInfo->width);
+            EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseHeight()), surfaceInfo->height);
+            EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getRenderPitch()), surfaceInfo->pitch);
+            EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getResourceFormatSurfaceState()), surfaceInfo->format);
+            EXPECT_EQ(AubAllocDump::getImageSurfaceTypeFromGmmResourceType<FamilyType>(gmm->gmmResourceInfo->getResourceType()), surfaceInfo->surftype);
+            EXPECT_EQ(gmm->gmmResourceInfo->getTileModeSurfaceState(), surfaceInfo->tilingType);
+            EXPECT_EQ(gmm->isRenderCompressed, surfaceInfo->compressed);
+            EXPECT_EQ((AubAllocDump::DumpFormat::IMAGE_TRE == dumpFormat) ? aub_stream::dumpType::tre : aub_stream::dumpType::bmp, surfaceInfo->dumpType);
+        }
+        memoryManager.freeGraphicsMemory(imageAllocation);
+    }
+}
+
+INSTANTIATE_TEST_CASE_P(GetDumpSurfaceTest,
+                        AubSurfaceDumpTests,
+                        ::testing::Combine(
+                            ::testing::Bool(), // isCompressed
+                            ::testing::Values( // dumpFormat
+                                AubAllocDump::DumpFormat::NONE,
+                                AubAllocDump::DumpFormat::BUFFER_BIN,
+                                AubAllocDump::DumpFormat::BUFFER_TRE,
+                                AubAllocDump::DumpFormat::IMAGE_BMP,
+                                AubAllocDump::DumpFormat::IMAGE_TRE)));

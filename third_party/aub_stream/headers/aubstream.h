@@ -13,11 +13,36 @@
 
 namespace aub_stream {
 
-namespace dumpFormat {
-constexpr uint32_t bin = 0;
-constexpr uint32_t bmp = 1;
-constexpr uint32_t tre = 2;
-} // namespace dumpFormat
+struct SurfaceInfo {
+    uint64_t address;
+    uint32_t width;
+    uint32_t height;
+    uint32_t pitch;
+    uint32_t format;
+    uint32_t surftype;
+    uint32_t tilingType;
+    bool compressed;
+    uint32_t dumpType;
+};
+
+namespace surftype {
+constexpr uint32_t image1D = 0;
+constexpr uint32_t image2D = 1;
+constexpr uint32_t image3D = 2;
+constexpr uint32_t buffer = 4;
+} // namespace surftype
+
+namespace tilingType {
+constexpr uint32_t linear = 0;
+constexpr uint32_t xmajor = 2;
+constexpr uint32_t ymajor = 3;
+} // namespace tilingType
+
+namespace dumpType {
+constexpr uint32_t bmp = 0;
+constexpr uint32_t bin = 1;
+constexpr uint32_t tre = 3;
+} // namespace dumpType
 
 namespace mode {
 constexpr uint32_t aubFile = 0;

@@ -1169,19 +1169,19 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
 
     EXPECT_FALSE(mockHwContext0->dumpBufferBINCalled);
     EXPECT_FALSE(mockHwContext1->dumpBufferBINCalled);
-    EXPECT_FALSE(mockHwContext0->dumpBufferCalled);
-    EXPECT_FALSE(mockHwContext1->dumpBufferCalled);
+    EXPECT_FALSE(mockHwContext0->dumpSurfaceCalled);
+    EXPECT_FALSE(mockHwContext1->dumpSurfaceCalled);
     EXPECT_FALSE(mockHwContext0->readMemoryCalled);
     EXPECT_FALSE(mockHwContext1->readMemoryCalled);
 
     hwContextContainer.dumpBufferBIN(1, 2);
-    hwContextContainer.dumpBuffer(1, 2, AubAllocDump::DumpFormat::BUFFER_BIN, false);
+    hwContextContainer.dumpSurface({1, 2, 3, 4, 5, 6, 7, false, 0});
     hwContextContainer.readMemory(1, reinterpret_cast<void *>(0x123), 1, 2, 0);
 
     EXPECT_TRUE(mockHwContext0->dumpBufferBINCalled);
     EXPECT_FALSE(mockHwContext1->dumpBufferBINCalled);
-    EXPECT_TRUE(mockHwContext0->dumpBufferCalled);
-    EXPECT_FALSE(mockHwContext1->dumpBufferCalled);
+    EXPECT_TRUE(mockHwContext0->dumpSurfaceCalled);
+    EXPECT_FALSE(mockHwContext1->dumpSurfaceCalled);
     EXPECT_TRUE(mockHwContext0->readMemoryCalled);
     EXPECT_FALSE(mockHwContext1->readMemoryCalled);
 }

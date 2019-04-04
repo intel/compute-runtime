@@ -724,19 +724,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
     }
 
     if (hardwareContextController) {
-        auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
-        auto size = gfxAllocation.getUnderlyingBufferSize();
-        auto compressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == gfxAllocation.getAllocationType();
-
-        switch (dumpFormat) {
-        case AubAllocDump::DumpFormat::BUFFER_BIN:
-            hardwareContextController->dumpBuffer(gpuAddress, size, aub_stream::dumpFormat::bin, compressed);
-            break;
-        case AubAllocDump::DumpFormat::BUFFER_TRE:
-            hardwareContextController->dumpBuffer(gpuAddress, size, aub_stream::dumpFormat::tre, compressed);
-            break;
-        default:
-            break;
+        auto surfaceInfo = std::unique_ptr<aub_stream::SurfaceInfo>(AubAllocDump::getDumpSurfaceInfo<GfxFamily>(gfxAllocation, dumpFormat));
+        if (nullptr != surfaceInfo) {
+            hardwareContextController->dumpSurface(*surfaceInfo.get());
         }
         return;
     }

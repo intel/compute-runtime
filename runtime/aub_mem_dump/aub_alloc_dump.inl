@@ -8,7 +8,10 @@
 #include "runtime/aub_mem_dump/aub_alloc_dump.h"
 #include "runtime/gmm_helper/gmm.h"
 
+#include "third_party/aub_stream/headers/aubstream.h"
+
 using namespace NEO;
+using namespace aub_stream;
 
 namespace AubAllocDump {
 
@@ -32,6 +35,45 @@ uint32_t getImageSurfaceTypeFromGmmResourceType(GMM_RESOURCE_TYPE gmmResourceTyp
         break;
     }
     return surfaceType;
+}
+
+template <typename GfxFamily>
+SurfaceInfo *getDumpSurfaceInfo(GraphicsAllocation &gfxAllocation, DumpFormat dumpFormat) {
+    SurfaceInfo *surfaceInfo = nullptr;
+
+    if (isBufferDumpFormat(dumpFormat)) {
+        using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+        using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
+        surfaceInfo = new SurfaceInfo();
+        surfaceInfo->address = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
+        surfaceInfo->width = static_cast<uint32_t>(gfxAllocation.getUnderlyingBufferSize());
+        surfaceInfo->height = 1;
+        surfaceInfo->pitch = static_cast<uint32_t>(gfxAllocation.getUnderlyingBufferSize());
+        surfaceInfo->format = SURFACE_FORMAT::SURFACE_FORMAT_RAW;
+        surfaceInfo->tilingType = RENDER_SURFACE_STATE::TILE_MODE_LINEAR;
+        surfaceInfo->surftype = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
+        surfaceInfo->compressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == gfxAllocation.getAllocationType();
+        surfaceInfo->dumpType = (AubAllocDump::DumpFormat::BUFFER_TRE == dumpFormat) ? dumpType::tre : dumpType::bin;
+    }
+
+    if (isImageDumpFormat(dumpFormat)) {
+        auto gmm = gfxAllocation.getDefaultGmm();
+        if (gmm->gmmResourceInfo->getNumSamples() > 1) {
+            return nullptr;
+        }
+        surfaceInfo = new SurfaceInfo();
+        surfaceInfo->address = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
+        surfaceInfo->width = static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseWidth());
+        surfaceInfo->height = static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseHeight());
+        surfaceInfo->pitch = static_cast<uint32_t>(gmm->gmmResourceInfo->getRenderPitch());
+        surfaceInfo->format = gmm->gmmResourceInfo->getResourceFormatSurfaceState();
+        surfaceInfo->tilingType = gmm->gmmResourceInfo->getTileModeSurfaceState();
+        surfaceInfo->surftype = getImageSurfaceTypeFromGmmResourceType<GfxFamily>(gmm->gmmResourceInfo->getResourceType());
+        surfaceInfo->compressed = gmm->isRenderCompressed;
+        surfaceInfo->dumpType = (AubAllocDump::DumpFormat::IMAGE_TRE == dumpFormat) ? dumpType::tre : dumpType::bmp;
+    }
+
+    return surfaceInfo;
 }
 
 template <typename GfxFamily>

@@ -16,6 +16,10 @@
 
 using namespace NEO;
 
+namespace aub_stream {
+struct SurfaceInfo;
+}
+
 namespace AubAllocDump {
 
 enum DumpFormat {
@@ -62,6 +66,17 @@ inline DumpFormat getDumpFormat(GraphicsAllocation &gfxAllocation) {
 
     return dumpFormat;
 }
+
+inline bool isBufferDumpFormat(DumpFormat dumpFormat) {
+    return (AubAllocDump::DumpFormat::BUFFER_BIN == dumpFormat) || (dumpFormat == AubAllocDump::DumpFormat::BUFFER_TRE);
+}
+
+inline bool isImageDumpFormat(DumpFormat dumpFormat) {
+    return (AubAllocDump::DumpFormat::IMAGE_BMP == dumpFormat) || (dumpFormat == AubAllocDump::DumpFormat::IMAGE_TRE);
+}
+
+template <typename GfxFamily>
+aub_stream::SurfaceInfo *getDumpSurfaceInfo(GraphicsAllocation &gfxAllocation, DumpFormat dumpFormat);
 
 template <typename GfxFamily>
 uint32_t getImageSurfaceTypeFromGmmResourceType(GMM_RESOURCE_TYPE gmmResourceType);

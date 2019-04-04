@@ -901,7 +901,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
 
     aubCsr.dumpAllocation(*gfxAllocation);
 
-    EXPECT_TRUE(mockHardwareContext->dumpBufferCalled);
+    EXPECT_TRUE(mockHardwareContext->dumpSurfaceCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -927,7 +927,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenCompressedGraphicsAllocationWritabl
 
     aubCsr.dumpAllocation(*gfxAllocation);
 
-    EXPECT_TRUE(mockHardwareContext->dumpBufferCalled);
+    EXPECT_TRUE(mockHardwareContext->dumpSurfaceCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -949,7 +949,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWritableWhenDumpA
 
     aubCsr.dumpAllocation(*gfxAllocation);
 
-    EXPECT_FALSE(mockHardwareContext->dumpBufferCalled);
+    EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -972,7 +972,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationNonWritableWhenDu
 
     aubCsr.dumpAllocation(*gfxAllocation);
 
-    EXPECT_FALSE(mockHardwareContext->dumpBufferCalled);
+    EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -997,7 +997,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationNotDumpableWhenDu
     aubCsr.dumpAllocation(*gfxAllocation);
 
     EXPECT_FALSE(gfxAllocation->isAllocDumpable());
-    EXPECT_FALSE(mockHardwareContext->dumpBufferCalled);
+    EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -1022,7 +1022,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationDumpableWhenDumpA
     aubCsr.dumpAllocation(*gfxAllocation);
 
     EXPECT_FALSE(gfxAllocation->isAllocDumpable());
-    EXPECT_TRUE(mockHardwareContext->dumpBufferCalled);
+    EXPECT_TRUE(mockHardwareContext->dumpSurfaceCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }

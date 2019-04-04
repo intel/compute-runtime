@@ -56,8 +56,8 @@ void HardwareContextController::dumpBufferBIN(uint64_t gfxAddress, size_t size) 
     hardwareContexts[0]->dumpBufferBIN(gfxAddress, size);
 }
 
-void HardwareContextController::dumpBuffer(uint64_t gfxAddress, size_t size, uint32_t format, bool compressed) {
-    hardwareContexts[0]->dumpBuffer(gfxAddress, size, format, compressed);
+void HardwareContextController::dumpSurface(const aub_stream::SurfaceInfo &surfaceInfo) {
+    hardwareContexts[0]->dumpSurface(surfaceInfo);
 }
 
 void HardwareContextController::readMemory(uint64_t gfxAddress, void *memory, size_t size, uint32_t memoryBanks, size_t pageSize) {
