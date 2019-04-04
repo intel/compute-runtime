@@ -4237,11 +4237,11 @@ cl_int CL_API_CALL clAddCommentINTEL(const char *comment) {
     auto executionEnvironment = platform()->peekExecutionEnvironment();
     auto aubCenter = executionEnvironment->aubCenter.get();
 
-    if (!comment || !aubCenter || !aubCenter->getAubManager()) {
+    if (!comment || (aubCenter && !aubCenter->getAubManager())) {
         retVal = CL_INVALID_VALUE;
     }
 
-    if (retVal == CL_SUCCESS) {
+    if (retVal == CL_SUCCESS && aubCenter) {
         aubCenter->getAubManager()->addComment(comment);
     }
     return retVal;

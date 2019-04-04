@@ -14,17 +14,17 @@ using namespace NEO;
 
 namespace ULT {
 
+TEST(clAddCommentToAubTest, givenProperCommentNullptrAubCenterWhenAddCommentToAubThenSuccessIsReturned) {
+    auto retVal = clAddCommentINTEL("comment");
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST(clAddCommentToAubTest, givenNullptrCommentWhenAddCommentToAubThenErrorIsReturned) {
     auto retVal = clAddCommentINTEL(nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST(clAddCommentToAubTest, givenProperCommentAndNullptrAubCenterWhenAddCommentToAubThenErrorIsReturned) {
-    auto retVal = clAddCommentINTEL("comment");
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-}
-
-TEST(clAddCommentToAubTest, givenProperCommentAndAubCenterButNullptrAubManagerWhenAddCommentToAubThenErrorIsReturned) {
+TEST(clAddCommentToAubTest, givenAubCenterAndProperCommentButNullptrAubManagerWhenAddCommentToAubThenErrorIsReturned) {
     auto executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->aubCenter.reset(new MockAubCenter());
 
