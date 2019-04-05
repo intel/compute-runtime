@@ -10,7 +10,6 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/linux/os_interface.h"
-#include "unit_tests/libult/mock_gfx_family.h"
 
 #include <cstring>
 
@@ -98,8 +97,7 @@ struct HwInfoConfigTestLinuxDummy : HwInfoConfigTestLinux {
 
         drm->StoredDeviceID = 1;
         drm->setGtType(GTTYPE_GT0);
-
-        testPlatform.eRenderCoreFamily = IGFX_UNKNOWN_CORE;
+        testPlatform.eRenderCoreFamily = platformDevices[0]->pPlatform->eRenderCoreFamily;
     }
 
     void TearDown() override {

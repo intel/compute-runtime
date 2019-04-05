@@ -10,7 +10,6 @@
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/libult/mock_gfx_family.h"
 
 namespace NEO {
 

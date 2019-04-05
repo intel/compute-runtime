@@ -18,7 +18,6 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/libult/mock_gfx_family.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -1268,18 +1267,6 @@ TEST(DispatchWalker, calculateDispatchDim) {
             EXPECT_EQ(dimRef, dimTest);
         }
     }
-}
-
-HWTEST_F(DispatchWalkerTest, WhenCallingDefaultWaMethodsThenExpectNothing) {
-    auto &cmdStream = pCmdQ->getCS(0);
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
-    EXPECT_EQ(CL_SUCCESS, kernel.initialize());
-
-    GpgpuWalkerHelper<GENX>::applyWADisableLSQCROPERFforOCL(&cmdStream, kernel, false);
-
-    size_t expectedSize = 0;
-    size_t actualSize = GpgpuWalkerHelper<GENX>::getSizeForWADisableLSQCROPERFforOCL(&kernel);
-    EXPECT_EQ(expectedSize, actualSize);
 }
 
 HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxTranslationRequiredThenPipeControlWithStallAndDCFlushAdded) {

@@ -14,7 +14,6 @@
 #include "runtime/platform/platform.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/libult/mock_gfx_family.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
@@ -744,39 +743,4 @@ TEST(GmmHelperTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
     EXPECT_NE(nullptr, GmmHelper::getClientContext()->getHandle());
 }
 
-struct GmmQueryInfoWithoutYTilingTest : public ::testing::Test {
-    GmmQueryInfoWithoutYTilingTest() : enabledYTilingBackup(&GENX::enabledYTiling, false),
-                                       renderCoreFamilyBackup(const_cast<GFXCORE_FAMILY *>(&platformDevices[0]->pPlatform->eRenderCoreFamily), IGFX_UNKNOWN_CORE) {}
-
-    VariableBackup<bool> enabledYTilingBackup;
-    VariableBackup<GFXCORE_FAMILY> renderCoreFamilyBackup;
-};
-TEST_F(GmmQueryInfoWithoutYTilingTest, givenPlatformThatDoesntSupportYTilingWhenQueryImageParamsForTilableImageThenTilingIsDisabled) {
-
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
-    imgDesc.image_width = 17;
-    imgDesc.image_height = 17;
-    imgDesc.image_depth = 17;
-
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-
-    auto queryGmm = MockGmm::queryImgParams(imgInfo);
-
-    EXPECT_EQ(queryGmm->resourceParams.Flags.Info.Linear, 0u);
-    EXPECT_EQ(queryGmm->resourceParams.Flags.Info.TiledY, 0u);
-}
-TEST_F(GmmQueryInfoWithoutYTilingTest, givenPlatformThatDoesntSupportYTilingWhenQueryImageParamsForUntilableImageThenLinearPropertyRemains) {
-
-    cl_image_desc imgDesc{};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
-    imgDesc.image_width = 17;
-
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-
-    auto queryGmm = MockGmm::queryImgParams(imgInfo);
-
-    EXPECT_EQ(queryGmm->resourceParams.Flags.Info.Linear, 1u);
-    EXPECT_EQ(queryGmm->resourceParams.Flags.Info.TiledY, 0u);
-}
 } // namespace NEO

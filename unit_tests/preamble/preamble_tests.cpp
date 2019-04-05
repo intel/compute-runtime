@@ -10,7 +10,6 @@
 #include "runtime/utilities/stackvec.h"
 #include "test.h"
 #include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/libult/mock_gfx_family.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
@@ -188,18 +187,4 @@ HWTEST_F(PreambleTest, givenDefaultPreambleWhenGetThreadsMaxNumberIsCalledThenMa
 
     uint32_t expected = hwInfo.pSysInfo->EUCount * threadsPerEU;
     EXPECT_EQ(expected, value);
-}
-
-TEST(DefaultPreambleHelperTest, givenDefaultPreambleHelperWhenGetAdditionalCommandsSizeThenZeroIsReturned) {
-    auto size = PreambleHelper<GENX>::getAdditionalCommandsSize(MockDevice(**platformDevices));
-    EXPECT_EQ(0u, size);
-}
-
-TEST(DefaultPreambleHelperTest, givenDefaultPreambleHelperWhenProgramGenSpecificPreambleWorkAroundsThenDoNothing) {
-    char preambleBuffer[4096];
-    LinearStream preambleStream(preambleBuffer, 4096);
-    size_t size = preambleStream.getUsed();
-
-    PreambleHelper<GENX>::programGenSpecificPreambleWorkArounds(&preambleStream, **platformDevices);
-    EXPECT_EQ(size, preambleStream.getUsed());
 }
