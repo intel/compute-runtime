@@ -174,6 +174,7 @@ int main(int argc, char **argv) {
     bool useDefaultListener = false;
     bool enable_alarm = true;
     bool setupFeatureTable = testMode == TestMode::AubTests ? true : false;
+    bool enableMemoryDumps = false;
 
     applyWorkarounds();
 
@@ -285,11 +286,18 @@ int main(int argc, char **argv) {
                 DebugManager.setReaderImpl(SettingsReader::create());
                 DebugManager.injectSettingsFromReader();
             }
+        } else if (!strcmp("--enable_memory_dumps", argv[i]) && testMode == TestMode::AubTests) {
+            enableMemoryDumps = true;
         }
     }
 
     if (numDevices < 1) {
         return -1;
+    }
+
+    if (enableMemoryDumps) {
+        DebugManager.flags.AUBDumpBufferFormat.set("BIN");
+        DebugManager.flags.AUBDumpImageFormat.set("TRE");
     }
 
     uint32_t threadsPerEu = hwInfoConfigFactory[productFamily]->threadsPerEu;
