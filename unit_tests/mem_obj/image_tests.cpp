@@ -475,6 +475,16 @@ TEST_P(CreateImageNoHostPtr, withImageGraphicsAllocationReportsImageType) {
     delete image;
 }
 
+TEST_P(CreateImageNoHostPtr, whenImageIsReadOnlyThenFlushL3IsNotRequired) {
+    auto image = clUniquePtr(createImageWithFlags(flags));
+
+    EXPECT_NE(nullptr, image);
+
+    auto allocation = image->getGraphicsAllocation();
+    auto isReadOnly = isValueSet(flags, CL_MEM_READ_ONLY);
+    EXPECT_NE(isReadOnly, allocation->isFlushL3Required());
+}
+
 // Parameterized test that tests image creation with all flags that should be
 // valid with a nullptr host ptr
 static cl_mem_flags NoHostPtrFlags[] = {
@@ -1427,7 +1437,7 @@ HWTEST_F(HwImageTest, givenImageHwWhenSettingCCSParamsThenSetClearColorParamsIsC
     format.image_channel_order = CL_RGBA;
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(imgInfo, true);
+    AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(imgInfo, true, 0);
 
     auto graphicsAllocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
 
@@ -1458,7 +1468,7 @@ HWTEST_F(HwImageTest, givenImageHwWithUnifiedSurfaceAndMcsWhenSettingParamsForMu
     cl_image_format format = {};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(imgInfo, true);
+    AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(imgInfo, true, 0);
 
     auto graphicsAllocation = memoryManager.allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);
 

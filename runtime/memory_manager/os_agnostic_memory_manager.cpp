@@ -246,7 +246,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(
     auto ptr = allocateSystemMemory(alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize), MemoryConstants::pageSize);
     if (ptr != nullptr) {
         alloc = new MemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.imgInfo->size,
-                                     counter, MemoryPool::SystemCpuInaccessible, false, false, false);
+                                     counter, MemoryPool::SystemCpuInaccessible, false, allocationData.flags.uncacheable, allocationData.flags.flushL3);
         counter++;
     }
 

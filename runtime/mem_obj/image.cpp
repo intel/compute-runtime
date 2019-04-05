@@ -223,7 +223,7 @@ Image *Image::create(Context *context,
             if (flags & CL_MEM_USE_HOST_PTR) {
 
                 if (!context->isSharedContext) {
-                    AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(imgInfo, false);
+                    AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(imgInfo, false, flags);
 
                     memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
 
@@ -243,7 +243,7 @@ Image *Image::create(Context *context,
                 }
 
             } else {
-                AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(imgInfo, true);
+                AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(imgInfo, true, flags);
                 memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
 
                 if (memory && MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {

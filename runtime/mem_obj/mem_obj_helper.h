@@ -89,8 +89,10 @@ class MemObjHelper {
 
     static AllocationProperties getAllocationProperties(MemoryProperties properties, bool allocateMemory,
                                                         size_t size, GraphicsAllocation::AllocationType type);
-    static AllocationProperties getAllocationProperties(ImageInfo &imgInfo, bool allocateMemory) {
-        return {allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE};
+    static AllocationProperties getAllocationProperties(ImageInfo &imgInfo, bool allocateMemory, MemoryProperties memoryProperties) {
+        AllocationProperties allocationProperties{allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE};
+        fillCachePolicyInProperties(allocationProperties, memoryProperties);
+        return allocationProperties;
     }
 
     static void fillCachePolicyInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties) {
