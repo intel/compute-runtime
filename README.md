@@ -35,6 +35,8 @@ Below packages are needed to enable [cl_intel_va_api_media_sharing](https://www.
 * Intel Core Processors with Gen8 graphics devices (formerly Broadwell) - OpenCL 2.1
 * Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake) - OpenCL 2.1
 * Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake) - OpenCL 1.2
+* Intel Core Processors with Gen11 graphics devices (formerly Ice Lake) - OpenCL 2.1
+
 
 ## Linking applications
 
