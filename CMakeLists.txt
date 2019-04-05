@@ -491,9 +491,11 @@ if(MSVC)
         endif()
 	endif()
 
+# Disable generating manifest
+	set(LINKER_FLAGS "/MANIFEST:NO")
+
 # Support for WUD
 	set(CMAKE_CXX_STANDARD_LIBRARIES "onecore.lib")
-	set(LINKER_FLAGS "")
 	foreach(IT kernel32.lib;user32.lib;gdi32.lib;advapi32.lib;ole32.lib;)
 		set(LINKER_FLAGS "${LINKER_FLAGS} /NODEFAULTLIB:${IT}")
 	endforeach()
@@ -524,7 +526,7 @@ else()
 		endif()
 	endif()
 
-endif(MSVC)
+endif()
 
 # setup variables needed for custom configuration type
 # generate PDB files even for release build on MSVC
