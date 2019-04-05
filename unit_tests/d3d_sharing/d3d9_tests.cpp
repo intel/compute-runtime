@@ -235,6 +235,18 @@ TEST_F(D3D9Tests, createSurfaceIntel) {
     clReleaseMemObject(memObj);
 }
 
+TEST_F(D3D9Tests, givenD3DHandleWhenCreatingSharedSurfaceThenAllocationTypeImageIsSet) {
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    surfaceInfo.shared_handle = reinterpret_cast<HANDLE>(1);
+
+    EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
+
+    auto sharedImg = std::unique_ptr<Image>(D3DSurface::create(context, &surfaceInfo, CL_MEM_READ_WRITE, 0, 2, nullptr));
+    ASSERT_NE(nullptr, sharedImg.get());
+    ASSERT_NE(nullptr, sharedImg->getGraphicsAllocation());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, sharedImg->getGraphicsAllocation()->getAllocationType());
+}
+
 TEST_F(D3D9Tests, givenUPlaneWhenCreateSurfaceThenChangeWidthHeightAndPitch) {
     mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
     surfaceInfo.shared_handle = (HANDLE)1;

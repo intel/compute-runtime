@@ -324,4 +324,22 @@ TEST_F(CreateFromGlTextureTests, GivenGlTextureTargetAndMipLevelNonNegativeWhenC
     EXPECT_GE(1u, glImage->getImageDesc().num_mip_levels);
     EXPECT_EQ(glImage->peekBaseMipLevel(), 2);
 }
+
+TEST_F(CreateFromGlTextureTests, GivenGlTextureWhenCreateIsCalledThenAllocationTypeIsSharedImage) {
+    unsigned int target = GL_TEXTURE_3D;
+    cl_GLint miplevel = 2;
+
+    imgDesc.image_type = GlTexture::getClMemObjectType(target);
+    imgDesc.image_height = 13;
+    imgDesc.image_width = 15;
+    imgDesc.image_depth = 7;
+
+    updateImgInfoAndForceGmm();
+
+    auto glImage = std::unique_ptr<Image>(GlTexture::createSharedGlTexture(&clContext, 0u, target, miplevel, 0, &retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    ASSERT_NE(nullptr, glImage->getGraphicsAllocation());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, glImage->getGraphicsAllocation()->getAllocationType());
+}
 } // namespace NEO

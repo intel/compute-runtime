@@ -1175,3 +1175,9 @@ TEST_F(glSharingTests, whenGetGlContextHandleIsCalledThenProperHandleIsReturned)
     sharing->GLContextHandle = 0x2c;
     EXPECT_EQ(0x2cU, sharing->getGLContextHandle());
 }
+
+TEST_F(glSharingTests, givenClGLBufferWhenCreatedThenSharedBufferAllocatoinTypeIsSet) {
+    std::unique_ptr<Buffer> buffer(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId, nullptr));
+    ASSERT_NE(nullptr, buffer->getGraphicsAllocation());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_BUFFER, buffer->getGraphicsAllocation()->getAllocationType());
+}

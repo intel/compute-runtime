@@ -1270,6 +1270,34 @@ TYPED_TEST_P(D3DTests, inForced32BitAddressingBufferCreatedHas32BitAllocation) {
     EXPECT_TRUE(allocation->is32BitAllocation());
 }
 
+TYPED_TEST_P(D3DTests, givenD3DTexture2dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet) {
+    this->mockSharingFcns->mockTexture2dDesc.Format = DXGI_FORMAT_P016;
+    EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
+
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
+    ASSERT_NE(nullptr, image.get());
+    ASSERT_NE(nullptr, image->getGraphicsAllocation());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, image->getGraphicsAllocation()->getAllocationType());
+}
+
+TYPED_TEST_P(D3DTests, givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet) {
+    this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+
+    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
+    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging)));
+
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, nullptr));
+    ASSERT_NE(nullptr, image.get());
+    ASSERT_NE(nullptr, image->getGraphicsAllocation());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, image->getGraphicsAllocation()->getAllocationType());
+}
+
 REGISTER_TYPED_TEST_CASE_P(D3DTests,
                            getDeviceIDsFromD3DWithSpecificDeviceSet,
                            getDeviceIDsFromD3DWithSpecificDeviceSource,
@@ -1313,7 +1341,9 @@ REGISTER_TYPED_TEST_CASE_P(D3DTests,
                            givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
                            givenP010FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
                            givenP016FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
-                           inForced32BitAddressingBufferCreatedHas32BitAllocation);
+                           inForced32BitAddressingBufferCreatedHas32BitAllocation,
+                           givenD3DTexture2dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet,
+                           givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet);
 
 typedef ::testing::Types<D3DTypesHelper::D3D10, D3DTypesHelper::D3D11> D3DTypes;
 INSTANTIATE_TYPED_TEST_CASE_P(D3DSharingTests, D3DTests, D3DTypes);

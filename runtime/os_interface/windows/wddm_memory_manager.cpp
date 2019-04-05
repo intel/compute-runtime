@@ -206,8 +206,8 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     return wddmAllocation.release();
 }
 
-GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle) {
-    auto allocation = std::make_unique<WddmAllocation>(GraphicsAllocation::AllocationType::UNDECIDED, nullptr, 0, handle, MemoryPool::SystemCpuInaccessible, false);
+GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, GraphicsAllocation::AllocationType allocationType) {
+    auto allocation = std::make_unique<WddmAllocation>(allocationType, nullptr, 0, handle, MemoryPool::SystemCpuInaccessible, false);
 
     bool status = ntHandle ? wddm->openNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(handle)), allocation.get())
                            : wddm->openSharedHandle(handle, allocation.get());
@@ -242,11 +242,11 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness) {
-    return createAllocationFromHandle(handle, requireSpecificBitness, false);
+    return createAllocationFromHandle(handle, requireSpecificBitness, false, properties.allocationType);
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void *handle) {
-    return createAllocationFromHandle((osHandle)((UINT_PTR)handle), false, true);
+    return createAllocationFromHandle((osHandle)((UINT_PTR)handle), false, true, GraphicsAllocation::AllocationType::SHARED_IMAGE);
 }
 
 void WddmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) {
