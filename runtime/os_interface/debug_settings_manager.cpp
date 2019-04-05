@@ -188,7 +188,7 @@ void DebugSettingsManager<DebugLevel>::dumpFlags() const {
     dumpNonDefaultFlag(#variableName, flags.variableName.get(), defaultValue);
 #include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
-} // namespace NEO
+}
 
 template <DebugFunctionalityLevel DebugLevel>
 void DebugSettingsManager<DebugLevel>::dumpBinaryProgram(int32_t numDevices, const size_t *lengths, const unsigned char **binaries) {
