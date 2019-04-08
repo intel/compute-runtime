@@ -169,8 +169,8 @@ template <DebugFunctionalityLevel DebugLevel>
 template <typename DataType>
 void DebugSettingsManager<DebugLevel>::dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValue) {
     if (variableValue != defaultValue) {
-        const char *variableStringValue = std::to_string(variableValue).c_str();
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout, "Non-default value of debug variable: %s = %s", variableName, variableStringValue);
+        const auto variableStringValue = std::to_string(variableValue);
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout, "Non-default value of debug variable: %s = %s\n", variableName, variableStringValue.c_str());
     }
 }
 
