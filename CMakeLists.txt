@@ -199,7 +199,7 @@ if(WIN32)
 	else()
 		set(CONST_FROM_WDK_10_0_18328_0 "CONST")
 	endif()
-	add_compile_options(-D CONST_FROM_WDK_10_0_18328_0=${CONST_FROM_WDK_10_0_18328_0})
+	add_compile_options(-DCONST_FROM_WDK_10_0_18328_0=${CONST_FROM_WDK_10_0_18328_0})
 
 	set(WDK_INCLUDE_PATHS
 		"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/um"

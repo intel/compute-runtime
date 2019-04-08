@@ -40,7 +40,7 @@ allowed_extensions = [
 ]
 
 allowed_extensions_2 = [
-    'h.in',
+    'h.in', 'rc.in',
     'options.txt'
 ]
 
