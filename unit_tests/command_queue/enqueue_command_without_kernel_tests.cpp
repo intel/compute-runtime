@@ -21,7 +21,7 @@ class MockCommandQueueWithCacheFlush : public MockCommandQueueHw<GfxFamily> {
     using MockCommandQueueHw<GfxFamily>::MockCommandQueueHw;
 
   public:
-    bool isCacheFlushCommand(uint32_t commandType) {
+    bool isCacheFlushCommand(uint32_t commandType) override {
         return commandRequireCacheFlush;
     }
     bool commandRequireCacheFlush = false;
