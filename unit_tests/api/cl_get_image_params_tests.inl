@@ -49,7 +49,7 @@ struct clGetImageParams : public api_fixture,
 
 typedef clGetImageParams<::testing::Test> clGetImageParamsTest;
 
-TEST_F(clGetImageParamsTest, returnsSuccess) {
+TEST_F(clGetImageParamsTest, GivenValidParamsWhenGettingImageParamsThenSuccessIsReturned) {
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     cl_int retVal = CL_INVALID_VALUE;
@@ -60,7 +60,7 @@ TEST_F(clGetImageParamsTest, returnsSuccess) {
     EXPECT_NE(imageSlicePitch, 0u);
 }
 
-TEST_F(clGetImageParamsTest, nullContextReturnsError) {
+TEST_F(clGetImageParamsTest, GivenNullContextWhenGettingImageParamsThenInvalidContextErrorIsReturned) {
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     cl_int retVal = CL_SUCCESS;
@@ -71,7 +71,7 @@ TEST_F(clGetImageParamsTest, nullContextReturnsError) {
     EXPECT_EQ(imageSlicePitch, 0u);
 }
 
-TEST_F(clGetImageParamsTest, nullParamsReturnError) {
+TEST_F(clGetImageParamsTest, GivenNullParamsWhenGettingImageParamsThenInvalidValueErrorIsReturned) {
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     cl_int retVal = CL_SUCCESS;
@@ -97,7 +97,7 @@ TEST_F(clGetImageParamsTest, nullParamsReturnError) {
     EXPECT_EQ(imageSlicePitch, 0u);
 }
 
-TEST_F(clGetImageParamsTest, invalidFormatReturnsError) {
+TEST_F(clGetImageParamsTest, GivenInvalidFormatWhenGettingImageParamsThenImageFormatNotSupportedErrorIsReturned) {
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
 
