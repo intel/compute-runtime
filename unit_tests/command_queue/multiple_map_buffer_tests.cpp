@@ -46,18 +46,21 @@ struct MultipleMapBufferTest : public DeviceFixture, public ::testing::Test {
         MockCmdQ(Context *context, Device *device) : CommandQueueHw<T>(context, device, 0) {}
 
         cl_int enqueueReadBuffer(Buffer *buffer, cl_bool blockingRead, size_t offset, size_t size, void *ptr,
-                                 cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+                                 GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList,
+                                 cl_event *event) override {
             enqueueSize = size;
             enqueueOffset = offset;
             readBufferCalled++;
             if (failOnReadBuffer) {
                 return CL_OUT_OF_RESOURCES;
             }
-            return CommandQueueHw<T>::enqueueReadBuffer(buffer, blockingRead, offset, size, ptr, numEventsInWaitList, eventWaitList, event);
+            return CommandQueueHw<T>::enqueueReadBuffer(buffer, blockingRead, offset, size, ptr, mapAllocation,
+                                                        numEventsInWaitList, eventWaitList, event);
         }
 
         cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t cb, const void *ptr,
-                                  cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+                                  GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList,
+                                  cl_event *event) override {
             enqueueSize = cb;
             enqueueOffset = offset;
             unmapPtr = ptr;
@@ -65,7 +68,8 @@ struct MultipleMapBufferTest : public DeviceFixture, public ::testing::Test {
             if (failOnWriteBuffer) {
                 return CL_OUT_OF_RESOURCES;
             }
-            return CommandQueueHw<T>::enqueueWriteBuffer(buffer, blockingWrite, offset, cb, ptr, numEventsInWaitList, eventWaitList, event);
+            return CommandQueueHw<T>::enqueueWriteBuffer(buffer, blockingWrite, offset, cb, ptr, mapAllocation,
+                                                         numEventsInWaitList, eventWaitList, event);
         }
 
         cl_int enqueueMarkerWithWaitList(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {

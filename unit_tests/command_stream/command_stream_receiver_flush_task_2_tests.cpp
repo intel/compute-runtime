@@ -44,7 +44,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
 
     auto &commandStreamCSR = commandStreamReceiver.getCS();
 
-    commandQueue.enqueueWriteBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, 1, &blockingEvent, 0);
+    commandQueue.enqueueWriteBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, nullptr, 1, &blockingEvent, 0);
 
     // Expect nothing was sent
     EXPECT_EQ(0u, commandStreamCSR.getUsed());
@@ -241,7 +241,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenEventIsQueried) {
     commandStreamReceiver.taskCount = taskCount;
     EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
 
-    commandQueue.enqueueReadBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, 0, 0, &event);
+    commandQueue.enqueueReadBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, nullptr, 0, 0, &event);
 
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
 
@@ -314,11 +314,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests,
 
     // Call requiring DCFlush, nonblocking
     buffer->forceDisallowCPUCopy = true;
-    commandQueue.enqueueReadBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, 0, 0, 0);
+    commandQueue.enqueueReadBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, nullptr, 0, 0, 0);
 
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
 
-    commandQueue.enqueueReadBuffer(buffer, CL_TRUE, 0, sizeof(tempBuffer), dstBuffer, 0, 0, &event);
+    commandQueue.enqueueReadBuffer(buffer, CL_TRUE, 0, sizeof(tempBuffer), dstBuffer, nullptr, 0, 0, &event);
 
     EXPECT_EQ(2u, commandStreamReceiver.peekLatestSentTaskCount());
 
@@ -637,7 +637,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
 
     auto buffer = Buffer::create(&ctx, CL_MEM_USE_HOST_PTR, sizeof(tempBuffer), tempBuffer, retVal);
 
-    commandQueue.enqueueReadBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, 0, 0, 0);
+    commandQueue.enqueueReadBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, nullptr, 0, 0, 0);
 
     // Parse command list
     parseCommands<FamilyType>(commandQueue);

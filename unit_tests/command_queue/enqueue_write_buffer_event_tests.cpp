@@ -35,6 +35,7 @@ TEST_F(EnqueueWriteBufferTypeTest, eventShouldBeReturned) {
         offset,
         size,
         pDestMemory,
+        nullptr,
         numEventsInWaitList,
         eventWaitList,
         &event);
@@ -85,6 +86,7 @@ TEST_F(EnqueueWriteBufferTypeTest, eventReturnedShouldBeMaxOfInputEventsAndCmdQP
         offset,
         size,
         pDestMemory,
+        nullptr,
         numEventsInWaitList,
         eventWaitList,
         &event);
@@ -124,6 +126,7 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBuffe
                                        0,
                                        size,
                                        ptr,
+                                       nullptr,
                                        numEventsInWaitList,
                                        eventWaitList,
                                        &event);
@@ -160,6 +163,7 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBuffe
                                        0,
                                        size,
                                        mem,
+                                       nullptr,
                                        numEventsInWaitList,
                                        eventWaitList,
                                        &event);
@@ -194,6 +198,7 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBuffe
                                        0,
                                        size,
                                        ptr,
+                                       nullptr,
                                        0,
                                        nullptr,
                                        &event);
@@ -236,6 +241,7 @@ TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndForcedCpuCopyOnWriteBu
                                          0,
                                          size,
                                          ptr,
+                                         nullptr,
                                          numEventsInWaitList,
                                          eventWaitList,
                                          &event);
@@ -276,6 +282,7 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesA
                                        0,
                                        size,
                                        ptr,
+                                       nullptr,
                                        numEventsInWaitList,
                                        eventWaitList,
                                        &event);
@@ -317,6 +324,7 @@ TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndDisabledSupportCpuCopi
                                          0,
                                          size,
                                          ptr,
+                                         nullptr,
                                          numEventsInWaitList,
                                          eventWaitList,
                                          &event);

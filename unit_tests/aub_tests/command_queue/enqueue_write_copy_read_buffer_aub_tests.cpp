@@ -61,6 +61,7 @@ void AubWriteCopyReadBuffer::runTest() {
         0,
         bufferSize,
         srcMemoryToWrite,
+        nullptr,
         numEventsInWaitList,
         eventWaitList,
         event);
@@ -73,6 +74,7 @@ void AubWriteCopyReadBuffer::runTest() {
         0,
         bufferSize,
         dstMemoryToWrite,
+        nullptr,
         numEventsInWaitList,
         eventWaitList,
         event);
@@ -108,6 +110,7 @@ void AubWriteCopyReadBuffer::runTest() {
         0,
         bufferSize,
         hostPtrMemory,
+        nullptr,
         numEventsInWaitList,
         eventWaitList,
         event);

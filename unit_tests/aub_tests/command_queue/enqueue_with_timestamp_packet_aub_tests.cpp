@@ -44,11 +44,11 @@ HWTEST_F(TimestampPacketAubTests, givenTwoBatchedEnqueuesWhenDependencyIsResolve
     buffer->forceDisallowCPUCopy = true;
     cl_event outEvent1, outEvent2;
 
-    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_FALSE, 0, bufferSize, writePattern1, 0, nullptr, &outEvent1);
+    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_FALSE, 0, bufferSize, writePattern1, nullptr, 0, nullptr, &outEvent1);
     auto node1 = castToObject<Event>(outEvent1)->getTimestampPacketNodes()->peekNodes().at(0);
     node1->getBaseGraphicsAllocation()->setAubWritable(true); // allow to write again after Buffer::create
 
-    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writePattern2, 0, nullptr, &outEvent2);
+    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writePattern2, nullptr, 0, nullptr, &outEvent2);
     auto node2 = castToObject<Event>(outEvent2)->getTimestampPacketNodes()->peekNodes().at(0);
 
     expectMemory<FamilyType>(reinterpret_cast<void *>(buffer->getGraphicsAllocation()->getGpuAddress()), writePattern2, bufferSize);
@@ -79,7 +79,7 @@ HWTEST_F(TimestampPacketAubTests, givenMultipleWalkersWhenEnqueueingThenWriteAll
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
     buffer->forceDisallowCPUCopy = true;
 
-    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 1, writeSize, writeData, 0, nullptr, &outEvent);
+    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 1, writeSize, writeData, nullptr, 0, nullptr, &outEvent);
 
     auto &timestampNodes = castToObject<Event>(outEvent)->getTimestampPacketNodes()->peekNodes();
 

@@ -70,6 +70,7 @@ HWTEST_P(AUBWriteBuffer, simple) {
         offset,
         sizeWritten,
         pSrcMemory,
+        nullptr,
         numEventsInWaitList,
         eventWaitList,
         event);
@@ -148,6 +149,7 @@ struct AUBWriteBufferUnaligned
             offset,
             size,
             ptrOffset(srcMemory, offset),
+            nullptr,
             0,
             nullptr,
             nullptr);

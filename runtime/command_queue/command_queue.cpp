@@ -324,7 +324,7 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
     if (!unmapInfo.readOnly) {
         if (memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
             auto buffer = castToObject<Buffer>(memObj);
-            retVal = enqueueWriteBuffer(buffer, CL_TRUE, unmapInfo.offset[0], unmapInfo.size[0], mappedPtr,
+            retVal = enqueueWriteBuffer(buffer, CL_TRUE, unmapInfo.offset[0], unmapInfo.size[0], mappedPtr, memObj->getMapAllocation(),
                                         eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
         } else {
             auto image = castToObjectOrAbort<Image>(memObj);
@@ -360,8 +360,12 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
 }
 
 void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet) {
-    void *returnPtr = ptrOffset(transferProperties.memObj->getBasePtrForMap(),
-                                transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset) + transferProperties.mipPtrOffset);
+    void *basePtr = transferProperties.memObj->getBasePtrForMap();
+    size_t mapPtrOffset = transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset) + transferProperties.mipPtrOffset;
+    if (transferProperties.memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
+        mapPtrOffset += transferProperties.memObj->getOffset();
+    }
+    void *returnPtr = ptrOffset(basePtr, mapPtrOffset);
 
     if (!transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
                                                  transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel)) {
@@ -371,8 +375,9 @@ void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperti
 
     if (transferProperties.memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
         auto buffer = castToObject<Buffer>(transferProperties.memObj);
-        errcodeRet = enqueueReadBuffer(buffer, transferProperties.blocking, transferProperties.offset[0], transferProperties.size[0], returnPtr,
-                                       eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
+        errcodeRet = enqueueReadBuffer(buffer, transferProperties.blocking, transferProperties.offset[0], transferProperties.size[0],
+                                       returnPtr, transferProperties.memObj->getMapAllocation(), eventsRequest.numEventsInWaitList,
+                                       eventsRequest.eventWaitList, eventsRequest.outEvent);
     } else {
         auto image = castToObjectOrAbort<Image>(transferProperties.memObj);
         size_t readOrigin[4] = {transferProperties.offset[0], transferProperties.offset[1], transferProperties.offset[2], 0};

@@ -264,7 +264,7 @@ Buffer *Buffer::create(Context *context,
         auto gmm = memory->getDefaultGmm();
         if ((gmm && gmm->isRenderCompressed) || !MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
             auto cmdQ = context->getSpecialQueue();
-            if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, 0, nullptr, nullptr)) {
+            if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, nullptr, 0, nullptr, nullptr)) {
                 errcodeRet = CL_OUT_OF_RESOURCES;
             }
         } else {

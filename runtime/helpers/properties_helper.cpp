@@ -15,7 +15,7 @@
 namespace NEO {
 TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking,
                                        size_t *offsetPtr, size_t *sizePtr, void *ptr, bool doTransferOnCpu)
-    : memObj(memObj), cmdType(cmdType), mapFlags(mapFlags), blocking(blocking), ptr(ptr) {
+    : memObj(memObj), ptr(ptr), cmdType(cmdType), mapFlags(mapFlags), blocking(blocking), doTransferOnCpu(doTransferOnCpu) {
 
     // no size or offset passed for unmap operation
     if (cmdType != CL_COMMAND_UNMAP_MEM_OBJECT) {

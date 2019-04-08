@@ -464,3 +464,17 @@ TEST(MemObj, givenGraphicsAllocationWhenCallingIsAllocDumpableThenItReturnsTheCo
     gfxAllocation.setAllocDumpable(true);
     EXPECT_TRUE(gfxAllocation.isAllocDumpable());
 }
+
+TEST(MemObj, givenMemObjNotUsingHostPtrWhenGettingBasePtrTwiceReturnSameMapPtr) {
+    MockContext context;
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_READ_WRITE,
+                  1, nullptr, nullptr, nullptr, true, false, false);
+
+    void *mapPtr = memObj.getBasePtrForMap();
+    EXPECT_NE(nullptr, mapPtr);
+    auto mapAllocation = memObj.getMapAllocation();
+    ASSERT_NE(nullptr, mapAllocation);
+    EXPECT_EQ(mapPtr, mapAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(mapPtr, memObj.getAllocatedMapPtr());
+}

@@ -71,6 +71,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     void setHostPtrMinSize(size_t size);
     void releaseAllocatedMapPtr();
+    void releaseMapAllocation();
 
     bool isMemObjZeroCopy() const;
     bool isMemObjWithHostPtrSVM() const;
@@ -109,6 +110,15 @@ class MemObj : public BaseObject<_cl_mem> {
     MemoryManager *getMemoryManager() const {
         return memoryManager;
     }
+    void setMapAllocation(GraphicsAllocation *allocation) {
+        mapAllocation = allocation;
+    }
+    GraphicsAllocation *getMapAllocation() const {
+        if (associatedMemObject) {
+            return associatedMemObject->getMapAllocation();
+        }
+        return mapAllocation;
+    }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
@@ -132,6 +142,7 @@ class MemObj : public BaseObject<_cl_mem> {
     MemoryManager *memoryManager = nullptr;
     GraphicsAllocation *graphicsAllocation;
     GraphicsAllocation *mcsAllocation = nullptr;
+    GraphicsAllocation *mapAllocation = nullptr;
     std::shared_ptr<SharingHandler> sharingHandler;
 
     class DestructorCallback {

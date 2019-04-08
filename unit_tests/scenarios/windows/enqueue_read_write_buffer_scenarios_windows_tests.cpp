@@ -81,7 +81,7 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
     char *misalignedPtr = reinterpret_cast<char *>(memory) + 1;
 
     buffer->forceDisallowCPUCopy = true;
-    auto retVal = cmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 4, misalignedPtr, 0, nullptr, nullptr);
+    auto retVal = cmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, 4, misalignedPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(0, cmdQ->lastEnqueuedKernels.size());
     Kernel *kernel = cmdQ->lastEnqueuedKernels[0];

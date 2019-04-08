@@ -23,6 +23,7 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingReadWhenEnqueueReadBufferI
         0,
         MemoryConstants::cacheLineSize,
         ptr,
+        nullptr,
         0,
         nullptr,
         nullptr);
@@ -46,6 +47,7 @@ TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEn
                              0,
                              sizeForReadBuffer,
                              (void *)addressForReadBuffer,
+                             nullptr,
                              0,
                              nullptr,
                              nullptr);
@@ -154,6 +156,7 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndBufferDoesntSha
         0,
         MemoryConstants::cacheLineSize,
         ptr,
+        nullptr,
         0,
         nullptr,
         nullptr);
@@ -171,6 +174,7 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndBufferSharesMem
         0,
         MemoryConstants::cacheLineSize,
         address,
+        nullptr,
         0,
         nullptr,
         nullptr);
@@ -188,6 +192,7 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingWriteAndBufferDoesntShareM
         0,
         MemoryConstants::cacheLineSize,
         ptr,
+        nullptr,
         0,
         nullptr,
         nullptr);
@@ -205,6 +210,7 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingWriteAndBufferSharesMemWit
         0,
         MemoryConstants::cacheLineSize,
         address,
+        nullptr,
         0,
         nullptr,
         nullptr);
@@ -222,6 +228,7 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingReadAndBufferDoesntShar
         0,
         MemoryConstants::cacheLineSize,
         ptr,
+        nullptr,
         0,
         nullptr,
         nullptr);
@@ -239,6 +246,7 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingReadAndBufferSharesMemW
         0,
         MemoryConstants::cacheLineSize,
         address,
+        nullptr,
         0,
         nullptr,
         nullptr);
@@ -256,6 +264,7 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingReadAndBufferDoesntShareMe
         0,
         MemoryConstants::cacheLineSize,
         ptr,
+        nullptr,
         0,
         nullptr,
         nullptr);
@@ -273,6 +282,7 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingReadAndBufferSharesMemWith
         0,
         MemoryConstants::cacheLineSize,
         address,
+        nullptr,
         0,
         nullptr,
         nullptr);

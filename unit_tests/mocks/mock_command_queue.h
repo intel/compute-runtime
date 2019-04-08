@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_queue/command_queue_hw.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +47,8 @@ class MockCommandQueue : public CommandQueue {
     }
 
     cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t size, const void *ptr,
-                              cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+                              GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList,
+                              cl_event *event) override {
         writeBufferCounter++;
         writeBufferBlocking = (CL_TRUE == blockingWrite);
         writeBufferOffset = offset;
@@ -114,10 +116,10 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return BaseClass::cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
     }
     cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t size,
-                              const void *ptr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+                              const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
         EnqueueWriteBufferCounter++;
         blockingWriteBuffer = blockingWrite == CL_TRUE;
-        return BaseClass::enqueueWriteBuffer(buffer, blockingWrite, offset, size, ptr, numEventsInWaitList, eventWaitList, event);
+        return BaseClass::enqueueWriteBuffer(buffer, blockingWrite, offset, size, ptr, mapAllocation, numEventsInWaitList, eventWaitList, event);
     }
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {

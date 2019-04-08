@@ -67,6 +67,7 @@ HWTEST_P(AUBReadBuffer, simple) {
         offset,
         sizeWritten,
         pDestMemory,
+        nullptr,
         numEventsInWaitList,
         eventWaitList,
         event);
@@ -139,6 +140,7 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
                                            0,
                                            sizeof(dstMemory),
                                            dstMemory,
+                                           nullptr,
                                            0,
                                            nullptr,
                                            nullptr);
@@ -193,6 +195,7 @@ struct AUBReadBufferUnaligned
             offset,
             size,
             ptrOffset(dstMemory, offset),
+            nullptr,
             0,
             nullptr,
             nullptr);

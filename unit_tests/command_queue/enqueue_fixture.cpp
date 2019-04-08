@@ -77,11 +77,12 @@ cl_int *EnqueueMapBufferTraits::errcodeRet       = nullptr;
 cl_command_type EnqueueMapBufferTraits::cmdType = CL_COMMAND_MAP_BUFFER;
 
 // EnqueueReadBufferTraits
-const cl_bool EnqueueReadBufferTraits::blocking   = CL_TRUE;
-const size_t EnqueueReadBufferTraits::offset      = 0;
-const size_t EnqueueReadBufferTraits::sizeInBytes = negOne;
-void *EnqueueReadBufferTraits::hostPtr            = ptrOutput;
-cl_command_type EnqueueReadBufferTraits::cmdType = CL_COMMAND_READ_BUFFER;
+const cl_bool EnqueueReadBufferTraits::blocking             = CL_TRUE;
+const size_t EnqueueReadBufferTraits::offset                = 0;
+const size_t EnqueueReadBufferTraits::sizeInBytes           = negOne;
+void *EnqueueReadBufferTraits::hostPtr                      = ptrOutput;
+cl_command_type EnqueueReadBufferTraits::cmdType            = CL_COMMAND_READ_BUFFER;
+GraphicsAllocation *EnqueueReadBufferTraits::mapAllocation  = nullptr;
 
 // EnqueueReadImageTraits
 const cl_bool EnqueueReadImageTraits::blocking  = CL_TRUE;
@@ -93,12 +94,13 @@ void *EnqueueReadImageTraits::hostPtr           = ptrOutput;
 cl_command_type EnqueueReadImageTraits::cmdType = CL_COMMAND_READ_IMAGE;
 
 // EnqueueWriteBufferTraits
-const bool EnqueueWriteBufferTraits::zeroCopy      = true;
-const cl_bool EnqueueWriteBufferTraits::blocking   = CL_TRUE;
-const size_t EnqueueWriteBufferTraits::offset      = 0;
-const size_t EnqueueWriteBufferTraits::sizeInBytes = negOne;
-void *EnqueueWriteBufferTraits::hostPtr            = ptrGarbage;
-cl_command_type EnqueueWriteBufferTraits::cmdType  = CL_COMMAND_WRITE_BUFFER;
+const bool EnqueueWriteBufferTraits::zeroCopy               = true;
+const cl_bool EnqueueWriteBufferTraits::blocking            = CL_TRUE;
+const size_t EnqueueWriteBufferTraits::offset               = 0;
+const size_t EnqueueWriteBufferTraits::sizeInBytes          = negOne;
+void *EnqueueWriteBufferTraits::hostPtr                     = ptrGarbage;
+cl_command_type EnqueueWriteBufferTraits::cmdType           = CL_COMMAND_WRITE_BUFFER;
+GraphicsAllocation *EnqueueWriteBufferTraits::mapAllocation = nullptr;
 
 // EnqueueWriteBufferRectTraits
 const bool EnqueueWriteBufferRectTraits::zeroCopy          = true;

@@ -60,6 +60,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, simpleRead) {
                                                           offset,
                                                           size - offset,
                                                           unalignedReadPtr,
+                                                          nullptr,
                                                           0,
                                                           nullptr,
                                                           nullptr);
@@ -100,6 +101,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenDeviceThatDoesntSupportCpuCopiesWhenRe
                                                           offset,
                                                           size - offset,
                                                           unalignedReadPtr,
+                                                          nullptr,
                                                           0,
                                                           nullptr,
                                                           nullptr);
@@ -142,6 +144,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenDeviceThatDoesntSupportCpuCopiesWhenWr
                                                             offset,
                                                             size - offset,
                                                             unalignedWritePtr,
+                                                            nullptr,
                                                             0,
                                                             nullptr,
                                                             nullptr);
@@ -186,6 +189,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, simpleWrite) {
                                                             offset,
                                                             size - offset,
                                                             unalignedWritePtr,
+                                                            nullptr,
                                                             0,
                                                             nullptr,
                                                             nullptr);

@@ -760,7 +760,7 @@ HWTEST_F(WaitForQueueCompletionTests, givenBlockingCallAndUnblockedQueueWhenEnqu
     std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
     uint32_t tmpPtr = 0;
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
-    cmdQ->enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 1, &tmpPtr, 0, nullptr, nullptr);
+    cmdQ->enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 1, &tmpPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(1u, cmdQ->waitUntilCompleteCounter);
     EXPECT_FALSE(cmdQ->requestedUseQuickKmdSleep);
 }
@@ -771,7 +771,7 @@ HWTEST_F(WaitForQueueCompletionTests, givenBlockingCallAndBlockedQueueWhenEnqueu
     cl_event clBlockingEvent = blockingEvent.get();
     uint32_t tmpPtr = 0;
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
-    cmdQ->enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 1, &tmpPtr, 1, &clBlockingEvent, nullptr);
+    cmdQ->enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 1, &tmpPtr, nullptr, 1, &clBlockingEvent, nullptr);
     EXPECT_EQ(1u, cmdQ->waitUntilCompleteCounter);
     EXPECT_FALSE(cmdQ->requestedUseQuickKmdSleep);
 }

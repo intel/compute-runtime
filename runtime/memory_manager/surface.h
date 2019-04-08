@@ -18,7 +18,7 @@ class Surface {
     virtual ~Surface() = default;
     virtual void makeResident(CommandStreamReceiver &csr) = 0;
     virtual Surface *duplicate() = 0;
-    const bool IsCoherent;
+    bool IsCoherent;
 };
 
 class NullSurface : public Surface {
@@ -105,6 +105,9 @@ class MemObjSurface : public Surface {
 
 class GeneralSurface : public Surface {
   public:
+    GeneralSurface() : Surface(false) {
+        gfxAllocation = nullptr;
+    }
     GeneralSurface(GraphicsAllocation *gfxAlloc) : Surface(gfxAlloc->isCoherent()) {
         gfxAllocation = gfxAlloc;
     };
@@ -114,6 +117,10 @@ class GeneralSurface : public Surface {
         csr.makeResident(*gfxAllocation);
     };
     Surface *duplicate() override { return new GeneralSurface(gfxAllocation); };
+    void setGraphicsAllocation(GraphicsAllocation *newAllocation) {
+        gfxAllocation = newAllocation;
+        IsCoherent = newAllocation->isCoherent();
+    }
 
   protected:
     GraphicsAllocation *gfxAllocation;

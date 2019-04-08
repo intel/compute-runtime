@@ -162,4 +162,47 @@ TEST_F(SubBufferTest, GivenBufferWithMemoryStorageAndNullHostPtrWhenSubBufferIsC
     buffer->release();
 }
 
+TEST_F(SubBufferTest, givenBufferWithHostPtrWhenSubbufferGetsMapPtrThenExpectBufferHostPtr) {
+    cl_buffer_region region = {0, 16};
+
+    auto subBuffer = buffer->createSubBuffer(CL_MEM_READ_WRITE, &region, retVal);
+    ASSERT_NE(nullptr, subBuffer);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    void *mapPtr = subBuffer->getBasePtrForMap();
+    EXPECT_EQ(pHostPtr, mapPtr);
+    mapPtr = subBuffer->getBasePtrForMap();
+    EXPECT_EQ(pHostPtr, mapPtr);
+
+    subBuffer->release();
+}
+
+TEST_F(SubBufferTest, givenBufferWithNoHostPtrWhenSubbufferGetsMapPtrThenExpectBufferMap) {
+    cl_buffer_region region = {0, 16};
+
+    Buffer *buffer = Buffer::create(&context, CL_MEM_READ_WRITE,
+                                    MemoryConstants::pageSize, nullptr, retVal);
+    ASSERT_NE(nullptr, buffer);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto subBuffer = buffer->createSubBuffer(CL_MEM_READ_WRITE, &region, retVal);
+    ASSERT_NE(nullptr, subBuffer);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    void *mapPtr = subBuffer->getBasePtrForMap();
+    void *bufferMapPtr = buffer->getBasePtrForMap();
+    EXPECT_EQ(bufferMapPtr, mapPtr);
+    auto mapAllocation = subBuffer->getMapAllocation();
+    auto bufferMapAllocation = buffer->getMapAllocation();
+    ASSERT_NE(nullptr, bufferMapAllocation);
+    EXPECT_EQ(bufferMapAllocation, mapAllocation);
+    EXPECT_EQ(bufferMapPtr, mapAllocation->getUnderlyingBuffer());
+
+    mapPtr = subBuffer->getBasePtrForMap();
+    EXPECT_EQ(bufferMapPtr, mapPtr);
+
+    subBuffer->release();
+    buffer->release();
+}
+
 } // namespace ULT

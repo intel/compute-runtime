@@ -970,7 +970,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlush
 
     auto &commandStreamCSR = commandStreamReceiver.getCS();
 
-    commandQueue.enqueueReadBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, 1, &blockingEvent, 0);
+    commandQueue.enqueueReadBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, nullptr, 1, &blockingEvent, 0);
 
     // Expect nothing was sent
     EXPECT_EQ(0u, commandStreamCSR.getUsed());

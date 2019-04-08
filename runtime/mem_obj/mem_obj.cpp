@@ -75,7 +75,10 @@ MemObj::~MemObj() {
             graphicsAllocation = nullptr;
         }
 
-        releaseAllocatedMapPtr();
+        if (!associatedMemObject) {
+            releaseMapAllocation();
+            releaseAllocatedMapPtr();
+        }
         if (mcsAllocation) {
             destroyGraphicsAllocation(mcsAllocation, false);
         }
@@ -283,6 +286,12 @@ void MemObj::releaseAllocatedMapPtr() {
     allocatedMapPtr = nullptr;
 }
 
+void MemObj::releaseMapAllocation() {
+    if (mapAllocation) {
+        destroyGraphicsAllocation(mapAllocation, false);
+    }
+}
+
 void MemObj::destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy) {
     if (asyncDestroy) {
         memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
@@ -302,13 +311,20 @@ bool MemObj::checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t of
 }
 
 void *MemObj::getBasePtrForMap() {
+    if (associatedMemObject) {
+        TakeOwnershipWrapper<MemObj> memObjOwnership(*this);
+        return associatedMemObject->getBasePtrForMap();
+    }
     if (getFlags() & CL_MEM_USE_HOST_PTR) {
         return getHostPtr();
     } else {
         TakeOwnershipWrapper<MemObj> memObjOwnership(*this);
-        if (!getAllocatedMapPtr()) {
+        if (!getMapAllocation()) {
             auto memory = memoryManager->allocateSystemMemory(getSize(), MemoryConstants::pageSize);
             setAllocatedMapPtr(memory);
+            AllocationProperties properties{false, getSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR};
+            auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, memory);
+            setMapAllocation(allocation);
         }
         return getAllocatedMapPtr();
     }

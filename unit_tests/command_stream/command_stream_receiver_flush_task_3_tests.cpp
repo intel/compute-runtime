@@ -1374,7 +1374,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandQueueWithThrottleHintW
     buffer->forceDisallowCPUCopy = true;
 
     uint32_t outPtr;
-    commandQueue.enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 1, &outPtr, 0, nullptr, nullptr);
+    commandQueue.enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 1, &outPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(QueueThrottle::LOW, mockCsr->passedDispatchFlags.throttle);
 }
 

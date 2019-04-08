@@ -27,6 +27,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     size_t offset,
     size_t size,
     const void *ptr,
+    GraphicsAllocation *mapAllocation,
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
@@ -89,16 +90,25 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
 
     HostPtrSurface hostPtrSurf(srcPtr, size, true);
     MemObjSurface bufferSurf(buffer);
-    Surface *surfaces[] = {&bufferSurf, &hostPtrSurf};
+    GeneralSurface mapSurface;
+    Surface *surfaces[] = {&bufferSurf, nullptr};
 
-    if (size != 0) {
-        bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
-        if (!status) {
-            return CL_OUT_OF_RESOURCES;
+    if (mapAllocation) {
+        surfaces[1] = &mapSurface;
+        mapSurface.setGraphicsAllocation(mapAllocation);
+        //get offset between base cpu ptr of map allocation and dst ptr
+        size_t srcOffset = ptrDiff(srcPtr, mapAllocation->getUnderlyingBuffer());
+        srcPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + srcOffset);
+    } else {
+        surfaces[1] = &hostPtrSurf;
+        if (size != 0) {
+            bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
+            if (!status) {
+                return CL_OUT_OF_RESOURCES;
+            }
+            srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
         }
-        srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
     }
-
     void *alignedSrcPtr = alignDown(srcPtr, 4);
     size_t srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
 

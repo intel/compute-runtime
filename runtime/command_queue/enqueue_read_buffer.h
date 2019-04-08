@@ -28,6 +28,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     size_t offset,
     size_t size,
     void *ptr,
+    GraphicsAllocation *mapAllocation,
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
@@ -84,21 +85,29 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                                                         this->getContext(), this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
-
     void *dstPtr = ptr;
 
     MemObjSurface bufferSurf(buffer);
     HostPtrSurface hostPtrSurf(dstPtr, size);
-    Surface *surfaces[] = {&bufferSurf, &hostPtrSurf};
+    GeneralSurface mapSurface;
+    Surface *surfaces[] = {&bufferSurf, nullptr};
 
-    if (size != 0) {
-        bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, true);
-        if (!status) {
-            return CL_OUT_OF_RESOURCES;
+    if (mapAllocation) {
+        surfaces[1] = &mapSurface;
+        mapSurface.setGraphicsAllocation(mapAllocation);
+        //get offset between base cpu ptr of map allocation and dst ptr
+        size_t dstOffset = ptrDiff(dstPtr, mapAllocation->getUnderlyingBuffer());
+        dstPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + dstOffset);
+    } else {
+        surfaces[1] = &hostPtrSurf;
+        if (size != 0) {
+            bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, true);
+            if (!status) {
+                return CL_OUT_OF_RESOURCES;
+            }
+            dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
         }
-        dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
     }
-
     void *alignedDstPtr = alignDown(dstPtr, 4);
     size_t dstPtrOffset = ptrDiff(dstPtr, alignedDstPtr);
 

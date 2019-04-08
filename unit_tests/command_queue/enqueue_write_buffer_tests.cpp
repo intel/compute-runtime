@@ -263,6 +263,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPt
                                          0,
                                          MemoryConstants::cacheLineSize,
                                          ptr,
+                                         nullptr,
                                          0,
                                          nullptr,
                                          nullptr);
@@ -283,6 +284,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstP
                                          0,
                                          MemoryConstants::cacheLineSize,
                                          ptr,
+                                         nullptr,
                                          0,
                                          nullptr,
                                          nullptr);
@@ -302,6 +304,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopies
                                        0,
                                        MemoryConstants::cacheLineSize,
                                        ptr,
+                                       nullptr,
                                        0,
                                        nullptr,
                                        nullptr);
@@ -320,6 +323,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopie
                                        0,
                                        MemoryConstants::cacheLineSize,
                                        ptr,
+                                       nullptr,
                                        0,
                                        nullptr,
                                        nullptr);
@@ -338,6 +342,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopie
                                        0,
                                        MemoryConstants::cacheLineSize,
                                        ptr,
+                                       nullptr,
                                        0,
                                        nullptr,
                                        nullptr);
@@ -356,6 +361,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopies
                                        0,
                                        MemoryConstants::cacheLineSize,
                                        ptr,
+                                       nullptr,
                                        0,
                                        nullptr,
                                        nullptr);
@@ -383,6 +389,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenEnqueueWriteBufferCalledWhenLockedPtrI
                                           0,
                                           MemoryConstants::cacheLineSize,
                                           ptr,
+                                          nullptr,
                                           0,
                                           nullptr,
                                           nullptr);
@@ -411,6 +418,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenForcedCpuCopyWhenEnqueueWriteCompresse
                                           0,
                                           MemoryConstants::cacheLineSize,
                                           ptr,
+                                          nullptr,
                                           0,
                                           nullptr,
                                           nullptr);
@@ -426,6 +434,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenForcedCpuCopyWhenEnqueueWriteCompresse
                                           0,
                                           MemoryConstants::cacheLineSize,
                                           ptr,
+                                          nullptr,
                                           0,
                                           nullptr,
                                           nullptr);
@@ -454,6 +463,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenEnqueueWriteBufferCalledWhenLockedPtrI
                                           0,
                                           MemoryConstants::cacheLineSize,
                                           ptr,
+                                          nullptr,
                                           0,
                                           nullptr,
                                           nullptr);
@@ -471,6 +481,7 @@ HWTEST_F(NegativeFailAllocationTest, givenEnqueueWriteBufferWhenHostPtrAllocatio
                                        0,
                                        MemoryConstants::cacheLineSize,
                                        ptr,
+                                       nullptr,
                                        0,
                                        nullptr,
                                        nullptr);

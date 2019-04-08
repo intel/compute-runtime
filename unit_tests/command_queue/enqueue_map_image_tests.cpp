@@ -209,6 +209,7 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
         region, nullptr, nullptr, 0,
         nullptr, nullptr, retVal);
     EXPECT_TRUE(mockImage.ownershipTaken);
+    pDevice->getMemoryManager()->freeGraphicsMemory(mockImage.getMapAllocation());
     mockImage.releaseAllocatedMapPtr();
 }
 

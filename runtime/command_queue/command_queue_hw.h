@@ -197,6 +197,7 @@ class CommandQueueHw : public CommandQueue {
                              size_t offset,
                              size_t size,
                              void *ptr,
+                             GraphicsAllocation *mapAllocation,
                              cl_uint numEventsInWaitList,
                              const cl_event *eventWaitList,
                              cl_event *event) override;
@@ -231,6 +232,7 @@ class CommandQueueHw : public CommandQueue {
                               size_t offset,
                               size_t cb,
                               const void *ptr,
+                              GraphicsAllocation *mapAllocation,
                               cl_uint numEventsInWaitList,
                               const cl_event *eventWaitList,
                               cl_event *event) override;

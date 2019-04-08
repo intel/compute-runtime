@@ -442,11 +442,11 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
     residualsBuffer->forceDisallowCPUCopy = true;
     shapesBuffer->forceDisallowCPUCopy = true;
 
-    retVal = pCmdQ->enqueueReadBuffer(motionVectorBuffer, true, 0, sizeof(destinationMV), destinationMV, 0, nullptr, nullptr);
+    retVal = pCmdQ->enqueueReadBuffer(motionVectorBuffer, true, 0, sizeof(destinationMV), destinationMV, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = pCmdQ->enqueueReadBuffer(residualsBuffer, true, 0, sizeof(destinationResiduals), destinationResiduals, 0, nullptr, nullptr);
+    retVal = pCmdQ->enqueueReadBuffer(residualsBuffer, true, 0, sizeof(destinationResiduals), destinationResiduals, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    retVal = pCmdQ->enqueueReadBuffer(shapesBuffer, true, 0, sizeof(destinationShapes), destinationShapes, 0, nullptr, nullptr);
+    retVal = pCmdQ->enqueueReadBuffer(shapesBuffer, true, 0, sizeof(destinationShapes), destinationShapes, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     // Check if our buffers matches expectations

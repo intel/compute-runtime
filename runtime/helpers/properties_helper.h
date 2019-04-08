@@ -49,32 +49,33 @@ struct TransferProperties {
     TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking, size_t *offsetPtr, size_t *sizePtr,
                        void *ptr, bool doTransferOnCpu);
 
-    MemObj *memObj = nullptr;
-    cl_command_type cmdType = 0;
-    cl_map_flags mapFlags = 0;
-    bool blocking = false;
     MemObjOffsetArray offset = {};
     MemObjSizeArray size = {};
+    MemObj *memObj = nullptr;
     void *ptr = nullptr;
+    void *lockedPtr = nullptr;
+    cl_command_type cmdType = 0;
+    cl_map_flags mapFlags = 0;
     uint32_t mipLevel = 0;
     uint32_t mipPtrOffset = 0;
+    bool blocking = false;
+    bool doTransferOnCpu = false;
 
-    void *lockedPtr = nullptr;
     void *getCpuPtrForReadWrite();
 };
 
 struct MapInfo {
     MapInfo() = default;
     MapInfo(void *ptr, size_t ptrLength, MemObjSizeArray size, MemObjOffsetArray offset, uint32_t mipLevel)
-        : ptr(ptr), ptrLength(ptrLength), size(size), offset(offset), mipLevel(mipLevel) {
+        : size(size), offset(offset), ptrLength(ptrLength), ptr(ptr), mipLevel(mipLevel) {
     }
 
-    void *ptr = nullptr;
-    size_t ptrLength = 0;
     MemObjSizeArray size = {};
     MemObjOffsetArray offset = {};
-    bool readOnly = false;
+    size_t ptrLength = 0;
+    void *ptr = nullptr;
     uint32_t mipLevel = 0;
+    bool readOnly = false;
 };
 
 class NonCopyableOrMovableClass {

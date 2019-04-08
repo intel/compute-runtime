@@ -118,7 +118,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadBufferWhenZeroSizeEnqueueIsDetec
     MockBuffer buffer;
     size_t memory[1];
     size_t zeroSize = 0;
-    mockCmdQ->enqueueReadBuffer(&buffer, CL_FALSE, 0, zeroSize, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueReadBuffer(&buffer, CL_FALSE, 0, zeroSize, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
@@ -129,7 +129,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadBufferWhenZeroSizeEnqueueIsDetec
     MockBuffer buffer;
     size_t memory[1];
     size_t zeroSize = 0;
-    mockCmdQ->enqueueReadBuffer(&buffer, CL_FALSE, 0, zeroSize, memory, 0, nullptr, &event);
+    mockCmdQ->enqueueReadBuffer(&buffer, CL_FALSE, 0, zeroSize, memory, nullptr, 0, nullptr, &event);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     auto pEvent = (Event *)event;
@@ -207,7 +207,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteBufferWhenZeroSizeEnqueueIsDete
     MockBuffer buffer;
     size_t memory[1];
     size_t zeroSize = 0;
-    mockCmdQ->enqueueWriteBuffer(&buffer, CL_FALSE, 0, zeroSize, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueWriteBuffer(&buffer, CL_FALSE, 0, zeroSize, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
@@ -218,7 +218,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteBufferWhenZeroSizeEnqueueIsDete
     MockBuffer buffer;
     size_t memory[1];
     size_t zeroSize = 0;
-    mockCmdQ->enqueueWriteBuffer(&buffer, CL_FALSE, 0, zeroSize, memory, 0, nullptr, &event);
+    mockCmdQ->enqueueWriteBuffer(&buffer, CL_FALSE, 0, zeroSize, memory, nullptr, 0, nullptr, &event);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     auto pEvent = (Event *)event;

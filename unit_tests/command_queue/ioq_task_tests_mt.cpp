@@ -42,6 +42,7 @@ TEST_F(IOQTaskTestsMt, enqueueReadBuffer_blockingAndBlockedOnUserEvent) {
                                                           0,
                                                           BufferDefaults::sizeInBytes,
                                                           alignedReadPtr,
+                                                          nullptr,
                                                           1,
                                                           &userEvent,
                                                           nullptr);

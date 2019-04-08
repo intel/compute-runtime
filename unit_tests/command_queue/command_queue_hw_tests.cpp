@@ -994,7 +994,7 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
 
     cl_event blockedEvent = &userEvent;
 
-    cl_int status = pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, MemoryConstants::cacheLineSize, ptr, 1, &blockedEvent, nullptr);
+    cl_int status = pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, MemoryConstants::cacheLineSize, ptr, nullptr, 1, &blockedEvent, nullptr);
     EXPECT_EQ(CL_SUCCESS, status);
 
     userEvent.setStatus(CL_COMPLETE);

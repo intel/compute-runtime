@@ -252,6 +252,7 @@ TEST_F(OOQTaskTests, enqueueReadBuffer_blockingAndNonBlockedOnUserEvent) {
                                                           0,
                                                           BufferDefaults::sizeInBytes,
                                                           alignedReadPtr,
+                                                          nullptr,
                                                           1,
                                                           &userEvent,
                                                           nullptr);

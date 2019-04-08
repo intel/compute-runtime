@@ -135,6 +135,7 @@ HWTEST_F(EnqueueThreading, enqueueReadBuffer) {
                              0,
                              1024u,
                              ptr,
+                             nullptr,
                              0,
                              nullptr,
                              nullptr);
@@ -158,6 +159,7 @@ HWTEST_F(EnqueueThreading, enqueueWriteBuffer) {
                               0,
                               1024u,
                               ptr,
+                              nullptr,
                               0,
                               nullptr,
                               nullptr);

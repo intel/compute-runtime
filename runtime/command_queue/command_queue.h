@@ -207,6 +207,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     virtual cl_int enqueueReadBuffer(Buffer *buffer, cl_bool blockingRead,
                                      size_t offset, size_t size, void *ptr,
+                                     GraphicsAllocation *mapAllocation,
                                      cl_uint numEventsInWaitList,
                                      const cl_event *eventWaitList,
                                      cl_event *event) {
@@ -224,6 +225,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     virtual cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite,
                                       size_t offset, size_t cb, const void *ptr,
+                                      GraphicsAllocation *mapAllocation,
                                       cl_uint numEventsInWaitList,
                                       const cl_event *eventWaitList,
                                       cl_event *event) {

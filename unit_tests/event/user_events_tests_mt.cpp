@@ -74,7 +74,7 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
             uEvent.setStatus(CL_COMPLETE);
         });
 
-        auto retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(), CL_TRUE, 0, srcBuffer->getSize(), dst.get(), sizeOfWaitList, eventWaitList, nullptr);
+        auto retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(), CL_TRUE, 0, srcBuffer->getSize(), dst.get(), nullptr, sizeOfWaitList, eventWaitList, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         t.join();
@@ -103,7 +103,7 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
         uEvent.setStatus(CL_COMPLETE);
     });
 
-    auto retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(), CL_TRUE, 0, srcBuffer->getSize(), dst.get(), sizeOfWaitList, eventWaitList, nullptr);
+    auto retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(), CL_TRUE, 0, srcBuffer->getSize(), dst.get(), nullptr, sizeOfWaitList, eventWaitList, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     t.join();
 }
