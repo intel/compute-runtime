@@ -32,7 +32,7 @@ GEN11TEST_F(HwHelperTestGen11, setupPreemptionRegisters) {
 
     preemption = true;
     preemption = helper.setupPreemptionRegisters(&hwInfoHelper.hwInfo, preemption);
-    EXPECT_FALSE(preemption);
+    EXPECT_TRUE(preemption);
 }
 
 GEN11TEST_F(HwHelperTestGen11, adjustDefaultEngineType) {

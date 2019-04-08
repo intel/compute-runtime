@@ -34,7 +34,7 @@ GEN8TEST_F(HwHelperTestGen8, setupPreemptionRegisters) {
 
     preemption = true;
     preemption = helper.setupPreemptionRegisters(&hwInfoHelper.hwInfo, preemption);
-    EXPECT_FALSE(preemption);
+    EXPECT_TRUE(preemption);
 }
 
 GEN8TEST_F(HwHelperTestGen8, adjustDefaultEngineType) {

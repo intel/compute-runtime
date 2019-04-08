@@ -69,7 +69,7 @@ uint32_t HwHelperHw<Family>::getConfigureAddressSpaceMode() {
 
 template <typename Family>
 bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
-    return false;
+    return enable;
 }
 
 template <typename Family>
