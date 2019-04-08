@@ -105,16 +105,20 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
     }
 }
 
-HWTEST_P(ParentKernelEnqueueTest, GivenParentKernelWithPrivateSurfaceWhenEnqueueKernelCalledThenResidencyCountIncreased) {
+HWTEST_P(ParentKernelEnqueueTest, GivenBlockKernelWithPrivateSurfaceWhenParentKernelIsEnqueuedThenPrivateSurfaceIsMadeResident) {
     if (pDevice->getSupportedClVersion() >= 20) {
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
         int32_t executionStamp = 0;
         auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment);
         pDevice->resetCommandStreamReceiver(mockCSR);
-        GraphicsAllocation *privateSurface = mockCSR->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+        GraphicsAllocation *privateSurface = pKernel->getProgram()->getBlockKernelManager()->getPrivateSurface(0);
 
-        pKernel->getProgram()->getBlockKernelManager()->pushPrivateSurface(privateSurface, 0);
+        if (privateSurface == nullptr) {
+            privateSurface = mockCSR->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+            pKernel->getProgram()->getBlockKernelManager()->pushPrivateSurface(privateSurface, 0);
+        }
+
         pCmdQ->enqueueKernel(pKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
 
         EXPECT_TRUE(privateSurface->isResident(mockCSR->getOsContext().getContextId()));
@@ -130,8 +134,12 @@ HWTEST_P(ParentKernelEnqueueTest, GivenBlocksWithPrivateMemoryWhenEnqueueKernelT
         auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
         csr.storeMakeResidentAllocations = true;
 
-        auto privateAllocation = csr.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-        blockKernelManager->pushPrivateSurface(privateAllocation, 0);
+        auto privateAllocation = pKernel->getProgram()->getBlockKernelManager()->getPrivateSurface(0);
+
+        if (privateAllocation == nullptr) {
+            privateAllocation = csr.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+            blockKernelManager->pushPrivateSurface(privateAllocation, 0);
+        }
 
         auto uEvent = make_releaseable<UserEvent>(pContext);
         auto clEvent = static_cast<cl_event>(uEvent.get());
