@@ -848,7 +848,7 @@ cl_int CL_API_CALL clEnqueueVerifyMemory(
     size_t sizeOfComparison,
     cl_uint comparisonMode);
 
-cl_int CL_API_CALL clAddCommentINTEL(const char *comment);
+cl_int CL_API_CALL clAddCommentINTEL(cl_platform_id platform, const char *comment);
 
 // OpenCL 2.1
 

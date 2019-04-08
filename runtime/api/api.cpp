@@ -4231,19 +4231,25 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemory(cl_command_queue commandQu
     return retVal;
 }
 
-cl_int CL_API_CALL clAddCommentINTEL(const char *comment) {
+cl_int CL_API_CALL clAddCommentINTEL(cl_platform_id platform, const char *comment) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("platform", platform, "comment", comment);
 
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    auto aubCenter = executionEnvironment->aubCenter.get();
+    Platform *pPlatform = nullptr;
+    retVal = validateObjects(WithCastToInternal(platform, &pPlatform));
 
-    if (!comment || (aubCenter && !aubCenter->getAubManager())) {
-        retVal = CL_INVALID_VALUE;
-    }
+    if (retVal == CL_SUCCESS) {
+        auto executionEnvironment = pPlatform->peekExecutionEnvironment();
+        auto aubCenter = executionEnvironment->aubCenter.get();
 
-    if (retVal == CL_SUCCESS && aubCenter) {
-        aubCenter->getAubManager()->addComment(comment);
+        if (!comment || (aubCenter && !aubCenter->getAubManager())) {
+            retVal = CL_INVALID_VALUE;
+        }
+
+        if (retVal == CL_SUCCESS && aubCenter) {
+            aubCenter->getAubManager()->addComment(comment);
+        }
     }
     return retVal;
 }

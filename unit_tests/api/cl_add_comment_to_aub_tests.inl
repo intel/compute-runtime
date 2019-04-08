@@ -6,6 +6,7 @@
  */
 
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/platform/platform.h"
 #include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
@@ -14,27 +15,31 @@ using namespace NEO;
 
 namespace ULT {
 
-TEST(clAddCommentToAubTest, givenProperCommentNullptrAubCenterWhenAddCommentToAubThenSuccessIsReturned) {
-    auto retVal = clAddCommentINTEL("comment");
+using clAddCommentToAubTest = api_tests;
+
+TEST(clAddCommentToAub, givenInvalidPlatformWhenAddCommentToAubThenErrorIsReturned) {
+    auto retVal = clAddCommentINTEL(nullptr, "comment");
+    EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
+}
+
+TEST_F(clAddCommentToAubTest, givenProperCommentNullptrAubCenterWhenAddCommentToAubThenSuccessIsReturned) {
+    auto retVal = clAddCommentINTEL(pPlatform, "comment");
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clAddCommentToAubTest, givenNullptrCommentWhenAddCommentToAubThenErrorIsReturned) {
-    auto retVal = clAddCommentINTEL(nullptr);
+TEST_F(clAddCommentToAubTest, givenNullptrCommentWhenAddCommentToAubThenErrorIsReturned) {
+    auto retVal = clAddCommentINTEL(pPlatform, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST(clAddCommentToAubTest, givenAubCenterAndProperCommentButNullptrAubManagerWhenAddCommentToAubThenErrorIsReturned) {
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->aubCenter.reset(new MockAubCenter());
+TEST_F(clAddCommentToAubTest, givenAubCenterAndProperCommentButNullptrAubManagerWhenAddCommentToAubThenErrorIsReturned) {
+    pPlatform->peekExecutionEnvironment()->aubCenter.reset(new MockAubCenter());
 
-    auto retVal = clAddCommentINTEL("comment");
+    auto retVal = clAddCommentINTEL(pPlatform, "comment");
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
-    executionEnvironment->aubCenter.reset(nullptr);
 }
 
-TEST(clAddCommentToAubTest, givenProperCommentAubCenterAndAubManagerWhenAddCommentToAubThenSuccessIsReturned) {
+TEST_F(clAddCommentToAubTest, givenProperCommentAubCenterAndAubManagerWhenAddCommentToAubThenSuccessIsReturned) {
     struct AubManagerCommentMock : public MockAubManager {
         using MockAubManager::MockAubManager;
         void addComment(const char *message) override {
@@ -46,15 +51,12 @@ TEST(clAddCommentToAubTest, givenProperCommentAubCenterAndAubManagerWhenAddComme
     auto mockAubCenter = new MockAubCenter();
     auto mockAubManager = new AubManagerCommentMock;
     mockAubCenter->aubManager.reset(mockAubManager);
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->aubCenter.reset(mockAubCenter);
+    pPlatform->peekExecutionEnvironment()->aubCenter.reset(mockAubCenter);
 
     EXPECT_FALSE(mockAubManager->addCommentCalled);
 
-    auto retVal = clAddCommentINTEL("comment");
+    auto retVal = clAddCommentINTEL(pPlatform, "comment");
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(mockAubManager->addCommentCalled);
-
-    executionEnvironment->aubCenter.reset(nullptr);
 }
 } // namespace ULT
