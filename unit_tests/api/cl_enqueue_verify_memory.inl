@@ -18,7 +18,7 @@ TEST(CheckVerifyMemoryRelatedApiConstants, givenVerifyMemoryRelatedApiConstantsW
     EXPECT_EQ(AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareNotEqual, CL_MEM_COMPARE_NOT_EQUAL);
 }
 
-struct clEnqueueVerifyMemorySettings {
+struct clEnqueueVerifyMemoryINTELSettings {
     const cl_uint comparisonMode = CL_MEM_COMPARE_EQUAL;
     const size_t bufferSize = 1;
     static constexpr size_t expectedSize = 1;
@@ -27,31 +27,31 @@ struct clEnqueueVerifyMemorySettings {
     void *gpuAddress = expected;
 };
 
-class clEnqueueVerifyMemoryTests : public api_tests,
-                                   public clEnqueueVerifyMemorySettings {
+class clEnqueueVerifyMemoryINTELTests : public api_tests,
+                                        public clEnqueueVerifyMemoryINTELSettings {
 };
 
-TEST_F(clEnqueueVerifyMemoryTests, givenSizeOfComparisonEqualZeroWhenCallingVerifyMemoryThenErrorIsReturned) {
-    cl_int retval = clEnqueueVerifyMemory(nullptr, nullptr, nullptr, 0, comparisonMode);
+TEST_F(clEnqueueVerifyMemoryINTELTests, givenSizeOfComparisonEqualZeroWhenCallingVerifyMemoryThenErrorIsReturned) {
+    cl_int retval = clEnqueueVerifyMemoryINTEL(nullptr, nullptr, nullptr, 0, comparisonMode);
     EXPECT_EQ(CL_INVALID_VALUE, retval);
 }
 
-TEST_F(clEnqueueVerifyMemoryTests, givenNullExpectedDataWhenCallingVerifyMemoryThenErrorIsReturned) {
-    cl_int retval = clEnqueueVerifyMemory(nullptr, nullptr, nullptr, expectedSize, comparisonMode);
+TEST_F(clEnqueueVerifyMemoryINTELTests, givenNullExpectedDataWhenCallingVerifyMemoryThenErrorIsReturned) {
+    cl_int retval = clEnqueueVerifyMemoryINTEL(nullptr, nullptr, nullptr, expectedSize, comparisonMode);
     EXPECT_EQ(CL_INVALID_VALUE, retval);
 }
 
-TEST_F(clEnqueueVerifyMemoryTests, givenInvalidAllocationPointerWhenCallingVerifyMemoryThenErrorIsReturned) {
-    cl_int retval = clEnqueueVerifyMemory(nullptr, nullptr, expected, expectedSize, comparisonMode);
+TEST_F(clEnqueueVerifyMemoryINTELTests, givenInvalidAllocationPointerWhenCallingVerifyMemoryThenErrorIsReturned) {
+    cl_int retval = clEnqueueVerifyMemoryINTEL(nullptr, nullptr, expected, expectedSize, comparisonMode);
     EXPECT_EQ(CL_INVALID_VALUE, retval);
 }
 
-TEST_F(clEnqueueVerifyMemoryTests, givenInvalidCommandQueueWhenCallingVerifyMemoryThenErrorIsReturned) {
-    cl_int retval = clEnqueueVerifyMemory(nullptr, gpuAddress, expected, expectedSize, comparisonMode);
+TEST_F(clEnqueueVerifyMemoryINTELTests, givenInvalidCommandQueueWhenCallingVerifyMemoryThenErrorIsReturned) {
+    cl_int retval = clEnqueueVerifyMemoryINTEL(nullptr, gpuAddress, expected, expectedSize, comparisonMode);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retval);
 }
 
-TEST_F(clEnqueueVerifyMemoryTests, givenCommandQueueWithoutAubCsrWhenCallingVerifyMemoryThenSuccessIsReturned) {
-    cl_int retval = clEnqueueVerifyMemory(pCommandQueue, gpuAddress, expected, expectedSize, comparisonMode);
+TEST_F(clEnqueueVerifyMemoryINTELTests, givenCommandQueueWithoutAubCsrWhenCallingVerifyMemoryThenSuccessIsReturned) {
+    cl_int retval = clEnqueueVerifyMemoryINTEL(pCommandQueue, gpuAddress, expected, expectedSize, comparisonMode);
     EXPECT_EQ(CL_SUCCESS, retval);
 }

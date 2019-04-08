@@ -3276,7 +3276,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clReleaseAcceleratorINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clCreateBufferWithPropertiesINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clAddCommentINTEL);
-    RETURN_FUNC_PTR_IF_EXIST(clEnqueueVerifyMemory);
+    RETURN_FUNC_PTR_IF_EXIST(clEnqueueVerifyMemoryINTEL);
 
     void *ret = sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr)
@@ -4202,11 +4202,11 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
     return pClonedKernel;
 }
 
-CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemory(cl_command_queue commandQueue,
-                                                      const void *allocationPtr,
-                                                      const void *expectedData,
-                                                      size_t sizeOfComparison,
-                                                      cl_uint comparisonMode) {
+CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(cl_command_queue commandQueue,
+                                                           const void *allocationPtr,
+                                                           const void *expectedData,
+                                                           size_t sizeOfComparison,
+                                                           cl_uint comparisonMode) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,

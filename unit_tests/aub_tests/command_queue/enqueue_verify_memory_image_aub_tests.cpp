@@ -121,12 +121,12 @@ HWTEST_P(VerifyMemoryImageHw, givenDifferentImagesWhenValidatingMemoryThenSucces
                     std::swap(validData, invalidData);
                 }
 
-                retVal = clEnqueueVerifyMemory(pCmdQ, &pImageData[x * elementSize], validData, elementSize, CL_MEM_COMPARE_EQUAL);
+                retVal = clEnqueueVerifyMemoryINTEL(pCmdQ, &pImageData[x * elementSize], validData, elementSize, CL_MEM_COMPARE_EQUAL);
                 EXPECT_EQ(CL_SUCCESS, retVal);
 
                 if (UnitTestHelper<FamilyType>::isExpectMemoryNotEqualSupported()) {
-                    retVal = clEnqueueVerifyMemory(pCmdQ, &pImageData[x * elementSize], invalidData, elementSize,
-                                                   CL_MEM_COMPARE_NOT_EQUAL);
+                    retVal = clEnqueueVerifyMemoryINTEL(pCmdQ, &pImageData[x * elementSize], invalidData, elementSize,
+                                                        CL_MEM_COMPARE_NOT_EQUAL);
                     EXPECT_EQ(CL_SUCCESS, retVal);
                 }
             }

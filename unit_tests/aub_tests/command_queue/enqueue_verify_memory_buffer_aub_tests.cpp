@@ -102,13 +102,13 @@ HWTEST_P(VerifyMemoryBufferHw, givenDifferentBuffersWhenValidatingMemoryThenSucc
 
     auto mappedAddress = clEnqueueMapBuffer(pCmdQ, buffer.get(), CL_TRUE, CL_MAP_READ, 0, testDataSize, 0, nullptr, nullptr, nullptr);
 
-    retVal = clEnqueueVerifyMemory(pCmdQ, mappedAddress, validContent.get(), testDataSize, CL_MEM_COMPARE_EQUAL);
+    retVal = clEnqueueVerifyMemoryINTEL(pCmdQ, mappedAddress, validContent.get(), testDataSize, CL_MEM_COMPARE_EQUAL);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     if (UnitTestHelper<FamilyType>::isExpectMemoryNotEqualSupported()) {
-        retVal = clEnqueueVerifyMemory(pCmdQ, mappedAddress, invalidContent1.get(), testDataSize, CL_MEM_COMPARE_NOT_EQUAL);
+        retVal = clEnqueueVerifyMemoryINTEL(pCmdQ, mappedAddress, invalidContent1.get(), testDataSize, CL_MEM_COMPARE_NOT_EQUAL);
         EXPECT_EQ(CL_SUCCESS, retVal);
-        retVal = clEnqueueVerifyMemory(pCmdQ, mappedAddress, invalidContent2.get(), testDataSize, CL_MEM_COMPARE_NOT_EQUAL);
+        retVal = clEnqueueVerifyMemoryINTEL(pCmdQ, mappedAddress, invalidContent2.get(), testDataSize, CL_MEM_COMPARE_NOT_EQUAL);
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 }

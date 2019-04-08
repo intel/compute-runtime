@@ -841,7 +841,7 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(
     const cl_sampler_properties *samplerProperties,
     cl_int *errcodeRet);
 
-cl_int CL_API_CALL clEnqueueVerifyMemory(
+cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(
     cl_command_queue commandQueue,
     const void *allocationPtr,
     const void *expectedData,
