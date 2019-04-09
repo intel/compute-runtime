@@ -52,7 +52,7 @@ cl_int CompilerInterface::build(
         if (program.getIsSpirV()) {
             intermediateCodeType = IGC::CodeType::spirV;
         } else {
-            intermediateCodeType = IGC::CodeType::llvmBc;
+            intermediateCodeType = useLlvmText ? IGC::CodeType::llvmLl : IGC::CodeType::llvmBc;
         }
     } else {
         highLevelCodeType = IGC::CodeType::oclC;

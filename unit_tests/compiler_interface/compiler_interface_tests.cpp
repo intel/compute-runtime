@@ -961,3 +961,23 @@ TEST_F(CompilerInterfaceTest, whenRequestingSipKernelBinaryThenProperInternalOpt
 
     gEnvironment->igcPopDebugVars();
 }
+
+TEST_F(CompilerInterfaceTest, givenCompilerIntefraceWithIntermediateAndUseLlvmTextWhenBuildThenCodeTypeEqualLlvmL1) {
+    std::unique_ptr<MockProgram> mockProgram(new MockProgram(pProgram->peekExecutionEnvironment()));
+    mockProgram->setDevice(pDevice);
+    mockProgram->programBinaryType = CL_PROGRAM_BINARY_TYPE_INTERMEDIATE;
+    pCompilerInterface->useLlvmText = true;
+    pCompilerInterface->failCreateIgcTranslationCtx = true;
+    retVal = pCompilerInterface->build(*mockProgram.get(), inputArgs, false);
+    EXPECT_EQ(IGC::CodeType::llvmLl, pCompilerInterface->intermediateInType);
+}
+
+TEST_F(CompilerInterfaceTest, givenCompilerIntefraceWithIntermediateAndUseLlvmTextSetToFalseWhenBuildThenCodeTypeEqualllvmBc) {
+    std::unique_ptr<MockProgram> mockProgram(new MockProgram(pProgram->peekExecutionEnvironment()));
+    mockProgram->setDevice(pDevice);
+    mockProgram->programBinaryType = CL_PROGRAM_BINARY_TYPE_INTERMEDIATE;
+    pCompilerInterface->useLlvmText = false;
+    pCompilerInterface->failCreateIgcTranslationCtx = true;
+    retVal = pCompilerInterface->build(*mockProgram.get(), inputArgs, false);
+    EXPECT_EQ(IGC::CodeType::llvmBc, pCompilerInterface->intermediateInType);
+}
