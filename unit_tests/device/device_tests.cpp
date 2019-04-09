@@ -67,6 +67,15 @@ TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
     EXPECT_THROW(pDevice->getEngine(aub_stream::ENGINE_VCS, false), std::exception);
 }
 
+TEST_F(DeviceTest, givenDebugVariableToAlwaysChooseEngineZeroWhenNotExistingEngineSelectedThenIndexZeroEngineIsReturned) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.OverrideInvalidEngineWithDefault.set(true);
+    auto &engines = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances();
+    auto &deviceEngine = pDevice->getEngine(engines[0], false);
+    auto &notExistingEngine = pDevice->getEngine(aub_stream::ENGINE_VCS, false);
+    EXPECT_EQ(&notExistingEngine, &deviceEngine);
+}
+
 TEST_F(DeviceTest, WhenGetOSTimeThenNotNull) {
     auto pDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 

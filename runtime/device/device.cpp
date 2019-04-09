@@ -285,6 +285,9 @@ EngineControl &Device::getEngine(aub_stream::EngineType engineType, bool lowPrio
             return engine;
         }
     }
+    if (DebugManager.flags.OverrideInvalidEngineWithDefault.get()) {
+        return engines[0];
+    }
     UNRECOVERABLE_IF(true);
 }
 } // namespace NEO
