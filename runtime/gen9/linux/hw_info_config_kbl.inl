@@ -12,6 +12,10 @@ namespace NEO {
 
 template <>
 int HwInfoConfigHw<IGFX_KABYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+    if (nullptr == osIface) {
+        return 0;
+    }
+
     PLATFORM *pPlatform = const_cast<PLATFORM *>(hwInfo->pPlatform);
     FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);

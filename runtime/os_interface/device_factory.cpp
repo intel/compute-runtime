@@ -8,6 +8,7 @@
 #include "runtime/device/device.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/hw_info_config.h"
 
 namespace NEO {
 
@@ -32,6 +33,9 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(HardwareInfo **pHWInfos, 
     hardwareInfoSetup[hwInfoConst->pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(hardwareInfo->pSysInfo),
                                                               const_cast<FeatureTable *>(hardwareInfo->pSkuTable),
                                                               true, hwInfoConfig);
+
+    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->pPlatform->eProductFamily);
+    hwConfig->configureHardwareCustom(hardwareInfo.get(), nullptr);
 
     *pHWInfos = hardwareInfo.release();
     executionEnvironment.setHwInfo(*pHWInfos);

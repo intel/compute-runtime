@@ -14,6 +14,10 @@ namespace NEO {
 
 template <>
 int HwInfoConfigHw<IGFX_BROXTON>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+    if (nullptr == osIface) {
+        return 0;
+    }
+
     Drm *drm = osIface->get()->getDrm();
     PLATFORM *pPlatform = const_cast<PLATFORM *>(hwInfo->pPlatform);
     FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
