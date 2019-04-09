@@ -507,6 +507,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenForcedCpuCopyWhenEnqueueReadCompressedB
                                          nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(buffer->getGraphicsAllocation()->isLocked());
     EXPECT_FALSE(mockCmdQ->cpuDataTransferHandlerCalled);
 
     buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
@@ -521,6 +522,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenForcedCpuCopyWhenEnqueueReadCompressedB
                                          nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(buffer->getGraphicsAllocation()->isLocked());
     EXPECT_TRUE(mockCmdQ->cpuDataTransferHandlerCalled);
 }
 
