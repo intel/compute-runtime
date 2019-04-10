@@ -82,8 +82,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
             }
         }
         if (kernel->isAuxTranslationRequired()) {
-            UNRECOVERABLE_IF(kernel->isParentKernel);
             if (!memObjsForAuxTranslation.empty()) {
+                UNRECOVERABLE_IF(kernel->isParentKernel);
                 dispatchAuxTranslation(multiDispatchInfo, memObjsForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
             }
         }
