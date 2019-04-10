@@ -12,6 +12,11 @@
 
 using namespace NEO;
 
+struct MemoryInfoImpl : public NEO::MemoryInfo {
+    MemoryInfoImpl() {}
+    ~MemoryInfoImpl() override{};
+};
+
 TEST(DrmTest, whenQueryingMemoryInfoThenMemoryInfoIsNotCreatedAndNoIoctlIsCalled) {
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
     EXPECT_NE(nullptr, drm);
@@ -22,11 +27,15 @@ TEST(DrmTest, whenQueryingMemoryInfoThenMemoryInfoIsNotCreatedAndNoIoctlIsCalled
     EXPECT_EQ(0u, drm->ioctlCallsCount);
 }
 
-TEST(MemoryInfo, givenMemoryInfoImplementationWhenDestructingThenDestructorIsCalled) {
-    struct MemoryInfoImpl : public NEO::MemoryInfo {
-        MemoryInfoImpl() {}
-        ~MemoryInfoImpl() override{};
-    };
+TEST(DrmTest, givenMemoryInfoWhenGetMemoryInfoIsCalledThenValidPtrIsReturned) {
+    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    EXPECT_NE(nullptr, drm);
 
+    drm->memoryInfo.reset(new MemoryInfoImpl);
+
+    EXPECT_EQ(drm->memoryInfo.get(), drm->getMemoryInfo());
+}
+
+TEST(MemoryInfo, givenMemoryInfoImplementationWhenDestructingThenDestructorIsCalled) {
     MemoryInfoImpl memoryInfoImpl;
 }

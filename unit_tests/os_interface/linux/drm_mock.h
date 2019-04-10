@@ -23,7 +23,6 @@ using namespace NEO;
 #define I915_PARAM_HAS_PREEMPTION 0x806
 #endif
 
-static const int mockFd = 33;
 // Mock DRM class that responds to DRM_IOCTL_I915_GETPARAMs
 class DrmMock : public Drm {
   public:
@@ -221,6 +220,8 @@ class DrmMock : public Drm {
 
     void setDeviceID(int deviceId) { this->deviceId = deviceId; }
     void setDeviceRevID(int revisionId) { this->revisionId = revisionId; }
+
+    static const int mockFd = 33;
 
     int StoredEUVal = -1;
     int StoredSSVal = -1;

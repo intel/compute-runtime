@@ -72,6 +72,10 @@ class Drm {
     bool getSimplifiedMocsTableUsage() const;
     void queryMemoryInfo();
 
+    MemoryInfo *getMemoryInfo() {
+        return memoryInfo.get();
+    }
+
   protected:
     bool useSimplifiedMocsTable = false;
     bool preemptionSupported = false;
