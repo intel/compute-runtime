@@ -313,7 +313,6 @@ class MockCompilerInterface : public CompilerInterface {
                                                                                IGC::CodeType::CodeType_t inType,
                                                                                IGC::CodeType::CodeType_t outType) override {
         requestedTranslationCtxs.emplace_back(inType, outType);
-        intermediateInType = inType;
         if (failCreateIgcTranslationCtx) {
             return nullptr;
         }
@@ -349,7 +348,6 @@ class MockCompilerInterface : public CompilerInterface {
     SipKernelType requestedSipKernel = SipKernelType::COUNT;
 
     IGC::IgcOclDeviceCtxTagOCL *peekIgcDeviceCtx(Device *device) { return igcDeviceContexts[device].get(); }
-    IGC::CodeType::CodeType_t intermediateInType;
     using CompilerInterface::useLlvmText;
 };
 
