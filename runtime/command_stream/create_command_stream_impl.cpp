@@ -23,55 +23,52 @@ CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEn
         return nullptr;
     }
     CommandStreamReceiver *commandStreamReceiver = nullptr;
-    int32_t csr = CommandStreamReceiverType::CSR_HW;
-    if (DebugManager.flags.SetCommandStreamReceiver.get() >= 0) {
-        csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    if (csr < 0) {
+        csr = CommandStreamReceiverType::CSR_HW;
     }
-    if (csr) {
-        switch (csr) {
-        case CSR_AUB:
-            commandStreamReceiver = AUBCommandStreamReceiver::create("aubfile", true, executionEnvironment);
-            break;
-        case CSR_TBX:
-            commandStreamReceiver = TbxCommandStreamReceiver::create("", false, executionEnvironment);
-            break;
-        case CSR_HW_WITH_AUB:
-            commandStreamReceiver = funcCreate(true, executionEnvironment);
-            break;
-        case CSR_TBX_WITH_AUB:
-            commandStreamReceiver = TbxCommandStreamReceiver::create("aubfile", true, executionEnvironment);
-            break;
-        default:
-            break;
-        }
-    } else {
+    switch (csr) {
+    case CSR_HW:
         commandStreamReceiver = funcCreate(false, executionEnvironment);
+        break;
+    case CSR_AUB:
+        commandStreamReceiver = AUBCommandStreamReceiver::create("aubfile", true, executionEnvironment);
+        break;
+    case CSR_TBX:
+        commandStreamReceiver = TbxCommandStreamReceiver::create("", false, executionEnvironment);
+        break;
+    case CSR_HW_WITH_AUB:
+        commandStreamReceiver = funcCreate(true, executionEnvironment);
+        break;
+    case CSR_TBX_WITH_AUB:
+        commandStreamReceiver = TbxCommandStreamReceiver::create("aubfile", true, executionEnvironment);
+        break;
+    default:
+        break;
     }
     return commandStreamReceiver;
 }
 
 bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
     bool result;
-    int32_t csr = CommandStreamReceiverType::CSR_HW;
-    if (DebugManager.flags.SetCommandStreamReceiver.get() >= 0) {
-        csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    if (csr < 0) {
+        csr = CommandStreamReceiverType::CSR_HW;
     }
-    if (csr) {
-        switch (csr) {
-        case CSR_AUB:
-        case CSR_TBX: {
-        case CSR_TBX_WITH_AUB:
-            return DeviceFactory::getDevicesForProductFamilyOverride(hwInfo, numDevicesReturned, executionEnvironment);
-        }
-        case CSR_HW_WITH_AUB:
-            return DeviceFactory::getDevices(hwInfo, numDevicesReturned, executionEnvironment);
-        default:
-            return false;
-        }
+    switch (csr) {
+    case CSR_HW:
+        result = DeviceFactory::getDevices(hwInfo, numDevicesReturned, executionEnvironment);
+        DEBUG_BREAK_IF(result && (hwInfo == nullptr));
+        return result;
+    case CSR_AUB:
+    case CSR_TBX:
+    case CSR_TBX_WITH_AUB:
+        return DeviceFactory::getDevicesForProductFamilyOverride(hwInfo, numDevicesReturned, executionEnvironment);
+    case CSR_HW_WITH_AUB:
+        return DeviceFactory::getDevices(hwInfo, numDevicesReturned, executionEnvironment);
+    default:
+        return false;
     }
-    result = DeviceFactory::getDevices(hwInfo, numDevicesReturned, executionEnvironment);
-    DEBUG_BREAK_IF(result && (hwInfo == nullptr));
-    return result;
 }
 
 } // namespace NEO

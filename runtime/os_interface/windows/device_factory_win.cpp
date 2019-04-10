@@ -27,7 +27,7 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, Exec
     numDevices = 0;
 
     auto hardwareInfo = std::make_unique<HardwareInfo>();
-    std::unique_ptr<Wddm> wddm(Wddm ::createWddm());
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     if (!wddm->enumAdapters(*hardwareInfo)) {
         return false;
     }
