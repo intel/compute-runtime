@@ -17,11 +17,6 @@ namespace ULT {
 
 using clAddCommentToAubTest = api_tests;
 
-TEST(clAddCommentToAub, givenInvalidPlatformWhenAddCommentToAubThenErrorIsReturned) {
-    auto retVal = clAddCommentINTEL(nullptr, "comment");
-    EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
-}
-
 TEST_F(clAddCommentToAubTest, givenProperCommentNullptrAubCenterWhenAddCommentToAubThenSuccessIsReturned) {
     auto retVal = clAddCommentINTEL(pPlatform, "comment");
     EXPECT_EQ(CL_SUCCESS, retVal);
