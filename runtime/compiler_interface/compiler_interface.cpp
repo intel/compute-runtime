@@ -56,9 +56,10 @@ cl_int CompilerInterface::build(
         }
     } else {
         highLevelCodeType = IGC::CodeType::oclC;
-        if (useLlvmText == true) {
-            intermediateCodeType = IGC::CodeType::llvmLl;
-        }
+    }
+
+    if (useLlvmText == true) {
+        intermediateCodeType = IGC::CodeType::llvmLl;
     }
 
     CachingMode cachingMode = None;
