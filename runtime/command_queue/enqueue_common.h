@@ -202,25 +202,30 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         if (!multiDispatchInfo.empty()) {
             obtainNewTimestampPacketNodes(estimateTimestampPacketNodesCount(multiDispatchInfo), previousTimestampPacketNodes);
             csrDeps.push_back(&previousTimestampPacketNodes);
+        } else if (isCacheFlushCommand(commandType)) {
+            obtainNewTimestampPacketNodes(1, previousTimestampPacketNodes);
+            csrDeps.push_back(&previousTimestampPacketNodes);
         }
     }
 
     auto &commandStream = getCommandStream<GfxFamily, commandType>(*this, csrDeps, profilingRequired, perfCountersRequired, multiDispatchInfo, surfacesForResidency, numSurfaceForResidency);
     auto commandStreamStart = commandStream.getUsed();
 
+    if (eventBuilder.getEvent() && getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
+    }
+
     if (multiDispatchInfo.empty() == false) {
         processDispatchForKernels<commandType>(multiDispatchInfo, printfHandler, eventBuilder.getEvent(),
                                                hwTimeStamps, parentKernel, blockQueue, devQueueHw, csrDeps, blockedCommandsData,
                                                previousTimestampPacketNodes, preemption);
     } else if (isCacheFlushCommand(commandType)) {
-        processDispatchForCacheFlush(surfacesForResidency, numSurfaceForResidency, &commandStream);
+        processDispatchForCacheFlush(surfacesForResidency, numSurfaceForResidency, &commandStream, csrDeps);
     } else if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         if (CL_COMMAND_BARRIER == commandType) {
             getCommandStreamReceiver().requestStallingPipeControlOnNextFlush();
         }
         if (eventBuilder.getEvent()) {
-            // Event from non-kernel enqueue inherits TimestampPackets from waitlist and command queue
-            eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
             for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
                 auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
                 if (waitlistEvent->getTimestampPacketNodes()) {
@@ -383,18 +388,13 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
         }
     }
 
-    if (event) {
-        if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-            event->addTimestampPacketNodes(*timestampPacketContainer);
-        }
-        if (this->isProfilingEnabled()) {
-            // Get allocation for timestamps
-            hwTimeStamps = event->getHwTimeStampNode();
-            if (this->isPerfCountersEnabled()) {
-                hwPerfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
-                // PERF COUNTER: copy current configuration from queue to event
-                event->copyPerfCounters(this->getPerfCountersConfigData());
-            }
+    if (event && this->isProfilingEnabled()) {
+        // Get allocation for timestamps
+        hwTimeStamps = event->getHwTimeStampNode();
+        if (this->isPerfCountersEnabled()) {
+            hwPerfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
+            // PERF COUNTER: copy current configuration from queue to event
+            event->copyPerfCounters(this->getPerfCountersConfigData());
         }
     }
 
@@ -432,6 +432,24 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
 
     getCommandStreamReceiver().setRequiredScratchSize(multiDispatchInfo.getRequiredScratchSize());
 }
+
+template <typename GfxFamily>
+void CommandQueueHw<GfxFamily>::processDispatchForCacheFlush(Surface **surfaces,
+                                                             size_t numSurfaces,
+                                                             LinearStream *commandStream,
+                                                             CsrDependencies &csrDeps) {
+
+    TimestampPacketHelper::programCsrDependencies<GfxFamily>(*commandStream, csrDeps);
+
+    uint64_t postSyncAddress = 0;
+    if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        auto timestampPacketNodeForPostSync = timestampPacketContainer->peekNodes().at(0);
+        postSyncAddress = TimestampPacketHelper::getGpuAddressForDataWrite(*timestampPacketNodeForPostSync, TimestampPacket::DataIndex::ContextStart);
+    }
+
+    submitCacheFlush(surfaces, numSurfaces, commandStream, postSyncAddress);
+}
+
 template <typename GfxFamily>
 void CommandQueueHw<GfxFamily>::processDeviceEnqueue(Kernel *parentKernel,
                                                      DeviceQueueHw<GfxFamily> *devQueueHw,
@@ -769,6 +787,11 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     EventBuilder &eventBuilder,
     uint32_t taskLevel) {
 
+    if (timestampPacketContainer) {
+        timestampPacketContainer->makeResident(getCommandStreamReceiver());
+        previousTimestampPacketNodes->makeResident(getCommandStreamReceiver());
+    }
+
     auto requiresCoherency = false;
     for (auto surface : CreateRange(surfaces, surfaceCount)) {
         surface->makeResident(getCommandStreamReceiver());
@@ -776,7 +799,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     }
 
     DispatchFlags dispatchFlags = {};
-
+    if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, getCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
+    }
     CompletionStamp completionStamp = getCommandStreamReceiver().flushTask(
         commandStream,
         commandStreamStart,

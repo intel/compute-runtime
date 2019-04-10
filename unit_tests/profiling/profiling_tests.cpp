@@ -859,8 +859,8 @@ HWTEST_F(ProfilingWithPerfCountersTests,
     pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
 }
 
-struct MockTimestampPacketContainer : public TimestampPacketContainer {
-    ~MockTimestampPacketContainer() override {
+struct MockTimestampContainer : public TimestampPacketContainer {
+    ~MockTimestampContainer() override {
         for (const auto &node : timestampPacketNodes) {
             delete node->tagForCpuAccess;
             delete node;
@@ -873,7 +873,7 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.ReturnRawGpuTimestamps.set(true);
         cmdQ->setProfilingEnabled();
-        ev->timestampPacketContainer = std::make_unique<MockTimestampPacketContainer>();
+        ev->timestampPacketContainer = std::make_unique<MockTimestampContainer>();
     }
 
     void addTimestampNode(int contextStart, int contextEnd, int globalStart) {

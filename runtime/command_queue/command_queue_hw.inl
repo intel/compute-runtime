@@ -46,9 +46,10 @@ bool CommandQueueHw<Family>::requiresCacheFlushAfterWalkerBasedOnProperties(cons
     return false;
 }
 template <typename GfxFamily>
-void CommandQueueHw<GfxFamily>::processDispatchForCacheFlush(Surface **surfaces,
-                                                             size_t numSurfaces,
-                                                             LinearStream *commandStream) {
+void CommandQueueHw<GfxFamily>::submitCacheFlush(Surface **surfaces,
+                                                 size_t numSurfaces,
+                                                 LinearStream *commandStream,
+                                                 uint64_t postSyncAddress) {
 }
 template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::isCacheFlushCommand(uint32_t commandType) {

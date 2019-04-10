@@ -22,6 +22,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/mocks/mock_timestamp_container.h"
 #include "unit_tests/utilities/base_object_utils.h"
 
 #include "gmock/gmock.h"
@@ -33,45 +34,6 @@ struct TimestampPacketSimpleTests : public ::testing::Test {
       public:
         using TimestampPacket::data;
         using TimestampPacket::implicitDependenciesCount;
-    };
-
-    template <typename TagType = TimestampPacket>
-    class MockTagAllocator : public TagAllocator<TagType> {
-      public:
-        using BaseClass = TagAllocator<TagType>;
-        using BaseClass::freeTags;
-        using BaseClass::usedTags;
-        using NodeType = typename BaseClass::NodeType;
-
-        MockTagAllocator(MemoryManager *memoryManager, size_t tagCount = 10) : BaseClass(memoryManager, tagCount, 10) {}
-
-        void returnTag(NodeType *node) override {
-            releaseReferenceNodes.push_back(node);
-            BaseClass::returnTag(node);
-        }
-
-        void returnTagToFreePool(NodeType *node) override {
-            returnedToFreePoolNodes.push_back(node);
-            BaseClass::returnTagToFreePool(node);
-        }
-
-        std::vector<NodeType *> releaseReferenceNodes;
-        std::vector<NodeType *> returnedToFreePoolNodes;
-    };
-
-    class MockTimestampPacketContainer : public TimestampPacketContainer {
-      public:
-        using TimestampPacketContainer::timestampPacketNodes;
-
-        MockTimestampPacketContainer(TagAllocator<TimestampPacket> &tagAllocator, size_t numberOfPreallocatedTags) {
-            for (size_t i = 0; i < numberOfPreallocatedTags; i++) {
-                add(tagAllocator.getTag());
-            }
-        }
-
-        TagNode<TimestampPacket> *getNode(size_t position) {
-            return timestampPacketNodes.at(position);
-        }
     };
 
     void setTagToReadyState(TagNode<TimestampPacket> *tagNode) {

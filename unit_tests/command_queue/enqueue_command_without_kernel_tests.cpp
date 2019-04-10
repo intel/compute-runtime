@@ -7,12 +7,14 @@
 
 #include "runtime/event/event_builder.h"
 #include "runtime/event/user_event.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "unit_tests/mocks/mock_timestamp_container.h"
 
 namespace NEO {
 
@@ -38,7 +40,8 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelWhenCommandEnqueuedT
     EventBuilder eventBuilder;
     Surface *surfaces[] = {surface.get()};
     auto blocking = true;
-    mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, mockCmdQ->getCS(0), 0, blocking, nullptr, eventsRequest, eventBuilder, 0);
+    TimestampPacketContainer previousTimestampPacketNodes;
+    mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, mockCmdQ->getCS(0), 0, blocking, &previousTimestampPacketNodes, eventsRequest, eventBuilder, 0);
     EXPECT_EQ(allocation->getTaskCount(mockCmdQ->getCommandStreamReceiver().getOsContext().getContextId()), 1u);
 }
 HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenEnqueuedHandlerThenUsedSizeEqualZero) {
@@ -48,5 +51,37 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenE
     mockCmdQ->commandRequireCacheFlush = true;
     mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(mockCmdQ->getCS(0).getUsed(), 0u);
+}
+HWTEST_F(EnqueueHandlerTest, givenTimestampPacketWriteEnabledAndCommandWithCacheFlushWhenEnqueueingHandlerThenObtainNewStamp) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    auto mockTagAllocator = new MockTagAllocator<>(pDevice->getMemoryManager());
+    csr.timestampPacketAllocator.reset(mockTagAllocator);
+    std::unique_ptr<MockCommandQueueWithCacheFlush<FamilyType>> mockCmdQ(new MockCommandQueueWithCacheFlush<FamilyType>(context, pDevice, 0));
+    mockCmdQ->commandRequireCacheFlush = true;
+
+    cl_event event;
+
+    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, nullptr, 0, nullptr, &event);
+    auto node1 = mockCmdQ->timestampPacketContainer->peekNodes().at(0);
+    EXPECT_NE(nullptr, node1);
+    clReleaseEvent(event);
+}
+HWTEST_F(EnqueueHandlerTest, givenTimestampPacketWriteDisabledAndCommandWithCacheFlushWhenEnqueueingHandlerThenTimeStampContainerIsNotCreated) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = false;
+
+    auto mockTagAllocator = new MockTagAllocator<>(pDevice->getMemoryManager());
+    csr.timestampPacketAllocator.reset(mockTagAllocator);
+    std::unique_ptr<MockCommandQueueWithCacheFlush<FamilyType>> mockCmdQ(new MockCommandQueueWithCacheFlush<FamilyType>(context, pDevice, 0));
+    mockCmdQ->commandRequireCacheFlush = true;
+
+    cl_event event;
+
+    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, nullptr, 0, nullptr, &event);
+    auto container = mockCmdQ->timestampPacketContainer.get();
+    EXPECT_EQ(nullptr, container);
+    clReleaseEvent(event);
 }
 } // namespace NEO

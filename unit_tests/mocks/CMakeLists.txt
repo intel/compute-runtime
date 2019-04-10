@@ -70,6 +70,7 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_svm_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
 )
 
 if(WIN32)
