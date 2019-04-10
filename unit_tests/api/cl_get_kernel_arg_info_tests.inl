@@ -21,7 +21,7 @@ typedef api_tests clGetKernelArgInfoTests;
 
 namespace ULT {
 
-TEST_F(clGetKernelArgInfoTests, success) {
+TEST_F(clGetKernelArgInfoTests, GivenValidParamsWhenGettingKernelArgInfoThenSuccessAndCorrectSizeAreReturned) {
     cl_program pProgram = nullptr;
     void *pSource = nullptr;
     size_t sourceSize = 0;
@@ -62,12 +62,12 @@ TEST_F(clGetKernelArgInfoTests, success) {
     cl_kernel kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    size_t ret_sz;
-    cl_kernel_arg_type_qualifier type_qual;
+    size_t returnSize = 0;
+    cl_kernel_arg_type_qualifier typeQualifier = CL_KERNEL_ARG_TYPE_NONE;
     retVal = clGetKernelArgInfo(kernel, 0, CL_KERNEL_ARG_TYPE_QUALIFIER,
-                                sizeof(type_qual), &type_qual, &ret_sz);
+                                sizeof(typeQualifier), &typeQualifier, &returnSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(ret_sz, sizeof(cl_kernel_arg_type_qualifier));
+    EXPECT_EQ(returnSize, sizeof(cl_kernel_arg_type_qualifier));
 
     retVal = clReleaseKernel(kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
