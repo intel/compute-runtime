@@ -184,7 +184,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         return gmms[handleId];
     }
     void setDefaultGmm(Gmm *gmm) {
-        return setGmm(gmm, 0u);
+        setGmm(gmm, 0u);
     }
     void setGmm(Gmm *gmm, uint32_t handleId) {
         gmms[handleId] = gmm;
