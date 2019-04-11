@@ -99,11 +99,7 @@ GEN9TEST_F(AUBParentKernelFixture, EnqueueParentKernel) {
         pCmdQ->finish(false);
 
         uint32_t expectedNumberOfEnqueues = 1;
-        IGIL_CommandQueue *igilQueue = reinterpret_cast<IGIL_CommandQueue *>(devQueue->getQueueBuffer()->getUnderlyingBuffer());
-        uint64_t gpuAddress = devQueue->getQueueBuffer()->getGpuAddress();
-        uint32_t *pointerTonumberOfEnqueues = &igilQueue->m_controls.m_TotalNumberOfQueues;
-        size_t offsetToEnqueues = ptrDiff(pointerTonumberOfEnqueues, igilQueue);
-        gpuAddress = gpuAddress + offsetToEnqueues;
+        uint64_t gpuAddress = devQueue->getQueueBuffer()->getGpuAddress() + offsetof(IGIL_CommandQueue, m_controls.m_TotalNumberOfQueues);
 
         AUBCommandStreamFixture::expectMemory<FamilyType>((void *)(uintptr_t)gpuAddress, &expectedNumberOfEnqueues, sizeof(uint32_t));
         AUBCommandStreamFixture::expectMemory<FamilyType>((void *)(uintptr_t)buffer->getGraphicsAllocation()->getGpuAddress(), &argScalar, sizeof(size_t));
