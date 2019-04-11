@@ -33,7 +33,7 @@ bool BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiD
     for (auto &memObj : *operationParams.memObjsForAuxTranslation) {
         DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder;
         auto graphicsAllocation = memObj->getGraphicsAllocation();
-        size_t allocationSize = graphicsAllocation->getUnderlyingBufferSize();
+        size_t allocationSize = alignUp(memObj->getSize(), 4);
 
         if (AuxTranslationDirection::AuxToNonAux == operationParams.auxTranslationDirection) {
             builder.setKernel(convertToNonAuxKernel.at(kernelInstanceNumber++).get());
@@ -46,9 +46,7 @@ bool BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiD
             builder.setArg(1, memObj);
         }
 
-        size_t elementSize = sizeof(uint32_t) * 4;
-        DEBUG_BREAK_IF(allocationSize < elementSize || !isAligned<4>(allocationSize));
-        size_t xGws = allocationSize / elementSize;
+        size_t xGws = allocationSize / 4;
 
         builder.setDispatchGeometry(Vec3<size_t>{xGws, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
         builder.bake(multiDispatchInfo);

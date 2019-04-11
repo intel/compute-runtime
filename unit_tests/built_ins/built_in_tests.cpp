@@ -272,7 +272,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTransla
         EXPECT_EQ(nullptr, kernel->getKernelArguments().at(1).object);
 
         EXPECT_EQ(1u, dispatchInfo.getDim());
-        size_t xGws = buffer->getGraphicsAllocation()->getUnderlyingBufferSize() / (sizeof(uint32_t) * 4);
+        size_t xGws = alignUp(buffer->getSize(), 4) / 4;
         Vec3<size_t> gws = {xGws, 1, 1};
         EXPECT_EQ(gws, dispatchInfo.getGWS());
     }
@@ -320,7 +320,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslatio
         EXPECT_EQ(clMem, kernel->getKernelArguments().at(1).object);
 
         EXPECT_EQ(1u, dispatchInfo.getDim());
-        size_t xGws = buffer->getGraphicsAllocation()->getUnderlyingBufferSize() / (sizeof(uint32_t) * 4);
+        size_t xGws = alignUp(buffer->getSize(), 4) / 4;
         Vec3<size_t> gws = {xGws, 1, 1};
         EXPECT_EQ(gws, dispatchInfo.getGWS());
     }

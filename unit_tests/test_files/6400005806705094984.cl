@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,7 @@
 
 __kernel void fullCopy(__global const uint* src, __global uint* dst) {
     unsigned int gid = get_global_id(0);
-    uint4 loaded = vload4(gid, src);
-    vstore4(loaded, gid, dst);
+	dst[gid] = src[gid];
 }
 
 __kernel void CopyBufferToBufferBytes(
