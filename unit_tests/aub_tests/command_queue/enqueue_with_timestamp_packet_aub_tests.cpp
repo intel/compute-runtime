@@ -54,7 +54,7 @@ HWTEST_F(TimestampPacketAubTests, givenTwoBatchedEnqueuesWhenDependencyIsResolve
     expectMemory<FamilyType>(reinterpret_cast<void *>(buffer->getGraphicsAllocation()->getGpuAddress()), writePattern2, bufferSize);
 
     uint32_t expectedDepsCount = 0;
-    auto dependenciesGpuAddress = TimestampPacketHelper::getImplicitDependenciesCounGpuWriteAddress(*node1);
+    auto dependenciesGpuAddress = node1->getGpuAddress() + offsetof(TimestampPacket, implicitDependenciesCount);
     expectMemory<FamilyType>(reinterpret_cast<void *>(dependenciesGpuAddress),
                              &expectedDepsCount, sizeof(uint32_t));
 

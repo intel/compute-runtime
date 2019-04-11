@@ -60,15 +60,12 @@ class TimestampPacket {
     }
 
     void initialize() {
-        for (auto index = 0u; index < data.size(); index++) {
-            data[index] = 1;
-        }
+        std::fill(data.begin(), data.end(), 1u);
         implicitDependenciesCount.store(0);
     }
 
     void incImplicitDependenciesCount() { implicitDependenciesCount++; }
 
-  protected:
     std::array<uint32_t, static_cast<uint32_t>(DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount> data;
     std::atomic<uint32_t> implicitDependenciesCount;
 };
@@ -99,7 +96,7 @@ struct TimestampPacketHelper {
     static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TagNode<TimestampPacket> &timestampPacketNode) {
         using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
         auto compareAddress = getGpuAddressForDataWrite(timestampPacketNode, TimestampPacket::DataIndex::ContextEnd);
-        auto dependenciesCountAddress = getImplicitDependenciesCounGpuWriteAddress(timestampPacketNode);
+        auto dependenciesCountAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacket, implicitDependenciesCount);
 
         KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress, 1);
 
@@ -112,13 +109,6 @@ struct TimestampPacketHelper {
 
     static uint64_t getGpuAddressForDataWrite(TagNode<TimestampPacket> &timestampPacketNodes, TimestampPacket::DataIndex dataIndex) {
         auto offset = static_cast<uint32_t>(dataIndex) * sizeof(uint32_t);
-        return timestampPacketNodes.getGpuAddress() + offset;
-    }
-
-    static uint64_t getImplicitDependenciesCounGpuWriteAddress(TagNode<TimestampPacket> &timestampPacketNodes) {
-        auto offset = static_cast<uint32_t>(TimestampPacket::DataIndex::Max) *
-                      TimestampPacketSizeControl::preferedChunkCount *
-                      sizeof(uint32_t);
         return timestampPacketNodes.getGpuAddress() + offset;
     }
 

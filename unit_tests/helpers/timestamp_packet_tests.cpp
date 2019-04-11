@@ -75,14 +75,11 @@ struct TimestampPacketSimpleTests : public ::testing::Test {
     };
 
     void setTagToReadyState(TagNode<TimestampPacket> *tagNode) {
-        auto dataAddress = TimestampPacketHelper::getGpuAddressForDataWrite(*tagNode, TimestampPacket::DataIndex::ContextStart);
-        auto atomicAddress = TimestampPacketHelper::getImplicitDependenciesCounGpuWriteAddress(*tagNode);
-        memset(reinterpret_cast<void *>(dataAddress), 0, timestampDataSize);
-        auto dependenciesCount = reinterpret_cast<std::atomic<uint32_t> *>(reinterpret_cast<void *>(atomicAddress));
-        dependenciesCount->store(0);
+        auto &data = tagNode->tagForCpuAccess->data;
+        std::fill(data.begin(), data.end(), 0u);
+        tagNode->tagForCpuAccess->implicitDependenciesCount.store(0);
     }
 
-    const size_t timestampDataSize = sizeof(uint32_t) * static_cast<size_t>(TimestampPacket::DataIndex::Max);
     const size_t gws[3] = {1, 1, 1};
 };
 
@@ -114,7 +111,7 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
     template <typename MI_ATOMIC>
     void verifyMiAtomic(MI_ATOMIC *miAtomicCmd, TagNode<TimestampPacket> *timestampPacketNode) {
         EXPECT_NE(nullptr, miAtomicCmd);
-        auto writeAddress = TimestampPacketHelper::getImplicitDependenciesCounGpuWriteAddress(*timestampPacketNode);
+        auto writeAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacket, implicitDependenciesCount);
 
         EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT, miAtomicCmd->getAtomicOpcode());
         EXPECT_EQ(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL), miAtomicCmd->getMemoryAddress());
@@ -125,9 +122,7 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
         auto &nodes = timestampPacketContainer->peekNodes();
         EXPECT_NE(0u, nodes.size());
         for (auto &node : nodes) {
-            auto atomicAddress = TimestampPacketHelper::getImplicitDependenciesCounGpuWriteAddress(*node);
-            auto dependenciesCount = reinterpret_cast<std::atomic<uint32_t> *>(reinterpret_cast<void *>(atomicAddress));
-            EXPECT_EQ(expectedValue, dependenciesCount->load());
+            EXPECT_EQ(expectedValue, node->tagForCpuAccess->implicitDependenciesCount.load());
         }
     }
 
@@ -208,17 +203,16 @@ TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
         *dataAccess = i;
     }
 
-    auto atomicAddress = TimestampPacketHelper::getImplicitDependenciesCounGpuWriteAddress(*firstNode);
-    auto dependenciesCount = reinterpret_cast<std::atomic<uint32_t> *>(reinterpret_cast<void *>(atomicAddress));
+    auto &dependenciesCount = firstNode->tagForCpuAccess->implicitDependenciesCount;
 
     setTagToReadyState(firstNode);
     allocator.returnTag(firstNode);
-    (*dependenciesCount)++;
+    dependenciesCount++;
 
     auto secondNode = allocator.getTag();
     EXPECT_EQ(secondNode, firstNode);
 
-    EXPECT_EQ(0u, dependenciesCount->load());
+    EXPECT_EQ(0u, dependenciesCount.load());
     for (uint32_t i = 0; i < static_cast<uint32_t>(TimestampPacket::DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount; i++) {
         auto dataAccess = reinterpret_cast<uint32_t *>(ptrOffset(firstNode->tagForCpuAccess, i * sizeof(uint32_t)));
         EXPECT_EQ(1u, *dataAccess);
