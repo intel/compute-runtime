@@ -803,6 +803,11 @@ void CommandStreamReceiverHw<GfxFamily>::blitFromHostPtr(MemObj &destinationMemO
 
     alignToCacheLine(commandStream);
 
+    makeResident(*hostPtrSurface.getAllocation());
+    makeResident(*destinationMemObj.getGraphicsAllocation());
+    makeResident(*commandStream.getGraphicsAllocation());
+    makeResident(*tagAllocation);
+
     taskCount++;
 }
 

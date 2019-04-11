@@ -254,7 +254,31 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddre
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateGshAddressForScratchSpace((expectedScratchAddress - MemoryConstants::pageSize), scratchController->calculateNewGSH()));
 }
 
-HWTEST_F(CommandStreamReceiverHwTest, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredCommands) {
+struct BcsTests : public CommandStreamReceiverHwTest {
+    void SetUp() override {
+        CommandStreamReceiverHwTest::SetUp();
+
+        auto &csr = pDevice->getCommandStreamReceiver();
+        auto engine = csr.getMemoryManager()->getRegisteredEngineForCsr(&csr);
+        auto contextId = engine->osContext->getContextId();
+
+        delete engine->osContext;
+        engine->osContext = OsContext::create(nullptr, contextId, 0, aub_stream::EngineType::ENGINE_BCS, PreemptionMode::Disabled, false);
+        engine->osContext->incRefInternal();
+        csr.setupContext(*engine->osContext);
+
+        context = std::make_unique<MockContext>(pDevice);
+    }
+
+    void TearDown() override {
+        context.reset();
+        CommandStreamReceiverHwTest::TearDown();
+    }
+
+    std::unique_ptr<MockContext> context;
+};
+
+HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredCommands) {
     uint64_t alignedBltSize = (3 * BlitterConstants::max2dBlitSize) + 1;
     uint64_t notAlignedBltSize = (3 * BlitterConstants::max2dBlitSize);
     uint32_t alignedNumberOfBlts = 4;
@@ -272,25 +296,17 @@ HWTEST_F(CommandStreamReceiverHwTest, givenBltSizeWhenEstimatingCommandSizeThenA
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
 }
 
-HWTEST_F(CommandStreamReceiverHwTest, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommands) {
+HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommands) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    MockContext context(pDevice);
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
-    auto engine = csr.getMemoryManager()->getRegisteredEngineForCsr(&csr);
-    auto contextId = engine->osContext->getContextId();
-
-    delete engine->osContext;
-    engine->osContext = OsContext::create(nullptr, contextId, 0, aub_stream::EngineType::ENGINE_BCS, PreemptionMode::Disabled, false);
-    engine->osContext->incRefInternal();
-    csr.setupContext(*engine->osContext);
 
     uint32_t bltLeftover = 17;
     uint64_t bltSize = (2 * BlitterConstants::max2dBlitSize) + bltLeftover;
     uint32_t numberOfBlts = 3;
 
     cl_int retVal = CL_SUCCESS;
-    auto buffer = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, static_cast<size_t>(bltSize), nullptr, retVal));
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, static_cast<size_t>(bltSize), nullptr, retVal));
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
     uint32_t newTaskCount = 19;
@@ -333,4 +349,28 @@ HWTEST_F(CommandStreamReceiverHwTest, givenBltSizeWithLeftoverWhenDispatchedThen
     while (cmdIterator != cmdList.end()) {
         EXPECT_NE(nullptr, genCmdCast<typename FamilyType::MI_NOOP *>(*(cmdIterator++)));
     }
+}
+
+HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocationsResident) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    csr.blitFromHostPtr(*buffer, hostPtr, 1);
+
+    EXPECT_TRUE(csr.isMadeResident(buffer->getGraphicsAllocation()));
+    EXPECT_TRUE(csr.isMadeResident(csr.commandStream.getGraphicsAllocation()));
+    EXPECT_TRUE(csr.isMadeResident(csr.getTagAllocation()));
+
+    bool hostPtrAllocationFound = false;
+    for (auto &allocation : csr.makeResidentAllocations) {
+        if (allocation.first->getUnderlyingBuffer() == hostPtr) {
+            hostPtrAllocationFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(hostPtrAllocationFound);
 }
