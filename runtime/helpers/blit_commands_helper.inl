@@ -70,9 +70,14 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(Buffer &buffer
         bltCmd->setDestinationBaseAddress(buffer.getGraphicsAllocation()->getGpuAddress() + offset);
         bltCmd->setSourceBaseAddress(hostPtrAllocation.getGpuAddress() + offset);
 
+        appendBlitCommandsForBuffer(buffer, *bltCmd);
+
         auto blitSize = width * height;
         sizeToBlit -= blitSize;
         offset += blitSize;
     }
 }
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(Buffer &buffer, typename GfxFamily::XY_COPY_BLT &blitCmd) {}
 } // namespace NEO
