@@ -62,9 +62,6 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
         auto graphicsAllocation = pKernel->getKernelInfo().getGraphicsAllocation();
         auto kernelIsaAddress = graphicsAllocation->getGpuAddressToPatch();
 
-        uint64_t lowPart = kernelIsaAddress & 0xffffffff;
-        uint64_t hightPart = (kernelIsaAddress & 0xffffffff00000000) >> 32;
-
         pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 0, nullptr, nullptr);
 
         if (pKernel->getKernelInfo().name == "kernel_reflection") {
@@ -75,8 +72,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
         EXPECT_NE(0u, idData[0].getConstantIndirectUrbEntryReadLength());
         EXPECT_NE(0u, idData[0].getCrossThreadConstantDataReadLength());
         EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL, idData[0].getDenormMode());
-        EXPECT_EQ((uint32_t)lowPart, idData[0].getKernelStartPointer());
-        EXPECT_EQ((uint32_t)hightPart, idData[0].getKernelStartPointerHigh());
+        EXPECT_EQ(static_cast<uint32_t>(kernelIsaAddress), idData[0].getKernelStartPointer());
+        EXPECT_EQ(static_cast<uint32_t>(kernelIsaAddress >> 32), idData[0].getKernelStartPointerHigh());
 
         const uint32_t blockFirstIndex = 1;
 

@@ -274,10 +274,10 @@ bool Event::calcProfilingData() {
             calculateProfilingDataInternal(contextStartTS, contextEndTS, &contextEndTS, globalStartTS);
         } else if (timeStampNode) {
             calculateProfilingDataInternal(
-                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tagForCpuAccess))->ContextStartTS,
-                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tagForCpuAccess))->ContextEndTS,
-                &(reinterpret_cast<HwTimeStamps *>(timeStampNode->tagForCpuAccess))->ContextCompleteTS,
-                (reinterpret_cast<HwTimeStamps *>(timeStampNode->tagForCpuAccess))->GlobalStartTS);
+                timeStampNode->tagForCpuAccess->ContextStartTS,
+                timeStampNode->tagForCpuAccess->ContextEndTS,
+                &timeStampNode->tagForCpuAccess->ContextCompleteTS,
+                timeStampNode->tagForCpuAccess->GlobalStartTS);
         }
     }
     return dataCalculated;

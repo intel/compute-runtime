@@ -357,15 +357,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
     mockDeviceQueueHw->buildSlbDummyCommands();
     mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel, hwTimeStamp, taskCount);
 
-    uint32_t eventTimestampAddrLow = static_cast<uint32_t>(igilCmdQueue->m_controls.m_EventTimestampAddress & 0xFFFFFFFF);
-    uint32_t eventTimestampAddrHigh = static_cast<uint32_t>((igilCmdQueue->m_controls.m_EventTimestampAddress & 0xFFFFFFFF00000000) >> 32);
-
-    uint64_t contextCompleteAddr = hwTimeStamp->getBaseGraphicsAllocation()->getGpuAddress() + ptrDiff(&hwTimeStamp->tagForCpuAccess->ContextCompleteTS, hwTimeStamp->tagForCpuAccess);
-    uint32_t contextCompleteAddrLow = static_cast<uint32_t>(contextCompleteAddr & 0xFFFFFFFF);
-    uint32_t contextCompleteAddrHigh = static_cast<uint32_t>((contextCompleteAddr & 0xFFFFFFFF00000000) >> 32);
-
-    EXPECT_EQ(contextCompleteAddrLow, eventTimestampAddrLow);
-    EXPECT_EQ(contextCompleteAddrHigh, eventTimestampAddrHigh);
+    uint64_t eventTimestampAddr = igilCmdQueue->m_controls.m_EventTimestampAddress;
+    uint64_t contextCompleteAddr = hwTimeStamp->getGpuAddress() + offsetof(HwTimeStamps, ContextCompleteTS);
+    EXPECT_EQ(contextCompleteAddr, eventTimestampAddr);
 
     HardwareParse hwParser;
     auto *slbCS = mockDeviceQueueHw->getSlbCS();

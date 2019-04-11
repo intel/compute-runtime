@@ -110,21 +110,19 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp
-    uint64_t TimeStampAddress = hwTimeStamps.getBaseGraphicsAllocation()->getGpuAddress() +
-                                ptrDiff(&hwTimeStamps.tagForCpuAccess->GlobalStartTS, hwTimeStamps.getBaseGraphicsAllocation()->getUnderlyingBuffer());
+    uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
 
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, TimeStampAddress, 0llu, false);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, timeStampAddress, 0llu, false);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
-    TimeStampAddress = hwTimeStamps.getBaseGraphicsAllocation()->getGpuAddress() +
-                       ptrDiff(&hwTimeStamps.tagForCpuAccess->ContextStartTS, hwTimeStamps.getBaseGraphicsAllocation()->getUnderlyingBuffer());
+    timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextStartTS);
 
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
     *pMICmdLow = GfxFamily::cmdInitStoreRegisterMem;
     adjustMiStoreRegMemMode(pMICmdLow);
     pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
-    pMICmdLow->setMemoryAddress(TimeStampAddress);
+    pMICmdLow->setMemoryAddress(timeStampAddress);
 }
 
 template <typename GfxFamily>
@@ -140,15 +138,14 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     pPipeControlCmd->setCommandStreamerStallEnable(true);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
-    uint64_t TimeStampAddress = hwTimeStamps.getBaseGraphicsAllocation()->getGpuAddress() +
-                                ptrDiff(&hwTimeStamps.tagForCpuAccess->ContextEndTS, hwTimeStamps.getBaseGraphicsAllocation()->getUnderlyingBuffer());
+    uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextEndTS);
 
     //low part
     auto pMICmdLow = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
     *pMICmdLow = GfxFamily::cmdInitStoreRegisterMem;
     adjustMiStoreRegMemMode(pMICmdLow);
     pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
-    pMICmdLow->setMemoryAddress(TimeStampAddress);
+    pMICmdLow->setMemoryAddress(timeStampAddress);
 }
 
 template <typename GfxFamily>
