@@ -21,7 +21,7 @@ typedef api_tests clGetKernelInfoTests;
 
 namespace ULT {
 
-TEST_F(clGetKernelInfoTests, success) {
+TEST_F(clGetKernelInfoTests, GivenValidParamsWhenGettingKernelInfoThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
     void *pSource = nullptr;
     size_t sourceSize = 0;
