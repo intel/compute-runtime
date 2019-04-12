@@ -186,6 +186,10 @@ class Program : public BaseObject<_cl_program> {
         return isSpirV;
     }
 
+    bool isCreatedFromIL() const {
+        return createdFrom == CreatedFrom::IL;
+    }
+
     size_t getProgramScopePatchListSize() const {
         return programScopePatchListSize;
     }

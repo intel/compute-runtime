@@ -48,7 +48,7 @@ cl_int CompilerInterface::build(
     IGC::CodeType::CodeType_t highLevelCodeType = IGC::CodeType::undefined;
     IGC::CodeType::CodeType_t intermediateCodeType = IGC::CodeType::undefined;
 
-    if (program.getProgramBinaryType() == CL_PROGRAM_BINARY_TYPE_INTERMEDIATE) {
+    if (program.isCreatedFromIL() || (program.getProgramBinaryType() == CL_PROGRAM_BINARY_TYPE_INTERMEDIATE)) {
         if (program.getIsSpirV()) {
             intermediateCodeType = IGC::CodeType::spirV;
         } else {
