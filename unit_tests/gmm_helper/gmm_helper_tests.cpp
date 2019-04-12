@@ -375,13 +375,6 @@ TEST_F(GmmTests, decanonize) {
     EXPECT_EQ(GmmHelper::decanonize(addr2), addrExpected2);
 }
 
-TEST_F(GmmTests, returnRenderTileMode) {
-    uint32_t alignments[5][2] = {{0, 1}, {4, 1}, {8, 2}, {16, 3}, {20, 1}}; // {given, expected}
-    for (uint32_t i = 0; i < 5; i++) {
-        EXPECT_EQ(GmmHelper::getRenderAlignment(alignments[i][0]), alignments[i][1]);
-    }
-}
-
 TEST_F(GmmTests, givenMipmapedInputWhenAskedForHalingThenNonDefaultValueIsReturned) {
     cl_image_desc imgDesc{};
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;

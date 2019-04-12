@@ -7,6 +7,7 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/compiler_interface/compiler_interface.h"
+#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/image.h"
@@ -1452,7 +1453,22 @@ HWTEST_F(HwImageTest, givenImageHwWhenSettingCCSParamsThenSetClearColorParamsIsC
     EXPECT_TRUE(mockImage->setClearColorParamsCalled);
 }
 
-using HwImageTest = ::testing::Test;
+HWTEST_F(HwImageTest, givenImageHwWhenSettingAlignmentThenUseGmmValues) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    MockContext context;
+    OsAgnosticMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
+    context.setMemoryManager(&memoryManager);
+
+    std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
+
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+
+    image->setImageArg(&surfaceState, false, 0);
+    auto resourceInfo = image->getGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo.get();
+    EXPECT_EQ(resourceInfo->getHAlignSurfaceState(), surfaceState.getSurfaceHorizontalAlignment());
+    EXPECT_EQ(resourceInfo->getVAlignSurfaceState(), surfaceState.getSurfaceVerticalAlignment());
+}
+
 HWTEST_F(HwImageTest, givenImageHwWithUnifiedSurfaceAndMcsWhenSettingParamsForMultisampleImageThenSetParamsForCcsMcsIsCalled) {
 
     MockContext context;

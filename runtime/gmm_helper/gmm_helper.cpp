@@ -106,18 +106,6 @@ uint64_t GmmHelper::decanonize(uint64_t address) {
     return (uint64_t)(address & 0xFFFFFFFFFFFF);
 }
 
-uint32_t GmmHelper::getRenderAlignment(uint32_t alignment) {
-    uint32_t returnAlign = 0;
-    if (alignment == 8) {
-        returnAlign = 2;
-    } else if (alignment == 16) {
-        returnAlign = 3;
-    } else {
-        returnAlign = 1;
-    }
-    return returnAlign;
-}
-
 uint32_t GmmHelper::getRenderMultisamplesCount(uint32_t numSamples) {
     if (numSamples == 2) {
         return 1;

@@ -200,14 +200,6 @@ uint32_t Gmm::queryQPitch(GMM_RESOURCE_TYPE resType) {
     return gmmResourceInfo->getQPitch();
 }
 
-uint32_t Gmm::getRenderHAlignment() {
-    return GmmHelper::getRenderAlignment(gmmResourceInfo->getHAlign());
-}
-
-uint32_t Gmm::getRenderVAlignment() {
-    return GmmHelper::getRenderAlignment(gmmResourceInfo->getVAlign());
-}
-
 void Gmm::updateImgInfo(ImageInfo &imgInfo, cl_image_desc &imgDesc, cl_uint arrayIndex) {
     imgDesc.image_width = gmmResourceInfo->getBaseWidth();
     imgDesc.image_row_pitch = gmmResourceInfo->getRenderPitch();

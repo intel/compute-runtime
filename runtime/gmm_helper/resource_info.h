@@ -42,6 +42,10 @@ class GmmResourceInfo {
 
     MOCKABLE_VIRTUAL uint32_t getVAlign() { return resourceInfo->GetVAlign(); }
 
+    MOCKABLE_VIRTUAL uint32_t getHAlignSurfaceState() { return resourceInfo->GetHAlignSurfaceState(); }
+
+    MOCKABLE_VIRTUAL uint32_t getVAlignSurfaceState() { return resourceInfo->GetVAlignSurfaceState(); }
+
     MOCKABLE_VIRTUAL uint32_t getMaxLod() { return resourceInfo->GetMaxLod(); }
 
     MOCKABLE_VIRTUAL uint32_t getTileModeSurfaceState() { return resourceInfo->GetTileModeSurfaceState(); }
