@@ -336,14 +336,6 @@ TEST_F(MemoryAllocatorTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocatio
     EXPECT_NE(&allocation->fragmentsStorage, &handleStorage);
 }
 
-TEST_F(MemoryAllocatorTest, defaultInternalHeapBaseIsInitialized) {
-    EXPECT_LE(0ull, memoryManager->MemoryManager::getInternalHeapBaseAddress());
-}
-
-TEST_F(MemoryAllocatorTest, defaultExternalHeapBaseIsNotNull) {
-    EXPECT_LT(0ull, memoryManager->getExternalHeapBaseAddress());
-}
-
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithTrueMutlipleTimesThenAllocatorIsReused) {
     memoryManager->setForce32BitAllocations(true);
     EXPECT_NE(nullptr, memoryManager->allocator32Bit.get());
