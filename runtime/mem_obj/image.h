@@ -9,6 +9,7 @@
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/validators.h"
+#include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/mem_obj.h"
 
 namespace NEO {
