@@ -92,6 +92,7 @@ const size_t EnqueueReadImageTraits::rowPitch   = 0;
 const size_t EnqueueReadImageTraits::slicePitch = 0;
 void *EnqueueReadImageTraits::hostPtr           = ptrOutput;
 cl_command_type EnqueueReadImageTraits::cmdType = CL_COMMAND_READ_IMAGE;
+GraphicsAllocation *EnqueueReadImageTraits::mapAllocation  = nullptr;
 
 // EnqueueWriteBufferTraits
 const bool EnqueueWriteBufferTraits::zeroCopy               = true;
@@ -123,4 +124,5 @@ const size_t EnqueueWriteImageTraits::rowPitch   = 0;
 const size_t EnqueueWriteImageTraits::slicePitch = 0;
 void *EnqueueWriteImageTraits::hostPtr           = ptrGarbage;
 cl_command_type EnqueueWriteImageTraits::cmdType = CL_COMMAND_WRITE_IMAGE;
+GraphicsAllocation *EnqueueWriteImageTraits::mapAllocation  = nullptr;
 // clang-format on

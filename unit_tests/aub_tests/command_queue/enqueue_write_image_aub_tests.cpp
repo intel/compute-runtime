@@ -160,6 +160,7 @@ HWTEST_P(AUBWriteImage, simpleUnalignedMemory) {
         inputRowPitch,
         inputSlicePitch,
         pSrcMemory,
+        nullptr,
         0,
         nullptr,
         nullptr);
@@ -168,7 +169,7 @@ HWTEST_P(AUBWriteImage, simpleUnalignedMemory) {
     auto readMemory = new uint8_t[dstImage->getSize()];
     size_t imgOrigin[] = {0, 0, 0};
     size_t imgRegion[] = {testWidth, testHeight, testDepth};
-    pCmdQ->enqueueReadImage(dstImage, CL_TRUE, imgOrigin, imgRegion, 0, 0, readMemory, 0, nullptr, nullptr);
+    pCmdQ->enqueueReadImage(dstImage, CL_TRUE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
 
     auto pDstMemory = readMemory;
     auto pSrc = pSrcMemory;

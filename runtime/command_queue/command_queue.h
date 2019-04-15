@@ -217,6 +217,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     virtual cl_int enqueueReadImage(Image *srcImage, cl_bool blockingRead,
                                     const size_t *origin, const size_t *region,
                                     size_t rowPitch, size_t slicePitch, void *ptr,
+                                    GraphicsAllocation *mapAllocation,
                                     cl_uint numEventsInWaitList,
                                     const cl_event *eventWaitList,
                                     cl_event *event) {
@@ -235,7 +236,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     virtual cl_int enqueueWriteImage(Image *dstImage, cl_bool blockingWrite,
                                      const size_t *origin, const size_t *region,
                                      size_t inputRowPitch, size_t inputSlicePitch,
-                                     const void *ptr, cl_uint numEventsInWaitList,
+                                     const void *ptr, GraphicsAllocation *mapAllocation,
+                                     cl_uint numEventsInWaitList,
                                      const cl_event *eventWaitList,
                                      cl_event *event) {
         return CL_SUCCESS;

@@ -14,6 +14,7 @@
 #include "runtime/helpers/mipmap.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 
 #include "hw_cmds.h"
 
@@ -31,6 +32,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     size_t inputRowPitch,
     size_t inputSlicePitch,
     const void *ptr,
+    GraphicsAllocation *mapAllocation,
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
@@ -73,16 +75,26 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
 
     MemObjSurface dstImgSurf(dstImage);
     HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize, true);
-    Surface *surfaces[] = {&dstImgSurf, &hostPtrSurf};
+    GeneralSurface mapSurface;
+    Surface *surfaces[] = {&dstImgSurf, nullptr};
 
-    if (region[0] != 0 &&
-        region[1] != 0 &&
-        region[2] != 0) {
-        bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
-        if (!status) {
-            return CL_OUT_OF_RESOURCES;
+    if (mapAllocation) {
+        surfaces[1] = &mapSurface;
+        mapSurface.setGraphicsAllocation(mapAllocation);
+        //get offset between base cpu ptr of map allocation and dst ptr
+        size_t srcOffset = ptrDiff(srcPtr, mapAllocation->getUnderlyingBuffer());
+        srcPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + srcOffset);
+    } else {
+        surfaces[1] = &hostPtrSurf;
+        if (region[0] != 0 &&
+            region[1] != 0 &&
+            region[2] != 0) {
+            bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
+            if (!status) {
+                return CL_OUT_OF_RESOURCES;
+            }
+            srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
         }
-        srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
     }
 
     void *alignedSrcPtr = alignDown(srcPtr, 4);

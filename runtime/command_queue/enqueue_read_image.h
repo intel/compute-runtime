@@ -17,6 +17,7 @@
 #include "runtime/helpers/mipmap.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/surface.h"
 
 #include "hw_cmds.h"
@@ -35,6 +36,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     size_t inputRowPitch,
     size_t inputSlicePitch,
     void *ptr,
+    GraphicsAllocation *mapAllocation,
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
@@ -80,16 +82,26 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
 
     MemObjSurface srcImgSurf(srcImage);
     HostPtrSurface hostPtrSurf(dstPtr, hostPtrSize);
-    Surface *surfaces[] = {&srcImgSurf, &hostPtrSurf};
+    GeneralSurface mapSurface;
+    Surface *surfaces[] = {&srcImgSurf, nullptr};
 
-    if (region[0] != 0 &&
-        region[1] != 0 &&
-        region[2] != 0) {
-        bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, true);
-        if (!status) {
-            return CL_OUT_OF_RESOURCES;
+    if (mapAllocation) {
+        surfaces[1] = &mapSurface;
+        mapSurface.setGraphicsAllocation(mapAllocation);
+        //get offset between base cpu ptr of map allocation and dst ptr
+        size_t dstOffset = ptrDiff(dstPtr, mapAllocation->getUnderlyingBuffer());
+        dstPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + dstOffset);
+    } else {
+        surfaces[1] = &hostPtrSurf;
+        if (region[0] != 0 &&
+            region[1] != 0 &&
+            region[2] != 0) {
+            bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, true);
+            if (!status) {
+                return CL_OUT_OF_RESOURCES;
+            }
+            dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
         }
-        dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
     }
 
     void *alignedDstPtr = alignDown(dstPtr, 4);

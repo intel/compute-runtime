@@ -258,6 +258,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DAndImageShareTheSameStorageWithHostP
                                         rowPitch,
                                         slicePitch,
                                         ptr,
+                                        nullptr,
                                         0,
                                         nullptr,
                                         nullptr);
@@ -287,6 +288,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DArrayAndImageShareTheSameStorageWith
                                       rowPitch,
                                       slicePitch,
                                       ptrStorage,
+                                      nullptr,
                                       0,
                                       nullptr,
                                       nullptr);
@@ -318,6 +320,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenSharedContextZeroCopy2DImageWhenEnqueueWrit
                                      rowPitch,
                                      slicePitch,
                                      ptr,
+                                     nullptr,
                                      0,
                                      nullptr,
                                      nullptr);
@@ -348,6 +351,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DThatIsZeroCopyWhenWriteImageWithTheS
                                       rowPitch,
                                       slicePitch,
                                       ptr,
+                                      nullptr,
                                       numEventsInWaitList,
                                       nullptr,
                                       &event);
@@ -428,6 +432,7 @@ HWTEST_P(MipMapWriteImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalle
                                       0,
                                       0,
                                       ptr.get(),
+                                      nullptr,
                                       0,
                                       nullptr,
                                       nullptr);
@@ -472,6 +477,7 @@ HWTEST_F(NegativeFailAllocationTest, givenEnqueueReadImageWhenHostPtrAllocationC
                                      rowPitch,
                                      slicePitch,
                                      ptr,
+                                     nullptr,
                                      0,
                                      nullptr,
                                      nullptr);

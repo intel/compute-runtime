@@ -359,7 +359,7 @@ HWTEST_F(EnqueueThreading, enqueueReadImage) {
     size_t origin[3] = {1024u, 1, 0};
     size_t region[3] = {1024u, 1, 1};
 
-    pCmdQ->enqueueReadImage(image.get(), CL_TRUE, origin, region, 0, 0, ptr, 0, nullptr, nullptr);
+    pCmdQ->enqueueReadImage(image.get(), CL_TRUE, origin, region, 0, 0, ptr, nullptr, 0, nullptr, nullptr);
 
     ::alignedFree(ptr);
 }
@@ -409,7 +409,7 @@ HWTEST_F(EnqueueThreading, enqueueWriteImage) {
     size_t origin[3] = {1024u, 1, 0};
     size_t region[3] = {1024u, 1, 1};
 
-    pCmdQ->enqueueWriteImage(image.get(), CL_TRUE, origin, region, 0, 0, ptr, 0, nullptr, nullptr);
+    pCmdQ->enqueueWriteImage(image.get(), CL_TRUE, origin, region, 0, 0, ptr, nullptr, 0, nullptr, nullptr);
 
     ::alignedFree(ptr);
 }

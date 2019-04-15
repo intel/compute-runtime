@@ -164,6 +164,7 @@ HWTEST_P(AUBReadImage, simpleUnalignedMemory) {
         inputRowPitch,
         inputSlicePitch,
         dstMemoryUnaligned,
+        nullptr,
         0,
         nullptr,
         nullptr);

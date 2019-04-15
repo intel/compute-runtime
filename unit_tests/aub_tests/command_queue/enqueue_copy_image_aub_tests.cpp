@@ -124,7 +124,7 @@ HWTEST_P(AUBCopyImage, simple) {
     size_t imgOrigin[] = {0, 0, 0};
     size_t imgRegion[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth};
 
-    pCmdQ->enqueueReadImage(dstImage, CL_TRUE, imgOrigin, imgRegion, 0, 0, dstOutMemory, 0, nullptr, nullptr);
+    pCmdQ->enqueueReadImage(dstImage, CL_TRUE, imgOrigin, imgRegion, 0, 0, dstOutMemory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Offset the source memory

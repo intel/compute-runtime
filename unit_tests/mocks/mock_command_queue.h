@@ -96,6 +96,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
                              size_t inputRowPitch,
                              size_t inputSlicePitch,
                              const void *ptr,
+                             GraphicsAllocation *mapAllocation,
                              cl_uint numEventsInWaitList,
                              const cl_event *eventWaitList,
                              cl_event *event) override {
@@ -107,6 +108,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
                                             inputRowPitch,
                                             inputSlicePitch,
                                             ptr,
+                                            mapAllocation,
                                             numEventsInWaitList,
                                             eventWaitList,
                                             event);

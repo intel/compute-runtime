@@ -891,6 +891,7 @@ TEST_F(MockEventTests, enqueueReadImageBlockedOnUserEvent) {
                                                              EnqueueReadImageTraits::rowPitch,
                                                              EnqueueReadImageTraits::slicePitch,
                                                              EnqueueReadImageTraits::hostPtr,
+                                                             EnqueueReadImageTraits::mapAllocation,
                                                              1,
                                                              eventWaitList,
                                                              &retEvent);

@@ -417,31 +417,31 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadImageWhenZeroSizeEnqueueIsDetect
     size_t origin[3] = {1024u, 1, 0};
 
     size_t zeroRegion000[3] = {0, 0, 0};
-    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion000, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion000, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion011[3] = {0, 1, 1};
-    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion011, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion011, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion101[3] = {1, 0, 1};
-    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion101, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion101, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion110[3] = {1, 1, 0};
-    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion110, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion110, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion001[3] = {0, 0, 1};
-    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion001, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion001, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion010[3] = {0, 1, 0};
-    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion010, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion010, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion100[3] = {1, 0, 0};
-    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion100, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion100, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
@@ -453,7 +453,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueReadImageWhenZeroSizeEnqueueIsDetect
     size_t memory[1];
     size_t origin[3] = {1024u, 1, 0};
     size_t zeroRegion[3] = {0, 0, 0};
-    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion, 0, 0, memory, 0, nullptr, &event);
+    mockCmdQ->enqueueReadImage(image.get(), CL_FALSE, origin, zeroRegion, 0, 0, memory, nullptr, 0, nullptr, &event);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     auto pEvent = (Event *)event;
@@ -474,31 +474,31 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteImageWhenZeroSizeEnqueueIsDetec
     size_t origin[3] = {1024u, 1, 0};
 
     size_t zeroRegion000[3] = {0, 0, 0};
-    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion000, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion000, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion011[3] = {0, 1, 1};
-    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion011, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion011, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion101[3] = {1, 0, 1};
-    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion101, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion101, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion110[3] = {1, 1, 0};
-    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion110, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion110, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion001[3] = {0, 0, 1};
-    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion001, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion001, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion010[3] = {0, 1, 0};
-    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion010, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion010, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     size_t zeroRegion100[3] = {1, 0, 0};
-    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion100, 0, 0, memory, 0, nullptr, nullptr);
+    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion100, 0, 0, memory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 }
 
@@ -510,7 +510,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, enqueueWriteImageWhenZeroSizeEnqueueIsDetec
     size_t memory[1];
     size_t origin[3] = {1024u, 1, 0};
     size_t zeroRegion[3] = {0, 0, 0};
-    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion, 0, 0, memory, 0, nullptr, &event);
+    mockCmdQ->enqueueWriteImage(image.get(), CL_FALSE, origin, zeroRegion, 0, 0, memory, nullptr, 0, nullptr, &event);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     auto pEvent = (Event *)event;

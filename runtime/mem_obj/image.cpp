@@ -350,7 +350,7 @@ Image *Image::create(Context *context,
                 } else {
                     errcodeRet = cmdQ->enqueueWriteImage(image, CL_TRUE, &copyOrigin[0], &copyRegion[0],
                                                          hostPtrRowPitch, hostPtrSlicePitch,
-                                                         hostPtr, 0, nullptr, nullptr);
+                                                         hostPtr, nullptr, 0, nullptr, nullptr);
                 }
             } else {
                 image->transferData(memory->getUnderlyingBuffer(), imgInfo.rowPitch, imgInfo.slicePitch,
@@ -945,7 +945,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch) {
         nullptr,
         retVal));
 
-    retVal = cmdQ->enqueueWriteImage(imageYPlane.get(), CL_TRUE, origin, region, hostPtrRowPitch, 0, hostPtr, 0, nullptr, nullptr);
+    retVal = cmdQ->enqueueWriteImage(imageYPlane.get(), CL_TRUE, origin, region, hostPtrRowPitch, 0, hostPtr, nullptr, 0, nullptr, nullptr);
 
     // UV Plane is two times smaller than Plane Y
     region[0] = region[0] / 2;
@@ -967,7 +967,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch) {
         nullptr,
         retVal));
 
-    retVal = cmdQ->enqueueWriteImage(imageUVPlane.get(), CL_TRUE, origin, region, hostPtrRowPitch, 0, hostPtr, 0, nullptr, nullptr);
+    retVal = cmdQ->enqueueWriteImage(imageUVPlane.get(), CL_TRUE, origin, region, hostPtrRowPitch, 0, hostPtr, nullptr, 0, nullptr, nullptr);
 
     return retVal;
 }

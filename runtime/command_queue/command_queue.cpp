@@ -333,7 +333,7 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
             UNRECOVERABLE_IF(mipIdx >= 4);
             writeOrigin[mipIdx] = unmapInfo.mipLevel;
             retVal = enqueueWriteImage(image, CL_FALSE, writeOrigin, &unmapInfo.size[0],
-                                       image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), mappedPtr,
+                                       image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), mappedPtr, memObj->getMapAllocation(),
                                        eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
             bool mustCallFinish = true;
             if (!(image->getFlags() & CL_MEM_USE_HOST_PTR)) {
@@ -385,7 +385,8 @@ void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperti
         UNRECOVERABLE_IF(mipIdx >= 4);
         readOrigin[mipIdx] = transferProperties.mipLevel;
         errcodeRet = enqueueReadImage(image, transferProperties.blocking, readOrigin, &transferProperties.size[0],
-                                      image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), returnPtr, eventsRequest.numEventsInWaitList,
+                                      image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
+                                      returnPtr, transferProperties.memObj->getMapAllocation(), eventsRequest.numEventsInWaitList,
                                       eventsRequest.eventWaitList, eventsRequest.outEvent);
     }
 

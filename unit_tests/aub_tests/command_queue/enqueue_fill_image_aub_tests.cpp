@@ -207,7 +207,7 @@ HWTEST_P(AubFillImage, simple) {
     size_t imgRegion[] = {testWidth, testHeight, testDepth};
 
     auto dstMemory = new uint8_t[sizeMemory];
-    pCmdQ->enqueueReadImage(image, CL_TRUE, imgOrigin, imgRegion, 0, 0, dstMemory, 0, nullptr, nullptr);
+    pCmdQ->enqueueReadImage(image, CL_TRUE, imgOrigin, imgRegion, 0, 0, dstMemory, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     size_t slicePitch = image->getHostPtrSlicePitch();

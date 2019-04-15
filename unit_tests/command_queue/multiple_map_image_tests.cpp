@@ -47,18 +47,18 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
         MockCmdQ(Context *context, Device *device) : CommandQueueHw<T>(context, device, 0) {}
 
         cl_int enqueueReadImage(Image *srcImage, cl_bool blockingRead, const size_t *origin, const size_t *region, size_t rowPitch, size_t slicePitch, void *ptr,
-                                cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+                                GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
             enqueueRegion = {{region[0], region[1], region[2]}};
             enqueueOrigin = {{origin[0], origin[1], origin[2]}};
             readImageCalled++;
             if (failOnReadImage) {
                 return CL_OUT_OF_RESOURCES;
             }
-            return CommandQueueHw<T>::enqueueReadImage(srcImage, blockingRead, origin, region, rowPitch, slicePitch, ptr, numEventsInWaitList, eventWaitList, event);
+            return CommandQueueHw<T>::enqueueReadImage(srcImage, blockingRead, origin, region, rowPitch, slicePitch, ptr, mapAllocation, numEventsInWaitList, eventWaitList, event);
         }
 
         cl_int enqueueWriteImage(Image *dstImage, cl_bool blockingWrite, const size_t *origin, const size_t *region, size_t inputRowPitch,
-                                 size_t inputSlicePitch, const void *ptr, cl_uint numEventsInWaitList, const cl_event *eventWaitList,
+                                 size_t inputSlicePitch, const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList,
                                  cl_event *event) override {
             enqueueRegion = {{region[0], region[1], region[2]}};
             enqueueOrigin = {{origin[0], origin[1], origin[2]}};
@@ -68,7 +68,7 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
                 return CL_OUT_OF_RESOURCES;
             }
             return CommandQueueHw<T>::enqueueWriteImage(dstImage, blockingWrite, origin, region, inputRowPitch, inputSlicePitch, ptr,
-                                                        numEventsInWaitList, eventWaitList, event);
+                                                        mapAllocation, numEventsInWaitList, eventWaitList, event);
         }
 
         cl_int enqueueMarkerWithWaitList(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {

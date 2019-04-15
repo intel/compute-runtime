@@ -363,6 +363,7 @@ TEST_P(PerformanceHintEnqueueReadImageTest, GivenHostPtrAndSizeAlignmentsWhenEnq
                             0,
                             0,
                             (void *)addressForReadImage,
+                            nullptr,
                             0,
                             nullptr,
                             nullptr);
@@ -387,6 +388,7 @@ TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingWriteWhenEnqueueWriteIma
         MemoryConstants::cacheLineSize,
         MemoryConstants::cacheLineSize,
         address,
+        nullptr,
         0,
         nullptr,
         nullptr);
@@ -409,6 +411,7 @@ TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingWriteImageSharesStorageW
         MemoryConstants::cacheLineSize,
         MemoryConstants::cacheLineSize,
         ptr,
+        nullptr,
         0,
         nullptr,
         nullptr);
@@ -431,6 +434,7 @@ TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingReadImageSharesStorageWi
         MemoryConstants::cacheLineSize,
         MemoryConstants::cacheLineSize,
         ptr,
+        nullptr,
         0,
         nullptr,
         nullptr);

@@ -103,6 +103,7 @@ struct AUBImageUnaligned
             inputRowPitch,
             inputSlicePitch,
             ptrOffset(dstMemory, offset),
+            nullptr,
             0,
             nullptr,
             nullptr);
@@ -192,6 +193,7 @@ struct AUBImageUnaligned
             inputRowPitch,
             inputSlicePitch,
             ptrOffset(srcMemory, offset),
+            nullptr,
             0,
             nullptr,
             nullptr);
