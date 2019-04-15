@@ -491,6 +491,10 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(Kernel *parentKernel,
     scheduler.makeResident(getCommandStreamReceiver());
 
     parentKernel->getProgram()->getBlockKernelManager()->makeInternalAllocationsResident(getCommandStreamReceiver());
+
+    if (parentKernel->isAuxTranslationRequired()) {
+        blocking = true;
+    }
 }
 
 template <typename GfxFamily>
