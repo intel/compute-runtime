@@ -212,7 +212,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     bool allow64KbPages = false;
     bool allow32Bit = false;
     bool forcePin = properties.flags.forcePin;
-    bool mustBeZeroCopy = false;
     bool mayRequireL3Flush = false;
 
     switch (properties.allocationType) {
@@ -249,20 +248,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     switch (properties.allocationType) {
-    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
-    case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
-    case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
-    case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
-    case GraphicsAllocation::AllocationType::PIPE:
-    case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
-    case GraphicsAllocation::AllocationType::SVM_CPU:
-    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
-        mustBeZeroCopy = true;
-    default:
-        break;
-    }
-
-    switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER:
     case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
@@ -283,8 +268,14 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     switch (properties.allocationType) {
+    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
+    case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
+    case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
+    case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
+    case GraphicsAllocation::AllocationType::PIPE:
+    case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
     case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
     case GraphicsAllocation::AllocationType::SVM_CPU:
     case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
@@ -296,7 +287,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     allocationData.flags.requiresCpuAccess = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
-    allocationData.flags.mustBeZeroCopy = mustBeZeroCopy;
     allocationData.flags.allocateMemory = properties.flags.allocateMemory;
     allocationData.flags.allow32Bit = allow32Bit;
     allocationData.flags.allow64kbPages = allow64KbPages;
@@ -306,10 +296,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         (mayRequireL3Flush ? properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite : 0u);
     allocationData.flags.preferRenderCompressed = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == properties.allocationType;
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
-
-    if (allocationData.flags.mustBeZeroCopy) {
-        allocationData.flags.useSystemMemory = true;
-    }
 
     allocationData.hostPtr = hostPtr;
     allocationData.size = properties.size;

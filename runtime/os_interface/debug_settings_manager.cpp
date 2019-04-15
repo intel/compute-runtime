@@ -317,6 +317,8 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "COMMAND_BUFFER";
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
         return "CONSTANT_SURFACE";
+    case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
+        return "DEVICE_QUEUE_BUFFER";
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
         return "EXTERNAL_HOST_PTR";
     case GraphicsAllocation::AllocationType::FILL_PATTERN:

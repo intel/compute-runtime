@@ -160,7 +160,6 @@ class MemoryManager {
     struct AllocationData {
         union {
             struct {
-                uint32_t mustBeZeroCopy : 1;
                 uint32_t allocateMemory : 1;
                 uint32_t allow64kbPages : 1;
                 uint32_t allow32Bit : 1;
@@ -171,7 +170,7 @@ class MemoryManager {
                 uint32_t preferRenderCompressed : 1;
                 uint32_t multiOsContextCapable : 1;
                 uint32_t requiresCpuAccess : 1;
-                uint32_t reserved : 21;
+                uint32_t reserved : 22;
             } flags;
             uint32_t allFlags = 0;
         };
