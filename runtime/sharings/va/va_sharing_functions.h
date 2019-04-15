@@ -22,27 +22,27 @@ class VASharingFunctions : public SharingFunctions {
     }
     static const uint32_t sharingId;
 
-    bool isValidVaDisplay() {
+    MOCKABLE_VIRTUAL bool isValidVaDisplay() {
         return vaDisplayIsValidPFN(vaDisplay) == 1;
     }
 
-    VAStatus deriveImage(VASurfaceID vaSurface, VAImage *vaImage) {
+    MOCKABLE_VIRTUAL VAStatus deriveImage(VASurfaceID vaSurface, VAImage *vaImage) {
         return vaDeriveImagePFN(vaDisplay, vaSurface, vaImage);
     }
 
-    VAStatus destroyImage(VAImageID vaImageId) {
+    MOCKABLE_VIRTUAL VAStatus destroyImage(VAImageID vaImageId) {
         return vaDestroyImagePFN(vaDisplay, vaImageId);
     }
 
-    VAStatus extGetSurfaceHandle(VASurfaceID *vaSurface, unsigned int *handleId) {
+    MOCKABLE_VIRTUAL VAStatus extGetSurfaceHandle(VASurfaceID *vaSurface, unsigned int *handleId) {
         return vaExtGetSurfaceHandlePFN(vaDisplay, vaSurface, handleId);
     }
 
-    VAStatus syncSurface(VASurfaceID vaSurface) {
+    MOCKABLE_VIRTUAL VAStatus syncSurface(VASurfaceID vaSurface) {
         return vaSyncSurfacePFN(vaDisplay, vaSurface);
     }
 
-    void *getLibFunc(const char *func) {
+    MOCKABLE_VIRTUAL void *getLibFunc(const char *func) {
         if (vaGetLibFuncPFN) {
             return vaGetLibFuncPFN(vaDisplay, func);
         }

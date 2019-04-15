@@ -11,80 +11,82 @@
 
 namespace NEO {
 
-extern int vaDisplayIsValidCalled;
-extern int vaDeriveImageCalled;
-extern int vaDestroyImageCalled;
-extern int vaSyncSurfaceCalled;
-extern int vaGetLibFuncCalled;
-extern int vaExtGetSurfaceHandleCalled;
-extern osHandle acquiredVaHandle;
-extern VAImage mockVaImage;
-extern uint16_t vaSharingFunctionsMockWidth, vaSharingFunctionsMockHeight;
-
 class VASharingFunctionsMock : public VASharingFunctions {
+  public:
+    VAImage mockVaImage = {};
+    int32_t derivedImageFormatFourCC = VA_FOURCC_NV12;
+    int32_t derivedImageFormatBpp = 8;
+    uint16_t derivedImageHeight = 256;
+    uint16_t derivedImageWidth = 256;
 
-    static int mockVaDisplayIsValid(VADisplay vaDisplay) {
-        vaDisplayIsValidCalled++;
-        return 1; // success
-    };
+    bool isValidDisplayCalled = false;
+    bool deriveImageCalled = false;
+    bool destroyImageCalled = false;
+    bool syncSurfaceCalled = false;
+    bool getLibFuncCalled = false;
+    bool extGetSurfaceHandleCalled = false;
 
-    static VAStatus mockVaDeriveImage(VADisplay vaDisplay, VASurfaceID vaSurface, VAImage *vaImage) {
+    osHandle acquiredVaHandle = 0;
+
+    VASharingFunctionsMock(VADisplay vaDisplay) : VASharingFunctions(vaDisplay) {}
+    VASharingFunctionsMock() : VASharingFunctionsMock(nullptr){};
+
+    VAStatus deriveImage(VASurfaceID vaSurface, VAImage *vaImage) override {
+        deriveImageCalled = true;
         uint32_t pitch;
-        vaDeriveImageCalled++;
-        vaImage->height = vaSharingFunctionsMockHeight;
-        vaImage->width = vaSharingFunctionsMockWidth;
-        pitch = alignUp(vaSharingFunctionsMockWidth, 128);
+        vaImage->height = derivedImageHeight;
+        vaImage->width = derivedImageWidth;
+        pitch = alignUp(derivedImageWidth, 128);
         vaImage->offsets[1] = alignUp(vaImage->height, 32) * pitch;
         vaImage->offsets[2] = vaImage->offsets[1] + 1;
         vaImage->pitches[0] = pitch;
         vaImage->pitches[1] = pitch;
         vaImage->pitches[2] = pitch;
+        vaImage->format.fourcc = derivedImageFormatFourCC;
+        vaImage->format.bits_per_pixel = derivedImageFormatBpp;
         mockVaImage.width = vaImage->width;
         mockVaImage.height = vaImage->height;
-        return (VAStatus)0; // success
-    };
-
-    static VAStatus mockVaDestroyImage(VADisplay vaDisplay, VAImageID vaImageId) {
-        vaDestroyImageCalled++;
-        return (VAStatus)0; // success
-    };
-
-    static VAStatus mockVaSyncSurface(VADisplay vaDisplay, VASurfaceID vaSurface) {
-        vaSyncSurfaceCalled++;
-        return (VAStatus)0; // success
-    };
-
-    static void *mockVaGetLibFunc(VADisplay vaDisplay, const char *func) {
-        vaGetLibFuncCalled++;
-        return nullptr;
-    };
-
-    static VAStatus mockExtGetSurfaceHandle(VADisplay vaDisplay, VASurfaceID *vaSurface, unsigned int *handleId) {
-        vaExtGetSurfaceHandleCalled++;
-        *handleId = acquiredVaHandle;
-        return (VAStatus)0; // success
-    };
-
-    void initMembers();
-
-  public:
-    VASharingFunctionsMock(VADisplay vaDisplay) : VASharingFunctions(vaDisplay) {
-        initMembers();
+        return VA_STATUS_SUCCESS;
     }
-    VASharingFunctionsMock() : VASharingFunctionsMock(nullptr){};
+
+    bool isValidVaDisplay() override {
+        isValidDisplayCalled = true;
+        return 1;
+    }
+
+    VAStatus destroyImage(VAImageID vaImageId) override {
+        destroyImageCalled = true;
+        return VA_STATUS_SUCCESS;
+    }
+
+    VAStatus extGetSurfaceHandle(VASurfaceID *vaSurface, unsigned int *handleId) override {
+        extGetSurfaceHandleCalled = true;
+        *handleId = acquiredVaHandle;
+        return VA_STATUS_SUCCESS;
+    }
+
+    VAStatus syncSurface(VASurfaceID vaSurface) override {
+        syncSurfaceCalled = true;
+        return VA_STATUS_SUCCESS;
+    }
+
+    void *getLibFunc(const char *func) override {
+        getLibFuncCalled = true;
+        return nullptr;
+    }
 };
 
 class MockVaSharing {
   public:
     void updateAcquiredHandle() {
-        acquiredVaHandle = sharingHandle;
+        sharingFunctions.acquiredVaHandle = sharingHandle;
     }
     void updateAcquiredHandle(unsigned int handle) {
         sharingHandle = handle;
-        acquiredVaHandle = sharingHandle;
+        sharingFunctions.acquiredVaHandle = sharingHandle;
     }
 
-    VASharingFunctionsMock m_sharingFunctions;
+    VASharingFunctionsMock sharingFunctions;
     osHandle sharingHandle = 0;
 };
 } // namespace NEO
