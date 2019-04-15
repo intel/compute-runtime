@@ -120,6 +120,8 @@ class Buffer : public MemObj {
 
     bool isReadWriteOnCpuAllowed(cl_bool blocking, cl_uint numEventsInWaitList, void *ptr, size_t size);
 
+    uint32_t getMocsValue(bool disableL3Cache) const;
+
   protected:
     Buffer(Context *context,
            MemoryProperties properties,

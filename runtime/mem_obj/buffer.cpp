@@ -505,6 +505,30 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
     return pBuffer;
 }
 
+uint32_t Buffer::getMocsValue(bool disableL3Cache) const {
+    uint64_t bufferAddress = 0;
+    size_t bufferSize = 0;
+    if (getGraphicsAllocation()) {
+        bufferAddress = getGraphicsAllocation()->getGpuAddress();
+        bufferSize = getGraphicsAllocation()->getUnderlyingBufferSize();
+    } else {
+        bufferAddress = reinterpret_cast<uint64_t>(getHostPtr());
+        bufferSize = getSize();
+    }
+    bufferAddress += this->offset;
+
+    bool readOnlyMemObj = isValueSet(getFlags(), CL_MEM_READ_ONLY);
+    bool alignedMemObj = isAligned<MemoryConstants::cacheLineSize>(bufferAddress) &&
+                         isAligned<MemoryConstants::cacheLineSize>(bufferSize);
+
+    auto gmmHelper = executionEnvironment->getGmmHelper();
+    if (!disableL3Cache && !isMemObjUncacheable() && (alignedMemObj || readOnlyMemObj || !isMemObjZeroCopy())) {
+        return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    } else {
+        return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    }
+}
+
 void Buffer::setSurfaceState(const Device *device,
                              void *surfaceState,
                              size_t svmSize,

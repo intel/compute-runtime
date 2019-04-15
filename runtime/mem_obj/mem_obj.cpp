@@ -229,7 +229,7 @@ bool MemObj::isMemObjUncacheable() const {
     return isValueSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
 }
 
-GraphicsAllocation *MemObj::getGraphicsAllocation() {
+GraphicsAllocation *MemObj::getGraphicsAllocation() const {
     return graphicsAllocation;
 }
 
