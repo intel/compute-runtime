@@ -60,7 +60,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
 
     gmm.release();
 
-    DebugManager.logAllocation(allocation.get());
     return allocation.release();
 }
 
@@ -84,7 +83,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const Allocati
     DEBUG_BREAK_IF(!status);
     wddmAllocation->setCpuAddress(cpuPtr);
 
-    DebugManager.logAllocation(wddmAllocation.get());
     return wddmAllocation.release();
 }
 
@@ -124,7 +122,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const
         return nullptr;
     }
 
-    DebugManager.logAllocation(wddmAllocation.get());
     return wddmAllocation.release();
 }
 
@@ -146,7 +143,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
         return nullptr;
     }
 
-    DebugManager.logAllocation(wddmAllocation.get());
     return wddmAllocation.release();
 }
 
@@ -168,7 +164,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithHostPtr(const A
         Gmm *gmm = new Gmm(ptrAligned, sizeAligned, false);
         allocation->setDefaultGmm(gmm);
         if (createWddmAllocation(allocation, reserve)) {
-            DebugManager.logAllocation(allocation);
             return allocation;
         }
         freeGraphicsMemory(allocation);
@@ -215,7 +210,6 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     auto baseAddress = useInternal32BitAllocator(allocationData.type) ? getInternalHeapBaseAddress() : allocator32Bit->getBase();
     wddmAllocation->setGpuBaseAddress(GmmHelper::canonize(baseAddress));
 
-    DebugManager.logAllocation(wddmAllocation.get());
     return wddmAllocation.release();
 }
 
