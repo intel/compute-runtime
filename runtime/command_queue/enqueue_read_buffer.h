@@ -33,7 +33,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    notifyEnqueueReadBuffer(buffer, !!blockingRead);
+    if (nullptr == mapAllocation) {
+        notifyEnqueueReadBuffer(buffer, !!blockingRead);
+    }
 
     cl_int retVal = CL_SUCCESS;
     bool isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, CL_COMMAND_READ_BUFFER) : true;

@@ -465,6 +465,24 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenCommandQueueWhenEnqueueReadBufferIsCall
     EXPECT_TRUE(mockCmdQ->notifyEnqueueReadBufferCalled);
 }
 
+HWTEST_F(EnqueueReadBufferTypeTest, givenCommandQueueWhenEnqueueReadBufferWithMapAllocationIsCalledThenItDoesntCallNotifyFunction) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
+    void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
+    GraphicsAllocation mapAllocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
+    auto retVal = mockCmdQ->enqueueReadBuffer(srcBuffer.get(),
+                                              CL_TRUE,
+                                              0,
+                                              MemoryConstants::cacheLineSize,
+                                              ptr,
+                                              &mapAllocation,
+                                              0,
+                                              nullptr,
+                                              nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(mockCmdQ->notifyEnqueueReadBufferCalled);
+}
+
 HWTEST_F(EnqueueReadBufferTypeTest, givenEnqueueReadBufferCalledWhenLockedPtrInTransferPropertisIsAvailableThenItIsNotUnlocked) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
