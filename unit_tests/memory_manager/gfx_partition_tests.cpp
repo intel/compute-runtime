@@ -69,6 +69,9 @@ void testGfxPartition(uint64_t gpuAddressSpace) {
             continue;
         }
 
+        EXPECT_GT(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap));
+        EXPECT_EQ(gfxPartition.getHeapMinimalAddress(heap), gfxPartition.getHeapBase(heap) + GfxPartition::heapGranularity);
+
         auto ptrBig = gfxPartition.heapAllocate(heap, sizeBig);
         EXPECT_NE(ptrBig, 0ull);
         EXPECT_LT(gfxPartition.getHeapBase(heap), ptrBig);

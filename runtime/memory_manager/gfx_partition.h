@@ -54,6 +54,10 @@ class GfxPartition {
         return getHeap(heapIndex).getBase() + getHeap(heapIndex).getSize() - 1;
     }
 
+    uint64_t getHeapMinimalAddress(HeapIndex heapIndex) {
+        return getHeapBase(heapIndex) + heapGranularity;
+    }
+
     static const uint64_t heapGranularity = MemoryConstants::pageSize64k;
 
     static const std::array<HeapIndex, 4> heap32Names;

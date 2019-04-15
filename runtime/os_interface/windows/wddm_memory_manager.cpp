@@ -39,7 +39,6 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
                                                                                    wddm(executionEnvironment.osInterface->get()->getWddm()) {
     DEBUG_BREAK_IF(wddm == nullptr);
 
-    allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(wddm->getExternalHeapBase(), wddm->getExternalHeapSize()));
     asyncDeleterEnabled = DebugManager.flags.EnableDeferredDeleter.get();
     if (asyncDeleterEnabled)
         deferredDeleter = createDeferredDeleter();
@@ -478,11 +477,15 @@ uint64_t WddmMemoryManager::getMaxApplicationAddress() {
 }
 
 uint64_t WddmMemoryManager::getInternalHeapBaseAddress() {
-    return wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Base;
+    return gfxPartition.getHeapBase(internalHeapIndex);
 }
 
 uint64_t WddmMemoryManager::getExternalHeapBaseAddress() {
-    return allocator32Bit->getBase();
+    return gfxPartition.getHeapBase(HeapIndex::HEAP_EXTERNAL);
+}
+
+void WddmMemoryManager::setForce32BitAllocations(bool newValue) {
+    force32bitAllocations = newValue;
 }
 
 bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
@@ -547,7 +550,7 @@ uint32_t WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *graphicsAllocat
     for (auto handleId = startingIndex; handleId < graphicsAllocation->getNumHandles(); handleId++) {
 
         if (!wddm->mapGpuVirtualAddress(graphicsAllocation->getGmm(handleId), graphicsAllocation->getHandles()[handleId],
-                                        gfxPartition.getHeapBase(heapIndex), gfxPartition.getHeapLimit(heapIndex),
+                                        gfxPartition.getHeapMinimalAddress(heapIndex), gfxPartition.getHeapLimit(heapIndex),
                                         addressToMap, graphicsAllocation->getGpuAddressToModify())) {
             return numMappedAllocations;
         }
@@ -559,8 +562,8 @@ uint32_t WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *graphicsAllocat
 void WddmMemoryManager::obtainGpuAddressIfNeeded(WddmAllocation *allocation) {
     if (allocation->getNumHandles() > 1u) {
         auto heapIndex = selectHeap(allocation, false, executionEnvironment.isFullRangeSvm());
-        allocation->preferredGpuAddress = wddm->reserveGpuVirtualAddress(gfxPartition.getHeapBase(heapIndex), gfxPartition.getHeapLimit(heapIndex),
-                                                                         allocation->getAlignedSize());
+        allocation->preferredGpuAddress = wddm->reserveGpuVirtualAddress(gfxPartition.getHeapMinimalAddress(heapIndex),
+                                                                         gfxPartition.getHeapLimit(heapIndex), allocation->getAlignedSize());
     }
 }
 
