@@ -783,7 +783,10 @@ void CommandStreamReceiverHw<GfxFamily>::blitFromHostPtr(MemObj &destinationMemO
 
     UNRECOVERABLE_IF(osContext->getEngineType() != aub_stream::EngineType::ENGINE_BCS);
 
+    auto lock = obtainUniqueOwnership();
     auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(sourceSize));
+    auto commandStreamStart = commandStream.getUsed();
+    auto newTaskCount = taskCount + 1;
 
     HostPtrSurface hostPtrSurface(sourceHostPtr, static_cast<size_t>(sourceSize), true);
     bool success = createAllocationForHostSurface(hostPtrSurface, false);
@@ -796,7 +799,7 @@ void CommandStreamReceiverHw<GfxFamily>::blitFromHostPtr(MemObj &destinationMemO
     *miFlushDwCmd = GfxFamily::cmdInitMiFlushDw;
     miFlushDwCmd->setPostSyncOperation(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
     miFlushDwCmd->setDestinationAddress(tagAllocation->getGpuAddress());
-    miFlushDwCmd->setImmediateData(taskCount + 1);
+    miFlushDwCmd->setImmediateData(newTaskCount);
 
     auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(commandStream.getSpace(sizeof(MI_BATCH_BUFFER_END)));
     *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;
@@ -808,7 +811,18 @@ void CommandStreamReceiverHw<GfxFamily>::blitFromHostPtr(MemObj &destinationMemO
     makeResident(*commandStream.getGraphicsAllocation());
     makeResident(*tagAllocation);
 
-    taskCount++;
+    BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, nullptr, false, false, QueueThrottle::MEDIUM,
+                            commandStream.getUsed(), &commandStream};
+
+    flushStamp->setStamp(flush(batchBuffer, getResidencyAllocations()));
+    makeSurfacePackNonResident(getResidencyAllocations());
+
+    latestFlushedTaskCount = newTaskCount;
+    latestSentTaskCount = newTaskCount;
+    taskCount = newTaskCount;
+
+    lock.unlock();
+    waitForCompletionWithTimeout(false, 0, newTaskCount);
 }
 
 } // namespace NEO

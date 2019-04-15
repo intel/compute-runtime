@@ -311,8 +311,12 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
 
     uint32_t newTaskCount = 19;
     csr.taskCount = newTaskCount - 1;
+    EXPECT_EQ(0u, csr.recursiveLockCounter.load());
     csr.blitFromHostPtr(*buffer, hostPtr, bltSize);
     EXPECT_EQ(newTaskCount, csr.taskCount);
+    EXPECT_EQ(newTaskCount, csr.latestFlushedTaskCount);
+    EXPECT_EQ(newTaskCount, csr.latestSentTaskCount);
+    EXPECT_EQ(1u, csr.recursiveLockCounter.load());
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -359,11 +363,14 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
+    EXPECT_EQ(0u, csr.makeSurfacePackNonResidentCalled);
+
     csr.blitFromHostPtr(*buffer, hostPtr, 1);
 
     EXPECT_TRUE(csr.isMadeResident(buffer->getGraphicsAllocation()));
     EXPECT_TRUE(csr.isMadeResident(csr.commandStream.getGraphicsAllocation()));
     EXPECT_TRUE(csr.isMadeResident(csr.getTagAllocation()));
+    EXPECT_EQ(1u, csr.makeSurfacePackNonResidentCalled);
 
     bool hostPtrAllocationFound = false;
     for (auto &allocation : csr.makeResidentAllocations) {
@@ -373,4 +380,33 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
         }
     }
     EXPECT_TRUE(hostPtrAllocationFound);
+}
+
+HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.recordFlusheBatchBuffer = true;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    auto &commandStream = csr.getCS(MemoryConstants::pageSize);
+    size_t commandStreamOffset = 4;
+    commandStream.getSpace(commandStreamOffset);
+
+    uint32_t newTaskCount = 17;
+    csr.taskCount = newTaskCount - 1;
+    csr.blitFromHostPtr(*buffer, hostPtr, 1);
+
+    EXPECT_EQ(commandStream.getGraphicsAllocation(), csr.latestFlushedBatchBuffer.commandBufferAllocation);
+    EXPECT_EQ(commandStreamOffset, csr.latestFlushedBatchBuffer.startOffset);
+    EXPECT_EQ(0u, csr.latestFlushedBatchBuffer.chainedBatchBufferStartOffset);
+    EXPECT_EQ(nullptr, csr.latestFlushedBatchBuffer.chainedBatchBuffer);
+    EXPECT_FALSE(csr.latestFlushedBatchBuffer.requiresCoherency);
+    EXPECT_FALSE(csr.latestFlushedBatchBuffer.low_priority);
+    EXPECT_EQ(QueueThrottle::MEDIUM, csr.latestFlushedBatchBuffer.throttle);
+    EXPECT_EQ(commandStream.getUsed(), csr.latestFlushedBatchBuffer.usedSize);
+    EXPECT_EQ(&commandStream, csr.latestFlushedBatchBuffer.stream);
+
+    EXPECT_EQ(newTaskCount, csr.latestWaitForCompletionWithTimeoutTaskCount.load());
 }

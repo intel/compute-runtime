@@ -74,7 +74,7 @@ class CommandStreamReceiver {
     virtual void makeCoherent(GraphicsAllocation &gfxAllocation){};
     virtual void makeResident(GraphicsAllocation &gfxAllocation);
     virtual void makeNonResident(GraphicsAllocation &gfxAllocation);
-    void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency);
+    MOCKABLE_VIRTUAL void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency);
     virtual void processResidency(ResidencyContainer &allocationsForResidency) {}
     virtual void processEviction();
     void makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation);
