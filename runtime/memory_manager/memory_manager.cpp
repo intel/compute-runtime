@@ -217,14 +217,14 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER:
-    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
-    case GraphicsAllocation::AllocationType::PIPE:
-    case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
-    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
-    case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
+    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
+    case GraphicsAllocation::AllocationType::PIPE:
+    case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
+    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
+    case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
         allow64KbPages = true;
         allow32Bit = true;
     default:
@@ -232,8 +232,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     switch (properties.allocationType) {
-    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
     case GraphicsAllocation::AllocationType::SVM_GPU:
+    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
         allow64KbPages = true;
     default:
         break;
@@ -241,8 +241,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER:
-    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
+    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
         forcePin = true;
     default:
         break;
@@ -250,13 +250,13 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
+    case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
+    case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
+    case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
     case GraphicsAllocation::AllocationType::PIPE:
     case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
-    case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
-    case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
-    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
-    case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
     case GraphicsAllocation::AllocationType::SVM_CPU:
+    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
         mustBeZeroCopy = true;
     default:
         break;
@@ -270,12 +270,12 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
     case GraphicsAllocation::AllocationType::IMAGE:
     case GraphicsAllocation::AllocationType::PIPE:
-    case GraphicsAllocation::AllocationType::SHARED_IMAGE:
     case GraphicsAllocation::AllocationType::SHARED_BUFFER:
+    case GraphicsAllocation::AllocationType::SHARED_IMAGE:
     case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
-    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
-    case GraphicsAllocation::AllocationType::SVM_GPU:
     case GraphicsAllocation::AllocationType::SVM_CPU:
+    case GraphicsAllocation::AllocationType::SVM_GPU:
+    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
     case GraphicsAllocation::AllocationType::UNDECIDED:
         mayRequireL3Flush = true;
     default:
@@ -283,12 +283,13 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     switch (properties.allocationType) {
-    case GraphicsAllocation::AllocationType::UNDECIDED:
+    case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
     case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:
-    case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
-    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
     case GraphicsAllocation::AllocationType::SVM_CPU:
+    case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
+    case GraphicsAllocation::AllocationType::TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::UNDECIDED:
         allocationData.flags.useSystemMemory = true;
     default:
         break;

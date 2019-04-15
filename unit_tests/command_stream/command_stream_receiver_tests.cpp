@@ -371,6 +371,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     EXPECT_TRUE(csr->getTagAddress() == nullptr);
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAllocation());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::TAG_BUFFER, csr->getTagAllocation()->getAllocationType());
     EXPECT_TRUE(csr->getTagAddress() != nullptr);
     EXPECT_EQ(*csr->getTagAddress(), initialHardwareTag);
 }

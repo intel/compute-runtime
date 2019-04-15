@@ -365,6 +365,12 @@ TEST(MemoryManagerTest, givenUndecidedTypeWhenGetAllocationDataIsCalledThenSyste
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
 
+TEST(MemoryManagerTest, givenTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
+    AllocationData allocData;
+    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::TAG_BUFFER}, {}, nullptr);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+}
+
 TEST(MemoryManagerTest, givenFillPatternTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::FILL_PATTERN}, {}, nullptr);
