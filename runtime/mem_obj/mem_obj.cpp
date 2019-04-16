@@ -214,7 +214,7 @@ void MemObj::setAllocatedMapPtr(void *allocatedMapPtr) {
 }
 
 cl_mem_flags MemObj::getFlags() const {
-    return properties.flags;
+    return getProperties().flags;
 }
 
 bool MemObj::isMemObjZeroCopy() const {

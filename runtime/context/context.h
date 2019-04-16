@@ -16,9 +16,11 @@
 
 namespace NEO {
 
+class CommandStreamReceiver;
 class CommandQueue;
 class Device;
 class DeviceQueue;
+class MemObj;
 class MemoryManager;
 class SharingFunctions;
 class SVMAllocsManager;
@@ -113,6 +115,8 @@ class Context : public BaseObject<_cl_context> {
     void setInteropUserSyncEnabled(bool enabled) { interopUserSync = enabled; }
 
     ContextType peekContextType() { return this->contextType; }
+
+    MOCKABLE_VIRTUAL CommandStreamReceiver *getCommandStreamReceiverForBlitOperation(MemObj &memObj) const;
 
   protected:
     Context(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *) = nullptr,

@@ -28,6 +28,7 @@
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/utilities/base_object_utils.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -607,6 +608,38 @@ TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenRenderCompressedBufferWh
         EXPECT_EQ(nullptr, mockCmdQ->writeBufferPtr);
     }
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatingThenUseBlitOperation) {
+    if (is32bit) {
+        return;
+    }
+
+    class MyMockContext : public MockContext {
+      public:
+        MyMockContext(Device *device) : MockContext(device) {
+            bcsOsContext.reset(OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false));
+            bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment()));
+            bcsCsr->setupContext(*bcsOsContext);
+            bcsCsr->initializeTagAllocation();
+        }
+        CommandStreamReceiver *getCommandStreamReceiverForBlitOperation(MemObj &memObj) const override {
+            return bcsCsr.get();
+        }
+        std::unique_ptr<OsContext> bcsOsContext;
+        std::unique_ptr<CommandStreamReceiver> bcsCsr;
+    };
+
+    auto newMemoryManager = new MockMemoryManager(true, true, *device->getExecutionEnvironment());
+    device->getExecutionEnvironment()->memoryManager.reset(newMemoryManager);
+    context->setMemoryManager(newMemoryManager);
+
+    auto myContext = clUniquePtr(new MyMockContext(device.get()));
+    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(myContext->bcsCsr.get());
+
+    EXPECT_EQ(0u, bcsCsr->blitFromHostPtrCalled);
+    auto bufferForBlt = clUniquePtr(Buffer::create(myContext.get(), CL_MEM_COPY_HOST_PTR, sizeof(uint32_t), &hostPtr, retVal));
+    EXPECT_EQ(1u, bcsCsr->blitFromHostPtrCalled);
 }
 
 TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenNonRenderCompressedBufferWhenCopyFromHostPtrIsRequiredThenDontCallWriteBuffer) {

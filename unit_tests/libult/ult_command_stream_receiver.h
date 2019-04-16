@@ -163,6 +163,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return CommandStreamReceiverHw<GfxFamily>::obtainUniqueOwnership();
     }
 
+    void blitFromHostPtr(MemObj &destinationMemObj, void *sourceHostPtr, uint64_t sourceSize) override {
+        blitFromHostPtrCalled++;
+        CommandStreamReceiverHw<GfxFamily>::blitFromHostPtr(destinationMemObj, sourceHostPtr, sourceSize);
+    }
+
     std::atomic<uint32_t> recursiveLockCounter;
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;
@@ -175,6 +180,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     LinearStream *lastFlushedCommandStream = nullptr;
     BatchBuffer latestFlushedBatchBuffer = {};
     uint32_t latestSentTaskCountValueDuringFlush = 0;
+    uint32_t blitFromHostPtrCalled = 0;
     std::atomic<uint32_t> latestWaitForCompletionWithTimeoutTaskCount{0};
 
   protected:

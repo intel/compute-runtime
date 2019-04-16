@@ -8,6 +8,7 @@
 #include "runtime/mem_obj/buffer.h"
 
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
@@ -268,10 +269,17 @@ Buffer *Buffer::create(Context *context,
 
     if (copyMemoryFromHostPtr) {
         auto gmm = memory->getDefaultGmm();
-        if ((gmm && gmm->isRenderCompressed) || !MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
-            auto cmdQ = context->getSpecialQueue();
-            if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, nullptr, 0, nullptr, nullptr)) {
-                errcodeRet = CL_OUT_OF_RESOURCES;
+        bool gpuCopyRequired = (gmm && gmm->isRenderCompressed) || !MemoryPool::isSystemMemoryPool(memory->getMemoryPool());
+
+        if (gpuCopyRequired) {
+            auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*pBuffer);
+            if (blitCommandStreamReceiver) {
+                blitCommandStreamReceiver->blitFromHostPtr(*pBuffer, hostPtr, size);
+            } else {
+                auto cmdQ = context->getSpecialQueue();
+                if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, nullptr, 0, nullptr, nullptr)) {
+                    errcodeRet = CL_OUT_OF_RESOURCES;
+                }
             }
         } else {
             memcpy_s(memory->getUnderlyingBuffer(), size, hostPtr, size);
