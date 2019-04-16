@@ -103,8 +103,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     int getAddressSpaceFromPTEBits(uint64_t entryBits) const;
 
-    size_t getPreferredTagPoolSize() const override { return 1; }
-
   protected:
     constexpr static uint32_t getMaskAndValueForPollForCompletion();
 

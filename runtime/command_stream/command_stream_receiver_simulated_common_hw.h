@@ -54,6 +54,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     virtual void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) = 0;
     virtual void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) = 0;
 
+    size_t getPreferredTagPoolSize() const override { return 1; }
+
     aub_stream::AubManager *aubManager = nullptr;
     std::unique_ptr<HardwareContextController> hardwareContextController;
 
