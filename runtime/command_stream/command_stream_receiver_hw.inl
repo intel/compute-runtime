@@ -787,6 +787,7 @@ void CommandStreamReceiverHw<GfxFamily>::blitFromHostPtr(MemObj &destinationMemO
     auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(sourceSize));
     auto commandStreamStart = commandStream.getUsed();
     auto newTaskCount = taskCount + 1;
+    latestSentTaskCount = newTaskCount;
 
     HostPtrSurface hostPtrSurface(sourceHostPtr, static_cast<size_t>(sourceSize), true);
     bool success = createAllocationForHostSurface(hostPtrSurface, false);
@@ -818,7 +819,6 @@ void CommandStreamReceiverHw<GfxFamily>::blitFromHostPtr(MemObj &destinationMemO
     makeSurfacePackNonResident(getResidencyAllocations());
 
     latestFlushedTaskCount = newTaskCount;
-    latestSentTaskCount = newTaskCount;
     taskCount = newTaskCount;
 
     lock.unlock();

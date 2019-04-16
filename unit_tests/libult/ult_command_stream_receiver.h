@@ -94,6 +94,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         if (recordFlusheBatchBuffer) {
             latestFlushedBatchBuffer = batchBuffer;
         }
+        latestSentTaskCountValueDuringFlush = latestSentTaskCount;
         return BaseClass::flush(batchBuffer, allocationsForResidency);
     }
 
@@ -169,6 +170,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool initProgrammingFlagsCalled = false;
     LinearStream *lastFlushedCommandStream = nullptr;
     BatchBuffer latestFlushedBatchBuffer = {};
+    uint32_t latestSentTaskCountValueDuringFlush = 0;
     std::atomic<uint32_t> latestWaitForCompletionWithTimeoutTaskCount{0};
 
   protected:

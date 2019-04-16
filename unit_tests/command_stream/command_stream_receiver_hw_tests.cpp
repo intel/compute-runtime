@@ -316,6 +316,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     EXPECT_EQ(newTaskCount, csr.taskCount);
     EXPECT_EQ(newTaskCount, csr.latestFlushedTaskCount);
     EXPECT_EQ(newTaskCount, csr.latestSentTaskCount);
+    EXPECT_EQ(newTaskCount, csr.latestSentTaskCountValueDuringFlush);
     EXPECT_EQ(1u, csr.recursiveLockCounter.load());
 
     HardwareParse hwParser;
