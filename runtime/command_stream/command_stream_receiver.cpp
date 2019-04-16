@@ -250,7 +250,7 @@ void CommandStreamReceiver::addAubComment(const char *comment) {}
 
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
-    debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::UNDECIDED});
+    debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
     return debugSurface;
 }
 
@@ -361,8 +361,8 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, surface.getMemoryPointer());
     if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
         // Try with no host pointer allocation and copy
-        AllocationProperties copyProperties{surface.getSurfaceSize(), GraphicsAllocation::AllocationType::UNDECIDED};
-        properties.alignment = MemoryConstants::pageSize;
+        AllocationProperties copyProperties{surface.getSurfaceSize(), GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY};
+        copyProperties.alignment = MemoryConstants::pageSize;
         allocation = memoryManager->allocateGraphicsMemoryWithProperties(copyProperties);
         if (allocation) {
             memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), surface.getMemoryPointer(), surface.getSurfaceSize());

@@ -110,13 +110,13 @@ void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *gr
 
 GraphicsAllocation *MemoryManager::createGraphicsAllocationWithPadding(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {
     if (!paddingAllocation) {
-        paddingAllocation = allocateGraphicsMemoryWithProperties({paddingBufferSize, GraphicsAllocation::AllocationType::UNDECIDED});
+        paddingAllocation = allocateGraphicsMemoryWithProperties({paddingBufferSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
     }
     return createPaddedAllocation(inputGraphicsAllocation, sizeWithPadding);
 }
 
 GraphicsAllocation *MemoryManager::createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {
-    return allocateGraphicsMemoryWithProperties({sizeWithPadding, GraphicsAllocation::AllocationType::UNDECIDED});
+    return allocateGraphicsMemoryWithProperties({sizeWithPadding, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
 }
 
 void MemoryManager::freeSystemMemory(void *ptr) {
@@ -280,6 +280,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::SVM_CPU:
     case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
     case GraphicsAllocation::AllocationType::TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::UNDECIDED:
         allocationData.flags.useSystemMemory = true;
     default:

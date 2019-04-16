@@ -1505,7 +1505,7 @@ void Kernel::createReflectionSurface() {
         kernelReflectionSize += blockCount * alignUp(maxConstantBufferSize, sizeof(void *));
         kernelReflectionSize += parentImageCount * sizeof(IGIL_ImageParamters);
         kernelReflectionSize += parentSamplerCount * sizeof(IGIL_ParentSamplerParams);
-        kernelReflectionSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({kernelReflectionSize, GraphicsAllocation::AllocationType::UNDECIDED});
+        kernelReflectionSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({kernelReflectionSize, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER});
 
         for (uint32_t i = 0; i < blockCount; i++) {
             const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
@@ -1579,7 +1579,7 @@ void Kernel::createReflectionSurface() {
 
     if (DebugManager.flags.ForceDispatchScheduler.get()) {
         if (this->isSchedulerKernel && kernelReflectionSurface == nullptr) {
-            kernelReflectionSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::UNDECIDED});
+            kernelReflectionSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER});
         }
     }
 }

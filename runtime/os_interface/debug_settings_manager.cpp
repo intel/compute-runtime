@@ -331,6 +331,12 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "INDIRECT_OBJECT_HEAP";
     case GraphicsAllocation::AllocationType::INSTRUCTION_HEAP:
         return "INSTRUCTION_HEAP";
+    case GraphicsAllocation::AllocationType::INTERNAL_HEAP:
+        return "INTERNAL_HEAP";
+    case GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY:
+        return "INTERNAL_HOST_MEMORY";
+    case GraphicsAllocation::AllocationType::KERNEL_ISA:
+        return "KERNEL_ISA";
     case GraphicsAllocation::AllocationType::LINEAR_STREAM:
         return "LINEAR_STREAM";
     case GraphicsAllocation::AllocationType::PIPE:
@@ -343,6 +349,10 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "PROFILING_TAG_BUFFER";
     case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
         return "SCRATCH_SURFACE";
+    case GraphicsAllocation::AllocationType::SHARED_BUFFER:
+        return "SHARED_BUFFER";
+    case GraphicsAllocation::AllocationType::SHARED_IMAGE:
+        return "SHARED_IMAGE";
     case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
         return "SHARED_RESOURCE_COPY";
     case GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP:
@@ -361,6 +371,7 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "UNDECIDED";
     case GraphicsAllocation::AllocationType::UNKNOWN:
         return "UNKNOWN";
+
     default:
         return "ILLEGAL_VALUE";
     }

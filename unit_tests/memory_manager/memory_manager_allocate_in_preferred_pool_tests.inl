@@ -374,6 +374,12 @@ TEST(MemoryManagerTest, givenDeviceQueueBufferTypeWhenGetAllocationDataIsCalledT
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
 
+TEST(MemoryManagerTest, givenInternalHostMemoryTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
+    AllocationData allocData;
+    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY}, {}, nullptr);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+}
+
 TEST(MemoryManagerTest, givenFillPatternTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::FILL_PATTERN}, {}, nullptr);

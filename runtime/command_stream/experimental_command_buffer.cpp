@@ -24,9 +24,9 @@ ExperimentalCommandBuffer::ExperimentalCommandBuffer(CommandStreamReceiver *csr,
                                                                                                                     experimentalAllocationOffset(0),
                                                                                                                     defaultPrint(true),
                                                                                                                     timerResolution(profilingTimerResolution) {
-    timestamps = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::UNDECIDED});
+    timestamps = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
     memset(timestamps->getUnderlyingBuffer(), 0, timestamps->getUnderlyingBufferSize());
-    experimentalAllocation = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::UNDECIDED});
+    experimentalAllocation = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
     memset(experimentalAllocation->getUnderlyingBuffer(), 0, experimentalAllocation->getUnderlyingBufferSize());
 }
 

@@ -53,6 +53,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         INDIRECT_OBJECT_HEAP,
         INSTRUCTION_HEAP,
         INTERNAL_HEAP,
+        INTERNAL_HOST_MEMORY,
         KERNEL_ISA,
         LINEAR_STREAM,
         PIPE,
