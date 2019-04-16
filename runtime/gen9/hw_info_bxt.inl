@@ -51,6 +51,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::Bxt, // aubDeviceId
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
+    false,                                         // blitterOperationsSupported
     true,                                          // ftrSupportsFP64
     true,                                          // ftrSupports64BitMath
     false,                                         // ftrSvm

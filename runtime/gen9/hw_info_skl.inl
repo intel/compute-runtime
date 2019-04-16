@@ -54,6 +54,7 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::Skl, // aubDeviceId
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
+    false,                                         // blitterOperationsSupported
     true,                                          // ftrSupportsFP64
     true,                                          // ftrSupports64BitMath
     true,                                          // ftrSvm

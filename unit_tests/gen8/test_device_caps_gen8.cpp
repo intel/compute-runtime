@@ -50,3 +50,7 @@ GEN8TEST_F(Gen8DeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValu
 GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckSupportCacheFlushAfterWalkerThenFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
 }
+
+GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckBlitterOperationsSupportThenReturnFalse) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.blitterOperationsSupported);
+}

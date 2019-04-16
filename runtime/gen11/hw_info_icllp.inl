@@ -50,6 +50,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::Icllp, // aubDeviceId
     1,                                               // extraQuantityThreadsPerEU
     64,                                              // slmSize
+    false,                                           // blitterOperationsSupported
     false,                                           // ftrSupportsFP64
     false,                                           // ftrSupports64BitMath
     true,                                            // ftrSvm

@@ -66,6 +66,10 @@ GEN10TEST_F(Gen10DeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectVa
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
 }
 
+GEN10TEST_F(Gen10DeviceCaps, givenGen10WhenCheckBlitterOperationsSupportThenReturnFalse) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.blitterOperationsSupported);
+}
+
 typedef Test<DeviceFixture> CnlUsDeviceIdTest;
 
 CNLTEST_F(CnlUsDeviceIdTest, isSimulationCap) {

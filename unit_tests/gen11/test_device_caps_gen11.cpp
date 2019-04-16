@@ -99,6 +99,10 @@ GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckSupportCacheFlushAfterWalkerThen
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
 }
 
+GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckBlitterOperationsSupportThenReturnFalse) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.blitterOperationsSupported);
+}
+
 typedef Test<DeviceFixture> IclLpUsDeviceIdTest;
 
 ICLLPTEST_F(IclLpUsDeviceIdTest, isSimulationCap) {
