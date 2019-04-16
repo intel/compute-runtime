@@ -13,8 +13,8 @@
 namespace NEO {
 
 void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
-    DebugManager.logAllocation(this);
     this->allocationType = allocationType;
+    DebugManager.logAllocation(this);
 }
 
 GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress,
