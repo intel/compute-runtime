@@ -378,6 +378,10 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation));
     }
 
+    if (AubHelper::isOneTimeAubWritableAllocationType(gfxAllocation.getAllocationType())) {
+        gfxAllocation.setAubWritable(false);
+    }
+
     return true;
 }
 
@@ -385,7 +389,7 @@ template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency) {
     for (auto &gfxAllocation : allocationsForResidency) {
         if (!writeMemory(*gfxAllocation)) {
-            DEBUG_BREAK_IF(!(gfxAllocation->getUnderlyingBufferSize() == 0));
+            DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) || !gfxAllocation->isAubWritable()));
         }
         gfxAllocation->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
     }

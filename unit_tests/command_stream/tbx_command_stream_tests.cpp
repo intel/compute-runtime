@@ -212,6 +212,21 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCa
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCalledWithGraphicsAllocationThatIsOnlyOneTimeWriteableThenGraphicsAllocationIsUpdated) {
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
+    ASSERT_NE(nullptr, memoryManager);
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_TRUE(graphicsAllocation->isAubWritable());
+    EXPECT_TRUE(tbxCsr->writeMemory(*graphicsAllocation));
+    EXPECT_FALSE(graphicsAllocation->isAubWritable());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCalledForGraphicsAllocationWithZeroSizeThenItShouldReturnFalse) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
     MockGraphicsAllocation graphicsAllocation((void *)0x1234, 0);
