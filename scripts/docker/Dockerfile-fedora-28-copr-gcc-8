@@ -11,6 +11,7 @@ RUN dnf install -y gcc-c++ cmake ninja-build git pkg-config; \
     dnf copr enable -y arturh/intel-opencl; \
     dnf --showduplicate list intel-igc-opencl-devel intel-gmmlib-devel; \
     dnf install -y intel-igc-opencl-devel intel-gmmlib-devel; \
-    mkdir /root/build; cd /root/build ; cmake -G Ninja ../neo; \
+    mkdir /root/build; cd /root/build ; cmake -G Ninja \
+    -DDO_NOT_RUN_AUB_TESTS=1 -DDONT_CARE_OF_VIRTUALS=1 ../neo; \
     ninja -j `nproc`
 CMD ["/bin/bash"]
