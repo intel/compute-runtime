@@ -339,8 +339,12 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "KERNEL_ISA";
     case GraphicsAllocation::AllocationType::LINEAR_STREAM:
         return "LINEAR_STREAM";
+    case GraphicsAllocation::AllocationType::MCS:
+        return "MCS";
     case GraphicsAllocation::AllocationType::PIPE:
         return "PIPE";
+    case GraphicsAllocation::AllocationType::PREEMPTION:
+        return "PREEMPTION";
     case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
         return "PRINTF_SURFACE";
     case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
@@ -351,6 +355,8 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "SCRATCH_SURFACE";
     case GraphicsAllocation::AllocationType::SHARED_BUFFER:
         return "SHARED_BUFFER";
+    case GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE:
+        return "SHARED_CONTEXT_IMAGE";
     case GraphicsAllocation::AllocationType::SHARED_IMAGE:
         return "SHARED_IMAGE";
     case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:

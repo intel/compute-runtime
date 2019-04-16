@@ -139,6 +139,7 @@ class Device : public BaseObject<_cl_device_id> {
     MOCKABLE_VIRTUAL void initializeCaps();
     void setupFp64Flags();
     void appendOSExtensions(std::string &deviceExtensions);
+    AllocationProperties getAllocationPropertiesForPreemption() const;
 
     unsigned int enabledClVersion = 0u;
 

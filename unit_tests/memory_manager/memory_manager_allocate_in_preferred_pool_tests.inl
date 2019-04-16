@@ -368,6 +368,24 @@ TEST(MemoryManagerTest, givenTagBufferTypeWhenGetAllocationDataIsCalledThenSyste
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
 
+TEST(MemoryManagerTest, givenPreemptionTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
+    AllocationData allocData;
+    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::PREEMPTION}, {}, nullptr);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+}
+
+TEST(MemoryManagerTest, givenSharedContextImageTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
+    AllocationData allocData;
+    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE}, {}, nullptr);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+}
+
+TEST(MemoryManagerTest, givenMCSTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
+    AllocationData allocData;
+    MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::MCS}, {}, nullptr);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+}
+
 TEST(MemoryManagerTest, givenDeviceQueueBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, {1, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER}, {}, nullptr);

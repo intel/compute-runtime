@@ -142,10 +142,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo) {
     executionEnvironment->memoryManager->setForce32BitAllocations(getDeviceInfo().force32BitAddressess);
 
     if (preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) {
-        AllocationProperties properties(true, pHwInfo->capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::UNDECIDED);
-        properties.flags.uncacheable = getWaTable()->waCSRUncachable;
-        properties.alignment = 256 * MemoryConstants::kiloByte;
-        preemptionAllocation = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(properties);
+        preemptionAllocation = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(getAllocationPropertiesForPreemption());
         if (!preemptionAllocation) {
             return false;
         }
@@ -162,6 +159,12 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo) {
     return true;
 }
 
+AllocationProperties Device::getAllocationPropertiesForPreemption() const {
+    AllocationProperties properties{true, getHardwareInfo().capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION};
+    properties.flags.uncacheable = getWaTable()->waCSRUncachable;
+    properties.alignment = 256 * MemoryConstants::kiloByte;
+    return properties;
+}
 bool Device::createEngines(const HardwareInfo *pHwInfo) {
     auto defaultEngineType = getChosenEngineType(*pHwInfo);
     auto &gpgpuEngines = HwHelper::get(pHwInfo->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances();
