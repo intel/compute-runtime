@@ -41,6 +41,13 @@ clCreateFromVA_APIMediaSurfaceINTEL(cl_context context, cl_mem_flags flags, VASu
     if (returnCode != CL_SUCCESS) {
         return nullptr;
     }
+
+    if (!VASurface::validate(flags, plane)) {
+        returnCode = CL_INVALID_VALUE;
+        err.set(returnCode);
+        return nullptr;
+    }
+
     image = VASurface::createSharedVaSurface(pContext, pContext->getSharing<VASharingFunctions>(), flags, surface, plane, errcodeRet);
     DBG_LOG_INPUTS("image", image);
     return image;

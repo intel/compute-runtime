@@ -50,8 +50,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
         imgInfo.plane = GMM_PLANE_U;
         imgFormat = {CL_RG, CL_UNORM_INT8};
     } else {
-        imgFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
-        imgInfo.plane = GMM_NO_PLANE;
+        UNRECOVERABLE_IF(true);
     }
 
     imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
@@ -94,4 +93,18 @@ void VASurface::getMemObjectInfo(size_t &paramValueSize, void *&paramValue) {
     paramValue = &surfaceId;
 }
 
+bool VASurface::validate(cl_mem_flags flags, cl_uint plane) {
+    switch (flags) {
+    case CL_MEM_READ_ONLY:
+    case CL_MEM_WRITE_ONLY:
+    case CL_MEM_READ_WRITE:
+        break;
+    default:
+        return false;
+    }
+    if (plane > 1) {
+        return false;
+    }
+    return true;
+}
 } // namespace NEO

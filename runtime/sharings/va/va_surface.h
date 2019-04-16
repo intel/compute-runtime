@@ -23,6 +23,8 @@ class VASurface : VASharing {
 
     void getMemObjectInfo(size_t &paramValueSize, void *&paramValue) override;
 
+    static bool validate(cl_mem_flags flags, cl_uint plane);
+
   protected:
     VASurface(VASharingFunctions *sharingFunctions, VAImageID imageId,
               cl_uint plane, VASurfaceID *surfaceId, bool interopUserSync)

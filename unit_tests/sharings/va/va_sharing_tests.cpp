@@ -173,6 +173,18 @@ TEST_F(VaSharingTests, givenMockVaWhenVaSurfaceIsCreatedThenMemObjectHasVaHandle
     delete vaSurface;
 }
 
+TEST_F(VaSharingTests, givenInvalidPlaneWhenVaSurfaceIsCreatedThenUnrecoverableIsCalled) {
+    EXPECT_THROW(VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
+                                                  CL_MEM_READ_WRITE, &vaSurfaceId, 2, &errCode),
+                 std::exception);
+}
+
+TEST_F(VaSharingTests, givenInvalidPlaneInputWhenVaSurfaceIsCreatedThenInvalidValueErrorIsReturned) {
+    sharedClMem = clCreateFromVA_APIMediaSurfaceINTEL(&context, CL_MEM_READ_WRITE, &vaSurfaceId, 2, &errCode);
+    EXPECT_EQ(nullptr, sharedClMem);
+    EXPECT_EQ(CL_INVALID_VALUE, errCode);
+}
+
 TEST_F(VaSharingTests, givenMockVaWhenVaSurfaceIsCreatedWithNotAlignedWidthAndHeightThenSurfaceOffsetsUseAlignedValues) {
     vaSharing->sharingFunctions.derivedImageWidth = 256 + 16;
     vaSharing->sharingFunctions.derivedImageHeight = 512 + 16;
@@ -316,10 +328,10 @@ TEST_F(VaSharingTests, givenVaMediaSurfaceWhenGetImageInfoIsCalledThenPlaneIsRet
 }
 
 TEST_F(VaSharingTests, givenPlaneWhenCreateSurfaceIsCalledThenSetPlaneFields) {
-    cl_uint planes[4] = {0, 1, 2, 3};
+    cl_uint planes[2] = {0, 1};
     updateAcquiredHandle(2);
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 2; i++) {
         createMediaSurface(planes[i]);
 
         EXPECT_TRUE(sharedImg->getSurfaceFormatInfo().OCLImageFormat.image_channel_data_type == CL_UNORM_INT8);
@@ -329,8 +341,6 @@ TEST_F(VaSharingTests, givenPlaneWhenCreateSurfaceIsCalledThenSetPlaneFields) {
             EXPECT_TRUE(sharedImg->getSurfaceFormatInfo().OCLImageFormat.image_channel_order == CL_R);
         } else if (planes[i] == 1) {
             EXPECT_TRUE(sharedImg->getSurfaceFormatInfo().OCLImageFormat.image_channel_order == CL_RG);
-        } else {
-            EXPECT_TRUE(sharedImg->getSurfaceFormatInfo().OCLImageFormat.image_channel_order == CL_NV12_INTEL);
         }
 
         delete sharedImg;
@@ -341,7 +351,7 @@ TEST_F(VaSharingTests, givenPlaneWhenCreateSurfaceIsCalledThenSetPlaneFields) {
 TEST_F(VaSharingTests, givenSimpleParamsWhenCreateSurfaceIsCalledThenSetImgObject) {
     updateAcquiredHandle(2);
 
-    createMediaSurface(3u);
+    createMediaSurface(0u);
 
     EXPECT_TRUE(sharedImg->getImageDesc().buffer == nullptr);
     EXPECT_EQ(0u, sharedImg->getImageDesc().image_array_size);
@@ -382,15 +392,14 @@ TEST_F(VaSharingTests, givenInteropUserSyncContextWhenAcquireIsCalledThenDontSyn
 }
 
 TEST_F(VaSharingTests, givenYuvPlaneWhenCreateIsCalledThenChangeWidthAndHeight) {
-    cl_uint planeTypes[4] = {
+    cl_uint planeTypes[] = {
         0, //Y
-        1, //U
-        2, //no-plane
+        1  //U
     };
 
     context.setInteropUserSyncEnabled(true);
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 2; i++) {
         createMediaSurface(planeTypes[i]);
         size_t retParam;
 
@@ -412,70 +421,6 @@ TEST_F(VaSharingTests, givenYuvPlaneWhenCreateIsCalledThenChangeWidthAndHeight) 
         delete sharedImg;
         sharedImg = nullptr;
     }
-}
-
-TEST_F(VaSharingTests, givenVaSurfaceWhenCreateImageFromParentThenShareHandler) {
-    context.setInteropUserSyncEnabled(true);
-
-    createMediaSurface(2u);
-    EXPECT_TRUE(sharedImg->getSurfaceFormatInfo().OCLImageFormat.image_channel_order == CL_NV12_INTEL);
-
-    cl_image_desc imgDesc = {};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 256;
-    imgDesc.image_height = 256;
-    imgDesc.mem_object = sharedClMem;
-
-    cl_image_format imgFormat = {CL_R, CL_UNORM_INT8};
-
-    auto childImg = clCreateImage(&context, CL_MEM_READ_WRITE, &imgFormat, &imgDesc, nullptr, &errCode);
-    EXPECT_EQ(CL_SUCCESS, errCode);
-
-    auto childImgObj = castToObject<Image>(childImg);
-    EXPECT_FALSE(childImgObj->getIsObjectRedescribed());
-
-    EXPECT_EQ(sharedImg->peekSharingHandler(), childImgObj->peekSharingHandler());
-
-    errCode = clReleaseMemObject(childImg);
-    EXPECT_EQ(CL_SUCCESS, errCode);
-}
-
-TEST_F(VaSharingTests, givenVaSurfaceWhenCreateImageFromParentThenSetMediaPlaneType) {
-    context.setInteropUserSyncEnabled(true);
-
-    createMediaSurface(2u);
-    EXPECT_TRUE(sharedImg->getSurfaceFormatInfo().OCLImageFormat.image_channel_order == CL_NV12_INTEL);
-
-    cl_image_desc imgDesc = {};
-    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    imgDesc.image_width = 256;
-    imgDesc.image_height = 256;
-    imgDesc.image_depth = 0; // Y plane
-    imgDesc.mem_object = sharedClMem;
-
-    cl_image_format imgFormat = {CL_R, CL_UNORM_INT8};
-
-    auto childImg = clCreateImage(&context, CL_MEM_READ_WRITE, &imgFormat, &imgDesc, nullptr, &errCode);
-    EXPECT_EQ(CL_SUCCESS, errCode);
-
-    auto childImgObj = castToObject<Image>(childImg);
-
-    EXPECT_EQ(childImgObj->getMediaPlaneType(), 0u);
-
-    errCode = clReleaseMemObject(childImg);
-    EXPECT_EQ(CL_SUCCESS, errCode);
-
-    imgDesc.image_depth = 1; // U plane
-    imgFormat.image_channel_order = CL_RG;
-    childImg = clCreateImage(&context, CL_MEM_READ_WRITE, &imgFormat, &imgDesc, nullptr, &errCode);
-    EXPECT_EQ(CL_SUCCESS, errCode);
-
-    childImgObj = castToObject<Image>(childImg);
-
-    EXPECT_EQ(childImgObj->getMediaPlaneType(), 1u);
-
-    errCode = clReleaseMemObject(childImg);
-    EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
 TEST_F(VaSharingTests, givenContextWhenSharingTableEmptyThenReturnsNullptr) {
@@ -506,4 +451,18 @@ TEST_F(VaSharingTests, givenInValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapter
     EXPECT_EQ(CL_INVALID_PLATFORM, errCode);
     EXPECT_EQ(0u, numDevices);
     EXPECT_EQ(0u, devices);
+}
+
+TEST(VaSurface, givenValidPlaneAndFlagsWhenValidatingInputsThenTrueIsReturned) {
+    for (cl_uint plane = 0; plane <= 1; plane++) {
+        EXPECT_TRUE(VASurface::validate(CL_MEM_READ_ONLY, plane));
+        EXPECT_TRUE(VASurface::validate(CL_MEM_WRITE_ONLY, plane));
+        EXPECT_TRUE(VASurface::validate(CL_MEM_READ_WRITE, plane));
+    }
+}
+
+TEST(VaSurface, givenInValidPlaneOrFlagsWhenValidatingInputsThenTrueIsReturned) {
+    cl_uint plane = 2;
+    EXPECT_FALSE(VASurface::validate(CL_MEM_READ_ONLY, plane));
+    EXPECT_FALSE(VASurface::validate(CL_MEM_USE_HOST_PTR, 0));
 }
