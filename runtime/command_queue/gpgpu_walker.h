@@ -191,8 +191,8 @@ class GpgpuWalkerHelper {
     static void setupTimestampPacket(
         LinearStream *cmdStream,
         WALKER_TYPE<GfxFamily> *walkerCmd,
-        TagNode<TimestampPacket> *timestampPacketNode,
-        TimestampPacket::WriteOperationType writeOperationType);
+        TagNode<TimestampPacketStorage> *timestampPacketNode,
+        TimestampPacketStorage::WriteOperationType writeOperationType);
 
     static void dispatchScheduler(
         LinearStream &commandStream,

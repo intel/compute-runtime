@@ -342,7 +342,7 @@ TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTags
 }
 
 TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetValidllocationType) {
-    TagAllocator<TimestampPacket> timestampPacketAllocator(memoryManager, 1, 1);
+    TagAllocator<TimestampPacketStorage> timestampPacketAllocator(memoryManager, 1, 1);
     TagAllocator<HwTimeStamps> hwTimeStampsAllocator(memoryManager, 1, 1);
     TagAllocator<HwPerfCounter> hwPerfCounterAllocator(memoryManager, 1, 1);
 

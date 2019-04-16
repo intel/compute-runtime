@@ -311,11 +311,11 @@ HWTEST_F(CommandStreamReceiverTest, givenTimestampPacketAllocatorWhenAskingForTa
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(nullptr, csr.timestampPacketAllocator.get());
 
-    TagAllocator<TimestampPacket> *allocator = csr.getTimestampPacketAllocator();
+    TagAllocator<TimestampPacketStorage> *allocator = csr.getTimestampPacketAllocator();
     EXPECT_NE(nullptr, csr.timestampPacketAllocator.get());
     EXPECT_EQ(allocator, csr.timestampPacketAllocator.get());
 
-    TagAllocator<TimestampPacket> *allocator2 = csr.getTimestampPacketAllocator();
+    TagAllocator<TimestampPacketStorage> *allocator2 = csr.getTimestampPacketAllocator();
     EXPECT_EQ(allocator, allocator2);
 
     auto node1 = allocator->getTag();

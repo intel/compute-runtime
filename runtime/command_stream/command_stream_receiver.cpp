@@ -391,9 +391,9 @@ TagAllocator<HwPerfCounter> *CommandStreamReceiver::getEventPerfCountAllocator()
     return perfCounterAllocator.get();
 }
 
-TagAllocator<TimestampPacket> *CommandStreamReceiver::getTimestampPacketAllocator() {
+TagAllocator<TimestampPacketStorage> *CommandStreamReceiver::getTimestampPacketAllocator() {
     if (timestampPacketAllocator.get() == nullptr) {
-        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacket>>(getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize);
+        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketStorage>>(getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize);
     }
     return timestampPacketAllocator.get();
 }

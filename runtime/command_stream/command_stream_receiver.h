@@ -37,9 +37,9 @@ class MemoryManager;
 class OsContext;
 class OSInterface;
 class ScratchSpaceController;
-class TimestampPacket;
 struct HwPerfCounter;
 struct HwTimeStamps;
+struct TimestampPacketStorage;
 
 template <typename T1>
 class TagAllocator;
@@ -167,7 +167,7 @@ class CommandStreamReceiver {
 
     TagAllocator<HwTimeStamps> *getEventTsAllocator();
     TagAllocator<HwPerfCounter> *getEventPerfCountAllocator();
-    TagAllocator<TimestampPacket> *getTimestampPacketAllocator();
+    TagAllocator<TimestampPacketStorage> *getTimestampPacketAllocator();
 
     virtual cl_int expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
 
@@ -194,7 +194,7 @@ class CommandStreamReceiver {
     std::unique_ptr<ScratchSpaceController> scratchSpaceController;
     std::unique_ptr<TagAllocator<HwTimeStamps>> profilingTimeStampAllocator;
     std::unique_ptr<TagAllocator<HwPerfCounter>> perfCounterAllocator;
-    std::unique_ptr<TagAllocator<TimestampPacket>> timestampPacketAllocator;
+    std::unique_ptr<TagAllocator<TimestampPacketStorage>> timestampPacketAllocator;
 
     ResidencyContainer residencyAllocations;
     ResidencyContainer evictionAllocations;

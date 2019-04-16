@@ -256,19 +256,19 @@ bool Event::calcProfilingData() {
         if (timestampPacketContainer && timestampPacketContainer->peekNodes().size() > 0) {
             const auto timestamps = timestampPacketContainer->peekNodes();
 
-            uint64_t contextStartTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextStart);
-            uint64_t contextEndTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextEnd);
-            uint64_t globalStartTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacket::DataIndex::GlobalStart);
+            uint64_t contextStartTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextStart);
+            uint64_t contextEndTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextEnd);
+            uint64_t globalStartTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::GlobalStart);
 
             for (const auto &timestamp : timestamps) {
-                if (timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextStart) < contextStartTS) {
-                    contextStartTS = timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextStart);
+                if (timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextStart) < contextStartTS) {
+                    contextStartTS = timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextStart);
                 }
-                if (timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextEnd) > contextEndTS) {
-                    contextEndTS = timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::ContextEnd);
+                if (timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextEnd) > contextEndTS) {
+                    contextEndTS = timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextEnd);
                 }
-                if (timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::GlobalStart) < globalStartTS) {
-                    globalStartTS = timestamp->tagForCpuAccess->getData(TimestampPacket::DataIndex::GlobalStart);
+                if (timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::GlobalStart) < globalStartTS) {
+                    globalStartTS = timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::GlobalStart);
                 }
             }
             calculateProfilingDataInternal(contextStartTS, contextEndTS, &contextEndTS, globalStartTS);

@@ -19,7 +19,6 @@ class DispatchInfo;
 class IndirectHeap;
 class Kernel;
 class LinearStream;
-class TimestampPacket;
 struct HwPerfCounter;
 struct HwTimeStamps;
 struct KernelOperation;

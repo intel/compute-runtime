@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-template <typename TagType = TimestampPacket>
+template <typename TagType = TimestampPacketStorage>
 class MockTagAllocator : public TagAllocator<TagType> {
   public:
     using BaseClass = TagAllocator<TagType>;
@@ -38,13 +38,13 @@ class MockTimestampPacketContainer : public TimestampPacketContainer {
   public:
     using TimestampPacketContainer::timestampPacketNodes;
 
-    MockTimestampPacketContainer(TagAllocator<TimestampPacket> &tagAllocator, size_t numberOfPreallocatedTags) {
+    MockTimestampPacketContainer(TagAllocator<TimestampPacketStorage> &tagAllocator, size_t numberOfPreallocatedTags) {
         for (size_t i = 0; i < numberOfPreallocatedTags; i++) {
             add(tagAllocator.getTag());
         }
     }
 
-    TagNode<TimestampPacket> *getNode(size_t position) {
+    TagNode<TimestampPacketStorage> *getNode(size_t position) {
         return timestampPacketNodes.at(position);
     }
 };

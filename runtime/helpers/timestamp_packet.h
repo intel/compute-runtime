@@ -26,9 +26,8 @@ constexpr uint32_t preferedChunkCount = 16u;
 }
 
 #pragma pack(1)
-class TimestampPacket {
-  public:
-    TimestampPacket() {
+struct TimestampPacketStorage {
+    TimestampPacketStorage() {
         initialize();
     }
 
@@ -71,12 +70,12 @@ class TimestampPacket {
 };
 #pragma pack()
 
-static_assert(((static_cast<uint32_t>(TimestampPacket::DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount + 1) * sizeof(uint32_t)) == sizeof(TimestampPacket),
+static_assert(((static_cast<uint32_t>(TimestampPacketStorage::DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount + 1) * sizeof(uint32_t)) == sizeof(TimestampPacketStorage),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 class TimestampPacketContainer : public NonCopyableOrMovableClass {
   public:
-    using Node = TagNode<TimestampPacket>;
+    using Node = TagNode<TimestampPacketStorage>;
     TimestampPacketContainer() = default;
     MOCKABLE_VIRTUAL ~TimestampPacketContainer();
 
@@ -93,10 +92,10 @@ class TimestampPacketContainer : public NonCopyableOrMovableClass {
 
 struct TimestampPacketHelper {
     template <typename GfxFamily>
-    static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TagNode<TimestampPacket> &timestampPacketNode) {
+    static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TagNode<TimestampPacketStorage> &timestampPacketNode) {
         using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
-        auto compareAddress = getGpuAddressForDataWrite(timestampPacketNode, TimestampPacket::DataIndex::ContextEnd);
-        auto dependenciesCountAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacket, implicitDependenciesCount);
+        auto compareAddress = getGpuAddressForDataWrite(timestampPacketNode, TimestampPacketStorage::DataIndex::ContextEnd);
+        auto dependenciesCountAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, implicitDependenciesCount);
 
         KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress, 1);
 
@@ -107,7 +106,7 @@ struct TimestampPacketHelper {
                                                          MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
     }
 
-    static uint64_t getGpuAddressForDataWrite(TagNode<TimestampPacket> &timestampPacketNodes, TimestampPacket::DataIndex dataIndex) {
+    static uint64_t getGpuAddressForDataWrite(TagNode<TimestampPacketStorage> &timestampPacketNodes, TimestampPacketStorage::DataIndex dataIndex) {
         auto offset = static_cast<uint32_t>(dataIndex) * sizeof(uint32_t);
         return timestampPacketNodes.getGpuAddress() + offset;
     }
