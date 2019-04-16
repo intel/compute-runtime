@@ -184,6 +184,13 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     enqueueHandlerHook(commandType, multiDispatchInfo);
 
+    if (getCommandStreamReceiver().getType() > CommandStreamReceiverType::CSR_HW) {
+        if (!multiDispatchInfo.empty()) {
+            auto kernelName = multiDispatchInfo.peekMainKernel()->getKernelInfo().name;
+            getCommandStreamReceiver().addAubComment(kernelName.c_str());
+        }
+    }
+
     if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
         getCommandStreamReceiver().activateAubSubCapture(multiDispatchInfo);
     }

@@ -144,6 +144,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
     void addAubComment(const char *message) override {
         CommandStreamReceiverHw<GfxFamily>::addAubComment(message);
+        aubCommentMessage.assign(message);
         addAubCommentCalled = true;
     }
     void flushBatchedSubmissions() override {
@@ -165,6 +166,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool recordFlusheBatchBuffer = false;
     bool activateAubSubCaptureCalled = false;
     bool addAubCommentCalled = false;
+    std::string aubCommentMessage = "";
     bool flushBatchedSubmissionsCalled = false;
     uint32_t makeSurfacePackNonResidentCalled = false;
     bool initProgrammingFlagsCalled = false;

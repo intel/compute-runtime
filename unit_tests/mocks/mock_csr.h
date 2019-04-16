@@ -95,6 +95,15 @@ template <typename GfxFamily>
 using MockCsrHw = MockCsrBase<GfxFamily>;
 
 template <typename GfxFamily>
+class MockCsrAub : public MockCsrBase<GfxFamily> {
+  public:
+    MockCsrAub(int32_t &execStamp, ExecutionEnvironment &executionEnvironment) : MockCsrBase<GfxFamily>(execStamp, executionEnvironment) {}
+    CommandStreamReceiverType getType() override {
+        return CommandStreamReceiverType::CSR_AUB;
+    }
+};
+
+template <typename GfxFamily>
 class MockCsr : public MockCsrBase<GfxFamily> {
   public:
     using BaseClass = MockCsrBase<GfxFamily>;

@@ -34,6 +34,37 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerWithKernelCallsProcessEvictionOnCSR) 
     EXPECT_TRUE(csr->processEvictionCalled);
 }
 
+HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWithKernelWhenAubCsrIsActiveThenAddCommentWithKernelName) {
+    int32_t tag;
+    auto aubCsr = new MockCsrAub<FamilyType>(tag, *pDevice->executionEnvironment);
+    pDevice->resetCommandStreamReceiver(aubCsr);
+
+    MockKernelWithInternals mockKernel(*pDevice);
+    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
+
+    size_t gws[] = {1, 1, 1};
+    mockKernel.kernelInfo.name = "kernel_name";
+    mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_TRUE(aubCsr->addAubCommentCalled);
+    EXPECT_STREQ("kernel_name", aubCsr->aubCommentMessage.c_str());
+}
+
+HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWithEmptyDispatchInfoWhenAubCsrIsActiveThenDontAddCommentWithKernelName) {
+    int32_t tag;
+    auto aubCsr = new MockCsrAub<FamilyType>(tag, *pDevice->executionEnvironment);
+    pDevice->resetCommandStreamReceiver(aubCsr);
+
+    MockKernelWithInternals mockKernel(*pDevice);
+    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
+
+    size_t gws[] = {0, 0, 0};
+    mockKernel.kernelInfo.name = "kernel_name";
+    mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_FALSE(aubCsr->addAubCommentCalled);
+}
+
 template <typename GfxFamily>
 class MyCommandQueueHw : public CommandQueueHw<GfxFamily> {
     typedef CommandQueueHw<GfxFamily> BaseClass;
