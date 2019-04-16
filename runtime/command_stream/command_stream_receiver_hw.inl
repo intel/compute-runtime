@@ -310,7 +310,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         if (is64bit && scratchSpaceController->getScratchSpaceAllocation() && !force32BitAllocations) {
             newGSHbase = scratchSpaceController->calculateNewGSH();
         } else if (is64bit && force32BitAllocations && dispatchFlags.GSBA32BitRequired) {
-            newGSHbase = getMemoryManager()->allocator32Bit->getBase();
+            newGSHbase = getMemoryManager()->getExternalHeapBaseAddress();
             GSBAFor32BitProgrammed = true;
         }
 

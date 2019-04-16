@@ -104,7 +104,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
             allocationData.type, nullptr, const_cast<void *>(allocationData.hostPtr), GmmHelper::canonize(gpuVirtualAddress + offset),
             allocationData.size, counter, MemoryPool::System4KBPagesWith32BitGpuAddressing, false, false, false);
         memAlloc->set32BitAllocation(true);
-        memAlloc->setGpuBaseAddress(GmmHelper::canonize(allocator32Bit->getBase()));
+        memAlloc->setGpuBaseAddress(GmmHelper::canonize(getExternalHeapBaseAddress()));
         memAlloc->sizeToFree = allocationSize;
 
         counter++;
@@ -129,7 +129,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
                                                 allocationData.size, counter, MemoryPool::System4KBPagesWith32BitGpuAddressing, false,
                                                 false, false);
         memoryAllocation->set32BitAllocation(true);
-        memoryAllocation->setGpuBaseAddress(GmmHelper::canonize(allocator32Bit->getBase()));
+        memoryAllocation->setGpuBaseAddress(GmmHelper::canonize(getExternalHeapBaseAddress()));
         memoryAllocation->sizeToFree = allocationSize;
     }
     counter++;
@@ -211,6 +211,10 @@ uint64_t OsAgnosticMemoryManager::getMaxApplicationAddress() {
 }
 
 uint64_t OsAgnosticMemoryManager::getInternalHeapBaseAddress() {
+    return this->allocator32Bit->getBase();
+}
+
+uint64_t OsAgnosticMemoryManager::getExternalHeapBaseAddress() {
     return this->allocator32Bit->getBase();
 }
 

@@ -108,6 +108,8 @@ class MemoryManager {
 
     virtual uint64_t getInternalHeapBaseAddress() = 0;
 
+    virtual uint64_t getExternalHeapBaseAddress() = 0;
+
     bool peek64kbPagesEnabled() const { return enable64kbpages; }
     bool peekForce32BitAllocations() const { return force32bitAllocations; }
     void setForce32BitAllocations(bool newValue);

@@ -118,7 +118,7 @@ TEST(WddmMemoryManagerAllocator32BitTest, allocator32BitIsCreatedWithCorrectBase
 
     ASSERT_NE(nullptr, memoryManager->allocator32Bit.get());
 
-    EXPECT_EQ(base, memoryManager->allocator32Bit->getBase());
+    EXPECT_EQ(base, memoryManager->getExternalHeapBaseAddress());
 }
 
 TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWMMWhenAsyncDeleterIsEnabledAndWaitForDeletionsIsCalledThenDeleterInWddmIsSetToNullptr) {
@@ -519,7 +519,7 @@ TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllocW
     if (is64bit) {
         EXPECT_TRUE(gpuAllocation->is32BitAllocation());
 
-        uint64_t base = memoryManager->allocator32Bit->getBase();
+        uint64_t base = memoryManager->getExternalHeapBaseAddress();
         EXPECT_EQ(GmmHelper::canonize(base), gpuAllocation->getGpuBaseAddress());
     }
 

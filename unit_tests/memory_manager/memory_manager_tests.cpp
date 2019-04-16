@@ -1034,7 +1034,7 @@ TEST(OsAgnosticMemoryManager, givenPointerAndSizeWhenCreateInternalAllocationIsC
 TEST(OsAgnosticMemoryManager, givenDefaultOsAgnosticMemoryManagerWhenItIsQueriedForInternalHeapBaseThen32BitAllocatorBaseIsReturned) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    auto heapBase = memoryManager.allocator32Bit->getBase();
+    auto heapBase = memoryManager.getExternalHeapBaseAddress();
     EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress());
 }
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledThenAllocationIsCreated) {
@@ -1126,7 +1126,7 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedWhenMemoryManagerIsCre
     if (is32bit) {
         heap32Base = 0;
     }
-    EXPECT_EQ(heap32Base, memoryManager.allocator32Bit->getBase());
+    EXPECT_EQ(heap32Base, memoryManager.getExternalHeapBaseAddress());
 }
 
 TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndNotAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
@@ -1138,7 +1138,7 @@ TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndNotAubUsageWhenMemoryM
     if (is32bit) {
         heap32Base = 0;
     }
-    EXPECT_EQ(heap32Base, memoryManager.allocator32Bit->getBase());
+    EXPECT_EQ(heap32Base, memoryManager.getExternalHeapBaseAddress());
 }
 
 TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedAndAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
@@ -1149,7 +1149,7 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedAndAubUsageWhenMemoryM
     if (is32bit) {
         heap32Base = 0;
     }
-    EXPECT_EQ(heap32Base, memoryManager.allocator32Bit->getBase());
+    EXPECT_EQ(heap32Base, memoryManager.getExternalHeapBaseAddress());
 }
 
 TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
@@ -1163,7 +1163,7 @@ TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndAubUsageWhenMemoryMana
     } else {
         heap32Base = 0x40000000000ul;
     }
-    EXPECT_EQ(heap32Base, memoryManager.allocator32Bit->getBase());
+    EXPECT_EQ(heap32Base, memoryManager.getExternalHeapBaseAddress());
 }
 
 TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForImageIsCalled) {

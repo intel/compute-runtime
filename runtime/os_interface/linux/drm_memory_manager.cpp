@@ -506,7 +506,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
     if (requireSpecificBitness && this->force32bitAllocations) {
         drmAllocation->set32BitAllocation(true);
-        drmAllocation->setGpuBaseAddress(allocator32Bit->getBase());
+        drmAllocation->setGpuBaseAddress(getExternalHeapBaseAddress());
     } else if (this->limitedGpuAddressRangeAllocator.get()) {
         drmAllocation->setGpuBaseAddress(this->limitedGpuAddressRangeAllocator->getBase());
     }
@@ -628,6 +628,10 @@ uint64_t DrmMemoryManager::getMaxApplicationAddress() {
 
 uint64_t DrmMemoryManager::getInternalHeapBaseAddress() {
     return this->internal32bitAllocator->getBase();
+}
+
+uint64_t DrmMemoryManager::getExternalHeapBaseAddress() {
+    return this->allocator32Bit->getBase();
 }
 
 MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {

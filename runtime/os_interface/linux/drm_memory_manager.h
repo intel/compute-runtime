@@ -41,6 +41,7 @@ class DrmMemoryManager : public MemoryManager {
     uint64_t getSystemSharedMemory() override;
     uint64_t getMaxApplicationAddress() override;
     uint64_t getInternalHeapBaseAddress() override;
+    uint64_t getExternalHeapBaseAddress() override;
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
     void cleanOsHandles(OsHandleStorage &handleStorage) override;

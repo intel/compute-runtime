@@ -207,7 +207,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
         return nullptr;
     }
 
-    auto baseAddress = useInternal32BitAllocator(allocationData.type) ? getInternalHeapBaseAddress() : allocator32Bit->getBase();
+    auto baseAddress = useInternal32BitAllocator(allocationData.type) ? getInternalHeapBaseAddress() : getExternalHeapBaseAddress();
     wddmAllocation->setGpuBaseAddress(GmmHelper::canonize(baseAddress));
 
     return wddmAllocation.release();
@@ -235,7 +235,7 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
         allocation->setReservedAddressRange(ptr, size);
     } else if (requireSpecificBitness && this->force32bitAllocations) {
         allocation->set32BitAllocation(true);
-        allocation->setGpuBaseAddress(GmmHelper::canonize(allocator32Bit->getBase()));
+        allocation->setGpuBaseAddress(GmmHelper::canonize(getExternalHeapBaseAddress()));
     }
     status = mapGpuVirtualAddressWithRetry(allocation.get(), allocation->getReservedAddressPtr());
     DEBUG_BREAK_IF(!status);
@@ -479,6 +479,10 @@ uint64_t WddmMemoryManager::getMaxApplicationAddress() {
 
 uint64_t WddmMemoryManager::getInternalHeapBaseAddress() {
     return wddm->getGfxPartition().Heap32[static_cast<uint32_t>(internalHeapIndex)].Base;
+}
+
+uint64_t WddmMemoryManager::getExternalHeapBaseAddress() {
+    return allocator32Bit->getBase();
 }
 
 bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
