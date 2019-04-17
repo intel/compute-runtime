@@ -468,7 +468,7 @@ if(MSVC)
   set_source_files_properties(${UltPchSource}
     PROPERTIES COMPILE_FLAGS "/Yc${UltPchHeader} /FI${UltPchHeader} /Fp${UltPchBinary}"
     OBJECT_OUTPUTS "${UltPchBinary}")
-else()
+elseif(USE_ULT_PCH)
   set(UltPchHeaderInBuildDir "${CMAKE_CURRENT_BINARY_DIR}/igdrcl_tests_pch.h")
   set(UltPchBinaryGch "${UltPchHeaderInBuildDir}.gch")
   set(UltPchBinary "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/igdrcl_ult_pch.dir/igdrcl_tests_pch.h.o")
