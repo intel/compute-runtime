@@ -439,6 +439,9 @@ struct RenderCompressedBuffersTests : public ::testing::Test {
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<Buffer> buffer;
+
+    uint32_t hostPtr[2048];
+    size_t bufferSize = sizeof(hostPtr);
 };
 
 TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationAndZeroCopyHostPtrWhenCheckingMemoryPropertiesThenUseHostPtrAndDontAllocateStorage) {
@@ -492,7 +495,7 @@ TEST_F(RenderCompressedBuffersTests, givenRenderCompressedBuffersAndAllocationCr
 TEST_F(RenderCompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhenCheckingMemoryPropertiesThenForceDisableZeroCopy) {
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
 
-    buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
+    buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     if (MemoryPool::isSystemMemoryPool(buffer->getGraphicsAllocation()->getMemoryPool())) {
         EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
@@ -501,12 +504,12 @@ TEST_F(RenderCompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHost
     }
 
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
+    buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     if (is32bit) {
         EXPECT_TRUE(buffer->isMemObjZeroCopy());
         EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     } else {
-        if (HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo())) {
+        if (HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).obtainRenderBufferCompressionPreference(bufferSize)) {
             EXPECT_FALSE(buffer->isMemObjZeroCopy());
             EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
         } else {
@@ -520,20 +523,18 @@ TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationWhenSharedCo
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     context->isSharedContext = false;
 
-    uint32_t hostPtr = 0;
-
-    buffer.reset(Buffer::create(context.get(), CL_MEM_READ_WRITE, sizeof(uint32_t), nullptr, retVal));
+    buffer.reset(Buffer::create(context.get(), CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
     if (is32bit) {
         EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     } else {
-        if (HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo())) {
+        if (HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).obtainRenderBufferCompressionPreference(bufferSize)) {
             EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
         } else {
             EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
         }
     }
     context->isSharedContext = true;
-    buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, sizeof(uint32_t), &hostPtr, retVal));
+    buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, bufferSize, hostPtr, retVal));
     EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 }
 
@@ -543,11 +544,11 @@ TEST_F(RenderCompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThen
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
 
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    buffer.reset(Buffer::create(context.get(), 0, sizeof(uint32_t), nullptr, retVal));
+    buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     if (is32bit) {
         EXPECT_NE(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     } else {
-        if (HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo())) {
+        if (HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).obtainRenderBufferCompressionPreference(bufferSize)) {
             EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
         } else {
             EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
@@ -555,7 +556,7 @@ TEST_F(RenderCompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThen
     }
 
     DebugManager.flags.RenderCompressedBuffersEnabled.set(0);
-    buffer.reset(Buffer::create(context.get(), 0, sizeof(uint32_t), nullptr, retVal));
+    buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     EXPECT_NE(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 }
 
@@ -581,7 +582,6 @@ struct RenderCompressedBuffersCopyHostMemoryTests : public RenderCompressedBuffe
     }
 
     MockCommandQueue *mockCmdQ = nullptr;
-    uint32_t hostPtr = 0;
 };
 
 TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenRenderCompressedBufferWhenCopyFromHostPtrIsRequiredThenCallWriteBuffer) {
@@ -590,14 +590,14 @@ TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenRenderCompressedBufferWh
     }
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
 
-    buffer.reset(Buffer::create(context.get(), CL_MEM_COPY_HOST_PTR, sizeof(uint32_t), &hostPtr, retVal));
-    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo())) {
+    buffer.reset(Buffer::create(context.get(), CL_MEM_COPY_HOST_PTR, bufferSize, hostPtr, retVal));
+    if (HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).obtainRenderBufferCompressionPreference(bufferSize)) {
         EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
         EXPECT_EQ(1u, mockCmdQ->writeBufferCounter);
         EXPECT_TRUE(mockCmdQ->writeBufferBlocking);
         EXPECT_EQ(0u, mockCmdQ->writeBufferOffset);
-        EXPECT_EQ(sizeof(uint32_t), mockCmdQ->writeBufferSize);
-        EXPECT_EQ(&hostPtr, mockCmdQ->writeBufferPtr);
+        EXPECT_EQ(bufferSize, mockCmdQ->writeBufferSize);
+        EXPECT_EQ(hostPtr, mockCmdQ->writeBufferPtr);
     } else {
         EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
         EXPECT_EQ(0u, mockCmdQ->writeBufferCounter);
@@ -621,13 +621,13 @@ TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenNonRenderCompressedBuffe
 }
 
 TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenRenderCompressedBufferWhenWriteBufferFailsThenReturnErrorCode) {
-    if (is32bit || !HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo())) {
+    if (is32bit || !HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).obtainRenderBufferCompressionPreference(bufferSize)) {
         return;
     }
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     mockCmdQ->writeBufferRetValue = CL_INVALID_VALUE;
 
-    buffer.reset(Buffer::create(context.get(), CL_MEM_COPY_HOST_PTR, sizeof(uint32_t), &hostPtr, retVal));
+    buffer.reset(Buffer::create(context.get(), CL_MEM_COPY_HOST_PTR, bufferSize, hostPtr, retVal));
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
     EXPECT_EQ(nullptr, buffer.get());
 }

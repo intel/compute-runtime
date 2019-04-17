@@ -34,8 +34,8 @@ bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const 
 }
 
 template <typename Family>
-bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo) const {
-    return true;
+bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const size_t size) const {
+    return size > KB;
 }
 
 template <typename Family>
