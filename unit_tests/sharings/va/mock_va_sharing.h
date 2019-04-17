@@ -23,7 +23,6 @@ class VASharingFunctionsMock : public VASharingFunctions {
     bool deriveImageCalled = false;
     bool destroyImageCalled = false;
     bool syncSurfaceCalled = false;
-    bool getLibFuncCalled = false;
     bool extGetSurfaceHandleCalled = false;
 
     osHandle acquiredVaHandle = 0;
@@ -68,11 +67,6 @@ class VASharingFunctionsMock : public VASharingFunctions {
     VAStatus syncSurface(VASurfaceID vaSurface) override {
         syncSurfaceCalled = true;
         return VA_STATUS_SUCCESS;
-    }
-
-    void *getLibFunc(const char *func) override {
-        getLibFuncCalled = true;
-        return nullptr;
     }
 };
 

@@ -42,7 +42,7 @@ class VASharingFunctions : public SharingFunctions {
         return vaSyncSurfacePFN(vaDisplay, vaSurface);
     }
 
-    MOCKABLE_VIRTUAL void *getLibFunc(const char *func) {
+    void *getLibFunc(const char *func) {
         if (vaGetLibFuncPFN) {
             return vaGetLibFuncPFN(vaDisplay, func);
         }
