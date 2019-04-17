@@ -70,7 +70,7 @@ INSTANTIATE_TEST_CASE_P(wgs,
                         KernelSubGroupInfoKhrReturnSizeTest,
                         ::testing::ValuesIn(KernelSubGroupInfoKhrWGS));
 
-TEST_P(KernelSubGroupInfoKhrReturnSizeTest, ReturnMaxSubGroupSizeForNdrParam) {
+TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGroupSizeThenCorrectValueIsReturned) {
     paramValueSizeRet = 0;
     inputValue[0] = GetParam().gwsX;
     inputValue[1] = GetParam().gwsY;
@@ -103,7 +103,7 @@ INSTANTIATE_TEST_CASE_P(wgs,
                         KernelSubGroupInfoKhrReturnCountTest,
                         ::testing::ValuesIn(KernelSubGroupInfoKhrWGS));
 
-TEST_P(KernelSubGroupInfoKhrReturnCountTest, ReturnSubGroupCountForNdrParam) {
+TEST_P(KernelSubGroupInfoKhrReturnCountTest, GivenLwsParameterWhenGettingSubGroupCountThenCorrectValueIsReturned) {
     paramValueSizeRet = 0;
     inputValue[0] = GetParam().gwsX;
     inputValue[1] = GetParam().gwsY;
@@ -132,7 +132,7 @@ TEST_P(KernelSubGroupInfoKhrReturnCountTest, ReturnSubGroupCountForNdrParam) {
 
 typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturnCompileSizeTest;
 
-TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, ReturnCompileSizeOfSubGroups) {
+TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, GivenKernelWhenGettingRequiredSubGroupSizeThenCorrectValueIsReturned) {
 
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
@@ -159,7 +159,7 @@ TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, ReturnCompileSizeOfSubGroups)
     EXPECT_EQ(paramValue, requiredSubGroupSize);
 }
 
-TEST_F(KernelSubGroupInfoKhrTest, InvalidKernel) {
+TEST_F(KernelSubGroupInfoKhrTest, GivenNullKernelWhenGettingKernelSubGroupInfoThenInvalidKernelErrorIsReturned) {
     retVal = clGetKernelSubGroupInfoKHR(
         nullptr,
         pDevice,
@@ -173,7 +173,7 @@ TEST_F(KernelSubGroupInfoKhrTest, InvalidKernel) {
     EXPECT_EQ(retVal, CL_INVALID_KERNEL);
 }
 
-TEST_F(KernelSubGroupInfoKhrTest, InvalidDevice) {
+TEST_F(KernelSubGroupInfoKhrTest, GivenNullDeviceWhenGettingKernelSubGroupInfoThenInvalidDeviceErrorIsReturned) {
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
         nullptr,
@@ -187,7 +187,7 @@ TEST_F(KernelSubGroupInfoKhrTest, InvalidDevice) {
     EXPECT_EQ(retVal, CL_INVALID_DEVICE);
 }
 
-TEST_F(KernelSubGroupInfoKhrTest, InvalidParamName) {
+TEST_F(KernelSubGroupInfoKhrTest, GivenInvalidParamNameWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
         pDevice,
@@ -211,7 +211,7 @@ INSTANTIATE_TEST_CASE_P(KernelSubGroupInfoKhrInputParams,
                         KernelSubGroupInfoKhrInputParamsTest,
                         ::testing::ValuesIn(KernelSubGroupInfoKhrInputParams));
 
-TEST_P(KernelSubGroupInfoKhrInputParamsTest, InvalidInput) {
+TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     // work dim == 0
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
@@ -265,7 +265,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, InvalidInput) {
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
 }
 
-TEST_P(KernelSubGroupInfoKhrInputParamsTest, InvalidParamSize) {
+TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidParamSizeWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     //param_value_size < sizeof(size_t)
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
@@ -280,7 +280,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, InvalidParamSize) {
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
 }
 
-TEST_P(KernelSubGroupInfoKhrInputParamsTest, SuccessWhenNoReturnRequired) {
+TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenNoReturnPointerWhenGettingKernelSubGroupInfoThenSuccessIsReturned) {
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
         pDevice,
