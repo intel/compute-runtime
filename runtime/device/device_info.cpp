@@ -206,7 +206,7 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
             getCap<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL>(src, srcSize, retSize);
         break;
     default:
-        DeviceHelper::getExtraDeviceInfo(paramName, param, src, srcSize, retSize);
+        DeviceHelper::getExtraDeviceInfo(hwInfo, paramName, param, src, srcSize, retSize);
     }
 
     retVal = ::getInfo(paramValue, paramValueSize, src, srcSize);
