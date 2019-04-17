@@ -878,15 +878,12 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
 
     void addTimestampNode(int contextStart, int contextEnd, int globalStart) {
         auto node = new MockTagNode<TimestampPacketStorage>();
-        auto timestampPacket = new TimestampPacketStorage();
-        node->tagForCpuAccess = timestampPacket;
+        auto timestampPacketStorage = new TimestampPacketStorage();
+        node->tagForCpuAccess = timestampPacketStorage;
 
-        *reinterpret_cast<uint32_t *>(ptrOffset(timestampPacket,
-                                                sizeof(uint32_t) * static_cast<uint32_t>(TimestampPacketStorage::DataIndex::ContextStart))) = contextStart;
-        *reinterpret_cast<uint32_t *>(ptrOffset(timestampPacket,
-                                                sizeof(uint32_t) * static_cast<uint32_t>(TimestampPacketStorage::DataIndex::ContextEnd))) = contextEnd;
-        *reinterpret_cast<uint32_t *>(ptrOffset(timestampPacket,
-                                                sizeof(uint32_t) * static_cast<uint32_t>(TimestampPacketStorage::DataIndex::GlobalStart))) = globalStart;
+        timestampPacketStorage->packets[0].contextStart = contextStart;
+        timestampPacketStorage->packets[0].contextEnd = contextEnd;
+        timestampPacketStorage->packets[0].globalStart = globalStart;
 
         ev->timestampPacketContainer->add(node);
     }

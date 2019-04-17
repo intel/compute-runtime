@@ -256,19 +256,20 @@ bool Event::calcProfilingData() {
         if (timestampPacketContainer && timestampPacketContainer->peekNodes().size() > 0) {
             const auto timestamps = timestampPacketContainer->peekNodes();
 
-            uint64_t contextStartTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextStart);
-            uint64_t contextEndTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextEnd);
-            uint64_t globalStartTS = timestamps[0]->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::GlobalStart);
+            auto contextStartTS = timestamps[0]->tagForCpuAccess->packets[0].contextStart;
+            uint64_t contextEndTS = timestamps[0]->tagForCpuAccess->packets[0].contextEnd;
+            auto globalStartTS = timestamps[0]->tagForCpuAccess->packets[0].globalStart;
 
             for (const auto &timestamp : timestamps) {
-                if (timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextStart) < contextStartTS) {
-                    contextStartTS = timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextStart);
+                const auto &packet = timestamp->tagForCpuAccess->packets[0];
+                if (contextStartTS > packet.contextStart) {
+                    contextStartTS = packet.contextStart;
                 }
-                if (timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextEnd) > contextEndTS) {
-                    contextEndTS = timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::ContextEnd);
+                if (contextEndTS < packet.contextEnd) {
+                    contextEndTS = packet.contextEnd;
                 }
-                if (timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::GlobalStart) < globalStartTS) {
-                    globalStartTS = timestamp->tagForCpuAccess->getData(TimestampPacketStorage::DataIndex::GlobalStart);
+                if (globalStartTS > packet.globalStart) {
+                    globalStartTS = packet.globalStart;
                 }
             }
             calculateProfilingDataInternal(contextStartTS, contextEndTS, &contextEndTS, globalStartTS);

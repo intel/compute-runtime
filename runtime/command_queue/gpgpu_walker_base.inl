@@ -175,7 +175,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     TimestampPacketStorage::WriteOperationType writeOperationType) {
 
     if (TimestampPacketStorage::WriteOperationType::AfterWalker == writeOperationType) {
-        uint64_t address = TimestampPacketHelper::getGpuAddressForDataWrite(*timestampPacketNode, TimestampPacketStorage::DataIndex::ContextEnd);
+        uint64_t address = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
         PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(cmdStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, 0, false);
     }
 }

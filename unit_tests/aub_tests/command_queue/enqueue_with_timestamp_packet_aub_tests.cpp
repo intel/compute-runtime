@@ -59,8 +59,8 @@ HWTEST_F(TimestampPacketAubTests, givenTwoBatchedEnqueuesWhenDependencyIsResolve
                              &expectedDepsCount, sizeof(uint32_t));
 
     uint32_t expectedEndTimestamp[2] = {0, 0};
-    auto endTimestampAddress1 = TimestampPacketHelper::getGpuAddressForDataWrite(*node1, TimestampPacketStorage::DataIndex::ContextEnd);
-    auto endTimestampAddress2 = TimestampPacketHelper::getGpuAddressForDataWrite(*node2, TimestampPacketStorage::DataIndex::ContextEnd);
+    auto endTimestampAddress1 = node1->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    auto endTimestampAddress2 = node2->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
     expectMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress1), expectedEndTimestamp, 2 * sizeof(uint32_t));
     expectMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress2), expectedEndTimestamp, 2 * sizeof(uint32_t));
 
@@ -86,8 +86,8 @@ HWTEST_F(TimestampPacketAubTests, givenMultipleWalkersWhenEnqueueingThenWriteAll
     EXPECT_EQ(2u, timestampNodes.size());
 
     uint32_t expectedEndTimestamp[2] = {0, 0};
-    auto endTimestampAddress1 = TimestampPacketHelper::getGpuAddressForDataWrite(*timestampNodes.at(0), TimestampPacketStorage::DataIndex::ContextEnd);
-    auto endTimestampAddress2 = TimestampPacketHelper::getGpuAddressForDataWrite(*timestampNodes.at(1), TimestampPacketStorage::DataIndex::ContextEnd);
+    auto endTimestampAddress1 = timestampNodes.at(0)->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    auto endTimestampAddress2 = timestampNodes.at(1)->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
     expectMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress1), expectedEndTimestamp, 2 * sizeof(uint32_t));
     expectMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress2), expectedEndTimestamp, 2 * sizeof(uint32_t));
 

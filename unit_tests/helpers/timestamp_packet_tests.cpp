@@ -31,8 +31,12 @@ using namespace NEO;
 
 struct TimestampPacketSimpleTests : public ::testing::Test {
     void setTagToReadyState(TagNode<TimestampPacketStorage> *tagNode) {
-        auto &data = tagNode->tagForCpuAccess->data;
-        std::fill(data.begin(), data.end(), 0u);
+        for (auto &packet : tagNode->tagForCpuAccess->packets) {
+            packet.contextStart = 0u;
+            packet.globalStart = 0u;
+            packet.contextEnd = 0u;
+            packet.globalEnd = 0u;
+        }
         tagNode->tagForCpuAccess->implicitDependenciesCount.store(0);
     }
 
@@ -59,7 +63,7 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
         EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
 
-        auto dataAddress = TimestampPacketHelper::getGpuAddressForDataWrite(*timestampPacketNode, TimestampPacketStorage::DataIndex::ContextEnd);
+        auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
 
         EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
     };
@@ -114,38 +118,35 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWhenSemaphoreAndAtomicAreProgrammedTh
 }
 
 TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenCanBeReleased) {
-    TimestampPacketStorage timestampPacket;
-    auto contextEndIndex = static_cast<uint32_t>(TimestampPacketStorage::DataIndex::ContextEnd);
-    auto globalEndIndex = static_cast<uint32_t>(TimestampPacketStorage::DataIndex::GlobalEnd);
+    TimestampPacketStorage timestampPacketStorage;
+    auto &packet = timestampPacketStorage.packets[0];
 
-    timestampPacket.data[contextEndIndex] = 1;
-    timestampPacket.data[globalEndIndex] = 1;
-    EXPECT_FALSE(timestampPacket.canBeReleased());
+    packet.contextEnd = 1;
+    packet.globalEnd = 1;
+    EXPECT_FALSE(timestampPacketStorage.canBeReleased());
 
-    timestampPacket.data[contextEndIndex] = 1;
-    timestampPacket.data[globalEndIndex] = 0;
-    EXPECT_FALSE(timestampPacket.canBeReleased());
+    packet.contextEnd = 1;
+    packet.globalEnd = 0;
+    EXPECT_FALSE(timestampPacketStorage.canBeReleased());
 
-    timestampPacket.data[contextEndIndex] = 0;
-    timestampPacket.data[globalEndIndex] = 1;
-    EXPECT_FALSE(timestampPacket.canBeReleased());
+    packet.contextEnd = 0;
+    packet.globalEnd = 1;
+    EXPECT_FALSE(timestampPacketStorage.canBeReleased());
 
-    timestampPacket.data[contextEndIndex] = 0;
-    timestampPacket.data[globalEndIndex] = 0;
-    EXPECT_TRUE(timestampPacket.canBeReleased());
+    packet.contextEnd = 0;
+    packet.globalEnd = 0;
+    EXPECT_TRUE(timestampPacketStorage.canBeReleased());
 }
 
 TEST_F(TimestampPacketSimpleTests, givenImplicitDependencyWhenEndTagIsWrittenThenCantBeReleased) {
-    TimestampPacketStorage timestampPacket;
-    auto contextEndIndex = static_cast<uint32_t>(TimestampPacketStorage::DataIndex::ContextEnd);
-    auto globalEndIndex = static_cast<uint32_t>(TimestampPacketStorage::DataIndex::GlobalEnd);
+    TimestampPacketStorage timestampPacketStorage;
 
-    timestampPacket.data[contextEndIndex] = 0;
-    timestampPacket.data[globalEndIndex] = 0;
-    timestampPacket.implicitDependenciesCount.store(1);
-    EXPECT_FALSE(timestampPacket.canBeReleased());
-    timestampPacket.implicitDependenciesCount.store(0);
-    EXPECT_TRUE(timestampPacket.canBeReleased());
+    timestampPacketStorage.packets[0].contextEnd = 0;
+    timestampPacketStorage.packets[0].globalEnd = 0;
+    timestampPacketStorage.implicitDependenciesCount.store(1);
+    EXPECT_FALSE(timestampPacketStorage.canBeReleased());
+    timestampPacketStorage.implicitDependenciesCount.store(0);
+    EXPECT_TRUE(timestampPacketStorage.canBeReleased());
 }
 
 TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
@@ -154,9 +155,12 @@ TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
     MockTagAllocator<TimestampPacketStorage> allocator(&memoryManager, 1);
 
     auto firstNode = allocator.getTag();
-    for (uint32_t i = 0; i < static_cast<uint32_t>(TimestampPacketStorage::DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount; i++) {
-        auto dataAccess = reinterpret_cast<uint32_t *>(ptrOffset(firstNode->tagForCpuAccess, i * sizeof(uint32_t)));
-        *dataAccess = i;
+    auto i = 0u;
+    for (auto &packet : firstNode->tagForCpuAccess->packets) {
+        packet.contextStart = i++;
+        packet.globalStart = i++;
+        packet.contextEnd = i++;
+        packet.globalEnd = i++;
     }
 
     auto &dependenciesCount = firstNode->tagForCpuAccess->implicitDependenciesCount;
@@ -169,39 +173,23 @@ TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
     EXPECT_EQ(secondNode, firstNode);
 
     EXPECT_EQ(0u, dependenciesCount.load());
-    for (uint32_t i = 0; i < static_cast<uint32_t>(TimestampPacketStorage::DataIndex::Max) * TimestampPacketSizeControl::preferedChunkCount; i++) {
-        auto dataAccess = reinterpret_cast<uint32_t *>(ptrOffset(firstNode->tagForCpuAccess, i * sizeof(uint32_t)));
-        EXPECT_EQ(1u, *dataAccess);
+    for (const auto &packet : firstNode->tagForCpuAccess->packets) {
+        EXPECT_EQ(1u, packet.contextStart);
+        EXPECT_EQ(1u, packet.globalStart);
+        EXPECT_EQ(1u, packet.contextEnd);
+        EXPECT_EQ(1u, packet.globalEnd);
     }
 }
 
 TEST_F(TimestampPacketSimpleTests, whenObjectIsCreatedThenInitializeAllStamps) {
-    TimestampPacketStorage timestampPacket;
-    auto entityElements = static_cast<uint32_t>(TimestampPacketStorage::DataIndex::Max);
-    auto allElements = entityElements * TimestampPacketSizeControl::preferedChunkCount;
-    EXPECT_EQ(4u, entityElements);
-    EXPECT_EQ(64u, allElements);
+    TimestampPacketStorage timestampPacketStorage;
+    EXPECT_EQ(TimestampPacketSizeControl::preferredPacketCount * sizeof(timestampPacketStorage.packets[0]), sizeof(timestampPacketStorage.packets));
 
-    EXPECT_EQ(allElements, timestampPacket.data.size());
-
-    for (uint32_t i = 0; i < allElements; i++) {
-        EXPECT_EQ(1u, timestampPacket.data[i]);
-    }
-}
-
-TEST_F(TimestampPacketSimpleTests, whenAskedForStampAddressThenReturnWithValidOffset) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
-    MockMemoryManager memoryManager(executionEnvironment);
-    MockTagAllocator<TimestampPacketStorage> allocator(&memoryManager, 1);
-
-    auto node = allocator.getTag();
-    auto tag = node->tagForCpuAccess;
-
-    for (size_t i = 0; i < static_cast<uint32_t>(TimestampPacketStorage::DataIndex::Max); i++) {
-        auto dataIndex = static_cast<TimestampPacketStorage::DataIndex>(i);
-        auto address = TimestampPacketHelper::getGpuAddressForDataWrite(*node, dataIndex);
-
-        EXPECT_EQ(address, reinterpret_cast<uint64_t>(ptrOffset(tag, i * sizeof(uint32_t))));
+    for (const auto &packet : timestampPacketStorage.packets) {
+        EXPECT_EQ(1u, packet.contextStart);
+        EXPECT_EQ(1u, packet.globalStart);
+        EXPECT_EQ(1u, packet.contextEnd);
+        EXPECT_EQ(1u, packet.globalEnd);
     }
 }
 
@@ -390,22 +378,19 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
 
-    auto verifyPipeControl = [](PIPE_CONTROL *pipeControl, uint64_t expectedAddress) {
-        EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
-        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
-        EXPECT_EQ(0u, pipeControl->getImmediateData());
-        EXPECT_EQ(static_cast<uint32_t>(expectedAddress & 0x0000FFFFFFFFULL), pipeControl->getAddress());
-        EXPECT_EQ(static_cast<uint32_t>(expectedAddress >> 32), pipeControl->getAddressHigh());
-    };
-
     uint32_t walkersFound = 0;
     for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
         if (genCmdCast<GPGPU_WALKER *>(*it)) {
             auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
             EXPECT_NE(nullptr, pipeControl);
-            auto dataAddress = TimestampPacketHelper::getGpuAddressForDataWrite(*timestampPacket.getNode(walkersFound), TimestampPacketStorage::DataIndex::ContextEnd);
+            auto expectedAddress = timestampPacket.getNode(walkersFound)->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
 
-            verifyPipeControl(pipeControl, dataAddress);
+            EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
+            EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+            EXPECT_EQ(0u, pipeControl->getImmediateData());
+            EXPECT_EQ(static_cast<uint32_t>(expectedAddress), pipeControl->getAddress());
+            EXPECT_EQ(static_cast<uint32_t>(expectedAddress >> 32), pipeControl->getAddressHigh());
+
             walkersFound++;
         }
     }
