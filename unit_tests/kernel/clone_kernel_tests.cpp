@@ -509,7 +509,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgImmediate) {
 }
 
 TEST_F(CloneKernelTest, cloneKernelWithExecInfo) {
-    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, 0);
+    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, {});
     ASSERT_NE(nullptr, ptrSVM);
 
     auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSVM);

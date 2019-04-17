@@ -261,7 +261,7 @@ TEST_F(BufferSetArgTest, clSetKernelArgBuffer) {
 }
 
 TEST_F(BufferSetArgTest, clSetKernelArgSVMPointer) {
-    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, 0);
+    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, {});
     EXPECT_NE(nullptr, ptrSVM);
 
     auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSVM);

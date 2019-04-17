@@ -34,7 +34,9 @@ bool MemObjHelper::parseMemoryProperties(const cl_mem_properties_intel *properti
 AllocationProperties MemObjHelper::getAllocationProperties(MemoryProperties memoryProperties, bool allocateMemory,
                                                            size_t size, GraphicsAllocation::AllocationType type) {
     AllocationProperties allocationProperties(allocateMemory, size, type);
-    fillCachePolicyInProperties(allocationProperties, memoryProperties);
+    fillCachePolicyInProperties(allocationProperties,
+                                isValueSet(memoryProperties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE),
+                                isValueSet(memoryProperties.flags, CL_MEM_READ_ONLY));
     return allocationProperties;
 }
 

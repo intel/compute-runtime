@@ -25,9 +25,9 @@ struct EnqueueSvmMemCopyTest : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pDevice, 0);
-        srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
+        srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {});
         ASSERT_NE(nullptr, srcSvmPtr);
-        dstSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
+        dstSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {});
         ASSERT_NE(nullptr, dstSvmPtr);
         auto srcSvmData = context->getSVMAllocsManager()->getSVMAlloc(srcSvmPtr);
         ASSERT_NE(nullptr, srcSvmData);

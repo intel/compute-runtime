@@ -38,7 +38,7 @@ struct EnqueueSvmTest : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pDevice, 0);
-        ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
+        ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {});
     }
 
     void TearDown() override {
@@ -243,7 +243,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueDstPtrIsNull) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     void *pDstSVM = nullptr;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {});
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -274,7 +274,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueSrcPtrIsNull) {
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_Success) {
     void *pDstSVM = ptrSVM;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {});
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -290,7 +290,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_Success) {
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlocking_Success) {
     void *pDstSVM = ptrSVM;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {});
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         true,    // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -306,7 +306,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlocking_Success) {
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlockedOnEvent_Success) {
     void *pDstSVM = ptrSVM;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, 0);
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {});
     auto uEvent = make_releaseable<UserEvent>();
     cl_event eventWaitList[] = {uEvent.get()};
     retVal = this->pCmdQ->enqueueSVMMemcpy(
@@ -325,7 +325,9 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlockedOnEvent_Success) {
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherent_Success) {
     void *pDstSVM = ptrSVM;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, CL_MEM_SVM_FINE_GRAIN_BUFFER);
+    SVMAllocsManager::SvmAllocationProperties svmProperties;
+    svmProperties.coherent = true;
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, svmProperties);
     retVal = this->pCmdQ->enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -341,7 +343,9 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherent_Success) {
 
 TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherentBlockedOnEvent_Success) {
     void *pDstSVM = ptrSVM;
-    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, CL_MEM_SVM_FINE_GRAIN_BUFFER);
+    SVMAllocsManager::SvmAllocationProperties svmProperties;
+    svmProperties.coherent = true;
+    void *pSrcSVM = context->getSVMAllocsManager()->createSVMAlloc(256, svmProperties);
     auto uEvent = make_releaseable<UserEvent>();
     cl_event eventWaitList[] = {uEvent.get()};
     retVal = this->pCmdQ->enqueueSVMMemcpy(
@@ -535,7 +539,7 @@ TEST_F(EnqueueSvmTest, concurentMapAccess) {
 
     auto allocSvm = [&](uint32_t from, uint32_t to) {
         for (uint32_t i = from; i <= to; i++) {
-            svmPtrs[i] = context->getSVMAllocsManager()->createSVMAlloc(1, 0);
+            svmPtrs[i] = context->getSVMAllocsManager()->createSVMAlloc(1, {});
             auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtrs[i]);
             ASSERT_NE(nullptr, svmData);
             auto ga = svmData->gpuAllocation;
@@ -593,6 +597,28 @@ TEST_F(EnqueueSvmTest, enqueueSVMMigrateMem_Success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmThenSvmIsCorrectlyAllocated) {
+    DebugManagerStateRestore dbgRestore;
+    SVMAllocsManager::SvmAllocationProperties svmAllocationProperties;
+
+    for (auto isLocalMemorySupported : ::testing::Bool()) {
+        DebugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
+        auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        auto mockContext = std::make_unique<MockContext>(mockDevice.get());
+
+        for (auto isReadOnly : ::testing::Bool()) {
+            for (auto isHostPtrReadOnly : ::testing::Bool()) {
+                svmAllocationProperties.readOnly = isReadOnly;
+                svmAllocationProperties.hostPtrReadOnly = isHostPtrReadOnly;
+
+                auto ptrSVM = mockContext->getSVMAllocsManager()->createSVMAlloc(256, svmAllocationProperties);
+                EXPECT_NE(nullptr, ptrSVM);
+                mockContext->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
+            }
+        }
+    }
+}
+
 struct EnqueueSvmTestLocalMemory : public DeviceFixture,
                                    public ::testing::Test {
     void SetUp() override {
@@ -602,7 +628,7 @@ struct EnqueueSvmTestLocalMemory : public DeviceFixture,
         DeviceFixture::SetUp();
         context = std::make_unique<MockContext>(pDevice, true);
         size = 256;
-        svmPtr = context->getSVMAllocsManager()->createSVMAlloc(size, 0);
+        svmPtr = context->getSVMAllocsManager()->createSVMAlloc(size, {});
         ASSERT_NE(nullptr, svmPtr);
         mockSvmManager = reinterpret_cast<MockSVMAllocsManager *>(context->getSVMAllocsManager());
     }
@@ -622,6 +648,24 @@ struct EnqueueSvmTestLocalMemory : public DeviceFixture,
     HardwareParse hwParse;
 };
 
+HWTEST_F(EnqueueSvmTestLocalMemory, givenWriteInvalidateRegionFlagWhenMappingSvmThenMapIsSuccessfulAndReadOnlyFlagIsFalse) {
+    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    uintptr_t offset = 64;
+    void *regionSvmPtr = ptrOffset(svmPtr, offset);
+    size_t regionSize = 64;
+    retVal = queue.enqueueSVMMap(
+        CL_TRUE,
+        CL_MAP_WRITE_INVALIDATE_REGION,
+        regionSvmPtr,
+        regionSize,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
+    EXPECT_FALSE(svmMap->readOnlyMap);
+}
+
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapValidSvmPtrThenExpectSingleWalker) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
@@ -630,7 +674,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapValidSvm
     cl_event event = nullptr;
 
     uintptr_t offset = 64;
-    void *regionSvmPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(svmPtr) + offset);
+    void *regionSvmPtr = ptrOffset(svmPtr, offset);
     size_t regionSize = 64;
     retVal = queue.enqueueSVMMap(
         CL_FALSE,
@@ -667,7 +711,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapSvmPtrTw
     LinearStream &stream = queue.getCS(0x1000);
 
     uintptr_t offset = 64;
-    void *regionSvmPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(svmPtr) + offset);
+    void *regionSvmPtr = ptrOffset(svmPtr, offset);
     size_t regionSize = 64;
     retVal = queue.enqueueSVMMap(
         CL_FALSE,

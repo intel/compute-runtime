@@ -136,7 +136,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
         if (event) {
             castToObjectOrAbort<Event>(*event)->setCmdType(CL_COMMAND_SVM_MAP);
         }
-        bool readOnlyMap = SVMAllocsManager::mapFlagIsReadOnly(mapFlags);
+        bool readOnlyMap = !isValueSet(mapFlags, CL_MAP_WRITE) && !isValueSet(mapFlags, CL_MAP_WRITE_INVALIDATE_REGION);
         context->getSVMAllocsManager()->insertSvmMapOperation(svmPtr, size, svmBasePtr, svmOffset, readOnlyMap);
 
         return CL_SUCCESS;

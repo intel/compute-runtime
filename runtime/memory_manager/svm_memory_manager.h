@@ -6,8 +6,6 @@
  */
 
 #pragma once
-#include "CL/cl.h"
-
 #include <cstdint>
 #include <map>
 #include <mutex>
@@ -57,27 +55,25 @@ class SVMAllocsManager {
         SvmMapOperationsContainer operations;
     };
 
+    struct SvmAllocationProperties {
+        bool coherent = false;
+        bool hostPtrReadOnly = false;
+        bool readOnly = false;
+    };
+
     SVMAllocsManager(MemoryManager *memoryManager);
-    void *createSVMAlloc(size_t size, cl_mem_flags flags);
+    void *createSVMAlloc(size_t size, const SvmAllocationProperties svmProperties);
     SvmAllocationData *getSVMAlloc(const void *ptr);
     void freeSVMAlloc(void *ptr);
     size_t getNumAllocs() const { return SVMAllocs.getNumAllocs(); }
-
-    static bool memFlagIsReadOnly(cl_svm_mem_flags flags) {
-        return (flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)) != 0;
-    }
-
-    static bool mapFlagIsReadOnly(cl_map_flags mapFlags) {
-        return !((mapFlags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION)) != 0);
-    }
 
     void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);
     void removeSvmMapOperation(const void *regionSvmPtr);
     SvmMapOperation *getSvmMapOperation(const void *regionPtr);
 
   protected:
-    void *createZeroCopySvmAllocation(size_t size, cl_mem_flags flags);
-    void *createSvmAllocationWithDeviceStorage(size_t size, cl_mem_flags flags);
+    void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties);
+    void *createSvmAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties);
     void freeZeroCopySvmAllocation(SvmAllocationData *svmData);
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
 

@@ -11,6 +11,7 @@
 #include "runtime/context/context_type.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/memory_manager/svm_memory_manager.h"
 
 #include "CL/cl.h"
 #include "mem_obj_types.h"
@@ -91,13 +92,15 @@ class MemObjHelper {
                                                         size_t size, GraphicsAllocation::AllocationType type);
     static AllocationProperties getAllocationProperties(ImageInfo &imgInfo, bool allocateMemory, MemoryProperties memoryProperties) {
         AllocationProperties allocationProperties{allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE};
-        fillCachePolicyInProperties(allocationProperties, memoryProperties);
+        fillCachePolicyInProperties(allocationProperties,
+                                    isValueSet(memoryProperties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE),
+                                    isValueSet(memoryProperties.flags, CL_MEM_READ_ONLY));
         return allocationProperties;
     }
 
-    static void fillCachePolicyInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties) {
-        allocationProperties.flags.uncacheable = isValueSet(memoryProperties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE);
-        auto cacheFlushRequired = !allocationProperties.flags.uncacheable && !isValueSet(memoryProperties.flags, CL_MEM_READ_ONLY);
+    static void fillCachePolicyInProperties(AllocationProperties &allocationProperties, bool uncached, bool readOnly) {
+        allocationProperties.flags.uncacheable = uncached;
+        auto cacheFlushRequired = !uncached && !readOnly;
         allocationProperties.flags.flushL3RequiredForRead = cacheFlushRequired;
         allocationProperties.flags.flushL3RequiredForWrite = cacheFlushRequired;
     }
@@ -108,6 +111,14 @@ class MemObjHelper {
             CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS;
 
         return isFieldValid(flags, allValidFlags);
+    }
+
+    static SVMAllocsManager::SvmAllocationProperties getSvmAllocationProperties(cl_mem_flags flags) {
+        SVMAllocsManager::SvmAllocationProperties svmProperties;
+        svmProperties.coherent = isValueSet(flags, CL_MEM_SVM_FINE_GRAIN_BUFFER);
+        svmProperties.hostPtrReadOnly = isValueSet(flags, CL_MEM_HOST_READ_ONLY) || isValueSet(flags, CL_MEM_HOST_NO_ACCESS);
+        svmProperties.readOnly = isValueSet(flags, CL_MEM_READ_ONLY);
+        return svmProperties;
     }
 
     static bool isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, ContextType contextType, bool preferCompression);

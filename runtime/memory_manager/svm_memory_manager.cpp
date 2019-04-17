@@ -71,15 +71,15 @@ SvmMapOperation *SVMAllocsManager::MapOperationsTracker::get(const void *regionP
 SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager) : memoryManager(memoryManager) {
 }
 
-void *SVMAllocsManager::createSVMAlloc(size_t size, cl_mem_flags flags) {
+void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationProperties svmProperties) {
     if (size == 0)
         return nullptr;
 
     std::unique_lock<std::mutex> lock(mtx);
     if (!memoryManager->isLocalMemorySupported()) {
-        return createZeroCopySvmAllocation(size, flags);
+        return createZeroCopySvmAllocation(size, svmProperties);
     } else {
-        return createSvmAllocationWithDeviceStorage(size, flags);
+        return createSvmAllocationWithDeviceStorage(size, svmProperties);
     }
 }
 
@@ -100,15 +100,15 @@ void SVMAllocsManager::freeSVMAlloc(void *ptr) {
     }
 }
 
-void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, cl_mem_flags flags) {
+void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties) {
     AllocationProperties properties{true, size, GraphicsAllocation::AllocationType::SVM_ZERO_COPY};
-    MemObjHelper::fillCachePolicyInProperties(properties, flags);
+    MemObjHelper::fillCachePolicyInProperties(properties, false, svmProperties.readOnly);
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
     if (!allocation) {
         return nullptr;
     }
-    allocation->setMemObjectsAllocationWithWritableFlags(!SVMAllocsManager::memFlagIsReadOnly(flags));
-    allocation->setCoherent(isValueSet(flags, CL_MEM_SVM_FINE_GRAIN_BUFFER));
+    allocation->setMemObjectsAllocationWithWritableFlags(!svmProperties.readOnly && !svmProperties.hostPtrReadOnly);
+    allocation->setCoherent(svmProperties.coherent);
 
     SvmAllocationData allocData;
     allocData.gpuAllocation = allocation;
@@ -118,29 +118,29 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, cl_mem_flags fl
     return allocation->getUnderlyingBuffer();
 }
 
-void *SVMAllocsManager::createSvmAllocationWithDeviceStorage(size_t size, cl_mem_flags flags) {
+void *SVMAllocsManager::createSvmAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties) {
     size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
     AllocationProperties cpuProperties{true, alignedSize, GraphicsAllocation::AllocationType::SVM_CPU};
     cpuProperties.alignment = 2 * MemoryConstants::megaByte;
-    MemObjHelper::fillCachePolicyInProperties(cpuProperties, flags);
+    MemObjHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly);
     GraphicsAllocation *allocationCpu = memoryManager->allocateGraphicsMemoryWithProperties(cpuProperties);
     if (!allocationCpu) {
         return nullptr;
     }
-    allocationCpu->setMemObjectsAllocationWithWritableFlags(!SVMAllocsManager::memFlagIsReadOnly(flags));
-    allocationCpu->setCoherent(isValueSet(flags, CL_MEM_SVM_FINE_GRAIN_BUFFER));
+    allocationCpu->setMemObjectsAllocationWithWritableFlags(!svmProperties.readOnly && !svmProperties.hostPtrReadOnly);
+    allocationCpu->setCoherent(svmProperties.coherent);
     void *svmPtr = allocationCpu->getUnderlyingBuffer();
 
     AllocationProperties gpuProperties{false, alignedSize, GraphicsAllocation::AllocationType::SVM_GPU};
     gpuProperties.alignment = 2 * MemoryConstants::megaByte;
-    MemObjHelper::fillCachePolicyInProperties(gpuProperties, flags);
+    MemObjHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly);
     GraphicsAllocation *allocationGpu = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties, svmPtr);
     if (!allocationGpu) {
         memoryManager->freeGraphicsMemory(allocationCpu);
         return nullptr;
     }
-    allocationGpu->setMemObjectsAllocationWithWritableFlags(!SVMAllocsManager::memFlagIsReadOnly(flags));
-    allocationGpu->setCoherent(isValueSet(flags, CL_MEM_SVM_FINE_GRAIN_BUFFER));
+    allocationGpu->setMemObjectsAllocationWithWritableFlags(!svmProperties.readOnly && !svmProperties.hostPtrReadOnly);
+    allocationGpu->setCoherent(svmProperties.coherent);
 
     SvmAllocationData allocData;
     allocData.gpuAllocation = allocationGpu;

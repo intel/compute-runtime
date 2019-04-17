@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/mem_obj/mem_obj_helper.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -35,14 +36,14 @@ using SVMMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<false>>;
 using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true>>;
 
 TEST_F(SVMMemoryAllocatorTest, whenCreateZeroSizedSVMAllocationThenReturnNullptr) {
-    auto ptr = svmManager->createSVMAlloc(0, 0);
+    auto ptr = svmManager->createSVMAlloc(0, {});
 
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
     EXPECT_EQ(ptr, nullptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_NE(nullptr, ptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
@@ -60,7 +61,7 @@ TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromReturnedPointerAreaThenReturnSameAllocation) {
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
@@ -79,7 +80,7 @@ TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromReturnedPointerAreaThenRe
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPointerAreaThenDontReturnThisAllocation) {
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
@@ -100,7 +101,7 @@ TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPointerA
 TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
     FailMemoryManager failMemoryManager(executionEnvironment);
     svmManager->memoryManager = &failMemoryManager;
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
     svmManager->freeSVMAlloc(ptr);
@@ -109,7 +110,7 @@ TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenReturnsNul
 TEST_F(SVMMemoryAllocatorTest, given64kbAllowedWhenAllocatingSvmMemoryThenDontPreferRenderCompression) {
     MockMemoryManager memoryManager64Kb(true, false, executionEnvironment);
     svmManager->memoryManager = &memoryManager64Kb;
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_FALSE(memoryManager64Kb.preferRenderCompressedFlagPassed);
     svmManager->freeSVMAlloc(ptr);
 }
@@ -117,36 +118,66 @@ TEST_F(SVMMemoryAllocatorTest, given64kbAllowedWhenAllocatingSvmMemoryThenDontPr
 TEST_F(SVMMemoryAllocatorTest, given64kbAllowedwhenAllocatingSvmMemoryThenAllocationIsIn64kbPagePool) {
     MockMemoryManager memoryManager64Kb(true, false, executionEnvironment);
     svmManager->memoryManager = &memoryManager64Kb;
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_EQ(MemoryPool::System64KBPages, svmManager->getSVMAlloc(ptr)->gpuAllocation->getMemoryPool());
     svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, given64kbDisallowedWhenAllocatingSvmMemoryThenAllocationIsIn4kbPagePool) {
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_EQ(MemoryPool::System4KBPages, svmManager->getSVMAlloc(ptr)->gpuAllocation->getMemoryPool());
     svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenCoherentFlagIsPassedThenAllocationIsCoherent) {
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, CL_MEM_SVM_FINE_GRAIN_BUFFER);
+    SVMAllocsManager::SvmAllocationProperties svmProperties;
+    svmProperties.coherent = true;
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, svmProperties);
     EXPECT_TRUE(svmManager->getSVMAlloc(ptr)->gpuAllocation->isCoherent());
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST_F(SVMMemoryAllocatorTest, whenReadOnlyFlagIsPresentThenReturnTrue) {
-    EXPECT_TRUE(SVMAllocsManager::memFlagIsReadOnly(CL_MEM_READ_ONLY));
-    EXPECT_TRUE(SVMAllocsManager::memFlagIsReadOnly(CL_MEM_HOST_READ_ONLY));
-    EXPECT_TRUE(SVMAllocsManager::memFlagIsReadOnly(CL_MEM_READ_ONLY));
-}
+TEST(SvmAllocationPropertiesTests, givenDifferentMemFlagsWhenGettingSvmAllocationPropertiesThenPropertiesAreCorrectlySet) {
+    SVMAllocsManager::SvmAllocationProperties allocationProperties = MemObjHelper::getSvmAllocationProperties(0);
+    EXPECT_FALSE(allocationProperties.coherent);
+    EXPECT_FALSE(allocationProperties.hostPtrReadOnly);
+    EXPECT_FALSE(allocationProperties.readOnly);
 
-TEST_F(SVMMemoryAllocatorTest, whenNoReadOnlyFlagIsPresentThenReturnFalse) {
-    EXPECT_FALSE(SVMAllocsManager::memFlagIsReadOnly(CL_MEM_READ_WRITE));
-    EXPECT_FALSE(SVMAllocsManager::memFlagIsReadOnly(CL_MEM_WRITE_ONLY));
+    allocationProperties = MemObjHelper::getSvmAllocationProperties(CL_MEM_SVM_FINE_GRAIN_BUFFER);
+    EXPECT_TRUE(allocationProperties.coherent);
+    EXPECT_FALSE(allocationProperties.hostPtrReadOnly);
+    EXPECT_FALSE(allocationProperties.readOnly);
+
+    allocationProperties = MemObjHelper::getSvmAllocationProperties(CL_MEM_HOST_READ_ONLY);
+    EXPECT_FALSE(allocationProperties.coherent);
+    EXPECT_TRUE(allocationProperties.hostPtrReadOnly);
+    EXPECT_FALSE(allocationProperties.readOnly);
+
+    allocationProperties = MemObjHelper::getSvmAllocationProperties(CL_MEM_HOST_NO_ACCESS);
+    EXPECT_FALSE(allocationProperties.coherent);
+    EXPECT_TRUE(allocationProperties.hostPtrReadOnly);
+    EXPECT_FALSE(allocationProperties.readOnly);
+
+    allocationProperties = MemObjHelper::getSvmAllocationProperties(CL_MEM_READ_ONLY);
+    EXPECT_FALSE(allocationProperties.coherent);
+    EXPECT_FALSE(allocationProperties.hostPtrReadOnly);
+    EXPECT_TRUE(allocationProperties.readOnly);
+
+    allocationProperties = MemObjHelper::getSvmAllocationProperties(CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_HOST_READ_ONLY);
+    EXPECT_TRUE(allocationProperties.coherent);
+    EXPECT_TRUE(allocationProperties.hostPtrReadOnly);
+    EXPECT_FALSE(allocationProperties.readOnly);
+
+    allocationProperties = MemObjHelper::getSvmAllocationProperties(CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_READ_ONLY);
+    EXPECT_TRUE(allocationProperties.coherent);
+    EXPECT_FALSE(allocationProperties.hostPtrReadOnly);
+    EXPECT_TRUE(allocationProperties.readOnly);
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenReadOnlySvmAllocationCreatedThenGraphicsAllocationHasWriteableFlagFalse) {
-    void *svm = svmManager->createSVMAlloc(4096, CL_MEM_READ_ONLY);
+    SVMAllocsManager::SvmAllocationProperties svmProperties;
+    svmProperties.readOnly = true;
+    void *svm = svmManager->createSVMAlloc(4096, svmProperties);
     EXPECT_NE(nullptr, svm);
 
     auto svmData = svmManager->getSVMAlloc(svm);
@@ -159,7 +190,7 @@ TEST_F(SVMMemoryAllocatorTest, whenReadOnlySvmAllocationCreatedThenGraphicsAlloc
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenAllocatingSvmThenExpectCpuAllocationWithPointerAndGpuAllocationWithSameGpuAddress) {
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
@@ -175,7 +206,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenAllocatingSvmThenExpectCpuAllocationWith
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPointerAreaThenDontReturnThisAllocation) {
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
@@ -196,7 +227,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPoi
 TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateCpuAllocationInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
     FailMemoryManager failMemoryManager(false, true, executionEnvironment);
     svmManager->memoryManager = &failMemoryManager;
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
     svmManager->freeSVMAlloc(ptr);
@@ -205,7 +236,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateCpuAllocationInMemoryMan
 TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateGpuAllocationInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
     FailMemoryManager failMemoryManager(1, executionEnvironment, true);
     svmManager->memoryManager = &failMemoryManager;
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
     svmManager->freeSVMAlloc(ptr);
@@ -213,7 +244,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateGpuAllocationInMemoryMan
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotReserveCpuAddressRangeInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
     memoryManager->failReserveAddress = true;
-    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, 0);
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
 }
