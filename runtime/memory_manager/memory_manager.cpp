@@ -208,6 +208,7 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
 bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const StorageInfo storageInfo,
                                       const void *hostPtr) {
     UNRECOVERABLE_IF(hostPtr == nullptr && !properties.flags.allocateMemory);
+    UNRECOVERABLE_IF(properties.allocationType == GraphicsAllocation::AllocationType::UNKNOWN);
 
     bool allow64KbPages = false;
     bool allow32Bit = false;
@@ -261,7 +262,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::SVM_CPU:
     case GraphicsAllocation::AllocationType::SVM_GPU:
     case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
-    case GraphicsAllocation::AllocationType::UNDECIDED:
         mayRequireL3Flush = true;
     default:
         break;
@@ -284,7 +284,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
     case GraphicsAllocation::AllocationType::TAG_BUFFER:
     case GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY:
-    case GraphicsAllocation::AllocationType::UNDECIDED:
         allocationData.flags.useSystemMemory = true;
     default:
         break;

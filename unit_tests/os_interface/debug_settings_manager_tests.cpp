@@ -925,7 +925,6 @@ AllocationTypeTestCase allocationTypeValues[] = {
     {GraphicsAllocation::AllocationType::SVM_ZERO_COPY, "SVM_ZERO_COPY"},
     {GraphicsAllocation::AllocationType::TAG_BUFFER, "TAG_BUFFER"},
     {GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, "TIMESTAMP_PACKET_TAG_BUFFER"},
-    {GraphicsAllocation::AllocationType::UNDECIDED, "UNDECIDED"},
     {GraphicsAllocation::AllocationType::UNKNOWN, "UNKNOWN"}};
 
 class AllocationTypeLogging : public ::testing::TestWithParam<AllocationTypeTestCase> {};

@@ -373,8 +373,6 @@ const char *DebugSettingsManager<DebugLevel>::getAllocationTypeString(GraphicsAl
         return "TAG_BUFFER";
     case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
         return "TIMESTAMP_PACKET_TAG_BUFFER";
-    case GraphicsAllocation::AllocationType::UNDECIDED:
-        return "UNDECIDED";
     case GraphicsAllocation::AllocationType::UNKNOWN:
         return "UNKNOWN";
 

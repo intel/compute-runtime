@@ -98,7 +98,7 @@ class DrmGemCloseWorkerFixture {
     class DrmAllocationWrapper : public DrmAllocation {
       public:
         DrmAllocationWrapper(BufferObject *bo)
-            : DrmAllocation(GraphicsAllocation::AllocationType::UNDECIDED, bo, nullptr, 0, MemoryPool::MemoryNull, 1u, false) {
+            : DrmAllocation(GraphicsAllocation::AllocationType::UNKNOWN, bo, nullptr, 0, MemoryPool::MemoryNull, 1u, false) {
         }
     };
     MockExecutionEnvironment executionEnvironment;
