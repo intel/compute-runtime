@@ -422,7 +422,9 @@ class MyOSTime : public OSTime {
         return 0;
     }
 };
+
 int MyOSTime::instanceNum = 0;
+
 TEST(EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEndTimestampInCompleteTimestampAndDoesntCallOsTimeMethods) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MyOSTime::instanceNum = 0;
@@ -523,7 +525,21 @@ struct ProfilingWithPerfCountersTests : public ProfilingTests,
         ProfilingTests::TearDown();
         PerformanceCountersFixture::TearDown();
     }
+
+    template <typename GfxFamily>
+    GenCmdList::iterator expectStoreRegister(GenCmdList::iterator itor, uint64_t memoryAddress, uint32_t registerAddress) {
+        using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+
+        itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
+        EXPECT_NE(cmdList.end(), itor);
+        auto pStore = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+        EXPECT_EQ(memoryAddress, pStore->getMemoryAddress());
+        EXPECT_EQ(registerAddress, pStore->getRegisterAddress());
+        itor++;
+        return itor;
+    }
 };
+
 HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCounterAndForWorkloadWithKernelWHENGetCSFromCmdQueueTHENEnoughSpaceInCS) {
     typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
@@ -855,6 +871,88 @@ HWTEST_F(ProfilingWithPerfCountersTests,
     // expect MI_REPORT_PERF_COUNT after WALKER
     auto itorAfterReportPerf = find<MI_REPORT_PERF_COUNT *>(itorGPGPUWalkerCmd, cmdList.end());
     ASSERT_EQ(cmdList.end(), itorAfterReportPerf);
+
+    pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
+}
+
+template <typename TagType>
+struct FixedGpuAddressTagAllocator : TagAllocator<TagType> {
+
+    struct MockTagNode : TagNode<TagType> {
+        void setGpuAddress(uint64_t value) { this->gpuAddress = value; }
+    };
+
+    FixedGpuAddressTagAllocator(CommandStreamReceiver &csr, uint64_t gpuAddress)
+        : TagAllocator<TagType>(csr.getMemoryManager(), csr.getPreferredTagPoolSize(), MemoryConstants::cacheLineSize) {
+        auto tag = reinterpret_cast<MockTagNode *>(this->freeTags.peekHead());
+        tag->setGpuAddress(gpuAddress);
+    }
+};
+
+HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCountersWHENWalkerIsDispatchedTHENRegisterStoresArePresentInCS) {
+    uint64_t timeStampGpuAddress = 0x123456000;
+    uint64_t perfCountersGpuAddress = 0xabcdef000;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.profilingTimeStampAllocator.reset(new FixedGpuAddressTagAllocator<HwTimeStamps>(csr, timeStampGpuAddress));
+    csr.perfCounterAllocator.reset(new FixedGpuAddressTagAllocator<HwPerfCounter>(csr, perfCountersGpuAddress));
+
+    pCmdQ->setPerfCountersEnabled(true, 1);
+
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_event event;
+    cl_kernel clKernel = &kernel;
+
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
+        clKernel,
+        dimensions,
+        globalOffsets,
+        workItems,
+        nullptr,
+        0,
+        nullptr,
+        &event);
+
+    auto pEvent = static_cast<MockEvent<Event> *>(event);
+    EXPECT_EQ(pEvent->getHwTimeStampNode()->getGpuAddress(), timeStampGpuAddress);
+    EXPECT_EQ(pEvent->getHwPerfCounterNode()->getGpuAddress(), perfCountersGpuAddress);
+    parseCommands<FamilyType>(*pCmdQ);
+
+    auto itor = expectStoreRegister<FamilyType>(cmdList.begin(), timeStampGpuAddress + offsetof(HwTimeStamps, ContextStartTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.DMAFenceIdBegin), INSTR_MMIO_NOOPID);
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.CoreFreqBegin), INSTR_MMIO_RPSTAT1);
+    for (auto i = 0u; i < NEO::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT; i++) {
+        itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportBegin.Gp) + i * sizeof(cl_uint),
+                                               INSTR_GFX_OFFSETS::INSTR_PERF_CNT_1_DW0 + i * sizeof(cl_uint));
+    }
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportBegin.User), 0);
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportBegin.User) + 8, 0);
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportBegin.User) + 12, 4);
+
+    // after WALKER:
+
+    itor = expectStoreRegister<FamilyType>(itor, timeStampGpuAddress + offsetof(HwTimeStamps, ContextEndTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.OaStatus), INSTR_GFX_OFFSETS::INSTR_OA_STATUS);
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.OaHead), INSTR_GFX_OFFSETS::INSTR_OA_HEAD_PTR);
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.OaTail), INSTR_GFX_OFFSETS::INSTR_OA_TAIL_PTR);
+    for (auto i = 0u; i < NEO::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT; i++) {
+        itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportEnd.Gp) + i * sizeof(cl_uint),
+                                               INSTR_GFX_OFFSETS::INSTR_PERF_CNT_1_DW0 + i * sizeof(cl_uint));
+    }
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.DMAFenceIdEnd), INSTR_MMIO_NOOPID);
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.CoreFreqEnd), INSTR_MMIO_RPSTAT1);
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportEnd.User), 0);
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportEnd.User) + 8, 0);
+    itor = expectStoreRegister<FamilyType>(itor, perfCountersGpuAddress + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportEnd.User) + 12, 4);
+
+    EXPECT_TRUE(pEvent->calcProfilingData());
+
+    clReleaseEvent(event);
 
     pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
 }

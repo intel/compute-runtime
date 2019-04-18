@@ -362,15 +362,15 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return commandQueueProperties;
     }
 
-    bool isProfilingEnabled() {
+    bool isProfilingEnabled() const {
         return !!(this->getCommandQueueProperties() & CL_QUEUE_PROFILING_ENABLE);
     }
 
-    bool isOOQEnabled() {
+    bool isOOQEnabled() const {
         return !!(this->getCommandQueueProperties() & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
     }
 
-    bool isPerfCountersEnabled() {
+    bool isPerfCountersEnabled() const {
         return perfCountersEnabled;
     }
 
@@ -388,7 +388,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         this->isSpecialCommandQueue = newValue;
     }
 
-    uint16_t getPerfCountersUserRegistersNumber() {
+    uint16_t getPerfCountersUserRegistersNumber() const {
         return perfCountersUserRegistersNumber;
     }
 

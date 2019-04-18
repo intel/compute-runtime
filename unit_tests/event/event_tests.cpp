@@ -1194,13 +1194,8 @@ TEST_F(EventTest, hwPerfCounterMemoryIsPlacedInGraphicsAllocation) {
     void *memoryStorage = allocation->getUnderlyingBuffer();
     size_t graphicsAllocationSize = allocation->getUnderlyingBufferSize();
 
-    uintptr_t perfCounterAddress = reinterpret_cast<uintptr_t>(perfCounter);
-    uintptr_t graphicsAllocationStart = reinterpret_cast<uintptr_t>(memoryStorage);
-
-    if (!((perfCounterAddress >= graphicsAllocationStart) &&
-          ((perfCounterAddress + sizeof(HwPerfCounter)) <= (graphicsAllocationStart + graphicsAllocationSize)))) {
-        EXPECT_TRUE(false);
-    }
+    EXPECT_GE(perfCounter, memoryStorage);
+    EXPECT_LE(perfCounter + 1, ptrOffset(memoryStorage, graphicsAllocationSize));
 }
 
 TEST_F(EventTest, IsPerfCounter_DisabledByNullQueue) {

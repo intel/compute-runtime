@@ -28,7 +28,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     const CsrDependencies &csrDependencies,
     KernelOperation **blockedCommandsData,
     TagNode<HwTimeStamps> *hwTimeStamps,
-    HwPerfCounter *hwPerfCounter,
+    TagNode<HwPerfCounter> *hwPerfCounter,
     TimestampPacketContainer *previousTimestampPacketNodes,
     TimestampPacketContainer *currentTimestampPacketNodes,
     PreemptionMode preemptionMode,

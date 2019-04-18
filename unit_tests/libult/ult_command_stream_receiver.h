@@ -51,6 +51,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::latestSentStatelessMocsConfig;
     using BaseClass::CommandStreamReceiver::latestSentTaskCount;
     using BaseClass::CommandStreamReceiver::mediaVfeStateDirty;
+    using BaseClass::CommandStreamReceiver::perfCounterAllocator;
+    using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
     using BaseClass::CommandStreamReceiver::requiredScratchSize;
     using BaseClass::CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::samplerCacheFlushRequired;

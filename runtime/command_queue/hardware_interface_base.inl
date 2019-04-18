@@ -53,7 +53,7 @@ inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfStartCommands(
     const DispatchInfo &dispatchInfo,
     const MultiDispatchInfo &multiDispatchInfo,
     TagNode<HwTimeStamps> *hwTimeStamps,
-    HwPerfCounter *hwPerfCounter,
+    TagNode<HwPerfCounter> *hwPerfCounter,
     LinearStream *commandStream,
     CommandQueue &commandQueue) {
 
@@ -71,7 +71,7 @@ inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfStartCommands(
 template <typename GfxFamily>
 inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfEndCommands(
     TagNode<HwTimeStamps> *hwTimeStamps,
-    HwPerfCounter *hwPerfCounter,
+    TagNode<HwPerfCounter> *hwPerfCounter,
     LinearStream *commandStream,
     CommandQueue &commandQueue) {
 

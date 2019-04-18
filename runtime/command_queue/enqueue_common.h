@@ -163,8 +163,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     bool profilingRequired = (this->isProfilingEnabled() && event != nullptr);
-    bool perfCountersRequired = false;
-    perfCountersRequired = (this->isPerfCountersEnabled() && event != nullptr);
+    bool perfCountersRequired = (this->isPerfCountersEnabled() && event != nullptr);
     KernelOperation *blockedCommandsData = nullptr;
     std::unique_ptr<PrintfHandler> printfHandler;
     bool slmUsed = multiDispatchInfo.usesSlm() || parentKernel;
@@ -381,7 +380,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
                                                           KernelOperation *&blockedCommandsData,
                                                           TimestampPacketContainer &previousTimestampPacketNodes,
                                                           PreemptionMode preemption) {
-    HwPerfCounter *hwPerfCounter = nullptr;
+    TagNode<HwPerfCounter> *hwPerfCounter = nullptr;
     DebugManager.dumpKernelArgs(&multiDispatchInfo);
 
     printfHandler.reset(PrintfHandler::create(multiDispatchInfo, *device));
@@ -399,7 +398,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
         // Get allocation for timestamps
         hwTimeStamps = event->getHwTimeStampNode();
         if (this->isPerfCountersEnabled()) {
-            hwPerfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
+            hwPerfCounter = event->getHwPerfCounterNode();
             // PERF COUNTER: copy current configuration from queue to event
             event->copyPerfCounters(this->getPerfCountersConfigData());
         }

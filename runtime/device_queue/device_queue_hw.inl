@@ -213,7 +213,6 @@ void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKer
     igilQueue->m_controls.m_CleanupSectionAddress = ptrOffset(slbBuffer->getGpuAddress(), slbCS.getUsed());
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(&slbCS, *parentKernel, true);
 
-    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     if (hwTimeStamp != nullptr) {
