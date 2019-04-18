@@ -274,7 +274,7 @@ TEST_F(CompilerInterfaceTest, CompileClToIsaWithOptions) {
 TEST_F(CompilerInterfaceTest, CompileClToIr) {
     // compile only from .cl to IR
     MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = clFiles + "copybuffer.elf";
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, "CopyBuffer_simd8_", ".bc");
     gEnvironment->fclPushDebugVars(fclDebugVars);
     retVal = pCompilerInterface->compile(*pProgram, inputArgs);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -300,7 +300,7 @@ TEST_F(CompilerInterfaceTest, WhenCompileIsInvokedThenFclReceivesListOfExtension
     std::string receivedInternalOptions;
 
     MockCompilerDebugVars fclDebugVars;
-    fclDebugVars.fileName = clFiles + "copybuffer.elf";
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, "CopyBuffer_simd8_", ".bc");
     fclDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
     gEnvironment->fclPushDebugVars(fclDebugVars);
     retVal = pCompilerInterface->compile(*pProgram, inputArgs);
@@ -362,7 +362,7 @@ TEST_F(CompilerInterfaceTest, LinkIrLinkFailure) {
 TEST_F(CompilerInterfaceTest, WhenLinkIsCalledThenLlvmBcIsUsedAsIntermediateRepresentation) {
     // link only from .ll to gen ISA
     MockCompilerDebugVars igcDebugVars;
-    igcDebugVars.fileName = clFiles + "copybuffer.ll";
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd8_", ".bc");
     gEnvironment->igcPushDebugVars(igcDebugVars);
     retVal = pCompilerInterface->link(*pProgram, inputArgs);
     gEnvironment->igcPopDebugVars();
@@ -427,7 +427,7 @@ TEST_F(CompilerInterfaceTest, CreateLibFailure) {
 TEST_F(CompilerInterfaceTest, WhenCreateLibraryIsCalledThenLlvmBcIsUsedAsIntermediateRepresentation) {
     // create library from .ll to IR
     MockCompilerDebugVars igcDebugVars;
-    igcDebugVars.fileName = clFiles + "copybuffer.ll";
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd8_", ".bc");
     gEnvironment->igcPushDebugVars(igcDebugVars);
     retVal = pCompilerInterface->createLibrary(*pProgram, inputArgs);
     gEnvironment->igcPopDebugVars();
@@ -932,7 +932,7 @@ TEST_F(CompilerInterfaceTest, whenIgcTranslatorReturnsBuildErrorThenGetSipKernel
 
 TEST_F(CompilerInterfaceTest, whenEverythingIsOkThenGetSipKernelReturnsIgcsOutputAsSipBinary) {
     MockCompilerDebugVars igcDebugVars;
-    igcDebugVars.fileName = clFiles + "copybuffer.ll";
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd8_", ".bc");
     gEnvironment->igcPushDebugVars(igcDebugVars);
     std::vector<char> sipBinary;
     retVal = pCompilerInterface->getSipKernelBinary(SipKernelType::Csr, *this->pDevice, sipBinary);
@@ -947,7 +947,7 @@ TEST_F(CompilerInterfaceTest, whenRequestingSipKernelBinaryThenProperInternalOpt
     std::string receivedInput;
 
     MockCompilerDebugVars igcDebugVars;
-    igcDebugVars.fileName = clFiles + "copybuffer.ll";
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd8_", ".bc");
     igcDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
     igcDebugVars.receivedInput = &receivedInput;
     gEnvironment->igcPushDebugVars(igcDebugVars);
