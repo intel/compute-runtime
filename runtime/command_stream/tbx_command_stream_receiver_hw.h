@@ -14,6 +14,8 @@
 
 #include "command_stream_receiver_simulated_hw.h"
 
+#include <set>
+
 namespace NEO {
 
 class TbxStream;
@@ -37,6 +39,8 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     uint32_t getMaskAndValueForPollForCompletion() const;
     bool getpollNotEqualValueForPollForCompletion() const;
 
+    MOCKABLE_VIRTUAL void makeCoherent(GraphicsAllocation &gfxAllocation);
+
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
@@ -45,10 +49,11 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::stream;
 
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
-    void makeCoherent(GraphicsAllocation &gfxAllocation) override;
 
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
+
+    void processEviction() override;
     void processResidency(ResidencyContainer &allocationsForResidency) override;
-    void waitBeforeMakingNonResidentWhenRequired() override;
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override;
     bool writeMemory(GraphicsAllocation &gfxAllocation) override;
 
@@ -77,6 +82,8 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     std::unique_ptr<PDPE> ggtt;
     // remap CPU VA -> GGTT VA
     AddressMapper gttRemap;
+
+    std::set<GraphicsAllocation *> allocationsForDownload = {};
 
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_TBX;

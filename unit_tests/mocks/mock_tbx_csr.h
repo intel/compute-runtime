@@ -20,24 +20,10 @@
 namespace NEO {
 
 template <typename GfxFamily>
-class MockTbxCsrToTestWaitBeforeMakingNonResident : public TbxCommandStreamReceiverHw<GfxFamily> {
-  public:
-    using CommandStreamReceiver::latestFlushedTaskCount;
-    MockTbxCsrToTestWaitBeforeMakingNonResident(ExecutionEnvironment &executionEnvironment)
-        : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment) {}
-
-    void makeCoherent(GraphicsAllocation &gfxAllocation) override {
-        auto tagAddress = reinterpret_cast<uint32_t *>(gfxAllocation.getUnderlyingBuffer());
-        *tagAddress = this->latestFlushedTaskCount;
-        makeCoherentCalled = true;
-    }
-    bool makeCoherentCalled = false;
-};
-
-template <typename GfxFamily>
 class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
   public:
     using TbxCommandStreamReceiverHw<GfxFamily>::writeMemory;
+    using TbxCommandStreamReceiverHw<GfxFamily>::allocationsForDownload;
     MockTbxCsr(ExecutionEnvironment &executionEnvironment)
         : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment) {}
 

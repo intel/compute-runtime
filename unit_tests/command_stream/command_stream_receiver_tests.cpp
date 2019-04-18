@@ -392,18 +392,6 @@ TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTa
     EXPECT_EQ(*csr->getTagAddress(), static_cast<uint32_t>(-1));
 }
 
-TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhenRequiredIsCalledWithBlockingFlagSetThenItReturnsImmediately) {
-    ExecutionEnvironment executionEnvironment;
-    MockCommandStreamReceiver csr(executionEnvironment);
-    uint32_t tag = 0;
-    MockGraphicsAllocation allocation(&tag, sizeof(tag));
-    csr.latestFlushedTaskCount = 3;
-    csr.setTagAllocation(&allocation);
-    csr.waitBeforeMakingNonResidentWhenRequired();
-
-    EXPECT_EQ(0u, tag);
-}
-
 TEST(CommandStreamReceiverSimpleTest, givenVariousDataSetsWhenVerifyingMemoryThenCorrectValueIsReturned) {
     ExecutionEnvironment executionEnvironment;
     MockCommandStreamReceiver csr(executionEnvironment);

@@ -71,14 +71,12 @@ class CommandStreamReceiver {
 
     virtual void flushBatchedSubmissions() = 0;
 
-    virtual void makeCoherent(GraphicsAllocation &gfxAllocation){};
     virtual void makeResident(GraphicsAllocation &gfxAllocation);
     virtual void makeNonResident(GraphicsAllocation &gfxAllocation);
     MOCKABLE_VIRTUAL void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency);
     virtual void processResidency(ResidencyContainer &allocationsForResidency) {}
     virtual void processEviction();
     void makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation);
-    virtual void waitBeforeMakingNonResidentWhenRequired() {}
 
     void ensureCommandBufferAllocation(LinearStream &commandStream, size_t minimumRequiredSize, size_t additionalAllocationSize);
 

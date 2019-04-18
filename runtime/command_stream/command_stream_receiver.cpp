@@ -80,7 +80,6 @@ void CommandStreamReceiver::processEviction() {
 
 void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isResident(osContext->getContextId())) {
-        makeCoherent(gfxAllocation);
         if (gfxAllocation.peekEvictable()) {
             this->getEvictionAllocations().push_back(&gfxAllocation);
         } else {
@@ -92,8 +91,6 @@ void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
 }
 
 void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency) {
-    this->waitBeforeMakingNonResidentWhenRequired();
-
     for (auto &surface : allocationsForResidency) {
         this->makeNonResident(*surface);
     }
