@@ -182,7 +182,6 @@ const SurfaceFormatInfo SurfaceFormats::planarYuvSurfaceFormats[] = {
     {{CL_NV12_INTEL,      CL_UNORM_INT8},     GMM_FORMAT_NV12,                     GFX3DSTATE_SURFACEFORMAT_NV12                    , 0, 1, 1, 1}
 };
 
-
 #endif
 
 const SurfaceFormatInfo SurfaceFormats::readOnlyDepthSurfaceFormats[] = {

@@ -272,6 +272,29 @@ TEST_F(GmmTests, givenTilableImageWhenEnableForceLinearImagesThenYTilingIsDisabl
     EXPECT_EQ(queryGmm->resourceParams.Flags.Info.TiledY, 0u);
 }
 
+TEST_F(GmmTests, givenPlanarFormatsWhenQueryingImageParamsThenUVOffsetIsQueried) {
+    cl_image_desc imgDesc{};
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imgDesc.image_width = 4;
+    imgDesc.image_height = 4;
+    imgDesc.image_depth = 1;
+
+    SurfaceFormatInfo surfaceFormatNV12 = {{CL_NV12_INTEL, CL_UNORM_INT8}, GMM_FORMAT_NV12, GFX3DSTATE_SURFACEFORMAT_NV12, 0, 1, 1, 1};
+    SurfaceFormatInfo surfaceFormatP010 = {{CL_R, CL_UNORM_INT16}, GMM_FORMAT_P010, GFX3DSTATE_SURFACEFORMAT_NV12, 0, 1, 2, 2};
+
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormatNV12);
+    imgInfo.yOffsetForUVPlane = 0;
+    MockGmm::queryImgParams(imgInfo);
+
+    EXPECT_NE(0u, imgInfo.yOffsetForUVPlane);
+
+    imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormatP010);
+    imgInfo.yOffsetForUVPlane = 0;
+
+    MockGmm::queryImgParams(imgInfo);
+    EXPECT_NE(0u, imgInfo.yOffsetForUVPlane);
+}
+
 TEST_F(GmmTests, givenTilingModeSetToTileYWhenHwSupportsTilingThenTileYFlagIsSet) {
     cl_image_desc imgDesc{};
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;

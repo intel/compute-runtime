@@ -179,7 +179,7 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
         imgInfo.offset = reqOffsetInfo.Render.Offset;
     }
 
-    if (imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_NV12) {
+    if (imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12 || imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_RESOURCE_FORMAT::GMM_FORMAT_P010) {
         GMM_REQ_OFFSET_INFO reqOffsetInfo = {};
         reqOffsetInfo.ReqLock = 1;
         reqOffsetInfo.Slice = 1;

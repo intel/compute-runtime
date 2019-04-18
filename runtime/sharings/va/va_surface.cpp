@@ -26,9 +26,8 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     VAImage vaImage = {};
     cl_image_desc imgDesc = {};
     cl_image_format gmmImgFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
-    cl_image_format imgFormat = {};
-    const SurfaceFormatInfo *gmmSurfaceFormat = nullptr;
-    const SurfaceFormatInfo *imgSurfaceFormat = nullptr;
+    cl_channel_order channelOrder = CL_RG;
+    cl_channel_type channelType = CL_UNORM_INT8;
     ImageInfo imgInfo = {0};
     VAImageID imageId = 0;
     McsSurfaceInfo mcsSurfaceInfo = {};
@@ -40,20 +39,27 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     imgDesc.image_width = vaImage.width;
     imgDesc.image_height = vaImage.height;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
-    gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat);
-    imgInfo.surfaceFormat = gmmSurfaceFormat;
 
     if (plane == 0) {
         imgInfo.plane = GMM_PLANE_Y;
-        imgFormat = {CL_R, CL_UNORM_INT8};
+        channelOrder = CL_R;
     } else if (plane == 1) {
         imgInfo.plane = GMM_PLANE_U;
-        imgFormat = {CL_RG, CL_UNORM_INT8};
+        channelOrder = CL_RG;
     } else {
         UNRECOVERABLE_IF(true);
     }
 
-    imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
+    auto gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat); //vaImage.format.fourcc == VA_FOURCC_NV12
+
+    if (DebugManager.flags.EnableExtendedVaFormats.get() && vaImage.format.fourcc == VA_FOURCC_P010) {
+        channelType = CL_UNORM_INT16;
+        gmmSurfaceFormat = getExtendedSurfaceFormatInfo(vaImage.format.fourcc);
+    }
+    imgInfo.surfaceFormat = gmmSurfaceFormat;
+
+    cl_image_format imgFormat = {channelOrder, channelType};
+    auto imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
 
     sharingFunctions->extGetSurfaceHandle(surface, &sharedHandle);
     AllocationProperties properties(false, imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE);
@@ -106,5 +112,19 @@ bool VASurface::validate(cl_mem_flags flags, cl_uint plane) {
         return false;
     }
     return true;
+}
+
+const SurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t formatFourCC) {
+    if (formatFourCC == VA_FOURCC_P010) {
+        static const SurfaceFormatInfo formatInfo = {{CL_NV12_INTEL, CL_UNORM_INT16},
+                                                     GMM_RESOURCE_FORMAT::GMM_FORMAT_P010,
+                                                     static_cast<GFX3DSTATE_SURFACEFORMAT>(NUM_GFX3DSTATE_SURFACEFORMATS), // not used for plane images
+                                                     0,
+                                                     1,
+                                                     2,
+                                                     2};
+        return &formatInfo;
+    }
+    return nullptr;
 }
 } // namespace NEO
