@@ -425,14 +425,14 @@ TEST_F(ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedTheDefaultDevice
             auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData()),
                                            patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset);
 
-            EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), *patchLocation);
+            EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddressToPatch(), *patchLocation);
         }
 
         if (patchInfo.pAllocateStatelessEventPoolSurface) {
             auto patchLocation = ptrOffset(reinterpret_cast<uint64_t *>(parentKernel->getCrossThreadData()),
                                            patchInfo.pAllocateStatelessEventPoolSurface->DataParamOffset);
 
-            EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddress(), *patchLocation);
+            EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddressToPatch(), *patchLocation);
         }
     }
 }
@@ -463,15 +463,15 @@ HWTEST_F(ParentKernelEnqueueFixture, GivenParentKernelWhenEnqueuedThenBlocksDSHO
             uint32_t offset = MockKernel::ReflectionSurfaceHelperPublic::getConstantBufferOffset(reflectionSurface, i);
 
             if (defaultQueueSize == sizeof(uint64_t)) {
-                EXPECT_EQ_VAL(pDevQueueHw->getQueueBuffer()->getGpuAddressToPatch(), *(uint64_t *)ptrOffset(reflectionSurface, offset + defaultQueueOffset));
+                EXPECT_EQ_VAL(pDevQueueHw->getQueueBuffer()->getGpuAddress(), *(uint64_t *)ptrOffset(reflectionSurface, offset + defaultQueueOffset));
             } else {
-                EXPECT_EQ((uint32_t)pDevQueueHw->getQueueBuffer()->getGpuAddressToPatch(), *(uint32_t *)ptrOffset(reflectionSurface, offset + defaultQueueOffset));
+                EXPECT_EQ((uint32_t)pDevQueueHw->getQueueBuffer()->getGpuAddress(), *(uint32_t *)ptrOffset(reflectionSurface, offset + defaultQueueOffset));
             }
 
             if (eventPoolSize == sizeof(uint64_t)) {
-                EXPECT_EQ_VAL(pDevQueueHw->getEventPoolBuffer()->getGpuAddressToPatch(), *(uint64_t *)ptrOffset(reflectionSurface, offset + eventPoolOffset));
+                EXPECT_EQ_VAL(pDevQueueHw->getEventPoolBuffer()->getGpuAddress(), *(uint64_t *)ptrOffset(reflectionSurface, offset + eventPoolOffset));
             } else {
-                EXPECT_EQ((uint32_t)pDevQueueHw->getEventPoolBuffer()->getGpuAddressToPatch(), *(uint32_t *)ptrOffset(reflectionSurface, offset + eventPoolOffset));
+                EXPECT_EQ((uint32_t)pDevQueueHw->getEventPoolBuffer()->getGpuAddress(), *(uint32_t *)ptrOffset(reflectionSurface, offset + eventPoolOffset));
             }
         }
     }

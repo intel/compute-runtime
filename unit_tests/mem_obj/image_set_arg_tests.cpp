@@ -1101,7 +1101,7 @@ HWTEST_F(ImageSetArgTest, givenImageWithOffsetGreaterThan4GBWhenSurfaceStateIsPr
     srcImage->setSurfaceOffsets(surfaceOffset, 0, 0, 0);
     srcImage->setImageArg(&surfaceState, false, 0);
 
-    auto expectedAddress = srcImage->getGraphicsAllocation()->getGpuAddressToPatch() + surfaceOffset;
+    auto expectedAddress = srcImage->getGraphicsAllocation()->getGpuAddress() + surfaceOffset;
     auto surfaceAddress = surfaceState.getSurfaceBaseAddress();
 
     EXPECT_EQ(expectedAddress, surfaceAddress);

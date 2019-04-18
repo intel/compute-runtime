@@ -199,7 +199,9 @@ TEST_F(MemoryAllocatorTest, allocateGraphics) {
     EXPECT_EQ(Sharing::nonSharedResource, allocation->peekSharedHandle());
 
     // Gpu address equal to cpu address
-    EXPECT_EQ(reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()), allocation->getGpuAddress());
+    if (platformDevices[0]->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
+        EXPECT_EQ(reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()), allocation->getGpuAddress());
+    }
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -372,21 +374,6 @@ TEST_F(MemoryAllocatorTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocatio
     EXPECT_EQ(size * 3, allocation->fragmentsStorage.fragmentStorageData[2].fragmentSize);
 
     EXPECT_NE(&allocation->fragmentsStorage, &handleStorage);
-}
-
-TEST_F(MemoryAllocatorTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithTrueMultipleTimesThenAllocatorIsReused) {
-    memoryManager->setForce32BitAllocations(true);
-    EXPECT_NE(nullptr, memoryManager->allocator32Bit.get());
-    auto currentAllocator = memoryManager->allocator32Bit.get();
-    memoryManager->setForce32BitAllocations(true);
-    EXPECT_EQ(memoryManager->allocator32Bit.get(), currentAllocator);
-}
-
-TEST_F(MemoryAllocatorTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithFalseThenAllocatorIsNotDeleted) {
-    memoryManager->setForce32BitAllocations(true);
-    EXPECT_NE(nullptr, memoryManager->allocator32Bit.get());
-    memoryManager->setForce32BitAllocations(false);
-    EXPECT_NE(nullptr, memoryManager->allocator32Bit.get());
 }
 
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationThen32bitGraphicsAllocationIsReturned) {
@@ -834,6 +821,23 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     memoryManager.freeGraphicsMemory(sharedAllocation);
 }
 
+TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocationFromSharedObjectIsCalledWithSpecificBitnessThen32BitGraphicsAllocationIsReturned) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
+    osHandle handle = 1;
+    auto size = 4096u;
+    AllocationProperties properties(false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false);
+    auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, properties, true);
+    EXPECT_NE(nullptr, sharedAllocation);
+    EXPECT_TRUE(sharedAllocation->is32BitAllocation());
+    EXPECT_FALSE(sharedAllocation->isCoherent());
+    EXPECT_NE(nullptr, sharedAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, sharedAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, sharedAllocation->getMemoryPool());
+
+    memoryManager.freeGraphicsMemory(sharedAllocation);
+}
+
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenCreateAllocationFromNtHandleIsCalledThenReturnNullptr) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
@@ -1069,12 +1073,7 @@ TEST(OsAgnosticMemoryManager, givenPointerAndSizeWhenCreateInternalAllocationIsC
     EXPECT_EQ(allocationSize, graphicsAllocation->getUnderlyingBufferSize());
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }
-TEST(OsAgnosticMemoryManager, givenDefaultOsAgnosticMemoryManagerWhenItIsQueriedForInternalHeapBaseThen32BitAllocatorBaseIsReturned) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
-    OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    auto heapBase = memoryManager.getExternalHeapBaseAddress();
-    EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress());
-}
+
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledThenAllocationIsCreated) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     MockMemoryManager memoryManager(executionEnvironment);
@@ -1155,54 +1154,6 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenDisabledHostPtrTrackingWhenAlloca
 INSTANTIATE_TEST_CASE_P(OsAgnosticMemoryManagerWithParams,
                         OsAgnosticMemoryManagerWithParams,
                         ::testing::Values(false, true));
-
-TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
-    MockMemoryManager memoryManager(false, false, false, executionEnvironment);
-    uint64_t heap32Base = 0x80000000000ul;
-
-    if (is32bit) {
-        heap32Base = 0;
-    }
-    EXPECT_EQ(heap32Base, memoryManager.getExternalHeapBaseAddress());
-}
-
-TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndNotAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
-    MockMemoryManager memoryManager(false, true, false, executionEnvironment);
-    memoryManager.allocator32Bit.reset(memoryManager.create32BitAllocator(false));
-    uint64_t heap32Base = 0x80000000000ul;
-
-    if (is32bit) {
-        heap32Base = 0;
-    }
-    EXPECT_EQ(heap32Base, memoryManager.getExternalHeapBaseAddress());
-}
-
-TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedAndAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
-    MockMemoryManager memoryManager(false, false, true, executionEnvironment);
-    uint64_t heap32Base = 0x80000000000ul;
-
-    if (is32bit) {
-        heap32Base = 0;
-    }
-    EXPECT_EQ(heap32Base, memoryManager.getExternalHeapBaseAddress());
-}
-
-TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
-    MockMemoryManager memoryManager(false, true, true, executionEnvironment);
-    memoryManager.allocator32Bit.reset(memoryManager.create32BitAllocator(true));
-    uint64_t heap32Base = 0x80000000000ul;
-
-    if (is32bit) {
-        heap32Base = 0;
-    } else {
-        heap32Base = 0x40000000000ul;
-    }
-    EXPECT_EQ(heap32Base, memoryManager.getExternalHeapBaseAddress());
-}
 
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGraphicsAllocationIsDestroyedThenFreeMemoryOnAubManagerShouldBeCalled) {
     MockExecutionEnvironment executionEnvironment;

@@ -361,6 +361,10 @@ TEST(AllocatorHelper, givenExpectedSizeToMapWhenGetSizetoMapCalledThenExpectedVa
     EXPECT_EQ((alignUp(4 * GB - 8096, 4096)), NEO::getSizeToMap());
 }
 
+TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenExpectedValueReturned) {
+    EXPECT_EQ(maxNBitValue<47> / 4, NEO::getSizeToReserve());
+}
+
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {
     DrmMockSuccess mock;
     MockExecutionEnvironment executionEnvironment(*platformDevices);

@@ -322,7 +322,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, cleanupSection) {
     hwParser.parseCommands<FamilyType>(*slbCS, cleanupSectionOffsetToParse);
     hwParser.findHardwareCommands<FamilyType>();
 
-    uint64_t cleanUpSectionAddress = (uint64_t)slbCS->getCpuBase() + cleanupSectionOffset;
+    uint64_t cleanUpSectionAddress = mockDeviceQueueHw->getSlbBuffer()->getGpuAddress() + cleanupSectionOffset;
     EXPECT_EQ(cleanUpSectionAddress, igilCmdQueue->m_controls.m_CleanupSectionAddress);
     EXPECT_EQ(slbCS->getUsed() - cleanupSectionOffset, igilCmdQueue->m_controls.m_CleanupSectionSize);
 
@@ -334,7 +334,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, cleanupSection) {
     MI_BATCH_BUFFER_END *bbEnd = (MI_BATCH_BUFFER_END *)*bbEndItor;
     uint64_t bbEndAddres = (uint64_t)bbEnd;
 
-    EXPECT_LE(mockDeviceQueueHw->getSlbBuffer()->getGpuAddress() + cleanupSectionOffset, bbEndAddres);
+    EXPECT_LE((uint64_t)mockDeviceQueueHw->getSlbBuffer()->getUnderlyingBuffer() + cleanupSectionOffset, bbEndAddres);
 
     delete mockParentKernel;
     delete mockDeviceQueueHw;
@@ -369,7 +369,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
     hwParser.parseCommands<FamilyType>(*slbCS, cleanupSectionOffsetToParse);
     hwParser.findHardwareCommands<FamilyType>();
 
-    uint64_t cleanUpSectionAddress = (uint64_t)slbCS->getCpuBase() + cleanupSectionOffset;
+    uint64_t cleanUpSectionAddress = mockDeviceQueueHw->getSlbBuffer()->getGpuAddress() + cleanupSectionOffset;
     EXPECT_EQ(cleanUpSectionAddress, igilCmdQueue->m_controls.m_CleanupSectionAddress);
     EXPECT_EQ(slbCS->getUsed() - cleanupSectionOffset, igilCmdQueue->m_controls.m_CleanupSectionSize);
 
@@ -405,7 +405,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
     MI_BATCH_BUFFER_END *bbEnd = (MI_BATCH_BUFFER_END *)*bbEndItor;
     uint64_t bbEndAddres = (uint64_t)bbEnd;
 
-    EXPECT_LE(mockDeviceQueueHw->getSlbBuffer()->getGpuAddress() + cleanupSectionOffset, bbEndAddres);
+    EXPECT_LE((uint64_t)mockDeviceQueueHw->getSlbBuffer()->getUnderlyingBuffer() + cleanupSectionOffset, bbEndAddres);
 
     delete mockParentKernel;
     delete mockDeviceQueueHw;

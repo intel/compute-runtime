@@ -340,8 +340,8 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllo
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroyedThenItDestroysTagAllocation) {
-    struct MockGraphicsAllocationWithDestructorTracing : public GraphicsAllocation {
-        using GraphicsAllocation::GraphicsAllocation;
+    struct MockGraphicsAllocationWithDestructorTracing : public MockGraphicsAllocation {
+        using MockGraphicsAllocation::MockGraphicsAllocation;
         ~MockGraphicsAllocationWithDestructorTracing() override { *destructorCalled = true; }
         bool *destructorCalled = nullptr;
     };

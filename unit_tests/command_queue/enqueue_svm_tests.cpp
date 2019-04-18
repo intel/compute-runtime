@@ -732,6 +732,10 @@ TEST_F(EnqueueSvmTest, enqueueSVMMigrateMem_Success) {
 }
 
 TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmThenSvmIsCorrectlyAllocated) {
+    if (!platformDevices[0]->capabilityTable.ftrSvm) {
+        return;
+    }
+
     DebugManagerStateRestore dbgRestore;
     SVMAllocsManager::SvmAllocationProperties svmAllocationProperties;
 

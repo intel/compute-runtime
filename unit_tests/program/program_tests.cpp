@@ -11,6 +11,7 @@
 #include "elf/reader.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/compiler_options.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/hash.h"
@@ -645,11 +646,7 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     auto kernelIsa = graphicsAllocation->getUnderlyingBuffer();
     EXPECT_NE(kernelInfo->heapInfo.pKernelHeap, kernelIsa);
     EXPECT_EQ(0, memcmp(kernelIsa, kernelInfo->heapInfo.pKernelHeap, kernelInfo->heapInfo.pKernelHeader->KernelHeapSize));
-    if (sizeof(void *) == sizeof(uint32_t)) {
-        EXPECT_EQ(0u, graphicsAllocation->getGpuBaseAddress());
-    } else {
-        EXPECT_NE(0u, graphicsAllocation->getGpuBaseAddress());
-    }
+    EXPECT_EQ(GmmHelper::decanonize(graphicsAllocation->getGpuBaseAddress()), pProgram->getDevice(0).getMemoryManager()->getInternalHeapBaseAddress());
 }
 
 TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {

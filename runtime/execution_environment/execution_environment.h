@@ -54,7 +54,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     const HardwareInfo *getHardwareInfo() const { return hwInfo.get(); }
     HardwareInfo *getMutableHardwareInfo() const { return hwInfo.get(); }
     bool isFullRangeSvm() const {
-        return hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
+        return hwInfo->capabilityTable.gpuAddressSpace >= maxNBitValue<47>;
     }
 
     GmmHelper *getGmmHelper() const;

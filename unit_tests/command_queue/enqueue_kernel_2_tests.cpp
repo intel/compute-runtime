@@ -324,13 +324,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     EXPECT_EQ(bitValue, cmd->getPerThreadScratchSpace());
     EXPECT_EQ(bitValue, cmd->getStackSize());
     auto graphicsAllocation = csr.getScratchAllocation();
-    auto GSHaddress = (uintptr_t)sba->getGeneralStateBaseAddress();
+    auto GSHaddress = sba->getGeneralStateBaseAddress();
     if (is32bit) {
         EXPECT_NE(0u, cmd->getScratchSpaceBasePointer());
         EXPECT_EQ(0u, GSHaddress);
     } else {
         EXPECT_EQ(HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), cmd->getScratchSpaceBasePointer());
-        EXPECT_EQ(GSHaddress + HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), (uintptr_t)graphicsAllocation->getUnderlyingBuffer());
+        EXPECT_EQ(GSHaddress + HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), graphicsAllocation->getGpuAddress());
     }
 
     auto allocationSize = scratchSize * pDevice->getDeviceInfo().computeUnitsUsedForScratch;
@@ -374,9 +374,9 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     auto graphicsAllocation2 = csr.getScratchAllocation();
 
     if (is32bit) {
-        auto scratchBase = (uintptr_t)cmd2->getScratchSpaceBasePointer();
+        auto scratchBase = cmd2->getScratchSpaceBasePointer();
         EXPECT_NE(0u, scratchBase);
-        auto graphicsAddress = (uintptr_t)graphicsAllocation2->getUnderlyingBuffer();
+        auto graphicsAddress = graphicsAllocation2->getGpuAddress();
         EXPECT_EQ(graphicsAddress, scratchBase);
     } else {
         auto *sba2 = (STATE_BASE_ADDRESS *)*itorCmdForStateBase;
@@ -403,7 +403,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     if (is32bit) {
         EXPECT_EQ(0u, GSBaddress);
     } else if (is64bit) {
-        EXPECT_EQ((uintptr_t)graphicsAllocation2->getUnderlyingBuffer(), GSBaddress + HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit());
+        EXPECT_EQ(graphicsAllocation2->getGpuAddress(), GSBaddress + HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit());
     }
 
     EXPECT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
@@ -489,7 +489,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
         ASSERT_NE(itorCmdForStateBase, itorWalker);
         auto *sba = (STATE_BASE_ADDRESS *)*itorCmdForStateBase;
 
-        auto GSHaddress = (uintptr_t)sba->getGeneralStateBaseAddress();
+        auto GSHaddress = sba->getGeneralStateBaseAddress();
 
         EXPECT_EQ(memoryManager->getExternalHeapBaseAddress(), GSHaddress);
 
@@ -595,7 +595,8 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
 
     // In scenarios with 32bit allocator and 64 bit tests this code won't work
     // due to inability to retrieve original buffer pointer as it is done in this test.
-    if (!pDevice->getMemoryManager()->peekForce32BitAllocations()) {
+    auto memoryManager = pDevice->getMemoryManager();
+    if (!memoryManager->peekForce32BitAllocations() && !memoryManager->isLimitedRange()) {
         testing::internal::CaptureStdout();
 
         auto userEvent = make_releaseable<UserEvent>(context);

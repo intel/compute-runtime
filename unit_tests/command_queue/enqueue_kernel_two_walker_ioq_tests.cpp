@@ -61,6 +61,6 @@ HWTEST_F(IOQWithTwoWalkers, shouldHaveAPipecontrolBetweenWalkers2) {
     uint64_t addressPC = ((uint64_t)pipeControl->getAddressHigh() << 32) | pipeControl->getAddress();
 
     // The PC address should match the CS tag address
-    EXPECT_EQ((uint64_t)commandStreamReceiver.getTagAddress(), addressPC);
+    EXPECT_EQ(commandStreamReceiver.getTagAllocation()->getGpuAddress(), addressPC);
     EXPECT_EQ(1u, pipeControl->getImmediateData());
 }

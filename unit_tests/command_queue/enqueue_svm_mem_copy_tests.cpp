@@ -24,6 +24,11 @@ struct EnqueueSvmMemCopyTest : public DeviceFixture,
 
     void SetUp() override {
         DeviceFixture::SetUp();
+
+        if (!pDevice->isFullRangeSvm()) {
+            return;
+        }
+
         CommandQueueFixture::SetUp(pDevice, 0);
         srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {});
         ASSERT_NE(nullptr, srcSvmPtr);
@@ -40,9 +45,11 @@ struct EnqueueSvmMemCopyTest : public DeviceFixture,
     }
 
     void TearDown() override {
-        context->getSVMAllocsManager()->freeSVMAlloc(srcSvmPtr);
-        context->getSVMAllocsManager()->freeSVMAlloc(dstSvmPtr);
-        CommandQueueFixture::TearDown();
+        if (pDevice->isFullRangeSvm()) {
+            context->getSVMAllocsManager()->freeSVMAlloc(srcSvmPtr);
+            context->getSVMAllocsManager()->freeSVMAlloc(dstSvmPtr);
+            CommandQueueFixture::TearDown();
+        }
         DeviceFixture::TearDown();
     }
 
@@ -53,6 +60,10 @@ struct EnqueueSvmMemCopyTest : public DeviceFixture,
 };
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
+    if (!pDevice->isFullRangeSvm()) {
+        return;
+    }
+
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
 
     // retrieve original builder
@@ -125,6 +136,10 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderAndSrcHostPtrThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
+    if (!pDevice->isFullRangeSvm()) {
+        return;
+    }
+
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
     void *srcHostPtr = alignedMalloc(256, 64);
 
@@ -199,6 +214,10 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderAndDstHostPtrThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
+    if (!pDevice->isFullRangeSvm()) {
+        return;
+    }
+
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
     auto dstHostPtr = alignedMalloc(256, 64);
 

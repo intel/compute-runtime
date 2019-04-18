@@ -39,10 +39,10 @@ void validateStateBaseAddress(uint64_t internalHeapBase, IndirectHeap *pDSH,
     EXPECT_TRUE(cmd->getIndirectObjectBaseAddressModifyEnable());
     EXPECT_TRUE(cmd->getInstructionBaseAddressModifyEnable());
 
-    EXPECT_EQ(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pDSH->getCpuBase())), cmd->getDynamicStateBaseAddress());
+    EXPECT_EQ(pDSH->getGraphicsAllocation()->getGpuAddress(), cmd->getDynamicStateBaseAddress());
     // Stateless accesses require GSH.base to be 0.
     EXPECT_EQ(expectedGeneralStateHeapBaseAddress, cmd->getGeneralStateBaseAddress());
-    EXPECT_EQ(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pSSH->getCpuBase())), cmd->getSurfaceStateBaseAddress());
+    EXPECT_EQ(pSSH->getGraphicsAllocation()->getGpuAddress(), cmd->getSurfaceStateBaseAddress());
     EXPECT_EQ(pIOH->getGraphicsAllocation()->getGpuBaseAddress(), cmd->getIndirectObjectBaseAddress());
     EXPECT_EQ(internalHeapBase, cmd->getInstructionBaseAddress());
 

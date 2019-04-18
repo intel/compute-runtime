@@ -111,6 +111,8 @@ class MemoryManager {
 
     virtual uint64_t getExternalHeapBaseAddress() = 0;
 
+    bool isLimitedRange() { return gfxPartition.isLimitedRange(); }
+
     bool peek64kbPagesEnabled() const { return enable64kbpages; }
     bool peekForce32BitAllocations() const { return force32bitAllocations; }
     virtual void setForce32BitAllocations(bool newValue);

@@ -31,8 +31,9 @@ constexpr auto internalHeapIndex = is32bit ? HeapIndex::HEAP_INTERNAL : HeapInde
 class GfxPartition {
   public:
     GfxPartition() {}
+    ~GfxPartition();
 
-    void init(uint64_t gpuAddressSpace);
+    void init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve);
 
     void heapInit(HeapIndex heapIndex, uint64_t base, uint64_t size) {
         getHeap(heapIndex).init(base, size);
@@ -46,33 +47,35 @@ class GfxPartition {
         getHeap(heapIndex).free(ptr, size);
     }
 
+    void freeGpuAddressRange(uint64_t ptr, size_t size);
+
     uint64_t getHeapBase(HeapIndex heapIndex) {
         return getHeap(heapIndex).getBase();
     }
 
     uint64_t getHeapLimit(HeapIndex heapIndex) {
-        return getHeap(heapIndex).getBase() + getHeap(heapIndex).getSize() - 1;
+        return getHeap(heapIndex).getLimit();
     }
 
     uint64_t getHeapMinimalAddress(HeapIndex heapIndex) {
         return getHeapBase(heapIndex) + heapGranularity;
     }
 
+    bool isLimitedRange() { return getHeap(HeapIndex::HEAP_SVM).getSize() == 0ull; }
+
     static const uint64_t heapGranularity = MemoryConstants::pageSize64k;
 
     static const std::array<HeapIndex, 4> heap32Names;
+    static const std::array<HeapIndex, 6> heapNonSvmNames;
 
   protected:
     class Heap {
       public:
         Heap() = default;
+        void init(uint64_t base, uint64_t size);
         uint64_t getBase() const { return base; }
         uint64_t getSize() const { return size; }
-        void init(uint64_t base, uint64_t size) {
-            this->base = base;
-            this->size = size;
-            alloc = std::make_unique<HeapAllocator>(base + heapGranularity, size ? size - heapGranularity : 0ull);
-        }
+        uint64_t getLimit() const { return base + size - 1; }
         uint64_t allocate(size_t &size) { return alloc->allocate(size); }
         void free(uint64_t ptr, size_t size) { alloc->free(ptr, size); }
 
@@ -82,10 +85,13 @@ class GfxPartition {
     };
 
     Heap &getHeap(HeapIndex heapIndex) {
-        return heap[static_cast<uint32_t>(heapIndex)];
+        return heaps[static_cast<uint32_t>(heapIndex)];
     }
 
-    std::array<Heap, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> heap;
+    std::array<Heap, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> heaps;
+
+    void *reservedCpuAddressRange = nullptr;
+    size_t reservedCpuAddressRangeSize = 0;
 };
 
 } // namespace NEO

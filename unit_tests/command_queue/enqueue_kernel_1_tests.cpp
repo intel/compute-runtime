@@ -370,7 +370,7 @@ HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtr
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<CommandQueue> cmdQ;
     auto hwInfoToModify = *platformDevices[0];
-    hwInfoToModify.capabilityTable.gpuAddressSpace = MemoryConstants::max32BitAddress;
+    hwInfoToModify.capabilityTable.gpuAddressSpace = MemoryConstants::max36BitAddress;
     device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoToModify));
     auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr);
@@ -394,7 +394,7 @@ HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtr
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<CommandQueue> cmdQ;
     auto hwInfoToModify = *platformDevices[0];
-    hwInfoToModify.capabilityTable.gpuAddressSpace = MemoryConstants::max32BitAddress;
+    hwInfoToModify.capabilityTable.gpuAddressSpace = MemoryConstants::max36BitAddress;
     device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoToModify));
     auto mockCsr = new MockCsrHw2<FamilyType>(*device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr);

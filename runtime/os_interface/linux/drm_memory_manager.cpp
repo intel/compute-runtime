@@ -19,6 +19,7 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/os_interface/32bit_memory.h"
+#include "runtime/os_interface/linux/allocator_helper.h"
 #include "runtime/os_interface/linux/os_context_linux.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/linux/tiling_mode_helper.h"
@@ -39,7 +40,7 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
     supportsMultiStorageResources = false;
-    gfxPartition.init(platformDevices[0]->capabilityTable.gpuAddressSpace);
+    gfxPartition.init(platformDevices[0]->capabilityTable.gpuAddressSpace, getSizeToReserve());
     MemoryManager::virtualPaddingAvailable = true;
     if (mode != gemCloseWorkerMode::gemCloseWorkerInactive) {
         gemCloseWorker.reset(new DrmGemCloseWorker(*this));

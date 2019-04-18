@@ -252,8 +252,9 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddre
     scratchController->setRequiredScratchSpace(surfaceHeap.get(), 0x1000u, 0u, 0u, stateBaseAddressDirty, cfeStateDirty);
 
     uint64_t expectedScratchAddress = 0xAAABBBCCCDDD000ull;
-    scratchController->getScratchSpaceAllocation()->setCpuPtrAndGpuAddress(scratchController->getScratchSpaceAllocation()->getUnderlyingBuffer(), expectedScratchAddress);
-    EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateGshAddressForScratchSpace((expectedScratchAddress - MemoryConstants::pageSize), scratchController->calculateNewGSH()));
+    auto scratchAllocation = scratchController->getScratchSpaceAllocation();
+    scratchAllocation->setCpuPtrAndGpuAddress(scratchAllocation->getUnderlyingBuffer(), expectedScratchAddress);
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateGshAddressForScratchSpace((scratchAllocation->getGpuAddress() - MemoryConstants::pageSize), scratchController->calculateNewGSH()));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenGshAddressZeroIsReturned) {
@@ -591,7 +592,9 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
 
         auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*hwParser.cmdList.begin());
         EXPECT_NE(nullptr, bltCmd);
-        EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getSourceBaseAddress());
+        if (pDevice->isFullRangeSvm()) {
+            EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getSourceBaseAddress());
+        }
         EXPECT_EQ(buffer1->getGraphicsAllocation()->getGpuAddress(), bltCmd->getDestinationBaseAddress());
     }
     {
@@ -605,7 +608,9 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
 
         auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*hwParser.cmdList.begin());
         EXPECT_NE(nullptr, bltCmd);
-        EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getDestinationBaseAddress());
+        if (pDevice->isFullRangeSvm()) {
+            EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getDestinationBaseAddress());
+        }
         EXPECT_EQ(buffer1->getGraphicsAllocation()->getGpuAddress(), bltCmd->getSourceBaseAddress());
     }
     {
@@ -645,7 +650,9 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
 
             auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*hwParser.cmdList.begin());
             EXPECT_NE(nullptr, bltCmd);
-            EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getSourceBaseAddress());
+            if (pDevice->isFullRangeSvm()) {
+                EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getSourceBaseAddress());
+            }
             EXPECT_EQ(ptrOffset(buffer1->getGraphicsAllocation()->getGpuAddress(), buffer1Offset), bltCmd->getDestinationBaseAddress());
         }
         {
@@ -659,7 +666,9 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
 
             auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*hwParser.cmdList.begin());
             EXPECT_NE(nullptr, bltCmd);
-            EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getDestinationBaseAddress());
+            if (pDevice->isFullRangeSvm()) {
+                EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getDestinationBaseAddress());
+            }
             EXPECT_EQ(ptrOffset(buffer1->getGraphicsAllocation()->getGpuAddress(), buffer1Offset), bltCmd->getSourceBaseAddress());
         }
 

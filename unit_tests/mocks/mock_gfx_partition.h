@@ -19,5 +19,13 @@ class MockGfxPartition : public GfxPartition {
         return getHeapSize(heapIndex) > 0;
     }
 
+    void *getReservedCpuAddressRange() {
+        return reservedCpuAddressRange;
+    }
+
+    size_t getReservedCpuAddressRangeSize() {
+        return reservedCpuAddressRangeSize;
+    }
+
     static std::array<HeapIndex, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> allHeapNames;
 };

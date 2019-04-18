@@ -115,7 +115,7 @@ class Device : public BaseObject<_cl_device_id> {
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
     uint32_t getDeviceIndex() const { return deviceIndex; }
     bool isFullRangeSvm() const {
-        return getHardwareInfo().capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
+        return executionEnvironment->isFullRangeSvm();
     }
 
   protected:
