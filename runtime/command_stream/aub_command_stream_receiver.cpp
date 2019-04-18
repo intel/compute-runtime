@@ -277,8 +277,8 @@ bool AubFileStream::addComment(const char *message) {
     return true;
 }
 
-std::unique_lock<std::mutex> AubFileStream::lockStream() {
-    return std::unique_lock<std::mutex>(mutex);
+std::unique_lock<std::recursive_mutex> AubFileStream::lockStream() {
+    return std::unique_lock<std::recursive_mutex>(mutex);
 }
 
 } // namespace AubMemDump

@@ -186,6 +186,54 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenF
     EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
 }
 
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenPollForCompletionIsCalledThenFileStreamShouldBeLocked) {
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+
+    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+
+    aubCsr->latestSentTaskCount = 1;
+    aubCsr->pollForCompletionTaskCount = 0;
+
+    aubCsr->pollForCompletion();
+    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+}
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenFileStreamShouldBeLocked) {
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+
+    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+
+    aubCsr->expectMemoryEqual(reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(0x1000), 0x1000);
+    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+}
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenAddAubCommentIsCalledThenFileStreamShouldBeLocked) {
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+
+    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+
+    aubCsr->addAubComment("comment");
+    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+}
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenDumpAllocationIsCalledThenFileStreamShouldBeLocked) {
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    GraphicsAllocation allocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
+
+    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+
+    aubCsr->dumpAllocation(allocation);
+    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+}
+
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldCallTheExpectedFunctions) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();

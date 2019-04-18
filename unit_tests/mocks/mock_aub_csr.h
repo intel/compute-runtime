@@ -118,6 +118,10 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::addAubComment(message);
         addAubCommentCalled = true;
     }
+    void dumpAllocation(GraphicsAllocation &gfxAllocation) override {
+        AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(gfxAllocation);
+        dumpAllocationCalled = true;
+    }
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;
     bool initializeEngineCalled = false;
@@ -128,6 +132,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool expectMemoryEqualCalled = false;
     bool expectMemoryNotEqualCalled = false;
     bool addAubCommentCalled = false;
+    bool dumpAllocationCalled = false;
 
     void initFile(const std::string &fileName) override {
         fileIsOpen = true;

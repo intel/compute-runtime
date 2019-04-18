@@ -554,6 +554,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionImpl() {
         }
     }
 
+    auto streamLocked = getAubStream()->lockStream();
+
     if (hardwareContextController) {
         hardwareContextController->pollForCompletion();
         return;
@@ -663,6 +665,8 @@ cl_int AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddres
                                                            size_t length, uint32_t compareOperation) {
     pollForCompletion();
 
+    auto streamLocked = getAubStream()->lockStream();
+
     if (hardwareContextController) {
         hardwareContextController->expectMemory(reinterpret_cast<uint64_t>(gfxAddress), srcAddress, length, compareOperation);
     }
@@ -723,6 +727,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         pollForCompletion();
     }
 
+    auto streamLocked = getAubStream()->lockStream();
+
     if (hardwareContextController) {
         auto surfaceInfo = std::unique_ptr<aub_stream::SurfaceInfo>(AubAllocDump::getDumpSurfaceInfo<GfxFamily>(gfxAllocation, dumpFormat));
         if (nullptr != surfaceInfo) {
@@ -765,6 +771,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(const MultiDis
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::addAubComment(const char *message) {
+    auto streamLocked = getAubStream()->lockStream();
     if (aubManager) {
         aubManager->addComment(message);
         return;

@@ -42,7 +42,7 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     void flush() override {
         flushCalled = true;
     }
-    std::unique_lock<std::mutex> lockStream() override {
+    std::unique_lock<std::recursive_mutex> lockStream() override {
         lockStreamCalled = true;
         return AUBCommandStreamReceiver::AubFileStream::lockStream();
     }
