@@ -1,4 +1,4 @@
-#NEO in Linux distributions
+# NEO in Linux distributions
 
 ## Arch Linux*
 
