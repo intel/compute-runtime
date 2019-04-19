@@ -41,7 +41,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    notifyEnqueueReadImage(srcImage, !!blockingRead);
+    if (nullptr == mapAllocation) {
+        notifyEnqueueReadImage(srcImage, !!blockingRead);
+    }
 
     MultiDispatchInfo di;
     auto isMemTransferNeeded = true;

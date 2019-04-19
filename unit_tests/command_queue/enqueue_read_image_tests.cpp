@@ -396,6 +396,21 @@ HWTEST_F(EnqueueReadImageTest, givenCommandQueueWhenEnqueueReadImageIsCalledThen
     EXPECT_TRUE(mockCmdQ->notifyEnqueueReadImageCalled);
 }
 
+HWTEST_F(EnqueueReadImageTest, givenCommandQueueWhenEnqueueReadImageWithMapAllocationIsCalledThenItDoesntCallNotifyFunction) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
+    std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
+    auto imageDesc = srcImage->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    size_t rowPitch = srcImage->getHostPtrRowPitch();
+    size_t slicePitch = srcImage->getHostPtrSlicePitch();
+    GraphicsAllocation mapAllocation{GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
+
+    EnqueueReadImageHelper<>::enqueueReadImage(mockCmdQ.get(), srcImage.get(), CL_TRUE, origin, region, rowPitch, slicePitch, dstPtr, &mapAllocation);
+
+    EXPECT_FALSE(mockCmdQ->notifyEnqueueReadImageCalled);
+}
+
 HWTEST_F(EnqueueReadImageTest, givenEnqueueReadImageBlockingWhenAUBDumpAllocsOnEnqueueReadOnlyIsOnThenImageShouldBeSetDumpable) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
