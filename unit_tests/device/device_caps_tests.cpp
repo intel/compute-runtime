@@ -708,7 +708,7 @@ TEST(DeviceGetCaps, givenOclVersion21WhenCapsAreCreatedThenDeviceReportsSpirvAsS
         DebugManager.flags.ForceOCLVersion.set(21);
         auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
         const auto &caps = device->getDeviceInfo();
-        EXPECT_STREQ("SPIR-V_1.0 ", caps.ilVersion);
+        EXPECT_STREQ("SPIR-V_1.2 ", caps.ilVersion);
         DebugManager.flags.ForceOCLVersion.set(0);
     }
 }

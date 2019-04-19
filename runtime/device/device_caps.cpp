@@ -28,7 +28,7 @@ extern const char *familyName[];
 static std::string vendor = "Intel(R) Corporation";
 static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "1.2 ";
-static const char *spirvVersion = "SPIR-V_1.0 ";
+static const char *spirvVersion = "SPIR-V_1.2 ";
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
 static std::string driverVersion = TOSTR(NEO_DRIVER_VERSION);

@@ -157,7 +157,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
     }
 }
 
-TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDeviceInfoThenSpirv10IsReturned) {
+TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDeviceInfoThenSpirv12IsReturned) {
     size_t paramRetSize = 0;
 
     Device *pDevice = castToObject<Device>(devices[0]);
@@ -184,7 +184,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDevic
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_STREQ("SPIR-V_1.0 ", paramValue.get());
+    EXPECT_STREQ("SPIR-V_1.2 ", paramValue.get());
 }
 
 //------------------------------------------------------------------------------
