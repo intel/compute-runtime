@@ -81,7 +81,7 @@ struct clGetKernelWorkGroupInfoTests : public api_fixture,
 
 namespace ULT {
 
-TEST_P(clGetKernelWorkGroupInfoTests, success) {
+TEST_P(clGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkGroupInfoThenSuccessIsReturned) {
 
     size_t paramValueSizeRet;
     retVal = clGetKernelWorkGroupInfo(
@@ -96,7 +96,7 @@ TEST_P(clGetKernelWorkGroupInfoTests, success) {
     EXPECT_NE(0u, paramValueSizeRet);
 }
 
-TEST_F(clGetKernelWorkGroupInfoTests, returnSpillMemSize) {
+TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong param_value;
     auto pDevice = castToObject<Device>(devices[0]);
