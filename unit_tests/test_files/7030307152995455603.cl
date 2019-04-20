@@ -7,7 +7,8 @@
 
 __kernel void fullCopy(__global const uint* src, __global uint* dst) {
     unsigned int gid = get_global_id(0);
-	dst[gid] = src[gid];
+    uint4 loaded = vload4(gid, src);
+    vstore4(loaded, gid, dst);
 }
 
 __kernel void CopyBufferToBufferBytes(

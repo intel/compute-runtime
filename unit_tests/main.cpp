@@ -399,8 +399,8 @@ int main(int argc, char **argv) {
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, "6400005806705094984_", ".bc");
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, "6400005806705094984_", ".gen");
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, "7030307152995455603_", ".bc");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, "7030307152995455603_", ".gen");
 
     gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, device);

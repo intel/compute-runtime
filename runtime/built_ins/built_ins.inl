@@ -33,7 +33,7 @@ bool BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiD
     for (auto &memObj : *operationParams.memObjsForAuxTranslation) {
         DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder;
         auto graphicsAllocation = memObj->getGraphicsAllocation();
-        size_t allocationSize = alignUp(memObj->getSize(), 4);
+        size_t allocationSize = alignUp(memObj->getSize(), 512);
 
         if (AuxTranslationDirection::AuxToNonAux == operationParams.auxTranslationDirection) {
             builder.setKernel(convertToNonAuxKernel.at(kernelInstanceNumber++).get());
@@ -46,7 +46,7 @@ bool BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiD
             builder.setArg(1, memObj);
         }
 
-        size_t xGws = allocationSize / 4;
+        size_t xGws = allocationSize / 16;
 
         builder.setDispatchGeometry(Vec3<size_t>{xGws, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
         builder.bake(multiDispatchInfo);
@@ -62,8 +62,9 @@ void BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::resizeKernelInstances(siz
 
     for (size_t i = convertToNonAuxKernel.size(); i < size; i++) {
         auto clonedKernel1 = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), nullptr);
-        clonedKernel1->setDisableL3forStatefulBuffers(true);
+        clonedKernel1->setAuxTranslationFlag(true);
         auto clonedKernel2 = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), nullptr);
+        clonedKernel2->setAuxTranslationFlag(true);
         clonedKernel1->cloneKernel(baseKernel);
         clonedKernel2->cloneKernel(baseKernel);
 

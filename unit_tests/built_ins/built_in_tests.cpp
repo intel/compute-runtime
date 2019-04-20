@@ -272,7 +272,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTransla
         EXPECT_EQ(nullptr, kernel->getKernelArguments().at(1).object);
 
         EXPECT_EQ(1u, dispatchInfo.getDim());
-        size_t xGws = alignUp(buffer->getSize(), 4) / 4;
+        size_t xGws = alignUp(buffer->getSize(), 512) / 16;
         Vec3<size_t> gws = {xGws, 1, 1};
         EXPECT_EQ(gws, dispatchInfo.getGWS());
     }

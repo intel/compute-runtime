@@ -1363,17 +1363,16 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledT
     DebugManager.flags.Force32bitAddressing.set(false);
 }
 
-HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisabledIsCalledThenL3CacheShouldBeOff) {
+HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisabledIsCalledThenL3CacheShouldBeOffAndSizeIsAlignedTo512) {
     MockContext context;
-    auto size = MemoryConstants::pageSize;
-    auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
+    auto size = 128;
     auto retVal = CL_SUCCESS;
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(
         &context,
-        CL_MEM_USE_HOST_PTR,
+        CL_MEM_READ_WRITE,
         size,
-        ptr,
+        nullptr,
         retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1385,8 +1384,8 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisable
     auto mocs = surfaceState.getMemoryObjectControlState();
     auto gmmHelper = device->getGmmHelper();
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
-
-    alignedFree(ptr);
+    EXPECT_EQ(128u, surfaceState.getWidth());
+    EXPECT_EQ(4u, surfaceState.getHeight());
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableReadOnlyBufferThenChoseOclBufferPolicy) {

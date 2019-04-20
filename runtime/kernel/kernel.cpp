@@ -1143,7 +1143,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
-            buffer->setArgStateful(surfaceState, forceNonAuxMode, disableL3forStatefulBuffers);
+            buffer->setArgStateful(surfaceState, forceNonAuxMode, auxTranslationKernel);
             kernelArguments[argIndex].isUncacheable = buffer->isMemObjUncacheable();
         }
         addAllocationToCacheFlushVector(argIndex, buffer->getGraphicsAllocation());

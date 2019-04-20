@@ -28,13 +28,12 @@ union SURFACE_STATE_BUFFER_LENGTH {
 };
 
 template <typename GfxFamily>
-void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3Cache) {
+void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool programForAuxTranslation) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
-
     // The graphics allocation for Host Ptr surface will be created in makeResident call and GPU address is expected to be the same as CPU address
     auto bufferAddress = (getGraphicsAllocation() != nullptr) ? getGraphicsAllocation()->getGpuAddress() : reinterpret_cast<uint64_t>(getHostPtr());
     bufferAddress += this->offset;
@@ -42,7 +41,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     auto bufferAddressAligned = alignDown(bufferAddress, 4);
     auto bufferOffset = ptrDiff(bufferAddress, bufferAddressAligned);
 
-    auto surfaceSize = alignUp(getSize() + bufferOffset, 4);
+    auto surfaceSize = alignUp(getSize() + bufferOffset, programForAuxTranslation ? 512 : 4);
 
     SURFACE_STATE_BUFFER_LENGTH Length = {0};
     Length.Length = static_cast<uint32_t>(surfaceSize - 1);
@@ -63,7 +62,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     surfaceState->setTileMode(RENDER_SURFACE_STATE::TILE_MODE_LINEAR);
     surfaceState->setVerticalLineStride(0);
     surfaceState->setVerticalLineStrideOffset(0);
-    surfaceState->setMemoryObjectControlState(getMocsValue(disableL3Cache));
+    surfaceState->setMemoryObjectControlState(getMocsValue(programForAuxTranslation));
     surfaceState->setSurfaceBaseAddress(bufferAddressAligned);
 
     Gmm *gmm = graphicsAllocation ? graphicsAllocation->getDefaultGmm() : nullptr;

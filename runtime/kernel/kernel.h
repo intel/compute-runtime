@@ -385,8 +385,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     using CacheFlushAllocationsVec = StackVec<GraphicsAllocation *, 32>;
     void getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const;
 
-    void setDisableL3forStatefulBuffers(bool disableL3forStatefulBuffers) {
-        this->disableL3forStatefulBuffers = disableL3forStatefulBuffers;
+    void setAuxTranslationFlag(bool auxTranslationFlag) {
+        this->auxTranslationKernel = auxTranslationFlag;
     }
 
   protected:
@@ -487,7 +487,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     std::vector<KernelArgHandler> kernelArgHandlers;
     std::vector<GraphicsAllocation *> kernelSvmGfxAllocations;
 
-    bool disableL3forStatefulBuffers = false;
+    bool auxTranslationKernel = false;
 
     size_t numberOfBindingTableStates;
     size_t localBindingTableOffset;
