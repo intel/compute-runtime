@@ -16,6 +16,7 @@
 #include "gtest/gtest.h"
 
 #include <fstream>
+#include <memory>
 
 using namespace NEO;
 using namespace std;
@@ -119,12 +120,13 @@ TEST(DrmTest, GetRevisionID) {
 }
 
 TEST(DrmTest, GivenDrmWhenAskedFor48BitAddressCorrectValueReturned) {
-    DrmMock *pDrm = new DrmMock;
-    pDrm->StoredPPGTT = 3;
-    EXPECT_TRUE(pDrm->is48BitAddressRangeSupported());
-    pDrm->StoredPPGTT = 2;
-    EXPECT_FALSE(pDrm->is48BitAddressRangeSupported());
-    delete pDrm;
+    auto drm = make_unique<DrmMock>();
+    EXPECT_TRUE(drm->is48BitAddressRangeSupported());
+    drm->StoredRetVal = -1;
+    EXPECT_TRUE(drm->is48BitAddressRangeSupported());
+    drm->StoredRetVal = 0;
+    drm->storedGTTSize = 1ull << 31;
+    EXPECT_FALSE(drm->is48BitAddressRangeSupported());
 }
 
 TEST(DrmTest, GivenDrmWhenAskedForPreemptionCorrectValueReturned) {
