@@ -22,6 +22,6 @@ TEST(KernelWithCasheFlushTests, givenDeviceWhichDoesntRequireCasheFlushWhenCheck
     auto mockKernel = std::make_unique<MockKernelWithInternals>(*device);
     MockContext mockContext(device.get());
     MockCommandQueue queue;
-    bool flushRequierd = mockKernel->mockKernel->Kernel::requiresCacheFlushCommand(queue);
-    EXPECT_FALSE(flushRequierd);
+    bool flushRequired = mockKernel->mockKernel->Kernel::requiresCacheFlushCommand(queue);
+    EXPECT_FALSE(flushRequired);
 }
