@@ -369,6 +369,35 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueWriteBufferBlocking) {
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
 
+HWTEST_F(GetSizeRequiredBufferTest, givenMultipleKernelRequiringSshWhenTotalSizeIsComputedThenItIsProperlyAligned) {
+    MultiDispatchInfo multiDispatchInfo;
+    auto &builder = pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                                                               pCmdQ->getContext(), pCmdQ->getDevice());
+    ASSERT_NE(nullptr, &builder);
+
+    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    dc.srcPtr = EnqueueWriteBufferTraits::hostPtr;
+    dc.dstMemObj = dstBuffer;
+    dc.dstOffset = {EnqueueWriteBufferTraits::offset, 0, 0};
+    dc.size = {dstBuffer->getSize(), 0, 0};
+    builder.buildDispatchInfos(multiDispatchInfo, dc);
+    builder.buildDispatchInfos(multiDispatchInfo, dc);
+    builder.buildDispatchInfos(multiDispatchInfo, dc);
+    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    auto sizeSSH = multiDispatchInfo.begin()->getKernel()->getSurfaceStateHeapSize();
+    sizeSSH += sizeSSH ? FamilyType::BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE : 0;
+
+    sizeSSH = alignUp(sizeSSH, MemoryConstants::cacheLineSize);
+
+    sizeSSH *= 4u;
+    sizeSSH = alignUp(sizeSSH, MemoryConstants::pageSize);
+
+    EXPECT_EQ(4u, multiDispatchInfo.size());
+    auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
+    EXPECT_EQ(sizeSSH, expectedSizeSSH);
+}
+
 HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelHelloWorld) {
     typedef HelloWorldKernelFixture KernelFixture;
     auto &commandStream = pCmdQ->getCS(1024);

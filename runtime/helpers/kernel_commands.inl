@@ -90,9 +90,10 @@ size_t getSizeRequired(const MultiDispatchInfo &multiDispatchInfo, SizeGetterT &
     size_t totalSize = 0;
     auto it = multiDispatchInfo.begin();
     for (auto e = multiDispatchInfo.end(); it != e; ++it) {
-        totalSize = alignUp(totalSize, MemoryConstants::pageSize);
+        totalSize = alignUp(totalSize, MemoryConstants::cacheLineSize);
         totalSize += getSize(*it, std::forward<ArgsT>(args)...);
     }
+    totalSize = alignUp(totalSize, MemoryConstants::pageSize);
     return totalSize;
 }
 
