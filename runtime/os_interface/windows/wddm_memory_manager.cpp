@@ -411,6 +411,8 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
         return AllocationStatus::InvalidHostPointer;
     }
 
+    UNRECOVERABLE_IF(result != STATUS_SUCCESS);
+
     for (uint32_t i = 0; i < allocatedFragmentsCounter; i++) {
         hostPtrManager->storeFragment(handleStorage.fragmentStorageData[allocatedFragmentIndexes[i]]);
     }
