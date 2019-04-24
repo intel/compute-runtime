@@ -9,6 +9,6 @@ set -e
 set -x
 
 mkdir /root/build
-pacman -Sy --noconfirm gcc cmake git make pkg-config ninja libva \
+pacman -Suy --noconfirm gcc cmake git make pkg-config ninja libva \
         intel-gmmlib intel-opencl-clang spirv-llvm-translator intel-graphics-compiler
 
