@@ -549,6 +549,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenI
 
     EXPECT_TRUE(mockHardwareContext->initializeCalled);
     EXPECT_TRUE(mockHardwareContext->submitCalled);
+    EXPECT_FALSE(mockHardwareContext->writeAndSubmitCalled);
     EXPECT_FALSE(mockHardwareContext->pollForCompletionCalled);
 
     EXPECT_TRUE(aubCsr.writeMemoryWithAubManagerCalled);
@@ -570,6 +571,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledWithZ
 
     aubCsr.flush(batchBuffer, allocationsForResidency);
 
+    EXPECT_FALSE(mockHardwareContext->writeAndSubmitCalled);
     EXPECT_FALSE(mockHardwareContext->submitCalled);
     pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
 }

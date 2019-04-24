@@ -420,6 +420,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     tbxCsr.flush(batchBuffer, allocationsForResidency);
 
     EXPECT_TRUE(mockHardwareContext->initializeCalled);
+    EXPECT_FALSE(mockHardwareContext->writeAndSubmitCalled);
     EXPECT_TRUE(mockHardwareContext->submitCalled);
     EXPECT_FALSE(mockHardwareContext->pollForCompletionCalled);
 

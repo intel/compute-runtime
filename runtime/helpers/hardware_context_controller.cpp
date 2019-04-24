@@ -7,6 +7,7 @@
 
 #include "runtime/helpers/hardware_context_controller.h"
 
+#include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_context.h"
 
@@ -42,7 +43,7 @@ void HardwareContextController::expectMemory(uint64_t gfxAddress, const void *sr
 void HardwareContextController::submit(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize,
                                        uint32_t memoryBank, uint64_t entryBits) {
     for (auto &hardwareContext : hardwareContexts) {
-        hardwareContext->writeAndSubmitBatchBuffer(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
+        hardwareContext->submitBatchBuffer(batchBufferGpuAddress);
     }
 }
 
