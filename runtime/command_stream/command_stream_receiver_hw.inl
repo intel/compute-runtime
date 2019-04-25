@@ -820,9 +820,10 @@ void CommandStreamReceiverHw<GfxFamily>::blitFromHostPtr(MemObj &destinationMemO
 
     latestFlushedTaskCount = newTaskCount;
     taskCount = newTaskCount;
+    auto flushStampToWait = flushStamp->peekStamp();
 
     lock.unlock();
-    waitForCompletionWithTimeout(false, 0, newTaskCount);
+    waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false);
 }
 
 } // namespace NEO

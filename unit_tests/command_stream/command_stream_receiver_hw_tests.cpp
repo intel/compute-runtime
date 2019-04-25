@@ -411,3 +411,42 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
 
     EXPECT_EQ(newTaskCount, csr.latestWaitForCompletionWithTimeoutTaskCount.load());
 }
+
+HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
+    class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
+      public:
+        using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
+
+        void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
+                                                   bool useQuickKmdSleep, bool forcePowerSavingMode) override {
+            waitForTaskCountWithKmdNotifyFallbackCalled++;
+            taskCountToWaitPassed = taskCountToWait;
+            flushStampToWaitPassed = flushStampToWait;
+            useQuickKmdSleepPassed = useQuickKmdSleep;
+            forcePowerSavingModePassed = forcePowerSavingMode;
+        }
+
+        uint32_t taskCountToWaitPassed = 0;
+        FlushStamp flushStampToWaitPassed = 0;
+        bool useQuickKmdSleepPassed = false;
+        bool forcePowerSavingModePassed = false;
+        uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
+    };
+
+    auto myMockCsr = std::make_unique<::testing::NiceMock<MyMockCsr>>(*pDevice->getExecutionEnvironment());
+    auto &bcsOsContext = pDevice->getUltCommandStreamReceiver<FamilyType>().getOsContext();
+    myMockCsr->initializeTagAllocation();
+    myMockCsr->setupContext(bcsOsContext);
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    myMockCsr->blitFromHostPtr(*buffer, hostPtr, 1);
+
+    EXPECT_EQ(1u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
+    EXPECT_EQ(myMockCsr->taskCount, myMockCsr->taskCountToWaitPassed);
+    EXPECT_EQ(myMockCsr->flushStamp->peekStamp(), myMockCsr->flushStampToWaitPassed);
+    EXPECT_FALSE(myMockCsr->useQuickKmdSleepPassed);
+    EXPECT_FALSE(myMockCsr->forcePowerSavingModePassed);
+}
