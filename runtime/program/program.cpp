@@ -210,6 +210,56 @@ cl_int Program::rebuildProgramFromIr() {
     return retVal;
 }
 
+cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue) {
+    if (!isSpirV) {
+        return CL_INVALID_PROGRAM;
+    }
+
+    static std::mutex mutex;
+    std::lock_guard<std::mutex> lock(mutex);
+
+    if (!areSpecializationConstantsInitialized) {
+        auto pCompilerInterface = this->executionEnvironment.getCompilerInterface();
+        if (nullptr == pCompilerInterface) {
+            return CL_OUT_OF_HOST_MEMORY;
+        }
+
+        TranslationArgs inputArgs = {};
+        inputArgs.pInput = const_cast<char *>(sourceCode.c_str());
+        inputArgs.InputSize = static_cast<uint32_t>(sourceCode.size());
+        inputArgs.pOptions = options.c_str();
+        inputArgs.OptionsSize = static_cast<uint32_t>(options.length());
+        inputArgs.pInternalOptions = internalOptions.c_str();
+        inputArgs.InternalOptionsSize = static_cast<uint32_t>(internalOptions.length());
+        inputArgs.pTracingOptions = nullptr;
+        inputArgs.TracingOptionsCount = 0;
+
+        auto retVal = pCompilerInterface->getSpecConstantsInfo(*this, inputArgs);
+
+        if (retVal != CL_SUCCESS) {
+            return retVal;
+        }
+
+        areSpecializationConstantsInitialized = true;
+    }
+
+    return updateSpecializationConstant(specId, specSize, specValue);
+}
+
+cl_int Program::updateSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue) {
+    for (uint32_t i = 0; i < specConstantsIds->GetSize<cl_uint>(); i++) {
+        if (specConstantsIds->GetMemory<cl_uint>()[i] == specId) {
+            if (specConstantsSizes->GetMemory<size_t>()[i] == specSize) {
+                specConstantsValues->GetMemoryWriteable<const void *>()[i] = specValue;
+                return CL_SUCCESS;
+            } else {
+                return CL_INVALID_VALUE;
+            }
+        }
+    }
+    return CL_INVALID_SPEC_ID;
+}
+
 void Program::getProgramCompilerVersion(
     SProgramBinaryHeader *pSectionData,
     uint32_t &binaryVersion) const {

@@ -15,6 +15,7 @@
 #include "runtime/helpers/string_helpers.h"
 
 #include "block_kernel_manager.h"
+#include "cif/builtins/memory/buffer/buffer.h"
 #include "igfxfmid.h"
 #include "kernel_info.h"
 #include "patch_list.h"
@@ -116,6 +117,9 @@ class Program : public BaseObject<_cl_program> {
                 cl_uint numInputPrograms, const cl_program *inputPrograms,
                 void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
                 void *userData);
+
+    cl_int setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue);
+    MOCKABLE_VIRTUAL cl_int updateSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue);
 
     size_t getNumKernels() const;
     const KernelInfo *getKernelInfo(const char *kernelName) const;
@@ -242,6 +246,18 @@ class Program : public BaseObject<_cl_program> {
         return debugDataSize;
     }
 
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> &getSpecConstIdsBuffer() {
+        return this->specConstantsIds;
+    }
+
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> &getSpecConstValuesBuffer() {
+        return this->specConstantsValues;
+    }
+
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> &getSpecConstSizesBuffer() {
+        return this->specConstantsSizes;
+    }
+
   protected:
     Program(ExecutionEnvironment &executionEnvironment);
 
@@ -286,60 +302,64 @@ class Program : public BaseObject<_cl_program> {
 
     static const std::string clOptNameClVer;
     static const std::string clOptNameUniformWgs;
-    // clang-format off
-    cl_program_binary_type    programBinaryType;
-    bool                      isSpirV = false;
+
+    cl_program_binary_type programBinaryType;
+    bool isSpirV = false;
     CLElfLib::ElfBinaryStorage elfBinary;
-    size_t                    elfBinarySize;
+    size_t elfBinarySize;
 
-    char*                     genBinary;
-    size_t                    genBinarySize;
+    char *genBinary;
+    size_t genBinarySize;
 
-    char*                     irBinary;
-    size_t                    irBinarySize;
+    char *irBinary;
+    size_t irBinarySize;
 
-    char*                     debugData;
-    size_t                    debugDataSize;
+    char *debugData;
+    size_t debugDataSize;
 
-    CreatedFrom               createdFrom = CreatedFrom::UNKNOWN;
+    CreatedFrom createdFrom = CreatedFrom::UNKNOWN;
 
-    std::vector<KernelInfo*>  kernelInfoArray;
-    std::vector<KernelInfo*>  parentKernelInfoArray;
-    std::vector<KernelInfo*>  subgroupKernelInfoArray;
-    BlockKernelManager *      blockKernelManager;
+    std::vector<KernelInfo *> kernelInfoArray;
+    std::vector<KernelInfo *> parentKernelInfoArray;
+    std::vector<KernelInfo *> subgroupKernelInfoArray;
+    BlockKernelManager *blockKernelManager;
 
-    const void*               programScopePatchList;
-    size_t                    programScopePatchListSize;
+    const void *programScopePatchList;
+    size_t programScopePatchListSize;
 
-    GraphicsAllocation*       constantSurface;
-    GraphicsAllocation*       globalSurface;
+    GraphicsAllocation *constantSurface;
+    GraphicsAllocation *globalSurface;
 
-    size_t                    globalVarTotalSize;
+    size_t globalVarTotalSize;
 
-    cl_build_status           buildStatus;
-    bool                      isCreatedFromBinary;
-    bool                      isProgramBinaryResolved;
+    cl_build_status buildStatus;
+    bool isCreatedFromBinary;
+    bool isProgramBinaryResolved;
 
-    std::string               sourceCode;
-    std::string               options;
-    std::string               internalOptions;
+    std::string sourceCode;
+    std::string options;
+    std::string internalOptions;
     static const std::vector<std::string> internalOptionsToExtract;
-    std::string               hashFileName;
-    std::string               hashFilePath;
+    std::string hashFileName;
+    std::string hashFilePath;
 
-    uint32_t                  programOptionVersion;
-    bool                      allowNonUniform;
+    uint32_t programOptionVersion;
+    bool allowNonUniform;
 
-    std::map<const Device*, std::string>  buildLog;
+    std::map<const Device *, std::string> buildLog;
 
-    ExecutionEnvironment&     executionEnvironment;
-    Context*                  context;
-    Device*                   pDevice;
-    cl_uint                   numDevices;
+    bool areSpecializationConstantsInitialized = false;
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsIds;
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsSizes;
+    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsValues;
 
-    bool                      isBuiltIn;
-    bool                      kernelDebugEnabled = false;
+    ExecutionEnvironment &executionEnvironment;
+    Context *context;
+    Device *pDevice;
+    cl_uint numDevices;
+
+    bool isBuiltIn;
+    bool kernelDebugEnabled = false;
     friend class OfflineCompiler;
-    // clang-format on
 };
 } // namespace NEO

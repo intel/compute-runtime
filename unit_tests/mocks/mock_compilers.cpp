@@ -5,13 +5,14 @@
  *
  */
 
-#include "unit_tests/mocks/mock_compilers.h"
+#include "mock_compilers.h"
 
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/os_inc_base.h"
 #include "unit_tests/helpers/test_files.h"
+#include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_sip.h"
 
 #include "cif/macros/enable.h"
@@ -486,6 +487,28 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     CIF::Builtins::BufferSimple *tracingOptions,
     uint32_t tracingOptionsCount,
     void *gtpinInput) {
+    auto out = new MockOclTranslationOutput();
+    translate(true, src, options, internalOptions, out);
+    return out;
+}
+
+bool MockIgcOclTranslationCtx::GetSpecConstantsInfoImpl(
+    CIF::Builtins::BufferSimple *src,
+    CIF::Builtins::BufferSimple *outSpecConstantsIds,
+    CIF::Builtins::BufferSimple *outSpecConstantsSizes) {
+    return true;
+}
+
+IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
+    CIF::Version_t outVersion,
+    CIF::Builtins::BufferSimple *src,
+    CIF::Builtins::BufferSimple *specConstantsIds,
+    CIF::Builtins::BufferSimple *specConstantsValues,
+    CIF::Builtins::BufferSimple *options,
+    CIF::Builtins::BufferSimple *internalOptions,
+    CIF::Builtins::BufferSimple *tracingOptions,
+    uint32_t tracingOptionsCount,
+    void *gtPinInput) {
     auto out = new MockOclTranslationOutput();
     translate(true, src, options, internalOptions, out);
     return out;

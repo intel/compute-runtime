@@ -572,7 +572,18 @@ struct TranslationCtxMock {
                                                                  CIF::Builtins::BufferSimple *options,
                                                                  CIF::Builtins::BufferSimple *internalOptions,
                                                                  CIF::Builtins::BufferSimple *tracingOptions,
-                                                                 uint32_t tracingOptionsCount, void *gtpinInit) {
+                                                                 uint32_t tracingOptionsCount,
+                                                                 void *gtpinInit) {
+        return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount);
+    }
+    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src,
+                                                                 CIF::Builtins::BufferSimple *specConstantsIds,
+                                                                 CIF::Builtins::BufferSimple *specConstantsValues,
+                                                                 CIF::Builtins::BufferSimple *options,
+                                                                 CIF::Builtins::BufferSimple *internalOptions,
+                                                                 CIF::Builtins::BufferSimple *tracingOptions,
+                                                                 uint32_t tracingOptionsCount,
+                                                                 void *gtPinInput) {
         return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount);
     }
 };
@@ -591,12 +602,55 @@ TEST(TranslateTest, whenArgsAreValidAndTranslatorReturnsValidOutputThenValidOutp
     EXPECT_EQ(mockIntOpt.get(), mockTranslationCtx.receivedIntOpt);
 }
 
+TEST(TranslateTest, givenGtPinInputWhenArgsAreValidAndTranslatorReturnsValidOutputThenValidOutputIsReturned) {
+    TranslationCtxMock mockTranslationCtx;
+    auto mockSrc = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockOpt = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockIntOpt = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+
+    auto ret = NEO::translate(&mockTranslationCtx, mockSrc.get(), mockOpt.get(), mockIntOpt.get(), nullptr);
+    EXPECT_NE(nullptr, ret);
+
+    EXPECT_EQ(mockSrc.get(), mockTranslationCtx.receivedSrc);
+    EXPECT_EQ(mockOpt.get(), mockTranslationCtx.receivedOpt);
+    EXPECT_EQ(mockIntOpt.get(), mockTranslationCtx.receivedIntOpt);
+}
+
+TEST(TranslateTest, whenArgsAreInvalidThenNullptrIsReturned) {
+    auto mockSrc = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockOpt = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockIntOpt = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+
+    auto ret = NEO::translate<TranslationCtxMock>(nullptr, mockSrc.get(), mockOpt.get(), mockIntOpt.get());
+
+    EXPECT_EQ(nullptr, ret);
+}
+
+TEST(TranslateTest, givenGtPinInputWhenArgsAreInvalidThenNullptrIsReturned) {
+    auto mockSrc = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockOpt = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockIntOpt = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+
+    auto ret = NEO::translate<TranslationCtxMock>(nullptr, mockSrc.get(), mockOpt.get(), mockIntOpt.get(), nullptr);
+
+    EXPECT_EQ(nullptr, ret);
+}
+
 TEST(TranslateTest, whenTranslatorReturnsNullptrThenNullptrIsReturned) {
     TranslationCtxMock mockTranslationCtx;
     mockTranslationCtx.returnNullptr = true;
     auto mockCifBuffer = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
 
     auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get());
+    EXPECT_EQ(nullptr, ret);
+}
+
+TEST(TranslateTest, givenSpecConstantsBuffersWhenTranslatorReturnsNullptrThenNullptrIsReturned) {
+    TranslationCtxMock mockTranslationCtx;
+    mockTranslationCtx.returnNullptr = true;
+    auto mockCifBuffer = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+
+    auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
     EXPECT_EQ(nullptr, ret);
 }
 
@@ -629,6 +683,18 @@ TEST(TranslateTest, givenNullPtrAsGtPinInputWhenTranslatorReturnsInvalidOutputTh
         mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
         mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
         auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
+        EXPECT_EQ(nullptr, ret);
+    }
+}
+
+TEST(TranslateTest, givenSpecConstantsBuffersAndNullPtrAsGtPinInputWhenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
+    TranslationCtxMock mockTranslationCtx;
+    auto mockCifBuffer = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    for (uint32_t i = 1; i <= (1 << 3) - 1; ++i) {
+        mockTranslationCtx.returnNullptrDebugData = (i & 1) != 0;
+        mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
+        mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
+        auto ret = NEO::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
         EXPECT_EQ(nullptr, ret);
     }
 }
@@ -960,4 +1026,143 @@ TEST_F(CompilerInterfaceTest, whenRequestingSipKernelBinaryThenProperInternalOpt
     EXPECT_EQ(0, strcmp(expectedInut.c_str(), receivedInput.c_str()));
 
     gEnvironment->igcPopDebugVars();
+}
+
+TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSpecializationConstantsFails) {
+    pCompilerInterface->GetIgcMain()->Release();
+    pCompilerInterface->SetIgcMain(nullptr);
+    TranslationArgs inputArgs;
+    retVal = pCompilerInterface->getSpecConstantsInfo(*pProgram, inputArgs);
+    EXPECT_EQ(CL_COMPILER_NOT_AVAILABLE, retVal);
+}
+
+struct SpecConstantsTranslationCtxMock {
+    bool returnFalse = false;
+
+    CIF::Builtins::BufferSimple *receivedSrc = nullptr;
+    CIF::Builtins::BufferSimple *receivedOutSpecConstantsIds = nullptr;
+    CIF::Builtins::BufferSimple *receivedOutSpecConstantsSizes = nullptr;
+
+    bool GetSpecConstantsInfoImpl(CIFBuffer *src, CIFBuffer *outSpecConstantsIds, CIFBuffer *outSpecConstantsSizes) {
+        this->receivedSrc = src;
+        this->receivedOutSpecConstantsIds = outSpecConstantsIds;
+        this->receivedOutSpecConstantsSizes = outSpecConstantsSizes;
+        return !returnFalse;
+    }
+};
+
+TEST(GetSpecConstantsTest, givenNullptrTranslationContextAndBuffersWhenGetSpecializationConstantsThenErrorIsReturned) {
+    EXPECT_FALSE(NEO::getSpecConstantsInfoImpl<SpecConstantsTranslationCtxMock>(nullptr, nullptr, nullptr, nullptr, nullptr));
+}
+
+TEST(GetSpecConstantsTest, whenGetSpecializationConstantsSuccedThenSuccessIsReturnedAndBuffersArePassed) {
+    SpecConstantsTranslationCtxMock tCtxMock;
+
+    auto mockSrc = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockIds = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockSizes = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockValues = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+
+    auto ret = NEO::getSpecConstantsInfoImpl(&tCtxMock, mockSrc.get(), mockIds.get(), mockSizes.get(), mockValues.get());
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(mockSrc.get(), tCtxMock.receivedSrc);
+    EXPECT_EQ(mockIds.get(), tCtxMock.receivedOutSpecConstantsIds);
+    EXPECT_EQ(mockSizes.get(), tCtxMock.receivedOutSpecConstantsSizes);
+}
+
+TEST(GetSpecConstantsTest, whenGetSpecializationConstantsFailThenErrorIsReturnedAndBuffersArePassed) {
+    SpecConstantsTranslationCtxMock tCtxMock;
+    tCtxMock.returnFalse = true;
+
+    auto mockSrc = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockIds = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockSizes = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    auto mockValues = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+
+    auto ret = NEO::getSpecConstantsInfoImpl(&tCtxMock, mockSrc.get(), mockIds.get(), mockSizes.get(), mockValues.get());
+
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(mockSrc.get(), tCtxMock.receivedSrc);
+    EXPECT_EQ(mockIds.get(), tCtxMock.receivedOutSpecConstantsIds);
+    EXPECT_EQ(mockSizes.get(), tCtxMock.receivedOutSpecConstantsSizes);
+}
+
+TEST_F(CompilerInterfaceTest, whenIgcTranlationContextCreationFailsThenErrorIsReturned) {
+    pCompilerInterface->failCreateIgcTranslationCtx = true;
+    retVal = pCompilerInterface->getSpecConstantsInfo(*pProgram, inputArgs);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+}
+
+TEST_F(CompilerInterfaceTest, givenCompilerInterfaceWhenGetSpecializationConstantsThenSuccesIsReturned) {
+    retVal = pCompilerInterface->getSpecConstantsInfo(*pProgram, inputArgs);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+struct UpdateSpecConstantsTest : public ::testing::Test {
+    void SetUp() override {
+        mockProgram.reset(new MockProgram(executionEnvironment));
+
+        mockProgram->specConstantsIds.reset(new MockCIFBuffer());
+        mockProgram->specConstantsSizes.reset(new MockCIFBuffer());
+        mockProgram->specConstantsValues.reset(new MockCIFBuffer());
+
+        mockProgram->specConstantsIds->PushBackRawCopy(1);
+        mockProgram->specConstantsIds->PushBackRawCopy(2);
+        mockProgram->specConstantsIds->PushBackRawCopy(3);
+
+        mockProgram->specConstantsSizes->PushBackRawCopy(sizeof(char));
+        mockProgram->specConstantsSizes->PushBackRawCopy(sizeof(uint16_t));
+        mockProgram->specConstantsSizes->PushBackRawCopy(sizeof(int));
+
+        mockProgram->specConstantsValues->PushBackRawCopy(&val1);
+        mockProgram->specConstantsValues->PushBackRawCopy(&val2);
+        mockProgram->specConstantsValues->PushBackRawCopy(&val3);
+
+        values = mockProgram->specConstantsValues->GetMemory<const void *>();
+
+        EXPECT_EQ(val1, *reinterpret_cast<const char *>(values[0]));
+        EXPECT_EQ(val2, *reinterpret_cast<const uint16_t *>(values[1]));
+        EXPECT_EQ(val3, *reinterpret_cast<const int *>(values[2]));
+    }
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<MockProgram> mockProgram;
+
+    char val1 = 5;
+    uint16_t val2 = 50;
+    int val3 = 500;
+    const void *const *values;
+};
+
+TEST_F(UpdateSpecConstantsTest, givenNewSpecConstValueWhenUpdateSpecializationConstantThenProperValueIsUpdated) {
+    int newSpecConstVal3 = 5000;
+
+    auto ret = mockProgram->updateSpecializationConstant(3, sizeof(int), &newSpecConstVal3);
+
+    EXPECT_EQ(CL_SUCCESS, ret);
+    EXPECT_EQ(val1, *reinterpret_cast<const char *>(values[0]));
+    EXPECT_EQ(val2, *reinterpret_cast<const uint16_t *>(values[1]));
+    EXPECT_EQ(newSpecConstVal3, *reinterpret_cast<const int *>(values[2]));
+}
+
+TEST_F(UpdateSpecConstantsTest, givenNewSpecConstValueWithUnproperSizeWhenUpdateSpecializationConstantThenErrorIsReturned) {
+    int newSpecConstVal3 = 5000;
+
+    auto ret = mockProgram->updateSpecializationConstant(3, 10 * sizeof(int), &newSpecConstVal3);
+
+    EXPECT_EQ(CL_INVALID_VALUE, ret);
+    EXPECT_EQ(val1, *reinterpret_cast<const char *>(values[0]));
+    EXPECT_EQ(val2, *reinterpret_cast<const uint16_t *>(values[1]));
+    EXPECT_EQ(val3, *reinterpret_cast<const int *>(values[2]));
+}
+
+TEST_F(UpdateSpecConstantsTest, givenNewSpecConstValueWithUnproperIdAndSizeWhenUpdateSpecializationConstantThenErrorIsReturned) {
+    int newSpecConstVal3 = 5000;
+
+    auto ret = mockProgram->updateSpecializationConstant(4, sizeof(int), &newSpecConstVal3);
+
+    EXPECT_EQ(CL_INVALID_SPEC_ID, ret);
+    EXPECT_EQ(val1, *reinterpret_cast<const char *>(values[0]));
+    EXPECT_EQ(val2, *reinterpret_cast<const uint16_t *>(values[1]));
+    EXPECT_EQ(val3, *reinterpret_cast<const int *>(values[2]));
 }

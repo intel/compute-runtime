@@ -131,7 +131,7 @@ cl_int CompilerInterface::build(
         if (!binaryLoaded) {
             auto igcTranslationCtx = createIgcTranslationCtx(device, intermediateCodeType, IGC::CodeType::oclGenBin);
 
-            auto igcOutput = translate(igcTranslationCtx.get(), intermediateRepresentation.get(),
+            auto igcOutput = translate(igcTranslationCtx.get(), intermediateRepresentation.get(), program.getSpecConstIdsBuffer().get(), program.getSpecConstValuesBuffer().get(),
                                        fclOptions.get(), fclInternalOptions.get(), inputArgs.GTPinInput);
 
             if (igcOutput == nullptr) {
@@ -267,6 +267,27 @@ cl_int CompilerInterface::link(
         if (currOut->GetDebugData()->GetSizeRaw() != 0) {
             program.storeDebugData(currOut->GetDebugData()->GetMemory<char>(), currOut->GetDebugData()->GetSizeRaw());
         }
+    }
+
+    return CL_SUCCESS;
+}
+
+cl_int CompilerInterface::getSpecConstantsInfo(Program &program, const TranslationArgs &inputArgs) {
+    if (false == isCompilerAvailable()) {
+        return CL_COMPILER_NOT_AVAILABLE;
+    }
+
+    auto igcTranslationCtx = createIgcTranslationCtx(program.getDevice(0), IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
+
+    auto inSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pInput, inputArgs.InputSize);
+    program.getSpecConstIdsBuffer() = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
+    program.getSpecConstSizesBuffer() = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
+    program.getSpecConstValuesBuffer() = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
+
+    auto retVal = getSpecConstantsInfoImpl(igcTranslationCtx.get(), inSrc.get(), program.getSpecConstIdsBuffer().get(), program.getSpecConstSizesBuffer().get(), program.getSpecConstValuesBuffer().get());
+
+    if (!retVal) {
+        return CL_OUT_OF_HOST_MEMORY;
     }
 
     return CL_SUCCESS;

@@ -54,6 +54,37 @@ inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationC
     return ret;
 }
 
+template <typename TranslationCtx>
+inline bool getSpecConstantsInfoImpl(TranslationCtx *tCtx,
+                                     CIFBuffer *src,
+                                     CIFBuffer *outSpecConstantsIds,
+                                     CIFBuffer *outSpecConstantsSizes,
+                                     CIFBuffer *outSpecConstantsValues) {
+    if (!NEO::areNotNullptr(tCtx, src, outSpecConstantsIds, outSpecConstantsSizes, outSpecConstantsValues)) {
+        return false;
+    }
+    return tCtx->GetSpecConstantsInfoImpl(src, outSpecConstantsIds, outSpecConstantsSizes);
+}
+
+template <typename TranslationCtx>
+inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *specConstantsIds, CIFBuffer *specConstantsValues, CIFBuffer *options,
+                                                                    CIFBuffer *internalOptions, void *gtpinInit) {
+    if (false == NEO::areNotNullptr(tCtx, src, options, internalOptions)) {
+        return nullptr;
+    }
+
+    auto ret = tCtx->Translate(src, specConstantsIds, specConstantsValues, options, internalOptions, nullptr, 0, gtpinInit);
+    if (ret == nullptr) {
+        return nullptr; // assume OOM or internal error
+    }
+
+    if (!NEO::areNotNullptr(ret->GetOutput(), ret->GetBuildLog(), ret->GetDebugData())) {
+        return nullptr; // assume OOM or internal error
+    }
+
+    return ret;
+}
+
 CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 
 template <template <CIF::Version_t> class EntryPointT>

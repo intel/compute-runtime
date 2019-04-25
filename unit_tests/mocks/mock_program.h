@@ -31,6 +31,7 @@ class MockProgram : public Program {
     using Program::resolveProgramBinary;
     using Program::updateNonUniformFlag;
 
+    using Program::areSpecializationConstantsInitialized;
     using Program::elfBinary;
     using Program::elfBinarySize;
     using Program::genBinary;
@@ -40,6 +41,9 @@ class MockProgram : public Program {
     using Program::isProgramBinaryResolved;
     using Program::isSpirV;
     using Program::programBinaryType;
+    using Program::specConstantsIds;
+    using Program::specConstantsSizes;
+    using Program::specConstantsValues;
 
     using Program::sourceCode;
 

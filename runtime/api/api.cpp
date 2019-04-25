@@ -4659,3 +4659,21 @@ cl_int CL_API_CALL clAddCommentINTEL(cl_platform_id platform, const char *commen
 
     return retVal;
 }
+
+cl_int CL_API_CALL clSetProgramSpecializationConstant(cl_program program, cl_uint specId, size_t specSize, const void *specValue) {
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("program", program,
+                   "specId", specId,
+                   "specSize", specSize,
+                   "specValue", specValue);
+
+    Program *pProgram = nullptr;
+    retVal = validateObjects(WithCastToInternal(program, &pProgram), specValue);
+
+    if (retVal == CL_SUCCESS) {
+        retVal = pProgram->setProgramSpecializationConstant(specId, specSize, specValue);
+    }
+
+    return retVal;
+}

@@ -34,6 +34,7 @@
 #include "unit_tests/api/cl_set_kernel_exec_info_tests.inl"
 #include "unit_tests/api/cl_set_mem_object_destructor_callback_tests.inl"
 #include "unit_tests/api/cl_set_performance_configuration_tests.inl"
+#include "unit_tests/api/cl_set_program_specialization_constant_tests.inl"
 #include "unit_tests/api/cl_svm_alloc_tests.inl"
 #include "unit_tests/api/cl_svm_free_tests.inl"
 #include "unit_tests/api/cl_unload_compiler_tests.inl"

@@ -57,6 +57,8 @@ class CompilerInterface {
 
     MOCKABLE_VIRTUAL cl_int link(Program &program, const TranslationArgs &pInputArgs);
 
+    MOCKABLE_VIRTUAL cl_int getSpecConstantsInfo(Program &program, const TranslationArgs &inputArgs);
+
     cl_int createLibrary(Program &program, const TranslationArgs &pInputArgs);
 
     MOCKABLE_VIRTUAL cl_int getSipKernelBinary(SipKernelType kernel, const Device &device, std::vector<char> &retBinary);

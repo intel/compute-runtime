@@ -916,3 +916,11 @@ extern CL_API_ENTRY cl_program CL_API_CALL clCreateProgramWithILKHR(
     size_t length,
     cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_2;
 }
+
+// OpenCL 2.2
+
+cl_int CL_API_CALL clSetProgramSpecializationConstant(
+    cl_program program,
+    cl_uint specId,
+    size_t specSize,
+    const void *specValue);

@@ -3013,3 +3013,87 @@ TEST(RebuildProgramFromIrTests, givenBinaryProgramWhenKernelRebulildIsNotForcedT
     EXPECT_TRUE(pProgram->processElfBinaryCalled);
     EXPECT_FALSE(pProgram->rebuildProgramFromIrCalled);
 }
+
+struct SpecializationConstantProgramMock : public MockProgram {
+    using MockProgram::MockProgram;
+    cl_int updateSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue) override {
+        return CL_SUCCESS;
+    }
+};
+
+struct SpecializationConstantCompilerInterfaceMock : public CompilerInterface {
+    int retVal = CL_SUCCESS;
+    int counter = 0;
+    cl_int getSpecConstantsInfo(Program &program, const TranslationArgs &pInputArgs) override {
+        counter++;
+        return retVal;
+    }
+    void returnError() {
+        retVal = CL_INVALID_VALUE;
+    }
+};
+
+struct SpecializationConstantExecutionEnvironmentMock : public ExecutionEnvironment {
+    SpecializationConstantExecutionEnvironmentMock() {
+        compilerInterface.reset(new SpecializationConstantCompilerInterfaceMock());
+    }
+    CompilerInterface *getCompilerInterface() override {
+        return compilerInterface.get();
+    }
+};
+
+struct setProgramSpecializationConstantTests : public ::testing::Test {
+    void SetUp() override {
+        mockProgram.reset(new SpecializationConstantProgramMock(executionEnvironment));
+        mockProgram->isSpirV = true;
+
+        EXPECT_FALSE(mockProgram->areSpecializationConstantsInitialized);
+        EXPECT_EQ(0, mockCompiler->counter);
+    }
+
+    SpecializationConstantExecutionEnvironmentMock executionEnvironment;
+    SpecializationConstantCompilerInterfaceMock *mockCompiler = reinterpret_cast<SpecializationConstantCompilerInterfaceMock *>(executionEnvironment.getCompilerInterface());
+    std::unique_ptr<SpecializationConstantProgramMock> mockProgram;
+
+    int specValue = 1;
+};
+
+TEST_F(setProgramSpecializationConstantTests, whenSetProgramSpecializationConstantMultipleTimesThenSpecializationConstantsAreInitializedOnce) {
+    auto retVal = mockProgram->setProgramSpecializationConstant(1, sizeof(int), &specValue);
+
+    EXPECT_EQ(1, mockCompiler->counter);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockProgram->areSpecializationConstantsInitialized);
+
+    retVal = mockProgram->setProgramSpecializationConstant(1, sizeof(int), &specValue);
+
+    EXPECT_EQ(1, mockCompiler->counter);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockProgram->areSpecializationConstantsInitialized);
+}
+
+TEST_F(setProgramSpecializationConstantTests, givenInvalidGetSpecConstantsInfoReturnValueWhenSetProgramSpecializationConstantThenErrorIsReturned) {
+    reinterpret_cast<SpecializationConstantCompilerInterfaceMock *>(executionEnvironment.getCompilerInterface())->returnError();
+
+    auto retVal = mockProgram->setProgramSpecializationConstant(1, sizeof(int), &specValue);
+
+    EXPECT_EQ(1, mockCompiler->counter);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_FALSE(mockProgram->areSpecializationConstantsInitialized);
+}
+
+TEST(setProgramSpecializationConstantTest, givenUninitializedCompilerinterfaceWhenSetProgramSpecializationConstantThenErrorIsReturned) {
+    struct MockExecutionEnvironment : public ExecutionEnvironment {
+        CompilerInterface *getCompilerInterface() override {
+            return compilerInterface.get();
+        }
+    };
+
+    MockExecutionEnvironment executionEnvironment;
+    SpecializationConstantProgramMock mockProgram(executionEnvironment);
+    mockProgram.isSpirV = true;
+    int specValue = 1;
+
+    auto retVal = mockProgram.setProgramSpecializationConstant(1, sizeof(int), &specValue);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+}
