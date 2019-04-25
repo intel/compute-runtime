@@ -181,16 +181,13 @@ class GpgpuWalkerHelper {
         uint32_t registerAddress);
 
     static void dispatchPerfCountersGeneralPurposeCounterCommands(
-        CommandQueue &commandQueue,
-        TagNode<HwPerfCounter> &hwPerfCounter,
         LinearStream *commandStream,
-        bool start);
+        uint64_t baseAddress);
 
     static void dispatchPerfCountersUserCounterCommands(
         CommandQueue &commandQueue,
-        TagNode<HwPerfCounter> &hwPerfCounter,
         LinearStream *commandStream,
-        bool start);
+        uint64_t baseAddress);
 
     static void dispatchPerfCountersOABufferStateCommands(
         TagNode<HwPerfCounter> &hwPerfCounter,

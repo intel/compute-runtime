@@ -56,10 +56,8 @@ class AUBFixture : public CommandQueueHwFixture {
     GraphicsAllocation *createHostPtrAllocationFromSvmPtr(void *svmPtr, size_t size);
 
     template <typename FamilyType>
-    CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr() {
-        CommandStreamReceiverSimulatedCommonHw<FamilyType> *simulatedCsr = nullptr;
-        simulatedCsr = reinterpret_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(csr);
-        return simulatedCsr;
+    CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr() const {
+        return static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(csr);
     }
 
     template <typename FamilyType>

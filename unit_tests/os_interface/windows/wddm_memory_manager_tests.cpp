@@ -1198,7 +1198,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     memoryManager->getHostPtrManager()->storeFragment(fragment);
 
     auto offset = 80;
-    auto allocationPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + offset);
+    auto allocationPtr = ptrOffset(ptr, offset);
     AllocationData allocationData;
     allocationData.size = size;
     allocationData.hostPtr = allocationPtr;

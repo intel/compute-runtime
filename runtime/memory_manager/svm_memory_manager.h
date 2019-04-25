@@ -11,9 +11,9 @@
 #include <mutex>
 
 namespace NEO {
+class CommandStreamReceiver;
 class Device;
 class GraphicsAllocation;
-class CommandStreamReceiver;
 class MemoryManager;
 
 struct SvmAllocationData {

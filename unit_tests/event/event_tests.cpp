@@ -1138,13 +1138,8 @@ TEST_F(EventTest, hwTimeStampsMemoryIsPlacedInGraphicsAllocation) {
     void *memoryStorage = allocation->getUnderlyingBuffer();
     size_t graphicsAllocationSize = allocation->getUnderlyingBufferSize();
 
-    uintptr_t timeStampAddress = reinterpret_cast<uintptr_t>(timeStamps);
-    uintptr_t graphicsAllocationStart = reinterpret_cast<uintptr_t>(memoryStorage);
-
-    if (!((timeStampAddress >= graphicsAllocationStart) &&
-          ((timeStampAddress + sizeof(HwTimeStamps)) <= (graphicsAllocationStart + graphicsAllocationSize)))) {
-        EXPECT_TRUE(false);
-    }
+    EXPECT_GE(timeStamps, memoryStorage);
+    EXPECT_LE(timeStamps + 1, ptrOffset(memoryStorage, graphicsAllocationSize));
 }
 
 TEST_F(EventTest, getHwPerfCounterReturnsValidPointer) {

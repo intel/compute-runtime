@@ -41,12 +41,12 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
         CommandStreamReceiver *csr = pCommandStreamReceiver;
         if (testMode == TestMode::AubTestsWithTbx) {
-            csr = reinterpret_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR.get();
+            csr = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR.get();
         }
 
         if (csr) {
             // Write our pseudo-op to the AUB file
-            auto aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
+            auto aubCsr = static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
             aubCsr->expectMMIO(mmioRegister, expectedValue);
         }
     }
@@ -55,14 +55,14 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
     void expectMemory(void *gfxAddress, const void *srcAddress, size_t length) {
         CommandStreamReceiver *csr = pCommandStreamReceiver;
         if (testMode == TestMode::AubTestsWithTbx) {
-            auto tbxCsr = reinterpret_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(pCommandStreamReceiver);
+            auto tbxCsr = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(pCommandStreamReceiver);
             tbxCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
 
-            csr = reinterpret_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR.get();
+            csr = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR.get();
         }
 
         if (csr) {
-            auto aubCsr = reinterpret_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(csr);
+            auto aubCsr = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(csr);
             aubCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
         }
     }
@@ -71,21 +71,21 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
     void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length) {
         CommandStreamReceiver *csr = pCommandStreamReceiver;
         if (testMode == TestMode::AubTestsWithTbx) {
-            auto tbxCsr = reinterpret_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(pCommandStreamReceiver);
+            auto tbxCsr = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(pCommandStreamReceiver);
             tbxCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length);
 
-            csr = reinterpret_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR.get();
+            csr = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR.get();
         }
 
         if (csr) {
-            auto aubCsr = reinterpret_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(csr);
+            auto aubCsr = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(csr);
             aubCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length);
         }
     }
 
     template <typename FamilyType>
-    CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr() {
-        return reinterpret_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(pCommandStreamReceiver);
+    CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr() const {
+        return static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(pCommandStreamReceiver);
     }
 
     template <typename FamilyType>

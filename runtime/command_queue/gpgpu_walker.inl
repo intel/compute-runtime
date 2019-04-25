@@ -165,14 +165,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchStoreRegisterCommand(
 
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterCommands(
-    CommandQueue &commandQueue,
-    TagNode<HwPerfCounter> &hwPerfCounter,
     LinearStream *commandStream,
-    bool start) {
-
-    uint64_t baseAddress = hwPerfCounter.getGpuAddress();
-    baseAddress += start ? offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportBegin.Gp)
-                         : offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportEnd.Gp);
+    uint64_t baseAddress) {
 
     // Read General Purpose counters
     for (auto i = 0u; i < NEO::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT; i++) {
@@ -186,19 +180,15 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterComm
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(
     CommandQueue &commandQueue,
-    TagNode<HwPerfCounter> &hwPerfCounter,
     LinearStream *commandStream,
-    bool start) {
+    uint64_t baseAddress) {
 
-    uint64_t baseAddr = hwPerfCounter.getGpuAddress();
-    baseAddr += start ? offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportBegin.User)
-                      : offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportEnd.User);
     auto userRegs = &commandQueue.getPerfCountersConfigData()->ReadRegs;
 
     for (uint32_t i = 0; i < userRegs->RegsCount; i++) {
         uint32_t regAddr = userRegs->Reg[i].Offset;
         //offset between base (low) registers is cl_ulong wide
-        uint64_t address = baseAddr + i * sizeof(cl_ulong);
+        uint64_t address = baseAddress + i * sizeof(cl_ulong);
         dispatchStoreRegisterCommand(commandStream, address, regAddr);
 
         if (userRegs->Reg[i].BitSize > 32) {
@@ -240,7 +230,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     //Read Core Frequency
     GpgpuWalkerHelper<GfxFamily>::dispatchStoreRegisterCommand(commandStream, hwPerfCounter.getGpuAddress() + offsetof(HwPerfCounter, HWPerfCounters.CoreFreqBegin), INSTR_MMIO_RPSTAT1);
 
-    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterCommands(commandQueue, hwPerfCounter, commandStream, true);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterCommands(commandStream, hwPerfCounter.getGpuAddress() + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportBegin.Gp));
 
     auto pReportPerfCount = commandStream->getSpaceForCmd<MI_REPORT_PERF_COUNT>();
     *pReportPerfCount = GfxFamily::cmdInitReportPerfCount;
@@ -252,7 +242,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
 
     PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, 0llu, false);
 
-    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(commandQueue, hwPerfCounter, commandStream, true);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(commandQueue, commandStream, hwPerfCounter.getGpuAddress() + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportBegin.User));
 
     commandQueue.sendPerfCountersConfig();
 }
@@ -286,7 +276,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     address = hwPerfCounter.getGpuAddress() + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportEnd.Oa);
     pReportPerfCount->setMemoryAddress(address);
 
-    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterCommands(commandQueue, hwPerfCounter, commandStream, false);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterCommands(commandStream, hwPerfCounter.getGpuAddress() + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportEnd.Gp));
 
     //Store value of NOOPID register
     GpgpuWalkerHelper<GfxFamily>::dispatchStoreRegisterCommand(commandStream, hwPerfCounter.getGpuAddress() + offsetof(HwPerfCounter, HWPerfCounters.DMAFenceIdEnd), INSTR_MMIO_NOOPID);
@@ -294,7 +284,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     //Read Core Frequency
     GpgpuWalkerHelper<GfxFamily>::dispatchStoreRegisterCommand(commandStream, hwPerfCounter.getGpuAddress() + offsetof(HwPerfCounter, HWPerfCounters.CoreFreqEnd), INSTR_MMIO_RPSTAT1);
 
-    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(commandQueue, hwPerfCounter, commandStream, false);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(commandQueue, commandStream, hwPerfCounter.getGpuAddress() + offsetof(HwPerfCounter, HWPerfCounters.HwPerfReportEnd.User));
 
     perfCounters->setCpuTimestamp();
 }

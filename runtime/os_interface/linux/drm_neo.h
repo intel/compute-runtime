@@ -25,7 +25,6 @@ namespace NEO {
 
 class DeviceFactory;
 struct HardwareInfo;
-struct FeatureTable;
 
 struct DeviceDescriptor {
     unsigned short deviceId;
