@@ -1369,7 +1369,7 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenFlushingThenProgramPip
     EXPECT_EQ(secondEnqueueOffset, csr.commandStream.getUsed()); // nothing programmed when flag is not set
 }
 
-HWTEST_F(TimestampPacketTests, givenKernelWhichDoesntRequiersFlushWhenEnquingKernelThenOneNodeCreated) {
+HWTEST_F(TimestampPacketTests, givenKernelWhichDoesntRequireFlushWhenEnqueueingKernelThenOneNodeIsCreated) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(false);
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
@@ -1384,7 +1384,7 @@ HWTEST_F(TimestampPacketTests, givenKernelWhichDoesntRequiersFlushWhenEnquingKer
     EXPECT_EQ(size, 1u);
 }
 
-HWTEST_F(TimestampPacketTests, givenKernelWhichRequiersFlushWhenEnquingKernelThenTwoNodesCreated) {
+HWTEST_F(TimestampPacketTests, givenKernelWhichRequiresFlushWhenEnqueueingKernelThenTwoNodesAreCreated) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(true);
     DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(true);

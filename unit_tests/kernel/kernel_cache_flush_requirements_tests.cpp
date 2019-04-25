@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-TEST(KernelWithCasheFlushTests, givenDeviceWhichDoesntRequireCasheFlushWhenCheckIfKernelRequierFlushThenReturnedFalse) {
+TEST(KernelWithCacheFlushTests, givenDeviceWhichDoesntRequireCacheFlushWhenCheckIfKernelRequireFlushThenReturnedFalse) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
 
     auto mockKernel = std::make_unique<MockKernelWithInternals>(*device);
