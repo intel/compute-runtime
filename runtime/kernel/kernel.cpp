@@ -2149,6 +2149,12 @@ void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsF
             auto buffer = castToObject<Buffer>(getKernelArg(i));
             if (buffer && buffer->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
                 memObjsForAuxTranslation.insert(buffer);
+
+                auto &context = this->program->getContext();
+                if (context.isProvidingPerformanceHints()) {
+                    context.providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, KERNEL_ARGUMENT_AUX_TRANSLATION,
+                                                   kernelInfo.name.c_str(), i, kernelInfo.kernelArgInfo.at(i).name.c_str());
+                }
             }
         }
     }
