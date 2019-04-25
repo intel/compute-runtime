@@ -127,6 +127,10 @@ TEST(DrmTest, GivenDrmWhenAskedFor48BitAddressCorrectValueReturned) {
     drm->StoredRetVal = 0;
     drm->storedGTTSize = 1ull << 31;
     EXPECT_FALSE(drm->is48BitAddressRangeSupported());
+    drm->storedGTTSize = MemoryConstants::max64BitAppAddress + 1;
+    EXPECT_TRUE(drm->is48BitAddressRangeSupported());
+    drm->storedGTTSize = MemoryConstants::max64BitAppAddress;
+    EXPECT_FALSE(drm->is48BitAddressRangeSupported());
 }
 
 TEST(DrmTest, GivenDrmWhenAskedForPreemptionCorrectValueReturned) {

@@ -132,7 +132,7 @@ bool Drm::is48BitAddressRangeSupported() {
 
     auto ret = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
     if (ret == 0) {
-        return contextParam.value == MemoryConstants::max64BitAppAddress + 1;
+        return contextParam.value > MemoryConstants::max64BitAppAddress;
     }
     return true;
 }
