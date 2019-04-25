@@ -78,6 +78,11 @@ LKFTEST_F(LkfHwInfo, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTableAndWor
         EXPECT_EQ(setParamBool, pSkuTable.ftrTileY);
         EXPECT_EQ(setParamBool, pSkuTable.ftrAstcHdr2D);
         EXPECT_EQ(setParamBool, pSkuTable.ftrAstcLdr2D);
+        EXPECT_EQ(setParamBool, pSkuTable.ftr3dMidBatchPreempt);
+        EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuMidBatchPreempt);
+        EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuMidThreadLevelPreempt);
+        EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuThreadGroupLevelPreempt);
+        EXPECT_EQ(setParamBool, pSkuTable.ftrPerCtxtPreemptionGranularityControl);
 
         EXPECT_EQ(setParamBool, pWaTable.wa4kAlignUVOffsetNV12LinearSurface);
         EXPECT_EQ(setParamBool, pWaTable.waReportPerfCountUseGlobalContextID);

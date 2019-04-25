@@ -94,6 +94,12 @@ void LKF::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     pSkuTable->ftrAstcHdr2D = true;
     pSkuTable->ftrAstcLdr2D = true;
 
+    pSkuTable->ftr3dMidBatchPreempt = true;
+    pSkuTable->ftrGpGpuMidBatchPreempt = true;
+    pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;
+    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
+
     pWaTable->wa4kAlignUVOffsetNV12LinearSurface = true;
     pWaTable->waReportPerfCountUseGlobalContextID = true;
 };
