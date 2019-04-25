@@ -42,10 +42,6 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfo) {
     //constant sysInfo/ftr flags
     EXPECT_EQ(1u, outHwInfo.pSysInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled);
     EXPECT_TRUE(outHwInfo.pSysInfo->VEBoxInfo.IsValid);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuMidBatchPreempt);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuThreadGroupLevelPreempt);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrSVM);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrL3IACoherency);
 
     ReleaseOutHwInfoStructs();
 

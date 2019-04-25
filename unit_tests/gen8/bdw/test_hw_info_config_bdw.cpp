@@ -88,6 +88,7 @@ BDWTEST_F(BdwHwInfo, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTableAndWor
             pWaTable = {};
             hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
 
+            EXPECT_EQ(setParamBool, pSkuTable.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, pSkuTable.ftrPPGTT);
             EXPECT_EQ(setParamBool, pSkuTable.ftrSVM);
             EXPECT_EQ(setParamBool, pSkuTable.ftrIA32eGfxPTEs);

@@ -77,6 +77,9 @@ GLKTEST_F(GlkHwInfo, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTableAndWor
             pWaTable = {};
             hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
 
+            EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuMidBatchPreempt);
+            EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuThreadGroupLevelPreempt);
+            EXPECT_EQ(setParamBool, pSkuTable.ftrL3IACoherency);
             EXPECT_EQ(false, pSkuTable.ftrGpGpuMidThreadLevelPreempt);
             EXPECT_EQ(setParamBool, pSkuTable.ftr3dMidBatchPreempt);
             EXPECT_EQ(setParamBool, pSkuTable.ftr3dObjectLevelPreempt);

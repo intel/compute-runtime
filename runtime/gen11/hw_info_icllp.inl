@@ -75,6 +75,7 @@ void ICLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
 
+    pSkuTable->ftrL3IACoherency = true;
     pSkuTable->ftrPPGTT = true;
     pSkuTable->ftrSVM = true;
     pSkuTable->ftrIA32eGfxPTEs = true;

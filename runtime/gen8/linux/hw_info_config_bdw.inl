@@ -16,9 +16,6 @@ int HwInfoConfigHw<IGFX_BROADWELL>::configureHardwareCustom(HardwareInfo *hwInfo
         return 0;
     }
     GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
-
-    pSkuTable->ftrL3IACoherency = true;
 
     // There is no interface to read total slice count from drm/i915, so we
     // derive this from the number of EUs and subslices.

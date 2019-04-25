@@ -95,6 +95,9 @@ CFLTEST_F(CflHwInfo, givenBoolWhenCallCflHardwareInfoSetupThenFeatureTableAndWor
             pWaTable = {};
             hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
 
+            EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuMidBatchPreempt);
+            EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuThreadGroupLevelPreempt);
+            EXPECT_EQ(setParamBool, pSkuTable.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, pSkuTable.ftrVEBOX);
             EXPECT_EQ(false, pSkuTable.ftrGpGpuMidThreadLevelPreempt);
             EXPECT_EQ(setParamBool, pSkuTable.ftr3dMidBatchPreempt);

@@ -44,9 +44,6 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfo) {
     EXPECT_EQ(1u, outHwInfo.pSysInfo->VDBoxInfo.Instances.Bits.VDBox0Enabled);
     EXPECT_TRUE(outHwInfo.pSysInfo->VEBoxInfo.IsValid);
     EXPECT_TRUE(outHwInfo.pSysInfo->VDBoxInfo.IsValid);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuMidBatchPreempt);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuThreadGroupLevelPreempt);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrL3IACoherency);
     ReleaseOutHwInfoStructs();
 
     drm->StoredDeviceID = ISKL_GT1_DT_DEVICE_F0_ID;

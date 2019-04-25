@@ -62,6 +62,7 @@ LKFTEST_F(LkfHwInfo, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTableAndWor
         pWaTable = {};
         hardwareInfoSetup[productFamily](&hwInfo, setParamBool, strConfig);
 
+        EXPECT_EQ(setParamBool, pSkuTable.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, pSkuTable.ftrPPGTT);
         EXPECT_EQ(setParamBool, pSkuTable.ftrSVM);
         EXPECT_EQ(setParamBool, pSkuTable.ftrIA32eGfxPTEs);

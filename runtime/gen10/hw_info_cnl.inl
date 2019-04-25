@@ -78,6 +78,9 @@ void CNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
 
+    pSkuTable->ftrL3IACoherency = true;
+    pSkuTable->ftrGpGpuMidBatchPreempt = true;
+    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
     pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;
     pSkuTable->ftr3dMidBatchPreempt = true;
     pSkuTable->ftr3dObjectLevelPreempt = true;

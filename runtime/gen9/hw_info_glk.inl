@@ -71,6 +71,9 @@ void GLK::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
 
+    pSkuTable->ftrGpGpuMidBatchPreempt = true;
+    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    pSkuTable->ftrL3IACoherency = true;
     pSkuTable->ftrGpGpuMidThreadLevelPreempt = false;
     pSkuTable->ftr3dMidBatchPreempt = true;
     pSkuTable->ftr3dObjectLevelPreempt = true;

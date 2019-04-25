@@ -16,11 +16,9 @@ int HwInfoConfigHw<IGFX_LAKEFIELD>::configureHardwareCustom(HardwareInfo *hwInfo
         return 0;
     }
 
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
 
     pSysInfo->SliceCount = 1;
-    pSkuTable->ftrL3IACoherency = true;
 
     return 0;
 }

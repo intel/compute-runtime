@@ -77,6 +77,9 @@ void BXT::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
 
+    pSkuTable->ftrGpGpuMidBatchPreempt = true;
+    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    pSkuTable->ftrL3IACoherency = true;
     pSkuTable->ftrVEBOX = true;
     pSkuTable->ftrULT = true;
     pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;

@@ -42,13 +42,6 @@ CNLTEST_F(HwInfoConfigTestLinuxCnl, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTC);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTX);
 
-    //constant sysInfo/ftr flags
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuMidBatchPreempt);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuThreadGroupLevelPreempt);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuThreadGroupLevelPreempt);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrSVM);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrL3IACoherency);
-
     ReleaseOutHwInfoStructs();
 
     drm->StoredDeviceID = ICNL_3x8_ULT_DEVICE_F0_ID;

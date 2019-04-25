@@ -96,6 +96,9 @@ KBLTEST_F(KblHwInfo, givenBoolWhenCallKblHardwareInfoSetupThenFeatureTableAndWor
             pPlatform.usRevId = 9;
             hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
 
+            EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuMidBatchPreempt);
+            EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuThreadGroupLevelPreempt);
+            EXPECT_EQ(setParamBool, pSkuTable.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, pSkuTable.ftrVEBOX);
             EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuMidThreadLevelPreempt);
             EXPECT_EQ(setParamBool, pSkuTable.ftr3dMidBatchPreempt);
