@@ -83,7 +83,6 @@ DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForUseHostPtr, false, "When active a
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")
 DECLARE_DEBUG_VARIABLE(bool, EnableHostPtrTracking, true, "Enable host ptr tracking")
 DECLARE_DEBUG_VARIABLE(bool, DisableDcFlushInEpilogue, false, "Disable DC flush in epilogue")
-DECLARE_DEBUG_VARIABLE(bool, EnableCacheFlushAfterWalkerForAllQueues, false, "Enable cache flush after walker even if queue doesn't require it")
 
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")

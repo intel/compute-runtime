@@ -10,11 +10,6 @@
 namespace NEO {
 
 template <typename GfxFamily>
-bool CommandQueueHw<GfxFamily>::requiresCacheFlushAfterWalkerBasedOnProperties(const cl_queue_properties *properties) {
-    return false;
-}
-
-template <typename GfxFamily>
 void CommandQueueHw<GfxFamily>::submitCacheFlush(Surface **surfaces,
                                                  size_t numSurfaces,
                                                  LinearStream *commandStream,
