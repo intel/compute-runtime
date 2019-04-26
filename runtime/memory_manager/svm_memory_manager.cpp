@@ -102,7 +102,7 @@ void SVMAllocsManager::freeSVMAlloc(void *ptr) {
 
 void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties) {
     AllocationProperties properties{true, size, GraphicsAllocation::AllocationType::SVM_ZERO_COPY};
-    MemObjHelper::fillCachePolicyInProperties(properties, false, svmProperties.readOnly);
+    MemObjHelper::fillCachePolicyInProperties(properties, false, svmProperties.readOnly, false);
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
     if (!allocation) {
         return nullptr;
@@ -122,7 +122,7 @@ void *SVMAllocsManager::createSvmAllocationWithDeviceStorage(size_t size, const 
     size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
     AllocationProperties cpuProperties{true, alignedSize, GraphicsAllocation::AllocationType::SVM_CPU};
     cpuProperties.alignment = 2 * MemoryConstants::megaByte;
-    MemObjHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly);
+    MemObjHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false);
     GraphicsAllocation *allocationCpu = memoryManager->allocateGraphicsMemoryWithProperties(cpuProperties);
     if (!allocationCpu) {
         return nullptr;
@@ -133,7 +133,7 @@ void *SVMAllocsManager::createSvmAllocationWithDeviceStorage(size_t size, const 
 
     AllocationProperties gpuProperties{false, alignedSize, GraphicsAllocation::AllocationType::SVM_GPU};
     gpuProperties.alignment = 2 * MemoryConstants::megaByte;
-    MemObjHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly);
+    MemObjHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly, false);
     GraphicsAllocation *allocationGpu = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties, svmPtr);
     if (!allocationGpu) {
         memoryManager->freeGraphicsMemory(allocationCpu);

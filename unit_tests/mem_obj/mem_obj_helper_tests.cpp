@@ -135,3 +135,27 @@ TEST(MemObjHelper, givenParentMemObjAndHostPtrFlagsWhenValidatingMemoryPropertie
         EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(properties, imageWithAccessFlagsUnrestricted.get()));
     }
 }
+
+TEST(MemObjHelper, givenDifferentParametersWhenCallingFillCachePolicyInPropertiesThenFlushL3FlagsAreCorrectlySet) {
+    AllocationProperties allocationProperties{0, GraphicsAllocation::AllocationType::BUFFER};
+
+    for (auto uncached : ::testing::Bool()) {
+        for (auto readOnly : ::testing::Bool()) {
+            for (auto deviceOnlyVisibilty : ::testing::Bool()) {
+                if (uncached || readOnly || deviceOnlyVisibilty) {
+                    allocationProperties.flags.flushL3RequiredForRead = true;
+                    allocationProperties.flags.flushL3RequiredForWrite = true;
+                    MemObjHelper::fillCachePolicyInProperties(allocationProperties, uncached, readOnly, deviceOnlyVisibilty);
+                    EXPECT_FALSE(allocationProperties.flags.flushL3RequiredForRead);
+                    EXPECT_FALSE(allocationProperties.flags.flushL3RequiredForWrite);
+                } else {
+                    allocationProperties.flags.flushL3RequiredForRead = false;
+                    allocationProperties.flags.flushL3RequiredForWrite = false;
+                    MemObjHelper::fillCachePolicyInProperties(allocationProperties, uncached, readOnly, deviceOnlyVisibilty);
+                    EXPECT_TRUE(allocationProperties.flags.flushL3RequiredForRead);
+                    EXPECT_TRUE(allocationProperties.flags.flushL3RequiredForWrite);
+                }
+            }
+        }
+    }
+}

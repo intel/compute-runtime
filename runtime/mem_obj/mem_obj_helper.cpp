@@ -31,13 +31,11 @@ bool MemObjHelper::parseMemoryProperties(const cl_mem_properties_intel *properti
     return true;
 }
 
-AllocationProperties MemObjHelper::getAllocationProperties(MemoryProperties memoryProperties, bool allocateMemory,
-                                                           size_t size, GraphicsAllocation::AllocationType type) {
-    AllocationProperties allocationProperties(allocateMemory, size, type);
+void MemObjHelper::fillPoliciesInProperties(AllocationProperties &allocationProperties, MemoryProperties &memoryProperties) {
     fillCachePolicyInProperties(allocationProperties,
                                 isValueSet(memoryProperties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE),
-                                isValueSet(memoryProperties.flags, CL_MEM_READ_ONLY));
-    return allocationProperties;
+                                isValueSet(memoryProperties.flags, CL_MEM_READ_ONLY),
+                                false);
 }
 
 bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, ContextType contextType, bool preferCompression) {
