@@ -223,6 +223,7 @@ GraphicsAllocation *CommandStreamReceiver::getScratchAllocation() {
 void CommandStreamReceiver::initProgrammingFlags() {
     isPreambleSent = false;
     GSBAFor32BitProgrammed = false;
+    bindingTableBaseAddressRequired = true;
     mediaVfeStateDirty = true;
     lastVmeSubslicesConfig = false;
 

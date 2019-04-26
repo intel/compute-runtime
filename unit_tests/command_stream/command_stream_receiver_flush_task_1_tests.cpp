@@ -472,6 +472,25 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, preambleShouldBeSentIfNeverSent) {
     EXPECT_GT(commandStreamReceiver.commandStream.getUsed(), 0u);
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenFlushTaskWhenInitProgrammingFlagsIsCalledThenBindingTableBaseAddressRequiredIsSetCorrecty) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.initProgrammingFlags();
+    EXPECT_TRUE(commandStreamReceiver.bindingTableBaseAddressRequired);
+
+    flushTask(commandStreamReceiver);
+    EXPECT_FALSE(commandStreamReceiver.bindingTableBaseAddressRequired);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenFlushTaskWhenInitProgrammingFlagsIsNotCalledThenBindingTableBaseAddressRequiredIsSetCorrectly) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_FALSE(commandStreamReceiver.bindingTableBaseAddressRequired);
+
+    flushTask(commandStreamReceiver);
+    EXPECT_FALSE(commandStreamReceiver.bindingTableBaseAddressRequired);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, pipelineSelectShouldBeSentIfNeverSentPreambleAndMediaSamplerRequirementChanged) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = false;

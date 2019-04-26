@@ -328,8 +328,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             dispatchFlags);
 
         if (sshDirty) {
+            bindingTableBaseAddressRequired = true;
+        }
+
+        if (bindingTableBaseAddressRequired) {
             StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(commandStreamCSR, ssh, stateBaseAddressCmdOffset,
                                                                               device.getGmmHelper());
+            bindingTableBaseAddressRequired = false;
         }
 
         programStateSip(commandStreamCSR, device);
