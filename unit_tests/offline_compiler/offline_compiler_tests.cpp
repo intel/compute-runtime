@@ -631,7 +631,7 @@ TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChang
     EXPECT_FALSE(mockOfflineCompiler->inputFileSpirV);
 }
 
-TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUed) {
+TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUsed) {
     MockOfflineCompiler mockOfflineCompiler;
     auto argv = {
         "ocloc",
@@ -674,6 +674,39 @@ TEST(OfflineCompilerTest, givenBinaryInputThenDontTruncateSourceAtFirstZero) {
     mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
     mockOfflineCompiler->initialize(argvSpirV.size(), argvSpirV.begin());
     EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
+}
+
+TEST(OfflineCompilerTest, givenSpirvInputFileWhenCmdLineHasOptionsThenCorrectOptionsArePassedToCompiler) {
+    char data[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    MockCompilerDebugVars igcDebugVars(gEnvironment->igcDebugVars);
+    igcDebugVars.binaryToReturn = data;
+    igcDebugVars.binaryToReturnSize = sizeof(data);
+
+    NEO::setIgcDebugVars(igcDebugVars);
+
+    MockOfflineCompiler mockOfflineCompiler;
+    auto argv = {
+        "ocloc",
+        "-file",
+        "test_files/emptykernel.cl",
+        "-spirv_input",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-options",
+        "test_options_passed"};
+
+    auto retVal = mockOfflineCompiler.initialize(argv.size(), argv.begin());
+    auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
+    mockOfflineCompiler.igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxLatest>(mockIgcOclDeviceCtx);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    mockOfflineCompiler.inputFileSpirV = true;
+
+    retVal = mockOfflineCompiler.buildSourceCode();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_STREQ("test_options_passed", mockOfflineCompiler.options.c_str());
+    NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
 }
 
 TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFileHasCorrectName) {
@@ -773,7 +806,7 @@ TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreApp
     EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("myInternalOptions")));
 }
 
-TEST(OfflineCompilerTest, givenInputOtpionsAndInternalOptionsFilesWhenOfflineCompilerIsInitializedThenCorrectOptionsAreSetAndRemainAfterBuild) {
+TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsFilesWhenOfflineCompilerIsInitializedThenCorrectOptionsAreSetAndRemainAfterBuild) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
