@@ -39,7 +39,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     uint32_t getMaskAndValueForPollForCompletion() const;
     bool getpollNotEqualValueForPollForCompletion() const;
 
-    MOCKABLE_VIRTUAL void makeCoherent(GraphicsAllocation &gfxAllocation);
+    MOCKABLE_VIRTUAL void downloadAllocation(GraphicsAllocation &gfxAllocation);
 
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;

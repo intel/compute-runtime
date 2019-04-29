@@ -318,7 +318,7 @@ HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThen
     EXPECT_EQ(9u, tbxCsr->aubDeviceId);
 }
 
-HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingMakeSurfacePackNonResidentThenOnlyResidentAllocationsAreScheduledForCoherence) {
+HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingMakeSurfacePackNonResidentThenOnlyResidentAllocationsAddedAllocationsForDownload) {
     MockTbxCsr<FamilyType> tbxCsr{*pDevice->executionEnvironment};
     MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
     tbxCsr.setupContext(osContext);
@@ -343,7 +343,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForTaskCountWithKm
     struct MockTbxCsr : TbxCommandStreamReceiverHw<FamilyType> {
         using CommandStreamReceiver::latestFlushedTaskCount;
         using TbxCommandStreamReceiverHw<FamilyType>::TbxCommandStreamReceiverHw;
-        void makeCoherent(GraphicsAllocation &gfxAllocation) override {
+        void downloadAllocation(GraphicsAllocation &gfxAllocation) override {
             *reinterpret_cast<uint32_t *>(CommandStreamReceiver::getTagAllocation()->getUnderlyingBuffer()) = this->latestFlushedTaskCount;
             downloadedAllocations.insert(&gfxAllocation);
         }
@@ -479,14 +479,14 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsC
     EXPECT_TRUE(tbxCsr.writeMemoryWithAubManagerCalled);
 }
 
-HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeCoherentIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenDownloadAllocationIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
     MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
     MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
     tbxCsr.setupContext(osContext);
     auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
 
     MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
-    tbxCsr.makeCoherent(allocation);
+    tbxCsr.downloadAllocation(allocation);
 
     EXPECT_TRUE(mockHardwareContext->readMemoryCalled);
 }

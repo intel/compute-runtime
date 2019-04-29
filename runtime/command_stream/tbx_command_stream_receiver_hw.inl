@@ -390,11 +390,11 @@ void TbxCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallbac
     this->flushBatchedSubmissions();
 
     while (*this->getTagAddress() < this->latestFlushedTaskCount) {
-        makeCoherent(*this->getTagAllocation());
+        downloadAllocation(*this->getTagAllocation());
     }
 
     for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
-        makeCoherent(*graphicsAllocation);
+        downloadAllocation(*graphicsAllocation);
     }
     this->allocationsForDownload.clear();
 
@@ -418,7 +418,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::makeCoherent(GraphicsAllocation &gfxAllocation) {
+void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocation(GraphicsAllocation &gfxAllocation) {
     if (hardwareContextController) {
         hardwareContextController->readMemory(gfxAllocation.getGpuAddress(), gfxAllocation.getUnderlyingBuffer(), gfxAllocation.getUnderlyingBufferSize(),
                                               this->getMemoryBank(&gfxAllocation), MemoryConstants::pageSize64k);

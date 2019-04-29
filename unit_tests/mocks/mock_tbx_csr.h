@@ -49,8 +49,8 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion();
         pollForCompletionCalled = true;
     }
-    void makeCoherent(GraphicsAllocation &gfxAllocation) override {
-        TbxCommandStreamReceiverHw<GfxFamily>::makeCoherent(gfxAllocation);
+    void downloadAllocation(GraphicsAllocation &gfxAllocation) override {
+        TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocation(gfxAllocation);
         makeCoherentCalled = true;
     }
     bool initializeEngineCalled = false;
