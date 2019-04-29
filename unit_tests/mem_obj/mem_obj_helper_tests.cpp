@@ -31,6 +31,26 @@ TEST(MemObjHelper, givenNullPropertiesWhenParsingMemoryPropertiesThenTrueIsRetur
     EXPECT_TRUE(MemObjHelper::parseMemoryProperties(nullptr, propertiesStruct));
 }
 
+TEST(MemObjHelper, givenClMemForceLinearStorageFlagWhenCheckForLinearStorageForceThenReturnProperValue) {
+    MemoryProperties properties;
+
+    properties.flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
+    properties.flags_intel = 0;
+    EXPECT_TRUE(MemObjHelper::isLinearStorageForced(properties));
+
+    properties.flags = 0;
+    properties.flags_intel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
+    EXPECT_TRUE(MemObjHelper::isLinearStorageForced(properties));
+
+    properties.flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
+    properties.flags_intel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
+    EXPECT_TRUE(MemObjHelper::isLinearStorageForced(properties));
+
+    properties.flags = 0;
+    properties.flags_intel = 0;
+    EXPECT_FALSE(MemObjHelper::isLinearStorageForced(properties));
+}
+
 TEST(MemObjHelper, givenEmptyPropertiesWhenParsingMemoryPropertiesThenTrueIsReturned) {
     cl_mem_properties_intel properties[] = {0};
 

@@ -127,6 +127,11 @@ class MemObjHelper {
         return svmProperties;
     }
 
+    static bool isLinearStorageForced(const MemoryProperties &memoryProperties) {
+        return isValueSet(memoryProperties.flags, CL_MEM_FORCE_LINEAR_STORAGE_INTEL) ||
+               isValueSet(memoryProperties.flags_intel, CL_MEM_FORCE_LINEAR_STORAGE_INTEL);
+    }
+
     static bool isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, ContextType contextType, bool preferCompression);
 
   protected:
