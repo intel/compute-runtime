@@ -251,6 +251,26 @@ OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 2)::Tran
     return nullptr;
 }
 
+bool CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 3)::GetSpecConstantsInfoImpl(
+    CIF::Builtins::BufferSimple *src,
+    CIF::Builtins::BufferSimple *outSpecConstantsIds,
+    CIF::Builtins::BufferSimple *outSpecConstantsSizes) {
+    return true;
+}
+
+OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 3)::TranslateImpl(
+    CIF::Version_t outVersion,
+    CIF::Builtins::BufferSimple *src,
+    CIF::Builtins::BufferSimple *specConstantsIds,
+    CIF::Builtins::BufferSimple *specConstantsValues,
+    CIF::Builtins::BufferSimple *options,
+    CIF::Builtins::BufferSimple *internalOptions,
+    CIF::Builtins::BufferSimple *tracingOptions,
+    uint32_t tracingOptionsCount,
+    void *gtPinInput) {
+    return nullptr;
+}
+
 // OclTranslationOutput
 OclTranslationOutput<0>::~OclTranslationOutput() {}
 
