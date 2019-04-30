@@ -28,7 +28,7 @@ components:
     branch: kmdaf
     clean_on_sync: true
     dest_dir: kmdaf
-    revision: 3e45a728e94ee8ed0faa968d22409ac1465bcb60
+    revision: b485c17a305407d9f57bc0533af34675af0bc9ff
     type: git
   libva:
     branch: libva
@@ -43,5 +43,5 @@ components:
     dest_dir: wdk
     revision: 0dea8bf00d710a5d2da5d04eb5ae595d0df4ce47-1217
     type: git
-converter: M-1222
+converter: M-1239
 version: '1'
