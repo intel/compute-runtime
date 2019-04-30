@@ -67,7 +67,6 @@ bool Drm::isi915Version(int fd) {
 }
 
 int Drm::getDeviceFd(const int devType) {
-    int fd = -1;
     char fullPath[PATH_MAX];
     const char *pathPrefix;
     unsigned int startNum;
@@ -85,22 +84,21 @@ int Drm::getDeviceFd(const int devType) {
     }
 
     for (unsigned int i = 0; i < maxDrmDevices; i++) {
-        snprintf(fullPath, PATH_MAX, "%s%d", pathPrefix, i + startNum);
-        if ((fd = ::open(fullPath, O_RDWR)) >= 0) {
+        snprintf(fullPath, PATH_MAX, "%s%u", pathPrefix, i + startNum);
+        int fd = ::open(fullPath, O_RDWR);
+        if (fd >= 0) {
             if (isi915Version(fd)) {
-                break;
+                return fd;
             }
             ::close(fd);
-            fd = -1;
         }
     }
 
-    return fd;
+    return -1;
 }
 
 int Drm::openDevice() {
-    int fd = -1;
-    fd = getDeviceFd(0);
+    int fd = getDeviceFd(0);
     if (fd < 0) {
         fd = getDeviceFd(1);
     }

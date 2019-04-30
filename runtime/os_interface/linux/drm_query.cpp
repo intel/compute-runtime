@@ -9,6 +9,13 @@
 
 namespace NEO {
 
+void *Drm::query(uint32_t queryId) {
+    return nullptr;
+}
+
+void Drm::queryEngineInfo() {
+}
+
 void Drm::queryMemoryInfo() {
 }
 

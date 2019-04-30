@@ -28,6 +28,7 @@ class DrmMock : public Drm {
   public:
     using Drm::memoryInfo;
     using Drm::preemptionSupported;
+    using Drm::query;
 
     DrmMock() : Drm(mockFd) {
         sysFsDefaultGpuPathToRestore = nullptr;

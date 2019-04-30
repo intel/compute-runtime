@@ -69,9 +69,10 @@ class Drm {
     MOCKABLE_VIRTUAL int getErrno();
     void setSimplifiedMocsTableUsage(bool value);
     bool getSimplifiedMocsTableUsage() const;
+    void queryEngineInfo();
     void queryMemoryInfo();
 
-    MemoryInfo *getMemoryInfo() {
+    MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();
     }
 
@@ -92,6 +93,7 @@ class Drm {
     static void closeDevice(int32_t deviceOrdinal);
 
     std::string getSysFsPciPath(int deviceID);
+    void *query(uint32_t queryId);
 
 #pragma pack(1)
     struct PCIConfig {
