@@ -1662,7 +1662,7 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
 
     for (auto allocationType : allocationTypesThatMayNeedL3Flush) {
         properties.allocationType = allocationType;
-        MockMemoryManager::getAllocationData(allocData, properties, {}, nullptr);
+        MockMemoryManager::getAllocationData(allocData, properties, nullptr);
         EXPECT_TRUE(allocData.flags.flushL3);
     }
 
@@ -1671,7 +1671,7 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
 
     for (auto allocationType : allocationTypesThatMayNeedL3Flush) {
         properties.allocationType = allocationType;
-        MockMemoryManager::getAllocationData(allocData, properties, {}, nullptr);
+        MockMemoryManager::getAllocationData(allocData, properties, nullptr);
         EXPECT_FALSE(allocData.flags.flushL3);
     }
 }

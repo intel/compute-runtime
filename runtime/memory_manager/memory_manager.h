@@ -183,8 +183,7 @@ class MemoryManager {
         ImageInfo *imgInfo = nullptr;
     };
 
-    static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const StorageInfo storageInfo,
-                                  const void *hostPtr);
+    static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr);
     static bool useInternal32BitAllocator(GraphicsAllocation::AllocationType allocationType) {
         return allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA ||
                allocationType == GraphicsAllocation::AllocationType::INTERNAL_HEAP;

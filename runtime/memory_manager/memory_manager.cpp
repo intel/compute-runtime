@@ -204,8 +204,7 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
     return osContext;
 }
 
-bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const StorageInfo storageInfo,
-                                      const void *hostPtr) {
+bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr) {
     UNRECOVERABLE_IF(hostPtr == nullptr && !properties.flags.allocateMemory);
     UNRECOVERABLE_IF(properties.allocationType == GraphicsAllocation::AllocationType::UNKNOWN);
 
@@ -302,7 +301,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.hostPtr = hostPtr;
     allocationData.size = properties.size;
     allocationData.type = properties.allocationType;
-    allocationData.storageInfo = storageInfo;
+    allocationData.storageInfo = MemoryManager::createStorageInfoFromProperties(properties);
     allocationData.alignment = properties.alignment ? properties.alignment : MemoryConstants::preferredAlignment;
     allocationData.imgInfo = properties.imgInfo;
 
@@ -314,8 +313,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr) {
     AllocationData allocationData;
-    auto storageInfo = MemoryManager::createStorageInfoFromProperties(properties);
-    getAllocationData(allocationData, properties, storageInfo, hostPtr);
+    getAllocationData(allocationData, properties, hostPtr);
 
     AllocationStatus status = AllocationStatus::Error;
     GraphicsAllocation *allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
