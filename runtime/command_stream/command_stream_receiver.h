@@ -154,7 +154,7 @@ class CommandStreamReceiver {
     AllocationsList &getTemporaryAllocations();
     AllocationsList &getAllocationsForReuse();
     InternalAllocationStorage *getInternalAllocationStorage() const { return internalAllocationStorage.get(); }
-    bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush);
+    MOCKABLE_VIRTUAL bool createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush);
     virtual size_t getPreferredTagPoolSize() const { return 512; }
     virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
     OsContext &getOsContext() const { return *osContext; }

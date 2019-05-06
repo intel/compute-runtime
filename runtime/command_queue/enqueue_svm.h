@@ -264,6 +264,18 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMFree(cl_uint numSvmPointers,
     return CL_SUCCESS;
 }
 
+inline void setOperationParams(BuiltinDispatchInfoBuilder::BuiltinOpParams &operationParams, size_t size,
+                               const void *srcPtr, GraphicsAllocation *srcSvmAlloc, size_t srcPtrOffset,
+                               void *dstPtr, GraphicsAllocation *dstSvmAlloc, size_t dstPtrOffset) {
+    operationParams.size = {size, 0, 0};
+    operationParams.srcPtr = const_cast<void *>(srcPtr);
+    operationParams.srcSvmAlloc = srcSvmAlloc;
+    operationParams.srcOffset = {srcPtrOffset, 0, 0};
+    operationParams.dstPtr = dstPtr;
+    operationParams.dstSvmAlloc = dstSvmAlloc;
+    operationParams.dstOffset = {dstPtrOffset, 0, 0};
+}
+
 template <typename GfxFamily>
 cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
                                                    void *dstPtr,
@@ -273,40 +285,100 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
                                                    const cl_event *eventWaitList,
                                                    cl_event *event) {
 
+    if ((dstPtr == nullptr) || (srcPtr == nullptr)) {
+        return CL_INVALID_VALUE;
+    }
     auto dstSvmData = context->getSVMAllocsManager()->getSVMAlloc(dstPtr);
     auto srcSvmData = context->getSVMAllocsManager()->getSVMAlloc(srcPtr);
-    if ((dstSvmData == nullptr) || (srcSvmData == nullptr)) {
+
+    enum CopyType { InvalidCopyType,
+                    SvmToHost,
+                    HostToSvm,
+                    SvmToSvm };
+    CopyType copyType = InvalidCopyType;
+    if ((srcSvmData != nullptr) && (dstSvmData != nullptr)) {
+        copyType = SvmToSvm;
+    } else if ((srcSvmData == nullptr) && (dstSvmData != nullptr)) {
+        copyType = HostToSvm;
+    } else if (srcSvmData != nullptr) {
+        copyType = SvmToHost;
+    } else {
         return CL_INVALID_VALUE;
     }
 
     MultiDispatchInfo dispatchInfo;
-
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                                                         this->getContext(), this->getDevice());
-
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
-
     BuiltinDispatchInfoBuilder::BuiltinOpParams operationParams;
-    operationParams.srcPtr = const_cast<void *>(srcPtr);
-    operationParams.dstPtr = dstPtr;
-    operationParams.srcSvmAlloc = srcSvmData->gpuAllocation;
-    operationParams.dstSvmAlloc = dstSvmData->gpuAllocation;
-    operationParams.srcOffset = {0, 0, 0};
-    operationParams.dstOffset = {0, 0, 0};
-    operationParams.size = {size, 0, 0};
-    builder.buildDispatchInfos(dispatchInfo, operationParams);
 
-    GeneralSurface s1(srcSvmData->gpuAllocation), s2(dstSvmData->gpuAllocation);
-    Surface *surfaces[] = {&s1, &s2};
+    Surface *surfaces[2];
+    if (copyType == SvmToHost) {
+        GeneralSurface srcSvmSurf(srcSvmData->gpuAllocation);
+        HostPtrSurface dstHostPtrSurf(dstPtr, size);
+        if (size != 0) {
+            bool status = getCommandStreamReceiver().createAllocationForHostSurface(dstHostPtrSurf, true);
+            if (!status) {
+                return CL_OUT_OF_RESOURCES;
+            }
+            dstPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
+        }
 
-    enqueueHandler<CL_COMMAND_SVM_MEMCPY>(
-        surfaces,
-        blockingCopy ? true : false,
-        dispatchInfo,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
-
+        void *alignedDstPtr = alignDown(dstPtr, 4);
+        size_t dstPtrOffset = ptrDiff(dstPtr, alignedDstPtr);
+        setOperationParams(operationParams, size, srcPtr, srcSvmData->gpuAllocation, 0, alignedDstPtr, nullptr, dstPtrOffset);
+        surfaces[0] = &srcSvmSurf;
+        surfaces[1] = &dstHostPtrSurf;
+        builder.buildDispatchInfos(dispatchInfo, operationParams);
+        enqueueHandler<CL_COMMAND_READ_BUFFER>(
+            surfaces,
+            blockingCopy == CL_TRUE,
+            dispatchInfo,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+    } else if (copyType == HostToSvm) {
+        HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcPtr), size);
+        GeneralSurface dstSvmSurf(dstSvmData->gpuAllocation);
+        if (size != 0) {
+            bool status = getCommandStreamReceiver().createAllocationForHostSurface(srcHostPtrSurf, false);
+            if (!status) {
+                return CL_OUT_OF_RESOURCES;
+            }
+            srcPtr = reinterpret_cast<void *>(srcHostPtrSurf.getAllocation()->getGpuAddress());
+        }
+        void *alignedSrcPtr = alignDown(const_cast<void *>(srcPtr), 4);
+        size_t srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
+        setOperationParams(operationParams, size, alignedSrcPtr, nullptr, srcPtrOffset, dstPtr, dstSvmData->gpuAllocation, 0);
+        surfaces[0] = &dstSvmSurf;
+        surfaces[1] = &srcHostPtrSurf;
+        builder.buildDispatchInfos(dispatchInfo, operationParams);
+        enqueueHandler<CL_COMMAND_WRITE_BUFFER>(
+            surfaces,
+            blockingCopy == CL_TRUE,
+            dispatchInfo,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+    } else {
+        GeneralSurface srcSvmSurf(srcSvmData->gpuAllocation);
+        GeneralSurface dstSvmSurf(dstSvmData->gpuAllocation);
+        setOperationParams(operationParams, size, srcPtr, srcSvmData->gpuAllocation, 0, dstPtr, dstSvmData->gpuAllocation, 0);
+        surfaces[0] = &srcSvmSurf;
+        surfaces[1] = &dstSvmSurf;
+        builder.buildDispatchInfos(dispatchInfo, operationParams);
+        enqueueHandler<CL_COMMAND_SVM_MEMCPY>(
+            surfaces,
+            blockingCopy ? true : false,
+            dispatchInfo,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+    }
+    if (event) {
+        auto pEvent = castToObjectOrAbort<Event>(*event);
+        pEvent->setCmdType(CL_COMMAND_SVM_MEMCPY);
+    }
     return CL_SUCCESS;
 }
 
