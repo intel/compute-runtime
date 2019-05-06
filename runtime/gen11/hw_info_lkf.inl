@@ -71,8 +71,8 @@ WorkaroundTable LKF::workaroundTable = {};
 FeatureTable LKF::featureTable = {};
 
 void LKF::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
-    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
+    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
 
     pSkuTable->ftrL3IACoherency = true;
     pSkuTable->ftrPPGTT = true;
@@ -114,7 +114,7 @@ const HardwareInfo LKF_1x8x8::hwInfo = {
 };
 GT_SYSTEM_INFO LKF_1x8x8::gtSystemInfo = {0};
 void LKF_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 64;
     gtSysInfo->ThreadCount = 64 * LKF::threadsPerEu;
     gtSysInfo->SliceCount = 1;

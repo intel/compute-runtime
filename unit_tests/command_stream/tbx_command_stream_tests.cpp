@@ -132,7 +132,7 @@ HWTEST_F(TbxCommandStreamTests, DISABLED_getCsTraits) {
 
 TEST(TbxCommandStreamReceiverTest, givenNullFactoryEntryWhenTbxCsrIsCreatedThenNullptrIsReturned) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    GFXCORE_FAMILY family = executionEnvironment->getHardwareInfo()->pPlatform->eRenderCoreFamily;
+    GFXCORE_FAMILY family = executionEnvironment->getHardwareInfo()->pPlatform.eRenderCoreFamily;
     VariableBackup<TbxCommandStreamReceiverCreateFunc> tbxCsrFactoryBackup(&tbxCommandStreamReceiverFactory[family]);
 
     tbxCommandStreamReceiverFactory[family] = nullptr;
@@ -143,15 +143,12 @@ TEST(TbxCommandStreamReceiverTest, givenNullFactoryEntryWhenTbxCsrIsCreatedThenN
 
 TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedWithWrongGfxCoreFamilyThenNullPointerShouldBeReturned) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    auto hwInfo = executionEnvironment->getHardwareInfo();
-    GFXCORE_FAMILY family = hwInfo->pPlatform->eRenderCoreFamily;
+    auto hwInfo = executionEnvironment->getMutableHardwareInfo();
 
-    const_cast<PLATFORM *>(hwInfo->pPlatform)->eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
+    hwInfo->pPlatform.eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
 
     CommandStreamReceiver *csr = TbxCommandStreamReceiver::create("", false, *executionEnvironment);
     EXPECT_EQ(nullptr, csr);
-
-    const_cast<PLATFORM *>(hwInfo->pPlatform)->eRenderCoreFamily = family;
 }
 
 TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenTypeIsCheckedThenTbxCsrIsReturned) {
@@ -387,12 +384,8 @@ HWTEST_F(TbxCommandSteamSimpleTest, whenTbxCommandStreamReceiverIsCreatedThenPPG
 
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCommandStreamReceiverWhenPhysicalAddressAllocatorIsCreatedThenItIsNotNull) {
     MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
-    auto oldSkuTable = hwInfoHelper.pSkuTable;
-    std::unique_ptr<FeatureTable, std::function<void(FeatureTable *)>> skuTable(new FeatureTable, [&](FeatureTable *ptr) { delete ptr;  hwInfoHelper.pSkuTable = oldSkuTable; });
-    hwInfoHelper.pSkuTable = skuTable.get();
     std::unique_ptr<PhysicalAddressAllocator> allocator(tbxCsr.createPhysicalAddressAllocator(&hwInfoHelper));
     ASSERT_NE(nullptr, allocator);
-    hwInfoHelper.pSkuTable = nullptr;
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenItIsCreatedWithUseAubStreamFalseThenDontInitializeAubManager) {
@@ -505,7 +498,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenHardwareContextIsCreatedThenTbxSt
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareContext) {
     auto hwInfo = pDevice->executionEnvironment->getHardwareInfo();
-    MockOsContext osContext(0, 1, HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    MockOsContext osContext(0, 1, HwHelper::get(hwInfo->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                             PreemptionMode::Disabled, false);
     std::string fileName = "";
     MockAubManager *mockManager = new MockAubManager();

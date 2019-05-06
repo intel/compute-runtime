@@ -41,7 +41,7 @@ typedef Test<DrmTestsFixture> DrmTests;
 
 void initializeTestedDevice() {
     for (uint32_t i = 0; deviceDescriptorTable[i].eGtType != GTTYPE::GTTYPE_UNDEFINED; i++) {
-        if (platformDevices[0]->pPlatform->eProductFamily == deviceDescriptorTable[i].pHwInfo->pPlatform->eProductFamily) {
+        if (platformDevices[0]->pPlatform.eProductFamily == deviceDescriptorTable[i].pHwInfo->pPlatform.eProductFamily) {
             deviceId = deviceDescriptorTable[i].deviceId;
             break;
         }

@@ -33,7 +33,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         memoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        device.reset(MockDevice::create<MockDevice>(*platformDevices, executionEnvironment, 0));
+        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0));
         context.reset(new MockContext(device.get()));
 
         allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{size});

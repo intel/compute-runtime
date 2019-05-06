@@ -104,7 +104,7 @@ TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManage
 TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillAvailable) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
-    std::unique_ptr<Device> device(Device::create<NEO::Device>(nullptr, executionEnvironment, 0u));
+    std::unique_ptr<Device> device(Device::create<Device>(executionEnvironment, 0u));
     device.reset(nullptr);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
@@ -178,7 +178,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
     auto executionEnvironment = device->getExecutionEnvironment();
     executionEnvironment->initializeCommandStreamReceiver(0, 0);
-    auto enableLocalMemory = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
+    auto enableLocalMemory = HwHelper::get(hwInfo->pPlatform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
     executionEnvironment->initializeMemoryManager();
     EXPECT_EQ(enableLocalMemory, executionEnvironment->memoryManager->isLocalMemorySupported());
 }
@@ -192,7 +192,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::vector<std::unique_ptr<CommandStreamReceiver>>) +
                                                   sizeof(std::unique_ptr<CommandStreamReceiver>) +
                                                   sizeof(std::mutex) +
-                                                  sizeof(HardwareInfo *) +
+                                                  sizeof(std::unique_ptr<HardwareInfo>) +
                                                   (is64bit ? 80 : 44),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
@@ -249,11 +249,11 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
 
 TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    std::unique_ptr<MockDevice> device(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 0u));
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0u));
     auto &commandStreamReceiver = device->getCommandStreamReceiver();
     auto memoryManager = device->getMemoryManager();
 
-    std::unique_ptr<MockDevice> device2(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 1u));
+    std::unique_ptr<MockDevice> device2(Device::create<MockDevice>(executionEnvironment, 1u));
     EXPECT_NE(&commandStreamReceiver, &device2->getCommandStreamReceiver());
     EXPECT_EQ(memoryManager, device2->getMemoryManager());
 }
@@ -300,7 +300,7 @@ TEST(ExecutionEnvironment, whenSpecialCsrExistsThenReturnSpecialEngineControl) {
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 
     executionEnvironment->specialCommandStreamReceiver.reset(createCommandStream(*executionEnvironment));
-    auto engineType = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0];
+    auto engineType = HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0];
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(executionEnvironment->specialCommandStreamReceiver.get(),
                                                                                      engineType, 1,
                                                                                      PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);

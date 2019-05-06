@@ -68,9 +68,9 @@ WorkaroundTable KBL::workaroundTable = {};
 FeatureTable KBL::featureTable = {};
 
 void KBL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    PLATFORM *pPlatform = const_cast<PLATFORM *>(hwInfo->pPlatform);
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
-    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+    PLATFORM *pPlatform = &hwInfo->pPlatform;
+    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
+    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
 
     pSkuTable->ftrGpGpuMidBatchPreempt = true;
     pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
@@ -120,7 +120,7 @@ const HardwareInfo KBL_1x2x6::hwInfo = {
 };
 GT_SYSTEM_INFO KBL_1x2x6::gtSystemInfo = {0};
 void KBL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 11;
     gtSysInfo->ThreadCount = 11 * KBL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -154,7 +154,7 @@ const HardwareInfo KBL_1x3x6::hwInfo = {
 
 GT_SYSTEM_INFO KBL_1x3x6::gtSystemInfo = {0};
 void KBL_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 17;
     gtSysInfo->ThreadCount = 17 * KBL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -187,7 +187,7 @@ const HardwareInfo KBL_1x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO KBL_1x3x8::gtSystemInfo = {0};
 void KBL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 23;
     gtSysInfo->ThreadCount = 23 * KBL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -220,7 +220,7 @@ const HardwareInfo KBL_2x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO KBL_2x3x8::gtSystemInfo = {0};
 void KBL_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 47;
     gtSysInfo->ThreadCount = 47 * KBL::threadsPerEu;
     gtSysInfo->SliceCount = 2;
@@ -253,7 +253,7 @@ const HardwareInfo KBL_3x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO KBL_3x3x8::gtSystemInfo = {0};
 void KBL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 71;
     gtSysInfo->ThreadCount = 71 * KBL::threadsPerEu;
     gtSysInfo->SliceCount = 3;

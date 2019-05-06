@@ -15,7 +15,7 @@ int HwInfoConfigHw<IGFX_CANNONLAKE>::configureHardwareCustom(HardwareInfo *hwInf
     if (nullptr == osIface) {
         return 0;
     }
-    GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
 
     if (pSysInfo->SubSliceCount == 9) {
         pSysInfo->SliceCount = 4;

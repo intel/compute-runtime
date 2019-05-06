@@ -49,14 +49,13 @@ TEST_F(clSetPerformanceConfigurationINTELTests, negativeInstrumentationDisabled)
     cl_uint offsets[2];
     cl_uint values[2];
 
-    HardwareInfo *pInHwInfo = const_cast<HardwareInfo *>(hwInfo);
-    bool instrumentationEnabled = pInHwInfo->capabilityTable.instrumentationEnabled;
-    pInHwInfo->capabilityTable.instrumentationEnabled = false;
+    bool instrumentationEnabled = hwInfo->capabilityTable.instrumentationEnabled;
+    hwInfo->capabilityTable.instrumentationEnabled = false;
 
     ret = clSetPerformanceConfigurationINTEL(device.get(), 2, offsets, values);
     EXPECT_EQ(CL_PROFILING_INFO_NOT_AVAILABLE, ret);
 
-    pInHwInfo->capabilityTable.instrumentationEnabled = instrumentationEnabled;
+    hwInfo->capabilityTable.instrumentationEnabled = instrumentationEnabled;
 }
 
 } // namespace ULT

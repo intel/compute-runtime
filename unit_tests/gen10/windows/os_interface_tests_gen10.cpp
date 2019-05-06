@@ -12,15 +12,15 @@
 typedef OsInterfaceTest OsInterfaceTestCnl;
 
 GEN10TEST_F(OsInterfaceTestCnl, askKmdIfPreemptionRegisterWhitelisted) {
-    HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
 
     ExecutionEnvironment executionEnvironment;
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevices(numDevices, executionEnvironment);
     EXPECT_TRUE(success);
+    auto hwInfo = executionEnvironment.getHardwareInfo();
 
     for (size_t i = 0u; i < numDevices; i++) {
-        if (hwInfo[i].pWaTable->waEnablePreemptionGranularityControlByUMD) {
+        if (hwInfo[i].pWaTable.waEnablePreemptionGranularityControlByUMD) {
             EXPECT_TRUE(hwInfo[i].capabilityTable.whitelistedRegisters.csChicken1_0x2580);
         } else {
             EXPECT_FALSE(hwInfo[i].capabilityTable.whitelistedRegisters.csChicken1_0x2580);

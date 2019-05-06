@@ -206,7 +206,7 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
             getCap<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL>(src, srcSize, retSize);
         break;
     default:
-        DeviceHelper::getExtraDeviceInfo(hwInfo, paramName, param, src, srcSize, retSize);
+        DeviceHelper::getExtraDeviceInfo(getHardwareInfo(), paramName, param, src, srcSize, retSize);
     }
 
     retVal = ::getInfo(paramValue, paramValueSize, src, srcSize);
@@ -222,7 +222,7 @@ bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTime
     TimeStampData queueTimeStamp;
     bool retVal = getOSTime()->getCpuGpuTime(&queueTimeStamp);
     if (retVal) {
-        uint64_t resolution = (uint64_t)getOSTime()->getDynamicDeviceTimerResolution(this->hwInfo);
+        uint64_t resolution = (uint64_t)getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
         *deviceTimestamp = queueTimeStamp.GPUTimeStamp * resolution;
     }
 

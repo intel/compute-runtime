@@ -36,7 +36,7 @@ template <>
 void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, DispatchFlags &dispatchFlags) {
     using PWR_CLK_STATE_REGISTER = Family::PWR_CLK_STATE_REGISTER;
 
-    if (peekHwInfo().pPlatform->eProductFamily == IGFX_ICELAKE_LP) {
+    if (peekHwInfo().pPlatform.eProductFamily == IGFX_ICELAKE_LP) {
         if (dispatchFlags.mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
                 auto pc = addPipeControlCmd(stream);
@@ -49,13 +49,13 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 pc->setConstantCacheInvalidationEnable(true);
                 pc->setStateCacheInvalidationEnable(true);
 
-                uint32_t numSubslices = peekHwInfo().pSysInfo->SubSliceCount;
+                uint32_t numSubslices = peekHwInfo().pSysInfo.SubSliceCount;
                 uint32_t numSubslicesWithVme = numSubslices / 2; // 1 VME unit per DSS
                 uint32_t numSlicesForPowerGating = 1;            // power gating supported only if #Slices = 1
 
                 PWR_CLK_STATE_REGISTER reg = Family::cmdInitPwrClkStateRegister;
-                reg.TheStructure.Common.EUmin = peekHwInfo().pSysInfo->MaxEuPerSubSlice;
-                reg.TheStructure.Common.EUmax = peekHwInfo().pSysInfo->MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmin = peekHwInfo().pSysInfo.MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmax = peekHwInfo().pSysInfo.MaxEuPerSubSlice;
                 reg.TheStructure.Common.SSCountEn = 1; // Enable SScount
                 reg.TheStructure.Common.SScount = numSubslicesWithVme;
                 reg.TheStructure.Common.EnableSliceCountRequest = 1; // Enable SliceCountRequest
@@ -84,13 +84,13 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 // In Gen11-LP, software programs this register as if GT consists of
                 // 2 slices with 4 subslices in each slice. Hardware maps this to the
                 // LP 1 slice/8-subslice physical layout
-                uint32_t numSubslices = peekHwInfo().pSysInfo->SubSliceCount;
+                uint32_t numSubslices = peekHwInfo().pSysInfo.SubSliceCount;
                 uint32_t numSubslicesMapped = numSubslices / 2;
-                uint32_t numSlicesMapped = peekHwInfo().pSysInfo->SliceCount * 2;
+                uint32_t numSlicesMapped = peekHwInfo().pSysInfo.SliceCount * 2;
 
                 PWR_CLK_STATE_REGISTER reg = Family::cmdInitPwrClkStateRegister;
-                reg.TheStructure.Common.EUmin = peekHwInfo().pSysInfo->MaxEuPerSubSlice;
-                reg.TheStructure.Common.EUmax = peekHwInfo().pSysInfo->MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmin = peekHwInfo().pSysInfo.MaxEuPerSubSlice;
+                reg.TheStructure.Common.EUmax = peekHwInfo().pSysInfo.MaxEuPerSubSlice;
                 reg.TheStructure.Common.SSCountEn = 1; // Enable SScount
                 reg.TheStructure.Common.SScount = numSubslicesMapped;
                 reg.TheStructure.Common.EnableSliceCountRequest = 1; // Enable SliceCountRequest
@@ -107,7 +107,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
 template <>
 bool CommandStreamReceiverHw<Family>::detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const {
     bool flag = DebugManager.flags.ForceCsrReprogramming.get();
-    if (peekHwInfo().pPlatform->eProductFamily == IGFX_ICELAKE_LP) {
+    if (peekHwInfo().pPlatform.eProductFamily == IGFX_ICELAKE_LP) {
         if (!dispatchFlags.mediaSamplerRequired) {
             if (lastVmeSubslicesConfig) {
                 flag = true;
@@ -122,7 +122,7 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForMediaSampler(bool mediaSamp
     typedef typename Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename Family::PIPE_CONTROL PIPE_CONTROL;
 
-    if (peekHwInfo().pPlatform->eProductFamily == IGFX_ICELAKE_LP) {
+    if (peekHwInfo().pPlatform.eProductFamily == IGFX_ICELAKE_LP) {
         if (mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
                 return sizeof(MI_LOAD_REGISTER_IMM) + 2 * sizeof(PIPE_CONTROL);

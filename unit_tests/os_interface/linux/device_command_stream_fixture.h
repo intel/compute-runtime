@@ -285,7 +285,7 @@ class DrmMockCustom : public Drm {
 
     DrmMockCustom() : Drm(mockFd) {
         reset();
-        ioctl_expected.contextCreate = static_cast<int>(NEO::HwHelper::get(NEO::platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances().size());
+        ioctl_expected.contextCreate = static_cast<int>(NEO::HwHelper::get(NEO::platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances().size());
         ioctl_expected.contextDestroy = ioctl_expected.contextCreate.load();
     }
     int getErrno() override {

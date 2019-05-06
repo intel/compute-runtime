@@ -213,7 +213,7 @@ TEST(Context, givenMockSharingBuilderWhenContextWithInvalidPropertiesThenContext
     stateRestore.clearCurrentState();
     stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
 
-    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
+    auto device = std::make_unique<MockDevice>();
     cl_device_id clDevice = static_cast<cl_device_id>(device.get());
     auto deviceVector = DeviceVector(&clDevice, 1);
     cl_int retVal;

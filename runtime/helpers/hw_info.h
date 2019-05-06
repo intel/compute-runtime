@@ -68,10 +68,10 @@ struct HardwareInfo {
     HardwareInfo(const PLATFORM *platform, const FeatureTable *skuTable, const WorkaroundTable *waTable,
                  const GT_SYSTEM_INFO *sysInfo, const RuntimeCapabilityTable &capabilityTable);
 
-    const PLATFORM *pPlatform = nullptr;
-    const FeatureTable *pSkuTable = nullptr;
-    const WorkaroundTable *pWaTable = nullptr;
-    const GT_SYSTEM_INFO *pSysInfo = nullptr;
+    PLATFORM pPlatform = {};
+    FeatureTable pSkuTable = {};
+    WorkaroundTable pWaTable = {};
+    GT_SYSTEM_INFO pSysInfo = {};
 
     RuntimeCapabilityTable capabilityTable = {};
 };

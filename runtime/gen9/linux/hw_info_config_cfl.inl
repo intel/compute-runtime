@@ -15,7 +15,7 @@ int HwInfoConfigHw<IGFX_COFFEELAKE>::configureHardwareCustom(HardwareInfo *hwInf
     if (nullptr == osIface) {
         return 0;
     }
-    GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
 
     if (pSysInfo->SubSliceCount > 3) {
         pSysInfo->SliceCount = 2;
@@ -26,8 +26,8 @@ int HwInfoConfigHw<IGFX_COFFEELAKE>::configureHardwareCustom(HardwareInfo *hwInf
     pSysInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled = true;
     pSysInfo->VEBoxInfo.IsValid = true;
 
-    if (hwInfo->pPlatform->usDeviceID == ICFL_GT3_ULT_28W_DEVICE_F0_ID ||
-        hwInfo->pPlatform->usDeviceID == ICFL_GT3_ULT_15W_DEVICE_F0_ID) {
+    if (hwInfo->pPlatform.usDeviceID == ICFL_GT3_ULT_28W_DEVICE_F0_ID ||
+        hwInfo->pPlatform.usDeviceID == ICFL_GT3_ULT_15W_DEVICE_F0_ID) {
         pSysInfo->EdramSizeInKb = 64 * 1024;
     }
 

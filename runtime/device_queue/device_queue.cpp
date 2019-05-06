@@ -116,7 +116,7 @@ void DeviceQueue::allocateResources() {
     queueStorageBuffer = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({queueStorageSize, GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER});
     memset(queueStorageBuffer->getUnderlyingBuffer(), 0, queueStorageBuffer->getUnderlyingBufferSize());
 
-    auto &hwHelper = HwHelper::get(device->getHardwareInfo().pPlatform->eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(device->getHardwareInfo().pPlatform.eRenderCoreFamily);
     const size_t IDTSize = numberOfIDTables * interfaceDescriptorEntries * hwHelper.getInterfaceDescriptorDataSize();
 
     // Additional padding of PAGE_SIZE for PageFaults just after DSH to satisfy hw requirements

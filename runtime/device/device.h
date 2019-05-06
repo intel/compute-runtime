@@ -39,10 +39,9 @@ class Device : public BaseObject<_cl_device_id> {
     static const cl_ulong objectMagic = 0x8055832341AC8D08LL;
 
     template <typename T>
-    static T *create(const HardwareInfo *pHwInfo, ExecutionEnvironment *execEnv, uint32_t deviceIndex) {
-        pHwInfo = getDeviceInitHwInfo(pHwInfo);
-        T *device = new T(*pHwInfo, execEnv, deviceIndex);
-        return createDeviceInternals(pHwInfo, device);
+    static T *create(ExecutionEnvironment *execEnv, uint32_t deviceIndex) {
+        T *device = new T(execEnv, deviceIndex);
+        return createDeviceInternals(device);
     }
 
     Device &operator=(const Device &) = delete;
@@ -106,7 +105,7 @@ class Device : public BaseObject<_cl_device_id> {
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     GraphicsAllocation *getPreemptionAllocation() const { return preemptionAllocation; }
-    MOCKABLE_VIRTUAL const WhitelistedRegisters &getWhitelistedRegisters() { return hwInfo.capabilityTable.whitelistedRegisters; }
+    MOCKABLE_VIRTUAL const WhitelistedRegisters &getWhitelistedRegisters() { return getHardwareInfo().capabilityTable.whitelistedRegisters; }
     std::vector<unsigned int> simultaneousInterops;
     std::string deviceExtensions;
     std::string name;
@@ -121,20 +120,20 @@ class Device : public BaseObject<_cl_device_id> {
 
   protected:
     Device() = delete;
-    Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
+    Device(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
 
     template <typename T>
-    static T *createDeviceInternals(const HardwareInfo *pHwInfo, T *device) {
-        if (false == device->createDeviceImpl(pHwInfo)) {
+    static T *createDeviceInternals(T *device) {
+        if (false == device->createDeviceImpl()) {
             delete device;
             return nullptr;
         }
         return device;
     }
 
-    bool createDeviceImpl(const HardwareInfo *pHwInfo);
-    bool createEngines(const HardwareInfo *pHwInfo);
-    static const HardwareInfo *getDeviceInitHwInfo(const HardwareInfo *pHwInfoIn);
+    bool createDeviceImpl();
+    bool createEngines();
+
     MOCKABLE_VIRTUAL void initializeCaps();
     void setupFp64Flags();
     void appendOSExtensions(std::string &deviceExtensions);
@@ -142,7 +141,6 @@ class Device : public BaseObject<_cl_device_id> {
 
     unsigned int enabledClVersion = 0u;
 
-    const HardwareInfo &hwInfo;
     HardwareCapabilities hardwareCapabilities = {};
     DeviceInfo deviceInfo;
 

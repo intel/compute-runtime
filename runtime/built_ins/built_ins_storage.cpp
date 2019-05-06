@@ -197,7 +197,7 @@ BuiltinResourceT BuiltinsLib::getBuiltinResource(EBuiltInOps builtin, BuiltinCod
     std::string resourceNameGeneric = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType));
     std::string resourceNameForPlatformType = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType), device.getFamilyNameWithType());
     std::string resourceNameForPlatformTypeAndStepping = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType), device.getFamilyNameWithType(),
-                                                                                   device.getHardwareInfo().pPlatform->usRevId);
+                                                                                   device.getHardwareInfo().pPlatform.usRevId);
 
     for (auto &rn : {resourceNameForPlatformTypeAndStepping, resourceNameForPlatformType, resourceNameGeneric}) { // first look for dedicated version, only fallback to generic one
         for (auto &s : allStorages) {

@@ -46,10 +46,10 @@ GEN9TEST_F(Gen9DeviceCaps, compression) {
 
 GEN9TEST_F(Gen9DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {
     const auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(hwInfo.pPlatform.eRenderCoreFamily);
 
-    uint32_t expectedValue = hwInfo.pSysInfo->MaxSubSlicesSupported * hwInfo.pSysInfo->MaxEuPerSubSlice *
-                             hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount;
+    uint32_t expectedValue = hwInfo.pSysInfo.MaxSubSlicesSupported * hwInfo.pSysInfo.MaxEuPerSubSlice *
+                             hwInfo.pSysInfo.ThreadCount / hwInfo.pSysInfo.EUCount;
 
     EXPECT_EQ(expectedValue, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
     EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);

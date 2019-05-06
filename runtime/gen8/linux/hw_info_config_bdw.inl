@@ -15,7 +15,7 @@ int HwInfoConfigHw<IGFX_BROADWELL>::configureHardwareCustom(HardwareInfo *hwInfo
     if (nullptr == osIface) {
         return 0;
     }
-    GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
 
     // There is no interface to read total slice count from drm/i915, so we
     // derive this from the number of EUs and subslices.
@@ -26,8 +26,8 @@ int HwInfoConfigHw<IGFX_BROADWELL>::configureHardwareCustom(HardwareInfo *hwInfo
         pSysInfo->SliceCount = 1;
     }
 
-    if (hwInfo->pPlatform->usDeviceID == IBDW_GT3_HALO_MOBL_DEVICE_F0_ID ||
-        hwInfo->pPlatform->usDeviceID == IBDW_GT3_SERV_DEVICE_F0_ID) {
+    if (hwInfo->pPlatform.usDeviceID == IBDW_GT3_HALO_MOBL_DEVICE_F0_ID ||
+        hwInfo->pPlatform.usDeviceID == IBDW_GT3_SERV_DEVICE_F0_ID) {
         pSysInfo->EdramSizeInKb = 128 * 1024;
     }
     return 0;

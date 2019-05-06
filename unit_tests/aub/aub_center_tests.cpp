@@ -30,11 +30,11 @@ TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenCreat
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(false);
 
-    MockAubManager *mockAubManager = new MockAubManager(platformDevices[0]->pPlatform->eProductFamily, 4, 8 * MB, true, aub_stream::mode::aubFile);
+    MockAubManager *mockAubManager = new MockAubManager(platformDevices[0]->pPlatform.eProductFamily, 4, 8 * MB, true, aub_stream::mode::aubFile);
     MockAubCenter mockAubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter.aubManager = std::unique_ptr<MockAubManager>(mockAubManager);
 
-    EXPECT_EQ(platformDevices[0]->pPlatform->eProductFamily, mockAubManager->mockAubManagerParams.productFamily);
+    EXPECT_EQ(platformDevices[0]->pPlatform.eProductFamily, mockAubManager->mockAubManagerParams.productFamily);
     EXPECT_EQ(4, mockAubManager->mockAubManagerParams.devicesCount);
     EXPECT_EQ(8 * MB, mockAubManager->mockAubManagerParams.memoryBankSize);
     EXPECT_EQ(true, mockAubManager->mockAubManagerParams.localMemorySupported);

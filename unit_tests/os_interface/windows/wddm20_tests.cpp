@@ -89,81 +89,59 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMapp
 TEST(Wddm20EnumAdaptersTest, expectTrue) {
     HardwareInfo outHwInfo;
 
-    const HardwareInfo hwInfo = *platformDevices[0];
-    OsLibrary *mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo, hwInfo.capabilityTable.gpuAddressSpace);
+    const HardwareInfo *hwInfo = platformDevices[0];
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->pPlatform,
+                                                         &hwInfo->pSysInfo,
+                                                         hwInfo->capabilityTable.gpuAddressSpace));
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     bool success = wddm->enumAdapters(outHwInfo);
 
     EXPECT_TRUE(success);
 
-    const HardwareInfo *hwinfo = *platformDevices;
-
-    ASSERT_NE(nullptr, outHwInfo.pPlatform);
-    EXPECT_EQ(outHwInfo.pPlatform->eDisplayCoreFamily, hwinfo->pPlatform->eDisplayCoreFamily);
-    delete mockGdiDll;
-
-    delete outHwInfo.pPlatform;
-    delete outHwInfo.pSkuTable;
-    delete outHwInfo.pSysInfo;
-    delete outHwInfo.pWaTable;
+    EXPECT_EQ(outHwInfo.pPlatform.eDisplayCoreFamily, hwInfo->pPlatform.eDisplayCoreFamily);
 }
 
 TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCapabilityTableIsSet) {
     HardwareInfo outHwInfo = {};
 
-    auto hwInfo = *platformDevices[0];
-    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo, hwInfo.capabilityTable.gpuAddressSpace));
+    const HardwareInfo *hwInfo = platformDevices[0];
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->pPlatform,
+                                                         &hwInfo->pSysInfo,
+                                                         hwInfo->capabilityTable.gpuAddressSpace));
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     bool success = wddm->enumAdapters(outHwInfo);
     EXPECT_TRUE(success);
 
-    const HardwareInfo *hwinfo = *platformDevices;
+    EXPECT_EQ(outHwInfo.pPlatform.eDisplayCoreFamily, hwInfo->pPlatform.eDisplayCoreFamily);
 
-    ASSERT_NE(nullptr, outHwInfo.pPlatform);
-    EXPECT_EQ(outHwInfo.pPlatform->eDisplayCoreFamily, hwinfo->pPlatform->eDisplayCoreFamily);
-
-    EXPECT_EQ(outHwInfo.capabilityTable.defaultProfilingTimerResolution, hwInfo.capabilityTable.defaultProfilingTimerResolution);
-    EXPECT_EQ(outHwInfo.capabilityTable.clVersionSupport, hwInfo.capabilityTable.clVersionSupport);
-    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify, hwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
-    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, hwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
-    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep, hwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);
-    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds, hwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
-
-    delete outHwInfo.pPlatform;
-    delete outHwInfo.pSkuTable;
-    delete outHwInfo.pSysInfo;
-    delete outHwInfo.pWaTable;
+    EXPECT_EQ(outHwInfo.capabilityTable.defaultProfilingTimerResolution, hwInfo->capabilityTable.defaultProfilingTimerResolution);
+    EXPECT_EQ(outHwInfo.capabilityTable.clVersionSupport, hwInfo->capabilityTable.clVersionSupport);
+    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify, hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify);
+    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
+    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep, hwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);
+    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds, hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
 }
 
 TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFalseIsReturnedAndOutputIsEmpty) {
-    HardwareInfo outHwInfo;
-
-    memset(&outHwInfo, 0, sizeof(outHwInfo));
+    HardwareInfo outHwInfo = {};
 
     HardwareInfo hwInfo = *platformDevices[0];
-    auto bkp = hwInfo.pPlatform->eProductFamily;
-    PLATFORM platform = *(hwInfo.pPlatform);
-    platform.eProductFamily = IGFX_UNKNOWN;
+    hwInfo.pPlatform.eProductFamily = IGFX_UNKNOWN;
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo.pPlatform,
+                                                         &hwInfo.pSysInfo,
+                                                         hwInfo.capabilityTable.gpuAddressSpace));
 
-    std::unique_ptr<OsLibrary, std::function<void(OsLibrary *)>> mockGdiDll(
-        setAdapterInfo(&platform, hwInfo.pSysInfo, hwInfo.capabilityTable.gpuAddressSpace),
-        [&](OsLibrary *ptr) {
-            platform.eProductFamily = bkp;
-            typedef void(__stdcall * pfSetAdapterInfo)(const void *, const void *, uint64_t);
-            pfSetAdapterInfo fSetAdpaterInfo = reinterpret_cast<pfSetAdapterInfo>(ptr->getProcAddress("MockSetAdapterInfo"));
-
-            fSetAdpaterInfo(&platform, hwInfo.pSysInfo, hwInfo.capabilityTable.gpuAddressSpace);
-            delete ptr;
-        });
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     auto ret = wddm->enumAdapters(outHwInfo);
     EXPECT_FALSE(ret);
-    EXPECT_EQ(nullptr, outHwInfo.pPlatform);
-    EXPECT_EQ(nullptr, outHwInfo.pSkuTable);
-    EXPECT_EQ(nullptr, outHwInfo.pSysInfo);
-    EXPECT_EQ(nullptr, outHwInfo.pWaTable);
+
+    // reset mock gdi
+    hwInfo = *platformDevices[0];
+    mockGdiDll.reset(setAdapterInfo(&hwInfo.pPlatform,
+                                    &hwInfo.pSysInfo,
+                                    hwInfo.capabilityTable.gpuAddressSpace));
 }
 
 TEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
@@ -454,7 +432,7 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
     D3DKMT_HANDLE adapterHandle = ADAPTER_HANDLE;
     D3DKMT_HANDLE deviceHandle = DEVICE_HANDLE;
     const HardwareInfo hwInfo = *platformDevices[0];
-    BOOLEAN FtrL3IACoherency = hwInfo.pSkuTable->ftrL3IACoherency ? 1 : 0;
+    BOOLEAN FtrL3IACoherency = hwInfo.pSkuTable.ftrL3IACoherency ? 1 : 0;
     uintptr_t maxAddr = hwInfo.capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress
                             ? reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress) + 1
                             : 0;
@@ -530,7 +508,7 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenEngineTypeWhenCreatingContextThenPassCorrectNodeOrdinal) {
     init();
     auto createContextParams = this->getCreateContextDataFcn();
-    UINT expected = WddmEngineMapper::engineNodeMap(HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0]);
+    UINT expected = WddmEngineMapper::engineNodeMap(HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0]);
     EXPECT_EQ(expected, createContextParams->NodeOrdinal);
 }
 

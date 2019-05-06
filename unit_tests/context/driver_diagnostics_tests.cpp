@@ -117,7 +117,7 @@ TEST_P(PerformanceHintCommandQueueTest, GivenProfilingFlagAndPreemptionFlagWhenC
     EXPECT_EQ(profilingEnabled, containsHint(expectedHint, userData));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED_WITH_DISABLED_PREEMPTION], 0);
-    if (device->getHardwareInfo().pPlatform->eProductFamily < IGFX_SKYLAKE && preemptionSupported && profilingEnabled) {
+    if (device->getHardwareInfo().pPlatform.eProductFamily < IGFX_SKYLAKE && preemptionSupported && profilingEnabled) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
         EXPECT_FALSE(containsHint(expectedHint, userData));
@@ -142,7 +142,7 @@ TEST_P(PerformanceHintCommandQueueTest, GivenEnabledProfilingFlagAndSupportedPre
     EXPECT_EQ(profilingEnabled, containsHint(expectedHint, userData));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED_WITH_DISABLED_PREEMPTION], 0);
-    if (device->getHardwareInfo().pPlatform->eProductFamily < IGFX_SKYLAKE && preemptionSupported && profilingEnabled) {
+    if (device->getHardwareInfo().pPlatform.eProductFamily < IGFX_SKYLAKE && preemptionSupported && profilingEnabled) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
         EXPECT_FALSE(containsHint(expectedHint, userData));

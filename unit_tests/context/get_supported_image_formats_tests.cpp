@@ -159,7 +159,7 @@ TEST(ImageFormats, isDepthFormat) {
 struct PackedYuvExtensionSupportedImageFormatsTest : public ::testing::TestWithParam<std::tuple<uint64_t, uint32_t>> {
 
     void SetUp() override {
-        device = std::unique_ptr<MockDevice>(new MockDevice(*platformDevices[0]));
+        device = std::unique_ptr<MockDevice>(new MockDevice());
         context = std::unique_ptr<MockContext>(new MockContext(device.get(), true));
     }
 
@@ -245,7 +245,7 @@ TEST_P(PackedYuvExtensionSupportedImageFormatsTest, retrieveImageFormatsPackedYU
 struct NV12ExtensionSupportedImageFormatsTest : public ::testing::TestWithParam<std::tuple<uint64_t, uint32_t>> {
 
     void SetUp() override {
-        device = std::unique_ptr<MockDevice>(new MockDevice(*platformDevices[0]));
+        device = std::unique_ptr<MockDevice>(new MockDevice());
         context = std::unique_ptr<MockContext>(new MockContext(device.get(), true));
     }
 

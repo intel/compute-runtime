@@ -43,6 +43,7 @@ static constexpr cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_c
                                                                                        CL_FP_FMA);
 
 void Device::setupFp64Flags() {
+    auto &hwInfo = getHardwareInfo();
     if (DebugManager.flags.OverrideDefaultFP64Settings.get() == -1) {
         if (hwInfo.capabilityTable.ftrSupportsFP64) {
             deviceExtensions += "cl_khr_fp64 ";
@@ -66,6 +67,7 @@ void Device::setupFp64Flags() {
 }
 
 void Device::initializeCaps() {
+    auto &hwInfo = getHardwareInfo();
     deviceExtensions.clear();
     deviceExtensions.append(deviceExtensionsList);
     // Add our graphics family name to the device name
@@ -77,7 +79,7 @@ void Device::initializeCaps() {
     driverVersion = TOSTR(NEO_DRIVER_VERSION);
 
     name += "Intel(R) ";
-    name += familyName[hwInfo.pPlatform->eRenderCoreFamily];
+    name += familyName[hwInfo.pPlatform.eRenderCoreFamily];
     name += " HD Graphics NEO";
 
     if (driverInfo) {
@@ -85,7 +87,7 @@ void Device::initializeCaps() {
         driverVersion.assign(driverInfo.get()->getVersion(driverVersion).c_str());
     }
 
-    auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(hwInfo.pPlatform.eRenderCoreFamily);
 
     deviceInfo.name = name.c_str();
     deviceInfo.driverVersion = driverVersion.c_str();
@@ -203,7 +205,7 @@ void Device::initializeCaps() {
     deviceInfo.addressBits = 64;
 
     //copy system info to prevent misaligned reads
-    const auto systemInfo = *hwInfo.pSysInfo;
+    const auto systemInfo = hwInfo.pSysInfo;
 
     deviceInfo.globalMemCachelineSize = 64;
     deviceInfo.globalMemCacheSize = systemInfo.L3BankCount * 128 * KB;
@@ -251,7 +253,7 @@ void Device::initializeCaps() {
     deviceInfo.numThreadsPerEU = 0;
     auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 32 : 8;
 
-    deviceInfo.maxNumEUsPerSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.pSkuTable->ftrPooledEuEnabled == 0)
+    deviceInfo.maxNumEUsPerSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.pSkuTable.ftrPooledEuEnabled == 0)
                                           ? (systemInfo.EUCount / systemInfo.SubSliceCount)
                                           : systemInfo.EuCountPerPoolMin;
     deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;

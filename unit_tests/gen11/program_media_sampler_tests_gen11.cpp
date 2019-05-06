@@ -79,10 +79,10 @@ ICLLPTEST_F(Gen11MediaSamplerProgramingTest, givenVmeEnableSubsliceDisabledWhenP
 
     auto expectedMiLrCmd = FamilyType::cmdInitLoadRegisterImm;
     expectedMiLrCmd.setRegisterOffset(gen11PowerClockStateRegister::address);
-    auto expectedRegValue = (device->getHardwareInfo().pSysInfo->SubSliceCount / 2) << gen11PowerClockStateRegister::subSliceCountShift;
+    auto expectedRegValue = (device->getHardwareInfo().pSysInfo.SubSliceCount / 2) << gen11PowerClockStateRegister::subSliceCountShift;
     expectedRegValue |= (gen11PowerClockStateRegister::vmeSliceCount << gen11PowerClockStateRegister::sliceCountShift);
-    expectedRegValue |= (device->getHardwareInfo().pSysInfo->MaxEuPerSubSlice << gen11PowerClockStateRegister::minEuCountShift);
-    expectedRegValue |= (device->getHardwareInfo().pSysInfo->MaxEuPerSubSlice << gen11PowerClockStateRegister::maxEuCountShift);
+    expectedRegValue |= (device->getHardwareInfo().pSysInfo.MaxEuPerSubSlice << gen11PowerClockStateRegister::minEuCountShift);
+    expectedRegValue |= (device->getHardwareInfo().pSysInfo.MaxEuPerSubSlice << gen11PowerClockStateRegister::maxEuCountShift);
     expectedRegValue |= gen11PowerClockStateRegister::enabledValue;
     expectedMiLrCmd.setDataDword(expectedRegValue);
 
@@ -118,10 +118,10 @@ ICLLPTEST_F(Gen11MediaSamplerProgramingTest, givenVmeEnableSubsliceEnabledWhenPo
 
     auto expectedMiLrCmd = FamilyType::cmdInitLoadRegisterImm;
     expectedMiLrCmd.setRegisterOffset(gen11PowerClockStateRegister::address);
-    auto expectedRegValue = (device->getHardwareInfo().pSysInfo->SubSliceCount / 2) << gen11PowerClockStateRegister::subSliceCountShift;
-    expectedRegValue |= ((device->getHardwareInfo().pSysInfo->SliceCount * 2) << gen11PowerClockStateRegister::sliceCountShift);
-    expectedRegValue |= (device->getHardwareInfo().pSysInfo->MaxEuPerSubSlice << gen11PowerClockStateRegister::minEuCountShift);
-    expectedRegValue |= (device->getHardwareInfo().pSysInfo->MaxEuPerSubSlice << gen11PowerClockStateRegister::maxEuCountShift);
+    auto expectedRegValue = (device->getHardwareInfo().pSysInfo.SubSliceCount / 2) << gen11PowerClockStateRegister::subSliceCountShift;
+    expectedRegValue |= ((device->getHardwareInfo().pSysInfo.SliceCount * 2) << gen11PowerClockStateRegister::sliceCountShift);
+    expectedRegValue |= (device->getHardwareInfo().pSysInfo.MaxEuPerSubSlice << gen11PowerClockStateRegister::minEuCountShift);
+    expectedRegValue |= (device->getHardwareInfo().pSysInfo.MaxEuPerSubSlice << gen11PowerClockStateRegister::maxEuCountShift);
     expectedRegValue |= gen11PowerClockStateRegister::disabledValue;
     expectedMiLrCmd.setDataDword(expectedRegValue);
 

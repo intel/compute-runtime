@@ -304,6 +304,6 @@ GEN10TEST_F(Gen10PreemptionTests, givenMidThreadPreemptionModeWhenStateSipIsProg
     auto cmd = hwParserOnlyPreemption.getCommand<STATE_SIP>();
 
     EXPECT_NE(nullptr, cmd);
-    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform->eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
+    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform.eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
     EXPECT_EQ(mockDevice->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), cmd->getSystemInstructionPointer());
 }

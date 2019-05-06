@@ -16,8 +16,9 @@ using HwInfoConfigTestWindowsIcllp = HwInfoConfigTestWindows;
 ICLLPTEST_F(HwInfoConfigTestWindowsIcllp, whenCallAdjustPlatformThenDoNothing) {
     EXPECT_EQ(IGFX_ICELAKE_LP, productFamily);
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    hwInfoConfig->adjustPlatformForProductFamily(&testHwInfo);
+    outHwInfo = pInHwInfo;
+    hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
 
-    int ret = memcmp(outHwInfo.pPlatform, testHwInfo.pPlatform, sizeof(PLATFORM));
+    int ret = memcmp(&outHwInfo.pPlatform, &pInHwInfo.pPlatform, sizeof(PLATFORM));
     EXPECT_EQ(0, ret);
 }

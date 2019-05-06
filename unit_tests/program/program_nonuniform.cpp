@@ -103,7 +103,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform21UniformFlag) {
 
 TEST(KernelNonUniform, GetAllowNonUniformFlag) {
     KernelInfo ki;
-    MockDevice d(*platformDevices[0]);
+    MockDevice d;
     MockProgram pm(*d.getExecutionEnvironment());
     struct KernelMock : Kernel {
         KernelMock(Program *p, KernelInfo &ki, Device &d)

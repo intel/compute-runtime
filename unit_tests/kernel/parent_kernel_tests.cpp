@@ -36,7 +36,7 @@ class MockKernelWithArgumentAccess : public Kernel {
 
 TEST(ParentKernelTest, GetObjectCounts) {
     KernelInfo info;
-    MockDevice *device = new MockDevice(*platformDevices[0]);
+    MockDevice *device = new MockDevice;
     MockProgram program(*device->getExecutionEnvironment());
 
     SPatchExecutionEnvironment environment = {};
@@ -65,7 +65,7 @@ TEST(ParentKernelTest, GetObjectCounts) {
 }
 
 TEST(ParentKernelTest, patchBlocksSimdSize) {
-    MockDevice device(*platformDevices[0]);
+    MockDevice device;
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
@@ -79,7 +79,7 @@ TEST(ParentKernelTest, patchBlocksSimdSize) {
 }
 
 TEST(ParentKernelTest, hasDeviceEnqueue) {
-    MockDevice device(*platformDevices[0]);
+    MockDevice device;
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context));
 
@@ -87,14 +87,14 @@ TEST(ParentKernelTest, hasDeviceEnqueue) {
 }
 
 TEST(ParentKernelTest, doesnthaveDeviceEnqueue) {
-    MockDevice device(*platformDevices[0]);
+    MockDevice device;
     MockKernelWithInternals kernel(device);
 
     EXPECT_FALSE(kernel.kernelInfo.hasDeviceEnqueue());
 }
 
 TEST(ParentKernelTest, initializeOnParentKernelPatchesBlocksSimdSize) {
-    MockDevice device(*platformDevices[0]);
+    MockDevice device;
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
@@ -108,7 +108,7 @@ TEST(ParentKernelTest, initializeOnParentKernelPatchesBlocksSimdSize) {
 }
 
 TEST(ParentKernelTest, initializeOnParentKernelAllocatesPrivateMemoryForBlocks) {
-    MockDevice device(*platformDevices[0]);
+    MockDevice device;
     MockContext context(&device);
     std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;

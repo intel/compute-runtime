@@ -29,7 +29,7 @@ uint32_t bitExact(uint32_t value, uint32_t highBit, uint32_t lowBit) {
 }
 
 int configureCacheInfo(HardwareInfo *hwInfo) {
-    GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
 
     uint32_t type = 0;
     uint32_t subleaf = 0;
@@ -70,20 +70,10 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     int ret = 0;
     Drm *drm = osIface->get()->getDrm();
 
-    auto pPlatform = std::unique_ptr<PLATFORM>(new PLATFORM);
-    *pPlatform = *(inHwInfo->pPlatform);
-    auto pSysInfo = std::unique_ptr<GT_SYSTEM_INFO>(new GT_SYSTEM_INFO);
-    *(pSysInfo) = *(inHwInfo->pSysInfo);
-    auto pSkuTable = std::unique_ptr<FeatureTable>(new FeatureTable);
-    *pSkuTable = *(inHwInfo->pSkuTable);
-    auto pWaTable = std::unique_ptr<WorkaroundTable>(new WorkaroundTable);
-    *pWaTable = *(inHwInfo->pWaTable);
-
-    outHwInfo->pPlatform = pPlatform.get();
-    outHwInfo->pSysInfo = pSysInfo.get();
-    outHwInfo->pSkuTable = pSkuTable.get();
-    outHwInfo->pWaTable = pWaTable.get();
-    outHwInfo->capabilityTable = inHwInfo->capabilityTable;
+    *outHwInfo = *inHwInfo;
+    auto pPlatform = &outHwInfo->pPlatform;
+    auto pSysInfo = &outHwInfo->pSysInfo;
+    auto pSkuTable = &outHwInfo->pSkuTable;
 
     int val = 0;
     ret = drm->getDeviceID(val);
@@ -163,10 +153,10 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     bool preemption = drm->isPreemptionSupported();
     preemption = hwHelper.setupPreemptionRegisters(outHwInfo, preemption);
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
-                                                  static_cast<bool>(outHwInfo->pSkuTable->ftrGpGpuMidThreadLevelPreempt) && preemption,
-                                                  static_cast<bool>(outHwInfo->pSkuTable->ftrGpGpuThreadGroupLevelPreempt) && preemption,
-                                                  static_cast<bool>(outHwInfo->pSkuTable->ftrGpGpuMidBatchPreempt) && preemption);
-    outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
+                                                  static_cast<bool>(outHwInfo->pSkuTable.ftrGpGpuMidThreadLevelPreempt) && preemption,
+                                                  static_cast<bool>(outHwInfo->pSkuTable.ftrGpGpuThreadGroupLevelPreempt) && preemption,
+                                                  static_cast<bool>(outHwInfo->pSkuTable.ftrGpGpuMidBatchPreempt) && preemption);
+    outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->pSysInfo.CsrSizeInMb * MemoryConstants::megaByte;
 
     auto &kmdNotifyProperties = outHwInfo->capabilityTable.kmdNotifyProperties;
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);
@@ -175,11 +165,6 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableQuickKmdSleepForSporadicWaits.get(), kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
-
-    pPlatform.release();
-    pSkuTable.release();
-    pWaTable.release();
-    pSysInfo.release();
 
     return 0;
 }

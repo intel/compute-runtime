@@ -113,7 +113,7 @@ struct PerformanceHintCommandQueueTest : public PerformanceHintTest,
     void SetUp() override {
         PerformanceHintTest::SetUp();
         std::tie(profilingEnabled, preemptionSupported) = GetParam();
-        device = new MockDevice(*platformDevices[0]);
+        device = new MockDevice;
         device->getDeviceInfoToModify()->preemptionSupported = preemptionSupported;
     }
 

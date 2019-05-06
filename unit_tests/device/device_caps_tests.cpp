@@ -63,7 +63,7 @@ TEST_F(DeviceGetCapsF, GivenDeviceCapsWhenQueryingForSLMWindowStartAddressThenPo
 TEST(Device_GetCaps, validate) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
-    const auto &sysInfo = *platformDevices[0]->pSysInfo;
+    const auto &sysInfo = platformDevices[0]->pSysInfo;
 
     EXPECT_NE(nullptr, caps.builtInKernels);
 
@@ -107,7 +107,7 @@ TEST(Device_GetCaps, validate) {
     EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), caps.deviceAvailable);
     EXPECT_EQ(static_cast<cl_device_mem_cache_type>(CL_READ_WRITE_CACHE), caps.globalMemCacheType);
 
-    EXPECT_EQ(sysInfo.EUCount, caps.maxComputUnits);
+    EXPECT_TRUE(sysInfo.EUCount == caps.maxComputUnits);
     EXPECT_LT(0u, caps.maxConstantArgs);
 
     EXPECT_LE(128u, caps.maxReadImageArgs);
@@ -187,7 +187,7 @@ TEST(Device_GetCaps, validateImage3DDimensions) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
-    if (device->getHardwareInfo().pPlatform->eRenderCoreFamily > IGFX_GEN8_CORE) {
+    if (device->getHardwareInfo().pPlatform.eRenderCoreFamily > IGFX_GEN8_CORE) {
         EXPECT_EQ(16384u, caps.image3DMaxWidth);
         EXPECT_EQ(16384u, caps.image3DMaxHeight);
     } else {
@@ -339,7 +339,7 @@ TEST(Device_GetCaps, givenGlobalMemSizeWhenCalculatingMaxAllocSizeThenAdjustToHW
     const auto &caps = device->getDeviceInfo();
 
     HardwareCapabilities hwCaps = {0};
-    auto &hwHelper = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily);
     hwHelper.setupHardwareCapabilities(&hwCaps, *platformDevices[0]);
 
     uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
@@ -714,10 +714,9 @@ TEST(DeviceGetCaps, givenOclVersion21WhenCapsAreCreatedThenDeviceReportsSpirvAsS
 }
 
 TEST(DeviceGetCaps, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThenIgnoreEuCountPerPoolMin) {
-    GT_SYSTEM_INFO mySysInfo = *platformDevices[0]->pSysInfo;
-    FeatureTable mySkuTable = *platformDevices[0]->pSkuTable;
-    HardwareInfo myHwInfo = {platformDevices[0]->pPlatform, &mySkuTable, platformDevices[0]->pWaTable,
-                             &mySysInfo, platformDevices[0]->capabilityTable};
+    HardwareInfo myHwInfo = *platformDevices[0];
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.pSysInfo;
+    FeatureTable &mySkuTable = myHwInfo.pSkuTable;
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
@@ -733,10 +732,9 @@ TEST(DeviceGetCaps, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThenIgnoreE
 }
 
 TEST(DeviceGetCaps, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin) {
-    GT_SYSTEM_INFO mySysInfo = *platformDevices[0]->pSysInfo;
-    FeatureTable mySkuTable = *platformDevices[0]->pSkuTable;
-    HardwareInfo myHwInfo = {platformDevices[0]->pPlatform, &mySkuTable, platformDevices[0]->pWaTable,
-                             &mySysInfo, platformDevices[0]->capabilityTable};
+    HardwareInfo myHwInfo = *platformDevices[0];
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.pSysInfo;
+    FeatureTable &mySkuTable = myHwInfo.pSkuTable;
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
@@ -754,10 +752,8 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.set(true);
 
-    GT_SYSTEM_INFO mySysInfo = *platformDevices[0]->pSysInfo;
-    FeatureTable mySkuTable = *platformDevices[0]->pSkuTable;
-    HardwareInfo myHwInfo = {platformDevices[0]->pPlatform, &mySkuTable, platformDevices[0]->pWaTable,
-                             &mySysInfo, platformDevices[0]->capabilityTable};
+    HardwareInfo myHwInfo = *platformDevices[0];
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.pSysInfo;
 
     mySysInfo.EUCount = 24;
     mySysInfo.SubSliceCount = 3;
@@ -769,10 +765,8 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
 }
 
 TEST(DeviceGetCaps, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedItIsLimitedTo1024) {
-    GT_SYSTEM_INFO mySysInfo = *platformDevices[0]->pSysInfo;
-    FeatureTable mySkuTable = *platformDevices[0]->pSkuTable;
-    HardwareInfo myHwInfo = {platformDevices[0]->pPlatform, &mySkuTable, platformDevices[0]->pWaTable,
-                             &mySysInfo, platformDevices[0]->capabilityTable};
+    HardwareInfo myHwInfo = *platformDevices[0];
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.pSysInfo;
 
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
@@ -821,7 +815,7 @@ TEST(Device_GetCaps, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenRet
     const auto &caps = device->getDeviceInfo();
 
     std::string tempName = "Intel(R) ";
-    tempName += familyName[platformDevices[0]->pPlatform->eRenderCoreFamily];
+    tempName += familyName[platformDevices[0]->pPlatform.eRenderCoreFamily];
     tempName += " HD Graphics NEO";
 
 #define QTR(a) #a
@@ -839,29 +833,28 @@ TEST(Device_GetCaps, GivenFlagEnabled64kbPagesWhenSetThenReturnCorrectValue) {
     DebugManagerStateRestore dbgRestore;
     VariableBackup<bool> OsEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
 
-    HardwareInfo hwInfo = *platformDevices[0];
     ExecutionEnvironment executionEnvironment;
-    executionEnvironment.setHwInfo(&hwInfo);
+    auto &capabilityTable = executionEnvironment.getMutableHardwareInfo()->capabilityTable;
     std::unique_ptr<MemoryManager> memoryManager;
 
     DebugManager.flags.Enable64kbpages.set(-1);
 
-    hwInfo.capabilityTable.ftr64KBpages = false;
+    capabilityTable.ftr64KBpages = false;
     OSInterface::osEnabled64kbPages = false;
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_FALSE(memoryManager->peek64kbPagesEnabled());
 
-    hwInfo.capabilityTable.ftr64KBpages = false;
+    capabilityTable.ftr64KBpages = false;
     OSInterface::osEnabled64kbPages = true;
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_FALSE(memoryManager->peek64kbPagesEnabled());
 
-    hwInfo.capabilityTable.ftr64KBpages = true;
+    capabilityTable.ftr64KBpages = true;
     OSInterface::osEnabled64kbPages = false;
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_FALSE(memoryManager->peek64kbPagesEnabled());
 
-    hwInfo.capabilityTable.ftr64KBpages = true;
+    capabilityTable.ftr64KBpages = true;
     OSInterface::osEnabled64kbPages = true;
     memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_TRUE(memoryManager->peek64kbPagesEnabled());
@@ -887,9 +880,9 @@ typedef HwHelperTest DeviceCapsWithModifiedHwInfoTest;
 
 TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNotSupportedWhenDeviceIsCreatedThenSourceLevelDebuggerActiveIsSetToFalse) {
 
-    hwInfoHelper.hwInfo.capabilityTable.sourceLevelDebuggerSupported = false;
+    hwInfoHelper.capabilityTable.sourceLevelDebuggerSupported = false;
 
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper.hwInfo));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper));
 
     const auto &caps = device->getDeviceInfo();
     EXPECT_EQ(nullptr, device->getSourceLevelDebugger());

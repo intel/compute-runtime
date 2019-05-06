@@ -605,7 +605,7 @@ TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsTokenMask) {
 }
 
 TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNonParentKernelDoesNotCreateReflectionSurface) {
-    MockDevice device(*platformDevices[0]);
+    MockDevice device;
     MockProgram program(*device.getExecutionEnvironment());
     KernelInfo info;
     MockKernel kernel(&program, info, device);
@@ -623,7 +623,7 @@ TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNon
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceDispatchScheduler.set(true);
 
-    MockDevice device(*platformDevices[0]);
+    MockDevice device;
     MockProgram program(*device.getExecutionEnvironment());
     KernelInfo info;
     MockKernel kernel(&program, info, device);

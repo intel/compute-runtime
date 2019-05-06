@@ -57,7 +57,7 @@ class GlSharingTextureTests : public ::testing::Test {
 
         tempMM = new TempMM(*executionEnvironment);
         executionEnvironment->memoryManager.reset(tempMM);
-        device.reset(MockDevice::create<MockDevice>(*platformDevices, executionEnvironment, 0));
+        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0));
         clContext = std::make_unique<MockContext>(device.get());
 
         mockGlSharingFunctions = glSharing->sharingFunctions.release();

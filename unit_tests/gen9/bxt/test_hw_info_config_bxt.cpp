@@ -13,9 +13,8 @@ TEST(BxtHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorr
     if (IGFX_BROXTON != productFamily) {
         return;
     }
-    GT_SYSTEM_INFO gtSystemInfo = {0};
     HardwareInfo hwInfo;
-    hwInfo.pSysInfo = &gtSystemInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
 
     std::string strConfig = "1x2x6";
     hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
@@ -53,15 +52,11 @@ BXTTEST_F(BxtHwInfo, givenBoolWhenCallBxtHardwareInfoSetupThenFeatureTableAndWor
         "1x3x6"};
     bool boolValue[]{
         true, false};
-    GT_SYSTEM_INFO gtSystemInfo = {0};
-    FeatureTable pSkuTable;
-    WorkaroundTable pWaTable;
-    PLATFORM pPlatform;
     HardwareInfo hwInfo;
-    hwInfo.pSysInfo = &gtSystemInfo;
-    hwInfo.pSkuTable = &pSkuTable;
-    hwInfo.pWaTable = &pWaTable;
-    hwInfo.pPlatform = &pPlatform;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+    FeatureTable &pSkuTable = hwInfo.pSkuTable;
+    WorkaroundTable &pWaTable = hwInfo.pWaTable;
+    PLATFORM &pPlatform = hwInfo.pPlatform;
 
     for (auto &config : strConfig) {
         for (auto setParamBool : boolValue) {

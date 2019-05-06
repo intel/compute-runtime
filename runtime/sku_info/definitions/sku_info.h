@@ -9,7 +9,7 @@
 #include "runtime/sku_info/sku_info_base.h"
 
 namespace NEO {
-struct FeatureTable : FeatureTableBase {};
+struct alignas(4) FeatureTable : FeatureTableBase {};
 
-struct WorkaroundTable : WorkaroundTableBase {};
+struct alignas(4) WorkaroundTable : WorkaroundTableBase {};
 } // namespace NEO

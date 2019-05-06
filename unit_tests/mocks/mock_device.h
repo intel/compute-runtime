@@ -32,8 +32,8 @@ class MockDevice : public Device {
     void *peekSlmWindowStartAddress() const {
         return this->slmWindowStartAddress;
     }
-    MockDevice(const HardwareInfo &hwInfo);
-    MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
+    MockDevice();
+    MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
 
     DeviceInfo *getDeviceInfoToModify() {
         return &this->deviceInfo;
@@ -85,16 +85,17 @@ class MockDevice : public Device {
 
     template <typename T>
     static T *createWithExecutionEnvironment(const HardwareInfo *pHwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) {
-        pHwInfo = getDeviceInitHwInfo(pHwInfo);
+        pHwInfo = pHwInfo ? pHwInfo : platformDevices[0];
         executionEnvironment->setHwInfo(pHwInfo);
-        T *device = new T(*pHwInfo, executionEnvironment, deviceIndex);
+        T *device = new T(executionEnvironment, deviceIndex);
         executionEnvironment->memoryManager = std::move(device->mockMemoryManager);
-        return createDeviceInternals(pHwInfo, device);
+        return createDeviceInternals(device);
     }
 
     template <typename T>
     static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo) {
         ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment();
+        pHwInfo = pHwInfo ? pHwInfo : platformDevices[0];
         executionEnvironment->setHwInfo(pHwInfo);
         return createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, 0u);
     }
@@ -119,23 +120,24 @@ template <>
 inline Device *MockDevice::createWithNewExecutionEnvironment<Device>(const HardwareInfo *pHwInfo) {
     auto executionEnvironment = new ExecutionEnvironment();
     MockAubCenterFixture::setMockAubCenter(executionEnvironment);
-    executionEnvironment->setHwInfo(*platformDevices);
+    auto hwInfo = pHwInfo ? pHwInfo : *platformDevices;
+    executionEnvironment->setHwInfo(hwInfo);
     executionEnvironment->initializeMemoryManager();
-    return Device::create<Device>(pHwInfo, executionEnvironment, 0u);
+    return Device::create<Device>(executionEnvironment, 0u);
 }
 
 class FailDevice : public MockDevice {
   public:
-    FailDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
+    FailDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
 };
 
 class FailDeviceAfterOne : public MockDevice {
   public:
-    FailDeviceAfterOne(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
+    FailDeviceAfterOne(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
 };
 
 class MockAlignedMallocManagerDevice : public MockDevice {
   public:
-    MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
+    MockAlignedMallocManagerDevice(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
 };
 } // namespace NEO

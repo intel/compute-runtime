@@ -68,8 +68,8 @@ WorkaroundTable GLK::workaroundTable = {};
 FeatureTable GLK::featureTable = {};
 
 void GLK::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
-    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
+    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
 
     pSkuTable->ftrGpGpuMidBatchPreempt = true;
     pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
@@ -111,7 +111,7 @@ const HardwareInfo GLK_1x3x6::hwInfo = {
 
 GT_SYSTEM_INFO GLK_1x3x6::gtSystemInfo = {0};
 void GLK_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 18;
     gtSysInfo->ThreadCount = 18 * GLK::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -144,7 +144,7 @@ const HardwareInfo GLK_1x2x6::hwInfo = {
 };
 GT_SYSTEM_INFO GLK_1x2x6::gtSystemInfo = {0};
 void GLK_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 12;
     gtSysInfo->ThreadCount = 12 * GLK::threadsPerEu;
     gtSysInfo->SliceCount = 1;

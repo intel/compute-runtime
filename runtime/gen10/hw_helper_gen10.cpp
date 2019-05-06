@@ -16,7 +16,7 @@ typedef CNLFamily Family;
 
 template <>
 void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
-    if (pHwInfo->pPlatform->usRevId < 0x4) {
+    if (pHwInfo->pPlatform.usRevId < 0x4) {
         coherencyFlag = false;
     } else {
         coherencyFlag = true;

@@ -304,7 +304,7 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
   public:
     void SetUp() override {
         memoryManager = new MockMemoryManager();
-        device = new MockDevice(*platformDevices[0]);
+        device = new MockDevice;
         deleter = new MockDeferredDeleter();
         device->injectMemoryManager(memoryManager);
         memoryManager->setDeferredDeleter(deleter);

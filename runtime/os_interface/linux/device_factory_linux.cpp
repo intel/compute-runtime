@@ -21,9 +21,8 @@
 
 namespace NEO {
 size_t DeviceFactory::numDevices = 0;
-HardwareInfo *DeviceFactory::hwInfo = nullptr;
 
-bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
+bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
     unsigned int devNum = 0;
     size_t requiredDeviceCount = 1;
 
@@ -39,19 +38,16 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, Exec
     executionEnvironment.osInterface.reset(new OSInterface());
     executionEnvironment.osInterface->get()->setDrm(drm);
 
-    auto hardwareInfo = std::make_unique<HardwareInfo>();
+    auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
     const HardwareInfo *pCurrDevice = platformDevices[devNum];
-    HwInfoConfig *hwConfig = HwInfoConfig::get(pCurrDevice->pPlatform->eProductFamily);
-    if (hwConfig->configureHwInfo(pCurrDevice, hardwareInfo.get(), executionEnvironment.osInterface.get())) {
+    HwInfoConfig *hwConfig = HwInfoConfig::get(pCurrDevice->pPlatform.eProductFamily);
+    if (hwConfig->configureHwInfo(pCurrDevice, hardwareInfo, executionEnvironment.osInterface.get())) {
         return false;
     }
 
     numDevices = requiredDeviceCount;
-    *pHWInfos = hardwareInfo.release();
-    executionEnvironment.setHwInfo(*pHWInfos);
 
     DeviceFactory::numDevices = numDevices;
-    DeviceFactory::hwInfo = *pHWInfos;
 
     return true;
 }
@@ -61,13 +57,7 @@ void DeviceFactory::releaseDevices() {
         for (unsigned int i = 0; i < DeviceFactory::numDevices; ++i) {
             Drm::closeDevice(i);
         }
-        delete hwInfo->pSysInfo;
-        delete hwInfo->pSkuTable;
-        delete hwInfo->pWaTable;
-        delete hwInfo->pPlatform;
-        delete hwInfo;
     }
-    DeviceFactory::hwInfo = nullptr;
     DeviceFactory::numDevices = 0;
 }
 

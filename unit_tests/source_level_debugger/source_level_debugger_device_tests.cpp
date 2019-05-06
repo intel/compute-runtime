@@ -29,7 +29,7 @@ class MockOsLibrary : public OsLibrary {
 
 class MockDeviceWithDebuggerActive : public MockDevice {
   public:
-    MockDeviceWithDebuggerActive(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(hwInfo, executionEnvironment, deviceIndex) {}
+    MockDeviceWithDebuggerActive(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(executionEnvironment, deviceIndex) {}
     void initializeCaps() override {
         MockDevice::initializeCaps();
         this->setSourceLevelDebuggerActive(true);
@@ -40,7 +40,7 @@ TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhen
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     auto gmock = new ::testing::NiceMock<GMockSourceLevelDebugger>(new MockOsLibrary);
     executionEnvironment->sourceLevelDebugger.reset(gmock);
-    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, executionEnvironment, 0u));
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
 
     EXPECT_CALL(*gmock, notifyDeviceDestruction()).Times(1);
 }
@@ -48,7 +48,7 @@ TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhen
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsCreatedThenPreemptionIsDisabled) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->sourceLevelDebugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
-    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, executionEnvironment, 0u));
+    auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(executionEnvironment, 0u));
 
     EXPECT_EQ(PreemptionMode::Disabled, device->getPreemptionMode());
 }

@@ -406,7 +406,7 @@ HWTEST_F(Image2dFromBufferTest, givenBufferWhenImageFromBufferThenIsImageFromBuf
         }
     };
 
-    auto raiiFactory = RAIIHwHelperFactory<MockHwHelperHw>(context.getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily);
+    auto raiiFactory = RAIIHwHelperFactory<MockHwHelperHw>(context.getDevice(0)->getHardwareInfo().pPlatform.eRenderCoreFamily);
 
     cl_int errCode = CL_SUCCESS;
     auto buffer = Buffer::create(&context, 0, 1, nullptr, errCode);

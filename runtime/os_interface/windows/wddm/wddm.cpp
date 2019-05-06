@@ -74,10 +74,10 @@ bool Wddm::enumAdapters(HardwareInfo &outHardwareInfo) {
         return false;
     }
 
-    outHardwareInfo.pPlatform = new PLATFORM(*gfxPlatform);
-    outHardwareInfo.pSkuTable = new FeatureTable(*featureTable);
-    outHardwareInfo.pWaTable = new WorkaroundTable(*waTable);
-    outHardwareInfo.pSysInfo = new GT_SYSTEM_INFO(*gtSystemInfo);
+    outHardwareInfo.pPlatform = *gfxPlatform;
+    outHardwareInfo.pSkuTable = *featureTable;
+    outHardwareInfo.pWaTable = *waTable;
+    outHardwareInfo.pSysInfo = *gtSystemInfo;
 
     outHardwareInfo.capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
     outHardwareInfo.capabilityTable.maxRenderFrequency = maxRenderFrequency;

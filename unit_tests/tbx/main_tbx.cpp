@@ -14,28 +14,26 @@
 using namespace NEO;
 
 namespace NEO {
-bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
+bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
 } // namespace NEO
 
 TEST(CSRTests, getDevices) {
-    HardwareInfo *hwInfo = nullptr;
     size_t numDevicesReturned = 0;
 
     DebugManagerStateRestore dbgState;
     DebugManager.flags.SetCommandStreamReceiver.set(2);
     ExecutionEnvironment executionEnvironment;
-    NEO::getDevices(&hwInfo, numDevicesReturned, executionEnvironment);
+    NEO::getDevices(numDevicesReturned, executionEnvironment);
 
-    ASSERT_NE(nullptr, hwInfo);
-    ASSERT_NE(nullptr, hwInfo->pSysInfo);
+    auto hwInfo = executionEnvironment.getHardwareInfo();
 
-    EXPECT_GT_VAL(hwInfo->pSysInfo->EUCount, 0u);
-    EXPECT_GT_VAL(hwInfo->pSysInfo->ThreadCount, 0u);
-    EXPECT_GT_VAL(hwInfo->pSysInfo->SliceCount, 0u);
-    EXPECT_GT_VAL(hwInfo->pSysInfo->SubSliceCount, 0u);
-    EXPECT_GT_VAL(hwInfo->pSysInfo->L3CacheSizeInKb, 0u);
-    EXPECT_EQ_VAL(hwInfo->pSysInfo->CsrSizeInMb, 8u);
-    EXPECT_FALSE(hwInfo->pSysInfo->IsDynamicallyPopulated);
+    EXPECT_GT_VAL(hwInfo->pSysInfo.EUCount, 0u);
+    EXPECT_GT_VAL(hwInfo->pSysInfo.ThreadCount, 0u);
+    EXPECT_GT_VAL(hwInfo->pSysInfo.SliceCount, 0u);
+    EXPECT_GT_VAL(hwInfo->pSysInfo.SubSliceCount, 0u);
+    EXPECT_GT_VAL(hwInfo->pSysInfo.L3CacheSizeInKb, 0u);
+    EXPECT_EQ_VAL(hwInfo->pSysInfo.CsrSizeInMb, 8u);
+    EXPECT_FALSE(hwInfo->pSysInfo.IsDynamicallyPopulated);
 }
 
 int main(int argc, char **argv) {

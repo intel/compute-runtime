@@ -21,7 +21,7 @@ template <>
 uint32_t PreambleHelper<BDWFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
     uint32_t l3Config = 0;
 
-    switch (hwInfo.pPlatform->eProductFamily) {
+    switch (hwInfo.pPlatform.eProductFamily) {
     case IGFX_BROADWELL:
         l3Config = getL3ConfigHelper<IGFX_BROADWELL>(useSLM);
         break;

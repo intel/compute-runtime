@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-bool DeviceFactory::getDevicesForProductFamilyOverride(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
+bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
     auto totalDeviceCount = 1u;
     if (DebugManager.flags.CreateMultipleDevices.get()) {
         totalDeviceCount = DebugManager.flags.CreateMultipleDevices.get();
@@ -24,23 +24,16 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(HardwareInfo **pHWInfos, 
     std::string hwInfoConfig;
     DebugManager.getHardwareInfoOverride(hwInfoConfig);
 
-    auto hardwareInfo = std::make_unique<HardwareInfo>();
-    hardwareInfo->pPlatform = new PLATFORM(*hwInfoConst->pPlatform);
-    hardwareInfo->pSkuTable = new FeatureTable(*hwInfoConst->pSkuTable);
-    hardwareInfo->pWaTable = new WorkaroundTable(*hwInfoConst->pWaTable);
-    hardwareInfo->pSysInfo = new GT_SYSTEM_INFO(*hwInfoConst->pSysInfo);
-    hardwareInfo->capabilityTable = hwInfoConst->capabilityTable;
-    hardwareInfoSetup[hwInfoConst->pPlatform->eProductFamily](hardwareInfo.get(), true, hwInfoConfig);
+    auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
+    *hardwareInfo = *hwInfoConst;
 
-    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->pPlatform->eProductFamily);
-    hwConfig->configureHardwareCustom(hardwareInfo.get(), nullptr);
+    hardwareInfoSetup[hwInfoConst->pPlatform.eProductFamily](hardwareInfo, true, hwInfoConfig);
 
-    *pHWInfos = hardwareInfo.release();
+    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->pPlatform.eProductFamily);
+    hwConfig->configureHardwareCustom(hardwareInfo, nullptr);
 
-    executionEnvironment.setHwInfo(*pHWInfos);
     numDevices = totalDeviceCount;
     DeviceFactory::numDevices = numDevices;
-    DeviceFactory::hwInfo = *pHWInfos;
 
     return true;
 }

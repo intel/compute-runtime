@@ -13,29 +13,28 @@ TEST(LkfHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorr
     if (IGFX_LAKEFIELD != productFamily) {
         return;
     }
-    GT_SYSTEM_INFO gInfo = {0};
     HardwareInfo hwInfo;
-    hwInfo.pSysInfo = &gInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
 
     std::string strConfig = "1x8x8";
     hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gInfo.SliceCount);
-    EXPECT_EQ(8u, gInfo.SubSliceCount);
-    EXPECT_EQ(64u, gInfo.EUCount);
+    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(8u, gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(64u, gtSystemInfo.EUCount);
 
     strConfig = "default";
-    gInfo = {0};
+    gtSystemInfo = {0};
     hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gInfo.SliceCount);
-    EXPECT_EQ(8u, gInfo.SubSliceCount);
-    EXPECT_EQ(64u, gInfo.EUCount);
+    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(8u, gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(64u, gtSystemInfo.EUCount);
 
     strConfig = "erroneous";
-    gInfo = {0};
+    gtSystemInfo = {0};
     EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, strConfig));
-    EXPECT_EQ(0u, gInfo.SliceCount);
-    EXPECT_EQ(0u, gInfo.SubSliceCount);
-    EXPECT_EQ(0u, gInfo.EUCount);
+    EXPECT_EQ(0u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
 using LkfHwInfo = ::testing::Test;
@@ -43,21 +42,16 @@ using LkfHwInfo = ::testing::Test;
 LKFTEST_F(LkfHwInfo, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     bool boolValue[]{
         true, false};
-    GT_SYSTEM_INFO gInfo = {0};
-    FeatureTable pSkuTable;
-    WorkaroundTable pWaTable;
-    PLATFORM pPlatform;
     HardwareInfo hwInfo;
-    hwInfo.pSysInfo = &gInfo;
-    hwInfo.pSkuTable = &pSkuTable;
-    hwInfo.pWaTable = &pWaTable;
-    hwInfo.pPlatform = &pPlatform;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+    FeatureTable &pSkuTable = hwInfo.pSkuTable;
+    WorkaroundTable &pWaTable = hwInfo.pWaTable;
 
     std::string strConfig = "1x8x8";
 
     for (auto setParamBool : boolValue) {
 
-        gInfo = {0};
+        gtSystemInfo = {0};
         pSkuTable = {};
         pWaTable = {};
         hardwareInfoSetup[productFamily](&hwInfo, setParamBool, strConfig);

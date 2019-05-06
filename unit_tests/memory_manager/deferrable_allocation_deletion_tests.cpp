@@ -40,7 +40,7 @@ struct DeferrableAllocationDeletionTest : ::testing::Test {
         ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
         memoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
-        device.reset(Device::create<MockDevice>(nullptr, executionEnvironment, 0u));
+        device.reset(Device::create<MockDevice>(executionEnvironment, 0u));
         hwTag = device->getDefaultEngine().commandStreamReceiver->getTagAddress();
         defaultOsContextId = device->getDefaultEngine().osContext->getContextId();
         asyncDeleter = std::make_unique<DeferredDeleterPublic>();

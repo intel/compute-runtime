@@ -38,7 +38,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
   protected:
     std::unique_ptr<GmmHelper> gmmHelper;
-    const HardwareInfo *hwInfo = nullptr;
+    std::unique_ptr<HardwareInfo> hwInfo;
 
   public:
     ExecutionEnvironment();
@@ -51,9 +51,8 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void initializeMemoryManager();
     void initSourceLevelDebugger();
     void setHwInfo(const HardwareInfo *hwInfo);
-    const HardwareInfo *getHardwareInfo() const {
-        return this->hwInfo;
-    }
+    const HardwareInfo *getHardwareInfo() const { return hwInfo.get(); }
+    HardwareInfo *getMutableHardwareInfo() const { return hwInfo.get(); }
     bool isFullRangeSvm() const {
         return hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
     }

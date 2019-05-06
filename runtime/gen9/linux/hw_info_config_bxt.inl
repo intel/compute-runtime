@@ -19,8 +19,8 @@ int HwInfoConfigHw<IGFX_BROXTON>::configureHardwareCustom(HardwareInfo *hwInfo, 
     }
 
     Drm *drm = osIface->get()->getDrm();
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
-    GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
+    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
 
     pSysInfo->SliceCount = 1;
 

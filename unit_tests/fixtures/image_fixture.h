@@ -12,7 +12,6 @@
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/platform/platform.h"
-#include "unit_tests/helpers/hw_info_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "CL/cl.h"
@@ -117,10 +116,10 @@ class ImageClearColorFixture {
     using AUXILIARY_SURFACE_MODE = typename FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     void SetUp() {
-        hwInfoHelper.hwInfo.capabilityTable.ftrRenderCompressedImages = true;
+        hwInfoHelper.capabilityTable.ftrRenderCompressedImages = true;
 
         NEO::platformImpl.reset();
-        NEO::constructPlatform()->peekExecutionEnvironment()->setHwInfo(&hwInfoHelper.hwInfo);
+        NEO::constructPlatform()->peekExecutionEnvironment()->setHwInfo(&hwInfoHelper);
         NEO::platform()->peekExecutionEnvironment()->initGmm();
 
         surfaceState = FamilyType::cmdInitRenderSurfaceState;
@@ -135,7 +134,7 @@ class ImageClearColorFixture {
     }
 
     RENDER_SURFACE_STATE surfaceState;
-    HwInfoHelper hwInfoHelper;
+    NEO::HardwareInfo hwInfoHelper = **NEO::platformDevices;
 
   protected:
     MockContext context;

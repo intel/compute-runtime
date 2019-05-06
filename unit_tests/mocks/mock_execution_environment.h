@@ -16,7 +16,9 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
     MockExecutionEnvironment() = default;
     MockExecutionEnvironment(const HardwareInfo *hwInfo) : MockExecutionEnvironment(hwInfo, true) {}
     MockExecutionEnvironment(const HardwareInfo *hwInfo, bool useMockAubCenter) : useMockAubCenter(useMockAubCenter) {
-        setHwInfo(hwInfo);
+        if (hwInfo) {
+            setHwInfo(hwInfo);
+        }
     }
     void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) override {
         if (!initAubCenterCalled) {

@@ -36,7 +36,7 @@ void PerformanceCountersLinux::initialize(const HardwareInfo *hwInfo) {
     if (mdLibHandle) {
         perfmonLoadConfigFunc = reinterpret_cast<perfmonLoadConfig_t>(dlsymFunc(mdLibHandle, "drm_intel_perfmon_load_config"));
     }
-    setPlatformInfoFunc(hwInfo->pPlatform->eProductFamily, (void *)(hwInfo->pSkuTable));
+    setPlatformInfoFunc(hwInfo->pPlatform.eProductFamily, (void *)(&hwInfo->pSkuTable));
 }
 
 void PerformanceCountersLinux::enableImpl() {

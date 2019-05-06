@@ -76,8 +76,8 @@ WorkaroundTable BDW::workaroundTable = {};
 FeatureTable BDW::featureTable = {};
 
 void BDW::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
-    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
+    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
 
     pSkuTable->ftrL3IACoherency = true;
     pSkuTable->ftrPPGTT = true;
@@ -106,7 +106,7 @@ const HardwareInfo BDW_1x2x6::hwInfo = {
 
 GT_SYSTEM_INFO BDW_1x2x6::gtSystemInfo = {0};
 void BDW_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 12;
     gtSysInfo->ThreadCount = 12 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -139,7 +139,7 @@ const HardwareInfo BDW_1x3x6::hwInfo = {
 };
 GT_SYSTEM_INFO BDW_1x3x6::gtSystemInfo = {0};
 void BDW_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 18;
     gtSysInfo->ThreadCount = 18 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -172,7 +172,7 @@ const HardwareInfo BDW_1x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO BDW_1x3x8::gtSystemInfo = {0};
 void BDW_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 23;
     gtSysInfo->ThreadCount = 23 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -205,7 +205,7 @@ const HardwareInfo BDW_2x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO BDW_2x3x8::gtSystemInfo = {0};
 void BDW_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 47;
     gtSysInfo->ThreadCount = 47 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 2;

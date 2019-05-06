@@ -42,7 +42,7 @@ template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment)
     : CommandStreamReceiver(executionEnvironment) {
 
-    auto &hwHelper = HwHelper::get(peekHwInfo().pPlatform->eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(peekHwInfo().pPlatform.eRenderCoreFamily);
     localMemoryEnabled = hwHelper.getEnableLocalMemory(peekHwInfo());
 
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
@@ -390,7 +390,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*preemptionCsrAllocation);
 
     if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || device.isSourceLevelDebuggerActive()) {
-        auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().pPlatform->eRenderCoreFamily, device.isSourceLevelDebuggerActive());
+        auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().pPlatform.eRenderCoreFamily, device.isSourceLevelDebuggerActive());
         makeResident(*device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, device).getSipAllocation());
         if (debugSurface) {
             makeResident(*debugSurface);

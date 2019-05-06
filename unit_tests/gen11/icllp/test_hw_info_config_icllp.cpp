@@ -13,50 +13,50 @@ TEST(IcllpHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCo
     if (IGFX_ICELAKE_LP != productFamily) {
         return;
     }
-    GT_SYSTEM_INFO gInfo = {0};
     HardwareInfo hwInfo;
-    hwInfo.pSysInfo = &gInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+    gtSystemInfo = {0};
 
     std::string strConfig = "1x8x8";
     hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gInfo.SliceCount);
-    EXPECT_EQ(8u, gInfo.SubSliceCount);
-    EXPECT_EQ(63u, gInfo.EUCount);
+    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(8u, gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(63u, gtSystemInfo.EUCount);
 
     strConfig = "1x4x8";
-    gInfo = {0};
+    gtSystemInfo = {0};
     hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gInfo.SliceCount);
-    EXPECT_EQ(4u, gInfo.SubSliceCount);
-    EXPECT_EQ(31u, gInfo.EUCount);
+    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(4u, gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(31u, gtSystemInfo.EUCount);
 
     strConfig = "1x6x8";
-    gInfo = {0};
+    gtSystemInfo = {0};
     hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gInfo.SliceCount);
-    EXPECT_EQ(6u, gInfo.SubSliceCount);
-    EXPECT_EQ(47u, gInfo.EUCount);
+    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(6u, gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(47u, gtSystemInfo.EUCount);
 
     strConfig = "1x1x8";
-    gInfo = {0};
+    gtSystemInfo = {0};
     hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gInfo.SliceCount);
-    EXPECT_EQ(1u, gInfo.SubSliceCount);
-    EXPECT_EQ(8u, gInfo.EUCount);
+    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(1u, gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(8u, gtSystemInfo.EUCount);
 
     strConfig = "default";
-    gInfo = {0};
+    gtSystemInfo = {0};
     hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
-    EXPECT_EQ(1u, gInfo.SliceCount);
-    EXPECT_EQ(8u, gInfo.SubSliceCount);
-    EXPECT_EQ(63u, gInfo.EUCount);
+    EXPECT_EQ(1u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(8u, gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(63u, gtSystemInfo.EUCount);
 
     strConfig = "erroneous";
-    gInfo = {0};
+    gtSystemInfo = {0};
     EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, strConfig));
-    EXPECT_EQ(0u, gInfo.SliceCount);
-    EXPECT_EQ(0u, gInfo.SubSliceCount);
-    EXPECT_EQ(0u, gInfo.EUCount);
+    EXPECT_EQ(0u, gtSystemInfo.SliceCount);
+    EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
 using IcllpHwInfo = ::testing::Test;
@@ -70,20 +70,15 @@ ICLLPTEST_F(IcllpHwInfo, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatureTable
     bool boolValue[]{
         true, false};
 
-    GT_SYSTEM_INFO gInfo = {0};
-    FeatureTable pSkuTable;
-    WorkaroundTable pWaTable;
-    PLATFORM pPlatform;
     HardwareInfo hwInfo;
-    hwInfo.pSysInfo = &gInfo;
-    hwInfo.pSkuTable = &pSkuTable;
-    hwInfo.pWaTable = &pWaTable;
-    hwInfo.pPlatform = &pPlatform;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+    FeatureTable &pSkuTable = hwInfo.pSkuTable;
+    WorkaroundTable &pWaTable = hwInfo.pWaTable;
 
     for (auto &config : strConfig) {
         for (auto setParamBool : boolValue) {
 
-            gInfo = {0};
+            gtSystemInfo = {0};
             pSkuTable = {};
             pWaTable = {};
             hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);

@@ -49,9 +49,9 @@ GEN11TEST_F(Gen11UrbEntryAllocationSize, getUrbEntryAllocationSize) {
 typedef PreambleVfeState Gen11PreambleVfeState;
 GEN11TEST_F(Gen11PreambleVfeState, WaOff) {
     typedef typename ICLFamily::PIPE_CONTROL PIPE_CONTROL;
-    testWaTable.waSendMIFLUSHBeforeVFE = 0;
+    testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    PreambleHelper<ICLFamily>::programVFEState(&linearStream, **platformDevices, 0, 0);
+    PreambleHelper<ICLFamily>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0);
 
     parseCommands<ICLFamily>(cs);
 
@@ -67,9 +67,9 @@ GEN11TEST_F(Gen11PreambleVfeState, WaOff) {
 
 GEN11TEST_F(Gen11PreambleVfeState, WaOn) {
     typedef typename ICLFamily::PIPE_CONTROL PIPE_CONTROL;
-    testWaTable.waSendMIFLUSHBeforeVFE = 1;
+    testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
-    PreambleHelper<ICLFamily>::programVFEState(&linearStream, **platformDevices, 0, 0);
+    PreambleHelper<ICLFamily>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0);
 
     parseCommands<ICLFamily>(cs);
 
@@ -92,8 +92,9 @@ GEN11TEST_F(PreemptionWatermarkGen11, givenPreambleThenPreambleWorkAroundsIsNotP
     auto cmd = findMmioCmd<FamilyType>(cmdList.begin(), cmdList.end(), FfSliceCsChknReg2::address);
     ASSERT_EQ(nullptr, cmd);
 
-    size_t expectedSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(MockDevice(*platformDevices[0]));
-    EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(MockDevice(*platformDevices[0])));
+    MockDevice device;
+    size_t expectedSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(device);
+    EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(device));
 }
 
 typedef PreambleFixture ThreadArbitrationGen11;
@@ -104,7 +105,7 @@ GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArb
     typedef ICLFamily::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(**platformDevices, true);
-    MockDevice mockDevice(**platformDevices);
+    MockDevice mockDevice;
     PreambleHelper<FamilyType>::programPreamble(&linearStream, mockDevice, l3Config,
                                                 ThreadArbitrationPolicy::RoundRobin,
                                                 nullptr);
@@ -119,7 +120,8 @@ GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArb
 
     EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[ThreadArbitrationPolicy::RoundRobin], cmd->getDataDword());
 
-    EXPECT_EQ(0u, PreambleHelper<ICLFamily>::getAdditionalCommandsSize(MockDevice(*platformDevices[0])));
+    MockDevice device;
+    EXPECT_EQ(0u, PreambleHelper<ICLFamily>::getAdditionalCommandsSize(device));
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<ICLFamily>::getThreadArbitrationCommandsSize());
 }
 

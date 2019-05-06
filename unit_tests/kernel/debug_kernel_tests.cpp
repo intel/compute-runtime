@@ -16,7 +16,7 @@
 using namespace NEO;
 
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetDebugSurfaceBtiIsCalledThenCorrectValueIsReturned) {
-    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
+    auto device = std::make_unique<MockDevice>();
     MockProgram program(*device->getExecutionEnvironment());
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockDebugKernel>(*device.get(), &program));
@@ -25,7 +25,7 @@ TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetDebugSurfaceBtiIsCal
 }
 
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenCorrectValueIsReturned) {
-    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
+    auto device = std::make_unique<MockDevice>();
     MockProgram program(*device->getExecutionEnvironment());
     program.enableKernelDebug();
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*device.get(), &program));
@@ -34,7 +34,7 @@ TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThrea
 }
 
 TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetDebugSurfaceBtiIsCalledThenInvalidIndexValueIsReturned) {
-    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
+    auto device = std::make_unique<MockDevice>();
     MockProgram program(*device->getExecutionEnvironment());
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(*device.get(), &program));
@@ -43,7 +43,7 @@ TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetDebugSurfaceBtiIsCalledT
 }
 
 TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenZeroIsReturned) {
-    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
+    auto device = std::make_unique<MockDevice>();
     MockProgram program(*device->getExecutionEnvironment());
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(*device.get(), &program));

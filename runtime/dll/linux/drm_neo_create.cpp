@@ -180,13 +180,13 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     if (ret != 0) {
         // turbo patch not present, we are not on custom Kernel, switch to simplified Mocs selection
         // do this only for GEN9+
-        if (device->pHwInfo->pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
+        if (device->pHwInfo->pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
             drmObject->setSimplifiedMocsTableUsage(true);
         }
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
-    if (HwHelper::get(device->pHwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*device->pHwInfo)) {
+    if (HwHelper::get(device->pHwInfo->pPlatform.eRenderCoreFamily).getEnableLocalMemory(*device->pHwInfo)) {
         drmObject->queryMemoryInfo();
     }
 

@@ -25,10 +25,9 @@ bool overrideDeviceWithDefaultHardwareInfo = true;
 CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment) {
     CommandStreamReceiver *commandStreamReceiver = nullptr;
     auto hwInfo = executionEnvironment.getHardwareInfo();
-    assert(nullptr != hwInfo->pPlatform);
     auto offset = !overrideCommandStreamReceiverCreation ? IGFX_MAX_CORE : 0;
     if (offset != 0) {
-        auto funcCreate = commandStreamReceiverFactory[offset + hwInfo->pPlatform->eRenderCoreFamily];
+        auto funcCreate = commandStreamReceiverFactory[offset + hwInfo->pPlatform.eRenderCoreFamily];
         if (funcCreate) {
             commandStreamReceiver = funcCreate(false, executionEnvironment);
         }
@@ -38,14 +37,12 @@ CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnviro
     return commandStreamReceiver;
 }
 
-bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
+bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
     if (overrideDeviceWithDefaultHardwareInfo) {
-        *hwInfo = const_cast<HardwareInfo *>(*platformDevices);
-        executionEnvironment.setHwInfo(*hwInfo);
         numDevicesReturned = numPlatformDevices;
         return getDevicesResult;
     }
 
-    return getDevicesImpl(hwInfo, numDevicesReturned, executionEnvironment);
+    return getDevicesImpl(numDevicesReturned, executionEnvironment);
 }
 } // namespace NEO

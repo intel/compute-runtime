@@ -26,7 +26,7 @@ void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
     ASSERT_NE(pCmdQ, nullptr);
     auto &device = reinterpret_cast<MockDevice &>(pCmdQ->getDevice());
     const auto &hwInfo = device.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(hwInfo.pPlatform.eRenderCoreFamily);
 
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
     std::stringstream strfilename;

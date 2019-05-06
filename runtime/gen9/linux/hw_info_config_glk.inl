@@ -19,8 +19,8 @@ int HwInfoConfigHw<IGFX_GEMINILAKE>::configureHardwareCustom(HardwareInfo *hwInf
     }
 
     Drm *drm = osIface->get()->getDrm();
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
-    GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
+    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
 
     pSysInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled = 1;
     pSysInfo->VEBoxInfo.IsValid = true;

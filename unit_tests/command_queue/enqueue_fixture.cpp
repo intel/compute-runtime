@@ -11,6 +11,7 @@
 
 // clang-format off
 // EnqueueTraits
+using namespace NEO;
 cl_uint EnqueueTraits::numEventsInWaitList   = 0;
 const cl_event *EnqueueTraits::eventWaitList = nullptr;
 cl_event *EnqueueTraits::event               = nullptr;

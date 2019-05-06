@@ -16,7 +16,7 @@ int HwInfoConfigHw<IGFX_LAKEFIELD>::configureHardwareCustom(HardwareInfo *hwInfo
         return 0;
     }
 
-    GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
 
     pSysInfo->SliceCount = 1;
 

@@ -6,11 +6,11 @@
  */
 
 #pragma once
+#include "runtime/helpers/hw_info.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "test.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
-#include "unit_tests/helpers/hw_info_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_csr.h"
@@ -43,7 +43,7 @@ struct BufferEnqueueFixture : public HardwareParse,
         memoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
 
-        device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(hwInfo, executionEnvironment, 0));
+        device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0));
 
         context = std::make_unique<MockContext>(device.get());
 
@@ -61,7 +61,7 @@ struct BufferEnqueueFixture : public HardwareParse,
 
   protected:
     const size_t bufferSizeInDwords = 64;
-    HwInfoHelper hwInfoHelper;
+    HardwareInfo hwInfoHelper;
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment;
     cl_queue_properties properties = {};

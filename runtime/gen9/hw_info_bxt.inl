@@ -73,9 +73,9 @@ WorkaroundTable BXT::workaroundTable = {};
 FeatureTable BXT::featureTable = {};
 
 void BXT::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    PLATFORM *pPlatform = const_cast<PLATFORM *>(hwInfo->pPlatform);
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
-    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+    PLATFORM *pPlatform = &hwInfo->pPlatform;
+    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
+    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
 
     pSkuTable->ftrGpGpuMidBatchPreempt = true;
     pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
@@ -123,7 +123,7 @@ const HardwareInfo BXT_1x2x6::hwInfo = {
 };
 GT_SYSTEM_INFO BXT_1x2x6::gtSystemInfo = {0};
 void BXT_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 12;
     gtSysInfo->ThreadCount = 12 * BXT::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -156,7 +156,7 @@ const HardwareInfo BXT_1x3x6::hwInfo = {
 };
 GT_SYSTEM_INFO BXT_1x3x6::gtSystemInfo = {0};
 void BXT_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 18;
     gtSysInfo->ThreadCount = 18 * BXT::threadsPerEu;
     gtSysInfo->SliceCount = 1;

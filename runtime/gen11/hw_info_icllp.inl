@@ -72,8 +72,8 @@ WorkaroundTable ICLLP::workaroundTable = {};
 FeatureTable ICLLP::featureTable = {};
 
 void ICLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
-    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
+    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
 
     pSkuTable->ftrL3IACoherency = true;
     pSkuTable->ftrPPGTT = true;
@@ -116,7 +116,7 @@ const HardwareInfo ICLLP_1x8x8::hwInfo = {
 
 GT_SYSTEM_INFO ICLLP_1x8x8::gtSystemInfo = {0};
 void ICLLP_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 63;
     gtSysInfo->ThreadCount = 63 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -150,7 +150,7 @@ const HardwareInfo ICLLP_1x4x8::hwInfo = {
 
 GT_SYSTEM_INFO ICLLP_1x4x8::gtSystemInfo = {0};
 void ICLLP_1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 31;
     gtSysInfo->ThreadCount = 31 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -183,7 +183,7 @@ const HardwareInfo ICLLP_1x6x8::hwInfo = {
 
 GT_SYSTEM_INFO ICLLP_1x6x8::gtSystemInfo = {0};
 void ICLLP_1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 47;
     gtSysInfo->ThreadCount = 47 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -216,7 +216,7 @@ const HardwareInfo ICLLP_1x1x8::hwInfo = {
 };
 GT_SYSTEM_INFO ICLLP_1x1x8::gtSystemInfo = {0};
 void ICLLP_1x1x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 8;
     gtSysInfo->ThreadCount = 8 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;

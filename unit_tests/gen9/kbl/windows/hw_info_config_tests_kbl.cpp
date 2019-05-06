@@ -16,8 +16,8 @@ using HwInfoConfigTestWindowsKbl = HwInfoConfigTestWindows;
 KBLTEST_F(HwInfoConfigTestWindowsKbl, whenCallAdjustPlatformThenDoNothing) {
     EXPECT_EQ(IGFX_KABYLAKE, productFamily);
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    hwInfoConfig->adjustPlatformForProductFamily(&testHwInfo);
+    hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
 
-    int ret = memcmp(outHwInfo.pPlatform, testHwInfo.pPlatform, sizeof(PLATFORM));
+    int ret = memcmp(&outHwInfo.pPlatform, &pInHwInfo.pPlatform, sizeof(PLATFORM));
     EXPECT_EQ(0, ret);
 }

@@ -159,7 +159,7 @@ WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
     this->hasBarriers = !!dispatchInfo.getKernel()->getKernelInfo().patchInfo.executionEnvironment->HasBarriers;
     this->simdSize = (uint32_t)dispatchInfo.getKernel()->getKernelInfo().getMaxSimdSize();
     this->slmTotalSize = (uint32_t)dispatchInfo.getKernel()->slmTotalSize;
-    this->coreFamily = dispatchInfo.getKernel()->getDevice().getHardwareInfo().pPlatform->eRenderCoreFamily;
+    this->coreFamily = dispatchInfo.getKernel()->getDevice().getHardwareInfo().pPlatform.eRenderCoreFamily;
     this->numThreadsPerSubSlice = (uint32_t)dispatchInfo.getKernel()->getDevice().getDeviceInfo().maxNumEUsPerSubSlice * dispatchInfo.getKernel()->getDevice().getDeviceInfo().numThreadsPerEU;
     this->localMemSize = (uint32_t)dispatchInfo.getKernel()->getDevice().getDeviceInfo().localMemSize;
     setIfUseImg(dispatchInfo.getKernel());

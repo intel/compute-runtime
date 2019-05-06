@@ -23,100 +23,88 @@ struct HwInfoConfigTestLinuxCnl : HwInfoConfigTestLinux {
 
 CNLTEST_F(HwInfoConfigTestLinuxCnl, configureHwInfo) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.pPlatform->usDeviceID);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform->usRevId);
-    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo->EUCount);
-    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo->SubSliceCount);
-    EXPECT_EQ(1u, outHwInfo.pSysInfo->SliceCount);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.pPlatform.usDeviceID);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform.usRevId);
+    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo.SubSliceCount);
+    EXPECT_EQ(1u, outHwInfo.pSysInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GT2, outHwInfo.pPlatform->eGTType);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT1_5);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTX);
-
-    ReleaseOutHwInfoStructs();
+    EXPECT_EQ(GTTYPE_GT2, outHwInfo.pPlatform.eGTType);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT1_5);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTX);
 
     drm->StoredDeviceID = ICNL_3x8_ULT_DEVICE_F0_ID;
     drm->StoredSSVal = 4;
     drm->setGtType(GTTYPE_GT1);
-    ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.pPlatform->usDeviceID);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform->usRevId);
-    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo->EUCount);
-    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo->SubSliceCount);
-    EXPECT_EQ(2u, outHwInfo.pSysInfo->SliceCount);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.pPlatform.usDeviceID);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform.usRevId);
+    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo.SubSliceCount);
+    EXPECT_EQ(2u, outHwInfo.pSysInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GT1, outHwInfo.pPlatform->eGTType);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTX);
-
-    ReleaseOutHwInfoStructs();
+    EXPECT_EQ(GTTYPE_GT1, outHwInfo.pPlatform.eGTType);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTX);
 
     drm->StoredDeviceID = ICNL_3x8_ULT_DEVICE_F0_ID;
     drm->StoredSSVal = 6;
     drm->setGtType(GTTYPE_GT2_5);
-    ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.pPlatform->usDeviceID);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform->usRevId);
-    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo->EUCount);
-    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo->SubSliceCount);
-    EXPECT_EQ(3u, outHwInfo.pSysInfo->SliceCount);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.pPlatform.usDeviceID);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform.usRevId);
+    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo.SubSliceCount);
+    EXPECT_EQ(3u, outHwInfo.pSysInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GT2_5, outHwInfo.pPlatform->eGTType);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTA);
-
-    ReleaseOutHwInfoStructs();
+    EXPECT_EQ(GTTYPE_GT2_5, outHwInfo.pPlatform.eGTType);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTA);
 }
 
 CNLTEST_F(HwInfoConfigTestLinuxCnl, negative) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     drm->StoredRetValForDeviceID = -1;
-    int ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
-
-    ReleaseOutHwInfoStructs();
 
     drm->StoredRetValForDeviceID = 0;
     drm->StoredRetValForDeviceRevID = -1;
-    ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
-
-    ReleaseOutHwInfoStructs();
 
     drm->StoredRetValForDeviceRevID = 0;
     drm->StoredRetValForEUVal = -1;
-    ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
-
-    ReleaseOutHwInfoStructs();
 
     drm->StoredRetValForEUVal = 0;
     drm->StoredRetValForSSVal = -1;
-    ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);
 }
 
@@ -124,38 +112,34 @@ CNLTEST_F(HwInfoConfigTestLinuxCnl, configureHwInfoWaFlags) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
     drm->StoredDeviceRevID = 0;
-    int ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-
-    ReleaseOutHwInfoStructs();
 
     drm->StoredDeviceRevID = 1;
-    ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(0u, outHwInfo.pWaTable->waEncryptedEdramOnlyPartials);
-
-    ReleaseOutHwInfoStructs();
+    EXPECT_EQ(0u, outHwInfo.pWaTable.waEncryptedEdramOnlyPartials);
 
     drm->StoredDeviceRevID = 2;
-    ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(0u, outHwInfo.pWaTable->waFbcLinearSurfaceStride);
-    EXPECT_EQ(0u, outHwInfo.pWaTable->waEncryptedEdramOnlyPartials);
+    EXPECT_EQ(0u, outHwInfo.pWaTable.waFbcLinearSurfaceStride);
+    EXPECT_EQ(0u, outHwInfo.pWaTable.waEncryptedEdramOnlyPartials);
 }
 
 CNLTEST_F(HwInfoConfigTestLinuxCnl, configureHwInfoIsL3HashModeEnabled) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 
-    uint64_t oldL3CacheSizeInKb = testSysInfo.L3CacheSizeInKb;
-    uint32_t oldL3BankCount = testSysInfo.L3BankCount;
+    uint64_t oldL3CacheSizeInKb = testSysInfo->L3CacheSizeInKb;
+    uint32_t oldL3BankCount = testSysInfo->L3BankCount;
 
-    testSysInfo.IsL3HashModeEnabled = true;
+    testSysInfo->IsL3HashModeEnabled = true;
 
     drm->StoredSSVal = 9;
-    int ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((oldL3BankCount - 1), outHwInfo.pSysInfo->L3BankCount);
-    EXPECT_EQ_VAL((oldL3CacheSizeInKb - 256), outHwInfo.pSysInfo->L3CacheSizeInKb);
+    EXPECT_EQ((oldL3BankCount - 1), outHwInfo.pSysInfo.L3BankCount);
+    EXPECT_EQ_VAL((oldL3CacheSizeInKb - 256), outHwInfo.pSysInfo.L3CacheSizeInKb);
 }
 
 template <typename T>
@@ -164,16 +148,9 @@ class CnlHwInfoTests : public ::testing::Test {
 typedef ::testing::Types<CNL_2x5x8, CNL_2x4x8, CNL_1x3x8, CNL_1x2x8, CNL_4x9x8> cnlTestTypes;
 TYPED_TEST_CASE(CnlHwInfoTests, cnlTestTypes);
 TYPED_TEST(CnlHwInfoTests, gtSetupIsCorrect) {
-    GT_SYSTEM_INFO gtSystemInfo;
-    FeatureTable featureTable;
-    WorkaroundTable pWaTable;
-    PLATFORM pPlatform;
     HardwareInfo hwInfo;
-    hwInfo.pSysInfo = &gtSystemInfo;
-    hwInfo.pSkuTable = &featureTable;
-    hwInfo.pWaTable = &pWaTable;
-    hwInfo.pPlatform = &pPlatform;
-    memset(&gtSystemInfo, 0, sizeof(gtSystemInfo));
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+
     TypeParam::setupHardwareInfo(&hwInfo, false);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
     EXPECT_GT(gtSystemInfo.ThreadCount, 0u);

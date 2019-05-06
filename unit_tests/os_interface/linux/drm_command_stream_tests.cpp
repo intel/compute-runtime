@@ -43,7 +43,7 @@ class DrmCommandStreamFixture {
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         executionEnvironment.osInterface->get()->setDrm(mock.get());
 
-        osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0],
+        osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                                      PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
 
         csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(executionEnvironment, gemCloseWorkerMode::gemCloseWorkerActive);
@@ -259,7 +259,7 @@ TEST_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdToAllExecBuff
         .RetiresOnSaturation();
 
     osContext = std::make_unique<OsContextLinux>(*mock, 1, 1,
-                                                 HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0],
+                                                 HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                                  PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     csr->setupContext(*osContext);
 
@@ -589,7 +589,7 @@ class DrmCommandStreamEnhancedFixture
                                   *executionEnvironment);
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
-        device.reset(MockDevice::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
+        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         device->resetCommandStreamReceiver(tCsr);
         ASSERT_NE(nullptr, device);
     }

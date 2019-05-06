@@ -150,7 +150,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
     TbxCommandStreamReceiverHw<GfxFamily> *csr;
     if (withAubDump) {
         auto hwInfo = executionEnvironment.getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily);
+        auto &hwHelper = HwHelper::get(hwInfo->pPlatform.eRenderCoreFamily);
         auto localMemoryEnabled = hwHelper.getEnableLocalMemory(*hwInfo);
         auto fullName = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, baseName);
         executionEnvironment.initAubCenter(localMemoryEnabled, fullName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);

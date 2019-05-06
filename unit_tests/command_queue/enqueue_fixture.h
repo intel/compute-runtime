@@ -391,7 +391,7 @@ struct EnqueueReadBufferTraits : public EnqueueTraits {
     static const size_t sizeInBytes;
     static void *hostPtr;
     static cl_command_type cmdType;
-    static GraphicsAllocation *mapAllocation;
+    static NEO::GraphicsAllocation *mapAllocation;
 };
 
 template <typename T = EnqueueReadBufferTraits>
@@ -406,7 +406,7 @@ struct EnqueueReadBufferHelper {
                                     size_t offset = Traits::offset,
                                     size_t size = Traits::sizeInBytes,
                                     void *ptr = Traits::hostPtr,
-                                    GraphicsAllocation *mapAllocation = Traits::mapAllocation,
+                                    NEO::GraphicsAllocation *mapAllocation = Traits::mapAllocation,
                                     cl_uint numEventsInWaitList = Traits::numEventsInWaitList,
                                     const cl_event *eventWaitList = Traits::eventWaitList,
                                     cl_event *event = Traits::event) {
@@ -442,7 +442,7 @@ struct EnqueueReadImageTraits : public EnqueueTraits {
     static const size_t slicePitch;
     static void *hostPtr;
     static cl_command_type cmdType;
-    static GraphicsAllocation *mapAllocation;
+    static NEO::GraphicsAllocation *mapAllocation;
 };
 
 template <typename T = EnqueueReadImageTraits>
@@ -459,7 +459,7 @@ struct EnqueueReadImageHelper {
                                    size_t rowPitch = Traits::rowPitch,
                                    size_t slicePitch = Traits::slicePitch,
                                    void *ptr = Traits::hostPtr,
-                                   GraphicsAllocation *mapAllocation = Traits::mapAllocation,
+                                   NEO::GraphicsAllocation *mapAllocation = Traits::mapAllocation,
                                    cl_uint numEventsInWaitList = Traits::numEventsInWaitList,
                                    const cl_event *eventWaitList = Traits::eventWaitList,
                                    cl_event *event = Traits::event) {
@@ -497,7 +497,7 @@ struct EnqueueWriteBufferTraits : public EnqueueTraits {
     static const size_t sizeInBytes;
     static void *hostPtr;
     static cl_command_type cmdType;
-    static GraphicsAllocation *mapAllocation;
+    static NEO::GraphicsAllocation *mapAllocation;
 };
 
 template <typename T = EnqueueWriteBufferTraits>
@@ -512,7 +512,7 @@ struct EnqueueWriteBufferHelper {
                                      size_t offset = Traits::offset,
                                      size_t size = Traits::sizeInBytes,
                                      void *ptr = Traits::hostPtr,
-                                     GraphicsAllocation *mapAllocation = Traits::mapAllocation,
+                                     NEO::GraphicsAllocation *mapAllocation = Traits::mapAllocation,
                                      cl_uint numEventsInWaitList = Traits::numEventsInWaitList,
                                      const cl_event *eventWaitList = Traits::eventWaitList,
                                      cl_event *event = Traits::event) {
@@ -604,7 +604,7 @@ struct EnqueueWriteImageTraits : public EnqueueTraits {
     static const size_t slicePitch;
     static void *hostPtr;
     static cl_command_type cmdType;
-    static GraphicsAllocation *mapAllocation;
+    static NEO::GraphicsAllocation *mapAllocation;
 };
 
 template <typename T = EnqueueWriteImageTraits>
@@ -621,7 +621,7 @@ struct EnqueueWriteImageHelper {
                                     size_t rowPitch = Traits::rowPitch,
                                     size_t slicePitch = Traits::slicePitch,
                                     const void *ptr = Traits::hostPtr,
-                                    GraphicsAllocation *mapAllocation = Traits::mapAllocation,
+                                    NEO::GraphicsAllocation *mapAllocation = Traits::mapAllocation,
                                     cl_uint numEventsInWaitList = Traits::numEventsInWaitList,
                                     const cl_event *eventWaitList = Traits::eventWaitList,
                                     cl_event *event = Traits::event) {

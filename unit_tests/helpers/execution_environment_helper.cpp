@@ -16,7 +16,8 @@ ExecutionEnvironment *getExecutionEnvironmentImpl(HardwareInfo *&hwInfo) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     size_t numDevicesReturned = 0;
     hwInfo = nullptr;
-    DeviceFactory::getDevices(&hwInfo, numDevicesReturned, *executionEnvironment);
+    DeviceFactory::getDevices(numDevicesReturned, *executionEnvironment);
+    hwInfo = executionEnvironment->getMutableHardwareInfo();
     executionEnvironment->initializeMemoryManager();
 
     return executionEnvironment;

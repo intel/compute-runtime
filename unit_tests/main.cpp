@@ -147,7 +147,7 @@ void cleanTestHelpers() {
 }
 
 std::string getHardwarePrefix() {
-    std::string s = hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily];
+    std::string s = hardwarePrefix[platformDevices[0]->pPlatform.eProductFamily];
     return s;
 }
 
@@ -196,17 +196,17 @@ int main(int argc, char **argv) {
     std::string hwInfoConfig = "default";
     auto numDevices = numPlatformDevices;
     HardwareInfo device = DEFAULT_TEST_PLATFORM::hwInfo;
-    hardwareInfoSetup[device.pPlatform->eProductFamily](&device, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
-    GT_SYSTEM_INFO gtSystemInfo = *device.pSysInfo;
-    FeatureTable featureTable = *device.pSkuTable;
-    WorkaroundTable workaroundTable = *device.pWaTable;
+    hardwareInfoSetup[device.pPlatform.eProductFamily](&device, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
+    GT_SYSTEM_INFO gtSystemInfo = device.pSysInfo;
+    FeatureTable featureTable = device.pSkuTable;
+    WorkaroundTable workaroundTable = device.pWaTable;
 
-    size_t revisionId = device.pPlatform->usRevId;
+    size_t revisionId = device.pPlatform.usRevId;
     uint32_t euPerSubSlice = 0;
     uint32_t sliceCount = 0;
     uint32_t subSlicePerSliceCount = 0;
     int dieRecovery = 0;
-    ::productFamily = device.pPlatform->eProductFamily;
+    ::productFamily = device.pPlatform.eProductFamily;
 
     for (int i = 1; i < argc; ++i) {
         if (!strcmp("--disable_default_listener", argv[i])) {
@@ -307,15 +307,15 @@ int main(int argc, char **argv) {
     if (!hardwareInfo) {
         return -1;
     }
-    platform = *hardwareInfo->pPlatform;
+    platform = hardwareInfo->pPlatform;
 
     platform.usRevId = (uint16_t)revisionId;
     HardwareInfo hwInfo = *hardwareInfo;
     // set Gt and FeatureTable to initial state
     hardwareInfoSetup[productFamily](&hwInfo, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
-    featureTable = *hwInfo.pSkuTable;
-    gtSystemInfo = *hwInfo.pSysInfo;
-    workaroundTable = *hwInfo.pWaTable;
+    featureTable = hwInfo.pSkuTable;
+    gtSystemInfo = hwInfo.pSysInfo;
+    workaroundTable = hwInfo.pWaTable;
 
     // and adjust dynamic values if not secified
     sliceCount = sliceCount > 0 ? sliceCount : gtSystemInfo.SliceCount;
@@ -335,13 +335,13 @@ int main(int argc, char **argv) {
     ::productFamily = platform.eProductFamily;
     ::renderCoreFamily = platform.eRenderCoreFamily;
 
-    device.pPlatform = &platform;
-    device.pSysInfo = &gtSystemInfo;
-    device.pSkuTable = &featureTable;
-    device.pWaTable = &workaroundTable;
+    device.pPlatform = platform;
+    device.pSysInfo = gtSystemInfo;
+    device.pSkuTable = featureTable;
+    device.pWaTable = workaroundTable;
     device.capabilityTable = hardwareInfo->capabilityTable;
 
-    binaryNameSuffix.append(familyName[device.pPlatform->eRenderCoreFamily]);
+    binaryNameSuffix.append(familyName[device.pPlatform.eRenderCoreFamily]);
     binaryNameSuffix.append(getPlatformType(device));
 
     std::string nBinaryKernelFiles = getRunPath(argv[0]);

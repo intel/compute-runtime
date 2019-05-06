@@ -40,22 +40,14 @@ class PreambleVfeState : public PlatformFixture,
         LinearStreamFixture::SetUp();
         HardwareParse::SetUp();
         PlatformFixture::SetUp();
-        const HardwareInfo &hwInfo = pPlatform->getDevice(0)->getHardwareInfo();
-        HardwareInfo *pHwInfo = const_cast<HardwareInfo *>(&hwInfo);
-        pOldWaTable = pHwInfo->pWaTable;
-        memcpy(&testWaTable, pOldWaTable, sizeof(testWaTable));
-        pHwInfo->pWaTable = &testWaTable;
+        testWaTable = &pPlatform->peekExecutionEnvironment()->getMutableHardwareInfo()->pWaTable;
     }
     void TearDown() override {
-        const HardwareInfo &hwInfo = pPlatform->getDevice(0)->getHardwareInfo();
-        HardwareInfo *pHwInfo = const_cast<HardwareInfo *>(&hwInfo);
-        pHwInfo->pWaTable = pOldWaTable;
         PlatformFixture::TearDown();
         HardwareParse::TearDown();
         LinearStreamFixture::TearDown();
         ::testing::Test::TearDown();
     }
 
-    WorkaroundTable testWaTable;
-    const WorkaroundTable *pOldWaTable;
+    WorkaroundTable *testWaTable;
 };

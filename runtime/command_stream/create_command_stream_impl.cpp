@@ -18,7 +18,7 @@ namespace NEO {
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
 CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEnvironment) {
-    auto funcCreate = commandStreamReceiverFactory[executionEnvironment.getHardwareInfo()->pPlatform->eRenderCoreFamily];
+    auto funcCreate = commandStreamReceiverFactory[executionEnvironment.getHardwareInfo()->pPlatform.eRenderCoreFamily];
     if (funcCreate == nullptr) {
         return nullptr;
     }
@@ -49,7 +49,7 @@ CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEn
     return commandStreamReceiver;
 }
 
-bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
+bool getDevicesImpl(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
     bool result;
     int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
     if (csr < 0) {
@@ -57,15 +57,15 @@ bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned, Execution
     }
     switch (csr) {
     case CSR_HW:
-        result = DeviceFactory::getDevices(hwInfo, numDevicesReturned, executionEnvironment);
-        DEBUG_BREAK_IF(result && (hwInfo == nullptr));
+        result = DeviceFactory::getDevices(numDevicesReturned, executionEnvironment);
+        DEBUG_BREAK_IF(!result);
         return result;
     case CSR_AUB:
     case CSR_TBX:
     case CSR_TBX_WITH_AUB:
-        return DeviceFactory::getDevicesForProductFamilyOverride(hwInfo, numDevicesReturned, executionEnvironment);
+        return DeviceFactory::getDevicesForProductFamilyOverride(numDevicesReturned, executionEnvironment);
     case CSR_HW_WITH_AUB:
-        return DeviceFactory::getDevices(hwInfo, numDevicesReturned, executionEnvironment);
+        return DeviceFactory::getDevices(numDevicesReturned, executionEnvironment);
     default:
         return false;
     }

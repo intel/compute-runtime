@@ -143,7 +143,7 @@ GMM_YUV_PLANE GmmHelper::convertPlane(OCLPlane oclPlane) {
     return GMM_NO_PLANE;
 }
 GmmHelper::GmmHelper(const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
-    initContext(pHwInfo->pPlatform, pHwInfo->pSkuTable, pHwInfo->pWaTable, pHwInfo->pSysInfo);
+    initContext(&pHwInfo->pPlatform, &pHwInfo->pSkuTable, &pHwInfo->pWaTable, &pHwInfo->pSysInfo);
 }
 GmmHelper::~GmmHelper() {
     gmmEntries.pfnDestroySingletonContext();

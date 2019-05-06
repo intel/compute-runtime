@@ -13,9 +13,9 @@ TEST(CnlHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorr
     if (IGFX_CANNONLAKE != productFamily) {
         return;
     }
-    GT_SYSTEM_INFO gtSystemInfo = {0};
     HardwareInfo hwInfo;
-    hwInfo.pSysInfo = &gtSystemInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+    gtSystemInfo = {0};
 
     std::string strConfig = "1x2x8";
     hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
@@ -77,15 +77,11 @@ CNLTEST_F(CnlHwInfo, givenBoolWhenCallCnlHardwareInfoSetupThenFeatureTableAndWor
         "4x9x8"};
     bool boolValue[]{
         true, false};
-    GT_SYSTEM_INFO gtSystemInfo = {0};
-    FeatureTable pSkuTable;
-    WorkaroundTable pWaTable;
-    PLATFORM pPlatform;
     HardwareInfo hwInfo;
-    hwInfo.pSysInfo = &gtSystemInfo;
-    hwInfo.pSkuTable = &pSkuTable;
-    hwInfo.pWaTable = &pWaTable;
-    hwInfo.pPlatform = &pPlatform;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+    FeatureTable &pSkuTable = hwInfo.pSkuTable;
+    WorkaroundTable &pWaTable = hwInfo.pWaTable;
+    PLATFORM &pPlatform = hwInfo.pPlatform;
 
     for (auto &config : strConfig) {
         for (auto setParamBool : boolValue) {

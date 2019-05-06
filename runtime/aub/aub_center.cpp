@@ -36,7 +36,7 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
         aub_stream::setTbxServerIp(DebugManager.flags.TbxServer.get());
         aub_stream::setTbxServerPort(DebugManager.flags.TbxPort.get());
 
-        aubManager.reset(createAubManager(pHwInfo->pPlatform->eProductFamily, devicesCount, memoryBankSize, localMemoryEnabled, aubStreamMode));
+        aubManager.reset(createAubManager(pHwInfo->pPlatform.eProductFamily, devicesCount, memoryBankSize, localMemoryEnabled, aubStreamMode));
     }
     addressMapper = std::make_unique<AddressMapper>();
     streamProvider = std::make_unique<AubFileStreamProvider>();

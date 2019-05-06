@@ -2288,10 +2288,8 @@ TEST(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedThenMa
     DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.set(true);
 
-    GT_SYSTEM_INFO mySysInfo = *platformDevices[0]->pSysInfo;
-    FeatureTable mySkuTable = *platformDevices[0]->pSkuTable;
-    HardwareInfo myHwInfo = {platformDevices[0]->pPlatform, &mySkuTable, platformDevices[0]->pWaTable,
-                             &mySysInfo, platformDevices[0]->capabilityTable};
+    HardwareInfo myHwInfo = *platformDevices[0];
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.pSysInfo;
 
     mySysInfo.EUCount = 24;
     mySysInfo.SubSliceCount = 3;
@@ -2337,16 +2335,16 @@ TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
 }
 
 TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonStatefulAccessThenMarkKernelForAuxTranslation) {
-    HardwareInfo localHwInfo = *platformDevices[0];
-
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+    auto &capabilityTable = hwInfo->capabilityTable;
     auto context = clUniquePtr(new MockContext(device.get()));
     context->setContextType(ContextType::CONTEXT_TYPE_UNRESTRICTIVE);
     MockKernelWithInternals kernel(*device, context.get());
     kernel.kernelInfo.kernelArgInfo.resize(1);
     kernel.kernelInfo.kernelArgInfo.at(0).typeStr = "char *";
 
-    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+    capabilityTable.ftrRenderCompressedBuffers = false;
     kernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = true;
     kernel.mockKernel->initialize();
     EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
@@ -2355,7 +2353,7 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
     kernel.mockKernel->initialize();
     EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
 
-    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    capabilityTable.ftrRenderCompressedBuffers = true;
     kernel.mockKernel->initialize();
     EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
 }

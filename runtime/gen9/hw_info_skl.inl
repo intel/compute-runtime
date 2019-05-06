@@ -74,8 +74,8 @@ const RuntimeCapabilityTable SKL::capabilityTable{
 WorkaroundTable SKL::workaroundTable = {};
 FeatureTable SKL::featureTable = {};
 void SKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
-    WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
+    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
+    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
 
     pSkuTable->ftrGpGpuMidBatchPreempt = true;
     pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
@@ -113,14 +113,14 @@ void SKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     pWaTable->waForcePcBbFullCfgRestore = true;
     pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
-    if ((1 << hwInfo->pPlatform->usRevId) & 0x0eu) {
+    if ((1 << hwInfo->pPlatform.usRevId) & 0x0eu) {
         pWaTable->waCompressedResourceRequiresConstVA21 = true;
     }
-    if ((1 << hwInfo->pPlatform->usRevId) & 0x0fu) {
+    if ((1 << hwInfo->pPlatform.usRevId) & 0x0fu) {
         pWaTable->waDisablePerCtxtPreemptionGranularityControl = true;
         pWaTable->waModifyVFEStateAfterGPGPUPreemption = true;
     }
-    if ((1 << hwInfo->pPlatform->usRevId) & 0x3f) {
+    if ((1 << hwInfo->pPlatform.usRevId) & 0x3f) {
         pWaTable->waCSRUncachable = true;
     }
 }
@@ -133,7 +133,7 @@ const HardwareInfo SKL_1x2x6::hwInfo = {
 };
 GT_SYSTEM_INFO SKL_1x2x6::gtSystemInfo = {0};
 void SKL_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 11;
     gtSysInfo->ThreadCount = 11 * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -166,7 +166,7 @@ const HardwareInfo SKL_1x3x6::hwInfo = {
 };
 GT_SYSTEM_INFO SKL_1x3x6::gtSystemInfo = {0};
 void SKL_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 17;
     gtSysInfo->ThreadCount = 17 * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -199,7 +199,7 @@ const HardwareInfo SKL_1x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO SKL_1x3x8::gtSystemInfo = {0};
 void SKL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 23;
     gtSysInfo->ThreadCount = 23 * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -232,7 +232,7 @@ const HardwareInfo SKL_2x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO SKL_2x3x8::gtSystemInfo = {0};
 void SKL_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 47;
     gtSysInfo->ThreadCount = 47 * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 2;
@@ -265,7 +265,7 @@ const HardwareInfo SKL_3x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO SKL_3x3x8::gtSystemInfo = {0};
 void SKL_3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
     gtSysInfo->EUCount = 71;
     gtSysInfo->ThreadCount = 71 * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 3;

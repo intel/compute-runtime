@@ -22,7 +22,6 @@ struct HwInfoConfigTestWindows : public HwInfoConfigTest {
     void TearDown() override;
 
     std::unique_ptr<OSInterface> osInterface;
-    HardwareInfo testHwInfo;
     DummyHwConfig hwConfig;
 };
 

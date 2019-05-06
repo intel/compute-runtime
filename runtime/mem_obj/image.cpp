@@ -188,7 +188,7 @@ Image *Image::create(Context *context,
         bool transferNeeded = false;
         if (((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) || (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) && (parentBuffer != nullptr)) {
 
-            HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily).checkResourceCompatibility(parentBuffer, errcodeRet);
+            HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform.eRenderCoreFamily).checkResourceCompatibility(parentBuffer, errcodeRet);
 
             if (errcodeRet != CL_SUCCESS) {
                 return nullptr;
@@ -378,7 +378,7 @@ Image *Image::createImageHw(Context *context, cl_mem_flags flags, size_t size, v
     const auto device = context->getDevice(0);
     const auto &hwInfo = device->getHardwareInfo();
 
-    auto funcCreate = imageFactory[hwInfo.pPlatform->eRenderCoreFamily].createImageFunction;
+    auto funcCreate = imageFactory[hwInfo.pPlatform.eRenderCoreFamily].createImageFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
     auto image = funcCreate(context, flags, size, hostPtr, imageFormat, imageDesc,
                             zeroCopy, graphicsAllocation, isObjectRedescribed, createTiledImage, baseMipLevel, mipCount, surfaceFormatInfo, nullptr);

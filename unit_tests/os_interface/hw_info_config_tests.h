@@ -20,22 +20,12 @@ struct HwInfoConfigTest : public ::testing::Test,
                           public PlatformFixture {
     void SetUp() override;
     void TearDown() override;
-    void ReleaseOutHwInfoStructs();
 
-    HardwareInfo *pInHwInfo;
+    HardwareInfo pInHwInfo;
     HardwareInfo outHwInfo;
 
-    RuntimeCapabilityTable originalCapTable;
-
-    const PLATFORM *pOldPlatform;
-    PLATFORM testPlatform;
-
-    const FeatureTable *pOldSkuTable;
-    FeatureTable testSkuTable;
-
-    const WorkaroundTable *pOldWaTable;
-    WorkaroundTable testWaTable;
-
-    const GT_SYSTEM_INFO *pOldSysInfo;
-    GT_SYSTEM_INFO testSysInfo;
+    PLATFORM *testPlatform = nullptr;
+    FeatureTable *testSkuTable = nullptr;
+    WorkaroundTable *testWaTable = nullptr;
+    GT_SYSTEM_INFO *testSysInfo = nullptr;
 };

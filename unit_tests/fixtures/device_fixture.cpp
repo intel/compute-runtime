@@ -31,9 +31,7 @@ void DeviceFixture::TearDown() {
 
 MockDevice *DeviceFixture::createWithUsDeviceId(unsigned short usDeviceId) {
     hwInfoHelper = *platformDevices[0];
-    platformHelper = *platformDevices[0]->pPlatform;
-    platformHelper.usDeviceID = usDeviceId;
-    hwInfoHelper.pPlatform = &platformHelper;
+    hwInfoHelper.pPlatform.usDeviceID = usDeviceId;
     return MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper);
 }
 } // namespace NEO

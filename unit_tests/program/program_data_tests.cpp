@@ -127,7 +127,7 @@ void ProgramDataTest::buildAndDecodeProgramPatchList() {
     cl_int error = CL_SUCCESS;
     programBinaryHeader.Magic = 0x494E5443;
     programBinaryHeader.Version = CURRENT_ICBE_VERSION;
-    programBinaryHeader.Device = platformDevices[0]->pPlatform->eRenderCoreFamily;
+    programBinaryHeader.Device = platformDevices[0]->pPlatform.eRenderCoreFamily;
     programBinaryHeader.GPUPointerSizeInBytes = 8;
     programBinaryHeader.NumberOfKernels = 0;
     programBinaryHeader.PatchListSize = programPatchListSize;

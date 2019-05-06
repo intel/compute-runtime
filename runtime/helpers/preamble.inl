@@ -117,8 +117,8 @@ size_t PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(bool debuggingA
 
 template <typename GfxFamily>
 uint32_t PreambleHelper<GfxFamily>::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
-    uint32_t threadsPerEU = (hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
-    return hwInfo.pSysInfo->EUCount * threadsPerEU;
+    uint32_t threadsPerEU = (hwInfo.pSysInfo.ThreadCount / hwInfo.pSysInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    return hwInfo.pSysInfo.EUCount * threadsPerEU;
 }
 
 } // namespace NEO

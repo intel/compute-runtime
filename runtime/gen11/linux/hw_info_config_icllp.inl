@@ -16,7 +16,7 @@ int HwInfoConfigHw<IGFX_ICELAKE_LP>::configureHardwareCustom(HardwareInfo *hwInf
         return 0;
     }
 
-    GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
 
     pSysInfo->SliceCount = 1;
 

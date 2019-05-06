@@ -181,17 +181,17 @@ TEST_F(BinaryCacheHashTests, testUnique) {
 
     PLATFORM p1 = {(PRODUCT_FAMILY)1};
     PLATFORM p2 = {(PRODUCT_FAMILY)2};
-    const PLATFORM *platforms[] = {nullptr, &p1, &p2};
+    const PLATFORM *platforms[] = {&p1, &p2};
     FeatureTable s1;
     FeatureTable s2;
     s1.ftrSVM = true;
     s2.ftrSVM = false;
-    const FeatureTable *skus[] = {nullptr, &s1, &s2};
+    const FeatureTable *skus[] = {&s1, &s2};
     WorkaroundTable w1;
     WorkaroundTable w2;
     w1.waDoNotUseMIReportPerfCount = true;
     w2.waDoNotUseMIReportPerfCount = false;
-    const WorkaroundTable *was[] = {nullptr, &w1, &w2};
+    const WorkaroundTable *was[] = {&w1, &w2};
     // GT_SYSTEM_INFO s1 = {};
 
     std::array<std::string, 4> input = {{std::string(""),
@@ -219,13 +219,13 @@ TEST_F(BinaryCacheHashTests, testUnique) {
     std::unique_ptr<char> buf4(new char[bufSize]);
 
     for (auto platform : platforms) {
-        hwInfo.pPlatform = platform;
+        hwInfo.pPlatform = *platform;
 
         for (auto sku : skus) {
-            hwInfo.pSkuTable = sku;
+            hwInfo.pSkuTable = *sku;
 
             for (auto wa : was) {
-                hwInfo.pWaTable = wa;
+                hwInfo.pWaTable = *wa;
 
                 for (size_t i1 = 0; i1 < input.size(); i1++) {
                     strcpy_s(buf1.get(), bufSize, input[i1].c_str());

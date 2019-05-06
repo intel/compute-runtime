@@ -19,7 +19,7 @@ GEN11TEST_F(HwHelperTestGen11, setCapabilityCoherencyFlag) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = false;
-    helper.setCapabilityCoherencyFlag(&hwInfoHelper.hwInfo, coherency);
+    helper.setCapabilityCoherencyFlag(&hwInfoHelper, coherency);
     EXPECT_TRUE(coherency);
 }
 
@@ -27,26 +27,26 @@ GEN11TEST_F(HwHelperTestGen11, setupPreemptionRegisters) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool preemption = false;
-    preemption = helper.setupPreemptionRegisters(&hwInfoHelper.hwInfo, preemption);
+    preemption = helper.setupPreemptionRegisters(&hwInfoHelper, preemption);
     EXPECT_FALSE(preemption);
 
     preemption = true;
-    preemption = helper.setupPreemptionRegisters(&hwInfoHelper.hwInfo, preemption);
+    preemption = helper.setupPreemptionRegisters(&hwInfoHelper, preemption);
     EXPECT_TRUE(preemption);
 }
 
 GEN11TEST_F(HwHelperTestGen11, adjustDefaultEngineType) {
-    auto engineType = hwInfoHelper.hwInfo.capabilityTable.defaultEngineType;
+    auto engineType = hwInfoHelper.capabilityTable.defaultEngineType;
     auto &helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hwInfoHelper.hwInfo);
-    EXPECT_EQ(engineType, hwInfoHelper.hwInfo.capabilityTable.defaultEngineType);
+    helper.adjustDefaultEngineType(&hwInfoHelper);
+    EXPECT_EQ(engineType, hwInfoHelper.capabilityTable.defaultEngineType);
 }
 
 GEN11TEST_F(HwHelperTestGen11, givenGen11PlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     // Test default method implementation
-    testDefaultImplementationOfSetupHardwareCapabilities(helper, hwInfoHelper.hwInfo);
+    testDefaultImplementationOfSetupHardwareCapabilities(helper, hwInfoHelper);
 }
 
 GEN11TEST_F(HwHelperTestGen11, whenGetConfigureAddressSpaceModeThenReturnZero) {

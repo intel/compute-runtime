@@ -10,18 +10,16 @@
 
 namespace NEO {
 
-struct HardwareInfo;
 class ExecutionEnvironment;
 
 class DeviceFactory {
   public:
-    static bool getDevices(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment);
-    static bool getDevicesForProductFamilyOverride(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment);
+    static bool getDevices(size_t &numDevices, ExecutionEnvironment &executionEnvironment);
+    static bool getDevicesForProductFamilyOverride(size_t &numDevices, ExecutionEnvironment &executionEnvironment);
     static void releaseDevices();
 
   protected:
     static size_t numDevices;
-    static HardwareInfo *hwInfo;
 };
 
 class DeviceFactoryCleaner {

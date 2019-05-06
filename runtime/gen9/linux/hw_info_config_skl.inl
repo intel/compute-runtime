@@ -16,7 +16,7 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     if (nullptr == osIface) {
         return 0;
     }
-    GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
+    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
 
     if (pSysInfo->SubSliceCount > 3) {
         pSysInfo->SliceCount = 2;
@@ -29,14 +29,14 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     pSysInfo->VEBoxInfo.IsValid = true;
     pSysInfo->VDBoxInfo.IsValid = true;
 
-    if (hwInfo->pPlatform->usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_540 ||
-        hwInfo->pPlatform->usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_550 ||
-        hwInfo->pPlatform->usDeviceID == ISKL_GT3_MEDIA_SERV_DEVICE_F0_ID) {
+    if (hwInfo->pPlatform.usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_540 ||
+        hwInfo->pPlatform.usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_550 ||
+        hwInfo->pPlatform.usDeviceID == ISKL_GT3_MEDIA_SERV_DEVICE_F0_ID) {
         pSysInfo->EdramSizeInKb = 64 * 1024;
     }
 
-    if (hwInfo->pPlatform->usDeviceID == ISKL_GT4_HALO_MOBL_DEVICE_F0_ID ||
-        hwInfo->pPlatform->usDeviceID == ISKL_GT4_WRK_DEVICE_F0_ID) {
+    if (hwInfo->pPlatform.usDeviceID == ISKL_GT4_HALO_MOBL_DEVICE_F0_ID ||
+        hwInfo->pPlatform.usDeviceID == ISKL_GT4_WRK_DEVICE_F0_ID) {
         pSysInfo->EdramSizeInKb = 128 * 1024;
     }
 

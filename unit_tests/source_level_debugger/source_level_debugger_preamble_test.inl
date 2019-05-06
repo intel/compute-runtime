@@ -29,7 +29,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
     STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
-    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform->eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
+    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform.eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
     EXPECT_EQ(mockDevice->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 
@@ -55,7 +55,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisa
     STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
-    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform->eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
+    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform.eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
     EXPECT_EQ(mockDevice->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 
@@ -81,7 +81,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
     STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
-    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform->eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
+    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform.eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
     EXPECT_EQ(mockDevice->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 

@@ -24,7 +24,8 @@ using namespace NEO;
 
 struct KmdNotifyTests : public ::testing::Test {
     void SetUp() override {
-        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
         cmdQ.reset(new MockCommandQueue(&context, device.get(), nullptr));
         *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountToWait;
         cmdQ->getCommandStreamReceiver().waitForFlushStamp(flushStampToWait);
@@ -34,7 +35,7 @@ struct KmdNotifyTests : public ::testing::Test {
     void overrideKmdNotifyParams(bool kmdNotifyEnable, int64_t kmdNotifyDelay,
                                  bool quickKmdSleepEnable, int64_t quickKmdSleepDelay,
                                  bool quickKmdSleepEnableForSporadicWaits, int64_t quickKmdSleepDelayForSporadicWaits) {
-        auto &properties = localHwInfo.capabilityTable.kmdNotifyProperties;
+        auto &properties = hwInfo->capabilityTable.kmdNotifyProperties;
         properties.enableKmdNotify = kmdNotifyEnable;
         properties.delayKmdNotifyMicroseconds = kmdNotifyDelay;
         properties.enableQuickKmdSleep = quickKmdSleepEnable;
@@ -87,7 +88,7 @@ struct KmdNotifyTests : public ::testing::Test {
     }
 
     MockKmdNotifyHelper *mockKmdNotifyHelper = nullptr;
-    HardwareInfo localHwInfo = **platformDevices;
+    HardwareInfo *hwInfo = nullptr;
     MockContext context;
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<MockCommandQueue> cmdQ;
@@ -281,7 +282,7 @@ HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWithDisabledSporadicWa
 }
 
 HWTEST_F(KmdNotifyTests, givenNewHelperWhenItsSetToCsrThenUpdateAcLineStatus) {
-    auto helper = new MockKmdNotifyHelper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    auto helper = new MockKmdNotifyHelper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     EXPECT_EQ(0u, helper->updateAcLineStatusCalled);
 
     auto csr = createMockCsr<FamilyType>();
@@ -290,8 +291,8 @@ HWTEST_F(KmdNotifyTests, givenNewHelperWhenItsSetToCsrThenUpdateAcLineStatus) {
 }
 
 TEST_F(KmdNotifyTests, givenTaskCountDiffLowerThanMinimumToCheckAcLineWhenObtainingTimeoutPropertiesThenDontCheck) {
-    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
-    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
 
     uint32_t hwTag = 9;
     uint32_t taskCountToWait = 10;
@@ -305,8 +306,8 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffLowerThanMinimumToCheckAcLineWhenObtain
 }
 
 TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndDisabledKmdNotifyWhenObtainingTimeoutPropertiesThenCheck) {
-    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
-    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
 
     uint32_t hwTag = 10;
     uint32_t taskCountToWait = 21;
@@ -320,8 +321,8 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndDisab
 }
 
 TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndEnabledKmdNotifyWhenObtainingTimeoutPropertiesThenDontCheck) {
-    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
-    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
 
     uint32_t hwTag = 10;
     uint32_t taskCountToWait = 21;
@@ -335,8 +336,8 @@ TEST_F(KmdNotifyTests, givenTaskCountDiffGreaterThanMinimumToCheckAcLineAndEnabl
 }
 
 TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenAcLineIsDisconnectedThenForceEnableTimeout) {
-    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
-    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;
 
     int64_t timeout = 0;
@@ -348,21 +349,21 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenAcLineIsDisconnectedTh
 }
 
 TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenAcLineIsDisconnectedThenDontChangeTimeoutValue) {
-    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
-    localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds = 5;
-    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
+    hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds = 5;
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;
 
     int64_t timeout = 0;
     bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2, false);
 
     EXPECT_TRUE(timeoutEnabled);
-    EXPECT_EQ(localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, timeout);
+    EXPECT_EQ(hwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, timeout);
 }
 
 TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismAndFlushStampIsZeroWhenAcLineIsDisconnectedThenDontForceEnableTimeout) {
-    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
-    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;
 
     int64_t timeout = 0;
@@ -375,8 +376,8 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismAndFlushStampIsZeroWhenAcL
 TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsSetThenKmdNotifyMechanismIsUsedAndReturnsShortestWaitingTimePossible) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.PowerSavingMode.set(1u);
-    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
-    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;
 
     int64_t timeout = 0;
@@ -387,8 +388,8 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsSetTh
 }
 
 TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsRequestedThenKmdNotifyMechanismIsUsedAndReturnsShortestWaitingTimePossible) {
-    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
-    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = false;
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
 
     int64_t timeout = 0;
     FlushStamp flushStampToWait = 1;
@@ -400,8 +401,8 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenPowerSavingModeIsReque
 TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenPowerSavingModeIsSetAndNoFlushStampProvidedWhenParametersAreObtainedThenFalseIsReturned) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.PowerSavingMode.set(1u);
-    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
-    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
+    hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
+    MockKmdNotifyHelper helper(&(hwInfo->capabilityTable.kmdNotifyProperties));
     helper.acLineConnected = false;
 
     int64_t timeout = 0;

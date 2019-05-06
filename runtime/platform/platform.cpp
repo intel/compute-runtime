@@ -34,7 +34,7 @@ namespace NEO {
 
 std::unique_ptr<Platform> platformImpl;
 
-bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
+bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
 
 Platform *platform() { return platformImpl.get(); }
 
@@ -121,7 +121,6 @@ const std::string &Platform::peekCompilerExtensions() const {
 }
 
 bool Platform::initialize() {
-    HardwareInfo *hwInfo = nullptr;
     size_t numDevicesReturned = 0;
 
     TakeOwnershipWrapper<Platform> platformOwnership(*this);
@@ -135,7 +134,7 @@ bool Platform::initialize() {
             this->initializationLoopHelper();
     }
 
-    state = NEO::getDevices(&hwInfo, numDevicesReturned, *executionEnvironment) ? StateIniting : StateNone;
+    state = NEO::getDevices(numDevicesReturned, *executionEnvironment) ? StateIniting : StateNone;
 
     if (state == StateNone) {
         return false;
@@ -148,7 +147,7 @@ bool Platform::initialize() {
 
     this->devices.resize(numDevicesReturned);
     for (uint32_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
-        auto pDevice = Device::create<NEO::Device>(hwInfo, executionEnvironment, deviceOrdinal);
+        auto pDevice = Device::create<NEO::Device>(executionEnvironment, deviceOrdinal);
         DEBUG_BREAK_IF(!pDevice);
         if (pDevice) {
             this->devices[deviceOrdinal] = pDevice;
@@ -174,15 +173,17 @@ bool Platform::initialize() {
     }
     executionEnvironment->initializeSpecialCommandStreamReceiver();
 
+    auto hwInfo = executionEnvironment->getHardwareInfo();
+
     const bool sourceLevelDebuggerActive = executionEnvironment->sourceLevelDebugger && executionEnvironment->sourceLevelDebugger->isDebuggerActive();
     if (devices[0]->getPreemptionMode() == PreemptionMode::MidThread || sourceLevelDebuggerActive) {
-        auto sipType = SipKernel::getSipKernelType(devices[0]->getHardwareInfo().pPlatform->eRenderCoreFamily, devices[0]->isSourceLevelDebuggerActive());
+        auto sipType = SipKernel::getSipKernelType(hwInfo->pPlatform.eRenderCoreFamily, devices[0]->isSourceLevelDebuggerActive());
         initSipKernel(sipType, *devices[0]);
     }
 
     CommandStreamReceiverType csrType = this->devices[0]->getDefaultEngine().commandStreamReceiver->getType();
     if (csrType != CommandStreamReceiverType::CSR_HW) {
-        auto enableLocalMemory = HwHelper::get(hwInfo->pPlatform->eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
+        auto enableLocalMemory = HwHelper::get(hwInfo->pPlatform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
         executionEnvironment->initAubCenter(enableLocalMemory, "aubfile", csrType);
     }
 

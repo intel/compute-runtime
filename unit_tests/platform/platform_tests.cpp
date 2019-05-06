@@ -188,12 +188,12 @@ class PlatformFailingTest : public PlatformTest {
     void SetUp() override {
         PlatformTest::SetUp();
         hwInfo = platformDevices[0];
-        commandStreamReceiverCreateFunc = commandStreamReceiverFactory[hwInfo->pPlatform->eRenderCoreFamily];
-        commandStreamReceiverFactory[hwInfo->pPlatform->eRenderCoreFamily] = createMockCommandStreamReceiver;
+        commandStreamReceiverCreateFunc = commandStreamReceiverFactory[hwInfo->pPlatform.eRenderCoreFamily];
+        commandStreamReceiverFactory[hwInfo->pPlatform.eRenderCoreFamily] = createMockCommandStreamReceiver;
     }
 
     void TearDown() override {
-        commandStreamReceiverFactory[hwInfo->pPlatform->eRenderCoreFamily] = commandStreamReceiverCreateFunc;
+        commandStreamReceiverFactory[hwInfo->pPlatform.eRenderCoreFamily] = commandStreamReceiverCreateFunc;
         PlatformTest::TearDown();
     }
 

@@ -48,7 +48,7 @@ Sampler *Sampler::create(Context *context, cl_bool normalizedCoordinates,
     const auto device = context->getDevice(0);
     const auto &hwInfo = device->getHardwareInfo();
 
-    auto funcCreate = samplerFactory[hwInfo.pPlatform->eRenderCoreFamily];
+    auto funcCreate = samplerFactory[hwInfo.pPlatform.eRenderCoreFamily];
     DEBUG_BREAK_IF(nullptr == funcCreate);
     sampler = funcCreate(context, normalizedCoordinates, addressingMode, filterMode, mipFilterMode, lodMin, lodMax);
 
@@ -60,7 +60,7 @@ Sampler *Sampler::create(Context *context, cl_bool normalizedCoordinates,
 }
 
 size_t Sampler::getSamplerStateSize(const HardwareInfo &hwInfo) {
-    return getSamplerStateSizeHw[hwInfo.pPlatform->eRenderCoreFamily]();
+    return getSamplerStateSizeHw[hwInfo.pPlatform.eRenderCoreFamily]();
 }
 
 template <typename ParameterType>

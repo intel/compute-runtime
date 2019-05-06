@@ -136,7 +136,7 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenSett
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
 
     CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump("aubfile", *executionEnvironment);
-    MockOsContext osContext(0, 1, HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    MockOsContext osContext(0, 1, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                             PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
 
     csrWithAubDump.setupContext(osContext);

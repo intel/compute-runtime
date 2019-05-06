@@ -21,22 +21,25 @@
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
 namespace NEO {
-ExecutionEnvironment::ExecutionEnvironment() = default;
+ExecutionEnvironment::ExecutionEnvironment() {
+    hwInfo = std::make_unique<HardwareInfo>(*platformDevices[0]);
+};
+
 ExecutionEnvironment::~ExecutionEnvironment() = default;
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment);
 
 void ExecutionEnvironment::initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (!aubCenter) {
-        aubCenter.reset(new AubCenter(this->hwInfo, localMemoryEnabled, aubFileName, csrType));
+        aubCenter.reset(new AubCenter(hwInfo.get(), localMemoryEnabled, aubFileName, csrType));
     }
 }
 void ExecutionEnvironment::initGmm() {
     if (!gmmHelper) {
-        gmmHelper.reset(new GmmHelper(this->hwInfo));
+        gmmHelper.reset(new GmmHelper(hwInfo.get()));
     }
 }
 void ExecutionEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
-    this->hwInfo = hwInfo;
+    *this->hwInfo = *hwInfo;
 }
 bool ExecutionEnvironment::initializeCommandStreamReceiver(uint32_t deviceIndex, uint32_t deviceCsrIndex) {
     if (deviceIndex + 1 > commandStreamReceivers.size()) {
@@ -53,7 +56,7 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(uint32_t deviceIndex,
     if (!commandStreamReceiver) {
         return false;
     }
-    if (HwHelper::get(this->hwInfo->pPlatform->eRenderCoreFamily).isPageTableManagerSupported(*this->hwInfo)) {
+    if (HwHelper::get(hwInfo->pPlatform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo)) {
         commandStreamReceiver->createPageTableManager();
     }
     commandStreamReceiver->setDeviceIndex(deviceIndex);
@@ -87,11 +90,11 @@ void ExecutionEnvironment::initializeMemoryManager() {
     DEBUG_BREAK_IF(!this->memoryManager);
 }
 void ExecutionEnvironment::initSourceLevelDebugger() {
-    if (this->hwInfo->capabilityTable.sourceLevelDebuggerSupported) {
+    if (hwInfo->capabilityTable.sourceLevelDebuggerSupported) {
         sourceLevelDebugger.reset(SourceLevelDebugger::create());
     }
     if (sourceLevelDebugger) {
-        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(this->hwInfo->pPlatform->eRenderCoreFamily, true));
+        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(hwInfo->pPlatform.eRenderCoreFamily, true));
         sourceLevelDebugger->initialize(localMemorySipAvailable);
     }
 }

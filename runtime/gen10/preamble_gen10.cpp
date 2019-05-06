@@ -15,7 +15,7 @@ template <>
 uint32_t PreambleHelper<CNLFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
     uint32_t l3Config = 0;
 
-    switch (hwInfo.pPlatform->eProductFamily) {
+    switch (hwInfo.pPlatform.eProductFamily) {
     case IGFX_CANNONLAKE:
         l3Config = getL3ConfigHelper<IGFX_CANNONLAKE>(useSLM);
         break;
@@ -60,7 +60,7 @@ void PreambleHelper<CNLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComman
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
     *pipeControl = PIPE_CONTROL::sInit();
     pipeControl->setCommandStreamerStallEnable(true);
-    if (hwInfo->pWaTable->waSendMIFLUSHBeforeVFE) {
+    if (hwInfo->pWaTable.waSendMIFLUSHBeforeVFE) {
         pipeControl->setRenderTargetCacheFlushEnable(true);
         pipeControl->setDepthCacheFlushEnable(true);
         pipeControl->setDcFlushEnable(true);

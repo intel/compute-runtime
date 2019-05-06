@@ -81,7 +81,7 @@ void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &
     if (isMidThreadPreemption || sourceLevelDebuggerActive) {
         auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
         *sip = GfxFamily::cmdInitStateSip;
-        auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().pPlatform->eRenderCoreFamily, sourceLevelDebuggerActive);
+        auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().pPlatform.eRenderCoreFamily, sourceLevelDebuggerActive);
         sip->setSystemInstructionPointer(device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, device).getSipAllocation()->getGpuAddressToPatch());
     }
 }

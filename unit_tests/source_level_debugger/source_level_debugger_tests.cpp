@@ -458,7 +458,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceIsConstructe
         DebuggerLibrary::setDebuggerActive(true);
         DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
-        unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+        unique_ptr<MockDevice> device(new MockDevice());
         EXPECT_TRUE(interceptor.initCalled);
     }
 }
@@ -494,7 +494,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
         ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
 
         hwInfo->capabilityTable.instrumentationEnabled = true;
-        unique_ptr<MockDevice> device(Device::create<MockDevice>(&hwInfo[0], executionEnvironment, 0));
+        unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0));
 
         ASSERT_NE(nullptr, device->getCommandStreamReceiver().getOSInterface());
 
@@ -530,12 +530,12 @@ TEST(SourceLevelDebugger, givenTwoDevicesWhenSecondIsCreatedThenNotCreatingNewSo
 
         ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
 
-        std::unique_ptr<Device> device1(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 0u));
+        std::unique_ptr<Device> device1(Device::create<MockDevice>(executionEnvironment, 0u));
         EXPECT_NE(nullptr, executionEnvironment->memoryManager);
         EXPECT_TRUE(interceptor.initCalled);
 
         interceptor.initCalled = false;
-        std::unique_ptr<Device> device2(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 1u));
+        std::unique_ptr<Device> device2(Device::create<MockDevice>(executionEnvironment, 1u));
         EXPECT_NE(nullptr, executionEnvironment->memoryManager);
         EXPECT_FALSE(interceptor.initCalled);
     }
@@ -549,9 +549,9 @@ TEST(SourceLevelDebugger, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheS
         DebuggerLibrary::setDebuggerActive(true);
 
         ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-        std::unique_ptr<Device> device1(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 0u));
+        std::unique_ptr<Device> device1(Device::create<NEO::MockDevice>(executionEnvironment, 0u));
         auto sourceLevelDebugger = device1->getSourceLevelDebugger();
-        std::unique_ptr<Device> device2(Device::create<NEO::MockDevice>(nullptr, executionEnvironment, 1u));
+        std::unique_ptr<Device> device2(Device::create<NEO::MockDevice>(executionEnvironment, 1u));
         EXPECT_EQ(sourceLevelDebugger, device2->getSourceLevelDebugger());
     }
 }

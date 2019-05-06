@@ -14,7 +14,7 @@
 namespace NEO {
 HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *skuTable, const WorkaroundTable *waTable,
                            const GT_SYSTEM_INFO *sysInfo, const RuntimeCapabilityTable &capabilityTable)
-    : pPlatform(platform), pSkuTable(skuTable), pWaTable(waTable), pSysInfo(sysInfo), capabilityTable(capabilityTable) {
+    : pPlatform(*platform), pSkuTable(*skuTable), pWaTable(*waTable), pSysInfo(*sysInfo), capabilityTable(capabilityTable) {
 }
 
 const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT] = {};

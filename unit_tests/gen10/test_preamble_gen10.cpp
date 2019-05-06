@@ -38,34 +38,7 @@ CNLTEST_F(CnlSlm, shouldBeEnabledOnGen10) {
     EXPECT_EQ(1u, lri.getDataDword() & 1);
 }
 
-struct CnlPreambleWaCmds : public PreambleFixture {
-    CnlPreambleWaCmds() {
-        memset(reinterpret_cast<void *>(&waTable), 0, sizeof(waTable));
-    }
-    void SetUp() override {
-        pHwInfo = const_cast<HardwareInfo *>(*NEO::platformDevices);
-        pOldWaTable = pHwInfo->pWaTable;
-        pHwInfo->pWaTable = &waTable;
-
-        DeviceFixture::SetUpImpl(pHwInfo);
-        HardwareParse::SetUp();
-        if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
-            preemptionLocation.reset(new MockGraphicsAllocation);
-        }
-    }
-
-    void TearDown() override {
-        preemptionLocation.reset();
-        pHwInfo->pWaTable = pOldWaTable;
-        HardwareParse::TearDown();
-        DeviceFixture::TearDown();
-    }
-
-    WorkaroundTable waTable;
-    HardwareInfo *pHwInfo;
-    const WorkaroundTable *pOldWaTable;
-    std::unique_ptr<GraphicsAllocation> preemptionLocation;
-};
+using CnlPreambleWaCmds = PreambleFixture;
 
 typedef PreambleFixture Gen10UrbEntryAllocationSize;
 CNLTEST_F(Gen10UrbEntryAllocationSize, getUrbEntryAllocationSize) {
@@ -76,9 +49,9 @@ CNLTEST_F(Gen10UrbEntryAllocationSize, getUrbEntryAllocationSize) {
 typedef PreambleVfeState Gen10PreambleVfeState;
 CNLTEST_F(Gen10PreambleVfeState, WaOff) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    testWaTable.waSendMIFLUSHBeforeVFE = 0;
+    testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, **platformDevices, 0, 0);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0);
 
     parseCommands<FamilyType>(cs);
 
@@ -94,9 +67,9 @@ CNLTEST_F(Gen10PreambleVfeState, WaOff) {
 
 CNLTEST_F(Gen10PreambleVfeState, WaOn) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    testWaTable.waSendMIFLUSHBeforeVFE = 1;
+    testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, **platformDevices, 0, 0);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0);
 
     parseCommands<FamilyType>(cs);
 
@@ -169,7 +142,7 @@ GEN10TEST_F(ThreadArbitrationGen10, givenPreambleWhenItIsProgrammedThenThreadArb
     typedef CNLFamily::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(**platformDevices, true);
-    MockDevice mockDevice(**platformDevices);
+    MockDevice mockDevice;
     PreambleHelper<FamilyType>::programPreamble(&linearStream, mockDevice, l3Config,
                                                 ThreadArbitrationPolicy::RoundRobin,
                                                 nullptr);
@@ -184,7 +157,8 @@ GEN10TEST_F(ThreadArbitrationGen10, givenPreambleWhenItIsProgrammedThenThreadArb
 
     EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[ThreadArbitrationPolicy::RoundRobin], cmd->getDataDword());
 
-    EXPECT_EQ(0u, PreambleHelper<CNLFamily>::getAdditionalCommandsSize(MockDevice(*platformDevices[0])));
+    MockDevice device;
+    EXPECT_EQ(0u, PreambleHelper<CNLFamily>::getAdditionalCommandsSize(device));
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<CNLFamily>::getThreadArbitrationCommandsSize());
 }
 
