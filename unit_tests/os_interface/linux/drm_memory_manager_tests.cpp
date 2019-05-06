@@ -290,7 +290,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedButNotAllowedHostPtr)
 TEST_F(DrmMemoryManagerTest, unreference) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemClose = 1;
-    BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, 0ul, true);
+    BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, 0ul);
     ASSERT_NE(nullptr, bo);
     memoryManager->unreference(bo);
 }
@@ -517,7 +517,7 @@ TEST_F(DrmMemoryManagerTest, BoWaitFailure) {
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, 0ul, true);
+    BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, 0ul);
     ASSERT_NE(nullptr, bo);
     mock->ioctl_res = -EIO;
     EXPECT_THROW(bo->wait(-1), std::exception);

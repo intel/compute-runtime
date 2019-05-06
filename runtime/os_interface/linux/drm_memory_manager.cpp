@@ -48,7 +48,7 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
     DEBUG_BREAK_IF(mem == nullptr);
 
     if (forcePinEnabled || validateHostPtrMemory) {
-        pinBB = allocUserptr(reinterpret_cast<uintptr_t>(mem), MemoryConstants::pageSize, 0, true);
+        pinBB = allocUserptr(reinterpret_cast<uintptr_t>(mem), MemoryConstants::pageSize, 0);
     }
 
     if (!pinBB) {
@@ -196,7 +196,7 @@ void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, StorageA
     limitedGpuAddressRangeAllocator->free(graphicsAddress, unmapSize);
 }
 
-NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint64_t flags, bool softpin) {
+NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint64_t flags) {
     drm_i915_gem_userptr userptr = {};
     userptr.user_ptr = address;
     userptr.user_size = size;
@@ -243,7 +243,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
     if (!res)
         return nullptr;
 
-    BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(res), cSize, 0, true);
+    BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(res), cSize, 0);
 
     if (!bo) {
         alignedFreeWrapper(res);
@@ -298,7 +298,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
         return nullptr;
     }
 
-    BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(alignedPtr), realAllocationSize, 0, true);
+    BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(alignedPtr), realAllocationSize, 0);
     if (!bo) {
         releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, allocType);
         return nullptr;
@@ -375,7 +375,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
         auto alignedUserPointer = reinterpret_cast<uintptr_t>(alignDown(allocationData.hostPtr, MemoryConstants::pageSize));
         auto inputPointerOffset = inputPtr - alignedUserPointer;
 
-        BufferObject *bo = allocUserptr(alignedUserPointer, allocationSize, 0, true);
+        BufferObject *bo = allocUserptr(alignedUserPointer, allocationSize, 0);
         if (!bo) {
             allocatorToUse->free(gpuVirtualAddress, realAllocationSize);
             return nullptr;
@@ -411,7 +411,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
         }
     }
 
-    BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(ptrAlloc), alignedAllocationSize, 0, true);
+    BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(ptrAlloc), alignedAllocationSize, 0);
 
     if (!bo) {
         if (limitedGpuAddressRangeAllocator) {
@@ -538,7 +538,7 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
     auto alignedPtr = (uintptr_t)alignDown(srcPtr, MemoryConstants::pageSize);
     auto offset = (uintptr_t)srcPtr - alignedPtr;
 
-    BufferObject *bo = allocUserptr(alignedPtr, alignedSrcSize, 0, true);
+    BufferObject *bo = allocUserptr(alignedPtr, alignedSrcSize, 0);
     if (!bo) {
         return nullptr;
     }
@@ -647,8 +647,7 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
 
             handleStorage.fragmentStorageData[i].osHandleStorage->bo = allocUserptr((uintptr_t)handleStorage.fragmentStorageData[i].cpuPtr,
                                                                                     handleStorage.fragmentStorageData[i].fragmentSize,
-                                                                                    0,
-                                                                                    true);
+                                                                                    0);
             if (!handleStorage.fragmentStorageData[i].osHandleStorage->bo) {
                 handleStorage.fragmentStorageData[i].freeTheFragment = true;
                 return AllocationStatus::Error;

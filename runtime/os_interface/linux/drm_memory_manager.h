@@ -62,7 +62,7 @@ class DrmMemoryManager : public MemoryManager {
     BufferObject *createSharedBufferObject(int boHandle, size_t size, bool requireSpecificBitness);
     void eraseSharedBufferObject(BufferObject *bo);
     void pushSharedBufferObject(BufferObject *bo);
-    BufferObject *allocUserptr(uintptr_t address, size_t size, uint64_t flags, bool softpin);
+    BufferObject *allocUserptr(uintptr_t address, size_t size, uint64_t flags);
     bool setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable);
     uint64_t acquireGpuRange(size_t &size, StorageAllocatorType &allocType, bool requireSpecificBitness);
     void releaseGpuRange(void *address, size_t unmapSize, StorageAllocatorType allocatorType);
