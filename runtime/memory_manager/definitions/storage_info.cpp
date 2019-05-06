@@ -5,10 +5,10 @@
  *
  */
 
-#include "runtime/memory_manager/graphics_allocation.h"
+#include "runtime/memory_manager/memory_manager.h"
 
 namespace NEO {
-StorageInfo GraphicsAllocation::createStorageInfoFromProperties(const AllocationProperties &properties) {
+StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationProperties &properties) {
     return {};
 }
 uint32_t StorageInfo::getNumHandles() const { return 1u; }

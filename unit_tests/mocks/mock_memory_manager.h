@@ -35,6 +35,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::AllocationData;
     using MemoryManager::allocator32Bit;
     using MemoryManager::createGraphicsAllocation;
+    using MemoryManager::createStorageInfoFromProperties;
     using MemoryManager::getAllocationData;
     using MemoryManager::multiContextResourceDestructor;
     using MemoryManager::registeredEngines;

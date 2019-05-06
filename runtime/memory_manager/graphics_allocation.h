@@ -171,7 +171,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER ||
                allocationType == AllocationType::COMMAND_BUFFER;
     }
-    static StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
     void *getReservedAddressPtr() const {
         return this->reservedAddressRangeInfo.addressPtr;
     }
