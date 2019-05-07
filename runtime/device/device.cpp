@@ -275,12 +275,6 @@ bool Device::isSourceLevelDebuggerActive() const {
     return deviceInfo.sourceLevelDebuggerActive;
 }
 
-void Device::initMaxPowerSavingMode() {
-    for (auto &engine : engines) {
-        engine.commandStreamReceiver->peekKmdNotifyHelper()->initMaxPowerSavingMode();
-    }
-}
-
 EngineControl &Device::getEngine(aub_stream::EngineType engineType, bool lowPriority) {
     for (auto &engine : engines) {
         if (engine.osContext->getEngineType() == engineType &&

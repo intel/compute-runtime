@@ -146,10 +146,6 @@ class CommandStreamReceiver {
     bool initializeTagAllocation();
     MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
 
-    KmdNotifyHelper *peekKmdNotifyHelper() {
-        return kmdNotifyHelper.get();
-    }
-
     bool peekTimestampPacketWriteEnabled() const { return timestampPacketWriteEnabled; }
 
     size_t defaultSshSize;

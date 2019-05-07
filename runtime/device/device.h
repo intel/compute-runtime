@@ -65,7 +65,6 @@ class Device : public BaseObject<_cl_device_id> {
     DeviceInfo *getMutableDeviceInfo();
     MOCKABLE_VIRTUAL const WorkaroundTable *getWaTable() const;
 
-    void initMaxPowerSavingMode();
     void *getSLMWindowStartAddress();
     void prepareSLMWindow();
     void setForce32BitAddressing(bool value) {
