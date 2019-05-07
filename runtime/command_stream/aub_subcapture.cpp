@@ -130,12 +130,14 @@ bool AubSubCaptureManager::isSubCaptureFilterActive(const MultiDispatchInfo &dis
 void AubSubCaptureManager::setDebugManagerFlags() const {
     DebugManager.flags.MakeEachEnqueueBlocking.set(!subCaptureIsActive);
     DebugManager.flags.ForceCsrFlushing.set(false);
+    DebugManager.flags.OmitTimestampPacketDependencies.set(false);
     if (!subCaptureIsActive && subCaptureWasActive) {
         DebugManager.flags.ForceCsrFlushing.set(true);
     }
     DebugManager.flags.ForceCsrReprogramming.set(false);
     if (subCaptureIsActive && !subCaptureWasActive) {
         DebugManager.flags.ForceCsrReprogramming.set(true);
+        DebugManager.flags.OmitTimestampPacketDependencies.set(true);
     }
 }
 } // namespace NEO

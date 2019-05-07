@@ -555,7 +555,7 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
     auto allocator = getCommandStreamReceiver().getTimestampPacketAllocator();
 
     previousNodes.swapNodes(*timestampPacketContainer);
-    previousNodes.resolveDependencies(isOOQEnabled());
+    previousNodes.resolveDependencies(isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get());
 
     DEBUG_BREAK_IF(timestampPacketContainer->peekNodes().size() > 0);
 
