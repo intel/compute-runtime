@@ -212,12 +212,11 @@ class MemoryManager {
                         return nullptr;
                     }
                     uint64_t gpuAddress = reinterpret_cast<uint64_t>(allocationData.hostPtr);
-                    allocation = new GraphicsAllocation(allocationData.type,
-                                                        cpuAllocation,
-                                                        gpuAddress,
-                                                        gpuAddress,
-                                                        allocationData.size, MemoryPool::LocalMemory, false);
-                    allocation->setDriverAllocatedCpuPtr(cpuAllocation);
+                    allocation = constructGraphicsAllocation(allocationData.type,
+                                                             cpuAllocation,
+                                                             gpuAddress,
+                                                             allocationData.size, MemoryPool::LocalMemory, false);
+                    allocation->setGpuBaseAddress(gpuAddress);
                 } else {
                     allocation = allocateGraphicsMemory(allocationData);
                 }
@@ -236,6 +235,10 @@ class MemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryForImageFromHostPtr(const AllocationData &allocationData);
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) = 0;
+    virtual GraphicsAllocation *constructGraphicsAllocation(GraphicsAllocation::AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress,
+                                                            size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable) {
+        return nullptr;
+    }
 
     virtual void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;

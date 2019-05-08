@@ -80,6 +80,10 @@ class OsAgnosticMemoryManager : public MemoryManager {
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override {}
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
+    GraphicsAllocation *constructGraphicsAllocation(GraphicsAllocation::AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress,
+                                                    size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable) override {
+        return new MemoryAllocation(allocationType, cpuPtrIn, cpuPtrIn, gpuAddress, sizeIn, counter++, pool, multiOsContextCapable, false, false);
+    }
 
   private:
     unsigned long long counter = 0;
