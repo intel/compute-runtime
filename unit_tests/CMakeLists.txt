@@ -457,7 +457,7 @@ set(UltPchHeader "${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_tests_pch.h")
 set(UltPchSource "${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_tests_pch.cpp")
 get_target_property(UltSources igdrcl_tests SOURCES)
 
-if(MSVC)
+if(MSVC AND NOT DISABLE_ULT_PCH_WIN)
   set(UltPchBinary "${CMAKE_CURRENT_BINARY_DIR}/igdrcl_tests_pch.pch")
 
   set(IGDRCL_SRCS_ult_pch ${UltPchSource} ${UltPchHeader})
