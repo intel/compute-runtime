@@ -27,13 +27,13 @@ TEST(CSRTests, getDevices) {
 
     auto hwInfo = executionEnvironment.getHardwareInfo();
 
-    EXPECT_GT_VAL(hwInfo->pSysInfo.EUCount, 0u);
-    EXPECT_GT_VAL(hwInfo->pSysInfo.ThreadCount, 0u);
-    EXPECT_GT_VAL(hwInfo->pSysInfo.SliceCount, 0u);
-    EXPECT_GT_VAL(hwInfo->pSysInfo.SubSliceCount, 0u);
-    EXPECT_GT_VAL(hwInfo->pSysInfo.L3CacheSizeInKb, 0u);
-    EXPECT_EQ_VAL(hwInfo->pSysInfo.CsrSizeInMb, 8u);
-    EXPECT_FALSE(hwInfo->pSysInfo.IsDynamicallyPopulated);
+    EXPECT_GT_VAL(hwInfo->gtSystemInfo.EUCount, 0u);
+    EXPECT_GT_VAL(hwInfo->gtSystemInfo.ThreadCount, 0u);
+    EXPECT_GT_VAL(hwInfo->gtSystemInfo.SliceCount, 0u);
+    EXPECT_GT_VAL(hwInfo->gtSystemInfo.SubSliceCount, 0u);
+    EXPECT_GT_VAL(hwInfo->gtSystemInfo.L3CacheSizeInKb, 0u);
+    EXPECT_EQ_VAL(hwInfo->gtSystemInfo.CsrSizeInMb, 8u);
+    EXPECT_FALSE(hwInfo->gtSystemInfo.IsDynamicallyPopulated);
 }
 
 int main(int argc, char **argv) {

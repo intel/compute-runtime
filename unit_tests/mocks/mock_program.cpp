@@ -78,7 +78,7 @@ Program *GlobalMockSipProgram::getSipProgramWithCustomBinary() {
     SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)binary;
     pBHdr->Magic = iOpenCL::MAGIC_CL;
     pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = platformDevices[0]->pPlatform.eRenderCoreFamily;
+    pBHdr->Device = platformDevices[0]->platform.eRenderCoreFamily;
     pBHdr->GPUPointerSizeInBytes = 8;
     pBHdr->NumberOfKernels = 1;
     pBHdr->SteppingId = 0;

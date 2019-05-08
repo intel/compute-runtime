@@ -20,7 +20,7 @@ using NEO::DeviceFixture;
 using NEO::folderAUB;
 
 std::string getAubFileName(const NEO::Device *pDevice, const std::string baseName) {
-    const auto pGtSystemInfo = &pDevice->getHardwareInfo().pSysInfo;
+    const auto pGtSystemInfo = &pDevice->getHardwareInfo().gtSystemInfo;
     std::stringstream strfilename;
     uint32_t subSlicesPerSlice = pGtSystemInfo->SubSliceCount / pGtSystemInfo->SliceCount;
     strfilename << pDevice->getProductAbbrev() << "_" << pGtSystemInfo->SliceCount << "x" << subSlicesPerSlice << "x" << pGtSystemInfo->MaxEuPerSubSlice << "_" << baseName;
@@ -84,7 +84,7 @@ HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
     auto gAddress = static_cast<uintptr_t>(-1) - 4096;
     auto pAddress = static_cast<uint64_t>(gAddress) & 0xFFFFFFFF;
 
-    auto enableLocalMemory = HwHelper::get(hwInfo.pPlatform.eRenderCoreFamily).getEnableLocalMemory(hwInfo);
+    auto enableLocalMemory = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getEnableLocalMemory(hwInfo);
     NEO::AubHelperHw<FamilyType> aubHelperHw(enableLocalMemory);
     AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress, 7, aubHelperHw);
 

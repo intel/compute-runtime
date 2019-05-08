@@ -20,12 +20,12 @@ TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE
 CommandStreamReceiver *TbxCommandStreamReceiver::create(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
     auto hwInfo = executionEnvironment.getHardwareInfo();
 
-    if (hwInfo->pPlatform.eRenderCoreFamily >= IGFX_MAX_CORE) {
+    if (hwInfo->platform.eRenderCoreFamily >= IGFX_MAX_CORE) {
         DEBUG_BREAK_IF(!false);
         return nullptr;
     }
 
-    auto pCreate = tbxCommandStreamReceiverFactory[hwInfo->pPlatform.eRenderCoreFamily];
+    auto pCreate = tbxCommandStreamReceiverFactory[hwInfo->platform.eRenderCoreFamily];
 
     return pCreate ? pCreate(baseName, withAubDump, executionEnvironment) : nullptr;
 }

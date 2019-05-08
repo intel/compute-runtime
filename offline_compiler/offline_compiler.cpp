@@ -237,7 +237,7 @@ int OfflineCompiler::getHardwareInfo(const char *pDeviceName) {
             if (hardwareInfoTable[productId]) {
                 hwInfo = hardwareInfoTable[productId];
                 familyNameWithType.clear();
-                familyNameWithType.append(familyName[hwInfo->pPlatform.eRenderCoreFamily]);
+                familyNameWithType.append(familyName[hwInfo->platform.eRenderCoreFamily]);
                 familyNameWithType.append(getPlatformType(*hwInfo));
                 retVal = CL_SUCCESS;
                 break;
@@ -394,39 +394,39 @@ int OfflineCompiler::initialize(size_t numArgs, const char *const *argv) {
     if ((igcPlatform == nullptr) || (igcGtSystemInfo == nullptr) || (igcFeWa == nullptr)) {
         return CL_OUT_OF_HOST_MEMORY;
     }
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo->pPlatform);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo->pSysInfo);
+    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo->platform);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo->gtSystemInfo);
     // populate with features
-    igcFeWa.get()->SetFtrDesktop(hwInfo->pSkuTable.ftrDesktop);
-    igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(hwInfo->pSkuTable.ftrChannelSwizzlingXOREnabled);
+    igcFeWa.get()->SetFtrDesktop(hwInfo->featureTable.ftrDesktop);
+    igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(hwInfo->featureTable.ftrChannelSwizzlingXOREnabled);
 
-    igcFeWa.get()->SetFtrGtBigDie(hwInfo->pSkuTable.ftrGtBigDie);
-    igcFeWa.get()->SetFtrGtMediumDie(hwInfo->pSkuTable.ftrGtMediumDie);
-    igcFeWa.get()->SetFtrGtSmallDie(hwInfo->pSkuTable.ftrGtSmallDie);
+    igcFeWa.get()->SetFtrGtBigDie(hwInfo->featureTable.ftrGtBigDie);
+    igcFeWa.get()->SetFtrGtMediumDie(hwInfo->featureTable.ftrGtMediumDie);
+    igcFeWa.get()->SetFtrGtSmallDie(hwInfo->featureTable.ftrGtSmallDie);
 
-    igcFeWa.get()->SetFtrGT1(hwInfo->pSkuTable.ftrGT1);
-    igcFeWa.get()->SetFtrGT1_5(hwInfo->pSkuTable.ftrGT1_5);
-    igcFeWa.get()->SetFtrGT2(hwInfo->pSkuTable.ftrGT2);
-    igcFeWa.get()->SetFtrGT3(hwInfo->pSkuTable.ftrGT3);
-    igcFeWa.get()->SetFtrGT4(hwInfo->pSkuTable.ftrGT4);
+    igcFeWa.get()->SetFtrGT1(hwInfo->featureTable.ftrGT1);
+    igcFeWa.get()->SetFtrGT1_5(hwInfo->featureTable.ftrGT1_5);
+    igcFeWa.get()->SetFtrGT2(hwInfo->featureTable.ftrGT2);
+    igcFeWa.get()->SetFtrGT3(hwInfo->featureTable.ftrGT3);
+    igcFeWa.get()->SetFtrGT4(hwInfo->featureTable.ftrGT4);
 
-    igcFeWa.get()->SetFtrIVBM0M1Platform(hwInfo->pSkuTable.ftrIVBM0M1Platform);
-    igcFeWa.get()->SetFtrGTL(hwInfo->pSkuTable.ftrGT1);
-    igcFeWa.get()->SetFtrGTM(hwInfo->pSkuTable.ftrGT2);
-    igcFeWa.get()->SetFtrGTH(hwInfo->pSkuTable.ftrGT3);
+    igcFeWa.get()->SetFtrIVBM0M1Platform(hwInfo->featureTable.ftrIVBM0M1Platform);
+    igcFeWa.get()->SetFtrGTL(hwInfo->featureTable.ftrGT1);
+    igcFeWa.get()->SetFtrGTM(hwInfo->featureTable.ftrGT2);
+    igcFeWa.get()->SetFtrGTH(hwInfo->featureTable.ftrGT3);
 
-    igcFeWa.get()->SetFtrSGTPVSKUStrapPresent(hwInfo->pSkuTable.ftrSGTPVSKUStrapPresent);
-    igcFeWa.get()->SetFtrGTA(hwInfo->pSkuTable.ftrGTA);
-    igcFeWa.get()->SetFtrGTC(hwInfo->pSkuTable.ftrGTC);
-    igcFeWa.get()->SetFtrGTX(hwInfo->pSkuTable.ftrGTX);
-    igcFeWa.get()->SetFtr5Slice(hwInfo->pSkuTable.ftr5Slice);
+    igcFeWa.get()->SetFtrSGTPVSKUStrapPresent(hwInfo->featureTable.ftrSGTPVSKUStrapPresent);
+    igcFeWa.get()->SetFtrGTA(hwInfo->featureTable.ftrGTA);
+    igcFeWa.get()->SetFtrGTC(hwInfo->featureTable.ftrGTC);
+    igcFeWa.get()->SetFtrGTX(hwInfo->featureTable.ftrGTX);
+    igcFeWa.get()->SetFtr5Slice(hwInfo->featureTable.ftr5Slice);
 
-    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(hwInfo->pSkuTable.ftrGpGpuMidThreadLevelPreempt);
-    igcFeWa.get()->SetFtrIoMmuPageFaulting(hwInfo->pSkuTable.ftrIoMmuPageFaulting);
-    igcFeWa.get()->SetFtrWddm2Svm(hwInfo->pSkuTable.ftrWddm2Svm);
-    igcFeWa.get()->SetFtrPooledEuEnabled(hwInfo->pSkuTable.ftrPooledEuEnabled);
+    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt);
+    igcFeWa.get()->SetFtrIoMmuPageFaulting(hwInfo->featureTable.ftrIoMmuPageFaulting);
+    igcFeWa.get()->SetFtrWddm2Svm(hwInfo->featureTable.ftrWddm2Svm);
+    igcFeWa.get()->SetFtrPooledEuEnabled(hwInfo->featureTable.ftrPooledEuEnabled);
 
-    igcFeWa.get()->SetFtrResourceStreamer(hwInfo->pSkuTable.ftrResourceStreamer);
+    igcFeWa.get()->SetFtrResourceStreamer(hwInfo->featureTable.ftrResourceStreamer);
 
     return retVal;
 }

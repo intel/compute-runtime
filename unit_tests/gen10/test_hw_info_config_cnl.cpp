@@ -14,7 +14,7 @@ TEST(CnlHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorr
         return;
     }
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     gtSystemInfo = {0};
 
     std::string strConfig = "1x2x8";
@@ -78,58 +78,58 @@ CNLTEST_F(CnlHwInfo, givenBoolWhenCallCnlHardwareInfoSetupThenFeatureTableAndWor
     bool boolValue[]{
         true, false};
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
-    FeatureTable &pSkuTable = hwInfo.pSkuTable;
-    WorkaroundTable &pWaTable = hwInfo.pWaTable;
-    PLATFORM &pPlatform = hwInfo.pPlatform;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+    FeatureTable &featureTable = hwInfo.featureTable;
+    WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
+    PLATFORM &platform = hwInfo.platform;
 
     for (auto &config : strConfig) {
         for (auto setParamBool : boolValue) {
 
             gtSystemInfo = {0};
-            pSkuTable = {};
-            pWaTable = {};
+            featureTable = {};
+            workaroundTable = {};
 
-            pPlatform.usRevId = 9;
+            platform.usRevId = 9;
             hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
 
-            EXPECT_EQ(setParamBool, pSkuTable.ftrL3IACoherency);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuMidBatchPreempt);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuThreadGroupLevelPreempt);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuMidThreadLevelPreempt);
-            EXPECT_EQ(setParamBool, pSkuTable.ftr3dMidBatchPreempt);
-            EXPECT_EQ(setParamBool, pSkuTable.ftr3dObjectLevelPreempt);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrPerCtxtPreemptionGranularityControl);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrPPGTT);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrSVM);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrIA32eGfxPTEs);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrStandardMipTailFormat);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrDisplayYTiling);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrTranslationTable);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrUserModeTranslationTable);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrTileMappedResource);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrEnableGuC);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrFbc);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrFbc2AddressTranslation);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrFbcBlitterTracking);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrFbcCpuTracking);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrAstcHdr2D);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrAstcLdr2D);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrTileY);
+            EXPECT_EQ(setParamBool, featureTable.ftrL3IACoherency);
+            EXPECT_EQ(setParamBool, featureTable.ftrGpGpuMidBatchPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftrGpGpuThreadGroupLevelPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftrGpGpuMidThreadLevelPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftr3dMidBatchPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftr3dObjectLevelPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftrPerCtxtPreemptionGranularityControl);
+            EXPECT_EQ(setParamBool, featureTable.ftrPPGTT);
+            EXPECT_EQ(setParamBool, featureTable.ftrSVM);
+            EXPECT_EQ(setParamBool, featureTable.ftrIA32eGfxPTEs);
+            EXPECT_EQ(setParamBool, featureTable.ftrStandardMipTailFormat);
+            EXPECT_EQ(setParamBool, featureTable.ftrDisplayYTiling);
+            EXPECT_EQ(setParamBool, featureTable.ftrTranslationTable);
+            EXPECT_EQ(setParamBool, featureTable.ftrUserModeTranslationTable);
+            EXPECT_EQ(setParamBool, featureTable.ftrTileMappedResource);
+            EXPECT_EQ(setParamBool, featureTable.ftrEnableGuC);
+            EXPECT_EQ(setParamBool, featureTable.ftrFbc);
+            EXPECT_EQ(setParamBool, featureTable.ftrFbc2AddressTranslation);
+            EXPECT_EQ(setParamBool, featureTable.ftrFbcBlitterTracking);
+            EXPECT_EQ(setParamBool, featureTable.ftrFbcCpuTracking);
+            EXPECT_EQ(setParamBool, featureTable.ftrAstcHdr2D);
+            EXPECT_EQ(setParamBool, featureTable.ftrAstcLdr2D);
+            EXPECT_EQ(setParamBool, featureTable.ftrTileY);
 
-            EXPECT_EQ(setParamBool, pWaTable.wa4kAlignUVOffsetNV12LinearSurface);
-            EXPECT_EQ(setParamBool, pWaTable.waSendMIFLUSHBeforeVFE);
-            EXPECT_EQ(setParamBool, pWaTable.waReportPerfCountUseGlobalContextID);
-            EXPECT_EQ(setParamBool, pWaTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads);
-            EXPECT_EQ(false, pWaTable.waFbcLinearSurfaceStride);
-            EXPECT_EQ(false, pWaTable.waEncryptedEdramOnlyPartials);
+            EXPECT_EQ(setParamBool, workaroundTable.wa4kAlignUVOffsetNV12LinearSurface);
+            EXPECT_EQ(setParamBool, workaroundTable.waSendMIFLUSHBeforeVFE);
+            EXPECT_EQ(setParamBool, workaroundTable.waReportPerfCountUseGlobalContextID);
+            EXPECT_EQ(setParamBool, workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads);
+            EXPECT_EQ(false, workaroundTable.waFbcLinearSurfaceStride);
+            EXPECT_EQ(false, workaroundTable.waEncryptedEdramOnlyPartials);
 
-            pPlatform.usRevId = 0;
-            pWaTable = {};
+            platform.usRevId = 0;
+            workaroundTable = {};
             hardwareInfoSetup[productFamily](&hwInfo, true, config);
 
-            EXPECT_EQ(true, pWaTable.waFbcLinearSurfaceStride);
-            EXPECT_EQ(true, pWaTable.waEncryptedEdramOnlyPartials);
+            EXPECT_EQ(true, workaroundTable.waFbcLinearSurfaceStride);
+            EXPECT_EQ(true, workaroundTable.waEncryptedEdramOnlyPartials);
         }
     }
 }

@@ -1460,7 +1460,7 @@ void Kernel::unsetArg(uint32_t argIndex) {
 void Kernel::createReflectionSurface() {
     if (this->isParentKernel && kernelReflectionSurface == nullptr) {
         auto &hwInfo = device.getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo.pPlatform.eRenderCoreFamily);
+        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         BlockKernelManager *blockManager = program->getBlockKernelManager();
         uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
 
@@ -1706,7 +1706,7 @@ void Kernel::ReflectionSurfaceHelper::getCurbeParams(std::vector<IGIL_KernelCurb
             tokenMask |= ((uint64_t)1 << 50);
 
             if (kernelInfo.patchInfo.bindingTableState) {
-                auto &hwHelper = HwHelper::get(hwInfo.pPlatform.eRenderCoreFamily);
+                auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
                 void *ssh = static_cast<char *>(kernelInfo.heapInfo.pSsh) + kernelInfo.patchInfo.bindingTableState->Offset;
 
                 for (uint32_t i = 0; i < kernelInfo.patchInfo.bindingTableState->Count; i++) {
@@ -1880,7 +1880,7 @@ void Kernel::ReflectionSurfaceHelper::setKernelAddressData(void *reflectionSurfa
                                                            uint32_t sshTokensOffset, uint32_t btOffset, const KernelInfo &kernelInfo, const HardwareInfo &hwInfo) {
     IGIL_KernelAddressData *kernelAddressData = reinterpret_cast<IGIL_KernelAddressData *>(ptrOffset(reflectionSurface, offset));
 
-    auto &hwHelper = HwHelper::get(hwInfo.pPlatform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     kernelAddressData->m_KernelDataOffset = kernelDataOffset;
     kernelAddressData->m_SamplerHeapOffset = samplerHeapOffset;
@@ -2139,7 +2139,7 @@ void Kernel::resolveArgs() {
 }
 
 bool Kernel::canTransformImages() const {
-    return device.getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE;
+    return device.getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE;
 }
 
 void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsForAuxTranslation) {

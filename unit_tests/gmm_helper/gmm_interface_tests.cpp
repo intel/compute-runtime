@@ -27,8 +27,8 @@ const char *mockGmmEntryName = "_openMockGmm@4";
 #endif
 #define EXPORT_KEYWORD __declspec(dllexport)
 GMM_STATUS GMM_STDCALL createSingletonContext(const PLATFORM platform,
-                                              const SKU_FEATURE_TABLE *pSkuTable,
-                                              const WA_TABLE *pWaTable,
+                                              const SKU_FEATURE_TABLE *featureTable,
+                                              const WA_TABLE *workaroundTable,
                                               const GT_SYSTEM_INFO *pGtSysInfo) {
     return GMM_SUCCESS;
 }
@@ -36,8 +36,8 @@ GMM_STATUS GMM_STDCALL createSingletonContext(const PLATFORM platform,
 const char *mockGmmEntryName = "openMockGmm";
 #define EXPORT_KEYWORD
 GMM_STATUS GMM_STDCALL createSingletonContext(const PLATFORM platform,
-                                              const void *pSkuTable,
-                                              const void *pWaTable,
+                                              const void *featureTable,
+                                              const void *workaroundTable,
                                               const void *pGtSysInfo) {
     return GMM_SUCCESS;
 }

@@ -24,23 +24,23 @@ ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, configureHwInfo) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.pPlatform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform.usRevId);
-    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo.SubSliceCount);
-    EXPECT_EQ(1u, outHwInfo.pSysInfo.SliceCount);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.platform.usDeviceID);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.platform.usRevId);
+    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GT1, outHwInfo.pPlatform.eGTType);
-    EXPECT_TRUE(outHwInfo.pSkuTable.ftrGT1);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGT1_5);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGT2);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGT3);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGT4);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGTA);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGTC);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGTX);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrTileY);
+    EXPECT_EQ(GTTYPE_GT1, outHwInfo.platform.eGTType);
+    EXPECT_TRUE(outHwInfo.featureTable.ftrGT1);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGT1_5);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGT2);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGT3);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGT4);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGTA);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGTC);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGTX);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrTileY);
 }
 
 ICLLPTEST_F(HwInfoConfigTestLinuxIcllp, negative) {
@@ -71,7 +71,7 @@ using IcllpHwInfoTests = ::testing::Test;
 ICLLPTEST_F(IcllpHwInfoTests, icllp1x8x8systemInfo) {
     GT_SYSTEM_INFO expectedGtSystemInfo = {};
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.pSysInfo;
+    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.gtSystemInfo;
     requestedGtSystemInfo = {};
 
     expectedGtSystemInfo.EUCount = 63;
@@ -100,7 +100,7 @@ ICLLPTEST_F(IcllpHwInfoTests, icllp1x8x8systemInfo) {
 ICLLPTEST_F(IcllpHwInfoTests, icllp1x4x8systemInfo) {
     HardwareInfo hwInfo;
     GT_SYSTEM_INFO expectedGtSystemInfo = {};
-    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.pSysInfo;
+    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.gtSystemInfo;
     requestedGtSystemInfo = {};
 
     expectedGtSystemInfo.EUCount = 31;
@@ -129,7 +129,7 @@ ICLLPTEST_F(IcllpHwInfoTests, icllp1x4x8systemInfo) {
 ICLLPTEST_F(IcllpHwInfoTests, icllp1x6x8systemInfo) {
     GT_SYSTEM_INFO expectedGtSystemInfo = {};
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.pSysInfo;
+    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.gtSystemInfo;
     requestedGtSystemInfo = {};
 
     expectedGtSystemInfo.EUCount = 47;
@@ -158,7 +158,7 @@ ICLLPTEST_F(IcllpHwInfoTests, icllp1x6x8systemInfo) {
 ICLLPTEST_F(IcllpHwInfoTests, icllp1x1x8systemInfo) {
     GT_SYSTEM_INFO expectedGtSystemInfo = {};
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.pSysInfo;
+    GT_SYSTEM_INFO &requestedGtSystemInfo = hwInfo.gtSystemInfo;
     requestedGtSystemInfo = {};
 
     expectedGtSystemInfo.EUCount = 8;

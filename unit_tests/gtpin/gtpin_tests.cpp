@@ -840,7 +840,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
     SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
     pBHdr->Magic = iOpenCL::MAGIC_CL;
     pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily;
+    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
     pBHdr->GPUPointerSizeInBytes = 8;
     pBHdr->NumberOfKernels = 1;
     pBHdr->SteppingId = 0;
@@ -928,7 +928,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithExecEnvIsUsedThen
     SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
     pBHdr->Magic = iOpenCL::MAGIC_CL;
     pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily;
+    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
     pBHdr->GPUPointerSizeInBytes = 8;
     pBHdr->NumberOfKernels = 1;
     pBHdr->SteppingId = 0;
@@ -1934,7 +1934,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
         SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
         pBHdr->Magic = iOpenCL::MAGIC_CL;
         pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-        pBHdr->Device = pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily;
+        pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
         pBHdr->GPUPointerSizeInBytes = 8;
         pBHdr->NumberOfKernels = 1;
         pBHdr->SteppingId = 0;
@@ -2083,7 +2083,7 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     size_t offsetBTS1 = pKernel->getBindingTableOffset();
     EXPECT_NE(0u, offsetBTS1);
 
-    GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily;
+    GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
     GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
     void *pSS1 = gtpinHelper.getSurfaceState(pKernel, 0);
     EXPECT_NE(nullptr, pSS1);
@@ -2210,7 +2210,7 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
 }
 
 TEST_F(GTPinTests, checkWhetherGTPinHwHelperGetterWorksWell) {
-    GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily;
+    GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
     GTPinHwHelper *pGTPinHelper = &GTPinHwHelper::get(genFamily);
     EXPECT_NE(nullptr, pGTPinHelper);
 }
@@ -2302,7 +2302,7 @@ TEST_F(ProgramTests, givenGenBinaryWithGtpinInfoWhenProcessGenBinaryCalledThenGt
     SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
     pBHdr->Magic = iOpenCL::MAGIC_CL;
     pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily;
+    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
     pBHdr->GPUPointerSizeInBytes = 8;
     pBHdr->NumberOfKernels = 1;
     pBHdr->SteppingId = 0;

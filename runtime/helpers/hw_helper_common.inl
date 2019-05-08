@@ -50,8 +50,8 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
 
 template <typename Family>
 uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
-    return pHwInfo->pSysInfo.MaxSubSlicesSupported * pHwInfo->pSysInfo.MaxEuPerSubSlice *
-           pHwInfo->pSysInfo.ThreadCount / pHwInfo->pSysInfo.EUCount;
+    return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice *
+           pHwInfo->gtSystemInfo.ThreadCount / pHwInfo->gtSystemInfo.EUCount;
 }
 
 template <typename Family>

@@ -97,6 +97,6 @@ TEST(InstrumentationTest, instrEscVerifyEnable) {
 
 TEST(InstrumentationTest, instrSetPlatformInfo) {
     uint32_t productId = 0;
-    void *pSkuTable = nullptr;
-    instrSetPlatformInfo(productId, pSkuTable);
+    void *featureTable = nullptr;
+    instrSetPlatformInfo(productId, featureTable);
 }

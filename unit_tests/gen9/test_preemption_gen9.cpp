@@ -63,7 +63,7 @@ GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsAvailableThenStateSipIs
     device->setPreemptionMode(PreemptionMode::MidThread);
     executionEnvironment->DisableMidThreadPreemption = 0;
 
-    size_t minCsrSize = device->getHardwareInfo().pSysInfo.CsrSizeInMb * MemoryConstants::megaByte;
+    size_t minCsrSize = device->getHardwareInfo().gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
     uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
     MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
 
@@ -541,6 +541,6 @@ GEN9TEST_F(Gen9PreemptionTests, givenMidThreadPreemptionModeWhenStateSipIsProgra
     auto cmd = hwParserOnlyPreemption.getCommand<STATE_SIP>();
     EXPECT_NE(nullptr, cmd);
 
-    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform.eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
+    auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().platform.eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
     EXPECT_EQ(mockDevice->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), cmd->getSystemInstructionPointer());
 }

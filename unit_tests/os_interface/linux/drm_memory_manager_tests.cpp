@@ -1632,7 +1632,7 @@ TEST_F(DrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShared
 }
 
 TEST_F(DrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedHandleIsCalledThenTileYGmmIsCreatedAndSetInAllocation) {
-    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->pPlatform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
 
     if (hwHelper.supportsYTiling()) {
         mock->ioctl_expected.primeFdToHandle = 1;

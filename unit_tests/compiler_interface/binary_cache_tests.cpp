@@ -219,13 +219,13 @@ TEST_F(BinaryCacheHashTests, testUnique) {
     std::unique_ptr<char> buf4(new char[bufSize]);
 
     for (auto platform : platforms) {
-        hwInfo.pPlatform = *platform;
+        hwInfo.platform = *platform;
 
         for (auto sku : skus) {
-            hwInfo.pSkuTable = *sku;
+            hwInfo.featureTable = *sku;
 
             for (auto wa : was) {
-                hwInfo.pWaTable = *wa;
+                hwInfo.workaroundTable = *wa;
 
                 for (size_t i1 = 0; i1 < input.size(); i1++) {
                     strcpy_s(buf1.get(), bufSize, input[i1].c_str());

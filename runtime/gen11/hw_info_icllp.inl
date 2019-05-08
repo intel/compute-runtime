@@ -72,38 +72,38 @@ WorkaroundTable ICLLP::workaroundTable = {};
 FeatureTable ICLLP::featureTable = {};
 
 void ICLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
-    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
+    FeatureTable *featureTable = &hwInfo->featureTable;
+    WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
-    pSkuTable->ftrL3IACoherency = true;
-    pSkuTable->ftrPPGTT = true;
-    pSkuTable->ftrSVM = true;
-    pSkuTable->ftrIA32eGfxPTEs = true;
-    pSkuTable->ftrStandardMipTailFormat = true;
+    featureTable->ftrL3IACoherency = true;
+    featureTable->ftrPPGTT = true;
+    featureTable->ftrSVM = true;
+    featureTable->ftrIA32eGfxPTEs = true;
+    featureTable->ftrStandardMipTailFormat = true;
 
-    pSkuTable->ftrDisplayYTiling = true;
-    pSkuTable->ftrTranslationTable = true;
-    pSkuTable->ftrUserModeTranslationTable = true;
-    pSkuTable->ftrTileMappedResource = true;
-    pSkuTable->ftrEnableGuC = true;
+    featureTable->ftrDisplayYTiling = true;
+    featureTable->ftrTranslationTable = true;
+    featureTable->ftrUserModeTranslationTable = true;
+    featureTable->ftrTileMappedResource = true;
+    featureTable->ftrEnableGuC = true;
 
-    pSkuTable->ftrFbc = true;
-    pSkuTable->ftrFbc2AddressTranslation = true;
-    pSkuTable->ftrFbcBlitterTracking = true;
-    pSkuTable->ftrFbcCpuTracking = true;
-    pSkuTable->ftrTileY = true;
+    featureTable->ftrFbc = true;
+    featureTable->ftrFbc2AddressTranslation = true;
+    featureTable->ftrFbcBlitterTracking = true;
+    featureTable->ftrFbcCpuTracking = true;
+    featureTable->ftrTileY = true;
 
-    pSkuTable->ftrAstcHdr2D = true;
-    pSkuTable->ftrAstcLdr2D = true;
+    featureTable->ftrAstcHdr2D = true;
+    featureTable->ftrAstcLdr2D = true;
 
-    pSkuTable->ftr3dMidBatchPreempt = true;
-    pSkuTable->ftrGpGpuMidBatchPreempt = true;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;
-    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
+    featureTable->ftr3dMidBatchPreempt = true;
+    featureTable->ftrGpGpuMidBatchPreempt = true;
+    featureTable->ftrGpGpuMidThreadLevelPreempt = true;
+    featureTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    featureTable->ftrPerCtxtPreemptionGranularityControl = true;
 
-    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = true;
-    pWaTable->waReportPerfCountUseGlobalContextID = true;
+    workaroundTable->wa4kAlignUVOffsetNV12LinearSurface = true;
+    workaroundTable->waReportPerfCountUseGlobalContextID = true;
 };
 
 const HardwareInfo ICLLP_1x8x8::hwInfo = {
@@ -116,7 +116,7 @@ const HardwareInfo ICLLP_1x8x8::hwInfo = {
 
 GT_SYSTEM_INFO ICLLP_1x8x8::gtSystemInfo = {0};
 void ICLLP_1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 63;
     gtSysInfo->ThreadCount = 63 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -150,7 +150,7 @@ const HardwareInfo ICLLP_1x4x8::hwInfo = {
 
 GT_SYSTEM_INFO ICLLP_1x4x8::gtSystemInfo = {0};
 void ICLLP_1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 31;
     gtSysInfo->ThreadCount = 31 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -183,7 +183,7 @@ const HardwareInfo ICLLP_1x6x8::hwInfo = {
 
 GT_SYSTEM_INFO ICLLP_1x6x8::gtSystemInfo = {0};
 void ICLLP_1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 47;
     gtSysInfo->ThreadCount = 47 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -216,7 +216,7 @@ const HardwareInfo ICLLP_1x1x8::hwInfo = {
 };
 GT_SYSTEM_INFO ICLLP_1x1x8::gtSystemInfo = {0};
 void ICLLP_1x1x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 8;
     gtSysInfo->ThreadCount = 8 * ICLLP::threadsPerEu;
     gtSysInfo->SliceCount = 1;

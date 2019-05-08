@@ -40,16 +40,16 @@ void GmmHelper::setSimplifiedMocsTableUsage(bool value) {
     useSimplifiedMocsTable = value;
 }
 
-void GmmHelper::initContext(const PLATFORM *pPlatform,
-                            const FeatureTable *pSkuTable,
-                            const WorkaroundTable *pWaTable,
+void GmmHelper::initContext(const PLATFORM *platform,
+                            const FeatureTable *featureTable,
+                            const WorkaroundTable *workaroundTable,
                             const GT_SYSTEM_INFO *pGtSysInfo) {
     _SKU_FEATURE_TABLE gmmFtrTable = {};
     _WA_TABLE gmmWaTable = {};
-    SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, pSkuTable);
-    SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, pWaTable);
+    SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, featureTable);
+    SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, workaroundTable);
     loadLib();
-    bool success = GMM_SUCCESS == gmmEntries.pfnCreateSingletonContext(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo);
+    bool success = GMM_SUCCESS == gmmEntries.pfnCreateSingletonContext(*platform, &gmmFtrTable, &gmmWaTable, pGtSysInfo);
     UNRECOVERABLE_IF(!success);
     gmmClientContext = GmmHelper::createGmmContextWrapperFunc(GMM_CLIENT::GMM_OCL_VISTA, gmmEntries);
     UNRECOVERABLE_IF(!gmmClientContext);
@@ -143,7 +143,7 @@ GMM_YUV_PLANE GmmHelper::convertPlane(OCLPlane oclPlane) {
     return GMM_NO_PLANE;
 }
 GmmHelper::GmmHelper(const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
-    initContext(&pHwInfo->pPlatform, &pHwInfo->pSkuTable, &pHwInfo->pWaTable, &pHwInfo->pSysInfo);
+    initContext(&pHwInfo->platform, &pHwInfo->featureTable, &pHwInfo->workaroundTable, &pHwInfo->gtSystemInfo);
 }
 GmmHelper::~GmmHelper() {
     gmmEntries.pfnDestroySingletonContext();

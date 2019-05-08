@@ -56,7 +56,7 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(uint32_t deviceIndex,
     if (!commandStreamReceiver) {
         return false;
     }
-    if (HwHelper::get(hwInfo->pPlatform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo)) {
+    if (HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo)) {
         commandStreamReceiver->createPageTableManager();
     }
     commandStreamReceiver->setDeviceIndex(deviceIndex);
@@ -94,7 +94,7 @@ void ExecutionEnvironment::initSourceLevelDebugger() {
         sourceLevelDebugger.reset(SourceLevelDebugger::create());
     }
     if (sourceLevelDebugger) {
-        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(hwInfo->pPlatform.eRenderCoreFamily, true));
+        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(hwInfo->platform.eRenderCoreFamily, true));
         sourceLevelDebugger->initialize(localMemorySipAvailable);
     }
 }

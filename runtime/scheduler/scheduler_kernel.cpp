@@ -42,13 +42,13 @@ void SchedulerKernel::setArgs(GraphicsAllocation *queue,
 void SchedulerKernel::computeGws() {
     auto &devInfo = device.getDeviceInfo();
     auto &hwInfo = device.getHardwareInfo();
-    auto &helper = HwHelper::get(hwInfo.pPlatform.eRenderCoreFamily);
+    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    size_t hWThreadsPerSubSlice = devInfo.maxComputUnits / hwInfo.pSysInfo.SubSliceCount;
+    size_t hWThreadsPerSubSlice = devInfo.maxComputUnits / hwInfo.gtSystemInfo.SubSliceCount;
     size_t wkgsPerSubSlice = hWThreadsPerSubSlice / PARALLEL_SCHEDULER_HWTHREADS_IN_HW_GROUP20;
 
     wkgsPerSubSlice = std::min(wkgsPerSubSlice, helper.getMaxBarrierRegisterPerSlice());
-    gws = wkgsPerSubSlice * hwInfo.pSysInfo.SubSliceCount * PARALLEL_SCHEDULER_HWTHREADS_IN_HW_GROUP20 * PARALLEL_SCHEDULER_COMPILATION_SIZE_20;
+    gws = wkgsPerSubSlice * hwInfo.gtSystemInfo.SubSliceCount * PARALLEL_SCHEDULER_HWTHREADS_IN_HW_GROUP20 * PARALLEL_SCHEDULER_COMPILATION_SIZE_20;
 
     if (device.isSimulation()) {
         gws = PARALLEL_SCHEDULER_HWTHREADS_IN_HW_GROUP20 * PARALLEL_SCHEDULER_COMPILATION_SIZE_20;

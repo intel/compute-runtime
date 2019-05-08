@@ -40,7 +40,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
 
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
     const HardwareInfo *pCurrDevice = platformDevices[devNum];
-    HwInfoConfig *hwConfig = HwInfoConfig::get(pCurrDevice->pPlatform.eProductFamily);
+    HwInfoConfig *hwConfig = HwInfoConfig::get(pCurrDevice->platform.eProductFamily);
     if (hwConfig->configureHwInfo(pCurrDevice, hardwareInfo, executionEnvironment.osInterface.get())) {
         return false;
     }

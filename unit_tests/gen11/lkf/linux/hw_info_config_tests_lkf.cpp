@@ -24,22 +24,22 @@ TEST_F(HwInfoConfigTestLinuxLkf, configureHwInfoLkf) {
     auto hwInfoConfig = HwInfoConfigHw<IGFX_LAKEFIELD>::get();
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.pPlatform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform.usRevId);
-    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo.SubSliceCount);
-    EXPECT_EQ(1u, outHwInfo.pSysInfo.SliceCount);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.platform.usDeviceID);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.platform.usRevId);
+    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
 
-    EXPECT_EQ(GTTYPE_GT1, outHwInfo.pPlatform.eGTType);
-    EXPECT_TRUE(outHwInfo.pSkuTable.ftrGT1);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGT1_5);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGT2);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGT3);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGT4);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGTA);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGTC);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrGTX);
-    EXPECT_FALSE(outHwInfo.pSkuTable.ftrTileY);
+    EXPECT_EQ(GTTYPE_GT1, outHwInfo.platform.eGTType);
+    EXPECT_TRUE(outHwInfo.featureTable.ftrGT1);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGT1_5);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGT2);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGT3);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGT4);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGTA);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGTC);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrGTX);
+    EXPECT_FALSE(outHwInfo.featureTable.ftrTileY);
 }
 
 TEST_F(HwInfoConfigTestLinuxLkf, negative) {
@@ -71,7 +71,7 @@ typedef ::testing::Types<LKF_1x8x8> lkfTestTypes;
 TYPED_TEST_CASE(LkfHwInfoTests, lkfTestTypes);
 TYPED_TEST(LkfHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     TypeParam::setupHardwareInfo(&hwInfo, false);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);

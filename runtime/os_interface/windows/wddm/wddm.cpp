@@ -38,7 +38,7 @@ Wddm::VirtualFreeFcn Wddm::virtualFreeFnc = getVirtualFree();
 
 Wddm::Wddm() {
     featureTable.reset(new FeatureTable());
-    waTable.reset(new WorkaroundTable());
+    workaroundTable.reset(new WorkaroundTable());
     gtSystemInfo.reset(new GT_SYSTEM_INFO);
     gfxPlatform.reset(new PLATFORM);
     memset(gtSystemInfo.get(), 0, sizeof(*gtSystemInfo));
@@ -74,10 +74,10 @@ bool Wddm::enumAdapters(HardwareInfo &outHardwareInfo) {
         return false;
     }
 
-    outHardwareInfo.pPlatform = *gfxPlatform;
-    outHardwareInfo.pSkuTable = *featureTable;
-    outHardwareInfo.pWaTable = *waTable;
-    outHardwareInfo.pSysInfo = *gtSystemInfo;
+    outHardwareInfo.platform = *gfxPlatform;
+    outHardwareInfo.featureTable = *featureTable;
+    outHardwareInfo.workaroundTable = *workaroundTable;
+    outHardwareInfo.gtSystemInfo = *gtSystemInfo;
 
     outHardwareInfo.capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
     outHardwareInfo.capabilityTable.maxRenderFrequency = maxRenderFrequency;
@@ -107,7 +107,7 @@ bool Wddm::queryAdapterInfo() {
         memcpy_s(gfxPlatform.get(), sizeof(PLATFORM), &adapterInfo.GfxPlatform, sizeof(PLATFORM));
 
         SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable.get(), &adapterInfo);
-        SkuInfoReceiver::receiveWaTableFromAdapterInfo(waTable.get(), &adapterInfo);
+        SkuInfoReceiver::receiveWaTableFromAdapterInfo(workaroundTable.get(), &adapterInfo);
 
         memcpy_s(&gfxPartition, sizeof(gfxPartition), &adapterInfo.GfxPartition, sizeof(GMM_GFX_PARTITIONING));
 

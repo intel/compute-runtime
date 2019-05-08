@@ -23,12 +23,12 @@ TEST_F(DeviceFactoryLinuxTest, GetDevicesCheckEUCntSSCnt) {
     EXPECT_TRUE(success);
     EXPECT_EQ((int)numDevices, 1);
     EXPECT_NE(hwInfo, nullptr);
-    EXPECT_EQ(refHwinfo->pPlatform.eDisplayCoreFamily, hwInfo->pPlatform.eDisplayCoreFamily);
-    EXPECT_EQ((int)hwInfo->pSysInfo.EUCount, 11);
-    EXPECT_EQ((int)hwInfo->pSysInfo.SubSliceCount, 8);
+    EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
+    EXPECT_EQ((int)hwInfo->gtSystemInfo.EUCount, 11);
+    EXPECT_EQ((int)hwInfo->gtSystemInfo.SubSliceCount, 8);
 
     //temporararily return GT2.
-    EXPECT_EQ(1u, hwInfo->pSkuTable.ftrGT2);
+    EXPECT_EQ(1u, hwInfo->featureTable.ftrGT2);
 
     DeviceFactory::releaseDevices();
 }

@@ -13,7 +13,7 @@ using namespace NEO;
 typedef Test<DeviceFixture> CannonlakeOnlyTest;
 
 CNLTEST_F(CannonlakeOnlyTest, shouldPassOnCnl) {
-    EXPECT_EQ(IGFX_CANNONLAKE, pDevice->getHardwareInfo().pPlatform.eProductFamily);
+    EXPECT_EQ(IGFX_CANNONLAKE, pDevice->getHardwareInfo().platform.eProductFamily);
 }
 
 typedef Test<DeviceFixture> Gen10OnlyTest;

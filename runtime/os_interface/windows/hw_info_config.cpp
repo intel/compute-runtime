@@ -21,21 +21,21 @@ namespace NEO {
 HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT] = {};
 
 int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
-    HwHelper &hwHelper = HwHelper::get(outHwInfo->pPlatform.eRenderCoreFamily);
+    HwHelper &hwHelper = HwHelper::get(outHwInfo->platform.eRenderCoreFamily);
 
-    outHwInfo->capabilityTable.ftrSvm = outHwInfo->pSkuTable.ftrSVM;
+    outHwInfo->capabilityTable.ftrSvm = outHwInfo->featureTable.ftrSVM;
 
     hwHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
     hwHelper.setCapabilityCoherencyFlag(outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
 
-    hwHelper.setupPreemptionRegisters(outHwInfo, outHwInfo->pWaTable.waEnablePreemptionGranularityControlByUMD);
+    hwHelper.setupPreemptionRegisters(outHwInfo, outHwInfo->workaroundTable.waEnablePreemptionGranularityControlByUMD);
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
-                                                  static_cast<bool>(outHwInfo->pSkuTable.ftrGpGpuMidThreadLevelPreempt),
-                                                  static_cast<bool>(outHwInfo->pSkuTable.ftrGpGpuThreadGroupLevelPreempt),
-                                                  static_cast<bool>(outHwInfo->pSkuTable.ftrGpGpuMidBatchPreempt));
-    outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->pSysInfo.CsrSizeInMb * MemoryConstants::megaByte;
+                                                  static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt),
+                                                  static_cast<bool>(outHwInfo->featureTable.ftrGpGpuThreadGroupLevelPreempt),
+                                                  static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidBatchPreempt));
+    outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
 
     outHwInfo->capabilityTable.instrumentationEnabled &= haveInstrumentation;
 

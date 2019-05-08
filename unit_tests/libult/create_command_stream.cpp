@@ -27,7 +27,7 @@ CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnviro
     auto hwInfo = executionEnvironment.getHardwareInfo();
     auto offset = !overrideCommandStreamReceiverCreation ? IGFX_MAX_CORE : 0;
     if (offset != 0) {
-        auto funcCreate = commandStreamReceiverFactory[offset + hwInfo->pPlatform.eRenderCoreFamily];
+        auto funcCreate = commandStreamReceiverFactory[offset + hwInfo->platform.eRenderCoreFamily];
         if (funcCreate) {
             commandStreamReceiver = funcCreate(false, executionEnvironment);
         }

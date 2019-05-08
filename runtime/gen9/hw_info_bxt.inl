@@ -73,45 +73,45 @@ WorkaroundTable BXT::workaroundTable = {};
 FeatureTable BXT::featureTable = {};
 
 void BXT::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    PLATFORM *pPlatform = &hwInfo->pPlatform;
-    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
-    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
+    PLATFORM *platform = &hwInfo->platform;
+    FeatureTable *featureTable = &hwInfo->featureTable;
+    WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
-    pSkuTable->ftrGpGpuMidBatchPreempt = true;
-    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    pSkuTable->ftrL3IACoherency = true;
-    pSkuTable->ftrVEBOX = true;
-    pSkuTable->ftrULT = true;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;
-    pSkuTable->ftr3dMidBatchPreempt = true;
-    pSkuTable->ftr3dObjectLevelPreempt = true;
-    pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
-    pSkuTable->ftrLCIA = true;
-    pSkuTable->ftrPPGTT = true;
-    pSkuTable->ftrIA32eGfxPTEs = true;
-    pSkuTable->ftrDisplayYTiling = true;
-    pSkuTable->ftrTranslationTable = true;
-    pSkuTable->ftrUserModeTranslationTable = true;
-    pSkuTable->ftrEnableGuC = true;
-    pSkuTable->ftrFbc = true;
-    pSkuTable->ftrFbc2AddressTranslation = true;
-    pSkuTable->ftrFbcBlitterTracking = true;
-    pSkuTable->ftrFbcCpuTracking = true;
-    pSkuTable->ftrTileY = true;
+    featureTable->ftrGpGpuMidBatchPreempt = true;
+    featureTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    featureTable->ftrL3IACoherency = true;
+    featureTable->ftrVEBOX = true;
+    featureTable->ftrULT = true;
+    featureTable->ftrGpGpuMidThreadLevelPreempt = true;
+    featureTable->ftr3dMidBatchPreempt = true;
+    featureTable->ftr3dObjectLevelPreempt = true;
+    featureTable->ftrPerCtxtPreemptionGranularityControl = true;
+    featureTable->ftrLCIA = true;
+    featureTable->ftrPPGTT = true;
+    featureTable->ftrIA32eGfxPTEs = true;
+    featureTable->ftrDisplayYTiling = true;
+    featureTable->ftrTranslationTable = true;
+    featureTable->ftrUserModeTranslationTable = true;
+    featureTable->ftrEnableGuC = true;
+    featureTable->ftrFbc = true;
+    featureTable->ftrFbc2AddressTranslation = true;
+    featureTable->ftrFbcBlitterTracking = true;
+    featureTable->ftrFbcCpuTracking = true;
+    featureTable->ftrTileY = true;
 
-    if (pPlatform->usRevId >= 3) {
-        pSkuTable->ftrGttCacheInvalidation = true;
+    if (platform->usRevId >= 3) {
+        featureTable->ftrGttCacheInvalidation = true;
     }
 
-    pWaTable->waLLCCachingUnsupported = true;
-    pWaTable->waMsaa8xTileYDepthPitchAlignment = true;
-    pWaTable->waFbcLinearSurfaceStride = true;
-    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = true;
-    pWaTable->waEnablePreemptionGranularityControlByUMD = true;
-    pWaTable->waSendMIFLUSHBeforeVFE = true;
-    pWaTable->waForcePcBbFullCfgRestore = true;
-    pWaTable->waReportPerfCountUseGlobalContextID = true;
-    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+    workaroundTable->waLLCCachingUnsupported = true;
+    workaroundTable->waMsaa8xTileYDepthPitchAlignment = true;
+    workaroundTable->waFbcLinearSurfaceStride = true;
+    workaroundTable->wa4kAlignUVOffsetNV12LinearSurface = true;
+    workaroundTable->waEnablePreemptionGranularityControlByUMD = true;
+    workaroundTable->waSendMIFLUSHBeforeVFE = true;
+    workaroundTable->waForcePcBbFullCfgRestore = true;
+    workaroundTable->waReportPerfCountUseGlobalContextID = true;
+    workaroundTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 
 const HardwareInfo BXT_1x2x6::hwInfo = {
@@ -123,7 +123,7 @@ const HardwareInfo BXT_1x2x6::hwInfo = {
 };
 GT_SYSTEM_INFO BXT_1x2x6::gtSystemInfo = {0};
 void BXT_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 12;
     gtSysInfo->ThreadCount = 12 * BXT::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -156,7 +156,7 @@ const HardwareInfo BXT_1x3x6::hwInfo = {
 };
 GT_SYSTEM_INFO BXT_1x3x6::gtSystemInfo = {0};
 void BXT_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 18;
     gtSysInfo->ThreadCount = 18 * BXT::threadsPerEu;
     gtSysInfo->SliceCount = 1;

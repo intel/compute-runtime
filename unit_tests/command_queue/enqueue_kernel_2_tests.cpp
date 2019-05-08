@@ -314,8 +314,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     auto *sba = (STATE_BASE_ADDRESS *)*itorCmdForStateBase;
 
     const HardwareInfo &hwInfo = **platformDevices;
-    uint32_t threadPerEU = (hwInfo.pSysInfo.ThreadCount / hwInfo.pSysInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
-    uint32_t maxNumberOfThreads = hwInfo.pSysInfo.EUCount * threadPerEU;
+    uint32_t threadPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t maxNumberOfThreads = hwInfo.gtSystemInfo.EUCount * threadPerEU;
 
     // Verify we have a valid length
     EXPECT_EQ(maxNumberOfThreads, cmd->getMaximumNumberOfThreads());

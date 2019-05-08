@@ -18,7 +18,7 @@ namespace NEO {
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
 CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEnvironment) {
-    auto funcCreate = commandStreamReceiverFactory[executionEnvironment.getHardwareInfo()->pPlatform.eRenderCoreFamily];
+    auto funcCreate = commandStreamReceiverFactory[executionEnvironment.getHardwareInfo()->platform.eRenderCoreFamily];
     if (funcCreate == nullptr) {
         return nullptr;
     }

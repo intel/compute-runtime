@@ -70,7 +70,7 @@ bool InstrEscSendReadRegsCfg(
 
 uint32_t InstrSetPlatformInfo(
     uint32_t productId,
-    void *pSkuTable) {
+    void *featureTable) {
     return -1;
 }
 

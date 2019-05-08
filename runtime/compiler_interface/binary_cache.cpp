@@ -37,11 +37,11 @@ const std::string BinaryCache::getCachedFileName(const HardwareInfo &hwInfo, con
     hash.update(&*internalOptions.begin(), internalOptions.size());
 
     hash.update("----", 4);
-    hash.update(reinterpret_cast<const char *>(&hwInfo.pPlatform), sizeof(hwInfo.pPlatform));
+    hash.update(reinterpret_cast<const char *>(&hwInfo.platform), sizeof(hwInfo.platform));
     hash.update("----", 4);
-    hash.update(reinterpret_cast<const char *>(&hwInfo.pSkuTable), sizeof(hwInfo.pSkuTable));
+    hash.update(reinterpret_cast<const char *>(&hwInfo.featureTable), sizeof(hwInfo.featureTable));
     hash.update("----", 4);
-    hash.update(reinterpret_cast<const char *>(&hwInfo.pWaTable), sizeof(hwInfo.pWaTable));
+    hash.update(reinterpret_cast<const char *>(&hwInfo.workaroundTable), sizeof(hwInfo.workaroundTable));
 
     auto res = hash.finish();
     std::stringstream stream;

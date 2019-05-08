@@ -167,7 +167,7 @@ class Wddm {
     std::unique_ptr<PLATFORM> gfxPlatform;
     std::unique_ptr<GT_SYSTEM_INFO> gtSystemInfo;
     std::unique_ptr<FeatureTable> featureTable;
-    std::unique_ptr<WorkaroundTable> waTable;
+    std::unique_ptr<WorkaroundTable> workaroundTable;
     GMM_GFX_PARTITIONING gfxPartition;
     uint64_t systemSharedMemory = 0;
     uint32_t maxRenderFrequency = 0;

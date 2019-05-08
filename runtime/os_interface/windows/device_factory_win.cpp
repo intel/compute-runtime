@@ -36,7 +36,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     executionEnvironment.osInterface.reset(new OSInterface());
     executionEnvironment.osInterface->get()->setWddm(wddm.release());
 
-    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->pPlatform.eProductFamily);
+    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
     if (hwConfig->configureHwInfo(hardwareInfo, hardwareInfo, nullptr)) {
         return false;
     }

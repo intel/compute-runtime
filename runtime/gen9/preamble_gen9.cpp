@@ -14,7 +14,7 @@ template <>
 uint32_t PreambleHelper<SKLFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
     uint32_t l3Config = 0;
 
-    switch (hwInfo.pPlatform.eProductFamily) {
+    switch (hwInfo.platform.eProductFamily) {
     case IGFX_SKYLAKE:
         l3Config = getL3ConfigHelper<IGFX_SKYLAKE>(useSLM);
         break;
@@ -45,7 +45,7 @@ void PreambleHelper<SKLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComman
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
     *pipeControl = SKLFamily::cmdInitPipeControl;
     pipeControl->setCommandStreamerStallEnable(true);
-    if (hwInfo->pWaTable.waSendMIFLUSHBeforeVFE) {
+    if (hwInfo->workaroundTable.waSendMIFLUSHBeforeVFE) {
         pipeControl->setRenderTargetCacheFlushEnable(true);
         pipeControl->setDepthCacheFlushEnable(true);
         pipeControl->setDcFlushEnable(true);

@@ -22,10 +22,10 @@ namespace NEO {
 AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[IGFX_MAX_CORE] = {};
 
 std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename) {
-    std::string hwPrefix = hardwarePrefix[hwInfo.pPlatform.eProductFamily];
+    std::string hwPrefix = hardwarePrefix[hwInfo.platform.eProductFamily];
 
     // Generate the full filename
-    const auto &gtSystemInfo = hwInfo.pSysInfo;
+    const auto &gtSystemInfo = hwInfo.gtSystemInfo;
     std::stringstream strfilename;
     uint32_t subSlicesPerSlice = gtSystemInfo.SubSliceCount / gtSystemInfo.SliceCount;
     strfilename << hwPrefix << "_" << gtSystemInfo.SliceCount << "x" << subSlicesPerSlice << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << filename << ".aub";
@@ -50,12 +50,12 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseN
         filePath.assign(DebugManager.flags.AUBDumpCaptureFileName.get());
     }
 
-    if (hwInfo->pPlatform.eRenderCoreFamily >= IGFX_MAX_CORE) {
+    if (hwInfo->platform.eRenderCoreFamily >= IGFX_MAX_CORE) {
         DEBUG_BREAK_IF(!false);
         return nullptr;
     }
 
-    auto pCreate = aubCommandStreamReceiverFactory[hwInfo->pPlatform.eRenderCoreFamily];
+    auto pCreate = aubCommandStreamReceiverFactory[hwInfo->platform.eRenderCoreFamily];
     return pCreate ? pCreate(filePath, standalone, executionEnvironment) : nullptr;
 }
 } // namespace NEO

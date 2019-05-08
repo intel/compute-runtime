@@ -48,10 +48,10 @@ BDWTEST_F(BdwDeviceCaps, BdwProfilingTimerResolution) {
 
 BDWTEST_F(BdwDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {
     const auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.pPlatform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    uint32_t expectedValue = hwInfo.pSysInfo.MaxSubSlicesSupported * hwInfo.pSysInfo.MaxEuPerSubSlice *
-                             hwInfo.pSysInfo.ThreadCount / hwInfo.pSysInfo.EUCount;
+    uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice *
+                             hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
 
     EXPECT_EQ(expectedValue, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
     EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);

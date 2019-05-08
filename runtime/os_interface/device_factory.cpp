@@ -27,9 +27,9 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
     *hardwareInfo = *hwInfoConst;
 
-    hardwareInfoSetup[hwInfoConst->pPlatform.eProductFamily](hardwareInfo, true, hwInfoConfig);
+    hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig);
 
-    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->pPlatform.eProductFamily);
+    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
     hwConfig->configureHardwareCustom(hardwareInfo, nullptr);
 
     numDevices = totalDeviceCount;

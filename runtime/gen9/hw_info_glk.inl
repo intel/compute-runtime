@@ -68,37 +68,37 @@ WorkaroundTable GLK::workaroundTable = {};
 FeatureTable GLK::featureTable = {};
 
 void GLK::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
-    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
+    FeatureTable *featureTable = &hwInfo->featureTable;
+    WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
-    pSkuTable->ftrGpGpuMidBatchPreempt = true;
-    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    pSkuTable->ftrL3IACoherency = true;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = false;
-    pSkuTable->ftr3dMidBatchPreempt = true;
-    pSkuTable->ftr3dObjectLevelPreempt = true;
-    pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
-    pSkuTable->ftrLCIA = true;
-    pSkuTable->ftrPPGTT = true;
-    pSkuTable->ftrIA32eGfxPTEs = true;
-    pSkuTable->ftrTranslationTable = true;
-    pSkuTable->ftrUserModeTranslationTable = true;
-    pSkuTable->ftrEnableGuC = true;
-    pSkuTable->ftrTileMappedResource = true;
-    pSkuTable->ftrULT = true;
-    pSkuTable->ftrAstcHdr2D = true;
-    pSkuTable->ftrAstcLdr2D = true;
-    pSkuTable->ftrTileY = true;
+    featureTable->ftrGpGpuMidBatchPreempt = true;
+    featureTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    featureTable->ftrL3IACoherency = true;
+    featureTable->ftrGpGpuMidThreadLevelPreempt = false;
+    featureTable->ftr3dMidBatchPreempt = true;
+    featureTable->ftr3dObjectLevelPreempt = true;
+    featureTable->ftrPerCtxtPreemptionGranularityControl = true;
+    featureTable->ftrLCIA = true;
+    featureTable->ftrPPGTT = true;
+    featureTable->ftrIA32eGfxPTEs = true;
+    featureTable->ftrTranslationTable = true;
+    featureTable->ftrUserModeTranslationTable = true;
+    featureTable->ftrEnableGuC = true;
+    featureTable->ftrTileMappedResource = true;
+    featureTable->ftrULT = true;
+    featureTable->ftrAstcHdr2D = true;
+    featureTable->ftrAstcLdr2D = true;
+    featureTable->ftrTileY = true;
 
-    pWaTable->waLLCCachingUnsupported = true;
-    pWaTable->waMsaa8xTileYDepthPitchAlignment = true;
-    pWaTable->waFbcLinearSurfaceStride = true;
-    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = true;
-    pWaTable->waEnablePreemptionGranularityControlByUMD = true;
-    pWaTable->waSendMIFLUSHBeforeVFE = true;
-    pWaTable->waForcePcBbFullCfgRestore = true;
-    pWaTable->waReportPerfCountUseGlobalContextID = true;
-    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+    workaroundTable->waLLCCachingUnsupported = true;
+    workaroundTable->waMsaa8xTileYDepthPitchAlignment = true;
+    workaroundTable->waFbcLinearSurfaceStride = true;
+    workaroundTable->wa4kAlignUVOffsetNV12LinearSurface = true;
+    workaroundTable->waEnablePreemptionGranularityControlByUMD = true;
+    workaroundTable->waSendMIFLUSHBeforeVFE = true;
+    workaroundTable->waForcePcBbFullCfgRestore = true;
+    workaroundTable->waReportPerfCountUseGlobalContextID = true;
+    workaroundTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 
 const HardwareInfo GLK_1x3x6::hwInfo = {
@@ -111,7 +111,7 @@ const HardwareInfo GLK_1x3x6::hwInfo = {
 
 GT_SYSTEM_INFO GLK_1x3x6::gtSystemInfo = {0};
 void GLK_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 18;
     gtSysInfo->ThreadCount = 18 * GLK::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -144,7 +144,7 @@ const HardwareInfo GLK_1x2x6::hwInfo = {
 };
 GT_SYSTEM_INFO GLK_1x2x6::gtSystemInfo = {0};
 void GLK_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 12;
     gtSysInfo->ThreadCount = 12 * GLK::threadsPerEu;
     gtSysInfo->SliceCount = 1;

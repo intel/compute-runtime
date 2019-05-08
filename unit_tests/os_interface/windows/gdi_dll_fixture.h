@@ -18,7 +18,7 @@ OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSyst
 struct GdiDllFixture {
     virtual void SetUp() {
         const HardwareInfo *hwInfo = platformDevices[0];
-        mockGdiDll.reset(setAdapterInfo(&hwInfo->pPlatform, &hwInfo->pSysInfo, hwInfo->capabilityTable.gpuAddressSpace));
+        mockGdiDll.reset(setAdapterInfo(&hwInfo->platform, &hwInfo->gtSystemInfo, hwInfo->capabilityTable.gpuAddressSpace));
 
         setSizesFcn = reinterpret_cast<decltype(&MockSetSizes)>(mockGdiDll->getProcAddress("MockSetSizes"));
         getSizesFcn = reinterpret_cast<decltype(&GetMockSizes)>(mockGdiDll->getProcAddress("GetMockSizes"));

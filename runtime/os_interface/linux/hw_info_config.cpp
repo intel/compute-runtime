@@ -29,7 +29,7 @@ uint32_t bitExact(uint32_t value, uint32_t highBit, uint32_t lowBit) {
 }
 
 int configureCacheInfo(HardwareInfo *hwInfo) {
-    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
 
     uint32_t type = 0;
     uint32_t subleaf = 0;
@@ -57,7 +57,7 @@ int configureCacheInfo(HardwareInfo *hwInfo) {
 
             size = sets * ways * partitions * linesize / 1024;
             if (cachelevel == 3) {
-                pSysInfo->LLCCacheSizeInKb = size;
+                gtSystemInfo->LLCCacheSizeInKb = size;
             }
             subleaf++;
         }
@@ -71,9 +71,9 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     Drm *drm = osIface->get()->getDrm();
 
     *outHwInfo = *inHwInfo;
-    auto pPlatform = &outHwInfo->pPlatform;
-    auto pSysInfo = &outHwInfo->pSysInfo;
-    auto pSkuTable = &outHwInfo->pSkuTable;
+    auto platform = &outHwInfo->platform;
+    auto gtSystemInfo = &outHwInfo->gtSystemInfo;
+    auto featureTable = &outHwInfo->featureTable;
 
     int val = 0;
     ret = drm->getDeviceID(val);
@@ -81,13 +81,13 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
         *outHwInfo = {};
         return (ret == 0) ? -1 : ret;
     }
-    pPlatform->usDeviceID = static_cast<unsigned short>(val);
+    platform->usDeviceID = static_cast<unsigned short>(val);
     ret = drm->getDeviceRevID(val);
     if (ret != 0) {
         *outHwInfo = {};
         return ret;
     }
-    pPlatform->usRevId = static_cast<unsigned short>(val);
+    platform->usRevId = static_cast<unsigned short>(val);
 
     int euCount;
     ret = drm->getEuTotal(euCount);
@@ -95,9 +95,9 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
         *outHwInfo = {};
         return ret;
     }
-    pSysInfo->EUCount = static_cast<uint32_t>(euCount);
+    gtSystemInfo->EUCount = static_cast<uint32_t>(euCount);
 
-    pSysInfo->ThreadCount = this->threadsPerEu * pSysInfo->EUCount;
+    gtSystemInfo->ThreadCount = this->threadsPerEu * gtSystemInfo->EUCount;
 
     int subSliceCount;
     ret = drm->getSubsliceTotal(subSliceCount);
@@ -105,9 +105,9 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
         *outHwInfo = {};
         return ret;
     }
-    pSysInfo->SubSliceCount = static_cast<uint32_t>(subSliceCount);
+    gtSystemInfo->SubSliceCount = static_cast<uint32_t>(subSliceCount);
 
-    pSkuTable->ftrSVM = drm->is48BitAddressRangeSupported();
+    featureTable->ftrSVM = drm->is48BitAddressRangeSupported();
 
     int maxGpuFreq = 0;
     drm->getMaxGpuFrequency(maxGpuFreq);
@@ -117,16 +117,16 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
         *outHwInfo = {};
         return -1;
     }
-    pPlatform->eGTType = gtType;
-    pSkuTable->ftrGTA = (gtType == GTTYPE_GTA) ? 1 : 0;
-    pSkuTable->ftrGTC = (gtType == GTTYPE_GTC) ? 1 : 0;
-    pSkuTable->ftrGTX = (gtType == GTTYPE_GTX) ? 1 : 0;
-    pSkuTable->ftrGT1 = (gtType == GTTYPE_GT1) ? 1 : 0;
-    pSkuTable->ftrGT1_5 = (gtType == GTTYPE_GT1_5) ? 1 : 0;
-    pSkuTable->ftrGT2 = (gtType == GTTYPE_GT2) ? 1 : 0;
-    pSkuTable->ftrGT2_5 = (gtType == GTTYPE_GT2_5) ? 1 : 0;
-    pSkuTable->ftrGT3 = (gtType == GTTYPE_GT3) ? 1 : 0;
-    pSkuTable->ftrGT4 = (gtType == GTTYPE_GT4) ? 1 : 0;
+    platform->eGTType = gtType;
+    featureTable->ftrGTA = (gtType == GTTYPE_GTA) ? 1 : 0;
+    featureTable->ftrGTC = (gtType == GTTYPE_GTC) ? 1 : 0;
+    featureTable->ftrGTX = (gtType == GTTYPE_GTX) ? 1 : 0;
+    featureTable->ftrGT1 = (gtType == GTTYPE_GT1) ? 1 : 0;
+    featureTable->ftrGT1_5 = (gtType == GTTYPE_GT1_5) ? 1 : 0;
+    featureTable->ftrGT2 = (gtType == GTTYPE_GT2) ? 1 : 0;
+    featureTable->ftrGT2_5 = (gtType == GTTYPE_GT2_5) ? 1 : 0;
+    featureTable->ftrGT3 = (gtType == GTTYPE_GT3) ? 1 : 0;
+    featureTable->ftrGT4 = (gtType == GTTYPE_GT4) ? 1 : 0;
 
     ret = configureHardwareCustom(outHwInfo, osIface);
     if (ret != 0) {
@@ -134,12 +134,12 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
         return ret;
     }
     configureCacheInfo(outHwInfo);
-    pSkuTable->ftrEDram = (pSysInfo->EdramSizeInKb != 0) ? 1 : 0;
+    featureTable->ftrEDram = (gtSystemInfo->EdramSizeInKb != 0) ? 1 : 0;
 
     outHwInfo->capabilityTable.maxRenderFrequency = maxGpuFreq;
-    outHwInfo->capabilityTable.ftrSvm = pSkuTable->ftrSVM;
+    outHwInfo->capabilityTable.ftrSvm = featureTable->ftrSVM;
 
-    HwHelper &hwHelper = HwHelper::get(pPlatform->eRenderCoreFamily);
+    HwHelper &hwHelper = HwHelper::get(platform->eRenderCoreFamily);
     outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
     hwHelper.adjustDefaultEngineType(outHwInfo);
@@ -153,10 +153,10 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     bool preemption = drm->isPreemptionSupported();
     preemption = hwHelper.setupPreemptionRegisters(outHwInfo, preemption);
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
-                                                  static_cast<bool>(outHwInfo->pSkuTable.ftrGpGpuMidThreadLevelPreempt) && preemption,
-                                                  static_cast<bool>(outHwInfo->pSkuTable.ftrGpGpuThreadGroupLevelPreempt) && preemption,
-                                                  static_cast<bool>(outHwInfo->pSkuTable.ftrGpGpuMidBatchPreempt) && preemption);
-    outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->pSysInfo.CsrSizeInMb * MemoryConstants::megaByte;
+                                                  static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt) && preemption,
+                                                  static_cast<bool>(outHwInfo->featureTable.ftrGpGpuThreadGroupLevelPreempt) && preemption,
+                                                  static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidBatchPreempt) && preemption);
+    outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
 
     auto &kmdNotifyProperties = outHwInfo->capabilityTable.kmdNotifyProperties;
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);

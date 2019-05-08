@@ -14,7 +14,7 @@ TEST(GlkHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorr
         return;
     }
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     gtSystemInfo = {0};
 
     std::string strConfig = "1x2x6";
@@ -54,46 +54,46 @@ GLKTEST_F(GlkHwInfo, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTableAndWor
     bool boolValue[]{
         true, false};
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
-    FeatureTable &pSkuTable = hwInfo.pSkuTable;
-    WorkaroundTable &pWaTable = hwInfo.pWaTable;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+    FeatureTable &featureTable = hwInfo.featureTable;
+    WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
     for (auto &config : strConfig) {
         for (auto setParamBool : boolValue) {
 
             gtSystemInfo = {0};
-            pSkuTable = {};
-            pWaTable = {};
+            featureTable = {};
+            workaroundTable = {};
             hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
 
-            EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuMidBatchPreempt);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrGpGpuThreadGroupLevelPreempt);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrL3IACoherency);
-            EXPECT_EQ(false, pSkuTable.ftrGpGpuMidThreadLevelPreempt);
-            EXPECT_EQ(setParamBool, pSkuTable.ftr3dMidBatchPreempt);
-            EXPECT_EQ(setParamBool, pSkuTable.ftr3dObjectLevelPreempt);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrPerCtxtPreemptionGranularityControl);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrLCIA);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrPPGTT);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrIA32eGfxPTEs);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrTranslationTable);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrUserModeTranslationTable);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrEnableGuC);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrTileMappedResource);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrULT);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrAstcHdr2D);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrAstcLdr2D);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrTileY);
+            EXPECT_EQ(setParamBool, featureTable.ftrGpGpuMidBatchPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftrGpGpuThreadGroupLevelPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftrL3IACoherency);
+            EXPECT_EQ(false, featureTable.ftrGpGpuMidThreadLevelPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftr3dMidBatchPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftr3dObjectLevelPreempt);
+            EXPECT_EQ(setParamBool, featureTable.ftrPerCtxtPreemptionGranularityControl);
+            EXPECT_EQ(setParamBool, featureTable.ftrLCIA);
+            EXPECT_EQ(setParamBool, featureTable.ftrPPGTT);
+            EXPECT_EQ(setParamBool, featureTable.ftrIA32eGfxPTEs);
+            EXPECT_EQ(setParamBool, featureTable.ftrTranslationTable);
+            EXPECT_EQ(setParamBool, featureTable.ftrUserModeTranslationTable);
+            EXPECT_EQ(setParamBool, featureTable.ftrEnableGuC);
+            EXPECT_EQ(setParamBool, featureTable.ftrTileMappedResource);
+            EXPECT_EQ(setParamBool, featureTable.ftrULT);
+            EXPECT_EQ(setParamBool, featureTable.ftrAstcHdr2D);
+            EXPECT_EQ(setParamBool, featureTable.ftrAstcLdr2D);
+            EXPECT_EQ(setParamBool, featureTable.ftrTileY);
 
-            EXPECT_EQ(setParamBool, pWaTable.waLLCCachingUnsupported);
-            EXPECT_EQ(setParamBool, pWaTable.waMsaa8xTileYDepthPitchAlignment);
-            EXPECT_EQ(setParamBool, pWaTable.waFbcLinearSurfaceStride);
-            EXPECT_EQ(setParamBool, pWaTable.wa4kAlignUVOffsetNV12LinearSurface);
-            EXPECT_EQ(setParamBool, pWaTable.waEnablePreemptionGranularityControlByUMD);
-            EXPECT_EQ(setParamBool, pWaTable.waSendMIFLUSHBeforeVFE);
-            EXPECT_EQ(setParamBool, pWaTable.waForcePcBbFullCfgRestore);
-            EXPECT_EQ(setParamBool, pWaTable.waReportPerfCountUseGlobalContextID);
-            EXPECT_EQ(setParamBool, pWaTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads);
+            EXPECT_EQ(setParamBool, workaroundTable.waLLCCachingUnsupported);
+            EXPECT_EQ(setParamBool, workaroundTable.waMsaa8xTileYDepthPitchAlignment);
+            EXPECT_EQ(setParamBool, workaroundTable.waFbcLinearSurfaceStride);
+            EXPECT_EQ(setParamBool, workaroundTable.wa4kAlignUVOffsetNV12LinearSurface);
+            EXPECT_EQ(setParamBool, workaroundTable.waEnablePreemptionGranularityControlByUMD);
+            EXPECT_EQ(setParamBool, workaroundTable.waSendMIFLUSHBeforeVFE);
+            EXPECT_EQ(setParamBool, workaroundTable.waForcePcBbFullCfgRestore);
+            EXPECT_EQ(setParamBool, workaroundTable.waReportPerfCountUseGlobalContextID);
+            EXPECT_EQ(setParamBool, workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads);
         }
     }
 }

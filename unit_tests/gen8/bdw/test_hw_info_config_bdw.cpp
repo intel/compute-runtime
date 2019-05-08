@@ -14,7 +14,7 @@ TEST(BdwHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorr
         return;
     }
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     std::string strConfig = "1x3x8";
     hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
@@ -70,33 +70,33 @@ BDWTEST_F(BdwHwInfo, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTableAndWor
     bool boolValue[]{
         true, false};
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
-    FeatureTable &pSkuTable = hwInfo.pSkuTable;
-    WorkaroundTable &pWaTable = hwInfo.pWaTable;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+    FeatureTable &featureTable = hwInfo.featureTable;
+    WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
     for (auto &config : strConfig) {
         for (auto setParamBool : boolValue) {
 
             gtSystemInfo = {0};
-            pSkuTable = {};
-            pWaTable = {};
+            featureTable = {};
+            workaroundTable = {};
             hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
 
-            EXPECT_EQ(setParamBool, pSkuTable.ftrL3IACoherency);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrPPGTT);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrSVM);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrIA32eGfxPTEs);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrFbc);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrFbc2AddressTranslation);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrFbcBlitterTracking);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrFbcCpuTracking);
-            EXPECT_EQ(setParamBool, pSkuTable.ftrTileY);
+            EXPECT_EQ(setParamBool, featureTable.ftrL3IACoherency);
+            EXPECT_EQ(setParamBool, featureTable.ftrPPGTT);
+            EXPECT_EQ(setParamBool, featureTable.ftrSVM);
+            EXPECT_EQ(setParamBool, featureTable.ftrIA32eGfxPTEs);
+            EXPECT_EQ(setParamBool, featureTable.ftrFbc);
+            EXPECT_EQ(setParamBool, featureTable.ftrFbc2AddressTranslation);
+            EXPECT_EQ(setParamBool, featureTable.ftrFbcBlitterTracking);
+            EXPECT_EQ(setParamBool, featureTable.ftrFbcCpuTracking);
+            EXPECT_EQ(setParamBool, featureTable.ftrTileY);
 
-            EXPECT_EQ(setParamBool, pWaTable.waDisableLSQCROPERFforOCL);
-            EXPECT_EQ(setParamBool, pWaTable.waReportPerfCountUseGlobalContextID);
-            EXPECT_EQ(setParamBool, pWaTable.waUseVAlign16OnTileXYBpp816);
-            EXPECT_EQ(setParamBool, pWaTable.waModifyVFEStateAfterGPGPUPreemption);
-            EXPECT_EQ(setParamBool, pWaTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads);
+            EXPECT_EQ(setParamBool, workaroundTable.waDisableLSQCROPERFforOCL);
+            EXPECT_EQ(setParamBool, workaroundTable.waReportPerfCountUseGlobalContextID);
+            EXPECT_EQ(setParamBool, workaroundTable.waUseVAlign16OnTileXYBpp816);
+            EXPECT_EQ(setParamBool, workaroundTable.waModifyVFEStateAfterGPGPUPreemption);
+            EXPECT_EQ(setParamBool, workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads);
         }
     }
 }

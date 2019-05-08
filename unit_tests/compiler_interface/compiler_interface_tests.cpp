@@ -848,20 +848,20 @@ TEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenRequestF
     IGC::IgcOclDeviceCtxTagOCL *devCtx = pCompilerInterface->peekIgcDeviceCtx(device);
     auto igcPlatform = devCtx->GetPlatformHandle();
     auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
-    EXPECT_TRUE(device->getHardwareInfo().pPlatform.eProductFamily == igcPlatform->GetProductFamily());
-    EXPECT_TRUE(device->getHardwareInfo().pPlatform.eRenderCoreFamily == igcPlatform->GetRenderCoreFamily());
-    EXPECT_TRUE(device->getHardwareInfo().pSysInfo.SliceCount == igcSysInfo->GetSliceCount());
-    EXPECT_TRUE(device->getHardwareInfo().pSysInfo.SubSliceCount == igcSysInfo->GetSubSliceCount());
-    EXPECT_TRUE(device->getHardwareInfo().pSysInfo.EUCount == igcSysInfo->GetEUCount());
-    EXPECT_TRUE(device->getHardwareInfo().pSysInfo.ThreadCount == igcSysInfo->GetThreadCount());
+    EXPECT_TRUE(device->getHardwareInfo().platform.eProductFamily == igcPlatform->GetProductFamily());
+    EXPECT_TRUE(device->getHardwareInfo().platform.eRenderCoreFamily == igcPlatform->GetRenderCoreFamily());
+    EXPECT_TRUE(device->getHardwareInfo().gtSystemInfo.SliceCount == igcSysInfo->GetSliceCount());
+    EXPECT_TRUE(device->getHardwareInfo().gtSystemInfo.SubSliceCount == igcSysInfo->GetSubSliceCount());
+    EXPECT_TRUE(device->getHardwareInfo().gtSystemInfo.EUCount == igcSysInfo->GetEUCount());
+    EXPECT_TRUE(device->getHardwareInfo().gtSystemInfo.ThreadCount == igcSysInfo->GetThreadCount());
 }
 
 TEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestForNewTranslationCtxThenUseDbgKeyPlatform) {
     DebugManagerStateRestore dbgRestore;
-    auto dbgProdFamily = DEFAULT_TEST_PLATFORM::hwInfo.pPlatform.eProductFamily;
+    auto dbgProdFamily = DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;
     std::string dbgPlatformString(hardwarePrefix[dbgProdFamily]);
-    const PLATFORM dbgPlatform = hardwareInfoTable[dbgProdFamily]->pPlatform;
-    const GT_SYSTEM_INFO dbgSystemInfo = hardwareInfoTable[dbgProdFamily]->pSysInfo;
+    const PLATFORM dbgPlatform = hardwareInfoTable[dbgProdFamily]->platform;
+    const GT_SYSTEM_INFO dbgSystemInfo = hardwareInfoTable[dbgProdFamily]->gtSystemInfo;
     DebugManager.flags.ForceCompilerUsePlatform.set(dbgPlatformString);
 
     auto device = this->pContext->getDevice(0);

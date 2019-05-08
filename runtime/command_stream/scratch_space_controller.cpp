@@ -17,7 +17,7 @@ namespace NEO {
 ScratchSpaceController::ScratchSpaceController(ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)
     : executionEnvironment(environment), csrAllocationStorage(allocationStorage) {
     auto hwInfo = executionEnvironment.getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->pPlatform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
     computeUnitsUsedForScratch = hwHelper.getComputeUnitsUsedForScratch(hwInfo);
 }
 

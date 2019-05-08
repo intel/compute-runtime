@@ -43,10 +43,10 @@ void gtpinNotifyContextCreate(cl_context context) {
         platform_info_t gtpinPlatformInfo;
         auto pPlatform = platform();
         auto pDevice = pPlatform->getDevice(0);
-        GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily;
+        GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         gtpinPlatformInfo.gen_version = (gtpin::GTPIN_GEN_VERSION)gtpinHelper.getGenVersion();
-        gtpinPlatformInfo.device_id = static_cast<uint32_t>(pDevice->getHardwareInfo().pPlatform.usDeviceID);
+        gtpinPlatformInfo.device_id = static_cast<uint32_t>(pDevice->getHardwareInfo().platform.usDeviceID);
         (*GTPinCallbacks.onContextCreate)((context_handle_t)context, &gtpinPlatformInfo, &pIgcInit);
     }
 }
@@ -64,7 +64,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         // Enlarge local copy of SSH by 1 SS
         auto pPlatform = platform();
         auto pDevice = pPlatform->getDevice(0);
-        GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily;
+        GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         if (!gtpinHelper.addSurfaceState(pKernel)) {
             // Kernel with no SSH or Kernel EM, not supported
@@ -132,7 +132,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         }
         auto pPlatform = platform();
         auto pDevice = pPlatform->getDevice(0);
-        GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily;
+        GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         size_t gtpinBTI = pKernel->getNumberOfBindingTableStates() - 1;
         void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI);

@@ -182,7 +182,7 @@ TEST_F(MemoryAllocatorTest, allocateSystemAligned) {
 TEST_F(MemoryAllocatorTest, allocateGraphics) {
     unsigned int alignment = 4096;
 
-    memoryManager->createAndRegisterOsContext(csr, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    memoryManager->createAndRegisterOsContext(csr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                               1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
@@ -1295,7 +1295,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhenche
 }
 
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsAddedToTemporaryAllocationList) {
-    memoryManager->createAndRegisterOsContext(csr, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    memoryManager->createAndRegisterOsContext(csr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                               1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     auto usedAllocationAndNotGpuCompleted = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
@@ -1543,7 +1543,7 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
 TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCountIncreases) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     MockMemoryManager memoryManager(false, false, executionEnvironment);
-    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     EXPECT_EQ(1u, memoryManager.getRegisteredEnginesCount());
     EXPECT_EQ(1, memoryManager.registeredEngines[0].osContext->getRefInternalCount());
@@ -1554,7 +1554,7 @@ TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValu
     MockMemoryManager memoryManager(false, false, executionEnvironment);
     DeviceBitfield deviceBitfield = getDeviceBitfieldForNDevices(2);
     PreemptionMode preemptionMode = PreemptionMode::MidThread;
-    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                              deviceBitfield, preemptionMode, false);
     EXPECT_EQ(2u, memoryManager.registeredEngines[0].osContext->getNumSupportedDevices());
     EXPECT_EQ(deviceBitfield, memoryManager.registeredEngines[0].osContext->getDeviceBitfield());
@@ -1564,9 +1564,9 @@ TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValu
 TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLowerThenProperSizeIsReturned) {
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     MockMemoryManager memoryManager(false, false, executionEnvironment);
-    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[1],
+    memoryManager.createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[1],
                                              1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     EXPECT_EQ(2u, memoryManager.getRegisteredEnginesCount());
     EXPECT_EQ(1, memoryManager.registeredEngines[0].osContext->getRefInternalCount());
@@ -1574,7 +1574,7 @@ TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLower
 }
 
 TEST(ResidencyDataTest, givenGpgpuEnginesWhenAskedForMaxOscontextCountThenValueIsGreaterOrEqual) {
-    auto &engines = HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances();
+    auto &engines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances();
     EXPECT_TRUE(maxOsContextCount >= engines.size());
 }
 
@@ -1585,8 +1585,8 @@ TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenIt
 
     MockResidencyData residency;
 
-    MockOsContext osContext(0u, 1, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
-    MockOsContext osContext2(1u, 1, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[1], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    MockOsContext osContext(0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
+    MockOsContext osContext2(1u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[1], PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
 
     auto lastFenceValue = 45llu;
     auto lastFenceValue2 = 23llu;

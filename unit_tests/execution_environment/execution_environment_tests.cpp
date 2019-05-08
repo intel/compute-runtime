@@ -178,7 +178,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
     auto executionEnvironment = device->getExecutionEnvironment();
     executionEnvironment->initializeCommandStreamReceiver(0, 0);
-    auto enableLocalMemory = HwHelper::get(hwInfo->pPlatform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
+    auto enableLocalMemory = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
     executionEnvironment->initializeMemoryManager();
     EXPECT_EQ(enableLocalMemory, executionEnvironment->memoryManager->isLocalMemorySupported());
 }
@@ -301,7 +301,7 @@ TEST(ExecutionEnvironment, whenSpecialCsrExistsThenReturnSpecialEngineControl) {
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 
     executionEnvironment->specialCommandStreamReceiver.reset(createCommandStream(*executionEnvironment));
-    auto engineType = HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0];
+    auto engineType = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0];
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(executionEnvironment->specialCommandStreamReceiver.get(),
                                                                                      engineType, 1,
                                                                                      PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);

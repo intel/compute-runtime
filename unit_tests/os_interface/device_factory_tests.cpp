@@ -25,7 +25,7 @@ struct DeviceFactoryTest : public ::testing::Test {
     void SetUp() override {
         const HardwareInfo *hwInfo = platformDevices[0];
         executionEnvironment = platformImpl->peekExecutionEnvironment();
-        mockGdiDll = setAdapterInfo(&hwInfo->pPlatform, &hwInfo->pSysInfo, hwInfo->capabilityTable.gpuAddressSpace);
+        mockGdiDll = setAdapterInfo(&hwInfo->platform, &hwInfo->gtSystemInfo, hwInfo->capabilityTable.gpuAddressSpace);
     }
 
     void TearDown() override {
@@ -64,7 +64,7 @@ TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Platform) {
 
     if (numDevices > 0) {
 
-        EXPECT_EQ(refHwinfo->pPlatform.eDisplayCoreFamily, hwInfo->pPlatform.eDisplayCoreFamily);
+        EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
     }
 }
 
@@ -133,7 +133,7 @@ TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSur
     ASSERT_TRUE(success);
     auto hwInfo = executionEnvironment->getHardwareInfo();
 
-    EXPECT_EQ(hwInfo->pSysInfo.CsrSizeInMb * MemoryConstants::megaByte, hwInfo->capabilityTable.requiredPreemptionSurfaceSize);
+    EXPECT_EQ(hwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte, hwInfo->capabilityTable.requiredPreemptionSurfaceSize);
 }
 
 TEST_F(DeviceFactoryTest, givenCreateMultipleDevicesDebugFlagWhenGetDevicesIsCalledThenNumberOfReturnedDevicesIsEqualToDebugVariable) {

@@ -337,7 +337,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturnsSizeOfMiLoadRegisterIm
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    size_t minCsrSize = mockDevice->getHardwareInfo().pSysInfo.CsrSizeInMb * MemoryConstants::megaByte;
+    size_t minCsrSize = mockDevice->getHardwareInfo().gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
     uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
     MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
 
@@ -372,7 +372,7 @@ HWTEST_P(PreemptionHwTest, programCmdStreamAddsProperMiLoadRegisterImmCommandToT
     StackVec<char, 4096> buffer(requiredSize);
     LinearStream cmdStream(buffer.begin(), buffer.size());
 
-    size_t minCsrSize = mockDevice->getHardwareInfo().pSysInfo.CsrSizeInMb * MemoryConstants::megaByte;
+    size_t minCsrSize = mockDevice->getHardwareInfo().gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
     uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
     MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
 
@@ -446,7 +446,7 @@ INSTANTIATE_TEST_CASE_P(
 
 HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceNoWa) {
     HardwareInfo hwInfo = *platformDevices[0];
-    hwInfo.pWaTable.waCSRUncachable = false;
+    hwInfo.workaroundTable.waCSRUncachable = false;
 
     std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     ASSERT_NE(nullptr, mockDevice.get());
@@ -466,7 +466,7 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
         FailingMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment) {}
 
         GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
-            if (++allocateGraphicsMemoryCount > HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances().size()) {
+            if (++allocateGraphicsMemoryCount > HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size()) {
                 return nullptr;
             }
             return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
@@ -483,7 +483,7 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
 
 HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceWa) {
     HardwareInfo hwInfo = *platformDevices[0];
-    hwInfo.pWaTable.waCSRUncachable = true;
+    hwInfo.workaroundTable.waCSRUncachable = true;
 
     std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     ASSERT_NE(nullptr, mockDevice.get());

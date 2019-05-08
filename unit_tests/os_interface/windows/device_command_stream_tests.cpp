@@ -248,7 +248,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
     executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment));
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
     executionEnvironment->commandStreamReceivers[0][0]->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
-    OsContextWin osContext(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    OsContextWin osContext(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                            PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
     executionEnvironment->commandStreamReceivers[0][0]->setupContext(osContext);
 
@@ -274,7 +274,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
     executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*executionEnvironment));
     executionEnvironment->memoryManager.reset(new MemoryManagerCreate<WddmMemoryManager>(false, false, *executionEnvironment));
     executionEnvironment->commandStreamReceivers[0][0]->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
-    OsContextWin osContext(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    OsContextWin osContext(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                            PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false);
     executionEnvironment->commandStreamReceivers[0][0]->setupContext(osContext);
 

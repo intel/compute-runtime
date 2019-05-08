@@ -76,24 +76,24 @@ WorkaroundTable BDW::workaroundTable = {};
 FeatureTable BDW::featureTable = {};
 
 void BDW::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
-    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
+    FeatureTable *featureTable = &hwInfo->featureTable;
+    WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
-    pSkuTable->ftrL3IACoherency = true;
-    pSkuTable->ftrPPGTT = true;
-    pSkuTable->ftrSVM = true;
-    pSkuTable->ftrIA32eGfxPTEs = true;
-    pSkuTable->ftrFbc = true;
-    pSkuTable->ftrFbc2AddressTranslation = true;
-    pSkuTable->ftrFbcBlitterTracking = true;
-    pSkuTable->ftrFbcCpuTracking = true;
-    pSkuTable->ftrTileY = true;
+    featureTable->ftrL3IACoherency = true;
+    featureTable->ftrPPGTT = true;
+    featureTable->ftrSVM = true;
+    featureTable->ftrIA32eGfxPTEs = true;
+    featureTable->ftrFbc = true;
+    featureTable->ftrFbc2AddressTranslation = true;
+    featureTable->ftrFbcBlitterTracking = true;
+    featureTable->ftrFbcCpuTracking = true;
+    featureTable->ftrTileY = true;
 
-    pWaTable->waDisableLSQCROPERFforOCL = true;
-    pWaTable->waReportPerfCountUseGlobalContextID = true;
-    pWaTable->waUseVAlign16OnTileXYBpp816 = true;
-    pWaTable->waModifyVFEStateAfterGPGPUPreemption = true;
-    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+    workaroundTable->waDisableLSQCROPERFforOCL = true;
+    workaroundTable->waReportPerfCountUseGlobalContextID = true;
+    workaroundTable->waUseVAlign16OnTileXYBpp816 = true;
+    workaroundTable->waModifyVFEStateAfterGPGPUPreemption = true;
+    workaroundTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 
 const HardwareInfo BDW_1x2x6::hwInfo = {
@@ -106,7 +106,7 @@ const HardwareInfo BDW_1x2x6::hwInfo = {
 
 GT_SYSTEM_INFO BDW_1x2x6::gtSystemInfo = {0};
 void BDW_1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 12;
     gtSysInfo->ThreadCount = 12 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -139,7 +139,7 @@ const HardwareInfo BDW_1x3x6::hwInfo = {
 };
 GT_SYSTEM_INFO BDW_1x3x6::gtSystemInfo = {0};
 void BDW_1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 18;
     gtSysInfo->ThreadCount = 18 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -172,7 +172,7 @@ const HardwareInfo BDW_1x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO BDW_1x3x8::gtSystemInfo = {0};
 void BDW_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 23;
     gtSysInfo->ThreadCount = 23 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -205,7 +205,7 @@ const HardwareInfo BDW_2x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO BDW_2x3x8::gtSystemInfo = {0};
 void BDW_2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 47;
     gtSysInfo->ThreadCount = 47 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 2;

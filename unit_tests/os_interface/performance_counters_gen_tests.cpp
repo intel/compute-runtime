@@ -33,7 +33,7 @@ class MockPerformanceCountersGen : public PerformanceCounters {
 };
 
 HWTEST_F(PerformanceCountersGenTest, givenPerfCountersWhenInitializedWithoutGenSpecificThenDefaultFunctionIsUsed) {
-    auto gfxCore = platformDevices[0]->pPlatform.eRenderCoreFamily;
+    auto gfxCore = platformDevices[0]->platform.eRenderCoreFamily;
 
     VariableBackup<decltype(&instrGetPerfCountersQueryData)> bkp(&getPerfCountersQueryDataFactory[gfxCore], nullptr);
 
@@ -49,7 +49,7 @@ HWTEST_F(PerformanceCountersGenTest, givenPerfCountersWhenInitializedWithoutGenS
 }
 
 HWTEST_F(PerformanceCountersGenTest, givenPerfCountersWhenInitializedWithGenSpecificThenGenFunctionIsUsed) {
-    VariableBackup<decltype(&instrGetPerfCountersQueryData)> bkp(&getPerfCountersQueryDataFactory[platformDevices[0]->pPlatform.eRenderCoreFamily]);
+    VariableBackup<decltype(&instrGetPerfCountersQueryData)> bkp(&getPerfCountersQueryDataFactory[platformDevices[0]->platform.eRenderCoreFamily]);
 
     auto mockFn = [](
                       InstrEscCbData cbData,

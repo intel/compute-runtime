@@ -568,7 +568,7 @@ TEST(OfflineCompilerTest, generateElfBinary) {
     memset(&binHeader, 0, sizeof(binHeader));
     binHeader.Magic = iOpenCL::MAGIC_CL;
     binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION - 3;
-    binHeader.Device = platformDevices[0]->pPlatform.eRenderCoreFamily;
+    binHeader.Device = platformDevices[0]->platform.eRenderCoreFamily;
     binHeader.GPUPointerSizeInBytes = 8;
     binHeader.NumberOfKernels = 0;
     binHeader.SteppingId = 0;

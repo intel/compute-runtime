@@ -65,7 +65,7 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
 };
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenInternalOptionsIncludeDebugFlag) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
         std::string receivedInternalOptions;
 
         auto debugVars = NEO::getFclDebugVars();
@@ -84,7 +84,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenInternalOptionsIncludeDashGFlag) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
         cl_int retVal = pProgram->compile(1, &device, nullptr,
                                           0, nullptr, nullptr,
                                           nullptr,
@@ -96,7 +96,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhenProgramIsCompiledThenOptionsIncludeClOptDisableFlag) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
 
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->isOptDisabled = true;
@@ -112,7 +112,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenOptionsStartsWithDashSFilename) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->sourceCodeFilename = "debugFileName";
         pDevice->executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebugger);
@@ -127,7 +127,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenInternalOptionsIncludeDebugFlag) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
         std::string receivedInternalOptions;
 
         auto debugVars = NEO::getFclDebugVars();
@@ -143,7 +143,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenOptionsIncludeDashGFlag) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
         cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr("-g"));
@@ -151,7 +151,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhenProgramIsBuiltThenOptionsIncludeClOptDisableFlag) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
 
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->isOptDisabled = true;
@@ -164,7 +164,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenOptionsStartsWithDashSFilename) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
 
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->sourceCodeFilename = "debugFileName";
@@ -177,7 +177,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinkedThenKernelDebugOptionsAreAppended) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
 
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         pDevice->executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebugger);
@@ -197,7 +197,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenDebuggerIsNotifiedWithKernelDebugData) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
 
         GMockSourceLevelDebugger *sourceLevelDebugger = new GMockSourceLevelDebugger(nullptr);
         ON_CALL(*sourceLevelDebugger, notifySourceCode(::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Return(false));
@@ -216,7 +216,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinkedThenDebuggerIsNotifiedWithKernelDebugData) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
 
         GMockSourceLevelDebugger *sourceLevelDebugger = new GMockSourceLevelDebugger(nullptr);
         ON_CALL(*sourceLevelDebugger, notifySourceCode(::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Return(false));
@@ -243,7 +243,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenBuiltThenPatchTokenAllocateSipSurfaceHasSizeGreaterThanZero) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
         retVal = pProgram->build(1, &device, CompilerOptions::debugKernelEnable, nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -253,7 +253,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenBui
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenKernelDebugEnabledWhenProgramIsBuiltThenDebugDataIsStored) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
         retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
 
         size_t debugDataSize = 0;
@@ -264,7 +264,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenKernelDebugEnabledWhenProgramIsBuilt
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenProcessDebugDataIsCalledThenKernelInfosAreFilledWithDebugData) {
-    if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
         retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
 

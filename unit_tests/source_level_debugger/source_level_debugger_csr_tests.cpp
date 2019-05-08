@@ -70,7 +70,7 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
                        dispatchFlags,
                        *device);
 
-    auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().pPlatform.eRenderCoreFamily, true);
+    auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().platform.eRenderCoreFamily, true);
     auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *device).getSipAllocation();
     bool found = false;
     for (auto allocation : mockCsr->copyOfAllocations) {
@@ -111,7 +111,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
                            dispatchFlags,
                            *device);
 
-        auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().pPlatform.eRenderCoreFamily, true);
+        auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().platform.eRenderCoreFamily, true);
         auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *device).getSipAllocation();
 
         HardwareParse hwParser;
@@ -174,7 +174,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverWithActiveDebuggerTest, givenCs
                            dispatchFlags,
                            *device);
 
-        auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().pPlatform.eRenderCoreFamily, true);
+        auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().platform.eRenderCoreFamily, true);
         auto sipAllocation = device->getExecutionEnvironment()->getBuiltIns()->getSipKernel(sipType, *device).getSipAllocation();
 
         HardwareParse hwParser;

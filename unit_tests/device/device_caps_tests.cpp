@@ -63,7 +63,7 @@ TEST_F(DeviceGetCapsF, GivenDeviceCapsWhenQueryingForSLMWindowStartAddressThenPo
 TEST(Device_GetCaps, validate) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
-    const auto &sysInfo = platformDevices[0]->pSysInfo;
+    const auto &sysInfo = platformDevices[0]->gtSystemInfo;
 
     EXPECT_NE(nullptr, caps.builtInKernels);
 
@@ -187,7 +187,7 @@ TEST(Device_GetCaps, validateImage3DDimensions) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
-    if (device->getHardwareInfo().pPlatform.eRenderCoreFamily > IGFX_GEN8_CORE) {
+    if (device->getHardwareInfo().platform.eRenderCoreFamily > IGFX_GEN8_CORE) {
         EXPECT_EQ(16384u, caps.image3DMaxWidth);
         EXPECT_EQ(16384u, caps.image3DMaxHeight);
     } else {
@@ -339,7 +339,7 @@ TEST(Device_GetCaps, givenGlobalMemSizeWhenCalculatingMaxAllocSizeThenAdjustToHW
     const auto &caps = device->getDeviceInfo();
 
     HardwareCapabilities hwCaps = {0};
-    auto &hwHelper = HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
     hwHelper.setupHardwareCapabilities(&hwCaps, *platformDevices[0]);
 
     uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
@@ -715,8 +715,8 @@ TEST(DeviceGetCaps, givenOclVersion21WhenCapsAreCreatedThenDeviceReportsSpirvAsS
 
 TEST(DeviceGetCaps, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThenIgnoreEuCountPerPoolMin) {
     HardwareInfo myHwInfo = *platformDevices[0];
-    GT_SYSTEM_INFO &mySysInfo = myHwInfo.pSysInfo;
-    FeatureTable &mySkuTable = myHwInfo.pSkuTable;
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
+    FeatureTable &mySkuTable = myHwInfo.featureTable;
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
@@ -733,8 +733,8 @@ TEST(DeviceGetCaps, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThenIgnoreE
 
 TEST(DeviceGetCaps, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin) {
     HardwareInfo myHwInfo = *platformDevices[0];
-    GT_SYSTEM_INFO &mySysInfo = myHwInfo.pSysInfo;
-    FeatureTable &mySkuTable = myHwInfo.pSkuTable;
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
+    FeatureTable &mySkuTable = myHwInfo.featureTable;
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
@@ -753,7 +753,7 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
     DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.set(true);
 
     HardwareInfo myHwInfo = *platformDevices[0];
-    GT_SYSTEM_INFO &mySysInfo = myHwInfo.pSysInfo;
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
 
     mySysInfo.EUCount = 24;
     mySysInfo.SubSliceCount = 3;
@@ -766,7 +766,7 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
 
 TEST(DeviceGetCaps, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedItIsLimitedTo1024) {
     HardwareInfo myHwInfo = *platformDevices[0];
-    GT_SYSTEM_INFO &mySysInfo = myHwInfo.pSysInfo;
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
 
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
@@ -815,7 +815,7 @@ TEST(Device_GetCaps, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenRet
     const auto &caps = device->getDeviceInfo();
 
     std::string tempName = "Intel(R) ";
-    tempName += familyName[platformDevices[0]->pPlatform.eRenderCoreFamily];
+    tempName += familyName[platformDevices[0]->platform.eRenderCoreFamily];
     tempName += " HD Graphics NEO";
 
 #define QTR(a) #a

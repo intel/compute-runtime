@@ -15,20 +15,20 @@ int HwInfoConfigHw<IGFX_KABYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo,
     if (nullptr == osIface) {
         return 0;
     }
-    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
 
-    if (pSysInfo->SubSliceCount > 3) {
-        pSysInfo->SliceCount = 2;
+    if (gtSystemInfo->SubSliceCount > 3) {
+        gtSystemInfo->SliceCount = 2;
     } else {
-        pSysInfo->SliceCount = 1;
+        gtSystemInfo->SliceCount = 1;
     }
 
-    pSysInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled = 1;
-    pSysInfo->VEBoxInfo.IsValid = true;
+    gtSystemInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled = 1;
+    gtSystemInfo->VEBoxInfo.IsValid = true;
 
-    if (hwInfo->pPlatform.usDeviceID == IKBL_GT3_28W_ULT_DEVICE_F0_ID ||
-        hwInfo->pPlatform.usDeviceID == IKBL_GT3_15W_ULT_DEVICE_F0_ID) {
-        pSysInfo->EdramSizeInKb = 64 * 1024;
+    if (hwInfo->platform.usDeviceID == IKBL_GT3_28W_ULT_DEVICE_F0_ID ||
+        hwInfo->platform.usDeviceID == IKBL_GT3_15W_ULT_DEVICE_F0_ID) {
+        gtSystemInfo->EdramSizeInKb = 64 * 1024;
     }
 
     auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;

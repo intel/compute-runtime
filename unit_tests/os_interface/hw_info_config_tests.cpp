@@ -18,10 +18,10 @@ void HwInfoConfigTest::SetUp() {
 
     pInHwInfo = pPlatform->getDevice(0)->getHardwareInfo();
 
-    testPlatform = &pInHwInfo.pPlatform;
-    testSkuTable = &pInHwInfo.pSkuTable;
-    testWaTable = &pInHwInfo.pWaTable;
-    testSysInfo = &pInHwInfo.pSysInfo;
+    testPlatform = &pInHwInfo.platform;
+    testSkuTable = &pInHwInfo.featureTable;
+    testWaTable = &pInHwInfo.workaroundTable;
+    testSysInfo = &pInHwInfo.gtSystemInfo;
 
     outHwInfo = {};
 }

@@ -28,7 +28,7 @@ CommandQueue *CommandQueueHwFixture::createCommandQueue(
     Device *pDevice,
     cl_command_queue_properties properties) {
 
-    auto funcCreate = commandQueueFactory[pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily];
+    auto funcCreate = commandQueueFactory[pDevice->getHardwareInfo().platform->eRenderCoreFamily];
     assert(nullptr != funcCreate);
 
     return funcCreate(context, pDevice, properties);

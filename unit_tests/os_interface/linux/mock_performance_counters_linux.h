@@ -17,7 +17,7 @@ void *dlsymMockPassing(void *handle, const char *symbol) throw();
 void *dlsymMockFailing(void *handle, const char *symbol) throw();
 int getTimeFuncPassing(clockid_t clk_id, struct timespec *tp) throw();
 int dlcloseMock(void *handle) throw();
-uint32_t setPlatformInfo(uint32_t productId, void *pSkuTable);
+uint32_t setPlatformInfo(uint32_t productId, void *featureTable);
 int perfmonLoadConfigMock(int fd, drm_intel_context *ctx, uint32_t *oa_cfg_id, uint32_t *gp_cfg_id);
 
 class PerfCounterFlagsLinux : public PerfCounterFlags {

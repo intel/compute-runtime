@@ -2289,7 +2289,7 @@ TEST(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedThenMa
     DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.set(true);
 
     HardwareInfo myHwInfo = *platformDevices[0];
-    GT_SYSTEM_INFO &mySysInfo = myHwInfo.pSysInfo;
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
 
     mySysInfo.EUCount = 24;
     mySysInfo.SubSliceCount = 3;

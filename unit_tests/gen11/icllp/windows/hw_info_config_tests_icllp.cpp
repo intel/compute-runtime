@@ -19,6 +19,6 @@ ICLLPTEST_F(HwInfoConfigTestWindowsIcllp, whenCallAdjustPlatformThenDoNothing) {
     outHwInfo = pInHwInfo;
     hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
 
-    int ret = memcmp(&outHwInfo.pPlatform, &pInHwInfo.pPlatform, sizeof(PLATFORM));
+    int ret = memcmp(&outHwInfo.platform, &pInHwInfo.platform, sizeof(PLATFORM));
     EXPECT_EQ(0, ret);
 }

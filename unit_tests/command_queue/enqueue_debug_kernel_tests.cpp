@@ -34,7 +34,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
         device = pDevice;
         pDevice->executionEnvironment->sourceLevelDebugger.reset(new SourceLevelDebugger(nullptr));
 
-        if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+        if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
             pDevice->getMutableDeviceInfo()->sourceLevelDebuggerActive = true;
             std::string filename;
             std::string kernelOption(CompilerOptions::debugKernelEnable);
@@ -73,7 +73,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
     }
 
     void TearDown() override {
-        if (pDevice->getHardwareInfo().pPlatform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
+        if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
             delete kbHelper;
             debugKernel->release();
         }

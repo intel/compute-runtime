@@ -12,7 +12,7 @@ void SkuInfoReceiver::receiveFtrTableFromAdapterInfo(FeatureTable *ftrTable, _AD
     receiveFtrTableFromAdapterInfoBase(ftrTable, adapterInfo);
 }
 
-void SkuInfoReceiver::receiveWaTableFromAdapterInfo(WorkaroundTable *waTable, _ADAPTER_INFO *adapterInfo) {
-    receiveWaTableFromAdapterInfoBase(waTable, adapterInfo);
+void SkuInfoReceiver::receiveWaTableFromAdapterInfo(WorkaroundTable *workaroundTable, _ADAPTER_INFO *adapterInfo) {
+    receiveWaTableFromAdapterInfoBase(workaroundTable, adapterInfo);
 }
 } // namespace NEO

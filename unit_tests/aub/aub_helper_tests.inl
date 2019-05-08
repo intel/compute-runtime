@@ -35,12 +35,12 @@ TEST(AubHelper, WhenGetPTEntryBitsIsCalledThenEntryBitsAreNotMasked) {
 
 TEST(AubHelper, WhenCreateMultipleDevicesIsSetThenGetDevicesCountReturnedCorrectValue) {
     DebugManagerStateRestore stateRestore;
-    FeatureTable skuTable = {};
-    WorkaroundTable waTable = {};
+    FeatureTable featureTable = {};
+    WorkaroundTable workaroundTable = {};
     RuntimeCapabilityTable capTable = {};
     GT_SYSTEM_INFO sysInfo = {};
     PLATFORM platform = {};
-    HardwareInfo hwInfo{&platform, &skuTable, &waTable, &sysInfo, capTable};
+    HardwareInfo hwInfo{&platform, &featureTable, &workaroundTable, &sysInfo, capTable};
     DebugManager.flags.CreateMultipleDevices.set(2);
 
     uint32_t devicesCount = DeviceHelper::getDevicesCount(&hwInfo);

@@ -205,6 +205,6 @@ void instrEscVerifyEnable(
 
 uint32_t instrSetPlatformInfo(
     uint32_t productId,
-    void *pSkuTable);
+    void *featureTable);
 
 } // namespace NEO

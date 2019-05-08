@@ -27,29 +27,29 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfo) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.pPlatform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform.usRevId);
-    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo.SubSliceCount);
-    EXPECT_EQ((unsigned int)drm->StoredHasPooledEU, outHwInfo.pSkuTable.ftrPooledEuEnabled);
-    EXPECT_EQ((uint32_t)drm->StoredMinEUinPool, outHwInfo.pSysInfo.EuCountPerPoolMin);
-    EXPECT_EQ((outHwInfo.pSysInfo.EUCount - outHwInfo.pSysInfo.EuCountPerPoolMin), outHwInfo.pSysInfo.EuCountPerPoolMax);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGttCacheInvalidation);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.platform.usDeviceID);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.platform.usRevId);
+    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ((unsigned int)drm->StoredHasPooledEU, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ((uint32_t)drm->StoredMinEUinPool, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGttCacheInvalidation);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     //constant sysInfo/ftr flags
-    EXPECT_EQ(1u, outHwInfo.pSysInfo.VEBoxInfo.Instances.Bits.VEBox0Enabled);
-    EXPECT_TRUE(outHwInfo.pSysInfo.VEBoxInfo.IsValid);
+    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.VEBoxInfo.Instances.Bits.VEBox0Enabled);
+    EXPECT_TRUE(outHwInfo.gtSystemInfo.VEBoxInfo.IsValid);
 
-    EXPECT_EQ(GTTYPE_GTA, outHwInfo.pPlatform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT4);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTX);
+    EXPECT_EQ(GTTYPE_GTA, outHwInfo.platform.eGTType);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
+    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
 
     drm->StoredDeviceID = IBXT_P_12EU_3x6_DEVICE_ID;
     drm->setGtType(GTTYPE_GTC); //IBXT_P_12EU_3x6_DEVICE_ID is GTA, but fot test sake make it GTC
@@ -57,48 +57,48 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfo) {
     drm->StoredDeviceRevID = 4;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.pPlatform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform.usRevId);
-    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo.SubSliceCount);
-    EXPECT_EQ((unsigned int)drm->StoredHasPooledEU, outHwInfo.pSkuTable.ftrPooledEuEnabled);
-    EXPECT_EQ((uint32_t)drm->StoredMinEUinPool, outHwInfo.pSysInfo.EuCountPerPoolMin);
-    EXPECT_EQ((outHwInfo.pSysInfo.EUCount - outHwInfo.pSysInfo.EuCountPerPoolMin), outHwInfo.pSysInfo.EuCountPerPoolMax);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.platform.usDeviceID);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.platform.usRevId);
+    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ((unsigned int)drm->StoredHasPooledEU, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ((uint32_t)drm->StoredMinEUinPool, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GTC, outHwInfo.pPlatform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTA);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable.ftrGTC);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTX);
+    EXPECT_EQ(GTTYPE_GTC, outHwInfo.platform.eGTType);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
+    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGTC);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTX);
 
     drm->StoredDeviceID = IBXT_P_12EU_3x6_DEVICE_ID;
     drm->setGtType(GTTYPE_GTX); //IBXT_P_12EU_3x6_DEVICE_ID is GTA, but fot test sake make it GTX
     drm->StoredMinEUinPool = 9;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.pPlatform.usDeviceID);
-    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform.usRevId);
-    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo.SubSliceCount);
-    EXPECT_EQ((unsigned int)drm->StoredHasPooledEU, outHwInfo.pSkuTable.ftrPooledEuEnabled);
-    EXPECT_EQ((uint32_t)drm->StoredMinEUinPool, outHwInfo.pSysInfo.EuCountPerPoolMin);
-    EXPECT_EQ((outHwInfo.pSysInfo.EUCount - outHwInfo.pSysInfo.EuCountPerPoolMin), outHwInfo.pSysInfo.EuCountPerPoolMax);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceID, outHwInfo.platform.usDeviceID);
+    EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.platform.usRevId);
+    EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ((unsigned int)drm->StoredHasPooledEU, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ((uint32_t)drm->StoredMinEUinPool, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
-    EXPECT_EQ(GTTYPE_GTX, outHwInfo.pPlatform.eGTType);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT1);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT1_5);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT2);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT3);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGT4);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTA);
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrGTC);
-    EXPECT_EQ(1u, outHwInfo.pSkuTable.ftrGTX);
+    EXPECT_EQ(GTTYPE_GTX, outHwInfo.platform.eGTType);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT1_5);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT2);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT3);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGT4);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTA);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrGTC);
+    EXPECT_EQ(1u, outHwInfo.featureTable.ftrGTX);
 
     auto &outKmdNotifyProperties = outHwInfo.capabilityTable.kmdNotifyProperties;
     EXPECT_TRUE(outKmdNotifyProperties.enableKmdNotify);
@@ -150,9 +150,9 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfoFailingEnabledPool) {
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrPooledEuEnabled);
-    EXPECT_EQ(0u, outHwInfo.pSysInfo.EuCountPerPoolMin);
-    EXPECT_EQ(0u, outHwInfo.pSysInfo.EuCountPerPoolMax);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
 
 BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfoDisabledEnabledPool) {
@@ -161,9 +161,9 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfoDisabledEnabledPool) {
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(0u, outHwInfo.pSkuTable.ftrPooledEuEnabled);
-    EXPECT_EQ(0u, outHwInfo.pSysInfo.EuCountPerPoolMin);
-    EXPECT_EQ(0u, outHwInfo.pSysInfo.EuCountPerPoolMax);
+    EXPECT_EQ(0u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
 
 BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfoFailingMinEuInPool) {
@@ -174,17 +174,17 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfoFailingMinEuInPool) {
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(1u, outHwInfo.pSkuTable.ftrPooledEuEnabled);
-    EXPECT_EQ(9u, outHwInfo.pSysInfo.EuCountPerPoolMin);
-    EXPECT_EQ((outHwInfo.pSysInfo.EUCount - outHwInfo.pSysInfo.EuCountPerPoolMin), outHwInfo.pSysInfo.EuCountPerPoolMax);
+    EXPECT_EQ(1u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(9u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 
     drm->StoredSSVal = 2;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(1u, outHwInfo.pSkuTable.ftrPooledEuEnabled);
-    EXPECT_EQ(3u, outHwInfo.pSysInfo.EuCountPerPoolMin);
-    EXPECT_EQ((outHwInfo.pSysInfo.EUCount - outHwInfo.pSysInfo.EuCountPerPoolMin), outHwInfo.pSysInfo.EuCountPerPoolMax);
+    EXPECT_EQ(1u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(3u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
 
 BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfoInvalidMinEuInPool) {
@@ -195,17 +195,17 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfoInvalidMinEuInPool) {
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(1u, outHwInfo.pSkuTable.ftrPooledEuEnabled);
-    EXPECT_EQ(9u, outHwInfo.pSysInfo.EuCountPerPoolMin);
-    EXPECT_EQ((outHwInfo.pSysInfo.EUCount - outHwInfo.pSysInfo.EuCountPerPoolMin), outHwInfo.pSysInfo.EuCountPerPoolMax);
+    EXPECT_EQ(1u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(9u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 
     drm->StoredSSVal = 2;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    EXPECT_EQ(1u, outHwInfo.pSkuTable.ftrPooledEuEnabled);
-    EXPECT_EQ(3u, outHwInfo.pSysInfo.EuCountPerPoolMin);
-    EXPECT_EQ((outHwInfo.pSysInfo.EUCount - outHwInfo.pSysInfo.EuCountPerPoolMin), outHwInfo.pSysInfo.EuCountPerPoolMax);
+    EXPECT_EQ(1u, outHwInfo.featureTable.ftrPooledEuEnabled);
+    EXPECT_EQ(3u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
 }
 
 BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfoWaFlags) {
@@ -221,7 +221,7 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, whenCallAdjustPlatformThenDoNothing) {
     outHwInfo = pInHwInfo;
     hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
 
-    int ret = memcmp(&outHwInfo.pPlatform, &pInHwInfo.pPlatform, sizeof(PLATFORM));
+    int ret = memcmp(&outHwInfo.platform, &pInHwInfo.platform, sizeof(PLATFORM));
     EXPECT_EQ(0, ret);
 }
 
@@ -232,7 +232,7 @@ typedef ::testing::Types<BXT_1x2x6, BXT_1x3x6> bxtTestTypes;
 TYPED_TEST_CASE(BxtHwInfoTests, bxtTestTypes);
 TYPED_TEST(BxtHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.pSysInfo;
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
     TypeParam::setupHardwareInfo(&hwInfo, false);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);

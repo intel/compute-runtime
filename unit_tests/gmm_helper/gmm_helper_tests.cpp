@@ -155,7 +155,7 @@ TEST_F(GmmTests, validImageTypeQuery) {
     EXPECT_GT(imgInfo.size, minSize);
     EXPECT_GT(imgInfo.rowPitch, 0u);
     EXPECT_GT(imgInfo.slicePitch, 0u);
-    if (hwinfo->pPlatform.eRenderCoreFamily == IGFX_GEN8_CORE) {
+    if (hwinfo->platform.eRenderCoreFamily == IGFX_GEN8_CORE) {
         EXPECT_EQ(imgInfo.qPitch, 0u);
     } else {
         EXPECT_GT(imgInfo.qPitch, 0u);
@@ -251,7 +251,7 @@ TEST_F(GmmTests, givenTilableImageWhenEnableForceLinearImagesThenYTilingIsDisabl
 
     auto queryGmm = MockGmm::queryImgParams(imgInfo);
 
-    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->pPlatform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
     bool supportsYTiling = hwHelper.supportsYTiling();
 
     if (!supportsYTiling) {
@@ -306,7 +306,7 @@ TEST_F(GmmTests, givenTilingModeSetToTileYWhenHwSupportsTilingThenTileYFlagIsSet
     imgInfo.tilingMode = TilingMode::TILE_Y;
     auto gmm = std::make_unique<Gmm>(imgInfo);
 
-    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->pPlatform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
     bool supportsYTiling = hwHelper.supportsYTiling();
 
     if (!supportsYTiling) {

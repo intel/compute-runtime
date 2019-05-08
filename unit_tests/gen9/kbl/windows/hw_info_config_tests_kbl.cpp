@@ -18,6 +18,6 @@ KBLTEST_F(HwInfoConfigTestWindowsKbl, whenCallAdjustPlatformThenDoNothing) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     hwInfoConfig->adjustPlatformForProductFamily(&outHwInfo);
 
-    int ret = memcmp(&outHwInfo.pPlatform, &pInHwInfo.pPlatform, sizeof(PLATFORM));
+    int ret = memcmp(&outHwInfo.platform, &pInHwInfo.platform, sizeof(PLATFORM));
     EXPECT_EQ(0, ret);
 }

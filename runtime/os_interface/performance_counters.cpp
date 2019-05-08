@@ -58,8 +58,8 @@ void PerformanceCounters::shutdown() {
 }
 
 void PerformanceCounters::initialize(const HardwareInfo *hwInfo) {
-    useMIRPC = !(hwInfo->pWaTable.waDoNotUseMIReportPerfCount);
-    gfxFamily = hwInfo->pPlatform.eRenderCoreFamily;
+    useMIRPC = !(hwInfo->workaroundTable.waDoNotUseMIReportPerfCount);
+    gfxFamily = hwInfo->platform.eRenderCoreFamily;
 
     if (getPerfCountersQueryDataFactory[gfxFamily] != nullptr) {
         getPerfCountersQueryDataFunc = getPerfCountersQueryDataFactory[gfxFamily];

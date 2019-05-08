@@ -190,7 +190,7 @@ TEST_F(clBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenPro
     SProgramBinaryHeader progBin = {};
     progBin.Magic = iOpenCL::MAGIC_CL;
     progBin.Version = iOpenCL::CURRENT_ICBE_VERSION;
-    progBin.Device = pContext->getDevice(0)->getHardwareInfo().pPlatform.eRenderCoreFamily;
+    progBin.Device = pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily;
     igcDebugVars.binaryToReturn = &progBin;
     igcDebugVars.binaryToReturnSize = sizeof(progBin);
     auto prevDebugVars = getIgcDebugVars();

@@ -16,9 +16,9 @@ int HwInfoConfigHw<IGFX_LAKEFIELD>::configureHardwareCustom(HardwareInfo *hwInfo
         return 0;
     }
 
-    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
 
-    pSysInfo->SliceCount = 1;
+    gtSystemInfo->SliceCount = 1;
 
     return 0;
 }

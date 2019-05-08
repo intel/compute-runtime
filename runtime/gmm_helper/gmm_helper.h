@@ -55,7 +55,7 @@ class GmmHelper {
 
   protected:
     void loadLib();
-    void initContext(const PLATFORM *pPlatform, const FeatureTable *pSkuTable, const WorkaroundTable *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo);
+    void initContext(const PLATFORM *platform, const FeatureTable *featureTable, const WorkaroundTable *workaroundTable, const GT_SYSTEM_INFO *pGtSysInfo);
 
     bool useSimplifiedMocsTable = false;
     const HardwareInfo *hwInfo = nullptr;

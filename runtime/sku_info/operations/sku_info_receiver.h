@@ -15,7 +15,7 @@ namespace NEO {
 class SkuInfoReceiver {
   public:
     static void receiveFtrTableFromAdapterInfo(FeatureTable *ftrTable, _ADAPTER_INFO *adapterInfo);
-    static void receiveWaTableFromAdapterInfo(WorkaroundTable *waTable, _ADAPTER_INFO *adapterInfo);
+    static void receiveWaTableFromAdapterInfo(WorkaroundTable *workaroundTable, _ADAPTER_INFO *adapterInfo);
 
   protected:
     static void receiveFtrTableFromAdapterInfoBase(FeatureTable *ftrTable, _ADAPTER_INFO *adapterInfo) {
@@ -97,8 +97,8 @@ class SkuInfoReceiver {
 #undef RECEIVE_FTR
     }
 
-    static void receiveWaTableFromAdapterInfoBase(WorkaroundTable *waTable, _ADAPTER_INFO *adapterInfo) {
-#define RECEIVE_WA(VAL_NAME) waTable->wa##VAL_NAME = adapterInfo->WaTable.Wa##VAL_NAME
+    static void receiveWaTableFromAdapterInfoBase(WorkaroundTable *workaroundTable, _ADAPTER_INFO *adapterInfo) {
+#define RECEIVE_WA(VAL_NAME) workaroundTable->wa##VAL_NAME = adapterInfo->WaTable.Wa##VAL_NAME
         RECEIVE_WA(DoNotUseMIReportPerfCount);
 
         RECEIVE_WA(EnablePreemptionGranularityControlByUMD);

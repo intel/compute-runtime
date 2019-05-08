@@ -21,7 +21,7 @@ GEN9TEST_F(OsInterfaceTestSkl, askKmdIfPreemptionRegisterWhitelisted) {
     EXPECT_TRUE(success);
 
     for (size_t i = 0u; i < numDevices; i++) {
-        if (hwInfo[i].pWaTable.waEnablePreemptionGranularityControlByUMD) {
+        if (hwInfo[i].workaroundTable.waEnablePreemptionGranularityControlByUMD) {
             EXPECT_TRUE(hwInfo[i].capabilityTable.whitelistedRegisters.csChicken1_0x2580);
         } else {
             EXPECT_FALSE(hwInfo[i].capabilityTable.whitelistedRegisters.csChicken1_0x2580);

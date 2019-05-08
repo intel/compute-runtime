@@ -177,13 +177,13 @@ bool Platform::initialize() {
 
     const bool sourceLevelDebuggerActive = executionEnvironment->sourceLevelDebugger && executionEnvironment->sourceLevelDebugger->isDebuggerActive();
     if (devices[0]->getPreemptionMode() == PreemptionMode::MidThread || sourceLevelDebuggerActive) {
-        auto sipType = SipKernel::getSipKernelType(hwInfo->pPlatform.eRenderCoreFamily, devices[0]->isSourceLevelDebuggerActive());
+        auto sipType = SipKernel::getSipKernelType(hwInfo->platform.eRenderCoreFamily, devices[0]->isSourceLevelDebuggerActive());
         initSipKernel(sipType, *devices[0]);
     }
 
     CommandStreamReceiverType csrType = this->devices[0]->getDefaultEngine().commandStreamReceiver->getType();
     if (csrType != CommandStreamReceiverType::CSR_HW) {
-        auto enableLocalMemory = HwHelper::get(hwInfo->pPlatform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
+        auto enableLocalMemory = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
         executionEnvironment->initAubCenter(enableLocalMemory, "aubfile", csrType);
     }
 

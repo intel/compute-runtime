@@ -64,7 +64,7 @@ TEST_F(AubCommandStreamReceiverTests, givenStructureWhenMisalignedUint64ThenUseS
 TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedWithWrongGfxCoreFamilyThenNullPointerShouldBeReturned) {
     HardwareInfo *hwInfo = pDevice->executionEnvironment->getMutableHardwareInfo();
 
-    hwInfo->pPlatform.eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
+    hwInfo->platform.eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
 
     CommandStreamReceiver *aubCsr = AUBCommandStreamReceiver::create("", true, *pDevice->executionEnvironment);
     EXPECT_EQ(nullptr, aubCsr);
@@ -251,7 +251,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesInitializeTheirEnginesThenUniqueGlobalGttAdressesAreGenerated) {
     pDevice->executionEnvironment->aubCenter.reset(new AubCenter());
 
-    auto engineInstance = HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0];
+    auto engineInstance = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0];
     MockOsContext osContext(0, 1, engineInstance, PreemptionMode::Disabled, false);
 
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment);

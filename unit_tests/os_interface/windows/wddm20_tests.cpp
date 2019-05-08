@@ -90,8 +90,8 @@ TEST(Wddm20EnumAdaptersTest, expectTrue) {
     HardwareInfo outHwInfo;
 
     const HardwareInfo *hwInfo = platformDevices[0];
-    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->pPlatform,
-                                                         &hwInfo->pSysInfo,
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
+                                                         &hwInfo->gtSystemInfo,
                                                          hwInfo->capabilityTable.gpuAddressSpace));
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
@@ -99,22 +99,22 @@ TEST(Wddm20EnumAdaptersTest, expectTrue) {
 
     EXPECT_TRUE(success);
 
-    EXPECT_EQ(outHwInfo.pPlatform.eDisplayCoreFamily, hwInfo->pPlatform.eDisplayCoreFamily);
+    EXPECT_EQ(outHwInfo.platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
 }
 
 TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCapabilityTableIsSet) {
     HardwareInfo outHwInfo = {};
 
     const HardwareInfo *hwInfo = platformDevices[0];
-    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->pPlatform,
-                                                         &hwInfo->pSysInfo,
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
+                                                         &hwInfo->gtSystemInfo,
                                                          hwInfo->capabilityTable.gpuAddressSpace));
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     bool success = wddm->enumAdapters(outHwInfo);
     EXPECT_TRUE(success);
 
-    EXPECT_EQ(outHwInfo.pPlatform.eDisplayCoreFamily, hwInfo->pPlatform.eDisplayCoreFamily);
+    EXPECT_EQ(outHwInfo.platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
 
     EXPECT_EQ(outHwInfo.capabilityTable.defaultProfilingTimerResolution, hwInfo->capabilityTable.defaultProfilingTimerResolution);
     EXPECT_EQ(outHwInfo.capabilityTable.clVersionSupport, hwInfo->capabilityTable.clVersionSupport);
@@ -128,9 +128,9 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
     HardwareInfo outHwInfo = {};
 
     HardwareInfo hwInfo = *platformDevices[0];
-    hwInfo.pPlatform.eProductFamily = IGFX_UNKNOWN;
-    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo.pPlatform,
-                                                         &hwInfo.pSysInfo,
+    hwInfo.platform.eProductFamily = IGFX_UNKNOWN;
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo.platform,
+                                                         &hwInfo.gtSystemInfo,
                                                          hwInfo.capabilityTable.gpuAddressSpace));
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
@@ -139,8 +139,8 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
 
     // reset mock gdi
     hwInfo = *platformDevices[0];
-    mockGdiDll.reset(setAdapterInfo(&hwInfo.pPlatform,
-                                    &hwInfo.pSysInfo,
+    mockGdiDll.reset(setAdapterInfo(&hwInfo.platform,
+                                    &hwInfo.gtSystemInfo,
                                     hwInfo.capabilityTable.gpuAddressSpace));
 }
 
@@ -432,7 +432,7 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
     D3DKMT_HANDLE adapterHandle = ADAPTER_HANDLE;
     D3DKMT_HANDLE deviceHandle = DEVICE_HANDLE;
     const HardwareInfo hwInfo = *platformDevices[0];
-    BOOLEAN FtrL3IACoherency = hwInfo.pSkuTable.ftrL3IACoherency ? 1 : 0;
+    BOOLEAN FtrL3IACoherency = hwInfo.featureTable.ftrL3IACoherency ? 1 : 0;
     uintptr_t maxAddr = hwInfo.capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress
                             ? reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress) + 1
                             : 0;
@@ -508,7 +508,7 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenEngineTypeWhenCreatingContextThenPassCorrectNodeOrdinal) {
     init();
     auto createContextParams = this->getCreateContextDataFcn();
-    UINT expected = WddmEngineMapper::engineNodeMap(HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0]);
+    UINT expected = WddmEngineMapper::engineNodeMap(HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0]);
     EXPECT_EQ(expected, createContextParams->NodeOrdinal);
 }
 

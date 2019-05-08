@@ -15,21 +15,21 @@ int HwInfoConfigHw<IGFX_CANNONLAKE>::configureHardwareCustom(HardwareInfo *hwInf
     if (nullptr == osIface) {
         return 0;
     }
-    GT_SYSTEM_INFO *pSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
 
-    if (pSysInfo->SubSliceCount == 9) {
-        pSysInfo->SliceCount = 4;
-    } else if (pSysInfo->SubSliceCount > 5) {
-        pSysInfo->SliceCount = 3;
-    } else if (pSysInfo->SubSliceCount > 3) {
-        pSysInfo->SliceCount = 2;
+    if (gtSystemInfo->SubSliceCount == 9) {
+        gtSystemInfo->SliceCount = 4;
+    } else if (gtSystemInfo->SubSliceCount > 5) {
+        gtSystemInfo->SliceCount = 3;
+    } else if (gtSystemInfo->SubSliceCount > 3) {
+        gtSystemInfo->SliceCount = 2;
     } else {
-        pSysInfo->SliceCount = 1;
+        gtSystemInfo->SliceCount = 1;
     }
 
-    if ((pSysInfo->SliceCount > 1) && (pSysInfo->IsL3HashModeEnabled)) {
-        pSysInfo->L3BankCount--;
-        pSysInfo->L3CacheSizeInKb -= 256;
+    if ((gtSystemInfo->SliceCount > 1) && (gtSystemInfo->IsL3HashModeEnabled)) {
+        gtSystemInfo->L3BankCount--;
+        gtSystemInfo->L3CacheSizeInKb -= 256;
     }
     return 0;
 }

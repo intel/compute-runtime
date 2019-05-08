@@ -16,7 +16,7 @@ typedef ICLFamily Family;
 
 template <>
 uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
-    return pHwInfo->pSysInfo.MaxSubSlicesSupported * pHwInfo->pSysInfo.MaxEuPerSubSlice * 8;
+    return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * 8;
 }
 
 template class AubHelperHw<Family>;

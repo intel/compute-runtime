@@ -15,15 +15,15 @@
 
 namespace NEO {
 
-bool PreemptionHelper::allowThreadGroupPreemption(Kernel *kernel, const WorkaroundTable *waTable) {
-    if (waTable->waDisablePerCtxtPreemptionGranularityControl) {
+bool PreemptionHelper::allowThreadGroupPreemption(Kernel *kernel, const WorkaroundTable *workaroundTable) {
+    if (workaroundTable->waDisablePerCtxtPreemptionGranularityControl) {
         return false;
     }
 
     if (kernel) {
         if (kernel->getKernelInfo().patchInfo.executionEnvironment &&
             kernel->getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages &&
-            waTable->waDisableLSQCROPERFforOCL) {
+            workaroundTable->waDisableLSQCROPERFforOCL) {
             return false;
         }
         if (kernel->isSchedulerKernel || kernel->isVmeKernel()) {

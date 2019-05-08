@@ -25,7 +25,7 @@ class PreemptionHelper {
 
     static PreemptionMode taskPreemptionMode(Device &device, Kernel *kernel);
     static PreemptionMode taskPreemptionMode(Device &device, const MultiDispatchInfo &multiDispatchInfo);
-    static bool allowThreadGroupPreemption(Kernel *kernel, const WorkaroundTable *waTable);
+    static bool allowThreadGroupPreemption(Kernel *kernel, const WorkaroundTable *workaroundTable);
     static bool allowMidThreadPreemption(Kernel *kernel, Device &device);
     static void adjustDefaultPreemptionMode(RuntimeCapabilityTable &deviceCapabilities, bool allowMidThread, bool allowThreadGroup, bool allowMidBatch);
 

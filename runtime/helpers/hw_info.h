@@ -65,13 +65,13 @@ struct HardwareCapabilities {
 
 struct HardwareInfo {
     HardwareInfo() = default;
-    HardwareInfo(const PLATFORM *platform, const FeatureTable *skuTable, const WorkaroundTable *waTable,
-                 const GT_SYSTEM_INFO *sysInfo, const RuntimeCapabilityTable &capabilityTable);
+    HardwareInfo(const PLATFORM *platform, const FeatureTable *featureTable, const WorkaroundTable *workaroundTable,
+                 const GT_SYSTEM_INFO *gtSystemInfo, const RuntimeCapabilityTable &capabilityTable);
 
-    PLATFORM pPlatform = {};
-    FeatureTable pSkuTable = {};
-    WorkaroundTable pWaTable = {};
-    GT_SYSTEM_INFO pSysInfo = {};
+    PLATFORM platform = {};
+    FeatureTable featureTable = {};
+    WorkaroundTable workaroundTable = {};
+    GT_SYSTEM_INFO gtSystemInfo = {};
 
     RuntimeCapabilityTable capabilityTable = {};
 };

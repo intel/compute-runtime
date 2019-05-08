@@ -19,7 +19,7 @@ GEN10TEST_F(HwHelperTestGen10, whenCnlRevIdForStepCThenSetCapabilityCoherencyFla
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = true;
-    hardwareInfo.pPlatform.usRevId = 0x3;
+    hardwareInfo.platform.usRevId = 0x3;
     helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
     EXPECT_FALSE(coherency);
 }
@@ -28,7 +28,7 @@ GEN10TEST_F(HwHelperTestGen10, whenCnlRevIdForStepDThenSetCapabilityCoherencyFla
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = false;
-    hardwareInfo.pPlatform.usRevId = 0x4;
+    hardwareInfo.platform.usRevId = 0x4;
     helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
     EXPECT_TRUE(coherency);
 }

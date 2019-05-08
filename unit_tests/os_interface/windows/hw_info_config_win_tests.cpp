@@ -41,7 +41,7 @@ TEST_F(HwInfoConfigTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenR
 }
 
 TEST_F(HwInfoConfigTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenSetFtrSvmCorrectly) {
-    auto ftrSvm = outHwInfo.pSkuTable.ftrSVM;
+    auto ftrSvm = outHwInfo.featureTable.ftrSVM;
 
     int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface.get());
     ASSERT_EQ(0, ret);

@@ -132,7 +132,7 @@ HWTEST_F(TbxCommandStreamTests, DISABLED_getCsTraits) {
 
 TEST(TbxCommandStreamReceiverTest, givenNullFactoryEntryWhenTbxCsrIsCreatedThenNullptrIsReturned) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
-    GFXCORE_FAMILY family = executionEnvironment->getHardwareInfo()->pPlatform.eRenderCoreFamily;
+    GFXCORE_FAMILY family = executionEnvironment->getHardwareInfo()->platform.eRenderCoreFamily;
     VariableBackup<TbxCommandStreamReceiverCreateFunc> tbxCsrFactoryBackup(&tbxCommandStreamReceiverFactory[family]);
 
     tbxCommandStreamReceiverFactory[family] = nullptr;
@@ -145,7 +145,7 @@ TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedW
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     auto hwInfo = executionEnvironment->getMutableHardwareInfo();
 
-    hwInfo->pPlatform.eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
+    hwInfo->platform.eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
 
     CommandStreamReceiver *csr = TbxCommandStreamReceiver::create("", false, *executionEnvironment);
     EXPECT_EQ(nullptr, csr);
@@ -498,7 +498,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenHardwareContextIsCreatedThenTbxSt
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareContext) {
     auto hwInfo = pDevice->executionEnvironment->getHardwareInfo();
-    MockOsContext osContext(0, 1, HwHelper::get(hwInfo->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
+    MockOsContext osContext(0, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                             PreemptionMode::Disabled, false);
     std::string fileName = "";
     MockAubManager *mockManager = new MockAubManager();

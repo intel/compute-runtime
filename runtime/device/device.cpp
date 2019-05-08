@@ -78,7 +78,7 @@ Device::Device(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
         this->executionEnvironment->initSourceLevelDebugger();
     }
     this->executionEnvironment->incRefInternal();
-    auto &hwHelper = HwHelper::get(hwInfo.pPlatform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     hwHelper.setupHardwareCapabilities(&this->hardwareCapabilities, hwInfo);
 }
 
@@ -170,7 +170,7 @@ AllocationProperties Device::getAllocationPropertiesForPreemption() const {
 bool Device::createEngines() {
     auto &hwInfo = getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(hwInfo);
-    auto &gpgpuEngines = HwHelper::get(hwInfo.pPlatform.eRenderCoreFamily).getGpgpuEngineInstances();
+    auto &gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances();
 
     for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngines.size(); deviceCsrIndex++) {
         if (!executionEnvironment->initializeCommandStreamReceiver(getDeviceIndex(), deviceCsrIndex)) {
@@ -201,7 +201,7 @@ bool Device::createEngines() {
 
 const HardwareInfo &Device::getHardwareInfo() const { return *executionEnvironment->getHardwareInfo(); }
 
-const WorkaroundTable *Device::getWaTable() const { return &getHardwareInfo().pWaTable; }
+const WorkaroundTable *Device::getWaTable() const { return &getHardwareInfo().workaroundTable; }
 
 const DeviceInfo &Device::getDeviceInfo() const {
     return deviceInfo;
@@ -223,12 +223,12 @@ void Device::prepareSLMWindow() {
 }
 
 const char *Device::getProductAbbrev() const {
-    return hardwarePrefix[executionEnvironment->getHardwareInfo()->pPlatform.eProductFamily];
+    return hardwarePrefix[executionEnvironment->getHardwareInfo()->platform.eProductFamily];
 }
 
 const std::string Device::getFamilyNameWithType() const {
     auto &hwInfo = getHardwareInfo();
-    std::string platformName = familyName[hwInfo.pPlatform.eRenderCoreFamily];
+    std::string platformName = familyName[hwInfo.platform.eRenderCoreFamily];
     platformName.append(getPlatformType(hwInfo));
     return platformName;
 }
@@ -254,11 +254,11 @@ unique_ptr_if_unused<Device> Device::release() {
 bool Device::isSimulation() const {
     auto &hwInfo = getHardwareInfo();
 
-    bool simulation = hwInfo.capabilityTable.isSimulation(hwInfo.pPlatform.usDeviceID);
+    bool simulation = hwInfo.capabilityTable.isSimulation(hwInfo.platform.usDeviceID);
     if (engines[0].commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
         simulation = true;
     }
-    if (hwInfo.pSkuTable.ftrSimulationMode) {
+    if (hwInfo.featureTable.ftrSimulationMode) {
         simulation = true;
     }
     return simulation;
@@ -270,7 +270,7 @@ double Device::getPlatformHostTimerResolution() const {
     return 0.0;
 }
 GFXCORE_FAMILY Device::getRenderCoreFamily() const {
-    return this->getHardwareInfo().pPlatform.eRenderCoreFamily;
+    return this->getHardwareInfo().platform.eRenderCoreFamily;
 }
 
 bool Device::isSourceLevelDebuggerActive() const {

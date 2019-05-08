@@ -144,7 +144,7 @@ Buffer *Buffer::create(Context *context,
         context->peekContextType(),
         HwHelper::renderCompressedBuffersSupported(context->getDevice(0)->getHardwareInfo()),
         memoryManager->isLocalMemorySupported(),
-        HwHelper::get(context->getDevice(0)->getHardwareInfo().pPlatform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(size));
+        HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(size));
 
     checkMemory(properties.flags, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager);
 
@@ -482,7 +482,7 @@ Buffer *Buffer::createBufferHw(Context *context,
     const auto device = context->getDevice(0);
     const auto &hwInfo = device->getHardwareInfo();
 
-    auto funcCreate = bufferFactory[hwInfo.pPlatform.eRenderCoreFamily].createBufferFunction;
+    auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
     auto pBuffer = funcCreate(context, properties, size, memoryStorage, hostPtr, gfxAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
@@ -505,7 +505,7 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
 
     const auto &hwInfo = device->getHardwareInfo();
 
-    auto funcCreate = bufferFactory[hwInfo.pPlatform.eRenderCoreFamily].createBufferFunction;
+    auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
     auto pBuffer = funcCreate(nullptr, flags, size, memoryStorage, hostPtr, gfxAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);

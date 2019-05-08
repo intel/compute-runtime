@@ -131,7 +131,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
     }
 
     applyAuxFlagsForImage(imgInfo);
-    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->pPlatform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
     if (!hwHelper.supportsYTiling() && resourceParams.Flags.Info.TiledY == 1) {
         resourceParams.Flags.Info.Linear = 0;
         resourceParams.Flags.Info.TiledY = 0;
@@ -194,7 +194,7 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
 }
 
 uint32_t Gmm::queryQPitch(GMM_RESOURCE_TYPE resType) {
-    if (GmmHelper::getInstance()->getHardwareInfo()->pPlatform.eRenderCoreFamily == IGFX_GEN8_CORE && resType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
+    if (GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN8_CORE && resType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
         return 0;
     }
     return gmmResourceInfo->getQPitch();

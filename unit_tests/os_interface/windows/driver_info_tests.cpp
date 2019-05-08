@@ -33,12 +33,12 @@ class DriverInfoDeviceTest : public ::testing::Test {
   public:
     void SetUp() {
         hwInfo = platformDevices[0];
-        commandStreamReceiverCreateFunc = commandStreamReceiverFactory[hwInfo->pPlatform.eRenderCoreFamily];
-        commandStreamReceiverFactory[hwInfo->pPlatform.eRenderCoreFamily] = createMockCommandStreamReceiver;
+        commandStreamReceiverCreateFunc = commandStreamReceiverFactory[hwInfo->platform.eRenderCoreFamily];
+        commandStreamReceiverFactory[hwInfo->platform.eRenderCoreFamily] = createMockCommandStreamReceiver;
     }
 
     void TearDown() {
-        commandStreamReceiverFactory[hwInfo->pPlatform.eRenderCoreFamily] = commandStreamReceiverCreateFunc;
+        commandStreamReceiverFactory[hwInfo->platform.eRenderCoreFamily] = commandStreamReceiverCreateFunc;
     }
 
     CommandStreamReceiverCreateFunc commandStreamReceiverCreateFunc;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,15 +16,15 @@ void GMM_STDCALL destroySingletonContext(void) {
 }
 #ifdef _WIN32
 GMM_STATUS GMM_STDCALL createSingletonContext(const PLATFORM Platform,
-                                              const SKU_FEATURE_TABLE *pSkuTable,
-                                              const WA_TABLE *pWaTable,
+                                              const SKU_FEATURE_TABLE *featureTable,
+                                              const WA_TABLE *workaroundTable,
                                               const GT_SYSTEM_INFO *pGtSysInfo) {
     return GMM_SUCCESS;
 }
 #else
 GMM_STATUS GMM_STDCALL createSingletonContext(const PLATFORM platform,
-                                              const void *pSkuTable,
-                                              const void *pWaTable,
+                                              const void *featureTable,
+                                              const void *workaroundTable,
                                               const void *pGtSysInfo) {
     return GMM_SUCCESS;
 }

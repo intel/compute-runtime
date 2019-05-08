@@ -75,43 +75,43 @@ WorkaroundTable CNL::workaroundTable = {};
 FeatureTable CNL::featureTable = {};
 
 void CNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    FeatureTable *pSkuTable = &hwInfo->pSkuTable;
-    WorkaroundTable *pWaTable = &hwInfo->pWaTable;
+    FeatureTable *featureTable = &hwInfo->featureTable;
+    WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
-    pSkuTable->ftrL3IACoherency = true;
-    pSkuTable->ftrGpGpuMidBatchPreempt = true;
-    pSkuTable->ftrGpGpuThreadGroupLevelPreempt = true;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = true;
-    pSkuTable->ftr3dMidBatchPreempt = true;
-    pSkuTable->ftr3dObjectLevelPreempt = true;
-    pSkuTable->ftrPerCtxtPreemptionGranularityControl = true;
-    pSkuTable->ftrPPGTT = true;
-    pSkuTable->ftrSVM = true;
-    pSkuTable->ftrIA32eGfxPTEs = true;
-    pSkuTable->ftrStandardMipTailFormat = true;
-    pSkuTable->ftrDisplayYTiling = true;
-    pSkuTable->ftrTranslationTable = true;
-    pSkuTable->ftrUserModeTranslationTable = true;
-    pSkuTable->ftrTileMappedResource = true;
-    pSkuTable->ftrEnableGuC = true;
-    pSkuTable->ftrFbc = true;
-    pSkuTable->ftrFbc2AddressTranslation = true;
-    pSkuTable->ftrFbcBlitterTracking = true;
-    pSkuTable->ftrFbcCpuTracking = true;
-    pSkuTable->ftrAstcHdr2D = true;
-    pSkuTable->ftrAstcLdr2D = true;
-    pSkuTable->ftrTileY = true;
+    featureTable->ftrL3IACoherency = true;
+    featureTable->ftrGpGpuMidBatchPreempt = true;
+    featureTable->ftrGpGpuThreadGroupLevelPreempt = true;
+    featureTable->ftrGpGpuMidThreadLevelPreempt = true;
+    featureTable->ftr3dMidBatchPreempt = true;
+    featureTable->ftr3dObjectLevelPreempt = true;
+    featureTable->ftrPerCtxtPreemptionGranularityControl = true;
+    featureTable->ftrPPGTT = true;
+    featureTable->ftrSVM = true;
+    featureTable->ftrIA32eGfxPTEs = true;
+    featureTable->ftrStandardMipTailFormat = true;
+    featureTable->ftrDisplayYTiling = true;
+    featureTable->ftrTranslationTable = true;
+    featureTable->ftrUserModeTranslationTable = true;
+    featureTable->ftrTileMappedResource = true;
+    featureTable->ftrEnableGuC = true;
+    featureTable->ftrFbc = true;
+    featureTable->ftrFbc2AddressTranslation = true;
+    featureTable->ftrFbcBlitterTracking = true;
+    featureTable->ftrFbcCpuTracking = true;
+    featureTable->ftrAstcHdr2D = true;
+    featureTable->ftrAstcLdr2D = true;
+    featureTable->ftrTileY = true;
 
-    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = true;
-    pWaTable->waSendMIFLUSHBeforeVFE = true;
-    pWaTable->waReportPerfCountUseGlobalContextID = true;
-    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+    workaroundTable->wa4kAlignUVOffsetNV12LinearSurface = true;
+    workaroundTable->waSendMIFLUSHBeforeVFE = true;
+    workaroundTable->waReportPerfCountUseGlobalContextID = true;
+    workaroundTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
-    if ((1 << hwInfo->pPlatform.usRevId) & 0x3) {
-        pWaTable->waFbcLinearSurfaceStride = true;
+    if ((1 << hwInfo->platform.usRevId) & 0x3) {
+        workaroundTable->waFbcLinearSurfaceStride = true;
     }
-    if ((1 << hwInfo->pPlatform.usRevId) & 0x1) {
-        pWaTable->waEncryptedEdramOnlyPartials = true;
+    if ((1 << hwInfo->platform.usRevId) & 0x1) {
+        workaroundTable->waEncryptedEdramOnlyPartials = true;
     }
 }
 const HardwareInfo CNL_2x5x8::hwInfo = {
@@ -123,7 +123,7 @@ const HardwareInfo CNL_2x5x8::hwInfo = {
 };
 GT_SYSTEM_INFO CNL_2x5x8::gtSystemInfo = {0};
 void CNL_2x5x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 39;
     gtSysInfo->ThreadCount = 39 * CNL::threadsPerEu;
     gtSysInfo->SliceCount = 2;
@@ -155,7 +155,7 @@ const HardwareInfo CNL_2x4x8::hwInfo = {
 };
 GT_SYSTEM_INFO CNL_2x4x8::gtSystemInfo = {0};
 void CNL_2x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 31;
     gtSysInfo->ThreadCount = 31 * CNL::threadsPerEu;
     gtSysInfo->SliceCount = 2;
@@ -187,7 +187,7 @@ const HardwareInfo CNL_1x3x8::hwInfo = {
 };
 GT_SYSTEM_INFO CNL_1x3x8::gtSystemInfo = {0};
 void CNL_1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 23;
     gtSysInfo->ThreadCount = 23 * CNL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -219,7 +219,7 @@ const HardwareInfo CNL_1x2x8::hwInfo = {
 };
 GT_SYSTEM_INFO CNL_1x2x8::gtSystemInfo = {0};
 void CNL_1x2x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 15;
     gtSysInfo->ThreadCount = 15 * CNL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -251,7 +251,7 @@ const HardwareInfo CNL_4x9x8::hwInfo = {
 };
 GT_SYSTEM_INFO CNL_4x9x8::gtSystemInfo = {0};
 void CNL_4x9x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->pSysInfo;
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->EUCount = 71;
     gtSysInfo->ThreadCount = 71 * CNL::threadsPerEu;
     gtSysInfo->SliceCount = 4;

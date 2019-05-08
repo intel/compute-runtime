@@ -40,7 +40,7 @@ class PreambleVfeState : public PlatformFixture,
         LinearStreamFixture::SetUp();
         HardwareParse::SetUp();
         PlatformFixture::SetUp();
-        testWaTable = &pPlatform->peekExecutionEnvironment()->getMutableHardwareInfo()->pWaTable;
+        testWaTable = &pPlatform->peekExecutionEnvironment()->getMutableHardwareInfo()->workaroundTable;
     }
     void TearDown() override {
         PlatformFixture::TearDown();

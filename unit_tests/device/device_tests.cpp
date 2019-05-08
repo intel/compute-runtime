@@ -32,7 +32,7 @@ TEST_F(DeviceTest, Create) {
 
 TEST_F(DeviceTest, givenDeviceWhenGetProductAbbrevThenReturnsHardwarePrefix) {
     const auto productAbbrev = pDevice->getProductAbbrev();
-    const auto hwPrefix = hardwarePrefix[pDevice->getHardwareInfo().pPlatform.eProductFamily];
+    const auto hwPrefix = hardwarePrefix[pDevice->getHardwareInfo().platform.eProductFamily];
     EXPECT_EQ(hwPrefix, productAbbrev);
 }
 
@@ -56,7 +56,7 @@ TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
 }
 
 TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
-    auto &engines = HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances();
+    auto &engines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances();
     for (uint32_t i = 0; i < engines.size(); i++) {
         bool lowPriority = (HwHelper::lowPriorityGpgpuEngineIndex == i);
         auto &deviceEngine = pDevice->getEngine(engines[i], lowPriority);
@@ -70,7 +70,7 @@ TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
 TEST_F(DeviceTest, givenDebugVariableToAlwaysChooseEngineZeroWhenNotExistingEngineSelectedThenIndexZeroEngineIsReturned) {
     DebugManagerStateRestore restore;
     DebugManager.flags.OverrideInvalidEngineWithDefault.set(true);
-    auto &engines = HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances();
+    auto &engines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances();
     auto &deviceEngine = pDevice->getEngine(engines[0], false);
     auto &notExistingEngine = pDevice->getEngine(aub_stream::ENGINE_VCS, false);
     EXPECT_EQ(&notExistingEngine, &deviceEngine);
@@ -172,13 +172,13 @@ TEST(DeviceCreation, givenDefaultHwCsrInDebugVarsWhenDeviceIsCreatedThenIsSimula
 TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryManager) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     auto memoryManager = device->getMemoryManager();
-    EXPECT_EQ(HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances().size(), memoryManager->getRegisteredEnginesCount());
+    EXPECT_EQ(HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size(), memoryManager->getRegisteredEnginesCount());
 }
 
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqueId) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     const size_t numDevices = 2;
-    const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances().size());
+    const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size());
 
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
@@ -212,7 +212,7 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperate
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateCommandStreamReceiver) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     const size_t numDevices = 2;
-    const auto &numGpgpuEngines = HwHelper::get(platformDevices[0]->pPlatform.eRenderCoreFamily).getGpgpuEngineInstances().size();
+    const auto &numGpgpuEngines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size();
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
@@ -239,9 +239,9 @@ TEST(DeviceCreation, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) 
 
 TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsArePresentThenIsSimulationReturnsTrue) {
     HardwareInfo hwInfo = *platformDevices[0];
-    hwInfo.pSkuTable.ftrSimulationMode = true;
+    hwInfo.featureTable.ftrSimulationMode = true;
 
-    bool simulationFromDeviceId = hwInfo.capabilityTable.isSimulation(hwInfo.pPlatform.usDeviceID);
+    bool simulationFromDeviceId = hwInfo.capabilityTable.isSimulation(hwInfo.platform.usDeviceID);
     EXPECT_FALSE(simulationFromDeviceId);
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(&hwInfo));
