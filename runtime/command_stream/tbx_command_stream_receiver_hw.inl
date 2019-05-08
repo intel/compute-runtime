@@ -270,7 +270,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBuff
 
         // Add our BBS
         auto bbs = GfxFamily::cmdInitBatchBufferStart;
-        bbs.setBatchBufferStartAddressGraphicsaddress472(AUB::ptrToPPGTT(batchBuffer));
+        bbs.setBatchBufferStartAddressGraphicsaddress472(static_cast<uint64_t>(batchBufferGpuAddress));
         bbs.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
         *(MI_BATCH_BUFFER_START *)pTail = bbs;
         pTail = ((MI_BATCH_BUFFER_START *)pTail) + 1;
