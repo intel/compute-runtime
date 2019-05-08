@@ -61,7 +61,7 @@ struct BufferEnqueueFixture : public HardwareParse,
 
   protected:
     const size_t bufferSizeInDwords = 64;
-    HardwareInfo hwInfoHelper;
+    HardwareInfo hardwareInfo;
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment;
     cl_queue_properties properties = {};

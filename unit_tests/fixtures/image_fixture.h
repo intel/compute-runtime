@@ -116,10 +116,10 @@ class ImageClearColorFixture {
     using AUXILIARY_SURFACE_MODE = typename FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     void SetUp() {
-        hwInfoHelper.capabilityTable.ftrRenderCompressedImages = true;
+        hardwareInfo.capabilityTable.ftrRenderCompressedImages = true;
 
         NEO::platformImpl.reset();
-        NEO::constructPlatform()->peekExecutionEnvironment()->setHwInfo(&hwInfoHelper);
+        NEO::constructPlatform()->peekExecutionEnvironment()->setHwInfo(&hardwareInfo);
         NEO::platform()->peekExecutionEnvironment()->initGmm();
 
         surfaceState = FamilyType::cmdInitRenderSurfaceState;
@@ -134,7 +134,7 @@ class ImageClearColorFixture {
     }
 
     RENDER_SURFACE_STATE surfaceState;
-    NEO::HardwareInfo hwInfoHelper = **NEO::platformDevices;
+    NEO::HardwareInfo hardwareInfo = **NEO::platformDevices;
 
   protected:
     MockContext context;

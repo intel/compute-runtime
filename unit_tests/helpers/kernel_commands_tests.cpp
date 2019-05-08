@@ -1357,7 +1357,7 @@ TEST_F(KernelCommandsTest, givenCacheFlushAfterWalkerEnabledWhenPlatformNotSuppo
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
     DebugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.set(1);
-    hwInfoHelper.capabilityTable.supportCacheFlushAfterWalker = false;
+    hardwareInfo.capabilityTable.supportCacheFlushAfterWalker = false;
 
     StackVec<GraphicsAllocation *, 32> allocationsForCacheFlush;
     mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocationsForCacheFlush);
@@ -1385,7 +1385,7 @@ HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocations
     kernel->setArg(1, sizeof(bufferRegular), &bufferRegular);
 
     kernel->getAllocationsForCacheFlush(cacheFlushVec);
-    size_t expectedCacheFlushVecSize = (hwInfoHelper.capabilityTable.supportCacheFlushAfterWalker ? 1u : 0u);
+    size_t expectedCacheFlushVecSize = (hardwareInfo.capabilityTable.supportCacheFlushAfterWalker ? 1u : 0u);
     EXPECT_EQ(expectedCacheFlushVecSize, cacheFlushVec.size());
 
     clReleaseMemObject(bufferLocallyUncached);

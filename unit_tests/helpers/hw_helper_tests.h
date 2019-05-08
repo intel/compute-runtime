@@ -18,7 +18,7 @@ class HwHelperFixture : public DeviceFixture {
   protected:
     void SetUp();
     void TearDown();
-    HardwareInfo hwInfoHelper;
+    HardwareInfo hardwareInfo;
 };
 
 using HwHelperTest = Test<HwHelperFixture>;

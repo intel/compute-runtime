@@ -61,7 +61,7 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
     }
 
   protected:
-    HardwareInfo hwInfoHelper;
+    HardwareInfo hardwareInfo;
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment;
     cl_queue_properties properties = {};

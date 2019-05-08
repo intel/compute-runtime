@@ -21,7 +21,7 @@ GEN8TEST_F(HwHelperTestGen8, setCapabilityCoherencyFlag) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = false;
-    helper.setCapabilityCoherencyFlag(&hwInfoHelper, coherency);
+    helper.setCapabilityCoherencyFlag(&hardwareInfo, coherency);
     EXPECT_TRUE(coherency);
 }
 
@@ -29,25 +29,25 @@ GEN8TEST_F(HwHelperTestGen8, setupPreemptionRegisters) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool preemption = false;
-    preemption = helper.setupPreemptionRegisters(&hwInfoHelper, preemption);
+    preemption = helper.setupPreemptionRegisters(&hardwareInfo, preemption);
     EXPECT_FALSE(preemption);
 
     preemption = true;
-    preemption = helper.setupPreemptionRegisters(&hwInfoHelper, preemption);
+    preemption = helper.setupPreemptionRegisters(&hardwareInfo, preemption);
     EXPECT_TRUE(preemption);
 }
 
 GEN8TEST_F(HwHelperTestGen8, adjustDefaultEngineType) {
-    auto engineType = hwInfoHelper.capabilityTable.defaultEngineType;
+    auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
     auto &helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hwInfoHelper);
-    EXPECT_EQ(engineType, hwInfoHelper.capabilityTable.defaultEngineType);
+    helper.adjustDefaultEngineType(&hardwareInfo);
+    EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
 GEN8TEST_F(HwHelperTestGen8, givenGen8PlatformWhenSetupHardwareCapabilitiesIsCalledThenSpecificImplementationIsUsed) {
     auto &helper = HwHelper::get(renderCoreFamily);
     HardwareCapabilities hwCaps = {0};
-    helper.setupHardwareCapabilities(&hwCaps, hwInfoHelper);
+    helper.setupHardwareCapabilities(&hwCaps, hardwareInfo);
 
     EXPECT_EQ(2048u, hwCaps.image3DMaxHeight);
     EXPECT_EQ(2048u, hwCaps.image3DMaxWidth);

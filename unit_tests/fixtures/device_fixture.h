@@ -20,7 +20,7 @@ struct DeviceFixture {
 
     MockDevice *pDevice = nullptr;
     volatile uint32_t *pTagMemory = nullptr;
-    HardwareInfo hwInfoHelper = {};
+    HardwareInfo hardwareInfo = {};
     PLATFORM platformHelper = {};
 };
 } // namespace NEO

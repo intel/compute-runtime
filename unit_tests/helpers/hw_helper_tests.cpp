@@ -27,7 +27,7 @@
 using namespace NEO;
 
 void HwHelperFixture::SetUp() {
-    hwInfoHelper = *platformDevices[0];
+    hardwareInfo = *platformDevices[0];
     DeviceFixture::SetUp();
 }
 void HwHelperFixture::TearDown() {
@@ -121,7 +121,7 @@ TEST_F(HwHelperTest, givenEngineTypeRcsWhenCsTraitsAreQueiredThenCorrectNameInTr
 
 HWTEST_F(HwHelperTest, givenHwHelperWhenAskedForPageTableManagerSupportThenReturnCorrectValue) {
     auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(helper.isPageTableManagerSupported(hwInfoHelper), UnitTestHelper<FamilyType>::isPageTableManagerSupported(hwInfoHelper));
+    EXPECT_EQ(helper.isPageTableManagerSupported(hardwareInfo), UnitTestHelper<FamilyType>::isPageTableManagerSupported(hardwareInfo));
 }
 
 TEST(DwordBuilderTest, setNonMaskedBits) {
@@ -638,25 +638,25 @@ TEST_F(HwHelperTest, givenEnableLocalMemoryDebugVarAndOsEnableLocalMemoryWhenSet
     auto &helper = HwHelper::get(renderCoreFamily);
 
     DebugManager.flags.EnableLocalMemory.set(0);
-    EXPECT_FALSE(helper.getEnableLocalMemory(hwInfoHelper));
+    EXPECT_FALSE(helper.getEnableLocalMemory(hardwareInfo));
 
     DebugManager.flags.EnableLocalMemory.set(1);
-    EXPECT_TRUE(helper.getEnableLocalMemory(hwInfoHelper));
+    EXPECT_TRUE(helper.getEnableLocalMemory(hardwareInfo));
 
     DebugManager.flags.EnableLocalMemory.set(-1);
 
     OSInterface::osEnableLocalMemory = false;
-    EXPECT_FALSE(helper.getEnableLocalMemory(hwInfoHelper));
+    EXPECT_FALSE(helper.getEnableLocalMemory(hardwareInfo));
 
     OSInterface::osEnableLocalMemory = true;
-    EXPECT_EQ(helper.isLocalMemoryEnabled(hwInfoHelper), helper.getEnableLocalMemory(hwInfoHelper));
+    EXPECT_EQ(helper.isLocalMemoryEnabled(hardwareInfo), helper.getEnableLocalMemory(hardwareInfo));
 }
 
 TEST_F(HwHelperTest, givenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGetEnableLocalMemoryReturnsCorrectValue) {
     DebugManagerStateRestore dbgRestore;
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo));
     auto &helper = HwHelper::get(renderCoreFamily);
 
     DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
-    EXPECT_TRUE(helper.getEnableLocalMemory(hwInfoHelper));
+    EXPECT_TRUE(helper.getEnableLocalMemory(hardwareInfo));
 }
