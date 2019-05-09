@@ -20,7 +20,7 @@ class GmmResourceInfo {
 
     MOCKABLE_VIRTUAL ~GmmResourceInfo() = default;
 
-    MOCKABLE_VIRTUAL size_t getSizeAllocation() { return static_cast<size_t>(resourceInfo->GetSizeAllocation()); }
+    MOCKABLE_VIRTUAL size_t getSizeAllocation() { return static_cast<size_t>(resourceInfo->GetSize(GMM_TOTAL_SURF)); }
 
     MOCKABLE_VIRTUAL size_t getBaseWidth() { return static_cast<size_t>(resourceInfo->GetBaseWidth()); }
 
