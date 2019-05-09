@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -580,11 +580,6 @@ inline void AUBCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotify
 }
 
 template <typename GfxFamily>
-constexpr uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getMaskAndValueForPollForCompletion() {
-    return 0x100;
-}
-
-template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::makeResidentExternal(AllocationView &allocationView) {
     externalAllocations.push_back(allocationView);
 }
@@ -785,12 +780,6 @@ uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getDumpHandle() {
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::addContextToken(uint32_t dumpHandle) {
-    // Some simulator versions don't support adding the context token.
-    // This hook allows specialization for those that do.
-}
-
-template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBufferAddress) {
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
 
@@ -826,17 +815,6 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
 
     PatchInfoData patchInfoData(batchBufferAddress, 0u, PatchInfoAllocationType::Default, reinterpret_cast<uintptr_t>(buffer.get()), sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START) - sizeof(uint64_t), PatchInfoAllocationType::GUCStartMessage);
     this->flatBatchBufferHelper->setPatchInfoData(patchInfoData);
-}
-
-template <typename GfxFamily>
-uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getGUCWorkQueueItemHeader() {
-    uint32_t GUCWorkQueueItemHeader = 0x00030001;
-    return GUCWorkQueueItemHeader;
-}
-
-template <typename GfxFamily>
-int AUBCommandStreamReceiverHw<GfxFamily>::getAddressSpaceFromPTEBits(uint64_t entryBits) const {
-    return AubMemDump::AddressSpaceValues::TraceNonlocal;
 }
 
 } // namespace NEO
