@@ -279,10 +279,11 @@ struct BcsTests : public CommandStreamReceiverHwTest {
 };
 
 HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredCommands) {
-    uint64_t alignedBltSize = (3 * BlitterConstants::max2dBlitSize) + 1;
-    uint64_t notAlignedBltSize = (3 * BlitterConstants::max2dBlitSize);
-    uint32_t alignedNumberOfBlts = 4;
-    uint32_t notAlignedNumberOfBlts = 3;
+    constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
+    uint64_t notAlignedBltSize = (3 * max2DBlitSize) + 1;
+    uint64_t alignedBltSize = (3 * max2DBlitSize);
+    uint32_t alignedNumberOfBlts = 3;
+    uint32_t notAlignedNumberOfBlts = 4;
 
     size_t expectedSize = sizeof(typename FamilyType::MI_FLUSH_DW) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
 
@@ -298,11 +299,13 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredComman
 
 HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommands) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
+
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
 
     uint32_t bltLeftover = 17;
-    uint64_t bltSize = (2 * BlitterConstants::max2dBlitSize) + bltLeftover;
+    uint64_t bltSize = (2 * max2DBlitSize) + bltLeftover;
     uint32_t numberOfBlts = 3;
 
     cl_int retVal = CL_SUCCESS;
@@ -333,13 +336,16 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
         EXPECT_EQ(0u, bltCmd->getDestinationY1CoordinateTop());
         EXPECT_EQ(0u, bltCmd->getSourceX1CoordinateLeft());
         EXPECT_EQ(0u, bltCmd->getSourceY1CoordinateTop());
+        uint32_t expectedWidth = static_cast<uint32_t>(BlitterConstants::maxBlitWidth);
+        uint32_t expectedHeight = static_cast<uint32_t>(BlitterConstants::maxBlitHeight);
         if (i == (numberOfBlts - 1)) {
-            EXPECT_EQ(bltLeftover, bltCmd->getDestinationX2CoordinateRight());
-            EXPECT_EQ(1u, bltCmd->getDestinationY2CoordinateBottom());
-        } else {
-            EXPECT_EQ(static_cast<uint32_t>(BlitterConstants::maxBlitWidth), bltCmd->getDestinationX2CoordinateRight());
-            EXPECT_EQ(static_cast<uint32_t>(BlitterConstants::maxBlitWidth), bltCmd->getDestinationY2CoordinateBottom());
+            expectedWidth = bltLeftover;
+            expectedHeight = 1;
         }
+        EXPECT_EQ(expectedWidth, bltCmd->getDestinationX2CoordinateRight());
+        EXPECT_EQ(expectedHeight, bltCmd->getDestinationY2CoordinateBottom());
+        EXPECT_EQ(expectedWidth, bltCmd->getDestinationPitch());
+        EXPECT_EQ(expectedWidth, bltCmd->getSourcePitch());
     }
 
     auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*(cmdIterator++));

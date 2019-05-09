@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #pragma once
 #include "CL/cl.h"
+
+#include <cstdint>
 
 // It's max SSH size per kernel (MAX_BINDING_TABLE_INDEX * 64)
 const uint32_t SAMPLER_OBJECT_ID_SHIFT = 253 * 64;

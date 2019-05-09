@@ -5,10 +5,9 @@
  *
  */
 
-using namespace NEO;
-
 #include "runtime/os_interface/windows/registry_reader.h"
 
+namespace NEO {
 class TestedRegistryReader : public RegistryReader {
   public:
     TestedRegistryReader(bool userScope) : RegistryReader(userScope){};
@@ -21,3 +20,4 @@ class TestedRegistryReader : public RegistryReader {
         return registryReadRootKey.c_str();
     }
 };
+} // namespace NEO
