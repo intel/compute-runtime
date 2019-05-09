@@ -614,6 +614,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
+    if (!gfxAllocation.isAubWritable()) {
+        return false;
+    }
+
     bool ownsLock = !gfxAllocation.isLocked();
 
     uint64_t gpuAddress;

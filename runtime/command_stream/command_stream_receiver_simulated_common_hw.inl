@@ -102,7 +102,7 @@ bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForWriteMem
         size = gmm->gmmResourceInfo->getSizeAllocation();
     }
 
-    if ((size == 0) || !graphicsAllocation.isAubWritable())
+    if (size == 0)
         return false;
 
     if (cpuAddress == nullptr) {

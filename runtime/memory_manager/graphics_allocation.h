@@ -133,6 +133,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     void setAubWritable(bool writable) { aubInfo.aubWritable = writable; }
     bool isAubWritable() const { return aubInfo.aubWritable; }
+    void setTbxWritable(bool writable) { aubInfo.tbxWritable = writable; }
+    bool isTbxWritable() const { return aubInfo.tbxWritable; }
     void setAllocDumpable(bool dumpable) { aubInfo.allocDumpable = dumpable; }
     bool isAllocDumpable() const { return aubInfo.allocDumpable; }
     bool isMemObjectsAllocationWithWritableFlags() const { return aubInfo.memObjectsAllocationWithWritableFlags; }
@@ -210,6 +212,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     };
     struct AubInfo {
         bool aubWritable = true;
+        bool tbxWritable = true;
         bool allocDumpable = false;
         bool memObjectsAllocationWithWritableFlags = false;
     };

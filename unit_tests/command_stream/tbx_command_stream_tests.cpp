@@ -217,9 +217,24 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCa
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
     ASSERT_NE(nullptr, graphicsAllocation);
 
-    EXPECT_TRUE(graphicsAllocation->isAubWritable());
+    EXPECT_TRUE(graphicsAllocation->isTbxWritable());
     EXPECT_TRUE(tbxCsr->writeMemory(*graphicsAllocation));
-    EXPECT_FALSE(graphicsAllocation->isAubWritable());
+    EXPECT_FALSE(graphicsAllocation->isTbxWritable());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCalledWithGraphicsAllocationThatIsOnlyOneTimeWriteableButAlreadyWrittenThenGraphicsAllocationIsNotUpdated) {
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
+    ASSERT_NE(nullptr, memoryManager);
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    graphicsAllocation->setTbxWritable(false);
+    EXPECT_FALSE(tbxCsr->writeMemory(*graphicsAllocation));
+    EXPECT_FALSE(graphicsAllocation->isTbxWritable());
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

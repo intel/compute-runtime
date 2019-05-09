@@ -190,10 +190,11 @@ TEST_F(EnqueueUnmapMemObjTest, UnmapMemObjWaitEvent) {
     clReleaseEvent(retEvent);
 }
 
-HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBufferObjectMappedToHostPtrForWritingThenItShouldBeResetToAubWritable) {
+HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBufferObjectMappedToHostPtrForWritingThenItShouldBeResetToAubAndTbxWritable) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     ASSERT_NE(nullptr, buffer);
     buffer->getGraphicsAllocation()->setAubWritable(false);
+    buffer->getGraphicsAllocation()->setTbxWritable(false);
 
     auto mappedForWritingPtr = pCmdQ->enqueueMapBuffer(buffer.get(), CL_TRUE, CL_MAP_WRITE, 0, 8, 0, nullptr, nullptr, retVal);
     ASSERT_NE(nullptr, mappedForWritingPtr);
@@ -207,4 +208,5 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBuf
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_TRUE(buffer->getGraphicsAllocation()->isAubWritable());
+    EXPECT_TRUE(buffer->getGraphicsAllocation()->isTbxWritable());
 }
