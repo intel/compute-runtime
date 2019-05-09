@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "runtime/os_interface/linux/engine_info.h"
 #include "runtime/os_interface/linux/memory_info.h"
 #include "runtime/utilities/api_intercept.h"
 
@@ -80,10 +81,11 @@ class Drm {
     bool useSimplifiedMocsTable = false;
     bool preemptionSupported = false;
     int fd;
-    int deviceId;
-    int revisionId;
-    GTTYPE eGtType;
-    Drm(int fd) : fd(fd), deviceId(0), revisionId(0), eGtType(GTTYPE_UNDEFINED) {}
+    int deviceId = 0;
+    int revisionId = 0;
+    GTTYPE eGtType = GTTYPE_UNDEFINED;
+    Drm(int fd) : fd(fd) {}
+    std::unique_ptr<EngineInfo> engineInfo;
     std::unique_ptr<MemoryInfo> memoryInfo;
 
     static bool isi915Version(int fd);

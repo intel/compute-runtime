@@ -26,3 +26,10 @@ TEST(DrmTest, whenQueryingEngineInfoThenNoIoctlIsCalled) {
     drm->queryEngineInfo();
     EXPECT_EQ(0u, drm->ioctlCallsCount);
 }
+
+TEST(EngineInfoTest, givenEngineInfoImplementationWhenDestructingThenDestructorIsCalled) {
+    struct EngineInfoImpl : EngineInfo {
+        ~EngineInfoImpl() override = default;
+    };
+    EngineInfoImpl engineInfo;
+}
