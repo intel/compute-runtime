@@ -561,7 +561,16 @@ TEST_F(RenderCompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThen
     EXPECT_NE(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 }
 
-TEST_F(RenderCompressedBuffersTests, givenSvmAllocationWhenCreatingBufferThenForceDisableCompression) {
+struct RenderCompressedBuffersSvmTests : public RenderCompressedBuffersTests {
+    void SetUp() override {
+        ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+        hwInfo = executionEnvironment->getMutableHardwareInfo();
+        hwInfo->capabilityTable.gpuAddressSpace = MemoryConstants::max48BitAddress;
+        RenderCompressedBuffersTests::SetUp();
+    }
+};
+
+TEST_F(RenderCompressedBuffersSvmTests, givenSvmAllocationWhenCreatingBufferThenForceDisableCompression) {
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
 
     auto svmPtr = context->getSVMAllocsManager()->createSVMAlloc(sizeof(uint32_t), {});
