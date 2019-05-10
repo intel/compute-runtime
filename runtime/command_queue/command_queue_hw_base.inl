@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,18 +41,5 @@ void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingR
         image->getGraphicsAllocation()->setAllocDumpable(blockingRead);
     }
 }
-template <typename Family>
-bool CommandQueueHw<Family>::requiresCacheFlushAfterWalkerBasedOnProperties(const cl_queue_properties *properties) {
-    return false;
-}
-template <typename GfxFamily>
-void CommandQueueHw<GfxFamily>::submitCacheFlush(Surface **surfaces,
-                                                 size_t numSurfaces,
-                                                 LinearStream *commandStream,
-                                                 uint64_t postSyncAddress) {
-}
-template <typename GfxFamily>
-bool CommandQueueHw<GfxFamily>::isCacheFlushCommand(uint32_t commandType) {
-    return false;
-}
+
 } // namespace NEO

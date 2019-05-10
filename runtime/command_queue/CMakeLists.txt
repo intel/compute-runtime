@@ -9,7 +9,8 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue.h
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_base.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cpu_data_transfer_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_barrier.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_common.h
