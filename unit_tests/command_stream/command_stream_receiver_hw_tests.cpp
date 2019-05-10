@@ -38,6 +38,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_event.h"
+#include "unit_tests/mocks/mock_internal_allocation_storage.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 #include "unit_tests/utilities/base_object_utils.h"
@@ -379,14 +380,7 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     EXPECT_TRUE(csr.isMadeResident(csr.getTagAllocation()));
     EXPECT_EQ(1u, csr.makeSurfacePackNonResidentCalled);
 
-    bool hostPtrAllocationFound = false;
-    for (auto &allocation : csr.makeResidentAllocations) {
-        if (allocation.first->getUnderlyingBuffer() == hostPtr) {
-            hostPtrAllocationFound = true;
-            break;
-        }
-    }
-    EXPECT_TRUE(hostPtrAllocationFound);
+    EXPECT_EQ(4u, csr.makeResidentAllocations.size());
 }
 
 HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
@@ -455,4 +449,23 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
     EXPECT_EQ(myMockCsr->flushStamp->peekStamp(), myMockCsr->flushStampToWaitPassed);
     EXPECT_FALSE(myMockCsr->useQuickKmdSleepPassed);
     EXPECT_FALSE(myMockCsr->forcePowerSavingModePassed);
+}
+
+HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCleanTemporaryAllocations) {
+    auto &bcsCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto mockInternalAllocationsStorage = new MockInternalAllocationStorage(bcsCsr);
+    bcsCsr.internalAllocationStorage.reset(mockInternalAllocationsStorage);
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    uint32_t newTaskCount = 17;
+    bcsCsr.taskCount = newTaskCount - 1;
+
+    EXPECT_EQ(0u, mockInternalAllocationsStorage->cleanAllocationsCalled);
+    bcsCsr.blitFromHostPtr(*buffer, hostPtr, 1);
+    EXPECT_EQ(1u, mockInternalAllocationsStorage->cleanAllocationsCalled);
+    EXPECT_EQ(newTaskCount, mockInternalAllocationsStorage->lastCleanAllocationsTaskCount);
+    EXPECT_TRUE(TEMPORARY_ALLOCATION == mockInternalAllocationsStorage->lastCleanAllocationUsage);
 }

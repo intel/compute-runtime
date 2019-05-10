@@ -829,6 +829,7 @@ void CommandStreamReceiverHw<GfxFamily>::blitFromHostPtr(MemObj &destinationMemO
 
     lock.unlock();
     waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false);
+    internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
 }
 
 } // namespace NEO

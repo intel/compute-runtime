@@ -16,6 +16,7 @@ class MockInternalAllocationStorage : public InternalAllocationStorage {
     void cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) override {
         cleanAllocationsCalled++;
         lastCleanAllocationsTaskCount = waitTaskCount;
+        lastCleanAllocationUsage = allocationUsage;
         InternalAllocationStorage::cleanAllocationList(waitTaskCount, allocationUsage);
         if (doUpdateCompletion) {
             *commandStreamReceiver.getTagAddress() = valueToUpdateCompletion;
@@ -28,6 +29,7 @@ class MockInternalAllocationStorage : public InternalAllocationStorage {
     }
     bool doUpdateCompletion = false;
     uint32_t valueToUpdateCompletion;
+    uint32_t lastCleanAllocationUsage = 0;
     uint32_t lastCleanAllocationsTaskCount = 0;
     uint32_t cleanAllocationsCalled = 0;
 };
