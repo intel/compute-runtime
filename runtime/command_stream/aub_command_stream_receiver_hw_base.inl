@@ -155,6 +155,8 @@ const std::string AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine() {
+    auto streamLocked = getAubStream()->lockStream();
+
     if (hardwareContextController) {
         hardwareContextController->initialize();
         return;
@@ -290,8 +292,6 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         }
     }
 
-    auto streamLocked = getAubStream()->lockStream();
-
     initializeEngine();
 
     // Write our batch buffer
@@ -380,6 +380,8 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits) {
+    auto streamLocked = getAubStream()->lockStream();
+
     if (hardwareContextController) {
         if (batchBufferSize) {
             hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, MemoryConstants::pageSize64k);
@@ -619,7 +621,6 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     }
 
     bool ownsLock = !gfxAllocation.isLocked();
-
     uint64_t gpuAddress;
     void *cpuAddress;
     size_t size;
@@ -627,11 +628,15 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         return false;
     }
 
+    auto streamLocked = getAubStream()->lockStream();
+
     if (aubManager) {
         this->writeMemoryWithAubManager(gfxAllocation);
     } else {
         writeMemory(gpuAddress, cpuAddress, size, this->getMemoryBank(&gfxAllocation), this->getPPGTTAdditionalBits(&gfxAllocation));
     }
+
+    streamLocked.unlock();
 
     if (gfxAllocation.isLocked() && ownsLock) {
         this->getMemoryManager()->unlockResource(&gfxAllocation);

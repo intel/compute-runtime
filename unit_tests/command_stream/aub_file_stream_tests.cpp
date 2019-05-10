@@ -171,18 +171,49 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenReopenFileIsCalled
     EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
 }
 
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenFileStreamShouldBeLocked) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitializeEngineIsCalledThenFileStreamShouldBeLocked) {
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+
+    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+
+    aubCsr->initializeEngine();
+    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+}
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenSubmitBatchBufferIsCalledThenFileStreamShouldBeLocked) {
     auto mockAubFileStream = std::make_unique<MockAubFileStream>();
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
     aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    ResidencyContainer allocationsForResidency = {};
+    auto pBatchBuffer = ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset);
+    auto batchBufferGpuAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
+    auto currentOffset = batchBuffer.usedSize;
+    auto sizeBatchBuffer = currentOffset - batchBuffer.startOffset;
 
-    aubCsr->flush(batchBuffer, allocationsForResidency);
+    aubCsr->initializeEngine();
+    mockAubFileStream->lockStreamCalled = false;
+
+    aubCsr->submitBatchBuffer(batchBufferGpuAddress, pBatchBuffer, sizeBatchBuffer, aubCsr->getMemoryBank(batchBuffer.commandBufferAllocation),
+                              aubCsr->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
+    EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
+}
+
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledThenFileStreamShouldBeLocked) {
+    auto mockAubFileStream = std::make_unique<MockAubFileStream>();
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+
+    aubCsr->stream = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+
+    aubCsr->writeMemory(allocation);
     EXPECT_TRUE(mockAubFileStream->lockStreamCalled);
 }
 
