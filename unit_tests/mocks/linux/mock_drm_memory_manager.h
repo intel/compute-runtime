@@ -108,7 +108,8 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     DrmAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType) {
         bool allocateMemory = ptr == nullptr;
         AllocationData allocationData;
-        getAllocationData(allocationData, MockAllocationProperties(allocateMemory, size, allocationType), ptr);
+        MockAllocationProperties properties(allocateMemory, size, allocationType);
+        getAllocationData(allocationData, properties, ptr, createStorageInfoFromProperties(properties));
         return allocate32BitGraphicsMemoryImpl(allocationData);
     }
 };

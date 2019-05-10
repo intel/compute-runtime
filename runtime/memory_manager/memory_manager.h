@@ -15,6 +15,7 @@
 #include "runtime/memory_manager/gfx_partition.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
+#include "runtime/memory_manager/local_memory_usage.h"
 #include "runtime/os_interface/32bit_memory.h"
 
 #include "engine_node.h"
@@ -183,12 +184,12 @@ class MemoryManager {
         ImageInfo *imgInfo = nullptr;
     };
 
-    static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr);
+    static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static bool useInternal32BitAllocator(GraphicsAllocation::AllocationType allocationType) {
         return allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA ||
                allocationType == GraphicsAllocation::AllocationType::INTERNAL_HEAP;
     }
-    static StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
+    StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) = 0;
     virtual GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) = 0;
@@ -243,6 +244,7 @@ class MemoryManager {
     virtual void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
+    uint32_t getBanksCount();
 
     bool force32bitAllocations = false;
     bool virtualPaddingAvailable = false;
@@ -260,6 +262,7 @@ class MemoryManager {
     std::unique_ptr<DeferredDeleter> multiContextResourceDestructor;
     std::unique_ptr<Allocator32bit> allocator32Bit;
     GfxPartition gfxPartition;
+    std::unique_ptr<LocalMemoryUsageBankSelector> localMemoryUsageBankSelector;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

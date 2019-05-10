@@ -14,7 +14,10 @@ namespace NEO {
 
 struct MockLocalMemoryUsageBankSelector : public LocalMemoryUsageBankSelector {
     using LocalMemoryUsageBankSelector::banksCount;
+    using LocalMemoryUsageBankSelector::freeOnBank;
     using LocalMemoryUsageBankSelector::LocalMemoryUsageBankSelector;
+    using LocalMemoryUsageBankSelector::reserveOnBank;
+    using LocalMemoryUsageBankSelector::updateUsageInfo;
     std::atomic<uint64_t> *getMemorySizes() { return memorySizes.get(); }
 };
 
@@ -27,7 +30,7 @@ TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenItsCreatedAllVal
 }
 
 TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryIsReservedOnGivenBankThenValueStoredInTheArrayIsCorrect) {
-    LocalMemoryUsageBankSelector selector(4u);
+    MockLocalMemoryUsageBankSelector selector(4u);
 
     uint64_t allocationSize = 1024u;
     auto bankIndex = selector.getLeastOccupiedBank();
@@ -37,7 +40,7 @@ TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryIsReserved
 }
 
 TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryIsReleasedThenValueIsCorrectlyAllocated) {
-    LocalMemoryUsageBankSelector selector(1u);
+    MockLocalMemoryUsageBankSelector selector(1u);
 
     uint64_t allocationSize = 1024u;
     auto bankIndex = selector.getLeastOccupiedBank();
@@ -75,7 +78,7 @@ TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryAllocatedS
 }
 
 TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenIndexIsInvalidThenErrorIsReturned) {
-    LocalMemoryUsageBankSelector selector(3u);
+    MockLocalMemoryUsageBankSelector selector(3u);
     EXPECT_THROW(selector.reserveOnBank(8u, 1024u), std::exception);
     EXPECT_THROW(selector.freeOnBank(8u, 1024u), std::exception);
     EXPECT_THROW(selector.getOccupiedMemorySizeForBank(8u), std::exception);
@@ -84,4 +87,52 @@ TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenIndexIsInvalidTh
 TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenItsCreatedWithZeroBanksThenErrorIsReturned) {
     EXPECT_THROW(LocalMemoryUsageBankSelector(0u), std::exception);
 }
+
+TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMultipleBanksAreUsedThenMemoryIsReservedOnEachOfThem) {
+    MockLocalMemoryUsageBankSelector selector(6u);
+    uint32_t banks = 5u;
+    uint64_t allocationSize = 1024u;
+
+    selector.reserveOnBanks(banks, allocationSize);
+    EXPECT_EQ(allocationSize, selector.getOccupiedMemorySizeForBank(0u));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(1u));
+    EXPECT_EQ(allocationSize, selector.getOccupiedMemorySizeForBank(2u));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(3u));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(4u));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(5u));
+}
+
+TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMultipleBanksAreUsedThenMemoryIsReleasedOnEachOfThem) {
+    MockLocalMemoryUsageBankSelector selector(6u);
+    uint32_t banks = 5u;
+    uint64_t allocationSize = 1024u;
+
+    selector.reserveOnBanks(banks, allocationSize);
+    selector.reserveOnBanks(banks, allocationSize);
+
+    EXPECT_EQ(2 * allocationSize, selector.getOccupiedMemorySizeForBank(0u));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(1u));
+    EXPECT_EQ(2 * allocationSize, selector.getOccupiedMemorySizeForBank(2u));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(3));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(4));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(5));
+
+    selector.freeOnBanks(banks, allocationSize);
+    EXPECT_EQ(allocationSize, selector.getOccupiedMemorySizeForBank(0u));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(1u));
+    EXPECT_EQ(allocationSize, selector.getOccupiedMemorySizeForBank(2u));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(3u));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(4u));
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(5u));
+}
+
+TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenThereAreMoreThan32BanksThenOnly32AreUpdated) {
+    MockLocalMemoryUsageBankSelector selector(33u);
+    uint32_t banks = ~0u;
+    uint64_t allocationSize = 1024u;
+
+    selector.reserveOnBanks(banks, allocationSize);
+    EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(32));
+}
+
 } // namespace NEO

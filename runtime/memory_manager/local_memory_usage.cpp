@@ -8,6 +8,7 @@
 #include "runtime/memory_manager/local_memory_usage.h"
 
 #include <algorithm>
+#include <bitset>
 #include <iterator>
 
 namespace NEO {
@@ -33,6 +34,19 @@ void LocalMemoryUsageBankSelector::freeOnBank(uint32_t bankIndex, uint64_t alloc
 void LocalMemoryUsageBankSelector::reserveOnBank(uint32_t bankIndex, uint64_t allocationSize) {
     UNRECOVERABLE_IF(bankIndex >= banksCount);
     memorySizes[bankIndex] += allocationSize;
+}
+
+void LocalMemoryUsageBankSelector::updateUsageInfo(uint32_t memoryBanks, uint64_t allocationSize, bool reserve) {
+    auto banks = std::bitset<32>(memoryBanks);
+    for (uint32_t bankIndex = 0; bankIndex < banks.size() && bankIndex < banksCount; bankIndex++) {
+        if (banks.test(bankIndex)) {
+            if (reserve) {
+                reserveOnBank(bankIndex, allocationSize);
+            } else {
+                freeOnBank(bankIndex, allocationSize);
+            }
+        }
+    }
 }
 
 } // namespace NEO

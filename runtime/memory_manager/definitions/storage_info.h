@@ -10,5 +10,6 @@
 namespace NEO {
 struct StorageInfo {
     uint32_t getNumHandles() const;
+    uint32_t getMemoryBanks() const { return 0u; }
 };
 } // namespace NEO

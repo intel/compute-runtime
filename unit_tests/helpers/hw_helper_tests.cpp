@@ -26,14 +26,6 @@
 
 using namespace NEO;
 
-void HwHelperFixture::SetUp() {
-    hardwareInfo = *platformDevices[0];
-    DeviceFixture::SetUp();
-}
-void HwHelperFixture::TearDown() {
-    DeviceFixture::TearDown();
-}
-
 TEST(HwHelperSimpleTest, givenDebugVariableWhenAskingForRenderCompressionThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
     HardwareInfo localHwInfo = **platformDevices;

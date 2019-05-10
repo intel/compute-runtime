@@ -25,6 +25,7 @@
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
+#include "runtime/memory_manager/local_memory_usage.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/utilities/stackvec.h"
@@ -40,6 +41,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     if (DebugManager.flags.Enable64kbpages.get() > -1) {
         this->enable64kbpages = DebugManager.flags.Enable64kbpages.get() != 0;
     }
+    localMemoryUsageBankSelector.reset(new LocalMemoryUsageBankSelector(getBanksCount()));
 }
 
 MemoryManager::~MemoryManager() {
@@ -147,6 +149,8 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
     if (isLocked) {
         freeAssociatedResourceImpl(*gfxAllocation);
     }
+
+    localMemoryUsageBankSelector->freeOnBanks(gfxAllocation->storageInfo.getMemoryBanks(), gfxAllocation->getUnderlyingBufferSize());
     freeGraphicsMemoryImpl(gfxAllocation);
 }
 //if not in use destroy in place
@@ -201,7 +205,7 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
     return osContext;
 }
 
-bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr) {
+bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo) {
     UNRECOVERABLE_IF(hostPtr == nullptr && !properties.flags.allocateMemory);
     UNRECOVERABLE_IF(properties.allocationType == GraphicsAllocation::AllocationType::UNKNOWN);
 
@@ -298,7 +302,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.hostPtr = hostPtr;
     allocationData.size = properties.size;
     allocationData.type = properties.allocationType;
-    allocationData.storageInfo = MemoryManager::createStorageInfoFromProperties(properties);
+    allocationData.storageInfo = storageInfo;
     allocationData.alignment = properties.alignment ? properties.alignment : MemoryConstants::preferredAlignment;
     allocationData.imgInfo = properties.imgInfo;
 
@@ -310,10 +314,13 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr) {
     AllocationData allocationData;
-    getAllocationData(allocationData, properties, hostPtr);
+    getAllocationData(allocationData, properties, hostPtr, createStorageInfoFromProperties(properties));
 
     AllocationStatus status = AllocationStatus::Error;
     GraphicsAllocation *allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
+    if (allocation) {
+        localMemoryUsageBankSelector->reserveOnBanks(allocationData.storageInfo.getMemoryBanks(), allocation->getUnderlyingBufferSize());
+    }
     if (!allocation && status == AllocationStatus::RetryInNonDevicePool) {
         allocation = allocateGraphicsMemory(allocationData);
     }

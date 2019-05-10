@@ -33,6 +33,7 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_constants.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/memory_manager_banks_count.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_pool.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.h

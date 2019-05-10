@@ -1660,9 +1660,10 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
         GraphicsAllocation::AllocationType::SVM_ZERO_COPY, GraphicsAllocation::AllocationType::SVM_GPU,
         GraphicsAllocation::AllocationType::SVM_CPU};
 
+    MockMemoryManager mockMemoryManager;
     for (auto allocationType : allocationTypesThatMayNeedL3Flush) {
         properties.allocationType = allocationType;
-        MockMemoryManager::getAllocationData(allocData, properties, nullptr);
+        MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
         EXPECT_TRUE(allocData.flags.flushL3);
     }
 
@@ -1671,7 +1672,7 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
 
     for (auto allocationType : allocationTypesThatMayNeedL3Flush) {
         properties.allocationType = allocationType;
-        MockMemoryManager::getAllocationData(allocData, properties, nullptr);
+        MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
         EXPECT_FALSE(allocData.flags.flushL3);
     }
 }

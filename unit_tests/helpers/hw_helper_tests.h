@@ -14,13 +14,6 @@
 
 using namespace NEO;
 
-class HwHelperFixture : public DeviceFixture {
-  protected:
-    void SetUp();
-    void TearDown();
-    HardwareInfo hardwareInfo;
-};
-
-using HwHelperTest = Test<HwHelperFixture>;
+using HwHelperTest = Test<DeviceFixture>;
 
 void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper, const HardwareInfo &hwInfo);
