@@ -107,7 +107,7 @@ TEST(Device_GetCaps, validate) {
     EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), caps.deviceAvailable);
     EXPECT_EQ(static_cast<cl_device_mem_cache_type>(CL_READ_WRITE_CACHE), caps.globalMemCacheType);
 
-    EXPECT_TRUE(sysInfo.EUCount == caps.maxComputUnits);
+    EXPECT_EQ(sysInfo.EUCount, caps.maxComputUnits);
     EXPECT_LT(0u, caps.maxConstantArgs);
 
     EXPECT_LE(128u, caps.maxReadImageArgs);

@@ -848,12 +848,12 @@ TEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenRequestF
     IGC::IgcOclDeviceCtxTagOCL *devCtx = pCompilerInterface->peekIgcDeviceCtx(device);
     auto igcPlatform = devCtx->GetPlatformHandle();
     auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
-    EXPECT_TRUE(device->getHardwareInfo().platform.eProductFamily == igcPlatform->GetProductFamily());
-    EXPECT_TRUE(device->getHardwareInfo().platform.eRenderCoreFamily == igcPlatform->GetRenderCoreFamily());
-    EXPECT_TRUE(device->getHardwareInfo().gtSystemInfo.SliceCount == igcSysInfo->GetSliceCount());
-    EXPECT_TRUE(device->getHardwareInfo().gtSystemInfo.SubSliceCount == igcSysInfo->GetSubSliceCount());
-    EXPECT_TRUE(device->getHardwareInfo().gtSystemInfo.EUCount == igcSysInfo->GetEUCount());
-    EXPECT_TRUE(device->getHardwareInfo().gtSystemInfo.ThreadCount == igcSysInfo->GetThreadCount());
+    EXPECT_EQ(device->getHardwareInfo().platform.eProductFamily, igcPlatform->GetProductFamily());
+    EXPECT_EQ(device->getHardwareInfo().platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
+    EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.SliceCount, igcSysInfo->GetSliceCount());
+    EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.SubSliceCount, igcSysInfo->GetSubSliceCount());
+    EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.EUCount, igcSysInfo->GetEUCount());
+    EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.ThreadCount, igcSysInfo->GetThreadCount());
 }
 
 TEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestForNewTranslationCtxThenUseDbgKeyPlatform) {
