@@ -174,7 +174,6 @@ int main(int argc, char **argv) {
     bool useDefaultListener = false;
     bool enable_alarm = true;
     bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
-    bool enableMemoryDumps = false;
 
     applyWorkarounds();
 
@@ -287,18 +286,21 @@ int main(int argc, char **argv) {
                 DebugManager.setReaderImpl(SettingsReader::create());
                 DebugManager.injectSettingsFromReader();
             }
-        } else if (!strcmp("--enable_memory_dumps", argv[i]) && testMode == TestMode::AubTests) {
-            enableMemoryDumps = true;
+        } else if (!strcmp("--dump_buffer_format", argv[i]) && testMode == TestMode::AubTests) {
+            ++i;
+            std::string dumpBufferFormat(argv[i]);
+            std::transform(dumpBufferFormat.begin(), dumpBufferFormat.end(), dumpBufferFormat.begin(), ::toupper);
+            DebugManager.flags.AUBDumpBufferFormat.set(dumpBufferFormat);
+        } else if (!strcmp("--dump_image_format", argv[i]) && testMode == TestMode::AubTests) {
+            ++i;
+            std::string dumpImageFormat(argv[i]);
+            std::transform(dumpImageFormat.begin(), dumpImageFormat.end(), dumpImageFormat.begin(), ::toupper);
+            DebugManager.flags.AUBDumpImageFormat.set(dumpImageFormat);
         }
     }
 
     if (numDevices < 1) {
         return -1;
-    }
-
-    if (enableMemoryDumps) {
-        DebugManager.flags.AUBDumpBufferFormat.set("BIN");
-        DebugManager.flags.AUBDumpImageFormat.set("TRE");
     }
 
     uint32_t threadsPerEu = hwInfoConfigFactory[productFamily]->threadsPerEu;

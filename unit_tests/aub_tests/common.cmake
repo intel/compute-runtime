@@ -1,10 +1,10 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-function(neo_run_aub_target gen gen_name product slices subslices eu_per_ss)
+function(neo_run_aub_target gen gen_name product slices subslices eu_per_ss options)
     add_custom_command(
         TARGET run_${gen}_aub_tests
         POST_BUILD
@@ -27,7 +27,7 @@ function(neo_run_aub_target gen gen_name product slices subslices eu_per_ss)
         POST_BUILD
         COMMAND WORKING_DIRECTORY ${TargetDir}
         COMMAND echo Running AUB generation for ${gen_name} in ${TargetDir}/${gen}_aub
-        COMMAND ${aub_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${IGDRCL_TESTS_LISTENER_OPTION}
+        COMMAND ${aub_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${options} ${IGDRCL_TESTS_LISTENER_OPTION}
     )
 
     if(DO_NOT_RUN_AUB_TESTS)
