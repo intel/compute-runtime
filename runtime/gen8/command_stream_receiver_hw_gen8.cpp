@@ -5,9 +5,9 @@
  *
  */
 
-#include "runtime/command_stream/command_stream_receiver_hw.inl"
+#include "runtime/command_stream/command_stream_receiver_hw_bdw_plus.inl"
 #include "runtime/command_stream/device_command_stream.h"
-#include "runtime/helpers/blit_commands_helper.inl"
+#include "runtime/helpers/blit_commands_helper_bdw_plus.inl"
 
 #include "hw_cmds.h"
 #include "hw_info.h"

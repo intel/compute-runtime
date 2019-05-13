@@ -14,7 +14,8 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object.h
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object_allocator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basic_math.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_base.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp

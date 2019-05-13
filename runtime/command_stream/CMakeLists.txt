@@ -17,7 +17,8 @@ set(RUNTIME_SRCS_COMMAND_STREAM
   ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver.h
   ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_base.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump.h
   ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_impl.cpp
