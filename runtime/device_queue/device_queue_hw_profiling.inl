@@ -5,6 +5,9 @@
  *
  */
 
+#include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/device_queue/device_queue_hw.h"
+
 namespace NEO {
 
 template <typename GfxFamily>
