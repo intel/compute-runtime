@@ -25,6 +25,10 @@ struct EnqueueSvmMemFillTest : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pDevice, 0);
+        const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
+        if (!hwInfo.capabilityTable.ftrSvm) {
+            GTEST_SKIP();
+        }
         patternSize = (size_t)GetParam();
         ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
         SVMAllocsManager::SvmAllocationProperties svmProperties;
@@ -38,7 +42,9 @@ struct EnqueueSvmMemFillTest : public DeviceFixture,
     }
 
     void TearDown() override {
-        context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
+        if (svmPtr) {
+            context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
+        }
         CommandQueueFixture::TearDown();
         DeviceFixture::TearDown();
     }
