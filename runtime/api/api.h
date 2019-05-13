@@ -244,6 +244,11 @@ cl_program CL_API_CALL clCreateProgramWithBinary(
     cl_int *binaryStatus,
     cl_int *errcodeRet);
 
+cl_program CL_API_CALL clCreateProgramWithIL(cl_context context,
+                                             const void *il,
+                                             size_t length,
+                                             cl_int *errcodeRet);
+
 cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(
     cl_context context,
     cl_uint numDevices,
@@ -858,6 +863,31 @@ cl_int CL_API_CALL clGetDeviceAndHostTimer(cl_device_id device,
 
 cl_int CL_API_CALL clGetHostTimer(cl_device_id device,
                                   cl_ulong *hostTimestamp);
+
+cl_int CL_API_CALL clGetKernelSubGroupInfo(cl_kernel kernel,
+                                           cl_device_id device,
+                                           cl_kernel_sub_group_info paramName,
+                                           size_t inputValueSize,
+                                           const void *inputValue,
+                                           size_t paramValueSize,
+                                           void *paramValue,
+                                           size_t *paramValueSizeRet);
+
+cl_int CL_API_CALL clSetDefaultDeviceCommandQueue(cl_context context,
+                                                  cl_device_id device,
+                                                  cl_command_queue commandQueue);
+
+cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
+                                          cl_uint numSvmPointers,
+                                          const void **svmPointers,
+                                          const size_t *sizes,
+                                          const cl_mem_migration_flags flags,
+                                          cl_uint numEventsInWaitList,
+                                          const cl_event *eventWaitList,
+                                          cl_event *event);
+
+cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
+                                    cl_int *errcodeRet);
 
 extern CL_API_ENTRY cl_command_queue CL_API_CALL
 clCreatePerfCountersCommandQueueINTEL(

@@ -47,4 +47,34 @@ TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClCreateProgramWithIL
     auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clCreateProgramWithILKHR");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clCreateProgramWithILKHR));
 }
+
+TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClCreateTracingHandleINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clCreateTracingHandleINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clCreateTracingHandleINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClSetTracingPointINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clSetTracingPointINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clSetTracingPointINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClDestroyTracingHandleINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clDestroyTracingHandleINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clDestroyTracingHandleINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClEnableTracingINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clEnableTracingINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnableTracingINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClDisableTracingINTELLWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clDisableTracingINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clDisableTracingINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressForPlatformTests, GivenClGetTracingStateINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddressForPlatform(pPlatform, "clGetTracingStateINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetTracingStateINTEL));
+}
 } // namespace ULT

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/api/api.h"
+#include "runtime/tracing/tracing_api.h"
 #include "test.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 

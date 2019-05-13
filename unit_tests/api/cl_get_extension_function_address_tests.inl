@@ -63,4 +63,33 @@ TEST_F(clGetExtensionFunctionAddressTests, givenClAddCommentToAubIntelAsInputWhe
     EXPECT_EQ(functionPointer, reinterpret_cast<void *>(clAddCommentINTEL));
 }
 
+TEST_F(clGetExtensionFunctionAddressTests, GivenClCreateTracingHandleINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clCreateTracingHandleINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clCreateTracingHandleINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressTests, GivenClSetTracingPointINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clSetTracingPointINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clSetTracingPointINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressTests, GivenClDestroyTracingHandleINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clDestroyTracingHandleINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clDestroyTracingHandleINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressTests, GivenClEnableTracingINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clEnableTracingINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnableTracingINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressTests, GivenClDisableTracingINTELLWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clDisableTracingINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clDisableTracingINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressTests, GivenClGetTracingStateINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clGetTracingStateINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetTracingStateINTEL));
+}
 } // namespace ULT

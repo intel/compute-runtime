@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -18,6 +18,7 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_gl_context_info_khr_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_gl_object_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_gl_texture_info_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_gl_intel_tracing_tests.cpp
   )
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_api_gl})
 endif()
