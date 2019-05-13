@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "core/helpers/basic_math.h"
 #include "public/cl_ext_private.h"
 #include "runtime/context/context_type.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_constants.h"
 

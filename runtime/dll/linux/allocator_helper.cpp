@@ -7,8 +7,8 @@
 
 #include "runtime/os_interface/linux/allocator_helper.h"
 
+#include "core/helpers/basic_math.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/basic_math.h"
 
 namespace NEO {
 size_t getSizeToMap() {

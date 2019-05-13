@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/helpers/basic_math.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
 #include "runtime/device/driver_info.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"

@@ -13,7 +13,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object.h
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object_allocator.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/basic_math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.h
@@ -90,6 +89,10 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/validators.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/validators.h
 )
+
+get_property(NEO_CORE_HELPERS GLOBAL PROPERTY NEO_CORE_HELPERS)
+list(APPEND RUNTIME_SRCS_HELPERS_BASE ${NEO_CORE_HELPERS})
+
 set(RUNTIME_SRCS_HELPERS_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_callbacks.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_callbacks.inl

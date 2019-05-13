@@ -5,12 +5,12 @@
  *
  */
 
+#include "core/helpers/basic_math.h"
 #include "runtime/command_queue/local_id_gen.h"
 #include "runtime/command_stream/csr_definitions.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/address_patch.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"

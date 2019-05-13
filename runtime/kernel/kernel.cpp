@@ -7,6 +7,7 @@
 
 #include "runtime/kernel/kernel.h"
 
+#include "core/helpers/basic_math.h"
 #include "runtime/accelerators/intel_accelerator.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
 #include "runtime/built_ins/built_ins.h"
@@ -19,7 +20,6 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_helper.h"

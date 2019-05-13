@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/basic_math.h"
+#include "core/helpers/basic_math.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"

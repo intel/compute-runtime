@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/helpers/basic_math.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/device_helpers.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/utilities/vec.h"
+#include "core/helpers/vec.h"
 
 #include <algorithm>
 #include <cmath>

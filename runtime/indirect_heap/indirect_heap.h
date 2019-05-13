@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "core/helpers/basic_math.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_constants.h"

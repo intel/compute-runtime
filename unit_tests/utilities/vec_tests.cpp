@@ -5,10 +5,9 @@
  *
  */
 
-#include "runtime/utilities/vec.h"
-#include "test.h"
+#include "core/helpers/vec.h"
 
-using namespace NEO;
+#include "gtest/gtest.h"
 
 TEST(VecTest, operators) {
     Vec3<size_t> v0(nullptr);

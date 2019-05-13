@@ -8,6 +8,7 @@
 #include "runtime/mem_obj/image.h"
 
 #include "common/compiler_support.h"
+#include "core/helpers/basic_math.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
@@ -15,7 +16,6 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"

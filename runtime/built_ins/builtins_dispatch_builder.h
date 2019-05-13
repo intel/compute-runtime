@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "core/helpers/vec.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/kernel/kernel.h"
-#include "runtime/utilities/vec.h"
 
 #include "CL/cl.h"
 

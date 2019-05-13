@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/basic_math.h"
+#include "core/helpers/basic_math.h"
 #include "runtime/memory_manager/local_memory_usage.h"
 
 #include "third_party/gtest/gtest/gtest.h"

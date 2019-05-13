@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/helpers/basic_math.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/event.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/timestamp_packet.h"

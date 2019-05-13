@@ -7,10 +7,10 @@
 
 #pragma once
 
+#include "core/helpers/vec.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/utilities/stackvec.h"
-#include "runtime/utilities/vec.h"
 
 #include <algorithm>
 #include <memory>

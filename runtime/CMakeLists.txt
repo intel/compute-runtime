@@ -177,7 +177,7 @@ if(${GENERATE_EXECUTABLE})
   create_project_source_tree_with_exports(${NEO_DYNAMIC_LIB_NAME} "${EXPORTS_FILENAME}")
 endif(${GENERATE_EXECUTABLE})
 
-create_project_source_tree(${NEO_STATIC_LIB_NAME})
+create_project_source_tree(${NEO_STATIC_LIB_NAME} ${IGDRCL_SOURCE_DIR})
 
 if(UNIX AND NOT (TARGET clang-tidy))
   add_custom_target(clang-tidy

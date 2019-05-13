@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/basic_math.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/array_count.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"

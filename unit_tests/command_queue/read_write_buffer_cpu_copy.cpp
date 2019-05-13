@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/basic_math.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/helpers/basic_math.h"
 #include "test.h"
 #include "unit_tests/command_queue/enqueue_read_buffer_fixture.h"
 

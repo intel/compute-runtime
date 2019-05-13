@@ -7,8 +7,8 @@
 
 #include "runtime/aub/aub_helper.h"
 
+#include "core/helpers/basic_math.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 namespace NEO {

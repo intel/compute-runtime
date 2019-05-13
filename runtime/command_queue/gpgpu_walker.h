@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "core/helpers/vec.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/linear_stream.h"
@@ -23,7 +24,6 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/utilities/tag_allocator.h"
-#include "runtime/utilities/vec.h"
 
 namespace NEO {
 

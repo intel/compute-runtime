@@ -7,10 +7,10 @@
 
 #include "unit_tests/helpers/kernel_commands_tests.h"
 
+#include "core/helpers/basic_math.h"
 #include "runtime/api/api.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "unit_tests/fixtures/execution_model_kernel_fixture.h"

@@ -7,6 +7,7 @@
 
 #include "runtime/memory_manager/memory_manager.h"
 
+#include "core/helpers/basic_math.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/event.h"
 #include "runtime/event/hw_timestamps.h"
@@ -15,7 +16,6 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/kernel_commands.h"

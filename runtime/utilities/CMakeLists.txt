@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -28,7 +28,6 @@ set(RUNTIME_SRCS_UTILITIES_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/stackvec.h
   ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/timer_util.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/vec.h
 )
 
 set(RUNTIME_SRCS_UTILITIES_WINDOWS
