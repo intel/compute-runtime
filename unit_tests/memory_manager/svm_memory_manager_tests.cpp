@@ -20,6 +20,10 @@ struct SVMMemoryAllocatorFixture {
     SVMMemoryAllocatorFixture() : executionEnvironment(*platformDevices) {}
 
     virtual void SetUp() {
+        bool svmSupported = executionEnvironment.getHardwareInfo()->capabilityTable.ftrSvm;
+        if (!svmSupported) {
+            GTEST_SKIP();
+        }
         memoryManager = std::make_unique<MockMemoryManager>(false, enableLocalMemory, executionEnvironment);
         svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
     }
