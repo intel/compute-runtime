@@ -64,6 +64,25 @@ TEST_F(clCreateImageTest, GivenNullHostPtrWhenCreatingImageThenImageIsCreatedAnd
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingImageThenInvalidOperationErrorIsReturned) {
+    auto device = static_cast<MockDevice *>(pContext->getDevice(0));
+    device->getDeviceInfoToModify()->imageSupport = CL_FALSE;
+    cl_bool imageSupportInfo = CL_TRUE;
+    auto status = clGetDeviceInfo(devices[0], CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+    cl_bool expectedValue = CL_FALSE;
+    EXPECT_EQ(expectedValue, imageSupportInfo);
+    auto image = clCreateImage(
+        pContext,
+        CL_MEM_READ_WRITE,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(nullptr, image);
+}
+
 TEST_F(clCreateImageTest, GivenNonNullHostPtrAndAlignedRowPitchWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
     char hostPtr[4096];
     imageDesc.image_row_pitch = 128;
@@ -96,7 +115,7 @@ TEST_F(clCreateImageTest, GivenNonNullHostPtrAndUnalignedRowPitchWhenCreatingIma
     EXPECT_EQ(nullptr, image);
 }
 
-TEST_F(clCreateImageTest, GivenNonNullHostPtrAndSmallRowPitchWhenCreatingImageThenInvalidImageDescriptotErrorIsReturned) {
+TEST_F(clCreateImageTest, GivenNonNullHostPtrAndSmallRowPitchWhenCreatingImageThenInvalidImageDescriptorErrorIsReturned) {
     char hostPtr[4096];
     imageDesc.image_row_pitch = 4;
     auto image = clCreateImage(

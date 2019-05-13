@@ -674,12 +674,13 @@ TEST(validateAndCreateImage, givenErrorCodeWhenValidateAndCreateImageIsCalledThe
 }
 
 TEST(validateAndCreateImage, givenInvalidImageFormatWhenValidateAndCreateImageIsCalledThenReturnsInvalidDescriptorError) {
+    MockContext context;
     cl_image_format imageFormat;
     cl_int retVal = CL_SUCCESS;
     Image *image;
     imageFormat.image_channel_order = 0;
     imageFormat.image_channel_data_type = 0;
-    image = Image::validateAndCreateImage(nullptr, 0, &imageFormat, nullptr, nullptr, retVal);
+    image = Image::validateAndCreateImage(&context, 0, &imageFormat, nullptr, nullptr, retVal);
     EXPECT_EQ(nullptr, image);
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
 }

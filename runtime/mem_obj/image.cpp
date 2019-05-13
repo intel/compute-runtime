@@ -1011,6 +1011,10 @@ Image *Image::validateAndCreateImage(Context *context,
     if (errcodeRet != CL_SUCCESS) {
         return nullptr;
     }
+    if (!context->getDevice(0)->getDeviceInfo().imageSupport) {
+        errcodeRet = CL_INVALID_OPERATION;
+        return nullptr;
+    }
     SurfaceFormatInfo *surfaceFormat = nullptr;
     Image *image = nullptr;
     do {
