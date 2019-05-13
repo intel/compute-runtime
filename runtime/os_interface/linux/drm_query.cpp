@@ -19,4 +19,8 @@ void Drm::queryEngineInfo() {
 void Drm::queryMemoryInfo() {
 }
 
+int Drm::bindDrmContext(uint32_t drmContextId, DeviceBitfield deviceBitfield, aub_stream::EngineType engineType) {
+    return -1;
+}
+
 } // namespace NEO

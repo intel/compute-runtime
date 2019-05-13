@@ -31,6 +31,7 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
     if (drm.isPreemptionSupported() && lowPriority) {
         drm.setLowPriorityContextParam(this->drmContextId);
     }
+    drm.bindDrmContext(this->drmContextId, deviceBitfield, engineType);
 }
 
 OsContextLinux::~OsContextLinux() {
