@@ -36,12 +36,18 @@ struct EnqueueSvmTest : public DeviceFixture,
     }
 
     void SetUp() override {
+        if (platformImpl->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.ftrSvm == false) {
+            GTEST_SKIP();
+        }
         DeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pDevice, 0);
         ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {});
     }
 
     void TearDown() override {
+        if (platformImpl->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.ftrSvm == false) {
+            return;
+        }
         context->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
         CommandQueueFixture::TearDown();
         DeviceFixture::TearDown();
@@ -622,6 +628,9 @@ TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmTh
 struct EnqueueSvmTestLocalMemory : public DeviceFixture,
                                    public ::testing::Test {
     void SetUp() override {
+        if (platformImpl->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.ftrSvm == false) {
+            GTEST_SKIP();
+        }
         dbgRestore = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnableLocalMemory.set(1);
 
@@ -634,6 +643,9 @@ struct EnqueueSvmTestLocalMemory : public DeviceFixture,
     }
 
     void TearDown() override {
+        if (platformImpl->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.ftrSvm == false) {
+            return;
+        }
         context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
         context.reset(nullptr);
         DeviceFixture::TearDown();
