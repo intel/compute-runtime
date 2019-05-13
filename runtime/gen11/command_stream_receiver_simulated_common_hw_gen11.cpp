@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_stream/command_stream_receiver_simulated_common_hw.inl"
+#include "runtime/command_stream/command_stream_receiver_simulated_common_hw_bdw_plus.inl"
 
 namespace NEO {
 typedef ICLFamily Family;
