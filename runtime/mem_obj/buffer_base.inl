@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,7 +80,4 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     appendBufferState(memory, context, getGraphicsAllocation());
 }
 
-template <typename GfxFamily>
-void BufferHw<GfxFamily>::appendBufferState(void *memory, Context *context, GraphicsAllocation *gfxAllocation) {
-}
 } // namespace NEO

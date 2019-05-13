@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/mem_obj/buffer.inl"
+#include "runtime/mem_obj/buffer_bdw_plus.inl"
 
 #include "hw_cmds.h"
 
