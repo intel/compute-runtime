@@ -31,11 +31,11 @@ class MockOfflineCompiler : public OfflineCompiler {
     MockOfflineCompiler() : OfflineCompiler() {
     }
 
-    int initialize(size_t numArgs, const char *const *argv) {
+    int initialize(size_t numArgs, const std::vector<std::string> &argv) {
         return OfflineCompiler::initialize(numArgs, argv);
     }
 
-    int parseCommandLine(size_t numArgs, const char *const *argv) {
+    int parseCommandLine(size_t numArgs, const std::vector<std::string> &argv) {
         return OfflineCompiler::parseCommandLine(numArgs, argv);
     }
 

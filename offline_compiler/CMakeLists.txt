@@ -16,6 +16,8 @@ ${IGDRCL_SOURCE_DIR}/offline_compiler/decoder/helper.h
 ${IGDRCL_SOURCE_DIR}/offline_compiler/helper.cpp
 ${IGDRCL_SOURCE_DIR}/offline_compiler/offline_compiler.cpp
 ${IGDRCL_SOURCE_DIR}/offline_compiler/offline_compiler.h
+${IGDRCL_SOURCE_DIR}/offline_compiler/multi_command.cpp
+${IGDRCL_SOURCE_DIR}/offline_compiler/multi_command.h
 ${IGDRCL_SOURCE_DIR}/offline_compiler/options.cpp
 ${IGDRCL_SOURCE_DIR}/runtime/compiler_interface/create_main.cpp
 ${IGDRCL_SOURCE_DIR}/runtime/helpers/abort.cpp

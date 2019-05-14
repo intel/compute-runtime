@@ -55,6 +55,12 @@ bool stringsAreEqual(const char *string1, const char *string2) {
     return (strcmp(string1, string2) == 0);
 }
 
+bool stringsAreEqual(std::string string1, std::string string2) {
+    if (string2.empty())
+        return false;
+    return (string1 == string2);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // convertToPascalCase
 ////////////////////////////////////////////////////////////////////////////////
@@ -91,12 +97,12 @@ OfflineCompiler::~OfflineCompiler() {
 ////////////////////////////////////////////////////////////////////////////////
 // Create
 ////////////////////////////////////////////////////////////////////////////////
-OfflineCompiler *OfflineCompiler::create(size_t numArgs, const char *const *argv, int &retVal) {
+OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, int &retVal) {
     retVal = CL_SUCCESS;
     auto pOffCompiler = new OfflineCompiler();
 
     if (pOffCompiler) {
-        retVal = pOffCompiler->initialize(numArgs, argv);
+        retVal = pOffCompiler->initialize(numArgs, allArgs);
     }
 
     if (retVal != CL_SUCCESS) {
@@ -270,13 +276,13 @@ std::string OfflineCompiler::getStringWithinDelimiters(const std::string &src) {
 ////////////////////////////////////////////////////////////////////////////////
 // Initialize
 ////////////////////////////////////////////////////////////////////////////////
-int OfflineCompiler::initialize(size_t numArgs, const char *const *argv) {
+int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &allArgs) {
     int retVal = CL_SUCCESS;
     const char *pSource = nullptr;
     void *pSourceFromFile = nullptr;
     size_t sourceFromFileSize = 0;
 
-    retVal = parseCommandLine(numArgs, argv);
+    retVal = parseCommandLine(numArgs, allArgs);
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
@@ -434,7 +440,7 @@ int OfflineCompiler::initialize(size_t numArgs, const char *const *argv) {
 ////////////////////////////////////////////////////////////////////////////////
 // ParseCommandLine
 ////////////////////////////////////////////////////////////////////////////////
-int OfflineCompiler::parseCommandLine(size_t numArgs, const char *const *argv) {
+int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::string> &argv) {
     int retVal = CL_SUCCESS;
     bool compile32 = false;
     bool compile64 = false;
@@ -493,7 +499,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const char *const *argv) {
             printUsage();
             retVal = PRINT_USAGE;
         } else {
-            printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex]);
+            printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
             retVal = INVALID_COMMAND_LINE;
             break;
         }
@@ -641,6 +647,13 @@ void OfflineCompiler::printUsage() {
     printf("  -file <filename>             Indicates the CL kernel file to be compiled.\n");
     printf("  -device <device_type>        Indicates which device for which we will compile.\n");
     printf("                               <device_type> can be: %s\n", getDevicesTypes().c_str());
+    printf("\n");
+    printf("  -multi <filename>            Indicates the txt file with multi commands\n");
+    printf("                               where each line is a single build in format:\n");
+    printf("                               '-file <filename> -device <device_type> [OPTIONS]'\n");
+    printf("                               Argument '-multi' must be first argument. \n");
+    printf("                               Result of builds will be output in directory named \n");
+    printf("                               like .txt file with build commands.\n");
     printf("\n");
     printf("  -output <filename>           Indicates output files core name.\n");
     printf("  -out_dir <output_dir>        Indicates the directory into which the compiled files\n");

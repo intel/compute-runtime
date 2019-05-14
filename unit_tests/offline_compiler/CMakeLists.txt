@@ -1,10 +1,11 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 project(ocloc_tests)
+
 
 set(IGDRCL_SRCS_cloc
 ${IGDRCL_SOURCE_DIR}/offline_compiler/decoder/binary_decoder.cpp
@@ -17,6 +18,26 @@ ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_decoder.h
 ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_encoder.h
 ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_compiler.h
 )
+
+set(CLOC_SRCS_UTILITIES
+  ${IGDRCL_SOURCE_DIR}/offline_compiler/utilities/safety_caller.h
+)
+
+if(WIN32)
+  list(APPEND CLOC_SRCS_UTILITIES
+    ${IGDRCL_SOURCE_DIR}/offline_compiler/utilities/windows/safety_caller_windows.cpp
+    ${IGDRCL_SOURCE_DIR}/offline_compiler/utilities/windows/safety_guard_windows.h
+    ${IGDRCL_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.cpp
+    ${IGDRCL_SOURCE_DIR}/offline_compiler/utilities/windows/seh_exception.h
+  )
+else()
+  list(APPEND CLOC_SRCS_UTILITIES
+    ${IGDRCL_SOURCE_DIR}/offline_compiler/utilities/linux/safety_caller_linux.cpp
+    ${IGDRCL_SOURCE_DIR}/offline_compiler/utilities/linux/safety_guard_linux.h
+  )
+endif()
+
+
 
 set(IGDRCL_SRCS_offline_compiler_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
@@ -34,6 +55,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
   ${IGDRCL_SRCS_cloc}
   ${IGDRCL_SRCS_offline_compiler_mock}
   ${CLOC_SRCS_LIB}
+  ${CLOC_SRCS_UTILITIES}
 )
 
 if(WIN32)
@@ -56,6 +78,10 @@ target_include_directories(ocloc_tests PRIVATE
 target_compile_definitions(ocloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:ocloc,INTERFACE_COMPILE_DEFINITIONS>)
 
 target_link_libraries(ocloc_tests igdrcl_mocks gmock-gtest elflib)
+
+if(WIN32)
+    target_link_libraries(ocloc_tests dbghelp)
+endif()
 
 if(UNIX)
   target_link_libraries(ocloc_tests dl pthread)
