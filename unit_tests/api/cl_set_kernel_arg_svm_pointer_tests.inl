@@ -113,12 +113,15 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidArgValue) {
 }
 
 TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerWithNullArgValue_success) {
-    auto retVal = clSetKernelArgSVMPointer(
-        pMockKernel, // cl_kernel kernel
-        0,           // cl_uint arg_index
-        nullptr      // const void *arg_value
-    );
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    const DeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        auto retVal = clSetKernelArgSVMPointer(
+            pMockKernel, // cl_kernel kernel
+            0,           // cl_uint arg_index
+            nullptr      // const void *arg_value
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+    }
 }
 
 TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_success) {

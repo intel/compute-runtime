@@ -299,6 +299,21 @@ TEST_F(ContextTest, givenContextWhenSharingTableIsNotEmptyThenReturnsSharingFunc
     EXPECT_EQ(sharingF, sharingFunctions);
 }
 
+TEST(Context, givenFtrSvmFalseWhenContextIsCreatedThenSVMAllocsManagerIsNotCreated) {
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    auto hwInfo = executionEnvironment->getMutableHardwareInfo();
+    hwInfo->capabilityTable.ftrSvm = false;
+
+    std::unique_ptr<MockDevice> device(MockDevice::createWithExecutionEnvironment<MockDevice>(hwInfo, executionEnvironment, 0));
+
+    cl_device_id clDevice = device.get();
+    cl_int retVal = CL_SUCCESS;
+    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+    ASSERT_NE(nullptr, context);
+    auto svmManager = context->getSVMAllocsManager();
+    EXPECT_EQ(nullptr, svmManager);
+}
+
 class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
                                     public ::testing::Test {
   public:

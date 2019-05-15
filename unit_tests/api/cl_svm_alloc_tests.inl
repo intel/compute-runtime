@@ -21,6 +21,9 @@ class clSVMAllocTemplateTests : public api_fixture,
   public:
     void SetUp() override {
         api_fixture::SetUp();
+        if (!pPlatform->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.ftrSvm) {
+            GTEST_SKIP();
+        }
     }
 
     void TearDown() override {

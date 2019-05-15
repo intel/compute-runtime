@@ -175,15 +175,18 @@ Buffer *Buffer::create(Context *context,
             allocateMemory = true;
         }
 
-        auto svmData = context->getSVMAllocsManager()->getSVMAlloc(hostPtr);
-        if (svmData) {
-            memory = svmData->gpuAllocation;
-            allocationType = memory->getAllocationType();
-            isHostPtrSVM = true;
-            zeroCopyAllowed = memory->getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY;
-            copyMemoryFromHostPtr = false;
-            allocateMemory = false;
-            mapAllocation = svmData->cpuAllocation;
+        auto svmManager = context->getSVMAllocsManager();
+        if (svmManager) {
+            auto svmData = svmManager->getSVMAlloc(hostPtr);
+            if (svmData) {
+                memory = svmData->gpuAllocation;
+                allocationType = memory->getAllocationType();
+                isHostPtrSVM = true;
+                zeroCopyAllowed = memory->getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY;
+                copyMemoryFromHostPtr = false;
+                allocateMemory = false;
+                mapAllocation = svmData->cpuAllocation;
+            }
         }
     }
 

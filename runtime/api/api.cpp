@@ -3621,6 +3621,12 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         return retVal;
     }
 
+    auto svmManager = pKernel->getContext().getSVMAllocsManager();
+    if (!svmManager) {
+        retVal = CL_INVALID_ARG_VALUE;
+        return retVal;
+    }
+
     cl_int kernelArgAddressQualifier = pKernel->getKernelArgAddressQualifier(argIndex);
     if ((kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_GLOBAL) &&
         (kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_CONSTANT)) {
@@ -3630,7 +3636,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
 
     GraphicsAllocation *pSvmAlloc = nullptr;
     if (argValue != nullptr) {
-        auto svmData = pKernel->getContext().getSVMAllocsManager()->getSVMAlloc(argValue);
+        auto svmData = svmManager->getSVMAlloc(argValue);
         if (svmData == nullptr) {
             retVal = CL_INVALID_ARG_VALUE;
             return retVal;
@@ -3667,6 +3673,10 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         }
         size_t numPointers = paramValueSize / sizeof(void *);
         size_t *pSvmPtrList = (size_t *)paramValue;
+
+        if (pKernel->getContext().getSVMAllocsManager() == nullptr) {
+            return CL_INVALID_VALUE;
+        }
 
         pKernel->clearKernelExecInfo();
         for (uint32_t i = 0; i < numPointers; i++) {
@@ -4145,9 +4155,14 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
         retVal = CL_INVALID_VALUE;
         return retVal;
     }
+    auto pSvmAllocMgr = pCommandQueue->getContext().getSVMAllocsManager();
+
+    if (pSvmAllocMgr == nullptr) {
+        retVal = CL_INVALID_VALUE;
+        return retVal;
+    }
 
     for (uint32_t i = 0; i < numSvmPointers; i++) {
-        SVMAllocsManager *pSvmAllocMgr = pCommandQueue->getContext().getSVMAllocsManager();
         auto svmData = pSvmAllocMgr->getSVMAlloc(svmPointers[i]);
         if (svmData == nullptr) {
             retVal = CL_INVALID_VALUE;

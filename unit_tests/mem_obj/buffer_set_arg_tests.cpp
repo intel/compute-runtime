@@ -261,6 +261,9 @@ TEST_F(BufferSetArgTest, clSetKernelArgBuffer) {
 }
 
 TEST_F(BufferSetArgTest, clSetKernelArgSVMPointer) {
+    if (!pDevice->getHardwareInfo().capabilityTable.ftrSvm) {
+        GTEST_SKIP();
+    }
     void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, {});
     EXPECT_NE(nullptr, ptrSVM);
 

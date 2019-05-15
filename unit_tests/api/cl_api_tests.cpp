@@ -42,8 +42,12 @@ void api_fixture::SetUp() {
 void api_fixture::TearDown() {
     delete pKernel;
     delete pCommandQueue;
-    pContext->release();
-    pProgram->release();
+    if (pContext) {
+        pContext->release();
+    }
+    if (pProgram) {
+        pProgram->release();
+    }
 
     PlatformFixture::TearDown();
 }

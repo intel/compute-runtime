@@ -509,6 +509,9 @@ TEST_F(CloneKernelTest, cloneKernelWithArgImmediate) {
 }
 
 TEST_F(CloneKernelTest, cloneKernelWithExecInfo) {
+    if (!pDevice->getHardwareInfo().capabilityTable.ftrSvm) {
+        GTEST_SKIP();
+    }
     void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(256, {});
     ASSERT_NE(nullptr, ptrSVM);
 
