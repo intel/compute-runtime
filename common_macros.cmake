@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,6 +7,14 @@
 macro(hide_subdir subdir)
   file(RELATIVE_PATH subdir_relative ${IGDRCL_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
   set(${subdir_relative}_hidden} TRUE)
+endmacro()
+
+macro(add_subdirectory_unique subdir)
+  file(RELATIVE_PATH subdir_relative ${IGDRCL_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
+  if(NOT ${subdir_relative}_hidden})
+    add_subdirectory(${subdir} ${ARGN})
+  endif()
+  hide_subdir(${subdir})
 endmacro()
 
 macro(add_subdirectories)
