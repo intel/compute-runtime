@@ -6,6 +6,7 @@
  */
 
 #include "runtime/device/device.h"
+#include "runtime/helpers/device_helpers.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
@@ -246,4 +247,9 @@ TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsAre
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(&hwInfo));
     EXPECT_TRUE(device->isSimulation());
+}
+
+TEST(DeviceCreation, givenDeviceWhenCheckingEnginesCountThenNumberGreaterThanZeroIsReturned) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+    EXPECT_GT(DeviceHelper::getEnginesCount(device->getHardwareInfo()), 0u);
 }

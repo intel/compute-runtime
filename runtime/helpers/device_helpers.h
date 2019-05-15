@@ -15,5 +15,6 @@ struct HardwareInfo;
 namespace DeviceHelper {
 void getExtraDeviceInfo(const HardwareInfo &hwInfo, cl_device_info paramName, cl_uint &param, const void *&src, size_t &size, size_t &retSize);
 uint32_t getDevicesCount(const HardwareInfo *pHwInfo);
+uint32_t getEnginesCount(const HardwareInfo &hwInfo);
 }; // namespace DeviceHelper
 } // namespace NEO
