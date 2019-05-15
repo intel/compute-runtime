@@ -70,6 +70,15 @@ set(CLOC_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 add_executable(ocloc ${CLOC_SRCS})
+
+if(UNIX)
+  install(FILES $<TARGET_FILE:ocloc>
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+    COMPONENT ocloc)
+  set_property(GLOBAL APPEND PROPERTY NEO_COMPONENTS_LIST "ocloc")
+endif()
+
 add_subdirectories()
 
 create_project_source_tree(ocloc ${IGDRCL_SOURCE_DIR}/runtime)

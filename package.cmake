@@ -5,8 +5,6 @@
 #
 
 if(UNIX)
-  include(GNUInstallDirs)
-
   set(package_input_dir ${IGDRCL_BINARY_DIR}/packageinput)
   set(package_output_dir ${IGDRCL_BINARY_DIR}/packages)
 
@@ -31,12 +29,6 @@ if(UNIX)
     set(_dir_etc "/etc")
   endif()
 
-  install(FILES
-    $<TARGET_FILE:${NEO_DYNAMIC_LIB_NAME}>
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/intel-opencl
-    COMPONENT opencl
-  )
-
   set(OCL_ICD_RUNTIME_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}${NEO_DLL_NAME_BASE}${CMAKE_SHARED_LIBRARY_SUFFIX})
   install(
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/intel.icd \"${CMAKE_INSTALL_FULL_LIBDIR}/intel-opencl/${OCL_ICD_RUNTIME_NAME}\n\" )"
@@ -47,11 +39,6 @@ if(UNIX)
     COMPONENT opencl
   )
   install(FILES ${IGDRCL_BINARY_DIR}/intel.icd DESTINATION ${_dir_etc}/OpenCL/vendors/ COMPONENT opencl)
-
-  install(FILES $<TARGET_FILE:ocloc>
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-    COMPONENT ocloc)
 
   if(NEO_CPACK_GENERATOR)
     set(CPACK_GENERATOR "${NEO_CPACK_GENERATOR}")
@@ -95,7 +82,7 @@ if(UNIX)
   set(CPACK_DEB_COMPONENT_INSTALL ON)
   set(CPACK_RPM_COMPONENT_INSTALL ON)
   set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-  set(CPACK_COMPONENTS_ALL opencl ocloc)
+  get_property(CPACK_COMPONENTS_ALL GLOBAL PROPERTY NEO_COMPONENTS_LIST)
   set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
     /etc/ld.so.conf.d
     /usr/local

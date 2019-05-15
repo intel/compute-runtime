@@ -20,6 +20,12 @@ if(CMAKE_CONFIGURATION_TYPES)
     list(REMOVE_DUPLICATES CMAKE_CONFIGURATION_TYPES)
 endif()
 
+include(GNUInstallDirs)
+
+# define global property where we will collect component list to package
+define_property(GLOBAL PROPERTY NEO_COMPONENTS_LIST BRIEF_DOCS "List of components" FULL_DOCS "List of components to create packages")
+set(GLOBAL PROPERTY NEO_COMPONENTS_LIST "")
+
 set(BRANCH_TYPE "")
 set(BRANCH_DIR_SUFFIX "/${BRANCH_TYPE}")
 
@@ -746,7 +752,6 @@ if(EXISTS ${IGDRCL_SOURCE_DIR}/../internal)
   add_subdirectory_unique(${IGDRCL_SOURCE_DIR}/../internal ${IGDRCL_BUILD_DIR}/internal)
 endif(EXISTS ${IGDRCL_SOURCE_DIR}/../internal)
 
-include(package.cmake)
 add_subdirectory_unique(scripts/lint)
 
 configure_file(config.h.in ${IGDRCL_BUILD_DIR}/config.h)
@@ -758,3 +763,5 @@ configure_file(lib_names.h.in ${IGDRCL_BUILD_DIR}/lib_names.h)
 
 hide_subdir(runtime)
 add_subdirectories()
+
+include(package.cmake)
