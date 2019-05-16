@@ -226,15 +226,6 @@ void DebugSettingsManager<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
 
             if (argInfo.addressQualifier == CL_KERNEL_ARG_ADDRESS_LOCAL) {
                 type = "local";
-            } else if (argInfo.typeStr.find("*") != std::string::npos) {
-                type = "buffer";
-                auto clMem = (const cl_mem)kernel->getKernelArg(i);
-                auto memObj = castToObject<MemObj>(clMem);
-                if (memObj != nullptr) {
-                    ptr = static_cast<char *>(memObj->getCpuAddress());
-                    size = memObj->getSize();
-                    flags = memObj->getFlags();
-                }
             } else if (argInfo.typeStr.find("image") != std::string::npos) {
                 type = "image";
                 auto clMem = (const cl_mem)kernel->getKernelArg(i);
@@ -246,6 +237,15 @@ void DebugSettingsManager<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
                 }
             } else if (argInfo.typeStr.find("sampler") != std::string::npos) {
                 type = "sampler";
+            } else if (argInfo.typeStr.find("*") != std::string::npos) {
+                type = "buffer";
+                auto clMem = (const cl_mem)kernel->getKernelArg(i);
+                auto memObj = castToObject<MemObj>(clMem);
+                if (memObj != nullptr) {
+                    ptr = static_cast<char *>(memObj->getCpuAddress());
+                    size = memObj->getSize();
+                    flags = memObj->getFlags();
+                }
             } else {
                 type = "immediate";
                 auto crossThreadData = kernel->getCrossThreadData();

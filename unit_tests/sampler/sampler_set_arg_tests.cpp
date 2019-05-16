@@ -367,6 +367,32 @@ HWTEST_F(SamplerSetArgTest, setKernelArgWithInvalidSampler) {
     ASSERT_EQ(CL_INVALID_SAMPLER, retVal);
 }
 
+TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndIsSamplerTrueWhenInitializeKernelThenKernelArgumentsTypeIsSamplerObj) {
+    pKernelInfo->kernelArgInfo.resize(2);
+    pKernelInfo->kernelArgInfo[0].typeStr = "sampler*";
+    pKernelInfo->kernelArgInfo[0].isSampler = true;
+    pKernelInfo->kernelArgInfo[1].typeStr = "sampler";
+    pKernelInfo->kernelArgInfo[1].isSampler = true;
+
+    auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, pMockKernell->initialize());
+    EXPECT_EQ(pMockKernell->getKernelArguments()[0].type, MockKernel::SAMPLER_OBJ);
+    EXPECT_EQ(pMockKernell->getKernelArguments()[1].type, MockKernel::SAMPLER_OBJ);
+}
+
+TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndAndIsSamplerFalseWhenInitializeKernelThenKernelArgumentsTypeIsNotSamplerObj) {
+    pKernelInfo->kernelArgInfo.resize(2);
+    pKernelInfo->kernelArgInfo[0].typeStr = "sampler*";
+    pKernelInfo->kernelArgInfo[0].isSampler = false;
+    pKernelInfo->kernelArgInfo[1].typeStr = "sampler";
+    pKernelInfo->kernelArgInfo[1].isSampler = false;
+
+    auto pMockKernell = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, pMockKernell->initialize());
+    EXPECT_NE(pMockKernell->getKernelArguments()[0].type, MockKernel::SAMPLER_OBJ);
+    EXPECT_NE(pMockKernell->getKernelArguments()[1].type, MockKernel::SAMPLER_OBJ);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 struct NormalizedTest
     : public SamplerSetArgFixture,

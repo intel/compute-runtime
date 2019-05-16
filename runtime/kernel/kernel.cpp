@@ -327,13 +327,6 @@ cl_int Kernel::initialize() {
             } else if (argInfo.typeQualifierStr.find("pipe") != std::string::npos) {
                 kernelArgHandlers[i] = &Kernel::setArgPipe;
                 kernelArguments[i].type = PIPE_OBJ;
-            } else if ((argInfo.typeStr.find("*") != std::string::npos) || argInfo.isBuffer) {
-                kernelArgHandlers[i] = &Kernel::setArgBuffer;
-                kernelArguments[i].type = BUFFER_OBJ;
-                usingBuffers = true;
-                allBufferArgsStateful &= static_cast<uint32_t>(argInfo.pureStatefulBufferAccess);
-                this->auxTranslationRequired |= !kernelInfo.kernelArgInfo[i].pureStatefulBufferAccess &&
-                                                HwHelper::renderCompressedBuffersSupported(getDevice().getHardwareInfo());
             } else if (argInfo.isImage) {
                 kernelArgHandlers[i] = &Kernel::setArgImage;
                 kernelArguments[i].type = IMAGE_OBJ;
@@ -343,6 +336,13 @@ cl_int Kernel::initialize() {
                 kernelArgHandlers[i] = &Kernel::setArgSampler;
                 kernelArguments[i].type = SAMPLER_OBJ;
                 DEBUG_BREAK_IF(!(*argInfo.typeStr.c_str() == '\0' || argInfo.typeStr.find("sampler") != std::string::npos));
+            } else if ((argInfo.typeStr.find("*") != std::string::npos) || argInfo.isBuffer) {
+                kernelArgHandlers[i] = &Kernel::setArgBuffer;
+                kernelArguments[i].type = BUFFER_OBJ;
+                usingBuffers = true;
+                allBufferArgsStateful &= static_cast<uint32_t>(argInfo.pureStatefulBufferAccess);
+                this->auxTranslationRequired |= !kernelInfo.kernelArgInfo[i].pureStatefulBufferAccess &&
+                                                HwHelper::renderCompressedBuffersSupported(getDevice().getHardwareInfo());
             } else if (argInfo.isDeviceQueue) {
                 kernelArgHandlers[i] = &Kernel::setArgDevQueue;
                 kernelArguments[i].type = DEVICE_QUEUE_OBJ;
