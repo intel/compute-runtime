@@ -49,7 +49,8 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_common.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_base.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands.h

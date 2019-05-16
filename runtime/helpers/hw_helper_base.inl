@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,20 +20,6 @@
 namespace NEO {
 
 template <typename Family>
-void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
-    coherencyFlag = true;
-}
-
-template <typename Family>
-void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
-}
-
-template <typename Family>
-bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename Family>
 bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const size_t size) const {
     return size > KB;
 }
@@ -49,22 +35,11 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
 }
 
 template <typename Family>
-uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
-    return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice *
-           pHwInfo->gtSystemInfo.ThreadCount / pHwInfo->gtSystemInfo.EUCount;
-}
-
-template <typename Family>
 SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
     if (!debuggingActive) {
         return SipKernelType::Csr;
     }
     return SipKernelType::DbgCsr;
-}
-
-template <typename Family>
-uint32_t HwHelperHw<Family>::getConfigureAddressSpaceMode() {
-    return 0u;
 }
 
 template <typename Family>
@@ -84,16 +59,6 @@ const AubMemDump::LrcaHelper &HwHelperHw<Family>::getCsTraits(aub_stream::Engine
 
 template <typename Family>
 bool HwHelperHw<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename Family>
-bool HwHelperHw<Family>::supportsYTiling() const {
-    return true;
-}
-
-template <typename Family>
-bool HwHelperHw<Family>::timestampPacketWriteSupported() const {
     return false;
 }
 
@@ -173,13 +138,6 @@ size_t HwHelperHw<Family>::getScratchSpaceOffsetFor64bit() {
 }
 
 template <typename Family>
-const std::vector<aub_stream::EngineType> HwHelperHw<Family>::getGpgpuEngineInstances() const {
-    constexpr std::array<aub_stream::EngineType, 2> gpgpuEngineInstances = {{aub_stream::ENGINE_RCS,
-                                                                             aub_stream::ENGINE_RCS}}; // low priority
-    return std::vector<aub_stream::EngineType>(gpgpuEngineInstances.begin(), gpgpuEngineInstances.end());
-}
-
-template <typename Family>
 bool HwHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.EnableLocalMemory.get() != -1) {
         return DebugManager.flags.EnableLocalMemory.get();
@@ -188,11 +146,6 @@ bool HwHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const 
     }
 
     return OSInterface::osEnableLocalMemory && isLocalMemoryEnabled(hwInfo);
-}
-
-template <typename Family>
-std::string HwHelperHw<Family>::getExtensions() const {
-    return "";
 }
 
 template <typename Family>
