@@ -6,7 +6,7 @@
  */
 
 #include "runtime/command_stream/csr_definitions.h"
-#include "runtime/helpers/preamble.inl"
+#include "runtime/helpers/preamble_bdw_plus.inl"
 
 namespace NEO {
 
