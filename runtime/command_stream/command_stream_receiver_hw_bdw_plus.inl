@@ -62,22 +62,6 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() 
 }
 
 template <typename GfxFamily>
-inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble(Device &device) const {
-    size_t size = 0;
-
-    if (mediaVfeStateDirty) {
-        size += sizeof(typename GfxFamily::PIPE_CONTROL) + sizeof(typename GfxFamily::MEDIA_VFE_STATE);
-    }
-    if (!this->isPreambleSent) {
-        size += PreambleHelper<GfxFamily>::getAdditionalCommandsSize(device);
-    }
-    if (!this->isPreambleSent || this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
-        size += PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
-    }
-    return size;
-}
-
-template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceController() {
     scratchSpaceController = std::make_unique<ScratchSpaceControllerBase>(executionEnvironment, *internalAllocationStorage.get());
 }

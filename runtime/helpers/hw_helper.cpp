@@ -40,4 +40,9 @@ bool HwHelper::cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo) {
     return hwInfo.capabilityTable.supportCacheFlushAfterWalker;
 }
 
+uint32_t HwHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
+    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    return hwInfo.gtSystemInfo.EUCount * threadsPerEU;
+}
+
 } // namespace NEO

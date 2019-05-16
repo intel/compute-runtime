@@ -94,6 +94,22 @@ inline void CommandStreamReceiverHw<GfxFamily>::alignToCacheLine(LinearStream &c
 }
 
 template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble(Device &device) const {
+    size_t size = 0;
+
+    if (mediaVfeStateDirty) {
+        size += PreambleHelper<GfxFamily>::getVFECommandsSize();
+    }
+    if (!this->isPreambleSent) {
+        size += PreambleHelper<GfxFamily>::getAdditionalCommandsSize(device);
+    }
+    if (!this->isPreambleSent || this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
+        size += PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
+    }
+    return size;
+}
+
+template <typename GfxFamily>
 inline typename GfxFamily::PIPE_CONTROL *CommandStreamReceiverHw<GfxFamily>::addPipeControlCmd(LinearStream &commandStream) {
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
     auto pCmd = reinterpret_cast<PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));

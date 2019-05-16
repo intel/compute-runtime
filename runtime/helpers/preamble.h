@@ -39,10 +39,10 @@ struct PreambleHelper {
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
     static size_t getAdditionalCommandsSize(const Device &device);
     static size_t getThreadArbitrationCommandsSize();
+    static size_t getVFECommandsSize();
     static size_t getKernelDebuggingCommandsSize(bool debuggingActive);
     static void programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo);
     static uint32_t getUrbEntryAllocationSize();
-    static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
 };
 
 template <PRODUCT_FAMILY ProductFamily>

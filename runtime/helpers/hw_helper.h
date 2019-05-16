@@ -63,6 +63,7 @@ class HwHelper {
     virtual const std::vector<aub_stream::EngineType> getGpgpuEngineInstances() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
     virtual std::string getExtensions() const = 0;
+    static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
 
     static constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
 
