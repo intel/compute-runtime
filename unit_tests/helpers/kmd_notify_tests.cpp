@@ -45,7 +45,6 @@ struct KmdNotifyTests : public ::testing::Test {
         using KmdNotifyHelper::acLineConnected;
         using KmdNotifyHelper::getMicrosecondsSinceEpoch;
         using KmdNotifyHelper::lastWaitForCompletionTimestampUs;
-        using KmdNotifyHelper::maxPowerSavingMode;
         using KmdNotifyHelper::properties;
 
         MockKmdNotifyHelper() = delete;
@@ -319,25 +318,6 @@ TEST_F(KmdNotifyTests, givenDisabledKmdNotifyMechanismWhenAcLineIsDisconnectedTh
     EXPECT_TRUE(timeoutEnabled);
     EXPECT_EQ(KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine, timeout);
     EXPECT_EQ(10000, KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine);
-}
-
-TEST_F(KmdNotifyTests, givenKmdNotifyEnabledWhenInitMaxPowerSavingModeIsCalledThenObtainReturnOneAsWaitValue) {
-    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
-    MockKmdNotifyHelper helper(&(localHwInfo.capabilityTable.kmdNotifyProperties));
-
-    EXPECT_FALSE(helper.maxPowerSavingMode);
-
-    int64_t timeout = 0;
-    bool timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2);
-    EXPECT_TRUE(timeoutEnabled);
-    EXPECT_EQ(2, timeout);
-
-    helper.initMaxPowerSavingMode();
-    EXPECT_TRUE(helper.maxPowerSavingMode);
-    timeoutEnabled = helper.obtainTimeoutParams(timeout, false, 1, 2, 2);
-    EXPECT_TRUE(timeoutEnabled);
-
-    EXPECT_EQ(1, timeout);
 }
 
 TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenAcLineIsDisconnectedThenDontChangeTimeoutValue) {

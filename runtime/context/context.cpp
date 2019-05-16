@@ -166,9 +166,6 @@ bool Context::createImpl(const cl_context_properties *properties,
         if (memoryManager->isAsyncDeleterEnabled()) {
             memoryManager->getDeferredDeleter()->addClient();
         }
-        if (this->sharingFunctions[SharingType::VA_SHARING]) {
-            device->getCommandStreamReceiver().peekKmdNotifyHelper()->initMaxPowerSavingMode();
-        }
     }
 
     for (auto &device : devices) {
