@@ -646,9 +646,9 @@ HWTEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenBufferWithInitializati
     auto myContext = clUniquePtr(new MyMockContext(device.get()));
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(myContext->bcsCsr.get());
 
-    EXPECT_EQ(0u, bcsCsr->blitFromHostPtrCalled);
+    EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
     auto bufferForBlt = clUniquePtr(Buffer::create(myContext.get(), CL_MEM_COPY_HOST_PTR, sizeof(uint32_t), &hostPtr, retVal));
-    EXPECT_EQ(1u, bcsCsr->blitFromHostPtrCalled);
+    EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
 }
 
 TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenNonRenderCompressedBufferWhenCopyFromHostPtrIsRequiredThenDontCallWriteBuffer) {

@@ -12,6 +12,8 @@
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/command_stream/scratch_space_controller.h"
+#include "runtime/context/context.h"
+#include "runtime/device/device.h"
 #include "runtime/event/event.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
@@ -19,6 +21,7 @@
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/timestamp_packet.h"
+#include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
@@ -404,4 +407,22 @@ cl_int CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *s
     return (isMemoryEqual == isEqualMemoryExpected) ? CL_SUCCESS : CL_INVALID_VALUE;
 }
 
+void CommandStreamReceiver::blitWithHostPtr(Buffer &buffer, void *hostPtr, uint64_t hostPtrSize,
+                                            BlitterConstants::BlitWithHostPtrDirection copyDirection) {
+    HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(hostPtrSize), true);
+    bool success = createAllocationForHostSurface(hostPtrSurface, false);
+    UNRECOVERABLE_IF(!success);
+    auto hostPtrAllocation = hostPtrSurface.getAllocation();
+
+    auto device = buffer.getContext()->getDevice(0);
+    auto hostPtrBuffer = std::unique_ptr<Buffer>(Buffer::createBufferHwFromDevice(device, CL_MEM_READ_ONLY, static_cast<size_t>(hostPtrSize),
+                                                                                  hostPtr, hostPtr, hostPtrAllocation,
+                                                                                  true, false, true));
+
+    if (BlitterConstants::BlitWithHostPtrDirection::FromHostPtr == copyDirection) {
+        blitBuffer(buffer, *hostPtrBuffer, hostPtrSize);
+    } else {
+        blitBuffer(*hostPtrBuffer, buffer, hostPtrSize);
+    }
+}
 } // namespace NEO

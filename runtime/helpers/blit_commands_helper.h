@@ -16,7 +16,7 @@ class LinearStream;
 template <typename GfxFamily>
 struct BlitCommandsHelper {
     static size_t estimateBlitCommandsSize(uint64_t copySize);
-    static void dispatchBlitCommandsForBuffer(Buffer &dstBuffer, LinearStream &linearStream, GraphicsAllocation &srcAllocation, uint64_t copySize);
-    static void appendBlitCommandsForBuffer(Buffer &dstBuffer, GraphicsAllocation &srcAllocation, typename GfxFamily::XY_COPY_BLT &blitCmd);
+    static void dispatchBlitCommandsForBuffer(Buffer &dstBuffer, Buffer &srcBuffer, LinearStream &linearStream, uint64_t copySize);
+    static void appendBlitCommandsForBuffer(Buffer &dstBuffer, Buffer &srcBuffer, typename GfxFamily::XY_COPY_BLT &blitCmd);
 };
 } // namespace NEO
