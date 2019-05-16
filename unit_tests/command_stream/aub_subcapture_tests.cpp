@@ -550,3 +550,26 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenKernelNameIsSpec
     EXPECT_FALSE(active);
     EXPECT_FALSE(aubSubCaptureManager.isSubCaptureActive());
 }
+
+TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenPublicInterfacIsCalledThenLockShouldBeAcquired) {
+    AubSubCaptureManagerMock aubSubCaptureManager("");
+    DispatchInfo dispatchInfo;
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
+
+    aubSubCaptureManager.isLocked = false;
+    aubSubCaptureManager.isSubCaptureEnabled();
+    EXPECT_TRUE(aubSubCaptureManager.isLocked);
+
+    aubSubCaptureManager.isLocked = false;
+    aubSubCaptureManager.disableSubCapture();
+    EXPECT_TRUE(aubSubCaptureManager.isLocked);
+
+    aubSubCaptureManager.isLocked = false;
+    aubSubCaptureManager.activateSubCapture(multiDispatchInfo);
+    EXPECT_TRUE(aubSubCaptureManager.isLocked);
+
+    aubSubCaptureManager.isLocked = false;
+    aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo);
+    EXPECT_TRUE(aubSubCaptureManager.isLocked);
+}

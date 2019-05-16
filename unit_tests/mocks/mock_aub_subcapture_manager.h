@@ -57,8 +57,15 @@ class AubSubCaptureManagerMock : public AubSubCaptureManager {
         return externalFileName;
     }
 
+    std::unique_lock<std::mutex> lock() const override {
+        isLocked = true;
+        return std::unique_lock<std::mutex>{mutex};
+    }
+
     using AubSubCaptureManager::generateFilterFileName;
     using AubSubCaptureManager::generateToggleFileName;
+
+    mutable bool isLocked = false;
 
   protected:
     bool isToggledOn = false;

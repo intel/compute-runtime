@@ -7,6 +7,7 @@
 
 #pragma once
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace NEO {
@@ -34,12 +35,9 @@ class AubSubCaptureManager {
         return subCaptureMode > SubCaptureMode::Off;
     }
 
-    inline bool isSubCaptureEnabled() const {
-        return subCaptureIsActive || subCaptureWasActive;
-    }
-    inline void disableSubCapture() {
-        subCaptureIsActive = subCaptureWasActive = false;
-    };
+    bool isSubCaptureEnabled() const;
+
+    void disableSubCapture();
 
     bool activateSubCapture(const MultiDispatchInfo &dispatchInfo);
 
@@ -56,6 +54,7 @@ class AubSubCaptureManager {
     MOCKABLE_VIRTUAL std::string generateToggleFileName(const MultiDispatchInfo &dispatchInfo) const;
     bool isKernelIndexInSubCaptureRange(uint32_t kernelIdx, uint32_t rangeStartIdx, uint32_t rangeEndIdx) const;
     void setDebugManagerFlags() const;
+    MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lock() const;
 
     bool subCaptureIsActive = false;
     bool subCaptureWasActive = false;
@@ -65,5 +64,6 @@ class AubSubCaptureManager {
     std::string initialFileName;
     std::string currentFileName;
     std::unique_ptr<SettingsReader> settingsReader;
+    mutable std::mutex mutex;
 };
 } // namespace NEO

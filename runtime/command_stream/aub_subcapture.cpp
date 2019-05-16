@@ -20,10 +20,24 @@ AubSubCaptureManager::AubSubCaptureManager(const std::string &fileName)
 
 AubSubCaptureManager::~AubSubCaptureManager() = default;
 
+bool AubSubCaptureManager::isSubCaptureEnabled() const {
+    auto guard = this->lock();
+
+    return subCaptureIsActive || subCaptureWasActive;
+}
+
+void AubSubCaptureManager::disableSubCapture() {
+    auto guard = this->lock();
+
+    subCaptureIsActive = subCaptureWasActive = false;
+};
+
 bool AubSubCaptureManager::activateSubCapture(const MultiDispatchInfo &dispatchInfo) {
     if (dispatchInfo.empty()) {
         return false;
     }
+
+    auto guard = this->lock();
 
     subCaptureWasActive = subCaptureIsActive;
     subCaptureIsActive = false;
@@ -47,6 +61,8 @@ bool AubSubCaptureManager::activateSubCapture(const MultiDispatchInfo &dispatchI
 }
 
 const std::string &AubSubCaptureManager::getSubCaptureFileName(const MultiDispatchInfo &dispatchInfo) {
+    auto guard = this->lock();
+
     if (useExternalFileName) {
         currentFileName = getExternalFileName();
     }
@@ -130,14 +146,18 @@ bool AubSubCaptureManager::isSubCaptureFilterActive(const MultiDispatchInfo &dis
 void AubSubCaptureManager::setDebugManagerFlags() const {
     DebugManager.flags.MakeEachEnqueueBlocking.set(!subCaptureIsActive);
     DebugManager.flags.ForceCsrFlushing.set(false);
-    DebugManager.flags.OmitTimestampPacketDependencies.set(false);
     if (!subCaptureIsActive && subCaptureWasActive) {
         DebugManager.flags.ForceCsrFlushing.set(true);
     }
     DebugManager.flags.ForceCsrReprogramming.set(false);
+    DebugManager.flags.OmitTimestampPacketDependencies.set(false);
     if (subCaptureIsActive && !subCaptureWasActive) {
         DebugManager.flags.ForceCsrReprogramming.set(true);
         DebugManager.flags.OmitTimestampPacketDependencies.set(true);
     }
+}
+
+std::unique_lock<std::mutex> AubSubCaptureManager::lock() const {
+    return std::unique_lock<std::mutex>{mutex};
 }
 } // namespace NEO
