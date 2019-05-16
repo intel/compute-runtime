@@ -10,6 +10,6 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(Buffer &buffer, typename GfxFamily::XY_COPY_BLT &blitCmd) {}
+void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(Buffer &dstBuffer, GraphicsAllocation &srcAllocation, typename GfxFamily::XY_COPY_BLT &blitCmd) {}
 
 } // namespace NEO
