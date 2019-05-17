@@ -65,21 +65,16 @@ class CCustomEventListener : public ::testing::TestEventListener {
     }
 
     void OnTestPartResult(const ::testing::TestPartResult &test_part_result) override {
-        printf("\n");
+        if (test_part_result.failed()) {
+            printf("\n");
+        }
         _listener->OnTestPartResult(test_part_result);
     }
 
     void OnTestEnd(const ::testing::TestInfo &test_case) override {
-        if (test_case.result()->Passed())
-            return;
-
-        std::stringstream ss;
-        ss << test_case.test_case_name() << "." << test_case.name();
-
-        if (test_case.result()->Skipped()) {
-            testNamesSkipped.push_back(std::make_pair(ss.str(), currentSeed));
-            std::cout << "[  SKIPPED  ][ " << hardwarePrefix << " ][ " << currentSeed << " ] " << test_case.test_case_name() << "." << test_case.name() << std::endl;
-        } else {
+        if (test_case.result()->Failed()) {
+            std::stringstream ss;
+            ss << test_case.test_case_name() << "." << test_case.name();
             testFailures.push_back(std::make_pair(ss.str(), currentSeed));
             std::cout << "[  FAILED  ][ " << hardwarePrefix << " ][ " << currentSeed << " ] " << test_case.test_case_name() << "." << test_case.name() << std::endl;
         }
@@ -134,12 +129,6 @@ class CCustomEventListener : public ::testing::TestEventListener {
             testsDisabled,
             timeElapsed);
 
-        for (auto skipped : testNamesSkipped) {
-            fprintf(
-                stdout,
-                "[  SKIPPED  ][ %s ][ %u ] %s\n", hardwarePrefix.c_str(), skipped.second, skipped.first.c_str());
-        }
-
         for (auto failure : testFailures)
             fprintf(
                 stdout,
@@ -154,7 +143,6 @@ class CCustomEventListener : public ::testing::TestEventListener {
 
     ::testing::TestEventListener *_listener;
     std::vector<std::pair<std::string, int>> testFailures;
-    std::vector<std::pair<std::string, int>> testNamesSkipped;
 
     int currentSeed = -1;
     std::string hardwarePrefix;
