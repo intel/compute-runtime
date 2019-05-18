@@ -53,28 +53,25 @@ void *MemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
     constexpr size_t minAlignment = 16;
     alignment = std::max(alignment, minAlignment);
     auto restrictions = getAlignedMallocRestrictions();
-    void *ptr = nullptr;
+    void *ptr = alignedMallocWrapper(size, alignment);
 
-    ptr = alignedMallocWrapper(size, alignment);
-    if (restrictions == nullptr) {
+    if (restrictions == nullptr || restrictions->minAddress == 0) {
         return ptr;
-    } else if (restrictions->minAddress == 0) {
-        return ptr;
-    } else {
-        if (restrictions->minAddress > reinterpret_cast<uintptr_t>(ptr) && ptr != nullptr) {
-            StackVec<void *, 100> invalidMemVector;
-            invalidMemVector.push_back(ptr);
-            do {
-                ptr = alignedMallocWrapper(size, alignment);
-                if (restrictions->minAddress > reinterpret_cast<uintptr_t>(ptr) && ptr != nullptr) {
-                    invalidMemVector.push_back(ptr);
-                } else {
-                    break;
-                }
-            } while (1);
-            for (auto &it : invalidMemVector) {
-                alignedFreeWrapper(it);
+    }
+
+    if (restrictions->minAddress > reinterpret_cast<uintptr_t>(ptr) && ptr != nullptr) {
+        StackVec<void *, 100> invalidMemVector;
+        invalidMemVector.push_back(ptr);
+        do {
+            ptr = alignedMallocWrapper(size, alignment);
+            if (restrictions->minAddress > reinterpret_cast<uintptr_t>(ptr) && ptr != nullptr) {
+                invalidMemVector.push_back(ptr);
+            } else {
+                break;
             }
+        } while (1);
+        for (auto &it : invalidMemVector) {
+            alignedFreeWrapper(it);
         }
     }
 
@@ -411,7 +408,8 @@ HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool h
     if (allocation) {
         if (useInternal32BitAllocator(allocation->getAllocationType())) {
             return internalHeapIndex;
-        } else if (allocation->is32BitAllocation()) {
+        }
+        if (allocation->is32BitAllocation()) {
             return HeapIndex::HEAP_EXTERNAL;
         }
     }
