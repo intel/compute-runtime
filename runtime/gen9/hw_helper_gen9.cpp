@@ -33,6 +33,11 @@ void PipeControlHelper<Family>::addPipeControlWA(LinearStream &commandStream) {
     pCmd->setCommandStreamerStallEnable(true);
 }
 
+template <>
+uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
+    return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Gen9);
+}
+
 template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;

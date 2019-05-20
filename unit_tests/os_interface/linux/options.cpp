@@ -22,6 +22,7 @@ const char *libvaDllName = nullptr;
 const char *testDllName = "libtest_dynamic_lib.so";
 const char *gmmDllName = "libmock_gmm.so";
 const char *gmmEntryName = "openMockGmm";
+const char *metricsLibraryDllName = "";
 #endif
 const char *sysFsPciPath = "./test_files";
 } // namespace Os

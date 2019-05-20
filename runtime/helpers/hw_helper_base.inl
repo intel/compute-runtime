@@ -204,4 +204,9 @@ int PipeControlHelper<GfxFamily>::getRequiredPipeControlSize() {
     return pipeControlCount * sizeof(typename GfxFamily::PIPE_CONTROL);
 }
 
+template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::getMetricsLibraryGenId() const {
+    return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Gen9);
+}
+
 } // namespace NEO

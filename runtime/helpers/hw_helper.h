@@ -64,6 +64,7 @@ class HwHelper {
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
     virtual std::string getExtensions() const = 0;
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
+    virtual uint32_t getMetricsLibraryGenId() const = 0;
 
     static constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
 
@@ -154,6 +155,8 @@ class HwHelperHw : public HwHelper {
     bool getEnableLocalMemory(const HardwareInfo &hwInfo) const override;
 
     std::string getExtensions() const override;
+
+    uint32_t getMetricsLibraryGenId() const override;
 
   protected:
     HwHelperHw() = default;

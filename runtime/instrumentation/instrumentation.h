@@ -10,201 +10,162 @@
 #include <cstdint>
 
 namespace NEO {
-
-constexpr unsigned int INSTR_GENERAL_PURPOSE_COUNTERS_COUNT = 4;
-constexpr unsigned int INSTR_MAX_USER_COUNTERS_COUNT = 32;
-constexpr unsigned int INSTR_MMIO_NOOPID = 0x2094;
-constexpr unsigned int INSTR_MMIO_RPSTAT1 = 0xA01C;
-
-constexpr unsigned int INSTR_GTDI_MAX_READ_REGS = 16;
-constexpr unsigned int INSTR_GTDI_PERF_METRICS_OA_COUNT = 36;
-constexpr unsigned int INSTR_GTDI_PERF_METRICS_OA_40b_COUNT = 32;
-constexpr unsigned int INSTR_GTDI_PERF_METRICS_NOA_COUNT = 16;
-constexpr unsigned int INSTR_MAX_CONTEXT_TAGS = 128;
-
-constexpr unsigned int INSTR_MAX_OA_PROLOG = 2;
-constexpr unsigned int INSTR_MAX_OA_EPILOG = 2;
-constexpr unsigned int INSTR_MAX_PM_REGS_BASE = 256;
-constexpr unsigned int INSTR_MAX_PM_REGS = (INSTR_MAX_PM_REGS_BASE + INSTR_MAX_OA_PROLOG + INSTR_MAX_OA_EPILOG);
-
-constexpr unsigned int INSTR_PM_REGS_CFG_INVALID = 0;
-constexpr unsigned int INSTR_READ_REGS_CFG_TAG = 0xFFFFFFFE;
-constexpr unsigned int INSTR_MAX_READ_REGS = 16;
-
 extern const bool haveInstrumentation;
+} // namespace NEO
 
-typedef enum {
-    INSTR_AS_MODE_OFF,
-    INSTR_AS_MODE_EVENT,
-    INSTR_AS_MODE_TIMER,
-    INSTR_AS_MODE_DMA
-} InstrAutoSamplingMode;
+namespace MetricsLibraryApi {
+// Dummy macros.
+#define ML_STDCALL
+#define METRICS_LIBRARY_CONTEXT_CREATE_1_0 "create"
+#define METRICS_LIBRARY_CONTEXT_DELETE_1_0 "delete"
 
-typedef enum GTDI_CONFIGURATION_SET {
-    GTDI_CONFIGURATION_SET_DYNAMIC = 0,
-    GTDI_CONFIGURATION_SET_1,
-    GTDI_CONFIGURATION_SET_2,
-    GTDI_CONFIGURATION_SET_3,
-    GTDI_CONFIGURATION_SET_4,
-    GTDI_CONFIGURATION_SET_COUNT,
-    GTDI_CONFIGURATION_SET_MAX = 0xFFFFFFFF
-} GTDI_CONFIGURATION_SET;
+// Dummy enumerators.
+enum class ClientApi : uint32_t { OpenCL };
+enum class ClientGen : uint32_t { Unknown,
+                                  Gen9,
+                                  Gen11 };
+enum class ValueType : uint32_t { Uint32 };
+enum class GpuConfigurationActivationType : uint32_t { Tbs,
+                                                       EscapeCode };
+enum class ObjectType : uint32_t { QueryHwCounters,
+                                   ConfigurationHwCountersUser,
+                                   ConfigurationHwCountersOa };
+enum class ParameterType : uint32_t { QueryHwCountersReportApiSize,
+                                      QueryHwCountersReportGpuSize };
+enum class StatusCode : uint32_t { Failed,
+                                   IncorrectObject,
+                                   Success };
+enum class GpuCommandBufferType : uint32_t { Render };
 
-enum INSTR_GFX_OFFSETS {
-    INSTR_PERF_CNT_1_DW0 = 0x91B8,
-    INSTR_PERF_CNT_1_DW1 = 0x91BC,
-    INSTR_PERF_CNT_2_DW0 = 0x91C0,
-    INSTR_PERF_CNT_2_DW1 = 0x91C4,
-    INSTR_OA_STATUS = 0x2B08,
-    INSTR_OA_HEAD_PTR = 0x2B0C,
-    INSTR_OA_TAIL_PTR = 0x2B10
+// Dummy handles.
+struct Handle {
+    void *data;
+    bool IsValid() const { return data != nullptr; } // NOLINT
+};
+struct QueryHandle_1_0 : Handle {};
+struct ConfigurationHandle_1_0 : Handle {};
+struct ContextHandle_1_0 : Handle {};
+
+// Dummy structures.
+struct ClientCallbacks_1_0 {};
+
+struct ClientDataWindows_1_0 {
+    void *Device;
+    void *Adapter;
+    void *Escape;
+    bool KmdInstrumentationEnabled;
 };
 
-typedef struct {
+struct ClientDataLinux_1_0 {
+    void *Reserved;
+};
 
-} GTDI_QUERY;
+struct ClientData_1_0 {
+    union {
+        ClientDataWindows_1_0 Windows;
+        ClientDataLinux_1_0 Linux;
+    };
+};
 
-typedef struct {
-    uint32_t contextId[INSTR_MAX_CONTEXT_TAGS];
-    uint32_t count;
-} InstrAllowedContexts;
+struct ConfigurationActivateData_1_0 {
+    GpuConfigurationActivationType Type;
+};
 
-typedef struct {
-    uint64_t counter[INSTR_GTDI_MAX_READ_REGS];
-    uint32_t userCntrCfgId;
-} InstrReportDataUser;
+struct ClientType_1_0 {
+    ClientApi Api;
+    ClientGen Gen;
+};
 
-typedef struct {
-    uint32_t reportId;
-    uint32_t timestamp;
-    uint32_t contextId;
-    uint32_t gpuTicksCounter;
-} InstrReportDataOaHeader;
+struct TypedValue_1_0 {
+    uint32_t ValueUInt32;
+};
 
-typedef struct {
-    uint32_t oaCounter[INSTR_GTDI_PERF_METRICS_OA_COUNT];
-    uint8_t oaCounterHB[INSTR_GTDI_PERF_METRICS_OA_40b_COUNT];
-    uint32_t noaCounter[INSTR_GTDI_PERF_METRICS_NOA_COUNT];
-} InstrReportDataOaData;
+struct GpuMemory_1_0 {
+    uint64_t GpuAddress;
+    void *CpuAddress;
+};
 
-typedef struct {
-    InstrReportDataOaHeader header;
-    InstrReportDataOaData data;
-} InstrReportDataOa;
+struct CommandBufferQueryHwCounters_1_0 {
+    QueryHandle_1_0 Handle;
+    ConfigurationHandle_1_0 HandleUserConfiguration;
+    bool Begin;
+};
 
-typedef struct {
-    uint64_t counter1;
-    uint64_t counter2;
-} InstrReportDataMonitor;
+struct CommandBufferSize_1_0 {
+    uint32_t GpuMemorySize;
+};
 
-typedef struct {
-    InstrReportDataMonitor Gp;
-    InstrReportDataUser User;
-    InstrReportDataOa Oa;
-} InstrReportData;
+struct ConfigurationCreateData_1_0 {
+    ContextHandle_1_0 HandleContext;
+    ObjectType Type;
+};
 
-typedef struct {
-    uint32_t DMAFenceIdBegin;
-    uint32_t DMAFenceIdEnd;
-    uint32_t CoreFreqBegin;
-    uint32_t CoreFreqEnd;
-    InstrReportData HwPerfReportBegin;
-    InstrReportData HwPerfReportEnd;
-    uint32_t OaStatus;
-    uint32_t OaHead;
-    uint32_t OaTail;
-} HwPerfCounters;
+struct CommandBufferData_1_0 {
+    ContextHandle_1_0 HandleContext;
+    ObjectType CommandsType;
+    GpuCommandBufferType Type;
+    GpuMemory_1_0 Allocation;
+    void *Data;
+    uint32_t Size;
+    CommandBufferQueryHwCounters_1_0 QueryHwCounters;
+};
 
-typedef struct {
-    uint32_t Offset;
-    uint32_t BitSize;
-} InstrPmReg;
+struct QueryCreateData_1_0 {
+    ContextHandle_1_0 HandleContext;
+    ObjectType Type;
+    uint32_t Slots;
+};
 
-typedef struct {
-    uint32_t Handle;
-    uint32_t RegsCount;
-} InstrPmRegsOaCountersCfg;
+struct GetReportQuery_1_0 {
+    QueryHandle_1_0 Handle;
 
-typedef struct {
-    uint32_t Handle;
-    uint32_t RegsCount;
-} InstrPmRegsGpCountersCfg;
+    uint32_t Slot;
+    uint32_t SlotsCount;
 
-typedef struct {
-    InstrPmReg Reg[INSTR_MAX_READ_REGS];
-    uint32_t RegsCount;
-} InstrReadRegsCfg;
+    uint32_t DataSize;
+    void *Data;
+};
 
-typedef struct {
-    InstrPmRegsOaCountersCfg OaCounters;
-    InstrPmRegsGpCountersCfg GpCounters;
-    InstrReadRegsCfg ReadRegs;
-} InstrPmRegsCfg;
+struct GetReportData_1_0 {
+    ObjectType Type;
+    GetReportQuery_1_0 Query;
+};
 
-typedef struct {
-    void *hAdapter;
-    void *hDevice;
-    void *pfnEscapeCb;
-    bool DDI;
-} InstrEscCbData;
+struct ContextCreateData_1_0 {
+    ClientData_1_0 *ClientData;
+    ClientCallbacks_1_0 *ClientCallbacks;
+    struct Interface_1_0 *Api;
+};
 
-bool instrAutoSamplingStart(
-    InstrEscCbData cbData,
-    void **ppOAInterface);
+// Dummy functions.
+using ContextCreateFunction_1_0 = StatusCode(ML_STDCALL *)(ClientType_1_0 clientType, struct ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle);
+using ContextDeleteFunction_1_0 = StatusCode(ML_STDCALL *)(const ContextHandle_1_0 handle);
+using GetParameterFunction_1_0 = StatusCode(ML_STDCALL *)(const ParameterType parameter, ValueType *type, TypedValue_1_0 *value);
+using CommandBufferGetFunction_1_0 = StatusCode(ML_STDCALL *)(const CommandBufferData_1_0 *data);
+using CommandBufferGetSizeFunction_1_0 = StatusCode(ML_STDCALL *)(const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size);
+using QueryCreateFunction_1_0 = StatusCode(ML_STDCALL *)(const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle);
+using QueryDeleteFunction_1_0 = StatusCode(ML_STDCALL *)(const QueryHandle_1_0 handle);
+using ConfigurationCreateFunction_1_0 = StatusCode(ML_STDCALL *)(const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle);
+using ConfigurationActivateFunction_1_0 = StatusCode(ML_STDCALL *)(const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData);
+using ConfigurationDeactivateFunction_1_0 = StatusCode(ML_STDCALL *)(const ConfigurationHandle_1_0 handle);
+using ConfigurationDeleteFunction_1_0 = StatusCode(ML_STDCALL *)(const ConfigurationHandle_1_0 handle);
+using GetDataFunction_1_0 = StatusCode(ML_STDCALL *)(GetReportData_1_0 *data);
 
-bool instrAutoSamplingStop(
-    void **ppOAInterface);
+// Dummy interface.
+struct Interface_1_0 {
+    GetParameterFunction_1_0 GetParameter;
 
-bool instrCheckPmRegsCfg(
-    InstrPmRegsCfg *pQueryPmRegsCfg,
-    uint32_t *pLastPmRegsCfgHandle,
-    const void *pASInterface);
+    CommandBufferGetFunction_1_0 CommandBufferGet;
+    CommandBufferGetSizeFunction_1_0 CommandBufferGetSize;
 
-void instrGetPerfCountersQueryData(
-    InstrEscCbData cbData,
-    GTDI_QUERY *pData,
-    HwPerfCounters *pLayout,
-    uint64_t cpuRawTimestamp,
-    void *pASInterface,
-    InstrPmRegsCfg *pPmRegsCfg,
-    bool useMiRPC,
-    bool resetASData = false,
-    const InstrAllowedContexts *pAllowedContexts = nullptr);
+    QueryCreateFunction_1_0 QueryCreate;
+    QueryDeleteFunction_1_0 QueryDelete;
 
-bool instrEscGetPmRegsCfg(
-    InstrEscCbData cbData,
-    uint32_t cfgId,
-    InstrPmRegsCfg *pCfg,
-    InstrAutoSamplingMode *pAutoSampling);
+    ConfigurationCreateFunction_1_0 ConfigurationCreate;
+    ConfigurationActivateFunction_1_0 ConfigurationActivate;
+    ConfigurationDeactivateFunction_1_0 ConfigurationDeactivate;
+    ConfigurationDeleteFunction_1_0 ConfigurationDelete;
 
-bool instrEscHwMetricsEnable(
-    InstrEscCbData cbData,
-    bool enable);
-
-bool instrEscLoadPmRegsCfg(
-    InstrEscCbData cbData,
-    InstrPmRegsCfg *pCfg,
-    bool hardwareAccess = 1);
-
-bool instrEscSetPmRegsCfg(
-    InstrEscCbData cbData,
-    uint32_t count,
-    uint32_t *pOffsets,
-    uint32_t *pValues);
-
-bool instrEscSendReadRegsCfg(
-    InstrEscCbData cbData,
-    uint32_t count,
-    uint32_t *pOffsets,
-    uint32_t *pBitSizes);
-
-bool instrSetAvailable(bool enabled);
-
-void instrEscVerifyEnable(
-    InstrEscCbData cbData);
-
-uint32_t instrSetPlatformInfo(
-    uint32_t productId,
-    void *featureTable);
-
-} // namespace NEO
+    GetDataFunction_1_0 GetData;
+};
+}; // namespace MetricsLibraryApi

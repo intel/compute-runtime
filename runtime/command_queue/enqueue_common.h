@@ -403,11 +403,6 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
     if (event && this->isProfilingEnabled()) {
         // Get allocation for timestamps
         hwTimeStamps = event->getHwTimeStampNode();
-        if (this->isPerfCountersEnabled()) {
-            hwPerfCounter = event->getHwPerfCounterNode();
-            // PERF COUNTER: copy current configuration from queue to event
-            event->copyPerfCounters(this->getPerfCountersConfigData());
-        }
     }
 
     if (parentKernel) {
@@ -419,6 +414,10 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
             devQueueHw->resetDeviceQueue();
             devQueueHw->acquireEMCriticalSection();
         }
+    }
+
+    if (event && this->isPerfCountersEnabled()) {
+        hwPerfCounter = event->getHwPerfCounterNode();
     }
 
     HardwareInterface<GfxFamily>::dispatchWalker(

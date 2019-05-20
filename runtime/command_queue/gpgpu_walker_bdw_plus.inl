@@ -189,31 +189,8 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
         size += 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
     }
     if (reservePerfCounters) {
-        //start cmds
-        //P_C: flush CS & TimeStamp BEGIN
-        size += 2 * sizeof(PIPE_CONTROL);
-        //SRM NOOPID & Frequency
-        size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        //gp registers
-        size += NEO::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        //report perf count
-        size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
-        //user registers
-        size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-
-        //end cmds
-        //P_C: flush CS & TimeStamp END;
-        size += 2 * sizeof(PIPE_CONTROL);
-        //OA buffer (status head, tail)
-        size += 3 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        //report perf count
-        size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
-        //gp registers
-        size += NEO::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        //SRM NOOPID & Frequency
-        size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        //user registers
-        size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        size += commandQueue.getPerfCounters()->getGpuCommandsSize(true);
+        size += commandQueue.getPerfCounters()->getGpuCommandsSize(false);
     }
     size += GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(pKernel);
 

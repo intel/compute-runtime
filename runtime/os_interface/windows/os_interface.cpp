@@ -22,10 +22,6 @@ OSInterface::~OSInterface() {
     delete osInterfaceImpl;
 }
 
-uint32_t OSInterface::getHwContextId() const {
-    return osInterfaceImpl->getHwContextId();
-}
-
 uint32_t OSInterface::getDeviceHandle() const {
     return static_cast<uint32_t>(osInterfaceImpl->getDeviceHandle());
 }

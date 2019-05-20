@@ -792,7 +792,6 @@ struct InternalsEventWithPerfCountersTest
         PerformanceCountersFixture::SetUp();
         InternalsEventTest::SetUp();
         createPerfCounters();
-        performanceCountersBase->initialize(platformDevices[0]);
         pDevice->setPerfCounters(performanceCountersBase.get());
     }
 
@@ -806,9 +805,9 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
     bool ret = false;
-    ret = pCmdQ->setPerfCountersEnabled(true, 1);
+    ret = pCmdQ->setPerfCountersEnabled(true, 0);
     EXPECT_TRUE(ret);
-    ret = pCmdQ->setPerfCountersEnabled(true, 1);
+    ret = pCmdQ->setPerfCountersEnabled(true, 0);
     EXPECT_TRUE(ret);
     MockEvent<Event> *event = new MockEvent<Event>(pCmdQ, CL_COMMAND_MARKER, 0, 0);
     event->setCPUProfilingPath(true);
@@ -834,7 +833,7 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
 HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWhenEnqueuedMarkerThenUseTimeStampNodePerfCounterNode) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
-    pCmdQ->setPerfCountersEnabled(true, 1);
+    pCmdQ->setPerfCountersEnabled(true, 0);
     MockEvent<Event> *event = new MockEvent<Event>(pCmdQ, CL_COMMAND_MARKER, 0, 0);
     event->setCPUProfilingPath(true);
     HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
@@ -862,7 +861,7 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
 TEST_F(InternalsEventWithPerfCountersTest, IsPerfCounter_Enabled) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
-    pCmdQ->setPerfCountersEnabled(true, 2);
+    pCmdQ->setPerfCountersEnabled(true, 0);
     Event *ev = new Event(pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
     EXPECT_TRUE(ev->isProfilingEnabled());
     EXPECT_TRUE(ev->isPerfCountersEnabled());
@@ -1137,57 +1136,6 @@ TEST_F(EventTest, hwTimeStampsMemoryIsPlacedInGraphicsAllocation) {
     EXPECT_LE(timeStamps + 1, ptrOffset(memoryStorage, graphicsAllocationSize));
 }
 
-TEST_F(EventTest, getHwPerfCounterReturnsValidPointer) {
-    std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
-    ASSERT_NE(nullptr, event);
-
-    HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
-    ASSERT_NE(nullptr, perfCounter);
-
-    ASSERT_EQ(0ULL, perfCounter->HWTimeStamp.GlobalStartTS);
-    ASSERT_EQ(0ULL, perfCounter->HWTimeStamp.ContextStartTS);
-    ASSERT_EQ(0ULL, perfCounter->HWTimeStamp.GlobalEndTS);
-    ASSERT_EQ(0ULL, perfCounter->HWTimeStamp.ContextEndTS);
-    ASSERT_EQ(0ULL, perfCounter->HWTimeStamp.GlobalCompleteTS);
-    ASSERT_EQ(0ULL, perfCounter->HWTimeStamp.ContextCompleteTS);
-
-    EXPECT_TRUE(perfCounter->canBeReleased());
-
-    HwPerfCounter *perfCounter2 = event->getHwPerfCounterNode()->tagForCpuAccess;
-    ASSERT_EQ(perfCounter, perfCounter2);
-}
-
-TEST_F(EventTest, getHwPerfCounterAllocationReturnsValidPointer) {
-    std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
-    ASSERT_NE(nullptr, event);
-
-    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getBaseGraphicsAllocation();
-    ASSERT_NE(nullptr, allocation);
-
-    void *memoryStorage = allocation->getUnderlyingBuffer();
-    size_t memoryStorageSize = allocation->getUnderlyingBufferSize();
-
-    EXPECT_NE(nullptr, memoryStorage);
-    EXPECT_GT(memoryStorageSize, 0u);
-}
-
-TEST_F(EventTest, hwPerfCounterMemoryIsPlacedInGraphicsAllocation) {
-    std::unique_ptr<Event> event(new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 0, 0));
-    ASSERT_NE(nullptr, event);
-
-    HwPerfCounter *perfCounter = event->getHwPerfCounterNode()->tagForCpuAccess;
-    ASSERT_NE(nullptr, perfCounter);
-
-    GraphicsAllocation *allocation = event->getHwPerfCounterNode()->getBaseGraphicsAllocation();
-    ASSERT_NE(nullptr, allocation);
-
-    void *memoryStorage = allocation->getUnderlyingBuffer();
-    size_t graphicsAllocationSize = allocation->getUnderlyingBufferSize();
-
-    EXPECT_GE(perfCounter, memoryStorage);
-    EXPECT_LE(perfCounter + 1, ptrOffset(memoryStorage, graphicsAllocationSize));
-}
-
 TEST_F(EventTest, IsPerfCounter_DisabledByNullQueue) {
     Event ev(nullptr, CL_COMMAND_COPY_BUFFER, 3, 0);
     EXPECT_FALSE(ev.isProfilingEnabled());
@@ -1212,24 +1160,13 @@ TEST_F(InternalsEventTest, IsPerfCounter_DisabledByNoPerfCounter) {
     delete pCmdQ;
 }
 
-TEST_F(InternalsEventWithPerfCountersTest, SetPerfCounter_negativeInvalidASInterface) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
-    CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
-    performanceCountersBase->setAutoSamplingStartFunc(autoSamplingStartFailing);
-    bool ret = false;
-    ret = pCmdQ->setPerfCountersEnabled(true, 1);
-    EXPECT_FALSE(ret);
-    delete pCmdQ;
-}
-
 TEST_F(InternalsEventWithPerfCountersTest, SetPerfCounter_AvailFalse) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
 
     bool ret = false;
-    ret = pCmdQ->setPerfCountersEnabled(true, 1);
+    ret = pCmdQ->setPerfCountersEnabled(true, 0);
     EXPECT_TRUE(ret);
-    performanceCountersBase->setAvailableFlag(false);
     ret = pCmdQ->setPerfCountersEnabled(false, 0);
     EXPECT_TRUE(ret);
     performanceCountersBase->shutdown();

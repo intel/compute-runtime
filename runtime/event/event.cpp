@@ -26,6 +26,8 @@
 #include "runtime/utilities/stackvec.h"
 #include "runtime/utilities/tag_allocator.h"
 
+#define OCLRT_NUM_TIMESTAMP_BITS (32)
+
 namespace NEO {
 
 const cl_uint Event::eventNotReady = 0xFFFFFFF0;
@@ -136,9 +138,6 @@ Event::~Event() {
     if (ctx != nullptr) {
         ctx->decRefInternal();
     }
-    if (perfConfigurationData) {
-        delete perfConfigurationData;
-    }
 
     // in case event did not unblock child events before
     unblockEventsBlockedByThis(executionStatus);
@@ -201,12 +200,10 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
         if (!perfCountersEnabled) {
             return CL_INVALID_VALUE;
         }
-        if (!cmdQueue->getPerfCounters()->processEventReport(paramValueSize,
-                                                             paramValue,
-                                                             paramValueSizeRet,
-                                                             getHwPerfCounterNode()->tagForCpuAccess,
-                                                             perfConfigurationData,
-                                                             updateStatusAndCheckCompletion())) {
+        if (!cmdQueue->getPerfCounters()->getApiReport(paramValueSize,
+                                                       paramValue,
+                                                       paramValueSizeRet,
+                                                       updateStatusAndCheckCompletion())) {
             return CL_PROFILING_INFO_NOT_AVAILABLE;
         }
         return CL_SUCCESS;
@@ -701,15 +698,12 @@ TagNode<HwTimeStamps> *Event::getHwTimeStampNode() {
 }
 
 TagNode<HwPerfCounter> *Event::getHwPerfCounterNode() {
-    if (!perfCounterNode) {
-        perfCounterNode = cmdQueue->getCommandStreamReceiver().getEventPerfCountAllocator()->getTag();
+
+    if (!perfCounterNode && cmdQueue->getPerfCounters()) {
+        const uint32_t gpuReportSize = cmdQueue->getPerfCounters()->getGpuReportSize();
+        perfCounterNode = cmdQueue->getCommandStreamReceiver().getEventPerfCountAllocator(gpuReportSize)->getTag();
     }
     return perfCounterNode;
-}
-
-void Event::copyPerfCounters(InstrPmRegsCfg *config) {
-    perfConfigurationData = new InstrPmRegsCfg;
-    memcpy_s(perfConfigurationData, sizeof(InstrPmRegsCfg), config, sizeof(InstrPmRegsCfg));
 }
 
 void Event::addTimestampPacketNodes(const TimestampPacketContainer &inputTimestampPacketContainer) {

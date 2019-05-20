@@ -301,9 +301,10 @@ TEST_F(CommandStreamReceiverTest, whenGetEventTsAllocatorIsCalledItReturnsSameTa
 }
 
 TEST_F(CommandStreamReceiverTest, whenGetEventPerfCountAllocatorIsCalledItReturnsSameTagAllocator) {
-    TagAllocator<HwPerfCounter> *allocator = commandStreamReceiver->getEventPerfCountAllocator();
+    const uint32_t gpuReportSize = 100;
+    TagAllocator<HwPerfCounter> *allocator = commandStreamReceiver->getEventPerfCountAllocator(gpuReportSize);
     EXPECT_NE(nullptr, allocator);
-    TagAllocator<HwPerfCounter> *allocator2 = commandStreamReceiver->getEventPerfCountAllocator();
+    TagAllocator<HwPerfCounter> *allocator2 = commandStreamReceiver->getEventPerfCountAllocator(gpuReportSize);
     EXPECT_EQ(allocator2, allocator);
 }
 

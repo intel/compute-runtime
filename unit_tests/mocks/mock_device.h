@@ -67,7 +67,11 @@ class MockDevice : public Device {
     void injectMemoryManager(MemoryManager *);
 
     void setPerfCounters(PerformanceCounters *perfCounters) {
-        performanceCounters = std::unique_ptr<PerformanceCounters>(perfCounters);
+        if (perfCounters) {
+            performanceCounters = std::unique_ptr<PerformanceCounters>(perfCounters);
+        } else {
+            performanceCounters.release();
+        }
     }
 
     template <typename T>

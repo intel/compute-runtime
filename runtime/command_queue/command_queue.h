@@ -12,8 +12,6 @@
 #include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/task_information.h"
 
-#include "instrumentation.h"
-
 #include <atomic>
 #include <cstdint>
 
@@ -374,22 +372,12 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return perfCountersEnabled;
     }
 
-    InstrPmRegsCfg *getPerfCountersConfigData() {
-        return perfConfigurationData;
-    }
-
     PerformanceCounters *getPerfCounters();
-
-    bool sendPerfCountersConfig();
 
     bool setPerfCountersEnabled(bool perfCountersEnabled, cl_uint configuration);
 
     void setIsSpecialCommandQueue(bool newValue) {
         this->isSpecialCommandQueue = newValue;
-    }
-
-    uint16_t getPerfCountersUserRegistersNumber() const {
-        return perfCountersUserRegistersNumber;
     }
 
     QueuePriority getPriority() const {
@@ -462,11 +450,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     QueueThrottle throttle = QueueThrottle::MEDIUM;
 
     bool perfCountersEnabled = false;
-    cl_uint perfCountersConfig = std::numeric_limits<uint32_t>::max();
-    uint32_t perfCountersUserRegistersNumber = 0;
-    InstrPmRegsCfg *perfConfigurationData = nullptr;
-    uint32_t perfCountersRegsCfgHandle = 0;
-    bool perfCountersRegsCfgPending = false;
 
     LinearStream *commandStream = nullptr;
 

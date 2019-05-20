@@ -7,47 +7,59 @@
 
 #include "mock_performance_counters_win.h"
 
+#include "runtime/os_interface/os_interface.h"
+#include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
 #include "unit_tests/mocks/mock_wddm.h"
+#include "unit_tests/os_interface/windows/mock_os_time_win.h"
 
 namespace NEO {
-MockPerformanceCountersWin::MockPerformanceCountersWin(OSTime *osTime)
-    : PerformanceCounters(osTime), PerformanceCountersWin(osTime), MockPerformanceCounters(osTime) {
-    setAvailableFunc = setAvailable;
-    verifyEnableFunc = verifyEnable;
-    PerfCounterFlagsWin::resetPerfCountersFlags();
-}
-std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(OSTime *osTime) {
-    return std::unique_ptr<PerformanceCounters>(new MockPerformanceCountersWin(osTime));
-}
 
-int PerfCounterFlagsWin::setAvailableFuncCalled;
-int PerfCounterFlagsWin::verifyEnableFuncCalled;
+///////////////////////////////////////////////////////
+// MockPerformanceCounters::create
+///////////////////////////////////////////////////////
+std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(Device *device) {
+    auto performanceCounters = std::unique_ptr<PerformanceCounters>(new MockPerformanceCountersWin(device));
+    auto metricsLibrary = std::make_unique<MockMetricsLibrary>();
+    auto metricsLibraryDll = std::make_unique<MockMetricsLibraryDll>();
 
-bool setAvailable(bool value) {
-    PerfCounterFlagsWin::setAvailableFuncCalled++;
-    return value;
+    metricsLibrary->api = std::make_unique<MockMetricsLibraryValidInterface>();
+    metricsLibrary->osLibrary = std::move(metricsLibraryDll);
+    performanceCounters->setMetricsLibraryInterface(std::move(metricsLibrary));
+
+    return performanceCounters;
 }
 
-void verifyEnable(InstrEscCbData cbData) {
-    PerfCounterFlagsWin::verifyEnableFuncCalled++;
+///////////////////////////////////////////////////////
+// MockPerformanceCountersWin::MockPerformanceCountersWin
+///////////////////////////////////////////////////////
+MockPerformanceCountersWin::MockPerformanceCountersWin(Device *device)
+    : PerformanceCountersWin() {
 }
 
-void PerfCounterFlagsWin::resetPerfCountersFlags() {
-    PerfCounterFlags::resetPerfCountersFlags();
-    PerfCounterFlagsWin::setAvailableFuncCalled = 0;
-    PerfCounterFlagsWin::verifyEnableFuncCalled = 0;
-}
-
+//////////////////////////////////////////////////////
+// PerformanceCountersFixture::createPerfCounters
+//////////////////////////////////////////////////////
 void PerformanceCountersFixture::createPerfCounters() {
-    performanceCountersBase = std::unique_ptr<MockPerformanceCounters>(new MockPerformanceCountersWin(osTimeBase.get()));
+    performanceCountersBase = MockPerformanceCounters::create(device.get());
 }
-void PerformanceCountersFixture::createOsTime() {
-    osTimeBase = std::unique_ptr<MockOSTimeWin>(new MockOSTimeWin(osInterfaceBase.get()));
+
+//////////////////////////////////////////////////////
+// PerformanceCountersFixture::SetUp
+//////////////////////////////////////////////////////
+void PerformanceCountersFixture::SetUp() {
+    device = std::unique_ptr<MockDevice>(new MockDevice());
+    context = std::make_unique<MockContext>(device.get());
+    queue = std::make_unique<MockCommandQueue>(context.get(), device.get(), &queueProperties);
+    osInterface = std::unique_ptr<OSInterface>(new OSInterface());
+    osInterface->get()->setWddm(new WddmMock());
+    device->setOSTime(new MockOSTimeWin(osInterface.get()));
 }
-void PerformanceCountersFixture::fillOsInterface() {
-    osInterfaceBase->get()->setWddm(new WddmMock());
+
+//////////////////////////////////////////////////////
+// PerformanceCountersFixture::TearDown
+//////////////////////////////////////////////////////
+void PerformanceCountersFixture::TearDown() {
 }
-void PerformanceCountersFixture::releaseOsInterface() {
-}
+
 } // namespace NEO

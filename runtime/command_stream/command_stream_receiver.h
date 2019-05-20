@@ -162,7 +162,7 @@ class CommandStreamReceiver {
     OsContext &getOsContext() const { return *osContext; }
 
     TagAllocator<HwTimeStamps> *getEventTsAllocator();
-    TagAllocator<HwPerfCounter> *getEventPerfCountAllocator();
+    TagAllocator<HwPerfCounter> *getEventPerfCountAllocator(const uint32_t tagSize);
     TagAllocator<TimestampPacketStorage> *getTimestampPacketAllocator();
 
     virtual cl_int expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);

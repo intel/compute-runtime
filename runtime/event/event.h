@@ -21,8 +21,6 @@
 #include <cstdint>
 #include <vector>
 
-#define OCLRT_NUM_TIMESTAMP_BITS (32)
-
 namespace NEO {
 template <typename TagType>
 struct TagNode;
@@ -120,8 +118,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     void setPerfCountersEnabled(bool perfCountersEnabled) {
         this->perfCountersEnabled = perfCountersEnabled;
     }
-
-    void copyPerfCounters(InstrPmRegsCfg *config);
 
     TagNode<HwPerfCounter> *getHwPerfCounterNode();
 
@@ -375,7 +371,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     TagNode<HwTimeStamps> *timeStampNode = nullptr;
     TagNode<HwPerfCounter> *perfCounterNode = nullptr;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
-    InstrPmRegsCfg *perfConfigurationData = nullptr;
     //number of events this event depends on
     std::atomic<int> parentCount;
     //event parents

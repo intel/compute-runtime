@@ -21,6 +21,7 @@ const char *gdiDllName = "gdi32_mock.dll";
 const char *gmmDllName = "mock_gmm.dll";
 const char *gmmEntryName = "openMockGmm";
 const char *testDllName = "test_dynamic_lib.dll";
+const char *metricsLibraryDllName = "";
 } // namespace Os
 
 NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {

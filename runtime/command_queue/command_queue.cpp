@@ -90,9 +90,6 @@ CommandQueue::~CommandQueue() {
         }
         delete commandStream;
 
-        if (perfConfigurationData) {
-            delete perfConfigurationData;
-        }
         if (this->perfCountersEnabled) {
             device->getPerformanceCounters()->shutdown();
         }
@@ -275,42 +272,30 @@ bool CommandQueue::setPerfCountersEnabled(bool perfCountersEnabled, cl_uint conf
     if (perfCountersEnabled == this->perfCountersEnabled) {
         return true;
     }
+    // Only dynamic configuration (set 0) is supported.
+    const uint32_t dynamicSet = 0;
+    if (configuration != dynamicSet) {
+        return false;
+    }
     auto perfCounters = device->getPerformanceCounters();
+
     if (perfCountersEnabled) {
         perfCounters->enable();
         if (!perfCounters->isAvailable()) {
             perfCounters->shutdown();
             return false;
         }
-        perfConfigurationData = perfCounters->getPmRegsCfg(configuration);
-        if (perfConfigurationData == nullptr) {
-            perfCounters->shutdown();
-            return false;
-        }
-        InstrReadRegsCfg *pUserCounters = &perfConfigurationData->ReadRegs;
-        for (uint32_t i = 0; i < pUserCounters->RegsCount; ++i) {
-            perfCountersUserRegistersNumber++;
-            if (pUserCounters->Reg[i].BitSize > 32) {
-                perfCountersUserRegistersNumber++;
-            }
-        }
     } else {
-        if (perfCounters->isAvailable()) {
-            perfCounters->shutdown();
-        }
+        perfCounters->shutdown();
     }
-    this->perfCountersConfig = configuration;
+
     this->perfCountersEnabled = perfCountersEnabled;
 
     return true;
-}
+} // namespace NEO
 
 PerformanceCounters *CommandQueue::getPerfCounters() {
     return device->getPerformanceCounters();
-}
-
-bool CommandQueue::sendPerfCountersConfig() {
-    return getPerfCounters()->sendPmRegsCfgCommands(perfConfigurationData, &perfCountersRegsCfgHandle, &perfCountersRegsCfgPending);
 }
 
 cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest) {

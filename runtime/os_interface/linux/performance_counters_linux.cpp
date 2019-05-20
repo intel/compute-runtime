@@ -7,66 +7,58 @@
 
 #include "performance_counters_linux.h"
 
+#include "runtime/device/device.h"
+#include "runtime/helpers/hw_helper.h"
+
 namespace NEO {
+////////////////////////////////////////////////////
+// PerformanceCounters::create
+////////////////////////////////////////////////////
+std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device) {
+    auto counter = std::make_unique<PerformanceCountersLinux>();
+    auto gen = device->getHardwareInfo().platform.eRenderCoreFamily;
+    auto &hwHelper = HwHelper::get(gen);
+    UNRECOVERABLE_IF(counter == nullptr);
 
-std::unique_ptr<PerformanceCounters> PerformanceCounters::create(OSTime *osTime) {
-    return std::unique_ptr<PerformanceCounters>(new PerformanceCountersLinux(osTime));
-}
-PerformanceCountersLinux::PerformanceCountersLinux(OSTime *osTime) : PerformanceCounters(osTime) {
-    mdLibHandle = nullptr;
-    perfmonLoadConfigFunc = nullptr;
-}
-
-PerformanceCountersLinux::~PerformanceCountersLinux() {
-    if (pAutoSamplingInterface) {
-        autoSamplingStopFunc(&pAutoSamplingInterface);
-        pAutoSamplingInterface = nullptr;
-        available = false;
-    }
-
-    if (mdLibHandle) {
-        dlcloseFunc(mdLibHandle);
-        mdLibHandle = nullptr;
-    }
+    counter->clientType.Gen = static_cast<MetricsLibraryApi::ClientGen>(hwHelper.getMetricsLibraryGenId());
+    return counter;
 }
 
-void PerformanceCountersLinux::initialize(const HardwareInfo *hwInfo) {
-    PerformanceCounters::initialize(hwInfo);
-    mdLibHandle = dlopenFunc("libmd.so", RTLD_LAZY | RTLD_LOCAL);
-    if (mdLibHandle) {
-        perfmonLoadConfigFunc = reinterpret_cast<perfmonLoadConfig_t>(dlsymFunc(mdLibHandle, "drm_intel_perfmon_load_config"));
-    }
-    setPlatformInfoFunc(hwInfo->platform.eProductFamily, (void *)(&hwInfo->featureTable));
-}
+//////////////////////////////////////////////////////
+// PerformanceCountersLinux::enableCountersConfiguration
+//////////////////////////////////////////////////////
+bool PerformanceCountersLinux::enableCountersConfiguration() {
+    // Release previous counters configuration so the user
+    // can change configuration between kernels.
+    releaseCountersConfiguration();
 
-void PerformanceCountersLinux::enableImpl() {
-    if (mdLibHandle && perfmonLoadConfigFunc) {
-        PerformanceCounters::enableImpl();
-    }
-}
-
-bool PerformanceCountersLinux::verifyPmRegsCfg(InstrPmRegsCfg *pCfg, uint32_t *pLastPmRegsCfgHandle, bool *pLastPmRegsCfgPending) {
-    if (perfmonLoadConfigFunc == nullptr) {
+    // Create oa configuration.
+    if (!metricsLibrary->oaConfigurationCreate(
+            context,
+            oaConfiguration)) {
+        DEBUG_BREAK_IF(true);
         return false;
     }
-    if (PerformanceCounters::verifyPmRegsCfg(pCfg, pLastPmRegsCfgHandle, pLastPmRegsCfgPending)) {
-        return getPerfmonConfig(pCfg);
-    }
-    return false;
-}
-bool PerformanceCountersLinux::getPerfmonConfig(InstrPmRegsCfg *pCfg) {
-    unsigned int oaCfgHandle = pCfg->OaCounters.Handle;
-    unsigned int gpCfgHandle = pCfg->GpCounters.Handle;
-    int fd = osInterface->get()->getDrm()->getFileDescriptor();
-    if (perfmonLoadConfigFunc(fd, nullptr, &oaCfgHandle, &gpCfgHandle) != 0) {
+
+    // Enable oa configuration.
+    if (!metricsLibrary->oaConfigurationActivate(
+            oaConfiguration)) {
+        DEBUG_BREAK_IF(true);
         return false;
     }
-    if (pCfg->OaCounters.Handle != 0 && oaCfgHandle != pCfg->OaCounters.Handle) {
-        return false;
-    }
-    if (pCfg->GpCounters.Handle != 0 && gpCfgHandle != pCfg->GpCounters.Handle) {
-        return false;
-    }
+
     return true;
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCountersLinux::releaseCountersConfiguration
+//////////////////////////////////////////////////////
+void PerformanceCountersLinux::releaseCountersConfiguration() {
+    // Oa configuration.
+    if (oaConfiguration.IsValid()) {
+        metricsLibrary->oaConfigurationDeactivate(oaConfiguration);
+        metricsLibrary->oaConfigurationDelete(oaConfiguration);
+        oaConfiguration.data = nullptr;
+    }
 }
 } // namespace NEO

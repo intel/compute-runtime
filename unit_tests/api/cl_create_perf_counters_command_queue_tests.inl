@@ -42,7 +42,7 @@ namespace ULT {
 TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenCorrectParamatersWhenCreatingPerfCountersCmdQThenCmdQIsCreatedAndPerfCountersAreEnabled) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
-    cl_uint configuration = 1;
+    cl_uint configuration = 0;
 
     cmdQ = clCreatePerfCountersCommandQueueINTEL(context.get(), clDevice, properties, configuration, &retVal);
     ASSERT_NE(nullptr, cmdQ);
@@ -99,7 +99,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenNullContextWhenCreatingP
 TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenMaximumGtdiConfigurationWhenCreatingPerfCountersCmdQThenOutOfResourcesErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
-    cl_uint configuration = GTDI_CONFIGURATION_SET_MAX;
+    cl_uint configuration = 4;
 
     cmdQ = clCreatePerfCountersCommandQueueINTEL(context.get(), clDevice, properties, configuration, &retVal);
 
@@ -110,7 +110,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenMaximumGtdiConfiguration
 TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenCorrectCmdQWhenEventIsCreatedThenPerfCountersAreEnabled) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
-    cl_uint configuration = 1;
+    cl_uint configuration = 0;
 
     cmdQ = clCreatePerfCountersCommandQueueINTEL(context.get(), clDevice, properties, configuration, &retVal);
     ASSERT_NE(nullptr, cmdQ);
@@ -130,7 +130,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInstrumentationEnabledIs
     hwInfo->capabilityTable.instrumentationEnabled = false;
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
-    cl_uint configuration = 1;
+    cl_uint configuration = 0;
 
     cmdQ = clCreatePerfCountersCommandQueueINTEL(context.get(), clDevice, properties, configuration, &retVal);
     ASSERT_EQ(nullptr, cmdQ);
@@ -146,6 +146,28 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInvalidDeviceWhenCreatin
 
     ASSERT_EQ(nullptr, cmdQ);
     ASSERT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInvalidMetricsLibraryWhenCreatingPerfCountersThenPerfCountersReturnError) {
+    cl_command_queue cmdQ = nullptr;
+    cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
+    cl_uint configuration = 0;
+
+    cmdQ = clCreatePerfCountersCommandQueueINTEL(context.get(), clDevice, properties, configuration, &retVal);
+    auto commandQueueObject = castToObject<CommandQueue>(cmdQ);
+    ASSERT_NE(nullptr, cmdQ);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    auto performanceCounters = commandQueueObject->getPerfCounters();
+    auto metricsLibary = static_cast<MockMetricsLibrary *>(performanceCounters->getMetricsLibraryInterface());
+    metricsLibary->validOpen = false;
+    ASSERT_NE(nullptr, metricsLibary);
+    EXPECT_TRUE(commandQueueObject->isPerfCountersEnabled());
+    EXPECT_TRUE(commandQueueObject->setPerfCountersEnabled(false, 0));
+    EXPECT_FALSE(commandQueueObject->setPerfCountersEnabled(true, 0));
+    EXPECT_FALSE(commandQueueObject->isPerfCountersEnabled());
+
+    retVal = clReleaseCommandQueue(cmdQ);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 } // namespace ULT

@@ -175,24 +175,6 @@ class GpgpuWalkerHelper {
         uint32_t aluRegister,
         uint32_t operation,
         uint32_t mask);
-
-    static void dispatchStoreRegisterCommand(
-        LinearStream *commandStream,
-        uint64_t memoryAddress,
-        uint32_t registerAddress);
-
-    static void dispatchPerfCountersGeneralPurposeCounterCommands(
-        LinearStream *commandStream,
-        uint64_t baseAddress);
-
-    static void dispatchPerfCountersUserCounterCommands(
-        CommandQueue &commandQueue,
-        LinearStream *commandStream,
-        uint64_t baseAddress);
-
-    static void dispatchPerfCountersOABufferStateCommands(
-        TagNode<HwPerfCounter> &hwPerfCounter,
-        LinearStream *commandStream);
 };
 
 template <typename GfxFamily>

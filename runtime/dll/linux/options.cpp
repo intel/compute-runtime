@@ -20,4 +20,11 @@ const char *gmmEntryName = GMM_ENTRY_NAME;
 
 const char *sysFsPciPath = "/sys/bus/pci/devices/";
 const char *tbxLibName = "libtbxAccess.so";
+
+// Os specific Metrics Library name
+#if __x86_64__ || __ppc64__
+const char *metricsLibraryDllName = "libigdml64.so";
+#else
+const char *metricsLibraryDllName = "libigdml32.so";
+#endif
 } // namespace Os

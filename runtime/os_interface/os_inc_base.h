@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,4 +18,7 @@ extern const char *testDllName;
 extern const char *fileSeparator;
 // Pci Path
 extern const char *sysFsPciPath;
+
+// Os specific Metrics Library name
+extern const char *metricsLibraryDllName;
 }; // namespace Os

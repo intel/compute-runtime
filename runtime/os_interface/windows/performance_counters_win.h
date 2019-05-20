@@ -7,18 +7,18 @@
 
 #pragma once
 #include "runtime/os_interface/performance_counters.h"
-#include "runtime/os_interface/windows/os_interface.h"
 
 namespace NEO {
 
 class PerformanceCountersWin : virtual public PerformanceCounters {
   public:
-    PerformanceCountersWin(OSTime *osTime);
-    ~PerformanceCountersWin() override;
-    void initialize(const HardwareInfo *hwInfo) override;
+    PerformanceCountersWin() = default;
+    ~PerformanceCountersWin() override = default;
 
-  protected:
-    decltype(&instrSetAvailable) setAvailableFunc = instrSetAvailable;
-    decltype(&instrEscVerifyEnable) verifyEnableFunc = instrEscVerifyEnable;
+    /////////////////////////////////////////////////////
+    // Gpu oa/mmio configuration.
+    /////////////////////////////////////////////////////
+    bool enableCountersConfiguration() override;
+    void releaseCountersConfiguration() override;
 };
 } // namespace NEO

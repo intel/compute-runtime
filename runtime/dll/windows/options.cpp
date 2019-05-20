@@ -15,4 +15,11 @@ const char *igcDllName = IGC_LIBRARY_NAME;
 const char *gdiDllName = "gdi32.dll";
 const char *gmmDllName = GMM_UMD_DLL;
 const char *gmmEntryName = GMM_ENTRY_NAME;
+
+// Os specific Metrics Library name
+#if _WIN64
+const char *metricsLibraryDllName = "igdml64.dll";
+#else
+const char *metricsLibraryDllName = "igdml32.dll";
+#endif
 } // namespace Os

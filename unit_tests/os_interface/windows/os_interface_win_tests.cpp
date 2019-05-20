@@ -10,11 +10,6 @@
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 
-TEST_F(OsInterfaceTest, givenOsInterfaceWithoutWddmWhenGetHwContextIdIsCalledThenReturnsZero) {
-    auto retVal = osInterface->getHwContextId();
-    EXPECT_EQ(0u, retVal);
-}
-
 TEST_F(OsInterfaceTest, GivenWindowsWhenOsSupportFor64KBpagesIsBeingQueriedThenTrueIsReturned) {
     EXPECT_TRUE(OSInterface::are64kbPagesEnabled());
 }

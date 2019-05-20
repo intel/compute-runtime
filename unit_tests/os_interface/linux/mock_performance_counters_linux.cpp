@@ -7,83 +7,53 @@
 
 #include "mock_performance_counters_linux.h"
 
-#include "unit_tests/os_interface/linux/drm_mock.h"
 #include "unit_tests/os_interface/linux/mock_os_time_linux.h"
+#include "unit_tests/os_interface/mock_performance_counters.h"
 
 namespace NEO {
-MockPerformanceCountersLinux::MockPerformanceCountersLinux(OSTime *osTime)
-    : PerformanceCounters(osTime), PerformanceCountersLinux(osTime), MockPerformanceCounters(osTime) {
-    dlopenFunc = dlopenMockPassing;
-    dlsymFunc = dlsymMockPassing;
-    dlcloseFunc = dlcloseMock;
-    setPlatformInfoFunc = setPlatformInfo;
-    PerfCounterFlagsLinux::resetPerfCountersFlags();
-}
-std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(OSTime *osTime) {
-    return std::unique_ptr<PerformanceCounters>(new MockPerformanceCountersLinux(osTime));
+//////////////////////////////////////////////////////
+// MockPerformanceCountersLinux::MockPerformanceCountersLinux
+//////////////////////////////////////////////////////
+MockPerformanceCountersLinux::MockPerformanceCountersLinux(Device *device)
+    : PerformanceCountersLinux() {
 }
 
-int PerfCounterFlagsLinux::dlopenFuncCalled;
-int PerfCounterFlagsLinux::dlsymFuncCalled;
-int PerfCounterFlagsLinux::dlcloseFuncCalled;
-int PerfCounterFlagsLinux::perfmonLoadConfigCalled;
-int PerfCounterFlagsLinux::setPlatformInfoFuncCalled;
+//////////////////////////////////////////////////////
+// MockPerformanceCounters::create
+//////////////////////////////////////////////////////
+std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(Device *device) {
+    auto performanceCounters = std::unique_ptr<PerformanceCounters>(new MockPerformanceCountersLinux(device));
+    auto metricsLibrary = std::make_unique<MockMetricsLibrary>();
+    auto metricsLibraryDll = std::make_unique<MockMetricsLibraryDll>();
 
-void *dlopenMockPassing(const char *filename, int flag) throw() {
-    PerfCounterFlagsLinux::dlopenFuncCalled++;
-    return new char[1];
-}
-void *dlopenMockFailing(const char *filename, int flag) throw() {
-    PerfCounterFlagsLinux::dlopenFuncCalled++;
-    return nullptr;
-}
-void *dlsymMockPassing(void *handle, const char *symbol) throw() {
-    PerfCounterFlagsLinux::dlsymFuncCalled++;
-    return (void *)perfmonLoadConfigMock;
-}
-void *dlsymMockFailing(void *handle, const char *symbol) throw() {
-    PerfCounterFlagsLinux::dlsymFuncCalled++;
-    return nullptr;
-}
-int dlcloseMock(void *handle) throw() {
-    PerfCounterFlagsLinux::dlcloseFuncCalled++;
-    if (handle) {
-        delete[] static_cast<char *>(handle);
-    }
-    return 0;
-}
-uint32_t setPlatformInfo(uint32_t productId, void *featureTable) {
-    PerfCounterFlagsLinux::setPlatformInfoFuncCalled++;
-    return 0;
-}
-int getTimeFuncPassing(clockid_t clkId, struct timespec *tp) throw() {
-    tp->tv_sec = 0;
-    tp->tv_nsec = 1;
-    return 0;
-}
-int perfmonLoadConfigMock(int fd, drm_intel_context *ctx, uint32_t *oaCfgId, uint32_t *gpCfgId) {
-    PerfCounterFlagsLinux::perfmonLoadConfigCalled++;
-    return 0;
+    metricsLibrary->api = std::make_unique<MockMetricsLibraryValidInterface>();
+    metricsLibrary->osLibrary = std::move(metricsLibraryDll);
+    performanceCounters->setMetricsLibraryInterface(std::move(metricsLibrary));
+
+    return performanceCounters;
 }
 
-void PerfCounterFlagsLinux::resetPerfCountersFlags() {
-    PerfCounterFlags::resetPerfCountersFlags();
-    PerfCounterFlagsLinux::dlopenFuncCalled = 0;
-    PerfCounterFlagsLinux::dlsymFuncCalled = 0;
-    PerfCounterFlagsLinux::dlcloseFuncCalled = 0;
-    PerfCounterFlagsLinux::perfmonLoadConfigCalled = 0;
-    PerfCounterFlagsLinux::setPlatformInfoFuncCalled = 0;
-}
+//////////////////////////////////////////////////////
+// PerformanceCountersFixture::createPerfCounters
+//////////////////////////////////////////////////////
 void PerformanceCountersFixture::createPerfCounters() {
-    performanceCountersBase = std::unique_ptr<MockPerformanceCounters>(new MockPerformanceCountersLinux(osTimeBase.get()));
+    performanceCountersBase = MockPerformanceCounters::create(device.get());
 }
-void PerformanceCountersFixture::createOsTime() {
-    osTimeBase = std::unique_ptr<MockOSTimeLinux>(new MockOSTimeLinux(osInterfaceBase.get()));
+
+//////////////////////////////////////////////////////
+// PerformanceCountersFixture::SetUp
+//////////////////////////////////////////////////////
+void PerformanceCountersFixture::SetUp() {
+    device = std::unique_ptr<MockDevice>(new MockDevice());
+    context = std::make_unique<MockContext>(device.get());
+    queue = std::make_unique<MockCommandQueue>(context.get(), device.get(), &queueProperties);
+    osInterface = std::unique_ptr<OSInterface>(new OSInterface());
+    device->setOSTime(new MockOSTimeLinux(osInterface.get()));
 }
-void PerformanceCountersFixture::fillOsInterface() {
-    osInterfaceBase->get()->setDrm(new DrmMock());
-}
-void PerformanceCountersFixture::releaseOsInterface() {
-    delete static_cast<DrmMock *>(osInterfaceBase->get()->getDrm());
+
+//////////////////////////////////////////////////////
+// PerformanceCountersFixture::TearDown
+//////////////////////////////////////////////////////
+void PerformanceCountersFixture::TearDown() {
 }
 } // namespace NEO

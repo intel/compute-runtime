@@ -122,8 +122,7 @@ bool Device::createDeviceImpl() {
     auto &hwInfo = getHardwareInfo();
     if (osTime->getOSInterface()) {
         if (hwInfo.capabilityTable.instrumentationEnabled) {
-            performanceCounters = createPerformanceCountersFunc(osTime.get());
-            performanceCounters->initialize(&hwInfo);
+            performanceCounters = createPerformanceCountersFunc(this);
         }
     }
 

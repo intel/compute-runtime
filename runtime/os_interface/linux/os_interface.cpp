@@ -19,10 +19,6 @@ OSInterface::~OSInterface() {
     delete osInterfaceImpl;
 }
 
-uint32_t OSInterface::getHwContextId() const {
-    return 0;
-}
-
 bool OSInterface::are64kbPagesEnabled() {
     return osEnabled64kbPages;
 }

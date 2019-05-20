@@ -51,9 +51,11 @@ class TagAllocator {
   public:
     using NodeType = TagNode<TagType>;
 
-    TagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment) : memoryManager(memMngr),
-                                                                                 tagCount(tagCount),
-                                                                                 tagAlignment(tagAlignment) {
+    TagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, size_t tagSize = sizeof(TagType)) : memoryManager(memMngr),
+                                                                                                                   tagCount(tagCount),
+                                                                                                                   tagAlignment(tagAlignment) {
+
+        this->tagSize = alignUp(tagSize, tagAlignment);
         populateFreeTags();
     }
 
@@ -109,6 +111,7 @@ class TagAllocator {
     MemoryManager *memoryManager;
     size_t tagCount;
     size_t tagAlignment;
+    size_t tagSize;
 
     std::mutex allocatorMutex;
 
@@ -126,7 +129,6 @@ class TagAllocator {
     }
 
     void populateFreeTags() {
-        size_t tagSize = alignUp(sizeof(TagType), tagAlignment);
         size_t allocationSizeRequired = tagCount * tagSize;
 
         auto allocationType = TagType::getAllocationType();

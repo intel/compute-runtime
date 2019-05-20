@@ -9,141 +9,238 @@
 #include "runtime/device/device.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/libult/create_command_stream.h"
+#include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_device.h"
+
+#include "instrumentation.h"
 
 namespace NEO {
-class OSInterface;
 
-bool hwMetricsEnableFuncPassing(InstrEscCbData cbData, bool enable);
-bool hwMetricsEnableFuncFailing(InstrEscCbData cbData, bool enable);
-bool autoSamplingStart(InstrEscCbData cbData, void **ppOAInterface);
-bool autoSamplingStartFailing(InstrEscCbData cbData, void **ppOAInterface);
-bool autoSamplingStop(void **ppOAInterface);
-bool getPmRegsCfgPassing(InstrEscCbData cbData, uint32_t cfgId, InstrPmRegsCfg *pCfg, InstrAutoSamplingMode *pAutoSampling);
-bool getPmRegsCfgFailing(InstrEscCbData cbData, uint32_t cfgId, InstrPmRegsCfg *pCfg, InstrAutoSamplingMode *pAutoSampling);
-bool checkPmRegsCfgPassing(InstrPmRegsCfg *pQueryPmRegsCfg, uint32_t *pLastPmRegsCfgHandle, const void *pASInterface);
-bool checkPmRegsCfgFailing(InstrPmRegsCfg *pQueryPmRegsCfg, uint32_t *pLastPmRegsCfgHandle, const void *pASInterface);
-bool loadPmRegsCfgPassing(InstrEscCbData cbData, InstrPmRegsCfg *pCfg, bool hardwareAccess);
-bool loadPmRegsCfgFailing(InstrEscCbData cbData, InstrPmRegsCfg *pCfg, bool hardwareAccess);
-template <typename GTDI_QUERY, typename HwPerfCountersLayout>
-void getPerfCountersQueryData(InstrEscCbData cbData, GTDI_QUERY *pData, HwPerfCountersLayout *pLayout, uint64_t cpuRawTimestamp, void *pASInterface, InstrPmRegsCfg *pPmRegsCfg, bool useMiRPC, bool resetASData = false, const InstrAllowedContexts *pAllowedContexts = NULL);
-bool setPmRegsCfgFuncPassing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pValues);
-bool setPmRegsCfgFuncFailing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pValues);
-bool sendReadRegsCfgFuncPassing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pBitSizes);
-bool sendReadRegsCfgFuncFailing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pBitSizes);
+//////////////////////////////////////////////////////
+// Metrics Library types
+//////////////////////////////////////////////////////
+using MetricsLibraryApi::ClientApi;
+using MetricsLibraryApi::ClientData_1_0;
+using MetricsLibraryApi::ClientGen;
+using MetricsLibraryApi::ClientType_1_0;
+using MetricsLibraryApi::CommandBufferData_1_0;
+using MetricsLibraryApi::CommandBufferSize_1_0;
+using MetricsLibraryApi::ConfigurationHandle_1_0;
+using MetricsLibraryApi::ContextCreateData_1_0;
+using MetricsLibraryApi::ContextHandle_1_0;
+using MetricsLibraryApi::GpuMemory_1_0;
+using MetricsLibraryApi::QueryHandle_1_0;
 
-class PerfCounterFlags {
-  public:
-    static int autoSamplingStarted;
-    static int autoSamplingStopped;
-    static int autoSamplingFuncCalled;
-    static int checkPmRegsCfgCalled;
-    static int escHwMetricsCalled;
-    static int getPerfCountersQueryDataCalled;
-    static int getPmRegsCfgCalled;
-    static int hwMetricsEnableStatus;
-    static int initalizeCalled;
-    static int loadPmRegsCfgCalled;
-    static int setPmRegsCfgCalled;
-    static int sendReadRegsCfgCalled;
-    static void resetPerfCountersFlags();
-};
+//////////////////////////////////////////////////////
+// MI_REPORT_PERF_COUNT definition for all GENs
+//////////////////////////////////////////////////////
+struct MI_REPORT_PERF_COUNT {
+    uint32_t DwordLength : BITFIELD_RANGE(0, 5);
+    uint32_t Reserved_6 : BITFIELD_RANGE(6, 22);
+    uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
+    uint32_t CommandType : BITFIELD_RANGE(29, 31);
+    uint64_t UseGlobalGtt : BITFIELD_RANGE(0, 0);
+    uint64_t Reserved_33 : BITFIELD_RANGE(1, 3);
+    uint64_t CoreModeEnable : BITFIELD_RANGE(4, 4);
+    uint64_t Reserved_37 : BITFIELD_RANGE(5, 5);
+    uint64_t MemoryAddress : BITFIELD_RANGE(6, 63);
+    uint32_t ReportId;
 
-class MockPerformanceCounters : virtual public PerformanceCounters {
-  public:
-    MockPerformanceCounters(OSTime *osTime);
-    static std::unique_ptr<PerformanceCounters> create(OSTime *osTime);
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x2,
+    } DWORD_LENGTH;
 
-    void initialize(const HardwareInfo *hwInfo) override;
+    typedef enum tagMI_COMMAND_OPCODE {
+        MI_COMMAND_OPCODE_MI_REPORT_PERF_COUNT = 0x28,
+    } MI_COMMAND_OPCODE;
 
-    void setEscHwMetricsFunc(decltype(hwMetricsEnableFunc) func) {
-        hwMetricsEnableFunc = func;
-    }
-    void setAutoSamplingStartFunc(decltype(autoSamplingStartFunc) func) {
-        autoSamplingStartFunc = func;
-    }
-    void setGetPmRegsCfgFunc(decltype(getPmRegsCfgFunc) func) {
-        getPmRegsCfgFunc = func;
-    }
-    void setCheckPmRegsCfgFunc(decltype(checkPmRegsCfgFunc) func) {
-        checkPmRegsCfgFunc = func;
-    }
-    void setLoadPmRegsCfgFunc(decltype(loadPmRegsCfgFunc) func) {
-        loadPmRegsCfgFunc = func;
-    }
-    void setSetPmRegsCfgFunc(decltype(setPmRegsCfgFunc) func) {
-        setPmRegsCfgFunc = func;
-    }
-    void setSendReadRegsCfgFunc(decltype(sendReadRegsCfgFunc) func) {
-        sendReadRegsCfgFunc = func;
-    }
-    uint64_t getCpuRawTimestamp() const {
-        return cpuRawTimestamp;
-    }
-    void setAsIface(void *asIface) {
-        pAutoSamplingInterface = asIface;
-    }
-    void setGfxFamily(GFXCORE_FAMILY family) {
-        gfxFamily = family;
-    }
-    uint32_t getReportId() override {
-        return PerformanceCounters::getReportId();
-    }
-    void setAvailableFlag(bool value) {
-        available = value;
-    }
-    GFXCORE_FAMILY getGfxFamily() {
-        return gfxFamily;
-    }
-    InstrEscCbData getCbData() {
-        return cbData;
-    }
-    bool getHwMetricsEnabled() {
-        return hwMetricsEnabled;
-    }
-    bool getUseMIRPC() {
-        return useMIRPC;
-    }
-    void *getPAutoSamplingInterface() {
-        return pAutoSamplingInterface;
-    }
-    uint64_t getCpuRawTimestamp() {
-        return cpuRawTimestamp;
-    }
-    bool getAvailable() {
-        return available;
+    typedef enum tagCOMMAND_TYPE {
+        COMMAND_TYPE_MI_COMMAND = 0x0,
+    } COMMAND_TYPE;
+
+    inline void init(void) {
+        memset(this, 0, sizeof(MI_REPORT_PERF_COUNT));
+        DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        MiCommandOpcode = MI_COMMAND_OPCODE_MI_REPORT_PERF_COUNT;
+        CommandType = COMMAND_TYPE_MI_COMMAND;
     }
 };
 
+// clang-format off
+//////////////////////////////////////////////////////
+// MockMetricsLibrary
+//////////////////////////////////////////////////////
+class MockMetricsLibrary : public MetricsLibrary {
+  public:
+    uint32_t openCount    = 0;
+    uint32_t contextCount = 0;
+    uint32_t queryCount   = 0;
+    bool     validOpen    = true;
+    bool     validGetData = true;
+
+    // Library open / close functions.
+    bool open() override;
+
+    // Context create / destroy functions.
+    bool contextCreate              (const ClientType_1_0 &client, ClientData_1_0& clientData, ContextCreateData_1_0 &createData, ContextHandle_1_0 &handle) override;
+    bool contextDelete              (const ContextHandle_1_0 &handle) override;
+
+    // HwCounters functions.
+    bool hwCountersCreate           (const ContextHandle_1_0 &context, const uint32_t slots, const ConfigurationHandle_1_0 mmio, QueryHandle_1_0 &handle) override;
+    bool hwCountersDelete           (const QueryHandle_1_0 &handle) override;
+    bool hwCountersGetReport        (const QueryHandle_1_0 &handle, const uint32_t slot, const uint32_t slotsCount, const uint32_t dataSize, void *data) override;
+    uint32_t hwCountersGetApiReportSize() override;
+    uint32_t hwCountersGetGpuReportSize() override;
+
+    // Command buffer functions.
+    bool commandBufferGet           (CommandBufferData_1_0 &data) override;
+    bool commandBufferGetSize       (const CommandBufferData_1_0 &commandBufferData, CommandBufferSize_1_0 &commandBufferSize) override;
+
+    // Oa configuration functions.
+    bool oaConfigurationCreate      (const ContextHandle_1_0 &context, ConfigurationHandle_1_0 &handle) override { return true; }
+    bool oaConfigurationDelete      (const ConfigurationHandle_1_0 &handle) override { return true; }
+    bool oaConfigurationActivate    (const ConfigurationHandle_1_0 &handle) override { return true; }
+    bool oaConfigurationDeactivate  (const ConfigurationHandle_1_0 &handle) override { return true; }
+
+    // User mmio configuration functions.
+    bool userConfigurationCreate    (const ContextHandle_1_0 &context, ConfigurationHandle_1_0 &handle) override { return true; }
+    bool userConfigurationDelete    (const ConfigurationHandle_1_0 &handle) override { return true; }
+};
+
+//////////////////////////////////////////////////////
+// MockMetricsLibraryValidInterface
+//////////////////////////////////////////////////////
+class MockMetricsLibraryValidInterface: public MetricsLibraryInterface {
+  public:
+    uint32_t contextCount                 = 0;
+    bool     validCreateConfigurationOa   = true;
+    bool     validCreateConfigurationUser = true;
+    bool     validActivateConfigurationOa = true;
+    bool     validGpuReportSize           = true;
+
+    static StatusCode ML_STDCALL ContextCreate             ( ClientType_1_0 clientType, ContextCreateData_1_0* createData, ContextHandle_1_0* handle );
+    static StatusCode ML_STDCALL ContextDelete             (const ContextHandle_1_0 handle);
+    static StatusCode ML_STDCALL GetParameter              (const ParameterType parameter, ValueType *type, TypedValue_1_0 *value);
+    static StatusCode ML_STDCALL CommandBufferGet          (const CommandBufferData_1_0 *data);
+    static StatusCode ML_STDCALL CommandBufferGetSize      (const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size);
+    static StatusCode ML_STDCALL QueryCreate               (const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle);
+    static StatusCode ML_STDCALL QueryDelete               (const QueryHandle_1_0 handle);
+    static StatusCode ML_STDCALL ConfigurationCreate       (const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle);
+    static StatusCode ML_STDCALL ConfigurationActivate     (const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData);
+    static StatusCode ML_STDCALL ConfigurationDeactivate   (const ConfigurationHandle_1_0 handle) { return StatusCode::Success; }
+    static StatusCode ML_STDCALL ConfigurationDelete       (const ConfigurationHandle_1_0 handle);
+    static StatusCode ML_STDCALL GetData                   (GetReportData_1_0 *data);
+
+    MockMetricsLibraryValidInterface()
+    {
+        contextCreate                     = &ContextCreate;
+        contextDelete                     = &ContextDelete;
+        functions.GetParameter            = &GetParameter;
+        functions.CommandBufferGet        = &CommandBufferGet;
+        functions.CommandBufferGetSize    = &CommandBufferGetSize;
+        functions.QueryCreate             = &QueryCreate;
+        functions.QueryDelete             = &QueryDelete;
+        functions.ConfigurationCreate     = &ConfigurationCreate;
+        functions.ConfigurationActivate   = &ConfigurationActivate;
+        functions.ConfigurationDeactivate = &ConfigurationDeactivate;
+        functions.ConfigurationDelete     = &ConfigurationDelete;
+        functions.GetData                 = &GetData;
+    }
+};
+
+//////////////////////////////////////////////////////
+// MockMetricsLibraryInvalidInterface
+//////////////////////////////////////////////////////
+class MockMetricsLibraryInvalidInterface: public MetricsLibraryInterface {
+  public:
+    static StatusCode ML_STDCALL ContextCreate             ( ClientType_1_0 clientType, ContextCreateData_1_0* createData, ContextHandle_1_0* handle ){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL ContextDelete             (const ContextHandle_1_0 handle){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL GetParameter              (const ParameterType parameter, ValueType *type, TypedValue_1_0 *value){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL CommandBufferGet          (const CommandBufferData_1_0 *data){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL CommandBufferGetSize      (const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL QueryCreate               (const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL QueryDelete               (const QueryHandle_1_0 handle){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL ConfigurationCreate       (const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL ConfigurationActivate     (const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL ConfigurationDeactivate   (const ConfigurationHandle_1_0 handle){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL ConfigurationDelete       (const ConfigurationHandle_1_0 handle){ return StatusCode::Failed;}
+    static StatusCode ML_STDCALL GetData                   (GetReportData_1_0 *data){ return StatusCode::Failed;}
+
+    MockMetricsLibraryInvalidInterface()
+    {
+        contextCreate                     = &ContextCreate;
+        contextDelete                     = &ContextDelete;
+        functions.GetParameter            = &GetParameter;
+        functions.CommandBufferGet        = &CommandBufferGet;
+        functions.CommandBufferGetSize    = &CommandBufferGetSize;
+        functions.QueryCreate             = &QueryCreate;
+        functions.QueryDelete             = &QueryDelete;
+        functions.ConfigurationCreate     = &ConfigurationCreate;
+        functions.ConfigurationActivate   = &ConfigurationActivate;
+        functions.ConfigurationDeactivate = &ConfigurationDeactivate;
+        functions.ConfigurationDelete     = &ConfigurationDelete;
+        functions.GetData                 = &GetData;
+    }
+};
+// clang-format on
+
+//////////////////////////////////////////////////////
+// MockMetricsLibraryDll
+//////////////////////////////////////////////////////
+class MockMetricsLibraryDll : public OsLibrary {
+  public:
+    bool validContextCreate = true;
+    bool validContextDelete = true;
+    bool validIsLoaded = true;
+
+    void *getProcAddress(const std::string &procName) override;
+    bool isLoaded() override;
+};
+
+//////////////////////////////////////////////////////
+// MockPerformanceCounters
+//////////////////////////////////////////////////////
+class MockPerformanceCounters {
+  public:
+    static std::unique_ptr<PerformanceCounters> create(Device *device);
+};
+
+//////////////////////////////////////////////////////
+// PerformanceCountersDeviceFixture
+//////////////////////////////////////////////////////
 struct PerformanceCountersDeviceFixture {
-    virtual void SetUp() {
-        overrideCSR = overrideCommandStreamReceiverCreation;
-        createFunc = Device::createPerformanceCountersFunc;
-        overrideCommandStreamReceiverCreation = true;
-        Device::createPerformanceCountersFunc = MockPerformanceCounters::create;
-    }
-    virtual void TearDown() {
-        overrideCommandStreamReceiverCreation = overrideCSR;
-        Device::createPerformanceCountersFunc = createFunc;
-    }
-    bool overrideCSR;
+    virtual void SetUp();
+    virtual void TearDown();
     decltype(&PerformanceCounters::create) createFunc;
 };
 
+/////////////////////////////////////////////////////
+// PerformanceCountersFixture
+//////////////////////////////////////////////////////
 struct PerformanceCountersFixture {
-
     virtual void SetUp();
-
-    virtual void TearDown() {
-        releaseOsInterface();
-    }
-
+    virtual void TearDown();
     virtual void createPerfCounters();
-    void createOsTime();
-    void fillOsInterface();
-    void releaseOsInterface();
-
-    std::unique_ptr<OSInterface> osInterfaceBase;
-    std::unique_ptr<OSTime> osTimeBase;
-    std::unique_ptr<MockPerformanceCounters> performanceCountersBase;
+    cl_queue_properties queueProperties = {};
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<MockCommandQueue> queue;
+    std::unique_ptr<OSInterface> osInterface;
+    std::unique_ptr<PerformanceCounters> performanceCountersBase;
 };
+
+//////////////////////////////////////////////////////
+// PerformanceCountersMetricsLibraryFixture
+//////////////////////////////////////////////////////
+struct PerformanceCountersMetricsLibraryFixture : PerformanceCountersFixture {
+
+    void SetUp() override;
+    void TearDown() override;
+
+    void createPerformanceCounters(const bool validMetricsLibraryApi, const bool mockMatricsLibrary);
+
+    std::unique_ptr<PerformanceCounters> performanceCountersBase;
+};
+
 } // namespace NEO

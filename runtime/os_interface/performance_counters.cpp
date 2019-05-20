@@ -7,175 +7,240 @@
 
 #include "runtime/os_interface/performance_counters.h"
 
-#include "runtime/helpers/debug_helpers.h"
-#include "runtime/os_interface/os_interface.h"
-#include "runtime/os_interface/os_time.h"
+#include "runtime/utilities/tag_allocator.h"
 
-#include "CL/cl.h"
+using namespace MetricsLibraryApi;
 
 namespace NEO {
-decltype(&instrGetPerfCountersQueryData) getPerfCountersQueryDataFactory[IGFX_MAX_CORE] = {
-    nullptr,
-};
-size_t perfCountersQuerySize[IGFX_MAX_CORE] = {
-    0,
-};
 
-PerformanceCounters::PerformanceCounters(OSTime *osTime) {
-    this->osTime = osTime;
-    DEBUG_BREAK_IF(osTime == nullptr);
-    gfxFamily = IGFX_UNKNOWN_CORE;
-    cbData = {
-        0,
-    };
-    this->osInterface = osTime->getOSInterface();
-    hwMetricsEnabled = false;
-    useMIRPC = false;
-    pAutoSamplingInterface = nullptr;
-    cpuRawTimestamp = 0;
-    refCounter = 0;
-    available = false;
-    reportId = 0;
+//////////////////////////////////////////////////////
+// PerformanceCounters constructor.
+//////////////////////////////////////////////////////
+PerformanceCounters::PerformanceCounters() {
+    metricsLibrary = std::make_unique<MetricsLibrary>();
+    UNRECOVERABLE_IF(metricsLibrary == nullptr);
 }
 
+//////////////////////////////////////////////////////
+// PerformanceCounters::getReferenceNumber
+//////////////////////////////////////////////////////
+uint32_t PerformanceCounters::getReferenceNumber() {
+    std::lock_guard<std::mutex> lockMutex(mutex);
+    return referenceCounter;
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::isAvailable
+//////////////////////////////////////////////////////
+bool PerformanceCounters::isAvailable() {
+    return available;
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::enable
+//////////////////////////////////////////////////////
 void PerformanceCounters::enable() {
-    mutex.lock();
-    std::lock_guard<std::mutex> lg(mutex, std::adopt_lock);
-    if (refCounter == 0) {
-        enableImpl();
+    std::lock_guard<std::mutex> lockMutex(mutex);
+
+    if (referenceCounter == 0) {
+        available = openMetricsLibrary();
     }
-    refCounter++;
+
+    referenceCounter++;
 }
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::shutdown
+//////////////////////////////////////////////////////
 void PerformanceCounters::shutdown() {
-    mutex.lock();
-    std::lock_guard<std::mutex> lg(mutex, std::adopt_lock);
-    if (refCounter >= 1) {
-        if (refCounter == 1) {
-            shutdownImpl();
+    std::lock_guard<std::mutex> lockMutex(mutex);
+
+    if (referenceCounter >= 1) {
+        if (referenceCounter == 1) {
+            available = false;
+            closeMetricsLibrary();
         }
-        refCounter--;
+        referenceCounter--;
     }
 }
 
-void PerformanceCounters::initialize(const HardwareInfo *hwInfo) {
-    useMIRPC = !(hwInfo->workaroundTable.waDoNotUseMIReportPerfCount);
-    gfxFamily = hwInfo->platform.eRenderCoreFamily;
+//////////////////////////////////////////////////////
+// PerformanceCounters::getMetricsLibraryInterface
+//////////////////////////////////////////////////////
+MetricsLibrary *PerformanceCounters::getMetricsLibraryInterface() {
+    return metricsLibrary.get();
+}
 
-    if (getPerfCountersQueryDataFactory[gfxFamily] != nullptr) {
-        getPerfCountersQueryDataFunc = getPerfCountersQueryDataFactory[gfxFamily];
-    } else {
-        perfCountersQuerySize[gfxFamily] = sizeof(GTDI_QUERY);
+//////////////////////////////////////////////////////
+// PerformanceCounters::setMetricsLibraryInterface
+//////////////////////////////////////////////////////
+void PerformanceCounters::setMetricsLibraryInterface(std::unique_ptr<MetricsLibrary> newMetricsLibrary) {
+    metricsLibrary = std::move(newMetricsLibrary);
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::getMetricsLibraryContext
+//////////////////////////////////////////////////////
+ContextHandle_1_0 PerformanceCounters::getMetricsLibraryContext() {
+    return context;
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::openMetricsLibrary
+//////////////////////////////////////////////////////
+bool PerformanceCounters::openMetricsLibrary() {
+
+    // Open metrics library.
+    bool result = metricsLibrary->open();
+    DEBUG_BREAK_IF(!result);
+
+    // Create metrics library context.
+    if (result) {
+        result = metricsLibrary->contextCreate(
+            clientType,
+            clientData,
+            contextData,
+            context);
+
+        // Validate gpu report size.
+        DEBUG_BREAK_IF(!metricsLibrary->hwCountersGetGpuReportSize());
+    }
+
+    // Error handling.
+    if (!result) {
+        closeMetricsLibrary();
+    }
+
+    return result;
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::closeMetricsLibrary
+//////////////////////////////////////////////////////
+void PerformanceCounters::closeMetricsLibrary() {
+    // Destroy oa/user mmio configuration.
+    releaseCountersConfiguration();
+
+    // Destroy hw counters query.
+    if (query.IsValid()) {
+        metricsLibrary->hwCountersDelete(query);
+    }
+
+    // Destroy metrics library context.
+    if (context.IsValid()) {
+        metricsLibrary->contextDelete(context);
     }
 }
-void PerformanceCounters::enableImpl() {
-    hwMetricsEnabled = hwMetricsEnableFunc(cbData, true);
 
-    if (!pAutoSamplingInterface && hwMetricsEnabled) {
-        autoSamplingStartFunc(cbData, &pAutoSamplingInterface);
-        if (pAutoSamplingInterface) {
-            available = true;
+//////////////////////////////////////////////////////
+// PerformanceCounters::getQueryHandle
+//////////////////////////////////////////////////////
+QueryHandle_1_0 PerformanceCounters::getQueryHandle() {
+    if (!query.IsValid()) {
+        metricsLibrary->hwCountersCreate(
+            context,
+            1,
+            userConfiguration,
+            query);
+    }
+
+    DEBUG_BREAK_IF(!query.IsValid());
+    return query;
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::getGpuCommandsSize
+//////////////////////////////////////////////////////
+uint32_t PerformanceCounters::getGpuCommandsSize(
+    const bool begin) {
+    CommandBufferData_1_0 bufferData = {};
+    CommandBufferSize_1_0 bufferSize = {};
+
+    if (begin) {
+        // Load currently activated (through metrics discovery) oa/user mmio configuration and use it.
+        // It will allow to change counters configuration between subsequent clEnqueueNDCommandRange calls.
+        if (!enableCountersConfiguration()) {
+            return 0;
         }
     }
+
+    bufferData.HandleContext = context;
+    bufferData.Type = GpuCommandBufferType::Render;
+    bufferData.CommandsType = ObjectType::QueryHwCounters;
+
+    bufferData.QueryHwCounters.Begin = begin;
+    bufferData.QueryHwCounters.Handle = getQueryHandle();
+    bufferData.QueryHwCounters.HandleUserConfiguration = userConfiguration;
+
+    return metricsLibrary->commandBufferGetSize(bufferData, bufferSize)
+               ? bufferSize.GpuMemorySize
+               : 0;
 }
-void PerformanceCounters::shutdownImpl() {
-    if (hwMetricsEnabled) {
-        hwMetricsEnableFunc(cbData, false);
-        hwMetricsEnabled = false;
-    }
-    if (pAutoSamplingInterface) {
-        autoSamplingStopFunc(&pAutoSamplingInterface);
-        pAutoSamplingInterface = nullptr;
-        available = false;
-    }
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::getGpuCommands
+//////////////////////////////////////////////////////
+bool PerformanceCounters::getGpuCommands(
+    TagNode<HwPerfCounter> &performanceCounters,
+    const bool begin,
+    const uint32_t bufferSize,
+    void *pBuffer) {
+    // Command Buffer data.
+    CommandBufferData_1_0 bufferData = {};
+    bufferData.HandleContext = context;
+    bufferData.Type = GpuCommandBufferType::Render;
+    bufferData.CommandsType = ObjectType::QueryHwCounters;
+    bufferData.Data = pBuffer;
+    bufferData.Size = bufferSize;
+
+    // Gpu memory allocation for query hw counters.
+    bufferData.Allocation.CpuAddress = reinterpret_cast<uint8_t *>(performanceCounters.tagForCpuAccess);
+    bufferData.Allocation.GpuAddress = performanceCounters.getGpuAddress();
+
+    // Query hw counters specific data.
+    bufferData.QueryHwCounters.Begin = begin;
+    bufferData.QueryHwCounters.Handle = getQueryHandle();
+    bufferData.QueryHwCounters.HandleUserConfiguration = userConfiguration;
+
+    return metricsLibrary->commandBufferGet(bufferData);
 }
-void PerformanceCounters::setCpuTimestamp() {
-    cpuRawTimestamp = osTime->getCpuRawTimestamp();
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::getApiReportSize
+//////////////////////////////////////////////////////
+uint32_t PerformanceCounters::getApiReportSize() {
+    return metricsLibrary->hwCountersGetApiReportSize();
 }
-InstrPmRegsCfg *PerformanceCounters::getPmRegsCfg(uint32_t configuration) {
-    if (!hwMetricsEnabled) {
-        return nullptr;
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::getGpuReportSize
+//////////////////////////////////////////////////////
+uint32_t PerformanceCounters::getGpuReportSize() {
+    return metricsLibrary->hwCountersGetGpuReportSize();
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::getApiReport
+//////////////////////////////////////////////////////
+bool PerformanceCounters::getApiReport(const size_t inputParamSize, void *pInputParam, size_t *pOutputParamSize, bool isEventComplete) {
+    const uint32_t outputSize = metricsLibrary->hwCountersGetApiReportSize();
+
+    if (pOutputParamSize) {
+        *pOutputParamSize = outputSize;
     }
 
-    switch (configuration) {
-    case GTDI_CONFIGURATION_SET_DYNAMIC:
-    case GTDI_CONFIGURATION_SET_1:
-    case GTDI_CONFIGURATION_SET_2:
-    case GTDI_CONFIGURATION_SET_3:
-        break;
-
-    default:
-        return nullptr;
-    }
-
-    InstrPmRegsCfg *pPmRegsCfg = new InstrPmRegsCfg();
-    pPmRegsCfg->OaCounters.Handle = INSTR_PM_REGS_CFG_INVALID;
-
-    mutex.lock();
-    std::lock_guard<std::mutex> lg(mutex, std::adopt_lock);
-
-    if (getPmRegsCfgFunc(cbData, configuration, pPmRegsCfg, nullptr)) {
-        return pPmRegsCfg;
-    }
-    delete pPmRegsCfg;
-    return nullptr;
-}
-bool PerformanceCounters::verifyPmRegsCfg(InstrPmRegsCfg *pCfg, uint32_t *pLastPmRegsCfgHandle, bool *pLastPmRegsCfgPending) {
-    if (pCfg == nullptr || pLastPmRegsCfgHandle == nullptr || pLastPmRegsCfgPending == nullptr) {
-        return false;
-    }
-    if (checkPmRegsCfgFunc(pCfg, pLastPmRegsCfgHandle, pAutoSamplingInterface)) {
-        if (loadPmRegsCfgFunc(cbData, pCfg, 1)) {
-            return true;
-        }
-    }
-    return false;
-}
-bool PerformanceCounters::sendPmRegsCfgCommands(InstrPmRegsCfg *pCfg, uint32_t *pLastPmRegsCfgHandle, bool *pLastPmRegsCfgPending) {
-    if (verifyPmRegsCfg(pCfg, pLastPmRegsCfgHandle, pLastPmRegsCfgPending)) {
-        *pLastPmRegsCfgPending = true;
+    if (pInputParam == nullptr && inputParamSize == 0 && pOutputParamSize) {
         return true;
     }
-    return false;
-}
-bool PerformanceCounters::processEventReport(size_t inputParamSize, void *inputParam, size_t *outputParamSize, HwPerfCounter *pPrivateData, InstrPmRegsCfg *countersConfiguration, bool isEventComplete) {
-    size_t outputSize = perfCountersQuerySize[gfxFamily];
-    if (outputParamSize) {
-        *outputParamSize = outputSize;
-    }
-    if (inputParam == nullptr && inputParamSize == 0 && outputParamSize) {
-        return true;
-    }
-    if (inputParam == nullptr || isEventComplete == false) {
+
+    if (pInputParam == nullptr || isEventComplete == false) {
         return false;
     }
+
     if (inputParamSize < outputSize) {
         return false;
     }
-    GTDI_QUERY *pClientData = static_cast<GTDI_QUERY *>(inputParam);
-    getPerfCountersQueryDataFunc(cbData, pClientData, &pPrivateData->HWPerfCounters,
-                                 cpuRawTimestamp, pAutoSamplingInterface, countersConfiguration, useMIRPC, true, nullptr);
-    return true;
-}
 
-int PerformanceCounters::sendPerfConfiguration(uint32_t count, uint32_t *pOffsets, uint32_t *pValues) {
-    bool ret = false;
-
-    if (count == 0 || pOffsets == NULL || pValues == NULL) {
-        return CL_INVALID_VALUE;
-    }
-
-    mutex.lock();
-    std::lock_guard<std::mutex> lg(mutex, std::adopt_lock);
-    if (pOffsets[0] != INSTR_READ_REGS_CFG_TAG) {
-        ret = setPmRegsCfgFunc(cbData, count, pOffsets, pValues);
-    } else if (count > 1) {
-        ret = sendReadRegsCfgFunc(cbData, count - 1, pOffsets + 1, pValues + 1);
-    }
-
-    return ret ? CL_SUCCESS : CL_PROFILING_INFO_NOT_AVAILABLE;
-}
-
-uint32_t PerformanceCounters::getCurrentReportId() {
-    return (osInterface->getHwContextId() << 12) | getReportId();
+    return metricsLibrary->hwCountersGetReport(query, 0, 1, outputSize, pInputParam);
 }
 } // namespace NEO

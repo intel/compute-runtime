@@ -3374,25 +3374,8 @@ clSetPerformanceConfigurationINTEL(
     cl_uint count,
     cl_uint *offsets,
     cl_uint *values) {
-    Device *pDevice = nullptr;
-
-    auto retVal = validateObjects(WithCastToInternal(device, &pDevice));
-
-    API_ENTER(&retVal);
-    DBG_LOG_INPUTS("device", device,
-                   "count", count,
-                   "offsets", offsets,
-                   "values", values);
-    if (CL_SUCCESS != retVal) {
-        return retVal;
-    }
-    if (!pDevice->getHardwareInfo().capabilityTable.instrumentationEnabled) {
-        retVal = CL_PROFILING_INFO_NOT_AVAILABLE;
-        return retVal;
-    }
-    auto perfCounters = pDevice->getPerformanceCounters();
-    retVal = perfCounters->sendPerfConfiguration(count, offsets, values);
-    return retVal;
+    // Not supported, covered by Metric Library DLL.
+    return CL_INVALID_OPERATION;
 }
 
 void *clHostMemAllocINTEL(

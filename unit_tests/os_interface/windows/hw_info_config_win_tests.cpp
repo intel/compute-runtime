@@ -11,6 +11,8 @@
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 
+#include "instrumentation.h"
+
 namespace NEO {
 
 template <>

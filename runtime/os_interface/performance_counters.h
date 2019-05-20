@@ -7,71 +7,105 @@
 
 #pragma once
 #include "runtime/event/perf_counter.h"
-#include "runtime/helpers/hw_info.h"
+#include "runtime/os_interface/metrics_library.h"
 
-#include "CL/cl.h"
-
-#include <memory>
 #include <mutex>
 
 namespace NEO {
-struct HardwareInfo;
-class OSInterface;
-class OSTime;
 
+//////////////////////////////////////////////////////
+// Forward declaration.
+//////////////////////////////////////////////////////
+template <typename Node>
+struct TagNode;
+
+//////////////////////////////////////////////////////
+// Performance counters implementation.
+//////////////////////////////////////////////////////
 class PerformanceCounters {
   public:
-    static std::unique_ptr<PerformanceCounters> create(OSTime *osTime);
+    //////////////////////////////////////////////////////
+    // Constructor/destructor.
+    //////////////////////////////////////////////////////
+    PerformanceCounters();
     virtual ~PerformanceCounters() = default;
+
+    //////////////////////////////////////////////////////
+    // Performance counters creation.
+    //////////////////////////////////////////////////////
+    static std::unique_ptr<PerformanceCounters> create(class Device *device);
     void enable();
     void shutdown();
-    virtual void initialize(const HardwareInfo *hwInfo);
-    InstrPmRegsCfg *getPmRegsCfg(uint32_t configuration);
-    bool sendPmRegsCfgCommands(InstrPmRegsCfg *pCfg, uint32_t *pLastPmRegsCfgHandle, bool *pLastPmRegsCfgPending);
-    void setCpuTimestamp();
-    bool processEventReport(size_t pClientDataSize, void *pClientData, size_t *outputSize, HwPerfCounter *pPrivateData, InstrPmRegsCfg *countersConfiguration, bool isEventComplete);
-    int sendPerfConfiguration(uint32_t count, uint32_t *pOffsets, uint32_t *pValues);
-    uint32_t getCurrentReportId();
+    bool isAvailable();
+    uint32_t getReferenceNumber();
 
-    uint32_t getPerfCountersReferenceNumber() {
-        mutex.lock();
-        std::lock_guard<std::mutex> lg(mutex, std::adopt_lock);
+    /////////////////////////////////////////////////////
+    // Gpu oa/mmio configuration.
+    /////////////////////////////////////////////////////
+    virtual bool enableCountersConfiguration() = 0;
+    virtual void releaseCountersConfiguration() = 0;
 
-        return refCounter;
-    }
+    //////////////////////////////////////////////////////
+    // Gpu commands.
+    //////////////////////////////////////////////////////
+    uint32_t getGpuCommandsSize(const bool begin);
+    bool getGpuCommands(TagNode<HwPerfCounter> &performanceCounters, const bool begin, const uint32_t bufferSize, void *pBuffer);
 
-    bool isAvailable() {
-        return available;
-    }
+    /////////////////////////////////////////////////////
+    // Gpu/Api reports.
+    /////////////////////////////////////////////////////
+    uint32_t getApiReportSize();
+    uint32_t getGpuReportSize();
+    bool getApiReport(const size_t inputParamSize, void *pClientData, size_t *pOutputSize, bool isEventComplete);
+
+    /////////////////////////////////////////////////////
+    // Metrics Library interface.
+    /////////////////////////////////////////////////////
+    MetricsLibrary *getMetricsLibraryInterface();
+    void setMetricsLibraryInterface(std::unique_ptr<MetricsLibrary> newMetricsLibrary);
+    bool openMetricsLibrary();
+    void closeMetricsLibrary();
+
+    /////////////////////////////////////////////////////
+    // Metrics Library context/query handles.
+    /////////////////////////////////////////////////////
+    ContextHandle_1_0 getMetricsLibraryContext();
+    QueryHandle_1_0 getQueryHandle();
 
   protected:
-    PerformanceCounters(OSTime *osTime);
-    virtual bool verifyPmRegsCfg(InstrPmRegsCfg *pCfg, uint32_t *pLastPmRegsCfgHandle, bool *pLastPmRegsCfgPending);
-    virtual void enableImpl();
-    void shutdownImpl();
-    MOCKABLE_VIRTUAL uint32_t getReportId() {
-        return ++reportId & 0xFFF;
-    }
-    GFXCORE_FAMILY gfxFamily;
-    InstrEscCbData cbData;
-    OSInterface *osInterface;
-    OSTime *osTime;
-    bool hwMetricsEnabled;
-    bool useMIRPC;
-    void *pAutoSamplingInterface;
-    uint64_t cpuRawTimestamp;
+    /////////////////////////////////////////////////////
+    // Common members.
+    /////////////////////////////////////////////////////
     std::mutex mutex;
-    uint32_t refCounter;
-    bool available;
-    uint32_t reportId;
-    decltype(&instrAutoSamplingStart) autoSamplingStartFunc = instrAutoSamplingStart;
-    decltype(&instrAutoSamplingStop) autoSamplingStopFunc = instrAutoSamplingStop;
-    decltype(&instrCheckPmRegsCfg) checkPmRegsCfgFunc = instrCheckPmRegsCfg;
-    decltype(&instrGetPerfCountersQueryData) getPerfCountersQueryDataFunc = instrGetPerfCountersQueryData;
-    decltype(&instrEscGetPmRegsCfg) getPmRegsCfgFunc = instrEscGetPmRegsCfg;
-    decltype(&instrEscHwMetricsEnable) hwMetricsEnableFunc = instrEscHwMetricsEnable;
-    decltype(&instrEscLoadPmRegsCfg) loadPmRegsCfgFunc = instrEscLoadPmRegsCfg;
-    decltype(&instrEscSetPmRegsCfg) setPmRegsCfgFunc = instrEscSetPmRegsCfg;
-    decltype(&instrEscSendReadRegsCfg) sendReadRegsCfgFunc = instrEscSendReadRegsCfg;
+    uint32_t referenceCounter = 0;
+    bool available = false;
+
+    /////////////////////////////////////////////////////
+    // Metrics Library interface.
+    /////////////////////////////////////////////////////
+    std::unique_ptr<MetricsLibrary> metricsLibrary = {};
+
+    /////////////////////////////////////////////////////
+    // Metrics Library client data.
+    /////////////////////////////////////////////////////
+    ClientData_1_0 clientData = {};
+    ClientType_1_0 clientType = {ClientApi::OpenCL, ClientGen::Unknown};
+
+    /////////////////////////////////////////////////////
+    // Metrics Library context.
+    /////////////////////////////////////////////////////
+    ContextCreateData_1_0 contextData = {};
+    ContextHandle_1_0 context = {};
+
+    /////////////////////////////////////////////////////
+    // Metrics Library oa/mmio counters configuration.
+    /////////////////////////////////////////////////////
+    ConfigurationHandle_1_0 oaConfiguration = {};
+    ConfigurationHandle_1_0 userConfiguration = {};
+
+    /////////////////////////////////////////////////////
+    // Metrics Library query object.
+    /////////////////////////////////////////////////////
+    QueryHandle_1_0 query = {};
 };
 } // namespace NEO

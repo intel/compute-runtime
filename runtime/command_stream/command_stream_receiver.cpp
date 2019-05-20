@@ -414,9 +414,9 @@ TagAllocator<HwTimeStamps> *CommandStreamReceiver::getEventTsAllocator() {
     return profilingTimeStampAllocator.get();
 }
 
-TagAllocator<HwPerfCounter> *CommandStreamReceiver::getEventPerfCountAllocator() {
+TagAllocator<HwPerfCounter> *CommandStreamReceiver::getEventPerfCountAllocator(const uint32_t tagSize) {
     if (perfCounterAllocator.get() == nullptr) {
-        perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize);
+        perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, tagSize);
     }
     return perfCounterAllocator.get();
 }
