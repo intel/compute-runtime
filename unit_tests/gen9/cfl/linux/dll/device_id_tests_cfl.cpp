@@ -15,7 +15,7 @@
 using namespace NEO;
 
 TEST(CflDeviceIdTest, supportedDeviceId) {
-    std::array<DeviceDescriptor, 23> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 41> expectedDescriptors = {{
         {ICFL_GT1_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
         {ICFL_GT1_S41_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
         {ICFL_GT1_S61_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
@@ -41,6 +41,27 @@ TEST(CflDeviceIdTest, supportedDeviceId) {
         {ICFL_GT3_ULT_28W_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
         {ICFL_GT3_ULT_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
         {ICFL_GT3_U43_ULT_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+
+        // CML GT1
+        {ICFL_GT1_ULT_DEVICE_V0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {ICFL_GT1_ULT_DEVICE_A0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {ICFL_GT1_ULT_DEVICE_S0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {ICFL_GT1_ULT_DEVICE_K0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {ICFL_GT1_ULX_DEVICE_S0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {ICFL_GT1_DT_DEVICE_P0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {ICFL_GT1_DT_DEVICE_G0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {ICFL_GT1_HALO_DEVICE_16_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {ICFL_GT1_HALO_DEVICE_18_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        // CML GT2
+        {ICFL_GT2_ULT_DEVICE_V0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_ULT_DEVICE_A0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_ULT_DEVICE_S0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_ULT_DEVICE_K0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_ULX_DEVICE_S0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_DT_DEVICE_P0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_DT_DEVICE_G0_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_HALO_DEVICE_15_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_HALO_DEVICE_17_ID, &CFL_1x3x8::hwInfo, &CFL_1x3x8::setupHardwareInfo, GTTYPE_GT2},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
