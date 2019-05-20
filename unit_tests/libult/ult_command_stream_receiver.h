@@ -165,9 +165,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return CommandStreamReceiverHw<GfxFamily>::obtainUniqueOwnership();
     }
 
-    void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t sourceSize) override {
+    void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t sourceSize, CsrDependencies &csrDependencies) override {
         blitBufferCalled++;
-        CommandStreamReceiverHw<GfxFamily>::blitBuffer(dstBuffer, srcBuffer, sourceSize);
+        CommandStreamReceiverHw<GfxFamily>::blitBuffer(dstBuffer, srcBuffer, sourceSize, csrDependencies);
     }
 
     std::atomic<uint32_t> recursiveLockCounter;

@@ -725,17 +725,19 @@ bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(cons
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t sourceSize) {
+void CommandStreamReceiverHw<GfxFamily>::blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t sourceSize, CsrDependencies &csrDependencies) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
     UNRECOVERABLE_IF(osContext->getEngineType() != aub_stream::EngineType::ENGINE_BCS);
 
     auto lock = obtainUniqueOwnership();
-    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(sourceSize));
+    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(sourceSize, csrDependencies));
     auto commandStreamStart = commandStream.getUsed();
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
+
+    TimestampPacketHelper::programCsrDependencies<GfxFamily>(commandStream, csrDependencies);
 
     BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(dstBuffer, srcBuffer, commandStream, sourceSize);
 

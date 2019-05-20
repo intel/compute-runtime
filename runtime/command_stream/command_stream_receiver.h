@@ -174,8 +174,9 @@ class CommandStreamReceiver {
         this->latestSentTaskCount = latestSentTaskCount;
     }
 
-    void blitWithHostPtr(Buffer &buffer, void *hostPtr, uint64_t hostPtrSize, BlitterConstants::BlitWithHostPtrDirection copyDirection);
-    virtual void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t sourceSize) = 0;
+    void blitWithHostPtr(Buffer &buffer, void *hostPtr, uint64_t hostPtrSize,
+                         BlitterConstants::BlitWithHostPtrDirection copyDirection, CsrDependencies &csrDependencies);
+    virtual void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t sourceSize, CsrDependencies &csrDependencies) = 0;
 
   protected:
     void cleanupResources();
