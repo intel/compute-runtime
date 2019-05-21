@@ -231,7 +231,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverHwTest, WhenCommandStreamReceiv
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenScratchAllocationIsNotCreated) {
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment);
-    auto scratchController = commandStreamReceiver->scratchSpaceController.get();
+    auto scratchController = commandStreamReceiver->getScratchSpaceController();
 
     bool stateBaseAddressDirty = false;
     bool cfeStateDirty = false;
@@ -243,7 +243,7 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenScratchAl
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddressIsReturned) {
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment);
-    auto scratchController = commandStreamReceiver->scratchSpaceController.get();
+    auto scratchController = commandStreamReceiver->getScratchSpaceController();
 
     bool cfeStateDirty = false;
     bool stateBaseAddressDirty = false;

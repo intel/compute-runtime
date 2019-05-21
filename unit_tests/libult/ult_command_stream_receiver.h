@@ -26,6 +26,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::deviceIndex;
     using BaseClass::dshState;
     using BaseClass::getScratchPatchAddress;
+    using BaseClass::getScratchSpaceController;
     using BaseClass::indirectHeap;
     using BaseClass::iohState;
     using BaseClass::programPreamble;
@@ -58,7 +59,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::requiredScratchSize;
     using BaseClass::CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::samplerCacheFlushRequired;
-    using BaseClass::CommandStreamReceiver::scratchSpaceController;
     using BaseClass::CommandStreamReceiver::stallingPipeControlOnNextFlushRequired;
     using BaseClass::CommandStreamReceiver::submissionAggregator;
     using BaseClass::CommandStreamReceiver::taskCount;
