@@ -8,7 +8,6 @@
 #include "runtime/gen11/hw_cmds_base.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/image.inl"
-#include "runtime/mem_obj/image_base.inl"
 
 #include <map>
 

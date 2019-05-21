@@ -263,4 +263,12 @@ void ImageHw<GfxFamily>::transformImage3dTo2dArray(void *memory) {
     surfaceState->setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
     surfaceState->setSurfaceArray(true);
 }
+
+template <typename GfxFamily>
+void ImageHw<GfxFamily>::setClearColorParams(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm) {
+}
+
+template <typename GfxFamily>
+void ImageHw<GfxFamily>::setAuxParamsForMCSCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
+}
 } // namespace NEO

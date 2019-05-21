@@ -14,7 +14,6 @@ set(RUNTIME_SRCS_MEM_OBJ
   ${CMAKE_CURRENT_SOURCE_DIR}/image.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image.h
   ${CMAKE_CURRENT_SOURCE_DIR}/image.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/image_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/image_factory_init.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/map_operations_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/map_operations_handler.h
