@@ -186,6 +186,7 @@ Drm *Drm::create(int32_t deviceOrdinal) {
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
+    drmObject->queryEngineInfo();
     if (HwHelper::get(device->pHwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*device->pHwInfo)) {
         drmObject->queryMemoryInfo();
     }
