@@ -256,6 +256,14 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddre
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateGshAddressForScratchSpace((expectedScratchAddress - MemoryConstants::pageSize), scratchController->calculateNewGSH()));
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenGshAddressZeroIsReturned) {
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment);
+    auto scratchController = commandStreamReceiver->getScratchSpaceController();
+
+    EXPECT_EQ(nullptr, scratchController->getScratchSpaceAllocation());
+    EXPECT_EQ(0u, scratchController->calculateNewGSH());
+}
+
 struct BcsTests : public CommandStreamReceiverHwTest {
     void SetUp() override {
         CommandStreamReceiverHwTest::SetUp();
