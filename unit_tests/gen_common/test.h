@@ -23,30 +23,38 @@ extern GFXCORE_FAMILY renderCoreFamily;
 #ifdef TESTS_GEN8
 #define BDW_TYPED_TEST_BODY testBodyHw<typename NEO::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily>();
 #define BDW_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename NEO::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily>();
+#define BDW_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
 #else
 #define BDW_TYPED_TEST_BODY
 #define BDW_TYPED_CMDTEST_BODY
+#define BDW_SUPPORTED_TEST(cmdSetBase) false
 #endif
 #ifdef TESTS_GEN9
 #define SKL_TYPED_TEST_BODY testBodyHw<typename NEO::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily>();
 #define SKL_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename NEO::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily>();
+#define SKL_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
 #else
 #define SKL_TYPED_TEST_BODY
 #define SKL_TYPED_CMDTEST_BODY
+#define SKL_SUPPORTED_TEST(cmdSetBase) false
 #endif
 #ifdef TESTS_GEN10
 #define CNL_TYPED_TEST_BODY testBodyHw<typename NEO::GfxFamilyMapper<IGFX_GEN10_CORE>::GfxFamily>();
 #define CNL_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename NEO::GfxFamilyMapper<IGFX_GEN10_CORE>::GfxFamily>();
+#define CNL_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN10_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
 #else
 #define CNL_TYPED_TEST_BODY
 #define CNL_TYPED_CMDTEST_BODY
+#define CNL_SUPPORTED_TEST(cmdSetBase) false
 #endif
 #ifdef TESTS_GEN11
 #define ICL_TYPED_TEST_BODY testBodyHw<typename NEO::GfxFamilyMapper<IGFX_GEN11_CORE>::GfxFamily>();
 #define ICL_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename NEO::GfxFamilyMapper<IGFX_GEN11_CORE>::GfxFamily>();
+#define ICL_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN11_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
 #else
 #define ICL_TYPED_TEST_BODY
 #define ICL_TYPED_CMDTEST_BODY
+#define ICL_SUPPORTED_TEST(cmdSetBase) false
 #endif
 
 #define TO_STR2(x) #x
@@ -195,6 +203,31 @@ extern GFXCORE_FAMILY renderCoreFamily;
 #define PLATFORM_EXCLUDES_CLASS_NAME(test_suite_name, test_name) \
     PLATFORM_EXCLUDES_##test_suite_name##test_name
 
+#define CALL_IF_SUPPORTED(cmdSetBase, expression)              \
+    {                                                          \
+        bool supported = false;                                \
+        switch (::renderCoreFamily) {                          \
+        case IGFX_GEN8_CORE:                                   \
+            supported = BDW_SUPPORTED_TEST(cmdSetBase);        \
+            break;                                             \
+        case IGFX_GEN9_CORE:                                   \
+            supported = SKL_SUPPORTED_TEST(cmdSetBase);        \
+            break;                                             \
+        case IGFX_GEN10_CORE:                                  \
+            supported = CNL_SUPPORTED_TEST(cmdSetBase);        \
+            break;                                             \
+        case IGFX_GEN11_CORE:                                  \
+            supported = ICL_SUPPORTED_TEST(cmdSetBase);        \
+            break;                                             \
+        default:                                               \
+            ASSERT_TRUE((false && "Unknown hardware family")); \
+            break;                                             \
+        }                                                      \
+        if (supported) {                                       \
+            expression;                                        \
+        }                                                      \
+    }
+
 // Macros to provide template based testing.
 // Test can use FamilyType in the test -- equivalent to SKLFamily
 #define HWCMDTEST_TEST_(cmdset_gen_base, test_suite_name, test_name, parent_class, parent_id)             \
@@ -265,12 +298,12 @@ extern GFXCORE_FAMILY renderCoreFamily;
         }                                                                                                 \
         void SetUp() override {                                                                           \
             if (notExcluded()) {                                                                          \
-                parent_class::SetUp();                                                                    \
+                CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::SetUp());                                \
             }                                                                                             \
         }                                                                                                 \
         void TearDown() override {                                                                        \
             if (notExcluded()) {                                                                          \
-                parent_class::TearDown();                                                                 \
+                CALL_IF_SUPPORTED(cmdset_gen_base, parent_class::TearDown());                             \
             }                                                                                             \
         }                                                                                                 \
         static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                             \
