@@ -14,27 +14,24 @@
 
 namespace NEO {
 
-PrintFormatter::PrintFormatter(Kernel &kernelArg, GraphicsAllocation &dataArg) : kernel(kernelArg),
-                                                                                 data(dataArg),
-                                                                                 buffer(nullptr),
-                                                                                 bufferSize(0),
-                                                                                 offset(0) {
+PrintFormatter::PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize,
+                               bool using32BitPointers, const StringMap &stringLiteralMap)
+    : printfOutputBuffer(printfOutputBuffer),
+      printfOutputBufferSize(printfOutputBufferMaxSize),
+      stringLiteralMap(stringLiteralMap),
+      using32BitPointers(using32BitPointers) {
 }
 
 void PrintFormatter::printKernelOutput(const std::function<void(char *)> &print) {
-    offset = 0;
-    buffer = reinterpret_cast<uint8_t *>(data.getUnderlyingBuffer());
+    currentOffset = 0;
 
-    // first 4 bytes of the buffer store it's own size
-    // before reading it size needs to be set to 4 because read() checks bounds and would fail if bufferSize was 0
-    bufferSize = 4;
-    read(&bufferSize);
+    // first 4 bytes of the buffer store the actual size of data that was written by printf from within EUs
+    read(&printfOutputBufferSize);
 
     uint32_t stringIndex = 0;
-
-    while (offset + 4 <= bufferSize) {
+    while (currentOffset + 4 <= printfOutputBufferSize) {
         read(&stringIndex);
-        const char *formatString = kernel.getKernelInfo().queryPrintfString(stringIndex);
+        const char *formatString = queryPrintfString(stringIndex);
         if (formatString != nullptr) {
             printString(formatString, print);
         }
@@ -146,7 +143,7 @@ size_t PrintFormatter::printStringToken(char *output, size_t size, const char *f
     read(&type);
     read(&index);
     if (type == static_cast<int>(PRINTF_DATA_TYPE::STRING)) {
-        return simple_sprintf(output, size, formatString, kernel.getKernelInfo().queryPrintfString(index));
+        return simple_sprintf(output, size, formatString, queryPrintfString(index));
     } else {
         return simple_sprintf(output, size, formatString, 0);
     }
@@ -156,7 +153,7 @@ size_t PrintFormatter::printPointerToken(char *output, size_t size, const char *
     uint64_t value = {0};
     read(&value);
 
-    if (kernel.is32Bit()) {
+    if (using32BitPointers) {
         value &= 0x00000000FFFFFFFF;
     }
 
@@ -196,4 +193,10 @@ bool PrintFormatter::isConversionSpecifier(char c) {
         return false;
     }
 }
+
+const char *PrintFormatter::queryPrintfString(uint32_t index) const {
+    auto stringEntry = stringLiteralMap.find(index);
+    return stringEntry == stringLiteralMap.end() ? nullptr : stringEntry->second.c_str();
+}
+
 } // namespace NEO

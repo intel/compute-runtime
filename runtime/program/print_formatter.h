@@ -15,10 +15,14 @@
 #include <cctype>
 #include <cstdint>
 #include <functional>
+#include <string>
+#include <unordered_map>
 
 extern int memcpy_s(void *dst, size_t destSize, const void *src, size_t count);
 
 namespace NEO {
+
+using StringMap = std::unordered_map<uint32_t, std::string>;
 
 enum class PRINTF_DATA_TYPE : int {
     INVALID,
@@ -40,12 +44,14 @@ enum class PRINTF_DATA_TYPE : int {
 
 class PrintFormatter {
   public:
-    PrintFormatter(Kernel &kernelArg, GraphicsAllocation &dataArg);
+    PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize,
+                   bool using32BitPointers, const StringMap &stringLiteralMap);
     void printKernelOutput(const std::function<void(char *)> &print = [](char *str) { printToSTDOUT(str); });
 
     static const size_t maxPrintfOutputLength = 1024;
 
   protected:
+    const char *queryPrintfString(uint32_t index) const;
     void printString(const char *formatString, const std::function<void(char *)> &print);
     size_t printToken(char *output, size_t size, const char *formatString);
     size_t printStringToken(char *output, size_t size, const char *formatString);
@@ -58,15 +64,15 @@ class PrintFormatter {
 
     template <class T>
     bool read(T *value) {
-        if (offset + sizeof(T) <= bufferSize) {
-            auto srcPtr = reinterpret_cast<T *>(buffer + offset);
+        if (currentOffset + sizeof(T) <= printfOutputBufferSize) {
+            auto srcPtr = reinterpret_cast<const T *>(printfOutputBuffer + currentOffset);
 
             if (isAligned(srcPtr)) {
                 *value = *srcPtr;
             } else {
-                memcpy_s(value, bufferSize - offset, srcPtr, sizeof(T));
+                memcpy_s(value, printfOutputBufferSize - currentOffset, srcPtr, sizeof(T));
             }
-            offset += sizeof(T);
+            currentOffset += sizeof(T);
             return true;
         } else {
             return false;
@@ -101,17 +107,18 @@ class PrintFormatter {
         }
 
         if (sizeof(T) < 4) {
-            offset += (4 - sizeof(T)) * valueCount;
+            currentOffset += (4 - sizeof(T)) * valueCount;
         }
 
         return charactersPrinted;
     }
 
-    Kernel &kernel;
-    GraphicsAllocation &data;
+    const uint8_t *printfOutputBuffer = nullptr; // buffer extracted from the kernel, contains values to be printed
+    uint32_t printfOutputBufferSize = 0;         // size of the data contained in the buffer
 
-    uint8_t *buffer;     // buffer extracted from the kernel, contains values to be printed
-    uint32_t bufferSize; // size of the data contained in the buffer
-    uint32_t offset;     // current position in currently parsed buffer
+    const StringMap &stringLiteralMap;
+    bool using32BitPointers = false;
+
+    uint32_t currentOffset = 0; // current position in currently parsed buffer
 };
 }; // namespace NEO

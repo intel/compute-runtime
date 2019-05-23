@@ -610,14 +610,9 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
 
         auto crossThreadData = reinterpret_cast<uint64_t *>(mockKernel.mockKernel->getCrossThreadData());
 
-        char *testString = new char[sizeof("test")];
-        strcpy_s(testString, sizeof("test"), "test");
+        std::string testString = "test";
 
-        PrintfStringInfo printfStringInfo;
-        printfStringInfo.SizeInBytes = sizeof("test");
-        printfStringInfo.pStringData = testString;
-
-        mockKernel.kernelInfo.patchInfo.stringDataMap.insert(std::make_pair(0, printfStringInfo));
+        mockKernel.kernelInfo.patchInfo.stringDataMap.insert(std::make_pair(0, testString));
 
         cl_uint workDim = 1;
         size_t globalWorkOffset[3] = {0, 0, 0};

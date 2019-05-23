@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,7 +123,7 @@ TEST_F(KernelDataTest, PrintfString) {
 
     buildAndDecode();
 
-    EXPECT_EQ_VAL(0, strcmp(stringValue, pKernelInfo->queryPrintfString(0)));
+    EXPECT_EQ_VAL(0, strcmp(stringValue, pKernelInfo->patchInfo.stringDataMap.find(0)->second.c_str()));
     delete[] pPrintfString;
 }
 

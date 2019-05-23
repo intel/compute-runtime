@@ -58,7 +58,8 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 }
 
 void PrintfHandler::printEnqueueOutput() {
-    PrintFormatter printFormatter(*kernel, *printfSurface);
+    PrintFormatter printFormatter(reinterpret_cast<const uint8_t *>(printfSurface->getUnderlyingBuffer()), static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize()),
+                                  kernel->is32Bit(), kernel->getKernelInfo().patchInfo.stringDataMap);
     printFormatter.printKernelOutput();
 }
 } // namespace NEO

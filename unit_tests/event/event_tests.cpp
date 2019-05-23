@@ -548,19 +548,13 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     pPrintfSurface->DataParamOffset = 0;
     pPrintfSurface->DataParamSize = 8;
 
-    char *testString = new char[sizeof("test")];
-
-    strcpy_s(testString, sizeof("test"), "test");
-
-    PrintfStringInfo printfStringInfo;
-    printfStringInfo.SizeInBytes = sizeof("test");
-    printfStringInfo.pStringData = testString;
+    std::string testString = "test";
 
     MockKernelWithInternals mockKernelWithInternals(*pDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
     KernelInfo *kernelInfo = const_cast<KernelInfo *>(&pKernel->getKernelInfo());
     kernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
-    kernelInfo->patchInfo.stringDataMap.insert(std::make_pair(0, printfStringInfo));
+    kernelInfo->patchInfo.stringDataMap.insert(std::make_pair(0, testString));
     uint64_t crossThread[10];
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 

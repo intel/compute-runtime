@@ -163,8 +163,6 @@ struct KernelInfo {
 
     void storeKernelArgPatchInfo(uint32_t argNum, uint32_t dataSize, uint32_t crossthreadOffset, uint32_t sourceOffset, uint32_t offsetSSH);
 
-    const char *queryPrintfString(uint32_t index) const;
-
     size_t getSamplerStateArrayCount() const;
     size_t getSamplerStateArraySize(const HardwareInfo &hwInfo) const;
     size_t getBorderColorStateSize() const;
