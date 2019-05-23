@@ -551,11 +551,11 @@ void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, 
     multiDispatchInfo.rbegin()->setPipeControlRequired(true);
 }
 
-void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes) {
+void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies) {
     auto allocator = getCommandStreamReceiver().getTimestampPacketAllocator();
 
     previousNodes.swapNodes(*timestampPacketContainer);
-    previousNodes.resolveDependencies(isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get());
+    previousNodes.resolveDependencies(clearAllDependencies);
 
     DEBUG_BREAK_IF(timestampPacketContainer->peekNodes().size() > 0);
 

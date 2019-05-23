@@ -139,6 +139,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     auto devQueue = this->getContext().getDefaultDeviceQueue();
     DeviceQueueHw<GfxFamily> *devQueueHw = castToObject<DeviceQueueHw<GfxFamily>>(devQueue);
+    auto clearAllDependencies = isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get();
 
     TagNode<HwTimeStamps> *hwTimeStamps = nullptr;
 
@@ -205,11 +206,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
-        if (!multiDispatchInfo.empty()) {
-            obtainNewTimestampPacketNodes(estimateTimestampPacketNodesCount(multiDispatchInfo), previousTimestampPacketNodes);
-            csrDeps.push_back(&previousTimestampPacketNodes);
-        } else if (isCacheFlushCommand(commandType)) {
-            obtainNewTimestampPacketNodes(1, previousTimestampPacketNodes);
+        auto nodesCount = !multiDispatchInfo.empty() ? estimateTimestampPacketNodesCount(multiDispatchInfo) : isCacheFlushCommand(commandType) ? 1u : 0u;
+        if (nodesCount > 0) {
+            obtainNewTimestampPacketNodes(nodesCount, previousTimestampPacketNodes, clearAllDependencies);
             csrDeps.push_back(&previousTimestampPacketNodes);
         }
     }
