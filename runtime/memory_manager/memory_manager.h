@@ -198,49 +198,10 @@ class MemoryManager {
     virtual GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) = 0;
     virtual GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) = 0;
     virtual GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) = 0;
-    virtual GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
-        status = AllocationStatus::Error;
-        switch (allocationData.type) {
-        case GraphicsAllocation::AllocationType::IMAGE:
-        case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
-            break;
-        default:
-            if (!allocationData.flags.useSystemMemory && !(allocationData.flags.allow32Bit && this->force32bitAllocations)) {
-                GraphicsAllocation *allocation = nullptr;
-                if (allocationData.type == GraphicsAllocation::AllocationType::SVM_GPU) {
-                    void *cpuAllocation = allocateSystemMemory(allocationData.size, allocationData.alignment);
-                    if (!cpuAllocation) {
-                        return nullptr;
-                    }
-                    uint64_t gpuAddress = reinterpret_cast<uint64_t>(allocationData.hostPtr);
-                    allocation = constructGraphicsAllocation(allocationData.type,
-                                                             cpuAllocation,
-                                                             gpuAddress,
-                                                             allocationData.size, MemoryPool::LocalMemory, false);
-                    allocation->setGpuBaseAddress(gpuAddress);
-                } else {
-                    allocation = allocateGraphicsMemory(allocationData);
-                }
-
-                if (allocation) {
-                    allocation->storageInfo = allocationData.storageInfo;
-                    allocation->setFlushL3Required(allocationData.flags.flushL3);
-                    status = AllocationStatus::Success;
-                }
-                return allocation;
-            }
-        }
-        status = AllocationStatus::RetryInNonDevicePool;
-        return nullptr;
-    }
+    virtual GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) = 0;
     GraphicsAllocation *allocateGraphicsMemoryForImageFromHostPtr(const AllocationData &allocationData);
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData);
     virtual GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) = 0;
-    virtual GraphicsAllocation *constructGraphicsAllocation(GraphicsAllocation::AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress,
-                                                            size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable) {
-        return nullptr;
-    }
-
     virtual void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };

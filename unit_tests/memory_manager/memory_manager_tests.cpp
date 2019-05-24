@@ -1677,22 +1677,6 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
     }
 }
 
-TEST(MemoryManagerTest, givenSpecializedMemoryManagerWhenCallingConstructGraphicsAllocationThenNullptrIsReturned) {
-    struct MemoryManagerConstructAllocation : public MockMemoryManager {
-        GraphicsAllocation *constructGraphicsAllocation(GraphicsAllocation::AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress,
-                                                        size_t sizeIn, MemoryPool::Type pool, bool multiOsContextCapable) override {
-            return MemoryManager::constructGraphicsAllocation(allocationType, cpuPtrIn, gpuAddress,
-                                                              sizeIn, pool, multiOsContextCapable);
-        }
-        MemoryManagerConstructAllocation(ExecutionEnvironment &executionEnvironment) : MockMemoryManager(false, executionEnvironment) {}
-    };
-
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
-    MemoryManagerConstructAllocation memoryManager(executionEnvironment);
-    auto allocation = memoryManager.constructGraphicsAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, MemoryPool::MemoryNull, false);
-    EXPECT_EQ(nullptr, allocation);
-}
-
 TEST(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false};
     allocation.set32BitAllocation(true);

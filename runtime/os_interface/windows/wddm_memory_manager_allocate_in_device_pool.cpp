@@ -9,7 +9,8 @@
 
 namespace NEO {
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
-    return MemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
+    status = AllocationStatus::RetryInNonDevicePool;
+    return nullptr;
 }
 bool WddmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, uint32_t sizeToCopy) const {
     return MemoryManager::copyMemoryToAllocation(graphicsAllocation, memoryToCopy, sizeToCopy);
