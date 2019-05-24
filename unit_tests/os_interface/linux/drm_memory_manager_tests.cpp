@@ -744,7 +744,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWhenLi
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithTrueMutlipleTimesThenAllocatorIsReused) {
+TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithTrueMultipleTimesThenAllocatorIsReused) {
     // allocator32Bit is created unconditionally when limitedRangeAllocation is enabled.
     if (!memoryManager->limitedGpuAddressRangeAllocator.get()) {
         EXPECT_EQ(nullptr, memoryManager->allocator32Bit.get());
