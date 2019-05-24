@@ -208,6 +208,24 @@ TEST_F(clCreateBufferTests, GivenMemWriteOnlyFlagAndMemReadWriteFlagWhenCreating
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreatingBufferThenInvalidBufferSizeErrorIsReturned) {
+    auto pDevice = pContext->getDevice(0);
+    size_t size = static_cast<size_t>(pDevice->getDeviceInfo().maxMemAllocSize) + 1;
+
+    auto buffer = clCreateBuffer(pContext, CL_MEM_ALLOC_HOST_PTR, size, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
+    EXPECT_EQ(nullptr, buffer);
+}
+
+TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreateBufferWithPropertiesINTELThenInvalidBufferSizeErrorIsReturned) {
+    auto pDevice = pContext->getDevice(0);
+    size_t size = static_cast<size_t>(pDevice->getDeviceInfo().maxMemAllocSize) + 1;
+
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, size, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
+    EXPECT_EQ(nullptr, buffer);
+}
+
 TEST_F(clCreateBufferTests, GivenNullHostPointerAndMemCopyHostPtrFlagWhenCreatingBufferThenNullIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     static const unsigned int bufferSize = 16;

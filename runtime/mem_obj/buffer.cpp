@@ -82,7 +82,14 @@ void Buffer::validateInputAndCreateBuffer(cl_context &context,
                                           void *hostPtr,
                                           cl_int &retVal,
                                           cl_mem &buffer) {
-    if (size == 0) {
+    Context *pContext = nullptr;
+    retVal = validateObjects(WithCastToInternal(context, &pContext));
+    if (retVal != CL_SUCCESS) {
+        return;
+    }
+
+    auto pDevice = pContext->getDevice(0);
+    if (size == 0 || size > pDevice->getDeviceInfo().maxMemAllocSize) {
         retVal = CL_INVALID_BUFFER_SIZE;
         return;
     }
@@ -96,12 +103,6 @@ void Buffer::validateInputAndCreateBuffer(cl_context &context,
     bool expectHostPtr = (properties.flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) != 0;
     if ((hostPtr == nullptr) == expectHostPtr) {
         retVal = CL_INVALID_HOST_PTR;
-        return;
-    }
-
-    Context *pContext = nullptr;
-    retVal = validateObjects(WithCastToInternal(context, &pContext));
-    if (retVal != CL_SUCCESS) {
         return;
     }
 
