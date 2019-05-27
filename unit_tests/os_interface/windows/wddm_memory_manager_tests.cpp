@@ -1646,20 +1646,25 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatNeedsMa
     memoryManager->freeGraphicsMemory(allocation);
     EXPECT_EQ(0u, wddm->evictTemporaryResourceResult.called);
 }
-TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingAllocationWithPreferredGpuAddressThenReleaseTheAddress) {
+TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingAllocationWithReservedGpuVirtualAddressThenReleaseTheAddress) {
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
     uint64_t gpuAddress = 0x123;
-    allocation->preferredGpuAddress = gpuAddress;
+    uint64_t sizeForFree = 0x1234;
+    allocation->reservedGpuVirtualAddress = gpuAddress;
+    allocation->reservedSizeForGpuVirtualAddress = sizeForFree;
     memoryManager->freeGraphicsMemory(allocation);
     EXPECT_EQ(1u, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(gpuAddress, wddm->freeGpuVirtualAddressResult.uint64ParamPassed);
+    EXPECT_EQ(sizeForFree, wddm->freeGpuVirtualAddressResult.sizePassed);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithPreferredGpuAddressWhenMapCallFailsDuringCreateWddmAllocationThenReleasePreferredAddress) {
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithReservedGpuVirtualAddressWhenMapCallFailsDuringCreateWddmAllocationThenReleasePreferredAddress) {
     MockWddmAllocation allocation;
     allocation.setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA);
     uint64_t gpuAddress = 0x123;
-    allocation.preferredGpuAddress = gpuAddress;
+    uint64_t sizeForFree = 0x1234;
+    allocation.reservedGpuVirtualAddress = gpuAddress;
+    allocation.reservedSizeForGpuVirtualAddress = sizeForFree;
 
     wddm->callBaseMapGpuVa = false;
     wddm->mapGpuVaStatus = false;
@@ -1667,6 +1672,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithPreferredGpuAddressWhenMa
     memoryManager->createWddmAllocation(&allocation, nullptr);
     EXPECT_EQ(1u, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(gpuAddress, wddm->freeGpuVirtualAddressResult.uint64ParamPassed);
+    EXPECT_EQ(sizeForFree, wddm->freeGpuVirtualAddressResult.sizePassed);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedThenAllocateMemoryReserveGpuVa) {

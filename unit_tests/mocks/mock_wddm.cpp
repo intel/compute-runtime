@@ -59,6 +59,7 @@ bool WddmMock::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTU
 bool WddmMock::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
     freeGpuVirtualAddressResult.called++;
     freeGpuVirtualAddressResult.uint64ParamPassed = gpuPtr;
+    freeGpuVirtualAddressResult.sizePassed = size;
     return freeGpuVirtualAddressResult.success = Wddm::freeGpuVirtualAddress(gpuPtr, size);
 }
 NTSTATUS WddmMock::createAllocation(WddmAllocation *wddmAllocation) {

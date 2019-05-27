@@ -344,8 +344,8 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     if (input->getReservedAddressPtr()) {
         releaseReservedCpuAddressRange(input->getReservedAddressPtr(), input->getReservedAddressSize());
     }
-    if (input->preferredGpuAddress) {
-        wddm->freeGpuVirtualAddress(input->preferredGpuAddress, input->getAlignedSize());
+    if (input->reservedGpuVirtualAddress) {
+        wddm->freeGpuVirtualAddress(input->reservedGpuVirtualAddress, input->reservedSizeForGpuVirtualAddress);
     }
     delete gfxAllocation;
 }
@@ -506,8 +506,8 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, void *r
     obtainGpuAddressIfNeeded(allocation);
     bool mapSuccess = mapGpuVirtualAddressWithRetry(allocation, requiredGpuPtr);
     if (!mapSuccess) {
-        if (allocation->preferredGpuAddress) {
-            wddm->freeGpuVirtualAddress(allocation->preferredGpuAddress, allocation->getAlignedSize());
+        if (allocation->reservedGpuVirtualAddress) {
+            wddm->freeGpuVirtualAddress(allocation->reservedGpuVirtualAddress, allocation->reservedSizeForGpuVirtualAddress);
         }
         wddm->destroyAllocations(allocation->getHandles().data(), allocation->getNumHandles(), allocation->resourceHandle);
         return false;
@@ -546,8 +546,8 @@ uint32_t WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *graphicsAllocat
     if (!executionEnvironment.isFullRangeSvm()) {
         addressToMap = 0u;
     }
-    if (graphicsAllocation->preferredGpuAddress) {
-        addressToMap = graphicsAllocation->preferredGpuAddress;
+    if (graphicsAllocation->reservedGpuVirtualAddress) {
+        addressToMap = graphicsAllocation->reservedGpuVirtualAddress;
     }
     for (auto handleId = startingIndex; handleId < graphicsAllocation->getNumHandles(); handleId++) {
 
@@ -564,8 +564,10 @@ uint32_t WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *graphicsAllocat
 void WddmMemoryManager::obtainGpuAddressIfNeeded(WddmAllocation *allocation) {
     if (allocation->getNumHandles() > 1u) {
         auto heapIndex = selectHeap(allocation, false, executionEnvironment.isFullRangeSvm());
-        allocation->preferredGpuAddress = wddm->reserveGpuVirtualAddress(gfxPartition.getHeapMinimalAddress(heapIndex),
-                                                                         gfxPartition.getHeapLimit(heapIndex), allocation->getAlignedSize());
+        allocation->reservedSizeForGpuVirtualAddress = allocation->getAlignedSize();
+        allocation->reservedGpuVirtualAddress = wddm->reserveGpuVirtualAddress(gfxPartition.getHeapMinimalAddress(heapIndex),
+                                                                               gfxPartition.getHeapLimit(heapIndex),
+                                                                               allocation->reservedSizeForGpuVirtualAddress);
     }
 }
 

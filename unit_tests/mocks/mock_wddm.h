@@ -41,6 +41,9 @@ struct KmDafLockCall : CallResult {
 struct WaitFromCpuResult : CallResult {
     const MonitoredFence *monitoredFence = nullptr;
 };
+struct FreeGpuVirtualAddressCall : CallResult {
+    uint64_t sizePassed = -1;
+};
 } // namespace WddmMockHelpers
 
 class WddmMock : public Wddm {
@@ -119,7 +122,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::MakeResidentCall makeResidentResult;
     WddmMockHelpers::CallResult makeNonResidentResult;
     WddmMockHelpers::CallResult mapGpuVirtualAddressResult;
-    WddmMockHelpers::CallResult freeGpuVirtualAddressResult;
+    WddmMockHelpers::FreeGpuVirtualAddressCall freeGpuVirtualAddressResult;
     WddmMockHelpers::CallResult createAllocationResult;
     WddmMockHelpers::CallResult destroyAllocationResult;
     WddmMockHelpers::CallResult destroyContextResult;

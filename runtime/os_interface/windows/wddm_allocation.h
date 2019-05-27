@@ -75,7 +75,8 @@ class WddmAllocation : public GraphicsAllocation {
     // OS assigned fields
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
     bool needsMakeResidentBeforeLock = false;
-    D3DGPU_VIRTUAL_ADDRESS preferredGpuAddress = 0u;
+    D3DGPU_VIRTUAL_ADDRESS reservedGpuVirtualAddress = 0u;
+    uint64_t reservedSizeForGpuVirtualAddress = 0u;
 
   protected:
     std::string getHandleInfoString() const {
