@@ -10,6 +10,12 @@
 
 using namespace NEO;
 
+typedef Test<DeviceFixture> IcelakeLpOnlyTest;
+
+ICLLPTEST_F(IcelakeLpOnlyTest, shouldPassOnIcllp) {
+    EXPECT_EQ(IGFX_ICELAKE_LP, pDevice->getHardwareInfo().platform.eProductFamily);
+}
+
 typedef Test<DeviceFixture> Gen11OnlyTeset;
 
 GEN11TEST_F(Gen11OnlyTeset, shouldPassOnGen11) {
