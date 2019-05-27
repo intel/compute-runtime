@@ -127,4 +127,12 @@ const SurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t format
     }
     return nullptr;
 }
+
+bool VASurface::isSupportedFourCC(int fourcc) {
+    if ((fourcc == VA_FOURCC_NV12) ||
+        (DebugManager.flags.EnableExtendedVaFormats.get() && fourcc == VA_FOURCC_P010)) {
+        return true;
+    }
+    return false;
+}
 } // namespace NEO

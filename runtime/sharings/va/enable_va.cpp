@@ -45,6 +45,7 @@ bool VaSharingContextBuilder::finalizeProperties(Context &context, int32_t &errc
             errcodeRet = CL_INVALID_VA_API_MEDIA_ADAPTER_INTEL;
             return false;
         }
+        context.getSharing<VASharingFunctions>()->querySupportedVaImageFormats(contextData->vaDisplay);
     }
 
     return true;

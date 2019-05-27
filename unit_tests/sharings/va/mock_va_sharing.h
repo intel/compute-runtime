@@ -13,11 +13,14 @@ namespace NEO {
 
 class VASharingFunctionsMock : public VASharingFunctions {
   public:
+    using VASharingFunctions::supportedFormats;
+
     VAImage mockVaImage = {};
     int32_t derivedImageFormatFourCC = VA_FOURCC_NV12;
     int32_t derivedImageFormatBpp = 8;
     uint16_t derivedImageHeight = 256;
     uint16_t derivedImageWidth = 256;
+    VAStatus queryImageFormatsReturnStatus = VA_STATUS_SUCCESS;
 
     bool isValidDisplayCalled = false;
     bool deriveImageCalled = false;
@@ -67,6 +70,30 @@ class VASharingFunctionsMock : public VASharingFunctions {
     VAStatus syncSurface(VASurfaceID vaSurface) override {
         syncSurfaceCalled = true;
         return VA_STATUS_SUCCESS;
+    }
+
+    VAStatus queryImageFormats(VADisplay vaDisplay, VAImageFormat *formatList, int *numFormats) override {
+        if (queryImageFormatsReturnStatus != VA_STATUS_SUCCESS) {
+            return queryImageFormatsReturnStatus;
+        }
+        if (numFormats) {
+            *numFormats = 2;
+        }
+
+        if (formatList) {
+            formatList[0].fourcc = VA_FOURCC_NV12;
+            formatList[0].bits_per_pixel = 12;
+            formatList[0].byte_order = VA_LSB_FIRST;
+
+            formatList[1].fourcc = VA_FOURCC_P010;
+            formatList[1].bits_per_pixel = 24;
+            formatList[1].byte_order = VA_LSB_FIRST;
+        }
+        return VA_STATUS_SUCCESS;
+    }
+
+    int maxNumImageFormats(VADisplay vaDisplay) override {
+        return 2;
     }
 };
 

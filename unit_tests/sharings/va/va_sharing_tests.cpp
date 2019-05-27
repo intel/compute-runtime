@@ -8,8 +8,10 @@
 #include "runtime/api/api.h"
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/platform/platform.h"
+#include "runtime/sharings/va/cl_va_api.h"
 #include "runtime/sharings/va/va_sharing.h"
 #include "runtime/sharings/va/va_surface.h"
 #include "unit_tests/fixtures/platform_fixture.h"
@@ -29,6 +31,7 @@ class VaSharingTests : public ::testing::Test, public PlatformFixture {
         PlatformFixture::SetUp();
         vaSharing = new MockVaSharing;
         context.setSharingFunctions(&vaSharing->sharingFunctions);
+        vaSharing->sharingFunctions.querySupportedVaImageFormats(VADisplay(1));
         vaSharing->updateAcquiredHandle(sharingHandle);
         sharedImg = nullptr;
         sharedClMem = nullptr;
@@ -66,8 +69,10 @@ class VaSharingTests : public ::testing::Test, public PlatformFixture {
     unsigned int sharingHandle = 1u;
 };
 
-TEST_F(VaSharingTests, givenVASharingFunctionsObjectWhenFunctionsAreCalledThenCallsAreRedirectedToVaFunctionPointers) {
+TEST(VaSharingTest, givenVASharingFunctionsObjectWhenFunctionsAreCalledThenCallsAreRedirectedToVaFunctionPointers) {
     unsigned int handle = 0u;
+    VASurfaceID vaSurfaceId = 0u;
+    VAImage vaImage = {};
 
     class VASharingFunctionsGlobalFunctionPointersMock : public VASharingFunctions {
       public:
@@ -81,6 +86,8 @@ TEST_F(VaSharingTests, givenVASharingFunctionsObjectWhenFunctionsAreCalledThenCa
         bool vaSyncSurfaceCalled = false;
         bool vaGetLibFuncCalled = false;
         bool vaExtGetSurfaceHandleCalled = false;
+        bool vaQueryImageFormatsCalled = false;
+        bool vaMaxNumImageFormatsCalled = false;
 
         void initMembers() {
             vaDisplayIsValidPFN = mockVaDisplayIsValid;
@@ -89,59 +96,84 @@ TEST_F(VaSharingTests, givenVASharingFunctionsObjectWhenFunctionsAreCalledThenCa
             vaSyncSurfacePFN = mockVaSyncSurface;
             vaGetLibFuncPFN = mockVaGetLibFunc;
             vaExtGetSurfaceHandlePFN = mockExtGetSurfaceHandle;
+            vaQueryImageFormatsPFN = mockVaQueryImageFormats;
+            vaMaxNumImageFormatsPFN = mockVaMaxNumImageFormats;
         }
 
-        static VASharingFunctionsGlobalFunctionPointersMock &getInstance() {
-            static VASharingFunctionsGlobalFunctionPointersMock vaSharingFunctions;
+        static VASharingFunctionsGlobalFunctionPointersMock *getInstance(bool release) {
+            static VASharingFunctionsGlobalFunctionPointersMock *vaSharingFunctions = nullptr;
+            if (!vaSharingFunctions) {
+                vaSharingFunctions = new VASharingFunctionsGlobalFunctionPointersMock;
+            } else if (release) {
+                delete vaSharingFunctions;
+                vaSharingFunctions = nullptr;
+            }
             return vaSharingFunctions;
         }
 
         static int mockVaDisplayIsValid(VADisplay vaDisplay) {
-            getInstance().vaDisplayIsValidCalled = true;
+            getInstance(false)->vaDisplayIsValidCalled = true;
             return 1;
         };
 
         static VAStatus mockVaDeriveImage(VADisplay vaDisplay, VASurfaceID vaSurface, VAImage *vaImage) {
-            getInstance().vaDeriveImageCalled = true;
+            getInstance(false)->vaDeriveImageCalled = true;
             return VA_STATUS_SUCCESS;
         };
 
         static VAStatus mockVaDestroyImage(VADisplay vaDisplay, VAImageID vaImageId) {
-            getInstance().vaDestroyImageCalled = true;
+            getInstance(false)->vaDestroyImageCalled = true;
             return VA_STATUS_SUCCESS;
         };
 
         static VAStatus mockVaSyncSurface(VADisplay vaDisplay, VASurfaceID vaSurface) {
-            getInstance().vaSyncSurfaceCalled = true;
+            getInstance(false)->vaSyncSurfaceCalled = true;
             return VA_STATUS_SUCCESS;
         };
 
         static void *mockVaGetLibFunc(VADisplay vaDisplay, const char *func) {
-            getInstance().vaGetLibFuncCalled = true;
+            getInstance(false)->vaGetLibFuncCalled = true;
             return nullptr;
         };
 
         static VAStatus mockExtGetSurfaceHandle(VADisplay vaDisplay, VASurfaceID *vaSurface, unsigned int *handleId) {
-            getInstance().vaExtGetSurfaceHandleCalled = true;
+            getInstance(false)->vaExtGetSurfaceHandleCalled = true;
             return VA_STATUS_SUCCESS;
         };
+
+        static VAStatus mockVaQueryImageFormats(VADisplay vaDisplay, VAImageFormat *formatList, int *numFormats) {
+            getInstance(false)->vaQueryImageFormatsCalled = true;
+            return VA_STATUS_SUCCESS;
+        };
+
+        static int mockVaMaxNumImageFormats(VADisplay vaDisplay) {
+            getInstance(false)->vaMaxNumImageFormatsCalled = true;
+            return 0;
+        };
     };
-    auto &vaSharingFunctions = VASharingFunctionsGlobalFunctionPointersMock::getInstance();
-    EXPECT_TRUE(vaSharingFunctions.isValidVaDisplay());
-    EXPECT_EQ(0, vaSharingFunctions.deriveImage(vaSurfaceId, &vaImage));
-    EXPECT_EQ(0, vaSharingFunctions.destroyImage(vaImage.image_id));
-    EXPECT_EQ(0, vaSharingFunctions.syncSurface(vaSurfaceId));
-    EXPECT_TRUE(nullptr == vaSharingFunctions.getLibFunc("funcName"));
-    EXPECT_EQ(0, vaSharingFunctions.extGetSurfaceHandle(&vaSurfaceId, &handle));
+    auto vaSharingFunctions = VASharingFunctionsGlobalFunctionPointersMock::getInstance(false);
+    EXPECT_TRUE(vaSharingFunctions->isValidVaDisplay());
+    EXPECT_EQ(0, vaSharingFunctions->deriveImage(vaSurfaceId, &vaImage));
+    EXPECT_EQ(0, vaSharingFunctions->destroyImage(vaImage.image_id));
+    EXPECT_EQ(0, vaSharingFunctions->syncSurface(vaSurfaceId));
+    EXPECT_TRUE(nullptr == vaSharingFunctions->getLibFunc("funcName"));
+    EXPECT_EQ(0, vaSharingFunctions->extGetSurfaceHandle(&vaSurfaceId, &handle));
+    int numFormats = 0;
+    EXPECT_EQ(0, vaSharingFunctions->queryImageFormats(VADisplay(1), nullptr, &numFormats));
+    EXPECT_EQ(0, vaSharingFunctions->maxNumImageFormats(VADisplay(1)));
 
     EXPECT_EQ(0u, handle);
 
-    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance().vaDisplayIsValidCalled);
-    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance().vaDeriveImageCalled);
-    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance().vaDestroyImageCalled);
-    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance().vaSyncSurfaceCalled);
-    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance().vaGetLibFuncCalled);
-    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance().vaExtGetSurfaceHandleCalled);
+    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaDisplayIsValidCalled);
+    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaDeriveImageCalled);
+    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaDestroyImageCalled);
+    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaSyncSurfaceCalled);
+    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaGetLibFuncCalled);
+    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaExtGetSurfaceHandleCalled);
+    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaQueryImageFormatsCalled);
+    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaMaxNumImageFormatsCalled);
+
+    VASharingFunctionsGlobalFunctionPointersMock::getInstance(true);
 }
 
 TEST_F(VaSharingTests, givenMockVaWhenVaSurfaceIsCreatedThenMemObjectHasVaHandler) {
@@ -504,6 +536,120 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndNV12FormatWhenCreatingSha
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
+using ApiVaSharingTests = VaSharingTests;
+
+TEST_F(ApiVaSharingTests, givenSupportedImageTypeWhenGettingSupportedVAApiFormatsThenCorrectListIsReturned) {
+    cl_mem_flags flags[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE};
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    VAImageFormat vaApiFormats[10] = {};
+    cl_uint numImageFormats = 0;
+
+    VAImageFormat supportedFormat = {VA_FOURCC_NV12, VA_LSB_FIRST, 8, 0, 0, 0, 0, 0};
+
+    for (size_t i = 0; i < arrayCount(flags); i++) {
+
+        cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+            &context,
+            flags[i],
+            image_type,
+            arrayCount(vaApiFormats),
+            vaApiFormats,
+            &numImageFormats);
+
+        EXPECT_EQ(CL_SUCCESS, result);
+        EXPECT_EQ(1u, numImageFormats);
+
+        EXPECT_EQ(supportedFormat.fourcc, vaApiFormats[0].fourcc);
+    }
+}
+
+TEST_F(ApiVaSharingTests, givenZeroNumEntriesWhenGettingSupportedVAApiFormatsThenNumFormatsIsReturned) {
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 0;
+
+    cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+        &context,
+        flags,
+        image_type,
+        0,
+        nullptr,
+        &numImageFormats);
+
+    EXPECT_EQ(CL_SUCCESS, result);
+    EXPECT_EQ(1u, numImageFormats);
+}
+
+TEST_F(ApiVaSharingTests, givenNullNumImageFormatsWhenGettingSupportedVAApiFormatsThenNumFormatsIsNotDereferenced) {
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+
+    cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+        &context,
+        flags,
+        image_type,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, result);
+}
+
+TEST_F(ApiVaSharingTests, givenInvalidImageTypeWhenGettingSupportedVAApiFormatsThenIvalidValueErrorIsReturned) {
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE3D;
+    VAImageFormat vaApiFormats[10] = {};
+    cl_uint numImageFormats = 0;
+
+    cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+        &context,
+        flags,
+        image_type,
+        arrayCount(vaApiFormats),
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(CL_INVALID_VALUE, result);
+    EXPECT_EQ(0u, numImageFormats);
+}
+
+TEST_F(ApiVaSharingTests, givenInvalidFlagsWhenGettingSupportedVAApiFormatsThenIvalidValueErrorIsReturned) {
+    cl_mem_flags flags = CL_MEM_NO_ACCESS_INTEL;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    VAImageFormat vaApiFormats[10] = {};
+    cl_uint numImageFormats = 0;
+
+    cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+        &context,
+        flags,
+        image_type,
+        arrayCount(vaApiFormats),
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(CL_INVALID_VALUE, result);
+    EXPECT_EQ(0u, numImageFormats);
+}
+
+TEST_F(ApiVaSharingTests, givenInvalidContextWhenGettingSupportedVAApiFormatsThenIvalidContextErrorIsReturned) {
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    VAImageFormat vaApiFormats[10] = {};
+    cl_uint numImageFormats = 0;
+
+    MockContext contextWihtoutVASharing;
+    cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+        &contextWihtoutVASharing,
+        flags,
+        image_type,
+        arrayCount(vaApiFormats),
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(CL_INVALID_CONTEXT, result);
+    EXPECT_EQ(0u, numImageFormats);
+}
+
 TEST(VaSurface, givenValidPlaneAndFlagsWhenValidatingInputsThenTrueIsReturned) {
     for (cl_uint plane = 0; plane <= 1; plane++) {
         EXPECT_TRUE(VASurface::validate(CL_MEM_READ_ONLY, plane));
@@ -521,4 +667,67 @@ TEST(VaSurface, givenInValidPlaneOrFlagsWhenValidatingInputsThenTrueIsReturned) 
 TEST(VaSurface, givenEnabledExtendedVaFormatsWhenGettingUnsupportedSurfaceFormatInfoThenNullptrIsReturned) {
     auto formatInfo = VASurface::getExtendedSurfaceFormatInfo(VA_FOURCC_P016);
     EXPECT_EQ(nullptr, formatInfo);
+}
+
+TEST(VaSurface, givenNotSupportedVaFormatsWhenCheckingIfSupportedThenFalseIsReturned) {
+    EXPECT_FALSE(VASurface::isSupportedFourCC(VA_FOURCC_NV11));
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableExtendedVaFormats.set(true);
+    EXPECT_FALSE(VASurface::isSupportedFourCC(VA_FOURCC_P016));
+}
+
+TEST(VaSharingFunctions, givenErrorReturnedFromVaLibWhenQuerySupportedVaImageFormatsThenSupportedFormatsAreNotSet) {
+    VASharingFunctionsMock sharingFunctions;
+    sharingFunctions.queryImageFormatsReturnStatus = VA_STATUS_ERROR_INVALID_VALUE;
+
+    sharingFunctions.querySupportedVaImageFormats(VADisplay(1));
+
+    EXPECT_EQ(0u, sharingFunctions.supportedFormats.size());
+}
+
+TEST(VaSharingFunctions, givenNoSupportedFormatsWhenQuerySupportedVaImageFormatsThenSupportedFormatsAreNotSet) {
+    VASharingFunctionsMock sharingFunctions;
+    EXPECT_EQ(0u, sharingFunctions.supportedFormats.size());
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 0;
+    VAImageFormat vaApiFormats[10] = {};
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        image_type,
+        10,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(0u, numImageFormats);
+}
+
+TEST(VaSharingFunctions, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupportedFormatsThenOnlyNumEntiresAreReturned) {
+    VASharingFunctionsMock sharingFunctions;
+    VAImageFormat imageFormat = {VA_FOURCC_NV12, 1, 12};
+    sharingFunctions.supportedFormats.emplace_back(imageFormat);
+    imageFormat.fourcc = VA_FOURCC_NV21;
+    sharingFunctions.supportedFormats.emplace_back(imageFormat);
+
+    EXPECT_EQ(2u, sharingFunctions.supportedFormats.size());
+
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 0;
+    VAImageFormat vaApiFormats[3] = {};
+
+    sharingFunctions.getSupportedFormats(
+        flags,
+        image_type,
+        1,
+        vaApiFormats,
+        &numImageFormats);
+
+    EXPECT_EQ(2u, numImageFormats);
+    EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_NV12), vaApiFormats[0].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[1].fourcc);
+    EXPECT_EQ(0u, vaApiFormats[2].fourcc);
 }

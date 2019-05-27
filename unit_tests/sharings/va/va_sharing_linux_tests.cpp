@@ -5,8 +5,11 @@
  *
  */
 
+#include "runtime/helpers/array_count.h"
 #include "runtime/sharings/va/va_sharing_functions.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/variable_backup.h"
+#include "unit_tests/sharings/va/mock_va_sharing.h"
 
 #include "gtest/gtest.h"
 
@@ -144,4 +147,27 @@ TEST(VASharingFunctions, GivenFunctionsWhenLibvaLoadedThenDlcloseIsCalled) {
         VASharingFunctionsTested functions;
     }
     EXPECT_EQ(1u, closeCalls);
+}
+
+TEST(VASharingFunctions, givenEnabledExtendedVaFormatsWhenQueryingSupportedFormatsThenAllSupportedFormatsAreStored) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableExtendedVaFormats.set(true);
+
+    VASharingFunctionsMock sharingFunctions;
+
+    sharingFunctions.querySupportedVaImageFormats(VADisplay(1));
+
+    EXPECT_EQ(2u, sharingFunctions.supportedFormats.size());
+
+    size_t allFormatsFound = 0;
+    uint32_t fourCCExpected[] = {VA_FOURCC_NV12, VA_FOURCC_P010};
+
+    for (size_t i = 0; i < sharingFunctions.supportedFormats.size(); i++) {
+        for (size_t fourCCIndex = 0; fourCCIndex < arrayCount(fourCCExpected); fourCCIndex++) {
+            if (sharingFunctions.supportedFormats[0].fourcc == fourCCExpected[fourCCIndex]) {
+                allFormatsFound++;
+            }
+        }
+    }
+    EXPECT_EQ(2u, allFormatsFound);
 }

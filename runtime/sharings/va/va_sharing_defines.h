@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,3 +16,5 @@ typedef VAStatus (*VADestroyImagePFN)(VADisplay vaDisplay, VAImageID vaImageId);
 typedef VAStatus (*VAExtGetSurfaceHandlePFN)(VADisplay vaDisplay, VASurfaceID *vaSurface, unsigned int *handleId);
 typedef VAStatus (*VASyncSurfacePFN)(VADisplay vaDisplay, VASurfaceID vaSurface);
 typedef void *(*VAGetLibFuncPFN)(VADisplay vaDisplay, const char *func);
+typedef VAStatus (*VAQueryImageFormatsPFN)(VADisplay vaDisplay, VAImageFormat *formatList, int *numFormats);
+typedef int (*VAMaxNumImageFormatsPFN)(VADisplay vaDisplay);
