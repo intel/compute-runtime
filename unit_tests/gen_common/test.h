@@ -88,7 +88,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
       public:                                                                                                                                             \
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                                \
         () {}                                                                                                                                             \
-        virtual void TestBody();                                                                                                                          \
+        virtual void TestBody() override;                                                                                                                 \
                                                                                                                                                           \
       private:                                                                                                                                            \
         static int AddToRegistry() {                                                                                                                      \
@@ -409,7 +409,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
         template <typename FamilyType>                                                                                                                    \
         void testBodyHw();                                                                                                                                \
                                                                                                                                                           \
-        virtual void TestBody() {                                                                                                                         \
+        virtual void TestBody() override {                                                                                                                \
             switch (::renderCoreFamily) {                                                                                                                 \
             case IGFX_GEN8_CORE:                                                                                                                          \
                 BDW_TYPED_TEST_BODY                                                                                                                       \
@@ -469,7 +469,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
             /* do nothing */                                                                                                                              \
         }                                                                                                                                                 \
                                                                                                                                                           \
-        virtual void TestBody() {                                                                                                                         \
+        virtual void TestBody() override {                                                                                                                \
             switch (::renderCoreFamily) {                                                                                                                 \
             case IGFX_GEN8_CORE:                                                                                                                          \
                 BDW_TYPED_CMDTEST_BODY                                                                                                                    \
@@ -487,6 +487,12 @@ extern GFXCORE_FAMILY renderCoreFamily;
                 ASSERT_TRUE((false && "Unknown hardware family"));                                                                                        \
                 break;                                                                                                                                    \
             }                                                                                                                                             \
+        }                                                                                                                                                 \
+        void SetUp() override {                                                                                                                           \
+            CALL_IF_SUPPORTED(cmdset_gen_base, test_suite_name::SetUp());                                                                                 \
+        }                                                                                                                                                 \
+        void TearDown() override {                                                                                                                        \
+            CALL_IF_SUPPORTED(cmdset_gen_base, test_suite_name::TearDown());                                                                              \
         }                                                                                                                                                 \
                                                                                                                                                           \
       private:                                                                                                                                            \
