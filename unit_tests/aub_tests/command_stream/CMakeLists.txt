@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,3 +12,5 @@ target_sources(igdrcl_aub_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump_tests.cpp
 )
+
+add_subdirectories()
