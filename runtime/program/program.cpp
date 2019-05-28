@@ -125,7 +125,7 @@ cl_int Program::createProgramFromBinary(
     const void *pBinary,
     size_t binarySize) {
 
-    cl_int retVal = CL_SUCCESS;
+    cl_int retVal = CL_INVALID_PROGRAM;
     uint32_t binaryVersion = iOpenCL::CURRENT_ICBE_VERSION;
 
     if (Program::isValidLlvmBinary(pBinary, binarySize)) {
@@ -133,6 +133,7 @@ cl_int Program::createProgramFromBinary(
     } else if (Program::isValidSpirvBinary(pBinary, binarySize)) {
         retVal = processSpirBinary(pBinary, binarySize, true);
     } else {
+        bool rebuildRequired = DebugManager.flags.RebuildPrecompiledKernels.get();
         retVal = processElfBinary(pBinary, binarySize, binaryVersion);
         if (retVal == CL_SUCCESS) {
             isCreatedFromBinary = true;
@@ -140,7 +141,11 @@ cl_int Program::createProgramFromBinary(
             // Version of compiler used to create program binary is invalid,
             // needs to recompile program binary from its IR (if available).
             // if recompile fails propagate error retVal from previous function
-            if (!rebuildProgramFromIr()) {
+            rebuildRequired = true;
+        }
+
+        if (rebuildRequired) {
+            if (rebuildProgramFromIr() == CL_SUCCESS) {
                 retVal = CL_SUCCESS;
             }
         }
