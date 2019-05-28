@@ -20,7 +20,7 @@ typedef api_tests clGetMemObjectInfoTests;
 
 namespace ULT {
 
-TEST_F(clGetMemObjectInfoTests, memSize) {
+TEST_F(clGetMemObjectInfoTests, GivenValidBufferWhenGettingMemObjectInfoThenCorrectBufferSizeIsReturned) {
     size_t bufferSize = 16;
     cl_mem buffer = nullptr;
 
@@ -33,16 +33,16 @@ TEST_F(clGetMemObjectInfoTests, memSize) {
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
-    size_t sizeRet = 0;
-    retVal = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(sizeRet), &sizeRet, NULL);
+    size_t paramValue = 0;
+    retVal = clGetMemObjectInfo(buffer, CL_MEM_SIZE, sizeof(paramValue), &paramValue, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_EQ(bufferSize, sizeRet);
+    ASSERT_EQ(bufferSize, paramValue);
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetMemObjectInfoTests, memMapCount) {
+TEST_F(clGetMemObjectInfoTests, GivenBufferWithMappedRegionWhenGettingMemObjectInfoThenCorrectMapCountIsReturned) {
     size_t bufferSize = 16;
     cl_mem buffer = nullptr;
 
@@ -70,10 +70,10 @@ TEST_F(clGetMemObjectInfoTests, memMapCount) {
         nullptr,
         nullptr);
 
-    size_t sizeRet = 0;
-    retVal = clGetMemObjectInfo(buffer, CL_MEM_MAP_COUNT, sizeof(sizeRet), &sizeRet, NULL);
+    cl_uint paramValue = 0;
+    retVal = clGetMemObjectInfo(buffer, CL_MEM_MAP_COUNT, sizeof(paramValue), &paramValue, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_EQ(1u, sizeRet);
+    ASSERT_EQ(1u, paramValue);
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -81,13 +81,13 @@ TEST_F(clGetMemObjectInfoTests, memMapCount) {
     clReleaseCommandQueue(cmdQ);
 }
 
-TEST_F(clGetMemObjectInfoTests, svmPtr) {
+TEST_F(clGetMemObjectInfoTests, GivenBufferCreatedFromSvmPointerWhenGettingMemObjectInfoThenClTrueIsReturned) {
     const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         size_t bufferSize = 64;
         cl_mem buffer = nullptr;
 
-        void *ptr = clSVMAlloc(pContext, CL_MEM_READ_WRITE, bufferSize, 64);
+        auto ptr = clSVMAlloc(pContext, CL_MEM_READ_WRITE, bufferSize, 64);
         ASSERT_NE(nullptr, ptr);
 
         buffer = clCreateBuffer(
@@ -99,10 +99,11 @@ TEST_F(clGetMemObjectInfoTests, svmPtr) {
         ASSERT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, buffer);
 
-        size_t sizeRet = 0;
-        retVal = clGetMemObjectInfo(buffer, CL_MEM_USES_SVM_POINTER, sizeof(sizeRet), &sizeRet, NULL);
+        cl_bool paramValue = CL_FALSE;
+        retVal = clGetMemObjectInfo(buffer, CL_MEM_USES_SVM_POINTER, sizeof(paramValue), &paramValue, nullptr);
+
         ASSERT_EQ(CL_SUCCESS, retVal);
-        ASSERT_EQ(1u, sizeRet);
+        ASSERT_EQ(static_cast<cl_bool>(CL_TRUE), paramValue);
 
         retVal = clReleaseMemObject(buffer);
         EXPECT_EQ(CL_SUCCESS, retVal);
