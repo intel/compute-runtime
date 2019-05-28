@@ -7,11 +7,11 @@
 
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
+#include "core/helpers/interlocked_max.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/gmm_helper/resource_info.h"
-#include "runtime/helpers/wddm_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/windows/gdi_interface.h"

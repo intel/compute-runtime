@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "runtime/helpers/wddm_helper.h"
+#include "core/helpers/interlocked_max.h"
 
 #include "gtest/gtest.h"
 
 #include <thread>
 
-TEST(MtTestWddmFixture, givenCurrentPagingFenceValueWhenValueChangedThenValueIsSet) {
+TEST(MtTestInterlockedMaxFixture, givenCurrentPagingFenceValueWhenValueChangedThenValueIsSet) {
     std::atomic<uint64_t> currentPagingFenceValue;
     std::atomic<int> testCount;
     std::atomic<int> maxValue;

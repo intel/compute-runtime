@@ -100,7 +100,6 @@ set(RUNTIME_SRCS_HELPERS_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_callbacks.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_callbacks.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/kmd_notify_properties_windows.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/gl_helper.h
 )
 set(RUNTIME_SRCS_HELPERS_LINUX
