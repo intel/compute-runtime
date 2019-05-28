@@ -26,6 +26,7 @@ class AubManager {
 
     virtual void addComment(const char *message) = 0;
     virtual void writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize) = 0;
+    virtual void freeMemory(uint64_t gfxAddress, size_t size) = 0;
 
     static AubManager *create(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, uint32_t streamMode);
 };
