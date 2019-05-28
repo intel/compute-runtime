@@ -582,7 +582,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         // Buffer to Buffer
         HardwareParse hwParser;
         auto offset = csr.commandStream.getUsed();
-        csr.blitBuffer(*buffer1, *buffer2, 1, csrDependencies);
+        csr.blitBuffer(*buffer1, *buffer2, 0, 0, 1, csrDependencies);
 
         hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -590,5 +590,30 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         EXPECT_NE(nullptr, bltCmd);
         EXPECT_EQ(buffer1->getGraphicsAllocation()->getGpuAddress(), bltCmd->getDestinationBaseAddress());
         EXPECT_EQ(buffer2->getGraphicsAllocation()->getGpuAddress(), bltCmd->getSourceBaseAddress());
+    }
+}
+
+HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrectGpuAddresses) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer1 = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    auto buffer2 = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+
+    size_t addressOffsets[] = {0, 1, 1234};
+
+    for (auto buffer1Offset : addressOffsets) {
+        for (auto buffer2Offset : addressOffsets) {
+            HardwareParse hwParser;
+            auto offset = csr.commandStream.getUsed();
+            csr.blitBuffer(*buffer1, *buffer2, buffer1Offset, buffer2Offset, 1, csrDependencies);
+
+            hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
+
+            auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*hwParser.cmdList.begin());
+            EXPECT_NE(nullptr, bltCmd);
+            EXPECT_EQ(ptrOffset(buffer1->getGraphicsAllocation()->getGpuAddress(), buffer1Offset), bltCmd->getDestinationBaseAddress());
+            EXPECT_EQ(ptrOffset(buffer2->getGraphicsAllocation()->getGpuAddress(), buffer2Offset), bltCmd->getSourceBaseAddress());
+        }
     }
 }

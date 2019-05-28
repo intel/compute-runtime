@@ -254,7 +254,8 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
     }
 
-    void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t sourceSize, CsrDependencies &csrDependencies) override{};
+    void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t dstOffset, uint64_t srcOffset,
+                    uint64_t copySize, CsrDependencies &csrDependencies) override{};
 
     void setOSInterface(OSInterface *osInterface);
 

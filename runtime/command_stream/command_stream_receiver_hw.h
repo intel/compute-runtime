@@ -70,7 +70,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return CommandStreamReceiverType::CSR_HW;
     }
 
-    void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t sourceSize, CsrDependencies &csrDependencies) override;
+    void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t dstOffset, uint64_t srcOffset,
+                    uint64_t copySize, CsrDependencies &csrDependencies) override;
 
   protected:
     using CommandStreamReceiver::osContext;

@@ -420,9 +420,9 @@ void CommandStreamReceiver::blitWithHostPtr(Buffer &buffer, void *hostPtr, uint6
                                                                                   true, false, true));
 
     if (BlitterConstants::BlitWithHostPtrDirection::FromHostPtr == copyDirection) {
-        blitBuffer(buffer, *hostPtrBuffer, hostPtrSize, csrDependencies);
+        blitBuffer(buffer, *hostPtrBuffer, 0, 0, hostPtrSize, csrDependencies);
     } else {
-        blitBuffer(*hostPtrBuffer, buffer, hostPtrSize, csrDependencies);
+        blitBuffer(*hostPtrBuffer, buffer, 0, 0, hostPtrSize, csrDependencies);
     }
 }
 } // namespace NEO
