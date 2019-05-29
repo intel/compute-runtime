@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/ptr_math.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/options.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"

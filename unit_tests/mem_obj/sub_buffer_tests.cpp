@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/ptr_math.h"
+#include "core/helpers/ptr_math.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "unit_tests/fixtures/device_fixture.h"

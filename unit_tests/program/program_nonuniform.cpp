@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/helpers/ptr_math.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/kernel_commands.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/graphics_allocation.h"

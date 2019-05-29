@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/ptr_math.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/helpers/ptr_math.h"
 #include "unit_tests/command_queue/enqueue_fill_buffer_fixture.h"
 
 #include "gtest/gtest.h"

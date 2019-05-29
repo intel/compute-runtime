@@ -7,9 +7,9 @@
 
 #include "aub_mem_dump.h"
 
+#include "core/helpers/ptr_math.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 namespace AubMemDump {

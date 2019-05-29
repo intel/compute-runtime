@@ -9,6 +9,7 @@
 
 #include "common/compiler_support.h"
 #include "core/helpers/basic_math.h"
+#include "core/helpers/ptr_math.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
@@ -20,7 +21,6 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/mipmap.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/buffer.h"

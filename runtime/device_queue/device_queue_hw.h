@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "core/helpers/ptr_math.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/device_queue/device_queue.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/program.h"

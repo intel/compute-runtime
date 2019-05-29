@@ -7,7 +7,7 @@
 
 #include "runtime/kernel/image_transformer.h"
 
-#include "runtime/helpers/ptr_math.h"
+#include "core/helpers/ptr_math.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/program/kernel_info.h"
 

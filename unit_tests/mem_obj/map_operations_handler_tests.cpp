@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/ptr_math.h"
+#include "core/helpers/ptr_math.h"
 #include "runtime/mem_obj/map_operations_handler.h"
 #include "test.h"
 

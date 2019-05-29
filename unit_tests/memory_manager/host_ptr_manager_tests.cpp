@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/ptr_math.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "test.h"
 #include "unit_tests/fixtures/memory_manager_fixture.h"

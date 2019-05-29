@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/helpers/ptr_math.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/memory_constants.h"

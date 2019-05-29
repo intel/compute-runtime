@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/helpers/ptr_math.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/aub_alloc_dump.h"
 #include "runtime/aub_mem_dump/aub_alloc_dump.inl"
@@ -17,7 +18,6 @@
 #include "runtime/helpers/hardware_context_controller.h"
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/neo_driver_version.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_banks.h"

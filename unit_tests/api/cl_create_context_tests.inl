@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/ptr_math.h"
+#include "core/helpers/ptr_math.h"
 
 #include "cl_api_tests.h"
 

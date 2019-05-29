@@ -6,7 +6,7 @@
  */
 
 #include "core/helpers/basic_math.h"
-#include "runtime/helpers/ptr_math.h"
+#include "core/helpers/ptr_math.h"
 #include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"

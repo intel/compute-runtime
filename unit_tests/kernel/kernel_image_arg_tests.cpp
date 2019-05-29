@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/ptr_math.h"
+#include "core/helpers/ptr_math.h"
 #include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/kernel_arg_fixture.h"

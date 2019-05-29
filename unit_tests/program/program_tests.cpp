@@ -7,6 +7,7 @@
 
 #include "unit_tests/program/program_tests.h"
 
+#include "core/helpers/ptr_math.h"
 #include "elf/reader.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/compiler_options.h"
@@ -14,7 +15,6 @@
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/kernel_commands.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"

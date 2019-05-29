@@ -6,12 +6,12 @@
  */
 
 #pragma once
+#include "core/helpers/ptr_math.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/options.h"
-#include "runtime/helpers/ptr_math.h"
 #include "test.h"
 
 #include "aub_mapper.h"

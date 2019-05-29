@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/helpers/ptr_math.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
@@ -21,7 +22,6 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/preamble.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/state_base_address.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/indirect_heap/indirect_heap.h"

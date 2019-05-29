@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/helpers/ptr_math.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/error_mappers.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/mocks/mock_buffer.h"
