@@ -9,6 +9,7 @@
 #include "runtime/device/device.h"
 #include "runtime/event/user_event.h"
 #include "runtime/gmm_helper/gmm.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/os_interface/os_interface.h"
@@ -762,6 +763,112 @@ TEST(glSharingBasicTest, givenGlSharingFunctionsWhenItIsConstructedThenFunctions
     EXPECT_NE(nullptr, glSharingFunctions.GLGetSynciv);
     EXPECT_NE(nullptr, glSharingFunctions.glGetStringi);
 }
+
+TEST(glSharingBasicTest, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupportedFormatsThenOnlyNumEntiresAreReturned) {
+    MockGLSharingFunctions glSharingFunctions;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 0;
+    cl_GLenum glFormats[3] = {};
+
+    auto retVal = glSharingFunctions.getSupportedFormats(flags, image_type, 1, glFormats, &numImageFormats);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(static_cast<uint32_t>(GlSharing::gLToCLFormats.size()), numImageFormats);
+    EXPECT_NE(0u, glFormats[0]);
+    EXPECT_EQ(0u, glFormats[1]);
+    EXPECT_EQ(0u, glFormats[2]);
+}
+
+TEST(glSharingBasicTest, givenCorrectFlagsWhenGettingSupportedFormatsThenCorrectListIsReturned) {
+    MockGLSharingFunctions glSharingFunctions;
+    cl_mem_flags flags[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE, CL_MEM_KERNEL_READ_AND_WRITE};
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_GLenum glFormats[3] = {};
+    cl_uint numImageFormats = 0;
+
+    for (size_t i = 0; i < arrayCount(flags); i++) {
+
+        auto result = glSharingFunctions.getSupportedFormats(flags[i], image_type, arrayCount(glFormats), glFormats, &numImageFormats);
+
+        EXPECT_EQ(CL_SUCCESS, result);
+        EXPECT_EQ(static_cast<uint32_t>(GlSharing::gLToCLFormats.size()), numImageFormats);
+
+        for (uint32_t formatIndex = 0; formatIndex < arrayCount(glFormats); formatIndex++) {
+            EXPECT_NE(GlSharing::gLToCLFormats.end(), GlSharing::gLToCLFormats.find(glFormats[formatIndex]));
+        }
+    }
+}
+
+TEST(glSharingBasicTest, givenSupportedImageTypesWhenGettingSupportedFormatsThenCorrectListIsReturned) {
+    MockGLSharingFunctions glSharingFunctions;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_types[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE3D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER};
+    cl_GLenum glFormats[3] = {};
+    cl_uint numImageFormats = 0;
+
+    for (size_t i = 0; i < arrayCount(image_types); i++) {
+
+        auto result = glSharingFunctions.getSupportedFormats(flags, image_types[i], arrayCount(glFormats), glFormats, &numImageFormats);
+
+        EXPECT_EQ(CL_SUCCESS, result);
+        EXPECT_EQ(static_cast<uint32_t>(GlSharing::gLToCLFormats.size()), numImageFormats);
+
+        for (uint32_t formatIndex = 0; formatIndex < arrayCount(glFormats); formatIndex++) {
+            EXPECT_NE(GlSharing::gLToCLFormats.end(), GlSharing::gLToCLFormats.find(glFormats[formatIndex]));
+        }
+    }
+}
+
+TEST(glSharingBasicTest, givenZeroNumEntriesWhenGettingSupportedFormatsThenNumFormatsIsReturned) {
+    MockGLSharingFunctions glSharingFunctions;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_uint numImageFormats = 0;
+
+    auto result = glSharingFunctions.getSupportedFormats(flags, image_type, 0, nullptr, &numImageFormats);
+
+    EXPECT_EQ(CL_SUCCESS, result);
+    EXPECT_EQ(static_cast<uint32_t>(GlSharing::gLToCLFormats.size()), numImageFormats);
+}
+
+TEST(glSharingBasicTest, givenNullNumImageFormatsWhenGettingSupportedFormatsThenNumFormatsIsNotDereferenced) {
+    MockGLSharingFunctions glSharingFunctions;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+
+    auto result = glSharingFunctions.getSupportedFormats(flags, image_type, 0, nullptr, nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, result);
+}
+
+TEST(glSharingBasicTest, givenInvalidImageTypeWhenGettingSupportedFormatsThenIvalidValueErrorIsReturned) {
+    MockGLSharingFunctions glSharingFunctions;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    cl_GLenum glFormats[3] = {};
+    cl_uint numImageFormats = 0;
+
+    auto result = glSharingFunctions.getSupportedFormats(flags, image_type, arrayCount(glFormats), glFormats, &numImageFormats);
+
+    EXPECT_EQ(CL_INVALID_VALUE, result);
+    EXPECT_EQ(0u, numImageFormats);
+}
+
+TEST(glSharingBasicTest, givenInvalidFlagsWhenGettingSupportedFormatsThenIvalidValueErrorIsReturned) {
+    MockGLSharingFunctions glSharingFunctions;
+    cl_mem_flags flags = CL_MEM_NO_ACCESS_INTEL;
+    cl_mem_object_type image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_GLenum glFormats[3] = {};
+    cl_uint numImageFormats = 0;
+
+    auto result = glSharingFunctions.getSupportedFormats(flags, image_type, arrayCount(glFormats), glFormats, &numImageFormats);
+
+    EXPECT_EQ(CL_INVALID_VALUE, result);
+    EXPECT_EQ(0u, numImageFormats);
+}
+
 TEST_F(glSharingTests, givenContextWhenCreateFromSharedBufferThenSharedImageIsReturned) {
     auto retVal = CL_SUCCESS;
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);

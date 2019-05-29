@@ -97,6 +97,12 @@ class GLSharingFunctions : public SharingFunctions {
 
     static bool isGlSharingEnabled();
 
+    static cl_int getSupportedFormats(cl_mem_flags flags,
+                                      cl_mem_object_type imageType,
+                                      size_t numEntries,
+                                      cl_GLenum *formats,
+                                      uint32_t *numImageFormats);
+
     GLboolean setSharedOCLContextState() {
         ContextInfo CtxInfo = {0};
         GLboolean retVal = GLSetSharedOCLContextState(GLHDCHandle, GLHGLRCHandle, CL_TRUE, &CtxInfo);
@@ -263,6 +269,7 @@ class GlSharing : public SharingHandler {
             *pClGlObjectId = clGlObjectId;
         }
     }
+    static const std::unordered_map<GLenum, const cl_image_format> gLToCLFormats;
 
   protected:
     int synchronizeHandler(UpdateData &updateData) override;

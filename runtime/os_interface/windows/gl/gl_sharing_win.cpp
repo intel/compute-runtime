@@ -10,6 +10,7 @@
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/gl/gl_sharing.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 
@@ -132,5 +133,39 @@ void GLSharingFunctions::createBackupContext() {
         GLHGLRCHandleBkpCtx = pfnWglCreateContext(GLHDCHandle);
         pfnWglShareLists(GLHGLRCHandle, GLHGLRCHandleBkpCtx);
     }
+}
+
+cl_int GLSharingFunctions::getSupportedFormats(cl_mem_flags flags,
+                                               cl_mem_object_type imageType,
+                                               size_t numEntries,
+                                               cl_GLenum *formats,
+                                               uint32_t *numImageFormats) {
+    if (flags != CL_MEM_READ_ONLY && flags != CL_MEM_WRITE_ONLY && flags != CL_MEM_READ_WRITE && flags != CL_MEM_KERNEL_READ_AND_WRITE) {
+        return CL_INVALID_VALUE;
+    }
+
+    if (imageType != CL_MEM_OBJECT_IMAGE1D && imageType != CL_MEM_OBJECT_IMAGE2D &&
+        imageType != CL_MEM_OBJECT_IMAGE3D && imageType != CL_MEM_OBJECT_IMAGE1D_ARRAY &&
+        imageType != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+        return CL_INVALID_VALUE;
+    }
+
+    const auto formatsCount = GlSharing::gLToCLFormats.size();
+    if (numImageFormats != nullptr) {
+        *numImageFormats = static_cast<cl_uint>(formatsCount);
+    }
+
+    if (formats != nullptr && formatsCount > 0) {
+        auto elementsToCopy = std::min(numEntries, formatsCount);
+        uint32_t i = 0;
+        for (auto &x : GlSharing::gLToCLFormats) {
+            formats[i++] = x.first;
+            if (i == elementsToCopy) {
+                break;
+            }
+        }
+    }
+
+    return CL_SUCCESS;
 }
 } // namespace NEO
