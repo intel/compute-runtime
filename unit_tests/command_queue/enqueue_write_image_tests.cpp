@@ -216,6 +216,48 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenReadWriteImageIsCalledThenH
     delete dstImage2;
 }
 
+HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenWriteImageIsCalledThenRowPitchIsSetToSlicePitch) {
+    auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
+    EBuiltInOps copyBuiltIn = EBuiltInOps::CopyBufferToImage3d;
+    auto &origBuilder = builtIns.getBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice());
+
+    // substitute original builder with mock builder
+    auto oldBuilder = builtIns.setBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice(),
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(builtIns, &origBuilder)));
+
+    std::unique_ptr<Image> image;
+    auto destImage = Image1dArrayHelper<>::create(context);
+    auto imageDesc = destImage->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_array_size, 1};
+    size_t rowPitch = 64;
+    size_t slicePitch = 128;
+
+    EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, destImage, CL_FALSE, origin, region, rowPitch, slicePitch);
+
+    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(builtIns.getBuiltinDispatchInfoBuilder(copyBuiltIn,
+                                                                                                             pCmdQ->getContext(),
+                                                                                                             pCmdQ->getDevice()));
+    auto params = mockBuilder.getBuiltinOpParams();
+    EXPECT_EQ(params->dstRowPitch, slicePitch);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = builtIns.setBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice(),
+        std::move(oldBuilder));
+    EXPECT_NE(nullptr, newBuilder);
+
+    delete destImage;
+}
+
 HWTEST_F(EnqueueWriteImageTest, GivenImage2DarrayWhenReadWriteImageIsCalledThenHostPtrSizeIsCalculatedProperly) {
     auto dstImage2 = Image2dArrayHelper<>::create(context);
     auto imageDesc = dstImage2->getImageDesc();

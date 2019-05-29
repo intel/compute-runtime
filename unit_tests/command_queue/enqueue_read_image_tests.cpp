@@ -238,6 +238,46 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenHostPtr
     delete srcImage;
 }
 
+HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitchIsSetToSlicePitch) {
+    auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
+    EBuiltInOps copyBuiltIn = EBuiltInOps::CopyImage3dToBuffer;
+    auto &origBuilder = builtIns.getBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice());
+
+    // substitute original builder with mock builder
+    auto oldBuilder = builtIns.setBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice(),
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(builtIns, &origBuilder)));
+
+    auto srcImage = Image1dArrayHelper<>::create(context);
+    auto imageDesc = srcImage->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_array_size, 1};
+    size_t rowPitch = 64;
+    size_t slicePitch = 128;
+
+    EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, srcImage, CL_TRUE, origin, region, rowPitch, slicePitch);
+
+    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(builtIns.getBuiltinDispatchInfoBuilder(copyBuiltIn,
+                                                                                                             pCmdQ->getContext(),
+                                                                                                             pCmdQ->getDevice()));
+    auto params = mockBuilder.getBuiltinOpParams();
+    EXPECT_EQ(params->srcRowPitch, slicePitch);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = builtIns.setBuiltinDispatchInfoBuilder(
+        copyBuiltIn,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice(),
+        std::move(oldBuilder));
+    EXPECT_NE(nullptr, newBuilder);
+    delete srcImage;
+}
+
 HWTEST_F(EnqueueReadImageTest, GivenImage2DarrayWhenReadImageIsCalledThenHostPtrSizeIsCalculatedProperly) {
     auto srcImage = Image2dArrayHelper<>::create(context);
     auto imageDesc = srcImage->getImageDesc();
