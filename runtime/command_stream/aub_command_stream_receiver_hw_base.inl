@@ -331,6 +331,10 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         subCaptureManager->disableSubCapture();
     }
 
+    if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+        pollForCompletion();
+    }
+
     getAubStream()->flush();
     return 0;
 }
