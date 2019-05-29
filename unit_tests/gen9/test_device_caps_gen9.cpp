@@ -55,6 +55,12 @@ GEN9TEST_F(Gen9DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThe
     EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
 }
 
+GEN9TEST_F(Gen9DeviceCaps, givenHwInfoWhenRequestedMaxFrontEndThreadsThenReturnValidValue) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
+
+    EXPECT_EQ(HwHelper::getMaxThreadsForVfe(hwInfo), pDevice->getDeviceInfo().maxFrontEndThreads);
+}
+
 GEN9TEST_F(Gen9DeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
 }

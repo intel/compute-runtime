@@ -81,7 +81,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programPipelineSelect(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programMediaSampler(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programStateSip(LinearStream &cmdStream, Device &device);
-    void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags);
+    void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t maxFrontEndThreads);
     virtual void initPageTableManagerRegisters(LinearStream &csr){};
 
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);

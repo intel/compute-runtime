@@ -126,7 +126,7 @@ void DeviceQueueHw<GfxFamily>::addMediaStateClearCmds() {
 
     addDcFlushToPipeControlWa(pipeControl);
 
-    PreambleHelper<GfxFamily>::programVFEState(&slbCS, device->getHardwareInfo(), 0, 0);
+    PreambleHelper<GfxFamily>::programVFEState(&slbCS, device->getHardwareInfo(), 0, 0, device->getDeviceInfo().maxFrontEndThreads);
 }
 
 template <typename GfxFamily>

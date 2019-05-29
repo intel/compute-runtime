@@ -57,6 +57,12 @@ BDWTEST_F(BdwDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenR
     EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
 }
 
+BDWTEST_F(BdwDeviceCaps, givenHwInfoWhenRequestedMaxFrontEndThreadsThenReturnValidValue) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
+
+    EXPECT_EQ(HwHelper::getMaxThreadsForVfe(hwInfo), pDevice->getDeviceInfo().maxFrontEndThreads);
+}
+
 typedef Test<DeviceFixture> BdwUsDeviceIdTest;
 
 BDWTEST_F(BdwUsDeviceIdTest, isSimulationCap) {

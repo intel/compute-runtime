@@ -281,6 +281,7 @@ void Device::initializeCaps() {
                      systemInfo.MaxSubSlicesSupported);
 
     deviceInfo.computeUnitsUsedForScratch = hwHelper.getComputeUnitsUsedForScratch(&hwInfo);
+    deviceInfo.maxFrontEndThreads = HwHelper::getMaxThreadsForVfe(hwInfo);
 
     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "computeUnitsUsedForScratch: %d\n", deviceInfo.computeUnitsUsedForScratch);
 

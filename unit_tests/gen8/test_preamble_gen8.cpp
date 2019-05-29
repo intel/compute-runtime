@@ -82,7 +82,7 @@ BDWTEST_F(PreambleVfeState, basic) {
     typedef BDWFamily::PIPE_CONTROL PIPE_CONTROL;
 
     LinearStream &cs = linearStream;
-    PreambleHelper<BDWFamily>::programVFEState(&linearStream, **platformDevices, 0, 0);
+    PreambleHelper<BDWFamily>::programVFEState(&linearStream, **platformDevices, 0, 0, 168u);
 
     parseCommands<BDWFamily>(cs);
 

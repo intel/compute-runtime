@@ -25,14 +25,18 @@ uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream, const HardwareInfo &hwInfo, int scratchSize, uint64_t scratchAddress) {
+void PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream,
+                                                const HardwareInfo &hwInfo,
+                                                int scratchSize,
+                                                uint64_t scratchAddress,
+                                                uint32_t maxFrontEndThreads) {
     using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
 
     addPipeControlBeforeVfeCmd(pCommandStream, &hwInfo);
 
     auto pMediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(pCommandStream->getSpace(sizeof(MEDIA_VFE_STATE)));
     *pMediaVfeState = GfxFamily::cmdInitMediaVfeState;
-    pMediaVfeState->setMaximumNumberOfThreads(HwHelper::getMaxThreadsForVfe(hwInfo));
+    pMediaVfeState->setMaximumNumberOfThreads(maxFrontEndThreads);
     pMediaVfeState->setNumberOfUrbEntries(1);
     pMediaVfeState->setUrbEntryAllocationSize(PreambleHelper<GfxFamily>::getUrbEntryAllocationSize());
     pMediaVfeState->setPerThreadScratchSpace(Kernel::getScratchSizeValueToProgramMediaVfeState(scratchSize));

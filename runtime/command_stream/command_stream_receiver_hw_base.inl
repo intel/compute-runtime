@@ -260,7 +260,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     stateBaseAddressDirty |= ((GSBAFor32BitProgrammed ^ dispatchFlags.GSBA32BitRequired) && force32BitAllocations);
 
-    programVFEState(commandStreamCSR, dispatchFlags);
+    programVFEState(commandStreamCSR, dispatchFlags, device.getDeviceInfo().maxFrontEndThreads);
 
     bool dshDirty = dshState.updateAndCheck(&dsh);
     bool iohDirty = iohState.updateAndCheck(&ioh);
@@ -663,9 +663,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &cs
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags) {
+inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t maxFrontEndThreads) {
     if (mediaVfeStateDirty) {
-        PreambleHelper<GfxFamily>::programVFEState(&csr, peekHwInfo(), requiredScratchSize, getScratchPatchAddress());
+        PreambleHelper<GfxFamily>::programVFEState(&csr, peekHwInfo(), requiredScratchSize, getScratchPatchAddress(), maxFrontEndThreads);
         setMediaVFEStateDirty(false);
     }
 }
