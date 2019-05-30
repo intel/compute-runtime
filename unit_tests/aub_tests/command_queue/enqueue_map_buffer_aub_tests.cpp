@@ -68,7 +68,10 @@ HWTEST_F(AUBMapBuffer, MapUpdateUnmapVerify) {
     std::unique_ptr<uint8_t[]> readMemory(new uint8_t[bufferSize]);
     buffer->forceDisallowCPUCopy = true;
 
-    retVal = pCmdQ->enqueueReadBuffer(buffer.get(), CL_TRUE, 0, bufferSize, readMemory.get(), nullptr, 0, nullptr, nullptr);
+    retVal = pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, bufferSize, readMemory.get(), nullptr, 0, nullptr, nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = pCmdQ->flush();
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     for (size_t i = 0; i < bufferSize; i++) {

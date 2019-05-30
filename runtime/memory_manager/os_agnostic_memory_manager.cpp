@@ -185,6 +185,11 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
         return;
     }
 
+    auto aubCenter = executionEnvironment.aubCenter.get();
+    if (aubCenter && aubCenter->getAubManager()) {
+        aubCenter->getAubManager()->freeMemory(gfxAllocation->getGpuAddress(), gfxAllocation->getUnderlyingBufferSize());
+    }
+
     if (gfxAllocation->fragmentsStorage.fragmentCount) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
         delete gfxAllocation;
@@ -199,11 +204,6 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
     alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
     if (gfxAllocation->getReservedAddressPtr()) {
         releaseReservedCpuAddressRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize());
-    }
-
-    auto aubCenter = executionEnvironment.aubCenter.get();
-    if (aubCenter && aubCenter->getAubManager()) {
-        aubCenter->getAubManager()->freeMemory(gfxAllocation->getGpuAddress(), gfxAllocation->getUnderlyingBufferSize());
     }
 
     delete gfxAllocation;

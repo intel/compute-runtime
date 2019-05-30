@@ -169,7 +169,11 @@ HWTEST_P(AUBWriteImage, simpleUnalignedMemory) {
     auto readMemory = new uint8_t[dstImage->getSize()];
     size_t imgOrigin[] = {0, 0, 0};
     size_t imgRegion[] = {testWidth, testHeight, testDepth};
-    pCmdQ->enqueueReadImage(dstImage, CL_TRUE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
+    retVal = pCmdQ->enqueueReadImage(dstImage, CL_FALSE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = pCmdQ->flush();
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto pDstMemory = readMemory;
     auto pSrc = pSrcMemory;

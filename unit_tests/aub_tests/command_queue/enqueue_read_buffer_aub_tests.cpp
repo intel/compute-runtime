@@ -136,7 +136,7 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
 
     srcBuffer->forceDisallowCPUCopy = true;
     auto retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
-                                           CL_TRUE,
+                                           CL_FALSE,
                                            0,
                                            sizeof(dstMemory),
                                            dstMemory,
@@ -144,6 +144,9 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
                                            0,
                                            nullptr,
                                            nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = pCmdQ->flush();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     GraphicsAllocation *dstAllocation = createResidentAllocationAndStoreItInCsr(dstMemory, sizeof(dstMemory));
@@ -191,7 +194,7 @@ struct AUBReadBufferUnaligned
         // Do unaligned read
         retVal = pCmdQ->enqueueReadBuffer(
             buffer.get(),
-            CL_TRUE,
+            CL_FALSE,
             offset,
             size,
             ptrOffset(dstMemory, offset),
@@ -199,6 +202,9 @@ struct AUBReadBufferUnaligned
             0,
             nullptr,
             nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        retVal = pCmdQ->flush();
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         // Check the memory

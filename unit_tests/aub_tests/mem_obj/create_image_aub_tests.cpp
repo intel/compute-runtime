@@ -242,7 +242,9 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithDoubledRowPitchThatIsCreatedWithCopyHos
             readMemory = new uint8_t[testImageDimensions * testImageDimensions * elementSize * 4];
             size_t imgOrigin[] = {0, 0, 0};
             size_t imgRegion[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth ? imageDesc.image_depth : 1};
-            retVal = pCmdQ->enqueueReadImage(image, CL_TRUE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
+            retVal = pCmdQ->enqueueReadImage(image, CL_FALSE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
+            EXPECT_EQ(CL_SUCCESS, retVal);
+            retVal = pCmdQ->flush();
             EXPECT_EQ(CL_SUCCESS, retVal);
             imageStorage = readMemory;
         }
@@ -312,7 +314,7 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithRowPitchCreatedWithUseHostPtrFlagCopied
         size_t imageSlicePitch = 0;
         auto ptr = pCmdQ->enqueueMapImage(
             image,
-            true,
+            false,
             mapFlags,
             origin,
             region,
@@ -327,6 +329,7 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithRowPitchCreatedWithUseHostPtrFlagCopied
         } else {
             EXPECT_NE(image->getCpuAddress(), ptr);
         }
+        pCmdQ->flush();
         size_t imageRowPitchRef = 0;
         image->getImageInfo(CL_IMAGE_ROW_PITCH, sizeof(imageRowPitchRef), &imageRowPitchRef, nullptr);
 
@@ -403,7 +406,9 @@ HWTEST_F(AUBCreateImage, image3DCreatedWithDoubledSlicePitchWhenQueriedForDataRe
         readMemory = new uint8_t[imageSize];
         size_t imgOrigin[] = {0, 0, 0};
         size_t imgRegion[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth};
-        retVal = pCmdQ->enqueueReadImage(image, CL_TRUE, imgOrigin, imgRegion, 0, computedSlicePitch, readMemory, nullptr, 0, nullptr, nullptr);
+        retVal = pCmdQ->enqueueReadImage(image, CL_FALSE, imgOrigin, imgRegion, 0, computedSlicePitch, readMemory, nullptr, 0, nullptr, nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        retVal = pCmdQ->flush();
         EXPECT_EQ(CL_SUCCESS, retVal);
         imageStorage = readMemory;
     }

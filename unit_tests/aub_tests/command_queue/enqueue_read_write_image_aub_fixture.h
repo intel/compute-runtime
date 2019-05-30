@@ -72,9 +72,6 @@ struct AUBImageUnaligned
         imageDesc.num_samples = 0;
         imageDesc.mem_object = NULL;
 
-        auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(dstMemory, bufferSize);
-        auto dstMemoryGPUPtr = reinterpret_cast<char *>(graphicsAllocation->getGpuAddress());
-
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
         auto retVal = CL_INVALID_VALUE;
@@ -89,6 +86,9 @@ struct AUBImageUnaligned
         ASSERT_NE(nullptr, image);
         EXPECT_FALSE(image->isMemObjZeroCopy());
 
+        auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(dstMemory, bufferSize);
+        auto dstMemoryGPUPtr = reinterpret_cast<char *>(graphicsAllocation->getGpuAddress());
+
         const size_t origin[3] = {0, 1, 0};
         const size_t region[3] = {size, 1, 1};
 
@@ -97,7 +97,7 @@ struct AUBImageUnaligned
 
         retVal = pCmdQ->enqueueReadImage(
             image.get(),
-            CL_TRUE,
+            CL_FALSE,
             origin,
             region,
             inputRowPitch,
@@ -109,7 +109,8 @@ struct AUBImageUnaligned
             nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        pCmdQ->finish(true);
+        retVal = pCmdQ->flush();
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
         AUBCommandStreamFixture::expectMemory<FamilyType>(dstMemoryGPUPtr, referenceMemory, offset);
         AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), &imageMemory[inputRowPitch * origin[1] * pixelSize], size * pixelSize);
