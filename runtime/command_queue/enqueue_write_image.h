@@ -45,25 +45,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
         isMemTransferNeeded = dstImage->checkIfMemoryTransferIsRequired(hostOffset, 0, ptr, CL_COMMAND_WRITE_IMAGE);
     }
     if (!isMemTransferNeeded) {
-        NullSurface s;
-        Surface *surfaces[] = {&s};
-        enqueueHandler<CL_COMMAND_MARKER>(
-            surfaces,
-            blockingWrite == CL_TRUE,
-            di,
-            numEventsInWaitList,
-            eventWaitList,
-            event);
-        if (event) {
-            auto pEvent = castToObjectOrAbort<Event>(*event);
-            pEvent->setCmdType(CL_COMMAND_WRITE_IMAGE);
-        }
-
-        if (context->isProvidingPerformanceHints()) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_WRITE_IMAGE_DOESNT_REQUIRES_COPY_DATA, static_cast<cl_mem>(dstImage));
-        }
-
-        return CL_SUCCESS;
+        return enqueueMarkerForReadWriteOperation(dstImage, const_cast<void *>(ptr), CL_COMMAND_WRITE_IMAGE, blockingWrite,
+                                                  numEventsInWaitList, eventWaitList, event);
     }
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
                                                                                                         this->getContext(), this->getDevice());

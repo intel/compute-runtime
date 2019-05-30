@@ -7,6 +7,8 @@
 
 #include "driver_diagnostics.h"
 
+#include "runtime/helpers/debug_helpers.h"
+
 namespace NEO {
 
 DriverDiagnostics::DriverDiagnostics(cl_diagnostics_verbose_level level) {
@@ -56,4 +58,41 @@ const char *DriverDiagnostics::hintFormat[] = {
     "Performance hint: Kernel %s submission requires coherency with CPU; this will impact performance.",                                                                                                                                  //KERNEL_REQUIRES_COHERENCY
     "Performance hint: Kernel %s requires aux translation on argument [%u] = \"%s\""                                                                                                                                                      //KERNEL_ARGUMENT_AUX_TRANSLATION
 };
+
+PerformanceHints DriverDiagnostics::obtainHintForTransferOperation(cl_command_type commandType, bool transferRequired) {
+    PerformanceHints hint;
+    switch (commandType) {
+    case CL_COMMAND_MAP_BUFFER:
+        hint = transferRequired ? CL_ENQUEUE_MAP_BUFFER_REQUIRES_COPY_DATA : CL_ENQUEUE_MAP_BUFFER_DOESNT_REQUIRE_COPY_DATA;
+        break;
+    case CL_COMMAND_MAP_IMAGE:
+        hint = transferRequired ? CL_ENQUEUE_MAP_IMAGE_REQUIRES_COPY_DATA : CL_ENQUEUE_MAP_IMAGE_DOESNT_REQUIRE_COPY_DATA;
+        break;
+    case CL_COMMAND_UNMAP_MEM_OBJECT:
+        hint = transferRequired ? CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA : CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA;
+        break;
+    case CL_COMMAND_WRITE_BUFFER:
+        hint = transferRequired ? CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA : CL_ENQUEUE_WRITE_BUFFER_DOESNT_REQUIRE_COPY_DATA;
+        break;
+    case CL_COMMAND_READ_BUFFER:
+        hint = transferRequired ? CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA : CL_ENQUEUE_READ_BUFFER_DOESNT_REQUIRE_COPY_DATA;
+        break;
+    case CL_COMMAND_WRITE_BUFFER_RECT:
+        hint = transferRequired ? CL_ENQUEUE_WRITE_BUFFER_RECT_REQUIRES_COPY_DATA : CL_ENQUEUE_WRITE_BUFFER_RECT_DOESNT_REQUIRE_COPY_DATA;
+        break;
+    case CL_COMMAND_READ_BUFFER_RECT:
+        hint = transferRequired ? CL_ENQUEUE_READ_BUFFER_RECT_REQUIRES_COPY_DATA : CL_ENQUEUE_READ_BUFFER_RECT_DOESNT_REQUIRES_COPY_DATA;
+        break;
+    case CL_COMMAND_WRITE_IMAGE:
+        hint = transferRequired ? CL_ENQUEUE_WRITE_IMAGE_REQUIRES_COPY_DATA : CL_ENQUEUE_WRITE_IMAGE_DOESNT_REQUIRES_COPY_DATA;
+        break;
+    case CL_COMMAND_READ_IMAGE:
+        UNRECOVERABLE_IF(transferRequired)
+        hint = CL_ENQUEUE_READ_IMAGE_DOESNT_REQUIRES_COPY_DATA;
+        break;
+    default:
+        UNRECOVERABLE_IF(true);
+    }
+    return hint;
+}
 } // namespace NEO

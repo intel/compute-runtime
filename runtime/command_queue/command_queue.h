@@ -446,6 +446,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies);
     void processProperties(const cl_queue_properties *properties);
+    bool bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandType, cl_bool blocking, size_t size, void *ptr,
+                              cl_uint numEventsInWaitList, const cl_event *eventWaitList);
 
     Context *context = nullptr;
     Device *device = nullptr;

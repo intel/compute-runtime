@@ -32,58 +32,28 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    cl_int retVal = CL_SUCCESS;
-    auto isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, CL_COMMAND_READ_BUFFER) : true;
-    if ((DebugManager.flags.DoCpuCopyOnWriteBuffer.get() && !Event::checkUserEventDependencies(numEventsInWaitList, eventWaitList) &&
-         buffer->getGraphicsAllocation()->getAllocationType() != GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
-        buffer->isReadWriteOnCpuAllowed(blockingWrite, numEventsInWaitList, const_cast<void *>(ptr), size)) {
-        if (!isMemTransferNeeded) {
-            TransferProperties transferProperties(buffer, CL_COMMAND_MARKER, 0, true, &offset, &size, const_cast<void *>(ptr), false);
-            EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
-            cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    auto isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, CL_COMMAND_WRITE_BUFFER) : true;
+    bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, CL_COMMAND_WRITE_BUFFER, blockingWrite, size, const_cast<void *>(ptr),
+                                                 numEventsInWaitList, eventWaitList);
 
-            if (event) {
-                auto pEvent = castToObjectOrAbort<Event>(*event);
-                pEvent->setCmdType(CL_COMMAND_WRITE_BUFFER);
-            }
-
-            if (context->isProvidingPerformanceHints()) {
-                context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_WRITE_BUFFER_DOESNT_REQUIRE_COPY_DATA, static_cast<cl_mem>(buffer), ptr);
-            }
-            return retVal;
+    if (isCpuCopyAllowed) {
+        if (isMemTransferNeeded) {
+            return enqueueReadWriteBufferOnCpuWithMemoryTransfer(CL_COMMAND_WRITE_BUFFER, buffer, offset, size, const_cast<void *>(ptr),
+                                                                 numEventsInWaitList, eventWaitList, event);
+        } else {
+            return enqueueReadWriteBufferOnCpuWithoutMemoryTransfer(CL_COMMAND_WRITE_BUFFER, buffer, offset, size, const_cast<void *>(ptr),
+                                                                    numEventsInWaitList, eventWaitList, event);
         }
-        TransferProperties transferProperties(buffer, CL_COMMAND_WRITE_BUFFER, 0, true, &offset, &size, const_cast<void *>(ptr), true);
-        EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
-        cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
-        return retVal;
+    } else if (!isMemTransferNeeded) {
+        return enqueueMarkerForReadWriteOperation(buffer, const_cast<void *>(ptr), CL_COMMAND_WRITE_BUFFER, blockingWrite,
+                                                  numEventsInWaitList, eventWaitList, event);
     }
 
-    MultiDispatchInfo dispatchInfo;
-    if (!isMemTransferNeeded) {
-        NullSurface s;
-        Surface *surfaces[] = {&s};
-        enqueueHandler<CL_COMMAND_MARKER>(
-            surfaces,
-            blockingWrite == CL_TRUE,
-            dispatchInfo,
-            numEventsInWaitList,
-            eventWaitList,
-            event);
-        if (event) {
-            auto pEvent = castToObjectOrAbort<Event>(*event);
-            pEvent->setCmdType(CL_COMMAND_WRITE_BUFFER);
-        }
-
-        if (context->isProvidingPerformanceHints()) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_WRITE_BUFFER_DOESNT_REQUIRE_COPY_DATA, static_cast<cl_mem>(buffer), ptr);
-        }
-
-        return CL_SUCCESS;
-    }
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                                                         this->getContext(), this->getDevice());
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
+    MultiDispatchInfo dispatchInfo;
 
     void *srcPtr = const_cast<void *>(ptr);
 

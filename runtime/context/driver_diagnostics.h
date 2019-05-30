@@ -57,6 +57,7 @@ class DriverDiagnostics {
     ~DriverDiagnostics() = default;
     static const char *hintFormat[];
     static const cl_int maxHintStringSize = 1024;
+    PerformanceHints obtainHintForTransferOperation(cl_command_type commandType, bool transferRequired);
 
   protected:
     cl_diagnostics_verbose_level verboseLevel;

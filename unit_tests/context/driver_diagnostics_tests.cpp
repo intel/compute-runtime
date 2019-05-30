@@ -9,6 +9,8 @@
 
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 
+#include <tuple>
+
 using namespace NEO;
 
 bool containsHint(const char *providedHint, char *userData) {
@@ -520,4 +522,43 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST(PerformanceHintsDebugVariables, givenDefaultDebugManagerWhenPrintDriverDiagnosticsIsCalledThenMinusOneIsReturned) {
     EXPECT_EQ(-1, DebugManager.flags.PrintDriverDiagnostics.get());
+}
+
+TEST(PerformanceHintsTransferTest, givenCommandTypeAndMemoryTransferRequiredWhenAskingForHintThenReturnCorrectValue) {
+    DriverDiagnostics driverDiagnostics(0);
+    const uint32_t numHints = 8;
+    std::tuple<uint32_t, PerformanceHints, PerformanceHints> commandHints[numHints] = {
+        // commandType, transfer required, transfer not required
+        std::make_tuple(CL_COMMAND_MAP_BUFFER, CL_ENQUEUE_MAP_BUFFER_REQUIRES_COPY_DATA, CL_ENQUEUE_MAP_BUFFER_DOESNT_REQUIRE_COPY_DATA),
+        std::make_tuple(CL_COMMAND_MAP_IMAGE, CL_ENQUEUE_MAP_IMAGE_REQUIRES_COPY_DATA, CL_ENQUEUE_MAP_IMAGE_DOESNT_REQUIRE_COPY_DATA),
+        std::make_tuple(CL_COMMAND_UNMAP_MEM_OBJECT, CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA, CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA),
+        std::make_tuple(CL_COMMAND_WRITE_BUFFER, CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA, CL_ENQUEUE_WRITE_BUFFER_DOESNT_REQUIRE_COPY_DATA),
+        std::make_tuple(CL_COMMAND_READ_BUFFER, CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA, CL_ENQUEUE_READ_BUFFER_DOESNT_REQUIRE_COPY_DATA),
+        std::make_tuple(CL_COMMAND_WRITE_BUFFER_RECT, CL_ENQUEUE_WRITE_BUFFER_RECT_REQUIRES_COPY_DATA, CL_ENQUEUE_WRITE_BUFFER_RECT_DOESNT_REQUIRE_COPY_DATA),
+        std::make_tuple(CL_COMMAND_READ_BUFFER_RECT, CL_ENQUEUE_READ_BUFFER_RECT_REQUIRES_COPY_DATA, CL_ENQUEUE_READ_BUFFER_RECT_DOESNT_REQUIRES_COPY_DATA),
+        std::make_tuple(CL_COMMAND_WRITE_IMAGE, CL_ENQUEUE_WRITE_IMAGE_REQUIRES_COPY_DATA, CL_ENQUEUE_WRITE_IMAGE_DOESNT_REQUIRES_COPY_DATA),
+    };
+
+    for (uint32_t i = 0; i < numHints; i++) {
+        auto hintWithTransferRequired = driverDiagnostics.obtainHintForTransferOperation(std::get<0>(commandHints[i]), true);
+        auto hintWithoutTransferRequired = driverDiagnostics.obtainHintForTransferOperation(std::get<0>(commandHints[i]), false);
+
+        EXPECT_EQ(std::get<1>(commandHints[i]), hintWithTransferRequired);
+        EXPECT_EQ(std::get<2>(commandHints[i]), hintWithoutTransferRequired);
+    }
+
+    EXPECT_THROW(driverDiagnostics.obtainHintForTransferOperation(CL_COMMAND_READ_IMAGE, true), std::exception); // no hint for this scenario
+    EXPECT_EQ(CL_ENQUEUE_READ_IMAGE_DOESNT_REQUIRES_COPY_DATA,
+              driverDiagnostics.obtainHintForTransferOperation(CL_COMMAND_READ_IMAGE, false));
+}
+
+TEST_F(DriverDiagnosticsTest, givenInvalidCommandTypeWhenAskingForZeroCopyOperatonThenAbort) {
+    cl_device_id deviceId = devices[0];
+    cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
+    auto context = std::unique_ptr<MockContext>(Context::create<MockContext>(validProperties, DeviceVector(&deviceId, 1),
+                                                                             callbackFunction, (void *)userData, retVal));
+
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    auto address = reinterpret_cast<void *>(0x12345);
+    EXPECT_THROW(context->providePerformanceHintForMemoryTransfer(CL_COMMAND_BARRIER, true, buffer.get(), address), std::exception);
 }

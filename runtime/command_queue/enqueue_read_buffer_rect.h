@@ -43,25 +43,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
         isMemTransferNeeded = buffer->checkIfMemoryTransferIsRequired(bufferOffset, hostOffset, ptr, CL_COMMAND_READ_BUFFER_RECT);
     }
     if (!isMemTransferNeeded) {
-        NullSurface s;
-        Surface *surfaces[] = {&s};
-        enqueueHandler<CL_COMMAND_MARKER>(
-            surfaces,
-            blockingRead == CL_TRUE,
-            dispatchInfo,
-            numEventsInWaitList,
-            eventWaitList,
-            event);
-        if (event) {
-            auto pEvent = castToObjectOrAbort<Event>(*event);
-            pEvent->setCmdType(CL_COMMAND_READ_BUFFER_RECT);
-        }
-
-        if (context->isProvidingPerformanceHints()) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_READ_BUFFER_RECT_DOESNT_REQUIRES_COPY_DATA, static_cast<cl_mem>(buffer), ptr);
-        }
-
-        return CL_SUCCESS;
+        return enqueueMarkerForReadWriteOperation(buffer, ptr, CL_COMMAND_READ_BUFFER_RECT, blockingRead,
+                                                  numEventsInWaitList, eventWaitList, event);
     }
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRect,
                                                                                                         this->getContext(), this->getDevice());
@@ -109,7 +92,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
         event);
 
     if (context->isProvidingPerformanceHints()) {
-        context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_BUFFER_RECT_REQUIRES_COPY_DATA, static_cast<cl_mem>(buffer), ptr);
+        context->providePerformanceHintForMemoryTransfer(CL_COMMAND_READ_BUFFER_RECT, true, static_cast<cl_mem>(buffer), ptr);
         if (!isL3Capable(ptr, hostPtrSize)) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_BUFFER_RECT_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, ptr, hostPtrSize, MemoryConstants::pageSize, MemoryConstants::pageSize);
         }

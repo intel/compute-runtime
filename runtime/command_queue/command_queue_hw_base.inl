@@ -42,4 +42,61 @@ void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingR
     }
 }
 
+template <typename Family>
+cl_int CommandQueueHw<Family>::enqueueReadWriteBufferOnCpuWithMemoryTransfer(cl_command_type commandType, Buffer *buffer,
+                                                                             size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
+                                                                             const cl_event *eventWaitList, cl_event *event) {
+    cl_int retVal = CL_SUCCESS;
+    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+
+    TransferProperties transferProperties(buffer, commandType, 0, true, &offset, &size, ptr, true);
+    cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    return retVal;
+}
+
+template <typename Family>
+cl_int CommandQueueHw<Family>::enqueueReadWriteBufferOnCpuWithoutMemoryTransfer(cl_command_type commandType, Buffer *buffer,
+                                                                                size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
+                                                                                const cl_event *eventWaitList, cl_event *event) {
+    cl_int retVal = CL_SUCCESS;
+    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+
+    TransferProperties transferProperties(buffer, CL_COMMAND_MARKER, 0, true, &offset, &size, ptr, false);
+    cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    if (event) {
+        auto pEvent = castToObjectOrAbort<Event>(*event);
+        pEvent->setCmdType(commandType);
+    }
+
+    if (context->isProvidingPerformanceHints()) {
+        context->providePerformanceHintForMemoryTransfer(commandType, false, static_cast<cl_mem>(buffer), ptr);
+    }
+    return retVal;
+}
+
+template <typename Family>
+cl_int CommandQueueHw<Family>::enqueueMarkerForReadWriteOperation(MemObj *memObj, void *ptr, cl_command_type commandType, cl_bool blocking, cl_uint numEventsInWaitList,
+                                                                  const cl_event *eventWaitList, cl_event *event) {
+    MultiDispatchInfo multiDispatchInfo;
+    NullSurface s;
+    Surface *surfaces[] = {&s};
+    enqueueHandler<CL_COMMAND_MARKER>(
+        surfaces,
+        blocking == CL_TRUE,
+        multiDispatchInfo,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+    if (event) {
+        auto pEvent = castToObjectOrAbort<Event>(*event);
+        pEvent->setCmdType(commandType);
+    }
+
+    if (context->isProvidingPerformanceHints()) {
+        context->providePerformanceHintForMemoryTransfer(commandType, false, static_cast<cl_mem>(memObj), ptr);
+    }
+
+    return CL_SUCCESS;
+}
+
 } // namespace NEO

@@ -367,6 +367,15 @@ class CommandQueueHw : public CommandQueue {
     MOCKABLE_VIRTUAL void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo){};
     size_t calculateHostPtrSizeForImage(const size_t *region, size_t rowPitch, size_t slicePitch, Image *image);
 
+    cl_int enqueueReadWriteBufferOnCpuWithMemoryTransfer(cl_command_type commandType, Buffer *buffer,
+                                                         size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
+                                                         const cl_event *eventWaitList, cl_event *event);
+    cl_int enqueueReadWriteBufferOnCpuWithoutMemoryTransfer(cl_command_type commandType, Buffer *buffer,
+                                                            size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
+                                                            const cl_event *eventWaitList, cl_event *event);
+    cl_int enqueueMarkerForReadWriteOperation(MemObj *memObj, void *ptr, cl_command_type commandType, cl_bool blocking, cl_uint numEventsInWaitList,
+                                              const cl_event *eventWaitList, cl_event *event);
+
   private:
     bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
     void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueue, unsigned int commandType) override;
