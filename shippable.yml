@@ -7,7 +7,7 @@ build:
     - mkdir workspace; cd workspace
     - git clone ../../compute-runtime neo
     - mkdir build; cd build
-    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DSKIP_UNIT_TESTS=1 ../neo
+    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ../neo
     - ninja
 integrations:
     notifications:
