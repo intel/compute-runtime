@@ -39,10 +39,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
 
     cl_int retVal = CL_SUCCESS;
     bool isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, CL_COMMAND_READ_BUFFER) : true;
-    if (((DebugManager.flags.DoCpuCopyOnReadBuffer.get() && !Event::checkUserEventDependencies(numEventsInWaitList, eventWaitList) &&
-          buffer->getGraphicsAllocation()->getAllocationType() != GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
-         buffer->isReadWriteOnCpuAllowed(blockingRead, numEventsInWaitList, ptr, size)) &&
-        context->getDevice(0)->getDeviceInfo().cpuCopyAllowed) {
+    if ((DebugManager.flags.DoCpuCopyOnReadBuffer.get() && !Event::checkUserEventDependencies(numEventsInWaitList, eventWaitList) &&
+         buffer->getGraphicsAllocation()->getAllocationType() != GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) ||
+        buffer->isReadWriteOnCpuAllowed(blockingRead, numEventsInWaitList, ptr, size)) {
         if (!isMemTransferNeeded) {
             TransferProperties transferProperties(buffer, CL_COMMAND_MARKER, 0, true, &offset, &size, ptr, false);
             EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);

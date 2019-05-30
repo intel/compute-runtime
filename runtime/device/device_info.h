@@ -129,7 +129,6 @@ struct DeviceInfo {
     bool                         nv12Extension;
     bool                         vmeExtension;
     bool                         platformLP;
-    bool                         cpuCopyAllowed;
     bool                         packedYuvExtension;
     bool                         sourceLevelDebuggerActive;
 };

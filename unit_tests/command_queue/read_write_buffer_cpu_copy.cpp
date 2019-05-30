@@ -36,9 +36,6 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, simpleRead) {
     size_t offset = 1;
     size_t size = 4;
 
-    auto deviceInfo = context->getDevice(0)->getMutableDeviceInfo();
-    deviceInfo->cpuCopyAllowed = true;
-
     auto alignedReadPtr = alignedMalloc(size + 1, MemoryConstants::cacheLineSize);
     memset(alignedReadPtr, 0x00, size + 1);
     auto unalignedReadPtr = ptrOffset(alignedReadPtr, 1);
@@ -72,99 +69,10 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, simpleRead) {
     alignedFree(alignedReadPtr);
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, givenDeviceThatDoesntSupportCpuCopiesWhenReadBufferIsExecutedThenCpuCopyIsNotDone) {
-    cl_int retVal;
-    size_t offset = 1;
-    size_t size = 4;
-
-    auto deviceInfo = context->getDevice(0)->getMutableDeviceInfo();
-    deviceInfo->cpuCopyAllowed = false;
-
-    auto alignedReadPtr = alignedMalloc(size + 1, MemoryConstants::cacheLineSize);
-    memset(alignedReadPtr, 0x00, size + 1);
-    auto unalignedReadPtr = ptrOffset(alignedReadPtr, 1);
-
-    std::unique_ptr<uint8_t[]> bufferPtr(new uint8_t[size]);
-    for (uint8_t i = 0; i < size; i++) {
-        bufferPtr[i] = i + 1;
-    }
-    std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, bufferPtr.get(), retVal));
-    EXPECT_EQ(retVal, CL_SUCCESS);
-
-    bool aligned = (reinterpret_cast<uintptr_t>(unalignedReadPtr) & (MemoryConstants::cacheLineSize - 1)) == 0;
-    EXPECT_TRUE(!aligned || buffer->isMemObjZeroCopy());
-    ASSERT_TRUE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, unalignedReadPtr, size));
-
-    retVal = EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ,
-                                                          buffer.get(),
-                                                          CL_TRUE,
-                                                          offset,
-                                                          size - offset,
-                                                          unalignedReadPtr,
-                                                          nullptr,
-                                                          0,
-                                                          nullptr,
-                                                          nullptr);
-    EXPECT_EQ(retVal, CL_SUCCESS);
-
-    char *charPtr = (char *)unalignedReadPtr;
-    for (uint8_t i = 0; i < size; i++) {
-        EXPECT_EQ(charPtr[i], 0);
-    }
-
-    alignedFree(alignedReadPtr);
-}
-
-HWTEST_F(ReadWriteBufferCpuCopyTest, givenDeviceThatDoesntSupportCpuCopiesWhenWriteBufferIsExecutedThenCpuCopyIsNotDone) {
-    cl_int retVal;
-    size_t offset = 1;
-    size_t size = 4;
-
-    auto deviceInfo = context->getDevice(0)->getMutableDeviceInfo();
-    deviceInfo->cpuCopyAllowed = false;
-
-    auto alignedWritePtr = alignedMalloc(size + 1, MemoryConstants::cacheLineSize);
-    memset(alignedWritePtr, 0x00, size + 1);
-    auto unalignedWritePtr = ptrOffset(alignedWritePtr, 1);
-
-    std::unique_ptr<uint8_t[]> bufferPtr(new uint8_t[size]);
-    for (uint8_t i = 0; i < size; i++) {
-        bufferPtr[i] = i + 1;
-    }
-    std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, bufferPtr.get(), retVal));
-    EXPECT_EQ(retVal, CL_SUCCESS);
-
-    bool aligned = (reinterpret_cast<uintptr_t>(unalignedWritePtr) & (MemoryConstants::cacheLineSize - 1)) == 0;
-    EXPECT_TRUE(!aligned || buffer->isMemObjZeroCopy());
-    ASSERT_TRUE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, unalignedWritePtr, size));
-
-    retVal = EnqueueWriteBufferHelper<>::enqueueWriteBuffer(pCmdQ,
-                                                            buffer.get(),
-                                                            CL_TRUE,
-                                                            offset,
-                                                            size - offset,
-                                                            unalignedWritePtr,
-                                                            nullptr,
-                                                            0,
-                                                            nullptr,
-                                                            nullptr);
-    EXPECT_EQ(retVal, CL_SUCCESS);
-
-    char *charPtr = (char *)buffer->getCpuAddressForMemoryTransfer() + offset;
-    for (uint8_t i = 0; i < size - offset; i++) {
-        EXPECT_EQ(charPtr[i], i + 2);
-    }
-
-    alignedFree(alignedWritePtr);
-}
-
 HWTEST_F(ReadWriteBufferCpuCopyTest, simpleWrite) {
     cl_int retVal;
     size_t offset = 1;
     size_t size = 4;
-
-    auto deviceInfo = context->getDevice(0)->getMutableDeviceInfo();
-    deviceInfo->cpuCopyAllowed = true;
 
     auto alignedWritePtr = alignedMalloc(size + 1, MemoryConstants::cacheLineSize);
     auto unalignedWritePtr = static_cast<uint8_t *>(ptrOffset(alignedWritePtr, 1));

@@ -120,7 +120,6 @@ void Device::initializeCaps() {
         break;
     }
     deviceInfo.platformLP = (hwInfo.capabilityTable.clVersionSupport == 12) ? true : false;
-    deviceInfo.cpuCopyAllowed = true;
     deviceInfo.spirVersions = spirVersions.c_str();
     auto supportsVme = hwInfo.capabilityTable.supportsVme;
 

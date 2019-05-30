@@ -579,30 +579,6 @@ TEST(Device_GetCaps, byDefaultVmeIsTurnedOn) {
     EXPECT_TRUE(freshDebugSettingsManager.flags.EnableIntelVme.get());
 }
 
-TEST(Device_GetCaps, givenOpenCL21DeviceCapsWhenAskedForCPUcopyFlagThenTrueIsReturned) {
-    DebugManagerStateRestore stateRestorer;
-    DebugManager.flags.ForceOCLVersion.set(21);
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_TRUE(caps.cpuCopyAllowed);
-}
-
-TEST(Device_GetCaps, givenOpenCL20DeviceCapsWhenAskedForCPUcopyFlagThenTrueIsReturned) {
-    DebugManagerStateRestore stateRestorer;
-    DebugManager.flags.ForceOCLVersion.set(20);
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_TRUE(caps.cpuCopyAllowed);
-}
-
-TEST(Device_GetCaps, givenOpenCL12DeviceCapsWhenAskedForCPUcopyFlagThenTrueIsReturned) {
-    DebugManagerStateRestore stateRestorer;
-    DebugManager.flags.ForceOCLVersion.set(12);
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_TRUE(caps.cpuCopyAllowed);
-}
-
 TEST(Device_GetCaps, deviceReportsPriorityHintsExtension) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
