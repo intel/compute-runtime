@@ -65,6 +65,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}/wddm_configure_device.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_interface.cpp
 )

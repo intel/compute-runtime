@@ -875,7 +875,7 @@ int Wddm::virtualFree(void *ptr, size_t size, unsigned long flags) {
     return virtualFreeFnc(ptr, size, flags);
 }
 
-bool Wddm::configureDeviceAddressSpace() {
+bool Wddm::configureDeviceAddressSpaceImpl() {
     SYSTEM_INFO sysInfo;
     Wddm::getSystemInfo(&sysInfo);
     maximumApplicationAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);

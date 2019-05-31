@@ -190,6 +190,7 @@ class Wddm {
     bool closeAdapter();
     void getDeviceState();
     void handleCompletion(OsContextWin &osContext);
+    bool configureDeviceAddressSpaceImpl();
 
     static CreateDXGIFactoryFcn createDxgiFactory;
     static GetSystemInfoFcn getSystemInfo;
