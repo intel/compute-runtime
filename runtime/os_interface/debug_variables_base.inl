@@ -19,7 +19,7 @@ DECLARE_DEBUG_VARIABLE(std::string, OverrideGdiPath, std::string("unk"), "When d
 DECLARE_DEBUG_VARIABLE(std::string, AubDumpAddMmioRegistersList, std::string("unk"), "Semicolon separated sequence of additional MMIO registers offset;values pairs i.e. 0x111;0x123;0x222;0x456")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterNamedKernelStartIdx, 0, "Start index of named kernel to AUB capture")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterNamedKernelEndIdx, -1, "End index of named kernel to AUB capture")
-DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpSubCaptureMode, 0, "AUB dump subcapture mode (off, toggle, filter)")
+DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpSubCaptureMode, 0, "AUB dump subcapture mode (0 - off, 1 - filter by kernel name and/or index range, 2 - toggle on/off with dynamic regkey)")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterKernelStartIdx, 0, "Start index of kernel to AUB capture")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterKernelEndIdx, -1, "End index of kernel to AUB capture")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpToggleCaptureOnOff, 0, "Toggle AUB capture on/off")

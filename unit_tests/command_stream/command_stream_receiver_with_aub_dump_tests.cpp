@@ -58,9 +58,10 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         }
     }
 
-    void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override {
-        activateAubSubCaptureParameterization.wasCalled = true;
-        activateAubSubCaptureParameterization.receivedDispatchInfo = &dispatchInfo;
+    AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override {
+        checkAndActivateAubSubCaptureParameterization.wasCalled = true;
+        checkAndActivateAubSubCaptureParameterization.receivedDispatchInfo = &dispatchInfo;
+        return {false, false};
     }
 
     struct FlushParameterization {
@@ -86,10 +87,10 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         GraphicsAllocation *receivedGfxAllocation = nullptr;
     } makeNonResidentParameterization;
 
-    struct ActivateAubSubCaptureParameterization {
+    struct CheckAndActivateAubSubCaptureParameterization {
         bool wasCalled = false;
         const MultiDispatchInfo *receivedDispatchInfo = nullptr;
-    } activateAubSubCaptureParameterization;
+    } checkAndActivateAubSubCaptureParameterization;
 };
 
 template <typename BaseCSR>
@@ -306,18 +307,18 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
 }
 
-HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenActivateAubSubCaptureIsCalledThenBaseCsrCommandStreamReceiverIsCalled) {
+HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenCheckAndActivateAubSubCaptureIsCalledThenBaseCsrCommandStreamReceiverIsCalled) {
     const DispatchInfo dispatchInfo;
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    csrWithAubDump->activateAubSubCapture(multiDispatchInfo);
+    csrWithAubDump->checkAndActivateAubSubCapture(multiDispatchInfo);
 
-    EXPECT_TRUE(csrWithAubDump->activateAubSubCaptureParameterization.wasCalled);
-    EXPECT_EQ(&multiDispatchInfo, csrWithAubDump->activateAubSubCaptureParameterization.receivedDispatchInfo);
+    EXPECT_TRUE(csrWithAubDump->checkAndActivateAubSubCaptureParameterization.wasCalled);
+    EXPECT_EQ(&multiDispatchInfo, csrWithAubDump->checkAndActivateAubSubCaptureParameterization.receivedDispatchInfo);
 
     if (createAubCSR) {
-        EXPECT_TRUE(csrWithAubDump->getAubMockCsr().activateAubSubCaptureParameterization.wasCalled);
-        EXPECT_EQ(&multiDispatchInfo, csrWithAubDump->getAubMockCsr().activateAubSubCaptureParameterization.receivedDispatchInfo);
+        EXPECT_TRUE(csrWithAubDump->getAubMockCsr().checkAndActivateAubSubCaptureParameterization.wasCalled);
+        EXPECT_EQ(&multiDispatchInfo, csrWithAubDump->getAubMockCsr().checkAndActivateAubSubCaptureParameterization.receivedDispatchInfo);
     }
 }
 

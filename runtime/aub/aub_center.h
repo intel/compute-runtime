@@ -40,8 +40,8 @@ class AubCenter {
         return streamProvider.get();
     }
 
-    AubSubCaptureManager *getSubCaptureManager() const {
-        return subCaptureManager.get();
+    AubSubCaptureCommon *getSubCaptureCommon() const {
+        return subCaptureCommon.get();
     }
 
     aub_stream::AubManager *getAubManager() const {
@@ -55,7 +55,7 @@ class AubCenter {
     std::unique_ptr<AddressMapper> addressMapper;
     std::unique_ptr<AubStreamProvider> streamProvider;
 
-    std::unique_ptr<AubSubCaptureManager> subCaptureManager;
+    std::unique_ptr<AubSubCaptureCommon> subCaptureCommon;
     std::unique_ptr<aub_stream::AubManager> aubManager;
     uint32_t aubStreamMode = 0;
 };

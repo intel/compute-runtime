@@ -142,9 +142,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::map<GraphicsAllocation *, uint32_t> makeResidentAllocations;
     bool storeMakeResidentAllocations = false;
 
-    void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override {
-        CommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(dispatchInfo);
-        activateAubSubCaptureCalled = true;
+    AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override {
+        auto status = CommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(dispatchInfo);
+        checkAndActivateAubSubCaptureCalled = true;
+        return status;
     }
     void addAubComment(const char *message) override {
         CommandStreamReceiverHw<GfxFamily>::addAubComment(message);
@@ -174,7 +175,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::atomic<uint32_t> recursiveLockCounter;
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;
-    bool activateAubSubCaptureCalled = false;
+    bool checkAndActivateAubSubCaptureCalled = false;
     bool addAubCommentCalled = false;
     std::vector<std::string> aubCommentMessages;
     bool flushBatchedSubmissionsCalled = false;

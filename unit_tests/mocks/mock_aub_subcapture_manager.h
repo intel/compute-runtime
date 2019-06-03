@@ -20,11 +20,11 @@ class AubSubCaptureManagerMock : public AubSubCaptureManager {
     bool isSubCaptureActive() const {
         return subCaptureIsActive;
     }
-    void setSubCaptureWasActive(bool on) {
-        subCaptureWasActive = on;
+    void setSubCaptureWasActiveInPreviousEnqueue(bool on) {
+        subCaptureWasActiveInPreviousEnqueue = on;
     }
-    bool wasSubCaptureActive() const {
-        return subCaptureWasActive;
+    bool wasSubCaptureActiveInPreviousEnqueue() const {
+        return subCaptureWasActiveInPreviousEnqueue;
     }
     void setKernelCurrentIndex(uint32_t index) {
         kernelCurrentIdx = index;

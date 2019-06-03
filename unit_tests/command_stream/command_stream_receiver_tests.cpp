@@ -625,3 +625,46 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndNoSuitableReu
 
     memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
 }
+
+class CommandStreamReceiverWithAubSubCaptureTest : public CommandStreamReceiverTest,
+                                                   public ::testing::WithParamInterface<std::pair<bool, bool>> {};
+
+HWTEST_P(CommandStreamReceiverWithAubSubCaptureTest, givenCommandStreamReceiverWhenProgramForAubSubCaptureIsCalledThenProgramCsrDependsOnAubSubCaptureStatus) {
+    class MyMockCsr : public MockCommandStreamReceiver {
+      public:
+        using MockCommandStreamReceiver::MockCommandStreamReceiver;
+
+        void initProgrammingFlags() override {
+            initProgrammingFlagsCalled = true;
+        }
+        void flushBatchedSubmissions() override {
+            flushBatchedSubmissionsCalled = true;
+        }
+        bool initProgrammingFlagsCalled = false;
+        bool flushBatchedSubmissionsCalled = false;
+    };
+
+    auto status = GetParam();
+    bool wasActiveInPreviousEnqueue = status.first;
+    bool isActive = status.second;
+
+    ExecutionEnvironment executionEnvironment;
+    MyMockCsr mockCsr(executionEnvironment);
+
+    mockCsr.programForAubSubCapture(wasActiveInPreviousEnqueue, isActive);
+
+    EXPECT_EQ(!wasActiveInPreviousEnqueue && isActive, mockCsr.initProgrammingFlagsCalled);
+    EXPECT_EQ(wasActiveInPreviousEnqueue && !isActive, mockCsr.flushBatchedSubmissionsCalled);
+}
+
+std::pair<bool, bool> aubSubCaptureStatus[] = {
+    {false, false},
+    {false, true},
+    {true, false},
+    {true, true},
+};
+
+INSTANTIATE_TEST_CASE_P(
+    CommandStreamReceiverWithAubSubCaptureTest_program,
+    CommandStreamReceiverWithAubSubCaptureTest,
+    testing::ValuesIn(aubSubCaptureStatus));

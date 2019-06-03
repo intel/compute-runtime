@@ -46,11 +46,13 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::makeNonResident(GraphicsAllocati
 }
 
 template <typename BaseCSR>
-void CommandStreamReceiverWithAUBDump<BaseCSR>::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
-    BaseCSR::activateAubSubCapture(dispatchInfo);
+AubSubCaptureStatus CommandStreamReceiverWithAUBDump<BaseCSR>::checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
+    auto status = BaseCSR::checkAndActivateAubSubCapture(dispatchInfo);
     if (aubCSR) {
-        aubCSR->activateAubSubCapture(dispatchInfo);
+        status = aubCSR->checkAndActivateAubSubCapture(dispatchInfo);
     }
+    BaseCSR::programForAubSubCapture(status.wasActiveInPreviousEnqueue, status.isActive);
+    return status;
 }
 
 template <typename BaseCSR>

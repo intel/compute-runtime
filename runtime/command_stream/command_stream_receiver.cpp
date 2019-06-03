@@ -237,6 +237,17 @@ void CommandStreamReceiver::initProgrammingFlags() {
     latestSentStatelessMocsConfig = 0;
 }
 
+void CommandStreamReceiver::programForAubSubCapture(bool wasActiveInPreviousEnqueue, bool isActive) {
+    if (!wasActiveInPreviousEnqueue && isActive) {
+        // force CSR reprogramming upon subcapture activation
+        this->initProgrammingFlags();
+    }
+    if (wasActiveInPreviousEnqueue && !isActive) {
+        // flush BB upon subcapture deactivation
+        this->flushBatchedSubmissions();
+    }
+}
+
 ResidencyContainer &CommandStreamReceiver::getResidencyAllocations() {
     return this->residencyAllocations;
 }
@@ -245,7 +256,7 @@ ResidencyContainer &CommandStreamReceiver::getEvictionAllocations() {
     return this->evictionAllocations;
 }
 
-void CommandStreamReceiver::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {}
+AubSubCaptureStatus CommandStreamReceiver::checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) { return {false, false}; }
 
 void CommandStreamReceiver::addAubComment(const char *comment) {}
 

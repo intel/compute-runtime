@@ -35,25 +35,6 @@ using namespace NEO;
 
 using AubCommandStreamReceiverTests = Test<AubCommandStreamReceiverFixture>;
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneAndSubCaptureModeWhenSubCaptureGetsDeactivatedThenCsrIsFlushed) {
-    DebugManagerStateRestore stateRestore;
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment));
-
-    auto subCaptureManagerMock = std::unique_ptr<AubSubCaptureManagerMock>(new AubSubCaptureManagerMock(""));
-    subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    subCaptureManagerMock->setSubCaptureIsActive(true);
-    subCaptureManagerMock->setSubCaptureToggleActive(false);
-    aubCsr->subCaptureManager = subCaptureManagerMock.get();
-
-    MockKernelWithInternals kernelInternals(*pDevice);
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(kernel);
-    aubCsr->activateAubSubCapture(multiDispatchInfo);
-
-    EXPECT_TRUE(aubCsr->flushBatchedSubmissionsCalled);
-    EXPECT_FALSE(aubCsr->initProgrammingFlagsCalled);
-}
-
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedBatchBufferFlatteningInImmediateDispatchModeThenNewCombinedBatchBufferIsCreated) {
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment));
     std::unique_ptr<MemoryManager> memoryManager(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));

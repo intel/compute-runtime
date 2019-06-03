@@ -13,8 +13,8 @@
 
 namespace NEO {
 
-AubSubCaptureManager::AubSubCaptureManager(const std::string &fileName)
-    : initialFileName(fileName) {
+AubSubCaptureManager::AubSubCaptureManager(const std::string &fileName, AubSubCaptureCommon &subCaptureCommon)
+    : initialFileName(fileName), subCaptureCommon(subCaptureCommon) {
     settingsReader.reset(SettingsReader::createOsReader(true));
 }
 
@@ -23,26 +23,28 @@ AubSubCaptureManager::~AubSubCaptureManager() = default;
 bool AubSubCaptureManager::isSubCaptureEnabled() const {
     auto guard = this->lock();
 
-    return subCaptureIsActive || subCaptureWasActive;
+    return subCaptureIsActive || subCaptureWasActiveInPreviousEnqueue;
 }
 
 void AubSubCaptureManager::disableSubCapture() {
     auto guard = this->lock();
 
-    subCaptureIsActive = subCaptureWasActive = false;
+    subCaptureIsActive = subCaptureWasActiveInPreviousEnqueue = false;
 };
 
-bool AubSubCaptureManager::activateSubCapture(const MultiDispatchInfo &dispatchInfo) {
+AubSubCaptureStatus AubSubCaptureManager::checkAndActivateSubCapture(const MultiDispatchInfo &dispatchInfo) {
     if (dispatchInfo.empty()) {
-        return false;
+        return {false, false};
     }
 
     auto guard = this->lock();
 
-    subCaptureWasActive = subCaptureIsActive;
+    kernelCurrentIdx = subCaptureCommon.getKernelCurrentIndexAndIncrement();
+
+    subCaptureWasActiveInPreviousEnqueue = subCaptureIsActive;
     subCaptureIsActive = false;
 
-    switch (subCaptureMode) {
+    switch (subCaptureCommon.subCaptureMode) {
     case SubCaptureMode::Toggle:
         subCaptureIsActive = isSubCaptureToggleActive();
         break;
@@ -54,10 +56,7 @@ bool AubSubCaptureManager::activateSubCapture(const MultiDispatchInfo &dispatchI
         break;
     }
 
-    kernelCurrentIdx++;
-    setDebugManagerFlags();
-
-    return subCaptureIsActive;
+    return {subCaptureIsActive, subCaptureWasActiveInPreviousEnqueue};
 }
 
 const std::string &AubSubCaptureManager::getSubCaptureFileName(const MultiDispatchInfo &dispatchInfo) {
@@ -66,7 +65,7 @@ const std::string &AubSubCaptureManager::getSubCaptureFileName(const MultiDispat
     if (useExternalFileName) {
         currentFileName = getExternalFileName();
     }
-    switch (subCaptureMode) {
+    switch (subCaptureCommon.subCaptureMode) {
     case SubCaptureMode::Filter:
         if (currentFileName.empty()) {
             currentFileName = generateFilterFileName();
@@ -102,12 +101,12 @@ std::string AubSubCaptureManager::getExternalFileName() const {
 std::string AubSubCaptureManager::generateFilterFileName() const {
     std::string baseFileName = initialFileName.substr(0, initialFileName.length() - strlen(".aub"));
     std::string filterFileName = baseFileName + "_filter";
-    filterFileName += "_from_" + std::to_string(subCaptureFilter.dumpKernelStartIdx);
-    filterFileName += "_to_" + std::to_string(subCaptureFilter.dumpKernelEndIdx);
-    if (!subCaptureFilter.dumpKernelName.empty()) {
-        filterFileName += "_" + subCaptureFilter.dumpKernelName;
-        filterFileName += "_from_" + std::to_string(subCaptureFilter.dumpNamedKernelStartIdx);
-        filterFileName += "_to_" + std::to_string(subCaptureFilter.dumpNamedKernelEndIdx);
+    filterFileName += "_from_" + std::to_string(subCaptureCommon.subCaptureFilter.dumpKernelStartIdx);
+    filterFileName += "_to_" + std::to_string(subCaptureCommon.subCaptureFilter.dumpKernelEndIdx);
+    if (!subCaptureCommon.subCaptureFilter.dumpKernelName.empty()) {
+        filterFileName += "_" + subCaptureCommon.subCaptureFilter.dumpKernelName;
+        filterFileName += "_from_" + std::to_string(subCaptureCommon.subCaptureFilter.dumpNamedKernelStartIdx);
+        filterFileName += "_to_" + std::to_string(subCaptureCommon.subCaptureFilter.dumpNamedKernelEndIdx);
     }
     filterFileName += ".aub";
     return filterFileName;
@@ -116,7 +115,7 @@ std::string AubSubCaptureManager::generateFilterFileName() const {
 std::string AubSubCaptureManager::generateToggleFileName(const MultiDispatchInfo &dispatchInfo) const {
     std::string baseFileName = initialFileName.substr(0, initialFileName.length() - strlen(".aub"));
     std::string toggleFileName = baseFileName + "_toggle";
-    toggleFileName += "_from_" + std::to_string(kernelCurrentIdx - 1);
+    toggleFileName += "_from_" + std::to_string(kernelCurrentIdx);
     if (!dispatchInfo.empty()) {
         toggleFileName += "_" + dispatchInfo.peekMainKernel()->getKernelInfo().name;
     }
@@ -128,33 +127,19 @@ bool AubSubCaptureManager::isSubCaptureFilterActive(const MultiDispatchInfo &dis
     auto kernelName = dispatchInfo.peekMainKernel()->getKernelInfo().name;
     auto subCaptureIsActive = false;
 
-    if (subCaptureFilter.dumpKernelName.empty()) {
-        if (isKernelIndexInSubCaptureRange(kernelCurrentIdx, subCaptureFilter.dumpKernelStartIdx, subCaptureFilter.dumpKernelEndIdx)) {
+    if (subCaptureCommon.subCaptureFilter.dumpKernelName.empty()) {
+        if (isKernelIndexInSubCaptureRange(kernelCurrentIdx, subCaptureCommon.subCaptureFilter.dumpKernelStartIdx, subCaptureCommon.subCaptureFilter.dumpKernelEndIdx)) {
             subCaptureIsActive = true;
         }
     } else {
-        if (0 == kernelName.compare(subCaptureFilter.dumpKernelName)) {
-            if (isKernelIndexInSubCaptureRange(kernelNameMatchesNum, subCaptureFilter.dumpNamedKernelStartIdx, subCaptureFilter.dumpNamedKernelEndIdx)) {
+        if (0 == kernelName.compare(subCaptureCommon.subCaptureFilter.dumpKernelName)) {
+            kernelNameMatchesNum = subCaptureCommon.getKernelNameMatchesNumAndIncrement();
+            if (isKernelIndexInSubCaptureRange(kernelNameMatchesNum, subCaptureCommon.subCaptureFilter.dumpNamedKernelStartIdx, subCaptureCommon.subCaptureFilter.dumpNamedKernelEndIdx)) {
                 subCaptureIsActive = true;
             }
-            kernelNameMatchesNum++;
         }
     }
     return subCaptureIsActive;
-}
-
-void AubSubCaptureManager::setDebugManagerFlags() const {
-    DebugManager.flags.MakeEachEnqueueBlocking.set(!subCaptureIsActive);
-    DebugManager.flags.ForceCsrFlushing.set(false);
-    if (!subCaptureIsActive && subCaptureWasActive) {
-        DebugManager.flags.ForceCsrFlushing.set(true);
-    }
-    DebugManager.flags.ForceCsrReprogramming.set(false);
-    DebugManager.flags.OmitTimestampPacketDependencies.set(false);
-    if (subCaptureIsActive && !subCaptureWasActive) {
-        DebugManager.flags.ForceCsrReprogramming.set(true);
-        DebugManager.flags.OmitTimestampPacketDependencies.set(true);
-    }
 }
 
 std::unique_lock<std::mutex> AubSubCaptureManager::lock() const {

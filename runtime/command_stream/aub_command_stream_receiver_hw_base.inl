@@ -12,6 +12,7 @@
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_stream_provider.h"
 #include "runtime/command_stream/aub_subcapture.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
@@ -46,7 +47,10 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
     auto aubCenter = executionEnvironment.aubCenter.get();
     UNRECOVERABLE_IF(nullptr == aubCenter);
 
-    subCaptureManager = aubCenter->getSubCaptureManager();
+    auto subCaptureCommon = aubCenter->getSubCaptureCommon();
+    UNRECOVERABLE_IF(nullptr == subCaptureCommon);
+    subCaptureManager = std::make_unique<AubSubCaptureManager>(fileName, *subCaptureCommon);
+
     aubManager = aubCenter->getAubManager();
 
     if (!aubCenter->getPhysicalAddressAllocator()) {
@@ -758,9 +762,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
-    bool active = subCaptureManager->activateSubCapture(dispatchInfo);
-    if (active) {
+AubSubCaptureStatus AUBCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
+    auto status = subCaptureManager->checkAndActivateSubCapture(dispatchInfo);
+    if (status.isActive) {
         std::string subCaptureFile = subCaptureManager->getSubCaptureFileName(dispatchInfo);
         auto isReopened = reopenFile(subCaptureFile);
         if (isReopened) {
@@ -768,13 +772,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(const MultiDis
         }
     }
     if (this->standalone) {
-        if (DebugManager.flags.ForceCsrFlushing.get()) {
-            this->flushBatchedSubmissions();
-        }
-        if (DebugManager.flags.ForceCsrReprogramming.get()) {
-            this->initProgrammingFlags();
-        }
+        this->programForAubSubCapture(status.wasActiveInPreviousEnqueue, status.isActive);
     }
+    return status;
 }
 
 template <typename GfxFamily>

@@ -185,7 +185,14 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     enqueueHandlerHook(commandType, multiDispatchInfo);
 
     if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
-        getCommandStreamReceiver().activateAubSubCapture(multiDispatchInfo);
+        auto status = getCommandStreamReceiver().checkAndActivateAubSubCapture(multiDispatchInfo);
+        if (!status.isActive) {
+            // make each enqueue blocking when subcapture is not active to split batch buffer
+            blocking = true;
+        } else if (!status.wasActiveInPreviousEnqueue) {
+            // omit timestamp packet dependencies dependencies upon subcapture activation
+            clearAllDependencies = true;
+        }
     }
 
     if (getCommandStreamReceiver().getType() > CommandStreamReceiverType::CSR_HW) {

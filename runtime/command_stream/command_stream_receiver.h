@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "runtime/command_stream/aub_subcapture.h"
 #include "runtime/command_stream/csr_definitions.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/submissions_aggregator.h"
@@ -133,7 +134,8 @@ class CommandStreamReceiver {
     void overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper) { flatBatchBufferHelper.reset(newHelper); }
 
     MOCKABLE_VIRTUAL void initProgrammingFlags();
-    virtual void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo);
+    virtual AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo);
+    void programForAubSubCapture(bool wasActiveInPreviousEnqueue, bool isActive);
     virtual void addAubComment(const char *comment);
 
     IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize);

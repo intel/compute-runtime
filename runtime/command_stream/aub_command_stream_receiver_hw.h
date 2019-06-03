@@ -55,7 +55,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue);
     cl_int expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) override;
 
-    void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
+    AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
     void addAubComment(const char *message) override;
 
     // Family specific version
@@ -84,7 +84,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL const std::string getFileName();
 
     MOCKABLE_VIRTUAL void initializeEngine();
-    AubSubCaptureManager *subCaptureManager = nullptr;
+    std::unique_ptr<AubSubCaptureManager> subCaptureManager;
     uint32_t aubDeviceId;
     bool standalone;
 

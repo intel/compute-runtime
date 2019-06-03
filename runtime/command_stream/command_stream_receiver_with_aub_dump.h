@@ -26,7 +26,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     FlushStamp flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
-    void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
+    AubSubCaptureStatus checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
     void setupContext(OsContext &osContext) override;
 
     std::unique_ptr<CommandStreamReceiver> aubCSR;

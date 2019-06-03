@@ -12,6 +12,8 @@
 #include "test.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_aub_csr.h"
+#include "unit_tests/mocks/mock_aub_subcapture_manager.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
@@ -87,6 +89,81 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWithEmptyDispatchInfoWhenAubCsrI
     mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     EXPECT_FALSE(aubCsr->addAubCommentCalled);
+}
+
+struct EnqueueHandlerWithAubSubCaptureTests : public EnqueueHandlerTest {
+    template <typename FamilyType>
+    class MockCmdQWithAubSubCapture : public CommandQueueHw<FamilyType> {
+      public:
+        MockCmdQWithAubSubCapture(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
+
+        void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+            waitUntilCompleteCalled = true;
+            CommandQueueHw<FamilyType>::waitUntilComplete(taskCountToWait, flushStampToWait, useQuickKmdSleep);
+        }
+
+        void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies) override {
+            timestampPacketDependenciesCleared = clearAllDependencies;
+            CommandQueueHw<FamilyType>::obtainNewTimestampPacketNodes(numberOfNodes, previousNodes, clearAllDependencies);
+        }
+
+        bool waitUntilCompleteCalled = false;
+        bool timestampPacketDependenciesCleared = false;
+    };
+};
+
+HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCaptureWhenSubCaptureIsNotActiveThenEnqueueIsMadeBlocking) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AUBDumpSubCaptureMode.set(1);
+
+    auto aubCsr = new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment);
+    pDevice->resetCommandStreamReceiver(aubCsr);
+
+    AubSubCaptureCommon subCaptureCommon;
+    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
+    subCaptureCommon.subCaptureFilter.dumpKernelName = "invalid_kernel_name";
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("file_name.aub", subCaptureCommon);
+    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+
+    MockCmdQWithAubSubCapture<FamilyType> cmdQ(context, pDevice);
+    MockKernelWithInternals mockKernel(*pDevice);
+    size_t gws[3] = {1, 0, 0};
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_TRUE(cmdQ.waitUntilCompleteCalled);
+}
+
+HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCaptureWhenSubCaptureGetsActivatedThenTimestampPacketDependenciesAreClearedAndNextRemainUncleared) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AUBDumpSubCaptureMode.set(1);
+    DebugManager.flags.EnableTimestampPacket.set(true);
+
+    auto aubCsr = new MockAubCsr<FamilyType>("", true, *pDevice->executionEnvironment);
+    pDevice->resetCommandStreamReceiver(aubCsr);
+
+    AubSubCaptureCommon subCaptureCommon;
+    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
+    subCaptureCommon.subCaptureFilter.dumpKernelName = "";
+    subCaptureCommon.subCaptureFilter.dumpKernelStartIdx = 0;
+    subCaptureCommon.subCaptureFilter.dumpKernelEndIdx = 1;
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("file_name.aub", subCaptureCommon);
+    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+
+    MockCmdQWithAubSubCapture<FamilyType> cmdQ(context, pDevice);
+    MockKernelWithInternals mockKernel(*pDevice);
+    size_t gws[3] = {1, 0, 0};
+
+    // activate subcapture
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_TRUE(cmdQ.timestampPacketDependenciesCleared);
+
+    // keep subcapture active
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_FALSE(cmdQ.timestampPacketDependenciesCleared);
+
+    // deactivate subcapture
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_FALSE(cmdQ.timestampPacketDependenciesCleared);
 }
 
 template <typename GfxFamily>
@@ -385,7 +462,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOffThenActivateS
                                                                  0,
                                                                  nullptr,
                                                                  nullptr);
-    EXPECT_FALSE(pDevice->getUltCommandStreamReceiver<FamilyType>().activateAubSubCaptureCalled);
+    EXPECT_FALSE(pDevice->getUltCommandStreamReceiver<FamilyType>().checkAndActivateAubSubCaptureCalled);
 
     mockCmdQ->release();
 }
@@ -407,7 +484,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSu
                                                                  0,
                                                                  nullptr,
                                                                  nullptr);
-    EXPECT_TRUE(pDevice->getUltCommandStreamReceiver<FamilyType>().activateAubSubCaptureCalled);
+    EXPECT_TRUE(pDevice->getUltCommandStreamReceiver<FamilyType>().checkAndActivateAubSubCaptureCalled);
 
     mockCmdQ->release();
 }
