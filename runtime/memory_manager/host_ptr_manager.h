@@ -26,9 +26,9 @@ class HostPtrManager {
 
   protected:
     static AllocationRequirements getAllocationRequirements(const void *inputPtr, size_t size);
-    OsHandleStorage populateAlreadyAllocatedFragments(AllocationRequirements &requirements, CheckedFragments *checkedFragments);
+    OsHandleStorage populateAlreadyAllocatedFragments(AllocationRequirements &requirements);
     FragmentStorage *getFragmentAndCheckForOverlaps(const void *inputPtr, size_t size, OverlapStatus &overlappingStatus);
-    RequirementsStatus checkAllocationsForOverlapping(MemoryManager &memoryManager, AllocationRequirements *requirements, CheckedFragments *checkedFragments);
+    RequirementsStatus checkAllocationsForOverlapping(MemoryManager &memoryManager, AllocationRequirements *requirements);
 
     HostPtrFragmentsContainer::iterator findElement(const void *ptr);
     HostPtrFragmentsContainer partialAllocations;

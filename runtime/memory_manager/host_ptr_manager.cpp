@@ -89,22 +89,11 @@ AllocationRequirements HostPtrManager::getAllocationRequirements(const void *inp
     return requiredAllocations;
 }
 
-OsHandleStorage HostPtrManager::populateAlreadyAllocatedFragments(AllocationRequirements &requirements, CheckedFragments *checkedFragments) {
+OsHandleStorage HostPtrManager::populateAlreadyAllocatedFragments(AllocationRequirements &requirements) {
     OsHandleStorage handleStorage;
     for (unsigned int i = 0; i < requirements.requiredFragmentsCount; i++) {
         OverlapStatus overlapStatus = OverlapStatus::FRAGMENT_NOT_CHECKED;
-        FragmentStorage *fragmentStorage = nullptr;
-
-        if (checkedFragments != nullptr) {
-            DEBUG_BREAK_IF(checkedFragments->count <= i);
-            overlapStatus = checkedFragments->status[i];
-            DEBUG_BREAK_IF(!(checkedFragments->fragments[i] != nullptr || overlapStatus == OverlapStatus::FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER));
-            fragmentStorage = checkedFragments->fragments[i];
-        }
-
-        if (overlapStatus == OverlapStatus::FRAGMENT_NOT_CHECKED)
-            fragmentStorage = getFragmentAndCheckForOverlaps(const_cast<void *>(requirements.AllocationFragments[i].allocationPtr), requirements.AllocationFragments[i].allocationSize, overlapStatus);
-
+        FragmentStorage *fragmentStorage = getFragmentAndCheckForOverlaps(const_cast<void *>(requirements.AllocationFragments[i].allocationPtr), requirements.AllocationFragments[i].allocationSize, overlapStatus);
         if (overlapStatus == OverlapStatus::FRAGMENT_WITHIN_STORED_FRAGMENT) {
             UNRECOVERABLE_IF(fragmentStorage == nullptr);
             fragmentStorage->refCount++;
@@ -250,11 +239,8 @@ FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(const void *inPt
 OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr) {
     std::lock_guard<decltype(allocationsMutex)> lock(allocationsMutex);
     auto requirements = HostPtrManager::getAllocationRequirements(ptr, size);
-
-    CheckedFragments checkedFragments;
-    UNRECOVERABLE_IF(checkAllocationsForOverlapping(memoryManager, &requirements, &checkedFragments) == RequirementsStatus::FATAL);
-
-    auto osStorage = populateAlreadyAllocatedFragments(requirements, &checkedFragments);
+    UNRECOVERABLE_IF(checkAllocationsForOverlapping(memoryManager, &requirements) == RequirementsStatus::FATAL);
+    auto osStorage = populateAlreadyAllocatedFragments(requirements);
     if (osStorage.fragmentCount > 0) {
         if (memoryManager.populateOsHandles(osStorage) != MemoryManager::AllocationStatus::Success) {
             memoryManager.cleanOsHandles(osStorage);
@@ -264,10 +250,10 @@ OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &mem
     return osStorage;
 }
 
-RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager &memoryManager, AllocationRequirements *requirements, CheckedFragments *checkedFragments) {
+RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager &memoryManager, AllocationRequirements *requirements) {
     UNRECOVERABLE_IF(requirements == nullptr);
-    UNRECOVERABLE_IF(checkedFragments == nullptr);
 
+    CheckedFragments checkedFragments[3];
     RequirementsStatus status = RequirementsStatus::SUCCESS;
     checkedFragments->count = 0;
 

@@ -222,7 +222,7 @@ TEST(HostPtrManager, AllocationRequirementsForMiddleAllocationThatIsNotStoredInM
     auto reqs = MockHostPtrManager::getAllocationRequirements(ptr, size);
     MockHostPtrManager hostPtrManager;
 
-    auto gpuAllocationFragments = hostPtrManager.populateAlreadyAllocatedFragments(reqs, nullptr);
+    auto gpuAllocationFragments = hostPtrManager.populateAlreadyAllocatedFragments(reqs);
     EXPECT_EQ(nullptr, gpuAllocationFragments.fragmentStorageData[0].osHandleStorage);
     EXPECT_EQ(ptr, gpuAllocationFragments.fragmentStorageData[0].cpuPtr);
     EXPECT_EQ(nullptr, gpuAllocationFragments.fragmentStorageData[1].osHandleStorage);
@@ -246,7 +246,7 @@ TEST(HostPtrManager, AllocationRequirementsForMiddleAllocationThatIsStoredInMana
 
     auto reqs = MockHostPtrManager::getAllocationRequirements(cpuPtr, ptrSize);
 
-    auto gpuAllocationFragments = hostPtrManager.populateAlreadyAllocatedFragments(reqs, nullptr);
+    auto gpuAllocationFragments = hostPtrManager.populateAlreadyAllocatedFragments(reqs);
 
     EXPECT_EQ(osInternalStorage, gpuAllocationFragments.fragmentStorageData[0].osHandleStorage);
     EXPECT_EQ(cpuPtr, gpuAllocationFragments.fragmentStorageData[0].cpuPtr);
@@ -274,7 +274,7 @@ TEST(HostPtrManager, AllocationRequirementsForAllocationWithinSizeOfStoredAlloca
 
     auto reqs = MockHostPtrManager::getAllocationRequirements(cpuPtr, MemoryConstants::pageSize);
 
-    auto gpuAllocationFragments = hostPtrManager.populateAlreadyAllocatedFragments(reqs, nullptr);
+    auto gpuAllocationFragments = hostPtrManager.populateAlreadyAllocatedFragments(reqs);
 
     EXPECT_EQ(osInternalStorage, gpuAllocationFragments.fragmentStorageData[0].osHandleStorage);
     EXPECT_EQ(cpuPtr, gpuAllocationFragments.fragmentStorageData[0].cpuPtr);
@@ -433,7 +433,7 @@ TEST(HostPtrManager, GivenHostPtrFilledWith3TripleFragmentsWhenAskedForPopulatio
 
     EXPECT_EQ(3u, hostPtrManager.getFragmentCount());
 
-    auto OsHandles = hostPtrManager.populateAlreadyAllocatedFragments(reqs, nullptr);
+    auto OsHandles = hostPtrManager.populateAlreadyAllocatedFragments(reqs);
 
     EXPECT_EQ(3u, hostPtrManager.getFragmentCount());
     for (int i = 0; i < maxFragmentsCount; i++) {
@@ -543,7 +543,7 @@ TEST(HostPtrManager, FragmentFindWhenFragmentSizeIsNotZero) {
     requiredAllocations = hostPtrManager.getAllocationRequirements(ptr3, size3);
     auto catchme = false;
     try {
-        OsHandleStorage st = hostPtrManager.populateAlreadyAllocatedFragments(requiredAllocations, nullptr);
+        OsHandleStorage st = hostPtrManager.populateAlreadyAllocatedFragments(requiredAllocations);
         EXPECT_EQ(st.fragmentCount, 0u);
     } catch (...) {
         catchme = true;
@@ -840,7 +840,6 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
     csr->latestSentTaskCount = taskCountReady - 1;
 
     AllocationRequirements requirements;
-    CheckedFragments checkedFragments;
 
     requirements.requiredFragmentsCount = 1;
     requirements.totalRequiredSize = MemoryConstants::pageSize * 10;
@@ -849,17 +848,9 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
     requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
     requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::NONE;
 
-    RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements, &checkedFragments);
+    RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
 
     EXPECT_EQ(RequirementsStatus::SUCCESS, status);
-    EXPECT_EQ(1u, checkedFragments.count);
-    EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER, checkedFragments.status[0]);
-    EXPECT_EQ(nullptr, checkedFragments.fragments[0]);
-
-    for (uint32_t i = 1; i < maxFragmentsCount; i++) {
-        EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_CHECKED, checkedFragments.status[i]);
-        EXPECT_EQ(nullptr, checkedFragments.fragments[i]);
-    }
 }
 
 HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWaitAndCleanOnAllEngines) {
@@ -898,7 +889,6 @@ HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWa
     csr1->setLatestSentTaskCount(taskCountNotReady);
 
     AllocationRequirements requirements;
-    CheckedFragments checkedFragments;
 
     requirements.requiredFragmentsCount = 1;
     requirements.totalRequiredSize = MemoryConstants::pageSize * 10;
@@ -907,7 +897,7 @@ HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWa
     requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
     requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::NONE;
 
-    hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements, &checkedFragments);
+    hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
 
     EXPECT_EQ(1u, csr0->waitForCompletionWithTimeoutCalled);
     EXPECT_EQ(1u, csr1->waitForCompletionWithTimeoutCalled);
@@ -941,7 +931,6 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
     csr->latestSentTaskCount = taskCountReady - 1;
 
     AllocationRequirements requirements;
-    CheckedFragments checkedFragments;
 
     requirements.requiredFragmentsCount = 1;
     requirements.totalRequiredSize = MemoryConstants::pageSize * 10;
@@ -950,17 +939,9 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
     requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
     requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::NONE;
 
-    RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements, &checkedFragments);
+    RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
 
     EXPECT_EQ(RequirementsStatus::FATAL, status);
-    EXPECT_EQ(1u, checkedFragments.count);
-    EXPECT_EQ(OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT, checkedFragments.status[0]);
-    EXPECT_EQ(nullptr, checkedFragments.fragments[0]);
-
-    for (uint32_t i = 1; i < maxFragmentsCount; i++) {
-        EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_CHECKED, checkedFragments.status[i]);
-        EXPECT_EQ(nullptr, checkedFragments.fragments[i]);
-    }
 }
 
 TEST_F(HostPtrAllocationTest, checkAllocationsForOverlappingWithoutBiggerOverlap) {
@@ -988,7 +969,6 @@ TEST_F(HostPtrAllocationTest, checkAllocationsForOverlappingWithoutBiggerOverlap
     EXPECT_NE(nullptr, fragment4);
 
     AllocationRequirements requirements;
-    CheckedFragments checkedFragments;
 
     requirements.requiredFragmentsCount = 2;
     requirements.totalRequiredSize = MemoryConstants::pageSize * 2;
@@ -1001,20 +981,9 @@ TEST_F(HostPtrAllocationTest, checkAllocationsForOverlappingWithoutBiggerOverlap
     requirements.AllocationFragments[1].allocationSize = MemoryConstants::pageSize;
     requirements.AllocationFragments[1].fragmentPosition = FragmentPosition::TRAILING;
 
-    RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements, &checkedFragments);
+    RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
 
     EXPECT_EQ(RequirementsStatus::SUCCESS, status);
-    EXPECT_EQ(2u, checkedFragments.count);
-
-    EXPECT_EQ(OverlapStatus::FRAGMENT_WITH_EXACT_SIZE_AS_STORED_FRAGMENT, checkedFragments.status[0]);
-    EXPECT_EQ(alignDown(cpuPtr1, MemoryConstants::pageSize), checkedFragments.fragments[0]->fragmentCpuPointer);
-    EXPECT_EQ(MemoryConstants::pageSize, checkedFragments.fragments[0]->fragmentSize);
-    EXPECT_EQ(1, checkedFragments.fragments[0]->refCount);
-
-    EXPECT_EQ(OverlapStatus::FRAGMENT_WITH_EXACT_SIZE_AS_STORED_FRAGMENT, checkedFragments.status[1]);
-    EXPECT_EQ(alignUp(cpuPtr1, MemoryConstants::pageSize), checkedFragments.fragments[1]->fragmentCpuPointer);
-    EXPECT_EQ(MemoryConstants::pageSize, checkedFragments.fragments[1]->fragmentSize);
-    EXPECT_EQ(2, checkedFragments.fragments[1]->refCount);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation1);
     memoryManager->freeGraphicsMemory(graphicsAllocation2);
@@ -1044,7 +1013,6 @@ TEST_F(HostPtrAllocationTest, checkAllocationsForOverlappingWithBiggerOverlapUnt
     csr->latestSentTaskCount = taskCountReady;
 
     AllocationRequirements requirements;
-    CheckedFragments checkedFragments;
 
     requirements.requiredFragmentsCount = 1;
     requirements.totalRequiredSize = MemoryConstants::pageSize * 10;
@@ -1053,15 +1021,7 @@ TEST_F(HostPtrAllocationTest, checkAllocationsForOverlappingWithBiggerOverlapUnt
     requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
     requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::NONE;
 
-    RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements, &checkedFragments);
+    RequirementsStatus status = hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
 
     EXPECT_EQ(RequirementsStatus::SUCCESS, status);
-    EXPECT_EQ(1u, checkedFragments.count);
-    EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER, checkedFragments.status[0]);
-    EXPECT_EQ(nullptr, checkedFragments.fragments[0]);
-
-    for (uint32_t i = 1; i < maxFragmentsCount; i++) {
-        EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_CHECKED, checkedFragments.status[i]);
-        EXPECT_EQ(nullptr, checkedFragments.fragments[i]);
-    }
 }
