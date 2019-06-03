@@ -12,7 +12,9 @@
 #include <string>
 
 namespace NEO {
-
+namespace Extensions {
+constexpr const char *const sharingFormatQuery = "cl_intel_sharing_format_query ";
+}
 extern const char *deviceExtensionsList;
 
 std::string getExtensionsList(const HardwareInfo &hwInfo);

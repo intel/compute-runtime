@@ -131,7 +131,7 @@ clEnqueueReleaseVA_APIMediaSurfacesINTEL(cl_command_queue commandQueue,
     return status;
 }
 
-cl_int clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+cl_int CL_API_CALL clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
     cl_context context,
     cl_mem_flags flags,
     cl_mem_object_type imageType,

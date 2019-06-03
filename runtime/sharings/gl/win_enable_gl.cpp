@@ -8,6 +8,7 @@
 #include "runtime/context/context.h"
 #include "runtime/context/context.inl"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/sharings/gl/cl_gl_api_intel.h"
 #include "runtime/sharings/gl/enable_gl.h"
 #include "runtime/sharings/gl/gl_sharing.h"
 #include "runtime/sharings/sharing_factory.h"
@@ -98,7 +99,14 @@ std::string GlSharingBuilderFactory::getExtensions() {
     return "";
 }
 
-void *GlSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) { return nullptr; }
+void *GlSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) {
+    if (DebugManager.flags.EnableFormatQuery.get() &&
+        functionName == "clGetSupportedGLTextureFormatsINTEL") {
+        return ((void *)(clGetSupportedGLTextureFormatsINTEL));
+    }
+
+    return nullptr;
+}
 
 static SharingFactory::RegisterSharing<GlSharingBuilderFactory, GLSharingFunctions> glSharing;
 } // namespace NEO

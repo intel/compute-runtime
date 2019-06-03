@@ -14,6 +14,7 @@
 #include "runtime/context/context.inl"
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/sharings/sharing_factory.inl"
+#include "runtime/sharings/va/cl_va_api.h"
 #include "runtime/sharings/va/va_sharing.h"
 
 #include <memory>
@@ -81,6 +82,9 @@ void *VaSharingBuilderFactory::getExtensionFunctionAddress(const std::string &fu
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueAcquireVA_APIMediaSurfacesINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueReleaseVA_APIMediaSurfacesINTEL);
 
+    if (DebugManager.flags.EnableFormatQuery.get()) {
+        RETURN_FUNC_PTR_IF_EXIST(clGetSupportedVA_APIMediaSurfaceFormatsINTEL);
+    }
     return nullptr;
 }
 

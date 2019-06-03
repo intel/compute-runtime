@@ -314,3 +314,24 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     retVal = CL_INVALID_VALUE;
     return retVal;
 }
+
+cl_int CL_API_CALL clGetSupportedGLTextureFormatsINTEL(
+    cl_context context,
+    cl_mem_flags flags,
+    cl_mem_object_type imageType,
+    cl_uint numEntries,
+    cl_GLint *glFormats,
+    cl_uint *numImageFormats) {
+
+    if (numImageFormats) {
+        *numImageFormats = 0;
+    }
+
+    Context *pContext = castToObjectOrAbort<Context>(context);
+    auto pSharing = pContext->getSharing<GLSharingFunctions>();
+    if (!pSharing) {
+        return CL_INVALID_CONTEXT;
+    }
+
+    return pSharing->getSupportedFormats(flags, imageType, numEntries, reinterpret_cast<cl_GLenum *>(glFormats), numImageFormats);
+}

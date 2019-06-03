@@ -170,16 +170,16 @@ typedef clIntelSharingFormatQueryDX1X<D3DTypesHelper::D3D10> clIntelSharingForma
 typedef clIntelSharingFormatQueryDX1X<D3DTypesHelper::D3D11> clIntelSharingFormatQueryDX11;
 
 TEST_F(clIntelSharingFormatQueryDX10, givenInvalidContextWhenDX10TextureFormatsRequestedThenInvalidContextError) {
-    retVal = clGetSupportedDX10TextureFormatsINTEL(NULL, CL_MEM_READ_WRITE, 0,
-                                                   static_cast<cl_uint>(retrievedFormats.size()),
-                                                   &retrievedFormats[0], &numImageFormats);
+    retVal = clGetSupportedD3D10TextureFormatsINTEL(NULL, CL_MEM_READ_WRITE, 0,
+                                                    static_cast<cl_uint>(retrievedFormats.size()),
+                                                    &retrievedFormats[0], &numImageFormats);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
 TEST_F(clIntelSharingFormatQueryDX10, givenValidParametersWhenRequestedDX10TextureFormatsThenTheResultIsASubsetOfKnownFormats) {
-    retVal = clGetSupportedDX10TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
-                                                   static_cast<cl_uint>(retrievedFormats.size()),
-                                                   &retrievedFormats[0], &numImageFormats);
+    retVal = clGetSupportedD3D10TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
+                                                    static_cast<cl_uint>(retrievedFormats.size()),
+                                                    &retrievedFormats[0], &numImageFormats);
     ASSERT_EQ(retVal, CL_SUCCESS);
     for (cl_uint i = 0; i < numImageFormats; ++i) {
         EXPECT_NE(std::find(availableFormats.begin(),
@@ -190,43 +190,43 @@ TEST_F(clIntelSharingFormatQueryDX10, givenValidParametersWhenRequestedDX10Textu
 }
 
 TEST_F(clIntelSharingFormatQueryDX10, givenValidParametersWhenRequestedDX10TextureFormatsTwiceThenTheResultsAreTheSame) {
-    retVal = clGetSupportedDX10TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
-                                                   static_cast<cl_uint>(retrievedFormats.size()),
-                                                   &retrievedFormats[0], &numImageFormats);
+    retVal = clGetSupportedD3D10TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
+                                                    static_cast<cl_uint>(retrievedFormats.size()),
+                                                    &retrievedFormats[0], &numImageFormats);
     ASSERT_EQ(retVal, CL_SUCCESS);
     std::vector<DXGI_FORMAT> formatsRetrievedForTheSecondTime(availableFormats.size());
     cl_uint anotherNumImageFormats;
-    retVal = clGetSupportedDX10TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
-                                                   static_cast<cl_uint>(formatsRetrievedForTheSecondTime.size()),
-                                                   &formatsRetrievedForTheSecondTime[0], &anotherNumImageFormats);
+    retVal = clGetSupportedD3D10TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
+                                                    static_cast<cl_uint>(formatsRetrievedForTheSecondTime.size()),
+                                                    &formatsRetrievedForTheSecondTime[0], &anotherNumImageFormats);
     ASSERT_EQ(retVal, CL_SUCCESS);
     ASSERT_EQ(numImageFormats, anotherNumImageFormats);
     ASSERT_EQ(memcmp(&retrievedFormats[0], &formatsRetrievedForTheSecondTime[0], numImageFormats * sizeof(DXGI_FORMAT)), 0);
 }
 
 TEST_F(clIntelSharingFormatQueryDX10, givenNullFormatsWhenRequestedDX10TextureFormatsThenNumImageFormatsIsSane) {
-    retVal = clGetSupportedDX10TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 0, nullptr, &numImageFormats);
+    retVal = clGetSupportedD3D10TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 0, nullptr, &numImageFormats);
     ASSERT_EQ(retVal, CL_SUCCESS);
     ASSERT_LE(0U, numImageFormats);
     ASSERT_LE(numImageFormats, static_cast<cl_uint>(availableFormats.size()));
 }
 
 TEST_F(clIntelSharingFormatQueryDX10, givenNullPointersWhenRequestedDX10TextureFormatsThenCLSuccessIsReturned) {
-    retVal = clGetSupportedDX10TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, static_cast<cl_uint>(retrievedFormats.size()), nullptr, nullptr);
+    retVal = clGetSupportedD3D10TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, static_cast<cl_uint>(retrievedFormats.size()), nullptr, nullptr);
     ASSERT_EQ(retVal, CL_SUCCESS);
 }
 
 TEST_F(clIntelSharingFormatQueryDX11, givenInvalidContextWhenDX11TextureFormatsRequestedThenInvalidContextError) {
-    retVal = clGetSupportedDX11TextureFormatsINTEL(nullptr, CL_MEM_READ_WRITE, 0,
-                                                   static_cast<cl_uint>(retrievedFormats.size()),
-                                                   &retrievedFormats[0], &numImageFormats);
+    retVal = clGetSupportedD3D11TextureFormatsINTEL(nullptr, CL_MEM_READ_WRITE, 0,
+                                                    static_cast<cl_uint>(retrievedFormats.size()),
+                                                    &retrievedFormats[0], &numImageFormats);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
 TEST_F(clIntelSharingFormatQueryDX11, givenValidParametersWhenRequestedDX11TextureFormatsThenTheResultIsASubsetOfKnownFormats) {
-    retVal = clGetSupportedDX11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
-                                                   static_cast<cl_uint>(retrievedFormats.size()),
-                                                   &retrievedFormats[0], &numImageFormats);
+    retVal = clGetSupportedD3D11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
+                                                    static_cast<cl_uint>(retrievedFormats.size()),
+                                                    &retrievedFormats[0], &numImageFormats);
     ASSERT_EQ(retVal, CL_SUCCESS);
     for (cl_uint i = 0; i < numImageFormats; ++i) {
         EXPECT_NE(std::find(availableFormats.begin(),
@@ -237,27 +237,27 @@ TEST_F(clIntelSharingFormatQueryDX11, givenValidParametersWhenRequestedDX11Textu
 }
 
 TEST_F(clIntelSharingFormatQueryDX11, givenNullFormatsWhenRequestedDX11TextureFormatsThenNumImageFormatsIsSane) {
-    retVal = clGetSupportedDX11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 0, nullptr, &numImageFormats);
+    retVal = clGetSupportedD3D11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 0, nullptr, &numImageFormats);
     ASSERT_EQ(retVal, CL_SUCCESS);
     ASSERT_LE(0U, numImageFormats);
     ASSERT_LE(numImageFormats, static_cast<cl_uint>(availableFormats.size()));
 }
 
 TEST_F(clIntelSharingFormatQueryDX11, givenNullPointersWhenRequestedDX11TextureFormatsThenCLSuccessIsReturned) {
-    retVal = clGetSupportedDX11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, static_cast<cl_uint>(retrievedFormats.size()), nullptr, nullptr);
+    retVal = clGetSupportedD3D11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, static_cast<cl_uint>(retrievedFormats.size()), nullptr, nullptr);
     ASSERT_EQ(retVal, CL_SUCCESS);
 }
 
 TEST_F(clIntelSharingFormatQueryDX11, givenValidParametersWhenRequestedDX11TextureFormatsTwiceThenTheResultsAreTheSame) {
-    retVal = clGetSupportedDX11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
-                                                   static_cast<cl_uint>(retrievedFormats.size()),
-                                                   &retrievedFormats[0], &numImageFormats);
+    retVal = clGetSupportedD3D11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
+                                                    static_cast<cl_uint>(retrievedFormats.size()),
+                                                    &retrievedFormats[0], &numImageFormats);
     ASSERT_EQ(retVal, CL_SUCCESS);
     std::vector<DXGI_FORMAT> formatsRetrievedForTheSecondTime(availableFormats.size());
     cl_uint anotherNumImageFormats;
-    retVal = clGetSupportedDX11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
-                                                   static_cast<cl_uint>(formatsRetrievedForTheSecondTime.size()),
-                                                   &formatsRetrievedForTheSecondTime[0], &anotherNumImageFormats);
+    retVal = clGetSupportedD3D11TextureFormatsINTEL(context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
+                                                    static_cast<cl_uint>(formatsRetrievedForTheSecondTime.size()),
+                                                    &formatsRetrievedForTheSecondTime[0], &anotherNumImageFormats);
     ASSERT_EQ(retVal, CL_SUCCESS);
     ASSERT_EQ(numImageFormats, anotherNumImageFormats);
     ASSERT_EQ(memcmp(&retrievedFormats[0], &formatsRetrievedForTheSecondTime[0], numImageFormats * sizeof(DXGI_FORMAT)), 0);

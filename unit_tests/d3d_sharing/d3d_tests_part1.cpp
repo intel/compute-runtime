@@ -20,6 +20,7 @@
 #include "unit_tests/fixtures/d3d_test_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_sharing_factory.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -727,4 +728,18 @@ TEST(D3D11, givenD3D11BuilderWhenGettingExtensionsThenCorrectExtensionsListIsRet
     EXPECT_THAT(builderFactory->getExtensions(), testing::HasSubstr(std::string("cl_intel_d3d11_nv12_media_sharing")));
 }
 
+TEST(D3DSharingFactory, givenEnabledFormatQueryAndFactoryWithD3DSharingsWhenGettingExtensionFunctionAddressThenFormatQueryFunctionsAreReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableFormatQuery.set(true);
+    SharingFactoryMock sharingFactory;
+
+    auto function = sharingFactory.getExtensionFunctionAddress("clGetSupportedDX9MediaSurfaceFormatsINTEL");
+    EXPECT_EQ(reinterpret_cast<void *>(clGetSupportedDX9MediaSurfaceFormatsINTEL), function);
+
+    function = sharingFactory.getExtensionFunctionAddress("clGetSupportedD3D10TextureFormatsINTEL");
+    EXPECT_EQ(reinterpret_cast<void *>(clGetSupportedD3D10TextureFormatsINTEL), function);
+
+    function = sharingFactory.getExtensionFunctionAddress("clGetSupportedD3D11TextureFormatsINTEL");
+    EXPECT_EQ(reinterpret_cast<void *>(clGetSupportedD3D11TextureFormatsINTEL), function);
+}
 } // namespace NEO

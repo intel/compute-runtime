@@ -9,12 +9,15 @@
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/string.h"
+#include "runtime/platform/extensions.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/sharing.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_sharing_factory.h"
 
 #include "gtest/gtest.h"
 
@@ -235,3 +238,39 @@ TEST(Context, givenMockSharingBuilderWhenContextWithInvalidPropertiesThenContext
     context.reset(Context::create<Context>(validProperties, deviceVector, nullptr, nullptr, retVal));
     EXPECT_NE(nullptr, context.get());
 };
+
+TEST(SharingFactoryTests, givenDisabledFormatQueryAndFactoryWithSharingWhenAskedForExtensionThenFormatQueryExtensionIsNotReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableFormatQuery.set(false);
+
+    SharingFactoryStateRestore stateRestore;
+    stateRestore.clearCurrentState();
+    stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
+
+    auto extensionsList = sharingFactory.getExtensions();
+    EXPECT_THAT(extensionsList, ::testing::Not(::testing::HasSubstr(Extensions::sharingFormatQuery)));
+}
+
+TEST(SharingFactoryTests, givenEnabledFormatQueryAndFactoryWithSharingWhenAskedForExtensionThenFormatQueryExtensionIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableFormatQuery.set(true);
+
+    SharingFactoryStateRestore stateRestore;
+    stateRestore.clearCurrentState();
+    stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
+
+    auto extensionsList = sharingFactory.getExtensions();
+    EXPECT_THAT(extensionsList, ::testing::HasSubstr(Extensions::sharingFormatQuery));
+}
+
+TEST(SharingFactoryTests, givenEnabledFormatQueryAndFactoryWithNoSharingsWhenAskedForExtensionThenNoExtensionIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableFormatQuery.set(true);
+
+    SharingFactoryStateRestore sharingFactory;
+
+    sharingFactory.clearCurrentState();
+
+    auto extensionsList = sharingFactory.getExtensions();
+    EXPECT_THAT(extensionsList, ::testing::Not(::testing::HasSubstr(Extensions::sharingFormatQuery)));
+}

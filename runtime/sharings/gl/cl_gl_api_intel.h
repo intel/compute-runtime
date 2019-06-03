@@ -5,13 +5,13 @@
  *
  */
 
-#include "CL/cl.h"
-#include "CL/cl_va_api_media_sharing_intel.h"
+#pragma once
+#include "CL/cl_gl.h"
 
-cl_int CL_API_CALL clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
+extern cl_int CL_API_CALL clGetSupportedGLTextureFormatsINTEL(
     cl_context context,
     cl_mem_flags flags,
     cl_mem_object_type imageType,
     cl_uint numEntries,
-    VAImageFormat *vaApiFormats,
+    cl_GLint *glFormats,
     cl_uint *numImageFormats);

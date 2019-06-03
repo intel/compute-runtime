@@ -7,6 +7,9 @@
 
 #include "sharing_factory.h"
 
+#include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/platform/extensions.h"
+
 namespace NEO {
 
 std::unique_ptr<SharingFactory> SharingFactory::build() {
@@ -23,10 +26,17 @@ std::unique_ptr<SharingFactory> SharingFactory::build() {
 
 std::string SharingFactory::getExtensions() {
     std::string res;
+    bool sharingAvailable = false;
+
     for (auto &builder : sharingContextBuilder) {
         if (builder == nullptr)
             continue;
         res += builder->getExtensions();
+        sharingAvailable = true;
+    }
+
+    if (DebugManager.flags.EnableFormatQuery.get() && sharingAvailable) {
+        res += Extensions::sharingFormatQuery;
     }
 
     return res;

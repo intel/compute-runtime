@@ -14,6 +14,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
+#include "runtime/sharings/gl/cl_gl_api_intel.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/gl/gl_buffer.h"
 #include "runtime/sharings/gl/gl_sync_event.h"
@@ -1287,4 +1288,29 @@ TEST_F(glSharingTests, givenClGLBufferWhenCreatedThenSharedBufferAllocatoinTypeI
     std::unique_ptr<Buffer> buffer(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId, nullptr));
     ASSERT_NE(nullptr, buffer->getGraphicsAllocation());
     EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_BUFFER, buffer->getGraphicsAllocation()->getAllocationType());
+}
+
+using clGetSupportedGLTextureFormatsINTELTests = glSharingTests;
+
+TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenContextWithoutGlSharingWhenGettingFormatsThenInvalidContextErrorIsReturned) {
+    MockContext context;
+
+    auto retVal = clGetSupportedGLTextureFormatsINTEL(&context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
+}
+
+TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenValidInputsWhenGettingFormatsThenSuccesAndValidFormatsAreReturned) {
+    cl_uint numFormats = 0;
+    cl_GLint glFormats[2] = {};
+    auto glFormatsCount = static_cast<cl_uint>(arrayCount(glFormats));
+
+    auto retVal = clGetSupportedGLTextureFormatsINTEL(&context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
+                                                      glFormatsCount, glFormats, &numFormats);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_NE(0u, numFormats);
+
+    for (uint32_t i = 0; i < glFormatsCount; i++) {
+        EXPECT_NE(GlSharing::gLToCLFormats.end(), GlSharing::gLToCLFormats.find(glFormats[i]));
+    }
 }

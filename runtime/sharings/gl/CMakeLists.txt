@@ -1,12 +1,14 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 if(WIN32)
   set(RUNTIME_SRCS_SHARINGS_GL
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_gl_api.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_gl_api_intel.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gl_arb_sync_event.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gl_arb_sync_event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gl_buffer.h

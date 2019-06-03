@@ -63,6 +63,7 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_program.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_program.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_sampler.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_sharing_factory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_source_level_debugger.h

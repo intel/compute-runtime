@@ -106,6 +106,7 @@ class GlSharingFunctionsMock : public GLSharingFunctions {
     using GLSharingFunctions::GLContextHandle;
     using GLSharingFunctions::GLDeviceHandle;
 
+    using GLSharingFunctions::getSupportedFormats;
     using GLSharingFunctions::pfnGlArbSyncObjectCleanup;
     using GLSharingFunctions::pfnGlArbSyncObjectSetup;
     using GLSharingFunctions::pfnGlArbSyncObjectSignal;
