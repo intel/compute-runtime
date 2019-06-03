@@ -75,7 +75,7 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
     if (size == 0)
         return nullptr;
 
-    std::unique_lock<std::mutex> lock(mtx);
+    std::unique_lock<SpinLock> lock(mtx);
     if (!memoryManager->isLocalMemorySupported()) {
         return createZeroCopySvmAllocation(size, svmProperties);
     } else {
@@ -84,14 +84,14 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
 }
 
 SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {
-    std::unique_lock<std::mutex> lock(mtx);
+    std::unique_lock<SpinLock> lock(mtx);
     return SVMAllocs.get(ptr);
 }
 
 void SVMAllocsManager::freeSVMAlloc(void *ptr) {
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
-        std::unique_lock<std::mutex> lock(mtx);
+        std::unique_lock<SpinLock> lock(mtx);
         if (svmData->gpuAllocation->getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY) {
             freeZeroCopySvmAllocation(svmData);
         } else {
@@ -168,7 +168,7 @@ void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svm
 }
 
 SvmMapOperation *SVMAllocsManager::getSvmMapOperation(const void *ptr) {
-    std::unique_lock<std::mutex> lock(mtx);
+    std::unique_lock<SpinLock> lock(mtx);
     return svmMapOperations.get(ptr);
 }
 
@@ -179,12 +179,12 @@ void SVMAllocsManager::insertSvmMapOperation(void *regionSvmPtr, size_t regionSi
     svmMapOperation.offset = offset;
     svmMapOperation.regionSize = regionSize;
     svmMapOperation.readOnlyMap = readOnlyMap;
-    std::unique_lock<std::mutex> lock(mtx);
+    std::unique_lock<SpinLock> lock(mtx);
     svmMapOperations.insert(svmMapOperation);
 }
 
 void SVMAllocsManager::removeSvmMapOperation(const void *regionSvmPtr) {
-    std::unique_lock<std::mutex> lock(mtx);
+    std::unique_lock<SpinLock> lock(mtx);
     svmMapOperations.remove(regionSvmPtr);
 }
 

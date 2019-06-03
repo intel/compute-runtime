@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "runtime/utilities/spinlock.h"
+
 #include <cstdint>
 #include <map>
 #include <mutex>
@@ -80,6 +82,6 @@ class SVMAllocsManager {
     MapBasedAllocationTracker SVMAllocs;
     MapOperationsTracker svmMapOperations;
     MemoryManager *memoryManager;
-    std::mutex mtx;
+    SpinLock mtx;
 };
 } // namespace NEO
