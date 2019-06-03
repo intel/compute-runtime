@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/helpers/ptr_math.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
 namespace NEO {
@@ -35,6 +36,7 @@ class DrmAllocation : public GraphicsAllocation {
         }
         return this->bo;
     }
+    uint64_t peekInternalHandle() override { return castToUint64(getBO()); }
 
   protected:
     BufferObject *bo;

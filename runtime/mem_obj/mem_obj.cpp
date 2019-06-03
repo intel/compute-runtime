@@ -118,6 +118,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     cl_uint mapCount = 0;
     cl_mem clAssociatedMemObject = static_cast<cl_mem>(this->associatedMemObject);
     cl_context ctx = nullptr;
+    uint64_t internalHandle = 0llu;
 
     switch (paramName) {
     case CL_MEM_TYPE:
@@ -172,6 +173,11 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         refCnt = static_cast<cl_uint>(this->getReference());
         srcParamSize = sizeof(refCnt);
         srcParam = &refCnt;
+        break;
+    case CL_MEM_ALLOCATION_HANDLE_INTEL:
+        internalHandle = this->getGraphicsAllocation()->peekInternalHandle();
+        srcParamSize = sizeof(internalHandle);
+        srcParam = &internalHandle;
         break;
 
     default:

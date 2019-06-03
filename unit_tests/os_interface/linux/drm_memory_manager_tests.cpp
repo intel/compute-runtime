@@ -144,6 +144,16 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     memoryManager->freeGraphicsMemory(alloc);
 }
 
+TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsReturend) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+    ASSERT_EQ(allocation->peekInternalHandle(), castToUint64(allocation->getBO()));
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerTest, givenDrmContextIdWhenAllocationIsCreatedThenPinWithPassedDrmContextId) {
     mock->ioctl_expected.gemUserptr = 2;
     mock->ioctl_expected.execbuffer2 = 1;
@@ -1117,6 +1127,32 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCr
     }
 
     delete buffer;
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmBufferWhenItIsQueriedForInternalAllocationThenBoIsReturned) {
+    mock->ioctl_expected.total = -1;
+    MockContext context;
+    context.setMemoryManager(memoryManager);
+
+    size_t size = 1u;
+    auto retVal = CL_SUCCESS;
+
+    auto buffer = Buffer::create(
+        &context,
+        CL_MEM_ALLOC_HOST_PTR,
+        size,
+        nullptr,
+        retVal);
+
+    uint64_t handle = 0llu;
+
+    retVal = clGetMemObjectInfo(buffer, CL_MEM_ALLOCATION_HANDLE_INTEL, sizeof(handle), &handle, nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    auto drmAllocation = static_cast<DrmAllocation *>(buffer->getGraphicsAllocation());
+    EXPECT_EQ(castToUint64(drmAllocation->getBO()), handle);
+
+    clReleaseMemObject(buffer);
 }
 
 TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIsExhaustedAndNewAllocationsIsMadeThenNullIsReturned) {

@@ -57,3 +57,5 @@ using cl_mem_flags_intel = cl_mem_flags;
 
 #define CL_MEM_FORCE_LINEAR_STORAGE_INTEL (1 << 19)
 #define CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL (1 << 20)
+
+#define CL_MEM_ALLOCATION_HANDLE_INTEL 0x10050
