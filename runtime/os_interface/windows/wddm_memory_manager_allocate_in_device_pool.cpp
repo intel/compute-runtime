@@ -15,4 +15,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
 bool WddmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, uint32_t sizeToCopy) const {
     return MemoryManager::copyMemoryToAllocation(graphicsAllocation, memoryToCopy, sizeToCopy);
 }
+bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const void *requiredPtr) {
+    return mapGpuVaForOneHandleAllocation(allocation, requiredPtr);
+}
 } // namespace NEO
