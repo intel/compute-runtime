@@ -150,7 +150,7 @@ TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsReturend) {
     mock->ioctl_expected.gemClose = 1;
     auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(10 * MemoryConstants::pageSize, true)));
     ASSERT_NE(allocation->getBO(), nullptr);
-    ASSERT_EQ(allocation->peekInternalHandle(), castToUint64(allocation->getBO()));
+    ASSERT_EQ(allocation->peekInternalHandle(), static_cast<uint64_t>(allocation->getBO()->peekHandle()));
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -1150,7 +1150,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmBufferWhenItIsQueriedForInternalAllocationT
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     auto drmAllocation = static_cast<DrmAllocation *>(buffer->getGraphicsAllocation());
-    EXPECT_EQ(castToUint64(drmAllocation->getBO()), handle);
+    EXPECT_EQ(static_cast<uint64_t>(drmAllocation->getBO()->peekHandle()), handle);
 
     clReleaseMemObject(buffer);
 }

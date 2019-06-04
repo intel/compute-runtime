@@ -19,4 +19,6 @@ std::string DrmAllocation::getAllocationInfoString() const {
     }
     return ss.str();
 }
+
+uint64_t DrmAllocation::peekInternalHandle() { return static_cast<uint64_t>(getBO()->peekHandle()); }
 } // namespace NEO
