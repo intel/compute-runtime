@@ -279,7 +279,7 @@ Buffer *Buffer::create(Context *context,
             auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*pBuffer);
             if (blitCommandStreamReceiver) {
                 CsrDependencies dependencies;
-                blitCommandStreamReceiver->blitWithHostPtr(*pBuffer, hostPtr, size, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                blitCommandStreamReceiver->blitWithHostPtr(*pBuffer, hostPtr, true, size, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
                                                            dependencies);
             } else {
                 auto cmdQ = context->getSpecialQueue();

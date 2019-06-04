@@ -725,7 +725,7 @@ bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(cons
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t dstOffset, uint64_t srcOffset,
+void CommandStreamReceiverHw<GfxFamily>::blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, bool blocking, uint64_t dstOffset, uint64_t srcOffset,
                                                     uint64_t copySize, CsrDependencies &csrDependencies) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
@@ -769,8 +769,10 @@ void CommandStreamReceiverHw<GfxFamily>::blitBuffer(Buffer &dstBuffer, Buffer &s
     auto flushStampToWait = flushStamp->peekStamp();
 
     lock.unlock();
-    waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false);
-    internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
+    if (blocking) {
+        waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false);
+        internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
+    }
 }
 
 } // namespace NEO

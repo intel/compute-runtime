@@ -174,9 +174,9 @@ class CommandStreamReceiver {
         this->latestSentTaskCount = latestSentTaskCount;
     }
 
-    void blitWithHostPtr(Buffer &buffer, void *hostPtr, uint64_t hostPtrSize,
+    void blitWithHostPtr(Buffer &buffer, void *hostPtr, bool blocking, uint64_t hostPtrSize,
                          BlitterConstants::BlitWithHostPtrDirection copyDirection, CsrDependencies &csrDependencies);
-    virtual void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, uint64_t dstOffset, uint64_t srcOffset,
+    virtual void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, bool blocking, uint64_t dstOffset, uint64_t srcOffset,
                             uint64_t copySize, CsrDependencies &csrDependencies) = 0;
 
     ScratchSpaceController *getScratchSpaceController() const {

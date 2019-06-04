@@ -407,7 +407,7 @@ cl_int CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *s
     return (isMemoryEqual == isEqualMemoryExpected) ? CL_SUCCESS : CL_INVALID_VALUE;
 }
 
-void CommandStreamReceiver::blitWithHostPtr(Buffer &buffer, void *hostPtr, uint64_t hostPtrSize,
+void CommandStreamReceiver::blitWithHostPtr(Buffer &buffer, void *hostPtr, bool blocking, uint64_t hostPtrSize,
                                             BlitterConstants::BlitWithHostPtrDirection copyDirection, CsrDependencies &csrDependencies) {
     HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(hostPtrSize), true);
     bool success = createAllocationForHostSurface(hostPtrSurface, false);
@@ -420,9 +420,9 @@ void CommandStreamReceiver::blitWithHostPtr(Buffer &buffer, void *hostPtr, uint6
                                                                                   true, false, true));
 
     if (BlitterConstants::BlitWithHostPtrDirection::FromHostPtr == copyDirection) {
-        blitBuffer(buffer, *hostPtrBuffer, 0, 0, hostPtrSize, csrDependencies);
+        blitBuffer(buffer, *hostPtrBuffer, blocking, 0, 0, hostPtrSize, csrDependencies);
     } else {
-        blitBuffer(*hostPtrBuffer, buffer, 0, 0, hostPtrSize, csrDependencies);
+        blitBuffer(*hostPtrBuffer, buffer, blocking, 0, 0, hostPtrSize, csrDependencies);
     }
 }
 } // namespace NEO

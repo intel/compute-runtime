@@ -347,7 +347,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     uint32_t newTaskCount = 19;
     csr.taskCount = newTaskCount - 1;
     EXPECT_EQ(0u, csr.recursiveLockCounter.load());
-    csr.blitWithHostPtr(*buffer, hostPtr, bltSize, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    csr.blitWithHostPtr(*buffer, hostPtr, true, bltSize, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
     EXPECT_EQ(newTaskCount, csr.taskCount);
     EXPECT_EQ(newTaskCount, csr.latestFlushedTaskCount);
     EXPECT_EQ(newTaskCount, csr.latestSentTaskCount);
@@ -408,7 +408,7 @@ HWTEST_F(BcsTests, givenCsrDependenciesWhenProgrammingCommandStreamThenAddSemaph
     csrDependencies.push_back(&timestamp0);
     csrDependencies.push_back(&timestamp1);
 
-    csr.blitWithHostPtr(*buffer, hostPtr, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    csr.blitWithHostPtr(*buffer, hostPtr, true, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -448,7 +448,7 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
 
     EXPECT_EQ(0u, csr.makeSurfacePackNonResidentCalled);
 
-    csr.blitWithHostPtr(*buffer, hostPtr, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    csr.blitWithHostPtr(*buffer, hostPtr, true, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
 
     EXPECT_TRUE(csr.isMadeResident(buffer->getGraphicsAllocation()));
     EXPECT_TRUE(csr.isMadeResident(csr.commandStream.getGraphicsAllocation()));
@@ -472,7 +472,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
 
     uint32_t newTaskCount = 17;
     csr.taskCount = newTaskCount - 1;
-    csr.blitWithHostPtr(*buffer, hostPtr, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    csr.blitWithHostPtr(*buffer, hostPtr, true, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
 
     EXPECT_EQ(commandStream.getGraphicsAllocation(), csr.latestFlushedBatchBuffer.commandBufferAllocation);
     EXPECT_EQ(commandStreamOffset, csr.latestFlushedBatchBuffer.startOffset);
@@ -517,8 +517,10 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
-    myMockCsr->blitWithHostPtr(*buffer, hostPtr, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    myMockCsr->blitWithHostPtr(*buffer, hostPtr, false, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    EXPECT_EQ(0u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
 
+    myMockCsr->blitWithHostPtr(*buffer, hostPtr, true, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
     EXPECT_EQ(1u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
     EXPECT_EQ(myMockCsr->taskCount, myMockCsr->taskCountToWaitPassed);
     EXPECT_EQ(myMockCsr->flushStamp->peekStamp(), myMockCsr->flushStampToWaitPassed);
@@ -535,13 +537,16 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCleanTemporaryAllocations) {
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
-    uint32_t newTaskCount = 17;
-    bcsCsr.taskCount = newTaskCount - 1;
+    bcsCsr.taskCount = 17;
 
     EXPECT_EQ(0u, mockInternalAllocationsStorage->cleanAllocationsCalled);
-    bcsCsr.blitWithHostPtr(*buffer, hostPtr, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+
+    bcsCsr.blitWithHostPtr(*buffer, hostPtr, false, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    EXPECT_EQ(0u, mockInternalAllocationsStorage->cleanAllocationsCalled);
+
+    bcsCsr.blitWithHostPtr(*buffer, hostPtr, true, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
     EXPECT_EQ(1u, mockInternalAllocationsStorage->cleanAllocationsCalled);
-    EXPECT_EQ(newTaskCount, mockInternalAllocationsStorage->lastCleanAllocationsTaskCount);
+    EXPECT_EQ(bcsCsr.taskCount, mockInternalAllocationsStorage->lastCleanAllocationsTaskCount);
     EXPECT_TRUE(TEMPORARY_ALLOCATION == mockInternalAllocationsStorage->lastCleanAllocationUsage);
 }
 
@@ -556,7 +561,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
     {
         // from hostPtr
         HardwareParse hwParser;
-        csr.blitWithHostPtr(*buffer1, hostPtr, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+        csr.blitWithHostPtr(*buffer1, hostPtr, true, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
 
         hwParser.parseCommands<FamilyType>(csr.commandStream);
 
@@ -569,7 +574,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         // to hostPtr
         HardwareParse hwParser;
         auto offset = csr.commandStream.getUsed();
-        csr.blitWithHostPtr(*buffer1, hostPtr, 1, BlitterConstants::BlitWithHostPtrDirection::ToHostPtr, csrDependencies);
+        csr.blitWithHostPtr(*buffer1, hostPtr, true, 1, BlitterConstants::BlitWithHostPtrDirection::ToHostPtr, csrDependencies);
 
         hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -582,7 +587,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         // Buffer to Buffer
         HardwareParse hwParser;
         auto offset = csr.commandStream.getUsed();
-        csr.blitBuffer(*buffer1, *buffer2, 0, 0, 1, csrDependencies);
+        csr.blitBuffer(*buffer1, *buffer2, true, 0, 0, 1, csrDependencies);
 
         hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -606,7 +611,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
         for (auto buffer2Offset : addressOffsets) {
             HardwareParse hwParser;
             auto offset = csr.commandStream.getUsed();
-            csr.blitBuffer(*buffer1, *buffer2, buffer1Offset, buffer2Offset, 1, csrDependencies);
+            csr.blitBuffer(*buffer1, *buffer2, true, buffer1Offset, buffer2Offset, 1, csrDependencies);
 
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
