@@ -36,11 +36,3 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExcludeTestSkl, givenHwCmdTestWhenSklExcludedDontRun
 HWTEST_F(ExcludeTestSkl, givenHwTestWhenSklExcludedDontRunOnSkl) {
     EXPECT_NE(IGFX_SKYLAKE, ::productFamily);
 }
-
-using ExcludeTestCnl = ExcludeTest<IGFX_CANNONLAKE>;
-HWCMDTEST_F(IGFX_GEN8_CORE, ExcludeTestCnl, givenHwCmdTestWhenCnlExcludedDontRunOnCnl) {
-    EXPECT_NE(IGFX_CANNONLAKE, ::productFamily);
-}
-HWTEST_F(ExcludeTestCnl, givenHwTestWhenCnlExcludedDontRunOnCnl) {
-    EXPECT_NE(IGFX_CANNONLAKE, ::productFamily);
-}

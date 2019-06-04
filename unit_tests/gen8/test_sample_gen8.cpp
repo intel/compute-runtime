@@ -21,5 +21,4 @@ typedef Test<DeviceFixture> Gen8OnlyTest;
 GEN8TEST_F(Gen8OnlyTest, shouldPassOnGen8) {
     EXPECT_EQ(IGFX_GEN8_CORE, pDevice->getRenderCoreFamily());
     EXPECT_NE(IGFX_GEN9_CORE, pDevice->getRenderCoreFamily());
-    EXPECT_NE(IGFX_GEN10_CORE, pDevice->getRenderCoreFamily());
 }

@@ -11,5 +11,3 @@ HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestBdw, givenHwCmdTestWhenBdwExcludedDontRunOnB
 HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestBdw, givenHwTestWhenBdwExcludedDontRunOnBdw, IGFX_BROADWELL);
 HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestSkl, givenHwCmdTestWhenSklExcludedDontRunOnSkl, IGFX_SKYLAKE);
 HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestSkl, givenHwTestWhenSklExcludedDontRunOnSkl, IGFX_SKYLAKE);
-HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestCnl, givenHwCmdTestWhenCnlExcludedDontRunOnCnl, IGFX_CANNONLAKE);
-HWCMDTEST_EXCLUDE_FAMILY(ExcludeTestCnl, givenHwTestWhenCnlExcludedDontRunOnCnl, IGFX_CANNONLAKE);

@@ -20,6 +20,5 @@ typedef Test<DeviceFixture> Gen11OnlyTeset;
 
 GEN11TEST_F(Gen11OnlyTeset, shouldPassOnGen11) {
     EXPECT_NE(IGFX_GEN9_CORE, pDevice->getRenderCoreFamily());
-    EXPECT_NE(IGFX_GEN10_CORE, pDevice->getRenderCoreFamily());
     EXPECT_EQ(IGFX_GEN11_CORE, pDevice->getRenderCoreFamily());
 }

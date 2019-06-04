@@ -8,7 +8,7 @@ RUN apt-get -y update ; apt-get install -y --allow-unauthenticated gpg; \
     apt-get -y update ; apt-get install -y --allow-unauthenticated cmake g++-7 git pkg-config ninja-build intel-igc-opencl-dev intel-gmmlib-dev
 RUN mkdir /root/build; cd /root/build ; cmake -G Ninja -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7 \
-    -DSUPPORT_GEN9=0 -DSUPPORT_GEN10=0 \
+    -DSUPPORT_GEN9=0 \
     -DDO_NOT_RUN_AUB_TESTS=1 -DDONT_CARE_OF_VIRTUALS=1 \
     ../neo; \
     ninja -j `nproc`
