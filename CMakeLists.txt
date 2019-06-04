@@ -762,6 +762,5 @@ configure_file(driver_version.h.in ${IGDRCL_BUILD_DIR}/driver_version.h) # Put D
 configure_file(lib_names.h.in ${IGDRCL_BUILD_DIR}/lib_names.h)
 
 hide_subdir(runtime)
-add_subdirectories()
 
 include(package.cmake)
