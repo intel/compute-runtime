@@ -44,3 +44,4 @@ set(IGDRCL_SRCS_tests_fixtures
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_fixtures})
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_fixtures ${IGDRCL_SRCS_tests_fixtures})
+add_subdirectories()
