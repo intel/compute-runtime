@@ -9,7 +9,7 @@
 
 namespace NEO {
 int MultiCommand::singleBuild(size_t numArgs, const std::vector<std::string> &allArgs) {
-    int retVal;
+    int retVal = CL_SUCCESS;
     std::string buildLog;
     OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, allArgs, retVal);
     if (retVal == CL_SUCCESS) {
