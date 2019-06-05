@@ -272,7 +272,7 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
     status = gdi->makeResident(&makeResident);
 
     if (status == STATUS_PENDING) {
-        interlockedMax(currentPagingFenceValue, makeResident.PagingFenceValue);
+        updatePagingFenceValue(makeResident.PagingFenceValue);
         success = true;
     } else if (status == STATUS_SUCCESS) {
         success = true;
@@ -316,7 +316,7 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     gpuPtr = GmmHelper::canonize(MapGPUVA.VirtualAddress);
 
     if (status == STATUS_PENDING) {
-        interlockedMax(currentPagingFenceValue, MapGPUVA.PagingFenceValue);
+        updatePagingFenceValue(MapGPUVA.PagingFenceValue);
         status = STATUS_SUCCESS;
     }
 
@@ -982,6 +982,10 @@ void Wddm::removeTemporaryResource(const D3DKMT_HANDLE &handle) {
 }
 std::unique_lock<SpinLock> Wddm::acquireLock(SpinLock &lock) {
     return std::unique_lock<SpinLock>{lock};
+}
+
+void Wddm::updatePagingFenceValue(uint64_t newPagingFenceValue) {
+    interlockedMax(currentPagingFenceValue, newPagingFenceValue);
 }
 
 } // namespace NEO

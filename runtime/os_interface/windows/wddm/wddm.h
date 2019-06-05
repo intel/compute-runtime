@@ -151,6 +151,7 @@ class Wddm {
     MOCKABLE_VIRTUAL void applyBlockingMakeResident(const D3DKMT_HANDLE &handle);
     MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock);
     MOCKABLE_VIRTUAL void removeTemporaryResource(const D3DKMT_HANDLE &handle);
+    void updatePagingFenceValue(uint64_t newPagingFenceValue);
 
   protected:
     bool initialized = false;
