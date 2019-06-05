@@ -418,22 +418,22 @@ cl_int CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *s
     return (isMemoryEqual == isEqualMemoryExpected) ? CL_SUCCESS : CL_INVALID_VALUE;
 }
 
-void CommandStreamReceiver::blitWithHostPtr(Buffer &buffer, void *hostPtr, bool blocking, uint64_t hostPtrSize,
+void CommandStreamReceiver::blitWithHostPtr(Buffer &buffer, void *hostPtr, bool blocking, size_t bufferOffset, uint64_t copySize,
                                             BlitterConstants::BlitWithHostPtrDirection copyDirection, CsrDependencies &csrDependencies) {
-    HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(hostPtrSize), true);
+    HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize), true);
     bool success = createAllocationForHostSurface(hostPtrSurface, false);
     UNRECOVERABLE_IF(!success);
     auto hostPtrAllocation = hostPtrSurface.getAllocation();
 
     auto device = buffer.getContext()->getDevice(0);
-    auto hostPtrBuffer = std::unique_ptr<Buffer>(Buffer::createBufferHwFromDevice(device, CL_MEM_READ_ONLY, static_cast<size_t>(hostPtrSize),
+    auto hostPtrBuffer = std::unique_ptr<Buffer>(Buffer::createBufferHwFromDevice(device, CL_MEM_READ_WRITE, static_cast<size_t>(copySize),
                                                                                   hostPtr, hostPtr, hostPtrAllocation,
                                                                                   true, false, true));
 
     if (BlitterConstants::BlitWithHostPtrDirection::FromHostPtr == copyDirection) {
-        blitBuffer(buffer, *hostPtrBuffer, blocking, 0, 0, hostPtrSize, csrDependencies);
+        blitBuffer(buffer, *hostPtrBuffer, blocking, bufferOffset, 0, copySize, csrDependencies);
     } else {
-        blitBuffer(*hostPtrBuffer, buffer, blocking, 0, 0, hostPtrSize, csrDependencies);
+        blitBuffer(*hostPtrBuffer, buffer, blocking, 0, bufferOffset, copySize, csrDependencies);
     }
 }
 } // namespace NEO
