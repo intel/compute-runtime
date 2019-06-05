@@ -35,6 +35,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     auto isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, CL_COMMAND_WRITE_BUFFER) : true;
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, CL_COMMAND_WRITE_BUFFER, blockingWrite, size, const_cast<void *>(ptr),
                                                  numEventsInWaitList, eventWaitList);
+    bool blitOperationsSupported = device->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.blitterOperationsSupported &&
+                                   DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get();
 
     if (isCpuCopyAllowed) {
         if (isMemTransferNeeded) {
@@ -47,6 +49,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     } else if (!isMemTransferNeeded) {
         return enqueueMarkerForReadWriteOperation(buffer, const_cast<void *>(ptr), CL_COMMAND_WRITE_BUFFER, blockingWrite,
                                                   numEventsInWaitList, eventWaitList, event);
+    } else if (blitOperationsSupported) {
+        return enqueueReadWriteBufferWithBlitTransfer(CL_COMMAND_WRITE_BUFFER, buffer, offset, size, const_cast<void *>(ptr),
+                                                      numEventsInWaitList, eventWaitList, event);
     }
 
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,

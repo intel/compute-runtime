@@ -618,14 +618,10 @@ TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenRenderCompressedBufferWh
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatingThenUseBlitOperation) {
-    if (is32bit) {
-        return;
-    }
-
-    class MyMockContext : public MockContext {
+struct BcsBufferTests : public ::testing::Test {
+    class BcsMockContext : public MockContext {
       public:
-        MyMockContext(Device *device) : MockContext(device) {
+        BcsMockContext(Device *device) : MockContext(device) {
             bcsOsContext.reset(OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false));
             bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment()));
             bcsCsr->setupContext(*bcsOsContext);
@@ -638,16 +634,64 @@ HWTEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenBufferWithInitializati
         std::unique_ptr<CommandStreamReceiver> bcsCsr;
     };
 
+    void SetUp() override {
+        if (is32bit) {
+            GTEST_SKIP();
+        }
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        bcsMockContext = std::make_unique<BcsMockContext>(device.get());
+    }
+
+    DebugManagerStateRestore restore;
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<BcsMockContext> bcsMockContext;
+    uint32_t hostPtr = 0;
+    cl_int retVal = CL_SUCCESS;
+};
+
+HWTEST_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatingThenUseBlitOperation) {
+    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
     auto newMemoryManager = new MockMemoryManager(true, true, *device->getExecutionEnvironment());
     device->getExecutionEnvironment()->memoryManager.reset(newMemoryManager);
-    context->setMemoryManager(newMemoryManager);
-
-    auto myContext = clUniquePtr(new MyMockContext(device.get()));
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(myContext->bcsCsr.get());
+    bcsMockContext->setMemoryManager(newMemoryManager);
 
     EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
-    auto bufferForBlt = clUniquePtr(Buffer::create(myContext.get(), CL_MEM_COPY_HOST_PTR, sizeof(uint32_t), &hostPtr, retVal));
+    auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_COPY_HOST_PTR, 2000, &hostPtr, retVal));
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
+}
+
+HWTEST_F(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledThenUseBcsCsr) {
+    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(false);
+    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
+
+    auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    bufferForBlt->forceDisallowCPUCopy = true;
+    auto commandQueue = std::unique_ptr<CommandQueue>(CommandQueue::create(bcsMockContext.get(), device.get(), nullptr, retVal));
+    auto *hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
+
+    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(false);
+    hwInfo->capabilityTable.blitterOperationsSupported = false;
+    commandQueue->enqueueWriteBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+
+    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(true);
+    hwInfo->capabilityTable.blitterOperationsSupported = false;
+    commandQueue->enqueueWriteBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+
+    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(false);
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+    commandQueue->enqueueWriteBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
+
+    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(true);
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+    commandQueue->enqueueWriteBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
+    commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(2u, bcsCsr->blitBufferCalled);
 }
 
 TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenNonRenderCompressedBufferWhenCopyFromHostPtrIsRequiredThenDontCallWriteBuffer) {
