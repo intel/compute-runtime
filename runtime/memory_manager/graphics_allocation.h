@@ -34,6 +34,7 @@ constexpr auto nonSharedResource = 0u;
 }
 
 class Gmm;
+class MemoryManager;
 struct AllocationProperties;
 
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {
@@ -166,7 +167,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool isResidencyTaskCountBelow(uint32_t taskCount, uint32_t contextId) const { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
 
     virtual std::string getAllocationInfoString() const;
-    virtual uint64_t peekInternalHandle() { return 0llu; }
+    virtual uint64_t peekInternalHandle(MemoryManager *memoryManager) { return 0llu; }
 
     static bool isCpuAccessRequired(AllocationType allocationType) {
         return allocationType == AllocationType::LINEAR_STREAM ||

@@ -145,12 +145,19 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
 }
 
 TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsReturend) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.AllowOpenFdOperations.set(1);
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.handleToPrimeFd = 1;
+    mock->outputFd = 1337;
     auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(10 * MemoryConstants::pageSize, true)));
     ASSERT_NE(allocation->getBO(), nullptr);
-    ASSERT_EQ(allocation->peekInternalHandle(), static_cast<uint64_t>(allocation->getBO()->peekHandle()));
+    ASSERT_EQ(allocation->peekInternalHandle(this->memoryManager), static_cast<uint64_t>(1337));
+
+    DebugManager.flags.AllowOpenFdOperations.set(0);
+    ASSERT_EQ(allocation->peekInternalHandle(this->memoryManager), 0llu);
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -1130,7 +1137,10 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCr
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmBufferWhenItIsQueriedForInternalAllocationThenBoIsReturned) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.AllowOpenFdOperations.set(1);
     mock->ioctl_expected.total = -1;
+    mock->outputFd = 1337;
     MockContext context;
     context.setMemoryManager(memoryManager);
 
@@ -1149,8 +1159,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmBufferWhenItIsQueriedForInternalAllocationT
     retVal = clGetMemObjectInfo(buffer, CL_MEM_ALLOCATION_HANDLE_INTEL, sizeof(handle), &handle, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
-    auto drmAllocation = static_cast<DrmAllocation *>(buffer->getGraphicsAllocation());
-    EXPECT_EQ(static_cast<uint64_t>(drmAllocation->getBO()->peekHandle()), handle);
+    EXPECT_EQ(static_cast<uint64_t>(1337), handle);
 
     clReleaseMemObject(buffer);
 }
@@ -3187,4 +3196,14 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, whenReservingAddressRangeTh
     EXPECT_EQ(reserve, allocation->getReservedAddressPtr());
     EXPECT_EQ(size, allocation->getReservedAddressSize());
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, whenObtainFdFromHandleIsCalledThenProperFdHandleIsReturned) {
+    int boHandle = 3;
+    this->mock->outputFd = 1337;
+    this->mock->ioctl_expected.handleToPrimeFd = 1;
+    auto fdHandle = memoryManager->obtainFdFromHandle(boHandle);
+    EXPECT_EQ(this->mock->inputHandle, static_cast<uint32_t>(boHandle));
+    EXPECT_EQ(this->mock->inputFlags, DRM_CLOEXEC | DRM_RDWR);
+    EXPECT_EQ(1337, fdHandle);
 }

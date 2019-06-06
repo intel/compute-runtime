@@ -57,6 +57,8 @@ class DrmMemoryManager : public MemoryManager {
     void *reserveCpuAddressRange(size_t size) override;
     void releaseReservedCpuAddressRange(void *reserved, size_t size) override;
 
+    int obtainFdFromHandle(int boHandle);
+
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
     BufferObject *createSharedBufferObject(int boHandle, size_t size, bool requireSpecificBitness);

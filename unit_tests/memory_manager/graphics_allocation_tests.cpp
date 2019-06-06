@@ -141,5 +141,5 @@ TEST(GraphicsAllocationTest, givenDefaultAllocationWhenGettingNumHandlesThenOneI
 
 TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsBeingObtainedThenZeroIsReturned) {
     MockGraphicsAllocation graphicsAllocation;
-    EXPECT_EQ(0llu, graphicsAllocation.peekInternalHandle());
+    EXPECT_EQ(0llu, graphicsAllocation.peekInternalHandle(nullptr));
 }

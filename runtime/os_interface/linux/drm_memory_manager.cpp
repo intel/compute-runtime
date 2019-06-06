@@ -768,4 +768,14 @@ void *DrmMemoryManager::reserveCpuAddressRange(size_t size) {
 void DrmMemoryManager::releaseReservedCpuAddressRange(void *reserved, size_t size) {
     munmapFunction(reserved, size);
 }
+int DrmMemoryManager::obtainFdFromHandle(int boHandle) {
+    drm_prime_handle openFd = {0, 0, 0};
+
+    openFd.flags = DRM_CLOEXEC | DRM_RDWR;
+    openFd.handle = boHandle;
+
+    drm->ioctl(DRM_IOCTL_PRIME_HANDLE_TO_FD, &openFd);
+
+    return openFd.fd;
+}
 } // namespace NEO

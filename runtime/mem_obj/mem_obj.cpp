@@ -175,7 +175,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         srcParam = &refCnt;
         break;
     case CL_MEM_ALLOCATION_HANDLE_INTEL:
-        internalHandle = this->getGraphicsAllocation()->peekInternalHandle();
+        internalHandle = this->getGraphicsAllocation()->peekInternalHandle(this->memoryManager);
         srcParamSize = sizeof(internalHandle);
         srcParam = &internalHandle;
         break;
