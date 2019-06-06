@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -31,5 +31,4 @@ set_target_properties(
 create_project_source_tree(${target_name})
 set_target_properties(${target_name} PROPERTIES FOLDER "test mocks")
 target_compile_definitions(${target_name} PUBLIC)
-add_dependencies(unit_tests ${target_name})
 

@@ -71,6 +71,10 @@ if(NOT DEFINED IGDRCL_SOURCE_DIR)
   set(IGDRCL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+if(SKIP_ALL_ULT)
+    set(SKIP_UNIT_TESTS TRUE)
+endif()
+
 # Set our build directory
 if(NOT DEFINED IGDRCL_BUILD_DIR)
   set(IGDRCL_BUILD_DIR ${CMAKE_BINARY_DIR})
@@ -700,8 +704,11 @@ macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
 	set(NEO_STATIC_LIB_NAME ${LIB_NAME})
 	set(SHARINGS_ENABLE_LIB_NAME "${LIB_NAME}_sharings_enable")
 	set(GENERATE_EXECUTABLE ${GENERATE_EXEC})
-
-	add_subdirectory(runtime "${IGDRCL_BUILD_DIR}/${LIB_NAME}")
+	if(NOT BUILD_WITHOUT_RUNTIME)
+		add_subdirectory(runtime "${IGDRCL_BUILD_DIR}/${LIB_NAME}")
+	else()
+		add_subdirectory(runtime "${IGDRCL_BUILD_DIR}/${LIB_NAME}" EXCLUDE_FROM_ALL)
+	endif()
 	target_compile_definitions(${BUILTINS_SOURCES_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
 	target_compile_definitions(${BUILTINS_BINARIES_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
 	target_compile_definitions(${SCHEDULER_BINARY_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
@@ -735,7 +742,7 @@ if(DONT_CARE_OF_VIRTUALS)
 else()
     set(NEO_RELEASE_LIB_NAME "igdrcl_lib_release") # Used by dll/so
     generate_runtime_lib(${NEO_RELEASE_LIB_NAME} FALSE TRUE)
-    if(NOT SKIP_UNIT_TESTS)
+    if(NOT SKIP_ALL_ULT)
         set(NEO_MOCKABLE_LIB_NAME "igdrcl_lib_mockable") # Used by ULTS
         generate_runtime_lib(${NEO_MOCKABLE_LIB_NAME} TRUE FALSE)
     endif()

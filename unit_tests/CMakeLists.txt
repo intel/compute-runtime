@@ -451,6 +451,7 @@ macro(macro_for_each_gen)
 endmacro()
 apply_macro_for_each_gen("TESTED")
 add_subdirectories()
+add_dependencies(unit_tests mock_gmm)
 create_project_source_tree(igdrcl_tests ${IGDRCL_SOURCE_DIR}/runtime)
 
 set(UltPchHeader "${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_tests_pch.h")
