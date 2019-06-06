@@ -282,10 +282,6 @@ D3DGPU_VIRTUAL_ADDRESS WddmMock::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS
     return Wddm::reserveGpuVirtualAddress(minimumAddress, maximumAddress, size);
 }
 
-GmmMemory *WddmMock::getGmmMemory() const {
-    return gmmMemory.get();
-}
-
 uint64_t *WddmMock::getPagingFenceAddress() {
     getPagingFenceAddressResult.called++;
     mockPagingFence++;

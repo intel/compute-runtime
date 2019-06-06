@@ -152,6 +152,9 @@ class Wddm {
     MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock);
     MOCKABLE_VIRTUAL void removeTemporaryResource(const D3DKMT_HANDLE &handle);
     void updatePagingFenceValue(uint64_t newPagingFenceValue);
+    GmmMemory *getGmmMemory() const {
+        return gmmMemory.get();
+    }
 
   protected:
     bool initialized = false;
