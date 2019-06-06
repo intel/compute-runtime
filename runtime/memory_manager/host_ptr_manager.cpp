@@ -253,31 +253,26 @@ OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &mem
 RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager &memoryManager, AllocationRequirements *requirements) {
     UNRECOVERABLE_IF(requirements == nullptr);
 
-    CheckedFragments checkedFragments[3];
     RequirementsStatus status = RequirementsStatus::SUCCESS;
-    checkedFragments->count = 0;
 
-    for (unsigned int i = 0; i < maxFragmentsCount; i++) {
-        checkedFragments->status[i] = OverlapStatus::FRAGMENT_NOT_CHECKED;
-        checkedFragments->fragments[i] = nullptr;
-    }
     for (unsigned int i = 0; i < requirements->requiredFragmentsCount; i++) {
-        checkedFragments->count++;
-        checkedFragments->fragments[i] = getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
-        if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
+        OverlapStatus overlapStatus = OverlapStatus::FRAGMENT_NOT_CHECKED;
+
+        getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, overlapStatus);
+        if (overlapStatus == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
             // clean temporary allocations
             memoryManager.cleanTemporaryAllocationListOnAllEngines(false);
 
             // check overlapping again
-            checkedFragments->fragments[i] = getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
-            if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
+            getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, overlapStatus);
+            if (overlapStatus == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
 
                 // Wait for completion
                 memoryManager.cleanTemporaryAllocationListOnAllEngines(true);
 
                 // check overlapping last time
-                checkedFragments->fragments[i] = getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
-                if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
+                getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, overlapStatus);
+                if (overlapStatus == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
                     status = RequirementsStatus::FATAL;
                     break;
                 }

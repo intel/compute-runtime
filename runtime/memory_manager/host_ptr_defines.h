@@ -79,9 +79,4 @@ struct OsHandleStorage {
     }
 };
 
-struct CheckedFragments {
-    FragmentStorage *fragments[maxFragmentsCount];
-    OverlapStatus status[maxFragmentsCount];
-    size_t count = 0;
-};
 } // namespace NEO
