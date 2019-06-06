@@ -47,6 +47,11 @@ using namespace NEO;
 
 typedef Test<MemoryAllocatorFixture> MemoryAllocatorTest;
 
+TEST(MemoryManagerTest, whenCreatingOsAgnosticMemoryManagerThenSupportsMultiStorageResourcesFlagIsSetToTrue) {
+    MockMemoryManager memoryManager;
+    EXPECT_TRUE(memoryManager.supportsMultiStorageResources);
+}
+
 TEST(MemoryBank, givenDifferentDeviceOrdinalsWhenGettingBankThenCorrectBanksAreReturned) {
     auto bank = MemoryBanks::getBank(0);
     EXPECT_EQ(MemoryBanks::MainBank, bank);

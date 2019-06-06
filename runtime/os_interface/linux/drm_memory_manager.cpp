@@ -38,6 +38,7 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                                                                  pinBB(nullptr),
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
+    supportsMultiStorageResources = false;
     gfxPartition.init(platformDevices[0]->capabilityTable.gpuAddressSpace);
     MemoryManager::virtualPaddingAvailable = true;
     if (mode != gemCloseWorkerMode::gemCloseWorkerInactive) {

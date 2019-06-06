@@ -215,6 +215,7 @@ class MemoryManager {
     bool asyncDeleterEnabled = false;
     bool enable64kbpages = false;
     bool localMemorySupported = false;
+    bool supportsMultiStorageResources = true;
     ExecutionEnvironment &executionEnvironment;
     EngineControlContainer registeredEngines;
     std::unique_ptr<HostPtrManager> hostPtrManager;

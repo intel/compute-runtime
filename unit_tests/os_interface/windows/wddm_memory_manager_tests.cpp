@@ -1692,3 +1692,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentPro
 
     memoryManager->freeGraphicsMemory(allocation);
 }
+
+TEST_F(WddmMemoryManagerSimpleTest, whenCreatingWddmMemoryManagerThenSupportsMultiStorageResourcesFlagIsSetToFalse) {
+    EXPECT_FALSE(memoryManager->supportsMultiStorageResources);
+}

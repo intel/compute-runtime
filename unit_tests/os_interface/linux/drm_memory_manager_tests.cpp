@@ -56,6 +56,10 @@ AllocationProperties createAllocationProperties(size_t size, bool forcePin) {
 typedef Test<DrmMemoryManagerFixture> DrmMemoryManagerTest;
 typedef Test<DrmMemoryManagerFixtureWithoutQuietIoctlExpectation> DrmMemoryManagerWithExplicitExpectationsTest;
 
+TEST_F(DrmMemoryManagerTest, whenCreatingDrmMemoryManagerThenSupportsMultiStorageResourcesFlagIsSetToFalse) {
+    EXPECT_FALSE(memoryManager->supportsMultiStorageResources);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryMangerWhenItIsCreatedThenItContainsInternal32BitAllocator) {
     EXPECT_NE(nullptr, memoryManager->getDrmInternal32BitAllocator());
 }
