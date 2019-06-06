@@ -1363,8 +1363,9 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedAn
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
     mock->ioctl_expected.gemCreate = 1;
     mock->ioctl_expected.gemSetTiling = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 2;
+    mock->ioctl_expected.gemClose = 2;
 
     MockContext context(device);
     context.setMemoryManager(memoryManager);
@@ -1379,7 +1380,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFr
     imageDesc.image_width = 64u;
     imageDesc.image_height = 64u;
 
-    char data[64u * 64u * 4 * 8];
+    auto data = alignedMalloc(64u * 64u * 4 * 8, MemoryConstants::pageSize);
 
     auto retVal = CL_SUCCESS;
 
@@ -1405,12 +1406,14 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFr
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(rowPitch, this->mock->setTilingStride);
     EXPECT_EQ(1u, this->mock->setTilingHandle);
+
+    alignedFree(data);
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageThenUnmapSizeCorrectlySetWhenLimitedRangeAllocationUsedOrNotUsed) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemUserptr = 2;
+    mock->ioctl_expected.gemWait = 2;
+    mock->ioctl_expected.gemClose = 2;
 
     MockContext context;
     context.setMemoryManager(memoryManager);
@@ -1424,7 +1427,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageThe
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 64u;
 
-    char data[64u * 4 * 8];
+    auto data = alignedMalloc(64u * 4 * 8, MemoryConstants::pageSize);
 
     auto retVal = CL_SUCCESS;
 
@@ -1446,12 +1449,14 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageThe
     } else {
         EXPECT_NE(0u, drmAllocation->getBO()->peekUnmapSize());
     }
+
+    alignedFree(data);
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemUserptr = 2;
+    mock->ioctl_expected.gemWait = 2;
+    mock->ioctl_expected.gemClose = 2;
 
     MockContext context;
     context.setMemoryManager(memoryManager);
@@ -1465,7 +1470,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZer
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 64u;
 
-    char data[64u * 4 * 8];
+    auto data = alignedMalloc(64u * 4 * 8, MemoryConstants::pageSize);
 
     auto retVal = CL_SUCCESS;
 
@@ -1487,6 +1492,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZer
     EXPECT_EQ(0u, this->mock->setTilingHandle);
 
     EXPECT_EQ(Sharing::nonSharedResource, imageGraphicsAllocation->peekSharedHandle());
+
+    alignedFree(data);
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNonZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
@@ -1507,7 +1514,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNon
     imageDesc.image_width = 64u;
     imageDesc.num_mip_levels = 1u;
 
-    char data[64u * 4 * 8];
+    auto data = alignedMalloc(64u * 4 * 8, MemoryConstants::pageSize);
 
     auto retVal = CL_SUCCESS;
 
@@ -1530,12 +1537,14 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNon
     EXPECT_EQ(0u, this->mock->setTilingHandle);
 
     EXPECT_EQ(Sharing::nonSharedResource, imageGraphicsAllocation->peekSharedHandle());
+
+    alignedFree(data);
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreatedFromHostPtrThenTilingIsNotCalled) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemUserptr = 2;
+    mock->ioctl_expected.gemWait = 2;
+    mock->ioctl_expected.gemClose = 2;
 
     MockContext context;
     context.setMemoryManager(memoryManager);
@@ -1549,7 +1558,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreated
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 64u;
 
-    char data[64u * 64u * 4 * 8];
+    auto data = alignedMalloc(64u * 4 * 8, MemoryConstants::pageSize);
 
     auto retVal = CL_SUCCESS;
 
@@ -1567,6 +1576,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreated
     EXPECT_EQ(0u, this->mock->setTilingHandle);
 
     EXPECT_EQ(Sharing::nonSharedResource, imageGraphicsAllocation->peekSharedHandle());
+
+    alignedFree(data);
 }
 
 TEST_F(DrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenAllocateGraphicsMemoryForImageIsCalledThenGraphicsAllocationIsReturned) {

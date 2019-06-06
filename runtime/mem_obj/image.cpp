@@ -116,6 +116,7 @@ Image *Image::create(Context *context,
     UNRECOVERABLE_IF(surfaceFormat == nullptr);
     Image *image = nullptr;
     GraphicsAllocation *memory = nullptr;
+    GraphicsAllocation *mapAllocation = nullptr;
     MemoryManager *memoryManager = context->getMemoryManager();
     Buffer *parentBuffer = castToObject<Buffer>(imageDesc->mem_object);
     Image *parentImage = castToObject<Image>(imageDesc->mem_object);
@@ -184,6 +185,32 @@ Image *Image::create(Context *context,
         imgInfo.preferRenderCompression = MemObjHelper::isSuitableForRenderCompression(isTilingAllowed, flags,
                                                                                        context->peekContextType(), true);
 
+        switch (imageDesc->image_type) {
+        case CL_MEM_OBJECT_IMAGE3D:
+            hostPtrMinSize = hostPtrSlicePitch * imageDepth;
+            break;
+        case CL_MEM_OBJECT_IMAGE2D:
+            if (IsNV12Image(&surfaceFormat->OCLImageFormat)) {
+                hostPtrMinSize = hostPtrRowPitch * imageHeight + hostPtrRowPitch * imageHeight / 2;
+            } else {
+                hostPtrMinSize = hostPtrRowPitch * imageHeight;
+            }
+            hostPtrSlicePitch = 0;
+            break;
+        case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+        case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+            hostPtrMinSize = hostPtrSlicePitch * imageCount;
+            break;
+        case CL_MEM_OBJECT_IMAGE1D:
+        case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+            hostPtrMinSize = hostPtrRowPitch;
+            hostPtrSlicePitch = 0;
+            break;
+        default:
+            DEBUG_BREAK_IF("Unsupported cl_image_type");
+            break;
+        }
+
         bool zeroCopy = false;
         bool transferNeeded = false;
         if (((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) || (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) && (parentBuffer != nullptr)) {
@@ -241,7 +268,11 @@ Image *Image::create(Context *context,
                     memory->setDefaultGmm(gmm);
                     zeroCopy = true;
                 }
-
+                if (memory) {
+                    AllocationProperties properties{false, hostPtrMinSize, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR};
+                    properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
+                    mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
+                }
             } else {
                 AllocationProperties allocProperties = MemObjHelper::getAllocationProperties(imgInfo, true, flags);
                 memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
@@ -252,32 +283,6 @@ Image *Image::create(Context *context,
             }
         }
         transferNeeded |= !!(flags & CL_MEM_COPY_HOST_PTR);
-
-        switch (imageDesc->image_type) {
-        case CL_MEM_OBJECT_IMAGE3D:
-            hostPtrMinSize = hostPtrSlicePitch * imageDepth;
-            break;
-        case CL_MEM_OBJECT_IMAGE2D:
-            if (IsNV12Image(&surfaceFormat->OCLImageFormat)) {
-                hostPtrMinSize = hostPtrRowPitch * imageHeight + hostPtrRowPitch * imageHeight / 2;
-            } else {
-                hostPtrMinSize = hostPtrRowPitch * imageHeight;
-            }
-            hostPtrSlicePitch = 0;
-            break;
-        case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-        case CL_MEM_OBJECT_IMAGE2D_ARRAY:
-            hostPtrMinSize = hostPtrSlicePitch * imageCount;
-            break;
-        case CL_MEM_OBJECT_IMAGE1D:
-        case CL_MEM_OBJECT_IMAGE1D_BUFFER:
-            hostPtrMinSize = hostPtrRowPitch;
-            hostPtrSlicePitch = 0;
-            break;
-        default:
-            DEBUG_BREAK_IF("Unsupported cl_image_type");
-            break;
-        }
 
         if (!memory) {
             break;
@@ -358,6 +363,8 @@ Image *Image::create(Context *context,
                                     copyRegion, copyOrigin);
             }
         }
+
+        image->mapAllocation = mapAllocation;
 
         if (errcodeRet != CL_SUCCESS) {
             image->release();

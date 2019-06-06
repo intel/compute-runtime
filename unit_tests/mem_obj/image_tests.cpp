@@ -432,6 +432,7 @@ TEST(TestCreateImageUseHostPtr, givenZeroCopyImageValuesWhenUsingHostPtrThenZero
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(image->isMemObjZeroCopy());
     EXPECT_EQ(hostPtr, image->getGraphicsAllocation()->getUnderlyingBuffer());
+    EXPECT_NE(nullptr, image->getMapAllocation());
 
     alignedFree(hostPtr);
 }

@@ -60,7 +60,7 @@ TEST_F(EnqueueMapImageTest, reuseMappedPtrForTiledImg) {
     const size_t region[3] = {1, 1, 1};
 
     auto mapAllocation = image->getMapAllocation();
-    EXPECT_EQ(nullptr, mapAllocation);
+    EXPECT_NE(nullptr, mapAllocation);
 
     auto ptr1 = pCmdQ->enqueueMapImage(
         image, true, mapFlags, origin,
@@ -69,7 +69,7 @@ TEST_F(EnqueueMapImageTest, reuseMappedPtrForTiledImg) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image->getHostPtr());
     mapAllocation = image->getMapAllocation();
-    EXPECT_EQ(nullptr, mapAllocation);
+    EXPECT_NE(nullptr, mapAllocation);
 
     auto ptr2 = pCmdQ->enqueueMapImage(
         image, true, mapFlags, origin,

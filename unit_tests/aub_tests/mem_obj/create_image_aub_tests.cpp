@@ -314,7 +314,7 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithRowPitchCreatedWithUseHostPtrFlagCopied
         size_t imageSlicePitch = 0;
         auto ptr = pCmdQ->enqueueMapImage(
             image,
-            false,
+            true,
             mapFlags,
             origin,
             region,
@@ -329,7 +329,6 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithRowPitchCreatedWithUseHostPtrFlagCopied
         } else {
             EXPECT_NE(image->getCpuAddress(), ptr);
         }
-        pCmdQ->flush();
         size_t imageRowPitchRef = 0;
         image->getImageInfo(CL_IMAGE_ROW_PITCH, sizeof(imageRowPitchRef), &imageRowPitchRef, nullptr);
 
