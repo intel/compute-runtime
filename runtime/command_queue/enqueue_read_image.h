@@ -98,7 +98,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     dc.dstOffset.x = dstPtrOffset;
     dc.srcOffset = origin;
     dc.size = region;
-    dc.srcRowPitch = inputRowPitch;
+    dc.srcRowPitch = (srcImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) ? inputSlicePitch : inputRowPitch;
     dc.srcSlicePitch = inputSlicePitch;
     if (srcImage->getImageDesc().num_mip_levels > 0) {
         dc.srcMipLevel = findMipLevel(srcImage->getImageDesc().image_type, origin);
