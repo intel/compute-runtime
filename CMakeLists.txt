@@ -6,6 +6,13 @@
 
 cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 include(ExternalProject)
+
+# Include custom configs
+file(GLOB custom_configs *custom_config.cmake)
+foreach(config ${custom_configs})
+    include(${config})
+endforeach()
+
 # Include needed macros
 include(common_macros.cmake)
 
