@@ -16,7 +16,11 @@ endforeach()
 # Include needed macros
 include(common_macros.cmake)
 
-project(igdrcl)
+if(NOT PROJECT_NAME)
+    set(PROJECT_NAME igdrcl)
+endif()
+
+project(${PROJECT_NAME})
 
 if(CMAKE_CONFIGURATION_TYPES)
     # Set custom build types for multi-configuration generators
