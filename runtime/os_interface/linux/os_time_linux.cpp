@@ -139,6 +139,18 @@ double OSTimeLinux::getHostTimerResolution() const {
 }
 
 double OSTimeLinux::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const {
+    if (pDrm) {
+        drm_i915_getparam_t getParam;
+        int frequency = 0;
+
+        getParam.param = I915_PARAM_CS_TIMESTAMP_FREQUENCY;
+        getParam.value = &frequency;
+        auto error = pDrm->ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
+
+        if (!error) {
+            return 1000000000.0 / frequency;
+        }
+    }
     return OSTime::getDeviceTimerResolution(hwInfo);
 }
 

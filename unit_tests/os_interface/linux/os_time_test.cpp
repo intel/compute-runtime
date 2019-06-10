@@ -194,6 +194,40 @@ TEST_F(DrmTimeTest, detect) {
     delete drm;
 }
 
+TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultResolutionIsReturned) {
+    auto defaultResolution = platformDevices[0]->capabilityTable.defaultProfilingTimerResolution;
+
+    auto drm = std::make_unique<DrmMockCustom>();
+    osTime->updateDrm(drm.get());
+
+    drm->getParamRetValue = 0;
+    drm->ioctl_res = -1;
+
+    auto result = osTime->getDynamicDeviceTimerResolution(*platformDevices[0]);
+    EXPECT_DOUBLE_EQ(result, defaultResolution);
+}
+
+TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenNoDrmThenDefaultResolutionIsReturned) {
+    osTime->updateDrm(nullptr);
+
+    auto defaultResolution = platformDevices[0]->capabilityTable.defaultProfilingTimerResolution;
+
+    auto result = osTime->getDynamicDeviceTimerResolution(*platformDevices[0]);
+    EXPECT_DOUBLE_EQ(result, defaultResolution);
+}
+
+TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlSuccedsThenCorrectResolutionIsReturned) {
+    auto drm = std::make_unique<DrmMockCustom>();
+    osTime->updateDrm(drm.get());
+
+    // 19200000 is frequency yelding 52.083ns resolution
+    drm->getParamRetValue = 19200000;
+    drm->ioctl_res = 0;
+
+    auto result = osTime->getDynamicDeviceTimerResolution(*platformDevices[0]);
+    EXPECT_DOUBLE_EQ(result, 52.08333333333333);
+}
+
 TEST_F(DrmTimeTest, givenAlwaysFailingResolutionFuncWhenGetHostTimerResolutionIsCalledThenReturnsZero) {
     osTime->setResolutionFunc(resolutionFuncFalse);
     auto retVal = osTime->getHostTimerResolution();
