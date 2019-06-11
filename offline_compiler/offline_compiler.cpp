@@ -124,12 +124,12 @@ int OfflineCompiler::buildSourceCode() {
             retVal = CL_INVALID_PROGRAM;
             break;
         }
-        UNRECOVERABLE_IF(fclDeviceCtx == nullptr);
         UNRECOVERABLE_IF(igcDeviceCtx == nullptr);
 
         CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
         bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
         if (false == inputIsIntermediateRepresentation) {
+            UNRECOVERABLE_IF(fclDeviceCtx == nullptr);
             IGC::CodeType::CodeType_t intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl : preferredIntermediateRepresentation;
             // sourceCode.size() returns the number of characters without null terminated char
             auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size() + 1);
@@ -333,40 +333,47 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         sourceCode = (pSource != nullptr) ? getStringWithinDelimiters((char *)pSourceFromFile) : (char *)pSourceFromFile;
     }
 
-    auto fclLibFile = OsLibrary::load(Os::frontEndDllName);
-    if (fclLibFile == nullptr) {
-        printf("Error: Failed to load %s\n", Os::frontEndDllName);
-        return CL_OUT_OF_HOST_MEMORY;
-    }
+    if ((inputFileSpirV == false) && (inputFileLlvm == false)) {
+        auto fclLibFile = OsLibrary::load(Os::frontEndDllName);
+        if (fclLibFile == nullptr) {
+            printf("Error: Failed to load %s\n", Os::frontEndDllName);
+            return CL_OUT_OF_HOST_MEMORY;
+        }
 
-    this->fclLib.reset(fclLibFile);
-    if (this->fclLib == nullptr) {
-        return CL_OUT_OF_HOST_MEMORY;
-    }
+        this->fclLib.reset(fclLibFile);
+        if (this->fclLib == nullptr) {
+            return CL_OUT_OF_HOST_MEMORY;
+        }
 
-    auto fclCreateMain = reinterpret_cast<CIF::CreateCIFMainFunc_t>(this->fclLib->getProcAddress(CIF::CreateCIFMainFuncName));
-    if (fclCreateMain == nullptr) {
-        return CL_OUT_OF_HOST_MEMORY;
-    }
+        auto fclCreateMain = reinterpret_cast<CIF::CreateCIFMainFunc_t>(this->fclLib->getProcAddress(CIF::CreateCIFMainFuncName));
+        if (fclCreateMain == nullptr) {
+            return CL_OUT_OF_HOST_MEMORY;
+        }
 
-    this->fclMain = CIF::RAII::UPtr(createMainNoSanitize(fclCreateMain));
-    if (this->fclMain == nullptr) {
-        return CL_OUT_OF_HOST_MEMORY;
-    }
+        this->fclMain = CIF::RAII::UPtr(createMainNoSanitize(fclCreateMain));
+        if (this->fclMain == nullptr) {
+            return CL_OUT_OF_HOST_MEMORY;
+        }
 
-    if (false == this->fclMain->IsCompatible<IGC::FclOclDeviceCtx>()) {
-        // given FCL is not compatible
-        DEBUG_BREAK_IF(true);
-        return CL_OUT_OF_HOST_MEMORY;
-    }
+        if (false == this->fclMain->IsCompatible<IGC::FclOclDeviceCtx>()) {
+            printf("Incompatible interface in FCL : %s\n", CIF::InterfaceIdCoder::Dec(this->fclMain->FindIncompatible<IGC::FclOclDeviceCtx>()).c_str());
+            DEBUG_BREAK_IF(true);
+            return CL_OUT_OF_HOST_MEMORY;
+        }
 
-    this->fclDeviceCtx = this->fclMain->CreateInterface<IGC::FclOclDeviceCtxTagOCL>();
-    if (this->fclDeviceCtx == nullptr) {
-        return CL_OUT_OF_HOST_MEMORY;
-    }
+        this->fclDeviceCtx = this->fclMain->CreateInterface<IGC::FclOclDeviceCtxTagOCL>();
+        if (this->fclDeviceCtx == nullptr) {
+            return CL_OUT_OF_HOST_MEMORY;
+        }
 
-    fclDeviceCtx->SetOclApiVersion(hwInfo->capabilityTable.clVersionSupport * 10);
-    preferredIntermediateRepresentation = fclDeviceCtx->GetPreferredIntermediateRepresentation();
+        fclDeviceCtx->SetOclApiVersion(hwInfo->capabilityTable.clVersionSupport * 10);
+        preferredIntermediateRepresentation = fclDeviceCtx->GetPreferredIntermediateRepresentation();
+    } else {
+        if (!isQuiet()) {
+            printf("Compilation from IR - skipping loading of FCL\n");
+        }
+        preferredIntermediateRepresentation = IGC::CodeType::spirV;
+    }
 
     this->igcLib.reset(OsLibrary::load(Os::igcDllName));
     if (this->igcLib == nullptr) {
@@ -383,9 +390,16 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         return CL_OUT_OF_HOST_MEMORY;
     }
 
-    if (false == this->igcMain->IsCompatible<IGC::IgcOclDeviceCtx>()) {
-        // given IGC is not compatible
+    std::vector<CIF::InterfaceId_t> interfacesToIgnore = {IGC::OclGenBinaryBase::GetInterfaceId()};
+    if (false == this->igcMain->IsCompatible<IGC::IgcOclDeviceCtx>(&interfacesToIgnore)) {
+        printf("Incompatible interface in IGC : %s\n", CIF::InterfaceIdCoder::Dec(this->igcMain->FindIncompatible<IGC::IgcOclDeviceCtx>(&interfacesToIgnore)).c_str());
         DEBUG_BREAK_IF(true);
+        return CL_OUT_OF_HOST_MEMORY;
+    }
+
+    CIF::Version_t verMin = 0, verMax = 0;
+    if (false == this->igcMain->FindSupportedVersions<IGC::IgcOclDeviceCtx>(IGC::OclGenBinaryBase::GetInterfaceId(), verMin, verMax)) {
+        printf("Patchtoken interface is missing");
         return CL_OUT_OF_HOST_MEMORY;
     }
 

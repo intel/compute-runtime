@@ -113,6 +113,19 @@ struct MockCIFMain : MockCIF<CIF::CIFMain> {
         return entryPointInterface;
     }
 
+    bool FindSupportedVersionsImpl(CIF::InterfaceId_t entryPointInterface, CIF::InterfaceId_t interfaceToFind, CIF::Version_t &verMin, CIF::Version_t &verMax) const override {
+        if (globalCreators.find(entryPointInterface) != globalCreators.end()) {
+            verMin = verMax = 1;
+            return true;
+        }
+        if (defaultCreators.find(entryPointInterface) != defaultCreators.end()) {
+            verMin = verMax = 1;
+            return true;
+        }
+
+        return false;
+    }
+
     std::map<CIF::InterfaceId_t, CreatorFuncT> defaultCreators;
 };
 

@@ -246,6 +246,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTest) {
 
     delete pOfflineCompiler;
 }
+
 TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -268,6 +269,23 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
 
     delete pOfflineCompiler;
 }
+
+TEST_F(OfflineCompilerTests, WhenFclNotNeededDontLoadIt) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-spirv_input"};
+
+    MockOfflineCompiler offlineCompiler;
+    auto ret = offlineCompiler.initialize(argv.size(), argv);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(nullptr, offlineCompiler.fclDeviceCtx);
+    EXPECT_NE(nullptr, offlineCompiler.igcDeviceCtx);
+}
+
 TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
     std::vector<std::string> argv = {
         "ocloc",

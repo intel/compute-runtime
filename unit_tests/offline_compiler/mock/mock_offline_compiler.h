@@ -15,6 +15,7 @@ namespace NEO {
 class MockOfflineCompiler : public OfflineCompiler {
   public:
     using OfflineCompiler::deviceName;
+    using OfflineCompiler::fclDeviceCtx;
     using OfflineCompiler::generateFilePathForIr;
     using OfflineCompiler::generateOptsSuffix;
     using OfflineCompiler::igcDeviceCtx;
