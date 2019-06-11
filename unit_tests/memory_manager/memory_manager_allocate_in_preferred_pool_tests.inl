@@ -482,6 +482,14 @@ TEST(MemoryManagerTest, givenAllocationPropertiesWithMultiOsContextCapableFlagDi
     memoryManager.freeGraphicsMemory(allocation);
 }
 
+TEST(MemoryManagerTest, givenConstantSurfaceTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{1, GraphicsAllocation::AllocationType::CONSTANT_SURFACE};
+    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
+}
+
 TEST(MemoryManagerTest, givenInternalHeapTypeThenUseInternal32BitAllocator) {
     EXPECT_TRUE(MockMemoryManager::useInternal32BitAllocator(GraphicsAllocation::AllocationType::INTERNAL_HEAP));
 }

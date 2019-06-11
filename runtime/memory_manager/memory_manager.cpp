@@ -268,7 +268,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
-    case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
     case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
