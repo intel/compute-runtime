@@ -19,7 +19,7 @@ bool DriverDiagnostics::validFlags(cl_diagnostics_verbose_level flags) const {
     return !!(verboseLevel & flags);
 }
 
-const char *DriverDiagnostics::hintFormat[] = {
+const char *const DriverDiagnostics::hintFormat[] = {
     "Performance hint: clCreateBuffer with pointer %p and size %u doesn't meet alignment restrictions. Size should be aligned to %u bytes and pointer should be aligned to %u. Buffer is not sharing the same physical memory with CPU.", //CL_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS
     "Performance hint: clCreateBuffer with pointer %p and size %u meets alignment restrictions and buffer will share the same physical memory with CPU.",                                                                                 //CL_BUFFER_MEETS_ALIGNMENT_RESTRICTIONS
     "Performance hint: clCreateBuffer needs to allocate memory for buffer. For subsequent operations the buffer will share the same physical memory with CPU.",                                                                           //CL_BUFFER_NEEDS_ALLOCATE_MEMORY

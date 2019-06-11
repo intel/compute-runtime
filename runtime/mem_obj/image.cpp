@@ -1015,14 +1015,13 @@ Image *Image::validateAndCreateImage(Context *context,
         errcodeRet = CL_INVALID_OPERATION;
         return nullptr;
     }
-    SurfaceFormatInfo *surfaceFormat = nullptr;
     Image *image = nullptr;
     do {
         errcodeRet = Image::validateImageFormat(imageFormat);
         if (CL_SUCCESS != errcodeRet) {
             break;
         }
-        surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, imageFormat);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat);
         errcodeRet = Image::validate(context, flags, surfaceFormat, imageDesc, hostPtr);
         if (CL_SUCCESS != errcodeRet) {
             break;
