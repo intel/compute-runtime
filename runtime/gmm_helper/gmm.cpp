@@ -56,9 +56,10 @@ Gmm::Gmm(GMM_RESOURCE_INFO *inputGmm) {
     gmmResourceInfo.reset(GmmResourceInfo::create(inputGmm));
 }
 
-Gmm::Gmm(ImageInfo &inputOutputImgInfo) {
+Gmm::Gmm(ImageInfo &inputOutputImgInfo, StorageInfo storageInfo) {
     this->resourceParams = {};
     setupImageResourceParams(inputOutputImgInfo);
+    applyMemoryFlags(!inputOutputImgInfo.useLocalMemory, storageInfo);
     this->gmmResourceInfo.reset(GmmResourceInfo::create(&this->resourceParams));
     UNRECOVERABLE_IF(this->gmmResourceInfo == nullptr);
 

@@ -208,7 +208,7 @@ Image *Image::create(Context *context,
             if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) {
                 // Retrieve sizes from GMM and apply virtual padding if buffer storage is not big enough
                 auto queryGmmImgInfo(imgInfo);
-                std::unique_ptr<Gmm> gmm(new Gmm(queryGmmImgInfo));
+                std::unique_ptr<Gmm> gmm(new Gmm(queryGmmImgInfo, StorageInfo{}));
                 auto gmmAllocationSize = gmm->gmmResourceInfo->getSizeAllocation();
                 if (gmmAllocationSize > memory->getUnderlyingBufferSize()) {
                     memory = memoryManager->createGraphicsAllocationWithPadding(memory, gmmAllocationSize);
@@ -236,7 +236,7 @@ Image *Image::create(Context *context,
                         }
                     }
                 } else {
-                    gmm = new Gmm(imgInfo);
+                    gmm = new Gmm(imgInfo, StorageInfo{});
                     memory = memoryManager->allocateGraphicsMemoryWithProperties({false, imgInfo.size, GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE}, hostPtr);
                     memory->setDefaultGmm(gmm);
                     zeroCopy = true;
@@ -646,7 +646,7 @@ cl_int Image::getImageParams(Context *context,
     imgInfo.imgDesc = &imageDescriptor;
     imgInfo.surfaceFormat = surfaceFormat;
 
-    std::unique_ptr<Gmm> gmm(new Gmm(imgInfo)); // query imgInfo
+    std::unique_ptr<Gmm> gmm(new Gmm(imgInfo, StorageInfo{})); // query imgInfo
 
     *imageRowPitch = imgInfo.rowPitch;
     *imageSlicePitch = imgInfo.slicePitch;

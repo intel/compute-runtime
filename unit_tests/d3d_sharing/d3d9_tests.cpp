@@ -48,7 +48,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
             return alloc;
         }
         GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
-            auto gmm = std::make_unique<Gmm>(*allocationData.imgInfo);
+            auto gmm = std::make_unique<Gmm>(*allocationData.imgInfo, StorageInfo{});
             AllocationProperties properties(nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE);
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, properties, false);
             alloc->setDefaultGmm(forceGmm);

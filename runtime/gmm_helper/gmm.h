@@ -25,7 +25,7 @@ class Gmm {
   public:
     virtual ~Gmm() = default;
     Gmm() = delete;
-    Gmm(ImageInfo &inputOutputImgInfo);
+    Gmm(ImageInfo &inputOutputImgInfo, StorageInfo storageInfo);
     Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable);
     Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool, StorageInfo storageInfo);
     Gmm(GMM_RESOURCE_INFO *inputGmm);

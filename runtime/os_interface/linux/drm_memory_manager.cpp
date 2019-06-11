@@ -521,7 +521,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         ((void)(ret));
 
         properties.imgInfo->tilingMode = TilingModeHelper::convert(getTiling.tiling_mode);
-        Gmm *gmm = new Gmm(*properties.imgInfo);
+        Gmm *gmm = new Gmm(*properties.imgInfo, createStorageInfoFromProperties(properties));
         drmAllocation->setDefaultGmm(gmm);
     }
     return drmAllocation;

@@ -304,7 +304,7 @@ TEST_F(GmmTests, givenTilingModeSetToTileYWhenHwSupportsTilingThenTileYFlagIsSet
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     imgInfo.tilingMode = TilingMode::TILE_Y;
-    auto gmm = std::make_unique<Gmm>(imgInfo);
+    auto gmm = std::make_unique<Gmm>(imgInfo, StorageInfo{});
 
     auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
     bool supportsYTiling = hwHelper.supportsYTiling();
@@ -327,7 +327,7 @@ TEST_F(GmmTests, givenTilingModeSetToNonTiledWhenCreatingGmmThenLinearFlagIsSet)
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     imgInfo.tilingMode = TilingMode::NON_TILED;
-    auto gmm = std::make_unique<Gmm>(imgInfo);
+    auto gmm = std::make_unique<Gmm>(imgInfo, StorageInfo{});
 
     EXPECT_EQ(gmm->resourceParams.Flags.Info.Linear, 1u);
     EXPECT_EQ(gmm->resourceParams.Flags.Info.TiledY, 0u);
@@ -343,7 +343,7 @@ TEST_F(GmmTests, givenTilingModeSetToTileXWhenCreatingGmmThenUnrecoverableIfIsCa
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     imgInfo.tilingMode = TilingMode::TILE_X;
 
-    EXPECT_THROW(new Gmm(imgInfo), std::exception);
+    EXPECT_THROW(new Gmm(imgInfo, {}), std::exception);
 }
 
 TEST_F(GmmTests, givenZeroRowPitchWhenQueryImgFromBufferParamsThenCalculate) {

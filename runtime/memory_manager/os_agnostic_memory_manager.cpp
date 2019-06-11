@@ -145,7 +145,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedH
     graphicsAllocation->set32BitAllocation(requireSpecificBitness);
 
     if (properties.imgInfo) {
-        Gmm *gmm = new Gmm(*properties.imgInfo);
+        Gmm *gmm = new Gmm(*properties.imgInfo, createStorageInfoFromProperties(properties));
         graphicsAllocation->setDefaultGmm(gmm);
     }
 
