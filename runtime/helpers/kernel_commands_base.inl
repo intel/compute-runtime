@@ -170,4 +170,7 @@ void KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Linear
     pipeControl->setCommandStreamerStallEnable(true);
     pipeControl->setDcFlushEnable(true);
 }
+
+template <typename GfxFamily>
+void KernelCommandsHelper<GfxFamily>::appendMiFlushDw(typename GfxFamily::MI_FLUSH_DW *miFlushDwCmd) {}
 } // namespace NEO
