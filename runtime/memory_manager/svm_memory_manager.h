@@ -18,10 +18,17 @@ class Device;
 class GraphicsAllocation;
 class MemoryManager;
 
+enum class InternalMemoryType : uint32_t {
+    SVM = 0,
+    DEVICE_UNIFIED_MEMORY,
+    NOT_SPECIFIED
+};
+
 struct SvmAllocationData {
     GraphicsAllocation *cpuAllocation = nullptr;
     GraphicsAllocation *gpuAllocation = nullptr;
     size_t size = 0;
+    InternalMemoryType memoryType = InternalMemoryType::SVM;
 };
 
 struct SvmMapOperation {
@@ -35,6 +42,8 @@ struct SvmMapOperation {
 class SVMAllocsManager {
   public:
     class MapBasedAllocationTracker {
+        friend class SVMAllocsManager;
+
       public:
         using SvmAllocationContainer = std::map<const void *, SvmAllocationData>;
         void insert(SvmAllocationData);
@@ -63,8 +72,13 @@ class SVMAllocsManager {
         bool readOnly = false;
     };
 
+    struct UnifiedMemoryProperties {
+        InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
+    };
+
     SVMAllocsManager(MemoryManager *memoryManager);
     void *createSVMAlloc(size_t size, const SvmAllocationProperties svmProperties);
+    void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties svmProperties);
     SvmAllocationData *getSVMAlloc(const void *ptr);
     void freeSVMAlloc(void *ptr);
     size_t getNumAllocs() const { return SVMAllocs.getNumAllocs(); }
@@ -72,10 +86,12 @@ class SVMAllocsManager {
     void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);
     void removeSvmMapOperation(const void *regionSvmPtr);
     SvmMapOperation *getSvmMapOperation(const void *regionPtr);
+    void makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver);
 
   protected:
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties);
     void *createSvmAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties);
+
     void freeZeroCopySvmAllocation(SvmAllocationData *svmData);
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
 

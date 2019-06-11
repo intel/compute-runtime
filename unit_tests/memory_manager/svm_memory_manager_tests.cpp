@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
@@ -138,6 +139,24 @@ TEST_F(SVMMemoryAllocatorTest, whenCoherentFlagIsPassedThenAllocationIsCoherent)
     svmProperties.coherent = true;
     auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, svmProperties);
     EXPECT_TRUE(svmManager->getSVMAlloc(ptr)->gpuAllocation->isCoherent());
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredWithProperTypeInAllocationMap) {
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    auto allocationSize = 4096u;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, ptr);
+    auto allocation = svmManager->getSVMAlloc(ptr);
+    EXPECT_EQ(nullptr, allocation->cpuAllocation);
+    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    EXPECT_EQ(InternalMemoryType::DEVICE_UNIFIED_MEMORY, allocation->memoryType);
+    EXPECT_EQ(allocationSize, allocation->size);
+
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, allocation->gpuAllocation->getAllocationType());
+
     svmManager->freeSVMAlloc(ptr);
 }
 

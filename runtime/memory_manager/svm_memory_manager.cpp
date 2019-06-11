@@ -68,6 +68,15 @@ SvmMapOperation *SVMAllocsManager::MapOperationsTracker::get(const void *regionP
     return &iter->second;
 }
 
+void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver) {
+    std::unique_lock<SpinLock> lock(mtx);
+    for (auto &allocation : this->SVMAllocs.allocations) {
+        if (allocation.second.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
+            commandStreamReceiver.makeResident(*allocation.second.gpuAllocation);
+        }
+    }
+}
+
 SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager) : memoryManager(memoryManager) {
 }
 
@@ -81,6 +90,22 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
     } else {
         return createSvmAllocationWithDeviceStorage(size, svmProperties);
     }
+}
+
+void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties svmProperties) {
+    size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
+    AllocationProperties unifiedMemoryProperties{true, alignedSize, GraphicsAllocation::AllocationType::BUFFER};
+    GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties);
+
+    SvmAllocationData allocData;
+    allocData.gpuAllocation = unifiedMemoryAllocation;
+    allocData.cpuAllocation = nullptr;
+    allocData.size = size;
+    allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+
+    std::unique_lock<SpinLock> lock(mtx);
+    this->SVMAllocs.insert(allocData);
+    return reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
 }
 
 SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {
