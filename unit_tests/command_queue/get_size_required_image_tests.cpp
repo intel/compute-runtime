@@ -15,7 +15,7 @@
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/event/event.h"
 #include "runtime/event/perf_counter.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/kernel/kernel.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
@@ -89,9 +89,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyImage) {
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_COPY_IMAGE, false, false, *pCmdQ, kernel);
-    auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
-    auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
+    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
+    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
+    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
@@ -137,9 +137,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyReadAndWriteImage) {
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_COPY_IMAGE, false, false, *pCmdQ, kernel.get());
-    auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel.get());
-    auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel.get());
-    auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel.get());
+    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel.get());
+    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel.get());
+    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel.get());
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
@@ -193,9 +193,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageNonBlocking) {
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_READ_IMAGE, false, false, *pCmdQ, kernel);
-    auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
-    auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
+    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
+    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
+    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
@@ -247,9 +247,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageBlocking) {
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_READ_IMAGE, false, false, *pCmdQ, kernel);
-    auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
-    auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
+    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
+    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
+    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
@@ -301,9 +301,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageNonBlocking) {
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_WRITE_IMAGE, false, false, *pCmdQ, kernel);
-    auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
-    auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
+    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
+    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
+    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
@@ -355,9 +355,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageBlocking) {
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_WRITE_IMAGE, false, false, *pCmdQ, kernel);
-    auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
-    auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
+    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
+    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
+    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);

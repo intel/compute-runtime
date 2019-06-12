@@ -142,8 +142,8 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenSSH
 
         EXPECT_LE(pKernel->getKernelInfo().heapInfo.pKernelHeader->SurfaceStateHeapSize, ssh.getMaxAvailableSpace());
 
-        size_t minRequiredSize = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
-        size_t minRequiredSizeForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*pKernel);
+        size_t minRequiredSize = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
+        size_t minRequiredSizeForEM = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*pKernel);
 
         EXPECT_LE(minRequiredSize + minRequiredSizeForEM, ssh.getMaxAvailableSpace());
     }
@@ -175,8 +175,8 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsBlockedThenSSHSiz
             true);
         ASSERT_NE(nullptr, blockedCommandsData);
 
-        size_t minRequiredSize = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo) + UnitTestHelper<FamilyType>::getDefaultSshUsage();
-        size_t minRequiredSizeForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*pKernel);
+        size_t minRequiredSize = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo) + UnitTestHelper<FamilyType>::getDefaultSshUsage();
+        size_t minRequiredSizeForEM = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*pKernel);
 
         size_t sshUsed = blockedCommandsData->ssh->getUsed();
 

@@ -7,7 +7,7 @@
 
 #pragma once
 #include "runtime/command_queue/hardware_interface.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/task_information.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 
@@ -50,7 +50,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
     // Allocate command stream and indirect heaps
     if (blockQueue) {
-        using KCH = KernelCommandsHelper<GfxFamily>;
+        using KCH = HardwareCommandsHelper<GfxFamily>;
 
         constexpr static auto additionalAllocationSize = CSRequirements::csOverfetchSize;
         constexpr static auto allocationSize = MemoryConstants::pageSize64k - additionalAllocationSize;
@@ -68,7 +68,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             dsh->getSpace(colorCalcSize);
             ioh = dsh;
             commandQueue.allocateHeapMemory(IndirectHeap::SURFACE_STATE,
-                                            KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<
+                                            HardwareCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<
                                                 IndirectHeap::SURFACE_STATE>(*parentKernel) +
                                                 KCH::getTotalSizeRequiredSSH(multiDispatchInfo),
                                             ssh);
@@ -96,7 +96,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
     TimestampPacketHelper::programCsrDependencies<GfxFamily>(*commandStream, csrDependencies);
 
-    dsh->align(KernelCommandsHelper<GfxFamily>::alignInterfaceDescriptorData);
+    dsh->align(HardwareCommandsHelper<GfxFamily>::alignInterfaceDescriptorData);
 
     uint32_t interfaceDescriptorIndex = 0;
     const size_t offsetInterfaceDescriptorTable = dsh->getUsed();
@@ -107,7 +107,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                        parentKernel, dsh, commandStream);
 
     // Program media interface descriptor load
-    KernelCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
+    HardwareCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
         *commandStream,
         offsetInterfaceDescriptorTable,
         totalInterfaceDescriptorTableSize);
@@ -219,7 +219,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             auto timestampPacketNodeForPostSync = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
             postSyncAddress = timestampPacketNodeForPostSync->getGpuAddress();
         }
-        KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, commandQueue, mainKernel, postSyncAddress, 0);
+        HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, commandQueue, mainKernel, postSyncAddress, 0);
     }
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
 }

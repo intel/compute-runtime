@@ -742,7 +742,7 @@ void CommandStreamReceiverHw<GfxFamily>::blitBuffer(Buffer &dstBuffer, Buffer &s
 
     BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(dstBuffer, srcBuffer, commandStream, dstOffset, srcOffset, copySize);
 
-    KernelCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount);
+    HardwareCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount);
 
     auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(commandStream.getSpace(sizeof(MI_BATCH_BUFFER_END)));
     *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;

@@ -9,7 +9,7 @@
 #include "runtime/event/event.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/dispatch_info.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"

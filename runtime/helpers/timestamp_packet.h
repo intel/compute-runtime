@@ -8,7 +8,7 @@
 #pragma once
 
 #include "runtime/helpers/csr_deps.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/utilities/tag_allocator.h"
 
@@ -92,13 +92,13 @@ struct TimestampPacketHelper {
         auto compareAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
         auto dependenciesCountAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, implicitDependenciesCount);
 
-        KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress, 1);
+        HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(cmdStream, compareAddress, 1);
 
         timestampPacketNode.tagForCpuAccess->incImplicitDependenciesCount();
 
-        KernelCommandsHelper<GfxFamily>::programMiAtomic(cmdStream, dependenciesCountAddress,
-                                                         MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
-                                                         MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
+        HardwareCommandsHelper<GfxFamily>::programMiAtomic(cmdStream, dependenciesCountAddress,
+                                                           MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
+                                                           MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
     }
 
     template <typename GfxFamily>

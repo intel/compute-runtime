@@ -6,7 +6,7 @@
  */
 
 #include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/kernel_info.h"
 #include "test.h"
@@ -85,7 +85,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, test_SLMProgramming) {
 
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
 
-    size_t offsetInterfaceDescriptorData = KernelCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
+    size_t offsetInterfaceDescriptorData = HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
         indirectHeap,
         interfaceDescriptorOffset,
         0,

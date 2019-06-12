@@ -23,10 +23,10 @@
 namespace NEO {
 
 template <typename GfxFamily>
-bool KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() { return false; }
+bool HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired() { return false; }
 
 template <typename GfxFamily>
-uint32_t KernelCommandsHelper<GfxFamily>::computeSlmValues(uint32_t valueIn) {
+uint32_t HardwareCommandsHelper<GfxFamily>::computeSlmValues(uint32_t valueIn) {
     auto value = std::max(valueIn, 1024u);
     value = Math::nextPowerOfTwo(value);
     value = Math::getMinLsbSet(value);
@@ -36,7 +36,7 @@ uint32_t KernelCommandsHelper<GfxFamily>::computeSlmValues(uint32_t valueIn) {
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredDSH(
+size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(
     const Kernel &kernel) {
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
@@ -62,7 +62,7 @@ size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredDSH(
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredIOH(
+size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(
     const Kernel &kernel,
     size_t localWorkSize) {
     typedef typename GfxFamily::WALKER_TYPE WALKER_TYPE;
@@ -77,7 +77,7 @@ size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredIOH(
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredSSH(
+size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredSSH(
     const Kernel &kernel) {
     typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
     auto sizeSSH = kernel.getSurfaceStateHeapSize();
@@ -98,25 +98,25 @@ size_t getSizeRequired(const MultiDispatchInfo &multiDispatchInfo, SizeGetterT &
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredDSH(
+size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredDSH(
     const MultiDispatchInfo &multiDispatchInfo) {
     return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredDSH(*dispatchInfo.getKernel()); });
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(
+size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(
     const MultiDispatchInfo &multiDispatchInfo) {
     return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredIOH(*dispatchInfo.getKernel(), Math::computeTotalElementsCount(dispatchInfo.getLocalWorkgroupSize())); });
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(
+size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(
     const MultiDispatchInfo &multiDispatchInfo) {
     return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredSSH(*dispatchInfo.getKernel()); });
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
+size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
     uint64_t kernelStartOffset,
@@ -171,9 +171,9 @@ size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 // Returned binding table pointer is relative to given heap (which is assumed to be the Surface state base addess)
 // as required by the INTERFACE_DESCRIPTOR_DATA.
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const KernelInfo &srcKernelInfo,
-                                                                         const void *srcKernelSsh, size_t srcKernelSshSize,
-                                                                         size_t numberOfBindingTableStates, size_t offsetOfBindingTable) {
+size_t HardwareCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const KernelInfo &srcKernelInfo,
+                                                                           const void *srcKernelSsh, size_t srcKernelSshSize,
+                                                                           size_t numberOfBindingTableStates, size_t offsetOfBindingTable) {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
@@ -221,7 +221,7 @@ size_t KernelCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(Indirec
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
+size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     LinearStream &commandStream,
     IndirectHeap &dsh,
     IndirectHeap &ioh,
@@ -239,8 +239,8 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
     DEBUG_BREAK_IF(simd != 8 && simd != 16 && simd != 32);
-    auto kernelUsesLocalIds = KernelCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
-    auto inlineDataProgrammingRequired = KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
+    auto inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
 
     // Copy the kernel over to the ISH
     uint64_t kernelStartOffset = 0llu;
@@ -296,14 +296,14 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
 
     uint32_t sizeCrossThreadData = kernel.getCrossThreadDataSize();
 
-    size_t offsetCrossThreadData = KernelCommandsHelper<GfxFamily>::sendCrossThreadData(
+    size_t offsetCrossThreadData = HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         ioh, kernel, inlineDataProgrammingRequired,
         walkerCmd, sizeCrossThreadData);
 
     size_t sizePerThreadDataTotal = 0;
     size_t sizePerThreadData = 0;
 
-    KernelCommandsHelper<GfxFamily>::programPerThreadData(
+    HardwareCommandsHelper<GfxFamily>::programPerThreadData(
         sizePerThreadData,
         localIdsGenerationByRuntime,
         ioh,
@@ -322,7 +322,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
         bindingTablePrefetchSize = 0;
     }
 
-    KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
+    HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
         dsh,
         offsetInterfaceDescriptor,
         kernelStartOffset,
@@ -360,7 +360,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::updatePerThreadDataTotal(
+void HardwareCommandsHelper<GfxFamily>::updatePerThreadDataTotal(
     size_t &sizePerThreadData,
     uint32_t &simd,
     uint32_t &numChannels,
@@ -377,7 +377,7 @@ void KernelCommandsHelper<GfxFamily>::updatePerThreadDataTotal(
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &commandStream, uint64_t compareAddress, uint32_t compareData) {
+void HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &commandStream, uint64_t compareAddress, uint32_t compareData) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
     auto miSemaphoreCmd = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
@@ -389,9 +389,9 @@ void KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &comma
 }
 
 template <typename GfxFamily>
-typename GfxFamily::MI_ATOMIC *KernelCommandsHelper<GfxFamily>::programMiAtomic(LinearStream &commandStream, uint64_t writeAddress,
-                                                                                typename MI_ATOMIC::ATOMIC_OPCODES opcode,
-                                                                                typename MI_ATOMIC::DATA_SIZE dataSize) {
+typename GfxFamily::MI_ATOMIC *HardwareCommandsHelper<GfxFamily>::programMiAtomic(LinearStream &commandStream, uint64_t writeAddress,
+                                                                                  typename MI_ATOMIC::ATOMIC_OPCODES opcode,
+                                                                                  typename MI_ATOMIC::DATA_SIZE dataSize) {
     auto miAtomic = commandStream.getSpaceForCmd<MI_ATOMIC>();
     *miAtomic = GfxFamily::cmdInitAtomic;
     miAtomic->setAtomicOpcode(opcode);
@@ -402,12 +402,12 @@ typename GfxFamily::MI_ATOMIC *KernelCommandsHelper<GfxFamily>::programMiAtomic(
 }
 
 template <typename GfxFamily>
-bool KernelCommandsHelper<GfxFamily>::doBindingTablePrefetch() {
+bool HardwareCommandsHelper<GfxFamily>::doBindingTablePrefetch() {
     return true;
 }
 
 template <typename GfxFamily>
-bool KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(const Kernel &kernel) {
+bool HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(const Kernel &kernel) {
     if (DebugManager.flags.EnablePassInlineData.get()) {
         return kernel.getKernelInfo().patchInfo.threadPayload->PassInlineData;
     }
@@ -415,14 +415,14 @@ bool KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(const Kernel
 }
 
 template <typename GfxFamily>
-bool KernelCommandsHelper<GfxFamily>::kernelUsesLocalIds(const Kernel &kernel) {
+bool HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(const Kernel &kernel) {
     return (kernel.getKernelInfo().patchInfo.threadPayload->LocalIDXPresent ||
             kernel.getKernelInfo().patchInfo.threadPayload->LocalIDYPresent ||
             kernel.getKernelInfo().patchInfo.threadPayload->LocalIDZPresent);
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData) {
+void HardwareCommandsHelper<GfxFamily>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData) {
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
     auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();

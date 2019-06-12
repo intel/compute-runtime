@@ -10,7 +10,7 @@
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/device_queue/device_queue_hw.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/scheduler/scheduler_kernel.h"
 #include "test.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
@@ -30,7 +30,7 @@ BDWTEST_F(BdwSchedulerTest, givenCallToDispatchSchedulerWhenPipeControlWithCSSta
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
         SchedulerKernel &scheduler = pDevice->getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(*context);
 
-        size_t minRequiredSizeForSchedulerSSH = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
+        size_t minRequiredSizeForSchedulerSSH = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
         // Setup heaps in pCmdQ
         LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);

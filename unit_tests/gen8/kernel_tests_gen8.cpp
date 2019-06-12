@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -18,7 +18,7 @@ GEN8TEST_F(Gen8KernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturnsF
     auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();
     EXPECT_FALSE(retVal);
 }
-using Gen8KernelCommandsTest = testing::Test;
-GEN8TEST_F(Gen8KernelCommandsTest, givenGen8PlatformWhenDoBindingTablePrefetchIsCalledThenReturnsTrue) {
-    EXPECT_TRUE(KernelCommandsHelper<FamilyType>::doBindingTablePrefetch());
+using Gen8HardwareCommandsTest = testing::Test;
+GEN8TEST_F(Gen8HardwareCommandsTest, givenGen8PlatformWhenDoBindingTablePrefetchIsCalledThenReturnsTrue) {
+    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::doBindingTablePrefetch());
 }

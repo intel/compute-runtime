@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -34,10 +34,10 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
   device_queue
   experimental_command_buffer
   gpgpu_walker
+  hardware_commands_helper
   hw_helper
   hw_info
   image
-  kernel_commands
   preamble
   preemption
   sampler

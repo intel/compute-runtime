@@ -6,21 +6,21 @@
  */
 
 #pragma once
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/kernel/kernel.h"
 
 namespace NEO {
 
 template <typename GfxFamily>
-typename KernelCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *KernelCommandsHelper<GfxFamily>::getInterfaceDescriptor(
+typename HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *HardwareCommandsHelper<GfxFamily>::getInterfaceDescriptor(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
-    KernelCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
+    HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
     return static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(indirectHeap.getCpuBase(), (size_t)offsetInterfaceDescriptor));
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::setAdditionalInfo(
+void HardwareCommandsHelper<GfxFamily>::setAdditionalInfo(
     INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
     const size_t &sizeCrossThreadData,
     const size_t &sizePerThreadData) {
@@ -39,24 +39,24 @@ void KernelCommandsHelper<GfxFamily>::setAdditionalInfo(
 }
 
 template <typename GfxFamily>
-uint32_t KernelCommandsHelper<GfxFamily>::additionalSizeRequiredDsh() {
+uint32_t HardwareCommandsHelper<GfxFamily>::additionalSizeRequiredDsh() {
     return sizeof(INTERFACE_DESCRIPTOR_DATA);
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredCS(const Kernel *kernel) {
+size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS(const Kernel *kernel) {
     size_t size = 2 * sizeof(typename GfxFamily::MEDIA_STATE_FLUSH) +
                   sizeof(typename GfxFamily::MEDIA_INTERFACE_DESCRIPTOR_LOAD);
     return size;
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
+size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
     return kernel->requiresCacheFlushCommand(commandQueue) ? sizeof(typename GfxFamily::PIPE_CONTROL) : 0;
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::sendMediaStateFlush(
+void HardwareCommandsHelper<GfxFamily>::sendMediaStateFlush(
     LinearStream &commandStream,
     size_t offsetInterfaceDescriptorData) {
 
@@ -67,7 +67,7 @@ void KernelCommandsHelper<GfxFamily>::sendMediaStateFlush(
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
+void HardwareCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
     LinearStream &commandStream,
     size_t offsetInterfaceDescriptorData,
     size_t sizeInterfaceDescriptorData) {
@@ -87,7 +87,7 @@ void KernelCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::setKernelStartOffset(
+void HardwareCommandsHelper<GfxFamily>::setKernelStartOffset(
     uint64_t &kernelStartOffset,
     bool kernelAllocation,
     const KernelInfo &kernelInfo,
@@ -102,7 +102,7 @@ void KernelCommandsHelper<GfxFamily>::setKernelStartOffset(
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::programPerThreadData(
+void HardwareCommandsHelper<GfxFamily>::programPerThreadData(
     size_t &sizePerThreadData,
     const bool &localIdsGenerationByRuntime,
     LinearStream &ioh,
@@ -125,7 +125,7 @@ void KernelCommandsHelper<GfxFamily>::programPerThreadData(
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::sendCrossThreadData(
+size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     IndirectHeap &indirectHeap,
     Kernel &kernel,
     bool inlineDataProgrammingRequired,
@@ -145,12 +145,12 @@ size_t KernelCommandsHelper<GfxFamily>::sendCrossThreadData(
 }
 
 template <typename GfxFamily>
-bool KernelCommandsHelper<GfxFamily>::resetBindingTablePrefetch(Kernel &kernel) {
+bool HardwareCommandsHelper<GfxFamily>::resetBindingTablePrefetch(Kernel &kernel) {
     return kernel.isSchedulerKernel || !doBindingTablePrefetch();
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
+void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
     WALKER_TYPE<GfxFamily> *walkerCmd,
     uint32_t &interfaceDescriptorIndex) {
 
@@ -158,12 +158,12 @@ void KernelCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
 }
 
 template <typename GfxFamily>
-bool KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t workDim, size_t *gws, size_t *lws) {
+bool HardwareCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t workDim, size_t *gws, size_t *lws) {
     return true;
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
+void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
     *pipeControl = GfxFamily::cmdInitPipeControl;
@@ -172,5 +172,5 @@ void KernelCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Linear
 }
 
 template <typename GfxFamily>
-void KernelCommandsHelper<GfxFamily>::appendMiFlushDw(typename GfxFamily::MI_FLUSH_DW *miFlushDwCmd) {}
+void HardwareCommandsHelper<GfxFamily>::appendMiFlushDw(typename GfxFamily::MI_FLUSH_DW *miFlushDwCmd) {}
 } // namespace NEO

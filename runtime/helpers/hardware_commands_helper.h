@@ -28,7 +28,7 @@ template <typename GfxFamily>
 using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 
 template <typename GfxFamily>
-struct KernelCommandsHelper : public PerThreadDataHelper {
+struct HardwareCommandsHelper : public PerThreadDataHelper {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;

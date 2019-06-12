@@ -10,9 +10,9 @@
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/kernel_commands.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/os_interface.h"
@@ -200,7 +200,7 @@ void PipeControlHelper<GfxFamily>::addPipeControl(LinearStream &commandStream, b
 
 template <typename GfxFamily>
 int PipeControlHelper<GfxFamily>::getRequiredPipeControlSize() {
-    const auto pipeControlCount = KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2u : 1u;
+    const auto pipeControlCount = HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2u : 1u;
     return pipeControlCount * sizeof(typename GfxFamily::PIPE_CONTROL);
 }
 

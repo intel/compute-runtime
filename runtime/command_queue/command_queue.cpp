@@ -20,7 +20,7 @@
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/convert_color.h"
 #include "runtime/helpers/get_info.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/queue_helpers.h"

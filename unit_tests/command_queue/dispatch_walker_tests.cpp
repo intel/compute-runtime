@@ -9,7 +9,7 @@
 #include "runtime/command_queue/hardware_interface.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/task_information.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/utilities/tag_allocator.h"
@@ -118,7 +118,7 @@ HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
 
     // Consume all memory except what is needed for this enqueue
     auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::WALKER_TYPE) +
-                                   KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
+                                   HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
 
     //cs has a minimum required size
     auto sizeThatNeedsToBeSubstracted = sizeDispatchWalkerNeeds + CSRequirements::minCommandQueueCommandStreamSize;
@@ -166,7 +166,7 @@ HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
 
     // Consume all memory except what is needed for this enqueue
     auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::WALKER_TYPE) +
-                                   KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
+                                   HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
 
     //cs has a minimum required size
     auto sizeThatNeedsToBeSubstracted = sizeDispatchWalkerNeeds + CSRequirements::minCommandQueueCommandStreamSize;
@@ -723,9 +723,9 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelW
 
     auto expectedSizeCSAllocation = MemoryConstants::pageSize64k;
     auto expectedSizeCS = MemoryConstants::pageSize64k - CSRequirements::csOverfetchSize;
-    auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(kernel);
-    auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(kernel, Math::computeTotalElementsCount(localWorkgroupSize));
-    auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(kernel);
+    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(kernel);
+    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernel, Math::computeTotalElementsCount(localWorkgroupSize));
+    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(kernel);
 
     EXPECT_EQ(expectedSizeCSAllocation, blockedCommandsData->commandStream->getGraphicsAllocation()->getUnderlyingBufferSize());
     EXPECT_EQ(expectedSizeCS, blockedCommandsData->commandStream->getMaxAvailableSpace());
@@ -761,9 +761,9 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromMdiWhen
 
     auto expectedSizeCSAllocation = MemoryConstants::pageSize64k;
     auto expectedSizeCS = MemoryConstants::pageSize64k - CSRequirements::csOverfetchSize;
-    auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
-    auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
-    auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
+    auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
+    auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
+    auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
 
     EXPECT_EQ(expectedSizeCSAllocation, blockedCommandsData->commandStream->getGraphicsAllocation()->getUnderlyingBufferSize());
     EXPECT_EQ(expectedSizeCS, blockedCommandsData->commandStream->getMaxAvailableSpace());
@@ -877,7 +877,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     // create Indirect DSH heap
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
 
-    indirectHeap.align(KernelCommandsHelper<FamilyType>::alignInterfaceDescriptorData);
+    indirectHeap.align(HardwareCommandsHelper<FamilyType>::alignInterfaceDescriptorData);
     auto dshBeforeMultiDisptach = indirectHeap.getUsed();
 
     HardwareInterface<FamilyType>::dispatchWalker(

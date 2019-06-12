@@ -20,10 +20,10 @@
 
 using namespace NEO;
 
-struct KernelCommandsTest : DeviceFixture,
-                            ContextFixture,
-                            BuiltInFixture,
-                            ::testing::Test {
+struct HardwareCommandsTest : DeviceFixture,
+                              ContextFixture,
+                              BuiltInFixture,
+                              ::testing::Test {
 
     using BuiltInFixture::SetUp;
     using ContextFixture::SetUp;

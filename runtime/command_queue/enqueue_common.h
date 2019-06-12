@@ -18,7 +18,7 @@
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/dispatch_info_builder.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/task_information.h"
 #include "runtime/mem_obj/buffer.h"
@@ -338,7 +338,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     if (blockQueue) {
         if (parentKernel) {
-            size_t minSizeSSHForEM = KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
+            size_t minSizeSSHForEM = HardwareCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
             blockedCommandsData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         }
 
@@ -469,7 +469,7 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(Kernel *parentKernel,
                                                      TagNode<HwTimeStamps> *hwTimeStamps,
                                                      PreemptionMode preemption,
                                                      bool &blocking) {
-    size_t minSizeSSHForEM = KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
     uint32_t taskCount = getCommandStreamReceiver().peekTaskCount() + 1;
     devQueueHw->setupExecutionModelDispatch(getIndirectHeap(IndirectHeap::SURFACE_STATE, minSizeSSHForEM),

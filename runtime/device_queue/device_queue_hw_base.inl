@@ -8,8 +8,8 @@
 #pragma once
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/device_queue/device_queue_hw.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/hw_helper.h"
-#include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/memory_manager.h"

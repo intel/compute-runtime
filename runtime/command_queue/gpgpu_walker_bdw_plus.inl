@@ -72,7 +72,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     const size_t totalInterfaceDescriptorTableSize = devQueueHw.interfaceDescriptorEntries * sizeof(INTERFACE_DESCRIPTOR_DATA);
 
     // Program media interface descriptor load
-    KernelCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
+    HardwareCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
         commandStream,
         offsetInterfaceDescriptor,
         totalInterfaceDescriptorTableSize);
@@ -124,9 +124,9 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     auto pGpGpuWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
     *pGpGpuWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
 
-    bool localIdsGenerationByRuntime = KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(1, globalWorkSizes, localWorkSizes);
-    bool inlineDataProgrammingRequired = KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(scheduler);
-    KernelCommandsHelper<GfxFamily>::sendIndirectState(
+    bool localIdsGenerationByRuntime = HardwareCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(1, globalWorkSizes, localWorkSizes);
+    bool inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(scheduler);
+    HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
         *dsh,
         *ioh,
@@ -182,9 +182,9 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
 
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
-    size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + KernelCommandsHelper<GfxFamily>::getSizeRequiredCS(pKernel) +
-                  sizeof(PIPE_CONTROL) * (KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2 : 1);
-    size += KernelCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(commandQueue, pKernel, 0U, 0U);
+    size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS(pKernel) +
+                  sizeof(PIPE_CONTROL) * (HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2 : 1);
+    size += HardwareCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(commandQueue, pKernel, 0U, 0U);
     size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(commandQueue.getDevice());
     if (reserveProfilingCmdsSpace) {
         size += 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);

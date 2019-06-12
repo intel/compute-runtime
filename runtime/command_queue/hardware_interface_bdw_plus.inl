@@ -116,7 +116,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, walkerCmd, timestampPacketNode, TimestampPacketStorage::WriteOperationType::AfterWalker);
     }
 
-    KernelCommandsHelper<GfxFamily>::sendIndirectState(
+    HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
         dsh,
         ioh,

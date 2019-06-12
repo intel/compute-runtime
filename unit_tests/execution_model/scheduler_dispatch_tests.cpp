@@ -53,7 +53,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
 
         EXPECT_NE(nullptr, executionModelDsh);
 
-        size_t minRequiredSizeForSchedulerSSH = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
+        size_t minRequiredSizeForSchedulerSSH = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
         // Setup heaps in pCmdQ
         LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
@@ -171,7 +171,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoe
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
         SchedulerKernel &scheduler = pDevice->getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(*context);
 
-        size_t minRequiredSizeForSchedulerSSH = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
+        size_t minRequiredSizeForSchedulerSSH = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
         // Setup heaps in pCmdQ
         getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
@@ -204,7 +204,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWi
 
         SchedulerKernel &scheduler = device->getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(*context);
 
-        size_t minRequiredSizeForSchedulerSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(scheduler);
+        size_t minRequiredSizeForSchedulerSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(scheduler);
         // Setup heaps in pCmdQ
         LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);

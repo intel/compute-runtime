@@ -82,7 +82,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GIVENCommandQueueWithProfilingAndFor
 
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
 
-    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
 
     auto &commandStreamNDRangeKernel = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, true, false, &kernel);
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, true, false, *pCmdQ, &kernel);
@@ -120,7 +120,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GIVENCommandQueueWithProfilingAndFor
 
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
 
-    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
     requiredSize += 2 * sizeof(GPGPU_WALKER);
 
     DispatchInfo dispatchInfo;
@@ -550,7 +550,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWit
 
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
 
-    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
     //begin perf cmds
     requiredSize += 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM) + NEO::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(MI_STORE_REGISTER_MEM) + sizeof(MI_REPORT_PERF_COUNT) + pCmdQ->getPerfCountersUserRegistersNumber() * sizeof(MI_STORE_REGISTER_MEM);
     //end perf cmds
@@ -605,7 +605,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWit
 
     pCmdQ->setPerfCountersEnabled(true, 1);
 
-    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + HardwareCommandsHelper<FamilyType>::getSizeRequiredCS(&kernel);
     requiredSize += 2 * sizeof(GPGPU_WALKER);
 
     //begin perf cmds

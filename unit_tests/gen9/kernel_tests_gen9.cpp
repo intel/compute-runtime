@@ -6,7 +6,7 @@
  */
 
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/mem_obj/buffer.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -20,12 +20,12 @@ GEN9TEST_F(Gen9KernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturnsT
     auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();
     EXPECT_TRUE(retVal);
 }
-using Gen9KernelCommandsTest = testing::Test;
-GEN9TEST_F(Gen9KernelCommandsTest, givenGen9PlatformWhenDoBindingTablePrefetchIsCalledThenReturnsTrue) {
-    EXPECT_TRUE(KernelCommandsHelper<FamilyType>::doBindingTablePrefetch());
+using Gen9HardwareCommandsTest = testing::Test;
+GEN9TEST_F(Gen9HardwareCommandsTest, givenGen9PlatformWhenDoBindingTablePrefetchIsCalledThenReturnsTrue) {
+    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::doBindingTablePrefetch());
 }
 
-GEN9TEST_F(Gen9KernelCommandsTest, givenBufferThatIsNotZeroCopyWhenSurfaceStateisSetThenL3IsTurnedOn) {
+GEN9TEST_F(Gen9HardwareCommandsTest, givenBufferThatIsNotZeroCopyWhenSurfaceStateisSetThenL3IsTurnedOn) {
     MockContext context;
 
     auto retVal = CL_SUCCESS;

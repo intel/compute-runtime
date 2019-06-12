@@ -11,7 +11,7 @@
 #include "runtime/command_queue/enqueue_common.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/cache_policy.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/surface.h"
 

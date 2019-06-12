@@ -17,7 +17,7 @@
 #include "runtime/event/event_tracker.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/get_info.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"

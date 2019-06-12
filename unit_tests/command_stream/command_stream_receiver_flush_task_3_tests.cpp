@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -1463,7 +1463,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsTrueWhenCall
     LinearStream commandStream(buffer.get(), 128);
 
     PipeControlHelper<FamilyType>::addPipeControl(commandStream, true);
-    auto pipeControlOffset = KernelCommandsHelper<FamilyType>::isPipeControlWArequired() ? sizeof(PIPE_CONTROL) : 0u;
+    auto pipeControlOffset = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired() ? sizeof(PIPE_CONTROL) : 0u;
     auto pipeControlAddress = buffer.get() + pipeControlOffset;
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(pipeControlAddress);
 
@@ -1477,7 +1477,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsFalseWhenCal
     LinearStream commandStream(buffer.get(), 128);
 
     PipeControlHelper<FamilyType>::addPipeControl(commandStream, false);
-    auto pipeControlOffset = KernelCommandsHelper<FamilyType>::isPipeControlWArequired() ? sizeof(PIPE_CONTROL) : 0u;
+    auto pipeControlOffset = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired() ? sizeof(PIPE_CONTROL) : 0u;
     auto pipeControlAddress = buffer.get() + pipeControlOffset;
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(pipeControlAddress);
 

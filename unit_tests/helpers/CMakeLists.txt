@@ -26,14 +26,14 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/get_gpgpu_engines_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/get_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gtest_helpers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hash_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_default_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_filename_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_management_tests.cpp

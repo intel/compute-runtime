@@ -17,7 +17,7 @@
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/helpers/dispatch_info.h"
-#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/task_information.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/indirect_heap/indirect_heap.h"
@@ -225,15 +225,15 @@ IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const MultiDispatchInf
 
     // clang-format off
     switch (heapType) {
-    case IndirectHeap::DYNAMIC_STATE:   expectedSize = KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredDSH(multiDispatchInfo); break;
-    case IndirectHeap::INDIRECT_OBJECT: expectedSize = KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(multiDispatchInfo); break;
-    case IndirectHeap::SURFACE_STATE:   expectedSize = KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(multiDispatchInfo); break;
+    case IndirectHeap::DYNAMIC_STATE:   expectedSize = HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredDSH(multiDispatchInfo); break;
+    case IndirectHeap::INDIRECT_OBJECT: expectedSize = HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(multiDispatchInfo); break;
+    case IndirectHeap::SURFACE_STATE:   expectedSize = HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(multiDispatchInfo); break;
     }
     // clang-format on
 
     if (Kernel *parentKernel = multiDispatchInfo.peekParentKernel()) {
         if (heapType == IndirectHeap::SURFACE_STATE) {
-            expectedSize += KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<heapType>(*parentKernel);
+            expectedSize += HardwareCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<heapType>(*parentKernel);
         } else //if (heapType == IndirectHeap::DYNAMIC_STATE || heapType == IndirectHeap::INDIRECT_OBJECT)
         {
             DeviceQueueHw<GfxFamily> *pDevQueue = castToObject<DeviceQueueHw<GfxFamily>>(commandQueue.getContext().getDefaultDeviceQueue());

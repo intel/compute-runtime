@@ -8,6 +8,7 @@
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/user_event.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
@@ -241,7 +242,6 @@ HWTEST_F(BarrierTest, givenBlockedCommandQueueAndEnqueueBarrierWithWaitlistRetur
     event2.setStatus(CL_COMPLETE);
     clReleaseEvent(event);
 }
-#include "runtime/helpers/kernel_commands.h"
 
 HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEventIsSignaledThenNewCommandStreamIsAcquired) {
     UserEvent event2(&pCmdQ->getContext());
