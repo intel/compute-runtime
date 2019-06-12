@@ -18,7 +18,8 @@ class CsrDependencies : public StackVec<TimestampPacketContainer *, 32> {
   public:
     enum class DependenciesType {
         OnCsr,
-        OutOfCsr
+        OutOfCsr,
+        All
     };
 
     void fillFromEventsRequestAndMakeResident(const EventsRequest &eventsRequest,

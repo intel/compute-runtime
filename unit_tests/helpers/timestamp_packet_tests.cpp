@@ -636,6 +636,36 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     }
 }
 
+HWTEST_F(TimestampPacketTests, givenAllDependencyTypesModeWhenFillingFromDifferentCsrsThenPushEverything) {
+    auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+
+    auto &csr1 = device->getUltCommandStreamReceiver<FamilyType>();
+    auto &csr2 = device2->getUltCommandStreamReceiver<FamilyType>();
+    csr1.timestampPacketWriteEnabled = true;
+    csr2.timestampPacketWriteEnabled = true;
+
+    MockContext context2(device2.get());
+
+    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
+
+    const cl_uint eventsOnWaitlist = 2;
+    MockTimestampPacketContainer timestamp1(*csr1.getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*csr2.getTimestampPacketAllocator(), 1);
+
+    Event event1(cmdQ1.get(), 0, 0, 0);
+    event1.addTimestampPacketNodes(timestamp1);
+    Event event2(cmdQ2.get(), 0, 0, 0);
+    event2.addTimestampPacketNodes(timestamp2);
+
+    cl_event waitlist[] = {&event1, &event2};
+    EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
+
+    CsrDependencies csrDependencies;
+    csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, csr1, CsrDependencies::DependenciesType::All);
+    EXPECT_EQ(static_cast<size_t>(eventsOnWaitlist), csrDependencies.size());
+}
+
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFromOneDeviceWhenEnqueueingThenProgramSemaphoresOnCsrStream) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;

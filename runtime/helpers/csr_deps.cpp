@@ -29,8 +29,11 @@ void CsrDependencies::fillFromEventsRequestAndMakeResident(const EventsRequest &
 
         timestampPacketContainer->makeResident(currentCsr);
         auto sameCsr = (&event->getCommandQueue()->getCommandStreamReceiver() == &currentCsr);
+        bool pushDependency = (DependenciesType::OnCsr == depsType && sameCsr) ||
+                              (DependenciesType::OutOfCsr == depsType && !sameCsr) ||
+                              (DependenciesType::All == depsType);
 
-        if (depsType == (sameCsr ? DependenciesType::OnCsr : DependenciesType::OutOfCsr)) {
+        if (pushDependency) {
             this->push_back(timestampPacketContainer);
         }
     }
