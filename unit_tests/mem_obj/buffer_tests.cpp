@@ -267,6 +267,28 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrRenderCompress
     }
 }
 
+TEST(Buffer, givenHostPtrPassedToBufferCreateWhenMemUseHostPtrFlagisSetAndBufferIsNotZeroCopyThenCreateMapAllocationWithHostPtr) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext ctx(device.get());
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
+    auto size = MemoryConstants::pageSize;
+    void *ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
+    auto ptrOffset = 1;
+    void *offsetedPtr = (void *)((uintptr_t)ptr + ptrOffset);
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, offsetedPtr, retVal));
+    ASSERT_NE(nullptr, buffer.get());
+
+    auto mapAllocation = buffer->getMapAllocation();
+    EXPECT_NE(nullptr, mapAllocation);
+    EXPECT_EQ(offsetedPtr, mapAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, mapAllocation->getAllocationType());
+
+    alignedFree(ptr);
+}
+
 TEST(Buffer, givenAlignedHostPtrPassedToBufferCreateWhenNoSharedContextOrRenderCompressedBuffersThenBuffersAllocationTypeIsBufferHostMemory) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx(device.get());

@@ -268,8 +268,15 @@ Buffer *Buffer::create(Context *context,
         return nullptr;
     }
 
-    pBuffer->setHostPtrMinSize(size);
+    if (properties.flags & CL_MEM_USE_HOST_PTR) {
+        if (!zeroCopyAllowed && !isHostPtrSVM) {
+            AllocationProperties properties{false, size, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
+            properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
+            mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
+        }
+    }
     pBuffer->mapAllocation = mapAllocation;
+    pBuffer->setHostPtrMinSize(size);
 
     if (copyMemoryFromHostPtr) {
         auto gmm = memory->getDefaultGmm();
