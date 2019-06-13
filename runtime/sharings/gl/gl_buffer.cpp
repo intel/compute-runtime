@@ -128,7 +128,7 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
     }
 
     if (!graphicsAllocation) {
-        AllocationProperties properties = {false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER};
+        AllocationProperties properties = {false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false};
         // couldn't find allocation for reuse - create new
         graphicsAllocation =
             context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(bufferInfo.globalShareHandle, properties, true);

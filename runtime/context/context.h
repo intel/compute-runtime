@@ -122,6 +122,7 @@ class Context : public BaseObject<_cl_context> {
 
     bool getInteropUserSyncEnabled() { return interopUserSync; }
     void setInteropUserSyncEnabled(bool enabled) { interopUserSync = enabled; }
+    bool areMultiStorageAllocationsPreffered();
 
     ContextType peekContextType() { return this->contextType; }
 

@@ -329,7 +329,7 @@ void *MemObj::getBasePtrForMap() {
         } else {
             auto memory = memoryManager->allocateSystemMemory(getSize(), MemoryConstants::pageSize);
             setAllocatedMapPtr(memory);
-            AllocationProperties properties{false, getSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR};
+            AllocationProperties properties{false, getSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
             auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, memory);
             setMapAllocation(allocation);
             return getAllocatedMapPtr();

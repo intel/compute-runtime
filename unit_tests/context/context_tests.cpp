@@ -361,3 +361,14 @@ TEST(DefaultContext, givenDefaultContextWhenItIsQueriedForTypeThenDefaultTypeIsR
     MockContext context;
     EXPECT_EQ(ContextType::CONTEXT_TYPE_DEFAULT, context.peekContextType());
 }
+
+TEST(Context, givenContextWhenCheckIfAllocationsAreMultiStorageThenReturnProperValueAccordingToContextType) {
+    MockContext context;
+    EXPECT_TRUE(context.areMultiStorageAllocationsPreffered());
+
+    context.setContextType(ContextType::CONTEXT_TYPE_SPECIALIZED);
+    EXPECT_FALSE(context.areMultiStorageAllocationsPreffered());
+
+    context.setContextType(ContextType::CONTEXT_TYPE_UNRESTRICTIVE);
+    EXPECT_TRUE(context.areMultiStorageAllocationsPreffered());
+}

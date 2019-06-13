@@ -45,7 +45,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     errorCode.set(CL_SUCCESS);
 
-    AllocationProperties allocProperties(false, 0u, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+    AllocationProperties allocProperties(false, 0u, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandle, allocProperties, false);
 
     if (alloc == nullptr) {

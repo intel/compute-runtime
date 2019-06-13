@@ -264,12 +264,12 @@ Image *Image::create(Context *context,
                     }
                 } else {
                     gmm = new Gmm(imgInfo, StorageInfo{});
-                    memory = memoryManager->allocateGraphicsMemoryWithProperties({false, imgInfo.size, GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE}, hostPtr);
+                    memory = memoryManager->allocateGraphicsMemoryWithProperties({false, imgInfo.size, GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE, false}, hostPtr);
                     memory->setDefaultGmm(gmm);
                     zeroCopy = true;
                 }
                 if (memory) {
-                    AllocationProperties properties{false, hostPtrMinSize, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR};
+                    AllocationProperties properties{false, hostPtrMinSize, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
                     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
                     mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
                 }

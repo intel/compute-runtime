@@ -90,6 +90,10 @@ void Context::overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueu
     this->decRefInternal();
 };
 
+bool Context::areMultiStorageAllocationsPreffered() {
+    return this->contextType != ContextType::CONTEXT_TYPE_SPECIALIZED;
+}
+
 bool Context::createImpl(const cl_context_properties *properties,
                          const DeviceVector &inputDevices,
                          void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),

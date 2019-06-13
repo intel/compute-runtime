@@ -47,31 +47,31 @@ TEST(MemoryManagerTest, givenAllowed32BitAndFroce32BitWhenGraphicsAllocationInDe
 }
 
 TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledThenAllocateFlagIsCorrectlySet) {
-    auto allocationProperties = MemObjHelper::getAllocationProperties({}, true, 0, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocationProperties = MemObjHelper::getAllocationProperties({}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_TRUE(allocationProperties.flags.allocateMemory);
 
-    allocationProperties = MemObjHelper::getAllocationProperties({}, false, 0, GraphicsAllocation::AllocationType::BUFFER);
+    allocationProperties = MemObjHelper::getAllocationProperties({}, false, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_FALSE(allocationProperties.flags.allocateMemory);
 }
 
 TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCalledThenUncacheableFlagIsCorrectlySet) {
     MemoryProperties memoryProperties;
     memoryProperties.flags_intel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
-    auto allocationFlags = MemObjHelper::getAllocationProperties(memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocationFlags = MemObjHelper::getAllocationProperties(memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_TRUE(allocationFlags.flags.uncacheable);
 
     memoryProperties.flags_intel = 0;
-    allocationFlags = MemObjHelper::getAllocationProperties(memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER);
+    allocationFlags = MemObjHelper::getAllocationProperties(memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_FALSE(allocationFlags.flags.uncacheable);
 }
 
 TEST(AllocationFlagsTest, givenReadOnlyResourceFlagWhenGetAllocationFlagsIsCalledThenFlushL3FlagsAreCorrectlySet) {
     auto allocationFlags =
-        MemObjHelper::getAllocationProperties(CL_MEM_READ_ONLY, true, 0, GraphicsAllocation::AllocationType::BUFFER);
+        MemObjHelper::getAllocationProperties(CL_MEM_READ_ONLY, true, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForRead);
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForWrite);
 
-    allocationFlags = MemObjHelper::getAllocationProperties(0, true, 0, GraphicsAllocation::AllocationType::BUFFER);
+    allocationFlags = MemObjHelper::getAllocationProperties(0, true, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_TRUE(allocationFlags.flags.flushL3RequiredForRead);
     EXPECT_TRUE(allocationFlags.flags.flushL3RequiredForWrite);
 }

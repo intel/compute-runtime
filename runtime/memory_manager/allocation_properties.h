@@ -30,22 +30,26 @@ struct AllocationProperties {
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
     ImageInfo *imgInfo = nullptr;
     uint32_t deviceIndex = AllocationProperties::noDeviceSpecified;
+    bool multiStorageResource = false;
 
     AllocationProperties(size_t size,
                          GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(true, size, allocationType) {}
+        : AllocationProperties(true, size, allocationType, false) {}
 
     AllocationProperties(bool allocateMemory,
                          ImageInfo &imgInfo,
                          GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(allocateMemory, 0u, allocationType) {
+        : AllocationProperties(allocateMemory, 0u, allocationType, false) {
         this->imgInfo = &imgInfo;
     }
 
     AllocationProperties(bool allocateMemory,
                          size_t size,
-                         GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(allocateMemory, size, allocationType, false, AllocationProperties::noDeviceSpecified) {}
+                         GraphicsAllocation::AllocationType allocationType,
+                         bool isMultiStorageAllocation)
+        : AllocationProperties(allocateMemory, size, allocationType, false, AllocationProperties::noDeviceSpecified) {
+        this->multiStorageResource = isMultiStorageAllocation;
+    }
 
     AllocationProperties(bool allocateMemory,
                          size_t size,

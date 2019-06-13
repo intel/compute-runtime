@@ -162,7 +162,7 @@ bool Device::createDeviceImpl() {
 }
 
 AllocationProperties Device::getAllocationPropertiesForPreemption() const {
-    AllocationProperties properties{true, getHardwareInfo().capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION};
+    AllocationProperties properties{true, getHardwareInfo().capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION, false};
     properties.flags.uncacheable = getWaTable()->waCSRUncachable;
     properties.alignment = 256 * MemoryConstants::kiloByte;
     return properties;

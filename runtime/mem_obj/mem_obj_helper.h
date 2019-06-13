@@ -89,8 +89,8 @@ class MemObjHelper {
     }
 
     static AllocationProperties getAllocationProperties(MemoryProperties memoryProperties, bool allocateMemory,
-                                                        size_t size, GraphicsAllocation::AllocationType type) {
-        AllocationProperties allocationProperties(allocateMemory, size, type);
+                                                        size_t size, GraphicsAllocation::AllocationType type, bool multiStorageResource) {
+        AllocationProperties allocationProperties(allocateMemory, size, type, multiStorageResource);
         fillPoliciesInProperties(allocationProperties, memoryProperties);
         return allocationProperties;
     }
