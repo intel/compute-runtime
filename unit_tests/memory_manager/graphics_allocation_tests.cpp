@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/helpers/array_count.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
@@ -146,4 +147,28 @@ TEST(GraphicsAllocationTest, givenDefaultAllocationWhenGettingNumHandlesThenOneI
 TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsBeingObtainedThenZeroIsReturned) {
     MockGraphicsAllocation graphicsAllocation;
     EXPECT_EQ(0llu, graphicsAllocation.peekInternalHandle(nullptr));
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenQueryingUsedPageSizeThenCorrectSizeForMemoryPoolUsedIsReturned) {
+
+    MemoryPool::Type page4kPools[] = {MemoryPool::MemoryNull,
+                                      MemoryPool::System4KBPages,
+                                      MemoryPool::System4KBPagesWith32BitGpuAddressing,
+                                      MemoryPool::SystemCpuInaccessible};
+
+    for (size_t i = 0; i < arrayCount(page4kPools); i++) {
+        MockGraphicsAllocation graphicsAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 1, page4kPools[i], false);
+
+        EXPECT_EQ(MemoryConstants::pageSize, graphicsAllocation.getUsedPageSize());
+    }
+
+    MemoryPool::Type page64kPools[] = {MemoryPool::System64KBPages,
+                                       MemoryPool::System64KBPagesWith32BitGpuAddressing,
+                                       MemoryPool::LocalMemory};
+
+    for (size_t i = 0; i < arrayCount(page64kPools); i++) {
+        MockGraphicsAllocation graphicsAllocation(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0u, 0u, 1, page64kPools[i], false);
+
+        EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation.getUsedPageSize());
+    }
 }

@@ -55,6 +55,17 @@ std::string GraphicsAllocation::getAllocationInfoString() const {
     return "";
 }
 
+uint32_t GraphicsAllocation::getUsedPageSize() const {
+    switch (this->memoryPool) {
+    case MemoryPool::System64KBPages:
+    case MemoryPool::System64KBPagesWith32BitGpuAddressing:
+    case MemoryPool::LocalMemory:
+        return MemoryConstants::pageSize64k;
+    default:
+        return MemoryConstants::pageSize;
+    }
+}
+
 constexpr uint32_t GraphicsAllocation::objectNotUsed;
 constexpr uint32_t GraphicsAllocation::objectNotResident;
 } // namespace NEO

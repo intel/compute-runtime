@@ -200,6 +200,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         gmms[handleId] = gmm;
     }
     uint32_t getNumHandles() const { return storageInfo.getNumHandles(); }
+    uint32_t getUsedPageSize() const;
 
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
