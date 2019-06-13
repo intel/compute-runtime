@@ -452,6 +452,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void processProperties(const cl_queue_properties *properties);
     bool bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandType, cl_bool blocking, size_t size, void *ptr,
                               cl_uint numEventsInWaitList, const cl_event *eventWaitList);
+    void providePerformanceHint(TransferProperties &transferProperties);
     bool queueDependenciesClearRequired() const;
 
     Context *context = nullptr;
@@ -478,9 +479,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool multiEngineQueue = false;
 
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
-
-  private:
-    void providePerformanceHint(TransferProperties &transferProperties);
 };
 
 typedef CommandQueue *(*CommandQueueCreateFunc)(
