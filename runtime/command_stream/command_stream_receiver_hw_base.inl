@@ -726,14 +726,15 @@ bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(cons
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, bool blocking, uint64_t dstOffset, uint64_t srcOffset,
-                                                    uint64_t copySize, CsrDependencies &csrDependencies) {
+                                                    uint64_t copySize, CsrDependencies &csrDependencies, const TimestampPacketContainer &outputTimestampPacket) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
     UNRECOVERABLE_IF(osContext->getEngineType() != aub_stream::EngineType::ENGINE_BCS);
 
     auto lock = obtainUniqueOwnership();
-    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(copySize, csrDependencies));
+    bool updateTimestampPacket = outputTimestampPacket.peekNodes().size() > 0;
+    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(copySize, csrDependencies, updateTimestampPacket));
     auto commandStreamStart = commandStream.getUsed();
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
@@ -743,6 +744,12 @@ void CommandStreamReceiverHw<GfxFamily>::blitBuffer(Buffer &dstBuffer, Buffer &s
     BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(dstBuffer, srcBuffer, commandStream, dstOffset, srcOffset, copySize);
 
     HardwareCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount);
+
+    if (updateTimestampPacket) {
+        UNRECOVERABLE_IF(outputTimestampPacket.peekNodes().size() != 1);
+        auto timestampPacketGpuAddress = outputTimestampPacket.peekNodes().at(0)->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+        HardwareCommandsHelper<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0);
+    }
 
     auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(commandStream.getSpace(sizeof(MI_BATCH_BUFFER_END)));
     *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;

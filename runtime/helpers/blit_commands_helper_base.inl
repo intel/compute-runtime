@@ -10,7 +10,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(uint64_t copySize, CsrDependencies &csrDependencies) {
+size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(uint64_t copySize, CsrDependencies &csrDependencies, bool updateTimestampPacket) {
     size_t numberOfBlits = 0;
     uint64_t sizeToBlit = copySize;
     uint64_t width = 1;
@@ -33,6 +33,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(uint64_t copySize
     size_t size = TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
                   (sizeof(typename GfxFamily::XY_COPY_BLT) * numberOfBlits) +
                   sizeof(typename GfxFamily::MI_FLUSH_DW) +
+                  (sizeof(typename GfxFamily::MI_FLUSH_DW) * static_cast<size_t>(updateTimestampPacket)) +
                   sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
 
     return alignUp(size, MemoryConstants::cacheLineSize);

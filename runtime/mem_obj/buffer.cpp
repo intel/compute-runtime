@@ -18,6 +18,7 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/string.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
@@ -286,8 +287,9 @@ Buffer *Buffer::create(Context *context,
             auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*pBuffer);
             if (blitCommandStreamReceiver) {
                 CsrDependencies dependencies;
+                TimestampPacketContainer timestampPacketContainer;
                 blitCommandStreamReceiver->blitWithHostPtr(*pBuffer, hostPtr, true, 0, size, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                           dependencies);
+                                                           dependencies, timestampPacketContainer);
             } else {
                 auto cmdQ = context->getSpecialQueue();
                 if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, nullptr, 0, nullptr, nullptr)) {

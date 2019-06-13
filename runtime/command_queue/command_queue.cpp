@@ -587,12 +587,20 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
 cl_int CommandQueue::enqueueReadWriteBufferWithBlitTransfer(cl_command_type commandType, Buffer *buffer,
                                                             size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
                                                             const cl_event *eventWaitList, cl_event *event) {
-    CsrDependencies csrDependencies;
     auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*buffer);
+    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+    TimestampPacketContainer previousTimestampPacketNodes;
+    CsrDependencies csrDependencies;
+
+    csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, *blitCommandStreamReceiver,
+                                                         CsrDependencies::DependenciesType::All);
+
+    obtainNewTimestampPacketNodes(1, previousTimestampPacketNodes, queueDependenciesClearRequired());
+    csrDependencies.push_back(&previousTimestampPacketNodes);
 
     auto copyDirection = (CL_COMMAND_WRITE_BUFFER == commandType) ? BlitterConstants::BlitWithHostPtrDirection::FromHostPtr
                                                                   : BlitterConstants::BlitWithHostPtrDirection::ToHostPtr;
-    blitCommandStreamReceiver->blitWithHostPtr(*buffer, ptr, true, offset, size, copyDirection, csrDependencies);
+    blitCommandStreamReceiver->blitWithHostPtr(*buffer, ptr, true, offset, size, copyDirection, csrDependencies, *timestampPacketContainer);
     return CL_SUCCESS;
 }
 

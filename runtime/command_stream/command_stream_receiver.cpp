@@ -419,7 +419,8 @@ cl_int CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *s
 }
 
 void CommandStreamReceiver::blitWithHostPtr(Buffer &buffer, void *hostPtr, bool blocking, size_t bufferOffset, uint64_t copySize,
-                                            BlitterConstants::BlitWithHostPtrDirection copyDirection, CsrDependencies &csrDependencies) {
+                                            BlitterConstants::BlitWithHostPtrDirection copyDirection, CsrDependencies &csrDependencies,
+                                            const TimestampPacketContainer &outputTimestampPacket) {
     HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize), true);
     bool success = createAllocationForHostSurface(hostPtrSurface, false);
     UNRECOVERABLE_IF(!success);
@@ -431,9 +432,9 @@ void CommandStreamReceiver::blitWithHostPtr(Buffer &buffer, void *hostPtr, bool 
                                                                                   true, false, true));
 
     if (BlitterConstants::BlitWithHostPtrDirection::FromHostPtr == copyDirection) {
-        blitBuffer(buffer, *hostPtrBuffer, blocking, bufferOffset, 0, copySize, csrDependencies);
+        blitBuffer(buffer, *hostPtrBuffer, blocking, bufferOffset, 0, copySize, csrDependencies, outputTimestampPacket);
     } else {
-        blitBuffer(*hostPtrBuffer, buffer, blocking, 0, bufferOffset, copySize, csrDependencies);
+        blitBuffer(*hostPtrBuffer, buffer, blocking, 0, bufferOffset, copySize, csrDependencies, outputTimestampPacket);
     }
 }
 } // namespace NEO

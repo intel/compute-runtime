@@ -285,6 +285,7 @@ struct BcsTests : public CommandStreamReceiverHwTest {
         CommandStreamReceiverHwTest::TearDown();
     }
 
+    TimestampPacketContainer timestampPacketContainer;
     CsrDependencies csrDependencies;
     std::unique_ptr<MockContext> context;
 };
@@ -301,11 +302,25 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredComman
     auto expectedAlignedSize = alignUp(expectedSize + (sizeof(typename FamilyType::XY_COPY_BLT) * alignedNumberOfBlts), MemoryConstants::cacheLineSize);
     auto expectedNotAlignedSize = alignUp(expectedSize + (sizeof(typename FamilyType::XY_COPY_BLT) * notAlignedNumberOfBlts), MemoryConstants::cacheLineSize);
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(alignedBltSize, csrDependencies);
-    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(notAlignedBltSize, csrDependencies);
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(alignedBltSize, csrDependencies, false);
+    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(notAlignedBltSize, csrDependencies, false);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
+}
+
+HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommandsThenAddMiFlushDw) {
+    size_t expectedBaseSize = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_FLUSH_DW) +
+                              sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+
+    auto expectedSizeWithTimestampPacketWrite = alignUp(expectedBaseSize + sizeof(typename FamilyType::MI_FLUSH_DW), MemoryConstants::cacheLineSize);
+    auto expectedSizeWithoutTimestampPacketWrite = alignUp(expectedBaseSize, MemoryConstants::cacheLineSize);
+
+    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(1, csrDependencies, true);
+    auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(1, csrDependencies, false);
+
+    EXPECT_EQ(expectedSizeWithTimestampPacketWrite, estimatedSizeWithTimestampPacketWrite);
+    EXPECT_EQ(expectedSizeWithoutTimestampPacketWrite, estimatedSizeWithoutTimestampPacketWrite);
 }
 
 HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAddAllRequiredCommands) {
@@ -324,7 +339,7 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
 
     auto expectedAlignedSize = alignUp(expectedSize, MemoryConstants::cacheLineSize);
 
-    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(1, csrDependencies);
+    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(1, csrDependencies, false);
 
     EXPECT_EQ(expectedAlignedSize, estimatedSize);
 }
@@ -347,7 +362,8 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     uint32_t newTaskCount = 19;
     csr.taskCount = newTaskCount - 1;
     EXPECT_EQ(0u, csr.recursiveLockCounter.load());
-    csr.blitWithHostPtr(*buffer, hostPtr, true, 0, bltSize, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    csr.blitWithHostPtr(*buffer, hostPtr, true, 0, bltSize, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                        csrDependencies, timestampPacketContainer);
     EXPECT_EQ(newTaskCount, csr.taskCount);
     EXPECT_EQ(newTaskCount, csr.latestFlushedTaskCount);
     EXPECT_EQ(newTaskCount, csr.latestSentTaskCount);
@@ -408,7 +424,8 @@ HWTEST_F(BcsTests, givenCsrDependenciesWhenProgrammingCommandStreamThenAddSemaph
     csrDependencies.push_back(&timestamp0);
     csrDependencies.push_back(&timestamp1);
 
-    csr.blitWithHostPtr(*buffer, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    csr.blitWithHostPtr(*buffer, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                        csrDependencies, timestampPacketContainer);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -448,7 +465,8 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
 
     EXPECT_EQ(0u, csr.makeSurfacePackNonResidentCalled);
 
-    csr.blitWithHostPtr(*buffer, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    csr.blitWithHostPtr(*buffer, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                        csrDependencies, timestampPacketContainer);
 
     EXPECT_TRUE(csr.isMadeResident(buffer->getGraphicsAllocation()));
     EXPECT_TRUE(csr.isMadeResident(csr.commandStream.getGraphicsAllocation()));
@@ -472,7 +490,8 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
 
     uint32_t newTaskCount = 17;
     csr.taskCount = newTaskCount - 1;
-    csr.blitWithHostPtr(*buffer, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    csr.blitWithHostPtr(*buffer, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                        csrDependencies, timestampPacketContainer);
 
     EXPECT_EQ(commandStream.getGraphicsAllocation(), csr.latestFlushedBatchBuffer.commandBufferAllocation);
     EXPECT_EQ(commandStreamOffset, csr.latestFlushedBatchBuffer.startOffset);
@@ -517,10 +536,12 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
-    myMockCsr->blitWithHostPtr(*buffer, hostPtr, false, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    myMockCsr->blitWithHostPtr(*buffer, hostPtr, false, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                               csrDependencies, timestampPacketContainer);
     EXPECT_EQ(0u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
 
-    myMockCsr->blitWithHostPtr(*buffer, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    myMockCsr->blitWithHostPtr(*buffer, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                               csrDependencies, timestampPacketContainer);
     EXPECT_EQ(1u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
     EXPECT_EQ(myMockCsr->taskCount, myMockCsr->taskCountToWaitPassed);
     EXPECT_EQ(myMockCsr->flushStamp->peekStamp(), myMockCsr->flushStampToWaitPassed);
@@ -541,10 +562,12 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCleanTemporaryAllocations) {
 
     EXPECT_EQ(0u, mockInternalAllocationsStorage->cleanAllocationsCalled);
 
-    bcsCsr.blitWithHostPtr(*buffer, hostPtr, false, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    bcsCsr.blitWithHostPtr(*buffer, hostPtr, false, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                           csrDependencies, timestampPacketContainer);
     EXPECT_EQ(0u, mockInternalAllocationsStorage->cleanAllocationsCalled);
 
-    bcsCsr.blitWithHostPtr(*buffer, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+    bcsCsr.blitWithHostPtr(*buffer, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                           csrDependencies, timestampPacketContainer);
     EXPECT_EQ(1u, mockInternalAllocationsStorage->cleanAllocationsCalled);
     EXPECT_EQ(bcsCsr.taskCount, mockInternalAllocationsStorage->lastCleanAllocationsTaskCount);
     EXPECT_TRUE(TEMPORARY_ALLOCATION == mockInternalAllocationsStorage->lastCleanAllocationUsage);
@@ -561,7 +584,8 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
     {
         // from hostPtr
         HardwareParse hwParser;
-        csr.blitWithHostPtr(*buffer1, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+        csr.blitWithHostPtr(*buffer1, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                            csrDependencies, timestampPacketContainer);
 
         hwParser.parseCommands<FamilyType>(csr.commandStream);
 
@@ -574,7 +598,8 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         // to hostPtr
         HardwareParse hwParser;
         auto offset = csr.commandStream.getUsed();
-        csr.blitWithHostPtr(*buffer1, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::ToHostPtr, csrDependencies);
+        csr.blitWithHostPtr(*buffer1, hostPtr, true, 0, 1, BlitterConstants::BlitWithHostPtrDirection::ToHostPtr,
+                            csrDependencies, timestampPacketContainer);
 
         hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -587,7 +612,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         // Buffer to Buffer
         HardwareParse hwParser;
         auto offset = csr.commandStream.getUsed();
-        csr.blitBuffer(*buffer1, *buffer2, true, 0, 0, 1, csrDependencies);
+        csr.blitBuffer(*buffer1, *buffer2, true, 0, 0, 1, csrDependencies, timestampPacketContainer);
 
         hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -613,7 +638,8 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
             // from hostPtr
             HardwareParse hwParser;
             auto offset = csr.commandStream.getUsed();
-            csr.blitWithHostPtr(*buffer1, hostPtr, true, buffer1Offset, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr, csrDependencies);
+            csr.blitWithHostPtr(*buffer1, hostPtr, true, buffer1Offset, 1, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                                csrDependencies, timestampPacketContainer);
 
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -626,7 +652,8 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
             // to hostPtr
             HardwareParse hwParser;
             auto offset = csr.commandStream.getUsed();
-            csr.blitWithHostPtr(*buffer1, hostPtr, true, buffer1Offset, 1, BlitterConstants::BlitWithHostPtrDirection::ToHostPtr, csrDependencies);
+            csr.blitWithHostPtr(*buffer1, hostPtr, true, buffer1Offset, 1, BlitterConstants::BlitWithHostPtrDirection::ToHostPtr,
+                                csrDependencies, timestampPacketContainer);
 
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -640,7 +667,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
             // Buffer to Buffer
             HardwareParse hwParser;
             auto offset = csr.commandStream.getUsed();
-            csr.blitBuffer(*buffer1, *buffer2, true, buffer1Offset, buffer2Offset, 1, csrDependencies);
+            csr.blitBuffer(*buffer1, *buffer2, true, buffer1Offset, buffer2Offset, 1, csrDependencies, timestampPacketContainer);
 
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 

@@ -177,9 +177,10 @@ class CommandStreamReceiver {
     }
 
     void blitWithHostPtr(Buffer &buffer, void *hostPtr, bool blocking, size_t bufferOffset, uint64_t copySize,
-                         BlitterConstants::BlitWithHostPtrDirection copyDirection, CsrDependencies &csrDependencies);
+                         BlitterConstants::BlitWithHostPtrDirection copyDirection, CsrDependencies &csrDependencies,
+                         const TimestampPacketContainer &outputTimestampPacket);
     virtual void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, bool blocking, uint64_t dstOffset, uint64_t srcOffset,
-                            uint64_t copySize, CsrDependencies &csrDependencies) = 0;
+                            uint64_t copySize, CsrDependencies &csrDependencies, const TimestampPacketContainer &outputTimestampPacket) = 0;
 
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();

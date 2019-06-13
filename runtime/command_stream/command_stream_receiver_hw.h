@@ -71,7 +71,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     }
 
     void blitBuffer(Buffer &dstBuffer, Buffer &srcBuffer, bool blocking, uint64_t dstOffset, uint64_t srcOffset,
-                    uint64_t copySize, CsrDependencies &csrDependencies) override;
+                    uint64_t copySize, CsrDependencies &csrDependencies, const TimestampPacketContainer &outputTimestampPacket) override;
 
   protected:
     using CommandStreamReceiver::osContext;

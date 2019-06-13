@@ -21,6 +21,7 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -28,6 +29,7 @@
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/mocks/mock_timestamp_container.h"
 #include "unit_tests/utilities/base_object_utils.h"
 
 #include "gmock/gmock.h"
@@ -660,7 +662,10 @@ struct BcsBufferTests : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
+        DebugManager.flags.EnableTimestampPacket.set(1);
+        DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(true);
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        device->getExecutionEnvironment()->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
         bcsMockContext = std::make_unique<BcsMockContext>(device.get());
     }
 
@@ -714,6 +719,90 @@ HWTEST_F(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledThen
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
     commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(2u, bcsCsr->blitBufferCalled);
+}
+
+HWTEST_F(BcsBufferTests, givenInputDependenciesWhenEnqueueBlitCalledThenProgramSemaphoresBeforeBlitCommand) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto csr0 = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
+    auto &csr1Engine = device->getEngine(aub_stream::EngineType::ENGINE_RCS, true);
+    auto csr1 = csr1Engine.commandStreamReceiver;
+
+    auto cmdQ0 = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+    auto cmdQ1 = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+    cmdQ1->engine = &csr1Engine;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    buffer->forceDisallowCPUCopy = true;
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    const cl_uint numEvents = 2;
+    MockTimestampPacketContainer timestamps[numEvents] = {{*csr0->getTimestampPacketAllocator(), 1}, {*csr1->getTimestampPacketAllocator(), 1}};
+
+    Event event0(cmdQ0.get(), 0, 0, 0);
+    event0.addTimestampPacketNodes(timestamps[0]);
+    Event event1(cmdQ1.get(), 0, 0, 0);
+    event1.addTimestampPacketNodes(timestamps[1]);
+    cl_event waitlist[numEvents] = {&event0, &event1}; // dependencies from different CSRs
+
+    cmdQ0->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, numEvents, waitlist, nullptr);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr0->commandStream);
+
+    uint32_t semaphoresCount = 0;
+    bool blitCmdFound = false;
+    for (auto &cmd : hwParser.cmdList) {
+        if (auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd)) {
+            EXPECT_FALSE(blitCmdFound);
+            auto dataAddress = timestamps[semaphoresCount].peekNodes().at(0)->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            semaphoresCount++;
+        } else if (genCmdCast<typename FamilyType::XY_COPY_BLT *>(cmd)) {
+            blitCmdFound = true;
+            EXPECT_EQ(2u, semaphoresCount);
+        }
+    }
+    EXPECT_EQ(2u, semaphoresCount);
+    EXPECT_TRUE(blitCmdFound);
+}
+
+HWTEST_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenProgramMiFlushDwWithDataWrite) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+    cl_int retVal = CL_SUCCESS;
+
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    buffer->forceDisallowCPUCopy = true;
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
+    auto outputTimestampPacket = cmdQ->timestampPacketContainer->peekNodes().at(0);
+    auto timestampPacketGpuWriteAddress = outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr->commandStream);
+
+    uint32_t miFlushDwCmdsCount = 0;
+    bool blitCmdFound = false;
+    for (auto &cmd : hwParser.cmdList) {
+        if (auto miFlushDwCmd = genCmdCast<MI_FLUSH_DW *>(cmd)) {
+            EXPECT_TRUE(blitCmdFound);
+            EXPECT_EQ(miFlushDwCmdsCount == 1,
+                      timestampPacketGpuWriteAddress == miFlushDwCmd->getDestinationAddress());
+            EXPECT_EQ(miFlushDwCmdsCount == 1,
+                      0u == miFlushDwCmd->getImmediateData());
+            miFlushDwCmdsCount++;
+        } else if (genCmdCast<typename FamilyType::XY_COPY_BLT *>(cmd)) {
+            blitCmdFound = true;
+            EXPECT_EQ(0u, miFlushDwCmdsCount);
+        }
+    }
+    EXPECT_EQ(2u, miFlushDwCmdsCount);
+    EXPECT_TRUE(blitCmdFound);
 }
 
 TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenNonRenderCompressedBufferWhenCopyFromHostPtrIsRequiredThenDontCallWriteBuffer) {
