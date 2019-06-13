@@ -139,7 +139,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     auto devQueue = this->getContext().getDefaultDeviceQueue();
     DeviceQueueHw<GfxFamily> *devQueueHw = castToObject<DeviceQueueHw<GfxFamily>>(devQueue);
-    auto clearAllDependencies = isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get();
+    auto clearAllDependencies = queueDependenciesClearRequired();
 
     TagNode<HwTimeStamps> *hwTimeStamps = nullptr;
 

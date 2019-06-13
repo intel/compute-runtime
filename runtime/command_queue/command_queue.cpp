@@ -595,4 +595,8 @@ cl_int CommandQueue::enqueueReadWriteBufferWithBlitTransfer(cl_command_type comm
     blitCommandStreamReceiver->blitWithHostPtr(*buffer, ptr, true, offset, size, copyDirection, csrDependencies);
     return CL_SUCCESS;
 }
+
+bool CommandQueue::queueDependenciesClearRequired() const {
+    return isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get();
+}
 } // namespace NEO
