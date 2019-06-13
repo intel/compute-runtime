@@ -61,6 +61,10 @@ class Kernel : public BaseObject<_cl_kernel> {
         bool isUncacheable = false;
     };
 
+    struct UnifiedMemoryControls {
+        bool indirectDeviceAllocationsAllowed = false;
+    };
+
     typedef int32_t (Kernel::*KernelArgHandler)(uint32_t argIndex,
                                                 size_t argSize,
                                                 const void *argVal);
@@ -388,6 +392,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     void setAuxTranslationFlag(bool auxTranslationFlag) {
         this->auxTranslationKernel = auxTranslationFlag;
     }
+    void setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoValue);
 
   protected:
     struct ObjectCounts {
@@ -457,8 +462,8 @@ class Kernel : public BaseObject<_cl_kernel> {
                                                        uint64_t privateMemoryCurbeOffset, uint32_t privateMemoryPatchSize, uint64_t privateMemoryGpuAddress);
     };
 
-  protected:
-    void makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
+    void
+    makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
 
     void *patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, GraphicsAllocation *svmAlloc);
 
@@ -515,5 +520,6 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool specialPipelineSelectMode = false;
     bool svmAllocationsRequireCacheFlush = false;
     std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
+    UnifiedMemoryControls unifiedMemoryControls;
 };
 } // namespace NEO

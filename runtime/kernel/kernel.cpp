@@ -34,6 +34,7 @@
 #include "runtime/mem_obj/pipe.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
+#include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/kernel_info.h"
@@ -940,6 +941,12 @@ void Kernel::clearKernelExecInfo() {
     svmAllocationsRequireCacheFlush = false;
 }
 
+void Kernel::setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoValue) {
+    if (infoType == CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL) {
+        this->unifiedMemoryControls.indirectDeviceAllocationsAllowed = infoValue;
+    }
+}
+
 inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceiver) {
 
     auto numArgs = kernelInfo.kernelArgInfo.size();
@@ -989,6 +996,10 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     }
 
     gtpinNotifyMakeResident(this, &commandStreamReceiver);
+
+    if (unifiedMemoryControls.indirectDeviceAllocationsAllowed) {
+        this->getContext().getSVMAllocsManager()->makeInternalAllocationsResident(commandStreamReceiver);
+    }
 }
 
 void Kernel::getResidency(std::vector<Surface *> &dst) {

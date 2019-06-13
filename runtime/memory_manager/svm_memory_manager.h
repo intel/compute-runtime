@@ -73,6 +73,8 @@ class SVMAllocsManager {
     };
 
     struct UnifiedMemoryProperties {
+        UnifiedMemoryProperties() = default;
+        UnifiedMemoryProperties(InternalMemoryType memoryType) : memoryType(memoryType){};
         InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
     };
 
