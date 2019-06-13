@@ -17,7 +17,7 @@ function(neo_run_aub_target gen gen_name product slices subslices eu_per_ss opti
     )
 
     if(WIN32 OR NOT DEFINED IGDRCL__GMM_LIBRARY_PATH)
-        set(aub_cmd_prefix igdrcl_aub_tests)
+        set(aub_cmd_prefix $<TARGET_FILE:igdrcl_aub_tests>)
     else()
         set(aub_cmd_prefix LD_LIBRARY_PATH=${IGDRCL__GMM_LIBRARY_PATH} IGDRCL_TEST_SELF_EXEC=off $<TARGET_FILE:igdrcl_aub_tests>)
     endif()
@@ -27,7 +27,7 @@ function(neo_run_aub_target gen gen_name product slices subslices eu_per_ss opti
         POST_BUILD
         COMMAND WORKING_DIRECTORY ${TargetDir}
         COMMAND echo Running AUB generation for ${gen_name} in ${TargetDir}/${gen}_aub
-        COMMAND ${aub_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${options} ${IGDRCL_TESTS_LISTENER_OPTION}
+        COMMAND ${CMAKE_COMMAND} -E env GTEST_OUTPUT=xml:${GTEST_XML_OUTPUT_DIR}/aub_test_details_${product}_${slices}_${subslices}_${eu_per_ss}.xml ${aub_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${options} ${IGDRCL_TESTS_LISTENER_OPTION}
     )
 
     if(DO_NOT_RUN_AUB_TESTS)

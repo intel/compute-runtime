@@ -105,6 +105,11 @@ if(NOT GTEST_REPEAT)
 endif()
 set(GTEST_REPEAT ${GTEST_REPEAT} CACHE STRING "Google test iterations")
 
+if(NOT DEFINED GTEST_XML_OUTPUT_DIR)
+  set(GTEST_XML_OUTPUT_DIR "test_logs")
+endif()
+set(GTEST_XML_OUTPUT_DIR ${GTEST_XML_OUTPUT_DIR} CACHE STRING "Google Test xml output file location")
+
 message(STATUS "GTest repeat count set to ${GTEST_REPEAT}")
 if(NOT GTEST_SHUFFLE)
   set(GTEST_SHUFFLE --gtest_shuffle --gtest_random_seed=0)
@@ -375,7 +380,7 @@ function(gen_run_unit_tests product slices subslices eu_per_ss)
     POST_BUILD
     COMMAND WORKING_DIRECTORY ${TargetDir}
     COMMAND echo Running igdrcl_tests ${target} ${slices}x${subslices}x${eu_per_ss} in ${TargetDir}/${product}
-    COMMAND igdrcl_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
+    COMMAND ${CMAKE_COMMAND} -E env GTEST_OUTPUT=xml:${GTEST_XML_OUTPUT_DIR}/test_details_${product}_${slices}_${subslices}_${eu_per_ss}.xml $<TARGET_FILE:igdrcl_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
   )
   add_dependencies(run_unit_tests run_${product}_unit_tests)
 endfunction()
