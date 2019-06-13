@@ -7,8 +7,10 @@
 
 #include "runtime/os_interface/os_interface.h"
 
+#include "runtime/memory_manager/memory_constants.h"
+
 namespace NEO {
 
-bool OSInterface::osEnableLocalMemory = true;
+bool OSInterface::osEnableLocalMemory = true && is64bit;
 
 } // namespace NEO
