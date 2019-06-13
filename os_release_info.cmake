@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -69,9 +69,10 @@ cmake_minimum_required(VERSION 2.8.12)
 #       DISTRIB_ID=Ubuntu      DISTRIB_RELEASE=17.10
 
 
-function(get_os_release_info _vn_id _vn_version_id)
+function(get_os_release_info _vn_id _vn_version_id _vn_codename)
     set(_var_id "")
     set(_var_version_id "")
+    set(_var_codename "")
 
     if("${_var_id}" STREQUAL "")
         set(file_path "/etc/centos-release")
@@ -102,7 +103,7 @@ function(get_os_release_info _vn_id _vn_version_id)
         endif()
 
         if(NOT "${file_path}" STREQUAL "")
-            file(STRINGS "${file_path}" data_list REGEX "^(ID|VERSION_ID)=")
+            file(STRINGS "${file_path}" data_list REGEX "^(ID|VERSION_ID|VERSION_CODENAME)=")
 
             # Look for lines like "ID="..." and VERSION_ID="..."
             foreach(_var ${data_list})
@@ -110,6 +111,8 @@ function(get_os_release_info _vn_id _vn_version_id)
                     set(_var_id "${CMAKE_MATCH_2}")
                 elseif("${_var}" MATCHES "^(VERSION_ID)=(.*)$")
                     set(_var_version_id "${CMAKE_MATCH_2}")
+                elseif("${_var}" MATCHES "^(VERSION_CODENAME)=(.*)$")
+                    set(_var_codename "${CMAKE_MATCH_2}")
                 endif()
             endforeach()
         endif()
@@ -118,7 +121,7 @@ function(get_os_release_info _vn_id _vn_version_id)
     if("${_var_id}" STREQUAL "")
         set(file_path "/etc/lsb-release")
         if(EXISTS "${file_path}")
-            file(STRINGS "${file_path}" data_list REGEX "^(DISTRIB_ID|DISTRIB_RELEASE)=")
+            file(STRINGS "${file_path}" data_list REGEX "^(DISTRIB_ID|DISTRIB_RELEASE|DISTRIB_CODENAME)=")
 
             # Look for lines like "DISTRIB_ID="..." and DISTRIB_RELEASE="..."
             foreach(_var ${data_list})
@@ -126,6 +129,8 @@ function(get_os_release_info _vn_id _vn_version_id)
                     set(_var_id "${CMAKE_MATCH_2}")
                 elseif("${_var}" MATCHES "^(DISTRIB_RELEASE)=(.*)$")
                     set(_var_version_id "${CMAKE_MATCH_2}")
+                elseif("${_var}" MATCHES "^(DISTRIB_CODENAME)=(.*)$")
+                    set(_var_codename "${CMAKE_MATCH_2}")
                 endif()
             endforeach()
         endif()
@@ -135,10 +140,12 @@ function(get_os_release_info _vn_id _vn_version_id)
 
     string(STRIP "${_var_id}" _var_id)
     string(STRIP "${_var_version_id}" _var_version_id)
+    string(STRIP "${_var_codename}" _var_codename)
 
     # Remove any enclosing quotation marks
     string(REGEX REPLACE "^\"(.*)\"$" "\\1" _var_id "${_var_id}")
     string(REGEX REPLACE "^\"(.*)\"$" "\\1" _var_version_id "${_var_version_id}")
+    string(REGEX REPLACE "^\"(.*)\"$" "\\1" _var_codename "${_var_codename}")
 
     if(NOT "${_vn_id}" STREQUAL "")
         set(${_vn_id} "${_var_id}" PARENT_SCOPE)
@@ -148,6 +155,9 @@ function(get_os_release_info _vn_id _vn_version_id)
         set(${_vn_version_id} "${_var_version_id}" PARENT_SCOPE)
     endif()
 
+    if(NOT "${_vn_codename}" STREQUAL "")
+        set(${_vn_codename} "${_var_codename}" PARENT_SCOPE)
+    endif()
 endfunction()
 
 
