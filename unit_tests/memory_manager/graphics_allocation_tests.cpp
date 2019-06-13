@@ -114,6 +114,10 @@ TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenCheckIfResidency
     EXPECT_TRUE(graphicsAllocation.isResidencyTaskCountBelow(currentResidencyTaskCount + 1u, 0u));
 }
 
+TEST(GraphicsAllocationTest, whenAllocationTypeIsConstantSurfaceThenCpuAccessIsRequired) {
+    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(GraphicsAllocation::AllocationType::CONSTANT_SURFACE));
+}
+
 TEST(GraphicsAllocationTest, whenAllocationTypeIsLinearStreamThenCpuAccessIsRequired) {
     EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(GraphicsAllocation::AllocationType::LINEAR_STREAM));
 }

@@ -170,10 +170,11 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     virtual uint64_t peekInternalHandle(MemoryManager *memoryManager) { return 0llu; }
 
     static bool isCpuAccessRequired(AllocationType allocationType) {
-        return allocationType == AllocationType::LINEAR_STREAM ||
+        return allocationType == AllocationType::COMMAND_BUFFER ||
+               allocationType == AllocationType::CONSTANT_SURFACE ||
                allocationType == AllocationType::INTERNAL_HEAP ||
-               allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER ||
-               allocationType == AllocationType::COMMAND_BUFFER;
+               allocationType == AllocationType::LINEAR_STREAM ||
+               allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
     }
     void *getReservedAddressPtr() const {
         return this->reservedAddressRangeInfo.addressPtr;
