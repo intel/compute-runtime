@@ -31,8 +31,10 @@ class MockKernel : public Kernel {
     using Kernel::kernelArgRequiresCacheFlush;
     using Kernel::kernelArguments;
     using Kernel::kernelSvmGfxAllocations;
+    using Kernel::kernelUnifiedMemoryGfxAllocations;
     using Kernel::numberOfBindingTableStates;
     using Kernel::svmAllocationsRequireCacheFlush;
+    using Kernel::unifiedMemoryControls;
 
     struct BlockPatchValues {
         uint64_t offset;

@@ -947,6 +947,14 @@ void Kernel::setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoVal
     }
 }
 
+void Kernel::setUnifiedMemoryExecInfo(GraphicsAllocation *unifiedMemoryAllocation) {
+    kernelUnifiedMemoryGfxAllocations.push_back(unifiedMemoryAllocation);
+}
+
+void Kernel::clearUnifiedMemoryExecInfo() {
+    kernelUnifiedMemoryGfxAllocations.clear();
+}
+
 inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceiver) {
 
     auto numArgs = kernelInfo.kernelArgInfo.size();
@@ -985,6 +993,10 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     }
 
     for (auto gfxAlloc : kernelSvmGfxAllocations) {
+        commandStreamReceiver.makeResident(*gfxAlloc);
+    }
+
+    for (auto gfxAlloc : kernelUnifiedMemoryGfxAllocations) {
         commandStreamReceiver.makeResident(*gfxAlloc);
     }
 

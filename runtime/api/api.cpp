@@ -3987,7 +3987,13 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     }
 
     switch (paramName) {
-    case CL_KERNEL_EXEC_INFO_SVM_PTRS: {
+    case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL: {
+        auto propertyValue = *reinterpret_cast<const cl_bool *>(paramValue);
+        pKernel->setUnifiedMemoryProperty(CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL, propertyValue);
+    } break;
+
+    case CL_KERNEL_EXEC_INFO_SVM_PTRS:
+    case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL: {
         if ((paramValueSize == 0) ||
             (paramValueSize % sizeof(void *)) ||
             (paramValue == nullptr)) {
@@ -4002,7 +4008,12 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
             return CL_INVALID_VALUE;
         }
 
-        pKernel->clearSvmKernelExecInfo();
+        if (paramName == CL_KERNEL_EXEC_INFO_SVM_PTRS) {
+            pKernel->clearSvmKernelExecInfo();
+        } else {
+            pKernel->clearUnifiedMemoryExecInfo();
+        }
+
         for (uint32_t i = 0; i < numPointers; i++) {
             auto svmData = pKernel->getContext().getSVMAllocsManager()->getSVMAlloc((const void *)pSvmPtrList[i]);
             if (svmData == nullptr) {
@@ -4011,7 +4022,12 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
                 return retVal;
             }
             GraphicsAllocation *svmAlloc = svmData->gpuAllocation;
-            pKernel->setSvmKernelExecInfo(svmAlloc);
+
+            if (paramName == CL_KERNEL_EXEC_INFO_SVM_PTRS) {
+                pKernel->setSvmKernelExecInfo(svmAlloc);
+            } else {
+                pKernel->setUnifiedMemoryExecInfo(svmAlloc);
+            }
         }
         break;
     }

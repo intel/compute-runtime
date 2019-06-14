@@ -389,6 +389,8 @@ class Kernel : public BaseObject<_cl_kernel> {
         this->auxTranslationKernel = auxTranslationFlag;
     }
     void setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoValue);
+    void setUnifiedMemoryExecInfo(GraphicsAllocation *argValue);
+    void clearUnifiedMemoryExecInfo();
 
   protected:
     struct ObjectCounts {
@@ -487,6 +489,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     std::vector<SimpleKernelArgInfo> kernelArguments;
     std::vector<KernelArgHandler> kernelArgHandlers;
     std::vector<GraphicsAllocation *> kernelSvmGfxAllocations;
+    std::vector<GraphicsAllocation *> kernelUnifiedMemoryGfxAllocations;
 
     bool auxTranslationKernel = false;
 
