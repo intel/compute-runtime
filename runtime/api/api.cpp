@@ -4002,7 +4002,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
             return CL_INVALID_VALUE;
         }
 
-        pKernel->clearKernelExecInfo();
+        pKernel->clearSvmKernelExecInfo();
         for (uint32_t i = 0; i < numPointers; i++) {
             auto svmData = pKernel->getContext().getSVMAllocsManager()->getSVMAlloc((const void *)pSvmPtrList[i]);
             if (svmData == nullptr) {
@@ -4011,7 +4011,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
                 return retVal;
             }
             GraphicsAllocation *svmAlloc = svmData->gpuAllocation;
-            pKernel->setKernelExecInfo(svmAlloc);
+            pKernel->setSvmKernelExecInfo(svmAlloc);
         }
         break;
     }

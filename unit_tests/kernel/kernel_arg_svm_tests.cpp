@@ -467,7 +467,7 @@ TEST_F(KernelArgSvmTest, givenWritableSvmAllocationWhenSettingKernelExecInfoThen
     svmAlloc.setMemObjectsAllocationWithWritableFlags(true);
     svmAlloc.setFlushL3Required(false);
 
-    pKernel->setKernelExecInfo(&svmAlloc);
+    pKernel->setSvmKernelExecInfo(&svmAlloc);
     EXPECT_FALSE(pKernel->svmAllocationsRequireCacheFlush);
 
     alignedFree(svmPtr);
@@ -481,7 +481,7 @@ TEST_F(KernelArgSvmTest, givenCacheFlushSvmAllocationWhenSettingKernelExecInfoTh
     svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
     svmAlloc.setFlushL3Required(true);
 
-    pKernel->setKernelExecInfo(&svmAlloc);
+    pKernel->setSvmKernelExecInfo(&svmAlloc);
     EXPECT_TRUE(pKernel->svmAllocationsRequireCacheFlush);
 
     alignedFree(svmPtr);
@@ -495,7 +495,7 @@ TEST_F(KernelArgSvmTest, givenNoCacheFlushReadOnlySvmAllocationWhenSettingKernel
     svmAlloc.setMemObjectsAllocationWithWritableFlags(false);
     svmAlloc.setFlushL3Required(false);
 
-    pKernel->setKernelExecInfo(&svmAlloc);
+    pKernel->setSvmKernelExecInfo(&svmAlloc);
     EXPECT_FALSE(pKernel->svmAllocationsRequireCacheFlush);
 
     alignedFree(svmPtr);

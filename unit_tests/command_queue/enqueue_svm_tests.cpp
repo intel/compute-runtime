@@ -604,9 +604,9 @@ TEST_F(EnqueueSvmTest, enqueueTaskWithKernelExecInfo_success) {
     std::unique_ptr<Program> program(Program::create("FillBufferBytes", context, *pDevice, true, &retVal));
     cl_device_id device = pDevice;
     program->build(1, &device, nullptr, nullptr, nullptr, false);
-    std::unique_ptr<Kernel> kernel(Kernel::create<MockKernel>(program.get(), *program->getKernelInfo("FillBufferBytes"), &retVal));
+    std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), *program->getKernelInfo("FillBufferBytes"), &retVal));
 
-    kernel->setKernelExecInfo(pSvmAlloc);
+    kernel->setSvmKernelExecInfo(pSvmAlloc);
 
     size_t offset = 0;
     size_t size = 1;
@@ -621,7 +621,7 @@ TEST_F(EnqueueSvmTest, enqueueTaskWithKernelExecInfo_success) {
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(1u, kernel->getKernelSvmGfxAllocations().size());
+    EXPECT_EQ(1u, kernel->kernelSvmGfxAllocations.size());
 }
 
 TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSurfacesAreMadeResident) {
@@ -639,7 +639,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
     kernel->getResidency(allSurfaces);
     EXPECT_EQ(1u, allSurfaces.size());
 
-    kernel->setKernelExecInfo(pSvmAlloc);
+    kernel->setSvmKernelExecInfo(pSvmAlloc);
 
     auto uEvent = make_releaseable<UserEvent>();
     cl_event eventWaitList[] = {uEvent.get()};
@@ -662,7 +662,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
     for (auto &surface : allSurfaces)
         delete surface;
 
-    EXPECT_EQ(1u, kernel->getKernelSvmGfxAllocations().size());
+    EXPECT_EQ(1u, kernel->kernelSvmGfxAllocations.size());
     uEvent->setStatus(-1);
 }
 

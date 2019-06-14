@@ -929,14 +929,14 @@ const Kernel::SimpleKernelArgInfo &Kernel::getKernelArgInfo(uint32_t argIndex) c
     return kernelArguments[argIndex];
 }
 
-void Kernel::setKernelExecInfo(GraphicsAllocation *argValue) {
+void Kernel::setSvmKernelExecInfo(GraphicsAllocation *argValue) {
     kernelSvmGfxAllocations.push_back(argValue);
     if (allocationForCacheFlush(argValue)) {
         svmAllocationsRequireCacheFlush = true;
     }
 }
 
-void Kernel::clearKernelExecInfo() {
+void Kernel::clearSvmKernelExecInfo() {
     kernelSvmGfxAllocations.clear();
     svmAllocationsRequireCacheFlush = false;
 }

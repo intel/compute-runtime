@@ -520,15 +520,15 @@ TEST_F(CloneKernelTest, cloneKernelWithExecInfo) {
     GraphicsAllocation *pSvmAlloc = svmData->gpuAllocation;
     ASSERT_NE(nullptr, pSvmAlloc);
 
-    pSourceKernel->setKernelExecInfo(pSvmAlloc);
+    pSourceKernel->setSvmKernelExecInfo(pSvmAlloc);
 
-    EXPECT_EQ(1u, pSourceKernel->getKernelSvmGfxAllocations().size());
+    EXPECT_EQ(1u, pSourceKernel->kernelSvmGfxAllocations.size());
 
     retVal = pClonedKernel->cloneKernel(pSourceKernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(pSourceKernel->getKernelSvmGfxAllocations().size(), pClonedKernel->getKernelSvmGfxAllocations().size());
-    EXPECT_EQ(pSourceKernel->getKernelSvmGfxAllocations().at(0), pClonedKernel->getKernelSvmGfxAllocations().at(0));
+    EXPECT_EQ(pSourceKernel->kernelSvmGfxAllocations.size(), pClonedKernel->kernelSvmGfxAllocations.size());
+    EXPECT_EQ(pSourceKernel->kernelSvmGfxAllocations.at(0), pClonedKernel->kernelSvmGfxAllocations.at(0));
 
     pContext->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
 }

@@ -130,8 +130,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     cl_int setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, GraphicsAllocation *svmAlloc, cl_mem_flags svmFlags);
     cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc);
 
-    void setKernelExecInfo(GraphicsAllocation *argValue);
-    void clearKernelExecInfo();
+    void setSvmKernelExecInfo(GraphicsAllocation *argValue);
+    void clearSvmKernelExecInfo();
 
     cl_int getInfo(cl_kernel_info paramName, size_t paramValueSize,
                    void *paramValue, size_t *paramValueSizeRet) const;
@@ -172,10 +172,6 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     const std::vector<SimpleKernelArgInfo> &getKernelArguments() const {
         return kernelArguments;
-    }
-
-    const std::vector<GraphicsAllocation *> &getKernelSvmGfxAllocations() const {
-        return kernelSvmGfxAllocations;
     }
 
     size_t getKernelArgsNumber() const {

@@ -150,7 +150,7 @@ TEST_F(clSetKernelExecInfoTests, success_SvmPtrListWithSinglePointer) {
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        EXPECT_EQ(1u, pMockKernel->getKernelSvmGfxAllocations().size());
+        EXPECT_EQ(1u, pMockKernel->kernelSvmGfxAllocations.size());
     }
 }
 
@@ -173,7 +173,7 @@ TEST_F(clSetKernelExecInfoTests, success_SvmPtrListWithMultiplePointers) {
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        EXPECT_EQ(3u, pMockKernel->getKernelSvmGfxAllocations().size());
+        EXPECT_EQ(3u, pMockKernel->kernelSvmGfxAllocations.size());
         EXPECT_TRUE(pMockKernel->svmAllocationsRequireCacheFlush);
 
         clSVMFree(pContext, ptrSvm1);
@@ -200,7 +200,7 @@ TEST_F(clSetKernelExecInfoTests, givenReadOnlySvmPtrListWhenUsedAsKernelPointers
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        EXPECT_EQ(2u, pMockKernel->getKernelSvmGfxAllocations().size());
+        EXPECT_EQ(2u, pMockKernel->kernelSvmGfxAllocations.size());
         EXPECT_FALSE(pMockKernel->svmAllocationsRequireCacheFlush);
 
         clSVMFree(pContext, ptrSvm1);
@@ -221,7 +221,7 @@ TEST_F(clSetKernelExecInfoTests, success_MultipleSetKernelExecInfo) {
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        EXPECT_EQ(1u, pMockKernel->getKernelSvmGfxAllocations().size());
+        EXPECT_EQ(1u, pMockKernel->kernelSvmGfxAllocations.size());
 
         retVal = clSetKernelExecInfo(
             pMockKernel,                  // cl_kernel kernel
@@ -231,7 +231,7 @@ TEST_F(clSetKernelExecInfoTests, success_MultipleSetKernelExecInfo) {
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        EXPECT_EQ(1u, pMockKernel->getKernelSvmGfxAllocations().size());
+        EXPECT_EQ(1u, pMockKernel->kernelSvmGfxAllocations.size());
     }
 }
 } // namespace ULT
