@@ -285,6 +285,39 @@ TEST_F(MemoryAllocatorTest, NullOsHandleStorageAskedForPopulationReturnsFilledPo
     memoryManager->cleanOsHandles(storage);
 }
 
+TEST_F(MemoryAllocatorTest, givenOsHandleStorageWhenOsHandlesAreCleanedAndAubManagerIsNotAvailableThenFreeMemoryIsNotCalledOnAubManager) {
+    MockExecutionEnvironment mockExecutionEnvironment(*platformDevices);
+    MockMemoryManager mockMemoryManager(mockExecutionEnvironment);
+    auto mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
+    mockAubCenter->aubManager.reset(nullptr);
+    mockExecutionEnvironment.aubCenter.reset(mockAubCenter);
+
+    OsHandleStorage storage;
+    storage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
+    mockMemoryManager.populateOsHandles(storage);
+    mockMemoryManager.getHostPtrManager()->releaseHandleStorage(storage);
+    mockMemoryManager.cleanOsHandles(storage);
+
+    EXPECT_EQ(nullptr, mockAubCenter->aubManager);
+}
+
+TEST_F(MemoryAllocatorTest, givenOsHandleStorageWhenOsHandlesAreCleanedAndAubManagerIsAvailableThenFreeMemoryIsCalledOnAubManager) {
+    MockExecutionEnvironment mockExecutionEnvironment(*platformDevices);
+    MockMemoryManager mockMemoryManager(mockExecutionEnvironment);
+    auto mockManager = new MockAubManager();
+    auto mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
+    mockAubCenter->aubManager.reset(mockManager);
+    mockExecutionEnvironment.aubCenter.reset(mockAubCenter);
+
+    OsHandleStorage storage;
+    storage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
+    mockMemoryManager.populateOsHandles(storage);
+    mockMemoryManager.getHostPtrManager()->releaseHandleStorage(storage);
+    mockMemoryManager.cleanOsHandles(storage);
+
+    EXPECT_TRUE(mockManager->freeMemoryCalled);
+}
+
 TEST_F(MemoryAllocatorTest, GivenEmptyMemoryManagerAndMisalingedHostPtrWithHugeSizeWhenAskedForHostPtrAllocationThenGraphicsAllocationIsBeignCreatedWithAllFragmentsPresent) {
     void *cpuPtr = (void *)0x1005;
     auto size = MemoryConstants::pageSize * 10 - 1;
