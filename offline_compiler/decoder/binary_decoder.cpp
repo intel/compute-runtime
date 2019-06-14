@@ -120,15 +120,53 @@ uint8_t BinaryDecoder::getSize(const std::string &typeStr) {
 }
 
 void BinaryDecoder::parseTokens() {
-    //Reading neccesary files
+    //Creating patchlist definitions
     std::vector<std::string> patchList;
 
-    readFileToVectorOfStrings(patchList, pathToPatch + "patch_list.h", true);
-    readFileToVectorOfStrings(patchList, pathToPatch + "patch_shared.h", true);
-    readFileToVectorOfStrings(patchList, pathToPatch + "patch_g7.h", true);
-    readFileToVectorOfStrings(patchList, pathToPatch + "patch_g8.h", true);
-    readFileToVectorOfStrings(patchList, pathToPatch + "patch_g9.h", true);
-    readFileToVectorOfStrings(patchList, pathToPatch + "patch_g10.h", true);
+    if (pathToPatch.empty()) {
+        messagePrinter.printf("Path to patch list not provided - using defaults, skipping patchokens as undefined.\n");
+        patchList = {
+            "struct SProgramBinaryHeader",
+            "{",
+            "    uint32_t   Magic;",
+            "    uint32_t   Version;",
+            "    uint32_t   Device;",
+            "    uint32_t   GPUPointerSizeInBytes;",
+            "    uint32_t   NumberOfKernels;",
+            "    uint32_t   SteppingId;",
+            "    uint32_t   PatchListSize;",
+            "};",
+            "",
+            "struct SKernelBinaryHeader",
+            "{",
+            "    uint32_t   CheckSum;",
+            "    uint64_t   ShaderHashCode;",
+            "    uint32_t   KernelNameSize;",
+            "    uint32_t   PatchListSize;",
+            "};",
+            "",
+            "struct SKernelBinaryHeaderCommon :",
+            "       SKernelBinaryHeader",
+            "{",
+            "    uint32_t   KernelHeapSize;",
+            "    uint32_t   GeneralStateHeapSize;",
+            "    uint32_t   DynamicStateHeapSize;",
+            "    uint32_t   SurfaceStateHeapSize;",
+            "    uint32_t   KernelUnpaddedSize;",
+            "};",
+            "",
+            "enum PATCH_TOKEN",
+            "{",
+            "};",
+        };
+    } else {
+        readFileToVectorOfStrings(patchList, pathToPatch + "patch_list.h", true);
+        readFileToVectorOfStrings(patchList, pathToPatch + "patch_shared.h", true);
+        readFileToVectorOfStrings(patchList, pathToPatch + "patch_g7.h", true);
+        readFileToVectorOfStrings(patchList, pathToPatch + "patch_g8.h", true);
+        readFileToVectorOfStrings(patchList, pathToPatch + "patch_g9.h", true);
+        readFileToVectorOfStrings(patchList, pathToPatch + "patch_g10.h", true);
+    }
 
     size_t pos = findPos(patchList, "struct SProgramBinaryHeader");
     if (pos == patchList.size()) {
@@ -390,10 +428,6 @@ int BinaryDecoder::validateInput(uint32_t argc, const char **argv) {
         }
         if (binaryFile.find(".bin") == std::string::npos) {
             messagePrinter.printf(".bin extension is expected for binary file.\n");
-            printHelp();
-            return -1;
-        } else if (pathToPatch.empty()) {
-            messagePrinter.printf("Path to patch list folder can't be empty.\n");
             printHelp();
             return -1;
         } else if (pathToDump.empty()) {

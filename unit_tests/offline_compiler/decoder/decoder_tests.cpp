@@ -178,6 +178,14 @@ TEST(DecoderTests, GivenProperPatchListFileWhenParsingTokensThenFileIsParsedCorr
     EXPECT_EQ("InterfaceDescriptorDataOffset", (decoder.patchTokens[19]->fields[0].name));
 }
 
+TEST(DecoderTests, WhenPathToPatchTokensNotProvidedThenUseDefaults) {
+    MockDecoder decoder;
+    decoder.pathToPatch = "";
+    decoder.parseTokens();
+    EXPECT_NE(0U, decoder.programHeader.size);
+    EXPECT_NE(0U, decoder.kernelHeader.size);
+}
+
 TEST(DecoderTests, GivenValidBinaryWhenReadingPatchTokensFromBinaryThenBinaryIsReadCorrectly) {
     std::string binaryString;
     std::stringstream binarySS;
