@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/unified_memory/unified_memory.h"
 #include "runtime/utilities/spinlock.h"
 
 #include <cstdint>
@@ -17,13 +18,6 @@ class CommandStreamReceiver;
 class Device;
 class GraphicsAllocation;
 class MemoryManager;
-
-enum InternalMemoryType : uint32_t {
-    NOT_SPECIFIED = 0b0,
-    SVM = 0b1,
-    DEVICE_UNIFIED_MEMORY = 0b10,
-    HOST_UNIFIED_MEMORY = 0b100,
-};
 
 struct SvmAllocationData {
     GraphicsAllocation *cpuAllocation = nullptr;

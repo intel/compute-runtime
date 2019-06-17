@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/unified_memory/unified_memory.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/device_queue/device_queue.h"
@@ -59,12 +60,6 @@ class Kernel : public BaseObject<_cl_kernel> {
         cl_mem_flags svmFlags;
         bool isPatched = false;
         bool isUncacheable = false;
-    };
-
-    struct UnifiedMemoryControls {
-        uint32_t generateMask();
-        bool indirectDeviceAllocationsAllowed = false;
-        bool indirectHostAllocationsAllowed = false;
     };
 
     typedef int32_t (Kernel::*KernelArgHandler)(uint32_t argIndex,
