@@ -43,6 +43,9 @@
 
 using cl_mem_properties_intel = cl_bitfield;
 using cl_mem_flags_intel = cl_mem_flags;
+using cl_mem_info_intel = cl_uint;
+using cl_mem_advice_intel = cl_uint;
+using cl_unified_shared_memory_type_intel = cl_uint;
 
 /******************************
  * Internal only cl_mem_flags *

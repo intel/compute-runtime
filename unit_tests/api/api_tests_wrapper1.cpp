@@ -35,3 +35,4 @@
 #include "unit_tests/api/cl_enqueue_map_image_tests.inl"
 #include "unit_tests/api/cl_enqueue_marker_tests.inl"
 #include "unit_tests/api/cl_enqueue_marker_with_wait_list_tests.inl"
+#include "unit_tests/api/cl_unified_shared_memory_tests.inl"

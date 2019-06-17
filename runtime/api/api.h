@@ -915,6 +915,83 @@ extern CL_API_ENTRY cl_program CL_API_CALL clCreateProgramWithILKHR(
     const void *il,
     size_t length,
     cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_2;
+
+void *clHostMemAllocINTEL(
+    cl_context context,
+    cl_mem_properties_intel *properties,
+    size_t size,
+    cl_uint alignment,
+    cl_int *errcodeRet);
+
+void *clDeviceMemAllocINTEL(
+    cl_context context,
+    cl_device_id device,
+    cl_mem_properties_intel *properties,
+    size_t size,
+    cl_uint alignment,
+    cl_int *errcodeRet);
+
+void *clSharedMemAllocINTEL(
+    cl_context context,
+    cl_device_id device,
+    cl_mem_properties_intel *properties,
+    size_t size,
+    cl_uint alignment,
+    cl_int *errcodeRet);
+
+cl_int clMemFreeINTEL(
+    cl_context context,
+    const void *ptr);
+
+cl_int clGetMemAllocInfoINTEL(
+    cl_context context,
+    const void *ptr,
+    cl_mem_info_intel paramName,
+    size_t paramValueSize,
+    void *paramValue,
+    size_t *paramValueSizeRet);
+
+cl_int clSetKernelArgMemPointerINTEL(
+    cl_kernel kernel,
+    cl_uint argIndex,
+    const void *argValue);
+
+cl_int clEnqueueMemsetINTEL(
+    cl_command_queue commandQueue,
+    void *dstPtr,
+    cl_int value,
+    size_t size,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event);
+
+cl_int clEnqueueMemcpyINTEL(
+    cl_command_queue commandQueue,
+    cl_bool blocking,
+    void *dstPtr,
+    const void *srcPtr,
+    size_t size,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event);
+
+cl_int clEnqueueMigrateMemINTEL(
+    cl_command_queue commandQueue,
+    const void *ptr,
+    size_t size,
+    cl_mem_migration_flags flags,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event);
+
+cl_int clEnqueueMemAdviseINTEL(
+    cl_command_queue commandQueue,
+    const void *ptr,
+    size_t size,
+    cl_mem_advice_intel advice,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event);
 }
 
 // OpenCL 2.2

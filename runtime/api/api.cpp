@@ -3357,6 +3357,109 @@ clSetPerformanceConfigurationINTEL(
     return retVal;
 }
 
+void *clHostMemAllocINTEL(
+    cl_context context,
+    cl_mem_properties_intel *properties,
+    size_t size,
+    cl_uint alignment,
+    cl_int *errcodeRet) {
+    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
+    *errcodeRet = retVal;
+    return nullptr;
+}
+
+void *clDeviceMemAllocINTEL(
+    cl_context context,
+    cl_device_id device,
+    cl_mem_properties_intel *properties,
+    size_t size,
+    cl_uint alignment,
+    cl_int *errcodeRet) {
+    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
+    *errcodeRet = retVal;
+    return nullptr;
+}
+
+void *clSharedMemAllocINTEL(
+    cl_context context,
+    cl_device_id device,
+    cl_mem_properties_intel *properties,
+    size_t size,
+    cl_uint alignment,
+    cl_int *errcodeRet) {
+    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
+    *errcodeRet = retVal;
+    return nullptr;
+}
+
+cl_int clMemFreeINTEL(
+    cl_context context,
+    const void *ptr) {
+    return CL_OUT_OF_HOST_MEMORY;
+}
+
+cl_int clGetMemAllocInfoINTEL(
+    cl_context context,
+    const void *ptr,
+    cl_mem_info_intel paramName,
+    size_t paramValueSize,
+    void *paramValue,
+    size_t *paramValueSizeRet) {
+    return CL_OUT_OF_HOST_MEMORY;
+}
+
+cl_int clSetKernelArgMemPointerINTEL(
+    cl_kernel kernel,
+    cl_uint argIndex,
+    const void *argValue) {
+    return CL_OUT_OF_HOST_MEMORY;
+}
+
+cl_int clEnqueueMemsetINTEL(
+    cl_command_queue commandQueue,
+    void *dstPtr,
+    cl_int value,
+    size_t size,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event) {
+    return CL_OUT_OF_HOST_MEMORY;
+}
+
+cl_int clEnqueueMemcpyINTEL(
+    cl_command_queue commandQueue,
+    cl_bool blocking,
+    void *dstPtr,
+    const void *srcPtr,
+    size_t size,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event) {
+    return CL_OUT_OF_HOST_MEMORY;
+}
+
+cl_int clEnqueueMigrateMemINTEL(
+    cl_command_queue commandQueue,
+    const void *ptr,
+    size_t size,
+    cl_mem_migration_flags flags,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event) {
+    return CL_OUT_OF_HOST_MEMORY;
+}
+
+cl_int clEnqueueMemAdviseINTEL(
+    cl_command_queue commandQueue,
+    const void *ptr,
+    size_t size,
+    cl_mem_advice_intel advice,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event) {
+    return CL_OUT_OF_HOST_MEMORY;
+}
+
 cl_command_queue CL_API_CALL clCreateCommandQueueWithPropertiesKHR(cl_context context,
                                                                    cl_device_id device,
                                                                    const cl_queue_properties_khr *properties,
@@ -3552,6 +3655,17 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clEnableTracingINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clDisableTracingINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetTracingStateINTEL);
+
+    RETURN_FUNC_PTR_IF_EXIST(clHostMemAllocINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clDeviceMemAllocINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clSharedMemAllocINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clMemFreeINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clGetMemAllocInfoINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clSetKernelArgMemPointerINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemsetINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemcpyINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clEnqueueMigrateMemINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemAdviseINTEL);
 
     void *ret = sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr) {
