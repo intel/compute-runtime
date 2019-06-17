@@ -181,6 +181,7 @@ struct AUBReadBufferRectUnaligned
         AUBCommandStreamFixture::expectMemory<FamilyType>(dstMemoryGPUPtr, referenceMemory, offset);
         AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, offset), &srcMemory[rowPitch * bufferOrigin[1]], size);
         AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, size + offset), referenceMemory, bufferSize - offset - size);
+        pCmdQ->finish(true);
         alignedFree(dstMemory);
     }
 };
