@@ -10,7 +10,7 @@ cd /root/build-igc
 
 export cclang_commit_id=6257ffe137a2c8df95a3f3b39fa477aa8ed15837
 export spirv_id=8ce6443ec1020183eafaeb3410c7d1edc2355dc3
-export igc_commit_id=igc-1.0.6
+export igc_commit_id=igc-1.0.8
 
 wget --no-check-certificate https://github.com/intel/opencl-clang/archive/${cclang_commit_id}/opencl-clang.tar.gz
 wget --no-check-certificate https://github.com/intel/intel-graphics-compiler/archive/${igc_commit_id}/igc.tar.gz
@@ -20,6 +20,8 @@ mkdir igc common_clang llvm-spirv
 
 tar xzf opencl-clang.tar.gz -C common_clang --strip-components=1
 tar xzf igc.tar.gz -C igc --strip-components=1
+patch -p1 < /root/llvm7.patch
+
 tar xzf spirv-llvm-translator.tar.gz -C llvm-spirv --strip-components=1
 
 mkdir build_spirv
