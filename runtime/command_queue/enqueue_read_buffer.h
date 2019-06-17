@@ -55,7 +55,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
         return enqueueMarkerForReadWriteOperation(buffer, ptr, CL_COMMAND_READ_BUFFER, blockingRead,
                                                   numEventsInWaitList, eventWaitList, event);
     } else if (blitOperationsSupported) {
-        return enqueueReadWriteBufferWithBlitTransfer(CL_COMMAND_READ_BUFFER, buffer, offset, size, ptr,
+        return enqueueReadWriteBufferWithBlitTransfer(CL_COMMAND_READ_BUFFER, buffer, !!blockingRead, offset, size, ptr,
                                                       numEventsInWaitList, eventWaitList, event);
     }
 

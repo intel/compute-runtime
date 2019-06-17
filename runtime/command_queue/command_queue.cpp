@@ -584,7 +584,7 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
            buffer->isReadWriteOnCpuAllowed(blocking, numEventsInWaitList, ptr, size);
 }
 
-cl_int CommandQueue::enqueueReadWriteBufferWithBlitTransfer(cl_command_type commandType, Buffer *buffer,
+cl_int CommandQueue::enqueueReadWriteBufferWithBlitTransfer(cl_command_type commandType, Buffer *buffer, bool blocking,
                                                             size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
                                                             const cl_event *eventWaitList, cl_event *event) {
     auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*buffer);
@@ -600,7 +600,7 @@ cl_int CommandQueue::enqueueReadWriteBufferWithBlitTransfer(cl_command_type comm
 
     auto copyDirection = (CL_COMMAND_WRITE_BUFFER == commandType) ? BlitterConstants::BlitWithHostPtrDirection::FromHostPtr
                                                                   : BlitterConstants::BlitWithHostPtrDirection::ToHostPtr;
-    blitCommandStreamReceiver->blitWithHostPtr(*buffer, ptr, true, offset, size, copyDirection, csrDependencies, *timestampPacketContainer);
+    blitCommandStreamReceiver->blitWithHostPtr(*buffer, ptr, blocking, offset, size, copyDirection, csrDependencies, *timestampPacketContainer);
     return CL_SUCCESS;
 }
 
