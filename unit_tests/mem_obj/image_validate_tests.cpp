@@ -10,6 +10,7 @@
 #include "runtime/helpers/convert_color.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
+#include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
@@ -662,17 +663,6 @@ TEST(ImageFormat, givenNullptrImageFormatWhenValidateImageFormatIsCalledThenRetu
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
 }
 
-TEST(validateAndCreateImage, givenErrorCodeWhenValidateAndCreateImageIsCalledThenReturnsError) {
-    cl_image_format imageFormat;
-    cl_int retVal = CL_INVALID_VALUE;
-    Image *image;
-    imageFormat.image_channel_order = 0;
-    imageFormat.image_channel_data_type = 0;
-    image = Image::validateAndCreateImage(nullptr, 0, &imageFormat, nullptr, nullptr, retVal);
-    EXPECT_EQ(nullptr, image);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-}
-
 TEST(validateAndCreateImage, givenInvalidImageFormatWhenValidateAndCreateImageIsCalledThenReturnsInvalidDescriptorError) {
     MockContext context;
     cl_image_format imageFormat;
@@ -680,7 +670,7 @@ TEST(validateAndCreateImage, givenInvalidImageFormatWhenValidateAndCreateImageIs
     Image *image;
     imageFormat.image_channel_order = 0;
     imageFormat.image_channel_data_type = 0;
-    image = Image::validateAndCreateImage(&context, 0, &imageFormat, nullptr, nullptr, retVal);
+    image = Image::validateAndCreateImage(&context, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
     EXPECT_EQ(nullptr, image);
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
 }
@@ -690,7 +680,7 @@ TEST(validateAndCreateImage, givenNotSupportedImageFormatWhenValidateAndCreateIm
     cl_image_format imageFormat = {CL_INTENSITY, CL_UNORM_INT8};
     cl_int retVal = CL_SUCCESS;
     Image *image;
-    image = Image::validateAndCreateImage(&context, CL_MEM_READ_WRITE, &imageFormat, nullptr, nullptr, retVal);
+    image = Image::validateAndCreateImage(&context, CL_MEM_READ_WRITE, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
     EXPECT_EQ(nullptr, image);
     EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
 }

@@ -31,7 +31,7 @@ bool MemObjHelper::parseMemoryProperties(const cl_mem_properties_intel *properti
     return true;
 }
 
-void MemObjHelper::fillPoliciesInProperties(AllocationProperties &allocationProperties, MemoryProperties &memoryProperties) {
+void MemObjHelper::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties) {
     fillCachePolicyInProperties(allocationProperties,
                                 isValueSet(memoryProperties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE),
                                 isValueSet(memoryProperties.flags, CL_MEM_READ_ONLY),

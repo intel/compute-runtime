@@ -26,7 +26,7 @@ namespace NEO {
 
 MemObj::MemObj(Context *context,
                cl_mem_object_type memObjectType,
-               MemoryProperties properties,
+               const MemoryProperties &properties,
                size_t size,
                void *memoryStorage,
                void *hostPtr,

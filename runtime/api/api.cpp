@@ -737,8 +737,7 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
                                  cl_int *errcodeRet) {
     TRACING_ENTER(clCreateImage, &context, &flags, &imageFormat, &imageDesc, &hostPtr, &errcodeRet);
 
-    Context *pContext = nullptr;
-    auto retVal = validateObjects(WithCastToInternal(context, &pContext));
+    cl_int retVal = CL_SUCCESS;
 
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("cl_context", context,
@@ -753,25 +752,15 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
                    "hostPtr", hostPtr);
 
     cl_mem image = nullptr;
-    do {
-        /* Are there some invalid flag bits? */
-        if (!MemObjHelper::validateMemoryPropertiesForImage(flags, imageDesc->mem_object)) {
-            retVal = CL_INVALID_VALUE;
-            break;
-        }
-        bool isHostPtrUsed = (hostPtr != nullptr);
-        bool areHostPtrFlagsUsed = isValueSet(flags, CL_MEM_COPY_HOST_PTR) || isValueSet(flags, CL_MEM_USE_HOST_PTR);
-        if (isHostPtrUsed != areHostPtrFlagsUsed) {
-            retVal = CL_INVALID_HOST_PTR;
-            break;
-        }
-        image = Image::validateAndCreateImage(pContext, flags, imageFormat, imageDesc, hostPtr, retVal);
+    Context *pContext = nullptr;
+    retVal = validateObjects(WithCastToInternal(context, &pContext));
 
-    } while (false);
-
-    if (errcodeRet) {
-        *errcodeRet = retVal;
+    if (retVal == CL_SUCCESS) {
+        MemoryProperties propertiesStruct(flags);
+        image = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, imageDesc, hostPtr, retVal);
     }
+
+    ErrorCodeHelper err(errcodeRet, retVal);
     DBG_LOG_INPUTS("image", image);
     TRACING_EXIT(clCreateImage, &image);
     return image;
@@ -787,8 +776,10 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
                                    void *hostPtr,
                                    cl_int *errcodeRet) {
     TRACING_ENTER(clCreateImage2D, &context, &flags, &imageFormat, &imageWidth, &imageHeight, &imageRowPitch, &hostPtr, &errcodeRet);
+
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+
     DBG_LOG_INPUTS("context", context,
                    "flags", flags,
                    "imageFormat", imageFormat,
@@ -796,9 +787,6 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
                    "imageHeight", imageHeight,
                    "imageRowPitch", imageRowPitch,
                    "hostPtr", hostPtr);
-    Context *pContext = nullptr;
-
-    retVal = validateObjects(WithCastToInternal(context, &pContext));
 
     cl_mem image2D = nullptr;
     cl_image_desc imageDesc;
@@ -809,11 +797,15 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
     imageDesc.image_row_pitch = imageRowPitch;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
 
-    image2D = Image::validateAndCreateImage(pContext, flags, imageFormat, &imageDesc, hostPtr, retVal);
+    Context *pContext = nullptr;
+    retVal = validateObjects(WithCastToInternal(context, &pContext));
 
-    if (errcodeRet) {
-        *errcodeRet = retVal;
+    if (retVal == CL_SUCCESS) {
+        MemoryProperties propertiesStruct(flags);
+        image2D = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, &imageDesc, hostPtr, retVal);
     }
+
+    ErrorCodeHelper err(errcodeRet, retVal);
     DBG_LOG_INPUTS("image 2D", image2D);
     TRACING_EXIT(clCreateImage2D, &image2D);
     return image2D;
@@ -831,8 +823,10 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
                                    void *hostPtr,
                                    cl_int *errcodeRet) {
     TRACING_ENTER(clCreateImage3D, &context, &flags, &imageFormat, &imageWidth, &imageHeight, &imageDepth, &imageRowPitch, &imageSlicePitch, &hostPtr, &errcodeRet);
+
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+
     DBG_LOG_INPUTS("context", context,
                    "flags", flags,
                    "imageFormat", imageFormat,
@@ -842,10 +836,6 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
                    "imageRowPitch", imageRowPitch,
                    "imageSlicePitch", imageSlicePitch,
                    "hostPtr", hostPtr);
-
-    Context *pContext = nullptr;
-
-    retVal = validateObjects(WithCastToInternal(context, &pContext));
 
     cl_mem image3D = nullptr;
     cl_image_desc imageDesc;
@@ -858,11 +848,15 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
     imageDesc.image_slice_pitch = imageSlicePitch;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
 
-    image3D = Image::validateAndCreateImage(pContext, flags, imageFormat, &imageDesc, hostPtr, retVal);
+    Context *pContext = nullptr;
+    retVal = validateObjects(WithCastToInternal(context, &pContext));
 
-    if (errcodeRet) {
-        *errcodeRet = retVal;
+    if (retVal == CL_SUCCESS) {
+        MemoryProperties propertiesStruct(flags);
+        image3D = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, &imageDesc, hostPtr, retVal);
     }
+
+    ErrorCodeHelper err(errcodeRet, retVal);
     DBG_LOG_INPUTS("image 3D", image3D);
     TRACING_EXIT(clCreateImage3D, &image3D);
     return image3D;

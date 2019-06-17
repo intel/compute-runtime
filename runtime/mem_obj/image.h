@@ -25,7 +25,7 @@ struct SurfaceOffsets {
 };
 
 typedef Image *(*ImageCreatFunc)(Context *context,
-                                 cl_mem_flags flags,
+                                 const MemoryProperties &properties,
                                  size_t size,
                                  void *hostPtr,
                                  const cl_image_format &imageFormat,
@@ -51,20 +51,20 @@ class Image : public MemObj {
     ~Image() override;
 
     static Image *create(Context *context,
-                         cl_mem_flags flags,
+                         const MemoryProperties &properties,
                          const SurfaceFormatInfo *surfaceFormat,
                          const cl_image_desc *imageDesc,
                          const void *hostPtr,
                          cl_int &errcodeRet);
 
     static Image *validateAndCreateImage(Context *context,
-                                         cl_mem_flags flags,
+                                         const MemoryProperties &properties,
                                          const cl_image_format *imageFormat,
                                          const cl_image_desc *imageDesc,
                                          const void *hostPtr,
                                          cl_int &errcodeRet);
 
-    static Image *createImageHw(Context *context, cl_mem_flags flags, size_t size, void *hostPtr,
+    static Image *createImageHw(Context *context, const MemoryProperties &properties, size_t size, void *hostPtr,
                                 const cl_image_format &imageFormat, const cl_image_desc &imageDesc,
                                 bool zeroCopy, GraphicsAllocation *graphicsAllocation,
                                 bool isObjectRedescribed, bool createTiledImage, uint32_t baseMipLevel, uint32_t mipCount, const SurfaceFormatInfo *surfaceFormatInfo = nullptr);
@@ -74,7 +74,7 @@ class Image : public MemObj {
                                     cl_mem_flags flags, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount);
 
     static cl_int validate(Context *context,
-                           cl_mem_flags flags,
+                           const MemoryProperties &properties,
                            const SurfaceFormatInfo *surfaceFormat,
                            const cl_image_desc *imageDesc,
                            const void *hostPtr);
@@ -183,7 +183,7 @@ class Image : public MemObj {
 
   protected:
     Image(Context *context,
-          cl_mem_flags flags,
+          const MemoryProperties &properties,
           size_t size,
           void *hostPtr,
           cl_image_format imageFormat,
@@ -238,7 +238,7 @@ class ImageHw : public Image {
 
   public:
     ImageHw(Context *context,
-            cl_mem_flags flags,
+            const MemoryProperties &properties,
             size_t size,
             void *hostPtr,
             const cl_image_format &imageFormat,
@@ -251,7 +251,7 @@ class ImageHw : public Image {
             uint32_t mipCount,
             const SurfaceFormatInfo &surfaceFormatInfo,
             const SurfaceOffsets *surfaceOffsets = nullptr)
-        : Image(context, flags, size, hostPtr, imageFormat, imageDesc,
+        : Image(context, properties, size, hostPtr, imageFormat, imageDesc,
                 zeroCopy, graphicsAllocation, isObjectRedescribed, createTiledImage, baseMipLevel, mipCount, surfaceFormatInfo, surfaceOffsets) {
         if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D ||
             getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER ||
@@ -275,7 +275,7 @@ class ImageHw : public Image {
     void transformImage2dArrayTo3d(void *memory) override;
     void transformImage3dTo2dArray(void *memory) override;
     static Image *create(Context *context,
-                         cl_mem_flags flags,
+                         const MemoryProperties &properties,
                          size_t size,
                          void *hostPtr,
                          const cl_image_format &imageFormat,
@@ -290,7 +290,7 @@ class ImageHw : public Image {
                          const SurfaceOffsets *surfaceOffsets) {
         UNRECOVERABLE_IF(surfaceFormatInfo == nullptr);
         auto image = new ImageHw<GfxFamily>(context,
-                                            flags,
+                                            properties,
                                             size,
                                             hostPtr,
                                             imageFormat,

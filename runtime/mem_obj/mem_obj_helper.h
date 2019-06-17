@@ -95,13 +95,13 @@ class MemObjHelper {
         return allocationProperties;
     }
 
-    static AllocationProperties getAllocationProperties(ImageInfo &imgInfo, bool allocateMemory, MemoryProperties memoryProperties) {
+    static AllocationProperties getAllocationProperties(ImageInfo &imgInfo, bool allocateMemory, const MemoryProperties &memoryProperties) {
         AllocationProperties allocationProperties{allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE};
         fillPoliciesInProperties(allocationProperties, memoryProperties);
         return allocationProperties;
     }
 
-    static void fillPoliciesInProperties(AllocationProperties &allocationProperties, MemoryProperties &memoryProperties);
+    static void fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties);
 
     static void fillCachePolicyInProperties(AllocationProperties &allocationProperties, bool uncached, bool readOnly,
                                             bool deviceOnlyVisibilty) {

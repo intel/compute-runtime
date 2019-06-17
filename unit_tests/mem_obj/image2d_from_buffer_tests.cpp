@@ -136,11 +136,14 @@ TEST_F(Image2dFromBufferTest, InvalidHostPtrAlignment) {
     imageDesc.mem_object = origBuffer;
 }
 
-TEST_F(Image2dFromBufferTest, InvalidFlags) {
-    cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, reinterpret_cast<void *>(0x12345));
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+TEST_F(Image2dFromBufferTest, givenInvalidFlagsWhenValidateIsCalledThenReturnError) {
+    cl_mem_flags flags[] = {CL_MEM_USE_HOST_PTR, CL_MEM_COPY_HOST_PTR};
+
+    for (auto flag : flags) {
+        const auto surfaceFormat = Image::getSurfaceFormatFromTable(flag, &imageFormat);
+        retVal = Image::validate(&context, flag, surfaceFormat, &imageDesc, reinterpret_cast<void *>(0x12345));
+        EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    }
 }
 
 TEST_F(Image2dFromBufferTest, givenOneChannel8BitColorsNoRowPitchSpecifiedAndTooLargeImageWhenValidatingSurfaceFormatThenReturnError) {
