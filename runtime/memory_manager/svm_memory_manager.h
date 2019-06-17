@@ -18,11 +18,11 @@ class Device;
 class GraphicsAllocation;
 class MemoryManager;
 
-enum class InternalMemoryType : uint32_t {
-    SVM = 0,
-    DEVICE_UNIFIED_MEMORY,
-    HOST_UNIFIED_MEMORY,
-    NOT_SPECIFIED
+enum InternalMemoryType : uint32_t {
+    NOT_SPECIFIED = 0b0,
+    SVM = 0b1,
+    DEVICE_UNIFIED_MEMORY = 0b10,
+    HOST_UNIFIED_MEMORY = 0b100,
 };
 
 struct SvmAllocationData {
@@ -89,7 +89,7 @@ class SVMAllocsManager {
     void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);
     void removeSvmMapOperation(const void *regionSvmPtr);
     SvmMapOperation *getSvmMapOperation(const void *regionPtr);
-    void makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver);
+    void makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t requestedTypesMask);
 
   protected:
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties);

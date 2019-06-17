@@ -68,10 +68,10 @@ SvmMapOperation *SVMAllocsManager::MapOperationsTracker::get(const void *regionP
     return &iter->second;
 }
 
-void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver) {
+void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t requestedTypesMask) {
     std::unique_lock<SpinLock> lock(mtx);
     for (auto &allocation : this->SVMAllocs.allocations) {
-        if (allocation.second.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
+        if (allocation.second.memoryType & requestedTypesMask) {
             commandStreamReceiver.makeResident(*allocation.second.gpuAllocation);
         }
     }

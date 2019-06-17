@@ -1067,7 +1067,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAll
     auto &residentAllocations = commandStreamReceiver.getResidencyAllocations();
     EXPECT_EQ(0u, residentAllocations.size());
 
-    svmManager->makeInternalAllocationsResident(commandStreamReceiver);
+    svmManager->makeInternalAllocationsResident(commandStreamReceiver, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
 
     //only unified memory allocation is made resident
     EXPECT_EQ(1u, residentAllocations.size());

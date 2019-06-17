@@ -62,7 +62,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     };
 
     struct UnifiedMemoryControls {
+        uint32_t generateMask();
         bool indirectDeviceAllocationsAllowed = false;
+        bool indirectHostAllocationsAllowed = false;
     };
 
     typedef int32_t (Kernel::*KernelArgHandler)(uint32_t argIndex,
