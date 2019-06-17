@@ -57,14 +57,4 @@ set(IGDRCL_SRCS_tests_helpers
 )
 
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_helpers})
-
-if(UNIX)
-  set(IGDRCL_SRCS_tests_helpers_linux
-    ${CMAKE_CURRENT_SOURCE_DIR}/linux/kmd_notify_linux_tests.cpp
-  )
-
-  target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_helpers_linux})
-  set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_helpers_linux ${IGDRCL_SRCS_tests_helpers_linux})
-endif()
-
 add_subdirectories()
