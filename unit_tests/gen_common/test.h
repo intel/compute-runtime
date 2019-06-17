@@ -533,35 +533,25 @@ extern GFXCORE_FAMILY renderCoreFamily;
     template <typename FamilyType>                                                                                                                        \
     void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::testBodyHw()
 
-#ifdef TESTS_GEN8
-#define GEN8TEST_F(test_fixture, test_name)                          \
+#define GENTEST_F(gfx_core, test_fixture, test_name)                 \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
-                     IGFX_GEN8_CORE, IGFX_MAX_PRODUCT)
-#define GEN8TEST_P(test_suite_name, test_name)    \
-    FAMILYTEST_TEST_P(test_suite_name, test_name, \
-                      IGFX_GEN8_CORE,             \
-                      IGFX_MAX_PRODUCT)
+                     gfx_core, IGFX_MAX_PRODUCT)
+
+#define GENTEST_P(gfx_core, test_suite_name, test_name) \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, gfx_core, IGFX_MAX_PRODUCT)
+
+#ifdef TESTS_GEN8
+#define GEN8TEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN8_CORE, test_fixture, test_name)
+#define GEN8TEST_P(test_suite_name, test_name) GENTEST_P(IGFX_GEN8_CORE, test_fixture, test_name)
 #endif
 #ifdef TESTS_GEN9
-#define GEN9TEST_F(test_fixture, test_name)                          \
-    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
-                     ::testing::internal::GetTypeId<test_fixture>(), \
-                     IGFX_GEN9_CORE, IGFX_MAX_PRODUCT)
-#define GEN9TEST_P(test_suite_name, test_name)    \
-    FAMILYTEST_TEST_P(test_suite_name, test_name, \
-                      IGFX_GEN9_CORE,             \
-                      IGFX_MAX_PRODUCT)
+#define GEN9TEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN9_CORE, test_fixture, test_name)
+#define GEN9TEST_P(test_suite_name, test_name) GENTEST_P(IGFX_GEN9_CORE, test_fixture, test_name)
 #endif
 #ifdef TESTS_GEN11
-#define GEN11TEST_F(test_fixture, test_name)                         \
-    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
-                     ::testing::internal::GetTypeId<test_fixture>(), \
-                     IGFX_GEN11_CORE, IGFX_MAX_PRODUCT)
-#define GEN11TEST_P(test_suite_name, test_name)   \
-    FAMILYTEST_TEST_P(test_suite_name, test_name, \
-                      IGFX_GEN11_CORE,            \
-                      IGFX_MAX_PRODUCT)
+#define GEN11TEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN11_CORE, test_fixture, test_name)
+#define GEN11TEST_P(test_suite_name, test_name) GENTEST_P(IGFX_GEN11_CORE, test_fixture, test_name)
 #endif
 
 #ifdef TESTS_GEN8
