@@ -64,6 +64,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
 
     for (auto i = 0u; i < workDim; i++) {
         region[i] = globalWorkSizeIn ? globalWorkSizeIn[i] : 0;
+        if (region[i] == 0 && (kernel.getDevice().getEnabledClVersion() < 21)) {
+            return CL_INVALID_GLOBAL_WORK_SIZE;
+        }
         globalWorkOffset[i] = globalWorkOffsetIn
                                   ? globalWorkOffsetIn[i]
                                   : 0;
@@ -78,7 +81,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
                 return CL_INVALID_WORK_GROUP_SIZE;
             }
             if (kernel.getAllowNonUniform()) {
-                workGroupSize[i] = std::min(localWorkSizeIn[i], globalWorkSizeIn[i]);
+                workGroupSize[i] = std::min(localWorkSizeIn[i], std::max(static_cast<size_t>(1), globalWorkSizeIn[i]));
             } else {
                 workGroupSize[i] = localWorkSizeIn[i];
             }
