@@ -65,7 +65,7 @@ class Drm {
     uint32_t createDrmContext();
     void destroyDrmContext(uint32_t drmContextId);
     void setLowPriorityContextParam(uint32_t drmContextId);
-    int bindDrmContext(uint32_t drmContextId, DeviceBitfield deviceBitfield, aub_stream::EngineType engineType);
+    unsigned int bindDrmContext(uint32_t drmContextId, DeviceBitfield deviceBitfield, aub_stream::EngineType engineType);
 
     void setGtType(GTTYPE eGtType) { this->eGtType = eGtType; }
     GTTYPE getGtType() const { return this->eGtType; }

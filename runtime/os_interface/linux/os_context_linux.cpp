@@ -7,7 +7,6 @@
 
 #include "runtime/os_interface/linux/os_context_linux.h"
 
-#include "runtime/os_interface/linux/drm_engine_mapper.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/os_context.h"
@@ -26,12 +25,11 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
                                aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
     : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority), drm(drm) {
 
-    engineFlag = DrmEngineMapper::engineNodeMap(engineType);
     this->drmContextId = drm.createDrmContext();
     if (drm.isPreemptionSupported() && lowPriority) {
         drm.setLowPriorityContextParam(this->drmContextId);
     }
-    drm.bindDrmContext(this->drmContextId, deviceBitfield, engineType);
+    this->engineFlag = drm.bindDrmContext(this->drmContextId, deviceBitfield, engineType);
 }
 
 OsContextLinux::~OsContextLinux() {
