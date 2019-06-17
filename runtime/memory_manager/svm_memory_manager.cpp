@@ -92,16 +92,21 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
     }
 }
 
-void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties svmProperties) {
+void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties memoryProperties) {
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
-    AllocationProperties unifiedMemoryProperties{true, alignedSize, GraphicsAllocation::AllocationType::BUFFER, false};
+
+    AllocationProperties unifiedMemoryProperties{true,
+                                                 alignedSize,
+                                                 memoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY ? GraphicsAllocation::AllocationType::BUFFER : GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+                                                 false};
+
     GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties);
 
     SvmAllocationData allocData;
     allocData.gpuAllocation = unifiedMemoryAllocation;
     allocData.cpuAllocation = nullptr;
     allocData.size = size;
-    allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData.memoryType = memoryProperties.memoryType;
 
     std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);

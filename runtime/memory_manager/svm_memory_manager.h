@@ -21,6 +21,7 @@ class MemoryManager;
 enum class InternalMemoryType : uint32_t {
     SVM = 0,
     DEVICE_UNIFIED_MEMORY,
+    HOST_UNIFIED_MEMORY,
     NOT_SPECIFIED
 };
 
