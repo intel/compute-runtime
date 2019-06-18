@@ -443,7 +443,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                                   size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
                                                   const cl_event *eventWaitList, cl_event *event);
 
-    virtual void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueue, unsigned int commandType){};
+    virtual void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType, bool updateQueueTaskLevel){};
 
     MOCKABLE_VIRTUAL void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
                                                  AuxTranslationDirection auxTranslationDirection);
@@ -454,6 +454,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                               cl_uint numEventsInWaitList, const cl_event *eventWaitList);
     void providePerformanceHint(TransferProperties &transferProperties);
     bool queueDependenciesClearRequired() const;
+    bool blitEnqueueAllowed(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_command_type cmdType);
 
     Context *context = nullptr;
     Device *device = nullptr;

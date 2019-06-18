@@ -37,25 +37,24 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
         notifyEnqueueReadBuffer(buffer, !!blockingRead);
     }
 
-    bool isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, CL_COMMAND_READ_BUFFER) : true;
-    bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, CL_COMMAND_READ_BUFFER, blockingRead, size, ptr,
+    const cl_command_type cmdType = CL_COMMAND_READ_BUFFER;
+    bool isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, cmdType) : true;
+    bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingRead, size, ptr,
                                                  numEventsInWaitList, eventWaitList);
-    bool blitOperationsSupported = device->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.blitterOperationsSupported &&
-                                   DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get();
 
     if (isCpuCopyAllowed) {
         if (isMemTransferNeeded) {
-            return enqueueReadWriteBufferOnCpuWithMemoryTransfer(CL_COMMAND_READ_BUFFER, buffer, offset, size, ptr,
+            return enqueueReadWriteBufferOnCpuWithMemoryTransfer(cmdType, buffer, offset, size, ptr,
                                                                  numEventsInWaitList, eventWaitList, event);
         } else {
-            return enqueueReadWriteBufferOnCpuWithoutMemoryTransfer(CL_COMMAND_READ_BUFFER, buffer, offset, size, ptr,
+            return enqueueReadWriteBufferOnCpuWithoutMemoryTransfer(cmdType, buffer, offset, size, ptr,
                                                                     numEventsInWaitList, eventWaitList, event);
         }
     } else if (!isMemTransferNeeded) {
-        return enqueueMarkerForReadWriteOperation(buffer, ptr, CL_COMMAND_READ_BUFFER, blockingRead,
+        return enqueueMarkerForReadWriteOperation(buffer, ptr, cmdType, blockingRead,
                                                   numEventsInWaitList, eventWaitList, event);
-    } else if (blitOperationsSupported) {
-        return enqueueReadWriteBufferWithBlitTransfer(CL_COMMAND_READ_BUFFER, buffer, !!blockingRead, offset, size, ptr,
+    } else if (blitEnqueueAllowed(numEventsInWaitList, eventWaitList, cmdType)) {
+        return enqueueReadWriteBufferWithBlitTransfer(cmdType, buffer, !!blockingRead, offset, size, ptr,
                                                       numEventsInWaitList, eventWaitList, event);
     }
 

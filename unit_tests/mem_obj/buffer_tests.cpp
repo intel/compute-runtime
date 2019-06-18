@@ -6,6 +6,7 @@
  */
 
 #include "runtime/command_queue/command_queue_hw.h"
+#include "runtime/event/user_event.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
@@ -718,6 +719,27 @@ HWTEST_F(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledThen
     commandQueue->enqueueWriteBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
     commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(2u, bcsCsr->blitBufferCalled);
+}
+
+HWTEST_F(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDontTakeBcsPath) {
+    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
+
+    auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    bufferForBlt->forceDisallowCPUCopy = true;
+    auto commandQueue = std::unique_ptr<CommandQueue>(CommandQueue::create(bcsMockContext.get(), device.get(), nullptr, retVal));
+    UserEvent userEvent(bcsMockContext.get());
+    cl_event waitlist = &userEvent;
+
+    commandQueue->enqueueWriteBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 1, &waitlist, nullptr);
+    commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
+
+    userEvent.setStatus(CL_COMPLETE);
+
+    commandQueue->enqueueWriteBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
+    commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(2u, bcsCsr->blitBufferCalled);
 }
 

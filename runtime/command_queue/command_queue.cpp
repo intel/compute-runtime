@@ -607,4 +607,16 @@ cl_int CommandQueue::enqueueReadWriteBufferWithBlitTransfer(cl_command_type comm
 bool CommandQueue::queueDependenciesClearRequired() const {
     return isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get();
 }
+
+bool CommandQueue::blitEnqueueAllowed(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_command_type cmdType) {
+    bool blitAllowed = device->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.blitterOperationsSupported &&
+                       DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get();
+
+    bool queueBlocked = false;
+    uint32_t calculatedTaskLevel = 0;
+
+    obtainTaskLevelAndBlockedStatus(calculatedTaskLevel, numEventsInWaitList, eventWaitList, queueBlocked, cmdType, false);
+
+    return blitAllowed && !queueBlocked;
+}
 } // namespace NEO
