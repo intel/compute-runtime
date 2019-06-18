@@ -487,13 +487,15 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
             }
             osHandles.fragmentStorageData[allocationIndex].osHandleStorage->handle = AllocationInfo[i].hAllocation;
             bool success = mapGpuVirtualAddress(&osHandles.fragmentStorageData[allocationIndex]);
-            allocationIndex++;
 
             if (!success) {
+                osHandles.fragmentStorageData[allocationIndex].freeTheFragment = true;
                 DBG_LOG(PrintDebugMessages, __FUNCTION__, "mapGpuVirtualAddress: ", success);
                 DEBUG_BREAK_IF(true);
-                break;
+                return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
             }
+
+            allocationIndex++;
 
             kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, adapter, device, AllocationInfo[i].hAllocation, gdi->escape);
         }

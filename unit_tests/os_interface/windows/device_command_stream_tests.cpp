@@ -603,6 +603,22 @@ TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWhenMakeResidentThenAllocat
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
+TEST_F(WddmCommandStreamTest, givenHostPtrAllocationWhenMapFailsThenFragmentsAreClearedAndNullptrIsReturned) {
+    this->wddm->callBaseMapGpuVa = false;
+    this->wddm->mapGpuVaStatus = false;
+    void *hostPtr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1234);
+    auto size = 1234u;
+
+    wddm->mapGpuVirtualAddressResult.called = 0u;
+    wddm->destroyAllocationResult.called = 0u;
+
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, hostPtr);
+
+    EXPECT_EQ(1u, wddm->mapGpuVirtualAddressResult.called);
+    EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
+    EXPECT_EQ(nullptr, gfxAllocation);
+}
+
 TEST_F(WddmCommandStreamTest, givenHostPtrWhenPtrBelowRestrictionThenCreateAllocationAndMakeResident) {
     void *hostPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     auto size = 0x2000u;
