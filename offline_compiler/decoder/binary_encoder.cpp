@@ -8,7 +8,9 @@
 #include "binary_encoder.h"
 
 #include "elf/writer.h"
+#include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/file_io.h"
+#include "runtime/helpers/hash.h"
 
 #include "CL/cl.h"
 #include "helper.h"
@@ -16,6 +18,7 @@
 #include <algorithm>
 #include <cstring>
 #include <fstream>
+#include <sstream>
 
 void BinaryEncoder::setMessagePrinter(const MessagePrinter &messagePrinter) {
     this->messagePrinter = messagePrinter;
@@ -49,11 +52,11 @@ void BinaryEncoder::calculatePatchListSizes(std::vector<std::string> &ptmFile) {
     }
 }
 
-int BinaryEncoder::copyBinaryToBinary(const std::string &srcFileName, std::ostream &outBinary) {
+bool BinaryEncoder::copyBinaryToBinary(const std::string &srcFileName, std::ostream &outBinary, uint32_t *binaryLength) {
     std::ifstream ifs(srcFileName, std::ios::binary);
     if (!ifs.good()) {
         messagePrinter.printf("Cannot open %s.\n", srcFileName.c_str());
-        return -1;
+        return false;
     }
     ifs.seekg(0, ifs.end);
     auto length = static_cast<size_t>(ifs.tellg());
@@ -61,7 +64,12 @@ int BinaryEncoder::copyBinaryToBinary(const std::string &srcFileName, std::ostre
     std::vector<char> binary(length);
     ifs.read(binary.data(), length);
     outBinary.write(binary.data(), length);
-    return 0;
+
+    if (binaryLength) {
+        *binaryLength = static_cast<uint32_t>(length);
+    }
+
+    return true;
 }
 
 int BinaryEncoder::createElf() {
@@ -169,56 +177,103 @@ int BinaryEncoder::processBinary(const std::vector<std::string> &ptmFile, std::o
     return 0;
 }
 
-int BinaryEncoder::processKernel(size_t &i, const std::vector<std::string> &ptmFile, std::ostream &deviceBinary) {
-    uint32_t kernelNameSize = 0;
-    while (i < ptmFile.size()) {
-        if (ptmFile[i].find("KernelName ") != std::string::npos) {
+void BinaryEncoder::addPadding(std::ostream &out, size_t numBytes) {
+    for (size_t i = 0; i < numBytes; ++i) {
+        const char nullByte = 0;
+        out.write(&nullByte, 1U);
+    }
+}
+
+int BinaryEncoder::processKernel(size_t &line, const std::vector<std::string> &ptmFileLines, std::ostream &deviceBinary) {
+    auto kernelInfoBeginMarker = line;
+    auto kernelInfoEndMarker = ptmFileLines.size();
+    auto kernelNameMarker = ptmFileLines.size();
+    auto kernelPatchtokensMarker = ptmFileLines.size();
+    std::stringstream kernelBlob;
+
+    // Normally these are added by the compiler, need to take or of them when reassembling
+    constexpr size_t isaPaddingSizeInBytes = 128;
+    constexpr uint32_t kernelHeapAlignmentInBytes = 64;
+
+    uint32_t kernelNameSizeInBinary = 0;
+    std::string kernelName;
+
+    //  Scan PTM lines for kernel info
+    while (line < ptmFileLines.size()) {
+        if (ptmFileLines[line].find("KernelName ") != std::string::npos) {
+            kernelName = std::string(ptmFileLines[line], ptmFileLines[line].find(' ') + 1);
+            kernelNameMarker = line;
+            kernelPatchtokensMarker = kernelNameMarker + 1; // patchtokens come after name
+        } else if (ptmFileLines[line].find("KernelNameSize") != std::string::npos) {
+            std::stringstream ss(ptmFileLines[line]);
+            ss.ignore(32, ' ');
+            ss.ignore(32, ' ');
+            ss >> kernelNameSizeInBinary;
+        } else if (ptmFileLines[line].find("Kernel #") != std::string::npos) {
+            kernelInfoEndMarker = line;
             break;
-        } else if (ptmFile[i].find("KernelNameSize") != std::string::npos) {
-            std::stringstream ss(ptmFile[i]);
-            ss.ignore(32, ' ');
-            ss.ignore(32, ' ');
-            ss >> kernelNameSize;
         }
-        if (writeDeviceBinary(ptmFile[i++], deviceBinary)) {
+        ++line;
+    }
+
+    // Write KernelName and padding
+    kernelBlob.write(kernelName.c_str(), kernelName.size());
+    addPadding(kernelBlob, kernelNameSizeInBinary - kernelName.size());
+
+    // Write KernelHeap and padding
+    uint32_t kernelSizeUnpadded = 0U;
+    bool heapsCopiedSuccesfully = copyBinaryToBinary(pathToDump + kernelName + "_KernelHeap.bin", kernelBlob, &kernelSizeUnpadded);
+
+    // Adding padding and alignment
+    addPadding(kernelBlob, isaPaddingSizeInBytes);
+    const uint32_t kernelHeapPaddedSize = kernelSizeUnpadded + isaPaddingSizeInBytes;
+    const uint32_t kernelHeapAlignedSize = alignUp(kernelHeapPaddedSize, kernelHeapAlignmentInBytes);
+    addPadding(kernelBlob, kernelHeapAlignedSize - kernelHeapPaddedSize);
+
+    // Write GeneralStateHeap, DynamicStateHeap, SurfaceStateHeap
+    if (fileExists(pathToDump + kernelName + "_GeneralStateHeap.bin")) {
+        heapsCopiedSuccesfully = heapsCopiedSuccesfully && copyBinaryToBinary(pathToDump + kernelName + "_GeneralStateHeap.bin", kernelBlob);
+    }
+    heapsCopiedSuccesfully = heapsCopiedSuccesfully && copyBinaryToBinary(pathToDump + kernelName + "_DynamicStateHeap.bin", kernelBlob);
+    heapsCopiedSuccesfully = heapsCopiedSuccesfully && copyBinaryToBinary(pathToDump + kernelName + "_SurfaceStateHeap.bin", kernelBlob);
+    if (false == heapsCopiedSuccesfully) {
+        return -1;
+    }
+
+    // Write kernel patchtokens
+    for (size_t i = kernelPatchtokensMarker; i < kernelInfoEndMarker; ++i) {
+        if (writeDeviceBinary(ptmFileLines[i], kernelBlob)) {
             messagePrinter.printf("Error while writing to binary.\n");
             return -1;
         }
     }
-    //KernelName
-    if (i == ptmFile.size()) {
-        messagePrinter.printf("Couldn't find KernelName line.\n");
-        return -1;
-    }
-    std::string kernelName(ptmFile[i], ptmFile[i].find(' ') + 1);
-    i++;
 
-    deviceBinary.write(kernelName.c_str(), kernelName.size());
-    for (auto j = kernelName.size(); j < kernelNameSize; ++j) {
-        uint8_t nullByte = 0;
-        deviceBinary.write(reinterpret_cast<const char *>(&nullByte), sizeof(uint8_t));
-    }
+    auto kernelBlobData = kernelBlob.str();
+    uint64_t hashValue = NEO::Hash::hash(reinterpret_cast<const char *>(kernelBlobData.data()), kernelBlobData.size());
+    uint32_t calcCheckSum = hashValue & 0xFFFFFFFF;
 
-    // Writing KernelHeap, DynamicStateHeap, SurfaceStateHeap
-    if (fileExists(pathToDump + kernelName + "_GeneralStateHeap.bin")) {
-        messagePrinter.printf("Warning! Adding GeneralStateHeap.\n");
-        if (copyBinaryToBinary(pathToDump + kernelName + "_GeneralStateHeap.bin", deviceBinary)) {
-            messagePrinter.printf("Couldn't copy %s_GeneralStateHeap.bin\n", kernelName.c_str());
-            return -1;
+    // Add kernel header
+    for (size_t i = kernelInfoBeginMarker; i < kernelNameMarker; ++i) {
+        if (ptmFileLines[i].find("CheckSum") != std::string::npos) {
+            static_assert(std::is_same<decltype(calcCheckSum), uint32_t>::value, "");
+            deviceBinary.write(reinterpret_cast<char *>(&calcCheckSum), sizeof(uint32_t));
+        } else if (ptmFileLines[i].find("KernelHeapSize") != std::string::npos) {
+            static_assert(sizeof(kernelHeapAlignedSize) == sizeof(uint32_t), "");
+            deviceBinary.write(reinterpret_cast<const char *>(&kernelHeapAlignedSize), sizeof(uint32_t));
+        } else if (ptmFileLines[i].find("KernelUnpaddedSize") != std::string::npos) {
+            static_assert(sizeof(kernelSizeUnpadded) == sizeof(uint32_t), "");
+            deviceBinary.write(reinterpret_cast<char *>(&kernelSizeUnpadded), sizeof(uint32_t));
+        } else {
+            if (writeDeviceBinary(ptmFileLines[i], deviceBinary)) {
+                messagePrinter.printf("Error while writing to binary.\n");
+                return -1;
+            }
         }
     }
-    if (copyBinaryToBinary(pathToDump + kernelName + "_KernelHeap.bin", deviceBinary)) {
-        messagePrinter.printf("Couldn't copy %s_KernelHeap.bin\n", kernelName.c_str());
-        return -1;
-    }
-    if (copyBinaryToBinary(pathToDump + kernelName + "_DynamicStateHeap.bin", deviceBinary)) {
-        messagePrinter.printf("Couldn't copy %s_DynamicStateHeap.bin\n", kernelName.c_str());
-        return -1;
-    }
-    if (copyBinaryToBinary(pathToDump + kernelName + "_SurfaceStateHeap.bin", deviceBinary)) {
-        messagePrinter.printf("Couldn't copy %s_SurfaceStateHeap.bin\n", kernelName.c_str());
-        return -1;
-    }
+
+    // Add kernel blob after the header
+    deviceBinary.write(kernelBlobData.c_str(), kernelBlobData.size());
+
     return 0;
 }
 

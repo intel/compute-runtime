@@ -56,8 +56,8 @@ TEST(EncoderTests, GivenWrongParametersWhenParsingParametersThenErrorCodeIsRetur
 TEST(EncoderTests, WhenTryingToCopyNonExistingFileThenErrorCodeIsReturned) {
     MockEncoder encoder;
     std::stringstream ss;
-    int retVal = encoder.copyBinaryToBinary("test_files/non_existing.bin", ss);
-    EXPECT_NE(0, retVal);
+    auto retVal = encoder.copyBinaryToBinary("test_files/non_existing.bin", ss);
+    EXPECT_FALSE(retVal);
 }
 
 TEST(EncoderTests, WhenWritingValuesToBinaryThenValuesAreWrittenCorrectly) {
@@ -156,11 +156,10 @@ TEST(EncoderTests, GivenIncorrectPatchListSizeWhileCalculatingPatchListSizeThenP
     EXPECT_EQ("\t4 PatchListSize 29", ptmFile[2]);
 }
 
-TEST(EncoderTests, GivenCorrectPTMFileWhileProcessingThenCorrectBinaryIsExpected) {
+TEST(EncoderTests, GivenCorrectPTMFileWhileProcessingThenCorrectProgramHeaderExpected) {
     std::stringstream expectedBinary;
     uint8_t byte;
     uint32_t byte4;
-    uint64_t byte8;
 
     byte4 = 1229870147;
     expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
@@ -188,28 +187,7 @@ TEST(EncoderTests, GivenCorrectPTMFileWhileProcessingThenCorrectBinaryIsExpected
     expectedBinary.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
     byte = 0x65;
     expectedBinary.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    byte4 = 2316678223;
-    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte8 = 4988534869940066475;
-    expectedBinary.write(reinterpret_cast<char *>(&byte8), sizeof(uint64_t));
-    byte4 = 12;
-    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 0;
-    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 0;
-    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 0;
-    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 0;
-    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    byte4 = 520;
-    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
-    std::string kernelName = "kernel";
-    expectedBinary.write(kernelName.c_str(), kernelName.length());
-    byte = 0;
-    for (size_t i = kernelName.length(); i < 12; ++i) {
-        expectedBinary.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
-    }
+
     std::vector<std::string> ptmFile;
     ptmFile.push_back("ProgramBinaryHeader:");
     ptmFile.push_back("\t4 Magic 1229870147");
@@ -238,9 +216,123 @@ TEST(EncoderTests, GivenCorrectPTMFileWhileProcessingThenCorrectBinaryIsExpected
     ptmFile.push_back("\tKernelName kernel");
     std::stringstream binary;
 
-    MockEncoder encoder;
-    int retVal = encoder.processBinary(ptmFile, binary);
-    EXPECT_EQ(-1, retVal);
+    MockEncoder().processBinary(ptmFile, binary);
     EXPECT_EQ(expectedBinary.str(), binary.str());
 }
+
+TEST(EncoderTests, WhenAddPaddingIsCalledThenProperNumberOfZerosIsAdded) {
+    std::stringstream stream;
+    stream << "aa";
+    MockEncoder().addPadding(stream, 8);
+    std::string asString = stream.str();
+    ASSERT_EQ(10U, asString.size());
+    char expected[] = {'a', 'a', 0, 0, 0, 0, 0, 0, 0, 0};
+    EXPECT_EQ(0, memcmp(asString.c_str(), expected, 10U));
+}
+
+TEST(EncoderTests, WhenProcessingDeviceBinaryThenProperChecksumIsCalculated) {
+    std::stringstream expectedBinary;
+    uint8_t byte;
+    uint32_t byte4;
+    uint64_t byte8;
+
+    MockEncoder encoder;
+    std::string kernelName = "kernel";
+    encoder.filesMap["kernel_DynamicStateHeap.bin"] = std::string(16, 2);
+    encoder.filesMap["kernel_KernelHeap.bin"] = std::string(16, 4);
+    encoder.filesMap["kernel_SurfaceStateHeap.bin"] = std::string(16, 8);
+    std::stringstream kernelBlob;
+    kernelBlob << kernelName;
+    kernelBlob.write(encoder.filesMap["kernel_KernelHeap.bin"].data(), encoder.filesMap["kernel_KernelHeap.bin"].size());
+    encoder.addPadding(kernelBlob, 128);                                                                // isa prefetch padding
+    encoder.addPadding(kernelBlob, 64 - (encoder.filesMap["kernel_KernelHeap.bin"].size() + 128) % 64); // isa alignment
+    size_t kernelHeapSize = encoder.filesMap["kernel_KernelHeap.bin"].size();
+    kernelHeapSize = alignUp(kernelHeapSize + 128, 64);
+    kernelBlob.write(encoder.filesMap["kernel_DynamicStateHeap.bin"].data(), encoder.filesMap["kernel_DynamicStateHeap.bin"].size());
+    kernelBlob.write(encoder.filesMap["kernel_SurfaceStateHeap.bin"].data(), encoder.filesMap["kernel_SurfaceStateHeap.bin"].size());
+
+    auto kernelBlobData = kernelBlob.str();
+    uint64_t hashValue = NEO::Hash::hash(reinterpret_cast<const char *>(kernelBlobData.data()), kernelBlobData.size());
+    uint32_t checksum = hashValue & 0xFFFFFFFF;
+
+    byte4 = 1229870147;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 1042;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 12;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 4;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 1;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 2;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 18;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 42;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 16;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 0;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 2;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte = 0x48;
+    expectedBinary.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
+    byte = 0x65;
+    expectedBinary.write(reinterpret_cast<char *>(&byte), sizeof(uint8_t));
+    byte4 = checksum;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte8 = 4988534869940066475;
+    expectedBinary.write(reinterpret_cast<char *>(&byte8), sizeof(uint64_t));
+    byte4 = static_cast<uint32_t>(kernelName.size());
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 0;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = static_cast<uint32_t>(kernelHeapSize);
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 0;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = 16;
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    byte4 = static_cast<uint32_t>(encoder.filesMap["kernel_KernelHeap.bin"].size());
+    expectedBinary.write(reinterpret_cast<char *>(&byte4), sizeof(uint32_t));
+    expectedBinary.write(kernelName.c_str(), kernelName.length());
+
+    std::vector<std::string> ptmFile;
+    ptmFile.push_back("ProgramBinaryHeader:");
+    ptmFile.push_back("\t4 Magic 1229870147");
+    ptmFile.push_back("\t4 Version 1042");
+    ptmFile.push_back("\t4 Device 12");
+    ptmFile.push_back("\t4 GPUPointerSizeInBytes 4");
+    ptmFile.push_back("\t4 NumberOfKernels 1");
+    ptmFile.push_back("\t4 SteppingId 2");
+    ptmFile.push_back("\t4 PatchListSize 18");
+    ptmFile.push_back("PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_PROGRAM_BINARY_INFO:");
+    ptmFile.push_back("\t4 Token 42");
+    ptmFile.push_back("\t4 Size 16");
+    ptmFile.push_back("\t4 ConstantBufferIndex 0");
+    ptmFile.push_back("\t4 InlineDataSize 2");
+    ptmFile.push_back("\tHex 48 65");
+    ptmFile.push_back("Kernel #0");
+    ptmFile.push_back("KernelBinaryHeader:");
+    ptmFile.push_back("\t4 CheckSum " + std::to_string(checksum));
+    ptmFile.push_back("\t8 ShaderHashCode 4988534869940066475");
+    ptmFile.push_back("\t4 KernelNameSize " + std::to_string(kernelName.size()));
+    ptmFile.push_back("\t4 PatchListSize 0");
+    ptmFile.push_back("\t4 KernelHeapSize 16");
+    ptmFile.push_back("\t4 GeneralStateHeapSize 0");
+    ptmFile.push_back("\t4 DynamicStateHeapSize 16");
+    ptmFile.push_back("\t4 KernelUnpaddedSize 16");
+    ptmFile.push_back("\tKernelName " + kernelName);
+
+    std::stringstream result;
+    auto ret = encoder.processBinary(ptmFile, result);
+    auto resultAsString = result.str();
+    EXPECT_EQ(0, ret);
+    auto expectedBinaryAsString = expectedBinary.str();
+    resultAsString.resize(expectedBinaryAsString.size()); // don't test beyond kernel header
+    EXPECT_EQ(expectedBinaryAsString, resultAsString);
+}
+
 } // namespace NEO

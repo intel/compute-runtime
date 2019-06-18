@@ -257,9 +257,6 @@ int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {
         }
         dumpField(ptr, v, ptmFile);
     }
-    if (patchListSize == 0) {
-        messagePrinter.printf("Warning! Program's patch list size is 0.\n");
-    }
     if (numberOfKernels == 0) {
         messagePrinter.printf("Warning! Number of Kernels is 0.\n");
     }
