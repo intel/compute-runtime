@@ -179,6 +179,25 @@ TEST_F(SVMMemoryAllocatorTest, whenHostAllocationIsCreatedThenItIsStoredWithProp
     svmManager->freeSVMAlloc(ptr);
 }
 
+TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithProperTypeInAllocationMap) {
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    auto allocationSize = 4096u;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, ptr);
+    auto allocation = svmManager->getSVMAlloc(ptr);
+    EXPECT_EQ(nullptr, allocation->cpuAllocation);
+    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation->memoryType);
+    EXPECT_EQ(allocationSize, allocation->size);
+
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, allocation->gpuAllocation->getAllocationType());
+    EXPECT_NE(allocation->gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_NE(nullptr, allocation->gpuAllocation->getUnderlyingBuffer());
+    svmManager->freeSVMAlloc(ptr);
+}
+
 TEST(SvmAllocationPropertiesTests, givenDifferentMemFlagsWhenGettingSvmAllocationPropertiesThenPropertiesAreCorrectlySet) {
     SVMAllocsManager::SvmAllocationProperties allocationProperties = MemObjHelper::getSvmAllocationProperties(0);
     EXPECT_FALSE(allocationProperties.coherent);

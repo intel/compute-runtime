@@ -13,10 +13,12 @@ enum InternalMemoryType : uint32_t {
     SVM = 0b1,
     DEVICE_UNIFIED_MEMORY = 0b10,
     HOST_UNIFIED_MEMORY = 0b100,
+    SHARED_UNIFIED_MEMORY = 0b1000
 };
 
 struct UnifiedMemoryControls {
     uint32_t generateMask();
     bool indirectDeviceAllocationsAllowed = false;
     bool indirectHostAllocationsAllowed = false;
+    bool indirectSharedAllocationsAllowed = false;
 };

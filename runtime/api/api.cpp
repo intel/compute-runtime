@@ -3988,7 +3988,8 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
 
     switch (paramName) {
     case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
-    case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL: {
+    case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL: {
         auto propertyValue = *reinterpret_cast<const cl_bool *>(paramValue);
         pKernel->setUnifiedMemoryProperty(paramName, propertyValue);
     } break;

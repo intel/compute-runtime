@@ -950,6 +950,10 @@ void Kernel::setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoVal
         this->unifiedMemoryControls.indirectHostAllocationsAllowed = infoValue;
         return;
     }
+    if (infoType == CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL) {
+        this->unifiedMemoryControls.indirectSharedAllocationsAllowed = infoValue;
+        return;
+    }
 }
 
 void Kernel::setUnifiedMemoryExecInfo(GraphicsAllocation *unifiedMemoryAllocation) {
@@ -1015,7 +1019,8 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     gtpinNotifyMakeResident(this, &commandStreamReceiver);
 
     if (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
-        unifiedMemoryControls.indirectHostAllocationsAllowed) {
+        unifiedMemoryControls.indirectHostAllocationsAllowed ||
+        unifiedMemoryControls.indirectSharedAllocationsAllowed) {
         this->getContext().getSVMAllocsManager()->makeInternalAllocationsResident(commandStreamReceiver, unifiedMemoryControls.generateMask());
     }
 }
