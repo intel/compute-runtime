@@ -247,7 +247,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
     }
 
-    CompletionStamp completionStamp;
+    CompletionStamp completionStamp = {Event::eventNotReady, taskLevel, 0};
     if (!blockQueue) {
         if (parentKernel) {
             processDeviceEnqueue(parentKernel, devQueueHw, multiDispatchInfo, hwTimeStamps, preemption, blocking);
@@ -293,7 +293,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 }
             }
         } else if (isCacheFlushCommand(commandType)) {
-            enqueueCommandWithoutKernel(
+            completionStamp = enqueueCommandWithoutKernel(
                 surfacesForResidency,
                 numSurfaceForResidency,
                 commandStream,
@@ -325,9 +325,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 eventBuilder.getEvent()->setStartTimeStamp();
             }
         }
-    } else {
-        CompletionStamp cmplStamp = {Event::eventNotReady, taskLevel, 0};
-        completionStamp = cmplStamp;
     }
     updateFromCompletionStamp(completionStamp);
 
