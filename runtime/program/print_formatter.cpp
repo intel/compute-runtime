@@ -7,7 +7,7 @@
 
 #include "print_formatter.h"
 
-#include "runtime/helpers/string.h"
+#include "core/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
 #include <iostream>

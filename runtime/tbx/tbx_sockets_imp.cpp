@@ -7,8 +7,8 @@
 
 #include "runtime/tbx/tbx_sockets_imp.h"
 
+#include "core/helpers/string.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/helpers/string.h"
 
 #ifdef WIN32
 #ifndef WIN32_LEAN_AND_MEAN

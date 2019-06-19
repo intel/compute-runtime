@@ -7,12 +7,12 @@
 
 #include "program.h"
 
+#include "core/helpers/string.h"
 #include "elf/writer.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_helper.h"
-#include "runtime/helpers/string.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/unified_memory_manager.h"
 

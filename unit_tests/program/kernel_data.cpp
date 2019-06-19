@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/string.h"
+#include "core/helpers/string.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
 #include "unit_tests/fixtures/kernel_data_fixture.h"

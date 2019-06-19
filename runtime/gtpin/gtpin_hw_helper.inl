@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/string.h"
 #include "runtime/gtpin/gtpin_hw_helper.h"
-#include "runtime/helpers/string.h"
 #include "runtime/kernel/kernel.h"
 
 #include "hw_cmds.h"

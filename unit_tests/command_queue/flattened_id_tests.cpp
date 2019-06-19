@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/string.h"
+#include "core/helpers/string.h"
 
 #include "gtest/gtest.h"
 

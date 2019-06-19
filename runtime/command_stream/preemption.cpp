@@ -7,10 +7,10 @@
 
 #include "runtime/command_stream/preemption.h"
 
+#include "core/helpers/string.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/dispatch_info.h"
-#include "runtime/helpers/string.h"
 #include "runtime/kernel/kernel.h"
 
 namespace NEO {

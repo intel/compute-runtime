@@ -7,9 +7,9 @@
 
 #include "runtime/accelerators/intel_accelerator.h"
 
+#include "core/helpers/string.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/get_info.h"
-#include "runtime/helpers/string.h"
 
 namespace NEO {
 

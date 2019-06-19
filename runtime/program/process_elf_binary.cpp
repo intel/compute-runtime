@@ -6,9 +6,9 @@
  */
 
 #include "common/compiler_support.h"
+#include "core/helpers/string.h"
 #include "elf/reader.h"
 #include "elf/writer.h"
-#include "runtime/helpers/string.h"
 
 #include "program.h"
 

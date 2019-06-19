@@ -7,11 +7,11 @@
 
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "test.h"
+#include <core/helpers/string.h>
 #include <runtime/compiler_interface/binary_cache.h>
 #include <runtime/helpers/aligned_memory.h>
 #include <runtime/helpers/hash.h>
 #include <runtime/helpers/hw_info.h>
-#include <runtime/helpers/string.h>
 #include <unit_tests/fixtures/device_fixture.h>
 #include <unit_tests/global_environment.h>
 #include <unit_tests/mocks/mock_context.h>

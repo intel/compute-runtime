@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "core/helpers/string.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/string.h"
 #include "runtime/kernel/grf_config.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/scheduler/scheduler_kernel.h"

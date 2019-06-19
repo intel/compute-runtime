@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/helpers/string.h"
 #include "runtime/api/dispatch.h"
-#include "runtime/helpers/string.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sharings/sharing_factory.h"
 

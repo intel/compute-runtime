@@ -7,8 +7,8 @@
 
 #include "runtime/sharings/gl/gl_sharing.h"
 
+#include "core/helpers/string.h"
 #include "runtime/context/context.h"
-#include "runtime/helpers/string.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/sharing_factory.h"

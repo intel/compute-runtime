@@ -10,7 +10,7 @@
 #include <cstring>
 
 // Need for linux compatibility with memcpy_s
-#include "runtime/helpers/string.h"
+#include "core/helpers/string.h"
 
 namespace CLElfLib {
 void CElfWriter::resolveBinary(ElfBinaryStorage &binary) {

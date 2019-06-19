@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/helpers/string.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/built_ins/built_ins.h"
@@ -13,7 +14,6 @@
 #include "runtime/helpers/dispatch_info_builder.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/hash.h"
-#include "runtime/helpers/string.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "test.h"

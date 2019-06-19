@@ -8,6 +8,7 @@
 #include "unit_tests/program/program_tests.h"
 
 #include "core/helpers/ptr_math.h"
+#include "core/helpers/string.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "elf/reader.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
@@ -17,7 +18,6 @@
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/hw_helper.h"
-#include "runtime/helpers/string.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/allocations_list.h"

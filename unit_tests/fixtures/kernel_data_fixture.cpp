@@ -7,8 +7,8 @@
 
 #include "unit_tests/fixtures/kernel_data_fixture.h"
 
+#include "core/helpers/string.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
 void KernelDataTest::buildAndDecode() {

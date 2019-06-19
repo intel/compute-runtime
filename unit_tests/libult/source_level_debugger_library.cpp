@@ -7,7 +7,7 @@
 
 #include "source_level_debugger_library.h"
 
-#include "runtime/helpers/string.h"
+#include "core/helpers/string.h"
 
 using namespace NEO;
 

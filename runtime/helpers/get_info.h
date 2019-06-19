@@ -11,7 +11,7 @@
 #include <cstring>
 
 // Need for linux compatibility with memcpy_s
-#include "runtime/helpers/string.h"
+#include "core/helpers/string.h"
 
 inline cl_int getInfo(void *destParamValue, size_t destParamValueSize,
                       const void *srcParamValue, size_t srcParamValueSize) {

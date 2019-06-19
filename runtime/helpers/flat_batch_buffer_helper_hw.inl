@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/string.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
-#include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_manager.h"
 
