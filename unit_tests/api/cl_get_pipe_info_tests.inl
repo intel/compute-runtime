@@ -16,7 +16,7 @@ typedef api_tests clGetPipeInfoTests;
 
 namespace ULT {
 
-TEST_F(clGetPipeInfoTests, packetSize) {
+TEST_F(clGetPipeInfoTests, GivenValidPipeWithPacketSizeOneWhenGettingPipeInfoThenPacketSizeReturnedIsOne) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -33,7 +33,7 @@ TEST_F(clGetPipeInfoTests, packetSize) {
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, maxPackets) {
+TEST_F(clGetPipeInfoTests, GivenValidPipeWithMaxPacketEqualTwentyWhenGettingPipeInfoThenMaxPacketReturnedIsTwenty) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -50,7 +50,7 @@ TEST_F(clGetPipeInfoTests, maxPackets) {
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, invalidParamName) {
+TEST_F(clGetPipeInfoTests, GivenInvalidParamNameWhenGettingPipeInfoThenClInvalidValueErrorIsReturned) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -65,7 +65,7 @@ TEST_F(clGetPipeInfoTests, invalidParamName) {
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, invalidMemoryObject) {
+TEST_F(clGetPipeInfoTests, GivenInvalidMemoryObjectWhenGettingPipeInfoThenClInvalidMemObjectErrorIsReturned) {
 
     cl_uint paramValue = 0;
     size_t paramValueRetSize = 0;
@@ -75,7 +75,7 @@ TEST_F(clGetPipeInfoTests, invalidMemoryObject) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clGetPipeInfoTests, paramValueIsNull) {
+TEST_F(clGetPipeInfoTests, GivenNullParamValueWhenGettingPipeInfoThenClSuccessIsReturned) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -90,7 +90,7 @@ TEST_F(clGetPipeInfoTests, paramValueIsNull) {
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, paramValueRetSizeIsNull) {
+TEST_F(clGetPipeInfoTests, GivenNullParamValueSizeRetWhenGettingPipeInfoThenClSuccessIsReturned) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -104,7 +104,7 @@ TEST_F(clGetPipeInfoTests, paramValueRetSizeIsNull) {
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, paramValueSizeTooSmall) {
+TEST_F(clGetPipeInfoTests, GivenParamValueSizeRetTooSmallWhenGettingPipeInfoThenClInvalidValueErrorIsReturned) {
     auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, pipe);
@@ -119,7 +119,7 @@ TEST_F(clGetPipeInfoTests, paramValueSizeTooSmall) {
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clGetPipeInfoTests, BufferInsteadOfPipe) {
+TEST_F(clGetPipeInfoTests, GivenBufferInsteadOfPipeWhenGettingPipeInfoThenClInvalidMemObjectErrorIsReturned) {
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 20, nullptr, &retVal);
 
     EXPECT_NE(nullptr, buffer);
