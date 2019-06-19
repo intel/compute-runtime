@@ -3443,7 +3443,19 @@ void *clSharedMemAllocINTEL(
 cl_int clMemFreeINTEL(
     cl_context context,
     const void *ptr) {
-    return CL_OUT_OF_HOST_MEMORY;
+
+    Context *neoContext = nullptr;
+    auto retVal = validateObjects(WithCastToInternal(context, &neoContext));
+
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
+    if (!neoContext->getSVMAllocsManager()->freeSVMAlloc(const_cast<void *>(ptr))) {
+        return CL_INVALID_VALUE;
+    }
+
+    return CL_SUCCESS;
 }
 
 cl_int clGetMemAllocInfoINTEL(

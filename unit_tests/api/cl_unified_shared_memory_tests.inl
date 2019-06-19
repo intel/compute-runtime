@@ -32,7 +32,8 @@ TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesH
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
     EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unifiedMemoryHostAllocation));
 
-    allocationsManager->freeSVMAlloc(unifiedMemoryHostAllocation);
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemoryHostAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClDeviceMemAllocINTELisCalledThenOutOfHostMemoryErrorIsReturned) {
@@ -47,9 +48,41 @@ TEST(clUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledThenOutOfHostM
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
 
-TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledThenOutOfHostMemoryErrorIsReturned) {
+TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithIncorrectContextThenReturnError) {
     auto retVal = clMemFreeINTEL(0, nullptr);
-    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithValidUmPointerThenMemoryIsFreed) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
+
+    auto allocationsManager = mockContext.getSVMAllocsManager();
+    EXPECT_EQ(1u, allocationsManager->getNumAllocs());
+
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemoryHostAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(0u, allocationsManager->getNumAllocs());
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithInvalidUmPointerThenMemoryIsNotFreed) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
+
+    auto allocationsManager = mockContext.getSVMAllocsManager();
+    EXPECT_EQ(1u, allocationsManager->getNumAllocs());
+
+    retVal = clMemFreeINTEL(&mockContext, ptrOffset(unifiedMemoryHostAllocation, 4));
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    EXPECT_EQ(1u, allocationsManager->getNumAllocs());
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemoryHostAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(0u, allocationsManager->getNumAllocs());
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledThenOutOfHostMemoryErrorIsReturned) {

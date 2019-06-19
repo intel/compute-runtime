@@ -77,7 +77,7 @@ class SVMAllocsManager {
     void *createSVMAlloc(size_t size, const SvmAllocationProperties svmProperties);
     void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties svmProperties);
     SvmAllocationData *getSVMAlloc(const void *ptr);
-    void freeSVMAlloc(void *ptr);
+    bool freeSVMAlloc(void *ptr);
     size_t getNumAllocs() const { return SVMAllocs.getNumAllocs(); }
 
     void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);

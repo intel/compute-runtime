@@ -118,7 +118,7 @@ SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {
     return SVMAllocs.get(ptr);
 }
 
-void SVMAllocsManager::freeSVMAlloc(void *ptr) {
+bool SVMAllocsManager::freeSVMAlloc(void *ptr) {
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
         std::unique_lock<SpinLock> lock(mtx);
@@ -127,7 +127,9 @@ void SVMAllocsManager::freeSVMAlloc(void *ptr) {
         } else {
             freeSvmAllocationWithDeviceStorage(svmData);
         }
+        return true;
     }
+    return false;
 }
 
 void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties) {
