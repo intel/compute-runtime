@@ -766,6 +766,44 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
     return image;
 }
 
+cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
+                                                    cl_mem_properties_intel *properties,
+                                                    const cl_image_format *imageFormat,
+                                                    const cl_image_desc *imageDesc,
+                                                    void *hostPtr,
+                                                    cl_int *errcodeRet) {
+    cl_int retVal = CL_SUCCESS;
+
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("cl_context", context,
+                   "cl_mem_properties_intel", properties,
+                   "cl_image_format.channel_data_type", imageFormat->image_channel_data_type,
+                   "cl_image_format.channel_order", imageFormat->image_channel_order,
+                   "cl_image_desc.width", imageDesc->image_width,
+                   "cl_image_desc.heigth", imageDesc->image_height,
+                   "cl_image_desc.depth", imageDesc->image_depth,
+                   "cl_image_desc.type", imageDesc->image_type,
+                   "cl_image_desc.array_size", imageDesc->image_array_size,
+                   "hostPtr", hostPtr);
+
+    cl_mem image = nullptr;
+    Context *pContext = nullptr;
+    MemoryProperties propertiesStruct{};
+    retVal = validateObjects(WithCastToInternal(context, &pContext));
+
+    if (retVal == CL_SUCCESS) {
+        if (MemObjHelper::parseMemoryProperties(properties, propertiesStruct)) {
+            image = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, imageDesc, hostPtr, retVal);
+        } else {
+            retVal = CL_INVALID_VALUE;
+        }
+    }
+
+    ErrorCodeHelper err(errcodeRet, retVal);
+    DBG_LOG_INPUTS("image", image);
+    return image;
+}
+
 // deprecated OpenCL 1.1
 cl_mem CL_API_CALL clCreateImage2D(cl_context context,
                                    cl_mem_flags flags,
@@ -3656,6 +3694,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clRetainAcceleratorINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clReleaseAcceleratorINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clCreateBufferWithPropertiesINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clCreateImageWithPropertiesINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clAddCommentINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueVerifyMemoryINTEL);
 

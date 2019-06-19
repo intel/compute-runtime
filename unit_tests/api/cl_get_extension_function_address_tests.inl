@@ -58,6 +58,11 @@ TEST_F(clGetExtensionFunctionAddressTests, GivenClCreateBufferWithPropertiesINTE
     EXPECT_EQ(functionPointer, reinterpret_cast<void *>(clCreateBufferWithPropertiesINTEL));
 }
 
+TEST_F(clGetExtensionFunctionAddressTests, GivenClCreateImageWithPropertiesINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto functionPointer = clGetExtensionFunctionAddress("clCreateImageWithPropertiesINTEL");
+    EXPECT_EQ(functionPointer, reinterpret_cast<void *>(clCreateImageWithPropertiesINTEL));
+}
+
 TEST_F(clGetExtensionFunctionAddressTests, givenClAddCommentToAubIntelAsInputWhenFunctionIsCalledThenProperPointerIsReturned) {
     auto functionPointer = clGetExtensionFunctionAddress("clAddCommentINTEL");
     EXPECT_EQ(functionPointer, reinterpret_cast<void *>(clAddCommentINTEL));

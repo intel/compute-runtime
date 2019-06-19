@@ -144,6 +144,14 @@ cl_mem CL_API_CALL clCreateImage(
     void *hostPtr,
     cl_int *errcodeRet);
 
+cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(
+    cl_context context,
+    cl_mem_properties_intel *properties,
+    const cl_image_format *imageFormat,
+    const cl_image_desc *imageDesc,
+    void *hostPtr,
+    cl_int *errcodeRet);
+
 // deprecated OpenCL 1.1
 cl_mem CL_API_CALL clCreateImage2D(
     cl_context context,
