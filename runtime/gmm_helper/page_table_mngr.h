@@ -16,7 +16,7 @@ class GmmPageTableMngr {
   public:
     MOCKABLE_VIRTUAL ~GmmPageTableMngr();
 
-    static GmmPageTableMngr *create(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
+    static GmmPageTableMngr *create(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
 
     MOCKABLE_VIRTUAL GMM_STATUS initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) {
         return pageTableManager->InitContextAuxTableRegister(initialBBHandle, engineType);
@@ -29,11 +29,14 @@ class GmmPageTableMngr {
     MOCKABLE_VIRTUAL GMM_STATUS updateAuxTable(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable) {
         return pageTableManager->UpdateAuxTable(ddiUpdateAuxTable);
     }
+    MOCKABLE_VIRTUAL void setCsrHandle(void *csrHandle) {
+        pageTableManager->GmmSetCsrHandle(csrHandle);
+    }
 
   protected:
     GmmPageTableMngr() = default;
 
-    GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
+    GmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
     GMM_CLIENT_CONTEXT *clientContext = nullptr;
     GMM_PAGETABLE_MGR *pageTableManager = nullptr;
 };

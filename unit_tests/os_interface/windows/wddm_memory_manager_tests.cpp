@@ -36,9 +36,8 @@ void WddmMemoryManagerFixture::SetUp() {
 
     wddm = static_cast<WddmMock *>(Wddm::createWddm());
     if (platformDevices[0]->capabilityTable.ftrRenderCompressedBuffers || platformDevices[0]->capabilityTable.ftrRenderCompressedImages) {
-        GMM_DEVICE_CALLBACKS_INT dummyDeviceCallbacks = {};
         GMM_TRANSLATIONTABLE_CALLBACKS dummyTTCallbacks = {};
-        wddm->resetPageTableManager(GmmPageTableMngr::create(&dummyDeviceCallbacks, 0, &dummyTTCallbacks));
+        wddm->resetPageTableManager(GmmPageTableMngr::create(0, &dummyTTCallbacks));
     }
     EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
     constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;

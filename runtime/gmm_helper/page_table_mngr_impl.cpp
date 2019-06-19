@@ -17,9 +17,9 @@ GmmPageTableMngr::~GmmPageTableMngr() {
     }
 }
 
-GmmPageTableMngr::GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
+GmmPageTableMngr::GmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
     clientContext = GmmHelper::getClientContext()->getHandle();
-    pageTableManager = clientContext->CreatePageTblMgrObject(deviceCb, translationTableCb, translationTableFlags);
+    pageTableManager = clientContext->CreatePageTblMgrObject(translationTableCb, translationTableFlags);
 }
 
 } // namespace NEO

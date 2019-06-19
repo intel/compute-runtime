@@ -16,8 +16,8 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
   public:
     MockGmmPageTableMngr() = default;
 
-    MockGmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb)
-        : deviceCb(*deviceCb), translationTableFlags(translationTableFlags), translationTableCb(*translationTableCb){};
+    MockGmmPageTableMngr(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb)
+        : translationTableFlags(translationTableFlags), translationTableCb(*translationTableCb){};
 
     MOCK_METHOD2(initContextAuxTableRegister, GMM_STATUS(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType));
 
@@ -25,7 +25,11 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
 
     MOCK_METHOD1(updateAuxTable, GMM_STATUS(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable));
 
-    GMM_DEVICE_CALLBACKS_INT deviceCb = {};
+    void setCsrHandle(void *csrHandle) override;
+
+    uint32_t setCsrHanleCalled = 0;
+    void *passedCsrHandle = nullptr;
+
     GMM_TRANSLATIONTABLE_CALLBACKS translationTableCb = {};
     unsigned int translationTableFlags = 0;
 };

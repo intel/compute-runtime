@@ -35,6 +35,7 @@ template <typename GfxFamily>
 WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment)
     : BaseClass(executionEnvironment) {
 
+    notifyAubCaptureImpl = DeviceCallbacks<GfxFamily>::notifyAubCapture;
     this->wddm = executionEnvironment.osInterface->get()->getWddm();
     this->osInterface = executionEnvironment.osInterface.get();
 
@@ -139,34 +140,11 @@ bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSt
 
 template <typename GfxFamily>
 GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager() {
-    GMM_DEVICE_CALLBACKS_INT deviceCallbacks = {};
     GMM_TRANSLATIONTABLE_CALLBACKS ttCallbacks = {};
-    auto gdi = wddm->getGdi();
+    ttCallbacks.pfWriteL3Adr = TTCallbacks<GfxFamily>::writeL3Address;
 
-    // clang-format off
-    deviceCallbacks.Adapter.KmtHandle         = wddm->getAdapter();
-    deviceCallbacks.hDevice.KmtHandle         = wddm->getDevice();
-    deviceCallbacks.hCsr            = static_cast<CommandStreamReceiverHw<GfxFamily> *>(this);
-    deviceCallbacks.PagingQueue     = wddm->getPagingQueue();
-    deviceCallbacks.PagingFence     = wddm->getPagingQueueSyncObject();
-
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnAllocate     = gdi->createAllocation;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnDeallocate   = gdi->destroyAllocation;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA     = gdi->mapGpuVirtualAddress;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMakeResident = gdi->makeResident;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEvict        = gdi->evict;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnReserveGPUVA = gdi->reserveGpuVirtualAddress;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnUpdateGPUVA  = gdi->updateGpuVirtualAddress;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnWaitFromCpu  = gdi->waitForSynchronizationObjectFromCpu;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnLock         = gdi->lock2;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnUnLock       = gdi->unlock2;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEscape       = gdi->escape;
-    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = DeviceCallbacks<GfxFamily>::notifyAubCapture;
-
-    ttCallbacks.pfWriteL3Adr        = TTCallbacks<GfxFamily>::writeL3Address;
-    // clang-format on
-
-    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(&deviceCallbacks, TT_TYPE::TRTT | TT_TYPE::AUXTT, &ttCallbacks);
+    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(TT_TYPE::TRTT | TT_TYPE::AUXTT, &ttCallbacks);
+    gmmPageTableMngr->setCsrHandle(this);
     this->wddm->resetPageTableManager(gmmPageTableMngr);
     return gmmPageTableMngr;
 }

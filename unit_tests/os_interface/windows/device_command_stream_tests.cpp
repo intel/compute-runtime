@@ -855,38 +855,14 @@ HWTEST_P(WddmCsrCompressionParameterizedTest, givenEnabledCompressionWhenInitial
     ASSERT_NE(nullptr, myMockWddm->getPageTableManager());
 
     auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
+    EXPECT_EQ(1u, mockMngr->setCsrHanleCalled);
+    EXPECT_EQ(&mockWddmCsr, mockMngr->passedCsrHandle);
 
-    GMM_DEVICE_CALLBACKS_INT expectedDeviceCb = {};
     GMM_TRANSLATIONTABLE_CALLBACKS expectedTTCallbacks = {};
     unsigned int expectedFlags = (TT_TYPE::TRTT | TT_TYPE::AUXTT);
-    auto myGdi = myMockWddm->getGdi();
-    // clang-format off
-    expectedDeviceCb.Adapter.KmtHandle = myMockWddm->getAdapter();
-    expectedDeviceCb.hDevice.KmtHandle = myMockWddm->getDevice();
-    expectedDeviceCb.hCsr = &mockWddmCsr;
-    expectedDeviceCb.PagingQueue = myMockWddm->getPagingQueue();
-    expectedDeviceCb.PagingFence = myMockWddm->getPagingQueueSyncObject();
-
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnAllocate = myGdi->createAllocation;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnDeallocate = myGdi->destroyAllocation;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA = myGdi->mapGpuVirtualAddress;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMakeResident = myGdi->makeResident;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnEvict = myGdi->evict;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnReserveGPUVA = myGdi->reserveGpuVirtualAddress;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnUpdateGPUVA = myGdi->updateGpuVirtualAddress;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnWaitFromCpu = myGdi->waitForSynchronizationObjectFromCpu;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnLock = myGdi->lock2;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnUnLock = myGdi->unlock2;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnEscape = myGdi->escape;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = DeviceCallbacks<FamilyType>::notifyAubCapture;
 
     expectedTTCallbacks.pfWriteL3Adr = TTCallbacks<FamilyType>::writeL3Address;
-    // clang-format on
 
-    EXPECT_TRUE(memcmp(&expectedDeviceCb, &mockMngr->deviceCb, sizeof(GMM_DEVICE_CALLBACKS_INT)) == 0);
-    EXPECT_TRUE(memcmp(&expectedDeviceCb.Adapter, &mockMngr->deviceCb.Adapter, sizeof(GMM_HANDLE_EXT)) == 0);
-    EXPECT_TRUE(memcmp(&expectedDeviceCb.hDevice, &mockMngr->deviceCb.hDevice, sizeof(GMM_HANDLE_EXT)) == 0);
-    EXPECT_TRUE(memcmp(&expectedDeviceCb.DevCbPtrs.KmtCbPtrs, &mockMngr->deviceCb.DevCbPtrs.KmtCbPtrs, sizeof(GMM_DEVICE_CB_PTRS::KmtCbPtrs)) == 0);
     EXPECT_TRUE(memcmp(&expectedTTCallbacks, &mockMngr->translationTableCb, sizeof(GMM_TRANSLATIONTABLE_CALLBACKS)) == 0);
     EXPECT_TRUE(memcmp(&expectedFlags, &mockMngr->translationTableFlags, sizeof(unsigned int)) == 0);
 }

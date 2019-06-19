@@ -10,6 +10,7 @@
 
 namespace NEO {
 
+static long(__stdcall *notifyAubCaptureImpl)(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate) = nullptr;
 template <typename GfxFamily>
 struct DeviceCallbacks {
     static long __stdcall notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate);

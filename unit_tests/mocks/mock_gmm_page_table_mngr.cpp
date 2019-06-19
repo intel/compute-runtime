@@ -10,11 +10,15 @@
 namespace NEO {
 using namespace ::testing;
 
-GmmPageTableMngr *GmmPageTableMngr::create(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-    auto pageTableMngr = new ::testing::NiceMock<MockGmmPageTableMngr>(deviceCb, translationTableFlags, translationTableCb);
+GmmPageTableMngr *GmmPageTableMngr::create(unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
+    auto pageTableMngr = new ::testing::NiceMock<MockGmmPageTableMngr>(translationTableFlags, translationTableCb);
     ON_CALL(*pageTableMngr, initContextAuxTableRegister(_, _)).WillByDefault(Return(GMM_SUCCESS));
     ON_CALL(*pageTableMngr, initContextTRTableRegister(_, _)).WillByDefault(Return(GMM_SUCCESS));
     ON_CALL(*pageTableMngr, updateAuxTable(_)).WillByDefault(Return(GMM_SUCCESS));
     return pageTableMngr;
+}
+void MockGmmPageTableMngr::setCsrHandle(void *csrHandle) {
+    passedCsrHandle = csrHandle;
+    setCsrHanleCalled++;
 }
 } // namespace NEO
