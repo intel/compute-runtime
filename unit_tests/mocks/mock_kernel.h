@@ -300,6 +300,7 @@ class MockKernelWithInternals {
             kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0;
             kernelInfo.kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(uintptr_t);
             mockKernel->setKernelArguments(defaultKernelArguments);
+            mockKernel->kernelArgRequiresCacheFlush.resize(1);
         }
     }
     ~MockKernelWithInternals() {

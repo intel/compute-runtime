@@ -3423,9 +3423,18 @@ void *clDeviceMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
-    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
-    *errcodeRet = retVal;
-    return nullptr;
+    Context *neoContext = nullptr;
+
+    ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
+
+    auto retVal = validateObjects(WithCastToInternal(context, &neoContext));
+
+    if (retVal != CL_SUCCESS) {
+        err.set(retVal);
+        return nullptr;
+    }
+
+    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY));
 }
 
 void *clSharedMemAllocINTEL(
@@ -3435,9 +3444,18 @@ void *clSharedMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
-    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
-    *errcodeRet = retVal;
-    return nullptr;
+    Context *neoContext = nullptr;
+
+    ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
+
+    auto retVal = validateObjects(WithCastToInternal(context, &neoContext));
+
+    if (retVal != CL_SUCCESS) {
+        err.set(retVal);
+        return nullptr;
+    }
+
+    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY));
 }
 
 cl_int clMemFreeINTEL(
@@ -3472,7 +3490,7 @@ cl_int clSetKernelArgMemPointerINTEL(
     cl_kernel kernel,
     cl_uint argIndex,
     const void *argValue) {
-    return CL_OUT_OF_HOST_MEMORY;
+    return clSetKernelArgSVMPointer(kernel, argIndex, argValue);
 }
 
 cl_int clEnqueueMemsetINTEL(
