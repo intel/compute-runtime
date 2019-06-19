@@ -17,6 +17,8 @@ class SchedulerKernel : public Kernel {
     static constexpr const char *schedulerName = "SchedulerParallel20";
     friend Kernel;
 
+    ~SchedulerKernel() override = default;
+
     size_t getLws() {
         return PARALLEL_SCHEDULER_HWTHREADS_IN_HW_GROUP20 * PARALLEL_SCHEDULER_COMPILATION_SIZE_20;
     }
