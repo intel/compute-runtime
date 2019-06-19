@@ -271,9 +271,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
     case GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR:
     case GraphicsAllocation::AllocationType::FILL_PATTERN:
-    case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
     case GraphicsAllocation::AllocationType::MCS:
-    case GraphicsAllocation::AllocationType::PIPE:
     case GraphicsAllocation::AllocationType::PREEMPTION:
     case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
     case GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER:

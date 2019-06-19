@@ -172,8 +172,10 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     static bool isCpuAccessRequired(AllocationType allocationType) {
         return allocationType == AllocationType::COMMAND_BUFFER ||
                allocationType == AllocationType::CONSTANT_SURFACE ||
+               allocationType == AllocationType::GLOBAL_SURFACE ||
                allocationType == AllocationType::INTERNAL_HEAP ||
                allocationType == AllocationType::LINEAR_STREAM ||
+               allocationType == AllocationType::PIPE ||
                allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER;
     }
     void *getReservedAddressPtr() const {
