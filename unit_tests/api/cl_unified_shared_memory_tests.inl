@@ -6,13 +6,33 @@
  */
 
 #include "runtime/api/api.h"
+#include "runtime/memory_manager/svm_memory_manager.h"
+#include "unit_tests/mocks/mock_context.h"
 
 using namespace NEO;
 
-TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocINTELisCalledThenOutOfHostMemoryErrorIsReturned) {
+TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocINTELisCalledWithoutContextThenInvalidContextIsReturned) {
     cl_int retVal = CL_SUCCESS;
-    clHostMemAllocINTEL(0, nullptr, 0, 0, &retVal);
-    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    auto ptr = clHostMemAllocINTEL(0, nullptr, 0, 0, &retVal);
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesHostUnifiedMemoryAllocation) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemoryHostAllocation);
+
+    auto allocationsManager = mockContext.getSVMAllocsManager();
+    EXPECT_EQ(1u, allocationsManager->getNumAllocs());
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryHostAllocation);
+    EXPECT_EQ(graphicsAllocation->size, 4u);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unifiedMemoryHostAllocation));
+
+    allocationsManager->freeSVMAlloc(unifiedMemoryHostAllocation);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClDeviceMemAllocINTELisCalledThenOutOfHostMemoryErrorIsReturned) {

@@ -3363,9 +3363,19 @@ void *clHostMemAllocINTEL(
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
-    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
-    *errcodeRet = retVal;
-    return nullptr;
+
+    Context *neoContext = nullptr;
+
+    ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
+
+    auto retVal = validateObjects(WithCastToInternal(context, &neoContext));
+
+    if (retVal != CL_SUCCESS) {
+        err.set(retVal);
+        return nullptr;
+    }
+
+    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY));
 }
 
 void *clDeviceMemAllocINTEL(
