@@ -109,7 +109,7 @@ cl_int Pipe::getPipeInfo(cl_image_info paramName,
 }
 
 void Pipe::setPipeArg(void *memory, uint32_t patchSize) {
-    patchWithRequiredSize(memory, patchSize, (uintptr_t)getCpuAddress());
+    patchWithRequiredSize(memory, patchSize, static_cast<uintptr_t>(getGraphicsAllocation()->getGpuAddressToPatch()));
 }
 
 Pipe::~Pipe() = default;
