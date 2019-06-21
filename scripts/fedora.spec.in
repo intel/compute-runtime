@@ -1,6 +1,6 @@
 %global neo_commit_id __NEO_COMMIT_ID__
 %global gmmlib_version_required 19.2.1
-%global igc_version_required 1.0.9-2190
+%global igc_version_required 1.0.9-2200
 
 Name: intel-opencl
 Version: __NEO_PACKAGE_VERSION__
