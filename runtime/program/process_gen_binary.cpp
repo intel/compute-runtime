@@ -899,7 +899,7 @@ cl_int Program::parseProgramScopePatchList() {
                     if (globalSurface->is32BitAllocation()) {
                         *reinterpret_cast<uint32_t *>(pPtr) += static_cast<uint32_t>(globalSurface->getGpuAddressToPatch());
                     } else {
-                        *reinterpret_cast<uintptr_t *>(pPtr) += reinterpret_cast<uintptr_t>(globalSurface->getUnderlyingBuffer());
+                        *reinterpret_cast<uintptr_t *>(pPtr) += static_cast<uintptr_t>(globalSurface->getGpuAddressToPatch());
                     }
                 } else {
                     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Program::parseProgramScopePatchList. Unhandled Data parameter: %d\n", pPatch->Token);
@@ -922,7 +922,7 @@ cl_int Program::parseProgramScopePatchList() {
                     if (constantSurface->is32BitAllocation()) {
                         *reinterpret_cast<uint32_t *>(pPtr) += static_cast<uint32_t>(constantSurface->getGpuAddressToPatch());
                     } else {
-                        *reinterpret_cast<uintptr_t *>(pPtr) += reinterpret_cast<uintptr_t>(constantSurface->getUnderlyingBuffer());
+                        *reinterpret_cast<uintptr_t *>(pPtr) += static_cast<uintptr_t>(constantSurface->getGpuAddressToPatch());
                     }
 
                 } else {
