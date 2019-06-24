@@ -99,7 +99,7 @@ endif()
 
 add_subdirectories()
 
-add_library(igdrcl_mocks STATIC ${IGDRCL_SRCS_tests_mocks})
+add_library(igdrcl_mocks STATIC EXCLUDE_FROM_ALL ${IGDRCL_SRCS_tests_mocks})
 
 if(WIN32)
   target_include_directories(igdrcl_mocks PUBLIC

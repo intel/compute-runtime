@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-add_library(${BUILTINS_BINARIES_LIB_NAME} OBJECT builtins_binary.cmake)
+add_library(${BUILTINS_BINARIES_LIB_NAME} OBJECT EXCLUDE_FROM_ALL builtins_binary.cmake)
 
 # Add builtins sources
 add_subdirectory(registry)

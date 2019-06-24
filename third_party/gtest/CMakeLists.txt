@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-add_library(gmock-gtest STATIC
+add_library(gmock-gtest STATIC EXCLUDE_FROM_ALL
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/gmock-gtest-all.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/gtest/gtest.h

@@ -81,7 +81,7 @@ set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
 )
 
 if(DEFINED AUB_STREAM_DIR)
-  add_library (aub_stream_mock_lib OBJECT
+  add_library (aub_stream_mock_lib OBJECT EXCLUDE_FROM_ALL
     ${IGDRCL_SOURCE_DIR}/unit_tests/aub_stream_mocks/aub_stream_interface_mock.cpp
   )
   list(APPEND NEO_IGDRCL_TESTS__TARGET_OBJECTS
@@ -482,7 +482,7 @@ elseif(USE_ULT_PCH)
   set(UltPchBinaryGch "${UltPchHeaderInBuildDir}.gch")
   set(UltPchBinary "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/igdrcl_ult_pch.dir/igdrcl_tests_pch.h.o")
 
-  add_library(igdrcl_ult_pch STATIC ${UltPchHeader})
+  add_library(igdrcl_ult_pch STATIC EXCLUDE_FROM_ALL ${UltPchHeader})
   add_dependencies(igdrcl_tests igdrcl_ult_pch)
 
   target_include_directories(igdrcl_ult_pch PRIVATE

@@ -72,7 +72,7 @@ endmacro()
 
 apply_macro_for_each_gen("SUPPORTED")
 
-add_library(${SCHEDULER_BINARY_LIB_NAME} OBJECT CMakeLists.txt)
+add_library(${SCHEDULER_BINARY_LIB_NAME} OBJECT EXCLUDE_FROM_ALL CMakeLists.txt)
 
 if(COMPILE_BUILT_INS)
   target_sources(${SCHEDULER_BINARY_LIB_NAME} PUBLIC ${GENERATED_SCHEDULER_CPPS})

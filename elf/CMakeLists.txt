@@ -1,10 +1,10 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-add_library(elflib STATIC
+add_library(elflib STATIC EXCLUDE_FROM_ALL
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/reader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/reader.h

@@ -1,11 +1,11 @@
 #
-# Copyright (C) 2018 Intel Corporation
+# Copyright (C) 2018-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 file(GLOB_RECURSE SHARING_ENABLE_CPPS enable*.cpp)
-add_library (${SHARINGS_ENABLE_LIB_NAME} OBJECT ${SHARING_ENABLE_CPPS})
+add_library (${SHARINGS_ENABLE_LIB_NAME} OBJECT EXCLUDE_FROM_ALL ${SHARING_ENABLE_CPPS})
 set_target_properties (${SHARINGS_ENABLE_LIB_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties (${SHARINGS_ENABLE_LIB_NAME} PROPERTIES FOLDER "opencl runtime")
 

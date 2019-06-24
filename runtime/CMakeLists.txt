@@ -23,7 +23,7 @@ hide_subdir(builtin_kernels_simulation)
 hide_subdir(dll)
 hide_subdir(instrumentation)
 
-add_library(${NEO_STATIC_LIB_NAME} STATIC
+add_library(${NEO_STATIC_LIB_NAME} STATIC EXCLUDE_FROM_ALL
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/enable_gens.cmake
   $<TARGET_OBJECTS:${BIKSIM_LIB_NAME}>

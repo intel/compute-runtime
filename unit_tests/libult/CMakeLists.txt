@@ -41,7 +41,7 @@ set(IGDRCL_SRCS_LIB_ULT_WINDOWS
   ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/mock_environment_variables.cpp
 )
 
-add_library (igdrcl_libult OBJECT
+add_library (igdrcl_libult OBJECT EXCLUDE_FROM_ALL
   ${IGDRCL_SRCS_LIB_ULT}
   ${IGDRCL_SRCS_ENABLE_TESTED_HW}
 )
@@ -53,7 +53,7 @@ set(IGDRCL_SRCS_LIB_ULT_CS
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_command_stream.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_command_stream.h
 )
-add_library (igdrcl_libult_cs OBJECT
+add_library (igdrcl_libult_cs OBJECT EXCLUDE_FROM_ALL
   ${IGDRCL_SRCS_LIB_ULT_CS}
 )
 target_include_directories(igdrcl_libult PRIVATE
@@ -88,7 +88,7 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
   ${IGDRCL_SOURCE_DIR}/unit_tests/ult_config_listener.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/ult_config_listener.h
 )
-add_library (igdrcl_libult_env OBJECT
+add_library (igdrcl_libult_env OBJECT EXCLUDE_FROM_ALL
   ${IGDRCL_SRCS_LIB_ULT_ENV}
 )
 

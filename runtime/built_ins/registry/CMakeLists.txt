@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-add_library(${BUILTINS_SOURCES_LIB_NAME} OBJECT
+add_library(${BUILTINS_SOURCES_LIB_NAME} OBJECT EXCLUDE_FROM_ALL
   CMakeLists.txt
   built_ins_registry.h
   register_copy_kernels_source.cpp
