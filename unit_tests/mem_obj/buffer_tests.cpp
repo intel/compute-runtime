@@ -6,6 +6,7 @@
  */
 
 #include "runtime/command_queue/command_queue_hw.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/event/user_event.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
@@ -743,51 +744,105 @@ HWTEST_F(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDontTakeBcsPath)
     EXPECT_EQ(2u, bcsCsr->blitBufferCalled);
 }
 
-HWTEST_F(BcsBufferTests, givenInputDependenciesWhenEnqueueBlitCalledThenProgramSemaphoresBeforeBlitCommand) {
+HWTEST_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
-    auto csr0 = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
-    auto &csr1Engine = device->getEngine(aub_stream::EngineType::ENGINE_RCS, true);
-    auto csr1 = csr1Engine.commandStreamReceiver;
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
 
-    auto cmdQ0 = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    auto cmdQ1 = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
-    cmdQ1->engine = &csr1Engine;
+    auto queueCsr = cmdQ->engine->commandStreamReceiver;
+    auto initialTaskCount = queueCsr->peekTaskCount();
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
     buffer->forceDisallowCPUCopy = true;
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
-    const cl_uint numEvents = 2;
-    MockTimestampPacketContainer timestamps[numEvents] = {{*csr0->getTimestampPacketAllocator(), 1}, {*csr1->getTimestampPacketAllocator(), 1}};
-
-    Event event0(cmdQ0.get(), 0, 0, 0);
-    event0.addTimestampPacketNodes(timestamps[0]);
-    Event event1(cmdQ1.get(), 0, 0, 0);
-    event1.addTimestampPacketNodes(timestamps[1]);
-    cl_event waitlist[numEvents] = {&event0, &event1}; // dependencies from different CSRs
-
-    cmdQ0->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, numEvents, waitlist, nullptr);
+    cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
+    auto timestampPacketNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(csr0->commandStream);
+    hwParser.parseCommands<FamilyType>(*cmdQ->peekCommandStream());
 
     uint32_t semaphoresCount = 0;
-    bool blitCmdFound = false;
+    uint32_t miAtomicsCount = 0;
     for (auto &cmd : hwParser.cmdList) {
         if (auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd)) {
-            EXPECT_FALSE(blitCmdFound);
-            auto dataAddress = timestamps[semaphoresCount].peekNodes().at(0)->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
-            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
             semaphoresCount++;
-        } else if (genCmdCast<typename FamilyType::XY_COPY_BLT *>(cmd)) {
-            blitCmdFound = true;
-            EXPECT_EQ(2u, semaphoresCount);
+            auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(0u, miAtomicsCount);
+
+        } else if (auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(cmd)) {
+            miAtomicsCount++;
+            auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, implicitDependenciesCount);
+            EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT, miAtomicCmd->getAtomicOpcode());
+            EXPECT_EQ(static_cast<uint32_t>(dataAddress), miAtomicCmd->getMemoryAddress());
+            EXPECT_EQ(static_cast<uint32_t>(dataAddress >> 32), miAtomicCmd->getMemoryAddressHigh());
+            EXPECT_EQ(1u, semaphoresCount);
         }
     }
-    EXPECT_EQ(2u, semaphoresCount);
-    EXPECT_TRUE(blitCmdFound);
+    EXPECT_EQ(1u, semaphoresCount);
+    EXPECT_EQ(1u, miAtomicsCount);
+    EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
+}
+
+HWTEST_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandStreamThenAddSemaphoreWait) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+
+    auto queueCsr = cmdQ->engine->commandStreamReceiver;
+    auto initialTaskCount = queueCsr->peekTaskCount();
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    buffer->forceDisallowCPUCopy = true;
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
+    auto timestampPacketNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ->peekCommandStream());
+
+    uint32_t semaphoresCount = 0;
+    uint32_t miAtomicsCount = 0;
+    for (auto &cmd : hwParser.cmdList) {
+        if (auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd)) {
+            semaphoresCount++;
+            auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(0u, miAtomicsCount);
+
+        } else if (auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(cmd)) {
+            miAtomicsCount++;
+            auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, implicitDependenciesCount);
+            EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT, miAtomicCmd->getAtomicOpcode());
+            EXPECT_EQ(static_cast<uint32_t>(dataAddress), miAtomicCmd->getMemoryAddress());
+            EXPECT_EQ(static_cast<uint32_t>(dataAddress >> 32), miAtomicCmd->getMemoryAddressHigh());
+            EXPECT_EQ(1u, semaphoresCount);
+        }
+    }
+    EXPECT_EQ(1u, semaphoresCount);
+    EXPECT_EQ(1u, miAtomicsCount);
+    EXPECT_EQ(initialTaskCount + 1, queueCsr->peekTaskCount());
+}
+
+HWTEST_F(BcsBufferTests, givenReadOrWriteBufferOperationWithoutKernelWhenEstimatingCommandsSizeThenReturnCorrectValue) {
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+    CsrDependencies csrDependencies;
+    MultiDispatchInfo multiDispatchInfo;
+
+    auto readBufferCmdsSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_READ_BUFFER, csrDependencies, false, false,
+                                                                                   *cmdQ, multiDispatchInfo);
+    auto writeBufferCmdsSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_WRITE_BUFFER, csrDependencies, false, false,
+                                                                                    *cmdQ, multiDispatchInfo);
+    auto expectedSize = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>();
+
+    EXPECT_EQ(expectedSize, readBufferCmdsSize);
+    EXPECT_EQ(expectedSize, writeBufferCmdsSize);
 }
 
 HWTEST_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenProgramMiFlushDwWithDataWrite) {

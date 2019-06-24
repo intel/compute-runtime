@@ -439,10 +439,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void *enqueueMapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueUnmapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest);
 
-    cl_int enqueueReadWriteBufferWithBlitTransfer(cl_command_type commandType, Buffer *buffer, bool blocking,
-                                                  size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
-                                                  const cl_event *eventWaitList, cl_event *event);
-
     virtual void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType, bool updateQueueTaskLevel){};
 
     MOCKABLE_VIRTUAL void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,

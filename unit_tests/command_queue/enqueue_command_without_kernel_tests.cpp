@@ -49,7 +49,7 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenE
     std::unique_ptr<MockCommandQueueWithCacheFlush<FamilyType>> mockCmdQ(new MockCommandQueueWithCacheFlush<FamilyType>(context, pDevice, 0));
 
     mockCmdQ->commandRequireCacheFlush = true;
-    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, nullptr, 0, nullptr, nullptr);
+    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, false, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(mockCmdQ->getCS(0).getUsed(), 0u);
 }
 HWTEST_F(EnqueueHandlerTest, givenTimestampPacketWriteEnabledAndCommandWithCacheFlushWhenEnqueueingHandlerThenObtainNewStamp) {
@@ -63,7 +63,7 @@ HWTEST_F(EnqueueHandlerTest, givenTimestampPacketWriteEnabledAndCommandWithCache
 
     cl_event event;
 
-    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, nullptr, 0, nullptr, &event);
+    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, false, nullptr, 0, nullptr, &event);
     auto node1 = mockCmdQ->timestampPacketContainer->peekNodes().at(0);
     EXPECT_NE(nullptr, node1);
     clReleaseEvent(event);
@@ -79,7 +79,7 @@ HWTEST_F(EnqueueHandlerTest, givenTimestampPacketWriteDisabledAndCommandWithCach
 
     cl_event event;
 
-    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, nullptr, 0, nullptr, &event);
+    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, false, nullptr, 0, nullptr, &event);
     auto container = mockCmdQ->timestampPacketContainer.get();
     EXPECT_EQ(nullptr, container);
     clReleaseEvent(event);

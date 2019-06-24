@@ -111,13 +111,18 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
+    static size_t getRequiredCmdStreamSizeForNodeDependency() {
+        return sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT) + sizeof(typename GfxFamily::MI_ATOMIC);
+    }
+
+    template <typename GfxFamily>
     static size_t getRequiredCmdStreamSize(const CsrDependencies &csrDependencies) {
         size_t totalNodesCount = 0;
         for (auto timestampPacketContainer : csrDependencies) {
             totalNodesCount += timestampPacketContainer->peekNodes().size();
         }
 
-        return totalNodesCount * (sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT) + sizeof(typename GfxFamily::MI_ATOMIC));
+        return totalNodesCount * getRequiredCmdStreamSizeForNodeDependency<GfxFamily>();
     }
 };
 } // namespace NEO

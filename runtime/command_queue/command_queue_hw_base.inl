@@ -99,4 +99,34 @@ cl_int CommandQueueHw<Family>::enqueueMarkerForReadWriteOperation(MemObj *memObj
     return CL_SUCCESS;
 }
 
+template <typename Family>
+cl_int CommandQueueHw<Family>::enqueueReadWriteBufferWithBlitTransfer(cl_command_type commandType, Buffer *buffer, bool blocking,
+                                                                      size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
+                                                                      const cl_event *eventWaitList, cl_event *event) {
+    auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*buffer);
+    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+    TimestampPacketContainer previousTimestampPacketNodes;
+    CsrDependencies csrDependencies;
+
+    csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, *blitCommandStreamReceiver,
+                                                         CsrDependencies::DependenciesType::All);
+
+    obtainNewTimestampPacketNodes(1, previousTimestampPacketNodes, queueDependenciesClearRequired());
+    csrDependencies.push_back(&previousTimestampPacketNodes);
+
+    auto copyDirection = (CL_COMMAND_WRITE_BUFFER == commandType) ? BlitterConstants::BlitWithHostPtrDirection::FromHostPtr
+                                                                  : BlitterConstants::BlitWithHostPtrDirection::ToHostPtr;
+    blitCommandStreamReceiver->blitWithHostPtr(*buffer, ptr, blocking, offset, size, copyDirection, csrDependencies, *timestampPacketContainer);
+
+    MultiDispatchInfo multiDispatchInfo;
+
+    if (CL_COMMAND_WRITE_BUFFER == commandType) {
+        enqueueHandler<CL_COMMAND_WRITE_BUFFER>(nullptr, 0, blocking, true, multiDispatchInfo, numEventsInWaitList, eventWaitList, event);
+    } else {
+        enqueueHandler<CL_COMMAND_READ_BUFFER>(nullptr, 0, blocking, true, multiDispatchInfo, numEventsInWaitList, eventWaitList, event);
+    }
+
+    return CL_SUCCESS;
+}
+
 } // namespace NEO

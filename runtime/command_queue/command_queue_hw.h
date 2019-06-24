@@ -289,6 +289,7 @@ class CommandQueueHw : public CommandQueue {
     void enqueueHandler(Surface **surfacesForResidency,
                         size_t numSurfaceForResidency,
                         bool blocking,
+                        bool blitEnqueue,
                         const MultiDispatchInfo &dispatchInfo,
                         cl_uint numEventsInWaitList,
                         const cl_event *eventWaitList,
@@ -301,7 +302,7 @@ class CommandQueueHw : public CommandQueue {
                         cl_uint numEventsInWaitList,
                         const cl_event *eventWaitList,
                         cl_event *event) {
-        enqueueHandler<enqueueType>(surfacesForResidency, size, blocking, dispatchInfo, numEventsInWaitList, eventWaitList, event);
+        enqueueHandler<enqueueType>(surfacesForResidency, size, blocking, false, dispatchInfo, numEventsInWaitList, eventWaitList, event);
     }
 
     template <uint32_t enqueueType, size_t size>
@@ -375,6 +376,10 @@ class CommandQueueHw : public CommandQueue {
                                                             const cl_event *eventWaitList, cl_event *event);
     cl_int enqueueMarkerForReadWriteOperation(MemObj *memObj, void *ptr, cl_command_type commandType, cl_bool blocking, cl_uint numEventsInWaitList,
                                               const cl_event *eventWaitList, cl_event *event);
+
+    cl_int enqueueReadWriteBufferWithBlitTransfer(cl_command_type commandType, Buffer *buffer, bool blocking,
+                                                  size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
+                                                  const cl_event *eventWaitList, cl_event *event);
 
   private:
     bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);

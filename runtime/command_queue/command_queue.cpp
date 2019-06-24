@@ -584,26 +584,6 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
            buffer->isReadWriteOnCpuAllowed(blocking, numEventsInWaitList, ptr, size);
 }
 
-cl_int CommandQueue::enqueueReadWriteBufferWithBlitTransfer(cl_command_type commandType, Buffer *buffer, bool blocking,
-                                                            size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
-                                                            const cl_event *eventWaitList, cl_event *event) {
-    auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*buffer);
-    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
-    TimestampPacketContainer previousTimestampPacketNodes;
-    CsrDependencies csrDependencies;
-
-    csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, *blitCommandStreamReceiver,
-                                                         CsrDependencies::DependenciesType::All);
-
-    obtainNewTimestampPacketNodes(1, previousTimestampPacketNodes, queueDependenciesClearRequired());
-    csrDependencies.push_back(&previousTimestampPacketNodes);
-
-    auto copyDirection = (CL_COMMAND_WRITE_BUFFER == commandType) ? BlitterConstants::BlitWithHostPtrDirection::FromHostPtr
-                                                                  : BlitterConstants::BlitWithHostPtrDirection::ToHostPtr;
-    blitCommandStreamReceiver->blitWithHostPtr(*buffer, ptr, blocking, offset, size, copyDirection, csrDependencies, *timestampPacketContainer);
-    return CL_SUCCESS;
-}
-
 bool CommandQueue::queueDependenciesClearRequired() const {
     return isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get();
 }

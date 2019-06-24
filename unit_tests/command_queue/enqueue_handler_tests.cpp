@@ -67,7 +67,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWithKernelSplitWhenAubCsrIsActiv
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
     MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel1.mockKernel, kernel2.mockKernel}));
 
-    mockCmdQ->template enqueueHandler<CL_COMMAND_WRITE_BUFFER>(nullptr, 0, true, multiDispatchInfo, 0, nullptr, nullptr);
+    mockCmdQ->template enqueueHandler<CL_COMMAND_WRITE_BUFFER>(nullptr, 0, true, false, multiDispatchInfo, 0, nullptr, nullptr);
 
     EXPECT_TRUE(aubCsr->addAubCommentCalled);
 
@@ -301,6 +301,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueBlockedWithoutReturnEventCreatesVirtualEvent
     mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
                                                                  0,
                                                                  blocking,
+                                                                 false,
                                                                  multiDispatchInfo,
                                                                  0,
                                                                  nullptr,
@@ -333,6 +334,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueBlockedSetsVirtualEventAsCurrentCmdQVirtualE
     mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
                                                                  0,
                                                                  blocking,
+                                                                 false,
                                                                  multiDispatchInfo,
                                                                  0,
                                                                  nullptr,
@@ -357,6 +359,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueWithOutputEventRegistersEvent) {
     mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
                                                                  0,
                                                                  blocking,
+                                                                 false,
                                                                  multiDispatchInfo,
                                                                  0,
                                                                  nullptr,
@@ -433,6 +436,7 @@ HWTEST_F(EnqueueHandlerTest, givenExternallySynchronizedParentEventWhenRequestin
     mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr,
                                                          0,
                                                          blocking,
+                                                         false,
                                                          emptyDispatchInfo,
                                                          1U,
                                                          &inEv,
@@ -458,6 +462,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOffThenActivateS
     mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
                                                                  0,
                                                                  false,
+                                                                 false,
                                                                  multiDispatchInfo,
                                                                  0,
                                                                  nullptr,
@@ -479,6 +484,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSu
 
     mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
                                                                  0,
+                                                                 false,
                                                                  false,
                                                                  multiDispatchInfo,
                                                                  0,
@@ -505,6 +511,7 @@ HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenCommandIsBlokingThenCom
     mockCmdQ->template enqueueHandler<CL_COMMAND_WRITE_BUFFER>(nullptr,
                                                                0,
                                                                true,
+                                                               false,
                                                                multiDispatchInfo,
                                                                0,
                                                                nullptr,
