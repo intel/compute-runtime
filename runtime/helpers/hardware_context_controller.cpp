@@ -48,8 +48,15 @@ void HardwareContextController::submit(uint64_t batchBufferGpuAddress, const voi
 }
 
 void HardwareContextController::writeMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t memoryBanks, int hint, size_t pageSize) {
-    for (auto &hardwareContext : hardwareContexts) {
-        hardwareContext->writeMemory(gfxAddress, memory, size, memoryBanks, hint, pageSize);
+    if (hardwareContexts.size() == 1u) {
+        hardwareContexts.at(0)->writeMemory(gfxAddress, memory, size, memoryBanks, hint, pageSize);
+        return;
+    }
+    for (auto bankId = 0u; bankId < hardwareContexts.size(); bankId++) {
+        auto &hardwareContext = hardwareContexts.at(bankId);
+        auto selectedBank = memoryBanks & (1 << bankId);
+        UNRECOVERABLE_IF(selectedBank == 0);
+        hardwareContext->writeMemory(gfxAddress, memory, size, memoryBanks & (1 << bankId), hint, pageSize);
     }
 }
 

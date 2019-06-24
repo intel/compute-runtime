@@ -1177,6 +1177,20 @@ TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenSubmitMethodIsCall
     EXPECT_FALSE(mockHwContext0->writeMemoryCalled);
 }
 
+TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenWriteMemoryIsCalledThenWholeMemoryBanksArePassed) {
+    MockAubManager aubManager;
+    MockOsContext osContext(1, getDeviceBitfieldForNDevices(1), aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
+    HardwareContextController hwContextContainer(aubManager, osContext, 0);
+    EXPECT_EQ(1u, hwContextContainer.hardwareContexts.size());
+
+    auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
+
+    hwContextContainer.writeMemory(1, reinterpret_cast<const void *>(0x123), 2, 3u, 4, 5);
+
+    EXPECT_TRUE(mockHwContext0->writeMemoryCalled);
+    EXPECT_EQ(3u, mockHwContext0->memoryBanksPassed);
+}
+
 TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCalledThenUseAllContexts) {
     MockAubManager aubManager;
     MockOsContext osContext(1, getDeviceBitfieldForNDevices(2), aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
@@ -1201,7 +1215,7 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     hwContextContainer.pollForCompletion();
     hwContextContainer.expectMemory(1, reinterpret_cast<const void *>(0x123), 2, 0);
     hwContextContainer.submit(1, reinterpret_cast<const void *>(0x123), 2, 0, 1);
-    hwContextContainer.writeMemory(1, reinterpret_cast<const void *>(0x123), 2, 3, 4, 5);
+    hwContextContainer.writeMemory(1, reinterpret_cast<const void *>(0x123), 2, 3u, 4, 5);
 
     EXPECT_TRUE(mockHwContext0->initializeCalled);
     EXPECT_TRUE(mockHwContext1->initializeCalled);
@@ -1213,6 +1227,8 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     EXPECT_TRUE(mockHwContext1->submitCalled);
     EXPECT_TRUE(mockHwContext0->writeMemoryCalled);
     EXPECT_TRUE(mockHwContext1->writeMemoryCalled);
+    EXPECT_EQ(1u, mockHwContext0->memoryBanksPassed);
+    EXPECT_EQ(2u, mockHwContext1->memoryBanksPassed);
 }
 
 TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCalledThenUseFirstContext) {
