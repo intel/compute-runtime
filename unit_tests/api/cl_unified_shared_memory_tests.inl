@@ -151,9 +151,45 @@ TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithVa
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledThenOutOfHostMemoryErrorIsReturned) {
+TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithoutIncorrectCommandQueueThenInvaliQueueErrorIsReturned) {
     auto retVal = clEnqueueMemsetINTEL(0, nullptr, 0, 0, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledWithProperParametersThenParametersArePassedCorrectly) {
+    auto mockContext = std::make_unique<MockContext>();
+    cl_int retVal = CL_SUCCESS;
+
+    auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
+
+    struct MockedCommandQueue : public CommandQueue {
+        cl_int enqueueSVMMemFill(void *svmPtr,
+                                 const void *pattern,
+                                 size_t patternSize,
+                                 size_t size,
+                                 cl_uint numEventsInWaitList,
+                                 const cl_event *eventWaitList,
+                                 cl_event *event) override {
+
+            EXPECT_EQ(12, *reinterpret_cast<const char *>(pattern));
+            EXPECT_EQ(expectedDstPtr, svmPtr);
+            EXPECT_EQ(400u, size);
+            EXPECT_EQ(1u, patternSize);
+            EXPECT_EQ(0u, numEventsInWaitList);
+            EXPECT_EQ(nullptr, eventWaitList);
+            EXPECT_EQ(nullptr, event);
+            return CL_SUCCESS;
+        }
+        void *expectedDstPtr = nullptr;
+    };
+
+    MockedCommandQueue queue;
+    queue.expectedDstPtr = unfiedMemoryDeviceAllocation;
+    cl_int setValue = 12u;
+
+    retVal = clEnqueueMemsetINTEL(&queue, unfiedMemoryDeviceAllocation, setValue, 400u, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    clMemFreeINTEL(mockContext.get(), unfiedMemoryDeviceAllocation);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemcpyINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
