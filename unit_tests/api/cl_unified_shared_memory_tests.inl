@@ -156,9 +156,46 @@ TEST(clUnifiedSharedMemoryTests, whenclEnqueueMemsetINTELisCalledThenOutOfHostMe
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
 
-TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemcpyINTELisCalledThenOutOfHostMemoryErrorIsReturned) {
+TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemcpyINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
     auto retVal = clEnqueueMemcpyINTEL(0, 0, nullptr, nullptr, 0, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
+}
+TEST(clUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCopiedThenProperParamtersArePassed) {
+
+    auto mockContext = std::make_unique<MockContext>();
+    cl_int retVal = CL_SUCCESS;
+
+    auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
+    auto unfiedMemorySharedAllocation = clSharedMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 400, 0, &retVal);
+
+    struct MockedCommandQueue : public CommandQueue {
+        cl_int enqueueSVMMemcpy(cl_bool blockingCopy,
+                                void *dstPtr,
+                                const void *srcPtr,
+                                size_t size,
+                                cl_uint numEventsInWaitList,
+                                const cl_event *eventWaitList,
+                                cl_event *event) override {
+            EXPECT_EQ(0u, blockingCopy);
+            EXPECT_EQ(expectedDstPtr, dstPtr);
+            EXPECT_EQ(expectedSrcPtr, srcPtr);
+            EXPECT_EQ(400u, size);
+            EXPECT_EQ(0u, numEventsInWaitList);
+            EXPECT_EQ(nullptr, eventWaitList);
+            EXPECT_EQ(nullptr, event);
+            return CL_SUCCESS;
+        }
+        void *expectedDstPtr = nullptr;
+        const void *expectedSrcPtr = nullptr;
+    };
+    MockedCommandQueue queue;
+    queue.expectedDstPtr = unfiedMemoryDeviceAllocation;
+    queue.expectedSrcPtr = unfiedMemorySharedAllocation;
+
+    retVal = clEnqueueMemcpyINTEL(&queue, 0, unfiedMemoryDeviceAllocation, unfiedMemorySharedAllocation, 400u, 0, nullptr, nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    clMemFreeINTEL(mockContext.get(), unfiedMemoryDeviceAllocation);
+    clMemFreeINTEL(mockContext.get(), unfiedMemorySharedAllocation);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledThenOutOfHostMemoryErrorIsReturned) {

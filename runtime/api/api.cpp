@@ -3513,7 +3513,14 @@ cl_int clEnqueueMemcpyINTEL(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-    return CL_OUT_OF_HOST_MEMORY;
+    return clEnqueueSVMMemcpy(commandQueue,
+                              blocking,
+                              dstPtr,
+                              srcPtr,
+                              size,
+                              numEventsInWaitList,
+                              eventWaitList,
+                              event);
 }
 
 cl_int clEnqueueMigrateMemINTEL(
