@@ -7,6 +7,7 @@
 
 #include "runtime/context/context.inl"
 #include "runtime/os_interface/windows/d3d_sharing_functions.h"
+#include "runtime/sharings/d3d/d3d_sharing.h"
 #include "runtime/sharings/sharing_factory.h"
 
 using namespace NEO;
@@ -215,7 +216,7 @@ void D3DSharingFunctions<D3D>::checkFormatSupport(DXGI_FORMAT format, UINT *pFor
 }
 
 template <typename D3D>
-std::vector<DXGI_FORMAT> &D3DSharingFunctions<D3D>::retrieveTextureFormats(cl_mem_object_type imageType) {
+std::vector<DXGI_FORMAT> &D3DSharingFunctions<D3D>::retrieveTextureFormats(cl_mem_object_type imageType, cl_uint plane) {
     auto cached = textureFormatCache.find(imageType);
     if (cached == textureFormatCache.end()) {
         bool success;
@@ -224,15 +225,25 @@ std::vector<DXGI_FORMAT> &D3DSharingFunctions<D3D>::retrieveTextureFormats(cl_me
             return DXGINoFormats;
         }
         std::vector<DXGI_FORMAT> &cached_formats = cached->second;
+        std::vector<DXGI_FORMAT> planarFormats(0);
+
         cached_formats.reserve(arrayCount(DXGIFormats));
         for (auto DXGIFormat : DXGIFormats) {
             UINT format = 0;
             checkFormatSupport(DXGIFormat, &format);
             if (memObjectFormatSupport(imageType, format)) {
                 cached_formats.push_back(DXGIFormat);
+                if (D3DSharing<D3D>::isFormatWithPlane1(DXGIFormat)) {
+                    planarFormats.push_back(DXGIFormat);
+                }
             }
         }
         cached_formats.shrink_to_fit();
+        textureFormatPlane1Cache.emplace(imageType, planarFormats);
+    }
+
+    if (plane == 1) {
+        return textureFormatPlane1Cache.find(imageType)->second;
     }
     return cached->second;
 }

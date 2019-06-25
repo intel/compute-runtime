@@ -695,8 +695,10 @@ cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue
     return retVal;
 }
 
-cl_int CL_API_CALL clGetSupportedDX9MediaSurfaceFormatsINTEL(cl_context context, cl_mem_flags flags, cl_mem_object_type imageType,
-                                                             cl_uint numEntries, D3DFORMAT *dx9Formats, cl_uint *numImageFormats) {
+cl_int CL_API_CALL clGetSupportedDX9MediaSurfaceFormatsINTEL(cl_context context, cl_mem_flags flags,
+                                                             cl_mem_object_type imageType, cl_uint plane,
+                                                             cl_uint numEntries, D3DFORMAT *dx9Formats,
+                                                             cl_uint *numImageFormats) {
 
     if (validateObject(context) != CL_SUCCESS) {
         return CL_INVALID_CONTEXT;
@@ -711,24 +713,49 @@ cl_int CL_API_CALL clGetSupportedDX9MediaSurfaceFormatsINTEL(cl_context context,
     }
 
     cl_uint i = 0;
-    for (auto format : D3DSurface::D3DtoClFormatConversions) {
-        if (i >= numEntries) {
-            break;
+    switch (plane) {
+    case 0:
+        for (auto format : D3DSurface::D3DtoClFormatConversions) {
+            if (i >= numEntries) {
+                break;
+            }
+            dx9Formats[i++] = format.first;
         }
-        dx9Formats[i++] = format.first;
+        *numImageFormats = static_cast<cl_uint>(D3DSurface::D3DtoClFormatConversions.size());
+        break;
+    case 1:
+        for (auto format : D3DSurface::D3DPlane1Formats) {
+            if (i >= numEntries) {
+                break;
+            }
+            dx9Formats[i++] = format;
+        }
+        *numImageFormats = static_cast<cl_uint>(D3DSurface::D3DPlane1Formats.size());
+        break;
+    case 2:
+        for (auto format : D3DSurface::D3DPlane2Formats) {
+            if (i >= numEntries) {
+                break;
+            }
+            dx9Formats[i++] = format;
+        }
+        *numImageFormats = static_cast<cl_uint>(D3DSurface::D3DPlane2Formats.size());
+        break;
+    default:
+        *numImageFormats = 0;
     }
-
-    *numImageFormats = static_cast<cl_uint>(D3DSurface::D3DtoClFormatConversions.size());
 
     return CL_SUCCESS;
 }
 
-cl_int CL_API_CALL clGetSupportedD3D10TextureFormatsINTEL(cl_context context, cl_mem_flags flags, cl_mem_object_type imageType,
-                                                          cl_uint numEntries, DXGI_FORMAT *formats, cl_uint *numImageFormats) {
-    return getSupportedDXTextureFormats<D3DTypesHelper::D3D10>(context, imageType, numEntries, formats, numImageFormats);
+cl_int CL_API_CALL clGetSupportedD3D10TextureFormatsINTEL(cl_context context, cl_mem_flags flags,
+                                                          cl_mem_object_type imageType,
+                                                          cl_uint numEntries, DXGI_FORMAT *formats, cl_uint *numTextureFormats) {
+    return getSupportedDXTextureFormats<D3DTypesHelper::D3D10>(context, imageType, 0, numEntries, formats, numTextureFormats);
 }
 
-cl_int CL_API_CALL clGetSupportedD3D11TextureFormatsINTEL(cl_context context, cl_mem_flags flags, cl_mem_object_type imageType,
-                                                          cl_uint numEntries, DXGI_FORMAT *formats, cl_uint *numImageFormats) {
-    return getSupportedDXTextureFormats<D3DTypesHelper::D3D11>(context, imageType, numEntries, formats, numImageFormats);
+cl_int CL_API_CALL clGetSupportedD3D11TextureFormatsINTEL(cl_context context, cl_mem_flags flags,
+                                                          cl_mem_object_type imageType, cl_uint plane,
+                                                          cl_uint numEntries, DXGI_FORMAT *formats, cl_uint *numTextureFormats) {
+    return getSupportedDXTextureFormats<D3DTypesHelper::D3D11>(context, imageType, plane, numEntries, formats, numTextureFormats);
 }

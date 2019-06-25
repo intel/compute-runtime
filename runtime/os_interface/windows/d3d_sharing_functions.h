@@ -142,7 +142,7 @@ class D3DSharingFunctions : public SharingFunctions {
     void fillCreateTexture2dDesc(D3DTexture2dDesc &desc, D3DTexture2dDesc *srcDesc, cl_uint subresource);
     void fillCreateTexture3dDesc(D3DTexture3dDesc &desc, D3DTexture3dDesc *srcDesc, cl_uint subresource);
 
-    std::vector<DXGI_FORMAT> &retrieveTextureFormats(cl_mem_object_type imageType);
+    std::vector<DXGI_FORMAT> &retrieveTextureFormats(cl_mem_object_type imageType, cl_uint plane);
 
   protected:
     D3DDevice *d3dDevice = nullptr;
@@ -151,11 +151,12 @@ class D3DSharingFunctions : public SharingFunctions {
     std::vector<DXGI_FORMAT> DXGINoFormats;
     std::vector<std::pair<D3DResource *, cl_uint>> trackedResources;
     std::map<cl_mem_object_type, std::vector<DXGI_FORMAT>> textureFormatCache;
+    std::map<cl_mem_object_type, std::vector<DXGI_FORMAT>> textureFormatPlane1Cache;
     static void getDxgiDesc(DXGI_ADAPTER_DESC *dxgiDesc, IDXGIAdapter *adapter, D3DDevice *device);
 };
 
 template <typename D3DSharing>
-static inline cl_int getSupportedDXTextureFormats(cl_context context, cl_mem_object_type imageType,
+static inline cl_int getSupportedDXTextureFormats(cl_context context, cl_mem_object_type imageType, cl_uint plane,
                                                   cl_uint numEntries, DXGI_FORMAT *formats, cl_uint *numImageFormats) {
     Context *pContext = castToObject<Context>(context);
     if (!pContext) {
@@ -167,10 +168,10 @@ static inline cl_int getSupportedDXTextureFormats(cl_context context, cl_mem_obj
         return CL_INVALID_CONTEXT;
     }
 
-    auto supported_formats = pSharing->retrieveTextureFormats(imageType);
+    auto supported_formats = pSharing->retrieveTextureFormats(imageType, plane);
 
     if (formats != nullptr) {
-        memcpy_s(formats, sizeof(DXGI_FORMAT) * numEntries, supported_formats.data(), std::min(static_cast<size_t>(numEntries), supported_formats.size()));
+        memcpy_s(formats, sizeof(DXGI_FORMAT) * numEntries, supported_formats.data(), sizeof(DXGI_FORMAT) * std::min(static_cast<size_t>(numEntries), supported_formats.size()));
     }
 
     if (numImageFormats) {

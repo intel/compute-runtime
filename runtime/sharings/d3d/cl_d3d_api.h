@@ -183,6 +183,7 @@ extern CL_API_ENTRY cl_int CL_API_CALL clGetSupportedDX9MediaSurfaceFormatsINTEL
     cl_context context,
     cl_mem_flags flags,
     cl_mem_object_type imageType,
+    cl_uint plane,
     cl_uint numEntries,
     D3DFORMAT *dx9Formats,
     cl_uint *numImageFormats) CL_API_SUFFIX__VERSION_1_2;
@@ -199,6 +200,7 @@ extern CL_API_ENTRY cl_int CL_API_CALL clGetSupportedD3D11TextureFormatsINTEL(
     cl_context context,
     cl_mem_flags flags,
     cl_mem_object_type imageType,
+    cl_uint plane,
     cl_uint numEntries,
     DXGI_FORMAT *dx11Formats,
     cl_uint *numImageFormats) CL_API_SUFFIX__VERSION_1_2;

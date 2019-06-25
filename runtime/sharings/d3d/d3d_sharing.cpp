@@ -90,3 +90,14 @@ const SurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(GMM_RESOURCE_FOR
     }
     return nullptr;
 }
+
+template <typename D3D>
+bool D3DSharing<D3D>::isFormatWithPlane1(DXGI_FORMAT format) {
+    switch (format) {
+    case DXGI_FORMAT_NV12:
+    case DXGI_FORMAT_P010:
+    case DXGI_FORMAT_P016:
+        return true;
+    }
+    return false;
+}

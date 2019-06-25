@@ -30,7 +30,7 @@ void D3DSharingFunctions<D3DTypesHelper::D3D9>::fillCreateBufferDesc(D3DBufferDe
 }
 
 template <>
-std::vector<DXGI_FORMAT> &D3DSharingFunctions<D3DTypesHelper::D3D9>::retrieveTextureFormats(cl_mem_object_type imageType) {
+std::vector<DXGI_FORMAT> &D3DSharingFunctions<D3DTypesHelper::D3D9>::retrieveTextureFormats(cl_mem_object_type imageType, cl_uint plane) {
     return DXGINoFormats;
 }
 

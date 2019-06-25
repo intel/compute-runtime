@@ -201,6 +201,13 @@ const std::map<const D3DFORMAT, const cl_image_format> D3DSurface::D3DtoClFormat
     {static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', 'Y', 'U')), {CL_YVYU_INTEL, CL_UNORM_INT8}},
     {static_cast<D3DFORMAT>(MAKEFOURCC('V', 'Y', 'U', 'Y')), {CL_VYUY_INTEL, CL_UNORM_INT8}}};
 
+const std::vector<D3DFORMAT> D3DSurface::D3DPlane1Formats = {
+    static_cast<D3DFORMAT>(MAKEFOURCC('N', 'V', '1', '2')),
+    static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2'))};
+
+const std::vector<D3DFORMAT> D3DSurface::D3DPlane2Formats =
+    {static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2'))};
+
 cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat, cl_uint plane, OCLPlane &oclPlane) {
     oclPlane = OCLPlane::NO_PLANE;
     static const cl_image_format unknown_format = {0, 0};

@@ -13,5 +13,5 @@ extern cl_int CL_API_CALL clGetSupportedGLTextureFormatsINTEL(
     cl_mem_flags flags,
     cl_mem_object_type imageType,
     cl_uint numEntries,
-    cl_GLint *glFormats,
-    cl_uint *numImageFormats);
+    cl_GLenum *glFormats,
+    cl_uint *numTextureFormats);

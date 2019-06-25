@@ -1301,7 +1301,7 @@ TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenContextWithoutGlSharingWhe
 
 TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenValidInputsWhenGettingFormatsThenSuccesAndValidFormatsAreReturned) {
     cl_uint numFormats = 0;
-    cl_GLint glFormats[2] = {};
+    cl_GLenum glFormats[2] = {};
     auto glFormatsCount = static_cast<cl_uint>(arrayCount(glFormats));
 
     auto retVal = clGetSupportedGLTextureFormatsINTEL(&context, CL_MEM_READ_WRITE, CL_MEM_OBJECT_IMAGE2D,
