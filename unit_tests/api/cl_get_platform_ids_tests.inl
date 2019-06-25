@@ -20,7 +20,7 @@ extern bool getDevicesResult;
 typedef api_tests clGetPlatformIDsTests;
 
 namespace ULT {
-TEST_F(clGetPlatformIDsTests, getCount) {
+TEST_F(clGetPlatformIDsTests, GivenNullPlatformWhenGettingPlatformIdsThenNumberofPlatformsIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_uint numPlatforms = 0;
 
@@ -30,7 +30,7 @@ TEST_F(clGetPlatformIDsTests, getCount) {
     EXPECT_GT(numPlatforms, 0u);
 }
 
-TEST_F(clGetPlatformIDsTests, getInfo) {
+TEST_F(clGetPlatformIDsTests, GivenPlatformsWhenGettingPlatformIdsThenPlatformsIdIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platform = nullptr;
 
@@ -40,7 +40,7 @@ TEST_F(clGetPlatformIDsTests, getInfo) {
     EXPECT_NE(nullptr, platform);
 }
 
-TEST_F(clGetPlatformIDsTests, NoPlatformListReturnsError) {
+TEST_F(clGetPlatformIDsTests, GivenNumEntriesZeroAndPlatformNotNullWhenGettingPlatformIdsThenClInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platform = nullptr;
 
@@ -49,7 +49,7 @@ TEST_F(clGetPlatformIDsTests, NoPlatformListReturnsError) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST(clGetPlatformIDsNegativeTests, WhenInitFailedThenErrorIsReturned) {
+TEST(clGetPlatformIDsNegativeTests, GivenFailedInitWhenGettingPlatformIdsThenClInvalidValueErrorIsReturned) {
     VariableBackup<decltype(getDevicesResult)> bkp(&getDevicesResult, false);
 
     cl_int retVal = CL_SUCCESS;
