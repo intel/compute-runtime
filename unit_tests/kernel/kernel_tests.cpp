@@ -2395,6 +2395,8 @@ TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
 }
 
 TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonStatefulAccessThenMarkKernelForAuxTranslation) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DisableAuxTranslation.set(false);
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
     auto &capabilityTable = hwInfo->capabilityTable;
@@ -2416,6 +2418,10 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
     capabilityTable.ftrRenderCompressedBuffers = true;
     kernel.mockKernel->initialize();
     EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
+
+    DebugManager.flags.DisableAuxTranslation.set(true);
+    kernel.mockKernel->initialize();
+    EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
 }
 
 TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkKernelForAuxTranslation) {

@@ -352,6 +352,10 @@ cl_int Kernel::initialize() {
             }
         }
 
+        if (DebugManager.flags.DisableAuxTranslation.get()) {
+            auxTranslationRequired = false;
+        }
+
         if (usingImages && !usingBuffers) {
             usingImagesOnly = true;
         }
