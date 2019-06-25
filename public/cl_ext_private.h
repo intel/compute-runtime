@@ -46,6 +46,7 @@ using cl_mem_flags_intel = cl_mem_flags;
 using cl_mem_info_intel = cl_uint;
 using cl_mem_advice_intel = cl_uint;
 using cl_unified_shared_memory_type_intel = cl_uint;
+using cl_unified_shared_memory_capabilities_intel = cl_bitfield;
 
 /******************************
  * Internal only cl_mem_flags *
@@ -71,3 +72,10 @@ using cl_unified_shared_memory_type_intel = cl_uint;
 #define CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL 0x10051
 #define CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL 0x10052
 #define CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL 0x10053
+
+// New queries for clGetDeviceInfo:
+#define CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL 0x10050
+#define CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL 0x10051
+#define CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL 0x10052
+#define CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL 0x10053
+#define CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL 0x10054

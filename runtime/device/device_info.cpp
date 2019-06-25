@@ -71,6 +71,7 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
     size_t srcSize = 0;
     size_t retSize = 0;
     cl_uint param;
+    cl_ulong ulongParam;
     const void *src = nullptr;
 
     // clang-format off
@@ -205,6 +206,16 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
         if (deviceInfo.nv12Extension)
             getCap<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL>(src, srcSize, retSize);
         break;
+    case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL: {
+        src = &ulongParam;
+        retSize = srcSize = sizeof(cl_unified_shared_memory_capabilities_intel);
+        ulongParam = 0u;
+        break;
+    }
     default:
         DeviceHelper::getExtraDeviceInfo(getHardwareInfo(), paramName, param, src, srcSize, retSize);
     }
