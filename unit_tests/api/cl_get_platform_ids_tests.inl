@@ -49,7 +49,7 @@ TEST_F(clGetPlatformIDsTests, GivenNumEntriesZeroAndPlatformNotNullWhenGettingPl
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST(clGetPlatformIDsNegativeTests, GivenFailedInitWhenGettingPlatformIdsThenClInvalidValueErrorIsReturned) {
+TEST(clGetPlatformIDsNegativeTests, GivenFailedInitializationWhenGettingPlatformIdsThenClOutOfHostMemoryErrorIsReturned) {
     VariableBackup<decltype(getDevicesResult)> bkp(&getDevicesResult, false);
 
     cl_int retVal = CL_SUCCESS;
@@ -58,7 +58,7 @@ TEST(clGetPlatformIDsNegativeTests, GivenFailedInitWhenGettingPlatformIdsThenClI
 
     retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
 
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     EXPECT_EQ(0u, numPlatforms);
     EXPECT_EQ(nullptr, platformRet);
 

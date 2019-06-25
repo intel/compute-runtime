@@ -78,7 +78,7 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             bool ret = pPlatform->initialize();
             DEBUG_BREAK_IF(ret != true);
             if (!ret) {
-                retVal = CL_INVALID_VALUE;
+                retVal = CL_OUT_OF_HOST_MEMORY;
                 break;
             }
 
