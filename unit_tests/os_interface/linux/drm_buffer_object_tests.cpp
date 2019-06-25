@@ -5,7 +5,6 @@
  *
  */
 
-#include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "test.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
