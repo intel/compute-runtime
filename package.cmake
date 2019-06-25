@@ -87,6 +87,7 @@ if(UNIX)
     /etc/ld.so.conf.d
     /usr/local
     /usr/local/lib64
+    /usr/local/bin
   )
 
   if(CMAKE_VERSION VERSION_GREATER 3.6 OR CMAKE_VERSION VERSION_EQUAL 3.6)
