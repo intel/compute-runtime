@@ -124,9 +124,147 @@ TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithInvalidUmPointerT
     EXPECT_EQ(0u, allocationsManager->getNumAllocs());
 }
 
-TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledThenOutOfHostMemoryErrorIsReturned) {
+TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutContextThenInvalidContextIsReturned) {
     auto retVal = clGetMemAllocInfoINTEL(0, nullptr, 0, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutAllocationThenInvalidValueIsReturned) {
+    MockContext mockContext;
+    auto retVal = clGetMemAllocInfoINTEL(&mockContext, nullptr, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutSVMAllocationThenInvalidValueIsReturned) {
+    MockContext mockContext;
+    delete mockContext.svmAllocsManager;
+    mockContext.svmAllocsManager = nullptr;
+    auto retVal = clGetMemAllocInfoINTEL(&mockContext, nullptr, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnifiedMemoryHostAllocationThenProperFieldsAreSet) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    size_t paramValueSize = sizeof(cl_int);
+    cl_int paramValue = 0;
+    size_t paramValueSizeRet = 0;
+
+    auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
+    auto allocationsManager = mockContext.getSVMAllocsManager();
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryHostAllocation);
+
+    retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemoryHostAllocation, CL_MEM_ALLOC_TYPE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+    EXPECT_EQ(CL_MEM_TYPE_HOST_INTEL, paramValue);
+    EXPECT_EQ(sizeof(cl_int), paramValueSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemoryHostAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnifiedMemoryDeviceAllocationThenProperFieldsAreSet) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    size_t paramValueSize = sizeof(cl_int);
+    cl_int paramValue = 0;
+    size_t paramValueSizeRet = 0;
+
+    auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, 4, 0, &retVal);
+    auto allocationsManager = mockContext.getSVMAllocsManager();
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryDeviceAllocation);
+
+    retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemoryDeviceAllocation, CL_MEM_ALLOC_TYPE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
+
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(CL_MEM_TYPE_DEVICE_INTEL, paramValue);
+    EXPECT_EQ(sizeof(cl_int), paramValueSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemoryDeviceAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithValidUnifiedMemorySharedAllocationThenProperFieldsAreSet) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    size_t paramValueSize = sizeof(cl_int);
+    cl_int paramValue = 0;
+    size_t paramValueSizeRet = 0;
+
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, 4, 0, &retVal);
+    auto allocationsManager = mockContext.getSVMAllocsManager();
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
+
+    retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemorySharedAllocation, CL_MEM_ALLOC_TYPE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
+
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
+    EXPECT_EQ(CL_MEM_TYPE_SHARED_INTEL, paramValue);
+    EXPECT_EQ(sizeof(cl_int), paramValueSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemorySharedAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocationBasePtrParamNameThenProperFieldsAreSet) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    size_t paramValueSize = sizeof(uint64_t);
+    uint64_t paramValue = 0;
+    size_t paramValueSizeRet = 0;
+
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, 4, 0, &retVal);
+    auto allocationsManager = mockContext.getSVMAllocsManager();
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemorySharedAllocation);
+
+    retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemorySharedAllocation, CL_MEM_ALLOC_BASE_PTR_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
+
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), paramValue);
+    EXPECT_EQ(sizeof(uint64_t), paramValueSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemorySharedAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocationSizeParamNameThenProperFieldsAreSet) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    size_t paramValueSize = sizeof(size_t);
+    size_t paramValue = 0;
+    size_t paramValueSizeRet = 0;
+
+    auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
+    auto allocationsManager = mockContext.getSVMAllocsManager();
+    auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryHostAllocation);
+
+    retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemoryHostAllocation, CL_MEM_ALLOC_SIZE_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
+
+    EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
+    EXPECT_EQ(graphicsAllocation->size, paramValue);
+    EXPECT_EQ(sizeof(size_t), paramValueSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemoryHostAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithoutParamNameThenInvalidValueIsReturned) {
+    MockContext mockContext;
+    cl_int retVal = CL_SUCCESS;
+    size_t paramValueSize = sizeof(cl_uint);
+    cl_uint paramValue = 0;
+    size_t paramValueSizeRet = 0;
+
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, 4, 0, &retVal);
+    retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemorySharedAllocation, 0, paramValueSize, &paramValue, &paramValueSizeRet);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    retVal = clMemFreeINTEL(&mockContext, unifiedMemorySharedAllocation);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithInvalidKernelThenInvaliKernelErrorIsReturned) {

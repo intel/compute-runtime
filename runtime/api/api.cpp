@@ -3483,7 +3483,52 @@ cl_int clGetMemAllocInfoINTEL(
     size_t paramValueSize,
     void *paramValue,
     size_t *paramValueSizeRet) {
-    return CL_OUT_OF_HOST_MEMORY;
+    Context *pContext = nullptr;
+    cl_int retVal = CL_SUCCESS;
+    retVal = validateObject(WithCastToInternal(context, &pContext));
+
+    if (!pContext) {
+        return retVal;
+    }
+
+    auto allocationsManager = pContext->getSVMAllocsManager();
+    if (!allocationsManager) {
+        return CL_INVALID_VALUE;
+    }
+
+    auto unifiedMemoryAllocation = allocationsManager->getSVMAlloc(ptr);
+    if (!unifiedMemoryAllocation) {
+        return CL_INVALID_VALUE;
+    }
+
+    GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
+    switch (paramName) {
+    case CL_MEM_ALLOC_TYPE_INTEL: {
+        if (unifiedMemoryAllocation->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
+            retVal = info.set<cl_int>(CL_MEM_TYPE_HOST_INTEL);
+            return retVal;
+        } else if (unifiedMemoryAllocation->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
+            retVal = info.set<cl_int>(CL_MEM_TYPE_DEVICE_INTEL);
+            return retVal;
+        } else {
+            retVal = info.set<cl_int>(CL_MEM_TYPE_SHARED_INTEL);
+            return retVal;
+        }
+        break;
+    }
+    case CL_MEM_ALLOC_BASE_PTR_INTEL: {
+        retVal = info.set<uint64_t>(unifiedMemoryAllocation->gpuAllocation->getGpuAddress());
+        return retVal;
+    }
+    case CL_MEM_ALLOC_SIZE_INTEL: {
+        retVal = info.set<size_t>(unifiedMemoryAllocation->size);
+        return retVal;
+    }
+    default: {
+    }
+    }
+
+    return CL_INVALID_VALUE;
 }
 
 cl_int clSetKernelArgMemPointerINTEL(
