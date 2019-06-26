@@ -286,10 +286,9 @@ Buffer *Buffer::create(Context *context,
         if (gpuCopyRequired) {
             auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*pBuffer);
             if (blitCommandStreamReceiver) {
-                CsrDependencies dependencies;
-                TimestampPacketContainer timestampPacketContainer;
-                blitCommandStreamReceiver->blitWithHostPtr(*pBuffer, hostPtr, true, 0, size, BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                           dependencies, timestampPacketContainer);
+                auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                                                                                            pBuffer, hostPtr, true, 0, size);
+                blitCommandStreamReceiver->blitWithHostPtr(blitProperties);
             } else {
                 auto cmdQ = context->getSpecialQueue();
                 if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, nullptr, 0, nullptr, nullptr)) {

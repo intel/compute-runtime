@@ -666,6 +666,7 @@ struct BcsBufferTests : public ::testing::Test {
         }
         DebugManager.flags.EnableTimestampPacket.set(1);
         DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(true);
+        platform()->initialize();
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
         device->getExecutionEnvironment()->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
         bcsMockContext = std::make_unique<BcsMockContext>(device.get());

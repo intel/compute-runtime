@@ -27,6 +27,7 @@
 #include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/platform/platform.h"
 #include "runtime/utilities/tag_allocator.h"
 
 namespace NEO {
@@ -418,23 +419,20 @@ cl_int CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *s
     return (isMemoryEqual == isEqualMemoryExpected) ? CL_SUCCESS : CL_INVALID_VALUE;
 }
 
-void CommandStreamReceiver::blitWithHostPtr(Buffer &buffer, void *hostPtr, bool blocking, size_t bufferOffset, uint64_t copySize,
-                                            BlitterConstants::BlitWithHostPtrDirection copyDirection, CsrDependencies &csrDependencies,
-                                            const TimestampPacketContainer &outputTimestampPacket) {
-    HostPtrSurface hostPtrSurface(hostPtr, static_cast<size_t>(copySize), true);
+void CommandStreamReceiver::blitWithHostPtr(BlitProperties &blitProperites) {
+    HostPtrSurface hostPtrSurface(blitProperites.hostPtr, static_cast<size_t>(blitProperites.copySize), true);
     bool success = createAllocationForHostSurface(hostPtrSurface, false);
     UNRECOVERABLE_IF(!success);
     auto hostPtrAllocation = hostPtrSurface.getAllocation();
 
-    auto device = buffer.getContext()->getDevice(0);
-    auto hostPtrBuffer = std::unique_ptr<Buffer>(Buffer::createBufferHwFromDevice(device, CL_MEM_READ_WRITE, static_cast<size_t>(copySize),
-                                                                                  hostPtr, hostPtr, hostPtrAllocation,
+    auto device = platform()->getDevice(0);
+    auto hostPtrBuffer = std::unique_ptr<Buffer>(Buffer::createBufferHwFromDevice(device, CL_MEM_READ_WRITE,
+                                                                                  static_cast<size_t>(blitProperites.copySize),
+                                                                                  blitProperites.hostPtr, blitProperites.hostPtr, hostPtrAllocation,
                                                                                   true, false, true));
 
-    if (BlitterConstants::BlitWithHostPtrDirection::FromHostPtr == copyDirection) {
-        blitBuffer(buffer, *hostPtrBuffer, blocking, bufferOffset, 0, copySize, csrDependencies, outputTimestampPacket);
-    } else {
-        blitBuffer(*hostPtrBuffer, buffer, blocking, 0, bufferOffset, copySize, csrDependencies, outputTimestampPacket);
-    }
+    blitProperites.setHostPtrBuffer(hostPtrBuffer.get());
+
+    blitBuffer(blitProperites);
 }
 } // namespace NEO

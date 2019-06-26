@@ -40,9 +40,8 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(uint64_t copySize
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(Buffer &dstBuffer, Buffer &srcBuffer, LinearStream &linearStream,
-                                                                  uint64_t dstOffset, uint64_t srcOffset, uint64_t copySize) {
-    uint64_t sizeToBlit = copySize;
+void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(BlitProperties &blitProperites, LinearStream &linearStream) {
+    uint64_t sizeToBlit = blitProperites.copySize;
     uint64_t width = 1;
     uint64_t height = 1;
     uint64_t offset = 0;
@@ -72,10 +71,10 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(Buffer &dstBuf
         bltCmd->setDestinationPitch(static_cast<uint32_t>(width));
         bltCmd->setSourcePitch(static_cast<uint32_t>(width));
 
-        bltCmd->setDestinationBaseAddress(dstBuffer.getGraphicsAllocation()->getGpuAddress() + dstOffset + offset);
-        bltCmd->setSourceBaseAddress(srcBuffer.getGraphicsAllocation()->getGpuAddress() + srcOffset + offset);
+        bltCmd->setDestinationBaseAddress(blitProperites.dstBuffer->getGraphicsAllocation()->getGpuAddress() + blitProperites.dstOffset + offset);
+        bltCmd->setSourceBaseAddress(blitProperites.srcBuffer->getGraphicsAllocation()->getGpuAddress() + blitProperites.srcOffset + offset);
 
-        appendBlitCommandsForBuffer(dstBuffer, srcBuffer, *bltCmd);
+        appendBlitCommandsForBuffer(blitProperites, *bltCmd);
 
         auto blitSize = width * height;
         sizeToBlit -= blitSize;

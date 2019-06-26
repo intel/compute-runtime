@@ -26,6 +26,7 @@
 #include "runtime/command_queue/finish.h"
 #include "runtime/command_queue/flush.h"
 #include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/helpers/blit_commands_helper.h"
 
 namespace NEO {
 template <typename Family>
@@ -106,17 +107,19 @@ cl_int CommandQueueHw<Family>::enqueueReadWriteBufferWithBlitTransfer(cl_command
     auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*buffer);
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     TimestampPacketContainer previousTimestampPacketNodes;
-    CsrDependencies csrDependencies;
-
-    csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, *blitCommandStreamReceiver,
-                                                         CsrDependencies::DependenciesType::All);
-
-    obtainNewTimestampPacketNodes(1, previousTimestampPacketNodes, queueDependenciesClearRequired());
-    csrDependencies.push_back(&previousTimestampPacketNodes);
 
     auto copyDirection = (CL_COMMAND_WRITE_BUFFER == commandType) ? BlitterConstants::BlitWithHostPtrDirection::FromHostPtr
                                                                   : BlitterConstants::BlitWithHostPtrDirection::ToHostPtr;
-    blitCommandStreamReceiver->blitWithHostPtr(*buffer, ptr, blocking, offset, size, copyDirection, csrDependencies, *timestampPacketContainer);
+    auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(copyDirection, buffer, ptr, blocking, offset, size);
+
+    blitProperties.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, *blitCommandStreamReceiver,
+                                                                        CsrDependencies::DependenciesType::All);
+
+    obtainNewTimestampPacketNodes(1, previousTimestampPacketNodes, queueDependenciesClearRequired());
+    blitProperties.csrDependencies.push_back(&previousTimestampPacketNodes);
+    blitProperties.outputTimestampPacket = timestampPacketContainer.get();
+
+    blitCommandStreamReceiver->blitWithHostPtr(blitProperties);
 
     MultiDispatchInfo multiDispatchInfo;
 
