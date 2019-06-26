@@ -22,6 +22,7 @@ class LinearStream {
     LinearStream();
     LinearStream(void *buffer, size_t bufferSize);
     LinearStream(GraphicsAllocation *buffer);
+    LinearStream(GraphicsAllocation *gfxAllocation, void *buffer, size_t bufferSize);
     void *getCpuBase() const;
     void *getSpace(size_t size);
     size_t getMaxAvailableSpace() const;

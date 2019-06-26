@@ -18,6 +18,16 @@ TEST(LinearStreamCtorTest, establishInitialValues) {
     EXPECT_EQ(0u, linearStream.getMaxAvailableSpace());
 }
 
+TEST(LinearStreamCtorTest, whenProvidedAllArgumentsThenExpectSameValuesSet) {
+    GraphicsAllocation *gfxAllocation = reinterpret_cast<GraphicsAllocation *>(0x1234);
+    void *buffer = reinterpret_cast<void *>(0x2000);
+    size_t bufferSize = 0x1000u;
+    LinearStream linearStream(gfxAllocation, buffer, bufferSize);
+    EXPECT_EQ(buffer, linearStream.getCpuBase());
+    EXPECT_EQ(bufferSize, linearStream.getMaxAvailableSpace());
+    EXPECT_EQ(gfxAllocation, linearStream.getGraphicsAllocation());
+}
+
 TEST_F(LinearStreamTest, getSpaceTestSizeZero) {
     EXPECT_NE(nullptr, linearStream.getSpace(0));
 }

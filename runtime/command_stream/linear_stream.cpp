@@ -11,8 +11,12 @@
 
 namespace NEO {
 
+LinearStream::LinearStream(GraphicsAllocation *gfxAllocation, void *buffer, size_t bufferSize)
+    : sizeUsed(0), maxAvailableSpace(bufferSize), buffer(buffer), graphicsAllocation(gfxAllocation) {
+}
+
 LinearStream::LinearStream(void *buffer, size_t bufferSize)
-    : sizeUsed(0), maxAvailableSpace(bufferSize), buffer(buffer), graphicsAllocation(nullptr) {
+    : LinearStream(nullptr, buffer, bufferSize) {
 }
 
 LinearStream::LinearStream(GraphicsAllocation *gfxAllocation)
