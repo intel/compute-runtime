@@ -1693,5 +1693,5 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentPro
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, whenCreatingWddmMemoryManagerThenSupportsMultiStorageResourcesFlagIsSetToFalse) {
-    EXPECT_FALSE(memoryManager->supportsMultiStorageResources);
+    EXPECT_TRUE(memoryManager->supportsMultiStorageResources);
 }
