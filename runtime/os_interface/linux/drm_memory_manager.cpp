@@ -85,7 +85,7 @@ DrmMemoryManager::~DrmMemoryManager() {
 }
 
 void DrmMemoryManager::initInternalRangeAllocator(size_t gpuRange) {
-    if (gpuRange < MemoryConstants::max48BitAddress || !DebugManager.flags.EnableHostPtrTracking.get()) {
+    if (gpuRange < MemoryConstants::max64BitAppAddress || !DebugManager.flags.EnableHostPtrTracking.get()) {
         // set the allocator with the whole reduced address space range - pageSize (base address) to
         // avoid starting address of the heap to be 0, which could be interpreted as invalid address
         // nullPtr.

@@ -103,6 +103,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
 
     DrmGemCloseWorker *getgemCloseWorker() { return this->gemCloseWorker.get(); }
     void forceLimitedRangeAllocator(uint64_t range) { initInternalRangeAllocator(range); }
+    void releaseLimitedAddressRangeAllocator() { limitedGpuAddressRangeAllocator.reset(nullptr); }
 
     Allocator32bit *getDrmInternal32BitAllocator() const { return internal32bitAllocator.get(); }
     AllocatorLimitedRange *getDrmLimitedRangeAllocator() const { return limitedGpuAddressRangeAllocator.get(); }

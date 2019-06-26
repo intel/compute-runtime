@@ -3115,6 +3115,22 @@ TEST_F(DrmMemoryManagerBasic, ifLimitedRangeAllocatorAvailableWhenAskedForAlloca
     limitedRangeAllocator->free(ptr, size);
 }
 
+TEST_F(DrmMemoryManagerBasic, givenAddressRangeBelowMax64BitAddressThenLimitedRangeAllocatorIsInitialized) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+    memoryManager->releaseLimitedAddressRangeAllocator();
+    EXPECT_EQ(nullptr, memoryManager->getDrmLimitedRangeAllocator());
+    memoryManager->forceLimitedRangeAllocator(MemoryConstants::max64BitAppAddress - 1);
+    EXPECT_NE(nullptr, memoryManager->getDrmLimitedRangeAllocator());
+}
+
+TEST_F(DrmMemoryManagerBasic, givenAddressRangeMax64BitWhenMemoryManagerIsCreatedThenLimitedRangeAllocatorIsNotInitialized) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+    memoryManager->releaseLimitedAddressRangeAllocator();
+    EXPECT_EQ(nullptr, memoryManager->getDrmLimitedRangeAllocator());
+    memoryManager->forceLimitedRangeAllocator(MemoryConstants::max64BitAppAddress);
+    EXPECT_EQ(nullptr, memoryManager->getDrmLimitedRangeAllocator());
+}
+
 TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWithNonZeroBaseAndSizeWhenAskedForBaseThenCorrectBaseIsReturned) {
     uint64_t size = 100u;
     uint64_t base = 0x23000;
