@@ -274,10 +274,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 slmUsed,
                 printfHandler.get());
 
-            if (eventBuilder.getEvent()) {
-                eventBuilder.getEvent()->flushStamp->replaceStampObject(this->flushStamp->getStampReference());
-            }
-
             if (parentKernel) {
                 getCommandStreamReceiver().setMediaVFEStateDirty(true);
 
@@ -328,6 +324,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 eventBuilder.getEvent()->setSubmitTimeStamp();
                 eventBuilder.getEvent()->setStartTimeStamp();
             }
+        }
+        if (eventBuilder.getEvent()) {
+            eventBuilder.getEvent()->flushStamp->replaceStampObject(this->flushStamp->getStampReference());
         }
     }
     updateFromCompletionStamp(completionStamp);

@@ -10,6 +10,7 @@
 #include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
+#include "unit_tests/mocks/mock_kernel.h"
 
 using namespace NEO;
 
@@ -217,4 +218,28 @@ TEST_F(MarkerTest, givenMultipleEventsAndCompletedUserEventWhenTheyArePassedToMa
 
     EXPECT_EQ(16u, pCmdQ->taskCount);
     EXPECT_EQ(16u, pEvent->peekTaskCount());
+}
+
+HWTEST_F(MarkerTest, givenMarkerCallFollowingNdrangeCallInBatchedModeWhenWaitForEventsIsCalledThenFlushStampIsProperlyUpdated) {
+    MockKernelWithInternals mockKernel(*this->pDevice, this->context);
+
+    auto &ultCommandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ultCommandStreamReceiver.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+
+    cl_event eventFromNdr = nullptr;
+    size_t gws[] = {1};
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &eventFromNdr);
+    cl_event eventFromMarker = nullptr;
+    pCmdQ->enqueueMarkerWithWaitList(1u, &eventFromNdr, &eventFromMarker);
+
+    ultCommandStreamReceiver.flushStamp->setStamp(1u);
+
+    clEnqueueWaitForEvents(pCmdQ, 1u, &eventFromMarker);
+
+    auto neoEvent = castToObject<Event>(eventFromMarker);
+    EXPECT_EQ(1u, neoEvent->flushStamp->peekStamp());
+
+    clReleaseEvent(eventFromMarker);
+    clReleaseEvent(eventFromNdr);
 }
