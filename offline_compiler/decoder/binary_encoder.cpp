@@ -8,6 +8,7 @@
 #include "binary_encoder.h"
 
 #include "elf/writer.h"
+#include "offline_compiler/offline_compiler.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/hash.h"
@@ -138,8 +139,10 @@ int BinaryEncoder::createElf() {
 }
 
 void BinaryEncoder::printHelp() {
-    messagePrinter.printf("Usage:\n-dump <path to dumping folder> -out <new elf file>\n");
+    messagePrinter.printf("Usage:\n-dump <path to dumping folder> -out <new elf file>  -device <device_type>\n");
     messagePrinter.printf("e.g. -dump C:/my_folder/dump -out C:/my_folder/new_binary.bin\n");
+    messagePrinter.printf("  -device <device_type>        Indicates which device for which we will compile.\n");
+    messagePrinter.printf("                               <device_type> can be: %s\n", NEO::getDevicesTypes().c_str());
 }
 
 int BinaryEncoder::encode() {
@@ -161,15 +164,26 @@ int BinaryEncoder::encode() {
     return createElf();
 }
 
-int BinaryEncoder::processBinary(const std::vector<std::string> &ptmFile, std::ostream &deviceBinary) {
+int BinaryEncoder::processBinary(const std::vector<std::string> &ptmFileLines, std::ostream &deviceBinary) {
+    if (false == iga->isKnownPlatform()) {
+        auto deviceMarker = findPos(ptmFileLines, "Device");
+        if (deviceMarker != ptmFileLines.size()) {
+            std::stringstream ss(ptmFileLines[deviceMarker]);
+            ss.ignore(32, ' ');
+            ss.ignore(32, ' ');
+            uint32_t gfxCore = 0;
+            ss >> gfxCore;
+            iga->setGfxCore(static_cast<GFXCORE_FAMILY>(gfxCore));
+        }
+    }
     size_t i = 0;
-    while (i < ptmFile.size()) {
-        if (ptmFile[i].find("Kernel #") != std::string::npos) {
-            if (processKernel(++i, ptmFile, deviceBinary)) {
+    while (i < ptmFileLines.size()) {
+        if (ptmFileLines[i].find("Kernel #") != std::string::npos) {
+            if (processKernel(++i, ptmFileLines, deviceBinary)) {
                 messagePrinter.printf("Warning while processing kernel!\n");
                 return -1;
             }
-        } else if (writeDeviceBinary(ptmFile[i++], deviceBinary)) {
+        } else if (writeDeviceBinary(ptmFileLines[i++], deviceBinary)) {
             messagePrinter.printf("Error while writing to binary!\n");
             return -1;
         }
@@ -222,7 +236,22 @@ int BinaryEncoder::processKernel(size_t &line, const std::vector<std::string> &p
 
     // Write KernelHeap and padding
     uint32_t kernelSizeUnpadded = 0U;
-    bool heapsCopiedSuccesfully = copyBinaryToBinary(pathToDump + kernelName + "_KernelHeap.bin", kernelBlob, &kernelSizeUnpadded);
+    bool heapsCopiedSuccesfully = true;
+
+    // Use .asm if available, fallback to .dat
+    if (fileExists(pathToDump + kernelName + "_KernelHeap.asm")) {
+        auto kernelAsAsm = readBinaryFile(pathToDump + kernelName + "_KernelHeap.asm");
+        std::string kernelAsBinary;
+        messagePrinter.printf("Trying to assemble %s.asm\n", kernelName.c_str());
+        if (false == iga->tryAssembleGenISA(std::string(kernelAsAsm.begin(), kernelAsAsm.end()), kernelAsBinary)) {
+            messagePrinter.printf("Error : Could not assemble : %s\n", kernelName.c_str());
+            return -1;
+        }
+        kernelSizeUnpadded = static_cast<uint32_t>(kernelAsBinary.size());
+        kernelBlob.write(kernelAsBinary.data(), kernelAsBinary.size());
+    } else {
+        heapsCopiedSuccesfully = copyBinaryToBinary(pathToDump + kernelName + "_KernelHeap.dat", kernelBlob, &kernelSizeUnpadded);
+    }
 
     // Adding padding and alignment
     addPadding(kernelBlob, isaPaddingSizeInBytes);
@@ -286,6 +315,8 @@ int BinaryEncoder::validateInput(uint32_t argc, const char **argv) {
             if (!strcmp(argv[i], "-dump")) {
                 pathToDump = std::string(argv[++i]);
                 addSlash(pathToDump);
+            } else if (!strcmp(argv[i], "-device")) {
+                iga->setProductFamily(getProductFamilyFromDeviceName(argv[++i]));
             } else if (!strcmp(argv[i], "-out")) {
                 elfName = std::string(argv[++i]);
             } else {
@@ -295,13 +326,18 @@ int BinaryEncoder::validateInput(uint32_t argc, const char **argv) {
             }
         }
         if (pathToDump.empty()) {
-            messagePrinter.printf("Path to dump folder can't be empty.\n");
-            printHelp();
-            return -1;
-        } else if (elfName.find(".bin") == std::string::npos) {
+            messagePrinter.printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
+            pathToDump = "dump";
+            addSlash(pathToDump);
+        }
+        if (elfName.find(".bin") == std::string::npos) {
             messagePrinter.printf(".bin extension is expected for binary file.\n");
             printHelp();
             return -1;
+        }
+
+        if (false == iga->isKnownPlatform()) {
+            messagePrinter.printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
         }
     }
     return 0;
@@ -363,4 +399,12 @@ int BinaryEncoder::writeDeviceBinary(const std::string &line, std::ostream &devi
         }
     }
     return 0;
+}
+
+bool BinaryEncoder::fileExists(const std::string &path) const {
+    return ::fileExists(path);
+}
+
+std::vector<char> BinaryEncoder::readBinaryFile(const std::string &path) const {
+    return ::readBinaryFile(path);
 }

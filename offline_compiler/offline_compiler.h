@@ -30,6 +30,7 @@ enum ErrorCode {
 };
 
 std::string generateFilePath(const std::string &directory, const std::string &fileNameBase, const char *extension);
+std::string getDevicesTypes();
 
 class OfflineCompiler {
   public:

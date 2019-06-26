@@ -16,6 +16,7 @@ ${IGDRCL_SOURCE_DIR}/offline_compiler/offline_compiler.cpp
 set(IGDRCL_SRCS_offline_compiler_mock
 ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_decoder.h
 ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_encoder.h
+${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_iga_wrapper.h
 ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_compiler.h
 )
 

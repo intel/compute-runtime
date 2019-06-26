@@ -9,6 +9,7 @@
 
 #include "core/helpers/ptr_math.h"
 #include "elf/reader.h"
+#include "offline_compiler/offline_compiler.h"
 #include "runtime/helpers/file_io.h"
 
 #include "helper.h"
@@ -242,18 +243,22 @@ void BinaryDecoder::parseTokens() {
 }
 
 void BinaryDecoder::printHelp() {
-    messagePrinter.printf("Usage:\n-file <Opencl elf binary file> -patch <path to folder containing patchlist> -dump <path to dumping folder>\n");
+    messagePrinter.printf("Usage:\n-file <Opencl elf binary file> -patch <path to folder containing patchlist> -dump <path to dumping folder> -device <device_type>\n");
     messagePrinter.printf("e.g. -file C:/my_folder/my_binary.bin -patch C:/igc/inc -dump C:/my_folder/dump\n");
+    messagePrinter.printf("  -device <device_type>        Indicates which device for which we will compile.\n");
+    messagePrinter.printf("                               <device_type> can be: %s\n", NEO::getDevicesTypes().c_str());
 }
 
 int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {
     ptmFile << "ProgramBinaryHeader:\n";
-    uint32_t numberOfKernels = 0, patchListSize = 0;
+    uint32_t numberOfKernels = 0, patchListSize = 0, device = 0;
     for (const auto &v : programHeader.fields) {
         if (v.name == "NumberOfKernels") {
             numberOfKernels = readUnaligned<uint32_t>(ptr);
         } else if (v.name == "PatchListSize") {
             patchListSize = readUnaligned<uint32_t>(ptr);
+        } else if (v.name == "Device") {
+            device = readUnaligned<uint32_t>(ptr);
         }
         dumpField(ptr, v, ptmFile);
     }
@@ -262,6 +267,7 @@ int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {
     }
 
     readPatchTokens(ptr, patchListSize, ptmFile);
+    iga->setGfxCore(static_cast<GFXCORE_FAMILY>(device));
 
     //Reading Kernels
     for (uint32_t i = 0; i < numberOfKernels; ++i) {
@@ -272,7 +278,7 @@ int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {
 }
 
 void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
-    uint32_t KernelNameSize = 0, KernelPatchListSize = 0, KernelHeapSize = 0,
+    uint32_t KernelNameSize = 0, KernelPatchListSize = 0, KernelHeapSize = 0, KernelUnpaddedSize = 0,
              GeneralStateHeapSize = 0, DynamicStateHeapSize = 0, SurfaceStateHeapSize = 0;
     ptmFile << "KernelBinaryHeader:\n";
     for (const auto &v : kernelHeader.fields) {
@@ -282,6 +288,8 @@ void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
             KernelNameSize = readUnaligned<uint32_t>(ptr);
         else if (v.name == "KernelHeapSize")
             KernelHeapSize = readUnaligned<uint32_t>(ptr);
+        else if (v.name == "KernelUnpaddedSize")
+            KernelUnpaddedSize = readUnaligned<uint32_t>(ptr);
         else if (v.name == "GeneralStateHeapSize")
             GeneralStateHeapSize = readUnaligned<uint32_t>(ptr);
         else if (v.name == "DynamicStateHeapSize")
@@ -302,8 +310,14 @@ void BinaryDecoder::processKernel(void *&ptr, std::ostream &ptmFile) {
     ptmFile << kernelName << '\n';
     ptr = ptrOffset(ptr, KernelNameSize);
 
-    std::string fileName = pathToDump + kernelName + "_KernelHeap.bin";
-    writeDataToFile(fileName.c_str(), ptr, KernelHeapSize);
+    std::string fileName = pathToDump + kernelName + "_KernelHeap";
+    messagePrinter.printf("Trying to disassemble %s.krn\n", kernelName.c_str());
+    std::string disassembledKernel;
+    if (iga->tryDisassembleGenISA(ptr, KernelUnpaddedSize, disassembledKernel)) {
+        writeDataToFile((fileName + ".asm").c_str(), disassembledKernel.data(), disassembledKernel.size());
+    } else {
+        writeDataToFile((fileName + ".dat").c_str(), ptr, KernelHeapSize);
+    }
     ptr = ptrOffset(ptr, KernelHeapSize);
 
     if (GeneralStateHeapSize != 0) {
@@ -411,6 +425,8 @@ int BinaryDecoder::validateInput(uint32_t argc, const char **argv) {
         for (uint32_t i = 2; i < argc - 1; ++i) {
             if (!strcmp(argv[i], "-file")) {
                 binaryFile = std::string(argv[++i]);
+            } else if (!strcmp(argv[i], "-device")) {
+                iga->setProductFamily(getProductFamilyFromDeviceName(argv[++i]));
             } else if (!strcmp(argv[i], "-patch")) {
                 pathToPatch = std::string(argv[++i]);
                 addSlash(pathToPatch);
@@ -427,10 +443,15 @@ int BinaryDecoder::validateInput(uint32_t argc, const char **argv) {
             messagePrinter.printf(".bin extension is expected for binary file.\n");
             printHelp();
             return -1;
-        } else if (pathToDump.empty()) {
-            messagePrinter.printf("Path to dump folder can't be empty.\n");
-            printHelp();
-            return -1;
+        }
+        if (pathToDump.empty()) {
+            messagePrinter.printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
+            pathToDump = "dump";
+            addSlash(pathToDump);
+        }
+
+        if (false == iga->isKnownPlatform()) {
+            messagePrinter.printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
         }
     }
     return 0;

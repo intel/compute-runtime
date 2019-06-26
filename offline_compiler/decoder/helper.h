@@ -6,7 +6,12 @@
  */
 
 #pragma once
+#include "runtime/os_interface/os_library.h"
+
+#include "igfxfmid.h"
+
 #include <exception>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -17,6 +22,8 @@ std::vector<char> readBinaryFile(const std::string &fileName);
 void readFileToVectorOfStrings(std::vector<std::string> &lines, const std::string &fileName, bool replaceTabs = false);
 
 size_t findPos(const std::vector<std::string> &lines, const std::string &whatToFind);
+
+PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &deviceName);
 
 class MessagePrinter {
   public:

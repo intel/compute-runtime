@@ -292,6 +292,46 @@ else()
     message(STATUS "IGC targets: ${IGDRCL__IGC_TARGETS}")
 endif()
 
+# VISA headers - always relative to IGC
+if(IS_DIRECTORY "${IGC_DIR}/../visa")
+    get_filename_component(VISA_DIR "${IGC_DIR}/../visa" ABSOLUTE)
+elseif(IS_DIRECTORY "${IGC_DIR}/visa")
+    set(VISA_DIR "${IGC_DIR}/visa")
+elseif(IS_DIRECTORY "${IGC_DIR}/include/visa")
+    set(VISA_DIR "${IGC_DIR}/include/visa")
+elseif(IS_DIRECTORY "${IGDRCL__IGC_INCLUDEDIR}/../visa")
+    get_filename_component(VISA_DIR "${IGDRCL__IGC_INCLUDEDIR}/../visa" ABSOLUTE)
+endif()
+message("VISA_DIR : ${VISA_DIR}")
+
+if(IS_DIRECTORY "${VISA_DIR}/include")
+    set(VISA_INCLUDE_DIR "${VISA_DIR}/include")
+else()
+    set(VISA_INCLUDE_DIR "${VISA_DIR}")
+endif()
+
+# IGA headers - always relative to VISA
+if(IS_DIRECTORY "${VISA_DIR}/../iga")
+    get_filename_component(IGA_DIR "${VISA_DIR}/../iga" ABSOLUTE)
+elseif(IS_DIRECTORY "${VISA_DIR}/iga")
+    set(IGA_DIR "${VISA_DIR}/iga")
+endif()
+
+if(IS_DIRECTORY "${IGA_DIR}/IGALibrary/api")
+    set(IGA_INCLUDE_DIR "${IGA_DIR}/IGALibrary/api")
+else()
+    set(IGA_INCLUDE_DIR "${IGA_DIR}")
+endif()
+
+if(IS_DIRECTORY ${IGA_INCLUDE_DIR})
+    set(IGA_HEADERS_AVAILABLE TRUE)
+    set(IGA_LIBRARY_NAME "iga${NEO_BITS}")
+else()
+    set(IGA_HEADERS_AVAILABLE FALSE)
+endif()
+
+message("IGA_INCLUDE_DIR : ${IGA_INCLUDE_DIR}")
+
 if(WIN32)
     set(IGC_LIBRARY_NAME "igc${NEO_BITS}")
     set(FCL_LIBRARY_NAME "igdfcl${NEO_BITS}")

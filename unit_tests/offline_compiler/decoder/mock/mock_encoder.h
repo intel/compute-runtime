@@ -9,6 +9,8 @@
 #include "offline_compiler/decoder/binary_encoder.h"
 #include "runtime/helpers/hash.h"
 
+#include "mock_iga_wrapper.h"
+
 #include <map>
 #include <string>
 
@@ -16,6 +18,7 @@ struct MockEncoder : public BinaryEncoder {
     MockEncoder() : MockEncoder("", ""){};
     MockEncoder(const std::string &dump, const std::string &elf)
         : BinaryEncoder(dump, elf) {
+        this->iga.reset(new MockIgaWrapper);
         setMessagePrinter(MessagePrinter{true});
     };
 
@@ -31,17 +34,31 @@ struct MockEncoder : public BinaryEncoder {
         return true;
     }
 
+    bool fileExists(const std::string &path) const override {
+        return filesMap.count(path) || BinaryEncoder::fileExists(path);
+    }
+
+    std::vector<char> readBinaryFile(const std::string &path) const override {
+        return filesMap.count(path) ? std::vector<char>(filesMap.at(path).c_str(), filesMap.at(path).c_str() + filesMap.at(path).size())
+                                    : BinaryEncoder::readBinaryFile(path);
+    }
+
     using BinaryEncoder::addPadding;
     using BinaryEncoder::calculatePatchListSizes;
     using BinaryEncoder::copyBinaryToBinary;
     using BinaryEncoder::createElf;
     using BinaryEncoder::elfName;
     using BinaryEncoder::encode;
+    using BinaryEncoder::iga;
     using BinaryEncoder::pathToDump;
     using BinaryEncoder::processBinary;
     using BinaryEncoder::processKernel;
     using BinaryEncoder::write;
     using BinaryEncoder::writeDeviceBinary;
+
+    MockIgaWrapper *getMockIga() const {
+        return static_cast<MockIgaWrapper *>(iga.get());
+    }
 
     std::map<std::string, std::string> filesMap;
 };
