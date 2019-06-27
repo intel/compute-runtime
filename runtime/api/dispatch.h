@@ -976,6 +976,13 @@ typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clSetDefaultDeviceCommandQueue)(
     cl_device_id device,
     cl_command_queue commandQueue) CL_API_SUFFIX__VERSION_2_1;
 
+/*OpenCL2.2*/
+typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clSetProgramSpecializationConstant)(
+    cl_program program,
+    cl_uint specIdd,
+    size_t specSize,
+    const void *specValue) CL_API_SUFFIX__VERSION_2_2;
+
 /* clCreateImage */
 
 typedef CL_API_ENTRY cl_int(CL_API_CALL *INTELpfn_clGetImageParamsINTEL)(
@@ -1239,6 +1246,9 @@ struct SDispatchTable {
     KHRpfn_clGetHostTimer clGetHostTimer;
     KHRpfn_clGetKernelSubGroupInfo clGetKernelSubGroupInfo;
     KHRpfn_clSetDefaultDeviceCommandQueue clSetDefaultDeviceCommandQueue;
+
+    /* OpenCL 2.2 */
+    KHRpfn_clSetProgramSpecializationConstant clSetProgramSpecializationConstant;
 };
 
 struct SCRTDispatchTable {

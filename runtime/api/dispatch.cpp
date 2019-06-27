@@ -179,7 +179,10 @@ SDispatchTable icdGlobalDispatchTable =
         clGetHostTimer,
         clGetKernelSubGroupInfo,
         clSetDefaultDeviceCommandQueue,
-};
+
+        /* OpenCL 2.2 */
+        clSetProgramSpecializationConstant};
+
 SCRTDispatchTable crtGlobalDispatchTable = {
     clGetKernelArgInfo,
 
