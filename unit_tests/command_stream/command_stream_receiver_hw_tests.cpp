@@ -270,7 +270,6 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenGshAddres
 struct BcsTests : public CommandStreamReceiverHwTest {
     void SetUp() override {
         CommandStreamReceiverHwTest::SetUp();
-        platform()->initialize();
 
         auto &csr = pDevice->getCommandStreamReceiver();
         auto engine = csr.getMemoryManager()->getRegisteredEngineForCsr(&csr);
@@ -367,9 +366,9 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     csr.taskCount = newTaskCount - 1;
     EXPECT_EQ(0u, csr.recursiveLockCounter.load());
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                                                buffer.get(), hostPtr, true, 0, bltSize);
+                                                                                csr, buffer->getGraphicsAllocation(), hostPtr, true, 0, bltSize);
 
-    csr.blitWithHostPtr(blitProperties);
+    csr.blitBuffer(blitProperties);
     EXPECT_EQ(newTaskCount, csr.taskCount);
     EXPECT_EQ(newTaskCount, csr.latestFlushedTaskCount);
     EXPECT_EQ(newTaskCount, csr.latestSentTaskCount);
@@ -426,14 +425,14 @@ HWTEST_F(BcsTests, givenCsrDependenciesWhenProgrammingCommandStreamThenAddSemaph
     size_t numberNodesPerContainer = 5;
 
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                                                buffer.get(), hostPtr, true, 0, 1);
+                                                                                csr, buffer->getGraphicsAllocation(), hostPtr, true, 0, 1);
 
     MockTimestampPacketContainer timestamp0(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
     MockTimestampPacketContainer timestamp1(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
     blitProperties.csrDependencies.push_back(&timestamp0);
     blitProperties.csrDependencies.push_back(&timestamp1);
 
-    csr.blitWithHostPtr(blitProperties);
+    csr.blitBuffer(blitProperties);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -474,9 +473,9 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     EXPECT_EQ(0u, csr.makeSurfacePackNonResidentCalled);
 
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                                                buffer.get(), hostPtr, true, 0, 1);
+                                                                                csr, buffer->getGraphicsAllocation(), hostPtr, true, 0, 1);
 
-    csr.blitWithHostPtr(blitProperties);
+    csr.blitBuffer(blitProperties);
 
     EXPECT_TRUE(csr.isMadeResident(buffer->getGraphicsAllocation()));
     EXPECT_TRUE(csr.isMadeResident(csr.commandStream.getGraphicsAllocation()));
@@ -502,9 +501,9 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
     csr.taskCount = newTaskCount - 1;
 
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                                                buffer.get(), hostPtr, true, 0, 1);
+                                                                                csr, buffer->getGraphicsAllocation(), hostPtr, true, 0, 1);
 
-    csr.blitWithHostPtr(blitProperties);
+    csr.blitBuffer(blitProperties);
 
     EXPECT_EQ(commandStream.getGraphicsAllocation(), csr.latestFlushedBatchBuffer.commandBufferAllocation);
     EXPECT_EQ(commandStreamOffset, csr.latestFlushedBatchBuffer.startOffset);
@@ -550,14 +549,14 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                                                buffer.get(), hostPtr, false, 0, 1);
+                                                                                *myMockCsr, buffer->getGraphicsAllocation(), hostPtr, false, 0, 1);
 
-    myMockCsr->blitWithHostPtr(blitProperties);
+    myMockCsr->blitBuffer(blitProperties);
 
     EXPECT_EQ(0u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
 
     blitProperties.blocking = true;
-    myMockCsr->blitWithHostPtr(blitProperties);
+    myMockCsr->blitBuffer(blitProperties);
 
     EXPECT_EQ(1u, myMockCsr->waitForTaskCountWithKmdNotifyFallbackCalled);
     EXPECT_EQ(myMockCsr->taskCount, myMockCsr->taskCountToWaitPassed);
@@ -580,14 +579,14 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCleanTemporaryAllocations) {
     EXPECT_EQ(0u, mockInternalAllocationsStorage->cleanAllocationsCalled);
 
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                                                buffer.get(), hostPtr, false, 0, 1);
+                                                                                bcsCsr, buffer->getGraphicsAllocation(), hostPtr, false, 0, 1);
 
-    bcsCsr.blitWithHostPtr(blitProperties);
+    bcsCsr.blitBuffer(blitProperties);
 
     EXPECT_EQ(0u, mockInternalAllocationsStorage->cleanAllocationsCalled);
 
     blitProperties.blocking = true;
-    bcsCsr.blitWithHostPtr(blitProperties);
+    bcsCsr.blitBuffer(blitProperties);
 
     EXPECT_EQ(1u, mockInternalAllocationsStorage->cleanAllocationsCalled);
     EXPECT_EQ(bcsCsr.taskCount, mockInternalAllocationsStorage->lastCleanAllocationsTaskCount);
@@ -606,9 +605,9 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         // from hostPtr
         HardwareParse hwParser;
         auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                                                    buffer1.get(), hostPtr, true, 0, 1);
+                                                                                    csr, buffer1->getGraphicsAllocation(), hostPtr, true, 0, 1);
 
-        csr.blitWithHostPtr(blitProperties);
+        csr.blitBuffer(blitProperties);
 
         hwParser.parseCommands<FamilyType>(csr.commandStream);
 
@@ -624,9 +623,9 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         HardwareParse hwParser;
         auto offset = csr.commandStream.getUsed();
         auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::ToHostPtr,
-                                                                                    buffer1.get(), hostPtr, true, 0, 1);
+                                                                                    csr, buffer1->getGraphicsAllocation(), hostPtr, true, 0, 1);
 
-        csr.blitWithHostPtr(blitProperties);
+        csr.blitBuffer(blitProperties);
 
         hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -642,8 +641,8 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
         HardwareParse hwParser;
         auto offset = csr.commandStream.getUsed();
         auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                                                    buffer1.get(), hostPtr, true, 0, 1);
-        blitProperties.setHostPtrBuffer(buffer2.get());
+                                                                                    csr, buffer1->getGraphicsAllocation(), nullptr, true, 0, 1);
+        blitProperties.srcAllocation = buffer2->getGraphicsAllocation();
 
         csr.blitBuffer(blitProperties);
 
@@ -672,9 +671,9 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
             HardwareParse hwParser;
             auto offset = csr.commandStream.getUsed();
             auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                                                        buffer1.get(), hostPtr, true, buffer1Offset, 1);
+                                                                                        csr, buffer1->getGraphicsAllocation(), hostPtr, true, buffer1Offset, 1);
 
-            csr.blitWithHostPtr(blitProperties);
+            csr.blitBuffer(blitProperties);
 
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -690,9 +689,9 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
             HardwareParse hwParser;
             auto offset = csr.commandStream.getUsed();
             auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::ToHostPtr,
-                                                                                        buffer1.get(), hostPtr, true, buffer1Offset, 1);
+                                                                                        csr, buffer1->getGraphicsAllocation(), hostPtr, true, buffer1Offset, 1);
 
-            csr.blitWithHostPtr(blitProperties);
+            csr.blitBuffer(blitProperties);
 
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -709,8 +708,8 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
             HardwareParse hwParser;
             auto offset = csr.commandStream.getUsed();
             auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                                                        buffer1.get(), hostPtr, true, buffer1Offset, 1);
-            blitProperties.setHostPtrBuffer(buffer2.get());
+                                                                                        csr, buffer1->getGraphicsAllocation(), nullptr, true, buffer1Offset, 1);
+            blitProperties.srcAllocation = buffer2->getGraphicsAllocation();
             blitProperties.srcOffset = buffer2Offset;
 
             csr.blitBuffer(blitProperties);

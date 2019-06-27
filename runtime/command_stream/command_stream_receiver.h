@@ -177,8 +177,7 @@ class CommandStreamReceiver {
         this->latestSentTaskCount = latestSentTaskCount;
     }
 
-    void blitWithHostPtr(BlitProperties &blitProperites);
-    virtual void blitBuffer(BlitProperties &blitProperites) = 0;
+    virtual void blitBuffer(const BlitProperties &blitProperites) = 0;
 
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();

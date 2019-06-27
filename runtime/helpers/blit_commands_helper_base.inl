@@ -10,7 +10,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(uint64_t copySize, CsrDependencies &csrDependencies, bool updateTimestampPacket) {
+size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(uint64_t copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket) {
     size_t numberOfBlits = 0;
     uint64_t sizeToBlit = copySize;
     uint64_t width = 1;
@@ -40,7 +40,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(uint64_t copySize
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(BlitProperties &blitProperites, LinearStream &linearStream) {
+void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProperties &blitProperites, LinearStream &linearStream) {
     uint64_t sizeToBlit = blitProperites.copySize;
     uint64_t width = 1;
     uint64_t height = 1;
@@ -71,8 +71,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(BlitProperties
         bltCmd->setDestinationPitch(static_cast<uint32_t>(width));
         bltCmd->setSourcePitch(static_cast<uint32_t>(width));
 
-        bltCmd->setDestinationBaseAddress(blitProperites.dstBuffer->getGraphicsAllocation()->getGpuAddress() + blitProperites.dstOffset + offset);
-        bltCmd->setSourceBaseAddress(blitProperites.srcBuffer->getGraphicsAllocation()->getGpuAddress() + blitProperites.srcOffset + offset);
+        bltCmd->setDestinationBaseAddress(blitProperites.dstAllocation->getGpuAddress() + blitProperites.dstOffset + offset);
+        bltCmd->setSourceBaseAddress(blitProperites.srcAllocation->getGpuAddress() + blitProperites.srcOffset + offset);
 
         appendBlitCommandsForBuffer(blitProperites, *bltCmd);
 

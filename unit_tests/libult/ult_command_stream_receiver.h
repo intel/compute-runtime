@@ -168,7 +168,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return CommandStreamReceiverHw<GfxFamily>::obtainUniqueOwnership();
     }
 
-    void blitBuffer(BlitProperties &blitProperites) override {
+    void blitBuffer(const BlitProperties &blitProperites) override {
         blitBufferCalled++;
         CommandStreamReceiverHw<GfxFamily>::blitBuffer(blitProperites);
     }

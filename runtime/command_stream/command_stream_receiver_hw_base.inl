@@ -726,7 +726,7 @@ bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(cons
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::blitBuffer(BlitProperties &blitProperites) {
+void CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitProperties &blitProperites) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
@@ -758,8 +758,8 @@ void CommandStreamReceiverHw<GfxFamily>::blitBuffer(BlitProperties &blitProperit
 
     alignToCacheLine(commandStream);
 
-    makeResident(*blitProperites.srcBuffer->getGraphicsAllocation());
-    makeResident(*blitProperites.dstBuffer->getGraphicsAllocation());
+    makeResident(*blitProperites.srcAllocation);
+    makeResident(*blitProperites.dstAllocation);
     makeResident(*commandStream.getGraphicsAllocation());
     makeResident(*tagAllocation);
 

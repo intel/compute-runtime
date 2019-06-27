@@ -12,7 +12,7 @@
 #include <cstdint>
 
 namespace NEO {
-class Buffer;
+class CommandStreamReceiver;
 class GraphicsAllocation;
 class LinearStream;
 class TimestampPacketContainer;
@@ -20,16 +20,17 @@ class TimestampPacketContainer;
 struct BlitProperties {
     BlitProperties() = delete;
 
-    static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection copyDirection, Buffer *buffer,
-                                                                void *hostPtr, bool blocking, size_t offset, uint64_t copySize);
-    void setHostPtrBuffer(Buffer *hostPtrBuffer);
+    static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection copyDirection,
+                                                                CommandStreamReceiver &commandStreamReceiver,
+                                                                GraphicsAllocation *memObjAllocation, void *hostPtr, bool blocking,
+                                                                size_t offset, uint64_t copySize);
 
     TimestampPacketContainer *outputTimestampPacket = nullptr;
     BlitterConstants::BlitWithHostPtrDirection copyDirection;
     CsrDependencies csrDependencies;
 
-    Buffer *dstBuffer = nullptr;
-    Buffer *srcBuffer = nullptr;
+    GraphicsAllocation *dstAllocation = nullptr;
+    GraphicsAllocation *srcAllocation = nullptr;
     void *hostPtr = nullptr;
     bool blocking = false;
     size_t dstOffset = 0;
@@ -39,8 +40,8 @@ struct BlitProperties {
 
 template <typename GfxFamily>
 struct BlitCommandsHelper {
-    static size_t estimateBlitCommandsSize(uint64_t copySize, CsrDependencies &csrDependencies, bool updateTimestampPacket);
-    static void dispatchBlitCommandsForBuffer(BlitProperties &blitProperites, LinearStream &linearStream);
-    static void appendBlitCommandsForBuffer(BlitProperties &blitProperites, typename GfxFamily::XY_COPY_BLT &blitCmd);
+    static size_t estimateBlitCommandsSize(uint64_t copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket);
+    static void dispatchBlitCommandsForBuffer(const BlitProperties &blitProperites, LinearStream &linearStream);
+    static void appendBlitCommandsForBuffer(const BlitProperties &blitProperites, typename GfxFamily::XY_COPY_BLT &blitCmd);
 };
 } // namespace NEO

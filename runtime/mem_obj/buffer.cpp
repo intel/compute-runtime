@@ -287,8 +287,9 @@ Buffer *Buffer::create(Context *context,
             auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*pBuffer);
             if (blitCommandStreamReceiver) {
                 auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
-                                                                                            pBuffer, hostPtr, true, 0, size);
-                blitCommandStreamReceiver->blitWithHostPtr(blitProperties);
+                                                                                            *blitCommandStreamReceiver, memory,
+                                                                                            hostPtr, true, 0, size);
+                blitCommandStreamReceiver->blitBuffer(blitProperties);
             } else {
                 auto cmdQ = context->getSpecialQueue();
                 if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, nullptr, 0, nullptr, nullptr)) {

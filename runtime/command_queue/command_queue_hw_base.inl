@@ -110,7 +110,9 @@ cl_int CommandQueueHw<Family>::enqueueReadWriteBufferWithBlitTransfer(cl_command
 
     auto copyDirection = (CL_COMMAND_WRITE_BUFFER == commandType) ? BlitterConstants::BlitWithHostPtrDirection::FromHostPtr
                                                                   : BlitterConstants::BlitWithHostPtrDirection::ToHostPtr;
-    auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(copyDirection, buffer, ptr, blocking, offset, size);
+    auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(copyDirection, *blitCommandStreamReceiver,
+                                                                                buffer->getGraphicsAllocation(), ptr, blocking,
+                                                                                offset, size);
 
     blitProperties.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, *blitCommandStreamReceiver,
                                                                         CsrDependencies::DependenciesType::All);
@@ -119,7 +121,7 @@ cl_int CommandQueueHw<Family>::enqueueReadWriteBufferWithBlitTransfer(cl_command
     blitProperties.csrDependencies.push_back(&previousTimestampPacketNodes);
     blitProperties.outputTimestampPacket = timestampPacketContainer.get();
 
-    blitCommandStreamReceiver->blitWithHostPtr(blitProperties);
+    blitCommandStreamReceiver->blitBuffer(blitProperties);
 
     MultiDispatchInfo multiDispatchInfo;
 

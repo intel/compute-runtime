@@ -422,20 +422,4 @@ cl_int CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *s
     return (isMemoryEqual == isEqualMemoryExpected) ? CL_SUCCESS : CL_INVALID_VALUE;
 }
 
-void CommandStreamReceiver::blitWithHostPtr(BlitProperties &blitProperites) {
-    HostPtrSurface hostPtrSurface(blitProperites.hostPtr, static_cast<size_t>(blitProperites.copySize), true);
-    bool success = createAllocationForHostSurface(hostPtrSurface, false);
-    UNRECOVERABLE_IF(!success);
-    auto hostPtrAllocation = hostPtrSurface.getAllocation();
-
-    auto device = platform()->getDevice(0);
-    auto hostPtrBuffer = std::unique_ptr<Buffer>(Buffer::createBufferHwFromDevice(device, CL_MEM_READ_WRITE,
-                                                                                  static_cast<size_t>(blitProperites.copySize),
-                                                                                  blitProperites.hostPtr, blitProperites.hostPtr, hostPtrAllocation,
-                                                                                  true, false, true));
-
-    blitProperites.setHostPtrBuffer(hostPtrBuffer.get());
-
-    blitBuffer(blitProperites);
-}
 } // namespace NEO
