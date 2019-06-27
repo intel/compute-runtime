@@ -19,4 +19,8 @@ static EnableGfxProductHw<IGFX_ICELAKE_LP> enableGfxProductHwICLLP;
 static EnableGfxProductHw<IGFX_LAKEFIELD> enableGfxProductHwLKF;
 #endif
 
+#ifdef SUPPORT_EHL
+static EnableGfxProductHw<IGFX_ELKHARTLAKE> enableGfxProductHwEHL;
+#endif
+
 } // namespace NEO

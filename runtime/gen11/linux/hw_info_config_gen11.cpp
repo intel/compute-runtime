@@ -14,3 +14,6 @@
 #ifdef SUPPORT_LKF
 #include "hw_info_config_lkf.inl"
 #endif
+#ifdef SUPPORT_EHL
+#include "hw_info_config_ehl.inl"
+#endif

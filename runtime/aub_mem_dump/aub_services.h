@@ -98,7 +98,8 @@ struct CmdServicesMemTraceVersion {
             Bdw = 11,
             Icllp = 19,
             Cfl = 24,
-            Lkf = 25
+            Lkf = 25,
+            Ehl = 28
         };
     };
     struct RecordingMethodValues {

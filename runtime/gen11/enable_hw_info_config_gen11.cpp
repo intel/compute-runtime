@@ -17,5 +17,8 @@ static EnableProductHwInfoConfig<IGFX_ICELAKE_LP> enableICLLP;
 #ifdef SUPPORT_LKF
 static EnableProductHwInfoConfig<IGFX_LAKEFIELD> enableLKF;
 #endif
+#ifdef SUPPORT_EHL
+static EnableProductHwInfoConfig<IGFX_ELKHARTLAKE> enableEHL;
+#endif
 
 } // namespace NEO

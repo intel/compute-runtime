@@ -12,3 +12,6 @@
 #ifdef SUPPORT_LKF
 #include "hw_cmds_lkf.h"
 #endif
+#ifdef SUPPORT_EHL
+#include "hw_cmds_ehl.h"
+#endif

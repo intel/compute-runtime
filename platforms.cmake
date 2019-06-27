@@ -162,7 +162,7 @@ endmacro()
 
 SET_FLAGS_FOR("GEN8" "BDW")
 SET_FLAGS_FOR("GEN9" "SKL" "KBL" "BXT" "GLK" "CFL")
-SET_FLAGS_FOR("GEN11" "ICLLP" "LKF")
+SET_FLAGS_FOR("GEN11" "ICLLP" "LKF" "EHL")
 
 # Init lists
 INIT_LIST("FAMILY_NAME" "TESTED")
@@ -262,6 +262,7 @@ if(SUPPORT_GEN11)
       ADD_ITEM_FOR_GEN("CONFIGURATIONS" "UNIT_TESTS" "GEN11" "icllp/1/8/8")
     endif()
   endif()
+
   if(SUPPORT_LKF)
     ADD_PLATFORM_FOR_GEN("SUPPORTED" "GEN11" "LKF" "LP")
     if(TESTS_LKF)
@@ -270,6 +271,13 @@ if(SUPPORT_GEN11)
     endif()
   endif()
 
+  if(SUPPORT_EHL)
+    ADD_PLATFORM_FOR_GEN("SUPPORTED" "GEN11" "EHL" "LP")
+    if(TESTS_EHL)
+      ADD_ITEM_FOR_GEN("PLATFORMS" "TESTED" "GEN11" "EHL")
+      ADD_ITEM_FOR_GEN("CONFIGURATIONS" "UNIT_TESTS" "GEN11" "ehl/1/4/8")
+    endif()
+  endif()
 endif()
 
 

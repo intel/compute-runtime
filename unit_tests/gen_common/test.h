@@ -631,6 +631,14 @@ extern GFXCORE_FAMILY renderCoreFamily;
     FAMILYTEST_TEST_P(test_suite_name, test_name, \
                       IGFX_GEN11_CORE,            \
                       IGFX_LAKEFIELD)
+#define EHLTEST_F(test_fixture, test_name)                           \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_GEN11_CORE, IGFX_ELKHARTLAKE)
+#define EHLTEST_P(test_suite_name, test_name)     \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_GEN11_CORE,            \
+                      IGFX_ELKHARTLAKE)
 #endif
 #define HWTEST_TYPED_TEST(CaseName, TestName)                                                                  \
     CHECK_TEST_NAME_LENGTH(CaseName, TestName)                                                                 \

@@ -29,4 +29,12 @@ int HwInfoConfigHw<IGFX_LAKEFIELD>::configureHardwareCustom(HardwareInfo *hwInfo
 template class HwInfoConfigHw<IGFX_LAKEFIELD>;
 #endif
 
+#ifdef SUPPORT_EHL
+template <>
+int HwInfoConfigHw<IGFX_ELKHARTLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+    return 0;
+}
+
+template class HwInfoConfigHw<IGFX_ELKHARTLAKE>;
+#endif
 } // namespace NEO

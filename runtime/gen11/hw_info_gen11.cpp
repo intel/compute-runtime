@@ -11,6 +11,9 @@
 #ifdef SUPPORT_LKF
 #include "hw_info_lkf.inl"
 #endif
+#ifdef SUPPORT_EHL
+#include "hw_info_ehl.inl"
+#endif
 
 namespace NEO {
 const char *GfxFamilyMapper<IGFX_GEN11_CORE>::name = "Gen11";
