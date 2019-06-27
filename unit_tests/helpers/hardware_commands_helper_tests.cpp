@@ -1253,7 +1253,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
     size_t actualSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(cmdQ, mockKernelWithInternal->mockKernel, 0U, 0U);
     EXPECT_EQ(expectedSize, actualSize);
 
-    HardwareCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, cmdQ, mockKernelWithInternal->mockKernel, 0U, 0U);
+    HardwareCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, cmdQ, mockKernelWithInternal->mockKernel, 0U);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(commandStream);
@@ -1293,7 +1293,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
     size_t actualSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(cmdQ, mockKernelWithInternal->mockKernel, 0U, 0U);
     EXPECT_EQ(expectedSize, actualSize);
 
-    HardwareCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, cmdQ, mockKernelWithInternal->mockKernel, 0U, 0U);
+    HardwareCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, cmdQ, mockKernelWithInternal->mockKernel, 0U);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(commandStream);
@@ -1327,7 +1327,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
     size_t actualSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForCacheFlush(cmdQ, mockKernelWithInternal->mockKernel, 0U, 0U);
     EXPECT_EQ(expectedSize, actualSize);
 
-    HardwareCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, cmdQ, mockKernelWithInternal->mockKernel, 0U, 0U);
+    HardwareCommandsHelper<FamilyType>::programCacheFlushAfterWalkerCommand(&commandStream, cmdQ, mockKernelWithInternal->mockKernel, 0U);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(commandStream);

@@ -163,7 +163,7 @@ bool HardwareCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint
 }
 
 template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData) {
+void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
     *pipeControl = GfxFamily::cmdInitPipeControl;

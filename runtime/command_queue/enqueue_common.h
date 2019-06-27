@@ -456,7 +456,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForCacheFlush(Surface **surfaces,
     uint64_t postSyncAddress = 0;
     if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         auto timestampPacketNodeForPostSync = timestampPacketContainer->peekNodes().at(0);
-        postSyncAddress = timestampPacketNodeForPostSync->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextStart);
+        postSyncAddress = timestampPacketNodeForPostSync->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
     }
 
     submitCacheFlush(surfaces, numSurfaces, commandStream, postSyncAddress);
