@@ -16,6 +16,7 @@ class ScratchSpaceControllerBase : public ScratchSpaceController {
 
     void setRequiredScratchSpace(void *sshBaseAddress,
                                  uint32_t requiredPerThreadScratchSize,
+                                 uint32_t requiredPerThreadPrivateScratchSize,
                                  uint32_t currentTaskCount,
                                  uint32_t contextId,
                                  bool &stateBaseAddressDirty,

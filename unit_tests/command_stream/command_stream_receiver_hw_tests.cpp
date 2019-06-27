@@ -235,10 +235,11 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenScratchAl
 
     bool stateBaseAddressDirty = false;
     bool cfeStateDirty = false;
-    scratchController->setRequiredScratchSpace(reinterpret_cast<void *>(0x2000), 0u, 0u, 0u, stateBaseAddressDirty, cfeStateDirty);
+    scratchController->setRequiredScratchSpace(reinterpret_cast<void *>(0x2000), 0u, 0u, 0u, 0u, stateBaseAddressDirty, cfeStateDirty);
     EXPECT_FALSE(cfeStateDirty);
     EXPECT_FALSE(stateBaseAddressDirty);
     EXPECT_EQ(nullptr, scratchController->getScratchSpaceAllocation());
+    EXPECT_EQ(nullptr, scratchController->getPrivateScratchSpaceAllocation());
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddressIsReturned) {
@@ -249,7 +250,7 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddre
     bool stateBaseAddressDirty = false;
 
     std::unique_ptr<void, std::function<decltype(alignedFree)>> surfaceHeap(alignedMalloc(0x1000, 0x1000), alignedFree);
-    scratchController->setRequiredScratchSpace(surfaceHeap.get(), 0x1000u, 0u, 0u, stateBaseAddressDirty, cfeStateDirty);
+    scratchController->setRequiredScratchSpace(surfaceHeap.get(), 0x1000u, 0u, 0u, 0u, stateBaseAddressDirty, cfeStateDirty);
 
     uint64_t expectedScratchAddress = 0xAAABBBCCCDDD000ull;
     auto scratchAllocation = scratchController->getScratchSpaceAllocation();
