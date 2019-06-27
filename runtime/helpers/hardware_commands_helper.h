@@ -141,7 +141,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         Kernel &kernel);
 
     static size_t getSizeRequiredCS(const Kernel *kernel);
-    static size_t getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress, uint64_t postSyncData);
+    static size_t getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);
     static bool isPipeControlWArequired();
     static size_t getSizeRequiredDSH(
         const Kernel &kernel);
