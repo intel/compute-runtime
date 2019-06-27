@@ -206,6 +206,10 @@ class Kernel : public BaseObject<_cl_kernel> {
         return kernelInfo.patchInfo.mediavfestate ? kernelInfo.patchInfo.mediavfestate->PerThreadScratchSpace : 0;
     }
 
+    uint32_t getPrivateScratchSize() {
+        return kernelInfo.patchInfo.mediaVfeStateSlot1 ? kernelInfo.patchInfo.mediaVfeStateSlot1->PerThreadScratchSpace : 0;
+    }
+
     void createReflectionSurface();
     template <bool mockable = false>
     void patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printfHandler);

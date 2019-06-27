@@ -144,6 +144,23 @@ TEST_F(KernelDataTest, MediaVFEState) {
     EXPECT_EQ_VAL(MediaVFEState.ScratchSpaceOffset, pKernelInfo->patchInfo.mediavfestate->ScratchSpaceOffset);
 }
 
+TEST_F(KernelDataTest, WhenMediaVFEStateSlot1TokenIsParsedThenCorrectValuesAreSet) {
+    iOpenCL::SPatchMediaVFEState MediaVFEState;
+    MediaVFEState.Token = PATCH_TOKEN_MEDIA_VFE_STATE_SLOT1;
+    MediaVFEState.Size = sizeof(SPatchMediaVFEState);
+    MediaVFEState.PerThreadScratchSpace = 1;
+    MediaVFEState.ScratchSpaceOffset = 0;
+
+    pPatchList = &MediaVFEState;
+    patchListSize = MediaVFEState.Size;
+
+    buildAndDecode();
+
+    EXPECT_EQ_CONST(PATCH_TOKEN_MEDIA_VFE_STATE_SLOT1, pKernelInfo->patchInfo.mediaVfeStateSlot1->Token);
+    EXPECT_EQ_VAL(MediaVFEState.PerThreadScratchSpace, pKernelInfo->patchInfo.mediaVfeStateSlot1->PerThreadScratchSpace);
+    EXPECT_EQ_VAL(MediaVFEState.ScratchSpaceOffset, pKernelInfo->patchInfo.mediaVfeStateSlot1->ScratchSpaceOffset);
+}
+
 TEST_F(KernelDataTest, MediaIDData) {
     iOpenCL::SPatchInterfaceDescriptorData idData;
     idData.Token = PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA;

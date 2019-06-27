@@ -50,6 +50,7 @@ struct PatchInfo {
     const SPatchMediaInterfaceDescriptorLoad *interfaceDescriptorDataLoad = nullptr;
     const SPatchAllocateLocalSurface *localsurface = nullptr;
     const SPatchMediaVFEState *mediavfestate = nullptr;
+    const SPatchMediaVFEState *mediaVfeStateSlot1 = nullptr;
     const SPatchInterfaceDescriptorData *interfaceDescriptorData = nullptr;
     const SPatchSamplerStateArray *samplerStateArray = nullptr;
     const SPatchBindingTableState *bindingTableState = nullptr;

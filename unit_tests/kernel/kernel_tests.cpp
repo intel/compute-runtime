@@ -394,6 +394,7 @@ TEST(PatchInfo, Constructor) {
     EXPECT_EQ(nullptr, patchInfo.interfaceDescriptorDataLoad);
     EXPECT_EQ(nullptr, patchInfo.localsurface);
     EXPECT_EQ(nullptr, patchInfo.mediavfestate);
+    EXPECT_EQ(nullptr, patchInfo.mediaVfeStateSlot1);
     EXPECT_EQ(nullptr, patchInfo.interfaceDescriptorData);
     EXPECT_EQ(nullptr, patchInfo.samplerStateArray);
     EXPECT_EQ(nullptr, patchInfo.bindingTableState);
@@ -2570,4 +2571,27 @@ TEST(KernelTest, givenNotAllArgumentsAreBuffersButAllBuffersAreStatefulWhenIniti
 
     kernel.mockKernel->initialize();
     EXPECT_TRUE(kernel.mockKernel->allBufferArgsStateful);
+}
+
+TEST(KernelTest, givenKernelRequiringPrivateScratchSpaceWhenGettingSizeForPrivateScratchSpaceThenCorrectSizeIsReturned) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+
+    MockKernelWithInternals mockKernel(*device);
+    SPatchMediaVFEState mediaVFEstate;
+    SPatchMediaVFEState mediaVFEstateSlot1;
+    mediaVFEstateSlot1.PerThreadScratchSpace = 1024u;
+    mediaVFEstate.PerThreadScratchSpace = 512u;
+    mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
+    mockKernel.kernelInfo.patchInfo.mediaVfeStateSlot1 = &mediaVFEstateSlot1;
+
+    EXPECT_EQ(1024u, mockKernel.mockKernel->getPrivateScratchSize());
+}
+
+TEST(KernelTest, givenKernelWithoutMediaVfeStateSlot1WhenGettingSizeForPrivateScratchSpaceThenCorrectSizeIsReturned) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+
+    MockKernelWithInternals mockKernel(*device);
+    mockKernel.kernelInfo.patchInfo.mediaVfeStateSlot1 = nullptr;
+
+    EXPECT_EQ(0u, mockKernel.mockKernel->getPrivateScratchSize());
 }

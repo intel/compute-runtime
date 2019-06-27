@@ -206,6 +206,16 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
                     "\n  .PerThreadScratchSpace", kernelInfo.patchInfo.mediavfestate->PerThreadScratchSpace);
             break;
 
+        case PATCH_TOKEN_MEDIA_VFE_STATE_SLOT1:
+            kernelInfo.patchInfo.mediaVfeStateSlot1 =
+                reinterpret_cast<const SPatchMediaVFEState *>(pPatch);
+            DBG_LOG(LogPatchTokens,
+                    "\n.MEDIA_VFE_STATE_SLOT1", pPatch->Token,
+                    "\n  .Size", pPatch->Size,
+                    "\n  .ScratchSpaceOffset", kernelInfo.patchInfo.mediaVfeStateSlot1->ScratchSpaceOffset,
+                    "\n  .PerThreadScratchSpace", kernelInfo.patchInfo.mediaVfeStateSlot1->PerThreadScratchSpace);
+            break;
+
         case PATCH_TOKEN_DATA_PARAMETER_BUFFER:
             DBG_LOG(LogPatchTokens,
                     "\n.DATA_PARAMETER_BUFFER", pPatch->Token,

@@ -263,6 +263,7 @@ class MockKernelWithInternals {
         memset(&executionEnvironmentBlock, 0, sizeof(SPatchExecutionEnvironment));
         memset(&dataParameterStream, 0, sizeof(SPatchDataParameterStream));
         memset(&mediaVfeState, 0, sizeof(SPatchMediaVFEState));
+        memset(&mediaVfeStateSlot1, 0, sizeof(SPatchMediaVFEState));
         executionEnvironment.NumGRFRequired = GrfConfig::DefaultGrfNumber;
         executionEnvironmentBlock.NumGRFRequired = GrfConfig::DefaultGrfNumber;
         kernelHeader.SurfaceStateHeapSize = sizeof(sshLocal);
@@ -277,6 +278,7 @@ class MockKernelWithInternals {
         kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
         kernelInfo.patchInfo.threadPayload = &threadPayload;
         kernelInfo.patchInfo.mediavfestate = &mediaVfeState;
+        kernelInfo.patchInfo.mediaVfeStateSlot1 = &mediaVfeStateSlot1;
 
         if (context == nullptr) {
             mockContext = new MockContext;
@@ -320,6 +322,7 @@ class MockKernelWithInternals {
     SKernelBinaryHeaderCommon kernelHeader = {};
     SPatchThreadPayload threadPayload = {};
     SPatchMediaVFEState mediaVfeState = {};
+    SPatchMediaVFEState mediaVfeStateSlot1 = {};
     SPatchDataParameterStream dataParameterStream = {};
     SPatchExecutionEnvironment executionEnvironment = {};
     SPatchExecutionEnvironment executionEnvironmentBlock = {};
