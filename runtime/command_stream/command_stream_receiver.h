@@ -120,9 +120,7 @@ class CommandStreamReceiver {
     GraphicsAllocation *getScratchAllocation();
     GraphicsAllocation *getDebugSurfaceAllocation() const { return debugSurface; }
     GraphicsAllocation *allocateDebugSurface(size_t size);
-
-    void setPreemptionCsrAllocation(GraphicsAllocation *allocation) { preemptionCsrAllocation = allocation; }
-
+    GraphicsAllocation *getPreemptionAllocation() const { return preemptionAllocation; }
     void requestThreadArbitrationPolicy(uint32_t requiredPolicy) { this->requiredThreadArbitrationPolicy = requiredPolicy; }
     void requestStallingPipeControlOnNextFlush() { stallingPipeControlOnNextFlushRequired = true; }
 
@@ -147,6 +145,7 @@ class CommandStreamReceiver {
     void setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer);
 
     bool initializeTagAllocation();
+    MOCKABLE_VIRTUAL bool createPreemptionAllocation();
     MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
 
     bool peekTimestampPacketWriteEnabled() const { return timestampPacketWriteEnabled; }
@@ -207,7 +206,7 @@ class CommandStreamReceiver {
     volatile uint32_t *tagAddress = nullptr;
 
     GraphicsAllocation *tagAllocation = nullptr;
-    GraphicsAllocation *preemptionCsrAllocation = nullptr;
+    GraphicsAllocation *preemptionAllocation = nullptr;
     GraphicsAllocation *debugSurface = nullptr;
     OSInterface *osInterface = nullptr;
 

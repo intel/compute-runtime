@@ -62,7 +62,10 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex) {
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex].reset(newCsr);
     executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex]->initializeTagAllocation();
-    executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex]->setPreemptionCsrAllocation(preemptionAllocation);
+
+    if (preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) {
+        executionEnvironment->commandStreamReceivers[getDeviceIndex()][engineIndex]->createPreemptionAllocation();
+    }
     this->engines[engineIndex].commandStreamReceiver = newCsr;
 
     auto osContext = this->engines[engineIndex].osContext;

@@ -94,7 +94,7 @@ GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
     csr.setMediaVFEStateDirty(false);
-    auto csrSurface = csr.getPreemptionCsrAllocation();
+    auto csrSurface = csr.getPreemptionAllocation();
     EXPECT_EQ(nullptr, csrSurface);
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
@@ -128,7 +128,7 @@ GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
     csr.setMediaVFEStateDirty(false);
-    auto csrSurface = csr.getPreemptionCsrAllocation();
+    auto csrSurface = csr.getPreemptionAllocation();
     EXPECT_EQ(nullptr, csrSurface);
     HardwareParse hwCsrParser;
     HardwareParse hwCmdQParser;
@@ -265,7 +265,7 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
     csr.setMediaVFEStateDirty(false);
-    auto csrSurface = csr.getPreemptionCsrAllocation();
+    auto csrSurface = csr.getPreemptionAllocation();
     ASSERT_NE(nullptr, csrSurface);
     HardwareParse hwCsrParser;
     HardwareParse hwCmdQParser;
@@ -345,7 +345,7 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
     csr.setMediaVFEStateDirty(false);
-    auto csrSurface = csr.getPreemptionCsrAllocation();
+    auto csrSurface = csr.getPreemptionAllocation();
     ASSERT_NE(nullptr, csrSurface);
     HardwareParse hwCsrParser;
     HardwareParse hwCmdQParser;

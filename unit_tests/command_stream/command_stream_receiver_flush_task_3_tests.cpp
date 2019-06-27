@@ -669,8 +669,12 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
     auto mockCsr = new MockCsrHw2<FamilyType>(*executionEnvironment);
     executionEnvironment->commandStreamReceivers.resize(1);
     executionEnvironment->commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(mockCsr));
+
+    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isSourceLevelDebuggerActive()) {
+        mockCsr->createPreemptionAllocation();
+    }
+
     mockCsr->initializeTagAllocation();
-    mockCsr->setPreemptionCsrAllocation(pDevice->getPreemptionAllocation());
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 

@@ -179,6 +179,11 @@ void CommandStreamReceiver::cleanupResources() {
         tagAllocation = nullptr;
         tagAddress = nullptr;
     }
+
+    if (preemptionAllocation) {
+        getMemoryManager()->freeGraphicsMemory(preemptionAllocation);
+        preemptionAllocation = nullptr;
+    }
 }
 
 bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
@@ -362,6 +367,15 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     *this->tagAddress = DebugManager.flags.EnableNullHardware.get() ? -1 : initialHardwareTag;
 
     return true;
+}
+
+bool CommandStreamReceiver::createPreemptionAllocation() {
+    auto hwInfo = executionEnvironment.getHardwareInfo();
+    AllocationProperties properties{true, hwInfo->capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION, false};
+    properties.flags.uncacheable = hwInfo->workaroundTable.waCSRUncachable;
+    properties.alignment = 256 * MemoryConstants::kiloByte;
+    this->preemptionAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    return this->preemptionAllocation != nullptr;
 }
 
 std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainUniqueOwnership() {

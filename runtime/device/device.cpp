@@ -96,13 +96,9 @@ Device::~Device() {
         executionEnvironment->sourceLevelDebugger->notifyDeviceDestruction();
     }
 
-    if (preemptionAllocation) {
-        executionEnvironment->memoryManager->freeGraphicsMemory(preemptionAllocation);
-        preemptionAllocation = nullptr;
-    }
     executionEnvironment->memoryManager->waitForDeletions();
-
     alignedFree(this->slmWindowStartAddress);
+
     executionEnvironment->decRefInternal();
 }
 
@@ -112,7 +108,6 @@ bool Device::createDeviceImpl() {
     if (!createEngines()) {
         return false;
     }
-
     executionEnvironment->memoryManager->setDefaultEngineIndex(defaultEngineIndex);
 
     auto osInterface = executionEnvironment->osInterface.get();
@@ -143,17 +138,9 @@ bool Device::createDeviceImpl() {
 
     executionEnvironment->memoryManager->setForce32BitAllocations(getDeviceInfo().force32BitAddressess);
 
-    if (preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) {
-        preemptionAllocation = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(getAllocationPropertiesForPreemption());
-        if (!preemptionAllocation) {
-            return false;
-        }
-    }
-
-    for (auto &engine : engines) {
-        auto csr = engine.commandStreamReceiver;
-        csr->setPreemptionCsrAllocation(preemptionAllocation);
-        if (DebugManager.flags.EnableExperimentalCommandBuffer.get() > 0) {
+    if (DebugManager.flags.EnableExperimentalCommandBuffer.get() > 0) {
+        for (auto &engine : engines) {
+            auto csr = engine.commandStreamReceiver;
             csr->setExperimentalCmdBuffer(std::make_unique<ExperimentalCommandBuffer>(csr, getDeviceInfo().profilingTimerResolution));
         }
     }
@@ -161,13 +148,8 @@ bool Device::createDeviceImpl() {
     return true;
 }
 
-AllocationProperties Device::getAllocationPropertiesForPreemption() const {
-    AllocationProperties properties{true, getHardwareInfo().capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION, false};
-    properties.flags.uncacheable = getWaTable()->waCSRUncachable;
-    properties.alignment = 256 * MemoryConstants::kiloByte;
-    return properties;
-}
 bool Device::createEngines() {
+
     auto &hwInfo = getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(hwInfo);
     auto &gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances();
@@ -189,9 +171,12 @@ bool Device::createEngines() {
         if (!commandStreamReceiver->initializeTagAllocation()) {
             return false;
         }
-
         if (gpgpuEngines[deviceCsrIndex] == defaultEngineType && !lowPriority) {
             defaultEngineIndex = deviceCsrIndex;
+        }
+
+        if ((preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) && !commandStreamReceiver->createPreemptionAllocation()) {
+            return false;
         }
 
         engines.push_back({commandStreamReceiver, osContext});

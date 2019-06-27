@@ -54,10 +54,7 @@ HWTEST_F(EnqueueHandlerTest, whenEnqueueCommandWithoutKernelThenPassCorrectDispa
     mockCsr->initializeTagAllocation();
     auto oldCsr = mockCmdQ->engine->commandStreamReceiver;
     mockCmdQ->engine->commandStreamReceiver = mockCsr.get();
-
-    AllocationProperties properties(1, GraphicsAllocation::AllocationType::PREEMPTION);
-    auto preemptionAllocation = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(properties);
-    mockCsr->setPreemptionCsrAllocation(preemptionAllocation);
+    mockCsr->createPreemptionAllocation();
 
     auto blocking = true;
     TimestampPacketContainer previousTimestampPacketNodes;
@@ -69,7 +66,6 @@ HWTEST_F(EnqueueHandlerTest, whenEnqueueCommandWithoutKernelThenPassCorrectDispa
     EXPECT_EQ(mockCmdQ->isMultiEngineQueue(), mockCsr->passedDispatchFlags.multiEngineQueue);
     EXPECT_EQ(pDevice->getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
     mockCmdQ->engine->commandStreamReceiver = oldCsr;
-    executionEnvironment->memoryManager->freeGraphicsMemory(preemptionAllocation);
 }
 
 HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenEnqueuedHandlerThenUsedSizeEqualZero) {

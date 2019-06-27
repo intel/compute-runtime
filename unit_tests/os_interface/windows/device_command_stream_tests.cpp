@@ -52,20 +52,21 @@ class WddmCommandStreamFixture {
     DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr;
     MockWddmMemoryManager *memoryManager = nullptr;
     WddmMock *wddm = nullptr;
+
     DebugManagerStateRestore stateRestore;
 
     virtual void SetUp() {
         HardwareInfo *hwInfo = nullptr;
         DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
         auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
-        wddm = static_cast<WddmMock *>(executionEnvironment->osInterface->get()->getWddm());
-
-        csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
 
         memoryManager = new MockWddmMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
+        wddm = static_cast<WddmMock *>(executionEnvironment->osInterface->get()->getWddm());
 
+        csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+
         device->resetCommandStreamReceiver(csr);
         ASSERT_NE(nullptr, device);
     }
@@ -129,15 +130,9 @@ class WddmCommandStreamWithMockGdiFixture {
         device->resetCommandStreamReceiver(this->csr);
         ASSERT_NE(nullptr, device);
         this->csr->overrideRecorededCommandBuffer(*device);
-        if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-            preemptionAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-        }
     }
 
     virtual void TearDown() {
-        if (preemptionAllocation) {
-            memoryManager->freeGraphicsMemory(preemptionAllocation);
-        }
         wddm = nullptr;
     }
 };
@@ -735,7 +730,6 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     auto sshAlloc = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     auto tagAllocation = csr->getTagAllocation();
-    csr->setPreemptionCsrAllocation(preemptionAllocation);
 
     LinearStream cs(commandBuffer);
     IndirectHeap dsh(dshAlloc);

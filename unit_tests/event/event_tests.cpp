@@ -958,6 +958,7 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushe
     MockNonZeroCopyBuff buffer(executionStamp);
     MockCsr<FamilyType> csr(executionStamp, *pDevice->executionEnvironment);
     csr.setTagAllocation(pDevice->getDefaultEngine().commandStreamReceiver->getTagAllocation());
+    csr.createPreemptionAllocation();
     csr.setupContext(*pDevice->getDefaultEngine().osContext);
 
     MemObjSizeArray size = {{4, 1, 1}};

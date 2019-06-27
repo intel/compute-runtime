@@ -101,14 +101,6 @@ class MockDevice : public Device {
         return createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, 0u);
     }
 
-    void allocatePreemptionAllocationIfNotPresent() {
-        if (this->preemptionAllocation == nullptr) {
-            if (preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) {
-                this->preemptionAllocation = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(getAllocationPropertiesForPreemption());
-                this->engines[defaultEngineIndex].commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
-            }
-        }
-    }
     std::unique_ptr<MemoryManager> mockMemoryManager;
 
   private:

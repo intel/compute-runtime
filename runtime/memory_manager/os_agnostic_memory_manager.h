@@ -88,4 +88,5 @@ class OsAgnosticMemoryManager : public MemoryManager {
     unsigned long long counter = 0;
     bool fakeBigAllocations = false;
 };
+
 } // namespace NEO

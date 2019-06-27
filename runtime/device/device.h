@@ -104,12 +104,11 @@ class Device : public BaseObject<_cl_device_id> {
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
-    GraphicsAllocation *getPreemptionAllocation() const { return preemptionAllocation; }
     MOCKABLE_VIRTUAL const WhitelistedRegisters &getWhitelistedRegisters() { return getHardwareInfo().capabilityTable.whitelistedRegisters; }
     std::vector<unsigned int> simultaneousInterops;
     std::string deviceExtensions;
     std::string name;
-    bool isSourceLevelDebuggerActive() const;
+    MOCKABLE_VIRTUAL bool isSourceLevelDebuggerActive() const;
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
@@ -137,14 +136,10 @@ class Device : public BaseObject<_cl_device_id> {
     MOCKABLE_VIRTUAL void initializeCaps();
     void setupFp64Flags();
     void appendOSExtensions(std::string &deviceExtensions);
-    AllocationProperties getAllocationPropertiesForPreemption() const;
-
     unsigned int enabledClVersion = 0u;
 
     HardwareCapabilities hardwareCapabilities = {};
     DeviceInfo deviceInfo;
-
-    GraphicsAllocation *preemptionAllocation = nullptr;
     std::unique_ptr<OSTime> osTime;
     std::unique_ptr<DriverInfo> driverInfo;
     std::unique_ptr<PerformanceCounters> performanceCounters;

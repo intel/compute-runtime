@@ -70,18 +70,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::waitForTaskCountAndCleanAllocationList;
 
     virtual ~UltCommandStreamReceiver() override {
-        if (tempPreemptionLocation) {
-            this->setPreemptionCsrAllocation(nullptr);
-        }
     }
 
     UltCommandStreamReceiver(ExecutionEnvironment &executionEnvironment) : BaseClass(executionEnvironment), recursiveLockCounter(0) {
-        if (executionEnvironment.getHardwareInfo()->capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
-            tempPreemptionLocation = std::make_unique<GraphicsAllocation>(GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull, false);
-            this->preemptionCsrAllocation = tempPreemptionLocation.get();
-        }
     }
-
     static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment) {
         return new UltCommandStreamReceiver<GfxFamily>(executionEnvironment);
     }
@@ -114,6 +106,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     size_t getPreferredTagPoolSize() const override {
         return BaseClass::getPreferredTagPoolSize() + 1;
     }
+    void setPreemptionAllocation(GraphicsAllocation *allocation) { this->preemptionAllocation = allocation; }
 
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
         latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
@@ -121,7 +114,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
 
     void overrideCsrSizeReqFlags(CsrSizeRequestFlags &flags) { this->csrSizeRequestFlags = flags; }
-    GraphicsAllocation *getPreemptionCsrAllocation() const { return this->preemptionCsrAllocation; }
+    GraphicsAllocation *getPreemptionAllocation() const { return this->preemptionAllocation; }
 
     void makeResident(GraphicsAllocation &gfxAllocation) override {
         if (storeMakeResidentAllocations) {
@@ -187,9 +180,5 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t latestSentTaskCountValueDuringFlush = 0;
     uint32_t blitBufferCalled = 0;
     std::atomic<uint32_t> latestWaitForCompletionWithTimeoutTaskCount{0};
-
-  protected:
-    std::unique_ptr<GraphicsAllocation> tempPreemptionLocation;
 };
-
 } // namespace NEO

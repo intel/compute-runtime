@@ -439,6 +439,39 @@ HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenCsrBaseAddressIsNotProgrammed
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
+HWTEST_P(PreemptionTest, whenFailToCreatePreemptionAllocationThenFailToCreateDevice) {
+
+    class MockUltCsr : public UltCommandStreamReceiver<FamilyType> {
+
+      public:
+        MockUltCsr(ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(executionEnvironment) {
+        }
+
+        bool createPreemptionAllocation() override {
+            return false;
+        }
+    };
+
+    class MockDeviceReturnedDebuggerActive : public MockDevice {
+      public:
+        MockDeviceReturnedDebuggerActive(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
+            : MockDevice(executionEnvironment, deviceIndex) {}
+        bool isSourceLevelDebuggerActive() const override {
+            return true;
+        }
+    };
+
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+
+    platformImpl->peekExecutionEnvironment()->commandStreamReceivers.resize(1);
+    platformImpl->peekExecutionEnvironment()->commandStreamReceivers[0].resize(2);
+    executionEnvironment->commandStreamReceivers[0][1].reset(new MockUltCsr(*executionEnvironment));
+    executionEnvironment->commandStreamReceivers[0][0].reset(new MockUltCsr(*executionEnvironment));
+
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::create<MockDeviceReturnedDebuggerActive>(executionEnvironment, 0));
+    EXPECT_EQ(nullptr, mockDevice);
+}
+
 INSTANTIATE_TEST_CASE_P(
     NonMidThread,
     PreemptionTest,
@@ -452,21 +485,22 @@ HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceNoWa) {
     ASSERT_NE(nullptr, mockDevice.get());
 
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
-    MemoryAllocation *csrSurface = static_cast<MemoryAllocation *>(csr.getPreemptionCsrAllocation());
+    MemoryAllocation *csrSurface = static_cast<MemoryAllocation *>(csr.getPreemptionAllocation());
     ASSERT_NE(nullptr, csrSurface);
     EXPECT_FALSE(csrSurface->uncacheable);
 
-    GraphicsAllocation *devCsrSurface = mockDevice->getPreemptionAllocation();
+    GraphicsAllocation *devCsrSurface = csr.getPreemptionAllocation();
     EXPECT_EQ(csrSurface, devCsrSurface);
 }
 
 HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfaceAllocationThenFailToCreateDevice) {
+
     class FailingMemoryManager : public OsAgnosticMemoryManager {
       public:
         FailingMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment) {}
 
         GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
-            if (++allocateGraphicsMemoryCount > HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size()) {
+            if (++allocateGraphicsMemoryCount > HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances().size() - 1) {
                 return nullptr;
             }
             return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
@@ -489,11 +523,11 @@ HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceWa) {
     ASSERT_NE(nullptr, mockDevice.get());
 
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
-    MemoryAllocation *csrSurface = static_cast<MemoryAllocation *>(csr.getPreemptionCsrAllocation());
+    MemoryAllocation *csrSurface = static_cast<MemoryAllocation *>(csr.getPreemptionAllocation());
     ASSERT_NE(nullptr, csrSurface);
     EXPECT_TRUE(csrSurface->uncacheable);
 
-    GraphicsAllocation *devCsrSurface = mockDevice->getPreemptionAllocation();
+    GraphicsAllocation *devCsrSurface = csr.getPreemptionAllocation();
     EXPECT_EQ(csrSurface, devCsrSurface);
 }
 

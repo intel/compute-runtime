@@ -771,7 +771,7 @@ class DrmCommandStreamBatchingTests : public Test<DrmCommandStreamEnhancedFixtur
             GlobalMockSipProgram::sipProgram->resetAllocation(device->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
         }
         tagAllocation = static_cast<DrmAllocation *>(device->getDefaultEngine().commandStreamReceiver->getTagAllocation());
-        preemptionAllocation = static_cast<DrmAllocation *>(device->getPreemptionAllocation());
+        preemptionAllocation = static_cast<DrmAllocation *>(device->getDefaultEngine().commandStreamReceiver->getPreemptionAllocation());
     }
     void TearDown() override {
         if (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) {
@@ -828,7 +828,6 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     tCsr->makeResident(*dummyAllocation);
 
     tCsr->setTagAllocation(tagAllocation);
-    tCsr->setPreemptionCsrAllocation(preemptionAllocation);
     DispatchFlags dispatchFlags;
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(device->getHardwareInfo());
     tCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
@@ -880,7 +879,6 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     IndirectHeap cs(commandBuffer);
 
     tCsr->setTagAllocation(tagAllocation);
-    tCsr->setPreemptionCsrAllocation(preemptionAllocation);
     auto &submittedCommandBuffer = tCsr->getCS(1024);
     //use some bytes
     submittedCommandBuffer.getSpace(4);
@@ -933,7 +931,6 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     EXPECT_EQ(ioctlExecCnt + ioctlUserPtrCnt, this->mock->ioctl_cnt.total);
 
     mm->freeGraphicsMemory(commandBuffer);
-    tCsr->setPreemptionCsrAllocation(nullptr);
 }
 
 typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamLeaksTest;
