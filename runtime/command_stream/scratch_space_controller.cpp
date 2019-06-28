@@ -25,6 +25,9 @@ ScratchSpaceController::~ScratchSpaceController() {
     if (scratchAllocation) {
         getMemoryManager()->freeGraphicsMemory(scratchAllocation);
     }
+    if (privateScratchAllocation) {
+        getMemoryManager()->freeGraphicsMemory(privateScratchAllocation);
+    }
 }
 
 MemoryManager *ScratchSpaceController::getMemoryManager() const {

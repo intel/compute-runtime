@@ -13,6 +13,7 @@
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/command_stream/scratch_space_controller.h"
+#include "runtime/command_stream/scratch_space_controller_base.h"
 #include "runtime/event/user_event.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/blit_commands_helper.h"
@@ -722,4 +723,18 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
             EXPECT_EQ(ptrOffset(buffer2->getGraphicsAllocation()->getGpuAddress(), buffer2Offset), bltCmd->getSourceBaseAddress());
         }
     }
+}
+
+struct MockScratchSpaceController : ScratchSpaceControllerBase {
+    using ScratchSpaceControllerBase::privateScratchAllocation;
+    using ScratchSpaceControllerBase::ScratchSpaceControllerBase;
+};
+
+using ScratchSpaceControllerTest = Test<DeviceFixture>;
+
+TEST_F(ScratchSpaceControllerTest, whenScratchSpaceControllerIsDestroyedThenItReleasePrivateScratchSpaceAllocation) {
+    MockScratchSpaceController scratchSpaceController(*pDevice->getExecutionEnvironment(), *pDevice->getCommandStreamReceiver().getInternalAllocationStorage());
+    scratchSpaceController.privateScratchAllocation = pDevice->getExecutionEnvironment()->memoryManager->allocateGraphicsMemoryInPreferredPool(MockAllocationProperties{MemoryConstants::pageSize}, nullptr);
+    EXPECT_NE(nullptr, scratchSpaceController.privateScratchAllocation);
+    //no memory leak is expected
 }
