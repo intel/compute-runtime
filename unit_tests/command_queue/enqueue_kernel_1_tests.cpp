@@ -334,6 +334,26 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameScra
     EXPECT_EQ(csr.getScratchAllocation(), scratchAlloc);
 }
 
+HWTEST_F(EnqueueKernelTest, whenEnqueueingKernelThatRequirePrivateScratchThenPrivateScratchIsSetInCommandStreamReceviver) {
+    pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getMemoryManager()->setForce32BitAllocations(false);
+    size_t off[3] = {0, 0, 0};
+    size_t gws[3] = {1, 1, 1};
+
+    SPatchMediaVFEState mediaVFEstate;
+    uint32_t privateScratchSize = 4096u;
+
+    mediaVFEstate.PerThreadScratchSpace = privateScratchSize;
+
+    MockKernelWithInternals mockKernel(*pDevice);
+    mockKernel.kernelInfo.patchInfo.mediaVfeStateSlot1 = &mediaVFEstate;
+
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_EQ(privateScratchSize, csr.requiredPrivateScratchSize);
+}
+
 HWTEST_F(EnqueueKernelTest, givenEnqueueWithGlobalWorkSizeWhenZeroValueIsPassedInDimensionThenTheKernelCommandWillTriviallySucceed) {
     size_t gws[3] = {0, 0, 0};
     MockKernelWithInternals mockKernel(*pDevice);

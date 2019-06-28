@@ -6,6 +6,7 @@
  */
 
 #include "runtime/command_stream/csr_definitions.h"
+#include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/state_base_address.h"
@@ -410,7 +411,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, handleTagAndScratchAllocationsResi
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
-    commandStreamReceiver->setRequiredScratchSize(1024); // whatever > 0
+    commandStreamReceiver->setRequiredScratchSizes(1024, 0); // whatever > 0
 
     flushTask(*commandStreamReceiver);
 
@@ -686,13 +687,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, InForced32BitAllocationsModeDoNotS
 
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
-    commandStreamReceiver->setRequiredScratchSize(4096); // whatever > 0 (in page size)
+    commandStreamReceiver->setRequiredScratchSizes(4096, 0); // whatever > 0 (in page size)
     flushTask(*commandStreamReceiver);
 
     auto scratchAllocation = commandStreamReceiver->getScratchAllocation();
     ASSERT_NE(scratchAllocation, nullptr);
 
-    commandStreamReceiver->setRequiredScratchSize(8196); // whatever > first size
+    commandStreamReceiver->setRequiredScratchSizes(8196, 0); // whatever > first size
 
     flushTask(*commandStreamReceiver); // 2nd flush
 
@@ -720,13 +721,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, InForced32BitAllocationsModeStore3
 
         pDevice->resetCommandStreamReceiver(commandStreamReceiver);
 
-        commandStreamReceiver->setRequiredScratchSize(4096); // whatever > 0 (in page size)
+        commandStreamReceiver->setRequiredScratchSizes(4096, 0); // whatever > 0 (in page size)
         flushTask(*commandStreamReceiver);
 
         auto scratchAllocation = commandStreamReceiver->getScratchAllocation();
         ASSERT_NE(scratchAllocation, nullptr);
 
-        commandStreamReceiver->setRequiredScratchSize(8196); // whatever > first size
+        commandStreamReceiver->setRequiredScratchSizes(8196, 0); // whatever > first size
 
         flushTask(*commandStreamReceiver); // 2nd flush
 

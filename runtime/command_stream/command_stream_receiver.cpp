@@ -214,9 +214,12 @@ void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
     this->tagAddress = allocation ? reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer()) : nullptr;
 }
 
-void CommandStreamReceiver::setRequiredScratchSize(uint32_t newRequiredScratchSize) {
+void CommandStreamReceiver::setRequiredScratchSizes(uint32_t newRequiredScratchSize, uint32_t newRequiredPrivateScratchSize) {
     if (newRequiredScratchSize > requiredScratchSize) {
         requiredScratchSize = newRequiredScratchSize;
+    }
+    if (newRequiredPrivateScratchSize > requiredPrivateScratchSize) {
+        requiredPrivateScratchSize = newRequiredPrivateScratchSize;
     }
 }
 

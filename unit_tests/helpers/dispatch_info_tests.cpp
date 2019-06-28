@@ -337,3 +337,9 @@ TEST(DispatchInfoBasicTests, givenDispatchInfoWhenSetCanBePartitionIsCalledThenS
     dispatchInfo.setCanBePartitioned(true);
     EXPECT_TRUE(dispatchInfo.peekCanBePartitioned());
 }
+
+TEST(DispatchInfoBasicTests, givenDispatchInfoWithoutKernelWhenGettingSizeForPrivateScratchThenZeroIsReturned) {
+    DispatchInfo dispatchInfo;
+    EXPECT_EQ(nullptr, dispatchInfo.getKernel());
+    EXPECT_EQ(0u, dispatchInfo.getRequiredPrivateScratchSize());
+}

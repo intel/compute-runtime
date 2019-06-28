@@ -21,16 +21,17 @@ class Kernel;
 
 class DispatchInfo {
   public:
-    DispatchInfo() : gws(0, 0, 0), elws(0, 0, 0), offset(0, 0, 0), agws(0, 0, 0), lws(0, 0, 0), twgs(0, 0, 0), nwgs(0, 0, 0), swgs(0, 0, 0) {}
-    DispatchInfo(Kernel *k, uint32_t d, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset)
-        : kernel(k), dim(d), gws(gws), elws(elws), offset(offset), agws(0, 0, 0), lws(0, 0, 0), twgs(0, 0, 0), nwgs(0, 0, 0), swgs(0, 0, 0) {}
-    DispatchInfo(Kernel *k, uint32_t d, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset, Vec3<size_t> agws, Vec3<size_t> lws, Vec3<size_t> twgs, Vec3<size_t> nwgs, Vec3<size_t> swgs)
-        : kernel(k), dim(d), gws(gws), elws(elws), offset(offset), agws(agws), lws(lws), twgs(twgs), nwgs(nwgs), swgs(swgs) {}
+    DispatchInfo() = default;
+    DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset)
+        : kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset) {}
+    DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset, Vec3<size_t> agws, Vec3<size_t> lws, Vec3<size_t> twgs, Vec3<size_t> nwgs, Vec3<size_t> swgs)
+        : kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset), agws(agws), lws(lws), twgs(twgs), nwgs(nwgs), swgs(swgs) {}
     bool isPipeControlRequired() const { return pipeControlRequired; }
     void setPipeControlRequired(bool blocking) { this->pipeControlRequired = blocking; }
     bool usesSlm() const;
     bool usesStatelessPrintfSurface() const;
     uint32_t getRequiredScratchSize() const;
+    uint32_t getRequiredPrivateScratchSize() const;
     void setKernel(Kernel *kernel) { this->kernel = kernel; }
     Kernel *getKernel() const { return kernel; }
     uint32_t getDim() const { return dim; }
@@ -60,14 +61,14 @@ class DispatchInfo {
     Kernel *kernel = nullptr;
     uint32_t dim = 0;
 
-    Vec3<size_t> gws;    //global work size
-    Vec3<size_t> elws;   //enqueued local work size
-    Vec3<size_t> offset; //global offset
-    Vec3<size_t> agws;   //actual global work size
-    Vec3<size_t> lws;    //local work size
-    Vec3<size_t> twgs;   //total number of work groups
-    Vec3<size_t> nwgs;   //number of work groups
-    Vec3<size_t> swgs;   //start of work groups
+    Vec3<size_t> gws{0, 0, 0};    //global work size
+    Vec3<size_t> elws{0, 0, 0};   //enqueued local work size
+    Vec3<size_t> offset{0, 0, 0}; //global offset
+    Vec3<size_t> agws{0, 0, 0};   //actual global work size
+    Vec3<size_t> lws{0, 0, 0};    //local work size
+    Vec3<size_t> twgs{0, 0, 0};   //total number of work groups
+    Vec3<size_t> nwgs{0, 0, 0};   //number of work groups
+    Vec3<size_t> swgs{0, 0, 0};   //start of work groups
 };
 
 struct MultiDispatchInfo {
@@ -109,6 +110,14 @@ struct MultiDispatchInfo {
         uint32_t ret = 0;
         for (const auto &dispatchInfo : dispatchInfos) {
             ret = std::max(ret, dispatchInfo.getRequiredScratchSize());
+        }
+        return ret;
+    }
+
+    uint32_t getRequiredPrivateScratchSize() const {
+        uint32_t ret = 0;
+        for (const auto &dispatchInfo : dispatchInfos) {
+            ret = std::max(ret, dispatchInfo.getRequiredPrivateScratchSize());
         }
         return ret;
     }

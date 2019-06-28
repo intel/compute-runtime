@@ -442,7 +442,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
         }
     }
 
-    getCommandStreamReceiver().setRequiredScratchSize(multiDispatchInfo.getRequiredScratchSize());
+    getCommandStreamReceiver().setRequiredScratchSizes(multiDispatchInfo.getRequiredScratchSize(), multiDispatchInfo.getRequiredPrivateScratchSize());
 }
 
 template <typename GfxFamily>

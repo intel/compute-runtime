@@ -116,7 +116,7 @@ class CommandStreamReceiver {
 
     void setMediaVFEStateDirty(bool dirty) { mediaVfeStateDirty = dirty; }
 
-    void setRequiredScratchSize(uint32_t newRequiredScratchSize);
+    void setRequiredScratchSizes(uint32_t newRequiredScratchSize, uint32_t newRequiredPrivateScratchSize);
     GraphicsAllocation *getScratchAllocation();
     GraphicsAllocation *getDebugSurfaceAllocation() const { return debugSurface; }
     GraphicsAllocation *allocateDebugSurface(size_t size);
@@ -235,6 +235,7 @@ class CommandStreamReceiver {
     uint32_t lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
 
     uint32_t requiredScratchSize = 0;
+    uint32_t requiredPrivateScratchSize = 0;
 
     int8_t lastSentCoherencyRequest = -1;
     int8_t lastMediaSamplerConfig = -1;
