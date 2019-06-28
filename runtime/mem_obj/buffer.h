@@ -100,6 +100,10 @@ class Buffer : public MemObj {
                                 GraphicsAllocation *gfxAlloc = nullptr,
                                 cl_mem_flags flags = 0);
 
+    static void provideCompressionHint(GraphicsAllocation::AllocationType allocationType,
+                                       Context *context,
+                                       Buffer *buffer);
+
     BufferCreatFunc createFunction = nullptr;
     bool isSubBuffer();
     bool isValidSubBufferOffset(size_t offset);

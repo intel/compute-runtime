@@ -276,6 +276,9 @@ Buffer *Buffer::create(Context *context,
             mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
         }
     }
+
+    Buffer::provideCompressionHint(allocationType, context, pBuffer);
+
     pBuffer->mapAllocation = mapAllocation;
     pBuffer->setHostPtrMinSize(size);
 
@@ -562,5 +565,17 @@ void Buffer::setSurfaceState(const Device *device,
     buffer->setArgStateful(surfaceState, false, false);
     buffer->graphicsAllocation = nullptr;
     delete buffer;
+}
+
+void Buffer::provideCompressionHint(GraphicsAllocation::AllocationType allocationType,
+                                    Context *context,
+                                    Buffer *buffer) {
+    if (context->isProvidingPerformanceHints() && HwHelper::renderCompressedBuffersSupported(context->getDevice(0)->getHardwareInfo())) {
+        if (allocationType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, BUFFER_IS_COMPRESSED, buffer);
+        } else {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, BUFFER_IS_NOT_COMPRESSED, buffer);
+        }
+    }
 }
 } // namespace NEO

@@ -222,6 +222,7 @@ Image *Image::create(Context *context,
             }
 
             memory = parentBuffer->getGraphicsAllocation();
+
             // Image from buffer - we never allocate memory, we use what buffer provides
             zeroCopy = true;
             hostPtr = parentBuffer->getHostPtr();
@@ -312,6 +313,16 @@ Image *Image::create(Context *context,
 
         image = createImageHw(context, properties, imgInfo.size, hostPtrToSet, surfaceFormat->OCLImageFormat,
                               imageDescriptor, zeroCopy, memory, false, isTilingAllowed, 0, 0, surfaceFormat);
+
+        if (context->isProvidingPerformanceHints() && HwHelper::renderCompressedImagesSupported(context->getDevice(0)->getHardwareInfo())) {
+            if (memory->getDefaultGmm()) {
+                if (memory->getDefaultGmm()->isRenderCompressed) {
+                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_COMPRESSED, image);
+                } else {
+                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_NOT_COMPRESSED, image);
+                }
+            }
+        }
 
         if (imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_ARRAY && imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D_ARRAY) {
             image->imageDesc.image_array_size = 0;

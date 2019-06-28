@@ -56,8 +56,11 @@ const char *const DriverDiagnostics::hintFormat[] = {
     "Performance hint: Kernel %s register pressure is too high, spill fills will be generated, additional surface needs to be allocated of size %u, consider simplifying your kernel.",                                                   //REGISTER_PRESSURE_TOO_HIGH
     "Performance hint: Kernel %s private memory usage is too high and exhausts register space, additional surface needs to be allocated of size %u, consider reducing amount of private memory used, avoid using private memory arrays.", //PRIVATE_MEMORY_USAGE_TOO_HIGH
     "Performance hint: Kernel %s submission requires coherency with CPU; this will impact performance.",                                                                                                                                  //KERNEL_REQUIRES_COHERENCY
-    "Performance hint: Kernel %s requires aux translation on argument [%u] = \"%s\""                                                                                                                                                      //KERNEL_ARGUMENT_AUX_TRANSLATION
-};
+    "Performance hint: Kernel %s requires aux translation on argument [%u] = \"%s\"",                                                                                                                                                     //KERNEL_ARGUMENT_AUX_TRANSLATION
+    "Performance hint: Buffer %p will use compressed memory.",                                                                                                                                                                            //BUFFER_IS_COMPRESSED
+    "Performance hint: Buffer %p will not use compressed memory.",                                                                                                                                                                        //BUFFER_IS_NOT_COMPRESSED
+    "Performance hint: Image %p will use compressed memory.",                                                                                                                                                                             //IMAGE_IS_COMPRESSED
+    "Performance hint: Image %p will not use compressed memory."};                                                                                                                                                                        //IMAGE_IS_NOT_COMPRESSED
 
 PerformanceHints DriverDiagnostics::obtainHintForTransferOperation(cl_command_type commandType, bool transferRequired) {
     PerformanceHints hint;
