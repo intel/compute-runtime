@@ -600,7 +600,8 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
     }
     void *reserveAddress = gfxAllocation->getReservedAddressPtr();
     if (reserveAddress) {
-        releaseReservedCpuAddressRange(reserveAddress, gfxAllocation->getReservedAddressSize());
+        auto gpuAddressToFree = GmmHelper::decanonize(reinterpret_cast<uint64_t>(reserveAddress));
+        gfxPartition.freeGpuAddressRange(gpuAddressToFree, gfxAllocation->getReservedAddressSize());
     }
     delete gfxAllocation;
 
