@@ -36,6 +36,9 @@ include(GNUInstallDirs)
 # define global property where we will collect component list to package
 define_property(GLOBAL PROPERTY NEO_COMPONENTS_LIST BRIEF_DOCS "List of components" FULL_DOCS "List of components to create packages")
 set(GLOBAL PROPERTY NEO_COMPONENTS_LIST "")
+if(NOT DEFINED NEO_BUILD_PACKAGE)
+    set(NEO_BUILD_PACKAGE TRUE)
+endif()
 
 set(BRANCH_TYPE "")
 set(BRANCH_DIR_SUFFIX "/${BRANCH_TYPE}")
@@ -822,4 +825,6 @@ configure_file(lib_names.h.in ${IGDRCL_BUILD_DIR}/lib_names.h)
 hide_subdir(runtime)
 add_subdirectories()
 
-include(package.cmake)
+if(NEO_BUILD_PACKAGE)
+    include(package.cmake)
+endif()
