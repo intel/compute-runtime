@@ -13,6 +13,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_timestamp_container.h"
 
@@ -44,6 +45,33 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelWhenCommandEnqueuedT
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, mockCmdQ->getCS(0), 0, blocking, &previousTimestampPacketNodes, eventsRequest, eventBuilder, 0);
     EXPECT_EQ(allocation->getTaskCount(mockCmdQ->getCommandStreamReceiver().getOsContext().getContextId()), 1u);
 }
+
+HWTEST_F(EnqueueHandlerTest, whenEnqueueCommandWithoutKernelThenPassCorrectDispatchFlags) {
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    auto mockCsr = std::make_unique<MockCsrHw2<FamilyType>>(*executionEnvironment);
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
+    mockCsr->setupContext(*mockCmdQ->engine->osContext);
+    mockCsr->initializeTagAllocation();
+    auto oldCsr = mockCmdQ->engine->commandStreamReceiver;
+    mockCmdQ->engine->commandStreamReceiver = mockCsr.get();
+
+    AllocationProperties properties(1, GraphicsAllocation::AllocationType::PREEMPTION);
+    auto preemptionAllocation = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(properties);
+    mockCsr->setPreemptionCsrAllocation(preemptionAllocation);
+
+    auto blocking = true;
+    TimestampPacketContainer previousTimestampPacketNodes;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+    mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, mockCmdQ->getCS(0), 0, blocking, &previousTimestampPacketNodes, eventsRequest, eventBuilder, 0);
+
+    EXPECT_EQ(blocking, mockCsr->passedDispatchFlags.blocking);
+    EXPECT_EQ(mockCmdQ->isMultiEngineQueue(), mockCsr->passedDispatchFlags.multiEngineQueue);
+    EXPECT_EQ(pDevice->getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
+    mockCmdQ->engine->commandStreamReceiver = oldCsr;
+    executionEnvironment->memoryManager->freeGraphicsMemory(preemptionAllocation);
+}
+
 HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenEnqueuedHandlerThenUsedSizeEqualZero) {
 
     std::unique_ptr<MockCommandQueueWithCacheFlush<FamilyType>> mockCmdQ(new MockCommandQueueWithCacheFlush<FamilyType>(context, pDevice, 0));

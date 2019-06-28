@@ -815,6 +815,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     }
 
     DispatchFlags dispatchFlags = {};
+    dispatchFlags.blocking = blocking;
+    dispatchFlags.multiEngineQueue = multiEngineQueue;
+    dispatchFlags.preemptionMode = device->getPreemptionMode();
     if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, getCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
     }
