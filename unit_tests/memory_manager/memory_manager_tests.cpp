@@ -303,7 +303,9 @@ TEST_F(MemoryAllocatorTest, givenOsHandleStorageWhenOsHandlesAreCleanedAndAubMan
     EXPECT_EQ(nullptr, mockAubCenter->aubManager);
 }
 
-TEST_F(MemoryAllocatorTest, givenOsHandleStorageWhenOsHandlesAreCleanedAndAubManagerIsAvailableThenFreeMemoryIsCalledOnAubManager) {
+TEST_F(MemoryAllocatorTest, givenOsHandleStorageAndFreeMemoryEnabledWhenOsHandlesAreCleanedAndAubManagerIsAvailableThenFreeMemoryIsCalledOnAubManager) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableFreeMemory.set(true);
     MockExecutionEnvironment mockExecutionEnvironment(*platformDevices);
     MockMemoryManager mockMemoryManager(mockExecutionEnvironment);
     auto mockManager = new MockAubManager();
@@ -1155,7 +1157,9 @@ INSTANTIATE_TEST_CASE_P(OsAgnosticMemoryManagerWithParams,
                         OsAgnosticMemoryManagerWithParams,
                         ::testing::Values(false, true));
 
-TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGraphicsAllocationIsDestroyedThenFreeMemoryOnAubManagerShouldBeCalled) {
+TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryEnabledWhenGraphicsAllocationIsDestroyedThenFreeMemoryOnAubManagerShouldBeCalled) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableFreeMemory.set(true);
     MockExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     MockAubManager *mockManager = new MockAubManager();
@@ -1167,6 +1171,22 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGraphicsAllocation
     EXPECT_FALSE(mockManager->freeMemoryCalled);
     memoryManager.freeGraphicsMemory(gfxAllocation);
     EXPECT_TRUE(mockManager->freeMemoryCalled);
+}
+
+TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryDisabledWhenGraphicsAllocationIsDestroyedThenFreeMemoryOnAubManagerShouldBeCalled) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableFreeMemory.set(false);
+    MockExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    MockAubManager *mockManager = new MockAubManager();
+    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "file_name.aub", CommandStreamReceiverType::CSR_AUB);
+    mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
+    executionEnvironment.aubCenter.reset(mockAubCenter);
+
+    auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    EXPECT_FALSE(mockManager->freeMemoryCalled);
+    memoryManager.freeGraphicsMemory(gfxAllocation);
+    EXPECT_FALSE(mockManager->freeMemoryCalled);
 }
 
 TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForImageIsCalled) {

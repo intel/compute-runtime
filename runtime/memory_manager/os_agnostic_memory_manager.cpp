@@ -215,7 +215,7 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
     }
 
     auto aubCenter = executionEnvironment.aubCenter.get();
-    if (aubCenter && aubCenter->getAubManager()) {
+    if (aubCenter && aubCenter->getAubManager() && DebugManager.flags.EnableFreeMemory.get()) {
         aubCenter->getAubManager()->freeMemory(gfxAllocation->getGpuAddress(), gfxAllocation->getUnderlyingBufferSize());
     }
 
@@ -275,7 +275,7 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
             auto aubCenter = executionEnvironment.aubCenter.get();
-            if (aubCenter && aubCenter->getAubManager()) {
+            if (aubCenter && aubCenter->getAubManager() && DebugManager.flags.EnableFreeMemory.get()) {
                 aubCenter->getAubManager()->freeMemory((uint64_t)handleStorage.fragmentStorageData[i].cpuPtr, handleStorage.fragmentStorageData[i].fragmentSize);
             }
             delete handleStorage.fragmentStorageData[i].osHandleStorage;
