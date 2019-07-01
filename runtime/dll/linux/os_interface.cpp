@@ -9,6 +9,6 @@
 
 namespace NEO {
 
-bool OSInterface::osEnableLocalMemory = false;
+bool OSInterface::osEnableLocalMemory = true;
 
 } // namespace NEO

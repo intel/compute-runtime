@@ -376,6 +376,10 @@ TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCr
     executionEnvironment.memoryManager = std::move(drmMemoryManager);
 }
 
+TEST(OsInterfaceTests, givenOsInterfaceWhenEnableLocalMemoryIsSpecifiedThenItIsSetToTrueOn64Bit) {
+    EXPECT_TRUE(OSInterface::osEnableLocalMemory);
+}
+
 int main(int argc, char **argv) {
     bool useDefaultListener = false;
 
