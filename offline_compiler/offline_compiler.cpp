@@ -465,8 +465,10 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
     }
 
     for (uint32_t argIndex = 1; argIndex < numArgs; argIndex++) {
-        if ((stringsAreEqual(argv[argIndex], "-file")) &&
-            (argIndex + 1 < numArgs)) {
+        if (stringsAreEqual(argv[argIndex], "compile")) {
+            //skip it
+        } else if ((stringsAreEqual(argv[argIndex], "-file")) &&
+                   (argIndex + 1 < numArgs)) {
             inputFile = argv[argIndex + 1];
             argIndex++;
         } else if ((stringsAreEqual(argv[argIndex], "-output")) &&
@@ -509,7 +511,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             argIndex++;
         } else if (stringsAreEqual(argv[argIndex], "-q")) {
             quiet = true;
-        } else if (stringsAreEqual(argv[argIndex], "-?")) {
+        } else if (stringsAreEqual(argv[argIndex], "--help")) {
             printUsage();
             retVal = PRINT_USAGE;
         } else {
@@ -655,36 +657,70 @@ std::string getDevicesTypes() {
 // PrintUsage
 ////////////////////////////////////////////////////////////////////////////////
 void OfflineCompiler::printUsage() {
+    printf(R"===(Compiles input file to Intel OCL GPU device binary.
+Additionally, outputs intermediate representation (e.g. spirV).
+Different input and intermediate file formats are available.
 
-    printf("Compiles CL files into llvm (.bc or .ll), gen isa (.gen), and binary files (.bin)\n\n");
-    printf("ocloc -file <filename> -device <device_type> [OPTIONS]\n\n");
-    printf("  -file <filename>             Indicates the CL kernel file to be compiled.\n");
-    printf("  -device <device_type>        Indicates which device for which we will compile.\n");
-    printf("                               <device_type> can be: %s\n", getDevicesTypes().c_str());
-    printf("\n");
-    printf("  -multi <filename>            Indicates the txt file with multi commands\n");
-    printf("                               where each line is a single build in format:\n");
-    printf("                               '-file <filename> -device <device_type> [OPTIONS]'\n");
-    printf("                               Argument '-multi' must be first argument. \n");
-    printf("                               Result of builds will be output in directory named \n");
-    printf("                               like .txt file with build commands.\n");
-    printf("\n");
-    printf("  -output <filename>           Indicates output files core name.\n");
-    printf("  -out_dir <output_dir>        Indicates the directory into which the compiled files\n");
-    printf("                               will be placed.\n");
-    printf("  -cpp_file                    Cpp file with scheduler program binary will be generated.\n");
-    printf("\n");
-    printf("  -32                          Force compile to 32-bit binary.\n");
-    printf("  -64                          Force compile to 64-bit binary.\n");
-    printf("  -internal_options <options>  Compiler internal options.\n");
-    printf("  -llvm_text                   Readable LLVM text will be output in a .ll file instead of\n");
-    printf("                               through the default lllvm binary (.bc) file.\n");
-    printf("  -llvm_input                  Indicates input file is llvm source\n");
-    printf("  -spirv_input                  Indicates input file is a SpirV binary\n");
-    printf("  -options <options>           Compiler options.\n");
-    printf("  -options_name                Add suffix with compile options to filename\n");
-    printf("  -q                           Be more quiet. print only warnings and errors.\n");
-    printf("  -?                           Print this usage message.\n");
+Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename>] [-out_dir <output_dir>] [-options <options>] [-32|-64] [-internal_options <options>] [-llvm_text] [-llvm_input|-spirv_input] [-options_name] [-q] [-cpp_file] [--help]
+
+  -file <filename>              The input file to be compiled                  
+                                (by default input source format is 
+                                 OCL C kernel language).
+                                
+  -device <device_type>         Target device.
+                                <device_type> can be: %s
+                                
+  -output <filename>            Optional output file base name.
+                                Default is input file's base name.
+                                
+  -out_dir <output_dir>         Optional output directory.
+                                Default is current working directory.
+                                
+  -options <options>            Optional OCL C compilation options
+                                as defined by OCL spec.
+                                
+  -32                           Forces target architecture to 32-bit pointers.
+                                Default is based on ocloc bittness.
+                                This option is exclusive with -64.
+                                
+  -64                           Forces target architecture to 64-bit pointers.
+                                Default is based on ocloc bittness.
+                                This option is exclusive with -32.
+                                
+  -internal_options <options>   Optional compiler internal options
+                                as defined by compilers used underneath.
+                                Check intel-graphics-compiler (IGC) project
+                                for details on available internal options.
+                                
+  -llvm_text                    Forces intermediate representation (IR) format
+                                to human-readable LLVM IR (.ll).
+                                Default IR is spirV.
+                                
+  -llvm_input                   Indicates that input file is an llvm binary.
+                                Default is OCL C kernel language.
+                                This option is exclusive with -spirv_input.
+                                
+  -spirv_input                  Indicates that input file is a spirV binary.
+                                Default is OCL C kernel language format.
+                                This option is exclusive with -llvm_input.
+                                
+  -options_name                 Will add suffix to generated files.
+                                This suffix will be based on input options.
+                                (Useful when rebuilding with different 
+                                 set of options to not overwrite results).
+                                
+  -q                            Will silence most of output messages.
+                                
+  -cpp_file                     Will generate c++ file with C-array
+                                containing Intel OCL device binary.
+                                
+  --help                        Print this usage message.
+      
+Examples :
+  Compile file to Intel OCL GPU device binary (out = source_file_Gen9core.bin)
+    ocloc -file source_file.cl -device skl
+)===",
+           NEO::getDevicesTypes().c_str());
 }
 
 ////////////////////////////////////////////////////////////////////////////////

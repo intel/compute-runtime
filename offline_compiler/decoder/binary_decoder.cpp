@@ -243,10 +243,37 @@ void BinaryDecoder::parseTokens() {
 }
 
 void BinaryDecoder::printHelp() {
-    messagePrinter.printf("Usage:\n-file <Opencl elf binary file> -patch <path to folder containing patchlist> -dump <path to dumping folder> -device <device_type>\n");
-    messagePrinter.printf("e.g. -file C:/my_folder/my_binary.bin -patch C:/igc/inc -dump C:/my_folder/dump\n");
-    messagePrinter.printf("  -device <device_type>        Indicates which device for which we will compile.\n");
-    messagePrinter.printf("                               <device_type> can be: %s\n", NEO::getDevicesTypes().c_str());
+    printf(R"===(Disassembles Intel OCL GPU device binary.
+
+Usage: ocloc disasm -file <file> [-patch <patchtokens_dir>] [-dump <dump_dir>] [-device <device_type>]
+  -file <file>              Input file to be disassembled.
+                            This file should be an Intel OCL GPU device binary.
+                            
+  -patch <patchtokens_dir>  Optional path to the directory containing 
+                            patchtoken definitions (patchlist.h, etc.) 
+                            as defined in intel-graphics-compiler (IGC) repo,
+                            IGC subdirectory :
+                            IGC/AdaptorOCL/ocl_igc_shared/executable_format
+                            By default (when patchtokens_dir is not provided)
+                            patchtokens won't be decoded.
+                            
+  -dump <dump_dir>          Optional path for files representing decoded binary. 
+                            Default is './dump'.                              
+                            
+  -device <device_type>     Optional target device of input binary
+                            <device_type> can be: %s
+                            By default ocloc will pick base device within
+                            a generation - i.e. both skl and kbl will
+                            fallback to skl. If specific product (e.g. kbl)
+                            is needed, provide it as device_type.
+                                 
+  --help                    Print this usage message.
+                             
+Examples:
+  Disassemble Intel OCL GPU device binary
+    ocloc disasm -file source_file_Gen9core.bin
+)===",
+           NEO::getDevicesTypes().c_str());
 }
 
 int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {

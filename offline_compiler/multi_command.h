@@ -35,6 +35,7 @@ class MultiCommand {
     int splitLineInSeparateArgs(std::vector<std::string> &qargs, const std::string &command, int numberOfBuild);
     void openFileWithBuildsArguments();
     void addAdditionalOptionsToSingleCommandLine(std::vector<std::string> &, int);
+    void printHelp();
     int initialize(int numArgs, const char *argv[]);
     int showResults();
     int singleBuild(size_t numArgs, const std::vector<std::string> &allArgs);

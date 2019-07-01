@@ -103,10 +103,15 @@ void MultiCommand::addAdditionalOptionsToSingleCommandLine(std::vector<std::stri
 int MultiCommand::initialize(int numArgs, const char *argv[]) {
     int retVal = CL_SUCCESS;
 
+    if (!strcmp(argv[numArgs - 1], "--help")) {
+        printHelp();
+        return -1;
+    }
+
     if (numArgs > 2)
         pathToCMD = argv[2];
     else {
-        printf("Lack of file with build arguments\n");
+        printHelp();
         return INVALID_COMMAND_LINE;
     }
     if (numArgs > 3 && strcmp(argv[3], "-q") == 0)
@@ -137,8 +142,24 @@ int MultiCommand::initialize(int numArgs, const char *argv[]) {
         }
 
         return showResults();
-    } else
+    } else {
+        printHelp();
         return INVALID_COMMAND_LINE;
+    }
+}
+
+void MultiCommand::printHelp() {
+    printf(R"===(Compiles multiple files using a config file.
+
+Usage: ocloc multi <file_name>
+  <file_name>   Input file containing a list of arguments for subsequent
+                ocloc invocations.
+                Expected format of each line inside such file is:
+                '-file <filename> -device <device_type> [compile_options].
+                See 'ocloc compile --help' for available compile_options.
+                Results of subsequent compilations will be dumped into 
+                a directory with name indentical file_name's base name.
+)===");
 }
 
 int MultiCommand::splitLineInSeparateArgs(std::vector<std::string> &qargs, const std::string &command, int numberOfBuild) {

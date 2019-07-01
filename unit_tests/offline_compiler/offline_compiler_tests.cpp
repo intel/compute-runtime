@@ -381,7 +381,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
 TEST_F(OfflineCompilerTests, PrintUsage) {
     std::vector<std::string> argv = {
         "ocloc",
-        "-?"};
+        "--help"};
 
     testing::internal::CaptureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, retVal);

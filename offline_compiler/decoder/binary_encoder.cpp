@@ -139,10 +139,30 @@ int BinaryEncoder::createElf() {
 }
 
 void BinaryEncoder::printHelp() {
-    messagePrinter.printf("Usage:\n-dump <path to dumping folder> -out <new elf file>  -device <device_type>\n");
-    messagePrinter.printf("e.g. -dump C:/my_folder/dump -out C:/my_folder/new_binary.bin\n");
-    messagePrinter.printf("  -device <device_type>        Indicates which device for which we will compile.\n");
-    messagePrinter.printf("                               <device_type> can be: %s\n", NEO::getDevicesTypes().c_str());
+    printf(R"===(Assembles Intel OCL GPU device binary.
+
+Usage: ocloc asm -out <out_file> [-dump <dump_dir>] [-device <device_type>]
+  -out <out_file>           Filename for newly assembled binary.
+
+  -dump <dumping_dir>       Path to the input directory containing 
+                            disassembled binary (as disassembled 
+                            by ocloc's disasm command).
+                            Default is './dump'.   
+
+  -device <device_type>     Optional target device of output binary
+                            <device_type> can be: %s
+                            By default ocloc will pick base device within
+                            a generation - i.e. both skl and kbl will
+                            fallback to skl. If specific product (e.g. kbl)
+                            is needed, provide it as device_type.
+                            
+  --help                    Print this usage message.
+                             
+Examples:
+  Assemble to Intel OCL GPU device binary (after above disasm)
+    ocloc asm -out reassembled.bin
+)===",
+           NEO::getDevicesTypes().c_str());
 }
 
 int BinaryEncoder::encode() {
