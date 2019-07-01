@@ -188,12 +188,10 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     DEBUG_BREAK_IF(currentOffset < batchBuffer.startOffset);
     auto sizeBatchBuffer = currentOffset - batchBuffer.startOffset;
 
-    if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-        CommandStreamReceiver::makeResident(*batchBuffer.commandBufferAllocation);
-    } else {
-        allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
-        batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->osContext->getContextId());
-    }
+    auto submissionTaskCount = this->taskCount + 1;
+    allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
+    batchBuffer.commandBufferAllocation->updateResidencyTaskCount(submissionTaskCount, this->osContext->getContextId());
+    batchBuffer.commandBufferAllocation->updateTaskCount(submissionTaskCount, osContext->getContextId());
 
     // Write allocations for residency
     processResidency(allocationsForResidency);
