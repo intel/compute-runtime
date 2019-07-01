@@ -64,7 +64,8 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     false,                                         // isCore
     true,                                          // sourceLevelDebuggerSupported
     false,                                         // supportsVme
-    false                                          // supportCacheFlushAfterWalker
+    false,                                         // supportCacheFlushAfterWalker
+    true                                           // supportsImages
 };
 
 WorkaroundTable LKF::workaroundTable = {};

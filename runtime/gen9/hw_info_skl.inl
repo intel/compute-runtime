@@ -69,7 +69,8 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                                          // isCore
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
-    false                                          // supportCacheFlushAfterWalker
+    false,                                         // supportCacheFlushAfterWalker
+    true                                           // supportsImages
 };
 WorkaroundTable SKL::workaroundTable = {};
 FeatureTable SKL::featureTable = {};

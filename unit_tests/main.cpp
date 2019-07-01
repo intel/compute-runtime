@@ -343,6 +343,8 @@ int main(int argc, char **argv) {
     device.workaroundTable = workaroundTable;
     device.capabilityTable = hardwareInfo->capabilityTable;
 
+    device.capabilityTable.supportsImages = true;
+
     binaryNameSuffix.append(familyName[device.platform.eRenderCoreFamily]);
     binaryNameSuffix.append(getPlatformType(device));
 

@@ -288,7 +288,7 @@ void Device::initializeCaps() {
     deviceInfo.localMemType = CL_LOCAL;
     deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize << 10;
 
-    deviceInfo.imageSupport = CL_TRUE;
+    deviceInfo.imageSupport = hwInfo.capabilityTable.supportsImages;
     deviceInfo.image2DMaxWidth = 16384;
     deviceInfo.image2DMaxHeight = 16384;
     deviceInfo.image3DMaxWidth = this->hardwareCapabilities.image3DMaxWidth;

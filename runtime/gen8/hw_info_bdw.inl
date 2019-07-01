@@ -69,7 +69,8 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     true,                                          // isCore
     false,                                         // sourceLevelDebuggerSupported
     true,                                          // supportsVme
-    false                                          // supportCacheFlushAfterWalker
+    false,                                         // supportCacheFlushAfterWalker
+    true                                           // supportsImages
 };
 
 WorkaroundTable BDW::workaroundTable = {};

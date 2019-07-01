@@ -61,7 +61,8 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     true,                                          // isCore
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
-    false                                          // supportCacheFlushAfterWalker
+    false,                                         // supportCacheFlushAfterWalker
+    true                                           // supportsImages
 };
 
 WorkaroundTable CFL::workaroundTable = {};
