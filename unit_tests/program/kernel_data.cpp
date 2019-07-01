@@ -458,6 +458,45 @@ TEST_F(KernelDataTest, WhenDecodingExecutionEnvironmentTokenThenWalkOrderIsForce
     std::array<uint8_t, 3> expectedDimsIds = {{0, 1, 2}};
     EXPECT_EQ(expectedWalkOrder, pKernelInfo->workgroupWalkOrder);
     EXPECT_EQ(expectedDimsIds, pKernelInfo->workgroupDimensionsOrder);
+    EXPECT_FALSE(pKernelInfo->requiresWorkGroupOrder);
+}
+
+TEST_F(KernelDataTest, whenWorkgroupOrderIsSpecifiedViaPatchTokenThenProperWorkGroupOrderIsParsed) {
+    iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
+    executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
+    executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
+
+    //dim0 : [0 : 1]; dim1 : [2 : 3]; dim2 : [4 : 5]
+    executionEnvironment.WorkgroupWalkOrderDims = 1 | (2 << 2);
+
+    pPatchList = &executionEnvironment;
+    patchListSize = executionEnvironment.Size;
+
+    buildAndDecode();
+    std::array<uint8_t, 3> expectedWalkOrder = {{1, 2, 0}};
+    std::array<uint8_t, 3> expectedDimsIds = {{2, 0, 1}};
+    EXPECT_EQ(expectedWalkOrder, pKernelInfo->workgroupWalkOrder);
+    EXPECT_EQ(expectedDimsIds, pKernelInfo->workgroupDimensionsOrder);
+    EXPECT_TRUE(pKernelInfo->requiresWorkGroupOrder);
+}
+
+TEST_F(KernelDataTest, whenWorkgroupOrderIsSpecifiedViaPatchToken2ThenProperWorkGroupOrderIsParsed) {
+    iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
+    executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
+    executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
+
+    //dim0 : [0 : 1]; dim1 : [2 : 3]; dim2 : [4 : 5]
+    executionEnvironment.WorkgroupWalkOrderDims = 2 | (1 << 4);
+
+    pPatchList = &executionEnvironment;
+    patchListSize = executionEnvironment.Size;
+
+    buildAndDecode();
+    std::array<uint8_t, 3> expectedWalkOrder = {{2, 0, 1}};
+    std::array<uint8_t, 3> expectedDimsIds = {{1, 2, 0}};
+    EXPECT_EQ(expectedWalkOrder, pKernelInfo->workgroupWalkOrder);
+    EXPECT_EQ(expectedDimsIds, pKernelInfo->workgroupDimensionsOrder);
+    EXPECT_TRUE(pKernelInfo->requiresWorkGroupOrder);
 }
 
 // Test all the different data parameters with the same "made up" data

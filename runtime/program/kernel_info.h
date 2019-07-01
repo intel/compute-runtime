@@ -231,6 +231,7 @@ struct KernelInfo {
     size_t requiredSubGroupSize = 0;
     std::array<uint8_t, 3> workgroupWalkOrder = {{0, 1, 2}};
     std::array<uint8_t, 3> workgroupDimensionsOrder = {{0, 1, 2}};
+    bool requiresWorkGroupOrder = false;
     uint32_t gpuPointerSize = 0;
     const BuiltinDispatchInfoBuilder *builtinDispatchBuilder = nullptr;
     uint32_t argumentsToPatchNum = 0;

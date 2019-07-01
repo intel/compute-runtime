@@ -516,6 +516,14 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
             kernelInfo.workgroupWalkOrder[0] = 0;
             kernelInfo.workgroupWalkOrder[1] = 1;
             kernelInfo.workgroupWalkOrder[2] = 2;
+            if (kernelInfo.patchInfo.executionEnvironment->WorkgroupWalkOrderDims) {
+                constexpr auto dimensionMask = 0b11;
+                constexpr auto dimensionSize = 2;
+                kernelInfo.workgroupWalkOrder[0] = kernelInfo.patchInfo.executionEnvironment->WorkgroupWalkOrderDims & dimensionMask;
+                kernelInfo.workgroupWalkOrder[1] = (kernelInfo.patchInfo.executionEnvironment->WorkgroupWalkOrderDims >> dimensionSize) & dimensionMask;
+                kernelInfo.workgroupWalkOrder[2] = (kernelInfo.patchInfo.executionEnvironment->WorkgroupWalkOrderDims >> dimensionSize * 2) & dimensionMask;
+                kernelInfo.requiresWorkGroupOrder = true;
+            }
 
             for (uint32_t i = 0; i < 3; ++i) {
                 // inverts the walk order mapping (from ORDER_ID->DIM_ID to DIM_ID->ORDER_ID)
