@@ -15,10 +15,10 @@
 
 namespace NEO {
 
-const char *getBuiltinAsString(EBuiltInOps builtin) {
+const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
     switch (builtin) {
     default:
-        return "unknown";
+        return getUnknownBuiltinAsString(builtin);
     case EBuiltInOps::AuxTranslation:
         return "aux_translation.igdrcl_built_in";
     case EBuiltInOps::CopyBufferToBuffer:
@@ -62,7 +62,7 @@ BuiltinResourceT createBuiltinResource(const BuiltinResourceT &r) {
     return BuiltinResourceT(r);
 }
 
-std::string createBuiltinResourceName(EBuiltInOps builtin, const std::string &extension,
+std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::string &extension,
                                       const std::string &platformName, uint32_t deviceRevId) {
     std::string ret;
     if (platformName.size() > 0) {
@@ -141,7 +141,7 @@ BuiltinsLib::BuiltinsLib() {
     allStorages.push_back(std::unique_ptr<Storage>(new FileStorage(getDriverInstallationPath())));
 }
 
-BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
+BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
     std::lock_guard<std::mutex> lockRaii{mutex};
 
     BuiltinResourceT bc;
@@ -192,7 +192,7 @@ std::unique_ptr<Program> BuiltinsLib::createProgramFromCode(const BuiltinCode &b
     return ret;
 }
 
-BuiltinResourceT BuiltinsLib::getBuiltinResource(EBuiltInOps builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
+BuiltinResourceT BuiltinsLib::getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
     BuiltinResourceT bc;
     std::string resourceNameGeneric = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType));
     std::string resourceNameForPlatformType = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType), device.getFamilyNameWithType());

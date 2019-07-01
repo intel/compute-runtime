@@ -691,7 +691,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnTrueIfExplicitKernelArgNotT
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetVMEBuilderReturnNonNull) {
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
 
-    EBuiltInOps vmeOps[] = {EBuiltInOps::VmeBlockMotionEstimateIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
+    EBuiltInOps::Type vmeOps[] = {EBuiltInOps::VmeBlockMotionEstimateIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
     for (auto op : vmeOps) {
         BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(op, *pContext, *pDevice);
         EXPECT_NE(nullptr, &builder);
@@ -702,7 +702,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetVMEBuilderReturnNonNull) {
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderVMEBuilderNullKernel) {
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    EBuiltInOps vmeOps[] = {EBuiltInOps::VmeBlockMotionEstimateIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
+    EBuiltInOps::Type vmeOps[] = {EBuiltInOps::VmeBlockMotionEstimateIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
     for (auto op : vmeOps) {
         BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(op, *pContext, *pDevice);
 
@@ -789,7 +789,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderAdvancedVMEBuilder) {
     auto image = std::unique_ptr<Image>(Image2dHelper<>::create(pContext));
     cl_mem srcImageArg = static_cast<cl_mem>(image.get());
 
-    EBuiltInOps vmeOps[] = {EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
+    EBuiltInOps::Type vmeOps[] = {EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
     for (auto op : vmeOps) {
         MultiDispatchInfo outMdi;
         overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
@@ -851,6 +851,11 @@ TEST_F(BuiltInTests, getBuiltinAsString) {
     EXPECT_EQ(0, strcmp("unknown", getBuiltinAsString(EBuiltInOps::COUNT)));
 }
 
+TEST_F(BuiltInTests, WhenUnknownOperationIsSpecifiedThenUnknownNameIsReturned) {
+    EXPECT_EQ(0, strcmp("unknown", getUnknownBuiltinAsString(EBuiltInOps::CopyImage3dToBuffer)));
+    EXPECT_EQ(0, strcmp("unknown", getUnknownBuiltinAsString(EBuiltInOps::COUNT)));
+}
+
 TEST_F(BuiltInTests, getExtension) {
     EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::Any)));
     EXPECT_EQ(0, strcmp(".bin", BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary)));
@@ -872,7 +877,7 @@ TEST_F(BuiltInTests, createBuiltinResource) {
 }
 
 TEST_F(BuiltInTests, createBuiltinResourceName) {
-    EBuiltInOps builtin = EBuiltInOps::CopyBufferToBuffer;
+    EBuiltInOps::Type builtin = EBuiltInOps::CopyBufferToBuffer;
     const std::string extension = ".cl";
     const std::string platformName = "skl";
     const uint32_t deviceRevId = 9;
@@ -1017,7 +1022,7 @@ TEST_F(BuiltInTests, getBuiltinCodeForTypeInvalid) {
 TEST_F(BuiltInTests, getBuiltinResourcesForTypeSource) {
     class MockBuiltinsLib : BuiltinsLib {
       public:
-        BuiltinResourceT getBuiltinResource(EBuiltInOps builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
+        BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
             return BuiltinsLib::getBuiltinResource(builtin, requestedCodeType, device);
         }
     };
@@ -1044,7 +1049,7 @@ TEST_F(BuiltInTests, getBuiltinResourcesForTypeSource) {
 TEST_F(BuiltInTests, getBuiltinResourcesForTypeBinary) {
     class MockBuiltinsLib : BuiltinsLib {
       public:
-        BuiltinResourceT getBuiltinResource(EBuiltInOps builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
+        BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
             return BuiltinsLib::getBuiltinResource(builtin, requestedCodeType, device);
         }
     };
