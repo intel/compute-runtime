@@ -43,6 +43,13 @@ The code can be ported and cross-compiled for Android systems. It is our long-te
 
 See [README.md](https://github.com/intel/compute-runtime/blob/master/README.md).
 
+### How can I check that my specific device is supported by the driver?
+
+To check support for any device, you can follow these steps:
+1. Go to [Ark]( https://ark.intel.com) and find your Device ID
+1. Find the corresponding device ID label in [GMM]( https://github.com/intel/gmmlib/blob/master/Source/inc/common/igfxfmid.h)
+1. Check if this device ID label is enumerated in the [supported device list](https://github.com/intel/compute-runtime/blob/master/runtime/dll/linux/devices/devices_base.inl)
+
 ### When will support for platform X be added?
 
 We will start adding platform support after platform is disclosed by Intel.
@@ -57,6 +64,10 @@ See [README.md](https://github.com/intel/compute-runtime/blob/master/README.md).
 ### Which platforms will receive OpenCL 2.2 support?
 
 Any platforms supporting OpenCL 2.1 are eligible for move to OpenCL 2.2.
+
+### How can I enable OpenCL 2.1 on the Apollo Lake / Broxton platform?
+
+You can enable a higher version of OpenCL using the ForceOCLVersion debug flag.
 
 ## Feature: cl_cache
 
