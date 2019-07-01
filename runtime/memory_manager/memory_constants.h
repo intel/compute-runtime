@@ -51,8 +51,9 @@ static const uint64_t maxSvmAddress = is64bit ? maxNBitValue<47> : maxNBitValue<
 namespace BlitterConstants {
 static constexpr uint64_t maxBlitWidth = 0x7FC0; // 0x7FFF aligned to cacheline size
 static constexpr uint64_t maxBlitHeight = 0x7FFF;
-enum class BlitWithHostPtrDirection {
-    ToHostPtr,
-    FromHostPtr
+enum class BlitDirection {
+    BufferToHostPtr,
+    HostPtrToBuffer,
+    BufferToBuffer
 };
 } // namespace BlitterConstants

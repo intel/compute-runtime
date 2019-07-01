@@ -20,13 +20,16 @@ class TimestampPacketContainer;
 struct BlitProperties {
     BlitProperties() = delete;
 
-    static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection copyDirection,
+    static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
                                                                 CommandStreamReceiver &commandStreamReceiver,
                                                                 GraphicsAllocation *memObjAllocation, void *hostPtr, bool blocking,
                                                                 size_t offset, uint64_t copySize);
 
+    static BlitProperties constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
+                                                           bool blocking, size_t dstOffset, size_t srcOffset, uint64_t copySize);
+
     TimestampPacketContainer *outputTimestampPacket = nullptr;
-    BlitterConstants::BlitWithHostPtrDirection copyDirection;
+    BlitterConstants::BlitDirection blitDirection;
     CsrDependencies csrDependencies;
 
     GraphicsAllocation *dstAllocation = nullptr;

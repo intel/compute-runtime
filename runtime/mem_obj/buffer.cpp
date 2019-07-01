@@ -286,7 +286,7 @@ Buffer *Buffer::create(Context *context,
         if (gpuCopyRequired) {
             auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*pBuffer);
             if (blitCommandStreamReceiver) {
-                auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitWithHostPtrDirection::FromHostPtr,
+                auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                             *blitCommandStreamReceiver, memory,
                                                                                             hostPtr, true, 0, size);
                 blitCommandStreamReceiver->blitBuffer(blitProperties);

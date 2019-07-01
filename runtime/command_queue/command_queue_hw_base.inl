@@ -108,8 +108,8 @@ cl_int CommandQueueHw<Family>::enqueueReadWriteBufferWithBlitTransfer(cl_command
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     TimestampPacketContainer previousTimestampPacketNodes;
 
-    auto copyDirection = (CL_COMMAND_WRITE_BUFFER == commandType) ? BlitterConstants::BlitWithHostPtrDirection::FromHostPtr
-                                                                  : BlitterConstants::BlitWithHostPtrDirection::ToHostPtr;
+    auto copyDirection = (CL_COMMAND_WRITE_BUFFER == commandType) ? BlitterConstants::BlitDirection::HostPtrToBuffer
+                                                                  : BlitterConstants::BlitDirection::BufferToHostPtr;
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(copyDirection, *blitCommandStreamReceiver,
                                                                                 buffer->getGraphicsAllocation(), ptr, blocking,
                                                                                 offset, size);
