@@ -428,6 +428,47 @@ TEST_F(GmmTests, givenNumSamplesWhenAskedForMultisamplesCountThenReturnValue) {
     }
 }
 
+struct GmmMediaCompressedTests : public GmmTests {
+    void SetUp() override {
+        GmmTests::SetUp();
+        StorageInfo info;
+        gmm = std::make_unique<Gmm>(nullptr, 4, false, true, true, info);
+        flags = gmm->gmmResourceInfo->getResourceFlags();
+        flags->Gpu.CCS = true;
+        flags->Gpu.UnifiedAuxSurface = true;
+    }
+    std::unique_ptr<Gmm> gmm;
+    GMM_RESOURCE_FLAG *flags;
+};
+
+TEST_F(GmmMediaCompressedTests, givenMediaCompressedGmmUnifiedAuxTranslationCapableReturnsTrue) {
+    flags->Info.MediaCompressed = true;
+    flags->Info.RenderCompressed = false;
+
+    EXPECT_TRUE(gmm->unifiedAuxTranslationCapable());
+}
+
+TEST_F(GmmMediaCompressedTests, givenRenderCompressedGmmUnifiedAuxTranslationCapableReturnsTrue) {
+    flags->Info.MediaCompressed = false;
+    flags->Info.RenderCompressed = true;
+
+    EXPECT_TRUE(gmm->unifiedAuxTranslationCapable());
+}
+
+TEST_F(GmmMediaCompressedTests, givenMediaAndRenderCompressedGmmUnifiedAuxTranslationCapableThrowsException) {
+    flags->Info.MediaCompressed = true;
+    flags->Info.RenderCompressed = true;
+
+    EXPECT_THROW(gmm->unifiedAuxTranslationCapable(), std::exception);
+}
+
+TEST_F(GmmMediaCompressedTests, givenNotMediaAndNotRenderCompressedGmmUnifiedAuxTranslationCapableReturnsFalse) {
+    flags->Info.MediaCompressed = false;
+    flags->Info.RenderCompressed = false;
+
+    EXPECT_FALSE(gmm->unifiedAuxTranslationCapable());
+}
+
 namespace GmmTestConst {
 static const cl_mem_object_type imgTypes[6] = {
     CL_MEM_OBJECT_IMAGE1D,
