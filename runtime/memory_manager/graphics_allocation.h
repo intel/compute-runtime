@@ -74,6 +74,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         SVM_ZERO_COPY,
         TAG_BUFFER,
         TIMESTAMP_PACKET_TAG_BUFFER,
+        WRITE_COMBINED
     };
 
     virtual ~GraphicsAllocation();

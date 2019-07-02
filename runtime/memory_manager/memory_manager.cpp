@@ -224,6 +224,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
     case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
     case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
+    case GraphicsAllocation::AllocationType::WRITE_COMBINED:
         allow64KbPages = true;
         allow32Bit = true;
     default:
@@ -242,6 +243,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::BUFFER:
     case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
     case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
+    case GraphicsAllocation::AllocationType::WRITE_COMBINED:
         forcePin = true;
     default:
         break;
@@ -261,6 +263,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::SVM_CPU:
     case GraphicsAllocation::AllocationType::SVM_GPU:
     case GraphicsAllocation::AllocationType::SVM_ZERO_COPY:
+    case GraphicsAllocation::AllocationType::WRITE_COMBINED:
         mayRequireL3Flush = true;
     default:
         break;

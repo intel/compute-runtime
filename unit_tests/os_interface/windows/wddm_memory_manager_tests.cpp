@@ -1692,6 +1692,25 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentPro
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenWriteCombinedAllocationThenCpuAddressIsEqualToGpuAddress) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+    memoryManager.reset(new MockWddmMemoryManager(true, true, *executionEnvironment));
+    size_t size = 2 * MemoryConstants::megaByte;
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::WRITE_COMBINED}));
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+    EXPECT_NE(nullptr, reinterpret_cast<void *>(allocation->getGpuAddress()));
+
+    if (executionEnvironment->isFullRangeSvm()) {
+        EXPECT_EQ(allocation->getUnderlyingBuffer(), reinterpret_cast<void *>(allocation->getGpuAddress()));
+    }
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, whenCreatingWddmMemoryManagerThenSupportsMultiStorageResourcesFlagIsSetToFalse) {
     EXPECT_TRUE(memoryManager->supportsMultiStorageResources);
 }
