@@ -15,7 +15,7 @@ sudo yum install devtoolset-4-gcc-c++ cmake3 ninja-build
 sudo /usr/sbin/alternatives --install /usr/bin/cmake cmake /usr/bin/cmake3 50
 ```
 
-2. Instal required dependencies
+2. Install required dependencies
 
 Neo requires [Intel(R) Graphics Compiler for OpenCL(TM)](https://github.com/intel/intel-graphics-compiler) and [Intel(R) Graphics Memory Management](https://github.com/intel/gmmlib) to be installed on your system.
 
