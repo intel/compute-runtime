@@ -13,7 +13,7 @@ using namespace NEO;
 
 typedef api_tests clGetSupportedImageFormatsTests;
 
-TEST_F(clGetSupportedImageFormatsTests, returnsNumReadWriteFormats) {
+TEST_F(clGetSupportedImageFormatsTests, GivenValidParamsWhenGettingSupportImageFormatsThenNumImageFormatsIsGreaterThanZero) {
     cl_uint numImageFormats = 0;
     retVal = clGetSupportedImageFormats(
         pContext,
@@ -27,7 +27,7 @@ TEST_F(clGetSupportedImageFormatsTests, returnsNumReadWriteFormats) {
     EXPECT_GT(numImageFormats, 0u);
 }
 
-TEST_F(clGetSupportedImageFormatsTests, givenInvalidContextWhenFunctionIsCalledThenErrorIsReturned) {
+TEST_F(clGetSupportedImageFormatsTests, givenInvalidContextWhenGettingSupportImageFormatsThenClInvalidContextErrorIsReturned) {
     auto device = pContext->getDevice(0u);
     auto dummyContext = reinterpret_cast<cl_context>(device);
 
