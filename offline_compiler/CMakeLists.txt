@@ -134,6 +134,7 @@ if(WIN32)
     add_custom_command(
       TARGET copy_compiler_files
       PRE_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:ocloc>
       COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:ocloc>
     )
   endforeach()
