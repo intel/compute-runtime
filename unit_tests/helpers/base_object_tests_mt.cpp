@@ -13,54 +13,39 @@
 
 namespace NEO {
 
-template <typename TypeParam>
-struct BaseObjectTestsMt : public ::testing::Test {
-    static void takeOwnerFailThreadFunc(TypeParam *obj) {
-        auto ret = obj->takeOwnership(false);
-        EXPECT_EQ(false, ret);
-    }
-    static void takeOwnerWaitThreadFunc(TypeParam *obj) {
-        auto ret = obj->takeOwnership(true);
-        EXPECT_EQ(true, ret);
-        obj->releaseOwnership();
-    }
-};
+TEST(BaseObjectTestsMt, givenObjectOwnershipForEachThreadWhenIncrementingNonAtomicValueThenNoDataRacesAreExpected) {
+    CommandQueue *object = new CommandQueue;
+    object->takeOwnership();
+    uint32_t counter = 0;
+    const uint32_t loopCount = 50;
+    const uint32_t numThreads = 3;
 
-typedef ::testing::Types<
-    Platform,
-    IntelAccelerator,
-    CommandQueue>
-    BaseObjectTypes;
-
-TYPED_TEST_CASE(BaseObjectTestsMt, BaseObjectTypes);
-
-// "typedef" BaseObjectTestsMt template to use with different TypeParams for testing
-template <typename T>
-using BaseObjectWithDefaultCtorTests = BaseObjectTestsMt<T>;
-
-TYPED_TEST(BaseObjectTestsMt, takeOwner) {
-    TypeParam *object = new TypeParam;
-    bool ret = object->takeOwnership(false);
-    EXPECT_EQ(true, ret);
-
-    std::thread t1(BaseObjectTestsMt<TypeParam>::takeOwnerFailThreadFunc, object);
-    t1.join();
+    auto incrementNonAtomicValue = [&](CommandQueue *obj) {
+        for (uint32_t i = 0; i < loopCount; i++) {
+            obj->takeOwnership();
+            counter++;
+            obj->releaseOwnership();
+        }
+    };
 
     EXPECT_EQ(0U, object->getCond().peekNumWaiters());
 
-    std::thread t2(BaseObjectTestsMt<TypeParam>::takeOwnerWaitThreadFunc, object);
-    //wait on condition var counter, so current threads know t2 thread waits on this variable
-    while (object->getCond().peekNumWaiters() == 0U) {
+    std::thread t1(incrementNonAtomicValue, object);
+    std::thread t2(incrementNonAtomicValue, object);
+    std::thread t3(incrementNonAtomicValue, object);
+
+    while (object->getCond().peekNumWaiters() != numThreads) {
         std::this_thread::yield();
     }
 
-    //t2 thread waits on conditional varialbe within takeOwnership
-    EXPECT_EQ(1U, object->getCond().peekNumWaiters());
-    std::this_thread::yield();
-
-    //current thread releases ownership, so t2 can take it
+    EXPECT_EQ(0u, counter);
     object->releaseOwnership();
+
+    t1.join();
     t2.join();
+    t3.join();
+
+    EXPECT_EQ(loopCount * numThreads, counter);
 
     object->release();
 }

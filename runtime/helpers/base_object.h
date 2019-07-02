@@ -101,27 +101,29 @@ class TakeOwnershipWrapper {
   public:
     TakeOwnershipWrapper(T &obj)
         : obj(obj) {
-        this->locked = obj.takeOwnership(true);
+        lock();
     }
     TakeOwnershipWrapper(T &obj, bool lockImmediately)
         : obj(obj) {
         if (lockImmediately) {
-            this->locked = obj.takeOwnership(true);
+            lock();
         }
     }
     ~TakeOwnershipWrapper() {
-        if (locked) {
-            obj.releaseOwnership();
-        }
+        unlock();
     }
     void unlock() {
-        obj.releaseOwnership();
-        locked = false;
+        if (locked) {
+            obj.releaseOwnership();
+            locked = false;
+        }
     }
 
     void lock() {
-        if (!locked)
-            this->locked = obj.takeOwnership(true);
+        if (!locked) {
+            obj.takeOwnership();
+            locked = true;
+        }
     }
 
   private:
@@ -191,7 +193,7 @@ class BaseObject : public B, public ReferenceTrackedObject<DerivedType_t<B>> {
         return this->getRefApiCount();
     }
 
-    MOCKABLE_VIRTUAL bool takeOwnership(bool waitUntilGet) const {
+    MOCKABLE_VIRTUAL void takeOwnership() const {
         DEBUG_BREAK_IF(!isValid());
 
         std::unique_lock<std::mutex> theLock(mtx);
@@ -199,22 +201,17 @@ class BaseObject : public B, public ReferenceTrackedObject<DerivedType_t<B>> {
 
         if (owner == invalidThreadID) {
             owner = self;
-            return true;
+            return;
         }
 
         if (owner == self) {
             ++recursiveOwnageCounter;
-            return true;
-        }
-
-        if (waitUntilGet == false) {
-            return false;
+            return;
         }
 
         cond.wait(theLock, [&] { return owner == invalidThreadID; });
         owner = self;
         recursiveOwnageCounter = 0;
-        return true;
     }
 
     MOCKABLE_VIRTUAL void releaseOwnership() const {

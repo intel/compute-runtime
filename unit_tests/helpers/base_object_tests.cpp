@@ -227,13 +227,13 @@ TYPED_TEST(BaseObjectTests, WhenAlreadyOwnedByThreadOnTakeOrReleaseOwnershipUses
     TypeParam obj;
     EXPECT_FALSE(obj.hasOwnership());
 
-    obj.takeOwnership(false);
+    obj.takeOwnership();
     EXPECT_TRUE(obj.hasOwnership());
 
-    obj.takeOwnership(false);
+    obj.takeOwnership();
     EXPECT_TRUE(obj.hasOwnership());
 
-    obj.takeOwnership(false);
+    obj.takeOwnership();
     EXPECT_TRUE(obj.hasOwnership());
 
     obj.releaseOwnership();
@@ -280,28 +280,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3Cache) override {
     }
-
-    void setFakeOwnership() {
-        this->owner = tempThreadID;
-    }
 };
-
-TEST(BaseObjectTest, takeOwnership) {
-    MockBuffer buffer;
-    EXPECT_FALSE(buffer.hasOwnership());
-    buffer.takeOwnership(false);
-    EXPECT_TRUE(buffer.hasOwnership());
-    buffer.takeOwnership(false);
-    EXPECT_TRUE(buffer.hasOwnership());
-    buffer.releaseOwnership();
-    EXPECT_TRUE(buffer.hasOwnership());
-    buffer.releaseOwnership();
-    EXPECT_FALSE(buffer.hasOwnership());
-    buffer.setFakeOwnership();
-    EXPECT_FALSE(buffer.hasOwnership());
-    buffer.takeOwnership(false);
-    EXPECT_FALSE(buffer.hasOwnership());
-}
 
 TEST(BaseObjectTest, takeOwnershipWrapper) {
     MockBuffer buffer;

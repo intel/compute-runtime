@@ -227,10 +227,9 @@ class MockKernel : public Kernel {
 
     void makeResident(CommandStreamReceiver &commandStreamReceiver) override;
     void getResidency(std::vector<Surface *> &dst) override;
-    bool takeOwnership(bool lock) const override {
-        auto retVal = Kernel::takeOwnership(lock);
+    void takeOwnership() const override {
+        Kernel::takeOwnership();
         takeOwnershipCalls++;
-        return retVal;
     }
 
     void releaseOwnership() const override {

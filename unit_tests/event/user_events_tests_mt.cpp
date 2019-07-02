@@ -92,7 +92,7 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
 
     std::thread t([&]() {
         while (true) {
-            pCmdQ->takeOwnership(true);
+            pCmdQ->takeOwnership();
 
             if (pCmdQ->taskLevel == Event::eventNotReady) {
                 pCmdQ->releaseOwnership();

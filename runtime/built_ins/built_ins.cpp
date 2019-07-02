@@ -817,7 +817,7 @@ void BuiltInOwnershipWrapper::takeOwnership(BuiltinDispatchInfoBuilder &inputBui
     UNRECOVERABLE_IF(builder);
     builder = &inputBuilder;
     for (auto &kernel : builder->peekUsedKernels()) {
-        kernel->takeOwnership(true);
+        kernel->takeOwnership();
         kernel->setContext(context);
     }
 }
