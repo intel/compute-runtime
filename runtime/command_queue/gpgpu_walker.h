@@ -130,7 +130,8 @@ class GpgpuWalkerHelper {
         uint32_t workDim,
         bool localIdsGenerationByRuntime,
         bool inlineDataProgrammingRequired,
-        const iOpenCL::SPatchThreadPayload &threadPayload);
+        const iOpenCL::SPatchThreadPayload &threadPayload,
+        uint32_t requiredWorkgroupOrder);
 
     static void dispatchProfilingCommandsStart(
         TagNode<HwTimeStamps> &hwTimeStamps,

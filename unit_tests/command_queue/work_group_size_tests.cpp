@@ -88,7 +88,7 @@ struct WorkGroupSizeBase {
             (workItems[2] + workGroupSize[2] - 1) / workGroupSize[2]};
         const iOpenCL::SPatchThreadPayload threadPayload = {};
         GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(&pCmd, globalOffsets, workGroupsStart, workGroupsNum,
-                                                                workGroupSize, simdSize, dims, true, false, threadPayload);
+                                                                workGroupSize, simdSize, dims, true, false, threadPayload, 0u);
 
         //And check if it is programmed correctly
         auto numWorkItems = computeWalkerWorkItems<FamilyType>(pCmd);

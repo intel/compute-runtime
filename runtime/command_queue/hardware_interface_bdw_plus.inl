@@ -134,7 +134,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(walkerCmd, globalOffsets, startWorkGroups,
                                                            numWorkGroups, localWorkSizes, simd, dim,
                                                            false, false,
-                                                           *kernel.getKernelInfo().patchInfo.threadPayload);
+                                                           *kernel.getKernelInfo().patchInfo.threadPayload, 0u);
 }
 
 } // namespace NEO

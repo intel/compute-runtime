@@ -21,7 +21,8 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     uint32_t workDim,
     bool localIdsGenerationByRuntime,
     bool inlineDataProgrammingRequired,
-    const iOpenCL::SPatchThreadPayload &threadPayload) {
+    const iOpenCL::SPatchThreadPayload &threadPayload,
+    uint32_t requiredWorkgroupOrder) {
     auto localWorkSize = localWorkSizesIn[0] * localWorkSizesIn[1] * localWorkSizesIn[2];
 
     auto threadsPerWorkGroup = getThreadsPerWG(simd, localWorkSize);
@@ -146,7 +147,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     size_t workGroups[3] = {(scheduler.getGws() / scheduler.getLws()), 1, 1};
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pGpGpuWalkerCmd, globalOffsets, globalOffsets, workGroups, localWorkSizes,
                                                            simd, 1, true, inlineDataProgrammingRequired,
-                                                           *scheduler.getKernelInfo().patchInfo.threadPayload);
+                                                           *scheduler.getKernelInfo().patchInfo.threadPayload, 0u);
 
     // Implement disabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(&commandStream, scheduler, false);
