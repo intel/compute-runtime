@@ -158,11 +158,6 @@ void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
 }
 
 template <typename GfxFamily>
-bool HardwareCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t workDim, size_t *gws, size_t *lws) {
-    return true;
-}
-
-template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));

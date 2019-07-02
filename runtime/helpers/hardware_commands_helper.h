@@ -210,7 +210,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
 
     static bool doBindingTablePrefetch();
 
-    static bool isRuntimeLocalIdsGenerationRequired(uint32_t workDim, size_t *gws, size_t *lws);
     static bool inlineDataProgrammingRequired(const Kernel &kernel);
     static bool kernelUsesLocalIds(const Kernel &kernel);
 };

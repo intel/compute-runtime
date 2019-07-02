@@ -112,7 +112,6 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
 
     // Send our indirect object data
     size_t localWorkSizes[3] = {scheduler.getLws(), 1, 1};
-    size_t globalWorkSizes[3] = {scheduler.getGws(), 1, 1};
 
     // Create indirectHeap for IOH that is located at the end of device enqueue DSH
     size_t curbeOffset = devQueueHw.setSchedulerCrossThreadData(scheduler);
@@ -124,7 +123,6 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     auto pGpGpuWalkerCmd = static_cast<GPGPU_WALKER *>(commandStream.getSpace(sizeof(GPGPU_WALKER)));
     *pGpGpuWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
 
-    bool localIdsGenerationByRuntime = HardwareCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(1, globalWorkSizes, localWorkSizes);
     bool inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(scheduler);
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         commandStream,
@@ -139,7 +137,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         preemptionMode,
         pGpGpuWalkerCmd,
         nullptr,
-        localIdsGenerationByRuntime);
+        true);
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(&commandStream, scheduler, true);
@@ -147,7 +145,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workGroups[3] = {(scheduler.getGws() / scheduler.getLws()), 1, 1};
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pGpGpuWalkerCmd, globalOffsets, globalOffsets, workGroups, localWorkSizes,
-                                                           simd, 1, localIdsGenerationByRuntime, inlineDataProgrammingRequired,
+                                                           simd, 1, true, inlineDataProgrammingRequired,
                                                            *scheduler.getKernelInfo().patchInfo.threadPayload);
 
     // Implement disabling special WA DisableLSQCROPERFforOCL if needed
