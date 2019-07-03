@@ -69,7 +69,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     void *alignedSrcPtr = alignDown(srcPtr, 4);
     size_t srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcPtr = alignedSrcPtr;
     dc.dstMemObj = buffer;
     dc.srcOffset = hostOrigin;

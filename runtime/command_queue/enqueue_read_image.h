@@ -92,7 +92,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     void *alignedDstPtr = alignDown(dstPtr, 4);
     size_t dstPtrOffset = ptrDiff(dstPtr, alignedDstPtr);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstPtr = alignedDstPtr;
     dc.dstOffset.x = dstPtrOffset;

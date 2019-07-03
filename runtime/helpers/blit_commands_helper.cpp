@@ -7,6 +7,8 @@
 
 #include "runtime/helpers/blit_commands_helper.h"
 
+#include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/context/context.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/surface.h"
 
@@ -30,6 +32,21 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
     }
 }
 
+BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
+                                                                     CommandStreamReceiver &commandStreamReceiver,
+                                                                     const BuiltinOpParams &builtinOpParams,
+                                                                     bool blocking) {
+    if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
+        return constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, builtinOpParams.dstMemObj->getGraphicsAllocation(),
+                                                     builtinOpParams.srcPtr, blocking, builtinOpParams.dstOffset.x,
+                                                     builtinOpParams.size.x);
+    } else {
+        return constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, builtinOpParams.srcMemObj->getGraphicsAllocation(),
+                                                     builtinOpParams.dstPtr, blocking, builtinOpParams.srcOffset.x,
+                                                     builtinOpParams.size.x);
+    }
+}
+
 BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
                                                                 bool blocking, size_t dstOffset, size_t srcOffset, uint64_t copySize) {
 
@@ -40,6 +57,20 @@ BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslati
                                                                     GraphicsAllocation *allocation) {
     auto allocationSize = allocation->getUnderlyingBufferSize();
     return {nullptr, BlitterConstants::BlitDirection::BufferToBuffer, {}, auxTranslationDirection, allocation, allocation, nullptr, false, 0, 0, allocationSize};
+}
+
+BlitterConstants::BlitDirection BlitProperties::obtainBlitDirection(uint32_t commandType) {
+    return (CL_COMMAND_WRITE_BUFFER == commandType) ? BlitterConstants::BlitDirection::HostPtrToBuffer
+                                                    : BlitterConstants::BlitDirection::BufferToHostPtr;
+}
+
+CommandStreamReceiver *BlitProperties::obtainBlitCommandStreamReceiver(Context &context, const BuiltinOpParams &builtinOpParams,
+                                                                       uint32_t commandType) {
+    if (CL_COMMAND_WRITE_BUFFER == commandType) {
+        return context.getCommandStreamReceiverForBlitOperation(*builtinOpParams.dstMemObj);
+    } else {
+        return context.getCommandStreamReceiverForBlitOperation(*builtinOpParams.srcMemObj);
+    }
 }
 
 } // namespace NEO

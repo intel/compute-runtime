@@ -187,7 +187,11 @@ void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxF
 }
 
 template <typename GfxFamily>
-size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
+size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
+    if (blitEnqueue) {
+        return TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<GfxFamily>();
+    }
+
     size_t expectedSizeCS = 0;
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     if (multiDispatchInfo.peekMainKernel() && multiDispatchInfo.peekMainKernel()->isAuxTranslationRequired()) {
@@ -204,14 +208,8 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, &scheduler);
     }
     if (commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        bool isReadWriteBufferOperationWithoutKernel = (CL_COMMAND_READ_BUFFER == eventType || CL_COMMAND_WRITE_BUFFER == eventType) &&
-                                                       multiDispatchInfo.empty();
         expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps);
-        if (isReadWriteBufferOperationWithoutKernel) {
-            expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<GfxFamily>();
-        } else {
-            expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
-        }
+        expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
     }
     return expectedSizeCS;
 }

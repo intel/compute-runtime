@@ -41,7 +41,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
     MemObjSurface dstImgSurf(image);
     Surface *surfaces[] = {&dstImgSurf};
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcPtr = const_cast<void *>(fillColor);
     dc.dstMemObj = image;
     dc.srcOffset = {0, 0, 0};

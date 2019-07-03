@@ -56,7 +56,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
 
     auto blockQueue = false;
     auto taskLevel = 0u;
-    obtainTaskLevelAndBlockedStatus(taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, blockQueue, transferProperties.cmdType, true);
+    obtainTaskLevelAndBlockedStatus(taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, blockQueue, transferProperties.cmdType);
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "taskLevel", taskLevel);
 

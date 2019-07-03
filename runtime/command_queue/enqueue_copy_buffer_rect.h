@@ -42,7 +42,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     MemObjSurface dstBufferSurf(dstBuffer);
     Surface *surfaces[] = {&srcBufferSurf, &dstBufferSurf};
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
     dc.srcOffset = srcOrigin;

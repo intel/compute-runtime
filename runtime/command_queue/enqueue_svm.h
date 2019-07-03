@@ -116,7 +116,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
         void *svmBasePtr = svmData->cpuAllocation->getUnderlyingBuffer();
         size_t svmOffset = ptrDiff(svmPtr, svmBasePtr);
 
-        BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+        BuiltinOpParams dc;
         dc.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddressToPatch());
         dc.dstSvmAlloc = svmData->cpuAllocation;
         dc.dstOffset = {svmOffset, 0, 0};
@@ -201,7 +201,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
 
         Surface *surfaces[] = {&dstSurface, &srcSurface};
 
-        BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+        BuiltinOpParams dc;
         dc.dstPtr = reinterpret_cast<void *>(svmData->gpuAllocation->getGpuAddressToPatch());
         dc.dstSvmAlloc = svmData->gpuAllocation;
         dc.dstOffset = {svmOperation->offset, 0, 0};
@@ -264,7 +264,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMFree(cl_uint numSvmPointers,
     return CL_SUCCESS;
 }
 
-inline void setOperationParams(BuiltinDispatchInfoBuilder::BuiltinOpParams &operationParams, size_t size,
+inline void setOperationParams(BuiltinOpParams &operationParams, size_t size,
                                const void *srcPtr, GraphicsAllocation *srcSvmAlloc, size_t srcPtrOffset,
                                void *dstPtr, GraphicsAllocation *dstSvmAlloc, size_t dstPtrOffset) {
     operationParams.size = {size, 0, 0};
@@ -310,7 +310,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                                                         this->getContext(), this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
-    BuiltinDispatchInfoBuilder::BuiltinOpParams operationParams;
+    BuiltinOpParams operationParams;
 
     Surface *surfaces[2];
     if (copyType == SvmToHost) {
@@ -426,7 +426,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams operationParams;
+    BuiltinOpParams operationParams;
     MemObj patternMemObj(this->context, 0, 0, alignUp(patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
     operationParams.srcMemObj = &patternMemObj;

@@ -836,9 +836,9 @@ HWTEST_F(BcsBufferTests, givenReadOrWriteBufferOperationWithoutKernelWhenEstimat
     MultiDispatchInfo multiDispatchInfo;
 
     auto readBufferCmdsSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_READ_BUFFER, csrDependencies, false, false,
-                                                                                   *cmdQ, multiDispatchInfo);
+                                                                                   true, *cmdQ, multiDispatchInfo);
     auto writeBufferCmdsSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_WRITE_BUFFER, csrDependencies, false, false,
-                                                                                    *cmdQ, multiDispatchInfo);
+                                                                                    true, *cmdQ, multiDispatchInfo);
     auto expectedSize = TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>();
 
     EXPECT_EQ(expectedSize, readBufferCmdsSize);

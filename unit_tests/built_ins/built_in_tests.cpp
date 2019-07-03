@@ -91,8 +91,8 @@ class BuiltInTests
         deleteDataReadFromFile(pData);
     }
 
-    bool compareBultinOpParams(const BuiltinDispatchInfoBuilder::BuiltinOpParams &left,
-                               const BuiltinDispatchInfoBuilder::BuiltinOpParams &right) {
+    bool compareBultinOpParams(const BuiltinOpParams &left,
+                               const BuiltinOpParams &right) {
         return left.srcPtr == right.srcPtr &&
                left.dstPtr == right.dstPtr &&
                left.size == right.size &&
@@ -194,7 +194,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
     MockBuffer &dst = *dstPtr;
 
     MultiDispatchInfo multiDispatchInfo;
-    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &src;
     builtinOpsParams.dstMemObj = &dst;
@@ -258,7 +258,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTransla
     mockBuffer[1].getGraphicsAllocation()->setSize(0x20000);
     mockBuffer[2].getGraphicsAllocation()->setSize(0x30000);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    BuiltinOpParams builtinOpsParams;
     builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
@@ -306,7 +306,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslatio
     mockBuffer[1].getGraphicsAllocation()->setSize(0x20000);
     mockBuffer[2].getGraphicsAllocation()->setSize(0x30000);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    BuiltinOpParams builtinOpsParams;
     builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
 
@@ -351,7 +351,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickD
     std::vector<Kernel *> builtinKernels;
 
     MultiDispatchInfo multiDispatchInfo;
-    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    BuiltinOpParams builtinOpsParams;
     builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
 
     for (auto &buffer : mockBuffer) {
@@ -384,7 +384,7 @@ TEST_F(BuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispatchInfo
     MockBuffer mockBuffer;
 
     MultiDispatchInfo multiDispatchInfo;
-    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    BuiltinOpParams builtinOpsParams;
     builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
 
     memObjsForAuxTranslation.insert(&mockBuffer);
@@ -419,7 +419,7 @@ HWTEST_F(BuiltInTests, givenMoreBuffersForAuxTranslationThanKernelInstancesWhenD
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 
     MemObjsForAuxTranslation memObjsForAuxTranslation;
-    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    BuiltinOpParams builtinOpsParams;
     MultiDispatchInfo multiDispatchInfo;
     MockBuffer mockBuffer[7];
 
@@ -491,7 +491,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferAligned) {
     AlignedBuffer dst;
 
     MultiDispatchInfo multiDispatchInfo;
-    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &src;
     builtinOpsParams.dstMemObj = &dst;
@@ -525,7 +525,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffse
     AlignedBuffer dst;
 
     MultiDispatchInfo multiDispatchInfo;
-    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &src;
     builtinOpsParams.srcOffset.x = 1;
@@ -551,7 +551,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReadBufferAligned) {
     auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
 
     MultiDispatchInfo multiDispatchInfo;
-    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &srcMemObj;
     builtinOpsParams.dstPtr = dstPtr;
@@ -586,7 +586,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderWriteBufferAligned) {
     AlignedBuffer dstMemObj;
 
     MultiDispatchInfo multiDispatchInfo;
-    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcPtr = srcPtr;
     builtinOpsParams.dstMemObj = &dstMemObj;
@@ -659,7 +659,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnFalseIfUnsupportedBuildType
     auto &bs = *pDevice->getExecutionEnvironment()->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
     MultiDispatchInfo multiDispatchInfo;
-    BuiltinDispatchInfoBuilder::BuiltinOpParams params;
+    BuiltinOpParams params;
 
     auto ret = bdib.buildDispatchInfos(multiDispatchInfo, params);
     EXPECT_FALSE(ret);
@@ -681,7 +681,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnTrueIfExplicitKernelArgNotT
     auto &bs = *pDevice->getExecutionEnvironment()->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
     MultiDispatchInfo multiDispatchInfo;
-    BuiltinDispatchInfoBuilder::BuiltinOpParams params;
+    BuiltinOpParams params;
 
     cl_int err;
     auto ret = bdib.setExplicitArg(1, 5, nullptr, err);

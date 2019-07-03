@@ -70,7 +70,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programInterfaceDescriptorData
                                                                                                      cmdQ.getContext(), cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcMemObj = srcImage.get();
     dc.dstMemObj = dstImage.get();
     dc.srcOffset = {0, 0, 0};
@@ -142,7 +142,7 @@ HWTEST_F(HardwareCommandsTest, sendCrossThreadDataResourceUsage) {
                                                                                                      cmdQ.getContext(), cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcMemObj = srcImage.get();
     dc.dstMemObj = dstImage.get();
     dc.srcOffset = {0, 0, 0};
@@ -290,7 +290,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, sendIndirectStateResourceUsage
                                                                                                      cmdQ.getContext(), cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcMemObj = srcImage.get();
     dc.dstMemObj = dstImage.get();
     dc.srcOffset = {0, 0, 0};
@@ -491,7 +491,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     auto &builder = cmdQ.getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
                                                                                                              cmdQ.getContext(), cmdQ.getDevice());
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcMemObj = img.get();
     dc.dstMemObj = img.get();
     dc.size = {1, 1, 1};
@@ -569,7 +569,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointer) 
                                                                                                      cmdQ.getContext(), cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcPtr = nullptr;
     dc.dstMemObj = dstImage.get();
     dc.dstOffset = {0, 0, 0};

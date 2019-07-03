@@ -30,28 +30,28 @@ class MemObj;
 struct MultiDispatchInfo;
 class Program;
 
+struct BuiltinOpParams {
+    void *srcPtr = nullptr;
+    void *dstPtr = nullptr;
+    MemObj *srcMemObj = nullptr;
+    MemObj *dstMemObj = nullptr;
+    GraphicsAllocation *srcSvmAlloc = nullptr;
+    GraphicsAllocation *dstSvmAlloc = nullptr;
+    const MemObjsForAuxTranslation *memObjsForAuxTranslation = nullptr;
+    AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
+    Vec3<size_t> srcOffset = {0, 0, 0};
+    Vec3<size_t> dstOffset = {0, 0, 0};
+    Vec3<size_t> size = {0, 0, 0};
+    size_t srcRowPitch = 0;
+    size_t dstRowPitch = 0;
+    size_t srcSlicePitch = 0;
+    size_t dstSlicePitch = 0;
+    uint32_t srcMipLevel = 0;
+    uint32_t dstMipLevel = 0;
+};
+
 class BuiltinDispatchInfoBuilder {
   public:
-    struct BuiltinOpParams {
-        void *srcPtr = nullptr;
-        void *dstPtr = nullptr;
-        MemObj *srcMemObj = nullptr;
-        MemObj *dstMemObj = nullptr;
-        GraphicsAllocation *srcSvmAlloc = nullptr;
-        GraphicsAllocation *dstSvmAlloc = nullptr;
-        const MemObjsForAuxTranslation *memObjsForAuxTranslation = nullptr;
-        AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
-        Vec3<size_t> srcOffset = {0, 0, 0};
-        Vec3<size_t> dstOffset = {0, 0, 0};
-        Vec3<size_t> size = {0, 0, 0};
-        size_t srcRowPitch = 0;
-        size_t dstRowPitch = 0;
-        size_t srcSlicePitch = 0;
-        size_t dstSlicePitch = 0;
-        uint32_t srcMipLevel = 0;
-        uint32_t dstMipLevel = 0;
-    };
-
     BuiltinDispatchInfoBuilder(BuiltIns &kernelLib) : kernelsLib(kernelLib) {}
     virtual ~BuiltinDispatchInfoBuilder() = default;
 

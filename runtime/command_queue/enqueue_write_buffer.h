@@ -48,9 +48,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     } else if (!isMemTransferNeeded) {
         return enqueueMarkerForReadWriteOperation(buffer, const_cast<void *>(ptr), cmdType, blockingWrite,
                                                   numEventsInWaitList, eventWaitList, event);
-    } else if (blitEnqueueAllowed(numEventsInWaitList, eventWaitList, cmdType)) {
-        return enqueueReadWriteBufferWithBlitTransfer(cmdType, buffer, !!blockingWrite, offset, size, const_cast<void *>(ptr),
-                                                      numEventsInWaitList, eventWaitList, event);
     }
 
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
@@ -85,7 +82,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     void *alignedSrcPtr = alignDown(srcPtr, 4);
     size_t srcPtrOffset = ptrDiff(srcPtr, alignedSrcPtr);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcPtr = alignedSrcPtr;
     dc.srcOffset = {srcPtrOffset, 0, 0};
     dc.dstMemObj = buffer;

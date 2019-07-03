@@ -526,7 +526,7 @@ void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, 
         multiDispatchInfo.rbegin()->setPipeControlRequired(true);
     }
     auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dispatchParams;
+    BuiltinOpParams dispatchParams;
 
     dispatchParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
     dispatchParams.auxTranslationDirection = auxTranslationDirection;
@@ -573,15 +573,12 @@ bool CommandQueue::queueDependenciesClearRequired() const {
     return isOOQEnabled() || DebugManager.flags.OmitTimestampPacketDependencies.get();
 }
 
-bool CommandQueue::blitEnqueueAllowed(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_command_type cmdType) {
+bool CommandQueue::blitEnqueueAllowed(bool queueBlocked, cl_command_type cmdType) {
     bool blitAllowed = device->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.blitterOperationsSupported &&
                        DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get();
 
-    bool queueBlocked = false;
-    uint32_t calculatedTaskLevel = 0;
+    bool commandAllowed = (CL_COMMAND_READ_BUFFER == cmdType) || (CL_COMMAND_WRITE_BUFFER == cmdType);
 
-    obtainTaskLevelAndBlockedStatus(calculatedTaskLevel, numEventsInWaitList, eventWaitList, queueBlocked, cmdType, false);
-
-    return blitAllowed && !queueBlocked;
+    return commandAllowed && !queueBlocked && blitAllowed;
 }
 } // namespace NEO

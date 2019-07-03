@@ -174,16 +174,16 @@ struct MultiDispatchInfo {
     Kernel *peekParentKernel() const;
     Kernel *peekMainKernel() const;
 
-    void setBuiltinOpParams(BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpParams) {
+    void setBuiltinOpParams(BuiltinOpParams builtinOpParams) {
         this->builtinOpParams = builtinOpParams;
     }
 
-    const BuiltinDispatchInfoBuilder::BuiltinOpParams &peekBuiltinOpParams() const {
+    const BuiltinOpParams &peekBuiltinOpParams() const {
         return builtinOpParams;
     }
 
   protected:
-    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpParams = {};
+    BuiltinOpParams builtinOpParams = {};
     StackVec<DispatchInfo, 9> dispatchInfos;
     StackVec<MemObj *, 2> redescribedSurfaces;
     Kernel *mainKernel = nullptr;

@@ -71,7 +71,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyImage) {
                                                                                                                pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstMemObj = dstImage;
     dc.srcOffset = EnqueueCopyImageTraits::srcOrigin;
@@ -174,7 +174,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageNonBlocking) {
                                                                                                                pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstPtr = EnqueueReadImageTraits::hostPtr;
     dc.srcOffset = EnqueueReadImageTraits::origin;
@@ -228,7 +228,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageBlocking) {
                                                                                                                pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcMemObj = srcImage;
     dc.dstPtr = EnqueueReadImageTraits::hostPtr;
     dc.srcOffset = EnqueueReadImageTraits::origin;
@@ -282,7 +282,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageNonBlocking) {
                                                                                                                pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcPtr = EnqueueWriteImageTraits::hostPtr;
     dc.dstMemObj = dstImage;
     dc.dstOffset = EnqueueWriteImageTraits::origin;
@@ -336,7 +336,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageBlocking) {
                                                                                                                pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    BuiltinOpParams dc;
     dc.srcPtr = EnqueueWriteImageTraits::hostPtr;
     dc.dstMemObj = dstImage;
     dc.dstOffset = EnqueueWriteImageTraits::origin;
