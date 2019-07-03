@@ -8,6 +8,7 @@
 #pragma once
 
 #include "core/helpers/vec.h"
+#include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/utilities/stackvec.h"
@@ -173,7 +174,16 @@ struct MultiDispatchInfo {
     Kernel *peekParentKernel() const;
     Kernel *peekMainKernel() const;
 
+    void setBuiltinOpParams(BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpParams) {
+        this->builtinOpParams = builtinOpParams;
+    }
+
+    const BuiltinDispatchInfoBuilder::BuiltinOpParams &peekBuiltinOpParams() const {
+        return builtinOpParams;
+    }
+
   protected:
+    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpParams = {};
     StackVec<DispatchInfo, 9> dispatchInfos;
     StackVec<MemObj *, 2> redescribedSurfaces;
     Kernel *mainKernel = nullptr;

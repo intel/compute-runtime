@@ -91,6 +91,17 @@ class BuiltInTests
         deleteDataReadFromFile(pData);
     }
 
+    bool compareBultinOpParams(const BuiltinDispatchInfoBuilder::BuiltinOpParams &left,
+                               const BuiltinDispatchInfoBuilder::BuiltinOpParams &right) {
+        return left.srcPtr == right.srcPtr &&
+               left.dstPtr == right.dstPtr &&
+               left.size == right.size &&
+               left.srcOffset == right.srcOffset &&
+               left.dstOffset == right.dstOffset &&
+               left.dstMemObj == right.dstMemObj &&
+               left.srcMemObj == right.srcMemObj;
+    }
+
     std::string allBuiltIns;
 };
 
@@ -231,7 +242,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
         }
         i++;
     }
-
+    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     delete srcPtr;
     delete dstPtr;
 }
@@ -276,7 +287,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTransla
         Vec3<size_t> gws = {xGws, 1, 1};
         EXPECT_EQ(gws, dispatchInfo.getGWS());
     }
-
+    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     // always pick different kernel
     EXPECT_EQ(3u, builtinKernels.size());
     EXPECT_NE(builtinKernels[0], builtinKernels[1]);
@@ -324,7 +335,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslatio
         Vec3<size_t> gws = {xGws, 1, 1};
         EXPECT_EQ(gws, dispatchInfo.getGWS());
     }
-
+    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     // always pick different kernel
     EXPECT_EQ(3u, builtinKernels.size());
     EXPECT_NE(builtinKernels[0], builtinKernels[1]);
@@ -358,7 +369,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickD
     for (auto &dispatchInfo : multiDispatchInfo) {
         builtinKernels.push_back(dispatchInfo.getKernel());
     }
-
+    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     // nonAux vs Aux instance
     EXPECT_EQ(6u, builtinKernels.size());
     EXPECT_NE(builtinKernels[0], builtinKernels[3]);
@@ -503,6 +514,8 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferAligned) {
     size_t middleElSize = sizeof(uint32_t) * 4;
     size_t middleSize = dst.getSize() / middleElSize;
     EXPECT_EQ(Vec3<size_t>(middleSize, 1, 1), dispatchInfo->getGWS());
+
+    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffsetUnalignedToFour) {
@@ -526,6 +539,8 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffse
     const DispatchInfo *dispatchInfo = multiDispatchInfo.begin();
 
     EXPECT_EQ(dispatchInfo->getKernel()->getKernelInfo().name, "CopyBufferToBufferLeftLeftover");
+
+    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReadBufferAligned) {
@@ -559,7 +574,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReadBufferAligned) {
     size_t middleElSize = sizeof(uint32_t) * 4;
     size_t middleSize = size / middleElSize;
     EXPECT_EQ(Vec3<size_t>(middleSize, 1, 1), dispatchInfo->getGWS());
-
+    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     alignedFree(dstPtr);
 }
 
@@ -594,7 +609,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderWriteBufferAligned) {
     size_t middleElSize = sizeof(uint32_t) * 4;
     size_t middleSize = size / middleElSize;
     EXPECT_EQ(Vec3<size_t>(middleSize, 1, 1), dispatchInfo->getGWS());
-
+    EXPECT_TRUE(compareBultinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
     alignedFree(srcPtr);
 }
 

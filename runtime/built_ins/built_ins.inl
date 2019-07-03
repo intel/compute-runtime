@@ -29,7 +29,7 @@ template <typename HWFamily>
 bool BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
     size_t kernelInstanceNumber = 0;
     resizeKernelInstances(operationParams.memObjsForAuxTranslation->size());
-
+    multiDispatchInfo.setBuiltinOpParams(operationParams);
     for (auto &memObj : *operationParams.memObjsForAuxTranslation) {
         DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder;
         auto graphicsAllocation = memObj->getGraphicsAllocation();

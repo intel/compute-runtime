@@ -211,7 +211,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispa
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const override {
         DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> kernelSplit1DBuilder;
-
+        multiDispatchInfo.setBuiltinOpParams(operationParams);
         uintptr_t start = reinterpret_cast<uintptr_t>(operationParams.dstPtr) + operationParams.dstOffset.x;
 
         size_t middleAlignment = MemoryConstants::cacheLineSize;
@@ -296,7 +296,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyBufferRect> : public BuiltinDispatchI
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const override {
         DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder;
-
+        multiDispatchInfo.setBuiltinOpParams(operationParams);
         size_t hostPtrSize = 0;
         bool is3D = false;
 
@@ -394,7 +394,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoB
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const override {
         DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> kernelSplit1DBuilder;
-
+        multiDispatchInfo.setBuiltinOpParams(operationParams);
         uintptr_t start = reinterpret_cast<uintptr_t>(operationParams.dstPtr) + operationParams.dstOffset.x;
 
         size_t middleAlignment = MemoryConstants::cacheLineSize;
@@ -472,7 +472,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyBufferToImage3d> : public BuiltinDisp
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const override {
         DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder;
-
+        multiDispatchInfo.setBuiltinOpParams(operationParams);
         DEBUG_BREAK_IF(!(((operationParams.srcPtr != nullptr) || (operationParams.srcMemObj != nullptr)) && (operationParams.dstPtr == nullptr)));
 
         auto dstImage = castToObjectOrAbort<Image>(operationParams.dstMemObj);
@@ -559,7 +559,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDisp
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const override {
         DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder;
-
+        multiDispatchInfo.setBuiltinOpParams(operationParams);
         DEBUG_BREAK_IF(!((operationParams.srcPtr == nullptr) && ((operationParams.dstPtr != nullptr) || (operationParams.dstMemObj != nullptr))));
 
         auto srcImage = castToObjectOrAbort<Image>(operationParams.srcMemObj);
@@ -642,7 +642,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyImageToImage3d> : public BuiltinDispa
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const override {
         DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder;
-
+        multiDispatchInfo.setBuiltinOpParams(operationParams);
         DEBUG_BREAK_IF(!((operationParams.srcPtr == nullptr) && (operationParams.dstPtr == nullptr)));
 
         auto srcImage = castToObjectOrAbort<Image>(operationParams.srcMemObj);
@@ -707,7 +707,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::FillImage3d> : public BuiltinDispatchInfo
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const override {
         DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> kernelNoSplit3DBuilder;
-
+        multiDispatchInfo.setBuiltinOpParams(operationParams);
         DEBUG_BREAK_IF(!((operationParams.srcMemObj == nullptr) && (operationParams.srcPtr != nullptr) && (operationParams.dstPtr == nullptr)));
 
         auto image = castToObjectOrAbort<Image>(operationParams.dstMemObj);
