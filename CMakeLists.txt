@@ -304,6 +304,8 @@ elseif(IS_DIRECTORY "${IGC_DIR}/include/visa")
     set(VISA_DIR "${IGC_DIR}/include/visa")
 elseif(IS_DIRECTORY "${IGDRCL__IGC_INCLUDEDIR}/../visa")
     get_filename_component(VISA_DIR "${IGDRCL__IGC_INCLUDEDIR}/../visa" ABSOLUTE)
+elseif(IS_DIRECTORY "${IGC_OCL_ADAPTOR_DIR}/../../visa")
+    get_filename_component(VISA_DIR "${IGC_OCL_ADAPTOR_DIR}/../../visa" ABSOLUTE)
 endif()
 message(STATUS "VISA Dir: ${VISA_DIR}")
 
