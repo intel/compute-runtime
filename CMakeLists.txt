@@ -305,7 +305,7 @@ elseif(IS_DIRECTORY "${IGC_DIR}/include/visa")
 elseif(IS_DIRECTORY "${IGDRCL__IGC_INCLUDEDIR}/../visa")
     get_filename_component(VISA_DIR "${IGDRCL__IGC_INCLUDEDIR}/../visa" ABSOLUTE)
 endif()
-message("VISA_DIR : ${VISA_DIR}")
+message(STATUS "VISA Dir: ${VISA_DIR}")
 
 if(IS_DIRECTORY "${VISA_DIR}/include")
     set(VISA_INCLUDE_DIR "${VISA_DIR}/include")
@@ -333,7 +333,7 @@ else()
     set(IGA_HEADERS_AVAILABLE FALSE)
 endif()
 
-message("IGA_INCLUDE_DIR : ${IGA_INCLUDE_DIR}")
+message(STATUS "IGA Includes dir: ${IGA_INCLUDE_DIR}")
 
 if(WIN32)
     set(IGC_LIBRARY_NAME "igc${NEO_BITS}")
