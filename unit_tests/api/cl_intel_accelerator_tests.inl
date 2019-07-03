@@ -51,7 +51,7 @@ struct IntelAcceleratorTestWithValidDescriptor : IntelAcceleratorTest {
     }
 };
 
-TEST_F(IntelAcceleratorTestWithValidDescriptor, GivenInvalidAcceleratorExpectFail) {
+TEST_F(IntelAcceleratorTestWithValidDescriptor, GivenInvalidAcceleratorTypeWhenCreatingAcceleratorThenClInvalidAcceleratorTypeIntelErrorIsReturned) {
     auto INVALID_ACCELERATOR_TYPE = static_cast<cl_accelerator_type_intel>(0xEEEEEEEE);
 
     accelerator = clCreateAcceleratorINTEL(
@@ -65,7 +65,7 @@ TEST_F(IntelAcceleratorTestWithValidDescriptor, GivenInvalidAcceleratorExpectFai
     EXPECT_EQ(CL_INVALID_ACCELERATOR_TYPE_INTEL, retVal);
 }
 
-TEST_F(IntelAcceleratorTestWithValidDescriptor, GivenInvalidContextThenFailApiCreate) {
+TEST_F(IntelAcceleratorTestWithValidDescriptor, GivenInvalidContextWhenCreatingAcceleratorThenClInvalidContextErrorIsReturned) {
     accelerator = clCreateAcceleratorINTEL(
         nullptr,
         CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL,
@@ -76,12 +76,12 @@ TEST_F(IntelAcceleratorTestWithValidDescriptor, GivenInvalidContextThenFailApiCr
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(IntelAcceleratorTest, GivenNullAcceleratorThenFailApiRelease) {
+TEST_F(IntelAcceleratorTest, GivenNullAcceleratorWhenReleasingAcceleratorThenClInvalidAcceleratorIntelErrorIsReturned) {
     result = clReleaseAcceleratorINTEL(nullptr);
     EXPECT_EQ(CL_INVALID_ACCELERATOR_INTEL, result);
 }
 
-TEST_F(IntelAcceleratorTest, GivenNullAcceleratorThenFailApiRetain) {
+TEST_F(IntelAcceleratorTest, GivenNullAcceleratorWhenRetainingAcceleratorThenClInvalidAcceleratorIntelErrorIsReturned) {
     result = clRetainAcceleratorINTEL(nullptr);
     EXPECT_EQ(CL_INVALID_ACCELERATOR_INTEL, result);
 }
@@ -115,14 +115,14 @@ struct IntelAcceleratorGetInfoTest : IntelAcceleratorTestWithValidDescriptor {
     size_t param_value_size_ret = 0;
 };
 
-TEST_F(IntelAcceleratorTest, GivenNullAcceleratorThenFailApiGetInfo) {
+TEST_F(IntelAcceleratorTest, GivenNullAcceleratorWhenGettingAcceleratorInfoThenClInvalidAcceleratorIntelErrorIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         nullptr, 0,
         0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_ACCELERATOR_INTEL, result);
 }
 
-TEST_F(IntelAcceleratorTest, GivenNullAcceleratorWithReturnsThenFailApiGetInfo) {
+TEST_F(IntelAcceleratorTest, GivenNullAcceleratorWhenGettingAcceleratorInfoThenParamValueAndSizeArePreserved) {
     cl_uint paramValue = 0xEEEEEEE1u;
     size_t paramSize = 0xEEEEEEE3u;
 
@@ -137,7 +137,7 @@ TEST_F(IntelAcceleratorTest, GivenNullAcceleratorWithReturnsThenFailApiGetInfo) 
     EXPECT_EQ(0xEEEEEEE3u, paramSize);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoWithBogusParam) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenInvalidParamNameWhenGettingAcceleratorInfoThenClInvalidValueErrorIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         0xEEEEEEEE,
@@ -148,7 +148,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoWithBogusParam) {
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountWithNullReturnExpectPass) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenClAcceleratorReferenceCountIntelWhenGettingAcceleratorInfoThenParamValueSizeRetHasCorrectSize) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
@@ -160,7 +160,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountWithNullReturnExpectPas
     EXPECT_EQ(sizeof(cl_uint), param_value_size_ret);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCount1ExpectPass) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenClAcceleratorReferenceCountIntelWhenGettingAcceleratorInfoThenParamValueIsOne) {
     cl_uint param_value = static_cast<cl_uint>(-1);
 
     result = clGetAcceleratorInfoINTEL(
@@ -174,7 +174,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCount1ExpectPass) {
     EXPECT_EQ(1u, param_value);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountWithLongReturnExpectPass) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenLongForDescriptorSizeWhenGettingAcceleratorInfoThenCorrectValuesAreReturned) {
     cl_uint param_value = static_cast<cl_uint>(-1);
 
     result = clGetAcceleratorInfoINTEL(
@@ -189,7 +189,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountWithLongReturnExpectPas
     EXPECT_EQ(1u, param_value);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountWithShortReturnExpectFail) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenShortForDescriptorSizeWhenGettingAcceleratorInfoThenClInvalidValueErrorIsReturned) {
     cl_uint param_value = static_cast<cl_uint>(-1);
 
     result = clGetAcceleratorInfoINTEL(
@@ -202,7 +202,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountWithShortReturnExpectFa
     EXPECT_EQ(CL_INVALID_VALUE, result);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountSizeQueryExpectPass) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenZeroForDescriptorSizeGivenLongForDescriptorSizeWhenGettingAcceleratorInfoThenCorrectValuesAreReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
@@ -214,7 +214,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountSizeQueryExpectPass) {
     EXPECT_EQ(sizeof(cl_uint), param_value_size_ret);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCount2ExpectPass) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenCallToRetainAcceleratorWhenGettingAcceleratorInfoThenParamValueIsTwo) {
     cl_uint param_value = static_cast<cl_uint>(-1);
 
     result = clRetainAcceleratorINTEL(accelerator);
@@ -245,7 +245,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCount2ExpectPass) {
     EXPECT_EQ(1u, param_value);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextNullReturnExpectPass) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenNullPtrForParamValueWhenGettingAcceleratorInfoThenClSuccessIsReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_CONTEXT_INTEL,
@@ -257,7 +257,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextNullReturnExpectPass) {
     EXPECT_EQ(sizeof(cl_context), param_value_size_ret);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextLongExpectPass) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenLongForDescriptorSizeWhenGettingAcceleratorContextInfoThenCorrectValuesAreReturned) {
     cl_context param_value = reinterpret_cast<cl_context>(-1);
 
     result = clGetAcceleratorInfoINTEL(
@@ -271,7 +271,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextLongExpectPass) {
     EXPECT_EQ(sizeof(cl_context), param_value_size_ret);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextLongExpectRightContext) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenAcceleratorContextIntelWhenGettingAcceleratorInfoThenCorrectValuesAreReturned) {
     cl_context param_value = reinterpret_cast<cl_context>(-1);
 
     result = clGetAcceleratorInfoINTEL(
@@ -288,7 +288,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextLongExpectRightContext) {
     EXPECT_EQ(referenceContext, param_value);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextShortExpectPass) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenShortForDescriptorSizeWhenGettingAcceleratorContextInfoThenClInvalidValueErrorIsReturned) {
     cl_context param_value = reinterpret_cast<cl_context>(-1);
 
     result = clGetAcceleratorInfoINTEL(
@@ -302,7 +302,7 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextShortExpectPass) {
     EXPECT_EQ(sizeof(cl_context), param_value_size_ret);
 }
 
-TEST_F(IntelAcceleratorGetInfoTest, GetInfoContextSizeQueryExpectPass) {
+TEST_F(IntelAcceleratorGetInfoTest, GivenZeroForDescriptorSizeGivenLongForDescriptorSizeWhenGettingAcceleratorContextInfoThenCorrectValuesAreReturned) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_CONTEXT_INTEL,
