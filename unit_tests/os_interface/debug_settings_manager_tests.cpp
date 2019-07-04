@@ -866,6 +866,7 @@ TEST(DebugSettingsManager, givenReaderImplInDebugManagerWhenSettingDifferentRead
 }
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
+    testing::internal::CaptureStdout();
     FullyEnabledTestDebugManager debugManager;
     debugManager.flags.PrintDebugSettings.set(true);
     debugManager.flags.LoopAtPlatformInitialize.set(true);
@@ -884,6 +885,13 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWhenCallingDumpFlagsThe
 #include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
     std::remove(FullyEnabledTestDebugManager::settingsDumpFileName);
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_NE(0u, output.size());
+
+    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: TbxServer = 192.168.0.1"));
+    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: LoopAtPlatformInitialize = 1"));
+    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: PrintDebugSettings = 1"));
+    EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: Enable64kbpages = 1"));
 }
 
 struct AllocationTypeTestCase {
