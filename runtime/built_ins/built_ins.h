@@ -12,7 +12,6 @@
 #include "runtime/helpers/properties_helper.h"
 
 #include "CL/cl.h"
-#include "built_in_ops.h"
 
 #include <array>
 #include <cstdint>
@@ -37,13 +36,32 @@ class SchedulerKernel;
 
 extern const char *mediaKernelsBuildOptions;
 
+enum class EBuiltInOps : uint32_t {
+    AuxTranslation = 0,
+    CopyBufferToBuffer,
+    CopyBufferRect,
+    FillBuffer,
+    CopyBufferToImage3d,
+    CopyImage3dToBuffer,
+    CopyImageToImage1d,
+    CopyImageToImage2d,
+    CopyImageToImage3d,
+    FillImage1d,
+    FillImage2d,
+    FillImage3d,
+    VmeBlockMotionEstimateIntel,
+    VmeBlockAdvancedMotionEstimateCheckIntel,
+    VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel,
+    Scheduler,
+    COUNT
+};
+
 BuiltinResourceT createBuiltinResource(const char *ptr, size_t size);
 BuiltinResourceT createBuiltinResource(const BuiltinResourceT &r);
-std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::string &extension,
+std::string createBuiltinResourceName(EBuiltInOps builtin, const std::string &extension,
                                       const std::string &platformName = "", uint32_t deviceRevId = 0);
 std::string joinPath(const std::string &lhs, const std::string &rhs);
-const char *getBuiltinAsString(EBuiltInOps::Type builtin);
-const char *getUnknownBuiltinAsString(EBuiltInOps::Type builtin);
+const char *getBuiltinAsString(EBuiltInOps builtin);
 
 class Storage {
   public:
@@ -129,12 +147,12 @@ struct BuiltinCode {
 class BuiltinsLib {
   public:
     BuiltinsLib();
-    BuiltinCode getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device);
+    BuiltinCode getBuiltinCode(EBuiltInOps builtin, BuiltinCode::ECodeType requestedCodeType, Device &device);
 
     static std::unique_ptr<Program> createProgramFromCode(const BuiltinCode &bc, Context &context, Device &device);
 
   protected:
-    BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device);
+    BuiltinResourceT getBuiltinResource(EBuiltInOps builtin, BuiltinCode::ECodeType requestedCodeType, Device &device);
 
     using StoragesContainerT = std::vector<std::unique_ptr<Storage>>;
     StoragesContainerT allStorages; // sorted by priority allStorages[0] will be checked before allStorages[1], etc.
@@ -159,8 +177,8 @@ class BuiltIns {
     using HWFamily = int;
     std::pair<std::unique_ptr<BuiltinDispatchInfoBuilder>, std::once_flag> BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::COUNT)];
 
-    BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Context &context, Device &device);
-    std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Context &context, Device &device,
+    BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps op, Context &context, Device &device);
+    std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps op, Context &context, Device &device,
                                                                               std::unique_ptr<BuiltinDispatchInfoBuilder> newBuilder);
     BuiltIns();
     virtual ~BuiltIns();
@@ -214,7 +232,7 @@ class BuiltInOwnershipWrapper : public NonCopyableOrMovableClass {
     BuiltinDispatchInfoBuilder *builder = nullptr;
 };
 
-template <typename HWFamily, uint32_t OpCode>
+template <typename HWFamily, EBuiltInOps OpCode>
 class BuiltInOp;
 
 } // namespace NEO

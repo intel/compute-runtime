@@ -11,5 +11,3 @@ set(IGDRCL_SRCS_tests_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/sip_tests.cpp
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_built_in})
-
-add_subdirectories()

@@ -11,12 +11,9 @@ set(RUNTIME_SRCS_BUILT_INS
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins_storage.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/built_in_ops_base.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/builtinops${BRANCH_DIR_SUFFIX}/built_in_ops.h
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/sip.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sip.h
-  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/unknown_built_in_name.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/vme_dispatch_builder.h
 )
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_BUILT_INS})

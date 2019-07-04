@@ -19,7 +19,7 @@ namespace NEO {
 template <typename HWFamily>
 class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
   public:
-    VmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps::Type builtinOp,
+    VmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps builtinOp,
                                   const char *kernelName)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
         populate(context, device, builtinOp,
@@ -250,7 +250,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::VmeBlockMotionEstimateIntel> : public Vme
 template <typename HWFamily>
 class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuilder<HWFamily> {
   public:
-    AdvancedVmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps::Type builtinOp,
+    AdvancedVmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps builtinOp,
                                           const char *kernelName)
         : VmeBuiltinDispatchInfoBuilder<HWFamily>(kernelsLib, context, device, builtinOp,
                                                   kernelName) {
