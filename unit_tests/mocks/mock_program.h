@@ -25,25 +25,35 @@ class GraphicsAllocation;
 class MockProgram : public Program {
   public:
     using Program::createProgramFromBinary;
+    using Program::getKernelNamesString;
     using Program::getProgramCompilerVersion;
     using Program::isKernelDebugEnabled;
+    using Program::linkBinary;
+    using Program::prepareLinkerInputStorage;
     using Program::rebuildProgramFromIr;
     using Program::resolveProgramBinary;
     using Program::updateNonUniformFlag;
 
     using Program::areSpecializationConstantsInitialized;
+    using Program::constantSurface;
+    using Program::context;
     using Program::elfBinary;
     using Program::elfBinarySize;
+    using Program::exportedFunctionsSurface;
     using Program::genBinary;
     using Program::genBinarySize;
+    using Program::globalSurface;
     using Program::irBinary;
     using Program::irBinarySize;
     using Program::isProgramBinaryResolved;
     using Program::isSpirV;
+    using Program::linkerInput;
+    using Program::pDevice;
     using Program::programBinaryType;
     using Program::specConstantsIds;
     using Program::specConstantsSizes;
     using Program::specConstantsValues;
+    using Program::symbols;
 
     using Program::sourceCode;
 

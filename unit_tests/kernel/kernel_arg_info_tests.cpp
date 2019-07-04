@@ -94,6 +94,11 @@ TEST_P(KernelArgInfoTest, Create_Simple) {
     // included in the setup of fixture
 }
 
+TEST_P(KernelArgInfoTest, WhenQueryingWithNullptrKernelNameTheniReturnNullptr) {
+    auto kernelInfo = this->pProgram->getKernelInfo(nullptr);
+    EXPECT_EQ(nullptr, kernelInfo);
+}
+
 TEST_P(KernelArgInfoTest, getKernelArgAcessQualifier) {
     cl_kernel_arg_access_qualifier param_value = 0;
     queryArgInfo<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_QUALIFIER, param_value);

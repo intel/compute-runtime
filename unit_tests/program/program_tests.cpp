@@ -2923,6 +2923,12 @@ TEST_F(ProgramTests, givenProgramWhenUnknownInternalOptionsArePassedThenTheyAreN
     EXPECT_TRUE(buildOptions == internalOption);
 }
 
+TEST_F(ProgramTests, givenProgramWhenGetSymbolsIsCalledThenMapWithExportedSymbolsIsReturned) {
+    ExecutionEnvironment executionEnvironment;
+    MockProgram program(executionEnvironment);
+    EXPECT_EQ(&program.symbols, &program.getSymbols());
+}
+
 class AdditionalOptionsMockProgram : public MockProgram {
   public:
     AdditionalOptionsMockProgram() : MockProgram(executionEnvironment) {}
@@ -3009,6 +3015,19 @@ TEST(RebuildProgramFromIrTests, givenBinaryProgramWhenKernelRebulildIsNotForcedT
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(pProgram->processElfBinaryCalled);
     EXPECT_FALSE(pProgram->rebuildProgramFromIrCalled);
+}
+
+TEST(Program, whenGetKernelNamesStringIsCalledThenNamesAreProperlyConcatenated) {
+    ExecutionEnvironment execEnv;
+    MockProgram program{execEnv};
+    KernelInfo kernel1 = {};
+    kernel1.name = "kern1";
+    KernelInfo kernel2 = {};
+    kernel2.name = "kern2";
+    program.getKernelInfoArray().push_back(&kernel1);
+    program.getKernelInfoArray().push_back(&kernel2);
+    EXPECT_EQ("kern1;kern2", program.getKernelNamesString());
+    program.getKernelInfoArray().clear();
 }
 
 struct SpecializationConstantProgramMock : public MockProgram {

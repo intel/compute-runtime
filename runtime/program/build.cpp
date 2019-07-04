@@ -179,7 +179,7 @@ cl_int Program::build(
     const char *pKernelData,
     size_t kernelDataSize) {
     cl_int retVal = CL_SUCCESS;
-    processKernel(pKernelData, retVal);
+    processKernel(pKernelData, 0U, retVal);
 
     return retVal;
 }

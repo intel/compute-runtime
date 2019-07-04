@@ -14,6 +14,7 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/memory_manager/svm_memory_manager.h"
 
 #include <sstream>
 
@@ -108,14 +109,23 @@ Program::~Program() {
     delete blockKernelManager;
 
     if (constantSurface) {
-        this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(constantSurface);
+        if ((nullptr != context) && (nullptr != context->getSVMAllocsManager()) && (context->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(constantSurface->getGpuAddress())))) {
+            context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(constantSurface->getGpuAddress()));
+        } else {
+            this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(constantSurface);
+        }
         constantSurface = nullptr;
     }
 
     if (globalSurface) {
-        this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(globalSurface);
+        if ((nullptr != context) && (nullptr != context->getSVMAllocsManager()) && (context->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(globalSurface->getGpuAddress())))) {
+            context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(globalSurface->getGpuAddress()));
+        } else {
+            this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(globalSurface);
+        }
         globalSurface = nullptr;
     }
+
     if (context && !isBuiltIn) {
         context->decRefInternal();
     }
@@ -492,5 +502,11 @@ void Program::updateNonUniformFlag(const Program **inputPrograms, size_t numInpu
         allowNonUniform = allowNonUniform && inputPrograms[i]->getAllowNonUniform();
     }
     this->allowNonUniform = allowNonUniform;
+}
+
+void Program::prepareLinkerInputStorage() {
+    if (this->linkerInput == nullptr) {
+        this->linkerInput = std::make_unique<LinkerInput>();
+    }
 }
 } // namespace NEO

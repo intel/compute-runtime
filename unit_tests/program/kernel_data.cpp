@@ -108,18 +108,24 @@ TEST_F(KernelDataTest, PrintfString) {
     iOpenCL::SPatchString printfString;
     printfString.Token = PATCH_TOKEN_STRING;
     printfString.Size = static_cast<uint32_t>(sizeof(SPatchString) + strSize);
-
     printfString.Index = 0;
     printfString.StringSize = static_cast<uint32_t>(strSize);
 
-    cl_char *pPrintfString = new cl_char[printfString.Size];
+    iOpenCL::SPatchString emptyString;
+    emptyString.Token = PATCH_TOKEN_STRING;
+    emptyString.Size = static_cast<uint32_t>(sizeof(SPatchString));
+    emptyString.Index = 1;
+    emptyString.StringSize = 0;
+
+    cl_char *pPrintfString = new cl_char[printfString.Size + emptyString.Size];
 
     memcpy_s(pPrintfString, sizeof(SPatchString), &printfString, sizeof(SPatchString));
-
     memcpy_s((cl_char *)pPrintfString + sizeof(printfString), strSize, stringValue, strSize);
 
+    memcpy_s((cl_char *)pPrintfString + printfString.Size, emptyString.Size, &emptyString, emptyString.Size);
+
     pPatchList = (void *)pPrintfString;
-    patchListSize = printfString.Size;
+    patchListSize = printfString.Size + emptyString.Size;
 
     buildAndDecode();
 
@@ -1386,4 +1392,32 @@ TEST_F(KernelDataTest, PATCH_TOKEN_ALLOCATE_SIP_SURFACE) {
     EXPECT_EQ(token.Offset, pKernelInfo->patchInfo.pAllocateSystemThreadSurface->Offset);
     EXPECT_EQ(token.Token, pKernelInfo->patchInfo.pAllocateSystemThreadSurface->Token);
     EXPECT_EQ(token.PerThreadSystemThreadSurfaceSize, pKernelInfo->patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize);
+}
+
+TEST_F(KernelDataTest, givenSymbolTablePatchTokenThenLinkerInputIsCreated) {
+    SPatchFunctionTableInfo token;
+    token.Token = PATCH_TOKEN_PROGRAM_SYMBOL_TABLE;
+    token.Size = static_cast<uint32_t>(sizeof(SPatchFunctionTableInfo));
+    token.NumEntries = 0;
+
+    pPatchList = &token;
+    patchListSize = token.Size;
+
+    buildAndDecode();
+
+    EXPECT_NE(nullptr, program->linkerInput);
+}
+
+TEST_F(KernelDataTest, givenRelocationTablePatchTokenThenLinkerInputIsCreated) {
+    SPatchFunctionTableInfo token;
+    token.Token = PATCH_TOKEN_PROGRAM_RELOCATION_TABLE;
+    token.Size = static_cast<uint32_t>(sizeof(SPatchFunctionTableInfo));
+    token.NumEntries = 0;
+
+    pPatchList = &token;
+    patchListSize = token.Size;
+
+    buildAndDecode();
+
+    EXPECT_NE(nullptr, program->linkerInput);
 }

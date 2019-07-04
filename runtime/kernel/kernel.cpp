@@ -969,7 +969,6 @@ void Kernel::clearUnifiedMemoryExecInfo() {
 }
 
 inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceiver) {
-
     auto numArgs = kernelInfo.kernelArgInfo.size();
     for (decltype(numArgs) argIndex = 0; argIndex < numArgs; argIndex++) {
         if (kernelArguments[argIndex].object) {
@@ -1003,6 +1002,10 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 
     if (program->getGlobalSurface()) {
         commandStreamReceiver.makeResident(*(program->getGlobalSurface()));
+    }
+
+    if (program->getExportedFunctionsSurface()) {
+        commandStreamReceiver.makeResident(*(program->getExportedFunctionsSurface()));
     }
 
     for (auto gfxAlloc : kernelSvmGfxAllocations) {
@@ -1042,6 +1045,11 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
 
     if (program->getGlobalSurface()) {
         GeneralSurface *surface = new GeneralSurface(program->getGlobalSurface());
+        dst.push_back(surface);
+    }
+
+    if (program->getExportedFunctionsSurface()) {
+        GeneralSurface *surface = new GeneralSurface(program->getExportedFunctionsSurface());
         dst.push_back(surface);
     }
 

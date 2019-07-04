@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/compiler_interface/linker.h"
 #include "elf/reader.h"
 #include "elf/writer.h"
 #include "runtime/api/cl_types.h"
@@ -148,6 +149,7 @@ class Program : public BaseObject<_cl_program> {
     }
 
     const Device &getDevice(cl_uint deviceOrdinal) const {
+        UNRECOVERABLE_IF(pDevice == nullptr);
         return *pDevice;
     }
 
@@ -206,6 +208,10 @@ class Program : public BaseObject<_cl_program> {
         return globalSurface;
     }
 
+    GraphicsAllocation *getExportedFunctionsSurface() const {
+        return exportedFunctionsSurface;
+    }
+
     BlockKernelManager *getBlockKernelManager() const {
         return blockKernelManager;
     }
@@ -258,6 +264,14 @@ class Program : public BaseObject<_cl_program> {
         return this->specConstantsSizes;
     }
 
+    const Linker::RelocatedSymbolsMap &getSymbols() const {
+        return this->symbols;
+    }
+
+    LinkerInput *getLinkerInput() const {
+        return this->linkerInput.get();
+    }
+
   protected:
     Program(ExecutionEnvironment &executionEnvironment);
 
@@ -274,13 +288,15 @@ class Program : public BaseObject<_cl_program> {
 
     cl_int resolveProgramBinary();
 
+    MOCKABLE_VIRTUAL cl_int linkBinary();
+
     cl_int parseProgramScopePatchList();
 
     MOCKABLE_VIRTUAL cl_int rebuildProgramFromIr();
 
-    cl_int parsePatchList(KernelInfo &pKernelInfo);
+    cl_int parsePatchList(KernelInfo &pKernelInfo, uint32_t kernelNum);
 
-    size_t processKernel(const void *pKernelBlob, cl_int &retVal);
+    size_t processKernel(const void *pKernelBlob, uint32_t kernelNum, cl_int &retVal);
 
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
 
@@ -299,6 +315,8 @@ class Program : public BaseObject<_cl_program> {
 
     MOCKABLE_VIRTUAL bool appendKernelDebugOptions();
     void notifyDebuggerWithSourceCode(std::string &filename);
+
+    void prepareLinkerInputStorage();
 
     static const std::string clOptNameClVer;
     static const std::string clOptNameUniformWgs;
@@ -329,6 +347,7 @@ class Program : public BaseObject<_cl_program> {
 
     GraphicsAllocation *constantSurface;
     GraphicsAllocation *globalSurface;
+    GraphicsAllocation *exportedFunctionsSurface = nullptr;
 
     size_t globalVarTotalSize;
 
@@ -345,6 +364,9 @@ class Program : public BaseObject<_cl_program> {
 
     uint32_t programOptionVersion;
     bool allowNonUniform;
+
+    std::unique_ptr<LinkerInput> linkerInput;
+    Linker::RelocatedSymbolsMap symbols;
 
     std::map<const Device *, std::string> buildLog;
 
