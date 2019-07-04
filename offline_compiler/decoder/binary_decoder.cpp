@@ -243,11 +243,27 @@ void BinaryDecoder::parseTokens() {
 }
 
 void BinaryDecoder::printHelp() {
-    printf(R"===(Disassembles Intel OCL GPU device binary.
+    printf(R"===(Disassembles Intel OpenCL GPU device binary files.
+Output of such operation is a set of files that can be later used to
+reassemble back a valid Intel OpenCL GPU device binary (using ocloc 'asm'
+command). This set of files contains:
+Program-scope data :
+  - spirv.bin (optional) - spirV representation of the program from which
+                           the input binary was generated
+  - build.bin            - build options that were used when generating the
+                           input binary
+  - PTM.txt              - 'patch tokens' describing program-scope and
+                           kernel-scope metadata about the input binary
+
+Kernel-scope data (<kname> is replaced by corresponding kernel's name):
+  - <kname>_DynamicStateHeap.bin - initial DynamicStateHeap (binary file)
+  - <kname>_SurfaceStateHeap.bin - initial SurfaceStateHeap (binary file)
+  - <kname>_KernelHeap.asm       - list of instructions describing
+                                   the kernel function (text file)
 
 Usage: ocloc disasm -file <file> [-patch <patchtokens_dir>] [-dump <dump_dir>] [-device <device_type>]
   -file <file>              Input file to be disassembled.
-                            This file should be an Intel OCL GPU device binary.
+                            This file should be an Intel OpenCL GPU device binary.
                             
   -patch <patchtokens_dir>  Optional path to the directory containing 
                             patchtoken definitions (patchlist.h, etc.) 
@@ -270,7 +286,7 @@ Usage: ocloc disasm -file <file> [-patch <patchtokens_dir>] [-dump <dump_dir>] [
   --help                    Print this usage message.
                              
 Examples:
-  Disassemble Intel OCL GPU device binary
+  Disassemble Intel OpenCL GPU device binary
     ocloc disasm -file source_file_Gen9core.bin
 )===",
            NEO::getDevicesTypes().c_str());
