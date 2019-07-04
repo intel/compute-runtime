@@ -723,6 +723,41 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
     }
 }
 
+HWTEST_F(BcsTests, givenAuxTranslationRequestWhenBlitCalledThenProgramCommandCorrectly) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 123, nullptr, retVal));
+    auto allocationGpuAddress = buffer->getGraphicsAllocation()->getGpuAddress();
+    auto allocationSize = buffer->getGraphicsAllocation()->getUnderlyingBufferSize();
+
+    AuxTranslationDirection translationDirection[] = {AuxTranslationDirection::AuxToNonAux, AuxTranslationDirection::NonAuxToAux};
+
+    for (int i = 0; i < 2; i++) {
+        auto blitProperties = BlitProperties::constructPropertiesForAuxTranslation(translationDirection[i],
+                                                                                   buffer->getGraphicsAllocation());
+
+        auto offset = csr.commandStream.getUsed();
+        csr.blitBuffer(blitProperties);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
+        uint32_t xyCopyBltCmdFound = 0;
+
+        for (auto &cmd : hwParser.cmdList) {
+            if (auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(cmd)) {
+                xyCopyBltCmdFound++;
+                EXPECT_EQ(static_cast<uint32_t>(allocationSize), bltCmd->getDestinationX2CoordinateRight());
+                EXPECT_EQ(1u, bltCmd->getDestinationY2CoordinateBottom());
+
+                EXPECT_EQ(allocationGpuAddress, bltCmd->getDestinationBaseAddress());
+                EXPECT_EQ(allocationGpuAddress, bltCmd->getSourceBaseAddress());
+            }
+        }
+        EXPECT_EQ(1u, xyCopyBltCmdFound);
+    }
+}
+
 struct MockScratchSpaceController : ScratchSpaceControllerBase {
     using ScratchSpaceControllerBase::privateScratchAllocation;
     using ScratchSpaceControllerBase::ScratchSpaceControllerBase;

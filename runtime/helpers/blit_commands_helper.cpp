@@ -24,16 +24,22 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
     auto hostPtrAllocation = hostPtrSurface.getAllocation();
 
     if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
-        return {nullptr, blitDirection, {}, memObjAllocation, hostPtrAllocation, hostPtr, blocking, offset, 0, copySize};
+        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, memObjAllocation, hostPtrAllocation, hostPtr, blocking, offset, 0, copySize};
     } else {
-        return {nullptr, blitDirection, {}, hostPtrAllocation, memObjAllocation, hostPtr, blocking, 0, offset, copySize};
+        return {nullptr, blitDirection, {}, AuxTranslationDirection::None, hostPtrAllocation, memObjAllocation, hostPtr, blocking, 0, offset, copySize};
     }
 }
 
 BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
                                                                 bool blocking, size_t dstOffset, size_t srcOffset, uint64_t copySize) {
 
-    return {nullptr, BlitterConstants::BlitDirection::BufferToBuffer, {}, dstAllocation, srcAllocation, nullptr, blocking, dstOffset, srcOffset, copySize};
+    return {nullptr, BlitterConstants::BlitDirection::BufferToBuffer, {}, AuxTranslationDirection::None, dstAllocation, srcAllocation, nullptr, blocking, dstOffset, srcOffset, copySize};
+}
+
+BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
+                                                                    GraphicsAllocation *allocation) {
+    auto allocationSize = allocation->getUnderlyingBufferSize();
+    return {nullptr, BlitterConstants::BlitDirection::BufferToBuffer, {}, auxTranslationDirection, allocation, allocation, nullptr, false, 0, 0, allocationSize};
 }
 
 } // namespace NEO

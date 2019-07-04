@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/helpers/csr_deps.h"
+#include "runtime/helpers/properties_helper.h"
 #include "runtime/memory_manager/memory_constants.h"
 
 #include <cstdint>
@@ -28,9 +29,13 @@ struct BlitProperties {
     static BlitProperties constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
                                                            bool blocking, size_t dstOffset, size_t srcOffset, uint64_t copySize);
 
+    static BlitProperties constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
+                                                               GraphicsAllocation *allocation);
+
     TimestampPacketContainer *outputTimestampPacket = nullptr;
     BlitterConstants::BlitDirection blitDirection;
     CsrDependencies csrDependencies;
+    AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
 
     GraphicsAllocation *dstAllocation = nullptr;
     GraphicsAllocation *srcAllocation = nullptr;
