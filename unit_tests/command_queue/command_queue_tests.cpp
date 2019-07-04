@@ -555,11 +555,14 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAlloc
     EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
 }
 
-TEST_P(CommandQueueIndirectHeapTest, CommandQueueWhenAskedForNewHeapStoresOldHeapForReuse) {
+HWTEST_P(CommandQueueIndirectHeapTest, CommandQueueWhenAskedForNewHeapStoresOldHeapForReuse) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     CommandQueue cmdQ(context.get(), pDevice, props);
 
-    EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
+    *commandStreamReceiver.getTagAddress() = 1u;
+    commandStreamReceiver.taskCount = 2u;
 
     const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
     auto heapSize = indirectHeap.getAvailableSpace();
@@ -569,9 +572,10 @@ TEST_P(CommandQueueIndirectHeapTest, CommandQueueWhenAskedForNewHeapStoresOldHea
     // Request a larger heap than the first.
     cmdQ.getIndirectHeap(this->GetParam(), heapSize + 6000);
 
-    EXPECT_FALSE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
 
-    EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekContains(*graphicsAllocation));
+    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekContains(*graphicsAllocation));
+    *commandStreamReceiver.getTagAddress() = 2u;
 }
 
 TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocationWhenAskedForNewHeapReturnsAcquiresNewAllocationWithoutStoring) {
