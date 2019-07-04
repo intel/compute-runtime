@@ -8,7 +8,6 @@
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/graphics_allocation.h"
-#include "runtime/os_interface/32bit_memory.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
 #include "test.h"

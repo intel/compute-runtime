@@ -29,7 +29,7 @@ BXTTEST_F(BxtDeviceCaps, BxtClVersionSupport) {
     EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
 
     auto memoryManager = pDevice->getMemoryManager();
-    if (is32BitOsAllocatorAvailable) {
+    if (is64bit) {
         EXPECT_TRUE(memoryManager->peekForce32BitAllocations());
         EXPECT_TRUE(caps.force32BitAddressess);
     } else {

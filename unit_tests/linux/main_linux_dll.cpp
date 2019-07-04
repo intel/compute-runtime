@@ -357,12 +357,8 @@ TEST_F(DrmTests, failOnInvalidDeviceName) {
     EXPECT_EQ(drm, nullptr);
 }
 
-TEST(AllocatorHelper, givenExpectedSizeToMapWhenGetSizetoMapCalledThenExpectedValueReturned) {
-    EXPECT_EQ((alignUp(4 * GB - 8096, 4096)), NEO::getSizeToMap());
-}
-
 TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenExpectedValueReturned) {
-    EXPECT_EQ(maxNBitValue<47> / 4, NEO::getSizeToReserve());
+    EXPECT_EQ((maxNBitValue<47> + 1) / 4, NEO::getSizeToReserve());
 }
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {

@@ -226,22 +226,6 @@ uint64_t OsAgnosticMemoryManager::getSystemSharedMemory() {
     return 16 * GB;
 }
 
-uint64_t OsAgnosticMemoryManager::getMaxApplicationAddress() {
-    return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress;
-}
-
-uint64_t OsAgnosticMemoryManager::getInternalHeapBaseAddress() {
-    return gfxPartition.getHeapBase(internalHeapIndex);
-}
-
-uint64_t OsAgnosticMemoryManager::getExternalHeapBaseAddress() {
-    return gfxPartition.getHeapBase(HeapIndex::HEAP_EXTERNAL);
-}
-
-void OsAgnosticMemoryManager::setForce32BitAllocations(bool newValue) {
-    force32bitAllocations = newValue;
-}
-
 GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {
     auto allocation = createMemoryAllocation(allocationData.type, nullptr, const_cast<void *>(allocationData.hostPtr),
                                              reinterpret_cast<uint64_t>(allocationData.hostPtr), allocationData.size, counter++,

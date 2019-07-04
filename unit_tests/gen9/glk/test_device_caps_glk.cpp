@@ -30,7 +30,7 @@ GLKTEST_F(Gen9DeviceCaps, GlkClVersionSupport) {
 GLKTEST_F(Gen9DeviceCaps, GlkIs32BitOsAllocatorAvailable) {
     const auto &caps = pDevice->getDeviceInfo();
     auto memoryManager = pDevice->getMemoryManager();
-    if (is32BitOsAllocatorAvailable) {
+    if (is64bit) {
         EXPECT_TRUE(memoryManager->peekForce32BitAllocations());
         EXPECT_TRUE(caps.force32BitAddressess);
     } else {

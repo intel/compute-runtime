@@ -474,22 +474,6 @@ uint64_t WddmMemoryManager::getSystemSharedMemory() {
     return wddm->getSystemSharedMemory();
 }
 
-uint64_t WddmMemoryManager::getMaxApplicationAddress() {
-    return wddm->getMaxApplicationAddress();
-}
-
-uint64_t WddmMemoryManager::getInternalHeapBaseAddress() {
-    return gfxPartition.getHeapBase(internalHeapIndex);
-}
-
-uint64_t WddmMemoryManager::getExternalHeapBaseAddress() {
-    return gfxPartition.getHeapBase(HeapIndex::HEAP_EXTERNAL);
-}
-
-void WddmMemoryManager::setForce32BitAllocations(bool newValue) {
-    force32bitAllocations = newValue;
-}
-
 bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
     return wddm->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->getDefaultGmm(), true);
 }

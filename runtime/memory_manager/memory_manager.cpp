@@ -34,7 +34,7 @@
 
 namespace NEO {
 MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment), hostPtrManager(std::make_unique<HostPtrManager>()),
-                                                                           multiContextResourceDestructor(std::make_unique<DeferredDeleter>()), allocator32Bit(nullptr) {
+                                                                           multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {
     auto hwInfo = executionEnvironment.getHardwareInfo();
     this->localMemorySupported = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
     this->enable64kbpages = OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages;
@@ -119,13 +119,6 @@ GraphicsAllocation *MemoryManager::createPaddedAllocation(GraphicsAllocation *in
 
 void MemoryManager::freeSystemMemory(void *ptr) {
     ::alignedFree(ptr);
-}
-
-void MemoryManager::setForce32BitAllocations(bool newValue) {
-    if (newValue && !this->allocator32Bit) {
-        this->allocator32Bit.reset(new Allocator32bit);
-    }
-    force32bitAllocations = newValue;
 }
 
 void MemoryManager::applyCommonCleanup() {

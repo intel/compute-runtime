@@ -9,6 +9,5 @@
 #include <cstddef>
 
 namespace NEO {
-size_t getSizeToMap();
 size_t getSizeToReserve();
 } // namespace NEO

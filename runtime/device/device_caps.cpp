@@ -71,10 +71,7 @@ void Device::initializeCaps() {
     deviceExtensions.clear();
     deviceExtensions.append(deviceExtensionsList);
     // Add our graphics family name to the device name
-    auto addressing32bitAllowed = is32BitOsAllocatorAvailable;
-    if (is32bit) {
-        addressing32bitAllowed = false;
-    }
+    auto addressing32bitAllowed = is64bit;
 
     driverVersion = TOSTR(NEO_DRIVER_VERSION);
 

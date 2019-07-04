@@ -60,10 +60,6 @@ class OsAgnosticMemoryManager : public MemoryManager {
     void cleanOsHandles(OsHandleStorage &handleStorage) override;
 
     uint64_t getSystemSharedMemory() override;
-    uint64_t getMaxApplicationAddress() override;
-    uint64_t getInternalHeapBaseAddress() override;
-    uint64_t getExternalHeapBaseAddress() override;
-    void setForce32BitAllocations(bool newValue) override;
 
     void turnOnFakingBigAllocations();
 

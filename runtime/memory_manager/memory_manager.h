@@ -16,7 +16,6 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/memory_manager/local_memory_usage.h"
-#include "runtime/os_interface/32bit_memory.h"
 
 #include "engine_node.h"
 
@@ -105,17 +104,15 @@ class MemoryManager {
 
     virtual uint64_t getSystemSharedMemory() = 0;
 
-    virtual uint64_t getMaxApplicationAddress() = 0;
-
-    virtual uint64_t getInternalHeapBaseAddress() = 0;
-
-    virtual uint64_t getExternalHeapBaseAddress() = 0;
+    uint64_t getMaxApplicationAddress() { return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress; };
+    uint64_t getInternalHeapBaseAddress() { return gfxPartition.getHeapBase(internalHeapIndex); }
+    uint64_t getExternalHeapBaseAddress() { return gfxPartition.getHeapBase(HeapIndex::HEAP_EXTERNAL); }
 
     bool isLimitedRange() { return gfxPartition.isLimitedRange(); }
 
     bool peek64kbPagesEnabled() const { return enable64kbpages; }
     bool peekForce32BitAllocations() const { return force32bitAllocations; }
-    virtual void setForce32BitAllocations(bool newValue);
+    void setForce32BitAllocations(bool newValue) { force32bitAllocations = newValue; }
 
     bool peekVirtualPaddingSupport() const { return virtualPaddingAvailable; }
     void setVirtualPaddingSupport(bool virtualPaddingSupport) { virtualPaddingAvailable = virtualPaddingSupport; }
@@ -224,7 +221,6 @@ class MemoryManager {
     uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
     uint32_t defaultEngineIndex = 0;
     std::unique_ptr<DeferredDeleter> multiContextResourceDestructor;
-    std::unique_ptr<Allocator32bit> allocator32Bit;
     GfxPartition gfxPartition;
     std::unique_ptr<LocalMemoryUsageBankSelector> localMemoryUsageBankSelector;
 };

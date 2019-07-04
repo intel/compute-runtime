@@ -33,7 +33,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
     using MemoryManager::allocateGraphicsMemoryWithProperties;
     using MemoryManager::AllocationData;
-    using MemoryManager::allocator32Bit;
     using MemoryManager::createGraphicsAllocation;
     using MemoryManager::createStorageInfoFromProperties;
     using MemoryManager::getAllocationData;
@@ -191,10 +190,6 @@ class FailMemoryManager : public MockMemoryManager {
 
     uint64_t getSystemSharedMemory() override {
         return 0;
-    };
-
-    uint64_t getMaxApplicationAddress() override {
-        return MemoryConstants::max32BitAppAddress;
     };
 
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override {

@@ -573,18 +573,6 @@ uint64_t DrmMemoryManager::getSystemSharedMemory() {
     return std::min(hostMemorySize, gpuMemorySize);
 }
 
-uint64_t DrmMemoryManager::getMaxApplicationAddress() {
-    return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress;
-}
-
-uint64_t DrmMemoryManager::getInternalHeapBaseAddress() {
-    return gfxPartition.getHeapBase(internalHeapIndex);
-}
-
-uint64_t DrmMemoryManager::getExternalHeapBaseAddress() {
-    return gfxPartition.getHeapBase(HeapIndex::HEAP_EXTERNAL);
-}
-
 MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
     BufferObject *allocatedBos[maxFragmentsCount];
     uint32_t numberOfBosAllocated = 0;

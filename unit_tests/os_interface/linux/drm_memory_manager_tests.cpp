@@ -19,7 +19,6 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/memory_constants.h"
-#include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/linux/allocator_helper.h"
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
@@ -32,7 +31,6 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
-#include "unit_tests/mocks/mock_32bitAllocator.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 
@@ -1140,7 +1138,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIs
     memoryManager->setForce32BitAllocations(true);
     std::unique_ptr<Device> pDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    size_t size = getSizeToMap();
+    size_t size = MemoryConstants::pageSize64k;
     auto alloc = memoryManager->gfxPartition.heapAllocate(internalHeapIndex, size);
     EXPECT_NE(0llu, alloc);
 
@@ -2391,41 +2389,6 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManage
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManagerWhenAskedForAlignedMallocRestrictionsThenNullPtrIsReturned) {
     EXPECT_EQ(nullptr, memoryManager->getAlignedMallocRestrictions());
-}
-
-TEST(Allocator32BitUsingHeapAllocator, given32BitAllocatorWhenMMapFailsThenNullptrIsReturned) {
-    MockAllocator32Bit::resetState();
-    failMmap = true;
-    MockAllocator32Bit::OsInternalsPublic *osInternals = MockAllocator32Bit::createOsInternals();
-    osInternals->mmapFunction = MockMmap;
-    osInternals->munmapFunction = MockMunmap;
-    MockAllocator32Bit mock32BitAllocator{osInternals};
-    size_t size = 100u;
-    auto ptr = mock32BitAllocator.allocate(size);
-    EXPECT_EQ(0llu, ptr);
-    EXPECT_EQ(2u, mmapCallCount);
-}
-
-TEST(Allocator32BitUsingHeapAllocator, given32BitAllocatorWhenFirstMMapFailsThenSecondIsCalledWithSmallerSize) {
-    MockAllocator32Bit::resetState();
-    maxMmapLength = getSizeToMap() - 1;
-    MockAllocator32Bit::OsInternalsPublic *osInternals = MockAllocator32Bit::createOsInternals();
-    osInternals->mmapFunction = MockMmap;
-    osInternals->munmapFunction = MockMunmap;
-    MockAllocator32Bit mock32BitAllocator{osInternals};
-    size_t size = 100u;
-    auto ptr = mock32BitAllocator.allocate(size);
-    EXPECT_NE(0llu, ptr);
-    EXPECT_EQ(2u, mmapCallCount);
-
-    EXPECT_NE(nullptr, osInternals->heapBasePtr);
-    EXPECT_NE(0u, osInternals->heapSize);
-}
-
-TEST(Allocator32BitUsingHeapAllocator, given32bitAllocatorWhenFreeIsCalledWithMapFailedThenZeroIsReturned) {
-    MockAllocator32Bit::OsInternalsPublic *osInternals = MockAllocator32Bit::createOsInternals();
-    MockAllocator32Bit mock32BitAllocator{osInternals};
-    EXPECT_EQ(0, mock32BitAllocator.free(castToUint64(MAP_FAILED), 4096u));
 }
 
 #include <chrono>
