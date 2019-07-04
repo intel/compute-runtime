@@ -243,7 +243,7 @@ void BinaryDecoder::parseTokens() {
 }
 
 void BinaryDecoder::printHelp() {
-    printf(R"===(Disassembles Intel OpenCL GPU device binary files.
+    messagePrinter.printf(R"===(Disassembles Intel OpenCL GPU device binary files.
 Output of such operation is a set of files that can be later used to
 reassemble back a valid Intel OpenCL GPU device binary (using ocloc 'asm'
 command). This set of files contains:
@@ -289,7 +289,7 @@ Examples:
   Disassemble Intel OpenCL GPU device binary
     ocloc disasm -file source_file_Gen9core.bin
 )===",
-           NEO::getDevicesTypes().c_str());
+                          NEO::getDevicesTypes().c_str());
 }
 
 int BinaryDecoder::processBinary(void *&ptr, std::ostream &ptmFile) {
