@@ -6,9 +6,11 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "test.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_svm_manager.h"
@@ -28,6 +30,9 @@ struct SVMMemoryAllocatorFixture {
         }
         memoryManager = std::make_unique<MockMemoryManager>(false, enableLocalMemory, executionEnvironment);
         svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
+        if (enableLocalMemory) {
+            memoryManager->pageFaultManager.reset(new MockPageFaultManager);
+        }
     }
     virtual void TearDown() {
     }
@@ -152,7 +157,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredW
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, nullptr);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
@@ -171,7 +176,7 @@ TEST_F(SVMMemoryAllocatorTest, whenHostAllocationIsCreatedThenItIsStoredWithProp
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::HOST_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, nullptr);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
@@ -187,10 +192,11 @@ TEST_F(SVMMemoryAllocatorTest, whenHostAllocationIsCreatedThenItIsStoredWithProp
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithProperTypeInAllocationMap) {
+    MockCommandQueue cmdQ;
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
@@ -206,13 +212,43 @@ TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithPr
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSetThenItIsStoredWithProperTypeInAllocationMapAndHasCpuAndGpuStorage) {
+    MockCommandQueue cmdQ;
     DebugManagerStateRestore restore;
     DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    EXPECT_NE(nullptr, ptr);
+    auto allocation = svmManager->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocation->cpuAllocation);
+    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation->memoryType);
+    EXPECT_EQ(allocationSize, allocation->size);
+
+    EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->cpuAllocation->getUnderlyingBufferSize());
+
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_GPU, allocation->gpuAllocation->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
+
+    EXPECT_EQ(allocation->gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_NE(allocation->cpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+
+    EXPECT_NE(nullptr, allocation->gpuAllocation->getUnderlyingBuffer());
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemoryAndRegisteredPageFaultHandlerThenItIsStoredWithProperTypeInAllocationMapAndHasCpuAndGpuStorage) {
+    MockCommandQueue cmdQ;
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    auto allocationSize = 4096u;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_NE(nullptr, allocation->cpuAllocation);
@@ -240,7 +276,7 @@ TEST_F(SVMMemoryAllocatorTest, givenSharedAllocationsDebugFlagWhenDeviceMemoryIs
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, nullptr);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);

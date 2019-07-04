@@ -35,6 +35,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
         CommandEnqueueFixture::SetUp(CL_QUEUE_PROFILING_ENABLE);
 
         program = ReleaseableObjectPtr<MockProgram>(new MockProgram(*pDevice->getExecutionEnvironment()));
+        program->setContext(&ctx);
 
         memset(&kernelHeader, 0, sizeof(kernelHeader));
         kernelHeader.KernelHeapSize = sizeof(kernelIsa);
@@ -70,6 +71,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
     SPatchExecutionEnvironment executionEnvironment = {};
     SPatchThreadPayload threadPayload = {};
     KernelInfo kernelInfo;
+    MockContext ctx;
 
     uint32_t kernelIsa[32];
     uint32_t crossThreadData[32];

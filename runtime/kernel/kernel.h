@@ -389,6 +389,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     void setAuxTranslationDirection(AuxTranslationDirection auxTranslationDirection) {
         this->auxTranslationDirection = auxTranslationDirection;
     }
+    void setUnifiedMemorySyncRequirement(bool isUnifiedMemorySyncRequired) {
+        this->isUnifiedMemorySyncRequired = isUnifiedMemorySyncRequired;
+    }
     void setUnifiedMemoryProperty(cl_kernel_exec_info infoType, bool infoValue);
     void setUnifiedMemoryExecInfo(GraphicsAllocation *argValue);
     void clearUnifiedMemoryExecInfo();
@@ -524,5 +527,6 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool svmAllocationsRequireCacheFlush = false;
     std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
     UnifiedMemoryControls unifiedMemoryControls;
+    bool isUnifiedMemorySyncRequired = true;
 };
 } // namespace NEO

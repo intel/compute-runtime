@@ -92,15 +92,24 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
     }
 }
 
-void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties memoryProperties) {
-    if (DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get()) {
-        if (memoryProperties.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
-            auto unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(size, {});
-            UNRECOVERABLE_IF(unifiedMemoryPointer == nullptr);
-            auto unifiedMemoryAllocation = this->getSVMAlloc(unifiedMemoryPointer);
-            unifiedMemoryAllocation->memoryType = memoryProperties.memoryType;
-            return unifiedMemoryPointer;
-        }
+void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties memoryProperties, void *cmdQ) {
+    auto supportDualStorageSharedMemory = memoryManager->isLocalMemorySupported();
+
+    if (DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get() != -1) {
+        supportDualStorageSharedMemory = !!DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get();
+    }
+
+    if (memoryProperties.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY && supportDualStorageSharedMemory) {
+        auto unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(size, {});
+        UNRECOVERABLE_IF(unifiedMemoryPointer == nullptr);
+        auto unifiedMemoryAllocation = this->getSVMAlloc(unifiedMemoryPointer);
+        unifiedMemoryAllocation->memoryType = memoryProperties.memoryType;
+
+        UNRECOVERABLE_IF(cmdQ == nullptr);
+        auto pageFaultManager = this->memoryManager->getPageFaultManager();
+        pageFaultManager->insertAllocation(unifiedMemoryPointer, size, this, cmdQ);
+
+        return unifiedMemoryPointer;
     }
 
     size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
@@ -131,6 +140,10 @@ SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {
 bool SVMAllocsManager::freeSVMAlloc(void *ptr) {
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
+        auto pageFaultManager = this->memoryManager->getPageFaultManager();
+        if (pageFaultManager) {
+            pageFaultManager->removeAllocation(ptr);
+        }
         std::unique_lock<SpinLock> lock(mtx);
         if (svmData->gpuAllocation->getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY) {
             freeZeroCopySvmAllocation(svmData);

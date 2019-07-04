@@ -666,7 +666,7 @@ TEST_F(PerformanceHintEnqueueTest, GivenSVMPointerWhenEnqueueSVMMapIsCallingThen
     }
     void *svmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {});
 
-    pCmdQ->enqueueSVMMap(CL_FALSE, 0, svmPtr, 256, 0, nullptr, nullptr);
+    pCmdQ->enqueueSVMMap(CL_FALSE, 0, svmPtr, 256, 0, nullptr, nullptr, false);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_SVM_MAP_DOESNT_REQUIRE_COPY_DATA], svmPtr);
     EXPECT_TRUE(containsHint(expectedHint, userData));

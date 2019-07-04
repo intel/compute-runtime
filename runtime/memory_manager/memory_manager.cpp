@@ -43,6 +43,9 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     }
     localMemoryUsageBankSelector.reset(new LocalMemoryUsageBankSelector(getBanksCount()));
     gfxPartition = std::make_unique<GfxPartition>();
+    if (this->localMemorySupported) {
+        pageFaultManager = PageFaultManager::create();
+    }
 }
 
 MemoryManager::~MemoryManager() {

@@ -89,6 +89,12 @@ class DispatchInfoBuilder {
         return CL_SUCCESS;
     }
 
+    void setUnifiedMemorySyncRequirement(bool isUnifiedMemorySyncRequired) {
+        for (auto &dispatchInfo : dispatchInfos) {
+            dispatchInfo.getKernel()->setUnifiedMemorySyncRequirement(isUnifiedMemorySyncRequired);
+        }
+    }
+
     template <SplitDispatch::Dim D = Dim, typename... ArgsT>
     typename std::enable_if<(D == SplitDispatch::Dim::d1D) && (Mode != SplitDispatch::SplitMode::NoSplit), void>::type
     setArgSvm(SplitDispatch::RegionCoordX x, ArgsT &&... args) {

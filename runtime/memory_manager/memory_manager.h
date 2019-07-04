@@ -9,6 +9,7 @@
 #include "common/helpers/bit_helpers.h"
 #include "core/command_stream/preemption_mode.h"
 #include "core/helpers/aligned_memory.h"
+#include "core/page_fault_manager/cpu_page_fault_manager.h"
 #include "public/cl_ext_private.h"
 #include "runtime/helpers/engine_control.h"
 #include "runtime/memory_manager/allocation_properties.h"
@@ -123,6 +124,10 @@ class MemoryManager {
         return deferredDeleter.get();
     }
 
+    PageFaultManager *getPageFaultManager() const {
+        return pageFaultManager.get();
+    }
+
     void waitForDeletions();
     void waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation);
     void cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion);
@@ -229,6 +234,7 @@ class MemoryManager {
     std::unique_ptr<GfxPartition> gfxPartition;
     std::unique_ptr<LocalMemoryUsageBankSelector> localMemoryUsageBankSelector;
     void *reservedMemory = nullptr;
+    std::unique_ptr<PageFaultManager> pageFaultManager;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

@@ -127,13 +127,13 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     virtual cl_int enqueueSVMMap(cl_bool blockingMap, cl_map_flags mapFlags,
                                  void *svmPtr, size_t size,
                                  cl_uint numEventsInWaitList, const cl_event *eventWaitList,
-                                 cl_event *event) {
+                                 cl_event *event, bool externalAppCall) {
         return CL_SUCCESS;
     }
 
     virtual cl_int enqueueSVMUnmap(void *svmPtr,
                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList,
-                                   cl_event *event) {
+                                   cl_event *event, bool externalAppCall) {
         return CL_SUCCESS;
     }
 

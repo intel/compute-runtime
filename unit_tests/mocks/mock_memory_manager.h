@@ -41,6 +41,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::gfxPartition;
     using MemoryManager::localMemoryUsageBankSelector;
     using MemoryManager::multiContextResourceDestructor;
+    using MemoryManager::pageFaultManager;
     using MemoryManager::registeredEngines;
     using MemoryManager::supportsMultiStorageResources;
     using MemoryManager::useInternal32BitAllocator;

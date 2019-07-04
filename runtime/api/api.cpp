@@ -3407,7 +3407,7 @@ void *clHostMemAllocINTEL(
         return nullptr;
     }
 
-    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY));
+    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY), neoContext->getSpecialQueue());
 }
 
 void *clDeviceMemAllocINTEL(
@@ -3428,7 +3428,7 @@ void *clDeviceMemAllocINTEL(
         return nullptr;
     }
 
-    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY));
+    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY), neoContext->getSpecialQueue());
 }
 
 void *clSharedMemAllocINTEL(
@@ -3449,7 +3449,7 @@ void *clSharedMemAllocINTEL(
         return nullptr;
     }
 
-    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY));
+    return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY), neoContext->getSpecialQueue());
 }
 
 cl_int clMemFreeINTEL(
@@ -4118,7 +4118,8 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
         size,
         numEventsInWaitList,
         eventWaitList,
-        event);
+        event,
+        true);
 
     TRACING_EXIT(clEnqueueSVMMap, &retVal);
     return retVal;
@@ -4155,7 +4156,8 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
         svmPtr,
         numEventsInWaitList,
         eventWaitList,
-        event);
+        event,
+        true);
 
     TRACING_EXIT(clEnqueueSVMUnmap, &retVal);
     return retVal;

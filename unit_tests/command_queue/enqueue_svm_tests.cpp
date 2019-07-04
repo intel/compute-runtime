@@ -7,6 +7,7 @@
 
 #include "core/helpers/aligned_memory.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/page_fault_manager/mock_cpu_page_fault_manager.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/user_event.h"
 #include "runtime/memory_manager/allocations_list.h"
@@ -67,8 +68,8 @@ TEST_F(EnqueueSvmTest, enqueueSVMMap_InvalidValue) {
         0,           // size_t size
         0,           // cl_uint num_events_in_wait_list
         nullptr,     // const cL_event *event_wait_list
-        nullptr      // cl_event *event
-    );
+        nullptr,     // cl_event *event
+        false);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -80,8 +81,8 @@ TEST_F(EnqueueSvmTest, enqueueSVMMap_Success) {
         256,         // size_t size
         0,           // cl_uint num_events_in_wait_list
         nullptr,     // const cL_event *event_wait_list
-        nullptr      // cl_event *event
-    );
+        nullptr,     // cl_event *event
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -93,8 +94,8 @@ TEST_F(EnqueueSvmTest, enqueueSVMMapBlocking_Success) {
         256,         // size_t size
         0,           // cl_uint num_events_in_wait_list
         nullptr,     // const cL_event *event_wait_list
-        nullptr      // cl_event *event
-    );
+        nullptr,     // cl_event *event
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -108,8 +109,8 @@ TEST_F(EnqueueSvmTest, enqueueSVMMapBlockedOnEvent_Success) {
         256,           // size_t size
         1,             // cl_uint num_events_in_wait_list
         eventWaitList, // const cL_event *event_wait_list
-        nullptr        // cl_event *event
-    );
+        nullptr,       // cl_event *event
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -119,8 +120,8 @@ TEST_F(EnqueueSvmTest, enqueueSVMUnmap_InvalidValue) {
         svmPtr,  // void *svm_ptr
         0,       // cl_uint num_events_in_wait_list
         nullptr, // const cL_event *event_wait_list
-        nullptr  // cl_event *event
-    );
+        nullptr, // cl_event *event
+        false);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -129,8 +130,8 @@ TEST_F(EnqueueSvmTest, enqueueSVMUnmap_Success) {
         ptrSVM,  // void *svm_ptr
         0,       // cl_uint num_events_in_wait_list
         nullptr, // const cL_event *event_wait_list
-        nullptr  // cl_event *event
-    );
+        nullptr, // cl_event *event
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -141,8 +142,8 @@ TEST_F(EnqueueSvmTest, enqueueSVMUnmapBlockedOnEvent_Success) {
         ptrSVM,        // void *svm_ptr
         1,             // cl_uint num_events_in_wait_list
         eventWaitList, // const cL_event *event_wait_list
-        nullptr        // cl_event *event
-    );
+        nullptr,       // cl_event *event
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -936,7 +937,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenWriteInvalidateRegionFlagWhenMappingSvm
         regionSize,
         0,
         nullptr,
-        nullptr);
+        nullptr,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
     EXPECT_FALSE(svmMap->readOnlyMap);
@@ -954,7 +956,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenMapWriteFlagWhenMappingSvmThenMapIsSucc
         regionSize,
         0,
         nullptr,
-        nullptr);
+        nullptr,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
     EXPECT_FALSE(svmMap->readOnlyMap);
@@ -972,7 +975,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenMapReadFlagWhenMappingSvmThenMapIsSucce
         regionSize,
         0,
         nullptr,
-        nullptr);
+        nullptr,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
     EXPECT_TRUE(svmMap->readOnlyMap);
@@ -990,7 +994,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenSvmAllocWithoutFlagsWhenMappingSvmThenM
         regionSize,
         0,
         nullptr,
-        nullptr);
+        nullptr,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
     EXPECT_FALSE(svmMap->readOnlyMap);
@@ -1013,7 +1018,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapValidSvm
         regionSize,
         0,
         nullptr,
-        &event);
+        &event,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
     ASSERT_NE(nullptr, svmMap);
@@ -1050,7 +1056,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapSvmPtrTw
         regionSize,
         0,
         nullptr,
-        nullptr);
+        nullptr,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
     ASSERT_NE(nullptr, svmMap);
@@ -1070,7 +1077,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapSvmPtrTw
         regionSize,
         0,
         nullptr,
-        &event);
+        &event,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, mockSvmManager->svmMapOperations.getNumMapOperations());
 
@@ -1096,7 +1104,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenNoMappedSvmPtrThe
         svmPtr,
         0,
         nullptr,
-        &event);
+        &event,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     queue.flush();
@@ -1123,7 +1132,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
         size,
         0,
         nullptr,
-        nullptr);
+        nullptr,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, mockSvmManager->svmMapOperations.getNumMapOperations());
     auto svmMap = mockSvmManager->svmMapOperations.get(svmPtr);
@@ -1141,7 +1151,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
         svmPtr,
         0,
         nullptr,
-        &event);
+        &event,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0u, mockSvmManager->svmMapOperations.getNumMapOperations());
 
@@ -1170,7 +1181,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
         size,
         0,
         nullptr,
-        &eventMap);
+        &eventMap,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, mockSvmManager->svmMapOperations.getNumMapOperations());
     auto svmMap = mockSvmManager->svmMapOperations.get(svmPtr);
@@ -1181,7 +1193,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
         svmPtr,
         0,
         nullptr,
-        &eventUnmap);
+        &eventUnmap,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0u, mockSvmManager->svmMapOperations.getNumMapOperations());
 
@@ -1214,7 +1227,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionAn
         size,
         0,
         nullptr,
-        nullptr);
+        nullptr,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, mockSvmManager->svmMapOperations.getNumMapOperations());
     auto svmMap = mockSvmManager->svmMapOperations.get(svmPtr);
@@ -1224,7 +1238,8 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionAn
         svmPtr,
         0,
         nullptr,
-        nullptr);
+        nullptr,
+        false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0u, mockSvmManager->svmMapOperations.getNumMapOperations());
 
@@ -1248,7 +1263,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAll
     auto allocationSize = 4096u;
     auto svmManager = this->context->getSVMAllocsManager();
     EXPECT_NE(0u, svmManager->getNumAllocs());
-    auto unifiedMemoryPtr = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
+    auto unifiedMemoryPtr = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties, this->context->getSpecialQueue());
     EXPECT_NE(nullptr, unifiedMemoryPtr);
     EXPECT_EQ(2u, svmManager->getNumAllocs());
 
@@ -1328,4 +1343,44 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenHostPtrAllocationCreati
     );
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
     cmdQ.gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
+}
+
+TEST_F(EnqueueSvmTest, givenPageFaultManagerWhenEnqueueMemcpyThenAllocIsDecommitted) {
+    auto mockMemoryManager = std::make_unique<MockMemoryManager>();
+    mockMemoryManager->pageFaultManager.reset(new MockPageFaultManager());
+    auto memoryManager = context->getMemoryManager();
+    context->setMemoryManager(mockMemoryManager.get());
+    auto srcSvm = context->getSVMAllocsManager()->createSVMAlloc(256, {});
+    mockMemoryManager->getPageFaultManager()->insertAllocation(srcSvm, 256, context->getSVMAllocsManager(), context->getSpecialQueue());
+    mockMemoryManager->getPageFaultManager()->insertAllocation(ptrSVM, 256, context->getSVMAllocsManager(), context->getSpecialQueue());
+    EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToCpuCalled, 2);
+
+    this->pCmdQ->enqueueSVMMemcpy(false, ptrSVM, srcSvm, 256, 0, nullptr, nullptr);
+
+    EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->allowMemoryAccessCalled, 0);
+    EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->protectMemoryCalled, 2);
+    EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToCpuCalled, 2);
+    EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToGpuCalled, 2);
+
+    context->getSVMAllocsManager()->freeSVMAlloc(srcSvm);
+    context->setMemoryManager(memoryManager);
+}
+
+TEST_F(EnqueueSvmTest, givenPageFaultManagerWhenEnqueueMemFillThenAllocIsDecommitted) {
+    char pattern[256];
+    auto mockMemoryManager = std::make_unique<MockMemoryManager>();
+    mockMemoryManager->pageFaultManager.reset(new MockPageFaultManager());
+    auto memoryManager = context->getMemoryManager();
+    context->setMemoryManager(mockMemoryManager.get());
+    mockMemoryManager->getPageFaultManager()->insertAllocation(ptrSVM, 256, context->getSVMAllocsManager(), context->getSpecialQueue());
+    EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToCpuCalled, 1);
+
+    pCmdQ->enqueueSVMMemFill(ptrSVM, &pattern, 256, 256, 0, nullptr, nullptr);
+
+    EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->allowMemoryAccessCalled, 0);
+    EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->protectMemoryCalled, 1);
+    EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToCpuCalled, 1);
+    EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToGpuCalled, 1);
+
+    context->setMemoryManager(memoryManager);
 }

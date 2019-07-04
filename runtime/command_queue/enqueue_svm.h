@@ -67,7 +67,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
                                                 size_t size,
                                                 cl_uint numEventsInWaitList,
                                                 const cl_event *eventWaitList,
-                                                cl_event *event) {
+                                                cl_event *event,
+                                                bool externalAppCall) {
 
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
     if (svmData == nullptr) {
@@ -124,6 +125,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
         dc.srcSvmAlloc = svmData->gpuAllocation;
         dc.srcOffset = {svmOffset, 0, 0};
         dc.size = {size, 0, 0};
+        dc.unifiedMemoryArgsRequireMemSync = externalAppCall;
         builder.buildDispatchInfos(dispatchInfo, dc);
 
         enqueueHandler<CL_COMMAND_READ_BUFFER>(
@@ -138,6 +140,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
         }
         bool readOnlyMap = isValueSet(mapFlags, CL_MAP_READ);
         context->getSVMAllocsManager()->insertSvmMapOperation(svmPtr, size, svmBasePtr, svmOffset, readOnlyMap);
+        dispatchInfo.backupUnifiedMemorySyncRequirement();
 
         return CL_SUCCESS;
     }
@@ -147,7 +150,8 @@ template <typename GfxFamily>
 cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
                                                   cl_uint numEventsInWaitList,
                                                   const cl_event *eventWaitList,
-                                                  cl_event *event) {
+                                                  cl_event *event,
+                                                  bool externalAppCall) {
 
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
     if (svmData == nullptr) {
@@ -209,6 +213,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
         dc.srcSvmAlloc = svmData->cpuAllocation;
         dc.srcOffset = {svmOperation->offset, 0, 0};
         dc.size = {svmOperation->regionSize, 0, 0};
+        dc.unifiedMemoryArgsRequireMemSync = externalAppCall;
         builder.buildDispatchInfos(dispatchInfo, dc);
 
         enqueueHandler<CL_COMMAND_READ_BUFFER>(
@@ -222,6 +227,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMUnmap(void *svmPtr,
             castToObjectOrAbort<Event>(*event)->setCmdType(CL_COMMAND_SVM_UNMAP);
         }
         context->getSVMAllocsManager()->removeSvmMapOperation(svmPtr);
+        dispatchInfo.backupUnifiedMemorySyncRequirement();
 
         return CL_SUCCESS;
     }
@@ -302,6 +308,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         copyType = HostToSvm;
     } else if (srcSvmData != nullptr) {
         copyType = SvmToHost;
+    }
+
+    auto pageFaultManager = context->getMemoryManager()->getPageFaultManager();
+    if (dstSvmData && pageFaultManager) {
+        pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(dstSvmData->gpuAllocation->getGpuAddress()));
+    }
+    if (srcSvmData && pageFaultManager) {
+        pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(srcSvmData->gpuAllocation->getGpuAddress()));
     }
 
     MultiDispatchInfo dispatchInfo;
@@ -419,8 +433,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
         return CL_INVALID_VALUE;
     }
 
-    auto memoryManager = getDevice().getMemoryManager();
+    auto memoryManager = context->getMemoryManager();
     DEBUG_BREAK_IF(nullptr == memoryManager);
+
+    auto pageFaultManager = memoryManager->getPageFaultManager();
+    if (pageFaultManager) {
+        pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(svmData->gpuAllocation->getGpuAddress()));
+    }
 
     auto commandStreamReceieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
     auto storageWithAllocations = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();

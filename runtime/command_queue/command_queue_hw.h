@@ -137,12 +137,14 @@ class CommandQueueHw : public CommandQueue {
                          size_t size,
                          cl_uint numEventsInWaitList,
                          const cl_event *eventWaitList,
-                         cl_event *event) override;
+                         cl_event *event,
+                         bool externalAppCall) override;
 
     cl_int enqueueSVMUnmap(void *svmPtr,
                            cl_uint numEventsInWaitList,
                            const cl_event *eventWaitList,
-                           cl_event *event) override;
+                           cl_event *event,
+                           bool externalAppCall) override;
 
     cl_int enqueueSVMFree(cl_uint numSvmPointers,
                           void *svmPointers[],

@@ -127,6 +127,12 @@ struct MultiDispatchInfo {
         return ret;
     }
 
+    void backupUnifiedMemorySyncRequirement() {
+        for (const auto &dispatchInfo : dispatchInfos) {
+            dispatchInfo.getKernel()->setUnifiedMemorySyncRequirement(true);
+        }
+    }
+
     DispatchInfo *begin() {
         return dispatchInfos.begin();
     }

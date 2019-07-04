@@ -67,6 +67,7 @@ void KernelImageArgTest::SetUp() {
 
     context.reset(new NEO::MockContext(pDevice));
     image.reset(Image2dHelper<>::create(context.get()));
+    pKernel->setContext(context.get());
     ASSERT_NE(nullptr, image);
 }
 

@@ -255,6 +255,8 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
             kernelSplit1DBuilder.setArgSvm(1, operationParams.size.x + operationParams.dstOffset.x, operationParams.dstPtr, nullptr, 0u);
         }
 
+        kernelSplit1DBuilder.setUnifiedMemorySyncRequirement(operationParams.unifiedMemoryArgsRequireMemSync);
+
         // Set-up srcOffset
         kernelSplit1DBuilder.setArg(SplitDispatch::RegionCoordX::Left, 2, static_cast<uint32_t>(operationParams.srcOffset.x));
         kernelSplit1DBuilder.setArg(SplitDispatch::RegionCoordX::Middle, 2, static_cast<uint32_t>(operationParams.srcOffset.x + leftSize));

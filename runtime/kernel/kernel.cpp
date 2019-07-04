@@ -976,6 +976,11 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
         if (kernelArguments[argIndex].object) {
             if (kernelArguments[argIndex].type == SVM_ALLOC_OBJ) {
                 auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
+                auto pageFaultManager = this->getContext().getMemoryManager()->getPageFaultManager();
+                if (pageFaultManager &&
+                    this->isUnifiedMemorySyncRequired) {
+                    pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(pSVMAlloc->getGpuAddress()));
+                }
                 commandStreamReceiver.makeResident(*pSVMAlloc);
             } else if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
                 auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
@@ -1014,10 +1019,18 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
         commandStreamReceiver.makeResident(*gfxAlloc);
     }
 
+    auto pageFaultManager = this->getContext().getMemoryManager()->getPageFaultManager();
+
     for (auto gfxAlloc : kernelUnifiedMemoryGfxAllocations) {
         commandStreamReceiver.makeResident(*gfxAlloc);
+        if (pageFaultManager) {
+            pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(gfxAlloc->getGpuAddress()));
+        }
     }
 
+    if (unifiedMemoryControls.indirectSharedAllocationsAllowed && pageFaultManager) {
+        pageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomain(this->getContext().getSVMAllocsManager());
+    }
     makeArgsResident(commandStreamReceiver);
 
     auto kernelIsaAllocation = this->kernelInfo.kernelAllocation;
