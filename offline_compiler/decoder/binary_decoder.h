@@ -17,13 +17,13 @@
 #include <vector>
 
 struct PTField {
-    uint8_t size;
+    uint8_t size = 0U;
     std::string name;
 };
 
 struct BinaryHeader {
     std::vector<PTField> fields;
-    uint32_t size;
+    uint32_t size = 0U;
 };
 struct PatchToken : BinaryHeader {
     std::string name;

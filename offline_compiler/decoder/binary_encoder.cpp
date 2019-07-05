@@ -158,9 +158,9 @@ Usage: ocloc asm -out <out_file> [-dump <dump_dir>] [-device <device_type>]
                             a generation - i.e. both skl and kbl will
                             fallback to skl. If specific product (e.g. kbl)
                             is needed, provide it as device_type.
-                            
+
   --help                    Print this usage message.
-                             
+
 Examples:
   Assemble to Intel OpenCL GPU device binary
     ocloc asm -out reassembled.bin

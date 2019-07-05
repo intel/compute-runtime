@@ -20,8 +20,8 @@ struct IgaWrapper {
 
     IgaWrapper(IgaWrapper &) = delete;
     IgaWrapper(const IgaWrapper &&) = delete;
-    IgaWrapper &operator=(IgaWrapper &) = delete;
-    IgaWrapper &operator=(const IgaWrapper &&) = delete;
+    IgaWrapper &operator=(const IgaWrapper &) = delete;
+    IgaWrapper &operator=(IgaWrapper &&) = delete;
 
     MOCKABLE_VIRTUAL bool tryDisassembleGenISA(const void *kernelPtr, uint32_t kernelSize, std::string &out);
     MOCKABLE_VIRTUAL bool tryAssembleGenISA(const std::string &inAsm, std::string &outBinary);
@@ -39,5 +39,5 @@ struct IgaWrapper {
     struct Impl;
     std::unique_ptr<Impl> pimpl;
 
-    MessagePrinter *messagePrinter;
+    MessagePrinter *messagePrinter = nullptr;
 };

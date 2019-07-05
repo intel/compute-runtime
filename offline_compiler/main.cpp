@@ -36,8 +36,8 @@ Available commands are listed below.
 Use 'ocloc <command> --help' to get help about specific command.
 
 Commands:
-  compile               Compiles input to Intel OpenCL GPU device binary. 
-  disasm                Disassembles Intel OpenCL GPU device binary. 
+  compile               Compiles input to Intel OpenCL GPU device binary.
+  disasm                Disassembles Intel OpenCL GPU device binary.
   asm                   Assembles Intel OpenCL GPU device binary.
   multi                 Compiles multiple files using a config file.
 
@@ -46,10 +46,10 @@ Default command (when none provided) is 'compile'.
 Examples:
   Compile file to Intel OpenCL GPU device binary (out = source_file_Gen9core.bin)
     ocloc -file source_file.cl -device skl
-  
+
   Disassemble Intel OpenCL GPU device binary
     ocloc disasm -file source_file_Gen9core.bin
-  
+
   Assemble to Intel OpenCL GPU device binary (after above disasm)
     ocloc asm -out reassembled.bin
 )===");
@@ -110,4 +110,5 @@ int main(int numArgs, const char *argv[]) {
         printf("%s\n", e.what());
         return -1;
     }
+    return -1;
 }

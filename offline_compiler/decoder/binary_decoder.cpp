@@ -264,7 +264,7 @@ Kernel-scope data (<kname> is replaced by corresponding kernel's name):
 Usage: ocloc disasm -file <file> [-patch <patchtokens_dir>] [-dump <dump_dir>] [-device <device_type>]
   -file <file>              Input file to be disassembled.
                             This file should be an Intel OpenCL GPU device binary.
-                            
+
   -patch <patchtokens_dir>  Optional path to the directory containing 
                             patchtoken definitions (patchlist.h, etc.) 
                             as defined in intel-graphics-compiler (IGC) repo,
@@ -272,19 +272,19 @@ Usage: ocloc disasm -file <file> [-patch <patchtokens_dir>] [-dump <dump_dir>] [
                             IGC/AdaptorOCL/ocl_igc_shared/executable_format
                             By default (when patchtokens_dir is not provided)
                             patchtokens won't be decoded.
-                            
+
   -dump <dump_dir>          Optional path for files representing decoded binary. 
-                            Default is './dump'.                              
-                            
+                            Default is './dump'.
+
   -device <device_type>     Optional target device of input binary
                             <device_type> can be: %s
                             By default ocloc will pick base device within
                             a generation - i.e. both skl and kbl will
                             fallback to skl. If specific product (e.g. kbl)
                             is needed, provide it as device_type.
-                                 
+
   --help                    Print this usage message.
-                             
+
 Examples:
   Disassemble Intel OpenCL GPU device binary
     ocloc disasm -file source_file_Gen9core.bin
