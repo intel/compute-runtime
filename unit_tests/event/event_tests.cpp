@@ -738,6 +738,26 @@ TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperation) {
     delete pCmdQ;
 }
 
+TEST_F(InternalsEventTest, givenBlockedMapCommandWhenSubmitIsCalledItReleasesMemObjectReference) {
+    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+    auto pCmdQ = std::make_unique<CommandQueue>(mockContext, pDevice, props);
+
+    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto buffer = new UnalignedBuffer;
+
+    auto currentBufferRefInternal = buffer->getRefInternalCount();
+
+    MemObjSizeArray size = {{1, 1, 1}};
+    MemObjOffsetArray offset = {{0, 0, 0}};
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, csr, *pCmdQ)));
+    EXPECT_EQ(currentBufferRefInternal + 1, buffer->getRefInternalCount());
+
+    event.submitCommand(false);
+
+    EXPECT_EQ(currentBufferRefInternal, buffer->getRefInternalCount());
+    buffer->decRefInternal();
+}
 TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperationNonZeroCopyBuffer) {
     MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};

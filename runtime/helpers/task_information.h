@@ -52,7 +52,7 @@ class CommandMapUnmap : public Command {
   public:
     CommandMapUnmap(MapOperationType op, MemObj &memObj, MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset, bool readOnly,
                     CommandStreamReceiver &csr, CommandQueue &cmdQ);
-    ~CommandMapUnmap() override;
+    ~CommandMapUnmap() override = default;
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
 
   private:

@@ -42,12 +42,9 @@ CommandMapUnmap::CommandMapUnmap(MapOperationType op, MemObj &memObj, MemObjSize
     memObj.incRefInternal();
 }
 
-CommandMapUnmap::~CommandMapUnmap() {
-    memObj.decRefInternal();
-}
-
 CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     if (terminated) {
+        memObj.decRefInternal();
         return completionStamp;
     }
 
@@ -89,6 +86,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
             memObj.transferDataFromHostPtr(copySize, copyOffset);
         }
     }
+
+    memObj.decRefInternal();
 
     return completionStamp;
 }
