@@ -123,3 +123,7 @@ __kernel void simple_kernel_8(__global uint *dst, uint incrementationsCount) {
         dst[destination]++;
     }
 }
+
+__kernel void simple_kernel_9(__global uint *dst) {
+    dst[get_sub_group_id()]++;
+}
