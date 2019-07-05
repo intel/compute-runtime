@@ -8,6 +8,8 @@ add_custom_target(builtins)
 set_target_properties(builtins PROPERTIES FOLDER "built_ins")
 set(BUILTINS_OUTDIR_WITH_ARCH "${TargetDir}/built_ins/${NEO_ARCH}")
 add_dependencies(${BUILTINS_BINARIES_LIB_NAME} builtins)
+add_subdirectories()
+set(GENERATED_BUILTINS ${GENERATED_BUILTINS} PARENT_SCOPE)
 
 if("${NEO_ARCH}" STREQUAL "x32")
   set(BUILTIN_OPTIONS "-cl-intel-greater-than-4GB-buffer-required")
@@ -28,8 +30,7 @@ function(compile_builtin gen_type platform_type builtin)
   get_family_name_with_type(${gen_type} ${platform_type})
   set(OUTPUTDIR "${BUILTINS_OUTDIR_WITH_ARCH}/${gen_type_lower}")
   # get filename
-  get_filename_component(FILENAME ${builtin} NAME)
-
+  set(FILENAME ${builtin})
   # get name of the file w/o extension
   get_filename_component(BASENAME ${builtin} NAME_WE)
 

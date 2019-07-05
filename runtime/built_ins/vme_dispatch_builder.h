@@ -18,7 +18,7 @@
 namespace NEO {
 class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
   public:
-    VmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps builtinOp,
+    VmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps::Type builtinOp,
                                   const char *kernelName)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
         populate(context, device, builtinOp,
@@ -248,7 +248,7 @@ class BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> : public VmeBuiltinDis
 
 class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuilder {
   public:
-    AdvancedVmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps builtinOp,
+    AdvancedVmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps::Type builtinOp,
                                           const char *kernelName)
         : VmeBuiltinDispatchInfoBuilder(kernelsLib, context, device, builtinOp,
                                         kernelName) {

@@ -240,7 +240,7 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenHostPtr
 
 HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitchIsSetToSlicePitch) {
     auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
-    EBuiltInOps copyBuiltIn = EBuiltInOps::CopyImage3dToBuffer;
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::CopyImage3dToBuffer;
     auto &origBuilder = builtIns.getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         pCmdQ->getContext(),

@@ -752,7 +752,7 @@ class BuiltInOp<EBuiltInOps::FillImage3d> : public BuiltinDispatchInfoBuilder {
     Kernel *kernel;
 };
 
-BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps operation, Context &context, Device &device) {
+BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Context &context, Device &device) {
     uint32_t operationId = static_cast<uint32_t>(operation);
     auto &operationBuilder = BuiltinOpsBuilders[operationId];
     switch (operation) {
@@ -795,7 +795,7 @@ BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps 
     return *operationBuilder.first;
 }
 
-std::unique_ptr<BuiltinDispatchInfoBuilder> BuiltIns::setBuiltinDispatchInfoBuilder(EBuiltInOps operation, Context &context, Device &device, std::unique_ptr<BuiltinDispatchInfoBuilder> builder) {
+std::unique_ptr<BuiltinDispatchInfoBuilder> BuiltIns::setBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Context &context, Device &device, std::unique_ptr<BuiltinDispatchInfoBuilder> builder) {
     uint32_t operationId = static_cast<uint32_t>(operation);
     auto &operationBuilder = BuiltinOpsBuilders[operationId];
     operationBuilder.first.swap(builder);
