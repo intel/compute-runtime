@@ -125,5 +125,6 @@ __kernel void simple_kernel_8(__global uint *dst, uint incrementationsCount) {
 }
 
 __kernel void simple_kernel_9(__global uint *dst) {
-    dst[get_sub_group_id()]++;
+    uint offset = get_max_sub_group_size() * get_sub_group_id();
+    dst[get_sub_group_local_id() + offset] = get_local_id(0);
 }
