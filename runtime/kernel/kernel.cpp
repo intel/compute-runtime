@@ -726,7 +726,7 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
     auto currentAllocationSize = pKernelInfo->kernelAllocation->getUnderlyingBufferSize();
     bool status = false;
     if (currentAllocationSize >= newKernelHeapSize) {
-        status = memoryManager->copyMemoryToAllocation(pKernelInfo->kernelAllocation, newKernelHeap, static_cast<uint32_t>(newKernelHeapSize));
+        status = memoryManager->copyMemoryToAllocation(pKernelInfo->kernelAllocation, newKernelHeap, newKernelHeapSize);
     } else {
         memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(pKernelInfo->kernelAllocation);
         pKernelInfo->kernelAllocation = nullptr;

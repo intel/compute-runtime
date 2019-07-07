@@ -658,6 +658,10 @@ bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool
 }
 
 void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
+    if (MemoryPool::LocalMemory == graphicsAllocation.getMemoryPool()) {
+        return lockResourceInLocalMemoryImpl(graphicsAllocation);
+    }
+
     auto cpuPtr = graphicsAllocation.getUnderlyingBuffer();
     if (cpuPtr != nullptr) {
         auto success = setDomainCpu(graphicsAllocation, false);
@@ -700,6 +704,7 @@ void DrmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation
 
     bo->setLockedAddress(nullptr);
 }
+
 void *DrmMemoryManager::reserveCpuAddressRange(size_t size) {
     void *reservePtr = mmapFunction(nullptr, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
     return reservePtr;

@@ -1890,7 +1890,7 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareTheSameBufferOb
     auto graphicsAllocation2 = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false);
 
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment->osInterface->get()->setDrm(mock);
+    executionEnvironment->osInterface->get()->setDrm(mock.get());
     auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
     device->resetCommandStreamReceiver(testedCsr);
 
@@ -1918,7 +1918,7 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBuf
     auto graphicsAllocation2 = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false);
 
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
-    executionEnvironment->osInterface->get()->setDrm(mock);
+    executionEnvironment->osInterface->get()->setDrm(mock.get());
     auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
     device->resetCommandStreamReceiver(testedCsr);
 

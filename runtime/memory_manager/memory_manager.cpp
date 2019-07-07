@@ -425,7 +425,8 @@ HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool h
     // Limited range allocation goes to STANDARD heap
     return HeapIndex::HEAP_STANDARD;
 }
-bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, uint32_t sizeToCopy) const {
+
+bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) {
     if (!graphicsAllocation->getUnderlyingBuffer()) {
         return false;
     }

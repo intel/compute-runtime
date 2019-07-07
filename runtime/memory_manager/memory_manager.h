@@ -150,7 +150,7 @@ class MemoryManager {
     EngineControl *getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
     void setDefaultEngineIndex(uint32_t index) { defaultEngineIndex = index; }
-    virtual bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, uint32_t sizeToCopy) const;
+    virtual bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy);
     static HeapIndex selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM);
     static std::unique_ptr<MemoryManager> createMemoryManager(ExecutionEnvironment &executionEnvironment);
     virtual void *reserveCpuAddressRange(size_t size) = 0;

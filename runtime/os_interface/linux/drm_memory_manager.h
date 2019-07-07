@@ -50,6 +50,7 @@ class DrmMemoryManager : public MemoryManager {
     }
 
     DrmGemCloseWorker *peekGemCloseWorker() const { return this->gemCloseWorker.get(); }
+    bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) override;
     void *reserveCpuAddressRange(size_t size) override;
     void releaseReservedCpuAddressRange(void *reserved, size_t size) override;
 
@@ -74,6 +75,7 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
 
     void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
+    void *lockResourceInLocalMemoryImpl(GraphicsAllocation &graphicsAllocation);
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
     DrmAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
