@@ -177,8 +177,30 @@ HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDoesntAddDependenciesInt
     buffer->decRefInternal();
 }
 
-HWTEST_F(CommandQueueHwTest, givenMapCommandWhenZeroStateCommandIsSubmittedThenTaskCountIsBeingWaited) {
+HWTEST_F(CommandQueueHwTest, givenMapCommandWhenZeroStateCommandIsSubmittedThenTaskCountIsNotBeingWaited) {
     auto buffer = new MockBuffer;
+    CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
+
+    MockEventBuilder eventBuilder;
+    MemObjSizeArray size = {{1, 1, 1}};
+    MemObjOffsetArray offset = {{0, 0, 0}};
+    pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
+                                          0,
+                                          MAP,
+                                          buffer,
+                                          size, offset, false,
+                                          eventBuilder);
+
+    EXPECT_NE(nullptr, pHwQ->virtualEvent);
+    pHwQ->virtualEvent->setStatus(CL_COMPLETE);
+
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), pHwQ->latestTaskCountWaited);
+    buffer->decRefInternal();
+}
+
+HWTEST_F(CommandQueueHwTest, givenMapCommandWhenZeroStateCommandIsSubmittedOnNonZeroCopyBufferThenTaskCountIsBeingWaited) {
+    auto buffer = new MockBuffer;
+    buffer->isZeroCopy = false;
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
 
     MockEventBuilder eventBuilder;

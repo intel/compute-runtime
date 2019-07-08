@@ -76,9 +76,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
                                     dispatchFlags,
                                     cmdQ.getDevice());
 
-    cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
-
     if (!memObj.isMemObjZeroCopy()) {
+        cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
         if (op == MAP) {
             memObj.transferDataToHostPtr(copySize, copyOffset);
         } else if (!readOnly) {
@@ -282,8 +281,6 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
                                     taskLevel,
                                     dispatchFlags,
                                     cmdQ.getDevice());
-
-    cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
 
     return completionStamp;
 }
