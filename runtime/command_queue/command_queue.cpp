@@ -141,10 +141,11 @@ bool CommandQueue::isQueueBlocked() {
     TakeOwnershipWrapper<CommandQueue> takeOwnershipWrapper(*this);
     //check if we have user event and if so, if it is in blocked state.
     if (this->virtualEvent) {
-        if (this->virtualEvent->peekExecutionStatus() <= CL_SUBMITTED) {
+        auto executionStatus = this->virtualEvent->peekExecutionStatus();
+        if (executionStatus <= CL_SUBMITTED) {
             UNRECOVERABLE_IF(this->virtualEvent == nullptr);
 
-            if (this->virtualEvent->isStatusCompletedByTermination() == false) {
+            if (this->virtualEvent->isStatusCompletedByTermination(executionStatus) == false) {
                 taskCount = this->virtualEvent->peekTaskCount();
                 flushStamp->setStamp(this->virtualEvent->flushStamp->peekStamp());
                 taskLevel = this->virtualEvent->taskLevel;

@@ -898,6 +898,39 @@ HWTEST_F(CommandQueueHwTest, givenBlockedInOrderCmdQueueAndAsynchronouslyComplet
     event->decRefInternal();
 }
 
+HWTEST_F(CommandQueueHwTest, givenBlockedOutOfOrderQueueWhenUserEventIsSubmittedThenNDREventIsSubmittedAsWell) {
+    CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
+    auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    MockKernelWithInternals mockKernelWithInternals(*pDevice);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+    size_t offset = 0;
+    size_t size = 1;
+
+    cl_event userEvent = clCreateUserEvent(this->pContext, nullptr);
+    cl_event blockedEvent = nullptr;
+
+    *mockCsr.getTagAddress() = 0u;
+    cmdQHw->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &userEvent, &blockedEvent);
+
+    auto neoEvent = castToObject<Event>(blockedEvent);
+    EXPECT_EQ(neoEvent->peekExecutionStatus(), CL_QUEUED);
+
+    neoEvent->updateExecutionStatus();
+
+    EXPECT_EQ(neoEvent->peekExecutionStatus(), CL_QUEUED);
+    EXPECT_EQ(neoEvent->peekTaskCount(), Event::eventNotReady);
+
+    clSetUserEventStatus(userEvent, 0u);
+
+    EXPECT_EQ(neoEvent->peekExecutionStatus(), CL_SUBMITTED);
+    EXPECT_EQ(neoEvent->peekTaskCount(), 1u);
+
+    *mockCsr.getTagAddress() = initialHardwareTag;
+    clReleaseEvent(blockedEvent);
+    clReleaseEvent(userEvent);
+}
+
 HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompletedEventWhenEnqueueCompletesVirtualEventThenUpdatedTaskLevelIsPassedToEnqueueAndFlushTask) {
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
 

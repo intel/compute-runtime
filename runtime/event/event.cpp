@@ -358,7 +358,7 @@ void Event::updateExecutionStatus() {
     }
 
     if (statusSnapshot == CL_QUEUED) {
-        bool abortBlockedTasks = isStatusCompletedByTermination(&statusSnapshot);
+        bool abortBlockedTasks = isStatusCompletedByTermination(statusSnapshot);
         submitCommand(abortBlockedTasks);
         transitionExecutionStatus(CL_SUBMITTED);
         executeCallbacks(CL_SUBMITTED);
@@ -399,7 +399,7 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
 
     uint32_t taskLevelToPropagate = Event::eventNotReady;
 
-    if (isStatusCompletedByTermination(&transitionStatus) == false) {
+    if (isStatusCompletedByTermination(transitionStatus) == false) {
         //if we are event on top of the tree , obtain taskLevel from CSR
         if (taskLevel == Event::eventNotReady) {
             this->taskLevel = getTaskLevel();
@@ -435,12 +435,12 @@ bool Event::setStatus(cl_int status) {
         return false;
     }
 
-    if (peekIsBlocked() && (isStatusCompletedByTermination(&status) == false)) {
+    if (peekIsBlocked() && (isStatusCompletedByTermination(status) == false)) {
         return false;
     }
 
     if ((status == CL_SUBMITTED) || (isStatusCompleted(&status))) {
-        bool abortBlockedTasks = isStatusCompletedByTermination(&status);
+        bool abortBlockedTasks = isStatusCompletedByTermination(status);
         submitCommand(abortBlockedTasks);
     }
 
@@ -563,7 +563,7 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
     int32_t blockerStatus = transitionStatus;
     DEBUG_BREAK_IF(!(isStatusCompleted(&blockerStatus) || peekIsSubmitted(&blockerStatus)));
 
-    if ((numEventsBlockingThis > 0) && (isStatusCompletedByTermination(&blockerStatus) == false)) {
+    if ((numEventsBlockingThis > 0) && (isStatusCompletedByTermination(blockerStatus) == false)) {
         return;
     }
     DBG_LOG(EventsDebugEnable, "Event", this, "is unblocked by", &event);
@@ -575,7 +575,7 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
     }
 
     int32_t statusToPropagate = CL_SUBMITTED;
-    if (isStatusCompletedByTermination(&blockerStatus)) {
+    if (isStatusCompletedByTermination(blockerStatus)) {
         statusToPropagate = blockerStatus;
     }
     setStatus(statusToPropagate);
@@ -625,7 +625,7 @@ void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
 
 void Event::executeCallbacks(int32_t executionStatusIn) {
     int32_t execStatus = executionStatusIn;
-    bool terminated = isStatusCompletedByTermination(&execStatus);
+    bool terminated = isStatusCompletedByTermination(execStatus);
     ECallbackTarget target;
     if (terminated) {
         target = ECallbackTarget::Completed;

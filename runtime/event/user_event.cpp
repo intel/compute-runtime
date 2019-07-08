@@ -76,7 +76,7 @@ uint32_t VirtualEvent::getTaskLevel() {
 bool VirtualEvent::setStatus(cl_int status) {
     // virtual events are just helper events and will have either
     // "waiting" (after construction) or "complete" (on change if not blocked) execution state
-    if (isStatusCompletedByTermination(&status) == false) {
+    if (isStatusCompletedByTermination(status) == false) {
         status = CL_COMPLETE;
     }
     return Event::setStatus(status);

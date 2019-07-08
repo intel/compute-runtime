@@ -184,12 +184,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // Note from OCL spec :
     //      "A negative integer value causes all enqueued commands that wait on this user event
     //       to be terminated."
-    bool isStatusCompletedByTermination(const int32_t *executionStatusSnapshot = nullptr) const {
-        if (executionStatusSnapshot == nullptr) {
-            return (peekExecutionStatus() < 0);
-        } else {
-            return (*executionStatusSnapshot < 0);
-        }
+    bool isStatusCompletedByTermination(const int32_t executionStatusSnapshot) const {
+        return executionStatusSnapshot < 0;
     }
 
     bool peekIsSubmitted(const int32_t *executionStatusSnapshot = nullptr) const {
