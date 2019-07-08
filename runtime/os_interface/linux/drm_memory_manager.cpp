@@ -149,6 +149,7 @@ void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, StorageA
     }
 
     uint64_t graphicsAddress = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(address));
+    graphicsAddress = GmmHelper::decanonize(graphicsAddress);
     gfxPartition.freeGpuAddressRange(graphicsAddress, unmapSize);
 }
 
