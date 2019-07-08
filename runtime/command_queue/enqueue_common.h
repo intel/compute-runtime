@@ -471,6 +471,8 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const MultiDispatc
     blitProperties.csrDependencies.push_back(&previousTimestampPacketNodes);
     blitProperties.outputTimestampPacket = timestampPacketContainer.get();
 
+    previousTimestampPacketNodes.makeResident(*blitCommandStreamReceiver);
+    timestampPacketContainer->makeResident(*blitCommandStreamReceiver);
     blitCommandStreamReceiver->blitBuffer(blitProperties);
 
     auto currentTimestampPacketNode = timestampPacketContainer->peekNodes().at(0);
