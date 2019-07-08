@@ -50,7 +50,8 @@ CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, Executi
     if (!executionEnvironment.osInterface) {
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         auto wddm = new WddmMock();
-        wddm->init(PreemptionHelper::getDefaultPreemptionMode(*executionEnvironment.getHardwareInfo()));
+        auto hwInfo = *executionEnvironment.getHardwareInfo();
+        wddm->init(hwInfo);
         executionEnvironment.osInterface->get()->setWddm(wddm);
     }
 

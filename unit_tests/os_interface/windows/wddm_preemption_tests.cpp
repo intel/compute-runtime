@@ -20,6 +20,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         const HardwareInfo hwInfo = *platformDevices[0];
         memcpy(&hwInfoTest, &hwInfo, sizeof(hwInfoTest));
         dbgRestorer = new DebugManagerStateRestore();
+        wddm->featureTable->ftrGpGpuMidThreadLevelPreempt = true;
     }
 
     void TearDown() override {
@@ -36,7 +37,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         wddm->registryReader.reset(regReader);
         regReader->forceRetValue = forceReturnPreemptionRegKeyValue;
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
-        wddm->init(preemptionMode);
+        wddm->init(hwInfoTest);
         osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode, false);
     }
 
@@ -49,7 +50,6 @@ TEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPr
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     unsigned int expectedVal = 1u;
     createAndInitWddm(1u);
-    EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
     EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
 }
 

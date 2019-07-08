@@ -32,9 +32,9 @@ struct WddmFixture : ::testing::Test {
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
-        wddm->init(preemptionMode);
+        auto hwInfo = *platformDevices[0];
+        wddm->init(hwInfo);
         osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1u, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode, false);
-        ASSERT_TRUE(wddm->isInitialized());
     }
 
     WddmMock *wddm = nullptr;
@@ -57,9 +57,9 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
 
     void init() {
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
-        EXPECT_TRUE(wddm->init(preemptionMode));
+        auto hwInfo = *platformDevices[0];
+        wddm->init(hwInfo);
         osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode, false);
-        ASSERT_TRUE(wddm->isInitialized());
     }
 
     void TearDown() override {

@@ -7,7 +7,6 @@
 
 #ifdef _WIN32
 
-#include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/device_helpers.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -26,8 +25,9 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     numDevices = 0;
 
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
+    executionEnvironment.initGmm();
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
-    if (!wddm->enumAdapters(*hardwareInfo)) {
+    if (!wddm->init(*hardwareInfo)) {
         return false;
     }
 
@@ -36,18 +36,8 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     executionEnvironment.osInterface.reset(new OSInterface());
     executionEnvironment.osInterface->get()->setWddm(wddm.release());
 
-    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
-    if (hwConfig->configureHwInfo(hardwareInfo, hardwareInfo, nullptr)) {
-        return false;
-    }
-
     numDevices = totalDeviceCount;
     DeviceFactory::numDevices = numDevices;
-
-    executionEnvironment.initGmm();
-    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);
-    bool success = executionEnvironment.osInterface->get()->getWddm()->init(preemptionMode);
-    DEBUG_BREAK_IF(!success);
 
     return true;
 }

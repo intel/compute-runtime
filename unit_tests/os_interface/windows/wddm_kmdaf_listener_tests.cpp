@@ -41,7 +41,8 @@ class WddmKmDafListenerTest : public ::testing::Test {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         wddmWithKmDafMock.reset(new WddmWithKmDafMock());
         wddmWithKmDafMock->gdi.reset(new MockGdi());
-        wddmWithKmDafMock->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+        auto hwInfo = *platformDevices[0];
+        wddmWithKmDafMock->init(hwInfo);
         wddmWithKmDafMock->featureTable->ftrKmdDaf = true;
     }
     void TearDown() {

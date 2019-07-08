@@ -8,6 +8,7 @@
 #include "runtime/os_interface/windows/wddm/wddm.h"
 
 #include "core/helpers/interlocked_max.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
@@ -58,7 +59,7 @@ Wddm::~Wddm() {
     closeAdapter();
 }
 
-bool Wddm::enumAdapters(HardwareInfo &outHardwareInfo) {
+bool Wddm::init(HardwareInfo &outHardwareInfo) {
     if (!gdi->isInitialized()) {
         return false;
     }
@@ -84,9 +85,31 @@ bool Wddm::enumAdapters(HardwareInfo &outHardwareInfo) {
     outHardwareInfo.capabilityTable.instrumentationEnabled &= instrumentationEnabled;
 
     HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
-    hwConfig->adjustPlatformForProductFamily(&outHardwareInfo);
 
-    return true;
+    hwConfig->adjustPlatformForProductFamily(&outHardwareInfo);
+    if (hwConfig->configureHwInfo(&outHardwareInfo, &outHardwareInfo, nullptr)) {
+        return false;
+    }
+
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(outHardwareInfo);
+
+    if (featureTable->ftrWddmHwQueues) {
+        wddmInterface = std::make_unique<WddmInterface23>(*this);
+    } else {
+        wddmInterface = std::make_unique<WddmInterface20>(*this);
+    }
+
+    if (!createDevice(preemptionMode)) {
+        return false;
+    }
+    if (!createPagingQueue()) {
+        return false;
+    }
+    if (!gmmMemory) {
+        gmmMemory.reset(GmmMemory::create());
+    }
+
+    return configureDeviceAddressSpace();
 }
 
 bool Wddm::queryAdapterInfo() {
@@ -890,37 +913,6 @@ bool Wddm::configureDeviceAddressSpaceImpl() {
                        : 0u;
 
     return gmmMemory->configureDevice(adapter, device, gdi->escape, svmSize, featureTable->ftrL3IACoherency, gfxPartition, minAddress);
-}
-
-bool Wddm::init(PreemptionMode preemptionMode) {
-    if (gdi != nullptr && gdi->isInitialized() && !initialized) {
-        if (!openAdapter()) {
-            return false;
-        }
-        if (!queryAdapterInfo()) {
-            return false;
-        }
-
-        if (!wddmInterface) {
-            if (featureTable->ftrWddmHwQueues) {
-                wddmInterface = std::make_unique<WddmInterface23>(*this);
-            } else {
-                wddmInterface = std::make_unique<WddmInterface20>(*this);
-            }
-        }
-
-        if (!createDevice(preemptionMode)) {
-            return false;
-        }
-        if (!createPagingQueue()) {
-            return false;
-        }
-        if (!gmmMemory) {
-            gmmMemory.reset(GmmMemory::create());
-        }
-        initialized = configureDeviceAddressSpace();
-    }
-    return initialized;
 }
 
 EvictionStatus Wddm::evictAllTemporaryResources() {

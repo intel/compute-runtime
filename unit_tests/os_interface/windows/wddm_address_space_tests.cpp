@@ -59,12 +59,12 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAddr
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    EXPECT_TRUE(ret);
+    auto hwInfo = *platformDevices[0];
+    wddm->init(hwInfo);
 
     wddm->returnGood = 1;
 
-    ret = wddm->reserveValidAddressRange(size, reserve);
+    auto ret = wddm->reserveValidAddressRange(size, reserve);
     uintptr_t expectedReserve = wddm->virtualAllocAddress;
     EXPECT_TRUE(ret);
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
@@ -76,10 +76,10 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    EXPECT_TRUE(ret);
+    auto hwInfo = *platformDevices[0];
+    wddm->init(hwInfo);
     uintptr_t expectedReserve = 0;
-    ret = wddm->reserveValidAddressRange(size, reserve);
+    auto ret = wddm->reserveValidAddressRange(size, reserve);
     EXPECT_FALSE(ret);
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
 }
@@ -89,12 +89,12 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenRetu
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    EXPECT_TRUE(ret);
+    auto hwInfo = *platformDevices[0];
+    wddm->init(hwInfo);
 
     wddm->returnInvalidCount = 1;
 
-    ret = wddm->reserveValidAddressRange(size, reserve);
+    auto ret = wddm->reserveValidAddressRange(size, reserve);
     uintptr_t expectedReserve = wddm->virtualAllocAddress;
     EXPECT_TRUE(ret);
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
@@ -106,12 +106,12 @@ TEST(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenRetu
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    EXPECT_TRUE(ret);
+    auto hwInfo = *platformDevices[0];
+    wddm->init(hwInfo);
 
     wddm->returnInvalidCount = 2;
 
-    ret = wddm->reserveValidAddressRange(size, reserve);
+    auto ret = wddm->reserveValidAddressRange(size, reserve);
     uintptr_t expectedReserve = wddm->virtualAllocAddress;
     EXPECT_TRUE(ret);
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
@@ -123,14 +123,14 @@ TEST(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturnSeco
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
-    EXPECT_TRUE(ret);
+    auto hwInfo = *platformDevices[0];
+    wddm->init(hwInfo);
 
     wddm->returnInvalidCount = 2;
     wddm->returnNullCount = 1;
     uintptr_t expectedReserve = 0;
 
-    ret = wddm->reserveValidAddressRange(size, reserve);
+    auto ret = wddm->reserveValidAddressRange(size, reserve);
     EXPECT_FALSE(ret);
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
 }

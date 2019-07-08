@@ -50,7 +50,8 @@ class MockWddmMemoryManagerFixture {
         wddm->gdi.reset(gdi);
         constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
         wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        EXPECT_TRUE(wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0])));
+        auto hwInfo = *platformDevices[0];
+        wddm->init(hwInfo);
 
         executionEnvironment->osInterface.reset(new OSInterface());
         executionEnvironment->osInterface->get()->setWddm(wddm);
@@ -94,10 +95,10 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         ASSERT_NE(nullptr, wddm);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
-        EXPECT_TRUE(wddm->init(preemptionMode));
+        auto hwInfo = *platformDevices[0];
+        wddm->init(hwInfo);
         executionEnvironment->osInterface->get()->setWddm(wddm);
         osInterface = executionEnvironment->osInterface.get();
-        wddm->init(preemptionMode);
         memoryManager = new (std::nothrow) MockWddmMemoryManager(*executionEnvironment);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
@@ -146,7 +147,6 @@ class WddmMemoryManagerSimpleTest : public MockWddmMemoryManagerFixture, public 
   public:
     void SetUp() override {
         MockWddmMemoryManagerFixture::SetUp();
-        wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
     }
     void TearDown() override {
         MockWddmMemoryManagerFixture::TearDown();

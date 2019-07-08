@@ -64,11 +64,9 @@ TEST_F(Wddm20Tests, givenMinWindowsAddressWhenWddmIsInitializedThenWddmUseThisAd
 
 TEST_F(Wddm20Tests, doubleCreation) {
     EXPECT_EQ(1u, wddm->createContextResult.called);
-    auto error = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    auto hwInfo = *platformDevices[0];
+    wddm->init(hwInfo);
     EXPECT_EQ(1u, wddm->createContextResult.called);
-
-    EXPECT_TRUE(error);
-    EXPECT_TRUE(wddm->isInitialized());
 }
 
 TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMappingGpuVaThenDontUpdateAuxTable) {
@@ -95,7 +93,7 @@ TEST(Wddm20EnumAdaptersTest, expectTrue) {
                                                          hwInfo->capabilityTable.gpuAddressSpace));
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
-    bool success = wddm->enumAdapters(outHwInfo);
+    bool success = wddm->init(outHwInfo);
 
     EXPECT_TRUE(success);
 
@@ -111,7 +109,7 @@ TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCa
                                                          hwInfo->capabilityTable.gpuAddressSpace));
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
-    bool success = wddm->enumAdapters(outHwInfo);
+    bool success = wddm->init(outHwInfo);
     EXPECT_TRUE(success);
 
     EXPECT_EQ(outHwInfo.platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
@@ -134,7 +132,7 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
                                                          hwInfo.capabilityTable.gpuAddressSpace));
 
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
-    auto ret = wddm->enumAdapters(outHwInfo);
+    auto ret = wddm->init(outHwInfo);
     EXPECT_FALSE(ret);
 
     // reset mock gdi
@@ -443,9 +441,8 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
                                                      FtrL3IACoherency))
         .Times(1)
         .WillRepeatedly(::testing::Return(true));
-    wddm->init(PreemptionHelper::getDefaultPreemptionMode(hwInfo));
-
-    EXPECT_TRUE(wddm->isInitialized());
+    auto hwInfoMock = *platformDevices[0];
+    wddm->init(hwInfoMock);
 }
 
 TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoAdapter) {
@@ -718,7 +715,8 @@ TEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemor
 }
 
 TEST_F(Wddm20Tests, whenContextIsInitializedThenApplyAdditionalContextFlagsIsCalled) {
-    auto result = wddm->init(PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]));
+    auto hwInfo = *platformDevices[0];
+    auto result = wddm->init(hwInfo);
     EXPECT_TRUE(result);
     EXPECT_EQ(1u, wddm->applyAdditionalContextFlagsResult.called);
 }

@@ -54,7 +54,7 @@ class Wddm {
     virtual ~Wddm();
 
     static Wddm *createWddm();
-    bool enumAdapters(HardwareInfo &outHardwareInfo);
+    bool init(HardwareInfo &outHardwareInfo);
 
     MOCKABLE_VIRTUAL bool evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
     MOCKABLE_VIRTUAL bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim);
@@ -91,12 +91,6 @@ class Wddm {
     MOCKABLE_VIRTUAL int virtualFree(void *ptr, size_t size, unsigned long flags);
 
     bool configureDeviceAddressSpace();
-
-    bool init(PreemptionMode preemptionMode);
-
-    bool isInitialized() const {
-        return initialized;
-    }
 
     GT_SYSTEM_INFO *getGtSysInfo() const {
         DEBUG_BREAK_IF(!gtSystemInfo);
@@ -157,7 +151,6 @@ class Wddm {
     }
 
   protected:
-    bool initialized = false;
     std::unique_ptr<Gdi> gdi;
     D3DKMT_HANDLE adapter = 0;
     D3DKMT_HANDLE device = 0;
