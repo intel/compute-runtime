@@ -226,8 +226,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
 
-    commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
     if (printfHandler) {
+        commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
         printfHandler.get()->printEnqueueOutput();
     }
 

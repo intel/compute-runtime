@@ -574,6 +574,8 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     event.submitCommand(false);
 
+    EXPECT_EQ(1u, cmdQ.latestTaskCountWaited);
+
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ("test", output.c_str());
     EXPECT_FALSE(surface->isResident(pDevice->getDefaultEngine().osContext->getContextId()));

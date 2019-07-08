@@ -842,22 +842,11 @@ HWTEST_F(CommandQueueHwTest, givenBlockedInOrderCmdQueueAndAsynchronouslyComplet
     size_t offset = 0;
     size_t size = 1;
 
-    class MockEventWithSetCompleteOnUpdate : public Event {
-      public:
-        MockEventWithSetCompleteOnUpdate(CommandQueue *cmdQueue, cl_command_type cmdType,
-                                         uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
-        }
-        void updateExecutionStatus() override {
-            setStatus(CL_COMPLETE);
-        }
-    };
-
     auto event = new Event(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, 10, 0);
 
     uint32_t virtualEventTaskLevel = 77;
     uint32_t virtualEventTaskCount = 80;
-    auto virtualEvent = new MockEventWithSetCompleteOnUpdate(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, virtualEventTaskLevel, virtualEventTaskCount);
-    virtualEvent->setStatus(CL_SUBMITTED);
+    auto virtualEvent = new Event(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, virtualEventTaskLevel, virtualEventTaskCount);
 
     cl_event blockedEvent = event;
 
@@ -866,20 +855,23 @@ HWTEST_F(CommandQueueHwTest, givenBlockedInOrderCmdQueueAndAsynchronouslyComplet
     virtualEvent->incRefInternal();
     cmdQHw->virtualEvent = virtualEvent;
 
+    *mockCSR->getTagAddress() = 0u;
     cmdQHw->taskLevel = 23;
     cmdQHw->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
     //new virtual event is created on enqueue, bind it to the created virtual event
     EXPECT_NE(cmdQHw->virtualEvent, virtualEvent);
 
+    EXPECT_EQ(virtualEvent->peekExecutionStatus(), CL_QUEUED);
     event->setStatus(CL_SUBMITTED);
+    EXPECT_EQ(virtualEvent->peekExecutionStatus(), CL_SUBMITTED);
 
-    virtualEvent->Event::updateExecutionStatus();
     EXPECT_FALSE(cmdQHw->isQueueBlocked());
     // +1 for next level after virtualEvent is unblocked
     // +1 as virtualEvent was a parent for event with actual command that is being submitted
     EXPECT_EQ(virtualEventTaskLevel + 2, cmdQHw->taskLevel);
     //command being submitted was dependant only on virtual event hence only +1
     EXPECT_EQ(virtualEventTaskLevel + 1, mockCSR->lastTaskLevelToFlushTask);
+    *mockCSR->getTagAddress() = initialHardwareTag;
     virtualEvent->decRefInternal();
     event->decRefInternal();
 }
@@ -911,7 +903,6 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
     uint32_t virtualEventTaskLevel = 77;
     uint32_t virtualEventTaskCount = 80;
     MockEventWithSetCompleteOnUpdate virtualEvent(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, virtualEventTaskLevel, virtualEventTaskCount);
-    virtualEvent.setStatus(CL_SUBMITTED);
 
     cl_event blockedEvent = &event;
 
