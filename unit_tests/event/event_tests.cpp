@@ -1195,16 +1195,10 @@ TEST_F(InternalsEventWithPerfCountersTest, SetPerfCounter_AvailFalse) {
     delete pCmdQ;
 }
 
-TEST_F(EventTest, GivenNullptrWhenpeekIsSubmittedThenFalse) {
-    Event ev(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
-    bool executionStatus = ev.peekIsSubmitted(nullptr);
-    EXPECT_NE(true, executionStatus);
-}
-
 TEST_F(EventTest, GivenCL_SUBMITTEDWhenpeekIsSubmittedThenTrue) {
     Event ev(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
     int32_t executionStatusSnapshot = CL_SUBMITTED;
-    bool executionStatus = ev.peekIsSubmitted(&executionStatusSnapshot);
+    bool executionStatus = ev.peekIsSubmitted(executionStatusSnapshot);
     EXPECT_EQ(true, executionStatus);
 }
 

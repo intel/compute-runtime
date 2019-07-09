@@ -395,7 +395,7 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
 
     int32_t status = transitionStatus;
     (void)status;
-    DEBUG_BREAK_IF(!(isStatusCompleted(&status) || (peekIsSubmitted(&status))));
+    DEBUG_BREAK_IF(!(isStatusCompleted(&status) || (peekIsSubmitted(status))));
 
     uint32_t taskLevelToPropagate = Event::eventNotReady;
 
@@ -565,7 +565,7 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
     DEBUG_BREAK_IF(numEventsBlockingThis < 0);
 
     int32_t blockerStatus = transitionStatus;
-    DEBUG_BREAK_IF(!(isStatusCompleted(&blockerStatus) || peekIsSubmitted(&blockerStatus)));
+    DEBUG_BREAK_IF(!(isStatusCompleted(&blockerStatus) || peekIsSubmitted(blockerStatus)));
 
     if ((numEventsBlockingThis > 0) && (isStatusCompletedByTermination(blockerStatus) == false)) {
         return;

@@ -188,12 +188,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return executionStatusSnapshot < 0;
     }
 
-    bool peekIsSubmitted(const int32_t *executionStatusSnapshot = nullptr) const {
-        if (executionStatusSnapshot == nullptr) {
-            return (peekExecutionStatus() == CL_SUBMITTED);
-        } else {
-            return (*executionStatusSnapshot == CL_SUBMITTED);
-        }
+    bool peekIsSubmitted(const int32_t executionStatusSnapshot) const {
+        return executionStatusSnapshot == CL_SUBMITTED;
     }
 
     bool peekIsCmdSubmitted() {
