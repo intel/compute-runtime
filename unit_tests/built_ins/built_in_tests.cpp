@@ -7,7 +7,6 @@
 
 #include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/built_ins/built_ins.inl"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/built_ins/vme_dispatch_builder.h"
 #include "runtime/helpers/dispatch_info_builder.h"
@@ -393,11 +392,10 @@ TEST_F(BuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispatchInfo
     EXPECT_THROW(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams), std::exception);
 }
 
-template <typename Family>
-class MockAuxBuilInOp : public BuiltInOp<Family, EBuiltInOps::AuxTranslation> {
+class MockAuxBuilInOp : public BuiltInOp<EBuiltInOps::AuxTranslation> {
   public:
     using BuiltinDispatchInfoBuilder::populate;
-    using BaseClass = BuiltInOp<Family, EBuiltInOps::AuxTranslation>;
+    using BaseClass = BuiltInOp<EBuiltInOps::AuxTranslation>;
     using BaseClass::baseKernel;
     using BaseClass::convertToAuxKernel;
     using BaseClass::convertToNonAuxKernel;
@@ -407,14 +405,14 @@ class MockAuxBuilInOp : public BuiltInOp<Family, EBuiltInOps::AuxTranslation> {
     MockAuxBuilInOp(BuiltIns &kernelsLib, Context &context, Device &device) : BaseClass(kernelsLib, context, device) {}
 };
 
-HWTEST_F(BuiltInTests, whenAuxBuiltInIsConstructedThenResizeKernelInstancedTo5) {
-    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
+TEST_F(BuiltInTests, whenAuxBuiltInIsConstructedThenResizeKernelInstancedTo5) {
+    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 }
 
-HWTEST_F(BuiltInTests, givenMoreBuffersForAuxTranslationThanKernelInstancesWhenDispatchingThenResize) {
-    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
+TEST_F(BuiltInTests, givenMoreBuffersForAuxTranslationThanKernelInstancesWhenDispatchingThenResize) {
+    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
     EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 
@@ -435,8 +433,8 @@ HWTEST_F(BuiltInTests, givenMoreBuffersForAuxTranslationThanKernelInstancesWhenD
     EXPECT_EQ(7u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
 }
 
-HWTEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesFromBaseKernel) {
-    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
+TEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesFromBaseKernel) {
+    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
     size_t newSize = mockAuxBuiltInOp.convertToAuxKernel.size() + 3;
     mockAuxBuiltInOp.resizeKernelInstances(newSize);
 
@@ -453,7 +451,7 @@ HWTEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstance
 
 HWTEST_F(BuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin) {
     pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
-    auto mockAuxBuiltInOp = new MockAuxBuilInOp<FamilyType>(*pBuiltIns, *pContext, *pDevice);
+    auto mockAuxBuiltInOp = new MockAuxBuilInOp(*pBuiltIns, *pContext, *pDevice);
     pBuiltIns->BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::AuxTranslation)].first.reset(mockAuxBuiltInOp);
 
     auto mockProgram = clUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
@@ -1152,8 +1150,7 @@ TEST_F(BuiltInTests, whenQueriedProperVmeVersionIsReturned) {
 TEST_F(BuiltInTests, vmeDispatchValidationHelpers) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    using GenericFamily = int;
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+    BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
     restoreBuiltInBinaryName(pDevice);
 
     cl_int err;
@@ -1213,9 +1210,8 @@ TEST_F(BuiltInTests, vmeDispatchValidationHelpers) {
 TEST_F(BuiltInTests, vmeDispatchIsBidir) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    using GenericFamily = int;
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBidirBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+    BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+    BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBidirBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
     restoreBuiltInBinaryName(pDevice);
 
     EXPECT_FALSE(avmeBuilder.isBidirKernel());
@@ -1262,8 +1258,7 @@ const cl_image_format ImageVmeInvalidChannelOrder::imageFormat = {
 TEST_F(BuiltInTests, vmeValidateImages) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    using GenericFamily = int;
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockMotionEstimateIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+    BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
     restoreBuiltInBinaryName(pDevice);
 
     uint32_t srcImgArgNum = 1;
@@ -1341,8 +1336,7 @@ TEST_F(BuiltInTests, vmeValidateImages) {
 TEST_F(BuiltInTests, vmeValidateFlags) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    using GenericFamily = int;
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+    BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
     restoreBuiltInBinaryName(pDevice);
 
     uint32_t defaultSkipBlockVal = 8192;
@@ -1372,9 +1366,8 @@ TEST_F(BuiltInTests, vmeValidateFlags) {
 TEST_F(BuiltInTests, vmeValidateSkipBlockType) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    using GenericFamily = int;
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBidirectionalBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+    BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBidirectionalBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+    BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
     restoreBuiltInBinaryName(pDevice);
 
     cl_int err;
@@ -1408,8 +1401,8 @@ TEST_F(BuiltInTests, vmeValidateSkipBlockType) {
 TEST_F(BuiltInTests, setExplicitArgAccelerator) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    using GenericFamily = int;
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+
+    BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
     restoreBuiltInBinaryName(pDevice);
 
     cl_int err;
@@ -1434,10 +1427,9 @@ TEST_F(BuiltInTests, setExplicitArgAccelerator) {
 TEST_F(BuiltInTests, vmeValidateDispatch) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    using GenericFamily = int;
-    struct MockVmeBuilder : BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockMotionEstimateIntel> {
+    struct MockVmeBuilder : BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> {
         MockVmeBuilder(BuiltIns &kernelsLib, Context &context, Device &device)
-            : BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockMotionEstimateIntel>(kernelsLib, context, device) {
+            : BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel>(kernelsLib, context, device) {
         }
 
         cl_int validateVmeDispatch(Vec3<size_t> inputRegion, Vec3<size_t> offset, size_t blkNum, size_t blkMul) const override {
@@ -1540,8 +1532,7 @@ TEST_F(BuiltInTests, vmeValidateDispatch) {
 TEST_F(BuiltInTests, vmeValidateVmeDispatch) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    using GenericFamily = int;
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockMotionEstimateIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+    BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
     restoreBuiltInBinaryName(pDevice);
 
     cl_int err;
@@ -1579,8 +1570,7 @@ TEST_F(BuiltInTests, vmeValidateVmeDispatch) {
 TEST_F(BuiltInTests, advancedVmeValidateVmeDispatch) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    using GenericFamily = int;
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+    BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
     restoreBuiltInBinaryName(pDevice);
 
     cl_int err;
@@ -1640,8 +1630,7 @@ TEST_F(BuiltInTests, advancedVmeValidateVmeDispatch) {
 TEST_F(BuiltInTests, advancedBidirectionalVmeValidateVmeDispatch) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    using GenericFamily = int;
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+    BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
     restoreBuiltInBinaryName(pDevice);
 
     cl_int err;
@@ -1689,8 +1678,7 @@ TEST_F(BuiltInTests, advancedBidirectionalVmeValidateVmeDispatch) {
 TEST_F(BuiltInTests, advancedVmeGetSkipResidualsBuffExpSizeDefaultValue) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
-    using GenericFamily = int;
-    BuiltInOp<GenericFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
+    BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
     restoreBuiltInBinaryName(pDevice);
 
     auto size16x16 = vmeBuilder.getSkipResidualsBuffExpSize(CL_ME_MB_TYPE_16x16_INTEL, 4);
@@ -1766,8 +1754,8 @@ TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCo
 
 using BuiltInOwnershipWrapperTests = BuiltInTests;
 
-HWTEST_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnlockOnDestruction) {
-    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
+TEST_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnlockOnDestruction) {
+    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
     MockContext mockContext;
 
     {
@@ -1779,8 +1767,8 @@ HWTEST_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnl
     EXPECT_EQ(pContext, &mockAuxBuiltInOp.baseKernel->getContext());
 }
 
-HWTEST_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingThenLockOnlyWhenRequested) {
-    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
+TEST_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingThenLockOnlyWhenRequested) {
+    MockAuxBuilInOp mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
     MockContext mockContext;
 
     {
@@ -1793,9 +1781,9 @@ HWTEST_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructin
     EXPECT_EQ(pContext, &mockAuxBuiltInOp.baseKernel->getContext());
 }
 
-HWTEST_F(BuiltInOwnershipWrapperTests, givenLockWithAcquiredOwnershipWhenTakeOwnershipCalledThenAbort) {
-    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp1(*pBuiltIns, *pContext, *pDevice);
-    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp2(*pBuiltIns, *pContext, *pDevice);
+TEST_F(BuiltInOwnershipWrapperTests, givenLockWithAcquiredOwnershipWhenTakeOwnershipCalledThenAbort) {
+    MockAuxBuilInOp mockAuxBuiltInOp1(*pBuiltIns, *pContext, *pDevice);
+    MockAuxBuilInOp mockAuxBuiltInOp2(*pBuiltIns, *pContext, *pDevice);
 
     BuiltInOwnershipWrapper lock(mockAuxBuiltInOp1, pContext);
     EXPECT_THROW(lock.takeOwnership(mockAuxBuiltInOp1, pContext), std::exception);

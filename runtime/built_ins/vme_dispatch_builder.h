@@ -16,7 +16,6 @@
 #include "runtime/mem_obj/image.h"
 
 namespace NEO {
-template <typename HWFamily>
 class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
   public:
     VmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps builtinOp,
@@ -238,22 +237,21 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
     Kernel *vmeKernel;
 };
 
-template <typename HWFamily>
-class BuiltInOp<HWFamily, EBuiltInOps::VmeBlockMotionEstimateIntel> : public VmeBuiltinDispatchInfoBuilder<HWFamily> {
+template <>
+class BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> : public VmeBuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
-        : VmeBuiltinDispatchInfoBuilder<HWFamily>(kernelsLib, context, device,
-                                                  EBuiltInOps::VmeBlockMotionEstimateIntel, "block_motion_estimate_intel") {
+        : VmeBuiltinDispatchInfoBuilder(kernelsLib, context, device,
+                                        EBuiltInOps::VmeBlockMotionEstimateIntel, "block_motion_estimate_intel") {
     }
 };
 
-template <typename HWFamily>
-class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuilder<HWFamily> {
+class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuilder {
   public:
     AdvancedVmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Context &context, Device &device, EBuiltInOps builtinOp,
                                           const char *kernelName)
-        : VmeBuiltinDispatchInfoBuilder<HWFamily>(kernelsLib, context, device, builtinOp,
-                                                  kernelName) {
+        : VmeBuiltinDispatchInfoBuilder(kernelsLib, context, device, builtinOp,
+                                        kernelName) {
         flagsArgNum = this->vmeKernel->getKernelInfo().getArgNumByName("flags");
         intraSrcImgArgNum = this->vmeKernel->getKernelInfo().getArgNumByName("intraSrcImg");
         skipBlockTypeArgNum = this->vmeKernel->getKernelInfo().getArgNumByName("skip_block_type");
@@ -274,7 +272,7 @@ class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuild
             // rebind also as media block image
             this->vmeKernel->setArg(intraSrcImgArgNum, argSize, argVal);
         }
-        return VmeBuiltinDispatchInfoBuilder<HWFamily>::setExplicitArg(argIndex, argSize, argVal, err);
+        return VmeBuiltinDispatchInfoBuilder::setExplicitArg(argIndex, argSize, argVal, err);
     }
 
     virtual bool isBidirKernel() const {
@@ -282,7 +280,7 @@ class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuild
     }
 
     bool validateFlags(uint32_t &outSkipBlockType) const {
-        uint32_t flagsVal = VmeBuiltinDispatchInfoBuilder<HWFamily>::template getKernelArgByValValue<uint32_t>(flagsArgNum);
+        uint32_t flagsVal = VmeBuiltinDispatchInfoBuilder::template getKernelArgByValValue<uint32_t>(flagsArgNum);
 
         if ((flagsVal & CL_ME_CHROMA_INTRA_PREDICT_ENABLED_INTEL) == CL_ME_CHROMA_INTRA_PREDICT_ENABLED_INTEL) {
             return false;
@@ -302,7 +300,7 @@ class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuild
             return true;
         }
 
-        outSkipBlockType = VmeBuiltinDispatchInfoBuilder<HWFamily>::template getKernelArgByValValue<uint32_t>(static_cast<uint32_t>(skipBlockTypeArgNum));
+        outSkipBlockType = VmeBuiltinDispatchInfoBuilder::template getKernelArgByValValue<uint32_t>(static_cast<uint32_t>(skipBlockTypeArgNum));
 
         switch (outSkipBlockType) {
         case CL_ME_MB_TYPE_16x16_INTEL:
@@ -379,7 +377,7 @@ class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuild
     }
 
     cl_int validateVmeDispatch(Vec3<size_t> inputRegion, Vec3<size_t> offset, size_t blkNum, size_t blkMul) const override {
-        cl_int basicVmeValidationStatus = VmeBuiltinDispatchInfoBuilder<HWFamily>::validateVmeDispatch(inputRegion, offset, blkNum, blkMul);
+        cl_int basicVmeValidationStatus = VmeBuiltinDispatchInfoBuilder::validateVmeDispatch(inputRegion, offset, blkNum, blkMul);
         if (basicVmeValidationStatus != CL_SUCCESS) {
             return basicVmeValidationStatus;
         }
@@ -393,18 +391,18 @@ class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuild
             return CL_OUT_OF_RESOURCES;
         }
 
-        if (false == VmeBuiltinDispatchInfoBuilder<HWFamily>::template validateEnumArg<uint32_t>(searchCostPenaltyArgNum, CL_ME_COST_PENALTY_NONE_INTEL, CL_ME_COST_PENALTY_LOW_INTEL, CL_ME_COST_PENALTY_NORMAL_INTEL,
-                                                                                                 CL_ME_COST_PENALTY_HIGH_INTEL)) {
+        if (false == VmeBuiltinDispatchInfoBuilder::template validateEnumArg<uint32_t>(searchCostPenaltyArgNum, CL_ME_COST_PENALTY_NONE_INTEL, CL_ME_COST_PENALTY_LOW_INTEL, CL_ME_COST_PENALTY_NORMAL_INTEL,
+                                                                                       CL_ME_COST_PENALTY_HIGH_INTEL)) {
             return CL_OUT_OF_RESOURCES;
         }
 
-        if (false == VmeBuiltinDispatchInfoBuilder<HWFamily>::template validateEnumArg<uint32_t>(searchCostPrecisionArgNum, CL_ME_COST_PRECISION_QPEL_INTEL, CL_ME_COST_PRECISION_HPEL_INTEL, CL_ME_COST_PRECISION_PEL_INTEL,
-                                                                                                 CL_ME_COST_PRECISION_DPEL_INTEL)) {
+        if (false == VmeBuiltinDispatchInfoBuilder::template validateEnumArg<uint32_t>(searchCostPrecisionArgNum, CL_ME_COST_PRECISION_QPEL_INTEL, CL_ME_COST_PRECISION_HPEL_INTEL, CL_ME_COST_PRECISION_PEL_INTEL,
+                                                                                       CL_ME_COST_PRECISION_DPEL_INTEL)) {
             return CL_OUT_OF_RESOURCES;
         }
 
-        if (false == VmeBuiltinDispatchInfoBuilder<HWFamily>::template validateEnumArg<uint8_t>(bidirWeightArgNum, 0, CL_ME_BIDIR_WEIGHT_QUARTER_INTEL, CL_ME_BIDIR_WEIGHT_THIRD_INTEL, CL_ME_BIDIR_WEIGHT_HALF_INTEL,
-                                                                                                CL_ME_BIDIR_WEIGHT_TWO_THIRD_INTEL, CL_ME_BIDIR_WEIGHT_THREE_QUARTER_INTEL)) {
+        if (false == VmeBuiltinDispatchInfoBuilder::template validateEnumArg<uint8_t>(bidirWeightArgNum, 0, CL_ME_BIDIR_WEIGHT_QUARTER_INTEL, CL_ME_BIDIR_WEIGHT_THIRD_INTEL, CL_ME_BIDIR_WEIGHT_HALF_INTEL,
+                                                                                      CL_ME_BIDIR_WEIGHT_TWO_THIRD_INTEL, CL_ME_BIDIR_WEIGHT_THREE_QUARTER_INTEL)) {
             return CL_INVALID_KERNEL_ARGS;
         }
 
@@ -439,17 +437,17 @@ class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuild
     uint32_t intraSrcImgArgNum;
 };
 
-template <typename HWFamily>
-class BuiltInOp<HWFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder<HWFamily> {
+template <>
+class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
-        : AdvancedVmeBuiltinDispatchInfoBuilder<HWFamily>(kernelsLib, context, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel,
-                                                          "block_advanced_motion_estimate_check_intel") {
+        : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, context, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel,
+                                                "block_advanced_motion_estimate_check_intel") {
     }
 
     cl_int validateVmeDispatch(Vec3<size_t> inputRegion, Vec3<size_t> offset,
                                size_t gwWidthInBlk, size_t gwHeightInBlk) const override {
-        cl_int basicAdvVmeValidationStatus = AdvancedVmeBuiltinDispatchInfoBuilder<HWFamily>::validateVmeDispatch(inputRegion, offset, gwWidthInBlk, gwHeightInBlk);
+        cl_int basicAdvVmeValidationStatus = AdvancedVmeBuiltinDispatchInfoBuilder::validateVmeDispatch(inputRegion, offset, gwWidthInBlk, gwHeightInBlk);
         if (basicAdvVmeValidationStatus != CL_SUCCESS) {
             return basicAdvVmeValidationStatus;
         }
@@ -463,12 +461,12 @@ class BuiltInOp<HWFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel>
     }
 };
 
-template <typename HWFamily>
-class BuiltInOp<HWFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder<HWFamily> {
+template <>
+class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
-        : AdvancedVmeBuiltinDispatchInfoBuilder<HWFamily>(kernelsLib, context, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel,
-                                                          "block_advanced_motion_estimate_bidirectional_check_intel") {
+        : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, context, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel,
+                                                "block_advanced_motion_estimate_bidirectional_check_intel") {
     }
 
     bool isBidirKernel() const override {

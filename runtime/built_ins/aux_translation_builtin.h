@@ -13,18 +13,16 @@
 #include <memory>
 
 namespace NEO {
-template <typename HWFamily>
-class BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder {
+template <>
+class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device);
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const override;
 
   protected:
     void resizeKernelInstances(size_t size) const;
-
     Kernel *baseKernel = nullptr;
     mutable std::vector<std::unique_ptr<Kernel>> convertToNonAuxKernel;
     mutable std::vector<std::unique_ptr<Kernel>> convertToAuxKernel;
 };
-
 } // namespace NEO

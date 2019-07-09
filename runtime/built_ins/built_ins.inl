@@ -18,15 +18,12 @@ void BuiltinDispatchInfoBuilder::populate(Context &context, Device &device, EBui
     grabKernels(std::forward<KernelsDescArgsT>(desc)...);
 }
 
-template <typename HWFamily>
-BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device)
-    : BuiltinDispatchInfoBuilder(kernelsLib) {
+BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device) : BuiltinDispatchInfoBuilder(kernelsLib) {
     BuiltinDispatchInfoBuilder::populate(context, device, EBuiltInOps::AuxTranslation, "", "fullCopy", baseKernel);
     resizeKernelInstances(5);
 }
 
-template <typename HWFamily>
-bool BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
+bool BuiltInOp<EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
     size_t kernelInstanceNumber = 0;
     resizeKernelInstances(operationParams.memObjsForAuxTranslation->size());
     multiDispatchInfo.setBuiltinOpParams(operationParams);
@@ -55,8 +52,7 @@ bool BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiD
     return true;
 }
 
-template <typename HWFamily>
-void BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::resizeKernelInstances(size_t size) const {
+void BuiltInOp<EBuiltInOps::AuxTranslation>::resizeKernelInstances(size_t size) const {
     convertToNonAuxKernel.reserve(size);
     convertToAuxKernel.reserve(size);
 

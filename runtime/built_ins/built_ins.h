@@ -174,7 +174,6 @@ class BuiltinDispatchInfoBuilder;
 
 class BuiltIns {
   public:
-    using HWFamily = int;
     std::pair<std::unique_ptr<BuiltinDispatchInfoBuilder>, std::once_flag> BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::COUNT)];
 
     BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps op, Context &context, Device &device);
@@ -232,7 +231,7 @@ class BuiltInOwnershipWrapper : public NonCopyableOrMovableClass {
     BuiltinDispatchInfoBuilder *builder = nullptr;
 };
 
-template <typename HWFamily, EBuiltInOps OpCode>
+template <EBuiltInOps OpCode>
 class BuiltInOp;
 
 } // namespace NEO
