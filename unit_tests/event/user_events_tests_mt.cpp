@@ -120,6 +120,7 @@ TEST_F(EventTests, givenoneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFini
         cl_event returnedEvent = nullptr;
 
         std::atomic_bool go{false};
+        std::atomic_bool updateEvent{true};
 
         std::thread t([&]() {
             while (!go)
@@ -132,7 +133,9 @@ TEST_F(EventTests, givenoneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFini
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         std::thread t2([&]() {
-            castToObject<Event>(returnedEvent)->updateExecutionStatus();
+            while (updateEvent) {
+                castToObject<Event>(returnedEvent)->updateExecutionStatus();
+            }
         });
 
         go = true;
@@ -141,6 +144,7 @@ TEST_F(EventTests, givenoneThreadUpdatingUserEventAnotherWaitingOnFinishWhenFini
         EXPECT_EQ(pCmdQ->latestTaskCountWaited, i + 1);
 
         t.join();
+        updateEvent = false;
         t2.join();
         clReleaseEvent(returnedEvent);
     }

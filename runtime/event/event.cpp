@@ -505,6 +505,10 @@ void Event::submitCommand(bool abortTasks) {
                 updateTaskCount(this->cmdQueue->getCommandStreamReceiver().peekTaskCount());
             }
         }
+        //make sure that task count is synchronized for events with kernels
+        if (!this->eventWithoutCommand && !abortTasks) {
+            this->synchronizeTaskCount();
+        }
     }
 }
 
