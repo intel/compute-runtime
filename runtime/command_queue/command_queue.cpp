@@ -146,6 +146,11 @@ bool CommandQueue::isQueueBlocked() {
             UNRECOVERABLE_IF(this->virtualEvent == nullptr);
 
             if (this->virtualEvent->isStatusCompletedByTermination(executionStatus) == false) {
+                //it may happen that virtual event is submitted but doesn't have task count assigned yet
+                if (this->virtualEvent->peekTaskCount() == Event::eventNotReady) {
+                    return true;
+                }
+
                 taskCount = this->virtualEvent->peekTaskCount();
                 flushStamp->setStamp(this->virtualEvent->flushStamp->peekStamp());
                 taskLevel = this->virtualEvent->taskLevel;
