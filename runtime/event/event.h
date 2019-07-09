@@ -175,8 +175,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     //    "A command is considered complete if its execution status
     //     is CL_COMPLETE or a negative value."
 
-    bool isStatusCompleted(const int32_t *executionStatusSnapshot) {
-        return (*executionStatusSnapshot == CL_COMPLETE) || (*executionStatusSnapshot < 0);
+    bool isStatusCompleted(const int32_t executionStatusSnapshot) {
+        return executionStatusSnapshot <= CL_COMPLETE;
     }
 
     bool updateStatusAndCheckCompletion();

@@ -108,7 +108,7 @@ Event::~Event() {
     submitCommand(true);
 
     int32_t lastStatus = executionStatus;
-    if (isStatusCompleted(&lastStatus) == false) {
+    if (isStatusCompleted(lastStatus) == false) {
         transitionExecutionStatus(-1);
         DEBUG_BREAK_IF(peekHasCallbacks() || peekHasChildEvents());
     }
@@ -346,7 +346,7 @@ void Event::updateExecutionStatus() {
     }
 
     int32_t statusSnapshot = executionStatus;
-    if (isStatusCompleted(&statusSnapshot)) {
+    if (isStatusCompleted(statusSnapshot)) {
         executeCallbacks(statusSnapshot);
         return;
     }
@@ -395,7 +395,7 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
 
     int32_t status = transitionStatus;
     (void)status;
-    DEBUG_BREAK_IF(!(isStatusCompleted(&status) || (peekIsSubmitted(status))));
+    DEBUG_BREAK_IF(!(isStatusCompleted(status) || (peekIsSubmitted(status))));
 
     uint32_t taskLevelToPropagate = Event::eventNotReady;
 
@@ -427,7 +427,7 @@ bool Event::setStatus(cl_int status) {
 
     DBG_LOG(EventsDebugEnable, "setStatus event", this, " new status", status, "previousStatus", prevStatus);
 
-    if (isStatusCompleted(&prevStatus)) {
+    if (isStatusCompleted(prevStatus)) {
         return false;
     }
 
@@ -439,14 +439,14 @@ bool Event::setStatus(cl_int status) {
         return false;
     }
 
-    if ((status == CL_SUBMITTED) || (isStatusCompleted(&status))) {
+    if ((status == CL_SUBMITTED) || (isStatusCompleted(status))) {
         bool abortBlockedTasks = isStatusCompletedByTermination(status);
         submitCommand(abortBlockedTasks);
     }
 
     this->incRefInternal();
     transitionExecutionStatus(status);
-    if (isStatusCompleted(&status) || (status == CL_SUBMITTED)) {
+    if (isStatusCompleted(status) || (status == CL_SUBMITTED)) {
         unblockEventsBlockedByThis(status);
     }
     executeCallbacks(status);
@@ -565,7 +565,7 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
     DEBUG_BREAK_IF(numEventsBlockingThis < 0);
 
     int32_t blockerStatus = transitionStatus;
-    DEBUG_BREAK_IF(!(isStatusCompleted(&blockerStatus) || peekIsSubmitted(blockerStatus)));
+    DEBUG_BREAK_IF(!(isStatusCompleted(blockerStatus) || peekIsSubmitted(blockerStatus)));
 
     if ((numEventsBlockingThis > 0) && (isStatusCompletedByTermination(blockerStatus) == false)) {
         return;
@@ -590,7 +590,7 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
 
 bool Event::updateStatusAndCheckCompletion() {
     auto currentStatus = updateEventAndReturnCurrentStatus();
-    return isStatusCompleted(&currentStatus);
+    return isStatusCompleted(currentStatus);
 }
 
 bool Event::isReadyForSubmission() {
