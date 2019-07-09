@@ -122,6 +122,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         pPipeControlCmd->setCommandStreamerStallEnable(true);
     }
 
+    dispatchProfilingPerfStartCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
+
     size_t currentDispatchIndex = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = *dispatchInfo.getKernel();
@@ -188,9 +190,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         // Send our indirect object data
         size_t localWorkSizes[3] = {lws.x, lws.y, lws.z};
-
-        dispatchProfilingPerfStartCommands(dispatchInfo, multiDispatchInfo, hwTimeStamps,
-                                           hwPerfCounter, commandStream, commandQueue);
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, true);
 

@@ -64,8 +64,6 @@ class HardwareInterface {
         const bool &enable);
 
     static void dispatchProfilingPerfStartCommands(
-        const DispatchInfo &dispatchInfo,
-        const MultiDispatchInfo &multiDispatchInfo,
         TagNode<HwTimeStamps> *hwTimeStamps,
         TagNode<HwPerfCounter> *hwPerfCounter,
         LinearStream *commandStream,

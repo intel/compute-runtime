@@ -50,21 +50,17 @@ inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
 
 template <typename GfxFamily>
 inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfStartCommands(
-    const DispatchInfo &dispatchInfo,
-    const MultiDispatchInfo &multiDispatchInfo,
     TagNode<HwTimeStamps> *hwTimeStamps,
     TagNode<HwPerfCounter> *hwPerfCounter,
     LinearStream *commandStream,
     CommandQueue &commandQueue) {
 
-    if (&dispatchInfo == &*multiDispatchInfo.begin()) {
-        // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
-        if (hwTimeStamps != nullptr) {
-            GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream);
-        }
-        if (hwPerfCounter != nullptr) {
-            GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(commandQueue, *hwPerfCounter, commandStream);
-        }
+    // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
+    if (hwTimeStamps != nullptr) {
+        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream);
+    }
+    if (hwPerfCounter != nullptr) {
+        GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(commandQueue, *hwPerfCounter, commandStream);
     }
 }
 
