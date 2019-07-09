@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/hardware_interface.h"
 #include "runtime/event/perf_counter.h"
@@ -18,6 +19,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -1266,7 +1268,13 @@ TEST(DispatchWalker, calculateDispatchDim) {
     }
 }
 
-HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxTranslationRequiredThenPipeControlWithStallAndDCFlushAdded) {
+HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxToNonAuxWhenTranslationRequiredThenPipeControlWithStallAndDCFlushAdded) {
+    MockContext context;
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    auto builtIns = executionEnvironment->getBuiltIns();
+    BuiltinDispatchInfoBuilder &baseBuilder = builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, context, *pDevice);
+    auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
+
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     kernelInfo.workloadInfo.workDimOffset = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -1274,11 +1282,18 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxTranslationRequiredThenPipeContro
     auto &cmdStream = pCmdQ->getCS(0);
     void *buffer = cmdStream.getCpuBase();
     kernel.auxTranslationRequired = true;
+    MockBuffer mockBuffer[2];
 
-    MockMultiDispatchInfo multiDispatchInfo(&kernel);
-    DispatchInfo di1(&kernel, 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0));
-    di1.setPipeControlRequired(true);
-    multiDispatchInfo.push(di1);
+    MultiDispatchInfo multiDispatchInfo;
+    MemObjsForAuxTranslation memObjsForAuxTranslation;
+    memObjsForAuxTranslation.insert(&mockBuffer[0]);
+    memObjsForAuxTranslation.insert(&mockBuffer[1]);
+
+    BuiltinOpParams builtinOpsParams;
+    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
+
+    builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);
 
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
@@ -1305,7 +1320,66 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxTranslationRequiredThenPipeContro
     EXPECT_TRUE(beginPipeControl->getCommandStreamerStallEnable());
 
     auto endPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[1]));
-    EXPECT_FALSE(endPipeControl->getDcFlushEnable());
+    bool dcFlushRequired = (executionEnvironment->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN8_CORE);
+    EXPECT_EQ(dcFlushRequired, endPipeControl->getDcFlushEnable());
+    EXPECT_TRUE(endPipeControl->getCommandStreamerStallEnable());
+}
+
+HWTEST_F(DispatchWalkerTest, givenKernelWhenNonAuxToAuxWhenTranslationRequiredThenPipeControlWithStallAdded) {
+    MockContext context;
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    auto builtIns = executionEnvironment->getBuiltIns();
+    BuiltinDispatchInfoBuilder &baseBuilder = builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, context, *pDevice);
+    auto &builder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(baseBuilder);
+
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    kernelInfo.workloadInfo.workDimOffset = 0;
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    auto &cmdStream = pCmdQ->getCS(0);
+    void *buffer = cmdStream.getCpuBase();
+    kernel.auxTranslationRequired = true;
+    MockBuffer mockBuffer[2];
+
+    MultiDispatchInfo multiDispatchInfo;
+    MemObjsForAuxTranslation memObjsForAuxTranslation;
+    memObjsForAuxTranslation.insert(&mockBuffer[0]);
+    memObjsForAuxTranslation.insert(&mockBuffer[1]);
+
+    BuiltinOpParams builtinOpsParams;
+    builtinOpsParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
+
+    builder.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpsParams);
+
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        pDevice->getPreemptionMode(),
+        false);
+
+    auto sizeUsed = cmdStream.getUsed();
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, buffer, sizeUsed));
+
+    auto pipeControls = findAll<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+    ASSERT_EQ(2u, pipeControls.size());
+
+    bool dcFlushRequired = (executionEnvironment->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN8_CORE);
+
+    auto beginPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[0]));
+    EXPECT_EQ(dcFlushRequired, beginPipeControl->getDcFlushEnable());
+    EXPECT_TRUE(beginPipeControl->getCommandStreamerStallEnable());
+
+    auto endPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[1]));
+    EXPECT_EQ(dcFlushRequired, endPipeControl->getDcFlushEnable());
     EXPECT_TRUE(endPipeControl->getCommandStreamerStallEnable());
 }
 

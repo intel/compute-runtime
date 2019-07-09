@@ -279,6 +279,9 @@ class DispatchInfoBuilder {
         }
     }
 
+    DispatchInfo &getDispatchInfo(size_t index) { return dispatchInfos[index]; }
+    static constexpr size_t getMaxNumDispatches() { return numDispatches; }
+
   protected:
     static bool supportsSplit() {
         return (Mode == SplitDispatch::SplitMode::WalkerSplit);
@@ -418,10 +421,6 @@ class DispatchInfoBuilder {
 
     static constexpr uint32_t getDispatchId(SplitDispatch::RegionCoordX x) {
         return static_cast<uint32_t>(x);
-    }
-
-    static constexpr size_t getMaxNumDispatches() {
-        return numDispatches;
     }
 
     static const size_t numDispatches = (Mode == SplitDispatch::SplitMode::WalkerSplit) ? 1 : powConst((static_cast<uint32_t>(Mode) + 1), // 1 (middle) 2 (middle + right/bottom) or 3 (lef/top + middle + right/mottom)

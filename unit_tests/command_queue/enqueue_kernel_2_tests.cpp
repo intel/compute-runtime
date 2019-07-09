@@ -655,6 +655,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
     template <typename FamilyType>
     class MyCmdQ : public CommandQueueHw<FamilyType> {
       public:
+        using CommandQueueHw<FamilyType>::commandStream;
         MyCmdQ(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
         void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
                                     AuxTranslationDirection auxTranslationDirection) override {
@@ -733,14 +734,19 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
 
     EXPECT_EQ(&buffer2, *std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).begin());
     EXPECT_EQ(&buffer2, *std::get<MemObjsForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).begin());
-    uint32_t pipeControlCount = 0;
-    for (auto dispatchInfo : cmdQ.dispatchInfos) {
-        if (dispatchInfo.isPipeControlRequired()) {
-            ++pipeControlCount;
-        }
-    }
 
-    EXPECT_EQ(4u, pipeControlCount);
+    auto cmdStream = cmdQ.commandStream;
+    auto sizeUsed = cmdStream->getUsed();
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), sizeUsed));
+
+    auto pipeControls = findAll<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+    auto additionalPcCount = PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation() / sizeof(typename FamilyType::PIPE_CONTROL);
+
+    // |AuxToNonAux|NDR|NonAuxToAux|
+    ASSERT_EQ(4u + additionalPcCount, pipeControls.size());
+
     ASSERT_EQ(2u, cmdQ.auxTranslationDirections.size());
     EXPECT_EQ(AuxTranslationDirection::AuxToNonAux, cmdQ.auxTranslationDirections[0]);
     EXPECT_EQ(AuxTranslationDirection::NonAuxToAux, cmdQ.auxTranslationDirections[1]);

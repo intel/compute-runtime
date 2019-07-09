@@ -23,35 +23,6 @@ BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, Context 
     resizeKernelInstances(5);
 }
 
-bool BuiltInOp<EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
-    size_t kernelInstanceNumber = 0;
-    resizeKernelInstances(operationParams.memObjsForAuxTranslation->size());
-    multiDispatchInfo.setBuiltinOpParams(operationParams);
-    for (auto &memObj : *operationParams.memObjsForAuxTranslation) {
-        DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder;
-        auto graphicsAllocation = memObj->getGraphicsAllocation();
-        size_t allocationSize = alignUp(memObj->getSize(), 512);
-
-        if (AuxTranslationDirection::AuxToNonAux == operationParams.auxTranslationDirection) {
-            builder.setKernel(convertToNonAuxKernel.at(kernelInstanceNumber++).get());
-            builder.setArg(0, memObj);
-            builder.setArgSvm(1, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), nullptr, 0u);
-        } else {
-            UNRECOVERABLE_IF(AuxTranslationDirection::NonAuxToAux != operationParams.auxTranslationDirection);
-            builder.setKernel(convertToAuxKernel.at(kernelInstanceNumber++).get());
-            builder.setArgSvm(0, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), nullptr, 0u);
-            builder.setArg(1, memObj);
-        }
-
-        size_t xGws = allocationSize / 16;
-
-        builder.setDispatchGeometry(Vec3<size_t>{xGws, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
-        builder.bake(multiDispatchInfo);
-    }
-
-    return true;
-}
-
 void BuiltInOp<EBuiltInOps::AuxTranslation>::resizeKernelInstances(size_t size) const {
     convertToNonAuxKernel.reserve(size);
     convertToAuxKernel.reserve(size);

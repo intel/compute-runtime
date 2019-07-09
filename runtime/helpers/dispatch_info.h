@@ -9,6 +9,7 @@
 
 #include "core/helpers/vec.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/helpers/registered_method_dispatcher.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/utilities/stackvec.h"
@@ -21,14 +22,15 @@ namespace NEO {
 class Kernel;
 
 class DispatchInfo {
+
   public:
+    using DispatchCommandMethodT = void(LinearStream &commandStream);
+
     DispatchInfo() = default;
     DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset)
         : kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset) {}
     DispatchInfo(Kernel *kernel, uint32_t dim, Vec3<size_t> gws, Vec3<size_t> elws, Vec3<size_t> offset, Vec3<size_t> agws, Vec3<size_t> lws, Vec3<size_t> twgs, Vec3<size_t> nwgs, Vec3<size_t> swgs)
         : kernel(kernel), dim(dim), gws(gws), elws(elws), offset(offset), agws(agws), lws(lws), twgs(twgs), nwgs(nwgs), swgs(swgs) {}
-    bool isPipeControlRequired() const { return pipeControlRequired; }
-    void setPipeControlRequired(bool blocking) { this->pipeControlRequired = blocking; }
     bool usesSlm() const;
     bool usesStatelessPrintfSurface() const;
     uint32_t getRequiredScratchSize() const;
@@ -56,8 +58,10 @@ class DispatchInfo {
     bool peekCanBePartitioned() const { return canBePartitioned; }
     void setCanBePartitioned(bool canBePartitioned) { this->canBePartitioned = canBePartitioned; }
 
+    RegisteredMethodDispatcher<DispatchCommandMethodT> dispatchInitCommands;
+    RegisteredMethodDispatcher<DispatchCommandMethodT> dispatchEpilogueCommands;
+
   protected:
-    bool pipeControlRequired = false;
     bool canBePartitioned = false;
     Kernel *kernel = nullptr;
     uint32_t dim = 0;

@@ -521,22 +521,6 @@ void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
     getCommandStreamReceiver().releaseIndirectHeap(heapType);
 }
 
-void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
-                                          AuxTranslationDirection auxTranslationDirection) {
-    if (!multiDispatchInfo.empty()) {
-        multiDispatchInfo.rbegin()->setPipeControlRequired(true);
-    }
-    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
-    BuiltinOpParams dispatchParams;
-
-    dispatchParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
-    dispatchParams.auxTranslationDirection = auxTranslationDirection;
-
-    builder.buildDispatchInfos(multiDispatchInfo, dispatchParams);
-
-    multiDispatchInfo.rbegin()->setPipeControlRequired(true);
-}
-
 void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies) {
     auto allocator = getCommandStreamReceiver().getTimestampPacketAllocator();
 

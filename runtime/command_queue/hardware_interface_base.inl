@@ -114,18 +114,11 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
     DEBUG_BREAK_IF(offsetInterfaceDescriptorTable % 64 != 0);
 
-    if (mainKernel->isAuxTranslationRequired()) {
-        using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-        auto pPipeControlCmd = static_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
-        *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
-        pPipeControlCmd->setDcFlushEnable(true);
-        pPipeControlCmd->setCommandStreamerStallEnable(true);
-    }
-
     dispatchProfilingPerfStartCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
 
     size_t currentDispatchIndex = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
+        dispatchInfo.dispatchInitCommands(*commandStream);
         auto &kernel = *dispatchInfo.getKernel();
         DEBUG_BREAK_IF(!(dispatchInfo.getDim() >= 1 && dispatchInfo.getDim() <= 3));
         DEBUG_BREAK_IF(!(dispatchInfo.getGWS().z == 1 || dispatchInfo.getDim() == 3));
@@ -203,14 +196,9 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                       offsetInterfaceDescriptorTable, numberOfWorkgroups, startOfWorkgroups);
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, false);
-        if (dispatchInfo.isPipeControlRequired()) {
-            using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-            auto pPipeControlCmd = static_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
-            *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
-            pPipeControlCmd->setCommandStreamerStallEnable(true);
-        }
 
         currentDispatchIndex++;
+        dispatchInfo.dispatchEpilogueCommands(*commandStream);
     }
     if (mainKernel->requiresCacheFlushCommand(commandQueue)) {
         uint64_t postSyncAddress = 0;

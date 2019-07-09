@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/command_queue/enqueue_barrier.h"
 #include "runtime/command_queue/enqueue_copy_buffer.h"
 #include "runtime/command_queue/enqueue_copy_buffer_rect.h"
@@ -98,5 +99,18 @@ cl_int CommandQueueHw<Family>::enqueueMarkerForReadWriteOperation(MemObj *memObj
     }
 
     return CL_SUCCESS;
+}
+
+template <typename Family>
+void CommandQueueHw<Family>::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, MemObjsForAuxTranslation &memObjsForAuxTranslation,
+                                                    AuxTranslationDirection auxTranslationDirection) {
+    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
+    auto &auxTranslationBuilder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(builder);
+    BuiltinOpParams dispatchParams;
+
+    dispatchParams.memObjsForAuxTranslation = &memObjsForAuxTranslation;
+    dispatchParams.auxTranslationDirection = auxTranslationDirection;
+
+    auxTranslationBuilder.buildDispatchInfosForAuxTranslation<Family>(multiDispatchInfo, dispatchParams);
 }
 } // namespace NEO
