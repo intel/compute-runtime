@@ -20,7 +20,7 @@ class clReleaseCommandQueueTypeTests : public DeviceHostQueueFixture<T> {};
 
 TYPED_TEST_CASE(clReleaseCommandQueueTypeTests, QueueTypes);
 
-TYPED_TEST(clReleaseCommandQueueTypeTests, returnsSucess) {
+TYPED_TEST(clReleaseCommandQueueTypeTests, GivenValidCmdQueueWhenReleasingCmdQueueThenSucessIsReturned) {
     using BaseType = typename TypeParam::BaseType;
 
     auto queue = this->createClQueue();
@@ -32,7 +32,7 @@ TYPED_TEST(clReleaseCommandQueueTypeTests, returnsSucess) {
     EXPECT_EQ(CL_SUCCESS, this->retVal);
 }
 
-TEST(clReleaseCommandQueueTypeTests, nullCommandQueueReturnsError) {
+TEST(clReleaseCommandQueueTypeTests, GivenNullCmdQueueWhenReleasingCmdQueueThenClInvalidCommandQueueErrorIsReturned) {
     auto retVal = clReleaseCommandQueue(nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
@@ -42,7 +42,7 @@ namespace ULT {
 
 typedef api_tests clReleaseCommandQueueTests;
 
-TEST_F(clReleaseCommandQueueTests, givenBlockedEnqueueWithOutputEventStoredAsVirtualEventWhenReleaseCommandQueueIsCalledThenInternalRefCountIsDecrementedAndQueueDeleted) {
+TEST_F(clReleaseCommandQueueTests, givenBlockedEnqueueWithOutputEventStoredAsVirtualEventWhenReleasingCmdQueueThenInternalRefCountIsDecrementedAndQueueDeleted) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
     Device *device = (Device *)devices[0];
