@@ -243,7 +243,7 @@ HWTEST_F(BarrierTest, givenBlockedCommandQueueAndEnqueueBarrierWithWaitlistRetur
     clReleaseEvent(event);
 }
 
-HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEventIsSignaledThenNewCommandStreamIsAcquired) {
+HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEventIsSignaledThenNewCommandStreamIsNotAcquired) {
     UserEvent event2(&pCmdQ->getContext());
     cl_event eventWaitList[] =
         {
@@ -276,7 +276,7 @@ HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEve
 
     EXPECT_EQ(0u, commandStreamStart);
     EXPECT_GT(commandStreamStart2, 0u);
-    EXPECT_NE(commandStreamBuffer2, commandStreamBuffer);
+    EXPECT_EQ(commandStreamBuffer2, commandStreamBuffer);
     EXPECT_GE(commandStream.getMaxAvailableSpace(), commandStream.getMaxAvailableSpace());
 
     clReleaseEvent(event);

@@ -105,6 +105,7 @@ class CommandStreamReceiver {
     uint32_t peekTaskCount() const { return taskCount; }
 
     uint32_t peekTaskLevel() const { return taskLevel; }
+    FlushStamp obtainCurrentFlushStamp() const;
 
     uint32_t peekLatestSentTaskCount() const { return latestSentTaskCount; }
 

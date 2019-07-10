@@ -256,31 +256,9 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
         return completionStamp;
     }
 
-    bool blocking = true;
-    auto lockCSR = this->csr.obtainUniqueOwnership();
-
-    auto &queueCommandStream = cmdQ.getCS(this->commandSize);
-    size_t offset = queueCommandStream.getUsed();
-
-    DispatchFlags dispatchFlags;
-    dispatchFlags.blocking = blocking;
-    dispatchFlags.dcFlush = shouldFlushDC(clCommandType, nullptr);
-    dispatchFlags.lowPriority = cmdQ.getPriority() == QueuePriority::LOW;
-    dispatchFlags.throttle = cmdQ.getThrottle();
-    dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(cmdQ.getDevice(), nullptr);
-
-    DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
-
-    gtpinNotifyPreFlushTask(&cmdQ);
-
-    completionStamp = csr.flushTask(queueCommandStream,
-                                    offset,
-                                    cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
-                                    cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
-                                    cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
-                                    taskLevel,
-                                    dispatchFlags,
-                                    cmdQ.getDevice());
+    completionStamp.taskCount = csr.peekTaskCount();
+    completionStamp.taskLevel = csr.peekTaskLevel();
+    completionStamp.flushStamp = csr.obtainCurrentFlushStamp();
 
     return completionStamp;
 }

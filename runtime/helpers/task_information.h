@@ -121,6 +121,9 @@ class CommandMarker : public Command {
   public:
     CommandMarker(CommandQueue &cmdQ, CommandStreamReceiver &csr, uint32_t clCommandType, uint32_t commandSize)
         : cmdQ(cmdQ), csr(csr), clCommandType(clCommandType), commandSize(commandSize) {
+        (void)this->cmdQ;
+        (void)this->clCommandType;
+        (void)this->commandSize;
     }
 
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;

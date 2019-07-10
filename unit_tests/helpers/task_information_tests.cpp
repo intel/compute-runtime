@@ -56,7 +56,7 @@ TEST(CommandTest, mapUnmapSubmitWithTerminateFlagAbortsFlush) {
     EXPECT_EQ(expectedTaskCount, completionStamp.taskCount);
 }
 
-TEST(CommandTest, markerSubmitWithoutTerminateFlagFlushesCsr) {
+TEST(CommandTest, markerSubmitWithoutTerminateFlagDosntFlushCsr) {
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr(*device->getExecutionEnvironment());
@@ -66,8 +66,8 @@ TEST(CommandTest, markerSubmitWithoutTerminateFlagFlushesCsr) {
     std::unique_ptr<Command> command(new CommandMarker(*cmdQ.get(), csr, CL_COMMAND_MARKER, 0));
     CompletionStamp completionStamp = command->submit(20, false);
 
-    auto expectedTaskCount = initialTaskCount + 1;
-    EXPECT_EQ(expectedTaskCount, completionStamp.taskCount);
+    EXPECT_EQ(initialTaskCount, completionStamp.taskCount);
+    EXPECT_EQ(initialTaskCount, csr.peekTaskCount());
 }
 
 TEST(CommandTest, markerSubmitWithTerminateFlagAbortsFlush) {
