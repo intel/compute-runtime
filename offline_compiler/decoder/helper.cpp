@@ -46,7 +46,8 @@ void readFileToVectorOfStrings(std::vector<std::string> &lines, const std::strin
     if (file.good()) {
         if (replaceTabs) {
             for (std::string line; std::getline(file, line);) {
-                std::replace_if(line.begin(), line.end(), [](auto c) { return c == '\t'; }, ' ');
+                std::replace_if(
+                    line.begin(), line.end(), [](auto c) { return c == '\t'; }, ' ');
                 lines.push_back(std::move(line));
             }
         } else {
@@ -75,7 +76,8 @@ size_t findPos(const std::vector<std::string> &lines, const std::string &whatToF
 
 PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &deviceName) {
     for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
-        if (deviceName == NEO::hardwarePrefix[productId]) {
+        if (NEO::hardwarePrefix[productId] != nullptr &&
+            deviceName == NEO::hardwarePrefix[productId]) {
             return static_cast<PRODUCT_FAMILY>(productId);
         }
     }

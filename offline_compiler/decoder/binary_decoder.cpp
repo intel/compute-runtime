@@ -17,6 +17,14 @@
 #include <cstring>
 #include <fstream>
 
+#ifdef _WIN32
+#include <direct.h>
+#define MakeDirectory _mkdir
+#else
+#include <sys/stat.h>
+#define MakeDirectory(dir) mkdir(dir, 0777)
+#endif
+
 void BinaryDecoder::setMessagePrinter(const MessagePrinter &messagePrinter) {
     this->messagePrinter = messagePrinter;
 }
@@ -496,6 +504,8 @@ int BinaryDecoder::validateInput(uint32_t argc, const char **argv) {
         if (false == iga->isKnownPlatform()) {
             messagePrinter.printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
         }
+
+        MakeDirectory(pathToDump.c_str());
     }
     return 0;
 }
