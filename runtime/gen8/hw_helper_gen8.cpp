@@ -27,9 +27,9 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
 }
 
 template <>
-void PipeControlHelper<Family>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
-    auto pCmd = PipeControlHelper<Family>::addPipeControlBase(commandStream, dcFlush);
-    pCmd->setDcFlushEnable(true);
+void PipeControlHelper<Family>::addPipeControlWithWA(LinearStream &commandStream, bool dcFlush) {
+    PipeControlHelper<Family>::addPipeControlWA(commandStream);
+    PipeControlHelper<Family>::addPipeControl(commandStream, true);
 }
 
 template class AubHelperHw<Family>;

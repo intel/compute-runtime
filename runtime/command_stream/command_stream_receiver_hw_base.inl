@@ -348,7 +348,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     // Add a PC if we have a dependency on a previous walker to avoid concurrency issues.
     if (taskLevel > this->taskLevel) {
         if (!timestampPacketWriteEnabled) {
-            PipeControlHelper<GfxFamily>::addPipeControl(commandStreamCSR, false);
+            PipeControlHelper<GfxFamily>::addPipeControlWithWA(commandStreamCSR, false);
         }
         this->taskLevel = taskLevel;
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", this->taskCount);
@@ -493,7 +493,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
-        auto pipeControlLocationSize = PipeControlHelper<GfxFamily>::getRequiredPipeControlSize();
+        auto pipeControlLocationSize = PipeControlHelper<GfxFamily>::getRequiredPipeControlSize(true);
         void *currentPipeControlForNooping = nullptr;
         void *epiloguePipeControlLocation = nullptr;
 
@@ -582,7 +582,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (!this->isStateSipSent || device.isSourceLevelDebuggerActive()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device);
     }
-    size += PipeControlHelper<GfxFamily>::getRequiredPipeControlSize();
+    size += PipeControlHelper<GfxFamily>::getRequiredPipeControlSize(true);
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
     size += getCmdSizeForL3Config();
