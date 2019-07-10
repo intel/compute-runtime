@@ -57,3 +57,12 @@ void TimestampPacketContainer::makeResident(CommandStreamReceiver &commandStream
         commandStreamReceiver.makeResident(*node->getBaseGraphicsAllocation());
     }
 }
+
+bool TimestampPacketContainer::isCompleted() const {
+    for (auto node : timestampPacketNodes) {
+        if (!node->tagForCpuAccess->isCompleted()) {
+            return false;
+        }
+    }
+    return true;
+}

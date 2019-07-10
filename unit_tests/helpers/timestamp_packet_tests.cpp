@@ -138,6 +138,17 @@ TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenCanBeReleased) {
     EXPECT_TRUE(timestampPacketStorage.canBeReleased());
 }
 
+TEST_F(TimestampPacketSimpleTests, whenIsCompletedIsCalledThenItReturnsProperTimestampPacketStatus) {
+    TimestampPacketStorage timestampPacketStorage;
+    auto &packet = timestampPacketStorage.packets[0];
+
+    EXPECT_FALSE(timestampPacketStorage.isCompleted());
+    packet.contextEnd = 0;
+    EXPECT_FALSE(timestampPacketStorage.isCompleted());
+    packet.globalEnd = 0;
+    EXPECT_TRUE(timestampPacketStorage.isCompleted());
+}
+
 TEST_F(TimestampPacketSimpleTests, givenImplicitDependencyWhenEndTagIsWrittenThenCantBeReleased) {
     TimestampPacketStorage timestampPacketStorage;
 
@@ -983,6 +994,25 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
     }
     EXPECT_EQ(1u, walkersFound);
     EXPECT_EQ(3u, semaphoresFound); // total number of semaphores found in cmdList
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenItIsQueriedForCompletionStatusThenItReturnsCurrentStatus) {
+    MockTimestampPacketContainer timestamp(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    EXPECT_FALSE(timestamp.isCompleted());
+    timestamp.getNode(0u)->tagForCpuAccess->packets[0].contextEnd = 0;
+    EXPECT_FALSE(timestamp.isCompleted());
+    timestamp.getNode(0u)->tagForCpuAccess->packets[0].globalEnd = 0;
+    EXPECT_TRUE(timestamp.isCompleted());
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWithMultipleNodesWhenItIsQueriedForCompletionStatusThenItReturnsCurrentStatus) {
+    MockTimestampPacketContainer timestamp(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    timestamp.getNode(0u)->tagForCpuAccess->packets[0].contextEnd = 0;
+    timestamp.getNode(0u)->tagForCpuAccess->packets[0].globalEnd = 0;
+    EXPECT_FALSE(timestamp.isCompleted());
+    timestamp.getNode(1u)->tagForCpuAccess->packets[0].contextEnd = 0;
+    timestamp.getNode(1u)->tagForCpuAccess->packets[0].globalEnd = 0;
+    EXPECT_TRUE(timestamp.isCompleted());
 }
 
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedThenMakeItResident) {

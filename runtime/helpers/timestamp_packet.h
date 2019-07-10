@@ -43,9 +43,12 @@ struct TimestampPacketStorage {
     }
 
     bool canBeReleased() const {
+        return isCompleted() && implicitDependenciesCount.load() == 0;
+    }
+
+    bool isCompleted() const {
         return packets[0].contextEnd != 1 &&
-               packets[0].globalEnd != 1 &&
-               implicitDependenciesCount.load() == 0;
+               packets[0].globalEnd != 1;
     }
 
     void initialize() {
@@ -80,6 +83,7 @@ class TimestampPacketContainer : public NonCopyableOrMovableClass {
     void assignAndIncrementNodesRefCounts(const TimestampPacketContainer &inputTimestampPacketContainer);
     void resolveDependencies(bool clearAllDependencies);
     void makeResident(CommandStreamReceiver &commandStreamReceiver);
+    bool isCompleted() const;
 
   protected:
     std::vector<Node *> timestampPacketNodes;
