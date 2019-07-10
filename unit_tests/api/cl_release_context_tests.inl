@@ -13,7 +13,7 @@ typedef api_tests clReleaseContextTests;
 
 namespace ULT {
 
-TEST_F(clReleaseContextTests, returnsSuccess) {
+TEST_F(clReleaseContextTests, GivenValidContextWhenReleasingContextThenSuccessIsReturned) {
     auto context = clCreateContext(
         nullptr,
         num_devices,
@@ -29,7 +29,7 @@ TEST_F(clReleaseContextTests, returnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clReleaseContextTests, nullptrReturnsError) {
+TEST_F(clReleaseContextTests, GivenNullContextWhenReleasingContextThenClInvalidContextIsReturned) {
     auto retVal = clReleaseContext(nullptr);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
