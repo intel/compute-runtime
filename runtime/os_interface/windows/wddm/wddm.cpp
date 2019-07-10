@@ -9,6 +9,7 @@
 
 #include "core/helpers/interlocked_max.h"
 #include "runtime/command_stream/preemption.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
@@ -22,6 +23,7 @@
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
+#include "runtime/platform/platform.h"
 #include "runtime/sku_info/operations/sku_info_receiver.h"
 
 #include "gmm_memory.h"
@@ -90,6 +92,8 @@ bool Wddm::init(HardwareInfo &outHardwareInfo) {
     if (hwConfig->configureHwInfo(&outHardwareInfo, &outHardwareInfo, nullptr)) {
         return false;
     }
+
+    platform()->peekExecutionEnvironment()->initGmm();
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(outHardwareInfo);
 

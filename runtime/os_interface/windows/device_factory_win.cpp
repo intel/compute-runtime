@@ -25,7 +25,6 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
     numDevices = 0;
 
     auto hardwareInfo = executionEnvironment.getMutableHardwareInfo();
-    executionEnvironment.initGmm();
     std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     if (!wddm->init(*hardwareInfo)) {
         return false;
