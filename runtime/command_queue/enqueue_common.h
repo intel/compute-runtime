@@ -235,6 +235,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
     }
 
+    bool flushDependenciesForNonKernelCommand = false;
+
     if (blitEnqueue) {
         processDispatchForBlitEnqueue(multiDispatchInfo, previousTimestampPacketNodes, eventsRequest, commandStream, commandType, blocking);
     } else if (multiDispatchInfo.empty() == false) {
@@ -247,13 +249,18 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         if (CL_COMMAND_BARRIER == commandType) {
             getCommandStreamReceiver().requestStallingPipeControlOnNextFlush();
         }
-        if (eventBuilder.getEvent()) {
-            for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
-                auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
-                if (waitlistEvent->getTimestampPacketNodes()) {
+
+        for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
+            auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
+            if (waitlistEvent->getTimestampPacketNodes()) {
+                flushDependenciesForNonKernelCommand = true;
+                if (eventBuilder.getEvent()) {
                     eventBuilder.getEvent()->addTimestampPacketNodes(*waitlistEvent->getTimestampPacketNodes());
                 }
             }
+        }
+        if (flushDependenciesForNonKernelCommand) {
+            TimestampPacketHelper::programCsrDependencies<GfxFamily>(commandStream, csrDeps);
         }
     }
 
@@ -298,7 +305,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                       devQueueHw->getDebugQueue());
                 }
             }
-        } else if (isCacheFlushCommand(commandType) || blitEnqueue) {
+        } else if (isCacheFlushCommand(commandType) || blitEnqueue || flushDependenciesForNonKernelCommand) {
             completionStamp = enqueueCommandWithoutKernel(
                 surfacesForResidency,
                 numSurfaceForResidency,

@@ -182,6 +182,8 @@ TEST_F(MarkerTest, givenMultipleEventWhenTheyArePassedToMarkerThenOutputEventHas
             &event3};
     cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
     cl_event event = nullptr;
+    auto initialTaskCount = pCmdQ->taskCount;
+
     pCmdQ->enqueueMarkerWithWaitList(
         numEventsInWaitList,
         eventWaitList,
@@ -189,8 +191,13 @@ TEST_F(MarkerTest, givenMultipleEventWhenTheyArePassedToMarkerThenOutputEventHas
 
     std::unique_ptr<Event> pEvent((Event *)(event));
 
-    EXPECT_EQ(16u, pCmdQ->taskCount);
-    EXPECT_EQ(16u, pEvent->peekTaskCount());
+    if (pCmdQ->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        EXPECT_EQ(initialTaskCount + 1, pCmdQ->taskCount);
+        EXPECT_EQ(initialTaskCount + 1, pEvent->peekTaskCount());
+    } else {
+        EXPECT_EQ(16u, pCmdQ->taskCount);
+        EXPECT_EQ(16u, pEvent->peekTaskCount());
+    }
 }
 
 TEST_F(MarkerTest, givenMultipleEventsAndCompletedUserEventWhenTheyArePassedToMarkerThenOutputEventHasHighestTaskCount) {
@@ -209,6 +216,8 @@ TEST_F(MarkerTest, givenMultipleEventsAndCompletedUserEventWhenTheyArePassedToMa
             &userEvent};
     cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
     cl_event event = nullptr;
+    auto initialTaskCount = pCmdQ->taskCount;
+
     pCmdQ->enqueueMarkerWithWaitList(
         numEventsInWaitList,
         eventWaitList,
@@ -216,8 +225,13 @@ TEST_F(MarkerTest, givenMultipleEventsAndCompletedUserEventWhenTheyArePassedToMa
 
     std::unique_ptr<Event> pEvent((Event *)(event));
 
-    EXPECT_EQ(16u, pCmdQ->taskCount);
-    EXPECT_EQ(16u, pEvent->peekTaskCount());
+    if (pCmdQ->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        EXPECT_EQ(initialTaskCount + 1, pCmdQ->taskCount);
+        EXPECT_EQ(initialTaskCount + 1, pEvent->peekTaskCount());
+    } else {
+        EXPECT_EQ(16u, pCmdQ->taskCount);
+        EXPECT_EQ(16u, pEvent->peekTaskCount());
+    }
 }
 
 HWTEST_F(MarkerTest, givenMarkerCallFollowingNdrangeCallInBatchedModeWhenWaitForEventsIsCalledThenFlushStampIsProperlyUpdated) {

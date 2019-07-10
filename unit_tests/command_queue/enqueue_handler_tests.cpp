@@ -412,9 +412,9 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDu
 }
 
 HWTEST_F(EnqueueHandlerTest, givenExternallySynchronizedParentEventWhenRequestingEnqueueWithoutGpuSubmissionThenTaskCountIsNotInherited) {
-    struct ExternallySynchEvent : Event {
-        ExternallySynchEvent(CommandQueue *cmdQueue) : Event(cmdQueue, CL_COMMAND_MARKER, 0, 0) {
-            transitionExecutionStatus(CL_COMPLETE);
+    struct ExternallySynchEvent : VirtualEvent {
+        ExternallySynchEvent(CommandQueue *cmdQueue) {
+            setStatus(CL_COMPLETE);
             this->updateTaskCount(7);
         }
         bool isExternallySynchronized() const override {

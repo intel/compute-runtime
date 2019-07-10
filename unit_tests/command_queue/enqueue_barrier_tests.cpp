@@ -186,11 +186,16 @@ HWTEST_F(BarrierTest, eventWithWaitDependenciesShouldSync) {
         &event);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, event);
-    auto pEvent = (Event *)event;
+    auto pEvent = castToObject<Event>(event);
+    auto &csr = pCmdQ->getCommandStreamReceiver();
 
     // in this case only cmdQ raises the taskLevel why csr stay intact
     EXPECT_EQ(8u, pCmdQ->taskLevel);
-    EXPECT_EQ(7u, commandStreamReceiver.peekTaskLevel());
+    if (csr.peekTimestampPacketWriteEnabled()) {
+        EXPECT_EQ(8u, commandStreamReceiver.peekTaskLevel());
+    } else {
+        EXPECT_EQ(7u, commandStreamReceiver.peekTaskLevel());
+    }
     EXPECT_EQ(pCmdQ->taskLevel, pEvent->taskLevel);
     EXPECT_EQ(8u, pEvent->taskLevel);
 
@@ -215,10 +220,17 @@ HWTEST_F(BarrierTest, givenNotBlockedCommandQueueAndEnqueueBarrierWithWaitlistRe
         eventWaitList,
         &event);
 
+    auto &csr = pCmdQ->getCommandStreamReceiver();
+
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(latestTaskCountWaitedBeforeEnqueue, this->pCmdQ->latestTaskCountWaited);
-    auto pEvent = (Event *)event;
-    EXPECT_EQ(17u, pEvent->peekTaskCount());
+    auto pEvent = castToObject<Event>(event);
+
+    if (csr.peekTimestampPacketWriteEnabled()) {
+        EXPECT_EQ(csr.peekTaskCount(), pEvent->peekTaskCount());
+    } else {
+        EXPECT_EQ(17u, pEvent->peekTaskCount());
+    }
     EXPECT_TRUE(pEvent->updateStatusAndCheckCompletion());
     delete pEvent;
 }
