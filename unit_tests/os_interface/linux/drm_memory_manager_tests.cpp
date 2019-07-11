@@ -732,7 +732,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32
     EXPECT_GE(bo->peekUnmapSize(), 0u);
     EXPECT_TRUE(allocation->is32BitAllocation());
 
-    EXPECT_EQ(memoryManager->getExternalHeapBaseAddress(), allocation->getGpuBaseAddress());
+    EXPECT_EQ(GmmHelper::canonize(memoryManager->getExternalHeapBaseAddress()), allocation->getGpuBaseAddress());
 
     EXPECT_EQ(bo->peekAllocationType(), StorageAllocatorType::BIT32_ALLOCATOR_EXTERNAL);
 
@@ -2154,7 +2154,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAllocatorWithHeapAllocatorWhenLargerFragm
     auto bo = graphicsAlloaction->getBO();
     EXPECT_EQ(allocationSize, bo->peekUnmapSize());
     EXPECT_EQ(pages3size, bo->peekSize());
-    EXPECT_EQ((uint64_t)(uintptr_t)ptr, graphicsAlloaction->getGpuAddress());
+    EXPECT_EQ(GmmHelper::canonize(ptr), graphicsAlloaction->getGpuAddress());
 
     memoryManager->freeGraphicsMemory(graphicsAlloaction);
 }
@@ -2243,7 +2243,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
 
     auto gpuPtr = drmAllocation->getGpuAddress();
 
-    auto heapBase = memoryManager->getInternalHeapBaseAddress();
+    auto heapBase = GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress());
     auto heapSize = 4 * GB;
 
     EXPECT_GE(gpuPtr, heapBase);
@@ -2281,7 +2281,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenAskedForInternalAlloc
 
     auto gpuPtr = drmAllocation->getGpuAddress();
 
-    auto heapBase = memoryManager->getInternalHeapBaseAddress();
+    auto heapBase = GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress());
     auto heapSize = 4 * GB;
 
     EXPECT_GE(gpuPtr, heapBase);
@@ -2343,7 +2343,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
 
     auto gpuPtr = drmAllocation->getGpuAddress();
 
-    auto heapBase = memoryManager->getInternalHeapBaseAddress();
+    auto heapBase = GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress());
     auto heapSize = 4 * GB;
 
     EXPECT_GE(gpuPtr, heapBase);
