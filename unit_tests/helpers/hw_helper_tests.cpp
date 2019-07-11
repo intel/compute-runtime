@@ -11,7 +11,6 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
@@ -202,21 +201,6 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     EXPECT_EQ(sizeof(PIPE_CONTROL), stream.getUsed());
     EXPECT_EQ(pipeControl, stream.getCpuBase());
     EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
-}
-
-HWTEST_F(PipeControlHelperTests, whenQueryingPipeControlSizeWithoutWaThenReturnSinglePipeControlSize) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    auto size = PipeControlHelper<FamilyType>::getRequiredPipeControlSize(false);
-    EXPECT_EQ(sizeof(PIPE_CONTROL), size);
-}
-
-HWTEST_F(PipeControlHelperTests, whenQueryingPipeControlSizeWithWaThenReturnValidPipeControlSize) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    auto size = PipeControlHelper<FamilyType>::getRequiredPipeControlSize(true);
-    size_t pipeControlsCount = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired() ? 2 : 1;
-
-    EXPECT_EQ(sizeof(PIPE_CONTROL) * pipeControlsCount, size);
 }
 
 HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIsUsedThenProperFieldsAreProgrammed) {
