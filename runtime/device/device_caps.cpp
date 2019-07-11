@@ -233,8 +233,7 @@ void Device::initializeCaps() {
     deviceInfo.preferredInteropUserSync = 1u;
 
     // OpenCL 1.2 requires 128MB minimum
-    auto maxMemAllocSize = std::max((uint64_t)(deviceInfo.globalMemSize / 2), (uint64_t)(128 * MB));
-    deviceInfo.maxMemAllocSize = std::min(maxMemAllocSize, this->hardwareCapabilities.maxMemAllocSize);
+    deviceInfo.maxMemAllocSize = std::min(std::max(deviceInfo.globalMemSize, static_cast<uint64_t>(128llu * MB)), this->hardwareCapabilities.maxMemAllocSize);
 
     deviceInfo.maxConstantBufferSize = deviceInfo.maxMemAllocSize;
 
