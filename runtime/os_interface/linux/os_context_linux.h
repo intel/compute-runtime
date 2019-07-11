@@ -7,6 +7,8 @@
 
 #include "runtime/os_interface/os_context.h"
 
+#include <vector>
+
 namespace NEO {
 class Drm;
 
@@ -18,11 +20,11 @@ class OsContextLinux : public OsContext {
                    aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority);
 
     unsigned int getEngineFlag() const { return engineFlag; }
-    uint32_t getDrmContextId() const { return drmContextId; }
+    uint32_t getDrmContextId() const { return drmContextIds[0]; }
 
   protected:
     unsigned int engineFlag = 0;
-    uint32_t drmContextId = 0;
+    std::vector<uint32_t> drmContextIds;
     Drm &drm;
 };
 } // namespace NEO

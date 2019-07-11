@@ -6,11 +6,11 @@
  */
 
 #pragma once
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/linux/engine_info.h"
 #include "runtime/os_interface/linux/memory_info.h"
 #include "runtime/utilities/api_intercept.h"
 
+#include "engine_node.h"
 #include "igfxfmid.h"
 
 #include <cerrno>
@@ -65,7 +65,7 @@ class Drm {
     uint32_t createDrmContext();
     void destroyDrmContext(uint32_t drmContextId);
     void setLowPriorityContextParam(uint32_t drmContextId);
-    unsigned int bindDrmContext(uint32_t drmContextId, DeviceBitfield deviceBitfield, aub_stream::EngineType engineType);
+    unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType);
 
     void setGtType(GTTYPE eGtType) { this->eGtType = eGtType; }
     GTTYPE getGtType() const { return this->eGtType; }

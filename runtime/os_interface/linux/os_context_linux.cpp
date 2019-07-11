@@ -24,15 +24,21 @@ OsContext *OsContext::create(OSInterface *osInterface, uint32_t contextId, Devic
 OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield deviceBitfield,
                                aub_stream::EngineType engineType, PreemptionMode preemptionMode, bool lowPriority)
     : OsContext(contextId, deviceBitfield, engineType, preemptionMode, lowPriority), drm(drm) {
-
-    this->drmContextId = drm.createDrmContext();
-    if (drm.isPreemptionSupported() && lowPriority) {
-        drm.setLowPriorityContextParam(this->drmContextId);
+    for (auto deviceIndex = 0u; deviceIndex < deviceBitfield.size(); deviceIndex++) {
+        if (deviceBitfield.test(deviceIndex)) {
+            auto drmContextId = drm.createDrmContext();
+            if (drm.isPreemptionSupported() && lowPriority) {
+                drm.setLowPriorityContextParam(drmContextId);
+            }
+            this->engineFlag = drm.bindDrmContext(drmContextId, deviceIndex, engineType);
+            this->drmContextIds.push_back(drmContextId);
+        }
     }
-    this->engineFlag = drm.bindDrmContext(this->drmContextId, deviceBitfield, engineType);
 }
 
 OsContextLinux::~OsContextLinux() {
-    drm.destroyDrmContext(drmContextId);
+    for (auto drmContextId : drmContextIds) {
+        drm.destroyDrmContext(drmContextId);
+    }
 }
 } // namespace NEO
