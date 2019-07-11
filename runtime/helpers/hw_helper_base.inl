@@ -149,14 +149,14 @@ bool HwHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const 
 }
 
 template <typename Family>
-typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndProgramPostSyncOperation(LinearStream *commandStream,
+typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndProgramPostSyncOperation(LinearStream &commandStream,
                                                                                                        POST_SYNC_OPERATION operation,
                                                                                                        uint64_t gpuAddress,
                                                                                                        uint64_t immediateData,
                                                                                                        bool dcFlush) {
-    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
-    *pipeControl = Family::cmdInitPipeControl;
-    pipeControl->setCommandStreamerStallEnable(true);
+    addPipeControlWA(commandStream);
+
+    auto pipeControl = obtainPipeControl(commandStream, dcFlush);
     pipeControl->setPostSyncOperation(operation);
     pipeControl->setAddress(static_cast<uint32_t>(gpuAddress & 0x0000FFFFFFFFULL));
     pipeControl->setAddressHigh(static_cast<uint32_t>(gpuAddress >> 32));
@@ -168,9 +168,7 @@ typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndPr
 }
 
 template <typename GfxFamily>
-typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::addPipeControlBase(LinearStream &commandStream, bool dcFlush) {
-    PipeControlHelper<GfxFamily>::addPipeControlWA(commandStream);
-
+typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::obtainPipeControl(LinearStream &commandStream, bool dcFlush) {
     auto pCmd = reinterpret_cast<PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));
     *pCmd = GfxFamily::cmdInitPipeControl;
     pCmd->setCommandStreamerStallEnable(true);
@@ -194,14 +192,19 @@ void PipeControlHelper<GfxFamily>::addPipeControlWA(LinearStream &commandStream)
 }
 
 template <typename GfxFamily>
-void PipeControlHelper<GfxFamily>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
-    PipeControlHelper<GfxFamily>::addPipeControlBase(commandStream, dcFlush);
+typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
+    return PipeControlHelper<GfxFamily>::obtainPipeControl(commandStream, dcFlush);
 }
 
 template <typename GfxFamily>
-int PipeControlHelper<GfxFamily>::getRequiredPipeControlSize() {
+size_t PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl() {
+    return sizeof(typename GfxFamily::PIPE_CONTROL);
+}
+
+template <typename GfxFamily>
+size_t PipeControlHelper<GfxFamily>::getSizeForPipeControlWithPostSyncOperation() {
     const auto pipeControlCount = HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2u : 1u;
-    return pipeControlCount * sizeof(typename GfxFamily::PIPE_CONTROL);
+    return pipeControlCount * getSizeForSinglePipeControl();
 }
 
 template <typename GfxFamily>

@@ -123,15 +123,15 @@ void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKer
 
     uint64_t criticalSectionAddress = (uint64_t)&igilQueue->m_controls.m_CriticalSection;
 
-    addPipeControlCmdWa();
-
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&slbCS, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, criticalSectionAddress, ExecutionModelCriticalSection::Free, false);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(slbCS,
+                                                                               PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                                                                               criticalSectionAddress, ExecutionModelCriticalSection::Free, false);
 
     uint64_t tagAddress = reinterpret_cast<uint64_t>(device->getDefaultEngine().commandStreamReceiver->getTagAddress());
 
-    addPipeControlCmdWa();
-
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&slbCS, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, tagAddress, taskCount, false);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(slbCS,
+                                                                               PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                                                                               tagAddress, taskCount, false);
 
     addMediaStateClearCmds();
 

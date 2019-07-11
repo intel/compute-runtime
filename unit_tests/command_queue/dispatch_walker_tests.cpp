@@ -1368,6 +1368,9 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
     if (checkForStart) {
         auto itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itorPipeCtrl);
+        if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+            itorPipeCtrl++;
+        }
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
         ASSERT_NE(nullptr, pipeControl);
 
@@ -1377,6 +1380,9 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
 
         itorPipeCtrl++;
         itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(itorPipeCtrl, cmdList.end());
+        if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+            itorPipeCtrl++;
+        }
         ASSERT_NE(cmdList.end(), itorPipeCtrl);
         pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
         ASSERT_NE(nullptr, pipeControl);

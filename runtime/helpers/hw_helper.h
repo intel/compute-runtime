@@ -192,15 +192,18 @@ template <typename GfxFamily>
 struct PipeControlHelper {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
-    static PIPE_CONTROL *obtainPipeControlAndProgramPostSyncOperation(LinearStream *commandStream,
+    static PIPE_CONTROL *obtainPipeControlAndProgramPostSyncOperation(LinearStream &commandStream,
                                                                       POST_SYNC_OPERATION operation,
                                                                       uint64_t gpuAddress,
                                                                       uint64_t immediateData,
                                                                       bool dcFlush);
     static void addPipeControlWA(LinearStream &commandStream);
-    static PIPE_CONTROL *addPipeControlBase(LinearStream &commandStream, bool dcFlush);
-    static void addPipeControl(LinearStream &commandStream, bool dcFlush);
-    static int getRequiredPipeControlSize();
+    static PIPE_CONTROL *addPipeControl(LinearStream &commandStream, bool dcFlush);
+    static size_t getSizeForPipeControlWithPostSyncOperation();
+    static size_t getSizeForSinglePipeControl();
+
+  protected:
+    static PIPE_CONTROL *obtainPipeControl(LinearStream &commandStream, bool dcFlush);
 };
 
 union SURFACE_STATE_BUFFER_LENGTH {

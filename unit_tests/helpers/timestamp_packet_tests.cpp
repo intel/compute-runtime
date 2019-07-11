@@ -398,6 +398,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
     uint32_t walkersFound = 0;
     for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
         if (genCmdCast<GPGPU_WALKER *>(*it)) {
+            if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+                auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
+                EXPECT_NE(nullptr, pipeControl);
+            }
             auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
             EXPECT_NE(nullptr, pipeControl);
             auto expectedAddress = timestampPacket.getNode(walkersFound)->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
@@ -503,6 +507,10 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     bool walkerFound = false;
     for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
         if (genCmdCast<GPGPU_WALKER *>(*it)) {
+            if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+                auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
+                EXPECT_NE(nullptr, pipeControl);
+            }
             walkerFound = true;
             auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
             ASSERT_NE(nullptr, pipeControl);

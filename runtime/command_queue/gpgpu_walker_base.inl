@@ -111,7 +111,9 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     // PIPE_CONTROL for global timestamp
     uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
 
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, timeStampAddress, 0llu, false);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(*commandStream,
+                                                                               PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
+                                                                               timeStampAddress, 0llu, false);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
     timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextStartTS);

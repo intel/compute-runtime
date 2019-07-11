@@ -11,6 +11,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
@@ -196,10 +197,11 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
     expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
 
-    auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(&stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, false);
+    auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, false);
+    auto additionalPcSize = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired() ? sizeof(PIPE_CONTROL) : 0u;
 
-    EXPECT_EQ(sizeof(PIPE_CONTROL), stream.getUsed());
-    EXPECT_EQ(pipeControl, stream.getCpuBase());
+    EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
+    EXPECT_EQ(pipeControl, ptrOffset(stream.getCpuBase(), additionalPcSize));
     EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
 }
 
@@ -218,10 +220,12 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
     expectedPipeControl.setImmediateData(immediateData);
 
-    auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(&stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, false);
+    auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, false);
 
-    EXPECT_EQ(sizeof(PIPE_CONTROL), stream.getUsed());
-    EXPECT_EQ(pipeControl, stream.getCpuBase());
+    auto additionalPcSize = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired() ? sizeof(PIPE_CONTROL) : 0u;
+
+    EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
+    EXPECT_EQ(pipeControl, ptrOffset(stream.getCpuBase(), additionalPcSize));
     EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
 }
 

@@ -62,21 +62,18 @@ template <typename GfxFamily>
 size_t ExperimentalCommandBuffer::getTimeStampPipeControlSize() noexcept {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    //two P_C for timestamps, two prior them for WA - Enable CS Stall
-    return 4 * sizeof(PIPE_CONTROL);
+    // Two P_C for timestamps
+    return 2 * PipeControlHelper<GfxFamily>::getSizeForPipeControlWithPostSyncOperation();
 }
 
 template <typename GfxFamily>
 void ExperimentalCommandBuffer::addTimeStampPipeControl() {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    auto pCmd = currentStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pCmd = GfxFamily::cmdInitPipeControl;
-    pCmd->setCommandStreamerStallEnable(true);
-
     uint64_t timeStampAddress = timestamps->getGpuAddress() + timestampsOffset;
 
-    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(currentStream.get(), PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, timeStampAddress, 0llu, false);
+    PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(*currentStream,
+                                                                               PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, timeStampAddress, 0llu, false);
 
     //moving to next chunk
     timestampsOffset += sizeof(uint64_t);

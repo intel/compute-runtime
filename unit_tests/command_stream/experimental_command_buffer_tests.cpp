@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -88,17 +89,20 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     hwParserExCmdBuffer.parseCommands<FamilyType>(*mockExCmdBuffer->currentStream, 0);
     it = hwParserExCmdBuffer.cmdList.begin();
     GenCmdList::iterator end = hwParserExCmdBuffer.cmdList.end();
-    //1st PIPE_CONTROL with CS Stall
-    ASSERT_NE(end, it);
-    pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-    ASSERT_NE(nullptr, pipeControl);
-    EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
+
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+        //1st PIPE_CONTROL with CS Stall
+        ASSERT_NE(end, it);
+        pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        ASSERT_NE(nullptr, pipeControl);
+        EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
+        it++;
+    }
 
     //2nd PIPE_CONTROL with ts addr
     uint64_t timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress();
     uint32_t expectedTsAddress = static_cast<uint32_t>(timeStampAddress & 0x0000FFFFFFFFULL);
     uint32_t expectedTsAddressHigh = static_cast<uint32_t>(timeStampAddress >> 32);
-    it++;
     ASSERT_NE(end, it);
     pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
     ASSERT_NE(nullptr, pipeControl);
@@ -116,12 +120,14 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(exAllocationGpuAddr, semaphoreCmd->getSemaphoreGraphicsAddress());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
-    //3rd PIPE_CONTROL with CS stall
-    it++;
-    ASSERT_NE(end, it);
-    pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-    ASSERT_NE(nullptr, pipeControl);
-    EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+        //3rd PIPE_CONTROL with CS stall
+        it++;
+        ASSERT_NE(end, it);
+        pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        ASSERT_NE(nullptr, pipeControl);
+        EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
+    }
 
     //4th PIPE_CONTROL with ts addr
     timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress() + sizeof(uint64_t);
@@ -212,8 +218,10 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     hwParserExCmdBuffer.parseCommands<FamilyType>(*mockExCmdBuffer->currentStream, cmbBufferOffset);
     it = hwParserExCmdBuffer.cmdList.begin();
     GenCmdList::iterator end = hwParserExCmdBuffer.cmdList.end();
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+        it++;
+    }
     //2nd PIPE_CONTROL
-    it++;
     uint64_t timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress() + 2 * sizeof(uint64_t);
     uint32_t expectedTsAddress = static_cast<uint32_t>(timeStampAddress & 0x0000FFFFFFFFULL);
     uint32_t expectedTsAddressHigh = static_cast<uint32_t>(timeStampAddress >> 32);
@@ -225,7 +233,9 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(expectedTsAddress, pipeControl->getAddress());
     EXPECT_EQ(expectedTsAddressHigh, pipeControl->getAddressHigh());
     //omit SEMAPHORE_WAIT and 3rd PIPE_CONTROL
-    it++;
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+        it++;
+    }
     it++;
     //get 4th PIPE_CONTROL
     timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress() + 3 * sizeof(uint64_t);

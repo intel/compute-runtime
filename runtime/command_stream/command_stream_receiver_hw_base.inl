@@ -168,22 +168,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             currentPipeControlForNooping = epiloguePipeControlLocation;
         }
 
-        //Some architectures (SKL) requires to have pipe control prior to pipe control with tag write, add it here
-        PipeControlHelper<GfxFamily>::addPipeControlWA(commandStreamTask);
-
         auto address = getTagAllocation()->getGpuAddress();
-        auto pCmd = PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(&commandStreamTask, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, taskCount + 1, dispatchFlags.dcFlush);
-
-        if (DebugManager.flags.FlushAllCaches.get()) {
-            pCmd->setDcFlushEnable(true);
-            pCmd->setRenderTargetCacheFlushEnable(true);
-            pCmd->setInstructionCacheInvalidateEnable(true);
-            pCmd->setTextureCacheInvalidationEnable(true);
-            pCmd->setPipeControlFlushEnable(true);
-            pCmd->setVfCacheInvalidationEnable(true);
-            pCmd->setConstantCacheInvalidationEnable(true);
-            pCmd->setStateCacheInvalidationEnable(true);
-        }
+        PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStreamTask,
+                                                                                   PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                                                                                   address, taskCount + 1, dispatchFlags.dcFlush);
 
         this->latestSentTaskCount = taskCount + 1;
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", taskCount);
@@ -493,7 +481,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
-        auto pipeControlLocationSize = PipeControlHelper<GfxFamily>::getRequiredPipeControlSize();
+        auto pipeControlLocationSize = PipeControlHelper<GfxFamily>::getSizeForPipeControlWithPostSyncOperation();
         void *currentPipeControlForNooping = nullptr;
         void *epiloguePipeControlLocation = nullptr;
 
@@ -582,7 +570,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (!this->isStateSipSent || device.isSourceLevelDebuggerActive()) {
         size += PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device);
     }
-    size += PipeControlHelper<GfxFamily>::getRequiredPipeControlSize();
+    size += PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl();
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
     size += getCmdSizeForL3Config();
