@@ -28,13 +28,13 @@ class EventFixture : public api_fixture, public T {
 
 typedef EventFixture<::testing::Test> clEventTests;
 
-TEST_F(clEventTests, releaseNullptr) {
+TEST_F(clEventTests, GivenNullEventWhenReleasingEventThenClInvalidEventErrorIsReturned) {
     auto retVal = clReleaseEvent(nullptr);
     EXPECT_EQ(CL_INVALID_EVENT, retVal);
 }
 
-TEST_F(clEventTests, releaseValidEvent) {
-    Event *pEvent = new Event(nullptr, 0, 0, 0);
+TEST_F(clEventTests, GivenValidEventWhenReleasingEventTheSuccessIsReturned) {
+    auto *pEvent = new Event(nullptr, 0, 0, 0);
     ASSERT_NE(nullptr, pEvent);
 
     cl_event event = (cl_event)pEvent;
@@ -43,43 +43,47 @@ TEST_F(clEventTests, releaseValidEvent) {
     //no delete operation. clReleaseEvent should do this for us
 }
 
-TEST_F(clEventTests, releaseAfterRetain) {
-    Event *pEvent = new Event(nullptr, 0, 0, 0);
+TEST_F(clEventTests, GivenValidEventWhenRetainedAndReleasedThenReferenceCountIsUpdated) {
+    auto *pEvent = new Event(nullptr, 0, 0, 0);
     ASSERT_NE(nullptr, pEvent);
 
     cl_event event = (cl_event)pEvent;
     auto retVal = clRetainEvent(event);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pEvent->getReference(), 2);
+
     retVal = clReleaseEvent(event);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pEvent->getReference(), 1);
+
     delete pEvent;
 }
 
-TEST_F(clEventTests, releaseTwiceAfterRetain) {
-    Event *pEvent = new Event(nullptr, 0, 0, 0);
+TEST_F(clEventTests, GivenValidEventWhenRetainedAndReleasedTwiceThenClSuccessIsReturned) {
+    auto *pEvent = new Event(nullptr, 0, 0, 0);
     ASSERT_NE(nullptr, pEvent);
 
     cl_event event = (cl_event)pEvent;
     auto retVal = clRetainEvent(event);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pEvent->getReference(), 2);
+
     retVal = clReleaseEvent(event);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pEvent->getReference(), 1);
+
     retVal = clReleaseEvent(event);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEventTests, retainNullptr) {
+TEST_F(clEventTests, GivenNullEventWhenRetainingEventThenClInvalidEventErrorIsReturned) {
     auto retVal = clRetainEvent(nullptr);
     EXPECT_EQ(CL_INVALID_EVENT, retVal);
 }
 
-TEST_F(clEventTests, getEventsCommandQueue) {
+TEST_F(clEventTests, GivenValidEventWhenGettingEventInfoThenSuccessIsReturned) {
     cl_command_queue cmdQ;
-    Event *pEvent = new Event(nullptr, 0, 0, 0);
+    auto *pEvent = new Event(nullptr, 0, 0, 0);
 
     cl_event event = (cl_event)pEvent;
     auto retVal = clGetEventInfo(event, CL_EVENT_COMMAND_QUEUE, sizeof(cmdQ), &cmdQ, nullptr);
@@ -88,14 +92,14 @@ TEST_F(clEventTests, getEventsCommandQueue) {
     delete pEvent;
 }
 
-TEST_F(clEventTests, getInvalidEventInfo) {
+TEST_F(clEventTests, GivenNullEventWhenGettingEventInfoThenClInvalidEventErrorIsReturned) {
     cl_command_queue cmdQ;
 
     auto retVal = clGetEventInfo(nullptr, CL_EVENT_COMMAND_QUEUE, sizeof(cmdQ), &cmdQ, nullptr);
     EXPECT_EQ(CL_INVALID_EVENT, retVal);
 }
 
-TEST_F(clEventTests, clWaitForEventsWithInvalidEvent) {
+TEST_F(clEventTests, GivenInvalidEventWhenWaitingForEventsThenClInvalidEventErrorIsReturned) {
     char *ptr = new char[sizeof(Event)];
     cl_event event = (cl_event)ptr;
 
@@ -105,31 +109,31 @@ TEST_F(clEventTests, clWaitForEventsWithInvalidEvent) {
     delete[] ptr;
 }
 
-TEST_F(clEventTests, doubleSetStatusReturnsError) {
-    cl_int error = 0;
-    cl_event event = clCreateUserEvent(pContext, &error);
-    EXPECT_EQ(CL_SUCCESS, error);
+TEST_F(clEventTests, GivenValidEventWhenSettingStatusMultipleTimesThenClInvalidOperationErrorIsReturned) {
+    cl_int retVal = 0;
+    auto event = clCreateUserEvent(pContext, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-    error = clSetUserEventStatus(event, CL_COMPLETE);
-    EXPECT_EQ(CL_SUCCESS, error);
+    retVal = clSetUserEventStatus(event, CL_COMPLETE);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-    error = clSetUserEventStatus(event, CL_COMPLETE);
-    EXPECT_EQ(CL_INVALID_OPERATION, error);
+    retVal = clSetUserEventStatus(event, CL_COMPLETE);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 
     clReleaseEvent(event);
 }
 
 typedef EventFixture<::testing::TestWithParam<std::tuple<int32_t, int32_t>>> clEventStatusTests;
 
-TEST_P(clEventStatusTests, setUserEventStatus) {
-    cl_int error = 0;
-    cl_event event = clCreateUserEvent(pContext, &error);
-    EXPECT_EQ(CL_SUCCESS, error);
+TEST_P(clEventStatusTests, GivenExecutionStatusWhenSettingUserEventStatusThenSuccessOrCorrectErrorIsReturned) {
+    cl_int retVal = 0;
+    cl_event event = clCreateUserEvent(pContext, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto status = std::get<0>(GetParam());
     auto expect = std::get<1>(GetParam());
-    error = clSetUserEventStatus(event, status);
-    EXPECT_EQ(expect, error);
+    retVal = clSetUserEventStatus(event, status);
+    EXPECT_EQ(expect, retVal);
 
     clReleaseEvent(event);
 }
