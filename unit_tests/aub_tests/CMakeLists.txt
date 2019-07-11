@@ -69,6 +69,38 @@ target_link_libraries(igdrcl_aub_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
 target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common${BRANCH_DIR_SUFFIX})
 
 macro(macro_for_each_test_config)
+  if(NOT TARGET ${PLATFORM_IT_LOWER}_aub_tests)
+    add_custom_target(${PLATFORM_IT_LOWER}_aub_tests
+      DEPENDS igdrcl_aub_tests
+      DEPENDS copy_test_files_${PLATFORM_IT_LOWER}
+    )
+    foreach(PLATFORM_TYPE "CORE" "LP")
+      if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
+        get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
+        add_dependencies(${PLATFORM_IT_LOWER}_aub_tests test_kernels_${family_name_with_type})
+        add_dependencies(${PLATFORM_IT_LOWER}_aub_tests test_kernel_${family_name_with_type})
+        PLATFORM_HAS_2_0(${GEN_TYPE} ${PLATFORM_IT} PLATFORM_SUPPORTS_2_0)
+        if(PLATFORM_SUPPORTS_2_0)
+          add_dependencies(${PLATFORM_IT_LOWER}_aub_tests test_kernel_2_0_${family_name_with_type})
+        endif()
+      endif()
+    endforeach()
+    add_custom_target(run_${PLATFORM_IT_LOWER}_aub_tests ALL DEPENDS ${PLATFORM_IT_LOWER}_aub_tests)
+    add_dependencies(run_aub_tests run_${PLATFORM_IT_LOWER}_aub_tests)
+    set_target_properties(${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
+    set_target_properties(run_${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
+    add_custom_command(
+      TARGET ${PLATFORM_IT_LOWER}_aub_tests
+      POST_BUILD
+      COMMAND WORKING_DIRECTORY ${TargetDir}
+      COMMAND echo Creating output directory for ${PLATFORM_IT_LOWER} AUBs generation...
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${TargetDir}/${PLATFORM_IT_LOWER}_aub/aub_out"
+    )
+    if(WIN32)
+      add_dependencies(${PLATFORM_IT_LOWER}_aub_tests mock_gdi)
+    endif()
+  endif()
+
   set(AUB_TESTS_OPTIONS "")
   if (NOT ${AUB_DUMP_BUFFER_FORMAT} STREQUAL "")
     list(APPEND AUB_TESTS_OPTIONS --dump_buffer_format)
@@ -82,35 +114,6 @@ macro(macro_for_each_test_config)
 endmacro()
 
 macro(macro_for_each_platform)
-  add_custom_target(${PLATFORM_IT_LOWER}_aub_tests
-    DEPENDS igdrcl_aub_tests
-    DEPENDS copy_test_files_${PLATFORM_IT_LOWER}
-  )
-  foreach(PLATFORM_TYPE "CORE" "LP")
-    if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
-      get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
-      add_dependencies(${PLATFORM_IT_LOWER}_aub_tests test_kernels_${family_name_with_type})
-      add_dependencies(${PLATFORM_IT_LOWER}_aub_tests test_kernel_${family_name_with_type})
-      PLATFORM_HAS_2_0(${GEN_TYPE} ${PLATFORM_IT} PLATFORM_SUPPORTS_2_0)
-      if(PLATFORM_SUPPORTS_2_0)
-        add_dependencies(${PLATFORM_IT_LOWER}_aub_tests test_kernel_2_0_${family_name_with_type})
-      endif()
-    endif()
-  endforeach()
-  add_custom_target(run_${PLATFORM_IT_LOWER}_aub_tests ALL DEPENDS ${PLATFORM_IT_LOWER}_aub_tests)
-  add_dependencies(run_aub_tests run_${PLATFORM_IT_LOWER}_aub_tests)
-  set_target_properties(${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
-  set_target_properties(run_${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
-  add_custom_command(
-    TARGET ${PLATFORM_IT_LOWER}_aub_tests
-    POST_BUILD
-    COMMAND WORKING_DIRECTORY ${TargetDir}
-    COMMAND echo Creating output directory for ${PLATFORM_IT_LOWER} AUBs generation...
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${TargetDir}/${PLATFORM_IT_LOWER}_aub/aub_out"
-  )
-  if(WIN32)
-    add_dependencies(${PLATFORM_IT_LOWER}_aub_tests mock_gdi)
-  endif()
   apply_macro_for_each_test_config("AUB_TESTS")
 endmacro()
 
