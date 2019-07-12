@@ -87,7 +87,7 @@ class SVMAllocsManager {
 
   protected:
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties);
-    void *createSvmAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties);
+    void *createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties);
 
     void freeZeroCopySvmAllocation(SvmAllocationData *svmData);
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);

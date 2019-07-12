@@ -8,6 +8,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "test.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_svm_manager.h"
@@ -142,7 +143,7 @@ TEST_F(SVMMemoryAllocatorTest, whenCoherentFlagIsPassedThenAllocationIsCoherent)
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST_F(SVMMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredWithProperTypeInAllocationMap) {
+TEST_F(SVMLocalMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredWithProperTypeInAllocationMap) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
@@ -153,6 +154,7 @@ TEST_F(SVMMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredWithPr
     EXPECT_NE(nullptr, allocation->gpuAllocation);
     EXPECT_EQ(InternalMemoryType::DEVICE_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
+    EXPECT_EQ(allocation->gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 
     EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->gpuAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, allocation->gpuAllocation->getAllocationType());
@@ -198,6 +200,54 @@ TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithPr
     svmManager->freeSVMAlloc(ptr);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSetThenItIsStoredWithProperTypeInAllocationMapAndHasCpuAndGpuStorage) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    auto allocationSize = 4096u;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, ptr);
+    auto allocation = svmManager->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocation->cpuAllocation);
+    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation->memoryType);
+    EXPECT_EQ(allocationSize, allocation->size);
+
+    EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->cpuAllocation->getUnderlyingBufferSize());
+
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_GPU, allocation->gpuAllocation->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
+
+    EXPECT_EQ(allocation->gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_NE(allocation->cpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+
+    EXPECT_NE(nullptr, allocation->gpuAllocation->getUnderlyingBuffer());
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMMemoryAllocatorTest, givenSharedAllocationsDebugFlagWhenDeviceMemoryIsAllocatedThenOneStorageIsProduced) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    auto allocationSize = 4096u;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096u, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, ptr);
+    auto allocation = svmManager->getSVMAlloc(ptr);
+    EXPECT_EQ(nullptr, allocation->cpuAllocation);
+    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    EXPECT_EQ(InternalMemoryType::DEVICE_UNIFIED_MEMORY, allocation->memoryType);
+    EXPECT_EQ(allocationSize, allocation->size);
+
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, allocation->gpuAllocation->getAllocationType());
+
+    svmManager->freeSVMAlloc(ptr);
+}
 TEST(SvmAllocationPropertiesTests, givenDifferentMemFlagsWhenGettingSvmAllocationPropertiesThenPropertiesAreCorrectlySet) {
     SVMAllocsManager::SvmAllocationProperties allocationProperties = MemObjHelper::getSvmAllocationProperties(0);
     EXPECT_FALSE(allocationProperties.coherent);
