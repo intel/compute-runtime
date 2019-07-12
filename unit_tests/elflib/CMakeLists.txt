@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,8 +11,8 @@ set(CLELFLIB_UNIT_TESTS_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.h
-  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.h
+  ${IGDRCL_SOURCE_DIR}/core/unit_tests/helpers/memory_management.cpp
+  ${IGDRCL_SOURCE_DIR}/core/unit_tests/helpers/memory_management.h
 )
 
 add_executable(elflib_tests ${CLELFLIB_UNIT_TESTS_SRCS})

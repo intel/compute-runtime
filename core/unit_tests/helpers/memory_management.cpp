@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/helpers/memory_management.h"
+#include "core/unit_tests/helpers/memory_management.h"
 
 #include "gtest/gtest.h"
 

@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/memory_management.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/cache_policy.h"
@@ -25,7 +26,6 @@
 #include "unit_tests/fixtures/memory_manager_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
-#include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"

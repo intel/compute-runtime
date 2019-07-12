@@ -24,8 +24,8 @@ set(IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.h
+  ${IGDRCL_SOURCE_DIR}/core/unit_tests/helpers/memory_management.cpp
+  ${IGDRCL_SOURCE_DIR}/core/unit_tests/helpers/memory_management.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp

@@ -7,8 +7,8 @@
 
 #include "unit_tests/fixtures/memory_management_fixture.h"
 
+#include "core/unit_tests/helpers/memory_management.h"
 #include "runtime/helpers/options.h"
-#include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/memory_leak_listener.h"
 
 #include <cinttypes>

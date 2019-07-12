@@ -10,10 +10,10 @@
 #elif defined(__linux__)
 #include "runtime/os_interface/linux/os_library.h"
 #endif
+#include "core/unit_tests/helpers/memory_management.h"
 #include "runtime/os_interface/os_library.h"
 #include "test.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/helpers/memory_management.h"
 
 #include "gtest/gtest.h"
 
