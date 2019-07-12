@@ -10,7 +10,6 @@
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #include "test.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -26,7 +25,6 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
     }
 
     void SetUp() override {
-        DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(false);
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
     }
 
@@ -63,7 +61,6 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
     }
 
   protected:
-    DebugManagerStateRestore restore;
     HardwareInfo hardwareInfo;
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment;
