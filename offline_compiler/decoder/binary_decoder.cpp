@@ -472,40 +472,39 @@ int BinaryDecoder::validateInput(uint32_t argc, const char **argv) {
     if (!strcmp(argv[argc - 1], "--help")) {
         printHelp();
         return -1;
-    } else {
-        for (uint32_t i = 2; i < argc - 1; ++i) {
-            if (!strcmp(argv[i], "-file")) {
-                binaryFile = std::string(argv[++i]);
-            } else if (!strcmp(argv[i], "-device")) {
-                iga->setProductFamily(getProductFamilyFromDeviceName(argv[++i]));
-            } else if (!strcmp(argv[i], "-patch")) {
-                pathToPatch = std::string(argv[++i]);
-                addSlash(pathToPatch);
-            } else if (!strcmp(argv[i], "-dump")) {
-                pathToDump = std::string(argv[++i]);
-                addSlash(pathToDump);
-            } else {
-                messagePrinter.printf("Unknown argument %s\n", argv[i]);
-                printHelp();
-                return -1;
-            }
-        }
-        if (binaryFile.find(".bin") == std::string::npos) {
-            messagePrinter.printf(".bin extension is expected for binary file.\n");
+    }
+
+    for (uint32_t i = 2; i < argc - 1; ++i) {
+        if (!strcmp(argv[i], "-file")) {
+            binaryFile = std::string(argv[++i]);
+        } else if (!strcmp(argv[i], "-device")) {
+            iga->setProductFamily(getProductFamilyFromDeviceName(argv[++i]));
+        } else if (!strcmp(argv[i], "-patch")) {
+            pathToPatch = std::string(argv[++i]);
+            addSlash(pathToPatch);
+        } else if (!strcmp(argv[i], "-dump")) {
+            pathToDump = std::string(argv[++i]);
+            addSlash(pathToDump);
+        } else {
+            messagePrinter.printf("Unknown argument %s\n", argv[i]);
             printHelp();
             return -1;
         }
-        if (pathToDump.empty()) {
-            messagePrinter.printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
-            pathToDump = "dump";
-            addSlash(pathToDump);
-        }
-
-        if (false == iga->isKnownPlatform()) {
-            messagePrinter.printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
-        }
-
-        MakeDirectory(pathToDump.c_str());
     }
+    if (binaryFile.find(".bin") == std::string::npos) {
+        messagePrinter.printf(".bin extension is expected for binary file.\n");
+        printHelp();
+        return -1;
+    }
+    if (pathToDump.empty()) {
+        messagePrinter.printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
+        pathToDump = std::string("dump/");
+    }
+
+    if (false == iga->isKnownPlatform()) {
+        messagePrinter.printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
+    }
+
+    MakeDirectory(pathToDump.c_str());
     return 0;
 }
