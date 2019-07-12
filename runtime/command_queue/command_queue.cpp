@@ -148,6 +148,11 @@ void CommandQueue::waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushS
 
     getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanAllocationList(taskCountToWait, TEMPORARY_ALLOCATION);
 
+    if (auto bcsCsr = getBcsCommandStreamReceiver()) {
+        auto bcsTaskCount = *bcsCsr->getTagAddress();
+        bcsCsr->waitForTaskCountAndCleanAllocationList(bcsTaskCount, TEMPORARY_ALLOCATION);
+    }
+
     WAIT_LEAVE()
 }
 

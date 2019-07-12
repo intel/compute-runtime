@@ -238,7 +238,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     bool flushDependenciesForNonKernelCommand = false;
 
     if (blitEnqueue) {
-        processDispatchForBlitEnqueue(multiDispatchInfo, previousTimestampPacketNodes, eventsRequest, commandStream, commandType, blocking);
+        processDispatchForBlitEnqueue(multiDispatchInfo, previousTimestampPacketNodes, eventsRequest, commandStream, commandType);
     } else if (multiDispatchInfo.empty() == false) {
         processDispatchForKernels<commandType>(multiDispatchInfo, printfHandler, eventBuilder.getEvent(),
                                                hwTimeStamps, parentKernel, blockQueue, devQueueHw, csrDeps, blockedCommandsData,
@@ -461,14 +461,13 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const MultiDispatc
                                                               TimestampPacketContainer &previousTimestampPacketNodes,
                                                               const EventsRequest &eventsRequest,
                                                               LinearStream &commandStream,
-                                                              uint32_t commandType,
-                                                              bool blocking) {
+                                                              uint32_t commandType) {
     auto blitDirection = BlitProperties::obtainBlitDirection(commandType);
 
     auto blitCommandStreamReceiver = getBcsCommandStreamReceiver();
 
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(blitDirection, *blitCommandStreamReceiver,
-                                                                                multiDispatchInfo.peekBuiltinOpParams(), blocking);
+                                                                                multiDispatchInfo.peekBuiltinOpParams(), false);
 
     blitProperties.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, *blitCommandStreamReceiver,
                                                                         CsrDependencies::DependenciesType::All);
