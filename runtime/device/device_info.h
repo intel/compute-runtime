@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "public/cl_ext_private.h"
+
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
 
@@ -132,5 +134,11 @@ struct DeviceInfo {
     bool                         platformLP;
     bool                         packedYuvExtension;
     bool                         sourceLevelDebuggerActive;
+    /*Unified Shared Memory Capabilites*/
+    cl_unified_shared_memory_capabilities_intel hostMemCapabilities;
+    cl_unified_shared_memory_capabilities_intel deviceMemCapabilities;
+    cl_unified_shared_memory_capabilities_intel singleDeviceSharedMemCapabilities;
+    cl_unified_shared_memory_capabilities_intel crossDeviceSharedMemCapabilities;
+    cl_unified_shared_memory_capabilities_intel sharedSystemMemCapabilities;
 };
 // clang-format on

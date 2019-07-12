@@ -12,6 +12,7 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
@@ -68,6 +69,7 @@ void Device::setupFp64Flags() {
 
 void Device::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
     deviceExtensions.clear();
     deviceExtensions.append(deviceExtensionsList);
     // Add our graphics family name to the device name
@@ -335,5 +337,11 @@ void Device::initializeCaps() {
     if (deviceInfo.sourceLevelDebuggerActive) {
         this->preemptionMode = PreemptionMode::Disabled;
     }
+
+    deviceInfo.hostMemCapabilities = hwInfoConfig->getHostMemCapabilities();
+    deviceInfo.deviceMemCapabilities = hwInfoConfig->getDeviceMemCapabilities();
+    deviceInfo.singleDeviceSharedMemCapabilities = hwInfoConfig->getSingleDeviceSharedMemCapabilities();
+    deviceInfo.crossDeviceSharedMemCapabilities = hwInfoConfig->getCrossDeviceSharedMemCapabilities();
+    deviceInfo.sharedSystemMemCapabilities = hwInfoConfig->getSharedSystemMemCapabilities();
 }
 } // namespace NEO
