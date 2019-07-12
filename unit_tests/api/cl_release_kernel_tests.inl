@@ -17,12 +17,12 @@ typedef api_tests clReleaseKernelTests;
 
 namespace ULT {
 
-TEST_F(clReleaseKernelTests, NullKernelReturnsError) {
+TEST_F(clReleaseKernelTests, GivenNullKernelWhenReleasingKernelThenClInvalidKernelErrorIsReturned) {
     retVal = clReleaseKernel(nullptr);
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST_F(clReleaseKernelTests, retainAndrelease) {
+TEST_F(clReleaseKernelTests, GivenRetainedKernelWhenReleasingKernelThenKernelIsCorrectlyReleased) {
     cl_kernel kernel = nullptr;
     cl_program program = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
