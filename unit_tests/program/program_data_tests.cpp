@@ -9,7 +9,7 @@
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/graphics_allocation.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/memory_manager/unified_memory_manager.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
 #include "test.h"

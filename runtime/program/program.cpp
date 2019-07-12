@@ -14,7 +14,7 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/memory_manager/unified_memory_manager.h"
 
 #include <sstream>
 

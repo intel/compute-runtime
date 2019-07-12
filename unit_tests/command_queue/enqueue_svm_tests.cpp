@@ -10,7 +10,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "runtime/memory_manager/surface.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/memory_manager/unified_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"

@@ -6,7 +6,7 @@
  */
 
 #include "runtime/event/user_event.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/memory_manager/unified_memory_manager.h"
 #include "unit_tests/context/driver_diagnostics_tests.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"

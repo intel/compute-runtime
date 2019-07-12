@@ -23,7 +23,7 @@ set(IGDRCL_SRCS_tests_memory_manager
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/physical_address_allocator_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/surface_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/svm_memory_manager_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager_tests.cpp
 )
 
 get_property(NEO_CORE_UNIFIED_MEMORY_TESTS GLOBAL PROPERTY NEO_CORE_UNIFIED_MEMORY_TESTS)

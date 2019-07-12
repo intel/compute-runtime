@@ -23,7 +23,7 @@
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/memory_manager/unified_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
 namespace NEO {

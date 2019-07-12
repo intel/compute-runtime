@@ -12,7 +12,7 @@
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/memory_manager/unified_memory_manager.h"
 #include "runtime/sharings/sharing.h"
 #include "unit_tests/fixtures/device_fixture.h"
 

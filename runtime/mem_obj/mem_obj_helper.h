@@ -11,7 +11,7 @@
 #include "runtime/context/context_type.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/memory_manager/unified_memory_manager.h"
 
 #include "CL/cl.h"
 #include "mem_obj_types.h"

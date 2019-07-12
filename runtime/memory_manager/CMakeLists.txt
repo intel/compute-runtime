@@ -46,8 +46,8 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/residency.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/residency_container.h
   ${CMAKE_CURRENT_SOURCE_DIR}/surface.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/svm_memory_manager.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/svm_memory_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.h
 )
 
 get_property(NEO_UNIFIED_MEMORY GLOBAL PROPERTY NEO_UNIFIED_MEMORY)

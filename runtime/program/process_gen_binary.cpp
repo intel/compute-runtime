@@ -13,7 +13,7 @@
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/memory_manager/unified_memory_manager.h"
 
 #include "patch_list.h"
 #include "patch_shared.h"

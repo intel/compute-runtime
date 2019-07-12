@@ -9,7 +9,7 @@
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/surface.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/memory_manager/unified_memory_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"

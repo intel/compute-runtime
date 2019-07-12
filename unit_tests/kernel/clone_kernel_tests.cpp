@@ -10,7 +10,7 @@
 #include "runtime/helpers/sampler_helpers.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/pipe.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/memory_manager/unified_memory_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"

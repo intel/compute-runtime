@@ -11,7 +11,7 @@
 #include "runtime/command_queue/enqueue_common.h"
 #include "runtime/event/event.h"
 #include "runtime/memory_manager/surface.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/memory_manager/unified_memory_manager.h"
 
 #include <new>
 
