@@ -881,14 +881,17 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::Device *devic
         svmProps.readOnly = constant;
         svmProps.hostPtrReadOnly = constant;
         auto ptr = ctx->getSVMAllocsManager()->createSVMAlloc(size, svmProps);
-        UNRECOVERABLE_IF(device == nullptr);
+        UNRECOVERABLE_IF(ptr == nullptr);
         auto gpuAlloc = ctx->getSVMAllocsManager()->getSVMAlloc(ptr)->gpuAllocation;
+        UNRECOVERABLE_IF(gpuAlloc == nullptr);
+        UNRECOVERABLE_IF(device == nullptr);
         device->getMemoryManager()->copyMemoryToAllocation(gpuAlloc, initData, static_cast<uint32_t>(size));
         return ctx->getSVMAllocsManager()->getSVMAlloc(ptr)->gpuAllocation;
     } else {
         UNRECOVERABLE_IF(device == nullptr);
         auto allocationType = constant ? GraphicsAllocation::AllocationType::CONSTANT_SURFACE : GraphicsAllocation::AllocationType::GLOBAL_SURFACE;
         auto gpuAlloc = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({size, allocationType});
+        UNRECOVERABLE_IF(gpuAlloc == nullptr);
         memcpy_s(gpuAlloc->getUnderlyingBuffer(), gpuAlloc->getUnderlyingBufferSize(), initData, size);
         return gpuAlloc;
     }
@@ -952,26 +955,24 @@ cl_int Program::parseProgramScopePatchList() {
         };
             break;
 
-        case PATCH_TOKEN_GLOBAL_POINTER_PROGRAM_BINARY_INFO:
-            if (globalSurface != nullptr) {
-                auto patch = *(SPatchGlobalPointerProgramBinaryInfo *)pPatch;
-                if ((patch.GlobalBufferIndex == 0) && (patch.BufferIndex == 0) && (patch.BufferType == PROGRAM_SCOPE_GLOBAL_BUFFER)) {
-                    globalVariablesSelfPatches.push_back(readMisalignedUint64(&patch.GlobalPointerOffset));
-                } else {
-                    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Program::parseProgramScopePatchList. Unhandled Data parameter: %d\n", pPatch->Token);
-                }
-                DBG_LOG(LogPatchTokens,
-                        "\n  .GLOBAL_POINTER_PROGRAM_BINARY_INFO", pPatch->Token,
-                        "\n  .Size", pPatch->Size,
-                        "\n  .GlobalBufferIndex", patch.GlobalBufferIndex,
-                        "\n  .GlobalPointerOffset", patch.GlobalPointerOffset,
-                        "\n  .BufferType", patch.BufferType,
-                        "\n  .BufferIndex", patch.BufferIndex);
+        case PATCH_TOKEN_GLOBAL_POINTER_PROGRAM_BINARY_INFO: {
+            auto patch = *(SPatchGlobalPointerProgramBinaryInfo *)pPatch;
+            if ((patch.GlobalBufferIndex == 0) && (patch.BufferIndex == 0) && (patch.BufferType == PROGRAM_SCOPE_GLOBAL_BUFFER)) {
+                globalVariablesSelfPatches.push_back(readMisalignedUint64(&patch.GlobalPointerOffset));
+            } else {
+                printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Program::parseProgramScopePatchList. Unhandled Data parameter: %d\n", pPatch->Token);
+            }
+            DBG_LOG(LogPatchTokens,
+                    "\n  .GLOBAL_POINTER_PROGRAM_BINARY_INFO", pPatch->Token,
+                    "\n  .Size", pPatch->Size,
+                    "\n  .GlobalBufferIndex", patch.GlobalBufferIndex,
+                    "\n  .GlobalPointerOffset", patch.GlobalPointerOffset,
+                    "\n  .BufferType", patch.BufferType,
+                    "\n  .BufferIndex", patch.BufferIndex);
             }
             break;
 
-        case PATCH_TOKEN_CONSTANT_POINTER_PROGRAM_BINARY_INFO:
-            if (constantSurface != nullptr) {
+            case PATCH_TOKEN_CONSTANT_POINTER_PROGRAM_BINARY_INFO: {
                 auto patch = *(SPatchConstantPointerProgramBinaryInfo *)pPatch;
                 if ((patch.ConstantBufferIndex == 0) && (patch.BufferIndex == 0) && (patch.BufferType == PROGRAM_SCOPE_CONSTANT_BUFFER)) {
                     globalConstantsSelfPatches.push_back(readMisalignedUint64(&patch.ConstantPointerOffset));
@@ -1021,22 +1022,28 @@ cl_int Program::parseProgramScopePatchList() {
     }
 
     for (auto offset : globalVariablesSelfPatches) {
-        UNRECOVERABLE_IF(globalSurface == nullptr);
-        void *pPtr = ptrOffset(globalSurface->getUnderlyingBuffer(), static_cast<size_t>(offset));
-        if (globalSurface->is32BitAllocation()) {
-            *reinterpret_cast<uint32_t *>(pPtr) += static_cast<uint32_t>(globalSurface->getGpuAddressToPatch());
+        if (globalSurface == nullptr) {
+            retVal = CL_INVALID_BINARY;
         } else {
-            *reinterpret_cast<uintptr_t *>(pPtr) += static_cast<uintptr_t>(globalSurface->getGpuAddressToPatch());
+            void *pPtr = ptrOffset(globalSurface->getUnderlyingBuffer(), static_cast<size_t>(offset));
+            if (globalSurface->is32BitAllocation()) {
+                *reinterpret_cast<uint32_t *>(pPtr) += static_cast<uint32_t>(globalSurface->getGpuAddressToPatch());
+            } else {
+                *reinterpret_cast<uintptr_t *>(pPtr) += static_cast<uintptr_t>(globalSurface->getGpuAddressToPatch());
+            }
         }
     }
 
     for (auto offset : globalConstantsSelfPatches) {
-        UNRECOVERABLE_IF(constantSurface == nullptr);
-        void *pPtr = ptrOffset(constantSurface->getUnderlyingBuffer(), static_cast<size_t>(offset));
-        if (constantSurface->is32BitAllocation()) {
-            *reinterpret_cast<uint32_t *>(pPtr) += static_cast<uint32_t>(constantSurface->getGpuAddressToPatch());
+        if (constantSurface == nullptr) {
+            retVal = CL_INVALID_BINARY;
         } else {
-            *reinterpret_cast<uintptr_t *>(pPtr) += static_cast<uintptr_t>(constantSurface->getGpuAddressToPatch());
+            void *pPtr = ptrOffset(constantSurface->getUnderlyingBuffer(), static_cast<size_t>(offset));
+            if (constantSurface->is32BitAllocation()) {
+                *reinterpret_cast<uint32_t *>(pPtr) += static_cast<uint32_t>(constantSurface->getGpuAddressToPatch());
+            } else {
+                *reinterpret_cast<uintptr_t *>(pPtr) += static_cast<uintptr_t>(constantSurface->getGpuAddressToPatch());
+            }
         }
     }
 

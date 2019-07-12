@@ -43,7 +43,6 @@ class ProgramDataTestBase : public testing::Test,
 
     void buildAndDecodeProgramPatchList();
 
-  protected:
     void SetUp() override {
         PlatformFixture::SetUp();
         cl_device_id device = pPlatform->getDevice(0);
@@ -120,6 +119,8 @@ class ProgramDataTestBase : public testing::Test,
     SProgramBinaryHeader programBinaryHeader;
     void *pProgramPatchList;
     uint32_t programPatchListSize;
+    cl_int patchlistDecodeErrorCode = 0;
+    bool allowDecodeFailure = false;
 };
 
 template <typename ProgramType>
@@ -153,7 +154,10 @@ void ProgramDataTestBase<ProgramType>::buildAndDecodeProgramPatchList() {
     pProgram->storeGenBinary(pProgramData, headerSize + programBinaryHeader.PatchListSize);
 
     error = pProgram->processGenBinary();
-    EXPECT_EQ(CL_SUCCESS, error);
+    patchlistDecodeErrorCode = error;
+    if (allowDecodeFailure == false) {
+        EXPECT_EQ(CL_SUCCESS, error);
+    }
     delete[] pProgramData;
 }
 
@@ -363,8 +367,11 @@ TEST_F(ProgramDataTest, GlobalPointerProgramBinaryInfo) {
     pProgramPatchList = (void *)pGlobalPointer;
     programPatchListSize = globalPointer.Size;
 
+    this->allowDecodeFailure = true;
     buildAndDecodeProgramPatchList();
     EXPECT_EQ(nullptr, pProgram->getGlobalSurface());
+    EXPECT_EQ(CL_INVALID_BINARY, this->patchlistDecodeErrorCode);
+    this->allowDecodeFailure = false;
 
     delete[] pGlobalPointer;
 
@@ -552,8 +559,11 @@ TEST_F(ProgramDataTest, ConstantPointerProgramBinaryInfo) {
     pProgramPatchList = (void *)pConstantPointer;
     programPatchListSize = constantPointer.Size;
 
+    this->allowDecodeFailure = true;
     buildAndDecodeProgramPatchList();
     EXPECT_EQ(nullptr, pProgram->getConstantSurface());
+    EXPECT_EQ(CL_INVALID_BINARY, this->patchlistDecodeErrorCode);
+    this->allowDecodeFailure = false;
 
     delete[] pConstantPointer;
 
