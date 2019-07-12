@@ -17,7 +17,5 @@ class MemoryLeakListener : public ::testing::EmptyTestEventListener {
   private:
     void OnTestStart(const ::testing::TestInfo &) override;
     void OnTestEnd(const ::testing::TestInfo &) override;
-
-    unsigned int numInitialBaseObjects;
 };
 } // namespace NEO

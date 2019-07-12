@@ -242,12 +242,6 @@ class BaseObject : public B, public ReferenceTrackedObject<DerivedType_t<B>> {
     ConditionVariableWithCounter &getCond() {
         return this->cond;
     }
-
-    // Custom allocators for memory tracking CL objects
-    static void *operator new(size_t sz);
-    static void *operator new(size_t sz, const std::nothrow_t &) noexcept;
-    static void operator delete(void *ptr, size_t allocationSize);
-    static void operator delete(void *ptr, const std::nothrow_t &)noexcept;
 };
 
 // Method called by global factory enabler

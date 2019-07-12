@@ -12,7 +12,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/base_object_allocator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.cpp

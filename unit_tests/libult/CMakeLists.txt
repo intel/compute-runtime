@@ -61,7 +61,6 @@ target_include_directories(igdrcl_libult PRIVATE
 )
 
 set(IGDRCL_SRCS_LIB_ULT_ENV
-  ${IGDRCL_SOURCE_DIR}/unit_tests/base_object_allocator.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/custom_event_listener.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/global_environment.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/global_environment.h
