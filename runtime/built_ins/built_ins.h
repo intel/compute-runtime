@@ -6,10 +6,10 @@
  */
 
 #pragma once
+#include "core/helpers/non_copyable_or_moveable.h"
 #include "core/helpers/vec.h"
 #include "runtime/built_ins/sip.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/helpers/properties_helper.h"
 
 #include "CL/cl.h"
 #include "built_in_ops.h"

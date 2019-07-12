@@ -16,6 +16,7 @@
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_wddm.h"
+#include "unit_tests/mocks/mock_wddm_residency_allocations_container.h"
 #include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 
@@ -23,7 +24,7 @@
 
 namespace NEO {
 struct WddmFixture : ::testing::Test {
-    void SetUp() {
+    void SetUp() override {
         executionEnvironment = platformImpl->peekExecutionEnvironment();
         wddm = static_cast<WddmMock *>(Wddm::createWddm());
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
@@ -35,6 +36,7 @@ struct WddmFixture : ::testing::Test {
         auto hwInfo = *platformDevices[0];
         wddm->init(hwInfo);
         osContext = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), 0u, 1u, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], preemptionMode, false);
+        mockTemporaryResources = static_cast<MockWddmResidentAllocationsContainer *>(wddm->temporaryResources.get());
     }
 
     WddmMock *wddm = nullptr;
@@ -43,6 +45,7 @@ struct WddmFixture : ::testing::Test {
     ExecutionEnvironment *executionEnvironment;
 
     MockGdi *gdi = nullptr;
+    MockWddmResidentAllocationsContainer *mockTemporaryResources;
 };
 
 struct WddmFixtureWithMockGdiDll : public GdiDllFixture {

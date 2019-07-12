@@ -27,4 +27,8 @@ uint32_t OSInterface::getDeviceHandle() const {
     return 0;
 }
 
+ResidencyHandler *OSInterface::getResidencyInterface() const {
+    return osInterfaceImpl->getResidencyInterface();
+}
+
 } // namespace NEO

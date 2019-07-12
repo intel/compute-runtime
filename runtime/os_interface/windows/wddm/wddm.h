@@ -6,12 +6,13 @@
  */
 
 #pragma once
-#include "runtime/command_stream/preemption_mode.h"
+#include "core/command_stream/preemption_mode.h"
+#include "core/memory_manager/eviction_status.h"
+#include "core/utilities/spinlock.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/memory_manager/gfx_partition.h"
 #include "runtime/os_interface/os_context.h"
-#include "runtime/utilities/spinlock.h"
 
 #include "sku_info.h"
 
@@ -28,6 +29,7 @@ class SettingsReader;
 class WddmAllocation;
 class WddmInterface;
 class WddmResidencyController;
+class WddmResidentAllocationsContainer;
 
 struct AllocationStorageData;
 struct HardwareInfo;
@@ -36,13 +38,6 @@ struct MonitoredFence;
 struct OsHandleStorage;
 
 enum class HeapIndex : uint32_t;
-
-enum class EvictionStatus {
-    SUCCESS,
-    FAILED,
-    NOT_APPLIED,
-    UNKNOWN
-};
 
 class Wddm {
   public:
@@ -140,15 +135,14 @@ class Wddm {
     MOCKABLE_VIRTUAL uint64_t *getPagingFenceAddress() {
         return pagingFenceAddress;
     }
-    MOCKABLE_VIRTUAL EvictionStatus evictAllTemporaryResources();
-    MOCKABLE_VIRTUAL EvictionStatus evictTemporaryResource(const D3DKMT_HANDLE &handle);
-    MOCKABLE_VIRTUAL void applyBlockingMakeResident(const D3DKMT_HANDLE &handle);
-    MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock);
-    MOCKABLE_VIRTUAL void removeTemporaryResource(const D3DKMT_HANDLE &handle);
+    WddmResidentAllocationsContainer *getTemporaryResourcesContainer() {
+        return temporaryResources.get();
+    }
     void updatePagingFenceValue(uint64_t newPagingFenceValue);
     GmmMemory *getGmmMemory() const {
         return gmmMemory.get();
     }
+    void waitOnPagingFenceFromCpu();
 
   protected:
     std::unique_ptr<Gdi> gdi;
@@ -198,7 +192,6 @@ class Wddm {
 
     std::unique_ptr<KmDafListener> kmDafListener;
     std::unique_ptr<WddmInterface> wddmInterface;
-    std::vector<D3DKMT_HANDLE> temporaryResources;
-    SpinLock temporaryResourcesLock;
+    std::unique_ptr<WddmResidentAllocationsContainer> temporaryResources;
 };
 } // namespace NEO

@@ -24,4 +24,9 @@ TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenDeviceHandleQueriedthenZeroIsRetu
     EXPECT_EQ(0u, osInterface.getDeviceHandle());
 }
 
+TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenResidencyInterfaceRetrievedThenCreatedObjectReturned) {
+    OSInterface osInterface;
+    EXPECT_NE(nullptr, osInterface.getResidencyInterface());
+}
+
 } // namespace NEO

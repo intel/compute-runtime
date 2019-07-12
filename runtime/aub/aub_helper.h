@@ -6,9 +6,9 @@
  */
 
 #pragma once
+#include "core/helpers/non_copyable_or_moveable.h"
 #include "runtime/gen_common/aub_mapper_base.h"
 #include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/properties_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
 namespace NEO {

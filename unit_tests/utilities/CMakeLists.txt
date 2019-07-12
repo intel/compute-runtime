@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -19,9 +19,12 @@ set(IGDRCL_SRCS_tests_utilities
   ${CMAKE_CURRENT_SOURCE_DIR}/numeric_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/spinlock_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/timer_util_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/vec_tests.cpp
 )
+
+get_property(NEO_CORE_UTILITIES_TESTS GLOBAL PROPERTY NEO_CORE_UTILITIES_TESTS)
+list(APPEND IGDRCL_SRCS_tests_utilities ${NEO_CORE_UTILITIES_TESTS})
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_utilities})

@@ -7,9 +7,9 @@
 
 #pragma once
 
+#include "core/helpers/non_copyable_or_moveable.h"
 #include "runtime/helpers/csr_deps.h"
 #include "runtime/helpers/hardware_commands_helper.h"
-#include "runtime/helpers/properties_helper.h"
 #include "runtime/utilities/tag_allocator.h"
 
 #include <atomic>

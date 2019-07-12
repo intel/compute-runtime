@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/memory_manager/residency_handler.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_helper.h"

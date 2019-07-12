@@ -23,6 +23,7 @@
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
+#include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sku_info/operations/sku_info_receiver.h"
 
@@ -52,6 +53,7 @@ Wddm::Wddm() {
     adapterLuid.LowPart = 0;
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
     gdi = std::unique_ptr<Gdi>(new Gdi());
+    temporaryResources = std::make_unique<WddmResidentAllocationsContainer>(this);
 }
 
 Wddm::~Wddm() {
@@ -630,7 +632,7 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
 void *Wddm::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock) {
 
     if (applyMakeResidentPriorToLock) {
-        applyBlockingMakeResident(handle);
+        temporaryResources->makeResidentResource(handle);
     }
 
     NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -919,67 +921,9 @@ bool Wddm::configureDeviceAddressSpaceImpl() {
     return gmmMemory->configureDevice(adapter, device, gdi->escape, svmSize, featureTable->ftrL3IACoherency, gfxPartition, minAddress);
 }
 
-EvictionStatus Wddm::evictAllTemporaryResources() {
-    decltype(temporaryResources) resourcesToEvict;
-    auto lock = acquireLock(temporaryResourcesLock);
-    temporaryResources.swap(resourcesToEvict);
-    if (resourcesToEvict.empty()) {
-        return EvictionStatus::NOT_APPLIED;
-    }
-    uint64_t sizeToTrim = 0;
-    bool error = false;
-    for (auto &handle : resourcesToEvict) {
-        if (!evict(&handle, 1, sizeToTrim)) {
-            error = true;
-        }
-    }
-    return error ? EvictionStatus::FAILED : EvictionStatus::SUCCESS;
-}
-
-EvictionStatus Wddm::evictTemporaryResource(const D3DKMT_HANDLE &handle) {
-    auto lock = acquireLock(temporaryResourcesLock);
-    auto position = std::find(temporaryResources.begin(), temporaryResources.end(), handle);
-    if (position == temporaryResources.end()) {
-        return EvictionStatus::NOT_APPLIED;
-    }
-    *position = temporaryResources.back();
-    temporaryResources.pop_back();
-    uint64_t sizeToTrim = 0;
-    if (!evict(&handle, 1, sizeToTrim)) {
-        return EvictionStatus::FAILED;
-    }
-    return EvictionStatus::SUCCESS;
-}
-void Wddm::applyBlockingMakeResident(const D3DKMT_HANDLE &handle) {
-    bool madeResident = false;
-    while (!(madeResident = makeResident(&handle, 1, false, nullptr))) {
-        if (evictAllTemporaryResources() == EvictionStatus::SUCCESS) {
-            continue;
-        }
-        if (!makeResident(&handle, 1, false, nullptr)) {
-            DEBUG_BREAK_IF(true);
-            return;
-        };
-        break;
-    }
-    DEBUG_BREAK_IF(!madeResident);
-    auto lock = acquireLock(temporaryResourcesLock);
-    temporaryResources.push_back(handle);
-    lock.unlock();
+void Wddm::waitOnPagingFenceFromCpu() {
     while (currentPagingFenceValue > *getPagingFenceAddress())
         ;
-}
-void Wddm::removeTemporaryResource(const D3DKMT_HANDLE &handle) {
-    auto lock = acquireLock(temporaryResourcesLock);
-    auto position = std::find(temporaryResources.begin(), temporaryResources.end(), handle);
-    if (position == temporaryResources.end()) {
-        return;
-    }
-    *position = temporaryResources.back();
-    temporaryResources.pop_back();
-}
-std::unique_lock<SpinLock> Wddm::acquireLock(SpinLock &lock) {
-    return std::unique_lock<SpinLock>{lock};
 }
 
 void Wddm::updatePagingFenceValue(uint64_t newPagingFenceValue) {

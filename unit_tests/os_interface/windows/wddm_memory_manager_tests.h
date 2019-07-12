@@ -13,6 +13,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
+#include "unit_tests/mocks/mock_wddm_residency_allocations_container.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
@@ -61,6 +62,7 @@ class MockWddmMemoryManagerFixture {
                                                               1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
 
         osContext->incRefInternal();
+        mockTemporaryResources = reinterpret_cast<MockWddmResidentAllocationsContainer *>(wddm->getTemporaryResourcesContainer());
     }
 
     void TearDown() {
@@ -70,6 +72,7 @@ class MockWddmMemoryManagerFixture {
     ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     WddmMock *wddm = nullptr;
+    MockWddmResidentAllocationsContainer *mockTemporaryResources;
     OsContext *osContext = nullptr;
     MockGdi *gdi = nullptr;
 };

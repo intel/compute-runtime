@@ -77,14 +77,4 @@ struct MapInfo {
     uint32_t mipLevel = 0;
     bool readOnly = false;
 };
-
-class NonCopyableOrMovableClass {
-  public:
-    NonCopyableOrMovableClass() = default;
-    NonCopyableOrMovableClass(const NonCopyableOrMovableClass &) = delete;
-    NonCopyableOrMovableClass &operator=(const NonCopyableOrMovableClass &) = delete;
-
-    NonCopyableOrMovableClass(NonCopyableOrMovableClass &&) = delete;
-    NonCopyableOrMovableClass &operator=(NonCopyableOrMovableClass &&) = delete;
-};
 } // namespace NEO

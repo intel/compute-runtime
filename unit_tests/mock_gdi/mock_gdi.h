@@ -10,11 +10,12 @@
 #include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/os_interface/windows/os_time_win.h"
 
+#include <d3d10_1.h>
 #include <d3d9types.h>
 
 #include "Windows.h"
-#include "d3d10.h"
 #include "umKmInc/sharedata.h"
+#include <d3d10.h>
 #include <d3dkmthk.h>
 
 #define DECL_FUNCTIONS()                                                                                 \

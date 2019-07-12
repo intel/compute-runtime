@@ -85,6 +85,8 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mock_helpers.h
     ${IGDRCL_SRC_tests_mock_wddm}
   )
 else()
@@ -115,4 +117,4 @@ target_compile_definitions(igdrcl_mocks PRIVATE MOCKABLE_VIRTUAL=virtual $<TARGE
 
 set_target_properties(igdrcl_mocks PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(igdrcl_mocks PROPERTIES FOLDER "test mocks")
-create_project_source_tree(igdrcl_mocks)
+create_project_source_tree(igdrcl_mocks ${IGDRCL_SOURCE_DIR})

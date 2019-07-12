@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/utilities/spinlock.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/gen_common/aub_mapper.h"
@@ -13,7 +14,6 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/memory_manager/page_table.h"
 #include "runtime/memory_manager/physical_address_allocator.h"
-#include "runtime/utilities/spinlock.h"
 
 #include "command_stream_receiver_simulated_hw.h"
 

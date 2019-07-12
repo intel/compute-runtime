@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/command_stream/preemption_mode.h"
+#include "core/command_stream/preemption_mode.h"
 #include "runtime/helpers/kmd_notify_properties.h"
 
 #include "engine_node.h"

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/helpers/properties_helper.h"
+#include "core/helpers/non_copyable_or_moveable.h"
 
 #include <atomic>
 

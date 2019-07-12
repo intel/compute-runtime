@@ -11,10 +11,15 @@
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "unit_tests/mock_gdi/mock_gdi.h"
+#include "unit_tests/mocks/mock_wddm_residency_allocations_container.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
+
+WddmMock::WddmMock() : Wddm() {
+    this->temporaryResources = std::make_unique<MockWddmResidentAllocationsContainer>(this);
+}
 
 WddmMock::~WddmMock() {
     EXPECT_EQ(0, reservedAddresses.size());
@@ -250,33 +255,6 @@ VOID *WddmMock::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback
     return Wddm::registerTrimCallback(callback, residencyController);
 }
 
-EvictionStatus WddmMock::evictAllTemporaryResources() {
-    evictAllTemporaryResourcesResult.called++;
-    evictAllTemporaryResourcesResult.status = Wddm::evictAllTemporaryResources();
-    return evictAllTemporaryResourcesResult.status;
-}
-
-EvictionStatus WddmMock::evictTemporaryResource(const D3DKMT_HANDLE &handle) {
-    evictTemporaryResourceResult.called++;
-    evictTemporaryResourceResult.status = Wddm::evictTemporaryResource(handle);
-    return evictTemporaryResourceResult.status;
-}
-
-void WddmMock::applyBlockingMakeResident(const D3DKMT_HANDLE &handle) {
-    applyBlockingMakeResidentResult.called++;
-    return Wddm::applyBlockingMakeResident(handle);
-}
-
-void WddmMock::removeTemporaryResource(const D3DKMT_HANDLE &handle) {
-    removeTemporaryResourceResult.called++;
-    return Wddm::removeTemporaryResource(handle);
-}
-
-std::unique_lock<SpinLock> WddmMock::acquireLock(SpinLock &lock) {
-    acquireLockResult.called++;
-    acquireLockResult.uint64ParamPassed = reinterpret_cast<uint64_t>(&lock);
-    return Wddm::acquireLock(lock);
-}
 D3DGPU_VIRTUAL_ADDRESS WddmMock::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) {
     reserveGpuVirtualAddressResult.called++;
     return Wddm::reserveGpuVirtualAddress(minimumAddress, maximumAddress, size);

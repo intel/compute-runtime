@@ -9,7 +9,9 @@
 
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
+#include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 #include "runtime/os_interface/windows/windows_defs.h"
+#include "unit_tests/mocks/wddm_mock_helpers.h"
 
 #include "gmock/gmock.h"
 
@@ -18,33 +20,6 @@
 
 namespace NEO {
 class GraphicsAllocation;
-
-namespace WddmMockHelpers {
-struct CallResult {
-    uint32_t called = 0;
-    uint64_t uint64ParamPassed = -1;
-    bool success = false;
-    uint64_t commandBufferSubmitted = 0u;
-    void *commandHeaderSubmitted = nullptr;
-    void *cpuPtrPassed = nullptr;
-};
-struct MakeResidentCall : CallResult {
-    std::vector<D3DKMT_HANDLE> handlePack;
-    uint32_t handleCount = 0;
-};
-struct EvictCallResult : CallResult {
-    EvictionStatus status = EvictionStatus::UNKNOWN;
-};
-struct KmDafLockCall : CallResult {
-    std::vector<D3DKMT_HANDLE> lockedAllocations;
-};
-struct WaitFromCpuResult : CallResult {
-    const MonitoredFence *monitoredFence = nullptr;
-};
-struct FreeGpuVirtualAddressCall : CallResult {
-    uint64_t sizePassed = -1;
-};
-} // namespace WddmMockHelpers
 
 class WddmMock : public Wddm {
   public:
@@ -59,10 +34,9 @@ class WddmMock : public Wddm {
     using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
     using Wddm::temporaryResources;
-    using Wddm::temporaryResourcesLock;
     using Wddm::wddmInterface;
 
-    WddmMock() : Wddm(){};
+    WddmMock();
     ~WddmMock();
 
     bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override;
@@ -98,11 +72,6 @@ class WddmMock : public Wddm {
     int virtualFree(void *ptr, size_t size, unsigned long flags) override;
     void releaseReservedAddress(void *reservedAddress) override;
     VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) override;
-    EvictionStatus evictAllTemporaryResources() override;
-    EvictionStatus evictTemporaryResource(const D3DKMT_HANDLE &handle) override;
-    void applyBlockingMakeResident(const D3DKMT_HANDLE &handle) override;
-    void removeTemporaryResource(const D3DKMT_HANDLE &handle) override;
-    std::unique_lock<SpinLock> acquireLock(SpinLock &lock) override;
     D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) override;
     bool reserveValidAddressRange(size_t size, void *&reservedMem);
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
@@ -137,11 +106,6 @@ class WddmMock : public Wddm {
     WddmMockHelpers::WaitFromCpuResult waitFromCpuResult;
     WddmMockHelpers::CallResult releaseReservedAddressResult;
     WddmMockHelpers::CallResult reserveValidAddressRangeResult;
-    WddmMockHelpers::EvictCallResult evictAllTemporaryResourcesResult;
-    WddmMockHelpers::EvictCallResult evictTemporaryResourceResult;
-    WddmMockHelpers::CallResult applyBlockingMakeResidentResult;
-    WddmMockHelpers::CallResult removeTemporaryResourceResult;
-    WddmMockHelpers::CallResult acquireLockResult;
     WddmMockHelpers::CallResult registerTrimCallbackResult;
     WddmMockHelpers::CallResult getPagingFenceAddressResult;
     WddmMockHelpers::CallResult reserveGpuVirtualAddressResult;

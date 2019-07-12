@@ -7,7 +7,7 @@
 
 #pragma once
 #include "core/unified_memory/unified_memory.h"
-#include "runtime/utilities/spinlock.h"
+#include "core/utilities/spinlock.h"
 
 #include <cstdint>
 #include <map>

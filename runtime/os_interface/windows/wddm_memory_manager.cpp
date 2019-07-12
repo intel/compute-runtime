@@ -8,6 +8,7 @@
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
 #include "core/helpers/ptr_math.h"
+#include "core/memory_manager/residency_handler.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
@@ -24,6 +25,7 @@
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
+#include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/platform/platform.h"
 
@@ -289,7 +291,7 @@ void WddmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocatio
     auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
     wddm->unlockResource(wddmAllocation.getDefaultHandle());
     if (wddmAllocation.needsMakeResidentBeforeLock) {
-        auto evictionStatus = wddm->evictTemporaryResource(wddmAllocation.getDefaultHandle());
+        auto evictionStatus = wddm->getTemporaryResourcesContainer()->evictResource(wddmAllocation.getDefaultHandle());
         DEBUG_BREAK_IF(evictionStatus == EvictionStatus::FAILED);
     }
 }
@@ -297,7 +299,7 @@ void WddmMemoryManager::freeAssociatedResourceImpl(GraphicsAllocation &graphicsA
     auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
     if (wddmAllocation.needsMakeResidentBeforeLock) {
         for (auto i = 0u; i < wddmAllocation.getNumHandles(); i++) {
-            wddm->removeTemporaryResource(wddmAllocation.getHandles()[i]);
+            wddm->getTemporaryResourcesContainer()->removeResource(wddmAllocation.getHandles()[i]);
         }
     }
 }
@@ -311,6 +313,8 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         auto lock = residencyController.acquireLock();
         residencyController.removeFromTrimCandidateListIfUsed(input, true);
     }
+
+    executionEnvironment.osInterface->getResidencyInterface()->evict(*input);
 
     auto defaultGmm = gfxAllocation->getDefaultGmm();
     if (defaultGmm) {

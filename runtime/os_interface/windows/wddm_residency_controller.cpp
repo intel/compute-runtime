@@ -7,11 +7,12 @@
 
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 
+#include "core/utilities/spinlock.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
-#include "runtime/utilities/spinlock.h"
+#include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 
 namespace NEO {
 
@@ -341,7 +342,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
             this->setMemoryBudgetExhausted();
             const bool trimmingDone = this->trimResidencyToBudget(bytesToTrim);
             if (!trimmingDone) {
-                auto evictionStatus = wddm.evictAllTemporaryResources();
+                auto evictionStatus = wddm.getTemporaryResourcesContainer()->evictAllResources();
                 if (evictionStatus == EvictionStatus::SUCCESS) {
                     continue;
                 }
