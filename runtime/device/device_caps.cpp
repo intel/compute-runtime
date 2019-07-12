@@ -323,8 +323,10 @@ void Device::initializeCaps() {
 
     deviceInfo.vmeAvcSupportsPreemption = hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption;
     deviceInfo.vmeAvcSupportsTextureSampler = hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler;
-    deviceInfo.vmeAvcVersion = CL_AVC_ME_VERSION_1_INTEL;
-    deviceInfo.vmeVersion = CL_ME_VERSION_ADVANCED_VER_2_INTEL;
+    if (hwInfo.capabilityTable.supportsVme) {
+        deviceInfo.vmeAvcVersion = CL_AVC_ME_VERSION_1_INTEL;
+        deviceInfo.vmeVersion = CL_ME_VERSION_ADVANCED_VER_2_INTEL;
+    }
     deviceInfo.platformHostTimerResolution = getPlatformHostTimerResolution();
 
     deviceInfo.internalDriverVersion = CL_DEVICE_DRIVER_VERSION_INTEL_NEO1;

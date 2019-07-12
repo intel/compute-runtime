@@ -1150,6 +1150,9 @@ TEST_F(BuiltInTests, createProgramFromCodeInternalOptionsFor32Bit) {
 }
 
 TEST_F(BuiltInTests, whenQueriedProperVmeVersionIsReturned) {
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsVme) {
+        GTEST_SKIP();
+    }
     cl_uint param;
     auto ret = pDevice->getDeviceInfo(CL_DEVICE_ME_VERSION_INTEL, sizeof(param), &param, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
