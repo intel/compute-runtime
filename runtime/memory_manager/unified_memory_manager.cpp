@@ -96,6 +96,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size, const Unified
     if (DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get()) {
         if (memoryProperties.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
             auto unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(size, {});
+            UNRECOVERABLE_IF(unifiedMemoryPointer == nullptr);
             auto unifiedMemoryAllocation = this->getSVMAlloc(unifiedMemoryPointer);
             unifiedMemoryAllocation->memoryType = memoryProperties.memoryType;
             return unifiedMemoryPointer;
