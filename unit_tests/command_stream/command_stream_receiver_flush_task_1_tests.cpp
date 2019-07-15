@@ -820,7 +820,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsChainsWith
 typedef Test<DeviceFixture> CommandStreamReceiverCQFlushTaskTests;
 HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSizeCSRTraffic) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
-    auto &commandStreamReceiver = commandQueue.getCommandStreamReceiver();
+    auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
 
     // NOTE: This test attempts to reserve the maximum amount
     // of memory such that if a client gets everything he wants
@@ -926,7 +926,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
     configureCSRtoNonDirtyState<FamilyType>();
 
-    auto &commandStreamReceiver = commandQueue.getCommandStreamReceiver();
+    auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
 
     size_t pipeControlCount = PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation() / sizeof(PIPE_CONTROL);
 

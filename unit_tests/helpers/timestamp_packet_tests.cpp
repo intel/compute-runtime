@@ -236,11 +236,11 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimat
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
-    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
-    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 3);
-    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 4);
-    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 5);
+    MockTimestampPacketContainer timestamp1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestamp3(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 3);
+    MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 4);
+    MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 5);
 
     Event event1(mockCmdQ, 0, 0, 0);
     event1.addTimestampPacketNodes(timestamp1);
@@ -258,7 +258,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimat
 
     EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, device->getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, csrDeps, false, false, false, multiDispatchInfo, nullptr, 0);
     auto sizeWithEnabled = mockCmdQ->requestedCmdStreamSize;
@@ -279,11 +279,11 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
-    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
-    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 3);
-    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 4);
-    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 5);
+    MockTimestampPacketContainer timestamp1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestamp3(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 3);
+    MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 4);
+    MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 5);
 
     Event event1(mockCmdQ, 0, 0, 0);
     event1.addTimestampPacketNodes(timestamp1);
@@ -301,7 +301,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
 
     EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, device->getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, csrDeps, false, false, false, multiDispatchInfo, nullptr, 0);
     auto sizeWithEnabled = mockCmdQ->requestedCmdStreamSize;
@@ -327,15 +327,15 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhen
 
     EventsRequest eventsRequest(numEventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDepsEmpty;
-    csrDepsEmpty.fillFromEventsRequestAndMakeResident(eventsRequest, device->getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDepsEmpty.fillFromEventsRequestAndMakeResident(eventsRequest, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
     EXPECT_EQ(0u, csrDepsEmpty.size());
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
-    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 3);
-    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 4);
-    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 5);
+    MockTimestampPacketContainer timestamp1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestamp3(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 3);
+    MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 4);
+    MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 5);
 
     Event event1(mockCmdQ, 0, 0, 0);
     event1.addTimestampPacketNodes(timestamp1);
@@ -355,7 +355,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhen
     cl_event waitlist2[] = {&event1, &eventWithEmptyTimestampContainer2, &event3, &eventWithEmptyTimestampContainer4, &event5};
     EventsRequest eventsRequest2(numEventsOnWaitlist, waitlist2, nullptr);
     CsrDependencies csrDepsSize3;
-    csrDepsSize3.fillFromEventsRequestAndMakeResident(eventsRequest2, device->getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDepsSize3.fillFromEventsRequestAndMakeResident(eventsRequest2, device->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     EXPECT_EQ(3u, csrDepsSize3.size());
 
@@ -371,7 +371,7 @@ HWTEST_F(TimestampPacketTests, whenEstimatingSizeForNodeDependencyThenReturnCorr
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispatchingGpuWalkerThenAddTwoPcForLastWalker) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    MockTimestampPacketContainer timestampPacket(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestampPacket(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
 
     MockKernelWithInternals kernel2(*device);
 
@@ -419,7 +419,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketDisabledWhenDispatchingGpuWalkerThenDontAddPipeControls) {
-    MockTimestampPacketContainer timestampPacket(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestampPacket(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
     MockMultiDispatchInfo multiDispatchInfo(kernel->mockKernel);
     auto &cmdStream = mockCmdQ->getCS(0);
 
@@ -525,11 +525,11 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrT
     MockContext context2(device2.get());
     auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
 
-    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
-    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 3);
-    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 4);
-    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 5);
+    MockTimestampPacketContainer timestamp1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestamp3(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 3);
+    MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 4);
+    MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 5);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     auto &csr2 = device2->getUltCommandStreamReceiver<FamilyType>();
@@ -567,11 +567,11 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForDiff
     cl_queue_properties props[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
     auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), props);
 
-    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
-    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 3);
-    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 4);
-    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 5);
+    MockTimestampPacketContainer timestamp1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestamp3(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 3);
+    MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 4);
+    MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 5);
 
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     auto &csr2 = cmdQ2->getUltCommandStreamReceiver();
@@ -619,10 +619,10 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
 
     const cl_uint eventsOnWaitlist = 6;
-    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp6(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestamp3(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp6(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
 
     UserEvent event1;
     event1.setStatus(CL_COMPLETE);
@@ -705,10 +705,10 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
     cmdQ2->getUltCommandStreamReceiver().timestampPacketWriteEnabled = true;
 
     const cl_uint eventsOnWaitlist = 6;
-    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp6(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestamp3(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp6(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
 
     UserEvent event1;
     event1.setStatus(CL_COMPLETE);
@@ -758,8 +758,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlo
     auto cmdQ1 = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
     auto cmdQ2 = new MockCommandQueueHw<FamilyType>(context2, device2.get(), nullptr);
 
-    MockTimestampPacketContainer timestamp0(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp0(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
 
     UserEvent userEvent;
     Event event0(cmdQ1.get(), 0, 0, 0);
@@ -805,8 +805,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
     auto cmdQ2 = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), props));
     cmdQ2->getUltCommandStreamReceiver().timestampPacketWriteEnabled = true;
 
-    MockTimestampPacketContainer timestamp0(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp0(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
 
     UserEvent userEvent;
     Event event0(cmdQ1.get(), 0, 0, 0);
@@ -852,11 +852,11 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
     auto &cmdStream = mockCmdQ->getCS(0);
 
     const cl_uint eventsOnWaitlist = 6;
-    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
-    MockTimestampPacketContainer timestamp6(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp7(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp3(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestamp6(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp7(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
 
     UserEvent event1;
     UserEvent event2;
@@ -873,7 +873,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
 
     EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, mockCmdQ->getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
@@ -936,11 +936,11 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
     auto &cmdStream = mockCmdQ->getCS(0);
 
     const cl_uint eventsOnWaitlist = 6;
-    MockTimestampPacketContainer timestamp3(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp4(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp5(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
-    MockTimestampPacketContainer timestamp6(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer timestamp7(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp3(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp4(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp5(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestamp6(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp7(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
 
     UserEvent event1;
     UserEvent event2;
@@ -957,7 +957,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
 
     EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
     CsrDependencies csrDeps;
-    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, mockCmdQ->getCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
+    csrDeps.fillFromEventsRequestAndMakeResident(eventsRequest, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
 
     HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
@@ -1005,7 +1005,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenItIsQueriedForCompletionStatusThenItReturnsCurrentStatus) {
-    MockTimestampPacketContainer timestamp(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
     EXPECT_FALSE(timestamp.isCompleted());
     timestamp.getNode(0u)->tagForCpuAccess->packets[0].contextEnd = 0;
     EXPECT_FALSE(timestamp.isCompleted());
@@ -1014,7 +1014,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenItIsQueriedForCompletionS
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWithMultipleNodesWhenItIsQueriedForCompletionStatusThenItReturnsCurrentStatus) {
-    MockTimestampPacketContainer timestamp(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 2);
+    MockTimestampPacketContainer timestamp(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
     timestamp.getNode(0u)->tagForCpuAccess->packets[0].contextEnd = 0;
     timestamp.getNode(0u)->tagForCpuAccess->packets[0].globalEnd = 0;
     EXPECT_FALSE(timestamp.isCompleted());
@@ -1104,7 +1104,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDep
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    MockTimestampPacketContainer firstNode(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 0);
+    MockTimestampPacketContainer firstNode(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 0);
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     TimestampPacketContainer previousNodes;
@@ -1320,7 +1320,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlo
 TEST_F(TimestampPacketTests, givenDispatchSizeWhenAskingForNewTimestampsThenObtainEnoughTags) {
     size_t dispatchSize = 3;
 
-    mockCmdQ->timestampPacketContainer = std::make_unique<MockTimestampPacketContainer>(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 0);
+    mockCmdQ->timestampPacketContainer = std::make_unique<MockTimestampPacketContainer>(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 0);
     EXPECT_EQ(0u, mockCmdQ->timestampPacketContainer->peekNodes().size());
 
     TimestampPacketContainer previousNodes;
@@ -1339,8 +1339,8 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
     TimestampPacketContainer cmdQNodes;
     cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ->timestampPacketContainer);
 
-    MockTimestampPacketContainer node1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer node2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
 
     Event event0(cmdQ.get(), 0, 0, 0);
     event0.addTimestampPacketNodes(node1);
@@ -1384,8 +1384,8 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingMarkerWi
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
     auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
 
-    MockTimestampPacketContainer node1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer node2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
 
     Event event0(cmdQ.get(), 0, 0, 0);
     event0.addTimestampPacketNodes(node1);
@@ -1423,8 +1423,8 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingBarrierW
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
     auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
 
-    MockTimestampPacketContainer node1(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    MockTimestampPacketContainer node2(*device->getCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
 
     Event event0(cmdQ.get(), 0, 0, 0);
     event0.addTimestampPacketNodes(node1);

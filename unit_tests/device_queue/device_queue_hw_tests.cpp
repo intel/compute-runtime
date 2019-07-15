@@ -353,7 +353,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
     MockParentKernel *mockParentKernel = MockParentKernel::create(*pContext);
     uint32_t taskCount = 7;
 
-    auto hwTimeStamp = pCommandQueue->getCommandStreamReceiver().getEventTsAllocator()->getTag();
+    auto hwTimeStamp = pCommandQueue->getGpgpuCommandStreamReceiver().getEventTsAllocator()->getTag();
     mockDeviceQueueHw->buildSlbDummyCommands();
     mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel, hwTimeStamp, taskCount);
 

@@ -74,7 +74,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         eventWaitList,
         event);
 
-    auto storageForAllocation = getCommandStreamReceiver().getInternalAllocationStorage();
+    auto storageForAllocation = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     storageForAllocation->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(patternAllocation), TEMPORARY_ALLOCATION, taskCount);
 
     return CL_SUCCESS;

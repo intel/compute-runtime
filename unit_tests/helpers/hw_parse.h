@@ -79,7 +79,7 @@ struct HardwareParse {
 
     template <typename FamilyType>
     void parseCommands(NEO::CommandQueue &commandQueue) {
-        auto &commandStreamReceiver = commandQueue.getCommandStreamReceiver();
+        auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
         auto &commandStreamCSR = commandStreamReceiver.getCS();
 
         parseCommands<FamilyType>(commandStreamCSR, startCSRCS);

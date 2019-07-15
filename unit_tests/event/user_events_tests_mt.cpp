@@ -23,7 +23,7 @@ TEST_F(MockEventTests, eventCreatedFromUserEventsThatIsNotSignaledDoesntFlushToC
     //call NDR
     auto retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
 
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     *csr.getTagAddress() = (unsigned int)-1;
     auto taskLevelBeforeWaitForEvents = csr.peekTaskLevel();
 

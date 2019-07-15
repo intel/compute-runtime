@@ -28,7 +28,7 @@ void CsrDependencies::fillFromEventsRequestAndMakeResident(const EventsRequest &
         }
 
         timestampPacketContainer->makeResident(currentCsr);
-        auto sameCsr = (&event->getCommandQueue()->getCommandStreamReceiver() == &currentCsr);
+        auto sameCsr = (&event->getCommandQueue()->getGpgpuCommandStreamReceiver() == &currentCsr);
         bool pushDependency = (DependenciesType::OnCsr == depsType && sameCsr) ||
                               (DependenciesType::OutOfCsr == depsType && !sameCsr) ||
                               (DependenciesType::All == depsType);

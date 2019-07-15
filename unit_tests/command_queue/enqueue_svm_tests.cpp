@@ -571,7 +571,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFillDoubleToReuseAllocation_Success) {
 }
 
 TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThenItsTypeShouldBeSetToFillPattern) {
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
 
     const float pattern[1] = {1.2345f};
@@ -1086,8 +1086,8 @@ HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenHostPtrAllocationCreationFailsThenRe
     void *pSrcSVM = ptrSVM;
     MockCommandQueueHw<FamilyType> cmdQ(context, pDevice, nullptr);
     auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment());
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.engine->commandStreamReceiver;
-    cmdQ.engine->commandStreamReceiver = failCsr.get();
+    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
+    cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
     retVal = cmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -1098,7 +1098,7 @@ HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenHostPtrAllocationCreationFailsThenRe
         nullptr  // cL_event *event
     );
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
-    cmdQ.engine->commandStreamReceiver = oldCommandStreamReceiver;
+    cmdQ.gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
 }
 
 HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
@@ -1107,8 +1107,8 @@ HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenHostPtrAllocationCreation
     void *pSrcSVM = srcHostPtr;
     MockCommandQueueHw<FamilyType> cmdQ(context, pDevice, nullptr);
     auto failCsr = std::make_unique<FailCsr<FamilyType>>(*pDevice->getExecutionEnvironment());
-    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.engine->commandStreamReceiver;
-    cmdQ.engine->commandStreamReceiver = failCsr.get();
+    CommandStreamReceiver *oldCommandStreamReceiver = cmdQ.gpgpuEngine->commandStreamReceiver;
+    cmdQ.gpgpuEngine->commandStreamReceiver = failCsr.get();
     retVal = cmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
         pDstSVM, // void *dst_ptr
@@ -1119,5 +1119,5 @@ HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenHostPtrAllocationCreation
         nullptr  // cL_event *event
     );
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
-    cmdQ.engine->commandStreamReceiver = oldCommandStreamReceiver;
+    cmdQ.gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
 }

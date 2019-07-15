@@ -171,7 +171,7 @@ TEST_F(MockEventTests, blockedUserEventPassedToEnqueueNdRangeWithoutReturnEventI
     cl_event userEvent = uEvent.get();
     cl_event *eventWaitList = &userEvent;
 
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskCount = csr.peekTaskCount();
 
     //call NDR
@@ -204,7 +204,7 @@ TEST_F(MockEventTests, blockedUserEventPassedToEnqueueNdRangeWithReturnEventIsNo
     cl_event retEvent = nullptr;
 
     cl_event *eventWaitList = &userEvent;
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskCount = csr.peekTaskCount();
 
     //call NDR
@@ -449,7 +449,7 @@ HWTEST_F(EventTests, userEventObtainsProperTaskLevelAfterSignaling) {
 
 TEST_F(MockEventTests, normalEventsBasingOnUserEventHasProperTaskLevel) {
     uEvent = make_releaseable<UserEvent>(context);
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskLevel = csr.peekTaskLevel();
 
     cl_event retEvent = nullptr;
@@ -520,7 +520,7 @@ TEST_F(MockEventTests, enqueueWithAbortedUserEventDoesntFlushToCSR) {
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent = nullptr;
 
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskCount = csr.peekTaskCount();
 
     //call NDR
@@ -553,7 +553,7 @@ TEST_F(MockEventTests, childEventDestructorDoesntProcessBlockedCommandsWhenParen
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent = nullptr;
 
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskCount = csr.peekTaskCount();
 
     //call NDR
@@ -636,7 +636,7 @@ TEST_F(MockEventTests, waitForEventDependingOnAbortedUserEventReturnsFailureTwoI
 TEST_F(MockEventTests, finishReturnsSuccessAfterQueueIsAborted) {
     uEvent = make_releaseable<UserEvent>(context);
 
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskLevel = csr.peekTaskLevel();
 
     cl_event eventWaitList[] = {uEvent.get()};
@@ -688,7 +688,7 @@ TEST_F(MockEventTests, unblockingEventSendsBlockedPackets) {
     uEvent = make_releaseable<UserEvent>(context);
     cl_event eventWaitList[] = {uEvent.get()};
 
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
 
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
@@ -908,7 +908,7 @@ TEST_F(MockEventTests, enqueueReadImageBlockedOnUserEvent) {
 }
 
 TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto memoryManager = pCmdQ->getDevice().getMemoryManager();
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());

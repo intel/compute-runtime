@@ -55,7 +55,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         constexpr static auto additionalAllocationSize = CSRequirements::csOverfetchSize;
         constexpr static auto allocationSize = MemoryConstants::pageSize64k - additionalAllocationSize;
         commandStream = new LinearStream();
-        commandQueue.getCommandStreamReceiver().ensureCommandBufferAllocation(*commandStream, allocationSize, additionalAllocationSize);
+        commandQueue.getGpgpuCommandStreamReceiver().ensureCommandBufferAllocation(*commandStream, allocationSize, additionalAllocationSize);
 
         if (parentKernel) {
             uint32_t colorCalcSize = commandQueue.getContext().getDefaultDeviceQueue()->colorCalcStateSize;
@@ -80,7 +80,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         using UniqueIH = std::unique_ptr<IndirectHeap>;
         *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh), UniqueIH(ioh),
-                                                   UniqueIH(ssh), *commandQueue.getCommandStreamReceiver().getInternalAllocationStorage());
+                                                   UniqueIH(ssh), *commandQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
         if (parentKernel) {
             (*blockedCommandsData)->doNotFreeISH = true;
         }
@@ -186,7 +186,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, true);
 
-        if (commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             auto timestampPacketNode = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
             GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacketNode, TimestampPacketStorage::WriteOperationType::BeforeWalker);
         }
@@ -202,7 +202,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     }
     if (mainKernel->requiresCacheFlushCommand(commandQueue)) {
         uint64_t postSyncAddress = 0;
-        if (commandQueue.getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             auto timestampPacketNodeForPostSync = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
             postSyncAddress = timestampPacketNodeForPostSync->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
         }

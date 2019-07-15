@@ -191,7 +191,7 @@ TEST_F(MarkerTest, givenMultipleEventWhenTheyArePassedToMarkerThenOutputEventHas
 
     std::unique_ptr<Event> pEvent((Event *)(event));
 
-    if (pCmdQ->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         EXPECT_EQ(initialTaskCount + 1, pCmdQ->taskCount);
         EXPECT_EQ(initialTaskCount + 1, pEvent->peekTaskCount());
     } else {
@@ -225,7 +225,7 @@ TEST_F(MarkerTest, givenMultipleEventsAndCompletedUserEventWhenTheyArePassedToMa
 
     std::unique_ptr<Event> pEvent((Event *)(event));
 
-    if (pCmdQ->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         EXPECT_EQ(initialTaskCount + 1, pCmdQ->taskCount);
         EXPECT_EQ(initialTaskCount + 1, pEvent->peekTaskCount());
     } else {

@@ -30,7 +30,7 @@ void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
 
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
     std::stringstream strfilename;
-    auto engineType = pCmdQ->getCommandStreamReceiver().getOsContext().getEngineType();
+    auto engineType = pCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getEngineType();
     strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
 
     if (testMode == TestMode::AubTestsWithTbx) {

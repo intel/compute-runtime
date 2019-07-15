@@ -1487,7 +1487,7 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
     gtpinNotifyKernelSubmit(pKernel1, pCmdQueue);
     EXPECT_EQ(nullptr, kernelExecQueue[0].gtpinResource);
 
-    CommandStreamReceiver &csr = pCmdQueue->getCommandStreamReceiver();
+    CommandStreamReceiver &csr = pCmdQueue->getGpgpuCommandStreamReceiver();
     gtpinNotifyMakeResident(pKernel1, &csr);
     EXPECT_FALSE(kernelExecQueue[0].isResourceResident);
 
@@ -1671,7 +1671,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     cl_mem gtpinBuffer1 = kernelExecQueue[1].gtpinResource;
     auto pBuffer1 = castToObject<Buffer>(gtpinBuffer1);
     GraphicsAllocation *pGfxAlloc1 = pBuffer1->getGraphicsAllocation();
-    CommandStreamReceiver &csr = pCmdQueue->getCommandStreamReceiver();
+    CommandStreamReceiver &csr = pCmdQueue->getGpgpuCommandStreamReceiver();
     EXPECT_FALSE(pGfxAlloc0->isResident(csr.getOsContext().getContextId()));
     EXPECT_FALSE(pGfxAlloc1->isResident(csr.getOsContext().getContextId()));
     gtpinNotifyMakeResident(pKernel, &csr);
@@ -1841,7 +1841,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     cl_mem gtpinBuffer1 = kernelExecQueue[1].gtpinResource;
     auto pBuffer1 = castToObject<Buffer>(gtpinBuffer1);
     GraphicsAllocation *pGfxAlloc1 = pBuffer1->getGraphicsAllocation();
-    CommandStreamReceiver &csr = pCmdQueue->getCommandStreamReceiver();
+    CommandStreamReceiver &csr = pCmdQueue->getGpgpuCommandStreamReceiver();
     // Make resident resource of first submitted kernel
     EXPECT_FALSE(pGfxAlloc0->isResident(csr.getOsContext().getContextId()));
     EXPECT_FALSE(pGfxAlloc1->isResident(csr.getOsContext().getContextId()));

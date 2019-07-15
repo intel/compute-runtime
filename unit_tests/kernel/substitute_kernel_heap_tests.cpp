@@ -110,7 +110,7 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     MockKernelWithInternals kernel(*pDevice);
     auto pHeader = const_cast<SKernelBinaryHeaderCommon *>(kernel.kernelInfo.heapInfo.pKernelHeader);
     auto memoryManager = pDevice->getMemoryManager();
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
 
     const size_t initialHeapSize = 0x40;
     pHeader->KernelHeapSize = initialHeapSize;

@@ -104,7 +104,7 @@ HWTEST_F(EnqueueDebugKernelTest, givenDebugKernelWhenEnqueuedThenSSHAndBtiAreCor
 
         auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh.getCpuBase(), surfaceStateOffset));
 
-        auto &commandStreamReceiver = mockCmdQ->getCommandStreamReceiver();
+        auto &commandStreamReceiver = mockCmdQ->getGpgpuCommandStreamReceiver();
         auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
         EXPECT_EQ(1u, debugSurface->getTaskCount(commandStreamReceiver.getOsContext().getContextId()));
 

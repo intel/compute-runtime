@@ -33,7 +33,7 @@ bool isBlockingCall(unsigned int cmdType) {
 }
 
 TYPED_TEST_P(OOQTaskTypedTests, givenNonBlockingCallWhenDoneOnOutOfOrderQueueThenTaskLevelDoesntChange) {
-    auto &commandStreamReceiver = this->pCmdQ->getCommandStreamReceiver();
+    auto &commandStreamReceiver = this->pCmdQ->getGpgpuCommandStreamReceiver();
     auto tagAddress = commandStreamReceiver.getTagAddress();
 
     auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
@@ -60,7 +60,7 @@ TYPED_TEST_P(OOQTaskTypedTests, givenNonBlockingCallWhenDoneOnOutOfOrderQueueThe
 }
 
 TYPED_TEST_P(OOQTaskTypedTests, givenTaskWhenEnqueuedOnOutOfOrderQueueThenTaskCountIsUpdated) {
-    auto &commandStreamReceiver = this->pCmdQ->getCommandStreamReceiver();
+    auto &commandStreamReceiver = this->pCmdQ->getGpgpuCommandStreamReceiver();
     auto previousTaskCount = commandStreamReceiver.peekTaskCount();
     auto tagAddress = commandStreamReceiver.getTagAddress();
     auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
@@ -104,7 +104,7 @@ INSTANTIATE_TYPED_TEST_CASE_P(OOQ, OOQTaskTypedTests, EnqueueParams);
 typedef OOQTaskTypedTests<EnqueueKernelHelper<>> OOQTaskTests;
 
 TEST_F(OOQTaskTests, enqueueKernel_changesTaskCount) {
-    auto &commandStreamReceiver = pCmdQ->getCommandStreamReceiver();
+    auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
     auto previousTaskCount = commandStreamReceiver.peekTaskCount();
 
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ,

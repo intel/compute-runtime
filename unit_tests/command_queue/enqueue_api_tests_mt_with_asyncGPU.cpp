@@ -61,7 +61,7 @@ HWTEST_F(AsyncGPUoperations, MapBufferAfterWriteBuffer) {
     }
     t.join();
 
-    srcBuffer->getGraphicsAllocation()->updateTaskCount(0u, pCmdQ->getCommandStreamReceiver().getOsContext().getContextId());
+    srcBuffer->getGraphicsAllocation()->updateTaskCount(0u, pCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getContextId());
 
     alignedFree(ptrMemory);
 }

@@ -66,7 +66,7 @@ Event::Event(
 
     if ((this->ctx == nullptr) && (cmdQueue != nullptr)) {
         this->ctx = &cmdQueue->getContext();
-        if (cmdQueue->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        if (cmdQueue->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
     }
@@ -334,7 +334,7 @@ inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {
 
     DEBUG_BREAK_IF(this->taskLevel == Event::eventNotReady && this->executionStatus >= 0);
 
-    auto *allocationStorage = cmdQueue->getCommandStreamReceiver().getInternalAllocationStorage();
+    auto *allocationStorage = cmdQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
 
     return true;
@@ -370,7 +370,7 @@ void Event::updateExecutionStatus() {
         transitionExecutionStatus(CL_COMPLETE);
         executeCallbacks(CL_COMPLETE);
         unblockEventsBlockedByThis(CL_COMPLETE);
-        auto *allocationStorage = cmdQueue->getCommandStreamReceiver().getInternalAllocationStorage();
+        auto *allocationStorage = cmdQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
         allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
         return;
     }
@@ -471,11 +471,11 @@ void Event::submitCommand(bool abortTasks) {
     if (cmdToProcess.get() != nullptr) {
         std::unique_lock<CommandStreamReceiver::MutexType> lockCSR;
         if (this->cmdQueue) {
-            lockCSR = this->getCommandQueue()->getCommandStreamReceiver().obtainUniqueOwnership();
+            lockCSR = this->getCommandQueue()->getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
         }
         if ((this->isProfilingEnabled()) && (this->cmdQueue != nullptr)) {
             if (timeStampNode) {
-                this->cmdQueue->getCommandStreamReceiver().makeResident(*timeStampNode->getBaseGraphicsAllocation());
+                this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*timeStampNode->getBaseGraphicsAllocation());
                 cmdToProcess->timestamp = timeStampNode;
             }
             if (profilingCpuPath) {
@@ -485,7 +485,7 @@ void Event::submitCommand(bool abortTasks) {
                 this->cmdQueue->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
             }
             if (perfCountersEnabled && perfCounterNode) {
-                this->cmdQueue->getCommandStreamReceiver().makeResident(*perfCounterNode->getBaseGraphicsAllocation());
+                this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*perfCounterNode->getBaseGraphicsAllocation());
             }
         }
         auto &complStamp = cmdToProcess->submit(taskLevel, abortTasks);
@@ -501,8 +501,8 @@ void Event::submitCommand(bool abortTasks) {
     if (this->taskCount == Event::eventNotReady) {
         if (!this->isUserEvent() && this->eventWithoutCommand) {
             if (this->cmdQueue) {
-                auto lockCSR = this->getCommandQueue()->getCommandStreamReceiver().obtainUniqueOwnership();
-                updateTaskCount(this->cmdQueue->getCommandStreamReceiver().peekTaskCount());
+                auto lockCSR = this->getCommandQueue()->getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+                updateTaskCount(this->cmdQueue->getGpgpuCommandStreamReceiver().peekTaskCount());
             }
         }
         //make sure that task count is synchronized for events with kernels
@@ -573,7 +573,7 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
     DBG_LOG(EventsDebugEnable, "Event", this, "is unblocked by", &event);
 
     if (this->taskLevel == Event::eventNotReady) {
-        this->taskLevel = std::max(cmdQueue->getCommandStreamReceiver().peekTaskLevel(), taskLevel);
+        this->taskLevel = std::max(cmdQueue->getGpgpuCommandStreamReceiver().peekTaskLevel(), taskLevel);
     } else {
         this->taskLevel = std::max(this->taskLevel.load(), taskLevel);
     }
@@ -664,7 +664,7 @@ void Event::tryFlushEvent() {
     if (cmdQueue && updateStatusAndCheckCompletion() == false) {
         //flush the command queue only if it is not blocked event
         if (taskLevel != Event::eventNotReady) {
-            cmdQueue->getCommandStreamReceiver().flushBatchedSubmissions();
+            cmdQueue->getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
         }
     }
 }
@@ -696,7 +696,7 @@ void Event::setEndTimeStamp() {
 
 TagNode<HwTimeStamps> *Event::getHwTimeStampNode() {
     if (!timeStampNode) {
-        timeStampNode = cmdQueue->getCommandStreamReceiver().getEventTsAllocator()->getTag();
+        timeStampNode = cmdQueue->getGpgpuCommandStreamReceiver().getEventTsAllocator()->getTag();
     }
     return timeStampNode;
 }
@@ -705,7 +705,7 @@ TagNode<HwPerfCounter> *Event::getHwPerfCounterNode() {
 
     if (!perfCounterNode && cmdQueue->getPerfCounters()) {
         const uint32_t gpuReportSize = cmdQueue->getPerfCounters()->getGpuReportSize();
-        perfCounterNode = cmdQueue->getCommandStreamReceiver().getEventPerfCountAllocator(gpuReportSize)->getTag();
+        perfCounterNode = cmdQueue->getGpgpuCommandStreamReceiver().getEventPerfCountAllocator(gpuReportSize)->getTag();
     }
     return perfCounterNode;
 }

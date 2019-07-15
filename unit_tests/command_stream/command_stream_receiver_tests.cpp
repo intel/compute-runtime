@@ -41,7 +41,7 @@ struct CommandStreamReceiverTest : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
 
-        commandStreamReceiver = &pDevice->getCommandStreamReceiver();
+        commandStreamReceiver = &pDevice->getGpgpuCommandStreamReceiver();
         ASSERT_NE(nullptr, commandStreamReceiver);
         memoryManager = commandStreamReceiver->getMemoryManager();
         internalAllocationStorage = commandStreamReceiver->getInternalAllocationStorage();
@@ -460,7 +460,7 @@ struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
         gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*executionEnvironment);
         executionEnvironment->memoryManager.reset(gmockMemoryManager);
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
-        commandStreamReceiver = &device->getCommandStreamReceiver();
+        commandStreamReceiver = &device->getGpgpuCommandStreamReceiver();
     }
     HardwareInfo hwInfo = *platformDevices[0];
     ExecutionEnvironment *executionEnvironment = nullptr;

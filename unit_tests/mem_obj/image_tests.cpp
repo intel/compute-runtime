@@ -1317,7 +1317,7 @@ TEST(ImageTest, givenClMemCopyHostPointerPassedToImageCreateWhenAllocationIsNotI
         .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseAllocateGraphicsMemoryInDevicePool));
 
     char memory[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    auto taskCount = device->getCommandStreamReceiver().peekLatestFlushedTaskCount();
+    auto taskCount = device->getGpgpuCommandStreamReceiver().peekLatestFlushedTaskCount();
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
@@ -1337,7 +1337,7 @@ TEST(ImageTest, givenClMemCopyHostPointerPassedToImageCreateWhenAllocationIsNotI
     std::unique_ptr<Image> image(Image::create(&ctx, flags, surfaceFormat, &imageDesc, memory, retVal));
     EXPECT_NE(nullptr, image);
 
-    auto taskCountSent = device->getCommandStreamReceiver().peekLatestFlushedTaskCount();
+    auto taskCountSent = device->getGpgpuCommandStreamReceiver().peekLatestFlushedTaskCount();
     EXPECT_LT(taskCount, taskCountSent);
 }
 

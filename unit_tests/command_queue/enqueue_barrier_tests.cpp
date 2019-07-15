@@ -187,7 +187,7 @@ HWTEST_F(BarrierTest, eventWithWaitDependenciesShouldSync) {
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, event);
     auto pEvent = castToObject<Event>(event);
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
 
     // in this case only cmdQ raises the taskLevel why csr stay intact
     EXPECT_EQ(8u, pCmdQ->taskLevel);
@@ -220,7 +220,7 @@ HWTEST_F(BarrierTest, givenNotBlockedCommandQueueAndEnqueueBarrierWithWaitlistRe
         eventWaitList,
         &event);
 
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(latestTaskCountWaitedBeforeEnqueue, this->pCmdQ->latestTaskCountWaited);

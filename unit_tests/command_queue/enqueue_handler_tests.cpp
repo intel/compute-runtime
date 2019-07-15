@@ -500,7 +500,7 @@ struct EnqueueHandlerTestBasic : public ::testing::Test {
 
         auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
-        auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(mockCmdQ->getCommandStreamReceiver());
+        auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(mockCmdQ->getGpgpuCommandStreamReceiver());
         ultCsr.taskCount = initialTaskCount;
 
         mockInternalAllocationStorage = new MockInternalAllocationStorage(ultCsr);

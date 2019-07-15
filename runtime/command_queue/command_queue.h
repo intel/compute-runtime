@@ -334,11 +334,11 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                              cl_uint numEventsInWaitList,
                                              const cl_event *eventWaitList);
 
-    CommandStreamReceiver &getCommandStreamReceiver() const;
+    CommandStreamReceiver &getGpgpuCommandStreamReceiver() const;
     Device &getDevice() const { return *device; }
     Context &getContext() const { return *context; }
     Context *getContextPtr() const { return context; }
-    EngineControl &getEngine() const { return *engine; }
+    EngineControl &getGpgpuEngine() const { return *gpgpuEngine; }
 
     MOCKABLE_VIRTUAL LinearStream &getCS(size_t minRequiredSize);
     IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType,
@@ -439,7 +439,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     Context *context = nullptr;
     Device *device = nullptr;
-    EngineControl *engine = nullptr;
+    EngineControl *gpgpuEngine = nullptr;
 
     cl_command_queue_properties commandQueueProperties = 0;
 

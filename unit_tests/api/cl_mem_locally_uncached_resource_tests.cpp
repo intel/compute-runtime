@@ -36,7 +36,7 @@ template <typename FamilyType>
 uint32_t cmdQueueMocs(CommandQueue *pCmdQ) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto pCmdQHw = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
-    auto &csr = pCmdQHw->getCommandStreamReceiver();
+    auto &csr = pCmdQHw->getGpgpuCommandStreamReceiver();
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(csr.getCS(0), 0);
     auto itorCmd = reverse_find<STATE_BASE_ADDRESS *>(hwParse.cmdList.rbegin(), hwParse.cmdList.rend());

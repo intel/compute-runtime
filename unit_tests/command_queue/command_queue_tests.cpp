@@ -204,7 +204,7 @@ TEST(CommandQueue, givenDeviceWhenCreatingCommandQueueThenPickCsrFromDefaultEngi
     CommandQueue cmdQ(nullptr, mockDevice.get(), 0);
 
     auto defaultCsr = mockDevice->getDefaultEngine().commandStreamReceiver;
-    EXPECT_EQ(defaultCsr, &cmdQ.getCommandStreamReceiver());
+    EXPECT_EQ(defaultCsr, &cmdQ.getGpgpuCommandStreamReceiver());
 }
 
 TEST(CommandQueue, givenCmdQueueBlockedByReadyVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
@@ -334,7 +334,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllo
     auto memoryManager = pDevice->getMemoryManager();
     size_t requiredSize = alignUp(100 + CSRequirements::minCommandQueueCommandStreamSize + CSRequirements::csOverfetchSize, MemoryConstants::pageSize64k);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({requiredSize, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-    auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
+    auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
@@ -463,7 +463,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, IndirectHeapContainsAtLeast64KB) {
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), sizeof(uint32_t));
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
-        size_t expectedSshUse = cmdQ.getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize - UnitTestHelper<FamilyType>::getDefaultSshUsage();
+        size_t expectedSshUse = cmdQ.getGpgpuCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize - UnitTestHelper<FamilyType>::getDefaultSshUsage();
         EXPECT_EQ(expectedSshUse, indirectHeap.getAvailableSpace());
     } else {
         EXPECT_EQ(64 * KB, indirectHeap.getAvailableSpace());
@@ -491,7 +491,7 @@ TEST_P(CommandQueueIndirectHeapTest, getIndirectHeapCanRecycle) {
     ASSERT_NE(nullptr, &indirectHeap);
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
         //no matter what SSH is always capped
-        EXPECT_EQ(cmdQ.getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize,
+        EXPECT_EQ(cmdQ.getGpgpuCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize,
                   indirectHeap.getMaxAvailableSpace());
     } else {
         EXPECT_LE(requiredSize, indirectHeap.getMaxAvailableSpace());
@@ -525,7 +525,7 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAlloc
 
     GraphicsAllocation *allocation = nullptr;
 
-    auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
+    auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
     auto allocationType = GraphicsAllocation::AllocationType::LINEAR_STREAM;
     if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT) {
         allocationType = GraphicsAllocation::AllocationType::INTERNAL_HEAP;
@@ -968,7 +968,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsC
 
     kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + kernel->getAllocatedKernelInfo()->patchInfo.pAllocateSystemThreadSurface->Offset);
     kernel->getAllocatedKernelInfo()->usesSsh = true;
-    auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
+    auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
 
     cmdQ.setupDebugSurface(kernel.get());
 
@@ -987,7 +987,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCsrWithDebugSurfaceAllocatedWhenSet
 
     kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + kernel->getAllocatedKernelInfo()->patchInfo.pAllocateSystemThreadSurface->Offset);
     kernel->getAllocatedKernelInfo()->usesSsh = true;
-    auto &commandStreamReceiver = cmdQ.getCommandStreamReceiver();
+    auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
     commandStreamReceiver.allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
     auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
     ASSERT_NE(nullptr, debugSurface);
@@ -1029,8 +1029,8 @@ TEST(CommandQueuePropertiesTests, whenDefaultCommandQueueIsCreatedThenItIsNotMul
 TEST(CommandQueuePropertiesTests, whenGetEngineIsCalledThenQueueEngineIsReturned) {
     MockCommandQueue queue;
     EngineControl engineControl;
-    queue.engine = &engineControl;
-    EXPECT_EQ(queue.engine, &queue.getEngine());
+    queue.gpgpuEngine = &engineControl;
+    EXPECT_EQ(queue.gpgpuEngine, &queue.getGpgpuEngine());
 }
 TEST(CommandQueue, GivenCommandQueueWhenEnqueueResourceBarrierCalledThenSuccessReturned) {
     MockContext context;

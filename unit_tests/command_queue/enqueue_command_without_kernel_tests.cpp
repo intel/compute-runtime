@@ -43,17 +43,17 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelWhenCommandEnqueuedT
     auto blocking = true;
     TimestampPacketContainer previousTimestampPacketNodes;
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, mockCmdQ->getCS(0), 0, blocking, &previousTimestampPacketNodes, eventsRequest, eventBuilder, 0);
-    EXPECT_EQ(allocation->getTaskCount(mockCmdQ->getCommandStreamReceiver().getOsContext().getContextId()), 1u);
+    EXPECT_EQ(allocation->getTaskCount(mockCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getContextId()), 1u);
 }
 
 HWTEST_F(EnqueueHandlerTest, whenEnqueueCommandWithoutKernelThenPassCorrectDispatchFlags) {
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     auto mockCsr = std::make_unique<MockCsrHw2<FamilyType>>(*executionEnvironment);
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
-    mockCsr->setupContext(*mockCmdQ->engine->osContext);
+    mockCsr->setupContext(*mockCmdQ->gpgpuEngine->osContext);
     mockCsr->initializeTagAllocation();
-    auto oldCsr = mockCmdQ->engine->commandStreamReceiver;
-    mockCmdQ->engine->commandStreamReceiver = mockCsr.get();
+    auto oldCsr = mockCmdQ->gpgpuEngine->commandStreamReceiver;
+    mockCmdQ->gpgpuEngine->commandStreamReceiver = mockCsr.get();
     mockCsr->createPreemptionAllocation();
 
     auto blocking = true;
@@ -65,7 +65,7 @@ HWTEST_F(EnqueueHandlerTest, whenEnqueueCommandWithoutKernelThenPassCorrectDispa
     EXPECT_EQ(blocking, mockCsr->passedDispatchFlags.blocking);
     EXPECT_EQ(mockCmdQ->isMultiEngineQueue(), mockCsr->passedDispatchFlags.multiEngineQueue);
     EXPECT_EQ(pDevice->getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
-    mockCmdQ->engine->commandStreamReceiver = oldCsr;
+    mockCmdQ->gpgpuEngine->commandStreamReceiver = oldCsr;
 }
 
 HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenEnqueuedHandlerThenUsedSizeEqualZero) {

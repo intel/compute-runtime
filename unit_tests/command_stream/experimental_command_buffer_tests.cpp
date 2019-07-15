@@ -31,8 +31,8 @@ struct ExperimentalCommandBufferTest : public UltCommandStreamReceiverTest {
 struct MockExperimentalCommandBufferTest : public UltCommandStreamReceiverTest {
     void SetUp() override {
         UltCommandStreamReceiverTest::SetUp();
-        pDevice->getCommandStreamReceiver().setExperimentalCmdBuffer(
-            std::unique_ptr<ExperimentalCommandBuffer>(new MockExperimentalCommandBuffer(&pDevice->getCommandStreamReceiver())));
+        pDevice->getGpgpuCommandStreamReceiver().setExperimentalCmdBuffer(
+            std::unique_ptr<ExperimentalCommandBuffer>(new MockExperimentalCommandBuffer(&pDevice->getGpgpuCommandStreamReceiver())));
     }
 };
 

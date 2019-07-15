@@ -67,8 +67,8 @@ CommandQueue::CommandQueue(Context *context, Device *deviceId, const cl_queue_pr
     flushStamp.reset(new FlushStampTracker(true));
 
     if (device) {
-        engine = &device->getDefaultEngine();
-        if (getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        gpgpuEngine = &device->getDefaultEngine();
+        if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
     }
@@ -83,7 +83,7 @@ CommandQueue::~CommandQueue() {
     }
 
     if (device) {
-        auto storageForAllocation = getCommandStreamReceiver().getInternalAllocationStorage();
+        auto storageForAllocation = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
 
         if (commandStream) {
             storageForAllocation->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream->getGraphicsAllocation()), REUSABLE_ALLOCATION);
@@ -103,8 +103,8 @@ CommandQueue::~CommandQueue() {
     }
 }
 
-CommandStreamReceiver &CommandQueue::getCommandStreamReceiver() const {
-    return *engine->commandStreamReceiver;
+CommandStreamReceiver &CommandQueue::getGpgpuCommandStreamReceiver() const {
+    return *gpgpuEngine->commandStreamReceiver;
 }
 
 uint32_t CommandQueue::getHwTag() const {
@@ -113,7 +113,7 @@ uint32_t CommandQueue::getHwTag() const {
 }
 
 volatile uint32_t *CommandQueue::getHwTagAddress() const {
-    return getCommandStreamReceiver().getTagAddress();
+    return getGpgpuCommandStreamReceiver().getTagAddress();
 }
 
 bool CommandQueue::isCompleted(uint32_t taskCount) const {
@@ -130,12 +130,13 @@ void CommandQueue::waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushS
 
     bool forcePowerSavingMode = this->throttle == QueueThrottle::LOW;
 
-    getCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
+    getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait,
+                                                                          useQuickKmdSleep, forcePowerSavingMode);
 
     DEBUG_BREAK_IF(getHwTag() < taskCountToWait);
     latestTaskCountWaited = taskCountToWait;
 
-    getCommandStreamReceiver().waitForTaskCountAndCleanAllocationList(taskCountToWait, TEMPORARY_ALLOCATION);
+    getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanAllocationList(taskCountToWait, TEMPORARY_ALLOCATION);
 
     WAIT_LEAVE()
 }
@@ -160,7 +161,7 @@ bool CommandQueue::isQueueBlocked() {
                 //at this point we may reset queue TaskCount, since all command previous to this were aborted
                 taskCount = 0;
                 flushStamp->setStamp(0);
-                taskLevel = getCommandStreamReceiver().peekTaskLevel();
+                taskLevel = getGpgpuCommandStreamReceiver().peekTaskLevel();
             }
 
             DebugManager.log(DebugManager.flags.EventsDebugEnable.get(), "isQueueBlocked taskLevel change from", taskLevel, "to new from virtualEvent", this->virtualEvent, "new tasklevel", this->virtualEvent->taskLevel.load());
@@ -202,7 +203,7 @@ LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
 
     minRequiredSize += CSRequirements::minCommandQueueCommandStreamSize;
     constexpr static auto additionalAllocationSize = CSRequirements::minCommandQueueCommandStreamSize + CSRequirements::csOverfetchSize;
-    getCommandStreamReceiver().ensureCommandBufferAllocation(*commandStream, minRequiredSize, additionalAllocationSize);
+    getGpgpuCommandStreamReceiver().ensureCommandBufferAllocation(*commandStream, minRequiredSize, additionalAllocationSize);
     return *commandStream;
 }
 
@@ -481,7 +482,7 @@ void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList
     }
 
     //store task data in event
-    auto cmd = std::unique_ptr<Command>(new CommandMapUnmap(opType, *memObj, copySize, copyOffset, readOnly, getCommandStreamReceiver(), *this));
+    auto cmd = std::unique_ptr<Command>(new CommandMapUnmap(opType, *memObj, copySize, copyOffset, readOnly, getGpgpuCommandStreamReceiver(), *this));
     eventBuilder->getEvent()->setCommand(std::move(cmd));
 
     //bind output event with input events
@@ -496,10 +497,10 @@ void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList
 }
 
 bool CommandQueue::setupDebugSurface(Kernel *kernel) {
-    auto debugSurface = getCommandStreamReceiver().getDebugSurfaceAllocation();
+    auto debugSurface = getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
 
     if (!debugSurface) {
-        debugSurface = getCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
+        debugSurface = getGpgpuCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
     }
 
     DEBUG_BREAK_IF(!kernel->requiresSshForBuffers());
@@ -513,19 +514,19 @@ bool CommandQueue::setupDebugSurface(Kernel *kernel) {
 }
 
 IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize) {
-    return getCommandStreamReceiver().getIndirectHeap(heapType, minRequiredSize);
+    return getGpgpuCommandStreamReceiver().getIndirectHeap(heapType, minRequiredSize);
 }
 
 void CommandQueue::allocateHeapMemory(IndirectHeap::Type heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap) {
-    getCommandStreamReceiver().allocateHeapMemory(heapType, minRequiredSize, indirectHeap);
+    getGpgpuCommandStreamReceiver().allocateHeapMemory(heapType, minRequiredSize, indirectHeap);
 }
 
 void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
-    getCommandStreamReceiver().releaseIndirectHeap(heapType);
+    getGpgpuCommandStreamReceiver().releaseIndirectHeap(heapType);
 }
 
 void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies) {
-    auto allocator = getCommandStreamReceiver().getTimestampPacketAllocator();
+    auto allocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
 
     previousNodes.swapNodes(*timestampPacketContainer);
     previousNodes.resolveDependencies(clearAllDependencies);

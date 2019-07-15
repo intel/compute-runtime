@@ -149,7 +149,7 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenPro
     auto miLoadRegImmCountWithoutDebugging = cmdList.size();
 
     mockDevice->setSourceLevelDebuggerActive(true);
-    auto preemptionAllocation = mockDevice->getCommandStreamReceiver().getPreemptionAllocation();
+    auto preemptionAllocation = mockDevice->getGpgpuCommandStreamReceiver().getPreemptionAllocation();
 
     StackVec<char, 8192> preambleBuffer2(8192);
     preambleStream.replaceBuffer(&*preambleBuffer2.begin(), preambleBuffer2.size());

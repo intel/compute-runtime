@@ -208,7 +208,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, LoadRegisterImmediateL3CNTLREG) {
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueFillBuffer<FamilyType>();
-    validateStateBaseAddress<FamilyType>(this->pCmdQ->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
+    validateStateBaseAddress<FamilyType>(this->pCmdQ->getGpgpuCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
@@ -368,7 +368,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, argumentTwoShouldMatchPatternPtr) {
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeCopied) {
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
     ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
@@ -389,7 +389,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeCopied) {
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeAligned) {
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
     ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
@@ -411,7 +411,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeAligned) {
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, patternOfSizeOneByteShouldGetPreparedForMiddleKernel) {
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
@@ -444,7 +444,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternOfSizeOneByteShouldGetPreparedForMidd
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, patternOfSizeTwoBytesShouldGetPreparedForMiddleKernel) {
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
@@ -477,7 +477,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternOfSizeTwoBytesShouldGetPreparedForMid
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationIsObtainedThenItsTypeShouldBeSetToFillPattern) {
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());

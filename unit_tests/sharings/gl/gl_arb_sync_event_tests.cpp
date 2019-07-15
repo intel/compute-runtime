@@ -166,7 +166,7 @@ TEST_F(GlArbSyncEventTest, whenSetBaseEventIsCalledThenProperMembersOfParentEven
     EXPECT_TRUE(getBaseEvent()->peekHasChildEvents());
     EXPECT_EQ(getBaseEvent(), syncEv->baseEvent);
     EXPECT_EQ(getBaseEvent()->getCommandQueue(), syncEv->getCommandQueue());
-    EXPECT_EQ(syncEv->getCommandQueue()->getCommandStreamReceiver().getOSInterface(), syncEv->osInterface);
+    EXPECT_EQ(syncEv->getCommandQueue()->getGpgpuCommandStreamReceiver().getOSInterface(), syncEv->osInterface);
 
     EXPECT_EQ(3, getBaseEvent()->getRefInternalCount());
     EXPECT_EQ(3, getBaseEvent()->getCommandQueue()->getRefInternalCount());

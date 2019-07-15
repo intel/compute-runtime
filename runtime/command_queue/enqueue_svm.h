@@ -317,7 +317,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         GeneralSurface srcSvmSurf(srcSvmData->gpuAllocation);
         HostPtrSurface dstHostPtrSurf(dstPtr, size);
         if (size != 0) {
-            bool status = getCommandStreamReceiver().createAllocationForHostSurface(dstHostPtrSurf, true);
+            bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(dstHostPtrSurf, true);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }
@@ -341,7 +341,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         HostPtrSurface srcHostPtrSurf(const_cast<void *>(srcPtr), size);
         GeneralSurface dstSvmSurf(dstSvmData->gpuAllocation);
         if (size != 0) {
-            bool status = getCommandStreamReceiver().createAllocationForHostSurface(srcHostPtrSurf, false);
+            bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(srcHostPtrSurf, false);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }
@@ -399,8 +399,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
     auto memoryManager = getDevice().getMemoryManager();
     DEBUG_BREAK_IF(nullptr == memoryManager);
 
-    auto commandStreamReceieverOwnership = getCommandStreamReceiver().obtainUniqueOwnership();
-    auto storageWithAllocations = getCommandStreamReceiver().getInternalAllocationStorage();
+    auto commandStreamReceieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto storageWithAllocations = getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
     auto allocationType = GraphicsAllocation::AllocationType::FILL_PATTERN;
     auto patternAllocation = storageWithAllocations->obtainReusableAllocation(patternSize, allocationType).release();
     commandStreamReceieverOwnership.unlock();

@@ -114,7 +114,7 @@ CommandComputeKernel::~CommandComputeKernel() {
     }
     kernel->decRefInternal();
 
-    auto &commandStreamReceiver = commandQueue.getCommandStreamReceiver();
+    auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         for (cl_event eventFromWaitList : eventsWaitlist) {
             auto event = castToObjectOrAbort<Event>(eventFromWaitList);
@@ -127,7 +127,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     if (terminated) {
         return completionStamp;
     }
-    auto &commandStreamReceiver = commandQueue.getCommandStreamReceiver();
+    auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
     bool executionModelKernel = kernel->isParentKernel;
     auto devQueue = commandQueue.getContext().getDefaultDeviceQueue();
 

@@ -29,7 +29,7 @@ bool GlArbSyncEvent::setBaseEvent(Event &ev) {
     UNRECOVERABLE_IF(ev.getContext() == nullptr);
     UNRECOVERABLE_IF(ev.getCommandQueue() == nullptr);
     auto cmdQueue = ev.getCommandQueue();
-    auto osInterface = cmdQueue->getCommandStreamReceiver().getOSInterface();
+    auto osInterface = cmdQueue->getGpgpuCommandStreamReceiver().getOSInterface();
     UNRECOVERABLE_IF(osInterface == nullptr);
     if (false == ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectSetup(*osInterface, *glSyncInfo)) {
         return false;
@@ -70,7 +70,7 @@ void GlArbSyncEvent::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tr
         return;
     }
 
-    ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectSignal(event.getCommandQueue()->getCommandStreamReceiver().getOsContext(), *glSyncInfo);
+    ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectSignal(event.getCommandQueue()->getGpgpuCommandStreamReceiver().getOsContext(), *glSyncInfo);
     ctx->getSharing<NEO::GLSharingFunctions>()->glArbSyncObjectWaitServer(*osInterface, *glSyncInfo);
 }
 } // namespace NEO

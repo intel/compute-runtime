@@ -28,7 +28,7 @@ struct KmdNotifyTests : public ::testing::Test {
         hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
         cmdQ.reset(new MockCommandQueue(&context, device.get(), nullptr));
         *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountToWait;
-        cmdQ->getCommandStreamReceiver().waitForFlushStamp(flushStampToWait);
+        cmdQ->getGpgpuCommandStreamReceiver().waitForFlushStamp(flushStampToWait);
         overrideKmdNotifyParams(true, 2, true, 1, false, 0);
     }
 

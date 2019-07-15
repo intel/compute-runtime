@@ -38,7 +38,7 @@ TEST_F(DeviceTest, givenDeviceWhenGetProductAbbrevThenReturnsHardwarePrefix) {
 }
 
 TEST_F(DeviceTest, getCommandStreamReceiver) {
-    EXPECT_NE(nullptr, &pDevice->getCommandStreamReceiver());
+    EXPECT_NE(nullptr, &pDevice->getGpgpuCommandStreamReceiver());
 }
 
 TEST_F(DeviceTest, getSupportedClVersion) {

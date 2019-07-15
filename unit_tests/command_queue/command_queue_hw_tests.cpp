@@ -682,7 +682,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventThatIsNotCompletedWhenFinishIsCalledAndIt
     auto ev = new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, Event::eventNotReady + 1);
     clSetEventCallback(ev, CL_COMPLETE, ClbFuncTempStruct::ClbFuncT, &Value);
 
-    auto &csr = this->pCmdQ->getCommandStreamReceiver();
+    auto &csr = this->pCmdQ->getGpgpuCommandStreamReceiver();
     EXPECT_GT(3u, csr.peekTaskCount());
     *csr.getTagAddress() = Event::eventNotReady + 1;
     ret = clFinish(this->pCmdQ);

@@ -20,7 +20,7 @@ void DeviceFixture::SetUp() {
     pDevice = DeviceHelper<>::create();
     ASSERT_NE(nullptr, pDevice);
 
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
     pTagMemory = commandStreamReceiver.getTagAddress();
     ASSERT_NE(nullptr, const_cast<uint32_t *>(pTagMemory));
 }

@@ -67,7 +67,7 @@ bool VirtualEvent::wait(bool blocking, bool useQuickKmdSleep) {
 uint32_t VirtualEvent::getTaskLevel() {
     uint32_t taskLevel = 0;
     if (cmdQueue != nullptr) {
-        auto &csr = cmdQueue->getCommandStreamReceiver();
+        auto &csr = cmdQueue->getGpgpuCommandStreamReceiver();
         taskLevel = csr.peekTaskLevel();
     }
     return taskLevel;

@@ -102,7 +102,7 @@ HWTEST_F(AUBcommandstreamTests, testNoopIdVecs) {
 TEST_F(AUBcommandstreamTests, makeResident) {
     uint8_t buffer[0x10000];
     size_t size = sizeof(buffer);
-    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
     auto graphicsAllocation = createResidentAllocationAndStoreItInCsr(buffer, size);
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
     commandStreamReceiver.processResidency(allocationsForResidency);

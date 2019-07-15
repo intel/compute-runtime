@@ -509,7 +509,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTask
     DispatchFlags dispatchFlags;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
-    auto &csr = commandQueue.getCommandStreamReceiver();
+    auto &csr = commandQueue.getGpgpuCommandStreamReceiver();
 
     csr.flushTask(commandStream,
                   0,
@@ -1452,7 +1452,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWhenItIsUnblocke
     using UniqueIH = std::unique_ptr<IndirectHeap>;
 
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ioh), UniqueIH(ssh), *pCmdQ->getCommandStreamReceiver().getInternalAllocationStorage());
+                                                   UniqueIH(ioh), UniqueIH(ssh), *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
 
     std::vector<Surface *> surfaces;
     event->setCommand(std::make_unique<CommandComputeKernel>(*pCmdQ, std::unique_ptr<KernelOperation>(blockedCommandsData), surfaces, false, false, false, nullptr, pDevice->getPreemptionMode(), pKernel.get(), 1));

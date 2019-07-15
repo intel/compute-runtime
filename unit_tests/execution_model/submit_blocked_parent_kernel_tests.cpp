@@ -101,7 +101,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenLockedEMcritcalSectionWhenParentK
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(ioh),
                                                                   std::unique_ptr<IndirectHeap>(ssh),
-                                                                  *pCmdQ->getCommandStreamReceiver().getInternalAllocationStorage());
+                                                                  *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -161,7 +161,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(ioh),
                                                                   std::unique_ptr<IndirectHeap>(ssh),
-                                                                  *pCmdQ->getCommandStreamReceiver().getInternalAllocationStorage());
+                                                                  *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
 
         size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
@@ -204,7 +204,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(ioh),
                                                                   std::unique_ptr<IndirectHeap>(ssh),
-                                                                  *pCmdQ->getCommandStreamReceiver().getInternalAllocationStorage());
+                                                                  *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
 
         size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
@@ -244,7 +244,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingW
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(ioh),
                                                                   std::unique_ptr<IndirectHeap>(ssh),
-                                                                  *pCmdQ->getCommandStreamReceiver().getInternalAllocationStorage());
+                                                                  *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
 
         size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
@@ -253,7 +253,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingW
         std::vector<Surface *> surfaces;
         auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
-        auto timestamp = pCmdQ->getCommandStreamReceiver().getEventTsAllocator()->getTag();
+        auto timestamp = pCmdQ->getGpgpuCommandStreamReceiver().getEventTsAllocator()->getTag();
         cmdComputeKernel->timestamp = timestamp;
         cmdComputeKernel->submit(0, false);
 
@@ -287,7 +287,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(ioh),
                                                                   std::unique_ptr<IndirectHeap>(ssh),
-                                                                  *pCmdQ->getCommandStreamReceiver().getInternalAllocationStorage());
+                                                                  *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
 
         size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
@@ -342,7 +342,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(ioh),
                                                                   std::unique_ptr<IndirectHeap>(ssh),
-                                                                  *pCmdQ->getCommandStreamReceiver().getInternalAllocationStorage());
+                                                                  *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -392,7 +392,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhen
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(ioh),
                                                                   std::unique_ptr<IndirectHeap>(ssh),
-                                                                  *pCmdQ->getCommandStreamReceiver().getInternalAllocationStorage());
+                                                                  *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();

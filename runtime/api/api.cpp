@@ -4865,7 +4865,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(cl_command_queue comm
         return retVal;
     }
 
-    auto &csr = pCommandQueue->getCommandStreamReceiver();
+    auto &csr = pCommandQueue->getGpgpuCommandStreamReceiver();
     retVal = csr.expectMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode);
     return retVal;
 }

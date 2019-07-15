@@ -72,7 +72,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {
-            bool status = getCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
+            bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
             }

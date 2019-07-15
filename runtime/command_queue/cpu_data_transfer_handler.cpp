@@ -51,7 +51,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         *eventsRequest.outEvent = outEventObj;
     }
 
-    auto commandStreamReceieverOwnership = getCommandStreamReceiver().obtainUniqueOwnership();
+    auto commandStreamReceieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
     TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
 
     auto blockQueue = false;

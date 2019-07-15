@@ -335,7 +335,7 @@ TEST_F(EnqueueReadBuffer, givenOutOfOrderQueueAndDisabledSupportCpuCopiesAndDstP
     ASSERT_NE(nullptr, event);
 
     auto pEvent = castToObject<Event>(event);
-    if (pCmdOOQ->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (pCmdOOQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         EXPECT_EQ(taskLevelEvent2 + 1, pCmdOOQ->taskLevel);
         EXPECT_EQ(taskLevelEvent2 + 1, pEvent->taskLevel);
     } else {

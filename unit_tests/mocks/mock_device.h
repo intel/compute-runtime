@@ -79,7 +79,7 @@ class MockDevice : public Device {
         return reinterpret_cast<UltCommandStreamReceiver<T> &>(*engines[defaultEngineIndex].commandStreamReceiver);
     }
 
-    CommandStreamReceiver &getCommandStreamReceiver() const { return *engines[defaultEngineIndex].commandStreamReceiver; }
+    CommandStreamReceiver &getGpgpuCommandStreamReceiver() const { return *engines[defaultEngineIndex].commandStreamReceiver; }
 
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint32_t engineIndex);

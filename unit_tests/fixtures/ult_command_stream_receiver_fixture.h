@@ -55,11 +55,11 @@ struct UltCommandStreamReceiverTest
         graphicsAllocation = new MockGraphicsAllocation(sshBuffer, sizeStream);
         ssh.replaceGraphicsAllocation(graphicsAllocation);
 
-        pDevice->getCommandStreamReceiver().setupContext(*pDevice->getDefaultEngine().osContext);
+        pDevice->getGpgpuCommandStreamReceiver().setupContext(*pDevice->getDefaultEngine().osContext);
     }
 
     void TearDown() override {
-        pDevice->getCommandStreamReceiver().flushBatchedSubmissions();
+        pDevice->getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
         delete dsh.getGraphicsAllocation();
         delete ioh.getGraphicsAllocation();
         delete ssh.getGraphicsAllocation();
@@ -130,7 +130,7 @@ struct UltCommandStreamReceiverTest
 
     template <typename GfxFamily>
     UltCommandStreamReceiver<GfxFamily> &getUltCommandStreamReceiver() {
-        return reinterpret_cast<UltCommandStreamReceiver<GfxFamily> &>(pDevice->getCommandStreamReceiver());
+        return reinterpret_cast<UltCommandStreamReceiver<GfxFamily> &>(pDevice->getGpgpuCommandStreamReceiver());
     }
 
     DispatchFlags flushTaskFlags = {};

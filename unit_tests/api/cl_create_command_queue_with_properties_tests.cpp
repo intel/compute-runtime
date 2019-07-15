@@ -360,7 +360,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingComman
     auto cmdQ = clCreateCommandQueueWithProperties(pContext, devices[0], properties, nullptr);
 
     auto commandQueueObj = castToObject<CommandQueue>(cmdQ);
-    auto &osContext = commandQueueObj->getCommandStreamReceiver().getOsContext();
+    auto &osContext = commandQueueObj->getGpgpuCommandStreamReceiver().getOsContext();
     EXPECT_EQ(aub_stream::ENGINE_RCS, osContext.getEngineType());
     EXPECT_TRUE(osContext.isLowPriority());
 

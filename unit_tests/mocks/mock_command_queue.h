@@ -18,7 +18,7 @@ namespace NEO {
 class MockCommandQueue : public CommandQueue {
   public:
     using CommandQueue::device;
-    using CommandQueue::engine;
+    using CommandQueue::gpgpuEngine;
     using CommandQueue::multiEngineQueue;
     using CommandQueue::obtainNewTimestampPacketNodes;
     using CommandQueue::requiresCacheFlushAfterWalker;
@@ -74,7 +74,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
   public:
     using BaseClass::commandStream;
-    using BaseClass::engine;
+    using BaseClass::gpgpuEngine;
     using BaseClass::multiEngineQueue;
     using BaseClass::obtainNewTimestampPacketNodes;
     using BaseClass::requiresCacheFlushAfterWalker;
@@ -86,7 +86,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     }
 
     UltCommandStreamReceiver<GfxFamily> &getUltCommandStreamReceiver() {
-        return reinterpret_cast<UltCommandStreamReceiver<GfxFamily> &>(*BaseClass::engine->commandStreamReceiver);
+        return reinterpret_cast<UltCommandStreamReceiver<GfxFamily> &>(*BaseClass::gpgpuEngine->commandStreamReceiver);
     }
 
     cl_int enqueueWriteImage(Image *dstImage,

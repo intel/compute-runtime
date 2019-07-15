@@ -226,8 +226,8 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
     EXPECT_NE(nullptr, mapAllocation);
     EXPECT_EQ(apiMapPtr, mapAllocation->getUnderlyingBuffer());
 
-    auto osContextId = pCmdQ->getCommandStreamReceiver().getOsContext().getContextId();
-    auto expectedTaskCount = pCmdQ->getCommandStreamReceiver().peekTaskCount();
+    auto osContextId = pCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
+    auto expectedTaskCount = pCmdQ->getGpgpuCommandStreamReceiver().peekTaskCount();
     auto actualMapAllocationTaskCount = mapAllocation->getTaskCount(osContextId);
     EXPECT_EQ(expectedTaskCount, actualMapAllocationTaskCount);
 
@@ -312,7 +312,7 @@ TEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEven
 
     MockKernelWithInternals kernel(*pDevice);
     *pTagMemory = tagHW;
-    auto &commandStreamReceiver = pCmdQ->getCommandStreamReceiver();
+    auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
     auto tag_address = commandStreamReceiver.getTagAddress();
     EXPECT_TRUE(pTagMemory == tag_address);
 
@@ -391,7 +391,7 @@ TEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEventAn
     const size_t region[3] = {1, 1, 1};
     *pTagMemory = 5;
 
-    auto &commandStreamReceiver = pCmdQ->getCommandStreamReceiver();
+    auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
 
     EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
 

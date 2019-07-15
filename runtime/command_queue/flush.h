@@ -10,7 +10,7 @@
 namespace NEO {
 template <typename GfxFamily>
 cl_int CommandQueueHw<GfxFamily>::flush() {
-    getCommandStreamReceiver().flushBatchedSubmissions();
+    getGpgpuCommandStreamReceiver().flushBatchedSubmissions();
     return CL_SUCCESS;
 }
 } // namespace NEO

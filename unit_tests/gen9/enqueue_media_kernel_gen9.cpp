@@ -155,21 +155,21 @@ GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueNonVmeKernelAfterVmeKernelThe
 }
 
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelThenVmeSubslicesConfigDoesntChangeToFalse) {
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pCmdQ->getCommandStreamReceiver());
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pCmdQ->getGpgpuCommandStreamReceiver());
     csr->lastVmeSubslicesConfig = true;
     enqueueVmeKernel<FamilyType>();
     EXPECT_TRUE(csr->lastVmeSubslicesConfig);
 }
 
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelThenVmeSubslicesConfigDoesntChangeToTrue) {
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pCmdQ->getCommandStreamReceiver());
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pCmdQ->getGpgpuCommandStreamReceiver());
     csr->lastVmeSubslicesConfig = false;
     enqueueVmeKernel<FamilyType>();
     EXPECT_FALSE(csr->lastVmeSubslicesConfig);
 }
 
 GEN9TEST_F(MediaKernelTest, gen9CmdSizeForMediaSampler) {
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pCmdQ->getCommandStreamReceiver());
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pCmdQ->getGpgpuCommandStreamReceiver());
 
     csr->lastVmeSubslicesConfig = false;
     EXPECT_EQ(0u, csr->getCmdSizeForMediaSampler(false));

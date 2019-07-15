@@ -182,7 +182,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, LoadRegiste
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueKernel<FamilyType>();
-    validateStateBaseAddress<FamilyType>(this->pDevice->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
+    validateStateBaseAddress<FamilyType>(this->pDevice->getGpgpuCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList,
                                          context->getMemoryManager()->peekForce32BitAllocations() ? context->getMemoryManager()->getExternalHeapBaseAddress() : 0llu);
 }
@@ -458,7 +458,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
     typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     if (is64bit) {
-        CommandStreamReceiver *csr = &pDevice->getCommandStreamReceiver();
+        CommandStreamReceiver *csr = &pDevice->getGpgpuCommandStreamReceiver();
         auto memoryManager = csr->getMemoryManager();
         memoryManager->setForce32BitAllocations(true);
 
@@ -541,7 +541,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWhenBeingDispatchedThenL3
     MockKernelWithInternals mockKernel(*pDevice);
     mockKernel.crossThreadData[64] = 0;
     mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto latestSentTaskCount = csr.peekTaskCount();
     enqueueKernel<FamilyType, false>(mockKernel);
     auto newLatestSentTaskCount = csr.peekTaskCount();
@@ -561,7 +561,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlocke
     MockKernelWithInternals mockKernel(*pDevice);
     mockKernel.crossThreadData[64] = 0;
     mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrintfSurface = &patchData;
-    auto &csr = pCmdQ->getCommandStreamReceiver();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto latestSentDcFlushTaskCount = csr.peekTaskCount();
 
     cl_uint workDim = 1;

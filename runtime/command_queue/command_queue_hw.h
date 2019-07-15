@@ -36,7 +36,7 @@ class CommandQueueHw : public CommandQueue {
 
         if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) {
             priority = QueuePriority::LOW;
-            this->engine = &device->getEngine(aub_stream::ENGINE_RCS, true);
+            this->gpgpuEngine = &device->getEngine(aub_stream::ENGINE_RCS, true);
         } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_MED_KHR)) {
             priority = QueuePriority::MEDIUM;
         } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_HIGH_KHR)) {
@@ -54,8 +54,8 @@ class CommandQueueHw : public CommandQueue {
         }
 
         if (getCmdQueueProperties<cl_queue_properties>(properties, CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)) {
-            getCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-            getCommandStreamReceiver().enableNTo1SubmissionModel();
+            getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+            getGpgpuCommandStreamReceiver().enableNTo1SubmissionModel();
         }
     }
 
