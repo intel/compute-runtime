@@ -134,6 +134,9 @@ void CommandQueue::waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushS
 
     DEBUG_BREAK_IF(getHwTag() < taskCountToWait);
     latestTaskCountWaited = taskCountToWait;
+
+    getCommandStreamReceiver().waitForTaskCountAndCleanAllocationList(taskCountToWait, TEMPORARY_ALLOCATION);
+
     WAIT_LEAVE()
 }
 

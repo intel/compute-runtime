@@ -28,8 +28,6 @@ cl_int CommandQueueHw<GfxFamily>::finish(bool dcFlush) {
     // Stall until HW reaches CQ taskCount
     waitUntilComplete(taskCountToWaitFor, flushStampToWaitFor, false);
 
-    getCommandStreamReceiver().waitForTaskCountAndCleanAllocationList(taskCountToWaitFor, TEMPORARY_ALLOCATION);
-
     return CL_SUCCESS;
 }
 } // namespace NEO

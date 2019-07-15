@@ -17,6 +17,7 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_internal_allocation_storage.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 
@@ -488,20 +489,37 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSu
 
     mockCmdQ->release();
 }
-using EnqueueHandlerTestBasic = ::testing::Test;
+
+struct EnqueueHandlerTestBasic : public ::testing::Test {
+    template <typename FamilyType>
+    std::unique_ptr<MockCommandQueueHw<FamilyType>> setupFixtureAndCreateMockCommandQueue() {
+        auto executionEnvironment = platformImpl->peekExecutionEnvironment();
+
+        device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
+        context = std::make_unique<MockContext>(device.get());
+
+        auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+        auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(mockCmdQ->getCommandStreamReceiver());
+        ultCsr.taskCount = initialTaskCount;
+
+        mockInternalAllocationStorage = new MockInternalAllocationStorage(ultCsr);
+        ultCsr.internalAllocationStorage.reset(mockInternalAllocationStorage);
+
+        return mockCmdQ;
+    }
+
+    MockInternalAllocationStorage *mockInternalAllocationStorage = nullptr;
+    const uint32_t initialTaskCount = 100;
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+};
+
 HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenCommandIsBlokingThenCompletionStampTaskCountIsPassedToWaitForTaskCountAndCleanAllocationListAsRequiredTaskCount) {
-    int32_t tag;
-    auto executionEnvironment = platformImpl->peekExecutionEnvironment();
-    auto mockCsr = new MockCsrBase<FamilyType>(tag, *executionEnvironment);
-    executionEnvironment->commandStreamReceivers.resize(1);
-    std::unique_ptr<MockDevice> pDevice(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
-    pDevice->resetCommandStreamReceiver(mockCsr);
-    auto context = std::make_unique<MockContext>(pDevice.get());
-    MockKernelWithInternals kernelInternals(*pDevice, context.get());
+    auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<FamilyType>();
+    MockKernelWithInternals kernelInternals(*device, context.get());
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
-    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context.get(), pDevice.get(), 0);
-    mockCmdQ->deltaTaskCount = 100;
     mockCmdQ->template enqueueHandler<CL_COMMAND_WRITE_BUFFER>(nullptr,
                                                                0,
                                                                true,
@@ -509,6 +527,32 @@ HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenCommandIsBlokingThenCom
                                                                0,
                                                                nullptr,
                                                                nullptr);
-    EXPECT_EQ(mockCsr->waitForTaskCountRequiredTaskCount, mockCmdQ->completionStampTaskCount);
-    mockCmdQ->release();
+    EXPECT_EQ(initialTaskCount + 1, mockInternalAllocationStorage->lastCleanAllocationsTaskCount);
+}
+
+HWTEST_F(EnqueueHandlerTestBasic, givenBlockedEnqueueHandlerWhenCommandIsBlokingThenCompletionStampTaskCountIsPassedToWaitForTaskCountAndCleanAllocationListAsRequiredTaskCount) {
+    auto mockCmdQ = setupFixtureAndCreateMockCommandQueue<FamilyType>();
+
+    MockKernelWithInternals kernelInternals(*device, context.get());
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+
+    UserEvent userEvent;
+    cl_event waitlist[] = {&userEvent};
+
+    std::thread t0([&mockCmdQ, &userEvent]() {
+        while (!mockCmdQ->isQueueBlocked()) {
+        }
+        userEvent.setStatus(CL_COMPLETE);
+    });
+    mockCmdQ->template enqueueHandler<CL_COMMAND_WRITE_BUFFER>(nullptr,
+                                                               0,
+                                                               true,
+                                                               multiDispatchInfo,
+                                                               1,
+                                                               waitlist,
+                                                               nullptr);
+    EXPECT_EQ(initialTaskCount + 1, mockInternalAllocationStorage->lastCleanAllocationsTaskCount);
+
+    t0.join();
 }
