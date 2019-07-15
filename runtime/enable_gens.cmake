@@ -15,13 +15,10 @@ set(RUNTIME_SRCS_GENX_CPP_LINUX
 
 set(RUNTIME_SRCS_GENX_H_BASE
   aub_mapper.h
-  device_enqueue.h
   hw_cmds.h
   hw_cmds_generated.h
   hw_info.h
   reg_configs.h
-  scheduler_definitions.h
-  scheduler_igdrcl_built_in.inl
 )
 
 set(RUNTIME_SRCS_GENX_CPP_BASE
@@ -80,6 +77,12 @@ macro(macro_for_each_gen)
   endif()
   if(EXISTS "${GENX_PREFIX}/hw_info_${GEN_TYPE_LOWER}.h")
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${GENX_PREFIX}/hw_info_${GEN_TYPE_LOWER}.h")
+  endif()
+
+  if(${SUPPORT_DEVICE_ENQUEUE_${GEN_TYPE}})
+    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/device_enqueue.h)
+    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/scheduler_definitions.h)
+    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/scheduler_igdrcl_built_in.inl)
   endif()
 
   foreach(OS_IT "BASE" "WINDOWS" "LINUX")

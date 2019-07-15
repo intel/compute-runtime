@@ -1103,7 +1103,7 @@ HWTEST_F(HardwareCommandsHelperTests, whenProgrammingMiAtomicThenSetupAllFields)
 
 typedef ExecutionModelKernelFixture ParentKernelCommandsFromBinaryTest;
 
-HWTEST_P(ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelForSurfaceStatesReturnsSizeOfBlocksPlusMaxBindingTableSizeForAllIDTEntriesAndSchedulerSSHSize) {
+HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelForSurfaceStatesReturnsSizeOfBlocksPlusMaxBindingTableSizeForAllIDTEntriesAndSchedulerSSHSize) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
 
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
@@ -1140,7 +1140,7 @@ HWTEST_P(ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelFor
     }
 }
 
-HWTEST_P(ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelForIOHReturnsSchedulerSize) {
+HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelForIOHReturnsSchedulerSize) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
 
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
@@ -1154,7 +1154,7 @@ HWTEST_P(ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelFor
     }
 }
 
-HWTEST_P(ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelForGSH) {
+HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelForGSH) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
 
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {

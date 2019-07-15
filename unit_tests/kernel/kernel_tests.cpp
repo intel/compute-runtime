@@ -22,6 +22,7 @@
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/device_host_queue_fixture.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/gtest_helpers.h"
@@ -38,6 +39,7 @@
 #include <memory>
 
 using namespace NEO;
+using namespace DeviceHostQueue;
 
 class KernelTest : public ProgramFromBinaryTest {
   public:
@@ -1164,7 +1166,7 @@ TEST_F(KernelConstantSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenCon
     delete pKernel;
 }
 
-HWTEST_F(KernelEventPoolSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenEventPoolSurfaceStateIsPatchedWithNullSurface) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenEventPoolSurfaceStateIsPatchedWithNullSurface) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -1216,7 +1218,7 @@ HWTEST_F(KernelEventPoolSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenE
     delete pKernel;
 }
 
-HWTEST_F(KernelEventPoolSurfaceTest, givenStatefulKernelWhenEventPoolIsPatchedThenEventPoolSurfaceStateIsProgrammed) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatefulKernelWhenEventPoolIsPatchedThenEventPoolSurfaceStateIsProgrammed) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -1268,7 +1270,7 @@ HWTEST_F(KernelEventPoolSurfaceTest, givenStatefulKernelWhenEventPoolIsPatchedTh
     delete pKernel;
 }
 
-HWTEST_F(KernelEventPoolSurfaceTest, givenKernelWithNullEventPoolInKernelInfoWhenEventPoolIsPatchedThenAddressIsNotPatched) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenKernelWithNullEventPoolInKernelInfoWhenEventPoolIsPatchedThenAddressIsNotPatched) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -1300,7 +1302,7 @@ HWTEST_F(KernelEventPoolSurfaceTest, givenKernelWithNullEventPoolInKernelInfoWhe
     delete pKernel;
 }
 
-TEST_F(KernelEventPoolSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenEventPoolSurfaceStateIsNotPatched) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenEventPoolSurfaceStateIsNotPatched) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -1336,7 +1338,7 @@ TEST_F(KernelEventPoolSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenEv
     delete pKernel;
 }
 
-TEST_F(KernelEventPoolSurfaceTest, givenStatelessKernelWhenEventPoolIsPatchedThenCrossThreadDataIsPatched) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatelessKernelWhenEventPoolIsPatchedThenCrossThreadDataIsPatched) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -1374,7 +1376,7 @@ TEST_F(KernelEventPoolSurfaceTest, givenStatelessKernelWhenEventPoolIsPatchedThe
     delete pKernel;
 }
 
-HWTEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenDefaultDeviceQueueSurfaceStateIsPatchedWithNullSurface) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenDefaultDeviceQueueSurfaceStateIsPatchedWithNullSurface) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -1426,7 +1428,7 @@ HWTEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenKernelIsCre
     delete pKernel;
 }
 
-HWTEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenDefaultDeviceQueueIsPatchedThenSurfaceStateIsCorrectlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenDefaultDeviceQueueIsPatchedThenSurfaceStateIsCorrectlyProgrammed) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -1480,7 +1482,7 @@ HWTEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenDefaultDevi
     delete pKernel;
 }
 
-TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenDefaultDeviceQueueSurfaceStateIsNotPatched) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenDefaultDeviceQueueSurfaceStateIsNotPatched) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -1514,7 +1516,7 @@ TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatelessKernelWhenKernelIsCrea
     delete pKernel;
 }
 
-TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenKernelWithNullDeviceQueueKernelInfoWhenDefaultDeviceQueueIsPatchedThenAddressIsNotPatched) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenKernelWithNullDeviceQueueKernelInfoWhenDefaultDeviceQueueIsPatchedThenAddressIsNotPatched) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -1546,7 +1548,7 @@ TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenKernelWithNullDeviceQueueKernel
     delete pKernel;
 }
 
-TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatelessKernelWhenDefaultDeviceQueueIsPatchedThenCrossThreadDataIsPatched) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatelessKernelWhenDefaultDeviceQueueIsPatchedThenCrossThreadDataIsPatched) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -2671,4 +2673,62 @@ TEST(KernelTest, givenKernelWithoutMediaVfeStateSlot1WhenGettingSizeForPrivateSc
     mockKernel.kernelInfo.patchInfo.mediaVfeStateSlot1 = nullptr;
 
     EXPECT_EQ(0u, mockKernel.mockKernel->getPrivateScratchSize());
+}
+
+namespace NEO {
+
+template <typename GfxFamily>
+class DeviceQueueHwMock : public DeviceQueueHw<GfxFamily> {
+    using BaseClass = DeviceQueueHw<GfxFamily>;
+
+  public:
+    using BaseClass::buildSlbDummyCommands;
+    using BaseClass::getCSPrefetchSize;
+    using BaseClass::getExecutionModelCleanupSectionSize;
+    using BaseClass::getMediaStateClearCmdsSize;
+    using BaseClass::getMinimumSlbSize;
+    using BaseClass::getProfilingEndCmdsSize;
+    using BaseClass::getSlbCS;
+    using BaseClass::getWaCommandsSize;
+    using BaseClass::offsetDsh;
+
+    DeviceQueueHwMock(Context *context, Device *device, cl_queue_properties &properties) : BaseClass(context, device, properties) {
+        auto slb = this->getSlbBuffer();
+        LinearStream *slbCS = getSlbCS();
+        slbCS->replaceBuffer(slb->getUnderlyingBuffer(), slb->getUnderlyingBufferSize()); // reset
+    };
+};
+} // namespace NEO
+
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, whenSlbEndOffsetGreaterThanZeroThenOverwriteOneEnqueue) {
+    std::unique_ptr<DeviceQueueHwMock<FamilyType>> mockDeviceQueueHw(new DeviceQueueHwMock<FamilyType>(pContext, device, deviceQueueProperties::minimumProperties[0]));
+
+    auto slb = mockDeviceQueueHw->getSlbBuffer();
+    auto commandsSize = mockDeviceQueueHw->getMinimumSlbSize() + mockDeviceQueueHw->getWaCommandsSize();
+    auto slbCopy = malloc(slb->getUnderlyingBufferSize());
+    memset(slb->getUnderlyingBuffer(), 0xFE, slb->getUnderlyingBufferSize());
+    memcpy(slbCopy, slb->getUnderlyingBuffer(), slb->getUnderlyingBufferSize());
+
+    auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(mockDeviceQueueHw->getQueueBuffer()->getUnderlyingBuffer());
+
+    // slbEndOffset < commandsSize * 128
+    // always fill only 1 enqueue (after offset)
+    auto offset = static_cast<int>(commandsSize) * 50;
+    igilCmdQueue->m_controls.m_SLBENDoffsetInBytes = offset;
+    mockDeviceQueueHw->resetDeviceQueue();
+    EXPECT_EQ(0, memcmp(slb->getUnderlyingBuffer(), slbCopy, offset)); // dont touch memory before offset
+    EXPECT_NE(0, memcmp(ptrOffset(slb->getUnderlyingBuffer(), offset),
+                        slbCopy, commandsSize)); // change 1 enqueue
+    EXPECT_EQ(0, memcmp(ptrOffset(slb->getUnderlyingBuffer(), offset + commandsSize),
+                        slbCopy, offset)); // dont touch memory after (offset + 1 enqueue)
+
+    // slbEndOffset == commandsSize * 128
+    // dont fill commands
+    memset(slb->getUnderlyingBuffer(), 0xFEFEFEFE, slb->getUnderlyingBufferSize());
+    offset = static_cast<int>(commandsSize) * 128;
+    igilCmdQueue->m_controls.m_SLBENDoffsetInBytes = static_cast<int>(commandsSize);
+    mockDeviceQueueHw->resetDeviceQueue();
+    EXPECT_EQ(0, memcmp(slb->getUnderlyingBuffer(), slbCopy, commandsSize * 128)); // dont touch memory for enqueues
+
+    free(slbCopy);
 }

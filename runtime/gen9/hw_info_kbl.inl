@@ -62,7 +62,8 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
-    true                                           // supportsImages
+    true,                                          // supportsImages
+    true                                           // supportsDeviceEnqueue
 };
 
 WorkaroundTable KBL::workaroundTable = {};

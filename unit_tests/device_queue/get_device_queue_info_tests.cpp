@@ -30,7 +30,7 @@ class GetDeviceQueueInfoTest : public DeviceHostQueueFixture<DeviceQueue> {
     DeviceQueue *deviceQueue;
 };
 
-TEST_F(GetDeviceQueueInfoTest, context) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, context) {
     cl_context contextReturned = nullptr;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -42,7 +42,7 @@ TEST_F(GetDeviceQueueInfoTest, context) {
     EXPECT_EQ((cl_context)pContext, contextReturned);
 }
 
-TEST_F(GetDeviceQueueInfoTest, device) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, device) {
     cl_device_id deviceExpected = devices[0];
     cl_device_id deviceIdReturned = nullptr;
 
@@ -55,7 +55,7 @@ TEST_F(GetDeviceQueueInfoTest, device) {
     EXPECT_EQ(deviceExpected, deviceIdReturned);
 }
 
-TEST_F(GetDeviceQueueInfoTest, queueProperties) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, queueProperties) {
     cl_command_queue_properties propertiesReturned = 0;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -67,7 +67,7 @@ TEST_F(GetDeviceQueueInfoTest, queueProperties) {
     EXPECT_EQ(deviceQueueProperties::allProperties[1], propertiesReturned);
 }
 
-TEST_F(GetDeviceQueueInfoTest, queueSize) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, queueSize) {
     cl_uint queueSizeReturned = 0;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -80,7 +80,7 @@ TEST_F(GetDeviceQueueInfoTest, queueSize) {
 }
 
 // OCL 2.1
-TEST_F(GetDeviceQueueInfoTest, queueDeviceDefault) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, queueDeviceDefault) {
     cl_command_queue commandQueueReturned = nullptr;
 
     retVal = deviceQueue->getCommandQueueInfo(
@@ -94,11 +94,11 @@ TEST_F(GetDeviceQueueInfoTest, queueDeviceDefault) {
     EXPECT_EQ(deviceQueue, commandQueueReturned);
 }
 
-TEST_F(GetDeviceQueueInfoTest, profiling) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, profiling) {
     EXPECT_TRUE(deviceQueue->isProfilingEnabled());
 }
 
-TEST_F(GetDeviceQueueInfoTest, invalidParameter) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceQueueInfoTest, invalidParameter) {
     uint32_t tempValue = 0;
 
     retVal = deviceQueue->getCommandQueueInfo(

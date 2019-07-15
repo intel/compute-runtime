@@ -134,6 +134,8 @@ set(SUPPORT_PLATFORM_DEFAULT TRUE CACHE BOOL "default value for support platform
 macro(SET_FLAGS_FOR GEN_TYPE)
   set(SUPPORT_${GEN_TYPE} ${SUPPORT_GEN_DEFAULT} CACHE BOOL "Support ${GEN_TYPE} devices")
   set(TESTS_${GEN_TYPE} ${SUPPORT_${GEN_TYPE}} CACHE BOOL "Build ULTs for ${GEN_TYPE} devices")
+  set(SUPPORT_DEVICE_ENQUEUE_${GEN_TYPE} TRUE CACHE BOOL "Support ${GEN_TYPE} for device side enqueue")
+
   if(NOT SUPPORT_${GEN_TYPE} OR SKIP_UNIT_TESTS)
     set(TESTS_${GEN_TYPE} FALSE)
   endif()

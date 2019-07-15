@@ -67,7 +67,8 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
-    true                                           // supportsImages
+    true,                                          // supportsImages
+    false                                          // supportsDeviceEnqueue
 };
 
 WorkaroundTable BXT::workaroundTable = {};

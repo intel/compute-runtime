@@ -70,7 +70,8 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     false,                                         // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
-    true                                           // supportsImages
+    true,                                          // supportsImages
+    true                                           // supportsDeviceEnqueue
 };
 
 WorkaroundTable BDW::workaroundTable = {};

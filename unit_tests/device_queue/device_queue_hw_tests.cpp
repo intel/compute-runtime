@@ -25,7 +25,7 @@
 using namespace NEO;
 using namespace DeviceHostQueue;
 
-HWTEST_F(DeviceQueueHwTest, resetOnlyExpected) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, resetOnlyExpected) {
     // profiling disabled
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
@@ -54,7 +54,7 @@ HWTEST_F(DeviceQueueHwTest, resetOnlyExpected) {
     delete deviceQueue;
 }
 
-HWTEST_F(DeviceQueueHwTest, resetStack) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, resetStack) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
     auto deviceQueueHw = castToHwType<FamilyType>(deviceQueue);
@@ -67,7 +67,7 @@ HWTEST_F(DeviceQueueHwTest, resetStack) {
     delete deviceQueue;
 }
 
-HWTEST_F(DeviceQueueHwTest, acquireEMCriticalSectionDoesNotAcquireWhenNullHardwareIsEnabled) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, acquireEMCriticalSectionDoesNotAcquireWhenNullHardwareIsEnabled) {
     DebugManagerStateRestore dbgRestorer;
 
     DebugManager.flags.EnableNullHardware.set(1);
@@ -411,7 +411,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
     delete mockDeviceQueueHw;
 }
 
-HWTEST_F(DeviceQueueHwTest, getIndirectHeapDSH) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, getIndirectHeapDSH) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     deviceQueue = createQueueObject();
@@ -438,7 +438,7 @@ HWTEST_F(DeviceQueueHwTest, getIndirectHeapDSH) {
     delete deviceQueue;
 }
 
-HWTEST_F(DeviceQueueHwTest, getIndirectHeapNonExistent) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, getIndirectHeapNonExistent) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
     auto *devQueueHw = castToObject<DeviceQueueHw<FamilyType>>(deviceQueue);
@@ -450,7 +450,7 @@ HWTEST_F(DeviceQueueHwTest, getIndirectHeapNonExistent) {
     delete deviceQueue;
 }
 
-HWTEST_F(DeviceQueueHwTest, getDshOffset) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, getDshOffset) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     deviceQueue = createQueueObject();
@@ -497,7 +497,7 @@ class DeviceQueueHwWithKernel : public ExecutionModelKernelFixture {
     MockContext *context;
 };
 
-HWTEST_P(DeviceQueueHwWithKernel, setupIndirectState) {
+HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectState) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
@@ -528,7 +528,7 @@ HWTEST_P(DeviceQueueHwWithKernel, setupIndirectState) {
     }
 }
 
-HWTEST_P(DeviceQueueHwWithKernel, setupIndirectStateSetsCorrectStartBlockID) {
+HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectStateSetsCorrectStartBlockID) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 

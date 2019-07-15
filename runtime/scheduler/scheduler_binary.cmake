@@ -56,7 +56,7 @@ endfunction()
 
 macro(macro_for_each_gen)
   foreach(PLATFORM_TYPE "CORE" "LP")
-    if(${GEN_TYPE}_HAS_${PLATFORM_TYPE})
+    if(${GEN_TYPE}_HAS_${PLATFORM_TYPE} AND SUPPORT_DEVICE_ENQUEUE_${GEN_TYPE})
       get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
       set(PLATFORM_2_0_LOWER ${DEFAULT_SUPPORTED_2_0_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
       if(COMPILE_BUILT_INS AND PLATFORM_2_0_LOWER)

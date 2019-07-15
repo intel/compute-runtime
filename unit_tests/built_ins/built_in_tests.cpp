@@ -632,7 +632,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetBuilderForUnknownBuiltInOp) {
     EXPECT_TRUE(caughtException);
 }
 
-TEST_F(BuiltInTests, getSchedulerKernel) {
+HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernel) {
     if (pDevice->getSupportedClVersion() >= 20) {
         Context &context = *pContext;
         SchedulerKernel &schedulerKernel = pBuiltIns->getSchedulerKernel(context);
@@ -641,7 +641,7 @@ TEST_F(BuiltInTests, getSchedulerKernel) {
     }
 }
 
-HWTEST_F(BuiltInTests, getSchedulerKernelForSecondTimeDoesNotCreateNewKernel) {
+HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernelForSecondTimeDoesNotCreateNewKernel) {
     if (pDevice->getSupportedClVersion() >= 20) {
         Context &context = *pContext;
         SchedulerKernel &schedulerKernel = pBuiltIns->getSchedulerKernel(context);
@@ -1044,11 +1044,14 @@ TEST_F(BuiltInTests, getBuiltinResourcesForTypeSource) {
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockMotionEstimateIntel, BuiltinCode::ECodeType::Source, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, BuiltinCode::ECodeType::Source, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, BuiltinCode::ECodeType::Source, *pDevice).size());
-    EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Source, *pDevice).size());
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::COUNT, BuiltinCode::ECodeType::Source, *pDevice).size());
+
+    if (pDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+        EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Source, *pDevice).size());
+    }
 }
 
-TEST_F(BuiltInTests, getBuiltinResourcesForTypeBinary) {
+HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getBuiltinResourcesForTypeBinary) {
     class MockBuiltinsLib : BuiltinsLib {
       public:
         BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {

@@ -55,6 +55,7 @@ struct RuntimeCapabilityTable {
     bool supportsVme;
     bool supportCacheFlushAfterWalker;
     bool supportsImages;
+    bool supportsDeviceEnqueue;
 };
 
 struct HardwareCapabilities {

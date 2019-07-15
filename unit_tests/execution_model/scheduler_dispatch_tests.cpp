@@ -226,7 +226,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWi
     }
 }
 
-HWTEST_F(ExecutionModelSchedulerFixture, ForceDispatchSchedulerEnqueuesSchedulerKernel) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, ForceDispatchSchedulerEnqueuesSchedulerKernel) {
 
     if (pDevice->getSupportedClVersion() >= 20) {
         DebugManagerStateRestore dbgRestorer;

@@ -13,6 +13,7 @@
 #include "runtime/helpers/base_object.h"
 #include "runtime/os_interface/os_context.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "CL/cl_ext.h"
@@ -74,8 +75,13 @@ TEST_P(clCreateCommandQueueWithPropertiesTests, GivenPropertiesWhenCreatingComma
             CL_QUEUE_THROTTLE_KHR, CL_QUEUE_THROTTLE_MED_KHR,
             0};
 
-    auto minimumCreateDeviceQueueFlags = static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE |
-                                                                                  CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    const auto minimumCreateDeviceQueueFlags = static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE |
+                                                                                        CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    const auto deviceQueueShouldBeCreated = (commandQueueProperties & minimumCreateDeviceQueueFlags) == minimumCreateDeviceQueueFlags;
+    if (deviceQueueShouldBeCreated && !castToObject<Device>(this->devices[0])->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+        return;
+    }
+
     bool queueOnDeviceUsed = false;
     bool priorityHintsUsed = false;
     bool throttleHintsUsed = false;
@@ -126,7 +132,7 @@ TEST_P(clCreateCommandQueueWithPropertiesTests, GivenPropertiesWhenCreatingComma
     auto deviceQueueObj = castToObject<DeviceQueue>(deviceQ);
     auto commandQueueObj = castToObject<CommandQueue>(cmdQ);
 
-    if ((commandQueueProperties & minimumCreateDeviceQueueFlags) == minimumCreateDeviceQueueFlags) { // created device queue
+    if (deviceQueueShouldBeCreated) { // created device queue
         ASSERT_NE(deviceQueueObj, nullptr);
         ASSERT_EQ(commandQueueObj, nullptr);
     } else { // created host queue
@@ -255,7 +261,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDefaultDeviceQueueWithoutQueu
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNumberOfDevicesGreaterThanMaxWhenCreatingCommandQueueWithPropertiesThenOutOfResourcesErrorIsReturned) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenNumberOfDevicesGreaterThanMaxWhenCreatingCommandQueueWithPropertiesThenOutOfResourcesErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto pDevice = castToObject<Device>(devices[0]);
     cl_queue_properties odq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE, 0, 0};
@@ -279,7 +285,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNumberOfDevicesGreaterThanMax
     }
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, GivenFailedAllocationWhenCreatingCommandQueueWithPropertiesThenOutOfHostMemoryErrorIsReturned) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenFailedAllocationWhenCreatingCommandQueueWithPropertiesThenOutOfHostMemoryErrorIsReturned) {
     InjectedFunction method = [this](size_t failureIndex) {
         cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
         auto retVal = CL_INVALID_VALUE;

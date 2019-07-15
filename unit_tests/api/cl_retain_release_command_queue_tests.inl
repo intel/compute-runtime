@@ -7,6 +7,7 @@
 
 #include "runtime/context/context.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 
 using namespace NEO;
 namespace DeviceHostQueue {
@@ -18,6 +19,10 @@ class clRetainReleaseCommandQueueTests : public DeviceHostQueueFixture<T> {};
 TYPED_TEST_CASE(clRetainReleaseCommandQueueTests, QueueTypes);
 
 TYPED_TEST(clRetainReleaseCommandQueueTests, retain_release) {
+    if (std::is_same<TypeParam, DeviceQueue>::value && !castToObject<Device>(this->devices[0])->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+        return;
+    }
+
     using BaseType = typename TypeParam::BaseType;
 
     auto queue = this->createClQueue();

@@ -62,7 +62,8 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
-    true                                           // supportsImages
+    true,                                          // supportsImages
+    true                                           // supportsDeviceEnqueue
 };
 
 WorkaroundTable CFL::workaroundTable = {};

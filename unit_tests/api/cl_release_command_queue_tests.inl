@@ -7,9 +7,12 @@
 
 #include "runtime/context/context.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
 #include "cl_api_tests.h"
+
+#include <type_traits>
 
 using namespace NEO;
 namespace DeviceHostQueue {
@@ -21,6 +24,10 @@ class clReleaseCommandQueueTypeTests : public DeviceHostQueueFixture<T> {};
 TYPED_TEST_CASE(clReleaseCommandQueueTypeTests, QueueTypes);
 
 TYPED_TEST(clReleaseCommandQueueTypeTests, GivenValidCmdQueueWhenReleasingCmdQueueThenSucessIsReturned) {
+    if (std::is_same<TypeParam, DeviceQueue>::value && !castToObject<Device>(this->devices[0])->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+        return;
+    }
+
     using BaseType = typename TypeParam::BaseType;
 
     auto queue = this->createClQueue();

@@ -66,7 +66,8 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     true,                                            // sourceLevelDebuggerSupported
     true,                                            // supportsVme
     false,                                           // supportCacheFlushAfterWalker
-    true                                             // supportsImages
+    true,                                            // supportsImages
+    true                                             // supportsDeviceEnqueue
 };
 
 WorkaroundTable ICLLP::workaroundTable = {};

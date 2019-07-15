@@ -62,7 +62,8 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
-    true                                           // supportsImages
+    true,                                          // supportsImages
+    false                                          // supportsDeviceEnqueue
 };
 
 WorkaroundTable GLK::workaroundTable = {};

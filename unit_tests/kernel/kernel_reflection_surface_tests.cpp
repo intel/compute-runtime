@@ -1026,7 +1026,7 @@ INSTANTIATE_TEST_CASE_P(KernelReflectionSurfaceTest,
                             ::testing::Values(binaryFile),
                             ::testing::ValuesIn(KernelNames)));
 
-TEST_P(KernelReflectionSurfaceWithQueueTest, ObtainKernelReflectionSurfacePatchesBlocksCurbe) {
+HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelReflectionSurfacePatchesBlocksCurbe) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
 
         BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
@@ -1100,7 +1100,7 @@ TEST_P(KernelReflectionSurfaceWithQueueTest, ObtainKernelReflectionSurfacePatche
     }
 }
 
-TEST_P(KernelReflectionSurfaceWithQueueTest, ObtainKernelReflectionSurfaceSetsParentImageAndSamplersParams) {
+HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelReflectionSurfaceSetsParentImageAndSamplersParams) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
 
         BlockKernelManager *blockManager = pProgram->getBlockKernelManager();

@@ -65,7 +65,8 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     true,                                          // sourceLevelDebuggerSupported
     false,                                         // supportsVme
     false,                                         // supportCacheFlushAfterWalker
-    true                                           // supportsImages
+    true,                                          // supportsImages
+    true                                           // supportsDeviceEnqueue
 };
 
 WorkaroundTable LKF::workaroundTable = {};
