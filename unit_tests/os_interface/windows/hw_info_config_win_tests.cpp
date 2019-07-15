@@ -7,9 +7,9 @@
 
 #include "unit_tests/os_interface/windows/hw_info_config_win_tests.h"
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 
 #include "instrumentation.h"
 

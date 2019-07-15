@@ -7,10 +7,10 @@
 
 #pragma once
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/device_queue/device_queue.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/execution_model_kernel_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
 class DeviceQueueFixture {

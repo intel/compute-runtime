@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/aub_mem_dump/aub_alloc_dump.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/helpers/hardware_context_controller.h"
@@ -15,7 +16,6 @@
 #include "unit_tests/fixtures/aub_command_stream_receiver_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
 #include "unit_tests/mocks/mock_aub_file_stream.h"

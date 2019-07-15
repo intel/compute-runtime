@@ -5,7 +5,7 @@
  *
  */
 
-#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/source_level_debugger/source_level_debugger_preamble_test.h"
 
 #include "gtest/gtest.h"

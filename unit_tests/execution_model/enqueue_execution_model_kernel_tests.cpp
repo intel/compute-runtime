@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
 #include "runtime/command_queue/gpgpu_walker.h"
@@ -15,7 +16,6 @@
 #include "runtime/kernel/kernel.h"
 #include "unit_tests/fixtures/device_host_queue_fixture.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/gtest_helpers.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_csr.h"

@@ -8,6 +8,7 @@
 #include "drm_memory_manager_tests.h"
 
 #include "core/helpers/ptr_math.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
@@ -28,7 +29,6 @@
 #include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/tag_allocator.h"
 #include "test.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"

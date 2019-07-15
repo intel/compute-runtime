@@ -6,10 +6,10 @@
  */
 
 #if defined(_WIN32)
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/os_interface/os_library.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "test.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 
 #include "gtest/gtest.h"
 

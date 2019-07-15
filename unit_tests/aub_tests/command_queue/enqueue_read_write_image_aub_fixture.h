@@ -6,11 +6,11 @@
  */
 
 #include "core/helpers/ptr_math.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/image.h"
 #include "test.h"
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_context.h"
 
 using namespace NEO;

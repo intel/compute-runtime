@@ -16,7 +16,6 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cmd_buffer_validator_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager_state_restore.h
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder_tests.cpp
@@ -54,6 +53,7 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/validator_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/variable_backup.h
+  ${NEO_CORE_DIRECTORY}/unit_tests/helpers/debug_manager_state_restore.h
 )
 
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_helpers})

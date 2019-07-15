@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/api/api.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/image.h"
@@ -18,7 +19,6 @@
 #include "runtime/sharings/d3d/enable_d3d.h"
 #include "runtime/utilities/arrayref.h"
 #include "unit_tests/fixtures/d3d_test_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_sharing_factory.h"
 

@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/basic_math.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
@@ -13,7 +14,6 @@
 #include "runtime/helpers/device_helpers.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_lrca_helper.h"
 
 #include "gtest/gtest.h"

@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/csr_definitions.h"
 #include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/gmm_helper/gmm_helper.h"
@@ -14,7 +15,6 @@
 #include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"

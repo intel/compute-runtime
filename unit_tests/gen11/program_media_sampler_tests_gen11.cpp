@@ -5,11 +5,11 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/gen11/reg_configs.h"
 #include "runtime/helpers/hw_helper.h"
 #include "test.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_device.h"
 

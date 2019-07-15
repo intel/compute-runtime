@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
 #include "unit_tests/custom_event_listener.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/gtest_helpers.h"
 
 using namespace NEO;

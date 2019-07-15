@@ -7,8 +7,8 @@
 
 #include "driver_diagnostics_tests.h"
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_gmm.h"
 
 #include <tuple>

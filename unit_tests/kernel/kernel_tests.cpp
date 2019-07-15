@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/gmm_helper/gmm_helper.h"
@@ -23,7 +24,6 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/gtest_helpers.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_command_queue.h"

@@ -5,13 +5,13 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/allocations_list.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"

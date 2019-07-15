@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.inl"
 #include "runtime/device/device.h"
@@ -12,7 +13,6 @@
 #include "runtime/helpers/options.h"
 #include "runtime/sharings/sharing.h"
 #include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_device.h"

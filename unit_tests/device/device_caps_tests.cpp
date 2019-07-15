@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/basic_math.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/driver_info.h"
 #include "runtime/helpers/hw_info.h"
@@ -16,7 +17,6 @@
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_helper_tests.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_builtins.h"

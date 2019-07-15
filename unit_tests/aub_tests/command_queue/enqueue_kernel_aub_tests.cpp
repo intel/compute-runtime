@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/ptr_math.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/hardware_commands_helper.h"
@@ -16,7 +17,6 @@
 #include "unit_tests/fixtures/simple_arg_fixture.h"
 #include "unit_tests/fixtures/two_walker_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 
 using namespace NEO;
 

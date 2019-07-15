@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/os_interface/linux/drm_null_device.h"
 #include "test.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/linux/drm_wrap.h"
 #include "unit_tests/linux/mock_os_layer.h"
 

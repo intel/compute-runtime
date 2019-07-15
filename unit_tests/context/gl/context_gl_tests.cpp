@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
@@ -12,7 +13,6 @@
 #include "runtime/os_interface/windows/gl/gl_sharing_os.h"
 #include "runtime/sharings/gl/gl_sharing.h"
 #include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_device.h"

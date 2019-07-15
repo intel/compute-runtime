@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/hardware_interface.h"
 #include "runtime/event/user_event.h"
@@ -13,7 +14,6 @@
 #include "runtime/platform/platform.h"
 #include "runtime/utilities/tag_allocator.h"
 #include "test.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"

@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/execution_environment/execution_environment.h"
@@ -12,7 +13,6 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/libult/create_command_stream.h"

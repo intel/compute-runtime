@@ -5,13 +5,13 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_queue/enqueue_kernel.h"
 #include "runtime/command_queue/hardware_interface.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/sampler/sampler.h"
 #include "unit_tests/fixtures/execution_model_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_context.h"

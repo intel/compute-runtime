@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
@@ -14,7 +15,6 @@
 #include "runtime/sharings/sharing.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_sharing_factory.h"

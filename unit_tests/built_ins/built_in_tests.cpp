@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
@@ -22,7 +23,6 @@
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/run_kernel_fixture.h"
 #include "unit_tests/global_environment.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_command_queue.h"

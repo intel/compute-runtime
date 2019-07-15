@@ -7,6 +7,7 @@
 
 #include "unit_tests/os_interface/windows/wddm_memory_manager_tests.h"
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/aligned_memory.h"
@@ -19,7 +20,6 @@
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/platform/platform.h"
 #include "runtime/utilities/tag_allocator.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_device.h"

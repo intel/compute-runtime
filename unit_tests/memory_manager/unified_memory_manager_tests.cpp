@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "test.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_svm_manager.h"

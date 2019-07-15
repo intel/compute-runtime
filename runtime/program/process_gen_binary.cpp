@@ -969,25 +969,23 @@ cl_int Program::parseProgramScopePatchList() {
                     "\n  .GlobalPointerOffset", patch.GlobalPointerOffset,
                     "\n  .BufferType", patch.BufferType,
                     "\n  .BufferIndex", patch.BufferIndex);
-            }
-            break;
+        } break;
 
-            case PATCH_TOKEN_CONSTANT_POINTER_PROGRAM_BINARY_INFO: {
-                auto patch = *(SPatchConstantPointerProgramBinaryInfo *)pPatch;
-                if ((patch.ConstantBufferIndex == 0) && (patch.BufferIndex == 0) && (patch.BufferType == PROGRAM_SCOPE_CONSTANT_BUFFER)) {
-                    globalConstantsSelfPatches.push_back(readMisalignedUint64(&patch.ConstantPointerOffset));
-                } else {
-                    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Program::parseProgramScopePatchList. Unhandled Data parameter: %d\n", pPatch->Token);
-                }
-                DBG_LOG(LogPatchTokens,
-                        "\n  .CONSTANT_POINTER_PROGRAM_BINARY_INFO", pPatch->Token,
-                        "\n  .Size", pPatch->Size,
-                        "\n  .ConstantBufferIndex", patch.ConstantBufferIndex,
-                        "\n  .ConstantPointerOffset", patch.ConstantPointerOffset,
-                        "\n  .BufferType", patch.BufferType,
-                        "\n  .BufferIndex", patch.BufferIndex);
+        case PATCH_TOKEN_CONSTANT_POINTER_PROGRAM_BINARY_INFO: {
+            auto patch = *(SPatchConstantPointerProgramBinaryInfo *)pPatch;
+            if ((patch.ConstantBufferIndex == 0) && (patch.BufferIndex == 0) && (patch.BufferType == PROGRAM_SCOPE_CONSTANT_BUFFER)) {
+                globalConstantsSelfPatches.push_back(readMisalignedUint64(&patch.ConstantPointerOffset));
+            } else {
+                printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Program::parseProgramScopePatchList. Unhandled Data parameter: %d\n", pPatch->Token);
             }
-            break;
+            DBG_LOG(LogPatchTokens,
+                    "\n  .CONSTANT_POINTER_PROGRAM_BINARY_INFO", pPatch->Token,
+                    "\n  .Size", pPatch->Size,
+                    "\n  .ConstantBufferIndex", patch.ConstantBufferIndex,
+                    "\n  .ConstantPointerOffset", patch.ConstantPointerOffset,
+                    "\n  .BufferType", patch.BufferType,
+                    "\n  .BufferIndex", patch.BufferIndex);
+        } break;
 
         case PATCH_TOKEN_PROGRAM_SYMBOL_TABLE: {
             const auto patch = reinterpret_cast<const iOpenCL::SPatchFunctionTableInfo *>(pPatch);

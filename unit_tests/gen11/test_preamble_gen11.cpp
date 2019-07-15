@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/preemption.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/preamble/preamble_fixture.h"
 
 #include "reg_configs_common.h"

@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/api/api.h"
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
@@ -15,7 +16,6 @@
 #include "runtime/sharings/va/va_sharing.h"
 #include "runtime/sharings/va/va_surface.h"
 #include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_context.h"

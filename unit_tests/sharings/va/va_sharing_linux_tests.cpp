@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/sharings/va/va_sharing_functions.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/sharings/va/mock_va_sharing.h"
 

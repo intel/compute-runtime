@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/execution_model/device_enqueue.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/printf_handler.h"
@@ -13,7 +14,6 @@
 #include "unit_tests/fixtures/execution_model_kernel_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/gen_common/matchers.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/gtest_helpers.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device_queue.h"

@@ -6,13 +6,13 @@
  */
 
 #include "core/helpers/ptr_math.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/platform/platform.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm.h"

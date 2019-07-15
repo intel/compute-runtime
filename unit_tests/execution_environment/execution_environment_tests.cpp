@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/preemption.h"
@@ -19,7 +20,6 @@
 #include "runtime/platform/platform.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "test.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"

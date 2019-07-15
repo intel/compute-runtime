@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/options.h"
@@ -13,7 +14,6 @@
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/libult/create_command_stream.h"
 
 namespace NEO {

@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/basic_math.h"
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -13,7 +14,6 @@
 #include "runtime/os_interface/linux/os_interface.h"
 #include "test.h"
 #include "unit_tests/custom_event_listener.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/linux/drm_wrap.h"
 #include "unit_tests/linux/mock_os_layer.h"

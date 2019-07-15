@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/compiler_interface/compiler_interface.inl"
 #include "runtime/context/context.h"
@@ -15,7 +16,6 @@
 #include "runtime/platform/platform.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/global_environment.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_cif.h"
 #include "unit_tests/mocks/mock_compilers.h"
