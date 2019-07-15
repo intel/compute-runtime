@@ -10,7 +10,7 @@ cd /root/build-igc
 
 export cclang_commit_id=6257ffe137a2c8df95a3f3b39fa477aa8ed15837
 export spirv_id=8ce6443ec1020183eafaeb3410c7d1edc2355dc3
-export igc_commit_id=igc-1.0.8
+export igc_commit_id=296a42bdfa870011a26b0e3d0d7d8d8da3a9ddb7
 
 wget --no-check-certificate https://github.com/intel/opencl-clang/archive/${cclang_commit_id}/opencl-clang.tar.gz
 wget --no-check-certificate https://github.com/intel/intel-graphics-compiler/archive/${igc_commit_id}/igc.tar.gz
@@ -41,7 +41,7 @@ cd ..
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DIGC_OPTION__OUTPUT_DIR=../igc-install/Release -DCOMMON_CLANG_LIBRARY_NAME=opencl_clang -DVME_TYPES_DEFINED=FALSE -DCMAKE_INSTALL_PREFIX='/usr' -Wno-dev ../igc
-make -j`nproc`
+make -j 1
 make install
 cd ..
 
