@@ -64,11 +64,25 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
 
   protected:
     template <typename GfxFamily>
+    static void dispatchPipeControlWithDcFlush(LinearStream &linearStream) {
+        PipeControlHelper<GfxFamily>::addPipeControl(linearStream, true);
+    }
+
+    template <typename GfxFamily>
+    static void dispatchPipeControlWithoutDcFlush(LinearStream &linearStream) {
+        PipeControlHelper<GfxFamily>::addPipeControl(linearStream, false);
+    }
+
+    template <typename GfxFamily>
     void registerPipeControlProgramming(RegisteredMethodDispatcher<DispatchInfo::DispatchCommandMethodT> &dispatcher, bool dcFlush) const {
-        auto method = std::bind(PipeControlHelper<GfxFamily>::addPipeControl, std::placeholders::_1, dcFlush);
-        dispatcher.registerMethod(method);
+        if (dcFlush) {
+            dispatcher.registerMethod(this->dispatchPipeControlWithDcFlush<GfxFamily>);
+        } else {
+            dispatcher.registerMethod(this->dispatchPipeControlWithoutDcFlush<GfxFamily>);
+        }
         dispatcher.registerCommandsSizeEstimationMethod(PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl);
     }
+
     void resizeKernelInstances(size_t size) const;
     Kernel *baseKernel = nullptr;
     mutable std::vector<std::unique_ptr<Kernel>> convertToNonAuxKernel;
