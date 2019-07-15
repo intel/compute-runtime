@@ -5,7 +5,6 @@
  *
  */
 
-#include "core/unit_tests/helpers/memory_management.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/cache_policy.h"

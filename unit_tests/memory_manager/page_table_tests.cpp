@@ -6,7 +6,6 @@
  */
 
 #include "core/helpers/ptr_math.h"
-#include "core/unit_tests/helpers/memory_management.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/page_table.h"

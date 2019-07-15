@@ -5,7 +5,6 @@
  *
  */
 
-#include "core/unit_tests/helpers/memory_management.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/memory_manager/address_mapper.h"
 #include "test.h"

@@ -5,7 +5,6 @@
  *
  */
 
-#include "core/unit_tests/helpers/memory_management.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/file_io.h"

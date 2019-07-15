@@ -5,7 +5,6 @@
  *
  */
 
-#include "core/unit_tests/helpers/memory_management.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/helpers/aligned_memory.h"

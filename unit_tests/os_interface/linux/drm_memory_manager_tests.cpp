@@ -8,7 +8,6 @@
 #include "drm_memory_manager_tests.h"
 
 #include "core/helpers/ptr_math.h"
-#include "core/unit_tests/helpers/memory_management.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
