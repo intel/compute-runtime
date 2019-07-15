@@ -442,7 +442,7 @@ HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWi
 
     EXPECT_TRUE(mockCsr->isMadeResident(graphicsAllocation));
 
-    // Enqueue With ScratchSize bigger then previous
+    // Enqueue With ScratchSize bigger than previous
     scratchSize = 8196;
     mediaVFEstate.PerThreadScratchSpace = scratchSize;
 

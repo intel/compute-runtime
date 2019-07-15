@@ -209,7 +209,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool stateBaseAddressDirty = false;
 
     bool checkVfeStateDirty = false;
-    if (requiredScratchSize) {
+    if (requiredScratchSize || requiredPrivateScratchSize) {
         scratchSpaceController->setRequiredScratchSpace(ssh.getCpuBase(),
                                                         requiredScratchSize,
                                                         requiredPrivateScratchSize,
@@ -220,7 +220,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         if (checkVfeStateDirty) {
             setMediaVFEStateDirty(true);
         }
-        makeResident(*scratchSpaceController->getScratchSpaceAllocation());
+        if (scratchSpaceController->getScratchSpaceAllocation()) {
+            makeResident(*scratchSpaceController->getScratchSpaceAllocation());
+        }
+        if (scratchSpaceController->getPrivateScratchSpaceAllocation()) {
+            makeResident(*scratchSpaceController->getPrivateScratchSpaceAllocation());
+        }
     }
 
     auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags, device));
