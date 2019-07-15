@@ -1276,7 +1276,7 @@ TEST_P(ValidHostPtr, failedAllocationInjection) {
         // System under test
         buffer = createBuffer();
 
-        if (nonfailingAllocation == failureIndex) {
+        if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_EQ(CL_SUCCESS, retVal);
             EXPECT_NE(nullptr, buffer);
         }

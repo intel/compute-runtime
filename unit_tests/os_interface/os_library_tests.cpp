@@ -81,7 +81,7 @@ TEST_F(OSLibraryTest, testFailNew) {
         // System under test
         OsLibrary *library = OsLibrary::load(libName);
 
-        if (nonfailingAllocation == failureIndex) {
+        if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_NE(nullptr, library);
         } else {
             EXPECT_EQ(nullptr, library);

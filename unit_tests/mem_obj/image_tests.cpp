@@ -630,7 +630,7 @@ TEST_P(CreateImageHostPtr, failedAllocationInjection) {
         // System under test
         image = createImage(retVal);
 
-        if (nonfailingAllocation == failureIndex) {
+        if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_EQ(CL_SUCCESS, retVal);
             EXPECT_NE(nullptr, image);
         } else {

@@ -71,7 +71,7 @@ TEST_F(MemoryManagementTest, nothrow_injectingAFailure) {
 TEST_F(MemoryManagementTest, NoLeaks) {
     auto indexAllocationTop = indexAllocation.load();
     auto indexDellocationTop = indexDeallocation.load();
-    EXPECT_EQ(static_cast<size_t>(-1), enumerateLeak(indexAllocationTop, indexDellocationTop));
+    EXPECT_EQ(static_cast<size_t>(-1), MemoryManagement::enumerateLeak(indexAllocationTop, indexDellocationTop, false, false));
 }
 
 TEST_F(MemoryManagementTest, OneLeak) {
@@ -79,13 +79,13 @@ TEST_F(MemoryManagementTest, OneLeak) {
     auto ptr = new (std::nothrow) char[sizeBuffer];
     auto indexAllocationTop = indexAllocation.load();
     auto indexDeallocationTop = indexDeallocation.load();
-    auto leakIndex = enumerateLeak(indexAllocationTop, indexDeallocationTop);
+    auto leakIndex = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
     ASSERT_NE(static_cast<size_t>(-1), leakIndex);
     EXPECT_EQ(ptr, eventsAllocated[leakIndex].address);
     EXPECT_EQ(sizeBuffer, eventsAllocated[leakIndex].size);
 
     // Not expecting any more failures
-    EXPECT_EQ(static_cast<size_t>(-1), enumerateLeak(indexAllocationTop, indexDeallocationTop));
+    EXPECT_EQ(static_cast<size_t>(-1), MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false));
 
     delete[] ptr;
 }
@@ -97,13 +97,13 @@ TEST_F(MemoryManagementTest, OneLeakBetweenFourEvents) {
     delete new (std::nothrow) char;
     auto indexAllocationTop = indexAllocation.load();
     auto indexDeallocationTop = indexDeallocation.load();
-    auto leakIndex = enumerateLeak(indexAllocationTop, indexDeallocationTop);
+    auto leakIndex = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
     ASSERT_NE(static_cast<size_t>(-1), leakIndex);
     EXPECT_EQ(ptr, eventsAllocated[leakIndex].address);
     EXPECT_EQ(sizeBuffer, eventsAllocated[leakIndex].size);
 
     // Not expecting any more failures
-    EXPECT_EQ(static_cast<size_t>(-1), enumerateLeak(indexAllocationTop, indexDeallocationTop));
+    EXPECT_EQ(static_cast<size_t>(-1), MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false));
 
     delete[] ptr;
 }
@@ -114,8 +114,8 @@ TEST_F(MemoryManagementTest, TwoLeaks) {
     auto ptr2 = new (std::nothrow) char[sizeBuffer];
     auto indexAllocationTop = indexAllocation.load();
     auto indexDeallocationTop = indexDeallocation.load();
-    auto leakIndex1 = enumerateLeak(indexAllocationTop, indexDeallocationTop);
-    auto leakIndex2 = enumerateLeak(indexAllocationTop, indexDeallocationTop);
+    auto leakIndex1 = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
+    auto leakIndex2 = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
     ASSERT_NE(static_cast<size_t>(-1), leakIndex1);
     EXPECT_EQ(ptr1, eventsAllocated[leakIndex1].address);
     EXPECT_EQ(sizeBuffer, eventsAllocated[leakIndex1].size);
@@ -125,7 +125,7 @@ TEST_F(MemoryManagementTest, TwoLeaks) {
     EXPECT_EQ(sizeBuffer, eventsAllocated[leakIndex2].size);
 
     // Not expecting any more failures
-    EXPECT_EQ(static_cast<size_t>(-1), enumerateLeak(indexAllocationTop, indexDeallocationTop));
+    EXPECT_EQ(static_cast<size_t>(-1), MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false));
 
     delete[] ptr1;
     delete[] ptr2;

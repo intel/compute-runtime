@@ -31,7 +31,7 @@ TEST_F(ContextFailureInjection, failedAllocationInjection) {
         auto context = Context::create<Context>(nullptr, DeviceVector(&deviceID, 1), nullptr,
                                                 nullptr, retVal);
 
-        if (nonfailingAllocation == failureIndex) {
+        if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_EQ(CL_SUCCESS, retVal);
             EXPECT_NE(nullptr, context);
         } else {

@@ -71,7 +71,7 @@ TEST_F(PipeTest, FailedAllocationInjection) {
         auto retVal = CL_INVALID_VALUE;
         auto pipe = Pipe::create(&context, CL_MEM_READ_ONLY, 1, 20, nullptr, retVal);
 
-        if (nonfailingAllocation == failureIndex) {
+        if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_EQ(CL_SUCCESS, retVal);
             EXPECT_NE(nullptr, pipe);
             delete pipe;

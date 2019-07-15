@@ -74,5 +74,10 @@ extern bool detailedAllocationLoggingActive;
 extern bool fastLeakDetectionEnabled;
 extern void (*deleteCallback)(void *);
 
+constexpr auto nonfailingAllocation = static_cast<size_t>(-1);
+constexpr auto invalidLeakIndex = static_cast<size_t>(-1);
+
 int detectLeaks();
+size_t enumerateLeak(size_t indexAllocationTop, size_t indexDeallocationTop, bool lookFromEnd, bool requireCallStack);
+
 } // namespace MemoryManagement

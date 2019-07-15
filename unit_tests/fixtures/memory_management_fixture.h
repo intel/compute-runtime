@@ -16,9 +16,6 @@ struct MemoryManagementFixture {
     MemoryManagementFixture() {
         MemoryManagement::detailedAllocationLoggingActive = true;
     };
-    static const auto nonfailingAllocation = static_cast<size_t>(-1);
-    static const auto invalidLeakIndex = static_cast<size_t>(-1);
-
     virtual ~MemoryManagementFixture() { MemoryManagement::detailedAllocationLoggingActive = false; };
 
     // Typical Fixture methods
@@ -28,8 +25,6 @@ struct MemoryManagementFixture {
     // Helper methods
     void setFailingAllocation(size_t allocation);
     void clearFailingAllocation(void);
-
-    static size_t enumerateLeak(size_t indexAllocationTop, size_t indexDeallocationTop, bool lookFromEnd = false, bool requireCallStack = false, bool fastLookup = false);
 
     ::testing::AssertionResult assertLeak(
         const char *leak_expr,

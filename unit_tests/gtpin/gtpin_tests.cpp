@@ -399,7 +399,7 @@ TEST_F(GTPinTests, givenValidRequestForHugeMemoryAllocationThenBufferAllocateFai
         cl_context ctxt = (cl_context)((Context *)pContext);
         uint32_t hugeSize = 400u; // Will be handled as huge memory allocation
         retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, hugeSize, &res);
-        if (nonfailingAllocation != failureIndex) {
+        if (MemoryManagement::nonfailingAllocation != failureIndex) {
             EXPECT_EQ(GTPIN_DI_ERROR_ALLOCATION_FAILED, retFromGtPin);
         } else {
             EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
@@ -1986,7 +1986,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
         pProgram->storeGenBinary(&binary[0], binSize);
         retVal = pProgram->processGenBinary();
         if (retVal == CL_OUT_OF_HOST_MEMORY) {
-            auto nonFailingAlloc = nonfailingAllocation;
+            auto nonFailingAlloc = MemoryManagement::nonfailingAllocation;
             EXPECT_NE(nonFailingAlloc, failureIndex);
         } else {
             EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1994,12 +1994,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
             cl_kernel kernels[2] = {0};
             cl_uint numCreatedKernels = 0;
 
-            if (nonfailingAllocation != failureIndex) {
+            if (MemoryManagement::nonfailingAllocation != failureIndex) {
                 memoryManager->failAllAllocationsInDevicePool = true;
             }
             retVal = clCreateKernelsInProgram(pProgram, 2, kernels, &numCreatedKernels);
 
-            if (nonfailingAllocation != failureIndex) {
+            if (MemoryManagement::nonfailingAllocation != failureIndex) {
                 if (retVal != CL_SUCCESS) {
                     EXPECT_EQ(nullptr, kernels[0]);
                     EXPECT_EQ(1u, numCreatedKernels);

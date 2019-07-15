@@ -94,7 +94,7 @@ TEST_P(CommandQueueTest, createDeleteCommandQueue_Properties) {
             nullptr,
             retVal);
 
-        if (nonfailingAllocation == failureIndex) {
+        if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_EQ(CL_SUCCESS, retVal);
             EXPECT_NE(nullptr, pCmdQ);
         } else {

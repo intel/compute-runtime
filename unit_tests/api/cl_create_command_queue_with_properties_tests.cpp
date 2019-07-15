@@ -286,7 +286,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenFailedAllocationWhenCreatingC
 
         auto cmdq = clCreateCommandQueueWithProperties(pContext, devices[0], ooq, &retVal);
 
-        if (nonfailingAllocation == failureIndex) {
+        if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_EQ(CL_SUCCESS, retVal);
             EXPECT_NE(nullptr, cmdq);
             clReleaseCommandQueue(cmdq);

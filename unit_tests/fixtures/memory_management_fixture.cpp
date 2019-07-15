@@ -57,72 +57,6 @@ void MemoryManagementFixture::clearFailingAllocation() {
     MemoryManagement::failingAllocation = -1;
 }
 
-size_t MemoryManagementFixture::enumerateLeak(size_t indexAllocationTop, size_t indexDeallocationTop, bool lookFromBack, bool requireCallStack, bool fastLookup) {
-    using MemoryManagement::AllocationEvent;
-    using MemoryManagement::eventsAllocated;
-    using MemoryManagement::eventsDeallocated;
-
-    static auto start = invalidLeakIndex;
-    auto newIndex = start == invalidLeakIndex ? 0 : start;
-    bool potentialLeak = false;
-    auto potentialLeakIndex = newIndex;
-
-    for (; newIndex < indexAllocationTop; ++newIndex) {
-        auto currentIndex = lookFromBack ? indexAllocationTop - newIndex - 1 : newIndex;
-        auto &eventAllocation = eventsAllocated[currentIndex];
-
-        if (requireCallStack && eventAllocation.frames == 0) {
-            continue;
-        }
-
-        if (fastLookup && !eventAllocation.fastLeakDetectionEnabled) {
-            continue;
-        }
-
-        if (eventAllocation.event != AllocationEvent::EVENT_UNKNOWN) {
-            // Should be some sort of allocation
-            size_t deleteIndex = 0;
-            for (; deleteIndex < indexDeallocationTop; ++deleteIndex) {
-                auto &eventDeallocation = eventsDeallocated[deleteIndex];
-
-                if (eventDeallocation.address == eventAllocation.address &&
-                    eventDeallocation.event != AllocationEvent::EVENT_UNKNOWN) {
-
-                    //this memory was once freed, now it is allocated but not freed
-                    if (requireCallStack && eventDeallocation.frames == 0) {
-                        potentialLeak = true;
-                        potentialLeakIndex = currentIndex;
-                        continue;
-                    }
-
-                    //allocated with fast lookup, but deallocated other way, not a match
-                    if (fastLookup && !eventDeallocation.fastLeakDetectionEnabled) {
-                        continue;
-                    }
-
-                    // Clear the NEW and DELETE event.
-                    eventAllocation.event = AllocationEvent::EVENT_UNKNOWN;
-                    eventDeallocation.event = AllocationEvent::EVENT_UNKNOWN;
-                    potentialLeak = false;
-                    // Found a corresponding match
-                    break;
-                }
-            }
-
-            if (potentialLeak) {
-                return potentialLeakIndex;
-            }
-
-            if (deleteIndex == indexDeallocationTop) {
-                start = newIndex + 1;
-                return currentIndex;
-            }
-        }
-    }
-    start = invalidLeakIndex;
-    return start;
-}
-
 std::string printCallStack(const MemoryManagement::AllocationEvent &event) {
     std::string result = "";
 
@@ -188,7 +122,7 @@ std::string printCallStack(const MemoryManagement::AllocationEvent &event) {
     using MemoryManagement::AllocationEvent;
     using MemoryManagement::eventsAllocated;
 
-    if (leakIndex == invalidLeakIndex) {
+    if (leakIndex == MemoryManagement::invalidLeakIndex) {
         return ::testing::AssertionSuccess();
     }
     auto &event = eventsAllocated[leakIndex];
@@ -254,11 +188,11 @@ void MemoryManagementFixture::checkForLeaks() {
             //EXPECT_EQ(previousAllocations, currentAllocations);
             size_t leakEventIndex;
             do {
-                leakEventIndex = enumerateLeak(indexAllocationTop, indexDellocationTop);
+                leakEventIndex = MemoryManagement::enumerateLeak(indexAllocationTop, indexDellocationTop, false, false);
                 EXPECT_PRED_FORMAT1(assertLeak, leakEventIndex);
-                auto invalidLeakIndexValues = invalidLeakIndex;
+                auto invalidLeakIndexValues = MemoryManagement::invalidLeakIndex;
                 EXPECT_EQ(leakEventIndex, invalidLeakIndexValues);
-            } while (leakEventIndex != invalidLeakIndex);
+            } while (leakEventIndex != MemoryManagement::invalidLeakIndex);
         } else {
             printf("*** WARNING: Leaks found but dumping disabled during test failure ***\n");
         }

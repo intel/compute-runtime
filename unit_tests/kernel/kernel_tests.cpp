@@ -601,7 +601,7 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurfaceAllocationFailure) {
     MemoryManagementFixture::InjectedFunction method = [&](size_t failureIndex) {
         MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
 
-        if (MemoryManagementFixture::nonfailingAllocation == failureIndex) {
+        if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_EQ(CL_SUCCESS, pKernel->initialize());
         } else {
             EXPECT_EQ(CL_OUT_OF_RESOURCES, pKernel->initialize());

@@ -242,6 +242,64 @@ int detectLeaks() {
     }
     return indexLeak;
 }
+
+size_t enumerateLeak(size_t indexAllocationTop, size_t indexDeallocationTop, bool lookFromBack, bool requireCallStack) {
+    using MemoryManagement::AllocationEvent;
+    using MemoryManagement::eventsAllocated;
+    using MemoryManagement::eventsDeallocated;
+
+    static auto start = MemoryManagement::invalidLeakIndex;
+    auto newIndex = start == MemoryManagement::invalidLeakIndex ? 0 : start;
+    bool potentialLeak = false;
+    auto potentialLeakIndex = newIndex;
+
+    for (; newIndex < indexAllocationTop; ++newIndex) {
+        auto currentIndex = lookFromBack ? indexAllocationTop - newIndex - 1 : newIndex;
+        auto &eventAllocation = eventsAllocated[currentIndex];
+
+        if (requireCallStack && eventAllocation.frames == 0) {
+            continue;
+        }
+
+        if (eventAllocation.event != AllocationEvent::EVENT_UNKNOWN) {
+            // Should be some sort of allocation
+            size_t deleteIndex = 0;
+            for (; deleteIndex < indexDeallocationTop; ++deleteIndex) {
+                auto &eventDeallocation = eventsDeallocated[deleteIndex];
+
+                if (eventDeallocation.address == eventAllocation.address &&
+                    eventDeallocation.event != AllocationEvent::EVENT_UNKNOWN) {
+
+                    //this memory was once freed, now it is allocated but not freed
+                    if (requireCallStack && eventDeallocation.frames == 0) {
+                        potentialLeak = true;
+                        potentialLeakIndex = currentIndex;
+                        continue;
+                    }
+
+                    // Clear the NEW and DELETE event.
+                    eventAllocation.event = AllocationEvent::EVENT_UNKNOWN;
+                    eventDeallocation.event = AllocationEvent::EVENT_UNKNOWN;
+                    potentialLeak = false;
+                    // Found a corresponding match
+                    break;
+                }
+            }
+
+            if (potentialLeak) {
+                return potentialLeakIndex;
+            }
+
+            if (deleteIndex == indexDeallocationTop) {
+                start = newIndex + 1;
+                return currentIndex;
+            }
+        }
+    }
+    start = MemoryManagement::invalidLeakIndex;
+    return start;
+}
+
 } // namespace MemoryManagement
 
 using MemoryManagement::allocate;
