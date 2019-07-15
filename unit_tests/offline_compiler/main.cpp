@@ -20,8 +20,6 @@ const char *fSeparator = "/";
 
 Environment *gEnvironment;
 
-extern bool printMemoryOpCallStack;
-
 std::string getRunPath() {
     std::string res;
 #if defined(__linux__)

@@ -9,6 +9,7 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 namespace MemoryManagement {
 #if defined(__clang__)
@@ -77,7 +78,11 @@ extern void (*deleteCallback)(void *);
 constexpr auto nonfailingAllocation = static_cast<size_t>(-1);
 constexpr auto invalidLeakIndex = static_cast<size_t>(-1);
 
+// capture allocations call stacks to print them during memory leak in ULTs
+constexpr bool captureCallStacks = false;
+
 int detectLeaks();
+std::string printCallStack(const MemoryManagement::AllocationEvent &event);
 size_t enumerateLeak(size_t indexAllocationTop, size_t indexDeallocationTop, bool lookFromEnd, bool requireCallStack);
 
 } // namespace MemoryManagement

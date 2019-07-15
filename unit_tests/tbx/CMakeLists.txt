@@ -31,6 +31,7 @@ if(WIN32)
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
   )
+  target_link_libraries(igdrcl_tbx_tests dbghelp)
 else()
   target_sources(igdrcl_tbx_tests PRIVATE
     ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/allocator_helper.cpp

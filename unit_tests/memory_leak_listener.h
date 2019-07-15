@@ -10,9 +10,6 @@
 
 namespace NEO {
 
-// capture allocations call stacks to print them during memory leak in ULTs
-constexpr bool captureCallStacks = false;
-
 class MemoryLeakListener : public ::testing::EmptyTestEventListener {
   private:
     void OnTestStart(const ::testing::TestInfo &) override;

@@ -40,5 +40,3 @@ struct MemoryManagementFixture {
     // Gets compared to # at TearDown time
     size_t previousAllocations;
 };
-
-std::string printCallStack(const MemoryManagement::AllocationEvent &event);

@@ -61,7 +61,6 @@ PRODUCT_FAMILY productFamily = IGFX_SKYLAKE;
 GFXCORE_FAMILY renderCoreFamily = IGFX_GEN9_CORE;
 PRODUCT_FAMILY defaultProductFamily = productFamily;
 
-extern bool printMemoryOpCallStack;
 extern std::string lastTest;
 bool generateRandomInput = false;
 
@@ -214,8 +213,6 @@ int main(int argc, char **argv) {
             useDefaultListener = true;
         } else if (!strcmp("--disable_alarm", argv[i])) {
             enable_alarm = false;
-        } else if (!strcmp("--print_memory_op_cs", argv[i])) {
-            printMemoryOpCallStack = true;
         } else if (!strcmp("--tbx", argv[i])) {
             if (testMode == TestMode::AubTests) {
                 testMode = TestMode::AubTestsWithTbx;

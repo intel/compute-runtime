@@ -24,8 +24,6 @@ set(IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
-  ${IGDRCL_SOURCE_DIR}/core/unit_tests/helpers/memory_management.cpp
-  ${IGDRCL_SOURCE_DIR}/core/unit_tests/helpers/memory_management.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
@@ -35,6 +33,8 @@ set(IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/utilities/debug_settings_reader_creator.cpp
+  ${NEO_CORE_DIRECTORY}/unit_tests/helpers/memory_management.h
+  ${NEO_CORE_DIRECTORY}/unit_tests/helpers/memory_management.cpp
 )
 
 set(IGDRCL_SRCS_LIB_ULT_WINDOWS

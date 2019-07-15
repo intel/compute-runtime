@@ -31,15 +31,13 @@ extern const char *frontEndDllName;
 extern const char *igcDllName;
 } // namespace Os
 
-bool printMemoryOpCallStack = true;
-
 void MemoryManagementFixture::SetUp() {
     EXPECT_EQ(static_cast<size_t>(-1), MemoryManagement::failingAllocation);
     MemoryManagement::indexAllocation = 0;
     MemoryManagement::indexDeallocation = 0;
     MemoryManagement::failingAllocation = -1;
     previousAllocations = MemoryManagement::numAllocations.load();
-    MemoryManagement::logTraces = NEO::captureCallStacks;
+    MemoryManagement::logTraces = MemoryManagement::captureCallStacks;
 }
 
 void MemoryManagementFixture::TearDown() {
@@ -55,65 +53,6 @@ void MemoryManagementFixture::setFailingAllocation(size_t allocation) {
 
 void MemoryManagementFixture::clearFailingAllocation() {
     MemoryManagement::failingAllocation = -1;
-}
-
-std::string printCallStack(const MemoryManagement::AllocationEvent &event) {
-    std::string result = "";
-
-    printf("printCallStack.%d.%d\n", printMemoryOpCallStack, event.frames);
-    if (!NEO::captureCallStacks) {
-        printf("for detailed stack information turn on captureCallStacks in memory_management_fixture.h\n");
-    }
-    if (printMemoryOpCallStack && event.frames > 0) {
-#if defined(__linux__)
-        char **bt = backtrace_symbols(event.callstack, event.frames);
-        char *demangled;
-        int status;
-        char output[1024];
-        Dl_info info;
-        result += "\n";
-        for (int i = 0; i < event.frames; ++i) {
-            dladdr(event.callstack[i], &info);
-            if (info.dli_sname) {
-                demangled = nullptr;
-                status = -1;
-                if (info.dli_sname[0] == '_') {
-                    demangled = abi::__cxa_demangle(info.dli_sname, nullptr, 0, &status);
-                }
-                snprintf(output, sizeof(output), "%-3d %*p %s + %zd\n",
-                         (event.frames - i - 1), (int)(sizeof(void *) + 2), event.callstack[i],
-                         status == 0 ? demangled : info.dli_sname == 0 ? bt[i] : info.dli_sname,
-                         (char *)event.callstack[i] - (char *)info.dli_saddr);
-                free(demangled);
-            } else {
-                snprintf(output, sizeof(output), "%-3d %*p %s\n",
-                         (event.frames - i - 1), (int)(sizeof(void *) + 2), event.callstack[i], bt[i]);
-            }
-            result += std::string(output);
-        }
-        result += "\n";
-        free(bt);
-#elif defined(_WIN32)
-        SYMBOL_INFO *symbol;
-        HANDLE process;
-        process = GetCurrentProcess();
-        SymInitialize(process, NULL, TRUE);
-
-        symbol = (SYMBOL_INFO *)calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1);
-        symbol->MaxNameLen = 255;
-        symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-
-        for (int i = 0; i < event.frames; i++) {
-            SymFromAddr(process, (DWORD64)(event.callstack[i]), 0, symbol);
-
-            printf("%i: %s - 0x%0" PRIx64 "\n", event.frames - i - 1, symbol->Name, symbol->Address);
-        }
-
-        free(symbol);
-#endif
-    }
-
-    return result;
 }
 
 ::testing::AssertionResult MemoryManagementFixture::assertLeak(
