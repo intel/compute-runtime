@@ -247,6 +247,7 @@ void Device::initializeCaps() {
     deviceInfo.maxComputUnits = systemInfo.EUCount;
     deviceInfo.maxConstantArgs = 8;
     deviceInfo.maxNumEUsPerSubSlice = 0;
+    deviceInfo.maxSliceCount = systemInfo.SliceCount;
     deviceInfo.numThreadsPerEU = 0;
     auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 32 : 8;
 

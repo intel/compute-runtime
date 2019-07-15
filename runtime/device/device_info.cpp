@@ -74,15 +74,19 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
     const void *src = nullptr;
 
     // clang-format off
+    // please keep alphabetical order
     switch (paramName) {
     case CL_DEVICE_ADDRESS_BITS:                                getCap<CL_DEVICE_ADDRESS_BITS                                >(src, srcSize, retSize); break;
     case CL_DEVICE_AVAILABLE:                                   getCap<CL_DEVICE_AVAILABLE                                   >(src, srcSize, retSize); break;
-    case CL_DEVICE_AVC_ME_VERSION_INTEL:                        getCap<CL_DEVICE_AVC_ME_VERSION_INTEL                        >(src, srcSize, retSize); break;
-    case CL_DEVICE_AVC_ME_SUPPORTS_TEXTURE_SAMPLER_USE_INTEL:   getCap<CL_DEVICE_AVC_ME_SUPPORTS_TEXTURE_SAMPLER_USE_INTEL   >(src, srcSize, retSize); break;
     case CL_DEVICE_AVC_ME_SUPPORTS_PREEMPTION_INTEL:            getCap<CL_DEVICE_AVC_ME_SUPPORTS_PREEMPTION_INTEL            >(src, srcSize, retSize); break;
+    case CL_DEVICE_AVC_ME_SUPPORTS_TEXTURE_SAMPLER_USE_INTEL:   getCap<CL_DEVICE_AVC_ME_SUPPORTS_TEXTURE_SAMPLER_USE_INTEL   >(src, srcSize, retSize); break;
+    case CL_DEVICE_AVC_ME_VERSION_INTEL:                        getCap<CL_DEVICE_AVC_ME_VERSION_INTEL                        >(src, srcSize, retSize); break;
     case CL_DEVICE_BUILT_IN_KERNELS:                            getStr<CL_DEVICE_BUILT_IN_KERNELS                            >(src, srcSize, retSize); break;
     case CL_DEVICE_COMPILER_AVAILABLE:                          getCap<CL_DEVICE_COMPILER_AVAILABLE                          >(src, srcSize, retSize); break;
+    case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:  getCap<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL  >(src, srcSize, retSize); break;
+    case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:               getCap<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL               >(src, srcSize, retSize); break;
     case CL_DEVICE_DOUBLE_FP_CONFIG:                            getCap<CL_DEVICE_DOUBLE_FP_CONFIG                            >(src, srcSize, retSize); break;
+    case CL_DEVICE_DRIVER_VERSION_INTEL:                        getCap<CL_DEVICE_DRIVER_VERSION_INTEL                        >(src, srcSize, retSize); break;
     case CL_DEVICE_ENDIAN_LITTLE:                               getCap<CL_DEVICE_ENDIAN_LITTLE                               >(src, srcSize, retSize); break;
     case CL_DEVICE_ERROR_CORRECTION_SUPPORT:                    getCap<CL_DEVICE_ERROR_CORRECTION_SUPPORT                    >(src, srcSize, retSize); break;
     case CL_DEVICE_EXECUTION_CAPABILITIES:                      getCap<CL_DEVICE_EXECUTION_CAPABILITIES                      >(src, srcSize, retSize); break;
@@ -93,6 +97,7 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_GLOBAL_MEM_SIZE:                             getCap<CL_DEVICE_GLOBAL_MEM_SIZE                             >(src, srcSize, retSize); break;
     case CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE:        getCap<CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE        >(src, srcSize, retSize); break;
     case CL_DEVICE_HALF_FP_CONFIG:                              getCap<CL_DEVICE_HALF_FP_CONFIG                              >(src, srcSize, retSize); break;
+    case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:                 getCap<CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL                 >(src, srcSize, retSize); break;
     case CL_DEVICE_HOST_UNIFIED_MEMORY:                         getCap<CL_DEVICE_HOST_UNIFIED_MEMORY                         >(src, srcSize, retSize); break;
     case CL_DEVICE_IL_VERSION:                                  getStr<CL_DEVICE_IL_VERSION                                  >(src, srcSize, retSize); break;
     case CL_DEVICE_IMAGE2D_MAX_HEIGHT:                          getCap<CL_DEVICE_IMAGE2D_MAX_HEIGHT                          >(src, srcSize, retSize); break;
@@ -164,7 +169,10 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE:              getCap<CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE              >(src, srcSize, retSize); break;
     case CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES:                  getCap<CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES                  >(src, srcSize, retSize); break;
     case CL_DEVICE_QUEUE_ON_HOST_PROPERTIES:                    getCap<CL_DEVICE_QUEUE_ON_HOST_PROPERTIES                    >(src, srcSize, retSize); break;
+    case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:        getCap<CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL        >(src, srcSize, retSize); break;
+    case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL: getCap<CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL >(src, srcSize, retSize); break;
     case CL_DEVICE_SINGLE_FP_CONFIG:                            getCap<CL_DEVICE_SINGLE_FP_CONFIG                            >(src, srcSize, retSize); break;
+    case CL_DEVICE_SLICE_COUNT_INTEL:                           getCap<CL_DEVICE_SLICE_COUNT_INTEL                           >(src, srcSize, retSize); break;
     case CL_DEVICE_SPIR_VERSIONS:                               getStr<CL_DEVICE_SPIR_VERSIONS                               >(src, srcSize, retSize); break;
     case CL_DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS:      getCap<CL_DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS      >(src, srcSize, retSize); break;
     case CL_DEVICE_SUB_GROUP_SIZES_INTEL:                       getCap<CL_DEVICE_SUB_GROUP_SIZES_INTEL                       >(src, srcSize, retSize); break;
@@ -173,14 +181,7 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_VENDOR:                                      getStr<CL_DEVICE_VENDOR                                      >(src, srcSize, retSize); break;
     case CL_DEVICE_VENDOR_ID:                                   getCap<CL_DEVICE_VENDOR_ID                                   >(src, srcSize, retSize); break;
     case CL_DEVICE_VERSION:                                     getStr<CL_DEVICE_VERSION                                     >(src, srcSize, retSize); break;
-    case CL_DRIVER_VERSION:                                     getStr<CL_DRIVER_VERSION                                     >(src, srcSize, retSize); break;
-    case CL_DEVICE_DRIVER_VERSION_INTEL:                        getCap<CL_DEVICE_DRIVER_VERSION_INTEL                        >(src, srcSize, retSize); break;
-    case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:                 getCap<CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL                 >(src, srcSize, retSize); break;
-    case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:               getCap<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL               >(src, srcSize, retSize); break;
-    case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL: getCap<CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL >(src, srcSize, retSize); break;
-    case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:  getCap<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL  >(src, srcSize, retSize); break;
-    case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:        getCap<CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL        >(src, srcSize, retSize); break;
-    // clang-format on
+    case CL_DRIVER_VERSION:                                     getStr<CL_DRIVER_VERSION                                     >(src, srcSize, retSize); break; // clang-format on
     case CL_DEVICE_NUM_SIMULTANEOUS_INTEROPS_INTEL:
         if (simultaneousInterops.size() > 1u) {
             srcSize = retSize = sizeof(cl_uint);

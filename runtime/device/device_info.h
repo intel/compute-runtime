@@ -18,6 +18,7 @@ struct DeviceInfo {
     cl_device_type               deviceType;
     size_t                       maxWorkGroupSize;
     size_t                       maxNumEUsPerSubSlice;
+    size_t                       maxSliceCount;
     cl_ulong                     maxMemAllocSize;
     size_t                       imageMaxBufferSize;
     size_t                       image2DMaxWidth;

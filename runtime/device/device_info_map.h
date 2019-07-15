@@ -36,14 +36,18 @@ struct Map {};
 // Map<Param>::getValue - ie. return deviceInfo.AddressBits
 //////////////////////////////////////////////////////
 // clang-format off
+// please keep alphabetical order
 template<> struct Map<CL_DEVICE_ADDRESS_BITS                                > : public MapBase<CL_DEVICE_ADDRESS_BITS,                                unsigned int,                  &DeviceInfo::addressBits> {};
 template<> struct Map<CL_DEVICE_AVAILABLE                                   > : public MapBase<CL_DEVICE_AVAILABLE,                                   uint32_t,                      &DeviceInfo::deviceAvailable> {};
-template<> struct Map<CL_DEVICE_AVC_ME_VERSION_INTEL                        > : public MapBase<CL_DEVICE_AVC_ME_VERSION_INTEL,                        uint32_t,                      &DeviceInfo::vmeAvcVersion> {};
-template<> struct Map<CL_DEVICE_AVC_ME_SUPPORTS_TEXTURE_SAMPLER_USE_INTEL   > : public MapBase<CL_DEVICE_AVC_ME_SUPPORTS_TEXTURE_SAMPLER_USE_INTEL,   uint32_t,                      &DeviceInfo::vmeAvcSupportsTextureSampler> {};
 template<> struct Map<CL_DEVICE_AVC_ME_SUPPORTS_PREEMPTION_INTEL            > : public MapBase<CL_DEVICE_AVC_ME_SUPPORTS_PREEMPTION_INTEL,            uint32_t,                      &DeviceInfo::vmeAvcSupportsPreemption> {};
+template<> struct Map<CL_DEVICE_AVC_ME_SUPPORTS_TEXTURE_SAMPLER_USE_INTEL   > : public MapBase<CL_DEVICE_AVC_ME_SUPPORTS_TEXTURE_SAMPLER_USE_INTEL,   uint32_t,                      &DeviceInfo::vmeAvcSupportsTextureSampler> {};
+template<> struct Map<CL_DEVICE_AVC_ME_VERSION_INTEL                        > : public MapBase<CL_DEVICE_AVC_ME_VERSION_INTEL,                        uint32_t,                      &DeviceInfo::vmeAvcVersion> {};
 template<> struct Map<CL_DEVICE_BUILT_IN_KERNELS                            > : public MapBase<CL_DEVICE_BUILT_IN_KERNELS,                            const char *,                  &DeviceInfo::builtInKernels> {};
 template<> struct Map<CL_DEVICE_COMPILER_AVAILABLE                          > : public MapBase<CL_DEVICE_COMPILER_AVAILABLE,                          uint32_t,                      &DeviceInfo::compilerAvailable> {};
+template<> struct Map<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL  > : public MapBase<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL,  uint64_t,                      &DeviceInfo::crossDeviceSharedMemCapabilities> {};
+template<> struct Map<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL               > : public MapBase<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL,               uint64_t,                      &DeviceInfo::deviceMemCapabilities> {};
 template<> struct Map<CL_DEVICE_DOUBLE_FP_CONFIG                            > : public MapBase<CL_DEVICE_DOUBLE_FP_CONFIG,                            uint64_t,                      &DeviceInfo::doubleFpConfig> {};
+template<> struct Map<CL_DEVICE_DRIVER_VERSION_INTEL                        > : public MapBase<CL_DEVICE_DRIVER_VERSION_INTEL,                        uint32_t,                      &DeviceInfo::internalDriverVersion> {};
 template<> struct Map<CL_DEVICE_ENDIAN_LITTLE                               > : public MapBase<CL_DEVICE_ENDIAN_LITTLE,                               uint32_t,                      &DeviceInfo::endianLittle> {};
 template<> struct Map<CL_DEVICE_ERROR_CORRECTION_SUPPORT                    > : public MapBase<CL_DEVICE_ERROR_CORRECTION_SUPPORT,                    uint32_t,                      &DeviceInfo::errorCorrectionSupport> {};
 template<> struct Map<CL_DEVICE_EXECUTION_CAPABILITIES                      > : public MapBase<CL_DEVICE_EXECUTION_CAPABILITIES,                      uint64_t,                      &DeviceInfo::executionCapabilities> {};
@@ -54,6 +58,7 @@ template<> struct Map<CL_DEVICE_GLOBAL_MEM_CACHE_TYPE                       > : 
 template<> struct Map<CL_DEVICE_GLOBAL_MEM_SIZE                             > : public MapBase<CL_DEVICE_GLOBAL_MEM_SIZE,                             uint64_t,                      &DeviceInfo::globalMemSize> {};
 template<> struct Map<CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE        > : public MapBase<CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE,        size_t,                        &DeviceInfo::globalVariablePreferredTotalSize> {};
 template<> struct Map<CL_DEVICE_HALF_FP_CONFIG                              > : public MapBase<CL_DEVICE_HALF_FP_CONFIG,                              uint64_t,                      &DeviceInfo::halfFpConfig> {};
+template<> struct Map<CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL                 > : public MapBase<CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL,                 uint64_t,                      &DeviceInfo::hostMemCapabilities> {};
 template<> struct Map<CL_DEVICE_HOST_UNIFIED_MEMORY                         > : public MapBase<CL_DEVICE_HOST_UNIFIED_MEMORY,                         uint32_t,                      &DeviceInfo::hostUnifiedMemory> {};
 template<> struct Map<CL_DEVICE_IL_VERSION                                  > : public MapBase<CL_DEVICE_IL_VERSION,                                  const char *,                  &DeviceInfo::ilVersion> {};
 template<> struct Map<CL_DEVICE_IMAGE2D_MAX_HEIGHT                          > : public MapBase<CL_DEVICE_IMAGE2D_MAX_HEIGHT,                          size_t,                        &DeviceInfo::image2DMaxHeight> {};
@@ -124,21 +129,17 @@ template<> struct Map<CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE                    > : 
 template<> struct Map<CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE              > : public MapBase<CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE,              uint32_t,                      &DeviceInfo::queueOnDevicePreferredSize> {};
 template<> struct Map<CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES                  > : public MapBase<CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES,                  uint64_t,                      &DeviceInfo::queueOnDeviceProperties> {};
 template<> struct Map<CL_DEVICE_QUEUE_ON_HOST_PROPERTIES                    > : public MapBase<CL_DEVICE_QUEUE_ON_HOST_PROPERTIES,                    uint64_t,                      &DeviceInfo::queueOnHostProperties> {};
+template<> struct Map<CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL        > : public MapBase<CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL,        uint64_t,                      &DeviceInfo::sharedSystemMemCapabilities> {};
+template<> struct Map<CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL > : public MapBase<CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL, uint64_t,                      &DeviceInfo::singleDeviceSharedMemCapabilities> {};
 template<> struct Map<CL_DEVICE_SINGLE_FP_CONFIG                            > : public MapBase<CL_DEVICE_SINGLE_FP_CONFIG,                            uint64_t,                      &DeviceInfo::singleFpConfig> {};
+template<> struct Map<CL_DEVICE_SLICE_COUNT_INTEL                           > : public MapBase<CL_DEVICE_SLICE_COUNT_INTEL,                           size_t,                        &DeviceInfo::maxSliceCount> {};
 template<> struct Map<CL_DEVICE_SPIR_VERSIONS                               > : public MapBase<CL_DEVICE_SPIR_VERSIONS,                               const char *,                  &DeviceInfo::spirVersions> {};
 template<> struct Map<CL_DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS      > : public MapBase<CL_DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS,      uint32_t,                      &DeviceInfo::independentForwardProgress> {};
 template<> struct Map<CL_DEVICE_SVM_CAPABILITIES                            > : public MapBase<CL_DEVICE_SVM_CAPABILITIES,                            uint64_t,                      &DeviceInfo::svmCapabilities> {};
 template<> struct Map<CL_DEVICE_TYPE                                        > : public MapBase<CL_DEVICE_TYPE,                                        uint64_t,                      &DeviceInfo::deviceType> {};
-template<> struct Map<CL_DEVICE_VENDOR_ID                                   > : public MapBase<CL_DEVICE_VENDOR_ID,                                   uint32_t,                      &DeviceInfo::vendorId> {};
 template<> struct Map<CL_DEVICE_VENDOR                                      > : public MapBase<CL_DEVICE_VENDOR,                                      const char *,                  &DeviceInfo::vendor> {};
+template<> struct Map<CL_DEVICE_VENDOR_ID                                   > : public MapBase<CL_DEVICE_VENDOR_ID,                                   uint32_t,                      &DeviceInfo::vendorId> {};
 template<> struct Map<CL_DEVICE_VERSION                                     > : public MapBase<CL_DEVICE_VERSION,                                     const char *,                  &DeviceInfo::clVersion> {};
 template<> struct Map<CL_DRIVER_VERSION                                     > : public MapBase<CL_DRIVER_VERSION,                                     const char *,                  &DeviceInfo::driverVersion> {};
-template<> struct Map<CL_DEVICE_DRIVER_VERSION_INTEL                        > : public MapBase<CL_DEVICE_DRIVER_VERSION_INTEL,                        uint32_t,                      &DeviceInfo::internalDriverVersion> {};
-template<> struct Map<CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL                 > : public MapBase<CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL,                 uint64_t,                      &DeviceInfo::hostMemCapabilities> {};
-template<> struct Map<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL               > : public MapBase<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL,               uint64_t,                      &DeviceInfo::deviceMemCapabilities> {};
-template<> struct Map<CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL > : public MapBase<CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL, uint64_t,                      &DeviceInfo::singleDeviceSharedMemCapabilities> {};
-template<> struct Map<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL  > : public MapBase<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL,  uint64_t,                      &DeviceInfo::crossDeviceSharedMemCapabilities> {};
-template<> struct Map<CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL        > : public MapBase<CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL,        uint64_t,                      &DeviceInfo::sharedSystemMemCapabilities> {};
-
 // clang-format on
 } // namespace DeviceInfoTable
