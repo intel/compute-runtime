@@ -19,6 +19,11 @@ GMM_STATUS GMM_STDCALL createSingletonContext(const PLATFORM Platform,
                                               const SKU_FEATURE_TABLE *featureTable,
                                               const WA_TABLE *workaroundTable,
                                               const GT_SYSTEM_INFO *pGtSysInfo) {
+    if (Platform.eProductFamily == PRODUCT_FAMILY::IGFX_UNKNOWN &&
+        Platform.eRenderCoreFamily == GFXCORE_FAMILY::IGFX_UNKNOWN_CORE &&
+        Platform.ePCHProductFamily == PCH_PRODUCT_FAMILY::PCH_UNKNOWN) {
+        return GMM_ERROR;
+    }
     return GMM_SUCCESS;
 }
 #else

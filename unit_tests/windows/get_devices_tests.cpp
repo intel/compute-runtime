@@ -7,18 +7,31 @@
 
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/os_interface/device_factory.h"
+#include "runtime/platform/platform.h"
 #include "test.h"
 
-namespace NEO {
-bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
-} // namespace NEO
+using namespace NEO;
 
 using GetDevicesTests = ::testing::Test;
 
 HWTEST_F(GetDevicesTests, WhenGetDevicesIsCalledThenSuccessIsReturned) {
     size_t numDevicesReturned = 0;
-    NEO::ExecutionEnvironment executionEnviornment;
+    ExecutionEnvironment executionEnviornment;
 
-    auto returnValue = NEO::getDevices(numDevicesReturned, executionEnviornment);
+    auto returnValue = DeviceFactory::getDevices(numDevicesReturned, executionEnviornment);
     EXPECT_EQ(true, returnValue);
+}
+
+HWTEST_F(GetDevicesTests, whenGetDevicesIsCalledThenGmmIsBeingInitializedAfterFillingHwInfo) {
+    platformImpl.reset(new Platform());
+    size_t numDevicesReturned = 0;
+    HardwareInfo hwInfo;
+    hwInfo.platform.eProductFamily = PRODUCT_FAMILY::IGFX_UNKNOWN;
+    hwInfo.platform.eRenderCoreFamily = GFXCORE_FAMILY::IGFX_UNKNOWN_CORE;
+    hwInfo.platform.ePCHProductFamily = PCH_PRODUCT_FAMILY::PCH_UNKNOWN;
+    platform()->peekExecutionEnvironment()->setHwInfo(&hwInfo);
+
+    auto returnValue = DeviceFactory::getDevices(numDevicesReturned, *platform()->peekExecutionEnvironment());
+    EXPECT_TRUE(returnValue);
 }
