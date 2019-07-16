@@ -13,14 +13,14 @@ using namespace NEO;
 
 typedef api_tests clReleaseProgramTests;
 
-TEST_F(clReleaseProgramTests, releaseNullptr) {
+TEST_F(clReleaseProgramTests, GivenNullProgramWhenReleasingProgramThenClInvalidProgramIsReturned) {
     auto retVal = clReleaseProgram(nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
 
 static const char fakeSrc[] = "__kernel void func(void) { }";
 
-TEST_F(clReleaseProgramTests, validRelease) {
+TEST_F(clReleaseProgramTests, GivenRetainedProgramWhenReleasingProgramThenProgramIsReleasedAndProgramReferenceCountDecrementedCorrectly) {
     size_t srcLen = sizeof(fakeSrc);
     const char *src = fakeSrc;
     cl_int retVal;
