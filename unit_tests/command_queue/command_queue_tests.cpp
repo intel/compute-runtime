@@ -207,6 +207,15 @@ TEST(CommandQueue, givenDeviceWhenCreatingCommandQueueThenPickCsrFromDefaultEngi
     EXPECT_EQ(defaultCsr, &cmdQ.getGpgpuCommandStreamReceiver());
 }
 
+TEST(CommandQueue, givenDeviceNotSupportingBlitOperationsWhenQueueIsCreatedThenDontRegisterBcsCsr) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.blitterOperationsSupported = false;
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    CommandQueue cmdQ(nullptr, mockDevice.get(), 0);
+
+    EXPECT_EQ(nullptr, cmdQ.getBcsCommandStreamReceiver());
+}
+
 TEST(CommandQueue, givenCmdQueueBlockedByReadyVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
     std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = new MockContext;

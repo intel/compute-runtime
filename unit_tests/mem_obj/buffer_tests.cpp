@@ -666,13 +666,22 @@ struct BcsBufferTests : public ::testing::Test {
         DebugManager.flags.EnableTimestampPacket.set(1);
         DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(true);
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-        device->getExecutionEnvironment()->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+        auto &capabilityTable = device->getExecutionEnvironment()->getMutableHardwareInfo()->capabilityTable;
+        bool createBcsEngine = !capabilityTable.blitterOperationsSupported;
+        capabilityTable.blitterOperationsSupported = true;
+
+        if (createBcsEngine) {
+            device->createEngine(0, static_cast<uint32_t>(device->engines.size()), aub_stream::EngineType::ENGINE_BCS);
+        }
+
         bcsMockContext = std::make_unique<BcsMockContext>(device.get());
+        commandQueue.reset(CommandQueue::create(bcsMockContext.get(), device.get(), nullptr, retVal));
     }
 
     DebugManagerStateRestore restore;
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<BcsMockContext> bcsMockContext;
+    std::unique_ptr<CommandQueue> commandQueue;
     uint32_t hostPtr = 0;
     cl_int retVal = CL_SUCCESS;
 };
@@ -690,11 +699,10 @@ HWTEST_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhenCreatingT
 
 HWTEST_F(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledThenUseBcsCsr) {
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(false);
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
+    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
 
     auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
     bufferForBlt->forceDisallowCPUCopy = true;
-    auto commandQueue = std::unique_ptr<CommandQueue>(CommandQueue::create(bcsMockContext.get(), device.get(), nullptr, retVal));
     auto *hwInfo = device->getExecutionEnvironment()->getMutableHardwareInfo();
 
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(false);
@@ -723,11 +731,10 @@ HWTEST_F(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledThen
 }
 
 HWTEST_F(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDontTakeBcsPath) {
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
+    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
 
     auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
     bufferForBlt->forceDisallowCPUCopy = true;
-    auto commandQueue = std::unique_ptr<CommandQueue>(CommandQueue::create(bcsMockContext.get(), device.get(), nullptr, retVal));
     UserEvent userEvent(bcsMockContext.get());
     cl_event waitlist = &userEvent;
 
@@ -847,7 +854,7 @@ HWTEST_F(BcsBufferTests, givenReadOrWriteBufferOperationWithoutKernelWhenEstimat
 HWTEST_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenProgramMiFlushDwWithDataWrite) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
     cl_int retVal = CL_SUCCESS;
 
@@ -882,7 +889,7 @@ HWTEST_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenProgramMiFl
 }
 
 HWTEST_F(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCalledThenMakeThemResident) {
-    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsMockContext->bcsCsr.get());
+    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
     cl_int retVal = CL_SUCCESS;
@@ -927,7 +934,9 @@ HWTEST_F(BcsBufferTests, givenBlockingEnqueueWhenUsingBcsThenCallWait) {
     myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
     bcsMockContext->bcsCsr.reset(myMockCsr);
 
+    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+    cmdQ->bcsEngine = &bcsEngineControl;
     cl_int retVal = CL_SUCCESS;
 
     auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));

@@ -73,6 +73,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     typedef CommandQueueHw<GfxFamily> BaseClass;
 
   public:
+    using BaseClass::bcsEngine;
     using BaseClass::commandStream;
     using BaseClass::gpgpuEngine;
     using BaseClass::multiEngineQueue;

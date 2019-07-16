@@ -465,8 +465,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const MultiDispatc
                                                               bool blocking) {
     auto blitDirection = BlitProperties::obtainBlitDirection(commandType);
 
-    auto blitCommandStreamReceiver = BlitProperties::obtainBlitCommandStreamReceiver(*context, multiDispatchInfo.peekBuiltinOpParams(),
-                                                                                     commandType);
+    auto blitCommandStreamReceiver = getBcsCommandStreamReceiver();
 
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(blitDirection, *blitCommandStreamReceiver,
                                                                                 multiDispatchInfo.peekBuiltinOpParams(), blocking);

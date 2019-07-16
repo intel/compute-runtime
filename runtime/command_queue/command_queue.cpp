@@ -71,6 +71,9 @@ CommandQueue::CommandQueue(Context *context, Device *deviceId, const cl_queue_pr
         if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
+        if (device->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.blitterOperationsSupported) {
+            bcsEngine = &device->getEngine(aub_stream::EngineType::ENGINE_BCS, false);
+        }
     }
 
     processProperties(properties);
@@ -105,6 +108,13 @@ CommandQueue::~CommandQueue() {
 
 CommandStreamReceiver &CommandQueue::getGpgpuCommandStreamReceiver() const {
     return *gpgpuEngine->commandStreamReceiver;
+}
+
+CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver() const {
+    if (bcsEngine) {
+        return bcsEngine->commandStreamReceiver;
+    }
+    return nullptr;
 }
 
 uint32_t CommandQueue::getHwTag() const {

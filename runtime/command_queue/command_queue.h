@@ -335,6 +335,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                              const cl_event *eventWaitList);
 
     CommandStreamReceiver &getGpgpuCommandStreamReceiver() const;
+    CommandStreamReceiver *getBcsCommandStreamReceiver() const;
     Device &getDevice() const { return *device; }
     Context &getContext() const { return *context; }
     Context *getContextPtr() const { return context; }
@@ -440,6 +441,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     Context *context = nullptr;
     Device *device = nullptr;
     EngineControl *gpgpuEngine = nullptr;
+    EngineControl *bcsEngine = nullptr;
 
     cl_command_queue_properties commandQueueProperties = 0;
 

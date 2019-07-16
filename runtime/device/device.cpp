@@ -148,38 +148,47 @@ bool Device::createDeviceImpl() {
 }
 
 bool Device::createEngines() {
-
     auto &hwInfo = getHardwareInfo();
-    auto defaultEngineType = getChosenEngineType(hwInfo);
     auto &gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances();
 
     for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngines.size(); deviceCsrIndex++) {
-        if (!executionEnvironment->initializeCommandStreamReceiver(getDeviceIndex(), deviceCsrIndex)) {
+        if (!createEngine(getDeviceIndex(), deviceCsrIndex, gpgpuEngines[deviceCsrIndex])) {
             return false;
         }
-
-        auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[getDeviceIndex()][deviceCsrIndex].get();
-
-        DeviceBitfield deviceBitfield;
-        deviceBitfield.set(getDeviceIndex());
-        bool lowPriority = deviceCsrIndex == HwHelper::lowPriorityGpgpuEngineIndex;
-        auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver, gpgpuEngines[deviceCsrIndex],
-                                                                                         deviceBitfield, preemptionMode, lowPriority);
-        commandStreamReceiver->setupContext(*osContext);
-
-        if (!commandStreamReceiver->initializeTagAllocation()) {
-            return false;
-        }
-        if (gpgpuEngines[deviceCsrIndex] == defaultEngineType && !lowPriority) {
-            defaultEngineIndex = deviceCsrIndex;
-        }
-
-        if ((preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) && !commandStreamReceiver->createPreemptionAllocation()) {
-            return false;
-        }
-
-        engines.push_back({commandStreamReceiver, osContext});
     }
+    return true;
+}
+
+bool Device::createEngine(uint32_t deviceIndex, uint32_t deviceCsrIndex, aub_stream::EngineType engineType) {
+    auto &hwInfo = getHardwareInfo();
+    auto defaultEngineType = getChosenEngineType(hwInfo);
+
+    if (!executionEnvironment->initializeCommandStreamReceiver(deviceIndex, deviceCsrIndex)) {
+        return false;
+    }
+
+    auto commandStreamReceiver = executionEnvironment->commandStreamReceivers[deviceIndex][deviceCsrIndex].get();
+
+    DeviceBitfield deviceBitfield;
+    deviceBitfield.set(deviceIndex);
+    bool lowPriority = (deviceCsrIndex == HwHelper::lowPriorityGpgpuEngineIndex);
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver, engineType,
+                                                                                     deviceBitfield, preemptionMode, lowPriority);
+    commandStreamReceiver->setupContext(*osContext);
+
+    if (!commandStreamReceiver->initializeTagAllocation()) {
+        return false;
+    }
+    if (engineType == defaultEngineType && !lowPriority) {
+        defaultEngineIndex = deviceCsrIndex;
+    }
+
+    if ((preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) && !commandStreamReceiver->createPreemptionAllocation()) {
+        return false;
+    }
+
+    engines.push_back({commandStreamReceiver, osContext});
+
     return true;
 }
 

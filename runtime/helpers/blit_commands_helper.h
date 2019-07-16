@@ -40,8 +40,6 @@ struct BlitProperties {
                                                                GraphicsAllocation *allocation);
 
     static BlitterConstants::BlitDirection obtainBlitDirection(uint32_t commandType);
-    static CommandStreamReceiver *obtainBlitCommandStreamReceiver(Context &context, const BuiltinOpParams &builtinOpParams,
-                                                                  uint32_t commandType);
 
     TimestampPacketContainer *outputTimestampPacket = nullptr;
     BlitterConstants::BlitDirection blitDirection;

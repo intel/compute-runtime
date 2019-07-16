@@ -64,13 +64,4 @@ BlitterConstants::BlitDirection BlitProperties::obtainBlitDirection(uint32_t com
                                                     : BlitterConstants::BlitDirection::BufferToHostPtr;
 }
 
-CommandStreamReceiver *BlitProperties::obtainBlitCommandStreamReceiver(Context &context, const BuiltinOpParams &builtinOpParams,
-                                                                       uint32_t commandType) {
-    if (CL_COMMAND_WRITE_BUFFER == commandType) {
-        return context.getCommandStreamReceiverForBlitOperation(*builtinOpParams.dstMemObj);
-    } else {
-        return context.getCommandStreamReceiverForBlitOperation(*builtinOpParams.srcMemObj);
-    }
-}
-
 } // namespace NEO

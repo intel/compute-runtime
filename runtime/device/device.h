@@ -132,6 +132,7 @@ class Device : public BaseObject<_cl_device_id> {
 
     bool createDeviceImpl();
     bool createEngines();
+    bool createEngine(uint32_t deviceIndex, uint32_t deviceCsrIndex, aub_stream::EngineType engineType);
 
     MOCKABLE_VIRTUAL void initializeCaps();
     void setupFp64Flags();
