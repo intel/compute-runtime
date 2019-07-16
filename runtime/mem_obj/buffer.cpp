@@ -90,7 +90,7 @@ void Buffer::validateInputAndCreateBuffer(cl_context &context,
     }
 
     auto pDevice = pContext->getDevice(0);
-    if (size == 0 || size > pDevice->getDeviceInfo().maxMemAllocSize) {
+    if (size == 0 || size > pDevice->getHardwareCapabilities().maxMemAllocSize) {
         retVal = CL_INVALID_BUFFER_SIZE;
         return;
     }

@@ -341,7 +341,7 @@ TEST(Device_GetCaps, givenGlobalMemSizeWhenCalculatingMaxAllocSizeThenAdjustToHW
     auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
     hwHelper.setupHardwareCapabilities(&hwCaps, *platformDevices[0]);
 
-    uint64_t expectedSize = std::max((caps.globalMemSize), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
+    uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
     expectedSize = std::min(expectedSize, hwCaps.maxMemAllocSize);
 
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
