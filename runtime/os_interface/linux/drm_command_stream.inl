@@ -44,17 +44,15 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
 
 template <typename GfxFamily>
 FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
-    unsigned int engineFlag = static_cast<OsContextLinux *>(osContext)->getEngineFlag();
-
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
     DEBUG_BREAK_IF(!alloc);
 
-    size_t alignedStart = (reinterpret_cast<uintptr_t>(batchBuffer.commandBufferAllocation->getUnderlyingBuffer()) & (MemoryConstants::allocationAlignment - 1)) + batchBuffer.startOffset;
     BufferObject *bb = alloc->getBO();
     FlushStamp flushStamp = 0;
 
     if (bb) {
         flushStamp = bb->peekHandle();
+        unsigned int engineFlag = static_cast<OsContextLinux *>(osContext)->getEngineFlag();
         this->processResidency(allocationsForResidency);
         // Residency hold all allocation except command buffer, hence + 1
         auto requiredSize = this->residency.size() + 1;
@@ -62,12 +60,13 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
             this->execObjectsStorage.resize(requiredSize);
         }
 
-        bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
-                 alignedStart, engineFlag | I915_EXEC_NO_RELOC,
-                 batchBuffer.requiresCoherency,
-                 static_cast<OsContextLinux *>(osContext)->getDrmContextId(),
-                 this->residency,
-                 this->execObjectsStorage.data());
+        int err = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
+                           batchBuffer.startOffset, engineFlag | I915_EXEC_NO_RELOC,
+                           batchBuffer.requiresCoherency,
+                           static_cast<OsContextLinux *>(osContext)->getDrmContextIds()[0],
+                           this->residency.data(), this->residency.size(),
+                           this->execObjectsStorage.data());
+        UNRECOVERABLE_IF(err != 0);
 
         this->residency.clear();
 

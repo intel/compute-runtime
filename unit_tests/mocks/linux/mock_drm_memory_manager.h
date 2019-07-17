@@ -50,6 +50,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::AllocationData;
     using DrmMemoryManager::allocUserptr;
     using DrmMemoryManager::createGraphicsAllocation;
+    using DrmMemoryManager::getDefaultDrmContextId;
     using DrmMemoryManager::gfxPartition;
     using DrmMemoryManager::pinThreshold;
     using DrmMemoryManager::setDomainCpu;

@@ -66,9 +66,8 @@ TEST_F(DrmBufferObjectTest, exec) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = 0;
 
-    BufferObject::ResidencyVector residency;
     drm_i915_gem_exec_object2 execObjectsStorage = {};
-    auto ret = bo->exec(0, 0, 0, false, 1, residency, &execObjectsStorage);
+    auto ret = bo->exec(0, 0, 0, false, 1, nullptr, 0u, &execObjectsStorage);
     EXPECT_EQ(mock->ioctl_res, ret);
     EXPECT_EQ(0u, mock->execBuffer.flags);
 }
@@ -76,9 +75,9 @@ TEST_F(DrmBufferObjectTest, exec) {
 TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = -1;
-    BufferObject::ResidencyVector residency;
+    mock->errnoValue = EFAULT;
     drm_i915_gem_exec_object2 execObjectsStorage = {};
-    EXPECT_THROW(bo->exec(0, 0, 0, false, 1, residency, &execObjectsStorage), std::exception);
+    EXPECT_EQ(EFAULT, bo->exec(0, 0, 0, false, 1, nullptr, 0u, &execObjectsStorage));
 }
 
 TEST_F(DrmBufferObjectTest, setTiling_success) {

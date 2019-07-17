@@ -7,11 +7,8 @@
 
 #pragma once
 #include <atomic>
-#include <cstdlib>
-#include <errno.h>
-#include <set>
+#include <cstddef>
 #include <stdint.h>
-#include <vector>
 
 struct drm_i915_gem_exec_object2;
 struct drm_i915_gem_relocation_entry;
@@ -35,14 +32,13 @@ class BufferObject {
     friend DrmMemoryManager;
 
   public:
-    using ResidencyVector = std::vector<BufferObject *>;
     MOCKABLE_VIRTUAL ~BufferObject(){};
 
     bool setTiling(uint32_t mode, uint32_t stride);
 
     MOCKABLE_VIRTUAL int pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t drmContextId);
 
-    int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId, ResidencyVector &residency, drm_i915_gem_exec_object2 *execObjectsStorage);
+    int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage);
 
     int wait(int64_t timeoutNs);
     bool close();
@@ -80,7 +76,6 @@ class BufferObject {
     uint32_t stride;
 
     MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t drmContextId);
-    void processRelocs(int &idx, uint32_t drmContextId, ResidencyVector &residency, drm_i915_gem_exec_object2 *execObjectsStorage);
 
     uint64_t gpuAddress = 0llu;
 

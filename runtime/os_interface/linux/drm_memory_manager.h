@@ -66,6 +66,7 @@ class DrmMemoryManager : public MemoryManager {
     uint64_t acquireGpuRange(size_t &size, StorageAllocatorType &allocType, bool requireSpecificBitness);
     void releaseGpuRange(void *address, size_t unmapSize, StorageAllocatorType allocatorType);
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
+    uint32_t getDefaultDrmContextId() const;
 
     DrmAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;

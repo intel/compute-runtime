@@ -176,8 +176,7 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
 
 void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const {
     if (forcePinEnabled && pinBB != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
-        auto &osContextLinux = static_cast<OsContextLinux &>(getDefaultCommandStreamReceiver(0)->getOsContext());
-        pinBB->pin(&bo, 1, osContextLinux.getDrmContextId());
+        pinBB->pin(&bo, 1, getDefaultDrmContextId());
     }
 }
 
@@ -600,8 +599,7 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
     }
 
     if (validateHostPtrMemory) {
-        auto &osContextLinux = static_cast<OsContextLinux &>(getDefaultCommandStreamReceiver(0)->getOsContext());
-        int result = pinBB->pin(allocatedBos, numberOfBosAllocated, osContextLinux.getDrmContextId());
+        int result = pinBB->pin(allocatedBos, numberOfBosAllocated, getDefaultDrmContextId());
 
         if (result == EFAULT) {
             for (uint32_t i = 0; i < numberOfBosAllocated; i++) {
@@ -722,5 +720,10 @@ int DrmMemoryManager::obtainFdFromHandle(int boHandle) {
     drm->ioctl(DRM_IOCTL_PRIME_HANDLE_TO_FD, &openFd);
 
     return openFd.fd;
+}
+
+uint32_t DrmMemoryManager::getDefaultDrmContextId() const {
+    auto &osContextLinux = static_cast<OsContextLinux &>(getDefaultCommandStreamReceiver(0)->getOsContext());
+    return osContextLinux.getDrmContextIds()[0];
 }
 } // namespace NEO

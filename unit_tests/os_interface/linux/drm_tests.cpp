@@ -180,13 +180,15 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
         drmMock.StoredCtxId = drmContextId1;
         OsContextLinux osContext1(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
 
-        EXPECT_EQ(drmContextId1, osContext1.getDrmContextId());
+        EXPECT_EQ(1u, osContext1.getDrmContextIds().size());
+        EXPECT_EQ(drmContextId1, osContext1.getDrmContextIds()[0]);
         EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
 
         {
             drmMock.StoredCtxId = drmContextId2;
             OsContextLinux osContext2(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
-            EXPECT_EQ(drmContextId2, osContext2.getDrmContextId());
+            EXPECT_EQ(1u, osContext2.getDrmContextIds().size());
+            EXPECT_EQ(drmContextId2, osContext2.getDrmContextIds()[0]);
             EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
         }
         EXPECT_EQ(drmContextId2, drmMock.receivedDestroyContextId);
