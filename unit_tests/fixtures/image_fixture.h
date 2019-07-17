@@ -12,6 +12,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/platform/platform.h"
+#include "test.h"
 #include "unit_tests/mocks/mock_context.h"
 
 #include "CL/cl.h"
@@ -105,40 +106,29 @@ template <typename Traits = Image1dArrayDefaults>
 struct Image1dArrayHelper : public ImageHelper<Traits> {
 };
 
-template <typename FamilyType>
-class ImageClearColorFixture {
-  public:
+struct ImageClearColorFixture : ::testing::Test {
     using GmmHelper = NEO::GmmHelper;
     using MockContext = NEO::MockContext;
     using Image = NEO::Image;
-    using ImageHw = NEO::ImageHw<FamilyType>;
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using AUXILIARY_SURFACE_MODE = typename FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    void SetUp() {
+    template <typename FamilyType>
+    void setUpImpl() {
         hardwareInfo.capabilityTable.ftrRenderCompressedImages = true;
 
         NEO::platformImpl.reset();
         NEO::constructPlatform()->peekExecutionEnvironment()->setHwInfo(&hardwareInfo);
         NEO::platform()->peekExecutionEnvironment()->initGmm();
+    }
 
-        surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    template <typename FamilyType>
+    typename FamilyType::RENDER_SURFACE_STATE getSurfaceState() {
+        using AUXILIARY_SURFACE_MODE = typename FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+        auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
         surfaceState.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    }
-    void TearDown() {
-    }
-
-    ImageHw *createImageHw() {
-        image.reset(ImageHelper<Image2dDefaults>::create(&context));
-        return static_cast<ImageHw *>(image.get());
+        return surfaceState;
     }
 
-    RENDER_SURFACE_STATE surfaceState;
     NEO::HardwareInfo hardwareInfo = **NEO::platformDevices;
-
-  protected:
     MockContext context;
-
     std::unique_ptr<Image> image;
-    ImageHw *imageHw = nullptr;
 };
