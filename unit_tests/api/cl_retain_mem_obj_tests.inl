@@ -14,22 +14,21 @@ using namespace NEO;
 typedef api_tests clRetainMemObjectTests;
 
 namespace ULT {
-TEST_F(clRetainMemObjectTests, returnsSuccess) {
-    unsigned char *hostMem = nullptr;
+TEST_F(clRetainMemObjectTests, GivenValidParamsWhenRetainingMemObjectThenRefCountIsIncremented) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     static const unsigned int bufferSize = 16;
     cl_mem buffer = nullptr;
     cl_int retVal;
     cl_uint theRef;
 
-    hostMem = new unsigned char[bufferSize];
-    memset(hostMem, 0xaa, bufferSize);
+    std::unique_ptr<char[]> hostMem(new char[bufferSize]);
+    memset(hostMem.get(), 0xaa, bufferSize);
 
     buffer = clCreateBuffer(
         pContext,
         flags,
         bufferSize,
-        hostMem,
+        hostMem.get(),
         &retVal);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -54,6 +53,5 @@ TEST_F(clRetainMemObjectTests, returnsSuccess) {
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    delete[] hostMem;
 }
 } // namespace ULT
