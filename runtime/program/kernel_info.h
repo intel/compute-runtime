@@ -49,7 +49,7 @@ struct WorkloadInfo {
     uint32_t slmStaticSize = 0;
     uint32_t simdSizeOffset;
     uint32_t parentEventOffset;
-    uint32_t prefferedWkgMultipleOffset;
+    uint32_t preferredWkgMultipleOffset;
 
     static const uint32_t undefinedOffset;
     static const uint32_t invalidParentEvent;
@@ -77,7 +77,7 @@ struct WorkloadInfo {
         workDimOffset = undefinedOffset;
         simdSizeOffset = undefinedOffset;
         parentEventOffset = undefinedOffset;
-        prefferedWkgMultipleOffset = undefinedOffset;
+        preferredWkgMultipleOffset = undefinedOffset;
     }
 };
 

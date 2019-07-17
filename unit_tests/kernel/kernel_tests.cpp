@@ -2270,18 +2270,18 @@ TEST_F(KernelCrossThreadTests, givenKernelWithPrivateMemoryWhenItIsCreatedThenCu
     delete kernel;
 }
 
-TEST_F(KernelCrossThreadTests, givenKernelWithPrefferedWkgMultipleWhenItIsCreatedThenCurbeIsPatchedProperly) {
+TEST_F(KernelCrossThreadTests, givenKernelWithPreferredWkgMultipleWhenItIsCreatedThenCurbeIsPatchedProperly) {
 
-    pKernelInfo->workloadInfo.prefferedWkgMultipleOffset = 8;
+    pKernelInfo->workloadInfo.preferredWkgMultipleOffset = 8;
     MockKernel *kernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
 
     kernel->initialize();
 
     auto *crossThread = kernel->getCrossThreadData();
 
-    uint32_t *prefferedWkgMultipleOffset = (uint32_t *)ptrOffset(crossThread, 8);
+    uint32_t *preferredWkgMultipleOffset = (uint32_t *)ptrOffset(crossThread, 8);
 
-    EXPECT_EQ(pKernelInfo->getMaxSimdSize(), *prefferedWkgMultipleOffset);
+    EXPECT_EQ(pKernelInfo->getMaxSimdSize(), *preferredWkgMultipleOffset);
 
     delete kernel;
 }

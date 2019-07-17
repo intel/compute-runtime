@@ -331,7 +331,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     uint32_t *workDim;
     uint32_t *dataParameterSimdSize;
     uint32_t *parentEventOffset;
-    uint32_t *prefferedWkgMultipleOffset;
+    uint32_t *preferredWkgMultipleOffset;
 
     static uint32_t dummyPatchLocation;
 

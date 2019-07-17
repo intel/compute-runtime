@@ -114,7 +114,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, createDeviceQueuesWhenMultipleDevic
 
 typedef DeviceQueueTest DeviceQueueBuffer;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setPrefferedSizeWhenNoPropertyGiven) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setPreferredSizeWhenNoPropertyGiven) {
     auto &deviceInfo = device->getDeviceInfo();
     deviceQueue = createQueueObject(); // only minimal properties
     ASSERT_NE(deviceQueue, nullptr);
@@ -122,7 +122,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setPrefferedSizeWhenNoPropertyGiv
     deviceQueue->release();
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setPrefferedSizeWhenInvalidPropertyGiven) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setPreferredSizeWhenInvalidPropertyGiven) {
     cl_queue_properties properties[5] = {CL_QUEUE_PROPERTIES, deviceQueueProperties::minimumProperties[1],
                                          CL_QUEUE_SIZE, 0, 0};
     auto &deviceInfo = device->getDeviceInfo();

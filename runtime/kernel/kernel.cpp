@@ -76,7 +76,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, const Devic
       workDim(&Kernel::dummyPatchLocation),
       dataParameterSimdSize(&Kernel::dummyPatchLocation),
       parentEventOffset(&Kernel::dummyPatchLocation),
-      prefferedWkgMultipleOffset(&Kernel::dummyPatchLocation),
+      preferredWkgMultipleOffset(&Kernel::dummyPatchLocation),
       slmTotalSize(kernelInfoArg.workloadInfo.slmStaticSize),
       isBuiltIn(false),
       isParentKernel((kernelInfoArg.patchInfo.executionEnvironment != nullptr) ? (kernelInfoArg.patchInfo.executionEnvironment->HasDeviceEnqueue != 0) : false),
@@ -225,11 +225,11 @@ cl_int Kernel::initialize() {
             workDim = workloadInfo.workDimOffset != WorkloadInfo::undefinedOffset ? ptrOffset(crossThread, workloadInfo.workDimOffset) : workDim;
             dataParameterSimdSize = workloadInfo.simdSizeOffset != WorkloadInfo::undefinedOffset ? ptrOffset(crossThread, workloadInfo.simdSizeOffset) : dataParameterSimdSize;
             parentEventOffset = workloadInfo.parentEventOffset != WorkloadInfo::undefinedOffset ? ptrOffset(crossThread, workloadInfo.parentEventOffset) : parentEventOffset;
-            prefferedWkgMultipleOffset = workloadInfo.prefferedWkgMultipleOffset != WorkloadInfo::undefinedOffset ? ptrOffset(crossThread, workloadInfo.prefferedWkgMultipleOffset) : prefferedWkgMultipleOffset;
+            preferredWkgMultipleOffset = workloadInfo.preferredWkgMultipleOffset != WorkloadInfo::undefinedOffset ? ptrOffset(crossThread, workloadInfo.preferredWkgMultipleOffset) : preferredWkgMultipleOffset;
 
             *maxWorkGroupSize = static_cast<uint32_t>(device.getDeviceInfo().maxWorkGroupSize);
             *dataParameterSimdSize = getKernelInfo().getMaxSimdSize();
-            *prefferedWkgMultipleOffset = getKernelInfo().getMaxSimdSize();
+            *preferredWkgMultipleOffset = getKernelInfo().getMaxSimdSize();
             *parentEventOffset = WorkloadInfo::invalidParentEvent;
         }
 

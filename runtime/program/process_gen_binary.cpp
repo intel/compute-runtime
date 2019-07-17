@@ -383,7 +383,7 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo, uint32_t kernelNum) {
                 break;
             case DATA_PARAMETER_PREFERRED_WORKGROUP_MULTIPLE:
                 DBG_LOG(LogPatchTokens, "\n  .Type", "PREFERRED_WORKGROUP_MULTIPLE");
-                kernelInfo.workloadInfo.prefferedWkgMultipleOffset = pDataParameterBuffer->Offset;
+                kernelInfo.workloadInfo.preferredWkgMultipleOffset = pDataParameterBuffer->Offset;
                 break;
             case DATA_PARAMETER_BUFFER_OFFSET:
                 DBG_LOG(LogPatchTokens, "\n  .Type", "DATA_PARAMETER_BUFFER_OFFSET");

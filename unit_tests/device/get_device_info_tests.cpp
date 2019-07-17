@@ -126,7 +126,7 @@ TEST(GetDeviceInfo, simultaneousInterops) {
     EXPECT_TRUE(memcmp(value, &device->simultaneousInterops[0], 4u * sizeof(cl_uint)) == 0);
 }
 
-TEST(GetDeviceInfo, prefferedInteropUserSync) {
+TEST(GetDeviceInfo, preferredInteropUserSync) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     cl_bool value = 0;

@@ -90,7 +90,7 @@ void Context::overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueu
     this->decRefInternal();
 };
 
-bool Context::areMultiStorageAllocationsPreffered() {
+bool Context::areMultiStorageAllocationsPreferred() {
     return this->contextType != ContextType::CONTEXT_TYPE_SPECIALIZED;
 }
 
