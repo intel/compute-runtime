@@ -918,3 +918,44 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
     delete program.constantSurface;
     program.constantSurface = nullptr;
 }
+
+TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
+    auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
+    linkerInput->symbols["A"] = NEO::SymbolInfo{4U, 4U, NEO::SymbolInfo::GlobalVariable};
+    linkerInput->symbols["B"] = NEO::SymbolInfo{8U, 4U, NEO::SymbolInfo::GlobalConstant};
+
+    NEO::ExecutionEnvironment env;
+    MockProgram program{env};
+    KernelInfo kernelInfo = {};
+    kernelInfo.name = "onlyKernel";
+    std::vector<char> kernelHeapData;
+    kernelHeapData.resize(32, 7);
+    std::vector<char> kernelHeap(kernelHeapData.begin(), kernelHeapData.end());
+    kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
+    iOpenCL::SKernelBinaryHeaderCommon kernelHeader = {};
+    kernelHeader.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
+    kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+    MockGraphicsAllocation kernelIsa(kernelHeap.data(), kernelHeap.size());
+    kernelInfo.kernelAllocation = &kernelIsa;
+    program.getKernelInfoArray().push_back(&kernelInfo);
+    program.linkerInput = std::move(linkerInput);
+
+    std::vector<char> globalVariablesBuffer;
+    globalVariablesBuffer.resize(32, 7);
+    std::vector<char> globalConstantsBuffer;
+    globalConstantsBuffer.resize(32, 7);
+    program.globalSurface = new MockGraphicsAllocation(globalVariablesBuffer.data(), globalVariablesBuffer.size());
+    program.constantSurface = new MockGraphicsAllocation(globalConstantsBuffer.data(), globalConstantsBuffer.size());
+
+    program.pDevice = this->pContext->getDevice(0);
+
+    auto ret = program.linkBinary();
+    EXPECT_EQ(CL_SUCCESS, ret);
+    EXPECT_EQ(kernelHeapData, kernelHeap);
+
+    program.getKernelInfoArray().clear();
+    delete program.globalSurface;
+    program.globalSurface = nullptr;
+    delete program.constantSurface;
+    program.constantSurface = nullptr;
+}

@@ -1049,58 +1049,59 @@ cl_int Program::parseProgramScopePatchList() {
 }
 
 cl_int Program::linkBinary() {
-    if (linkerInput != nullptr) {
-        Linker linker(*linkerInput);
-        Linker::Segment globals;
-        Linker::Segment constants;
-        Linker::Segment exportedFunctions;
-        if (this->globalSurface != nullptr) {
-            globals.gpuAddress = static_cast<uintptr_t>(this->globalSurface->getGpuAddress());
-            globals.segmentSize = this->globalSurface->getUnderlyingBufferSize();
+    if (linkerInput == nullptr) {
+        return CL_SUCCESS;
+    }
+    Linker linker(*linkerInput);
+    Linker::Segment globals;
+    Linker::Segment constants;
+    Linker::Segment exportedFunctions;
+    if (this->globalSurface != nullptr) {
+        globals.gpuAddress = static_cast<uintptr_t>(this->globalSurface->getGpuAddress());
+        globals.segmentSize = this->globalSurface->getUnderlyingBufferSize();
+    }
+    if (this->constantSurface != nullptr) {
+        constants.gpuAddress = static_cast<uintptr_t>(this->constantSurface->getGpuAddress());
+        constants.segmentSize = this->constantSurface->getUnderlyingBufferSize();
+    }
+    if (this->linkerInput->getExportedFunctionsSegmentId() >= 0) {
+        // Exported functions reside in instruction heap of one of kernels
+        auto exportedFunctionHeapId = this->linkerInput->getExportedFunctionsSegmentId();
+        this->exportedFunctionsSurface = this->kernelInfoArray[exportedFunctionHeapId]->getGraphicsAllocation();
+        exportedFunctions.gpuAddress = static_cast<uintptr_t>(exportedFunctionsSurface->getGpuAddressToPatch());
+        exportedFunctions.segmentSize = exportedFunctionsSurface->getUnderlyingBufferSize();
+    }
+    Linker::PatchableSegments isaSegmentsForPatching;
+    std::vector<std::vector<char>> patchedIsaTempStorage;
+    if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
+        patchedIsaTempStorage.reserve(this->kernelInfoArray.size());
+        for (const auto &kernelInfo : this->kernelInfoArray) {
+            auto &kernHeapInfo = kernelInfo->heapInfo;
+            const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
+            patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.pKernelHeader->KernelHeapSize));
+            isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.pKernelHeader->KernelHeapSize});
         }
-        if (this->constantSurface != nullptr) {
-            constants.gpuAddress = static_cast<uintptr_t>(this->constantSurface->getGpuAddress());
-            constants.segmentSize = this->constantSurface->getUnderlyingBufferSize();
-        }
-        if (this->linkerInput->getExportedFunctionsSegmentId() >= 0) {
-            // Exported functions reside in instruction heap of one of kernels
-            auto exportedFunctionHeapId = this->linkerInput->getExportedFunctionsSegmentId();
-            this->exportedFunctionsSurface = this->kernelInfoArray[exportedFunctionHeapId]->getGraphicsAllocation();
-            exportedFunctions.gpuAddress = static_cast<uintptr_t>(exportedFunctionsSurface->getGpuAddressToPatch());
-            exportedFunctions.segmentSize = exportedFunctionsSurface->getUnderlyingBufferSize();
-        }
-        Linker::PatchableSegments isaSegmentsForPatching;
-        std::vector<std::vector<char>> patchedIsaTempStorage;
-        if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
-            patchedIsaTempStorage.reserve(this->kernelInfoArray.size());
-            for (const auto &kernelInfo : this->kernelInfoArray) {
-                auto &kernHeapInfo = kernelInfo->heapInfo;
-                const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
-                patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.pKernelHeader->KernelHeapSize));
-                isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.pKernelHeader->KernelHeapSize});
-            }
-        }
+    }
 
-        Linker::UnresolvedExternals unresolvedExternalsInfo;
-        bool linkSuccess = linker.link(globals, constants, exportedFunctions,
-                                       isaSegmentsForPatching, unresolvedExternalsInfo);
-        this->symbols = linker.extractRelocatedSymbols();
-        if (false == linkSuccess) {
-            std::vector<std::string> kernelNames;
-            for (const auto &kernelInfo : this->kernelInfoArray) {
-                kernelNames.push_back("kernel : " + kernelInfo->name);
-            }
-            auto error = constructLinkerErrorMessage(unresolvedExternalsInfo, kernelNames);
-            updateBuildLog(pDevice, error.c_str(), error.size());
-            return CL_INVALID_BINARY;
-        } else {
-            for (const auto &kernelInfo : this->kernelInfoArray) {
-                auto &kernHeapInfo = kernelInfo->heapInfo;
-                auto segmentId = &kernelInfo - &this->kernelInfoArray[0];
-                this->pDevice->getMemoryManager()->copyMemoryToAllocation(kernelInfo->getGraphicsAllocation(),
-                                                                          isaSegmentsForPatching[segmentId].hostPointer,
-                                                                          kernHeapInfo.pKernelHeader->KernelHeapSize);
-            }
+    Linker::UnresolvedExternals unresolvedExternalsInfo;
+    bool linkSuccess = linker.link(globals, constants, exportedFunctions,
+                                   isaSegmentsForPatching, unresolvedExternalsInfo);
+    this->symbols = linker.extractRelocatedSymbols();
+    if (false == linkSuccess) {
+        std::vector<std::string> kernelNames;
+        for (const auto &kernelInfo : this->kernelInfoArray) {
+            kernelNames.push_back("kernel : " + kernelInfo->name);
+        }
+        auto error = constructLinkerErrorMessage(unresolvedExternalsInfo, kernelNames);
+        updateBuildLog(pDevice, error.c_str(), error.size());
+        return CL_INVALID_BINARY;
+    } else if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
+        for (const auto &kernelInfo : this->kernelInfoArray) {
+            auto &kernHeapInfo = kernelInfo->heapInfo;
+            auto segmentId = &kernelInfo - &this->kernelInfoArray[0];
+            this->pDevice->getMemoryManager()->copyMemoryToAllocation(kernelInfo->getGraphicsAllocation(),
+                                                                      isaSegmentsForPatching[segmentId].hostPointer,
+                                                                      kernHeapInfo.pKernelHeader->KernelHeapSize);
         }
     }
     return CL_SUCCESS;
