@@ -9,6 +9,7 @@
 #include "common/helpers/bit_helpers.h"
 #include "public/cl_ext_private.h"
 #include "runtime/context/context_type.h"
+#include "runtime/helpers/mem_properties_parser_helper.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/unified_memory_manager.h"
@@ -20,8 +21,6 @@ namespace NEO {
 
 class MemObjHelper {
   public:
-    static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &propertiesStruct);
-
     static bool validateMemoryPropertiesForBuffer(const MemoryProperties &properties) {
         if (!MemObjHelper::checkUsedFlagsForBuffer(properties)) {
             return false;
@@ -88,27 +87,10 @@ class MemObjHelper {
         return validateExtraMemoryProperties(properties);
     }
 
-    static AllocationProperties getAllocationProperties(MemoryProperties memoryProperties, bool allocateMemory,
-                                                        size_t size, GraphicsAllocation::AllocationType type, bool multiStorageResource) {
-        AllocationProperties allocationProperties(allocateMemory, size, type, multiStorageResource);
-        fillPoliciesInProperties(allocationProperties, memoryProperties);
-        return allocationProperties;
-    }
-
-    static AllocationProperties getAllocationProperties(ImageInfo &imgInfo, bool allocateMemory, const MemoryProperties &memoryProperties) {
+    static AllocationProperties getAllocationPropertiesWithImageInfo(ImageInfo &imgInfo, bool allocateMemory, const MemoryProperties &memoryProperties) {
         AllocationProperties allocationProperties{allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE};
-        fillPoliciesInProperties(allocationProperties, memoryProperties);
+        MemoryPropertiesParser::fillPoliciesInProperties(allocationProperties, memoryProperties);
         return allocationProperties;
-    }
-
-    static void fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties);
-
-    static void fillCachePolicyInProperties(AllocationProperties &allocationProperties, bool uncached, bool readOnly,
-                                            bool deviceOnlyVisibilty) {
-        allocationProperties.flags.uncacheable = uncached;
-        auto cacheFlushRequired = !uncached && !readOnly && !deviceOnlyVisibilty;
-        allocationProperties.flags.flushL3RequiredForRead = cacheFlushRequired;
-        allocationProperties.flags.flushL3RequiredForWrite = cacheFlushRequired;
     }
 
     static bool checkMemFlagsForSubBuffer(cl_mem_flags flags) {

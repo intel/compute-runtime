@@ -22,6 +22,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/mem_properties_parser_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/queue_helpers.h"
 #include "runtime/helpers/validators.h"
@@ -614,7 +615,7 @@ cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     MemoryProperties propertiesStruct;
-    if (!MemObjHelper::parseMemoryProperties(properties, propertiesStruct)) {
+    if (!MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct)) {
         retVal = CL_INVALID_VALUE;
     } else {
         Buffer::validateInputAndCreateBuffer(context, propertiesStruct, size, hostPtr, retVal, buffer);
@@ -792,7 +793,7 @@ cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
     retVal = validateObjects(WithCastToInternal(context, &pContext));
 
     if (retVal == CL_SUCCESS) {
-        if (MemObjHelper::parseMemoryProperties(properties, propertiesStruct)) {
+        if (MemoryPropertiesParser::parseMemoryProperties(properties, propertiesStruct)) {
             image = Image::validateAndCreateImage(pContext, propertiesStruct, imageFormat, imageDesc, hostPtr, retVal);
         } else {
             retVal = CL_INVALID_VALUE;
