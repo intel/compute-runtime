@@ -3124,3 +3124,55 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, whenObtainFdFromHandleIsCal
     EXPECT_EQ(this->mock->inputFlags, DRM_CLOEXEC | DRM_RDWR);
     EXPECT_EQ(1337, fdHandle);
 }
+
+TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedThenAllocateMemoryAndReserveGpuVa) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    TestedDrmMemoryManager::AllocationData allocationData;
+    allocationData.size = 2 * MemoryConstants::megaByte;
+    allocationData.alignment = 2 * MemoryConstants::megaByte;
+    allocationData.type = GraphicsAllocation::AllocationType::SVM_CPU;
+
+    DrmAllocation *allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_CPU, allocation->getAllocationType());
+
+    EXPECT_EQ(allocationData.size, allocation->getUnderlyingBufferSize());
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(allocation->getUnderlyingBuffer(), allocation->getDriverAllocatedCpuPtr());
+
+    EXPECT_NE(0llu, allocation->getGpuAddress());
+    EXPECT_NE(reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()), allocation->getGpuAddress());
+
+    auto bo = allocation->getBO();
+    ASSERT_NE(nullptr, bo);
+
+    EXPECT_NE(0llu, bo->peekAddress());
+
+    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD)), bo->peekAddress());
+    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapLimit(HeapIndex::HEAP_STANDARD)), bo->peekAddress());
+
+    EXPECT_EQ(reinterpret_cast<void *>(allocation->getGpuAddress()), alignUp(allocation->getReservedAddressPtr(), allocationData.alignment));
+    EXPECT_EQ(alignUp(allocationData.size, allocationData.alignment) + allocationData.alignment, allocation->getReservedAddressSize());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedButFailsToReserveGpuVaThenNullAllocationIsReturned) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 0;
+    mock->ioctl_expected.gemClose = 1;
+
+    memoryManager->gfxPartition.heapInit(HeapIndex::HEAP_STANDARD, 0, 0);
+
+    TestedDrmMemoryManager::AllocationData allocationData;
+    allocationData.size = 2 * MemoryConstants::megaByte;
+    allocationData.alignment = 2 * MemoryConstants::megaByte;
+    allocationData.type = GraphicsAllocation::AllocationType::SVM_CPU;
+
+    DrmAllocation *allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    EXPECT_EQ(nullptr, allocation);
+}

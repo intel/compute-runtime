@@ -223,10 +223,32 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
         bo->setAllocationType(allocType);
     }
 
+    uint64_t reservedGpuAddress = 0;
+    size_t reserveSizeAligned = 0;
+    if (allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU) {
+        //add 2MB padding in case reserved addr is not 2MB aligned
+        reserveSizeAligned = alignUp(cSize, cAlignment) + cAlignment;
+        reservedGpuAddress = GmmHelper::canonize(gfxPartition.heapAllocate(HeapIndex::HEAP_STANDARD, reserveSizeAligned));
+        if (!reservedGpuAddress) {
+            bo->close();
+            delete bo;
+            alignedFreeWrapper(res);
+            return nullptr;
+        }
+        bo->gpuAddress = alignUp(reservedGpuAddress, cAlignment);
+        bo->isAllocated = false;
+    }
+
     emitPinningRequest(bo, allocationData);
 
     auto allocation = new DrmAllocation(allocationData.type, bo, res, bo->gpuAddress, cSize, MemoryPool::System4KBPages, allocationData.flags.multiOsContextCapable);
     allocation->setDriverAllocatedCpuPtr(isLimitedRange() ? res : nullptr);
+
+    if (GraphicsAllocation::AllocationType::SVM_CPU == allocationData.type) {
+        allocation->setDriverAllocatedCpuPtr(res);
+        allocation->setReservedAddressRange(reinterpret_cast<void *>(reservedGpuAddress), reserveSizeAligned);
+    }
+
     return allocation;
 }
 
