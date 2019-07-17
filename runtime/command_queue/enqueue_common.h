@@ -351,7 +351,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     if (blockQueue) {
         if (parentKernel) {
-            size_t minSizeSSHForEM = HardwareCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
+            size_t minSizeSSHForEM = HardwareCommandsHelper<GfxFamily>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
             blockedCommandsData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         }
 
@@ -508,7 +508,7 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(Kernel *parentKernel,
                                                      TagNode<HwTimeStamps> *hwTimeStamps,
                                                      PreemptionMode preemption,
                                                      bool &blocking) {
-    size_t minSizeSSHForEM = HardwareCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<GfxFamily>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
 
     uint32_t taskCount = getGpgpuCommandStreamReceiver().peekTaskCount() + 1;
     devQueueHw->setupExecutionModelDispatch(getIndirectHeap(IndirectHeap::SURFACE_STATE, minSizeSSHForEM),

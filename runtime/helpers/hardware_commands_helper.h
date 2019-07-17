@@ -158,8 +158,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     static size_t getTotalSizeRequiredSSH(
         const MultiDispatchInfo &multiDispatchInfo);
 
-    template <IndirectHeap::Type heapType>
-    static size_t getSizeRequiredForExecutionModel(const Kernel &kernel) {
+    static size_t getSizeRequiredForExecutionModel(IndirectHeap::Type heapType, const Kernel &kernel) {
         typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
 
         size_t totalSize = 0;

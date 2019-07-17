@@ -95,6 +95,9 @@ class HardwareInterface {
 
     static WALKER_TYPE<GfxFamily> *allocateWalkerSpace(LinearStream &commandStream,
                                                        const Kernel &kernel);
+
+    static void obtainIndirectHeaps(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo,
+                                    bool blockedQueue, IndirectHeap *&dsh, IndirectHeap *&ioh, IndirectHeap *&ssh);
 };
 
 } // namespace NEO

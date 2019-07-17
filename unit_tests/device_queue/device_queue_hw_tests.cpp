@@ -509,7 +509,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectState) {
         auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
         ASSERT_NE(nullptr, dsh);
 
-        size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(const_cast<const Kernel &>(*pKernel));
+        size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, const_cast<const Kernel &>(*pKernel));
 
         auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
         auto usedBeforeSSH = ssh->getUsed();
@@ -539,7 +539,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectStateSetsCorre
         auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
         ASSERT_NE(nullptr, dsh);
 
-        size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(const_cast<const Kernel &>(*pKernel));
+        size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, const_cast<const Kernel &>(*pKernel));
 
         auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
 
@@ -569,7 +569,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, setupIndirectStateSetsCorre
         auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
         ASSERT_NE(nullptr, dsh);
 
-        size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(const_cast<const Kernel &>(*pKernel));
+        size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, const_cast<const Kernel &>(*pKernel));
 
         auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
 

@@ -1136,7 +1136,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, getSizeRequiredF
 
         totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
-        EXPECT_EQ(totalSize, HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*pKernel));
+        EXPECT_EQ(totalSize, HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *pKernel));
     }
 }
 
@@ -1150,7 +1150,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, getSizeRequiredF
         auto &scheduler = builtIns.getSchedulerKernel(*pContext);
         size_t totalSize = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(scheduler);
 
-        EXPECT_EQ(totalSize, HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::INDIRECT_OBJECT>(*pKernel));
+        EXPECT_EQ(totalSize, HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::INDIRECT_OBJECT, *pKernel));
     }
 }
 
@@ -1162,7 +1162,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, getSizeRequiredF
 
         size_t totalSize = 0;
 
-        EXPECT_EQ(totalSize, HardwareCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::GENERAL_STATE>(*pKernel));
+        EXPECT_EQ(totalSize, HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::GENERAL_STATE, *pKernel));
     }
 }
 

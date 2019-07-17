@@ -49,34 +49,12 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     }
 
     // Allocate command stream and indirect heaps
+    obtainIndirectHeaps(commandQueue, multiDispatchInfo, blockQueue, dsh, ioh, ssh);
     if (blockQueue) {
-        using KCH = HardwareCommandsHelper<GfxFamily>;
-
         constexpr static auto additionalAllocationSize = CSRequirements::csOverfetchSize;
         constexpr static auto allocationSize = MemoryConstants::pageSize64k - additionalAllocationSize;
         commandStream = new LinearStream();
         commandQueue.getGpgpuCommandStreamReceiver().ensureCommandBufferAllocation(*commandStream, allocationSize, additionalAllocationSize);
-
-        if (parentKernel) {
-            uint32_t colorCalcSize = commandQueue.getContext().getDefaultDeviceQueue()->colorCalcStateSize;
-
-            commandQueue.allocateHeapMemory(
-                IndirectHeap::DYNAMIC_STATE,
-                commandQueue.getContext().getDefaultDeviceQueue()->getDshBuffer()->getUnderlyingBufferSize(),
-                dsh);
-
-            dsh->getSpace(colorCalcSize);
-            ioh = dsh;
-            commandQueue.allocateHeapMemory(IndirectHeap::SURFACE_STATE,
-                                            HardwareCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<
-                                                IndirectHeap::SURFACE_STATE>(*parentKernel) +
-                                                KCH::getTotalSizeRequiredSSH(multiDispatchInfo),
-                                            ssh);
-        } else {
-            commandQueue.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, KCH::getTotalSizeRequiredDSH(multiDispatchInfo), dsh);
-            commandQueue.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, KCH::getTotalSizeRequiredIOH(multiDispatchInfo), ioh);
-            commandQueue.allocateHeapMemory(IndirectHeap::SURFACE_STATE, KCH::getTotalSizeRequiredSSH(multiDispatchInfo), ssh);
-        }
 
         using UniqueIH = std::unique_ptr<IndirectHeap>;
         *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh), UniqueIH(ioh),
@@ -86,12 +64,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         }
     } else {
         commandStream = &commandQueue.getCS(0);
-        if (parentKernel && (commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getUsed() > 0)) {
-            commandQueue.releaseIndirectHeap(IndirectHeap::SURFACE_STATE);
-        }
-        dsh = &getIndirectHeap<GfxFamily, IndirectHeap::DYNAMIC_STATE>(commandQueue, multiDispatchInfo);
-        ioh = &getIndirectHeap<GfxFamily, IndirectHeap::INDIRECT_OBJECT>(commandQueue, multiDispatchInfo);
-        ssh = &getIndirectHeap<GfxFamily, IndirectHeap::SURFACE_STATE>(commandQueue, multiDispatchInfo);
     }
 
     TimestampPacketHelper::programCsrDependencies<GfxFamily>(*commandStream, csrDependencies);
@@ -209,6 +181,47 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, commandQueue, mainKernel, postSyncAddress);
     }
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
+}
+
+template <typename GfxFamily>
+void HardwareInterface<GfxFamily>::obtainIndirectHeaps(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo,
+                                                       bool blockedQueue, IndirectHeap *&dsh, IndirectHeap *&ioh, IndirectHeap *&ssh) {
+    auto parentKernel = multiDispatchInfo.peekParentKernel();
+
+    if (blockedQueue) {
+        size_t dshSize = 0;
+        size_t colorCalcSize = 0;
+        size_t sshSize = HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(multiDispatchInfo);
+        bool iohEqualsDsh = false;
+
+        if (parentKernel) {
+            dshSize = commandQueue.getContext().getDefaultDeviceQueue()->getDshBuffer()->getUnderlyingBufferSize();
+            sshSize += HardwareCommandsHelper<GfxFamily>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
+            iohEqualsDsh = true;
+            colorCalcSize = static_cast<size_t>(commandQueue.getContext().getDefaultDeviceQueue()->colorCalcStateSize);
+        } else {
+            dshSize = HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredDSH(multiDispatchInfo);
+        }
+
+        commandQueue.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+        dsh->getSpace(colorCalcSize);
+
+        commandQueue.allocateHeapMemory(IndirectHeap::SURFACE_STATE, sshSize, ssh);
+
+        if (iohEqualsDsh) {
+            ioh = dsh;
+        } else {
+            commandQueue.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT,
+                                            HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(multiDispatchInfo), ioh);
+        }
+    } else {
+        if (parentKernel && (commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getUsed() > 0)) {
+            commandQueue.releaseIndirectHeap(IndirectHeap::SURFACE_STATE);
+        }
+        dsh = &getIndirectHeap<GfxFamily, IndirectHeap::DYNAMIC_STATE>(commandQueue, multiDispatchInfo);
+        ioh = &getIndirectHeap<GfxFamily, IndirectHeap::INDIRECT_OBJECT>(commandQueue, multiDispatchInfo);
+        ssh = &getIndirectHeap<GfxFamily, IndirectHeap::SURFACE_STATE>(commandQueue, multiDispatchInfo);
+    }
 }
 
 } // namespace NEO
