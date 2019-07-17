@@ -32,7 +32,7 @@ namespace NEO {
 // Performs ReadModifyWrite operation on value of a register: Register = Register Operation Mask
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
-    NEO::LinearStream *pCommandStream,
+    LinearStream *pCommandStream,
     uint32_t aluRegister,
     uint32_t operation,
     uint32_t mask) {
