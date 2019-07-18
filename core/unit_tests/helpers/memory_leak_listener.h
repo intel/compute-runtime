@@ -11,7 +11,7 @@
 namespace NEO {
 
 class MemoryLeakListener : public ::testing::EmptyTestEventListener {
-  private:
+  protected:
     void OnTestStart(const ::testing::TestInfo &) override;
     void OnTestEnd(const ::testing::TestInfo &) override;
 };
