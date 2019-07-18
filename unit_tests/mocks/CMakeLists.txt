@@ -18,6 +18,7 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_block_kernel_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_buffer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_queue.h

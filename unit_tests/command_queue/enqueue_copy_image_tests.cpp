@@ -11,6 +11,7 @@
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
+#include "unit_tests/mocks/mock_builtins.h"
 
 #include "reg_configs_common.h"
 
@@ -199,17 +200,18 @@ typedef EnqueueCopyImageMipMapTest MipMapCopyImageTest;
 HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCalledThenProperMipLevelsAreSet) {
     cl_mem_object_type srcImageType, dstImageType;
     std::tie(srcImageType, dstImageType) = GetParam();
-    auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
-    auto &origBuilder = builtIns.getBuiltinDispatchInfoBuilder(
+    auto builtIns = new MockBuiltins();
+    pCmdQ->getDevice().getExecutionEnvironment()->builtins.reset(builtIns);
+    auto &origBuilder = builtIns->getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyImageToImage3d,
         pCmdQ->getContext(),
         pCmdQ->getDevice());
     // substitute original builder with mock builder
-    auto oldBuilder = builtIns.setBuiltinDispatchInfoBuilder(
+    auto oldBuilder = builtIns->setBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyImageToImage3d,
         pCmdQ->getContext(),
         pCmdQ->getDevice(),
-        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(builtIns, &origBuilder)));
+        std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, &origBuilder)));
 
     cl_int retVal = CL_SUCCESS;
     cl_image_desc srcImageDesc = {};
@@ -295,16 +297,16 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(builtIns.getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                                                             pCmdQ->getContext(),
-                                                                                                             pCmdQ->getDevice()));
+    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(builtIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                                                              pCmdQ->getContext(),
+                                                                                                              pCmdQ->getDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
 
     EXPECT_EQ(expectedSrcMipLevel, params->srcMipLevel);
     EXPECT_EQ(expectedDstMipLevel, params->dstMipLevel);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = builtIns.setBuiltinDispatchInfoBuilder(
+    auto newBuilder = builtIns->setBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyImageToImage3d,
         pCmdQ->getContext(),
         pCmdQ->getDevice(),

@@ -795,13 +795,6 @@ BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps:
     return *operationBuilder.first;
 }
 
-std::unique_ptr<BuiltinDispatchInfoBuilder> BuiltIns::setBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Context &context, Device &device, std::unique_ptr<BuiltinDispatchInfoBuilder> builder) {
-    uint32_t operationId = static_cast<uint32_t>(operation);
-    auto &operationBuilder = BuiltinOpsBuilders[operationId];
-    operationBuilder.first.swap(builder);
-    return builder;
-}
-
 BuiltInOwnershipWrapper::BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context) {
     takeOwnership(inputBuilder, context);
 }
