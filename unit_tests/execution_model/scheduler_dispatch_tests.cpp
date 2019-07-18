@@ -55,7 +55,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
 
         size_t minRequiredSizeForSchedulerSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
         // Setup heaps in pCmdQ
-        LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);
+        MultiDispatchInfo multiDispatchinfo(&scheduler);
+        LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(),
+                                                                                              false, false, false, multiDispatchinfo,
+                                                                                              nullptr, 0);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
@@ -173,7 +176,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoe
 
         size_t minRequiredSizeForSchedulerSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
         // Setup heaps in pCmdQ
-        getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);
+
+        MultiDispatchInfo multiDispatchinfo(&scheduler);
+        getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(), false, false, false, multiDispatchinfo,
+                                                                nullptr, 0);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
@@ -206,7 +212,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWi
 
         size_t minRequiredSizeForSchedulerSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(scheduler);
         // Setup heaps in pCmdQ
-        LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);
+        MultiDispatchInfo multiDispatchinfo(&scheduler);
+        LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, CsrDependencies(),
+                                                                                              false, false, false, multiDispatchinfo,
+                                                                                              nullptr, 0);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
         GpgpuWalkerHelper<FamilyType>::dispatchScheduler(

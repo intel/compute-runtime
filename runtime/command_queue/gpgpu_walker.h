@@ -190,13 +190,9 @@ struct EnqueueOperation {
 };
 
 template <typename GfxFamily, uint32_t eventType>
-LinearStream &getCommandStream(CommandQueue &commandQueue, bool reserveProfilingCmdsSpace, bool reservePerfCounterCmdsSpace, const Kernel *pKernel) {
-    auto expectedSizeCS = EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, pKernel);
-    return commandQueue.getCS(expectedSizeCS);
-}
-
-template <typename GfxFamily, uint32_t eventType>
-LinearStream &getCommandStream(CommandQueue &commandQueue, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounterCmdsSpace, bool blitEnqueue, const MultiDispatchInfo &multiDispatchInfo, Surface **surfaces, size_t numSurfaces) {
+LinearStream &getCommandStream(CommandQueue &commandQueue, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace,
+                               bool reservePerfCounterCmdsSpace, bool blitEnqueue, const MultiDispatchInfo &multiDispatchInfo,
+                               Surface **surfaces, size_t numSurfaces) {
     size_t expectedSizeCS = EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(eventType, csrDeps, reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, blitEnqueue, commandQueue, multiDispatchInfo);
     return commandQueue.getCS(expectedSizeCS);
 }
