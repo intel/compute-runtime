@@ -15,11 +15,14 @@ MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject
     MEMORY_OBJECT_CONTROL_STATE retVal = {};
     memset(&retVal, 0, sizeof(MEMORY_OBJECT_CONTROL_STATE));
     switch (usage) {
+    case GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC:
+        retVal.DwordValue = 32u;
+        break;
     case GMM_RESOURCE_USAGE_OCL_BUFFER:
-        retVal.DwordValue = 6u;
+        retVal.DwordValue = 16u;
         break;
     case GMM_RESOURCE_USAGE_OCL_BUFFER_CONST:
-        retVal.DwordValue = 5u;
+        retVal.DwordValue = 8u;
         break;
     case GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED:
         retVal.DwordValue = 0u;
