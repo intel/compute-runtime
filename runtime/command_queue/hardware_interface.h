@@ -98,6 +98,12 @@ class HardwareInterface {
 
     static void obtainIndirectHeaps(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo,
                                     bool blockedQueue, IndirectHeap *&dsh, IndirectHeap *&ioh, IndirectHeap *&ssh);
+
+    static void dispatchKernelCommands(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, uint32_t commandType,
+                                       LinearStream &commandStream, bool isMainKernel, size_t currentDispatchIndex,
+                                       TimestampPacketContainer *currentTimestampPacketNodes, PreemptionMode preemptionMode,
+                                       uint32_t &interfaceDescriptorIndex, size_t offsetInterfaceDescriptorTable,
+                                       IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh);
 };
 
 } // namespace NEO
