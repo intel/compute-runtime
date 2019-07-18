@@ -19,7 +19,7 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     }
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
     auto hwInfoConst = *platformDevices;
-    getHwInfoForPlatformString(productFamily.c_str(), hwInfoConst);
+    getHwInfoForPlatformString(productFamily, hwInfoConst);
     numDevices = 0;
     std::string hwInfoConfig;
     DebugManager.getHardwareInfoOverride(hwInfoConfig);

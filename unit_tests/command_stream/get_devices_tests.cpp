@@ -109,6 +109,36 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
     }
 }
 
+HWTEST_F(GetDevicesTest, givenUpperCaseProductFamilyOverrideFlagSetWhenCreatingDevicesThenFindExpectedPlatform) {
+    std::string hwPrefix;
+    std::string hwPrefixUpperCase;
+    PRODUCT_FAMILY productFamily;
+
+    for (int productFamilyIndex = 0; productFamilyIndex < IGFX_MAX_PRODUCT; productFamilyIndex++) {
+        if (hardwarePrefix[productFamilyIndex]) {
+            hwPrefix = hardwarePrefix[productFamilyIndex];
+            productFamily = static_cast<PRODUCT_FAMILY>(productFamilyIndex);
+            break;
+        }
+    }
+
+    EXPECT_NE(0u, hwPrefix.length());
+    hwPrefixUpperCase.resize(hwPrefix.length());
+    std::transform(hwPrefix.begin(), hwPrefix.end(), hwPrefixUpperCase.begin(), ::toupper);
+    EXPECT_NE(hwPrefix, hwPrefixUpperCase);
+
+    DebugManager.flags.ProductFamilyOverride.set(hwPrefixUpperCase);
+    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
+
+    ExecutionEnvironment *exeEnv = platformImpl->peekExecutionEnvironment();
+    bool ret = getDevices(numDevices, *exeEnv);
+
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(productFamily, exeEnv->getHardwareInfo()->platform.eProductFamily);
+
+    DeviceFactory::releaseDevices();
+}
+
 HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
     uint32_t expectedDevices = 1;
     DebugManager.flags.CreateMultipleDevices.set(expectedDevices);

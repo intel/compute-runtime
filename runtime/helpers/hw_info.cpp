@@ -11,6 +11,8 @@
 
 #include "hw_cmds.h"
 
+#include <algorithm>
+
 namespace NEO {
 HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *featureTable, const WorkaroundTable *workaroundTable,
                            const GT_SYSTEM_INFO *gtSystemInfo, const RuntimeCapabilityTable &capabilityTable)
@@ -29,12 +31,14 @@ const char *getPlatformType(const HardwareInfo &hwInfo) {
     return "lp";
 }
 
-bool getHwInfoForPlatformString(const char *str, const HardwareInfo *&hwInfoIn) {
+bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn) {
+    std::transform(platform.begin(), platform.end(), platform.begin(), ::tolower);
+
     bool ret = false;
     for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
         if (hardwarePrefix[j] == nullptr)
             continue;
-        if (strcmp(hardwarePrefix[j], str) == 0) {
+        if (hardwarePrefix[j] == platform) {
             hwInfoIn = hardwareInfoTable[j];
             ret = true;
             break;
