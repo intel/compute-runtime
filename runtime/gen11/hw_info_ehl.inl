@@ -63,7 +63,7 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     true,                                          // forceStatelessCompilationFor32Bit
     "lp",                                          // platformType
     true,                                          // sourceLevelDebuggerSupported
-    true,                                          // supportsVme
+    false,                                         // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true                                           // supportsImages
 };

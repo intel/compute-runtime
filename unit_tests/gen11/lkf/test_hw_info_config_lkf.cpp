@@ -39,6 +39,16 @@ TEST(LkfHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorr
 
 using LkfHwInfo = ::testing::Test;
 
+LKFTEST_F(LkfHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
+    HardwareInfo hwInfo;
+
+    std::string strConfig = "1x8x8";
+    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
+    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
+    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
+    EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
+}
+
 LKFTEST_F(LkfHwInfo, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     bool boolValue[]{
         true, false};

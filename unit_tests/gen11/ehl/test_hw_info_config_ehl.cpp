@@ -53,6 +53,16 @@ TEST(EhlHwInfoConfig, givenHwInfoConfigStringThenAfterSetupResultingHwInfoIsCorr
 
 using EhlHwInfo = ::testing::Test;
 
+EHLTEST_F(EhlHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
+    HardwareInfo hwInfo;
+
+    std::string strConfig = "1x4x8";
+    hardwareInfoSetup[productFamily](&hwInfo, false, strConfig);
+    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
+    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
+    EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
+}
+
 EHLTEST_F(EhlHwInfo, givenBoolWhenCallEhlHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     bool boolValue[]{
         true, false};

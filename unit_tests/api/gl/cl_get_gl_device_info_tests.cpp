@@ -64,7 +64,6 @@ TEST_P(GetDeviceGlInfoStr, StringType) {
             "cl_intel_accelerator",
             "cl_intel_media_block_io",
             "cl_intel_driver_diagnostics",
-            "cl_intel_device_side_avc_motion_estimation",
             "cl_khr_gl_depth_images",
             "cl_khr_gl_event",
             "cl_khr_gl_msaa_sharing",

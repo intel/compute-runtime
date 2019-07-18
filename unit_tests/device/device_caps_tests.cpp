@@ -470,6 +470,7 @@ TEST(Device_GetCaps, givenEnableVmeSetToTrueAndDeviceSupportsVmeWhenCapsAreCreat
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_motion_estimation")));
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_device_side_avc_motion_estimation")));
     EXPECT_TRUE(caps.vmeExtension);
 
     EXPECT_THAT(caps.builtInKernels, testing::HasSubstr("block_motion_estimate_intel"));
@@ -484,6 +485,7 @@ TEST(Device_GetCaps, givenEnableVmeSetToTrueAndDeviceDoesNotSupportVmeWhenCapsAr
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_motion_estimation"))));
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_device_side_avc_motion_estimation"))));
     EXPECT_FALSE(caps.vmeExtension);
 
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_motion_estimate_intel")));
@@ -498,6 +500,7 @@ TEST(Device_GetCaps, givenEnableVmeSetToFalseAndDeviceDoesNotSupportVmeWhenCapsA
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_motion_estimation"))));
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_device_side_avc_motion_estimation"))));
     EXPECT_FALSE(caps.vmeExtension);
 
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_motion_estimate_intel")));
@@ -512,6 +515,7 @@ TEST(Device_GetCaps, givenEnableVmeSetToFalseAndDeviceSupportsVmeWhenCapsAreCrea
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_motion_estimation"))));
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_device_side_avc_motion_estimation"))));
     EXPECT_FALSE(caps.vmeExtension);
 
     EXPECT_THAT(caps.builtInKernels, testing::Not(testing::HasSubstr("block_motion_estimate_intel")));

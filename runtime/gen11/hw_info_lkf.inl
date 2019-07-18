@@ -54,8 +54,8 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     false,                                         // ftrSupports64BitMath
     false,                                         // ftrSvm
     true,                                          // ftrSupportsCoherency
-    true,                                          // ftrSupportsVmeAvcTextureSampler
-    true,                                          // ftrSupportsVmeAvcPreemption
+    false,                                         // ftrSupportsVmeAvcTextureSampler
+    false,                                         // ftrSupportsVmeAvcPreemption
     false,                                         // ftrRenderCompressedBuffers
     false,                                         // ftrRenderCompressedImages
     true,                                          // ftr64KBpages

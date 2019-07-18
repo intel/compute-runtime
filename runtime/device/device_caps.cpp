@@ -147,7 +147,7 @@ void Device::initializeCaps() {
         deviceInfo.packedYuvExtension = true;
     }
     if (DebugManager.flags.EnableIntelVme.get() && supportsVme) {
-        deviceExtensions += "cl_intel_motion_estimation ";
+        deviceExtensions += "cl_intel_motion_estimation cl_intel_device_side_avc_motion_estimation ";
         deviceInfo.vmeExtension = true;
     }
     if (DebugManager.flags.EnableIntelAdvancedVme.get() && supportsVme) {
