@@ -886,7 +886,9 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::Context *ctx, NEO::Device *devic
         svmProps.hostPtrReadOnly = constant;
         auto ptr = ctx->getSVMAllocsManager()->createSVMAlloc(size, svmProps);
         UNRECOVERABLE_IF(ptr == nullptr);
-        auto gpuAlloc = ctx->getSVMAllocsManager()->getSVMAlloc(ptr)->gpuAllocation;
+        auto svmAlloc = ctx->getSVMAllocsManager()->getSVMAlloc(ptr);
+        UNRECOVERABLE_IF(svmAlloc == nullptr);
+        auto gpuAlloc = svmAlloc->gpuAllocation;
         UNRECOVERABLE_IF(gpuAlloc == nullptr);
         UNRECOVERABLE_IF(device == nullptr);
         device->getMemoryManager()->copyMemoryToAllocation(gpuAlloc, initData, static_cast<uint32_t>(size));
