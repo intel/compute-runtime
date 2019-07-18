@@ -38,8 +38,6 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
 
     executionEnvironment.osInterface->get()->setDrm(this->drm);
     CommandStreamReceiver::osInterface = executionEnvironment.osInterface.get();
-    auto gmmHelper = platform()->peekExecutionEnvironment()->getGmmHelper();
-    gmmHelper->setSimplifiedMocsTableUsage(this->drm->getSimplifiedMocsTableUsage());
 }
 
 template <typename GfxFamily>
