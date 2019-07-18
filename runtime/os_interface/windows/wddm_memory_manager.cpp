@@ -496,7 +496,7 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, void *r
 
 bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocation, const void *preferredGpuVirtualAddress) {
     D3DGPU_VIRTUAL_ADDRESS addressToMap = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(preferredGpuVirtualAddress);
-    auto heapIndex = selectHeap(allocation, preferredGpuVirtualAddress != nullptr, executionEnvironment.isFullRangeSvm());
+    auto heapIndex = selectHeap(allocation, preferredGpuVirtualAddress != nullptr, is32bit || executionEnvironment.isFullRangeSvm());
     if (!executionEnvironment.isFullRangeSvm()) {
         addressToMap = 0u;
     }

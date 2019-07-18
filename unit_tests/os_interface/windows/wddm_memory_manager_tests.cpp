@@ -1384,6 +1384,12 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithNoRegisteredOsContextsWh
     EXPECT_FALSE(memoryManager->isMemoryBudgetExhausted());
 }
 
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerAnd32bitBuildThenSvmPartitionIsAlwaysInitialized) {
+    if (is32bit) {
+        EXPECT_EQ(memoryManager->gfxPartition.getHeapLimit(HeapIndex::HEAP_SVM), MemoryConstants::max32BitAddress);
+    }
+}
+
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenCallingIsMemoryBudgetExhaustedThenReturnFalse) {
     memoryManager->createAndRegisterOsContext(nullptr, aub_stream::ENGINE_RCS, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
     memoryManager->createAndRegisterOsContext(nullptr, aub_stream::ENGINE_RCS, 1, PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
