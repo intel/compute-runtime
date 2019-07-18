@@ -18,23 +18,14 @@
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/csr_deps.h"
+#include "runtime/helpers/task_information.inl"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/surface.h"
 
 namespace NEO {
-KernelOperation::~KernelOperation() {
-    storageForAllocations.storeAllocation(std::unique_ptr<GraphicsAllocation>(dsh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
-    if (ioh.get() == dsh.get()) {
-        ioh.release();
-    }
-    if (ioh) {
-        storageForAllocations.storeAllocation(std::unique_ptr<GraphicsAllocation>(ioh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
-    }
-    storageForAllocations.storeAllocation(std::unique_ptr<GraphicsAllocation>(ssh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
-
-    storageForAllocations.storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream->getGraphicsAllocation()), REUSABLE_ALLOCATION);
-}
+template void KernelOperation::ResourceCleaner::operator()<LinearStream>(LinearStream *);
+template void KernelOperation::ResourceCleaner::operator()<IndirectHeap>(IndirectHeap *);
 
 CommandMapUnmap::CommandMapUnmap(MapOperationType op, MemObj &memObj, MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset, bool readOnly,
                                  CommandStreamReceiver &csr, CommandQueue &cmdQ)
@@ -105,9 +96,6 @@ CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::uniq
 }
 
 CommandComputeKernel::~CommandComputeKernel() {
-    if (kernelOperation->ioh.get() == kernelOperation->dsh.get()) {
-        kernelOperation->doNotFreeISH = true;
-    }
     kernel->decRefInternal();
 
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();

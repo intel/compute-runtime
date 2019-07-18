@@ -97,11 +97,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenLockedEMcritca
         size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
 
         auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream(cmdStreamAllocation)),
-                                                                  std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(ioh),
-                                                                  std::unique_ptr<IndirectHeap>(ssh),
+        KernelOperation *blockedCommandData = new KernelOperation(new LinearStream(cmdStreamAllocation),
                                                                   *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+        blockedCommandData->setHeaps(dsh, ioh, ssh);
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -157,11 +155,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
         EXPECT_EQ(colorCalcSizeDevQueue, usedDSHBeforeSubmit);
 
         auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream(cmdStreamAllocation)),
-                                                                  std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(ioh),
-                                                                  std::unique_ptr<IndirectHeap>(ssh),
+        KernelOperation *blockedCommandData = new KernelOperation(new LinearStream(cmdStreamAllocation),
                                                                   *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+        blockedCommandData->setHeaps(dsh, ioh, ssh);
 
         size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
 
@@ -200,11 +196,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
         dsh->getSpace(mockDevQueue.getDshOffset());
 
         auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream(cmdStreamAllocation)),
-                                                                  std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(ioh),
-                                                                  std::unique_ptr<IndirectHeap>(ssh),
+        KernelOperation *blockedCommandData = new KernelOperation(new LinearStream(cmdStreamAllocation),
                                                                   *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+        blockedCommandData->setHeaps(dsh, ioh, ssh);
 
         size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
 
@@ -240,11 +234,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentK
         dsh->getSpace(mockDevQueue.getDshOffset());
 
         auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream(cmdStreamAllocation)),
-                                                                  std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(ioh),
-                                                                  std::unique_ptr<IndirectHeap>(ssh),
+        KernelOperation *blockedCommandData = new KernelOperation(new LinearStream(cmdStreamAllocation),
                                                                   *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+        blockedCommandData->setHeaps(dsh, ioh, ssh);
 
         size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
 
@@ -283,11 +275,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
         dsh->getSpace(mockDevQueue.getDshOffset());
 
         auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream(cmdStreamAllocation)),
-                                                                  std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(ioh),
-                                                                  std::unique_ptr<IndirectHeap>(ssh),
+        KernelOperation *blockedCommandData = new KernelOperation(new LinearStream(cmdStreamAllocation),
                                                                   *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+        blockedCommandData->setHeaps(dsh, ioh, ssh);
 
         size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
 
@@ -338,11 +328,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
         queueIoh.getSpace(usedSize);
 
         auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream(cmdStreamAllocation)),
-                                                                  std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(ioh),
-                                                                  std::unique_ptr<IndirectHeap>(ssh),
+        KernelOperation *blockedCommandData = new KernelOperation(new LinearStream(cmdStreamAllocation),
                                                                   *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+        blockedCommandData->setHeaps(dsh, ioh, ssh);
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -388,11 +376,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhen
         void *sshBuffer = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getCpuBase();
 
         auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream(cmdStreamAllocation)),
-                                                                  std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(ioh),
-                                                                  std::unique_ptr<IndirectHeap>(ssh),
+        KernelOperation *blockedCommandData = new KernelOperation(new LinearStream(cmdStreamAllocation),
                                                                   *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+        blockedCommandData->setHeaps(dsh, ioh, ssh);
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -419,7 +405,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommand
         parentKernel->createReflectionSurface();
         context->setDefaultDeviceQueue(&mockDevQueue);
 
-        KernelOperation *blockedCommandsData = nullptr;
+        auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};
 
@@ -430,13 +416,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommand
             *pCmdQ,
             multiDispatchInfo,
             CsrDependencies(),
-            &blockedCommandsData,
+            blockedCommandsData.get(),
             nullptr,
             nullptr,
             nullptr,
             nullptr,
             device->getPreemptionMode(),
-            true);
+            CL_COMMAND_NDRANGE_KERNEL);
 
         EXPECT_NE(nullptr, blockedCommandsData);
         EXPECT_EQ(blockedCommandsData->dsh->getMaxAvailableSpace(), mockDevQueue.getDshBuffer()->getUnderlyingBufferSize());
@@ -446,7 +432,5 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommand
         EXPECT_NE(nullptr, blockedCommandsData->ioh->getGraphicsAllocation());
         EXPECT_NE(nullptr, blockedCommandsData->ssh->getGraphicsAllocation());
         EXPECT_EQ(blockedCommandsData->dsh->getGraphicsAllocation(), blockedCommandsData->ioh->getGraphicsAllocation());
-
-        delete blockedCommandsData;
     }
 }

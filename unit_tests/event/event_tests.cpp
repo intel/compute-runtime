@@ -465,10 +465,9 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
     cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
     cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
     cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
-    using UniqueIH = std::unique_ptr<IndirectHeap>;
-    auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ioh), UniqueIH(ssh),
-                                                   *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+
+    auto blockedCommandsData = new KernelOperation(cmdStream, *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
     MockKernelWithInternals mockKernelWithInternals(*pDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
@@ -518,10 +517,9 @@ TEST_F(InternalsEventTest, processBlockedCommandsAbortKernelOperation) {
     cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
     cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
     cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
-    using UniqueIH = std::unique_ptr<IndirectHeap>;
-    auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ioh), UniqueIH(ssh),
-                                                   *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+
+    auto blockedCommandsData = new KernelOperation(cmdStream, *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
     MockKernelWithInternals mockKernelWithInternals(*pDevice);
     auto pKernel = mockKernelWithInternals.mockKernel;
@@ -553,10 +551,9 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
     cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
     cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
-    using UniqueIH = std::unique_ptr<IndirectHeap>;
-    auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ioh), UniqueIH(ssh),
-                                                   *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+
+    auto blockedCommandsData = new KernelOperation(cmdStream, *cmdQ.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
     SPatchAllocateStatelessPrintfSurface *pPrintfSurface = new SPatchAllocateStatelessPrintfSurface();
     pPrintfSurface->DataParamOffset = 0;
@@ -912,7 +909,6 @@ TEST(Event, GivenNoContextOnDeletionDeletesSelf) {
 }
 
 HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCSROccurs) {
-    using UniqueIH = std::unique_ptr<IndirectHeap>;
     class MockCommandComputeKernel : public CommandComputeKernel {
       public:
         using CommandComputeKernel::eventsWaitlist;
@@ -936,8 +932,8 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCSROccurs) {
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
 
     std::vector<Surface *> surfaces;
-    auto kernelOperation = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(ih1), UniqueIH(ih2), UniqueIH(ih3),
-                                               *pDevice->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
+    auto kernelOperation = new KernelOperation(cmdStream, *pDevice->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
+    kernelOperation->setHeaps(ih1, ih2, ih3);
 
     std::unique_ptr<MockCommandComputeKernel> command = std::make_unique<MockCommandComputeKernel>(*pCmdQ, kernelOperation, surfaces, kernel);
 
@@ -1490,9 +1486,8 @@ HWTEST_F(InternalsEventTest, givenAbortedCommandWhenSubmitCalledThenDontUpdateFl
     pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
     pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
     pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
-    using UniqueIH = std::unique_ptr<IndirectHeap>;
-    auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ioh), UniqueIH(ssh), *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    auto blockedCommandsData = new KernelOperation(cmdStream, *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandsData->setHeaps(dsh, ioh, ssh);
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     std::vector<Surface *> v;
     auto cmd = new CommandComputeKernel(*pCmdQ, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode, pKernel, 1);

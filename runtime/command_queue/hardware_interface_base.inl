@@ -26,13 +26,12 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     CommandQueue &commandQueue,
     const MultiDispatchInfo &multiDispatchInfo,
     const CsrDependencies &csrDependencies,
-    KernelOperation **blockedCommandsData,
+    KernelOperation *blockedCommandsData,
     TagNode<HwTimeStamps> *hwTimeStamps,
     TagNode<HwPerfCounter> *hwPerfCounter,
     TimestampPacketContainer *previousTimestampPacketNodes,
     TimestampPacketContainer *currentTimestampPacketNodes,
     PreemptionMode preemptionMode,
-    bool blockQueue,
     uint32_t commandType) {
 
     LinearStream *commandStream = nullptr;
@@ -49,19 +48,11 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     }
 
     // Allocate command stream and indirect heaps
-    obtainIndirectHeaps(commandQueue, multiDispatchInfo, blockQueue, dsh, ioh, ssh);
-    if (blockQueue) {
-        constexpr static auto additionalAllocationSize = CSRequirements::csOverfetchSize;
-        constexpr static auto allocationSize = MemoryConstants::pageSize64k - additionalAllocationSize;
-        commandStream = new LinearStream();
-        commandQueue.getGpgpuCommandStreamReceiver().ensureCommandBufferAllocation(*commandStream, allocationSize, additionalAllocationSize);
-
-        using UniqueIH = std::unique_ptr<IndirectHeap>;
-        *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh), UniqueIH(ioh),
-                                                   UniqueIH(ssh), *commandQueue.getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-        if (parentKernel) {
-            (*blockedCommandsData)->doNotFreeISH = true;
-        }
+    bool blockedQueue = (blockedCommandsData != nullptr);
+    obtainIndirectHeaps(commandQueue, multiDispatchInfo, blockedQueue, dsh, ioh, ssh);
+    if (blockedQueue) {
+        blockedCommandsData->setHeaps(dsh, ioh, ssh);
+        commandStream = blockedCommandsData->commandStream.get();
     } else {
         commandStream = &commandQueue.getCS(0);
     }

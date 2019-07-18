@@ -1449,10 +1449,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWhenItIsUnblocke
     pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
     pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
     pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
-    using UniqueIH = std::unique_ptr<IndirectHeap>;
 
-    auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ioh), UniqueIH(ssh), *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    auto blockedCommandsData = new KernelOperation(cmdStream, *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandsData->setHeaps(dsh, ioh, ssh);
 
     std::vector<Surface *> surfaces;
     event->setCommand(std::make_unique<CommandComputeKernel>(*pCmdQ, std::unique_ptr<KernelOperation>(blockedCommandsData), surfaces, false, false, false, nullptr, pDevice->getPreemptionMode(), pKernel.get(), 1));

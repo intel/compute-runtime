@@ -83,6 +83,15 @@ struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, pu
         DeviceFixture::TearDown();
     }
 
+    std::unique_ptr<KernelOperation> createBlockedCommandsData(CommandQueue &commandQueue) {
+        auto commandStream = new LinearStream();
+
+        auto &gpgpuCsr = commandQueue.getGpgpuCommandStreamReceiver();
+        gpgpuCsr.ensureCommandBufferAllocation(*commandStream, 1, 1);
+
+        return std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
+    }
+
     std::unique_ptr<MockProgram> program;
 
     SKernelBinaryHeaderCommon kernelHeader = {};
@@ -148,7 +157,7 @@ HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     EXPECT_EQ(commandStreamBuffer, commandStream.getCpuBase());
     EXPECT_LT(commandStreamStart, commandStream.getUsed());
@@ -196,7 +205,7 @@ HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     EXPECT_EQ(commandStreamBuffer, commandStream.getCpuBase());
     EXPECT_LT(commandStreamStart, commandStream.getUsed());
@@ -226,7 +235,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithDefaultLwsAlgorithm)
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            false);
+            CL_COMMAND_NDRANGE_KERNEL);
 
         EXPECT_EQ(dimension, *kernel.workDim);
     }
@@ -257,7 +266,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithSquaredLwsAlgorithm)
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            false);
+            CL_COMMAND_NDRANGE_KERNEL);
         EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
@@ -286,7 +295,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithNDLwsAlgorithm) {
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            false);
+            CL_COMMAND_NDRANGE_KERNEL);
         EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
@@ -316,7 +325,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithOldLwsAlgorithm) {
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            false);
+            CL_COMMAND_NDRANGE_KERNEL);
         EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
@@ -346,7 +355,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNumWorkGroups) {
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     EXPECT_EQ(2u, *kernel.numWorkGroupsX);
     EXPECT_EQ(5u, *kernel.numWorkGroupsY);
@@ -378,7 +387,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeND) {
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
     EXPECT_EQ(2u, *kernel.localWorkSizeX);
     EXPECT_EQ(5u, *kernel.localWorkSizeY);
     EXPECT_EQ(1u, *kernel.localWorkSizeZ);
@@ -409,7 +418,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeND) {
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
     EXPECT_EQ(2u, *kernel.localWorkSizeX);
     EXPECT_EQ(5u, *kernel.localWorkSizeY);
     EXPECT_EQ(10u, *kernel.localWorkSizeZ);
@@ -441,7 +450,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeSquared) {
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
     EXPECT_EQ(2u, *kernel.localWorkSizeX);
     EXPECT_EQ(5u, *kernel.localWorkSizeY);
     EXPECT_EQ(1u, *kernel.localWorkSizeZ);
@@ -473,7 +482,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeSquaredAn
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
     EXPECT_EQ(2u, *kernel.localWorkSizeX);
     EXPECT_EQ(5u, *kernel.localWorkSizeY);
     EXPECT_EQ(1u, *kernel.localWorkSizeZ);
@@ -503,7 +512,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSize) {
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
     EXPECT_EQ(1u, *kernel.localWorkSizeX);
     EXPECT_EQ(2u, *kernel.localWorkSizeY);
     EXPECT_EQ(3u, *kernel.localWorkSizeZ);
@@ -536,7 +545,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizes) {
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
     EXPECT_EQ(1u, *kernel.localWorkSizeX);
     EXPECT_EQ(2u, *kernel.localWorkSizeY);
     EXPECT_EQ(3u, *kernel.localWorkSizeZ);
@@ -573,7 +582,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizeForSplitKernel) {
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     auto dispatchId = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
@@ -624,7 +633,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizesForSplitWalker) {
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = *dispatchInfo.getKernel();
@@ -661,10 +670,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerDoesntConsumeCommandStreamWhenQueueIs
     size_t workGroupSize[3] = {2, 5, 10};
     cl_uint dimensions = 1;
 
-    //block the queue
-    auto blockQueue = true;
-
-    KernelOperation *blockedCommandsData = nullptr;
+    auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
 
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
@@ -673,13 +679,13 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerDoesntConsumeCommandStreamWhenQueueIs
         *pCmdQ,
         multiDispatchInfo,
         CsrDependencies(),
-        &blockedCommandsData,
+        blockedCommandsData.get(),
         nullptr,
         nullptr,
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        blockQueue);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     auto &commandStream = pCmdQ->getCS(1024);
     EXPECT_EQ(0u, commandStream.getUsed());
@@ -688,8 +694,6 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerDoesntConsumeCommandStreamWhenQueueIs
     EXPECT_NE(nullptr, blockedCommandsData->dsh);
     EXPECT_NE(nullptr, blockedCommandsData->ioh);
     EXPECT_NE(nullptr, blockedCommandsData->ssh);
-
-    delete blockedCommandsData;
 }
 
 HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelWhenQueueIsBlocked) {
@@ -701,41 +705,53 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelW
     size_t workGroupSize[3] = {2, 5, 10};
     cl_uint dimensions = 1;
 
-    //block the queue
-    auto blockQueue = true;
-
-    KernelOperation *blockedCommandsData = nullptr;
+    auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
 
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
-    MultiDispatchInfo multiDispatchInfo;
+    MultiDispatchInfo multiDispatchInfo(&kernel);
     multiDispatchInfo.push(dispatchInfo);
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         CsrDependencies(),
-        &blockedCommandsData,
+        blockedCommandsData.get(),
         nullptr,
         nullptr,
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        blockQueue);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     Vec3<size_t> localWorkgroupSize(workGroupSize);
 
-    auto expectedSizeCSAllocation = MemoryConstants::pageSize64k;
-    auto expectedSizeCS = MemoryConstants::pageSize64k - CSRequirements::csOverfetchSize;
     auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(kernel);
     auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernel, Math::computeTotalElementsCount(localWorkgroupSize));
     auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(kernel);
 
-    EXPECT_EQ(expectedSizeCSAllocation, blockedCommandsData->commandStream->getGraphicsAllocation()->getUnderlyingBufferSize());
-    EXPECT_EQ(expectedSizeCS, blockedCommandsData->commandStream->getMaxAvailableSpace());
     EXPECT_LE(expectedSizeDSH, blockedCommandsData->dsh->getMaxAvailableSpace());
     EXPECT_LE(expectedSizeIOH, blockedCommandsData->ioh->getMaxAvailableSpace());
     EXPECT_LE(expectedSizeSSH, blockedCommandsData->ssh->getMaxAvailableSpace());
+}
 
-    delete blockedCommandsData;
+HWTEST_F(DispatchWalkerTest, givenBlockedEnqueueWhenObtainingCommandStreamThenAllocateEnoughSpaceAndBlockedKernelData) {
+    DispatchInfo dispatchInfo;
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
+
+    std::unique_ptr<KernelOperation> blockedKernelData;
+    MockCommandQueueHw<FamilyType> mockCmdQ(nullptr, pDevice, nullptr);
+
+    auto expectedSizeCSAllocation = MemoryConstants::pageSize64k;
+    auto expectedSizeCS = MemoryConstants::pageSize64k - CSRequirements::csOverfetchSize;
+
+    CsrDependencies csrDependencies;
+    auto cmdStream = mockCmdQ.template obtainCommandStream<CL_COMMAND_NDRANGE_KERNEL>(csrDependencies, false, false, false, true,
+                                                                                      multiDispatchInfo, blockedKernelData, nullptr, 0u);
+
+    EXPECT_EQ(expectedSizeCS, cmdStream->getMaxAvailableSpace());
+    EXPECT_EQ(expectedSizeCSAllocation, cmdStream->getGraphicsAllocation()->getUnderlyingBufferSize());
+    EXPECT_NE(nullptr, blockedKernelData);
+    EXPECT_EQ(cmdStream, blockedKernelData->commandStream.get());
 }
 
 HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromMdiWhenQueueIsBlocked) {
@@ -744,36 +760,27 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromMdiWhen
 
     MockMultiDispatchInfo multiDispatchInfo(&kernel);
 
-    //block the queue
-    auto blockQueue = true;
-
-    KernelOperation *blockedCommandsData = nullptr;
+    auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
 
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         CsrDependencies(),
-        &blockedCommandsData,
+        blockedCommandsData.get(),
         nullptr,
         nullptr,
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        blockQueue);
+        CL_COMMAND_NDRANGE_KERNEL);
 
-    auto expectedSizeCSAllocation = MemoryConstants::pageSize64k;
-    auto expectedSizeCS = MemoryConstants::pageSize64k - CSRequirements::csOverfetchSize;
     auto expectedSizeDSH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
     auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
 
-    EXPECT_EQ(expectedSizeCSAllocation, blockedCommandsData->commandStream->getGraphicsAllocation()->getUnderlyingBufferSize());
-    EXPECT_EQ(expectedSizeCS, blockedCommandsData->commandStream->getMaxAvailableSpace());
     EXPECT_LE(expectedSizeDSH, blockedCommandsData->dsh->getMaxAvailableSpace());
     EXPECT_LE(expectedSizeIOH, blockedCommandsData->ioh->getMaxAvailableSpace());
     EXPECT_LE(expectedSizeSSH, blockedCommandsData->ssh->getMaxAvailableSpace());
-
-    delete blockedCommandsData;
 }
 
 HWTEST_F(DispatchWalkerTest, givenBlockedQueueWhenDispatchWalkerIsCalledThenCommandStreamHasGpuAddress) {
@@ -781,24 +788,21 @@ HWTEST_F(DispatchWalkerTest, givenBlockedQueueWhenDispatchWalkerIsCalledThenComm
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
     MockMultiDispatchInfo multiDispatchInfo(&kernel);
 
-    const auto blockQueue = true;
-    KernelOperation *blockedCommandsData = nullptr;
+    auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         CsrDependencies(),
-        &blockedCommandsData,
+        blockedCommandsData.get(),
         nullptr,
         nullptr,
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        blockQueue);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     EXPECT_NE(nullptr, blockedCommandsData->commandStream->getGraphicsAllocation());
     EXPECT_NE(0ull, blockedCommandsData->commandStream->getGraphicsAllocation()->getGpuAddress());
-
-    delete blockedCommandsData;
 }
 
 HWTEST_F(DispatchWalkerTest, givenThereAreAllocationsForReuseWhenDispatchWalkerIsCalledThenCommandStreamObtainsReusableAllocation) {
@@ -812,24 +816,21 @@ HWTEST_F(DispatchWalkerTest, givenThereAreAllocationsForReuseWhenDispatchWalkerI
     csr.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>{allocation}, REUSABLE_ALLOCATION);
     ASSERT_FALSE(csr.getInternalAllocationStorage()->getAllocationsForReuse().peekIsEmpty());
 
-    const auto blockQueue = true;
-    KernelOperation *blockedCommandsData = nullptr;
+    auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         CsrDependencies(),
-        &blockedCommandsData,
+        blockedCommandsData.get(),
         nullptr,
         nullptr,
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        blockQueue);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     EXPECT_TRUE(csr.getInternalAllocationStorage()->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(allocation, blockedCommandsData->commandStream->getGraphicsAllocation());
-
-    delete blockedCommandsData;
 }
 
 HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfo) {
@@ -850,7 +851,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfo) {
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = *dispatchInfo.getKernel();
@@ -892,7 +893,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     auto dshAfterMultiDisptach = indirectHeap.getUsed();
 
@@ -977,7 +978,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -1023,7 +1024,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -1074,7 +1075,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -1127,7 +1128,7 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerDisabledWhenAllocationReq
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdStream);
@@ -1166,7 +1167,7 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerEnabledWhenWalkerWithTwoK
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdStream);
@@ -1206,7 +1207,7 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerEnabledWhenTwoWalkersForQ
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
@@ -1218,7 +1219,7 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerEnabledWhenTwoWalkersForQ
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdStream);
@@ -1241,7 +1242,8 @@ HWTEST_F(DispatchWalkerTest, givenMultiDispatchWhenWhitelistedRegisterForCoheren
     DispatchInfo di2(&kernel, 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0));
     MockMultiDispatchInfo multiDispatchInfo(std::vector<DispatchInfo *>({&di1, &di2}));
 
-    HardwareInterface<FamilyType>::dispatchWalker(*pCmdQ, multiDispatchInfo, CsrDependencies(), nullptr, nullptr, nullptr, nullptr, nullptr, pDevice->getPreemptionMode(), false);
+    HardwareInterface<FamilyType>::dispatchWalker(*pCmdQ, multiDispatchInfo, CsrDependencies(), nullptr, nullptr, nullptr, nullptr, nullptr,
+                                                  pDevice->getPreemptionMode(), CL_COMMAND_NDRANGE_KERNEL);
 
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
 
@@ -1305,7 +1307,7 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenAuxToNonAuxWhenTranslationRequiredTh
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     auto sizeUsed = cmdStream.getUsed();
     GenCmdList cmdList;
@@ -1362,7 +1364,7 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenNonAuxToAuxWhenTranslationRequiredTh
         nullptr,
         nullptr,
         pDevice->getPreemptionMode(),
-        false);
+        CL_COMMAND_NDRANGE_KERNEL);
 
     auto sizeUsed = cmdStream.getUsed();
     GenCmdList cmdList;

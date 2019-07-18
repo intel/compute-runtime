@@ -88,7 +88,6 @@ TEST(CommandTest, markerSubmitWithTerminateFlagAbortsFlush) {
 }
 
 TEST(CommandTest, givenWaitlistRequestWhenCommandComputeKernelIsCreatedThenMakeLocalCopyOfWaitlist) {
-    using UniqueIH = std::unique_ptr<IndirectHeap>;
     class MockCommandComputeKernel : public CommandComputeKernel {
       public:
         using CommandComputeKernel::eventsWaitlist;
@@ -107,8 +106,8 @@ TEST(CommandTest, givenWaitlistRequestWhenCommandComputeKernelIsCreatedThenMakeL
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({1, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
 
     std::vector<Surface *> surfaces;
-    auto kernelOperation = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(ih1), UniqueIH(ih2), UniqueIH(ih3),
-                                               *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
+    auto kernelOperation = new KernelOperation(cmdStream, *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
+    kernelOperation->setHeaps(ih1, ih2, ih3);
 
     UserEvent event1, event2, event3;
     cl_event waitlist[] = {&event1, &event2};
@@ -128,7 +127,6 @@ TEST(CommandTest, givenWaitlistRequestWhenCommandComputeKernelIsCreatedThenMakeL
 }
 
 TEST(KernelOperationDestruction, givenKernelOperationWhenItIsDestructedThenAllAllocationsAreStoredInInternalStorageForReuse) {
-    using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     CommandQueue cmdQ(nullptr, device.get(), nullptr);
     InternalAllocationStorage &allocationStorage = *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage();
@@ -138,14 +136,15 @@ TEST(KernelOperationDestruction, givenKernelOperationWhenItIsDestructedThenAllAl
     cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 1, ih1);
     cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 1, ih2);
     cmdQ.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 1, ih3);
-    auto cmdStream = std::make_unique<LinearStream>(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({1, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
+    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({1, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
 
     auto &heapAllocation1 = *ih1->getGraphicsAllocation();
     auto &heapAllocation2 = *ih2->getGraphicsAllocation();
     auto &heapAllocation3 = *ih3->getGraphicsAllocation();
     auto &cmdStreamAllocation = *cmdStream->getGraphicsAllocation();
 
-    auto kernelOperation = std::make_unique<KernelOperation>(std::move(cmdStream), UniqueIH(ih1), UniqueIH(ih2), UniqueIH(ih3), allocationStorage);
+    auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, allocationStorage);
+    kernelOperation->setHeaps(ih1, ih2, ih3);
     EXPECT_TRUE(allocationsForReuse.peekIsEmpty());
 
     kernelOperation.reset();

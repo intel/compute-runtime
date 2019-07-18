@@ -77,6 +77,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::commandStream;
     using BaseClass::gpgpuEngine;
     using BaseClass::multiEngineQueue;
+    using BaseClass::obtainCommandStream;
     using BaseClass::obtainNewTimestampPacketNodes;
     using BaseClass::requiresCacheFlushAfterWalker;
     using BaseClass::timestampPacketContainer;

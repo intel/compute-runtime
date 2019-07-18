@@ -39,14 +39,13 @@ class HardwareInterface {
         CommandQueue &commandQueue,
         const MultiDispatchInfo &multiDispatchInfo,
         const CsrDependencies &csrDependencies,
-        KernelOperation **blockedCommandsData,
+        KernelOperation *blockedCommandsData,
         TagNode<HwTimeStamps> *hwTimeStamps,
         TagNode<HwPerfCounter> *hwPerfCounter,
         TimestampPacketContainer *previousTimestampPacketNodes,
         TimestampPacketContainer *currentTimestampPacketNodes,
         PreemptionMode preemptionMode,
-        bool blockQueue,
-        uint32_t commandType = 0);
+        uint32_t commandType);
 
     static void getDefaultDshSpace(
         const size_t &offsetInterfaceDescriptorTable,

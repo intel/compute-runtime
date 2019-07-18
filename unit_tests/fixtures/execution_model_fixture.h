@@ -64,6 +64,16 @@ class ExecutionModelKernelTest : public ExecutionModelKernelFixture,
         CommandQueueHwFixture::TearDown();
         ExecutionModelKernelFixture::TearDown();
     }
+
+    std::unique_ptr<KernelOperation> createBlockedCommandsData(CommandQueue &commandQueue) {
+        auto commandStream = new LinearStream();
+
+        auto &gpgpuCsr = commandQueue.getGpgpuCommandStreamReceiver();
+        gpgpuCsr.ensureCommandBufferAllocation(*commandStream, 1, 1);
+
+        return std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
+    }
+
     DebugManagerStateRestore dbgRestore;
 };
 
@@ -104,5 +114,15 @@ struct ParentKernelCommandQueueFixture : public CommandQueueHwFixture,
         CommandQueueHwFixture::TearDown();
         delete device;
     }
+
+    std::unique_ptr<KernelOperation> createBlockedCommandsData(CommandQueue &commandQueue) {
+        auto commandStream = new LinearStream();
+
+        auto &gpgpuCsr = commandQueue.getGpgpuCommandStreamReceiver();
+        gpgpuCsr.ensureCommandBufferAllocation(*commandStream, 1, 1);
+
+        return std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
+    }
+
     MockDevice *device;
 };

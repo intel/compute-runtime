@@ -66,23 +66,45 @@ class CommandMapUnmap : public Command {
 };
 
 struct KernelOperation {
-    KernelOperation(std::unique_ptr<LinearStream> commandStream, std::unique_ptr<IndirectHeap> dsh, std::unique_ptr<IndirectHeap> ioh, std::unique_ptr<IndirectHeap> ssh,
-                    InternalAllocationStorage &storageForAllocations)
-        : commandStream(std::move(commandStream)), dsh(std::move(dsh)),
-          ioh(std::move(ioh)), ssh(std::move(ssh)),
-          surfaceStateHeapSizeEM(0), doNotFreeISH(false), storageForAllocations(storageForAllocations) {
+  protected:
+    struct ResourceCleaner {
+        ResourceCleaner() = delete;
+        ResourceCleaner(InternalAllocationStorage *storageForAllocations) : storageForAllocations(storageForAllocations){};
+
+        template <typename ObjectT>
+        void operator()(ObjectT *object);
+
+        InternalAllocationStorage *storageForAllocations = nullptr;
+    } resourceCleaner{nullptr};
+
+    using LinearStreamUniquePtrT = std::unique_ptr<LinearStream, ResourceCleaner>;
+    using IndirectHeapUniquePtrT = std::unique_ptr<IndirectHeap, ResourceCleaner>;
+
+  public:
+    KernelOperation() = delete;
+    KernelOperation(LinearStream *commandStream, InternalAllocationStorage &storageForAllocations) {
+        resourceCleaner.storageForAllocations = &storageForAllocations;
+        this->commandStream = LinearStreamUniquePtrT(commandStream, resourceCleaner);
     }
 
-    ~KernelOperation();
+    void setHeaps(IndirectHeap *dsh, IndirectHeap *ioh, IndirectHeap *ssh) {
+        this->dsh = IndirectHeapUniquePtrT(dsh, resourceCleaner);
+        this->ioh = IndirectHeapUniquePtrT(ioh, resourceCleaner);
+        this->ssh = IndirectHeapUniquePtrT(ssh, resourceCleaner);
+    }
 
-    std::unique_ptr<LinearStream> commandStream;
-    std::unique_ptr<IndirectHeap> dsh;
-    std::unique_ptr<IndirectHeap> ioh;
-    std::unique_ptr<IndirectHeap> ssh;
+    ~KernelOperation() {
+        if (ioh.get() == dsh.get()) {
+            ioh.release();
+        }
+    }
 
-    size_t surfaceStateHeapSizeEM;
-    bool doNotFreeISH;
-    InternalAllocationStorage &storageForAllocations;
+    LinearStreamUniquePtrT commandStream{nullptr, resourceCleaner};
+    IndirectHeapUniquePtrT dsh{nullptr, resourceCleaner};
+    IndirectHeapUniquePtrT ioh{nullptr, resourceCleaner};
+    IndirectHeapUniquePtrT ssh{nullptr, resourceCleaner};
+
+    size_t surfaceStateHeapSizeEM = 0;
 };
 
 class CommandComputeKernel : public Command {

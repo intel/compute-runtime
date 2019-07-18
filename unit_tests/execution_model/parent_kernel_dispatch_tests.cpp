@@ -48,13 +48,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
             *pCmdQ,
             multiDispatchInfo,
             CsrDependencies(),
-            &blockedCommandsData,
+            blockedCommandsData,
             nullptr,
             nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            false);
+            CL_COMMAND_NDRANGE_KERNEL);
 
         size_t dshUsedAfter = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u).getUsed();
         EXPECT_EQ(0u, dshUsedAfter);
@@ -104,13 +104,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
             *pCmdQ,
             multiDispatchInfo,
             CsrDependencies(),
-            &blockedCommandsData,
+            blockedCommandsData,
             nullptr,
             nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            false);
+            CL_COMMAND_NDRANGE_KERNEL);
 
         auto iohUsed = ioh.getUsed();
         EXPECT_EQ(0u, iohUsed);
@@ -130,13 +130,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
             *pCmdQ,
             multiDispatchInfo,
             CsrDependencies(),
-            &blockedCommandsData,
+            blockedCommandsData,
             nullptr,
             nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            false);
+            CL_COMMAND_NDRANGE_KERNEL);
 
         auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u);
 
@@ -154,7 +154,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        KernelOperation *blockedCommandsData = nullptr;
+        auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};
 
@@ -166,13 +166,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
             *pCmdQ,
             multiDispatchInfo,
             CsrDependencies(),
-            &blockedCommandsData,
+            blockedCommandsData.get(),
             nullptr,
             nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            true);
+            CL_COMMAND_NDRANGE_KERNEL);
         ASSERT_NE(nullptr, blockedCommandsData);
 
         size_t minRequiredSize = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo) + UnitTestHelper<FamilyType>::getDefaultSshUsage();
@@ -191,8 +191,6 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
         EXPECT_GE(minRequiredSize, sshUsed);
         // Total SSH size including EM must be greater then ssh allocated
         EXPECT_GT(minRequiredSize + minRequiredSizeForEM, sshUsed);
-
-        delete blockedCommandsData;
     }
 }
 
@@ -251,6 +249,16 @@ class MockParentKernelDispatch : public ExecutionModelSchedulerTest,
     void TearDown() override {
         ExecutionModelSchedulerTest::TearDown();
     }
+
+    std::unique_ptr<KernelOperation> createBlockedCommandsData(CommandQueue &commandQueue) {
+        auto commandStream = new LinearStream();
+
+        auto &gpgpuCsr = commandQueue.getGpgpuCommandStreamReceiver();
+        gpgpuCsr.ensureCommandBufferAllocation(*commandStream, 1, 1);
+
+        return std::make_unique<KernelOperation>(commandStream, *gpgpuCsr.getInternalAllocationStorage());
+    }
+
     DebugManagerStateRestore dbgRestore;
 };
 
@@ -259,7 +267,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenBlockedQueueWhenParen
     if (pDevice->getSupportedClVersion() >= 20) {
         MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
 
-        KernelOperation *blockedCommandsData = nullptr;
+        auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};
 
@@ -270,18 +278,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenBlockedQueueWhenParen
             *pCmdQ,
             multiDispatchInfo,
             CsrDependencies(),
-            &blockedCommandsData,
+            blockedCommandsData.get(),
             nullptr,
             nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            true);
+            CL_COMMAND_NDRANGE_KERNEL);
 
         ASSERT_NE(nullptr, blockedCommandsData);
 
         EXPECT_EQ(blockedCommandsData->dsh.get(), blockedCommandsData->ioh.get());
-        delete blockedCommandsData;
         delete mockParentKernel;
     }
 }
@@ -304,13 +311,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispa
             *pCmdQ,
             multiDispatchInfo,
             CsrDependencies(),
-            &blockedCommandsData,
+            blockedCommandsData,
             nullptr,
             nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            false);
+            CL_COMMAND_NDRANGE_KERNEL);
 
         LinearStream *commandStream = &pCmdQ->getCS(0);
 
@@ -362,13 +369,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenUsedSSHHeapWhenParent
             *pCmdQ,
             multiDispatchInfo,
             CsrDependencies(),
-            &blockedCommandsData,
+            blockedCommandsData,
             nullptr,
             nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            false);
+            CL_COMMAND_NDRANGE_KERNEL);
 
         EXPECT_EQ(UnitTestHelper<FamilyType>::getDefaultSshUsage(), ssh.getUsed());
 
@@ -398,13 +405,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenNotUsedSSHHeapWhenPar
             *pCmdQ,
             multiDispatchInfo,
             CsrDependencies(),
-            &blockedCommandsData,
+            blockedCommandsData,
             nullptr,
             nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
-            false);
+            CL_COMMAND_NDRANGE_KERNEL);
 
         EXPECT_EQ(bufferMemory, ssh.getCpuBase());
 

@@ -69,7 +69,6 @@ TEST(EventBuilder, whenCreatingNewEventForwardsArgumentsToEventConstructor) {
 }
 
 TEST(EventBuilder, givenVirtualEventWithCommandThenFinalizeAddChild) {
-    using UniqueIH = std::unique_ptr<IndirectHeap>;
     class MockCommandComputeKernel : public CommandComputeKernel {
       public:
         using CommandComputeKernel::eventsWaitlist;
@@ -88,8 +87,8 @@ TEST(EventBuilder, givenVirtualEventWithCommandThenFinalizeAddChild) {
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({1, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
 
     std::vector<Surface *> surfaces;
-    auto kernelOperation = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(ih1), UniqueIH(ih2), UniqueIH(ih3),
-                                               *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
+    auto kernelOperation = new KernelOperation(cmdStream, *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
+    kernelOperation->setHeaps(ih1, ih2, ih3);
 
     std::unique_ptr<MockCommandComputeKernel> command = std::make_unique<MockCommandComputeKernel>(cmdQ, kernelOperation, surfaces, kernel);
 
@@ -119,7 +118,6 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
         using VirtualEvent::submittedCmd;
     };
 
-    using UniqueIH = std::unique_ptr<IndirectHeap>;
     class MockCommandComputeKernel : public CommandComputeKernel {
       public:
         using CommandComputeKernel::eventsWaitlist;
@@ -138,8 +136,8 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
 
     std::vector<Surface *> surfaces;
-    auto kernelOperation = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(ih1), UniqueIH(ih2), UniqueIH(ih3),
-                                               *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
+    auto kernelOperation = new KernelOperation(cmdStream, *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
+    kernelOperation->setHeaps(ih1, ih2, ih3);
 
     std::unique_ptr<MockCommandComputeKernel> command = std::make_unique<MockCommandComputeKernel>(cmdQ, kernelOperation, surfaces, kernel);
 
