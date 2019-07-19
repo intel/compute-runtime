@@ -162,6 +162,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::isPreambleSent;
     using CommandStreamReceiver::lastSentCoherencyRequest;
     using CommandStreamReceiver::mediaVfeStateDirty;
+    using CommandStreamReceiver::nTo1SubmissionModelEnabled;
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::taskLevel;
     using CommandStreamReceiver::timestampPacketWriteEnabled;

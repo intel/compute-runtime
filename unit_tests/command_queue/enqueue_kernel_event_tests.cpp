@@ -222,7 +222,7 @@ TEST_F(EventTests, eventPassedToEnqueueMarkerHasTheSameLevelAsPreviousCommand) {
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     if (csr.peekTimestampPacketWriteEnabled()) {
-        EXPECT_EQ(csr.peekTaskLevel(), pEvent2->taskLevel);
+        EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
     } else {
         EXPECT_EQ(csr.peekTaskLevel(), pEvent->taskLevel + 1);
     }

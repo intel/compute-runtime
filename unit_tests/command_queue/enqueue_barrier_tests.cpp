@@ -192,7 +192,7 @@ HWTEST_F(BarrierTest, eventWithWaitDependenciesShouldSync) {
     // in this case only cmdQ raises the taskLevel why csr stay intact
     EXPECT_EQ(8u, pCmdQ->taskLevel);
     if (csr.peekTimestampPacketWriteEnabled()) {
-        EXPECT_EQ(8u, commandStreamReceiver.peekTaskLevel());
+        EXPECT_EQ(pCmdQ->taskLevel + 1, commandStreamReceiver.peekTaskLevel());
     } else {
         EXPECT_EQ(7u, commandStreamReceiver.peekTaskLevel());
     }

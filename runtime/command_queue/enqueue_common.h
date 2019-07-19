@@ -859,6 +859,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     dispatchFlags.multiEngineQueue = multiEngineQueue;
     dispatchFlags.preemptionMode = device->getPreemptionMode();
     dispatchFlags.implicitFlush = blitEnqueue;
+    dispatchFlags.guardCommandBufferWithPipeControl = true;
+    dispatchFlags.outOfOrderExecutionAllowed = getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled();
+
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
     }

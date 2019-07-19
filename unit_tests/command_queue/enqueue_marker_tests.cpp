@@ -138,12 +138,13 @@ HWTEST_F(MarkerTest, returnedEventShouldHaveEqualDepthToLastCommandPacketInComma
 
 HWTEST_F(MarkerTest, eventWithWaitDependenciesShouldSync) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    uint32_t initialTaskLevel = 7;
 
     // In N:1, CSR is always highest task level.
-    commandStreamReceiver.taskLevel = 7;
+    commandStreamReceiver.taskLevel = initialTaskLevel;
 
     // In N:1, pCmdQ.level <= CSR.level
-    pCmdQ->taskLevel = 7;
+    pCmdQ->taskLevel = initialTaskLevel;
 
     // In N:1, event.level <= pCmdQ.level
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
@@ -165,7 +166,12 @@ HWTEST_F(MarkerTest, eventWithWaitDependenciesShouldSync) {
     std::unique_ptr<Event> pEvent((Event *)(event));
 
     // Should sync CSR & CmdQ levels.
-    EXPECT_EQ(commandStreamReceiver.peekTaskLevel(), pCmdQ->taskLevel);
+    if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        EXPECT_EQ(initialTaskLevel, pCmdQ->taskLevel);
+        EXPECT_EQ(initialTaskLevel + 1, commandStreamReceiver.peekTaskLevel());
+    } else {
+        EXPECT_EQ(commandStreamReceiver.peekTaskLevel(), pCmdQ->taskLevel);
+    }
     EXPECT_EQ(pCmdQ->taskLevel, pEvent->taskLevel);
     EXPECT_EQ(7u, pEvent->taskLevel);
 }
