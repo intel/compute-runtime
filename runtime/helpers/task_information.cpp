@@ -105,10 +105,6 @@ CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::uniq
 }
 
 CommandComputeKernel::~CommandComputeKernel() {
-    for (auto surface : surfaces) {
-        delete surface;
-    }
-    surfaces.clear();
     if (kernelOperation->ioh.get() == kernelOperation->dsh.get()) {
         kernelOperation->doNotFreeISH = true;
     }
@@ -125,6 +121,10 @@ CommandComputeKernel::~CommandComputeKernel() {
 
 CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminated) {
     if (terminated) {
+        for (auto surface : surfaces) {
+            delete surface;
+        }
+        surfaces.clear();
         return completionStamp;
     }
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
@@ -229,6 +229,11 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
         printfHandler.get()->printEnqueueOutput();
     }
+
+    for (auto surface : surfaces) {
+        delete surface;
+    }
+    surfaces.clear();
 
     return completionStamp;
 }

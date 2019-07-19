@@ -475,24 +475,31 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
 
     auto &csr = cmdQ.getGpgpuCommandStreamReceiver();
     std::vector<Surface *> v;
-    SurfaceMock *surface = new SurfaceMock;
-    surface->graphicsAllocation = new MockGraphicsAllocation((void *)0x1234, 100u);
+    MockBuffer buffer;
+    buffer.retain();
+    auto bufferSurf = new MemObjSurface(&buffer);
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    v.push_back(surface);
+    v.push_back(bufferSurf);
     auto cmd = new CommandComputeKernel(cmdQ, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode, pKernel, 1);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
+    auto refCount = buffer.getRefApiCount();
+    auto refInternal = buffer.getRefInternalCount();
+
     event.submitCommand(false);
+
+    EXPECT_EQ(refCount - 1, buffer.getRefApiCount());
+    EXPECT_EQ(refInternal - 1, buffer.getRefInternalCount());
 
     auto taskLevelAfter = csr.peekTaskLevel();
 
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
 
-    EXPECT_EQ(surface->resident, 1u);
-    EXPECT_FALSE(surface->graphicsAllocation->isResident(csr.getOsContext().getContextId()));
-    delete surface->graphicsAllocation;
+    auto graphicsAllocation = buffer.getGraphicsAllocation();
+
+    EXPECT_FALSE(graphicsAllocation->isResident(csr.getOsContext().getContextId()));
 }
 
 TEST_F(InternalsEventTest, processBlockedCommandsAbortKernelOperation) {
