@@ -86,6 +86,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);
+    PIPE_CONTROL *addPipeControlBeforeStateBaseAddress(LinearStream &commandStream);
     size_t getSshHeapSize();
 
     uint64_t getScratchPatchAddress();
