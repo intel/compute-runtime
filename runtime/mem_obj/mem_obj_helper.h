@@ -138,6 +138,7 @@ class MemObjHelper {
     static bool checkUsedFlagsForBuffer(const MemoryProperties &properties) {
         MemoryProperties acceptedProperties;
         addCommonMemoryProperties(acceptedProperties);
+        addBufferMemoryProperties(acceptedProperties);
         addExtraMemoryProperties(acceptedProperties);
 
         return (isFieldValid(properties.flags, acceptedProperties.flags) &&
@@ -164,6 +165,11 @@ class MemObjHelper {
 
     static inline void addImageMemoryProperties(MemoryProperties &properties) {
         properties.flags |= CL_MEM_NO_ACCESS_INTEL | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL;
+    }
+
+    static inline void addBufferMemoryProperties(MemoryProperties &properties) {
+        properties.flags |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
+        properties.flags_intel |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
     }
 
     static void addExtraMemoryProperties(MemoryProperties &properties);

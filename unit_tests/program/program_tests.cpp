@@ -1014,7 +1014,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Compile) {
     delete[](char *) pSourceBuffer;
 }
 
-TEST_P(ProgramFromSourceTest, CompileProgramWithReraFlag) {
+TEST_P(ProgramFromSourceTest, CompileProgramWithInternalFlags) {
     class MyCompilerInterface : public CompilerInterface {
       public:
         MyCompilerInterface() { buildOptions[0] = buildInternalOptions[0] = '\0'; };
@@ -1048,16 +1048,21 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithReraFlag) {
     // Check default build options
     std::string s1;
     std::string s2;
+    std::string s3;
     cip->getBuildOptions(s1);
     size_t pos = s1.find("-cl-fast-relaxed-math");
     EXPECT_EQ(pos, std::string::npos);
     cip->getBuildInternalOptions(s2);
     pos = s2.find("-cl-intel-gtpin-rera");
     EXPECT_EQ(pos, std::string::npos);
+    cip->getBuildInternalOptions(s3);
+    pos = s3.find("-cl-intel-greater-than-4GB-buffer-required");
+    EXPECT_EQ(pos, std::string::npos);
 
-    // Ask to build created program without "-cl-intel-gtpin-rera" flag.
+    // Ask to build created program without "-cl-intel-gtpin-rera" and "-cl-intel-greater-than-4GB-buffer-required" flags.
     s1.assign("");
     s2.assign("");
+    s3.assign("");
     cl_int retVal = program->compile(0, nullptr, "-cl-fast-relaxed-math", 0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1068,11 +1073,16 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithReraFlag) {
     cip->getBuildInternalOptions(s2);
     pos = s2.find("-cl-intel-gtpin-rera");
     EXPECT_EQ(pos, std::string::npos);
+    cip->getBuildInternalOptions(s3);
+    pos = s3.find("-cl-intel-greater-than-4GB-buffer-required");
+    EXPECT_EQ(pos, std::string::npos);
 
-    // Ask to build created program with "-cl-intel-gtpin-rera" flag.
+    // Ask to build created program with "-cl-intel-gtpin-rera" and "-cl-intel-greater-than-4GB-buffer-required" flags.
     s1.assign("");
     s2.assign("");
-    retVal = program->compile(0, nullptr, "-cl-intel-gtpin-rera -cl-finite-math-only", 0, nullptr, nullptr, nullptr, nullptr);
+    s3.assign("");
+    retVal = program->compile(0, nullptr, "-cl-intel-greater-than-4GB-buffer-required -cl-intel-gtpin-rera -cl-finite-math-only",
+                              0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -1083,6 +1093,9 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithReraFlag) {
     EXPECT_NE(pos, std::string::npos);
     cip->getBuildInternalOptions(s2);
     pos = s2.find("-cl-intel-gtpin-rera");
+    EXPECT_NE(pos, std::string::npos);
+    cip->getBuildInternalOptions(s3);
+    pos = s3.find("-cl-intel-greater-than-4GB-buffer-required");
     EXPECT_NE(pos, std::string::npos);
 }
 

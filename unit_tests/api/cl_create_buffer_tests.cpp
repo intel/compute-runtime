@@ -226,6 +226,47 @@ TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreateBufferWi
     EXPECT_EQ(nullptr, buffer);
 }
 
+TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnrestirctedSizeFlagWhenCreatingBufferThenClSuccessIsReturned) {
+    auto pDevice = pContext->getDevice(0);
+    uint64_t bigSize = GB * 5;
+    size_t size = static_cast<size_t>(bigSize);
+    cl_mem_flags flags = CL_MEM_ALLOC_HOST_PTR | CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
+    auto memoryManager = static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->turnOnFakingBigAllocations();
+
+    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto buffer = clCreateBuffer(pContext, flags, size, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    retVal = clReleaseMemObject(buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnrestirctedSizeFlagWhenCreatingBufferWithPropertiesINTELThenClSuccesssIsReturned) {
+    auto pDevice = pContext->getDevice(0);
+    uint64_t bigSize = GB * 5;
+    size_t size = static_cast<size_t>(bigSize);
+    cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL, 0};
+
+    auto memoryManager = static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->turnOnFakingBigAllocations();
+
+    if (memoryManager->peekForce32BitAllocations() || is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, size, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    retVal = clReleaseMemObject(buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST_F(clCreateBufferTests, GivenNullHostPointerAndMemCopyHostPtrFlagWhenCreatingBufferThenNullIsReturned) {
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     static const unsigned int bufferSize = 16;

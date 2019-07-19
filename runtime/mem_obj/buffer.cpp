@@ -89,14 +89,17 @@ void Buffer::validateInputAndCreateBuffer(cl_context &context,
         return;
     }
 
-    auto pDevice = pContext->getDevice(0);
-    if (size == 0 || size > pDevice->getHardwareCapabilities().maxMemAllocSize) {
-        retVal = CL_INVALID_BUFFER_SIZE;
+    if (!MemObjHelper::validateMemoryPropertiesForBuffer(properties)) {
+        retVal = CL_INVALID_VALUE;
         return;
     }
 
-    if (!MemObjHelper::validateMemoryPropertiesForBuffer(properties)) {
-        retVal = CL_INVALID_VALUE;
+    auto pDevice = pContext->getDevice(0);
+    bool allowCreateBuffersWithUnrestrictedSize = isValueSet(properties.flags, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
+                                                  isValueSet(properties.flags_intel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL);
+
+    if (size == 0 || (size > pDevice->getHardwareCapabilities().maxMemAllocSize && !allowCreateBuffersWithUnrestrictedSize)) {
+        retVal = CL_INVALID_BUFFER_SIZE;
         return;
     }
 

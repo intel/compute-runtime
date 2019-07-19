@@ -64,6 +64,9 @@ using cl_unified_shared_memory_capabilities_intel = cl_bitfield;
 
 #define CL_MEM_ALLOCATION_HANDLE_INTEL 0x10050
 
+//Used with createBuffer
+#define CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL (1 << 23)
+
 /******************************
 *        UNIFIED MEMORY       *
 *******************************/
