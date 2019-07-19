@@ -20,7 +20,7 @@ void addSlash(std::string &path) {
     if (!path.empty()) {
         auto lastChar = *path.rbegin();
         if ((lastChar != '/') && (lastChar != '\\')) {
-            path += '/';
+            path.append("/");
         }
     }
 }
