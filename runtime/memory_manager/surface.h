@@ -83,10 +83,10 @@ class HostPtrSurface : public Surface {
 class MemObjSurface : public Surface {
   public:
     MemObjSurface(MemObj *memObj) : Surface(memObj->getGraphicsAllocation()->isCoherent()), memObj(memObj) {
-        memObj->retain();
+        memObj->incRefInternal();
     }
     ~MemObjSurface() override {
-        memObj->release();
+        memObj->decRefInternal();
         memObj = nullptr;
     };
 

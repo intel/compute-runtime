@@ -477,7 +477,14 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
     std::vector<Surface *> v;
     MockBuffer buffer;
     buffer.retain();
+    auto initialRefCount = buffer.getRefApiCount();
+    auto initialInternalCount = buffer.getRefInternalCount();
+
     auto bufferSurf = new MemObjSurface(&buffer);
+
+    EXPECT_EQ(initialInternalCount + 1, buffer.getRefInternalCount());
+    EXPECT_EQ(initialRefCount, buffer.getRefApiCount());
+
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     v.push_back(bufferSurf);
     auto cmd = new CommandComputeKernel(cmdQ, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode, pKernel, 1);
@@ -490,7 +497,7 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
 
     event.submitCommand(false);
 
-    EXPECT_EQ(refCount - 1, buffer.getRefApiCount());
+    EXPECT_EQ(refCount, buffer.getRefApiCount());
     EXPECT_EQ(refInternal - 1, buffer.getRefInternalCount());
 
     auto taskLevelAfter = csr.peekTaskLevel();
