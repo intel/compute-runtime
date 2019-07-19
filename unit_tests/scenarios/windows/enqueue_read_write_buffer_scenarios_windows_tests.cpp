@@ -5,7 +5,6 @@
  *
  */
 
-#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
@@ -26,7 +25,6 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
     }
 
     void SetUp() override {
-        DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
     }
 
@@ -63,7 +61,6 @@ struct EnqueueBufferWindowsTest : public HardwareParse,
     }
 
   protected:
-    DebugManagerStateRestore restore;
     HardwareInfo hardwareInfo;
     HardwareInfo *hwInfo = nullptr;
     ExecutionEnvironment *executionEnvironment;
