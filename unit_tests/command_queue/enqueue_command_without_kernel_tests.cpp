@@ -42,7 +42,7 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelWhenCommandEnqueuedT
     Surface *surfaces[] = {surface.get()};
     auto blocking = true;
     TimestampPacketContainer previousTimestampPacketNodes;
-    mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, mockCmdQ->getCS(0), 0, blocking, &previousTimestampPacketNodes, eventsRequest, eventBuilder, 0);
+    mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, mockCmdQ->getCS(0), 0, blocking, false, &previousTimestampPacketNodes, eventsRequest, eventBuilder, 0);
     EXPECT_EQ(allocation->getTaskCount(mockCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getContextId()), 1u);
 }
 
@@ -60,11 +60,32 @@ HWTEST_F(EnqueueHandlerTest, whenEnqueueCommandWithoutKernelThenPassCorrectDispa
     TimestampPacketContainer previousTimestampPacketNodes;
     EventsRequest eventsRequest(0, nullptr, nullptr);
     EventBuilder eventBuilder;
-    mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, mockCmdQ->getCS(0), 0, blocking, &previousTimestampPacketNodes, eventsRequest, eventBuilder, 0);
+    mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, mockCmdQ->getCS(0), 0, blocking, false, &previousTimestampPacketNodes, eventsRequest, eventBuilder, 0);
 
     EXPECT_EQ(blocking, mockCsr->passedDispatchFlags.blocking);
+    EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_EQ(mockCmdQ->isMultiEngineQueue(), mockCsr->passedDispatchFlags.multiEngineQueue);
     EXPECT_EQ(pDevice->getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
+    mockCmdQ->gpgpuEngine->commandStreamReceiver = oldCsr;
+}
+
+HWTEST_F(EnqueueHandlerTest, givenBlitEnqueueWhenDispatchingCommandsWithoutKernelThenDoImplicitflush) {
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    auto mockCsr = std::make_unique<MockCsrHw2<FamilyType>>(*executionEnvironment);
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
+    mockCsr->setupContext(*mockCmdQ->gpgpuEngine->osContext);
+    mockCsr->initializeTagAllocation();
+    auto oldCsr = mockCmdQ->gpgpuEngine->commandStreamReceiver;
+    mockCmdQ->gpgpuEngine->commandStreamReceiver = mockCsr.get();
+    mockCsr->createPreemptionAllocation();
+
+    auto blocking = true;
+    TimestampPacketContainer previousTimestampPacketNodes;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+    mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, mockCmdQ->getCS(0), 0, blocking, true, &previousTimestampPacketNodes, eventsRequest, eventBuilder, 0);
+
+    EXPECT_TRUE(mockCsr->passedDispatchFlags.implicitFlush);
     mockCmdQ->gpgpuEngine->commandStreamReceiver = oldCsr;
 }
 

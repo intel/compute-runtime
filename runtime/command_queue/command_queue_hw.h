@@ -348,6 +348,7 @@ class CommandQueueHw : public CommandQueue {
                                                 LinearStream &commandStream,
                                                 size_t commandStreamStart,
                                                 bool &blocking,
+                                                bool blitEnqueue,
                                                 TimestampPacketContainer *previousTimestampPacketNodes,
                                                 EventsRequest &eventsRequest,
                                                 EventBuilder &eventBuilder,

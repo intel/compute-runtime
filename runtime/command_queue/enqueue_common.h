@@ -312,6 +312,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 commandStream,
                 commandStreamStart,
                 blocking,
+                blitEnqueue,
                 &previousTimestampPacketNodes,
                 eventsRequest,
                 eventBuilder,
@@ -836,6 +837,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     LinearStream &commandStream,
     size_t commandStreamStart,
     bool &blocking,
+    bool blitEnqueue,
     TimestampPacketContainer *previousTimestampPacketNodes,
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
@@ -856,6 +858,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     dispatchFlags.blocking = blocking;
     dispatchFlags.multiEngineQueue = multiEngineQueue;
     dispatchFlags.preemptionMode = device->getPreemptionMode();
+    dispatchFlags.implicitFlush = blitEnqueue;
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
     }
