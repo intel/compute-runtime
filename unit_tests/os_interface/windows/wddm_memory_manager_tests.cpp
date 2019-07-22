@@ -1735,3 +1735,24 @@ TEST_F(WddmMemoryManagerSimpleTest, givenWriteCombinedAllocationThenCpuAddressIs
 TEST_F(WddmMemoryManagerSimpleTest, whenCreatingWddmMemoryManagerThenSupportsMultiStorageResourcesFlagIsSetToFalse) {
     EXPECT_TRUE(memoryManager->supportsMultiStorageResources);
 }
+
+TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRangeAnd32BitThenAllocationGoesToSvmHeap) {
+    if (executionEnvironment->isFullRangeSvm()) {
+        GTEST_SKIP();
+    }
+
+    memoryManager.reset(new MockWddmMemoryManager(true, true, *executionEnvironment));
+    size_t size = 2 * MemoryConstants::megaByte;
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({size, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY}));
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+    EXPECT_NE(nullptr, reinterpret_cast<void *>(allocation->getGpuAddress()));
+
+    auto heap = is32bit ? HeapIndex::HEAP_SVM : HeapIndex::HEAP_STANDARD;
+
+    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapBase(heap)), allocation->getGpuAddress());
+    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapLimit(heap)), allocation->getGpuAddress());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
