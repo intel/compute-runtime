@@ -18,7 +18,7 @@ class clRetainReleaseCommandQueueTests : public DeviceHostQueueFixture<T> {};
 
 TYPED_TEST_CASE(clRetainReleaseCommandQueueTests, QueueTypes);
 
-TYPED_TEST(clRetainReleaseCommandQueueTests, retain_release) {
+TYPED_TEST(clRetainReleaseCommandQueueTests, GivenValidCommandQueueWhenRetainingAndReleasingThenReferenceCountIsUpdatedCorrectly) {
     if (std::is_same<TypeParam, DeviceQueue>::value && !castToObject<Device>(this->devices[0])->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
         return;
     }
