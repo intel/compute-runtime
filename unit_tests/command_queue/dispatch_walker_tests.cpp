@@ -745,8 +745,10 @@ HWTEST_F(DispatchWalkerTest, givenBlockedEnqueueWhenObtainingCommandStreamThenAl
     auto expectedSizeCS = MemoryConstants::pageSize64k - CSRequirements::csOverfetchSize;
 
     CsrDependencies csrDependencies;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
     auto cmdStream = mockCmdQ.template obtainCommandStream<CL_COMMAND_NDRANGE_KERNEL>(csrDependencies, false, false, false, true,
-                                                                                      multiDispatchInfo, blockedKernelData, nullptr, 0u);
+                                                                                      multiDispatchInfo, eventsRequest, blockedKernelData,
+                                                                                      nullptr, 0u);
 
     EXPECT_EQ(expectedSizeCS, cmdStream->getMaxAvailableSpace());
     EXPECT_EQ(expectedSizeCSAllocation, cmdStream->getGraphicsAllocation()->getUnderlyingBufferSize());

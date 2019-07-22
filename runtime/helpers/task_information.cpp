@@ -82,7 +82,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     return completionStamp;
 }
 
-CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> kernelOperation, std::vector<Surface *> &surfaces,
+CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> &surfaces,
                                            bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler,
                                            PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount)
     : Command(commandQueue, kernelOperation), flushDC(flushDC), slmUsed(usesSLM),
@@ -135,12 +135,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     if (printfHandler) {
         printfHandler.get()->makeResident(commandStreamReceiver);
     }
-    if (currentTimestampPacketNodes) {
-        currentTimestampPacketNodes->makeResident(commandStreamReceiver);
-    }
-    if (previousTimestampPacketNodes) {
-        previousTimestampPacketNodes->makeResident(commandStreamReceiver);
-    }
+    makeTimestampPacketsResident();
 
     if (executionModelKernel) {
         uint32_t taskCount = commandStreamReceiver.peekTaskCount() + 1;
@@ -224,9 +219,42 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
     }
 
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
-    completionStamp.taskCount = commandStreamReceiver.peekTaskCount();
-    completionStamp.taskLevel = commandStreamReceiver.peekTaskLevel();
-    completionStamp.flushStamp = commandStreamReceiver.obtainCurrentFlushStamp();
+
+    if (!kernelOperation) {
+        completionStamp.taskCount = commandStreamReceiver.peekTaskCount();
+        completionStamp.taskLevel = commandStreamReceiver.peekTaskLevel();
+        completionStamp.flushStamp = commandStreamReceiver.obtainCurrentFlushStamp();
+
+        return completionStamp;
+    }
+
+    auto lockCSR = commandStreamReceiver.obtainUniqueOwnership();
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.blocking = true;
+    dispatchFlags.lowPriority = commandQueue.getPriority() == QueuePriority::LOW;
+    dispatchFlags.throttle = commandQueue.getThrottle();
+    dispatchFlags.preemptionMode = commandQueue.getDevice().getPreemptionMode();
+    dispatchFlags.multiEngineQueue = commandQueue.isMultiEngineQueue();
+    dispatchFlags.guardCommandBufferWithPipeControl = true;
+    dispatchFlags.outOfOrderExecutionAllowed = commandStreamReceiver.isNTo1SubmissionModelEnabled();
+
+    UNRECOVERABLE_IF(!commandStreamReceiver.peekTimestampPacketWriteEnabled());
+
+    dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
+
+    makeTimestampPacketsResident();
+
+    gtpinNotifyPreFlushTask(&commandQueue);
+
+    completionStamp = commandStreamReceiver.flushTask(*kernelOperation->commandStream,
+                                                      0,
+                                                      commandQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
+                                                      commandQueue.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
+                                                      commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
+                                                      taskLevel,
+                                                      dispatchFlags,
+                                                      commandQueue.getDevice());
 
     return completionStamp;
 }
@@ -256,6 +284,17 @@ Command::~Command() {
             auto event = castToObjectOrAbort<Event>(eventFromWaitList);
             event->decRefInternal();
         }
+    }
+}
+
+void Command::makeTimestampPacketsResident() {
+    auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
+
+    if (currentTimestampPacketNodes) {
+        currentTimestampPacketNodes->makeResident(commandStreamReceiver);
+    }
+    if (previousTimestampPacketNodes) {
+        previousTimestampPacketNodes->makeResident(commandStreamReceiver);
     }
 }
 

@@ -228,7 +228,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     auto &commandStream = *obtainCommandStream<commandType>(csrDeps, profilingRequired, perfCountersRequired, blitEnqueue, blockQueue,
-                                                            multiDispatchInfo, blockedCommandsData, surfacesForResidency, numSurfaceForResidency);
+                                                            multiDispatchInfo, eventsRequest, blockedCommandsData, surfacesForResidency,
+                                                            numSurfaceForResidency);
     auto commandStreamStart = commandStream.getUsed();
 
     if (eventBuilder.getEvent() && getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
@@ -763,15 +764,16 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
         eventBuilder = &internalEventBuilder;
         DBG_LOG(EventsDebugEnable, "enqueueBlocked", "new virtualEvent", eventBuilder->getEvent());
     }
+    auto outEvent = eventBuilder->getEvent();
 
     //update queue taskCount
-    taskCount = eventBuilder->getEvent()->getCompletionStamp();
+    taskCount = outEvent->getCompletionStamp();
+
+    std::unique_ptr<Command> command;
+    bool storeTimestampPackets = blockedCommandsData && timestampPacketContainer;
 
     if (multiDispatchInfo.empty()) {
-        DEBUG_BREAK_IF(!isCommandWithoutKernel(commandType));
-        auto cmd = std::make_unique<CommandMarker>(*this);
-
-        eventBuilder->getEvent()->setCommand(std::move(cmd));
+        command = std::make_unique<CommandMarker>(*this, blockedCommandsData);
     } else {
         //store task data in event
         std::vector<Surface *> allSurfaces;
@@ -788,28 +790,26 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             allSurfaces.push_back(surface->duplicate());
         }
         PreemptionMode preemptionMode = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
-        auto cmd = std::make_unique<CommandComputeKernel>(
-            *this,
-            std::move(blockedCommandsData),
-            allSurfaces,
-            shouldFlushDC(commandType, printfHandler.get()),
-            slmUsed,
-            commandType == CL_COMMAND_NDRANGE_KERNEL,
-            std::move(printfHandler),
-            preemptionMode,
-            multiDispatchInfo.peekMainKernel(),
-            (uint32_t)multiDispatchInfo.size());
-
-        if (timestampPacketContainer.get()) {
-            for (cl_uint i = 0; i < eventsRequest.numEventsInWaitList; i++) {
-                auto event = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
-                event->incRefInternal();
-            }
-            cmd->setTimestampPacketNode(*timestampPacketContainer, *previousTimestampPacketNodes);
-        }
-        cmd->setEventsRequest(eventsRequest);
-        eventBuilder->getEvent()->setCommand(std::move(cmd));
+        command = std::make_unique<CommandComputeKernel>(*this,
+                                                         blockedCommandsData,
+                                                         allSurfaces,
+                                                         shouldFlushDC(commandType, printfHandler.get()),
+                                                         slmUsed,
+                                                         commandType == CL_COMMAND_NDRANGE_KERNEL,
+                                                         std::move(printfHandler),
+                                                         preemptionMode,
+                                                         multiDispatchInfo.peekMainKernel(),
+                                                         (uint32_t)multiDispatchInfo.size());
     }
+    if (storeTimestampPackets) {
+        for (cl_uint i = 0; i < eventsRequest.numEventsInWaitList; i++) {
+            auto event = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
+            event->incRefInternal();
+        }
+        command->setTimestampPacketNode(*timestampPacketContainer, *previousTimestampPacketNodes);
+        command->setEventsRequest(eventsRequest);
+    }
+    outEvent->setCommand(std::move(command));
 
     eventBuilder->addParentEvents(ArrayRef<const cl_event>(eventsRequest.eventWaitList, eventsRequest.numEventsInWaitList));
     eventBuilder->addParentEvent(this->virtualEvent);
@@ -819,7 +819,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
         this->virtualEvent->decRefInternal();
     }
 
-    this->virtualEvent = eventBuilder->getEvent();
+    this->virtualEvent = outEvent;
 }
 
 template <typename GfxFamily>

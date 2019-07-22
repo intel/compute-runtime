@@ -588,4 +588,27 @@ bool CommandQueue::blitEnqueueAllowed(bool queueBlocked, cl_command_type cmdType
 
     return commandAllowed && !queueBlocked && blitAllowed;
 }
+
+bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue) const {
+    if (!blockedQueue) {
+        return false;
+    }
+
+    if (isCacheFlushCommand(commandType) || !isCommandWithoutKernel(commandType)) {
+        return true;
+    }
+
+    if ((CL_COMMAND_BARRIER == commandType || CL_COMMAND_MARKER == commandType) &&
+        getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+
+        for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
+            auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
+            if (waitlistEvent->getTimestampPacketNodes()) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
 } // namespace NEO

@@ -10,6 +10,7 @@
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/properties_helper.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/utilities/iflist.h"
 
@@ -92,6 +93,7 @@ class Command : public IFNode<Command> {
     }
     void setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &previous);
     void setEventsRequest(EventsRequest &eventsRequest);
+    void makeTimestampPacketsResident();
 
     TagNode<HwTimeStamps> *timestamp = nullptr;
     CompletionStamp completionStamp = {};
@@ -122,7 +124,7 @@ class CommandMapUnmap : public Command {
 
 class CommandComputeKernel : public Command {
   public:
-    CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> kernelResources, std::vector<Surface *> &surfaces,
+    CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, std::vector<Surface *> &surfaces,
                          bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler,
                          PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount);
 
@@ -146,7 +148,6 @@ class CommandComputeKernel : public Command {
 class CommandMarker : public Command {
   public:
     using Command::Command;
-
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
 };
 } // namespace NEO

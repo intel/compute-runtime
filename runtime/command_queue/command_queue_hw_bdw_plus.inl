@@ -17,7 +17,7 @@ void CommandQueueHw<GfxFamily>::submitCacheFlush(Surface **surfaces,
 }
 
 template <typename GfxFamily>
-bool CommandQueueHw<GfxFamily>::isCacheFlushCommand(uint32_t commandType) {
+bool CommandQueueHw<GfxFamily>::isCacheFlushCommand(uint32_t commandType) const {
     return false;
 }
 

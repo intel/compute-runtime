@@ -367,7 +367,7 @@ class CommandQueueHw : public CommandQueue {
                           LinearStream *commandStream,
                           uint64_t postSyncAddress);
 
-    bool isCacheFlushCommand(uint32_t commandType) override;
+    bool isCacheFlushCommand(uint32_t commandType) const override;
 
   protected:
     MOCKABLE_VIRTUAL void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo){};
@@ -389,10 +389,11 @@ class CommandQueueHw : public CommandQueue {
     LinearStream *obtainCommandStream(const CsrDependencies &csrDependencies, bool profilingRequired,
                                       bool perfCountersRequired, bool blitEnqueue, bool blockedQueue,
                                       const MultiDispatchInfo &multiDispatchInfo,
+                                      const EventsRequest &eventsRequest,
                                       std::unique_ptr<KernelOperation> &blockedCommandsData,
                                       Surface **surfaces, size_t numSurfaces) {
         LinearStream *commandStream = nullptr;
-        if (blockedQueue && !multiDispatchInfo.empty()) {
+        if (isBlockedCommandStreamRequired(commandType, eventsRequest, blockedQueue)) {
             constexpr size_t additionalAllocationSize = CSRequirements::csOverfetchSize;
             constexpr size_t allocationSize = MemoryConstants::pageSize64k - CSRequirements::csOverfetchSize;
             commandStream = new LinearStream();

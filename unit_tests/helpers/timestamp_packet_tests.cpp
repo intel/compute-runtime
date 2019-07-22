@@ -17,6 +17,7 @@
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -1373,6 +1374,72 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutK
     cmdQ->isQueueBlocked();
 }
 
+HWTEST_F(TimestampPacketTests, givenBlockedEnqueueWithoutKernelWhenSubmittingThenDispatchBlockedCommands) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->getExecutionEnvironment());
+    device->resetCommandStreamReceiver(mockCsr);
+    mockCsr->timestampPacketWriteEnabled = true;
+    mockCsr->storeFlushedTaskStream = true;
+
+    auto cmdQ0 = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+
+    auto &secondEngine = device->getEngine(aub_stream::ENGINE_RCS, true);
+    static_cast<UltCommandStreamReceiver<FamilyType> *>(secondEngine.commandStreamReceiver)->timestampPacketWriteEnabled = true;
+
+    auto cmdQ1 = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+    cmdQ1->gpgpuEngine = &secondEngine;
+    cmdQ1->timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    EXPECT_NE(&cmdQ0->getGpgpuCommandStreamReceiver(), &cmdQ1->getGpgpuCommandStreamReceiver());
+
+    MockTimestampPacketContainer node0(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer node1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event0(cmdQ0.get(), 0, 0, 0); // on the same CSR
+    event0.addTimestampPacketNodes(node0);
+    Event event1(cmdQ1.get(), 0, 0, 0); // on different CSR
+    event1.addTimestampPacketNodes(node1);
+
+    uint32_t numEventsOnWaitlist = 3;
+
+    uint32_t commands[] = {CL_COMMAND_MARKER, CL_COMMAND_BARRIER};
+    for (int i = 0; i < 2; i++) {
+        UserEvent userEvent;
+        cl_event waitlist[] = {&event0, &event1, &userEvent};
+        if (commands[i] == CL_COMMAND_MARKER) {
+            cmdQ0->enqueueMarkerWithWaitList(numEventsOnWaitlist, waitlist, nullptr);
+        } else if (commands[i] == CL_COMMAND_BARRIER) {
+            cmdQ0->enqueueBarrierWithWaitList(numEventsOnWaitlist, waitlist, nullptr);
+        } else {
+            EXPECT_TRUE(false);
+        }
+
+        auto initialCsrStreamOffset = mockCsr->commandStream.getUsed();
+        userEvent.setStatus(CL_COMPLETE);
+
+        HardwareParse hwParserCsr;
+        HardwareParse hwParserCmdQ;
+        LinearStream taskStream(mockCsr->storedTaskStream.get(), mockCsr->storedTaskStreamSize);
+        taskStream.getSpace(mockCsr->storedTaskStreamSize);
+        hwParserCsr.parseCommands<FamilyType>(mockCsr->commandStream, initialCsrStreamOffset);
+        hwParserCmdQ.parseCommands<FamilyType>(taskStream, 0);
+
+        auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
+        EXPECT_EQ(1u, queueSemaphores.size());
+        verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), node0.getNode(0));
+
+        auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+        EXPECT_EQ(1u, csrSemaphores.size());
+        verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node1.getNode(0));
+
+        EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
+        EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+        EXPECT_EQ(device->getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
+
+        cmdQ0->isQueueBlocked();
+    }
+}
+
 HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingMarkerWithoutKernelThenInheritTimestampPacketsAndProgramSemaphores) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
@@ -1504,10 +1571,11 @@ HWTEST_F(TimestampPacketTests, givenBlockedQueueWhenEnqueueingBarrierThenRequest
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
 
-    UserEvent userEvent;
-    cl_event waitlist[] = {&userEvent};
+    auto userEvent = make_releaseable<UserEvent>();
+    cl_event waitlist[] = {userEvent.get()};
     cmdQ.enqueueBarrierWithWaitList(1, waitlist, nullptr);
     EXPECT_TRUE(csr.stallingPipeControlOnNextFlushRequired);
+    userEvent->setStatus(CL_COMPLETE);
 }
 
 HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenEstimatingCsrStreamSizeThenAddSizeForPipeControl) {
