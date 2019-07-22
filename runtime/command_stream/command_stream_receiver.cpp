@@ -216,7 +216,8 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
 
 void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
     this->tagAllocation = allocation;
-    this->tagAddress = allocation ? reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer()) : nullptr;
+    UNRECOVERABLE_IF(allocation == nullptr);
+    this->tagAddress = reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer());
 }
 
 FlushStamp CommandStreamReceiver::obtainCurrentFlushStamp() const {

@@ -27,9 +27,9 @@ namespace NEO {
 template void KernelOperation::ResourceCleaner::operator()<LinearStream>(LinearStream *);
 template void KernelOperation::ResourceCleaner::operator()<IndirectHeap>(IndirectHeap *);
 
-CommandMapUnmap::CommandMapUnmap(MapOperationType op, MemObj &memObj, MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset, bool readOnly,
-                                 CommandStreamReceiver &csr, CommandQueue &cmdQ)
-    : memObj(memObj), copySize(copySize), copyOffset(copyOffset), readOnly(readOnly), csr(csr), cmdQ(cmdQ), op(op) {
+CommandMapUnmap::CommandMapUnmap(MapOperationType operationType, MemObj &memObj, MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset, bool readOnly,
+                                 CommandQueue &commandQueue)
+    : Command(commandQueue), memObj(memObj), copySize(copySize), copyOffset(copyOffset), readOnly(readOnly), operationType(operationType) {
     memObj.incRefInternal();
 }
 
@@ -39,40 +39,40 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         return completionStamp;
     }
 
-    bool blocking = true;
-    auto commandStreamReceiverOwnership = csr.obtainUniqueOwnership();
-    auto &queueCommandStream = cmdQ.getCS(0);
+    auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
+    auto commandStreamReceiverOwnership = commandStreamReceiver.obtainUniqueOwnership();
+    auto &queueCommandStream = commandQueue.getCS(0);
     size_t offset = queueCommandStream.getUsed();
 
     DispatchFlags dispatchFlags;
-    dispatchFlags.blocking = blocking;
+    dispatchFlags.blocking = true;
     dispatchFlags.dcFlush = true;
     dispatchFlags.useSLM = true;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
-    dispatchFlags.lowPriority = cmdQ.getPriority() == QueuePriority::LOW;
-    dispatchFlags.throttle = cmdQ.getThrottle();
-    dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(cmdQ.getDevice(), nullptr);
-    dispatchFlags.multiEngineQueue = cmdQ.isMultiEngineQueue();
+    dispatchFlags.lowPriority = commandQueue.getPriority() == QueuePriority::LOW;
+    dispatchFlags.throttle = commandQueue.getThrottle();
+    dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), nullptr);
+    dispatchFlags.multiEngineQueue = commandQueue.isMultiEngineQueue();
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
-    gtpinNotifyPreFlushTask(&cmdQ);
+    gtpinNotifyPreFlushTask(&commandQueue);
 
-    completionStamp = csr.flushTask(queueCommandStream,
-                                    offset,
-                                    cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
-                                    cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
-                                    cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
-                                    taskLevel,
-                                    dispatchFlags,
-                                    cmdQ.getDevice());
+    completionStamp = commandStreamReceiver.flushTask(queueCommandStream,
+                                                      offset,
+                                                      commandQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
+                                                      commandQueue.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
+                                                      commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
+                                                      taskLevel,
+                                                      dispatchFlags,
+                                                      commandQueue.getDevice());
 
     if (!memObj.isMemObjZeroCopy()) {
-        cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
-        if (op == MAP) {
+        commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
+        if (operationType == MAP) {
             memObj.transferDataToHostPtr(copySize, copyOffset);
         } else if (!readOnly) {
-            DEBUG_BREAK_IF(op != UNMAP);
+            DEBUG_BREAK_IF(operationType != UNMAP);
             memObj.transferDataFromHostPtr(copySize, copyOffset);
         }
     }
@@ -85,7 +85,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
 CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> kernelOperation, std::vector<Surface *> &surfaces,
                                            bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler,
                                            PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount)
-    : commandQueue(commandQueue), kernelOperation(std::move(kernelOperation)), flushDC(flushDC), slmUsed(usesSLM),
+    : Command(commandQueue, kernelOperation), flushDC(flushDC), slmUsed(usesSLM),
       NDRangeKernel(ndRangeKernel), printfHandler(std::move(printfHandler)), kernel(kernel),
       kernelCount(kernelCount), preemptionMode(preemptionMode) {
     for (auto surface : surfaces) {
@@ -97,14 +97,6 @@ CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::uniq
 
 CommandComputeKernel::~CommandComputeKernel() {
     kernel->decRefInternal();
-
-    auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
-    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        for (cl_event eventFromWaitList : eventsWaitlist) {
-            auto event = castToObjectOrAbort<Event>(eventFromWaitList);
-            event->decRefInternal();
-        }
-    }
 }
 
 CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminated) {
@@ -226,7 +218,20 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     return completionStamp;
 }
 
-void CommandComputeKernel::setEventsRequest(EventsRequest &eventsRequest) {
+CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
+    if (terminated) {
+        return completionStamp;
+    }
+
+    auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
+    completionStamp.taskCount = commandStreamReceiver.peekTaskCount();
+    completionStamp.taskLevel = commandStreamReceiver.peekTaskLevel();
+    completionStamp.flushStamp = commandStreamReceiver.obtainCurrentFlushStamp();
+
+    return completionStamp;
+}
+
+void Command::setEventsRequest(EventsRequest &eventsRequest) {
     this->eventsRequest = eventsRequest;
     if (eventsRequest.numEventsInWaitList > 0) {
         eventsWaitlist.resize(eventsRequest.numEventsInWaitList);
@@ -236,7 +241,7 @@ void CommandComputeKernel::setEventsRequest(EventsRequest &eventsRequest) {
     }
 }
 
-void CommandComputeKernel::setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &previous) {
+void Command::setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &previous) {
     currentTimestampPacketNodes = std::make_unique<TimestampPacketContainer>();
     currentTimestampPacketNodes->assignAndIncrementNodesRefCounts(current);
 
@@ -244,15 +249,18 @@ void CommandComputeKernel::setTimestampPacketNode(TimestampPacketContainer &curr
     previousTimestampPacketNodes->assignAndIncrementNodesRefCounts(previous);
 }
 
-CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
-    if (terminated) {
-        return completionStamp;
+Command::~Command() {
+    auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
+    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        for (cl_event &eventFromWaitList : eventsWaitlist) {
+            auto event = castToObjectOrAbort<Event>(eventFromWaitList);
+            event->decRefInternal();
+        }
     }
-
-    completionStamp.taskCount = csr.peekTaskCount();
-    completionStamp.taskLevel = csr.peekTaskLevel();
-    completionStamp.flushStamp = csr.obtainCurrentFlushStamp();
-
-    return completionStamp;
 }
+
+Command::Command(CommandQueue &commandQueue) : commandQueue(commandQueue) {}
+
+Command::Command(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation)
+    : commandQueue(commandQueue), kernelOperation(std::move(kernelOperation)) {}
 } // namespace NEO

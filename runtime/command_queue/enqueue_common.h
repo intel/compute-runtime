@@ -769,13 +769,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
 
     if (multiDispatchInfo.empty()) {
         DEBUG_BREAK_IF(!isCommandWithoutKernel(commandType));
-        auto cmdSize = static_cast<uint32_t>(EnqueueOperation<GfxFamily>::getSizeRequiredCS(commandType,
-                                                                                            isProfilingEnabled(),
-                                                                                            isPerfCountersEnabled(),
-                                                                                            *this,
-                                                                                            nullptr));
-
-        auto cmd = std::make_unique<CommandMarker>(*this, getGpgpuCommandStreamReceiver(), commandType, cmdSize);
+        auto cmd = std::make_unique<CommandMarker>(*this);
 
         eventBuilder->getEvent()->setCommand(std::move(cmd));
     } else {

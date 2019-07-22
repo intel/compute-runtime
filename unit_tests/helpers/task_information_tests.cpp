@@ -29,7 +29,7 @@ TEST(CommandTest, mapUnmapSubmitWithoutTerminateFlagFlushesCsr) {
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    std::unique_ptr<Command> command(new CommandMapUnmap(MapOperationType::MAP, buffer, size, offset, false, csr, *cmdQ.get()));
+    std::unique_ptr<Command> command(new CommandMapUnmap(MapOperationType::MAP, buffer, size, offset, false, *cmdQ.get()));
     CompletionStamp completionStamp = command->submit(20, false);
 
     auto expectedTaskCount = initialTaskCount + 1;
@@ -46,7 +46,7 @@ TEST(CommandTest, mapUnmapSubmitWithTerminateFlagAbortsFlush) {
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    std::unique_ptr<Command> command(new CommandMapUnmap(MapOperationType::MAP, buffer, size, offset, false, csr, *cmdQ.get()));
+    std::unique_ptr<Command> command(new CommandMapUnmap(MapOperationType::MAP, buffer, size, offset, false, *cmdQ.get()));
     CompletionStamp completionStamp = command->submit(20, true);
 
     auto submitTaskCount = csr.peekTaskCount();
@@ -63,7 +63,7 @@ TEST(CommandTest, markerSubmitWithoutTerminateFlagDosntFlushCsr) {
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
-    std::unique_ptr<Command> command(new CommandMarker(*cmdQ.get(), csr, CL_COMMAND_MARKER, 0));
+    std::unique_ptr<Command> command(new CommandMarker(*cmdQ));
     CompletionStamp completionStamp = command->submit(20, false);
 
     EXPECT_EQ(initialTaskCount, completionStamp.taskCount);
@@ -77,7 +77,7 @@ TEST(CommandTest, markerSubmitWithTerminateFlagAbortsFlush) {
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
-    std::unique_ptr<Command> command(new CommandMarker(*cmdQ.get(), csr, CL_COMMAND_MARKER, 0));
+    std::unique_ptr<Command> command(new CommandMarker(*cmdQ));
     CompletionStamp completionStamp = command->submit(20, true);
 
     auto submitTaskCount = csr.peekTaskCount();

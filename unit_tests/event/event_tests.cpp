@@ -595,15 +595,15 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 }
 
 TEST_F(InternalsEventTest, processBlockedCommandsMapOperation) {
+    auto pCmdQ = make_releaseable<CommandQueue>(mockContext, pDevice, nullptr);
     MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
-    CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, 0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto buffer = new MockBuffer;
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, size, offset, false, csr, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, size, offset, false, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -613,19 +613,18 @@ TEST_F(InternalsEventTest, processBlockedCommandsMapOperation) {
 
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
     buffer->decRefInternal();
-    delete pCmdQ;
 }
 
 TEST_F(InternalsEventTest, processBlockedCommandsMapOperationNonZeroCopyBuffer) {
+    auto pCmdQ = make_releaseable<CommandQueue>(mockContext, pDevice, nullptr);
     MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
-    CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, 0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto buffer = new UnalignedBuffer;
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, size, offset, false, csr, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, size, offset, false, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -635,7 +634,6 @@ TEST_F(InternalsEventTest, processBlockedCommandsMapOperationNonZeroCopyBuffer) 
 
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
     buffer->decRefInternal();
-    delete pCmdQ;
 }
 
 uint32_t commands[] = {
@@ -712,7 +710,7 @@ TEST_F(InternalsEventTest, GIVENProfilingWHENMapOperationTHENTimesSet) {
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event->setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, size, offset, false, csr, *pCmdQ)));
+    event->setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, size, offset, false, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -729,16 +727,16 @@ TEST_F(InternalsEventTest, GIVENProfilingWHENMapOperationTHENTimesSet) {
 }
 
 TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperation) {
-    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
+    auto pCmdQ = make_releaseable<CommandQueue>(mockContext, pDevice, props);
+    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto buffer = new UnalignedBuffer;
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, csr, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -748,22 +746,20 @@ TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperation) {
 
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
     buffer->decRefInternal();
-    delete pCmdQ;
 }
 
 TEST_F(InternalsEventTest, givenBlockedMapCommandWhenSubmitIsCalledItReleasesMemObjectReference) {
-    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     auto pCmdQ = std::make_unique<CommandQueue>(mockContext, pDevice, props);
+    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
-    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto buffer = new UnalignedBuffer;
 
     auto currentBufferRefInternal = buffer->getRefInternalCount();
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, csr, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, *pCmdQ)));
     EXPECT_EQ(currentBufferRefInternal + 1, buffer->getRefInternalCount());
 
     event.submitCommand(false);
@@ -772,16 +768,16 @@ TEST_F(InternalsEventTest, givenBlockedMapCommandWhenSubmitIsCalledItReleasesMem
     buffer->decRefInternal();
 }
 TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperationNonZeroCopyBuffer) {
-    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
+    auto pCmdQ = std::make_unique<CommandQueue>(mockContext, pDevice, props);
+    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto buffer = new UnalignedBuffer;
 
     MemObjSizeArray size = {{1, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, csr, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -791,7 +787,6 @@ TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperationNonZeroCopyBuffer
 
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
     buffer->decRefInternal();
-    delete pCmdQ;
 }
 
 HWTEST_F(InternalsEventTest, givenCpuProfilingPathWhenEnqueuedMarkerThenDontUseTimeStampNode) {
@@ -800,9 +795,7 @@ HWTEST_F(InternalsEventTest, givenCpuProfilingPathWhenEnqueuedMarkerThenDontUseT
     MockEvent<Event> *event = new MockEvent<Event>(pCmdQ, CL_COMMAND_MARKER, 0, 0);
     event->setCPUProfilingPath(true);
 
-    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
-
-    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ, csr, CL_COMMAND_MARKER, 4096u)));
+    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ)));
 
     event->submitCommand(false);
 
@@ -845,9 +838,7 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
     MockEvent<Event> *event = new MockEvent<Event>(pCmdQ, CL_COMMAND_MARKER, 0, 0);
     event->setCPUProfilingPath(true);
 
-    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
-
-    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ, csr, CL_COMMAND_MARKER, 4096u)));
+    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ)));
 
     event->submitCommand(false);
 
@@ -873,9 +864,8 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
     ASSERT_NE(nullptr, perfCounter);
     HwTimeStamps *timeStamps = event->getHwTimeStampNode()->tagForCpuAccess;
     ASSERT_NE(nullptr, timeStamps);
-    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
 
-    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ, csr, CL_COMMAND_MARKER, 4096u)));
+    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ)));
 
     event->submitCommand(false);
 
@@ -984,47 +974,44 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushe
     };
 
     int32_t executionStamp = 0;
+    auto csr = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment);
+    pDevice->resetCommandStreamReceiver(csr);
+
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
+    auto pCmdQ = make_releaseable<CommandQueue>(mockContext, pDevice, props);
+
     MockNonZeroCopyBuff buffer(executionStamp);
-    MockCsr<FamilyType> csr(executionStamp, *pDevice->executionEnvironment);
-    csr.setTagAllocation(pDevice->getDefaultEngine().commandStreamReceiver->getTagAllocation());
-    csr.createPreemptionAllocation();
-    csr.setupContext(*pDevice->getDefaultEngine().osContext);
 
     MemObjSizeArray size = {{4, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};
-    auto commandMap = std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, size, offset, false, csr, *pCmdQ));
+    auto commandMap = std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, size, offset, false, *pCmdQ));
     EXPECT_EQ(0, executionStamp);
-    EXPECT_EQ(-1, csr.flushTaskStamp);
+    EXPECT_EQ(-1, csr->flushTaskStamp);
     EXPECT_EQ(-1, buffer.dataTransferedStamp);
 
-    auto latestSentFlushTaskCount = csr.peekLatestSentTaskCount();
+    auto latestSentFlushTaskCount = csr->peekLatestSentTaskCount();
 
     commandMap->submit(0, false);
     EXPECT_EQ(1, executionStamp);
-    EXPECT_EQ(0, csr.flushTaskStamp);
+    EXPECT_EQ(0, csr->flushTaskStamp);
     EXPECT_EQ(1, buffer.dataTransferedStamp);
-    auto latestSentFlushTaskCountAfterSubmit = csr.peekLatestSentTaskCount();
+    auto latestSentFlushTaskCountAfterSubmit = csr->peekLatestSentTaskCount();
     EXPECT_GT(latestSentFlushTaskCountAfterSubmit, latestSentFlushTaskCount);
 
     executionStamp = 0;
-    csr.flushTaskStamp = -1;
+    csr->flushTaskStamp = -1;
     buffer.dataTransferedStamp = -1;
     buffer.swapCopyDirection();
 
-    auto commandUnMap = std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, buffer, size, offset, false, csr, *pCmdQ));
+    auto commandUnMap = std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, buffer, size, offset, false, *pCmdQ));
     EXPECT_EQ(0, executionStamp);
-    EXPECT_EQ(-1, csr.flushTaskStamp);
+    EXPECT_EQ(-1, csr->flushTaskStamp);
     EXPECT_EQ(-1, buffer.dataTransferedStamp);
     commandUnMap->submit(0, false);
     EXPECT_EQ(1, executionStamp);
-    EXPECT_EQ(0, csr.flushTaskStamp);
+    EXPECT_EQ(0, csr->flushTaskStamp);
     EXPECT_EQ(1, buffer.dataTransferedStamp);
     EXPECT_EQ(nullptr, commandUnMap->getCommandStream());
-
-    pCmdQ->getGpgpuCommandStreamReceiver().setTagAllocation(nullptr);
-    delete pCmdQ;
 }
 
 TEST(EventCallback, CallbackAfterStatusOverrideUsesNewStatus) {
@@ -1466,7 +1453,7 @@ HWTEST_F(InternalsEventTest, givenCommandWhenSubmitCalledThenUpdateFlushStamp) {
 
     FlushStamp expectedFlushStamp = 0;
     EXPECT_EQ(expectedFlushStamp, event->flushStamp->peekStamp());
-    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ.get(), csr, CL_COMMAND_MARKER, 4096u)));
+    event->setCommand(std::unique_ptr<Command>(new CommandMarker(*pCmdQ)));
     event->submitCommand(false);
     EXPECT_EQ(csr.flushStamp->peekStamp(), event->flushStamp->peekStamp());
     delete event;
