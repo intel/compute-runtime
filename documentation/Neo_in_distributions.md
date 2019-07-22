@@ -12,6 +12,12 @@ pacman -S intel-compute-runtime
 swupd bundle-add computer-vision-basic
 ```
 
+## Exherbo Linux
+
+```
+cave resolve --execute intel-compute-runtime
+```
+
 ## Ubuntu* 19.04
 
 ```
