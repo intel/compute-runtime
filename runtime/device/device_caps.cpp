@@ -285,7 +285,7 @@ void Device::initializeCaps() {
     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "computeUnitsUsedForScratch: %d\n", deviceInfo.computeUnitsUsedForScratch);
 
     deviceInfo.localMemType = CL_LOCAL;
-    deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize << 10;
+    deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * KB;
 
     deviceInfo.imageSupport = hwInfo.capabilityTable.supportsImages;
     deviceInfo.image2DMaxWidth = 16384;

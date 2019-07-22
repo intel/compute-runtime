@@ -864,6 +864,10 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo, uint32_t kernelNum) {
         retVal = kernelInfo.createKernelAllocation(this->pDevice->getMemoryManager()) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
     }
 
+    if (this->pDevice && kernelInfo.workloadInfo.slmStaticSize > this->pDevice->getDeviceInfo().localMemSize) {
+        retVal = CL_OUT_OF_RESOURCES;
+    }
+
     DEBUG_BREAK_IF(kernelInfo.heapInfo.pKernelHeader->KernelHeapSize && !this->pDevice);
 
     return retVal;

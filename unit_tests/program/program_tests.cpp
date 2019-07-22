@@ -2060,6 +2060,68 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KE
     delete pProgram;
 }
 
+TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimitThenReturnError) {
+    cl_int retVal = CL_INVALID_BINARY;
+    char genBin[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
+    size_t binSize = 10;
+
+    auto program = std::unique_ptr<Program>(Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), nullptr, &genBin[0], binSize, false, &retVal));
+
+    EXPECT_NE(nullptr, program.get());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)program->getProgramBinaryType());
+
+    cl_device_id deviceId = pContext->getDevice(0);
+    Device *pDevice = castToObject<Device>(deviceId);
+    program->setDevice(pDevice);
+    char *pBin = &genBin[0];
+    retVal = CL_INVALID_BINARY;
+    binSize = 0;
+
+    // Prepare simple program binary containing patch token PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE
+    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
+    pBHdr->Magic = iOpenCL::MAGIC_CL;
+    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
+    pBHdr->Device = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+    pBHdr->GPUPointerSizeInBytes = 8;
+    pBHdr->NumberOfKernels = 1;
+    pBHdr->SteppingId = 0;
+    pBHdr->PatchListSize = 0;
+    pBin += sizeof(SProgramBinaryHeader);
+    binSize += sizeof(SProgramBinaryHeader);
+
+    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
+    pKHdr->CheckSum = 0;
+    pKHdr->ShaderHashCode = 0;
+    pKHdr->KernelNameSize = 8;
+    pKHdr->PatchListSize = sizeof(iOpenCL::SPatchAllocateLocalSurface);
+    pKHdr->KernelHeapSize = 0;
+    pKHdr->GeneralStateHeapSize = 0;
+    pKHdr->DynamicStateHeapSize = 0;
+    pKHdr->SurfaceStateHeapSize = 0;
+    pKHdr->KernelUnpaddedSize = 0;
+    pBin += sizeof(SKernelBinaryHeaderCommon);
+    binSize += sizeof(SKernelBinaryHeaderCommon);
+
+    strcpy(pBin, "TstCopy");
+    pBin += pKHdr->KernelNameSize;
+    binSize += pKHdr->KernelNameSize;
+
+    SPatchAllocateLocalSurface *pPatch = (SPatchAllocateLocalSurface *)pBin;
+    pPatch->Token = iOpenCL::PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE;
+    pPatch->Size = sizeof(iOpenCL::SPatchAllocateLocalSurface);
+    pPatch->TotalInlineLocalMemorySize = static_cast<uint32_t>(pDevice->getDeviceInfo().localMemSize * 2);
+
+    pBin += sizeof(SPatchAllocateLocalSurface);
+    binSize += sizeof(SPatchAllocateLocalSurface);
+
+    // Decode prepared program binary
+    program->storeGenBinary(&genBin[0], binSize);
+    retVal = program->processGenBinary();
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+}
+
 TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GTPIN_FREE_GRF_INFO) {
 #define GRF_INFO_SIZE 44u
     cl_int retVal = CL_INVALID_BINARY;
