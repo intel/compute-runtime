@@ -810,6 +810,60 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenWriteInvalidateRegionFlagWhenMappingSvm
     EXPECT_FALSE(svmMap->readOnlyMap);
 }
 
+HWTEST_F(EnqueueSvmTestLocalMemory, givenMapWriteFlagWhenMappingSvmThenMapIsSuccessfulAndReadOnlyFlagIsFalse) {
+    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    uintptr_t offset = 64;
+    void *regionSvmPtr = ptrOffset(svmPtr, offset);
+    size_t regionSize = 64;
+    retVal = queue.enqueueSVMMap(
+        CL_TRUE,
+        CL_MAP_WRITE,
+        regionSvmPtr,
+        regionSize,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
+    EXPECT_FALSE(svmMap->readOnlyMap);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenMapReadFlagWhenMappingSvmThenMapIsSuccessfulAndReadOnlyFlagIsTrue) {
+    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    uintptr_t offset = 64;
+    void *regionSvmPtr = ptrOffset(svmPtr, offset);
+    size_t regionSize = 64;
+    retVal = queue.enqueueSVMMap(
+        CL_TRUE,
+        CL_MAP_READ,
+        regionSvmPtr,
+        regionSize,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
+    EXPECT_TRUE(svmMap->readOnlyMap);
+}
+
+HWTEST_F(EnqueueSvmTestLocalMemory, givenSvmAllocWithoutFlagsWhenMappingSvmThenMapIsSuccessfulAndReadOnlyFlagIsTrue) {
+    MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
+    uintptr_t offset = 64;
+    void *regionSvmPtr = ptrOffset(svmPtr, offset);
+    size_t regionSize = 64;
+    retVal = queue.enqueueSVMMap(
+        CL_TRUE,
+        0,
+        regionSvmPtr,
+        regionSize,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
+    EXPECT_FALSE(svmMap->readOnlyMap);
+}
+
 HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenEnqeueMapValidSvmPtrThenExpectSingleWalker) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     MockCommandQueueHw<FamilyType> queue(context.get(), pDevice, nullptr);
