@@ -14,7 +14,7 @@
 using namespace NEO;
 
 struct DrmResidencyHandlerTest : public ::testing::Test {
-    void SetUp() {
+    void SetUp() override {
         drmResidencyHandler = std::make_unique<DrmResidencyHandler>();
     }
 
