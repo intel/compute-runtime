@@ -40,14 +40,14 @@ struct clSetDefaultDeviceCommandQueueApiTest : public api_tests {
     cl_command_queue deviceQueue = nullptr;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, SetDefaultDeviceQueue_returnsSuccess) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenValidParamsWhenSettingDefaultDeviceQueueThenSuccessIsReturned) {
     retVal = clSetDefaultDeviceCommandQueue(pContext, devices[0], deviceQueue);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(static_cast<_device_queue *>(deviceQueue), static_cast<_device_queue *>(pContext->getDefaultDeviceQueue()));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, ReplaceDefaultDeviceQueue_returnsSuccess) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenValidParamsWhenReplacingDefaultDeviceQueueThenSuccessIsReturned) {
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES,
                                         CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE,
                                         0,
@@ -68,22 +68,22 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, ReplaceDefaul
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, NullContext_returnsError) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullContextWhenSettingDefaultDeviceQueueThenClInvalidContextErrorIsReturned) {
     retVal = clSetDefaultDeviceCommandQueue(nullptr, devices[0], deviceQueue);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, NullDevice_returnsError) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullDeviceWhenSettingDefaultDeviceQueueThenClInvalidDeviceErrorIsReturned) {
     retVal = clSetDefaultDeviceCommandQueue(pContext, nullptr, deviceQueue);
     ASSERT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, NullDeviceQueue_returnsError) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned) {
     retVal = clSetDefaultDeviceCommandQueue(pContext, devices[0], nullptr);
     ASSERT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, HostDeviceQueue_returnsError) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenHostQueueAsDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned) {
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, 0, 0, 0};
     cl_command_queue hostQueue = clCreateCommandQueueWithProperties(pContext, devices[0], properties, &retVal);
     ASSERT_NE(nullptr, hostQueue);
@@ -96,7 +96,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, HostDeviceQue
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, DeviceQueueCtx2_returnsError) {
+HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenIncorrectDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned) {
     auto context2 = clCreateContext(nullptr, num_devices, devices, nullptr, nullptr, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES,
