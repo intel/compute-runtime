@@ -20,8 +20,8 @@ void CL_CALLBACK eventCallBack(cl_event event, cl_int callbackType, void *userDa
     cbData = userData;
 }
 
-class clSetEventCallback_ : public api_fixture,
-                            public ::testing::Test {
+class clSetEventCallbackTests : public api_fixture,
+                                public ::testing::Test {
 
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
@@ -38,141 +38,113 @@ class clSetEventCallback_ : public api_fixture,
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;
 };
 
-TEST_F(clSetEventCallback_, ValidEvent) {
-    Event *event = new Event(nullptr, 0, 0, 0);
-    cl_event clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_COMPLETE, eventCallBack, nullptr);
+TEST_F(clSetEventCallbackTests, GivenValidEventWhenSettingEventCallbackThenSuccessIsReturned) {
+    std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
+    retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
+
     EXPECT_EQ(CL_SUCCESS, retVal);
     event->decRefInternal();
-    delete event;
 }
 
-TEST_F(clSetEventCallback_, InvalidEvent) {
-    char *event = new char[sizeof(Event)];
-    memset(event, 0, sizeof(Event));
-    cl_event clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_COMPLETE, eventCallBack, nullptr);
+TEST_F(clSetEventCallbackTests, GivenInvalidEventWhenSettingEventCallbackThenInvalidEventErrorIsReturned) {
+    std::unique_ptr<char> event(new char[sizeof(Event)]);
+    memset(event.get(), 0, sizeof(Event));
+    retVal = clSetEventCallback(reinterpret_cast<cl_event>(event.get()), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_INVALID_EVENT, retVal);
-    delete[] event;
 }
 
-TEST_F(clSetEventCallback_, ValidCallbackTypes) {
-    Event *event = new Event(nullptr, 0, 0, 0);
-    cl_event clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_COMPLETE, eventCallBack, nullptr);
+TEST_F(clSetEventCallbackTests, GivenValidCallbackTypeWhenSettingEventCallbackThenSuccessIsReturned) {
+    std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
+    retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     event->decRefInternal();
-    delete event;
-    event = new Event(nullptr, 0, 0, 0);
-    clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_RUNNING, eventCallBack, nullptr);
+
+    event.reset(new Event(nullptr, 0, 0, 0));
+    retVal = clSetEventCallback(event.get(), CL_RUNNING, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     event->decRefInternal();
-    delete event;
-    event = new Event(nullptr, 0, 0, 0);
-    clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_SUBMITTED, eventCallBack, nullptr);
+
+    event.reset(new Event(nullptr, 0, 0, 0));
+    retVal = clSetEventCallback(event.get(), CL_SUBMITTED, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    delete event;
 }
 
-TEST_F(clSetEventCallback_, InvalidCallbackType) {
-    Event *event = new Event(nullptr, 0, 0, 0);
-    cl_event clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_COMPLETE + CL_RUNNING + CL_SUBMITTED, eventCallBack, nullptr);
+TEST_F(clSetEventCallbackTests, GivenInvalidCallbackTypeWhenSettingEventCallbackThenInvalidValueErrorIsReturned) {
+    std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
+    retVal = clSetEventCallback(event.get(), CL_COMPLETE + CL_RUNNING + CL_SUBMITTED, eventCallBack, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
-    delete event;
 }
 
-TEST_F(clSetEventCallback_, NullCallback) {
-    Event *event = new Event(nullptr, 0, 0, 0);
-    cl_event clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_COMPLETE, nullptr, nullptr);
+TEST_F(clSetEventCallbackTests, GivenNullCallbackWhenSettingEventCallbackThenInvalidValueErrorIsReturned) {
+    std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
+    retVal = clSetEventCallback(event.get(), CL_COMPLETE, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
-    delete event;
 }
 
-TEST_F(clSetEventCallback_, MultipleCallbacks) {
-    Event *event = new Event(nullptr, 0, 0, 0);
-    cl_event clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_COMPLETE, eventCallBack, nullptr);
+TEST_F(clSetEventCallbackTests, GivenMultipleCallbacksWhenSettingEventCallbackThenSuccessIsReturned) {
+    std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
+    retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetEventCallback(clevent, CL_RUNNING, eventCallBack, nullptr);
+    retVal = clSetEventCallback(event.get(), CL_RUNNING, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetEventCallback(clevent, CL_SUBMITTED, eventCallBack, nullptr);
+    retVal = clSetEventCallback(event.get(), CL_SUBMITTED, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     event->decRefInternal();
     event->decRefInternal();
-    delete event;
 }
 
-TEST_F(clSetEventCallback_, CallbackCalled) {
-    Event *event = new Event(nullptr, 0, 0, 0);
-    cl_event clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_COMPLETE, eventCallBack, nullptr);
+TEST_F(clSetEventCallbackTests, GivenValidCallbackWhenStatusIsSetToCompleteThenCallbackWasInvokedOnce) {
+    std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
+    retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     event->setStatus(CL_COMPLETE);
     EXPECT_EQ(cbInvoked, 1);
-
-    delete event;
 }
 
-TEST_F(clSetEventCallback_, MultipleCallbacksCalled) {
-    Event *event = new Event(nullptr, 0, 0, 0);
-    cl_event clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_COMPLETE, eventCallBack, nullptr);
+TEST_F(clSetEventCallbackTests, GivenThreeCallbacksWhenStatusIsSetToCompleteThenCallbackWasInvokedThreeTimes) {
+    std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
+    retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetEventCallback(clevent, CL_RUNNING, eventCallBack, nullptr);
+    retVal = clSetEventCallback(event.get(), CL_RUNNING, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetEventCallback(clevent, CL_SUBMITTED, eventCallBack, nullptr);
+    retVal = clSetEventCallback(event.get(), CL_SUBMITTED, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     event->setStatus(CL_COMPLETE);
     EXPECT_EQ(cbInvoked, 3);
-
-    delete event;
 }
 
-TEST_F(clSetEventCallback_, MultipleSetStatusCallbackOnce) {
-    Event *event = new Event(nullptr, 0, 0, 0);
-    cl_event clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_COMPLETE, eventCallBack, nullptr);
+TEST_F(clSetEventCallbackTests, GivenValidCallbackWhenStatusIsSetToCompleteMultipleTimesThenCallbackWasInvokedOnce) {
+    std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
+    retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     event->setStatus(CL_COMPLETE);
     event->setStatus(CL_COMPLETE);
     event->setStatus(CL_COMPLETE);
     EXPECT_EQ(cbInvoked, 1);
-
-    delete event;
 }
 
-TEST_F(clSetEventCallback_, MultipleCallbacksCount) {
-    Event *event = new Event(nullptr, 0, 0, 0);
-    cl_event clevent = (cl_event)event;
-    retVal = clSetEventCallback(clevent, CL_COMPLETE, eventCallBack, nullptr);
+TEST_F(clSetEventCallbackTests, GivenThreeCallbacksWhenStatusIsSetToCompleteMultipleTimesThenCallbackWasInvokedThreeTimes) {
+    std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
+    retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetEventCallback(clevent, CL_RUNNING, eventCallBack, nullptr);
+    retVal = clSetEventCallback(event.get(), CL_RUNNING, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetEventCallback(clevent, CL_SUBMITTED, eventCallBack, nullptr);
+    retVal = clSetEventCallback(event.get(), CL_SUBMITTED, eventCallBack, nullptr);
     event->setStatus(CL_SUBMITTED);
     event->setStatus(CL_RUNNING);
     event->setStatus(CL_COMPLETE);
     event->setStatus(CL_COMPLETE);
     event->setStatus(CL_COMPLETE);
     EXPECT_EQ(cbInvoked, 3);
-
-    delete event;
 }
 
-TEST_F(clSetEventCallback_, UserDataPassed) {
-    Event *event = new Event(nullptr, 0, 0, 0);
-    cl_event clevent = (cl_event)event;
+TEST_F(clSetEventCallbackTests, GivenUserDataWhenStatusIsSetToCompleteThenCallbackWasInvokedOnce) {
+    std::unique_ptr<Event> event(new Event(nullptr, 0, 0, 0));
     int data = 1;
-    retVal = clSetEventCallback(clevent, CL_COMPLETE, eventCallBack, &data);
+    retVal = clSetEventCallback(event.get(), CL_COMPLETE, eventCallBack, &data);
     EXPECT_EQ(CL_SUCCESS, retVal);
     event->setStatus(CL_COMPLETE);
     EXPECT_EQ(cbInvoked, 1);
     EXPECT_EQ(&data, cbData);
-
-    delete event;
 }
 } // namespace ClSetEventCallbackTests
