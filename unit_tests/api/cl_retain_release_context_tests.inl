@@ -15,7 +15,7 @@ typedef api_tests clRetainReleaseContextTests;
 
 namespace ULT {
 
-TEST_F(clRetainReleaseContextTests, retainAndrelease) {
+TEST_F(clRetainReleaseContextTests, GivenValidContextWhenRetainingAndReleasingThenContextReferenceCountIsUpdatedCorrectly) {
     cl_context context = clCreateContext(nullptr, 1, devices, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);

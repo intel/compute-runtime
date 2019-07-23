@@ -14,7 +14,7 @@ using namespace NEO;
 typedef api_tests clRetainReleaseSamplerTests;
 
 namespace ULT {
-TEST_F(clRetainReleaseSamplerTests, RetainRelease) {
+TEST_F(clRetainReleaseSamplerTests, GivenValidSamplerWhenRetainingThenSamplerReferenceCountIsIncremented) {
     cl_int retVal = CL_SUCCESS;
     auto sampler = clCreateSampler(pContext, CL_TRUE, CL_ADDRESS_CLAMP,
                                    CL_FILTER_NEAREST, &retVal);

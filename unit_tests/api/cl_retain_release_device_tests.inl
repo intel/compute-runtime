@@ -14,7 +14,7 @@ using namespace NEO;
 typedef api_tests clRetainReleaseDeviceTests;
 
 namespace ULT {
-TEST_F(clRetainReleaseDeviceTests, retain) {
+TEST_F(clRetainReleaseDeviceTests, GivenRootDeviceWhenRetainingThenReferenceCountIsOne) {
     cl_uint numEntries = 1;
     cl_device_id devices[1];
 
@@ -36,7 +36,7 @@ TEST_F(clRetainReleaseDeviceTests, retain) {
     EXPECT_EQ(1u, theRef);
 }
 
-TEST_F(clRetainReleaseDeviceTests, release) {
+TEST_F(clRetainReleaseDeviceTests, GivenRootDeviceWhenReleasingThenReferenceCountIsOne) {
     cl_uint numEntries = 1;
     cl_device_id devices[1];
 
