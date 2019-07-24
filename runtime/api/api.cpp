@@ -3481,14 +3481,17 @@ cl_int clGetMemAllocInfoINTEL(
     }
 
     auto unifiedMemoryAllocation = allocationsManager->getSVMAlloc(ptr);
-    if (!unifiedMemoryAllocation) {
+    if (!unifiedMemoryAllocation && paramName != CL_MEM_ALLOC_TYPE_INTEL) {
         return CL_INVALID_VALUE;
     }
 
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
     switch (paramName) {
     case CL_MEM_ALLOC_TYPE_INTEL: {
-        if (unifiedMemoryAllocation->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
+        if (!unifiedMemoryAllocation) {
+            retVal = info.set<cl_int>(CL_MEM_TYPE_UNKNOWN_INTEL);
+            return retVal;
+        } else if (unifiedMemoryAllocation->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
             retVal = info.set<cl_int>(CL_MEM_TYPE_HOST_INTEL);
             return retVal;
         } else if (unifiedMemoryAllocation->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) {
