@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,3 +11,4 @@ set(IGDRCL_SRCS_tests_sampler
   ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests.cpp
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_sampler})
+add_subdirectories()
