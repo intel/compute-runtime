@@ -672,7 +672,10 @@ struct BcsBufferTests : public ::testing::Test {
         capabilityTable.blitterOperationsSupported = true;
 
         if (createBcsEngine) {
-            device->createEngine(0, static_cast<uint32_t>(device->engines.size()), aub_stream::EngineType::ENGINE_BCS);
+            auto &engine = device->getEngine(aub_stream::ENGINE_RCS, true);
+            bcsOsContext.reset(OsContext::create(nullptr, 1, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false));
+            engine.osContext = bcsOsContext.get();
+            engine.commandStreamReceiver->setupContext(*bcsOsContext);
         }
 
         bcsMockContext = std::make_unique<BcsMockContext>(device.get());
@@ -680,6 +683,8 @@ struct BcsBufferTests : public ::testing::Test {
     }
 
     DebugManagerStateRestore restore;
+
+    std::unique_ptr<OsContext> bcsOsContext;
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<BcsMockContext> bcsMockContext;
     std::unique_ptr<CommandQueue> commandQueue;
