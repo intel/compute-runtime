@@ -5,7 +5,6 @@
  *
  */
 
-#pragma once
 #pragma pack(1)
 typedef struct tagBINDING_TABLE_STATE {
     union tagTheStructure {

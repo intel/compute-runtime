@@ -1,131 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2017-2019 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#pragma once
 #pragma pack(1)
-typedef struct tagMI_BATCH_BUFFER_START {
-    union tagTheStructure {
-        struct tagCommon {
-            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
-            uint32_t AddressSpaceIndicator : BITFIELD_RANGE(8, 8);
-            uint32_t Reserved_9 : BITFIELD_RANGE(9, 9);
-            uint32_t ResourceStreamerEnable : BITFIELD_RANGE(10, 10);
-            uint32_t Reserved_11 : BITFIELD_RANGE(11, 14);
-            uint32_t PredicationEnable : BITFIELD_RANGE(15, 15);
-            uint32_t Reserved_16 : BITFIELD_RANGE(16, 19);
-            uint32_t PoshEnable : BITFIELD_RANGE(20, 20);
-            uint32_t PoshStart : BITFIELD_RANGE(21, 21);
-            uint32_t SecondLevelBatchBuffer : BITFIELD_RANGE(22, 22);
-            uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
-            uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            uint64_t Reserved_32 : BITFIELD_RANGE(0, 1);
-            uint64_t BatchBufferStartAddress_Graphicsaddress39_2 : BITFIELD_RANGE(2, 47);
-            uint64_t BatchBufferStartAddress_Reserved : BITFIELD_RANGE(48, 63);
-        } Common;
-        uint32_t RawData[3];
-    } TheStructure;
-    typedef enum tagDWORD_LENGTH {
-        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x1,
-    } DWORD_LENGTH;
-    typedef enum tagADDRESS_SPACE_INDICATOR {
-        ADDRESS_SPACE_INDICATOR_GGTT = 0x0,
-        ADDRESS_SPACE_INDICATOR_PPGTT = 0x1,
-    } ADDRESS_SPACE_INDICATOR;
-    typedef enum tagSECOND_LEVEL_BATCH_BUFFER {
-        SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH = 0x0,
-        SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH = 0x1,
-    } SECOND_LEVEL_BATCH_BUFFER;
-    typedef enum tagMI_COMMAND_OPCODE {
-        MI_COMMAND_OPCODE_MI_BATCH_BUFFER_START = 0x31,
-    } MI_COMMAND_OPCODE;
-    typedef enum tagCOMMAND_TYPE {
-        COMMAND_TYPE_MI_COMMAND = 0x0,
-    } COMMAND_TYPE;
-    inline void init(void) {
-        memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.AddressSpaceIndicator = ADDRESS_SPACE_INDICATOR_GGTT;
-        TheStructure.Common.SecondLevelBatchBuffer = SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH;
-        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_BATCH_BUFFER_START;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
-    }
-    static tagMI_BATCH_BUFFER_START sInit(void) {
-        MI_BATCH_BUFFER_START state;
-        state.init();
-        return state;
-    }
-    inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 3);
-        return TheStructure.RawData[index];
-    }
-    inline void setAddressSpaceIndicator(const ADDRESS_SPACE_INDICATOR value) {
-        TheStructure.Common.AddressSpaceIndicator = value;
-    }
-    inline ADDRESS_SPACE_INDICATOR getAddressSpaceIndicator(void) const {
-        return static_cast<ADDRESS_SPACE_INDICATOR>(TheStructure.Common.AddressSpaceIndicator);
-    }
-    inline void setResourceStreamerEnable(const bool value) {
-        TheStructure.Common.ResourceStreamerEnable = value;
-    }
-    inline bool getResourceStreamerEnable(void) const {
-        return (TheStructure.Common.ResourceStreamerEnable);
-    }
-    inline void setPredicationEnable(const uint32_t value) {
-        TheStructure.Common.PredicationEnable = value;
-    }
-    inline uint32_t getPredicationEnable(void) const {
-        return (TheStructure.Common.PredicationEnable);
-    }
-    inline void setPoshEnable(const uint32_t value) {
-        TheStructure.Common.PoshEnable = value;
-    }
-    inline uint32_t getPoshEnable(void) const {
-        return (TheStructure.Common.PoshEnable);
-    }
-    inline void setPoshStart(const uint32_t value) {
-        TheStructure.Common.PoshStart = value;
-    }
-    inline uint32_t getPoshStart(void) const {
-        return (TheStructure.Common.PoshStart);
-    }
-    inline void setSecondLevelBatchBuffer(const SECOND_LEVEL_BATCH_BUFFER value) {
-        TheStructure.Common.SecondLevelBatchBuffer = value;
-    }
-    inline SECOND_LEVEL_BATCH_BUFFER getSecondLevelBatchBuffer(void) const {
-        return static_cast<SECOND_LEVEL_BATCH_BUFFER>(TheStructure.Common.SecondLevelBatchBuffer);
-    }
-    typedef enum tagBATCHBUFFERSTARTADDRESS_GRAPHICSADDRESS39_2 {
-        BATCHBUFFERSTARTADDRESS_GRAPHICSADDRESS39_2_BIT_SHIFT = 0x2,
-        BATCHBUFFERSTARTADDRESS_GRAPHICSADDRESS39_2_ALIGN_SIZE = 0x4,
-    } BATCHBUFFERSTARTADDRESS_GRAPHICSADDRESS39_2;
-    inline void setBatchBufferStartAddressGraphicsaddress392(const uint64_t value) {
-        TheStructure.Common.BatchBufferStartAddress_Graphicsaddress39_2 = value >> BATCHBUFFERSTARTADDRESS_GRAPHICSADDRESS39_2_BIT_SHIFT;
-    }
-    inline uint64_t getBatchBufferStartAddressGraphicsaddress392(void) const {
-        return (TheStructure.Common.BatchBufferStartAddress_Graphicsaddress39_2 << BATCHBUFFERSTARTADDRESS_GRAPHICSADDRESS39_2_BIT_SHIFT);
-    }
-    inline void setBatchBufferStartAddressGraphicsaddress472(const uint64_t value) {
-        setBatchBufferStartAddressGraphicsaddress392(value);
-    }
-    inline uint64_t getBatchBufferStartAddressGraphicsaddress472(void) const {
-        return getBatchBufferStartAddressGraphicsaddress392();
-    }
-    typedef enum tagBATCHBUFFERSTARTADDRESS_RESERVED {
-        BATCHBUFFERSTARTADDRESS_RESERVED_BIT_SHIFT = 0x2,
-        BATCHBUFFERSTARTADDRESS_RESERVED_ALIGN_SIZE = 0x4,
-    } BATCHBUFFERSTARTADDRESS_RESERVED;
-    inline void setBatchBufferStartAddressReserved(const uint64_t value) {
-        TheStructure.Common.BatchBufferStartAddress_Reserved = value >> BATCHBUFFERSTARTADDRESS_RESERVED_BIT_SHIFT;
-    }
-    inline uint64_t getBatchBufferStartAddressReserved(void) const {
-        return (TheStructure.Common.BatchBufferStartAddress_Reserved << BATCHBUFFERSTARTADDRESS_RESERVED_BIT_SHIFT);
-    }
-} MI_BATCH_BUFFER_START;
-STATIC_ASSERT(12 == sizeof(MI_BATCH_BUFFER_START));
 typedef struct tagMEDIA_SURFACE_STATE {
     union tagTheStructure {
         struct tagCommon {
@@ -154,8 +34,7 @@ typedef struct tagMEDIA_SURFACE_STATE {
             uint32_t SurfaceMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(1, 6);
             uint32_t Reserved_167 : BITFIELD_RANGE(7, 17);
             uint32_t TiledResourceMode : BITFIELD_RANGE(18, 19);
-            uint32_t Depth : BITFIELD_RANGE(20, 23);
-            uint32_t Reserved_184 : BITFIELD_RANGE(24, 29);
+            uint32_t Reserved_180 : BITFIELD_RANGE(20, 29);
             uint32_t VerticalLineStrideOffset : BITFIELD_RANGE(30, 30);
             uint32_t VerticalLineStride : BITFIELD_RANGE(31, 31);
             uint32_t SurfaceBaseAddressLow;
@@ -245,14 +124,6 @@ typedef struct tagMEDIA_SURFACE_STATE {
         SURFACE_FORMAT_Y1_UNORM = 0x10,
         SURFACE_FORMAT_Y32_UNORM = 0x11,
         SURFACE_FORMAT_PLANAR_422_8 = 0x12,
-        SURFACE_FORMAT_FM_STRBUF_Y1 = 0x13,
-        SURFACE_FORMAT_FM_STRBUF_Y8 = 0x14,
-        SURFACE_FORMAT_FM_STRBUF_Y16 = 0x15,
-        SURFACE_FORMAT_FM_STRBUF_Y32 = 0x16,
-        SURFACE_FORMAT_PLANAR_420_16 = 0x17,
-        SURFACE_FORMAT_R16B16_UNORM_CRCB = 0x18,
-        SURFACE_FORMAT_R16_UNORM_CR_CB = 0x19,
-        SURFACE_FORMAT_Y16_UNORM = 0x1a,
     } SURFACE_FORMAT;
     typedef enum tagSURFACE_MEMORY_OBJECT_CONTROL_STATE {
         SURFACE_MEMORY_OBJECT_CONTROL_STATE_DEFAULTVAUEDESC = 0x0,
@@ -407,12 +278,6 @@ typedef struct tagMEDIA_SURFACE_STATE {
     inline TILED_RESOURCE_MODE getTiledResourceMode(void) const {
         return static_cast<TILED_RESOURCE_MODE>(TheStructure.Common.TiledResourceMode);
     }
-    inline void setDepth(const uint32_t value) {
-        TheStructure.Common.Depth = value;
-    }
-    inline uint32_t getDepth(void) const {
-        return (TheStructure.Common.Depth);
-    }
     inline void setVerticalLineStrideOffset(const uint32_t value) {
         TheStructure.Common.VerticalLineStrideOffset = value;
     }
@@ -507,14 +372,14 @@ typedef struct tagMI_SEMAPHORE_WAIT {
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 11);
             uint32_t CompareOperation : BITFIELD_RANGE(12, 14);
             uint32_t WaitMode : BITFIELD_RANGE(15, 15);
-            uint32_t RegisterPollMode : BITFIELD_RANGE(16, 16);
-            uint32_t Reserved_17 : BITFIELD_RANGE(17, 21);
+            uint32_t Reserved_16 : BITFIELD_RANGE(16, 21);
             uint32_t MemoryType : BITFIELD_RANGE(22, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             uint32_t SemaphoreDataDword;
             uint64_t Reserved_64 : BITFIELD_RANGE(0, 1);
-            uint64_t SemaphoreAddress_Graphicsaddress : BITFIELD_RANGE(2, 63);
+            uint64_t SemaphoreAddress_Graphicsaddress : BITFIELD_RANGE(2, 47);
+            uint64_t SemaphoreAddress_Reserved : BITFIELD_RANGE(48, 63);
         } Common;
         uint32_t RawData[4];
     } TheStructure;
@@ -533,10 +398,6 @@ typedef struct tagMI_SEMAPHORE_WAIT {
         WAIT_MODE_SIGNAL_MODE = 0x0,
         WAIT_MODE_POLLING_MODE = 0x1,
     } WAIT_MODE;
-    typedef enum tagREGISTER_POLL_MODE {
-        REGISTER_POLL_MODE_MEMORY_POLL = 0x0,
-        REGISTER_POLL_MODE_REGISTER_POLL = 0x1,
-    } REGISTER_POLL_MODE;
     typedef enum tagMEMORY_TYPE {
         MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS = 0x0,
         MEMORY_TYPE_GLOBAL_GRAPHICS_ADDRESS = 0x1,
@@ -552,7 +413,6 @@ typedef struct tagMI_SEMAPHORE_WAIT {
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.CompareOperation = COMPARE_OPERATION_SAD_GREATER_THAN_SDD;
         TheStructure.Common.WaitMode = WAIT_MODE_SIGNAL_MODE;
-        TheStructure.Common.RegisterPollMode = REGISTER_POLL_MODE_MEMORY_POLL;
         TheStructure.Common.MemoryType = MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
@@ -578,12 +438,6 @@ typedef struct tagMI_SEMAPHORE_WAIT {
     inline WAIT_MODE getWaitMode(void) const {
         return static_cast<WAIT_MODE>(TheStructure.Common.WaitMode);
     }
-    inline void setRegisterPollMode(const REGISTER_POLL_MODE value) {
-        TheStructure.Common.RegisterPollMode = value;
-    }
-    inline REGISTER_POLL_MODE getRegisterPollMode(void) const {
-        return static_cast<REGISTER_POLL_MODE>(TheStructure.Common.RegisterPollMode);
-    }
     inline void setMemoryType(const MEMORY_TYPE value) {
         TheStructure.Common.MemoryType = value;
     }
@@ -599,7 +453,7 @@ typedef struct tagMI_SEMAPHORE_WAIT {
     typedef enum tagSEMAPHOREADDRESS_GRAPHICSADDRESS {
         SEMAPHOREADDRESS_GRAPHICSADDRESS_BIT_SHIFT = 0x2,
         SEMAPHOREADDRESS_GRAPHICSADDRESS_ALIGN_SIZE = 0x4,
-    } SEMAPHOREADDRESS_GRAPHICSADDRESS39_2;
+    } SEMAPHOREADDRESS_GRAPHICSADDRESS;
     inline void setSemaphoreGraphicsAddress(const uint64_t value) {
         TheStructure.Common.SemaphoreAddress_Graphicsaddress = value >> SEMAPHOREADDRESS_GRAPHICSADDRESS_BIT_SHIFT;
     }
@@ -610,6 +464,12 @@ typedef struct tagMI_SEMAPHORE_WAIT {
         SEMAPHOREADDRESS_RESERVED_BIT_SHIFT = 0x2,
         SEMAPHOREADDRESS_RESERVED_ALIGN_SIZE = 0x4,
     } SEMAPHOREADDRESS_RESERVED;
+    inline void setSemaphoreAddressReserved(const uint64_t value) {
+        TheStructure.Common.SemaphoreAddress_Reserved = value >> SEMAPHOREADDRESS_RESERVED_BIT_SHIFT;
+    }
+    inline uint64_t getSemaphoreAddressReserved(void) const {
+        return (TheStructure.Common.SemaphoreAddress_Reserved << SEMAPHOREADDRESS_RESERVED_BIT_SHIFT);
+    }
 } MI_SEMAPHORE_WAIT;
 STATIC_ASSERT(16 == sizeof(MI_SEMAPHORE_WAIT));
 
@@ -624,8 +484,8 @@ typedef struct tagMI_STORE_DATA_IMM {
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             uint64_t CoreModeEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_33 : BITFIELD_RANGE(1, 1);
-            uint64_t Address_Graphicsaddress39_2 : BITFIELD_RANGE(2, 39);
-            uint64_t Address_Reserved : BITFIELD_RANGE(40, 63);
+            uint64_t Address_Graphicsaddress47_2 : BITFIELD_RANGE(2, 47);
+            uint64_t Address_Reserved : BITFIELD_RANGE(48, 63);
             uint32_t DataDword0;
             uint32_t DataDword1;
         } Common;
@@ -680,15 +540,15 @@ typedef struct tagMI_STORE_DATA_IMM {
     inline uint64_t getCoreModeEnable(void) const {
         return (TheStructure.Common.CoreModeEnable);
     }
-    typedef enum tagADDRESS_GRAPHICSADDRESS39_2 {
-        ADDRESS_GRAPHICSADDRESS39_2_BIT_SHIFT = 0x2,
-        ADDRESS_GRAPHICSADDRESS39_2_ALIGN_SIZE = 0x4,
-    } ADDRESS_GRAPHICSADDRESS39_2;
+    typedef enum tagADDRESS_GRAPHICSADDRESS47_2 {
+        ADDRESS_GRAPHICSADDRESS47_2_BIT_SHIFT = 0x2,
+        ADDRESS_GRAPHICSADDRESS47_2_ALIGN_SIZE = 0x4,
+    } ADDRESS_GRAPHICSADDRESS47_2;
     inline void setAddress(const uint64_t value) {
-        TheStructure.Common.Address_Graphicsaddress39_2 = value >> ADDRESS_GRAPHICSADDRESS39_2_BIT_SHIFT;
+        TheStructure.Common.Address_Graphicsaddress47_2 = value >> ADDRESS_GRAPHICSADDRESS47_2_BIT_SHIFT;
     }
     inline uint64_t getAddress(void) const {
-        return (TheStructure.Common.Address_Graphicsaddress39_2 << ADDRESS_GRAPHICSADDRESS39_2_BIT_SHIFT);
+        return (TheStructure.Common.Address_Graphicsaddress47_2 << ADDRESS_GRAPHICSADDRESS47_2_BIT_SHIFT);
     }
     typedef enum tagADDRESS_RESERVED {
         ADDRESS_RESERVED_BIT_SHIFT = 0x2,
@@ -714,62 +574,4 @@ typedef struct tagMI_STORE_DATA_IMM {
     }
 } MI_STORE_DATA_IMM;
 STATIC_ASSERT(20 == sizeof(MI_STORE_DATA_IMM));
-
-typedef struct tagPWR_CLK_STATE_REGISTER {
-    typedef enum tagADDRESS {
-        REG_ADDRESS = 0x20C8
-    } ADDRESS;
-    union tagTheStructure {
-        struct tagCommon {
-            uint32_t EUmin : BITFIELD_RANGE(0, 3);
-            uint32_t EUmax : BITFIELD_RANGE(4, 7);
-            uint32_t SScount : BITFIELD_RANGE(8, 10);
-            uint32_t SSCountEn : BITFIELD_RANGE(11, 11);
-            uint32_t SliceCountRequest : BITFIELD_RANGE(12, 17);
-            uint32_t EnableSliceCountRequest : BITFIELD_RANGE(18, 18);
-            uint32_t Reserved : BITFIELD_RANGE(19, 30);
-            uint32_t EnablePwrClockGating : BITFIELD_RANGE(31, 31);
-        } Common;
-        uint32_t RawData[1];
-    } TheStructure;
-    inline void init(void) {
-        TheStructure.RawData[0] = 0;
-        TheStructure.Common.EnablePwrClockGating = 1;
-        TheStructure.Common.EUmin = 8;
-        TheStructure.Common.EUmax = 8;
-    }
-    static tagPWR_CLK_STATE_REGISTER sInit(void) {
-        PWR_CLK_STATE_REGISTER state;
-        state.init();
-        return state;
-    }
-} PWR_CLK_STATE_REGISTER;
-STATIC_ASSERT(4 == sizeof(PWR_CLK_STATE_REGISTER));
-
-typedef struct tagASYNC_SLICE_COUNT_SELECT_REGISTER {
-    typedef enum tagADDRESS {
-        REG_ADDRESS = 0xA204
-    } ADDRESS;
-    union tagTheStructure {
-        struct tagCommon {
-            uint32_t AsyncSliceCount : BITFIELD_RANGE(0, 3);
-            uint32_t AsyncEuCount : BITFIELD_RANGE(4, 7);
-            uint32_t AsyncSubSliceCount : BITFIELD_RANGE(8, 10);
-            uint32_t Reserved : BITFIELD_RANGE(11, 31);
-        } Common;
-        uint32_t RawData[1];
-    } TheStructure;
-    inline void init(void) {
-        TheStructure.RawData[0] = 0;
-        TheStructure.Common.AsyncSliceCount = 2;
-        TheStructure.Common.AsyncSubSliceCount = 4;
-        TheStructure.Common.AsyncEuCount = 8;
-    }
-    static tagASYNC_SLICE_COUNT_SELECT_REGISTER sInit(void) {
-        ASYNC_SLICE_COUNT_SELECT_REGISTER state;
-        state.init();
-        return state;
-    }
-} ASYNC_SLICE_COUNT_SELECT_REGISTER;
-STATIC_ASSERT(4 == sizeof(ASYNC_SLICE_COUNT_SELECT_REGISTER));
 #pragma pack()

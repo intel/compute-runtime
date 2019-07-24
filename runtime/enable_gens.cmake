@@ -16,7 +16,7 @@ set(RUNTIME_SRCS_GENX_CPP_LINUX
 set(RUNTIME_SRCS_GENX_H_BASE
   aub_mapper.h
   hw_cmds.h
-  hw_cmds_generated.h
+  hw_cmds_generated.inl
   hw_info.h
   reg_configs.h
 )
@@ -69,8 +69,8 @@ macro(macro_for_each_gen)
   foreach(SRC_IT ${RUNTIME_SRCS_GENX_H_BASE})
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/${SRC_IT})
   endforeach()
-  if(EXISTS "${GENX_PREFIX}/hw_cmds_generated_patched.h")
-    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${GENX_PREFIX}/hw_cmds_generated_patched.h")
+  if(EXISTS "${GENX_PREFIX}/hw_cmds_generated_patched.inl")
+    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${GENX_PREFIX}/hw_cmds_generated_patched.inl")
   endif()
   if(EXISTS "${GENX_PREFIX}/hw_cmds_base.h")
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE "${GENX_PREFIX}/hw_cmds_base.h")
