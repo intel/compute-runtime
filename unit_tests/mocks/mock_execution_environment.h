@@ -8,6 +8,7 @@
 #pragma once
 
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
 
@@ -35,5 +36,20 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
     bool localMemoryEnabledReceived = false;
     std::string aubFileNameReceived = "";
     bool useMockAubCenter = true;
+};
+
+template <typename CsrType>
+struct MockExecutionEnvironmentWithCsr : public ExecutionEnvironment {
+    MockExecutionEnvironmentWithCsr() = delete;
+    MockExecutionEnvironmentWithCsr(const HardwareInfo &hwInfo) {
+        setHwInfo(&hwInfo);
+
+        auto &gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances();
+        commandStreamReceivers.resize(1);
+
+        for (uint32_t csrIndex = 0; csrIndex < gpgpuEngines.size(); csrIndex++) {
+            commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(new CsrType(*this)));
+        }
+    }
 };
 } // namespace NEO
