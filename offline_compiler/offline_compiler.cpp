@@ -244,7 +244,7 @@ int OfflineCompiler::getHardwareInfo(const char *pDeviceName) {
                 hwInfo = hardwareInfoTable[productId];
                 familyNameWithType.clear();
                 familyNameWithType.append(familyName[hwInfo->platform.eRenderCoreFamily]);
-                familyNameWithType.append(getPlatformType(*hwInfo));
+                familyNameWithType.append(hwInfo->capabilityTable.platformType);
                 retVal = CL_SUCCESS;
                 break;
             }

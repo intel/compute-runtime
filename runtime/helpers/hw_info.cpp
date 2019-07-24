@@ -24,10 +24,6 @@ void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, const std::str
     nullptr,
 };
 
-const char *getPlatformType(const HardwareInfo &hwInfo) {
-    return hwInfo.capabilityTable.platformType;
-}
-
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn) {
     std::transform(platform.begin(), platform.end(), platform.begin(), ::tolower);
 

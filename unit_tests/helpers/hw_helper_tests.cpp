@@ -229,20 +229,6 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
 }
 
-TEST(HwInfoTest, givenHwInfoWhenPlatformTypeIsCoreThenPlatformTypeIsCore) {
-    HardwareInfo hwInfo;
-    hwInfo.capabilityTable.platformType = "core";
-    auto platformType = getPlatformType(hwInfo);
-    EXPECT_STREQ("core", platformType);
-}
-
-TEST(HwInfoTest, givenHwInfoWhenlatformTypeIsLpThenPlatformTypeIsLp) {
-    HardwareInfo hwInfo;
-    hwInfo.capabilityTable.platformType = "lp";
-    auto platformType = getPlatformType(hwInfo);
-    EXPECT_STREQ("lp", platformType);
-}
-
 TEST(HwInfoTest, givenHwInfoWhenChosenEngineTypeQueriedThenDefaultIsReturned) {
     HardwareInfo hwInfo;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;

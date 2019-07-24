@@ -99,7 +99,6 @@ struct EnableGfxFamilyHw {
     }
 };
 
-const char *getPlatformType(const HardwareInfo &hwInfo);
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn);
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
 } // namespace NEO

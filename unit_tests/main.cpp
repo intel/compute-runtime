@@ -343,7 +343,7 @@ int main(int argc, char **argv) {
     device.capabilityTable.supportsImages = true;
 
     binaryNameSuffix.append(familyName[device.platform.eRenderCoreFamily]);
-    binaryNameSuffix.append(getPlatformType(device));
+    binaryNameSuffix.append(device.capabilityTable.platformType);
 
     std::string nBinaryKernelFiles = getRunPath(argv[0]);
     nBinaryKernelFiles.append("/");

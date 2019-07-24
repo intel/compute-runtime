@@ -222,7 +222,7 @@ const char *Device::getProductAbbrev() const {
 const std::string Device::getFamilyNameWithType() const {
     auto &hwInfo = getHardwareInfo();
     std::string platformName = familyName[hwInfo.platform.eRenderCoreFamily];
-    platformName.append(getPlatformType(hwInfo));
+    platformName.append(hwInfo.capabilityTable.platformType);
     return platformName;
 }
 
