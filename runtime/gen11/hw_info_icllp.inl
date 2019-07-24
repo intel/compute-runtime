@@ -62,7 +62,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     false,                                           // ftr64KBpages
     true,                                            // instrumentationEnabled
     true,                                            // forceStatelessCompilationFor32Bit
-    false,                                           // isCore
+    "lp",                                            // platformType
     true,                                            // sourceLevelDebuggerSupported
     true,                                            // supportsVme
     false,                                           // supportCacheFlushAfterWalker

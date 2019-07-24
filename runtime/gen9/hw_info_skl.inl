@@ -66,7 +66,7 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                                          // ftr64KBpages
     true,                                          // instrumentationEnabled
     true,                                          // forceStatelessCompilationFor32Bit
-    true,                                          // isCore
+    "core",                                        // platformType
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker

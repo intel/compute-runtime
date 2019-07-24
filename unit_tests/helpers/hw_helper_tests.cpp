@@ -229,16 +229,16 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
 }
 
-TEST(HwInfoTest, givenHwInfoWhenIsCoreThenPlatformTypeIsCore) {
+TEST(HwInfoTest, givenHwInfoWhenPlatformTypeIsCoreThenPlatformTypeIsCore) {
     HardwareInfo hwInfo;
-    hwInfo.capabilityTable.isCore = true;
+    hwInfo.capabilityTable.platformType = "core";
     auto platformType = getPlatformType(hwInfo);
     EXPECT_STREQ("core", platformType);
 }
 
-TEST(HwInfoTest, givenHwInfoWhenIsNotCoreThenPlatformTypeIsLp) {
+TEST(HwInfoTest, givenHwInfoWhenlatformTypeIsLpThenPlatformTypeIsLp) {
     HardwareInfo hwInfo;
-    hwInfo.capabilityTable.isCore = false;
+    hwInfo.capabilityTable.platformType = "lp";
     auto platformType = getPlatformType(hwInfo);
     EXPECT_STREQ("lp", platformType);
 }

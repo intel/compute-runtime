@@ -65,7 +65,7 @@ function(compile_builtin gen_type platform_type builtin)
 endfunction()
 
 macro(macro_for_each_gen)
-  foreach(PLATFORM_TYPE "CORE" "LP")
+  foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
     if(${GEN_TYPE}_HAS_${PLATFORM_TYPE})
       get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
       string(TOLOWER ${PLATFORM_TYPE} PLATFORM_TYPE_LOWER)

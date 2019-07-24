@@ -61,7 +61,7 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     true,                                          // ftr64KBpages
     true,                                          // instrumentationEnabled
     true,                                          // forceStatelessCompilationFor32Bit
-    false,                                         // isCore
+    "lp",                                          // platformType
     true,                                          // sourceLevelDebuggerSupported
     false,                                         // supportsVme
     false,                                         // supportCacheFlushAfterWalker

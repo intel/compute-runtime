@@ -30,7 +30,7 @@ if(COMPILE_BUILT_INS)
 endif()
 
 macro(macro_for_each_gen)
-  foreach(PLATFORM_TYPE "CORE" "LP")
+  foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
     get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
     foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
       list(APPEND GENERATED_BUILTINS_CPPS ${BUILTINS_INCLUDE_DIR}/${RUNTIME_GENERATED_${GENERATED_BUILTIN}_${family_name_with_type}})

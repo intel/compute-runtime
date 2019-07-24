@@ -83,7 +83,7 @@ target_include_directories(igdrcl_mt_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/u
 macro(macro_for_each_test_config)
   run_mt_tests(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})
   if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
-    foreach(PLATFORM_TYPE "CORE" "LP")
+    foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
       if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
         get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
         add_dependencies(run_${PLATFORM_IT_LOWER}_mt_unit_tests test_kernels_${family_name_with_type})

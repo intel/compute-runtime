@@ -50,7 +50,7 @@ struct RuntimeCapabilityTable {
     bool ftr64KBpages;
     bool instrumentationEnabled;
     bool forceStatelessCompilationFor32Bit;
-    bool isCore;
+    const char *platformType;
     bool sourceLevelDebuggerSupported;
     bool supportsVme;
     bool supportCacheFlushAfterWalker;

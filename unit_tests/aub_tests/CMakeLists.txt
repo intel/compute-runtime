@@ -74,7 +74,7 @@ macro(macro_for_each_test_config)
       DEPENDS igdrcl_aub_tests
       DEPENDS copy_test_files_${PLATFORM_IT_LOWER}
     )
-    foreach(PLATFORM_TYPE "CORE" "LP")
+    foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
       if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
         get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
         add_dependencies(${PLATFORM_IT_LOWER}_aub_tests test_kernels_${family_name_with_type})

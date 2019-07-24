@@ -66,7 +66,7 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     false,                                         // ftr64KBpages
     true,                                          // instrumentationEnabled
     true,                                          // forceStatelessCompilationFor32Bit
-    true,                                          // isCore
+    "core",                                        // platformType
     false,                                         // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker

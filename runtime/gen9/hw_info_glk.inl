@@ -58,7 +58,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     false,                                         // ftr64KBpages
     true,                                          // instrumentationEnabled
     false,                                         // forceStatelessCompilationFor32Bit
-    false,                                         // isCore
+    "lp",                                          // platformType
     true,                                          // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker

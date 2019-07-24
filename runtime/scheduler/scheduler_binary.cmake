@@ -55,7 +55,7 @@ function(compile_kernel target gen_type platform_type kernel)
 endfunction()
 
 macro(macro_for_each_gen)
-  foreach(PLATFORM_TYPE "CORE" "LP")
+  foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
     if(${GEN_TYPE}_HAS_${PLATFORM_TYPE} AND SUPPORT_DEVICE_ENQUEUE_${GEN_TYPE})
       get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
       set(PLATFORM_2_0_LOWER ${DEFAULT_SUPPORTED_2_0_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
