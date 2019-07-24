@@ -3453,7 +3453,7 @@ cl_int clMemFreeINTEL(
         return retVal;
     }
 
-    if (!neoContext->getSVMAllocsManager()->freeSVMAlloc(const_cast<void *>(ptr))) {
+    if (ptr && !neoContext->getSVMAllocsManager()->freeSVMAlloc(const_cast<void *>(ptr))) {
         return CL_INVALID_VALUE;
     }
 

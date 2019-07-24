@@ -92,6 +92,12 @@ TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithIncorrectContextT
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
+TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithNullPointerThenNoActionOccurs) {
+    MockContext mockContext;
+    auto retVal = clMemFreeINTEL(&mockContext, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST(clUnifiedSharedMemoryTests, whenClMemFreeINTELisCalledWithValidUmPointerThenMemoryIsFreed) {
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
