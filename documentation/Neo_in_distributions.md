@@ -18,13 +18,20 @@ swupd bundle-add computer-vision-basic
 cave resolve --execute intel-compute-runtime
 ```
 
-## Ubuntu* 19.04
+## Fedora 30 and rawhide
 
 ```
-apt-get install intel-opencl-icd
+dnf copr enable jdanecki/intel-opencl
+dnf install intel-opencl
 ```
 
-## Ubuntu* 18.04 and 16.04 ppa
+## Gentoo
+
+```
+emerge intel-neo
+```
+
+## Ubuntu* 16.04 and 18.04 ppa
 
 ```
 add-apt-repository ppa:intel-opencl/intel-opencl
@@ -32,10 +39,10 @@ apt-get update
 apt-get install intel-opencl
 ```
 
-## Gentoo
+## Ubuntu* 19.04
 
 ```
-emerge intel-neo
+apt-get install intel-opencl-icd
 ```
 
 ## Additional configuration
