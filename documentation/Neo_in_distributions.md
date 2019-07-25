@@ -32,6 +32,12 @@ apt-get update
 apt-get install intel-opencl
 ```
 
+## Gentoo
+
+```
+emerge intel-neo
+```
+
 ## Additional configuration
 
 To allow Neo accessing GPU device make sure user has permissions to files in /dev/dri directory.
