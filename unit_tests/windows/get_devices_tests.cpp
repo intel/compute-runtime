@@ -17,9 +17,9 @@ using GetDevicesTests = ::testing::Test;
 
 HWTEST_F(GetDevicesTests, WhenGetDevicesIsCalledThenSuccessIsReturned) {
     size_t numDevicesReturned = 0;
-    ExecutionEnvironment executionEnviornment;
+    ExecutionEnvironment executionEnvironment;
 
-    auto returnValue = DeviceFactory::getDevices(numDevicesReturned, executionEnviornment);
+    auto returnValue = DeviceFactory::getDevices(numDevicesReturned, executionEnvironment);
     EXPECT_EQ(true, returnValue);
 }
 
