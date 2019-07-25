@@ -84,3 +84,10 @@ TEST(MemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocationSucceedThenReturn
 
     memoryManager.freeGraphicsMemory(allocation);
 }
+
+TEST(MemoryManagerTest, givenOsAgnosticMemoryManagerWhenGetLocalMemoryIsCalledThenSizeOfLocalMemoryIsReturned) {
+    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    EXPECT_EQ(0 * GB, memoryManager.getLocalMemorySize());
+}

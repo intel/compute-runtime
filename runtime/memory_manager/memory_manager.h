@@ -103,6 +103,7 @@ class MemoryManager {
     void checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation);
 
     virtual uint64_t getSystemSharedMemory() = 0;
+    virtual uint64_t getLocalMemorySize() = 0;
 
     uint64_t getMaxApplicationAddress() { return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress; };
     uint64_t getInternalHeapBaseAddress() { return gfxPartition.getHeapBase(internalHeapIndex); }

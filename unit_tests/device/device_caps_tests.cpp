@@ -333,6 +333,28 @@ TEST(Device_GetCaps, checkGlobalMemSize) {
     EXPECT_EQ(caps.globalMemSize, expectedSize);
 }
 
+TEST(Device_GetCaps, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGlobalMemSizeBasedOnLocalMemory) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableLocalMemory.set(true);
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    const auto &caps = device->getDeviceInfo();
+    auto pMemManager = device->getMemoryManager();
+    auto enabledCLVer = device->getEnabledClVersion();
+    bool addressing32Bit = is32bit || (is64bit && (enabledCLVer < 20)) || DebugManager.flags.Force32bitAddressing.get();
+
+    auto localMem = pMemManager->getLocalMemorySize();
+    auto maxAppAddrSpace = pMemManager->getMaxApplicationAddress() + 1;
+    auto memSize = std::min(localMem, maxAppAddrSpace);
+    memSize = static_cast<cl_ulong>(memSize * 0.8);
+    if (addressing32Bit) {
+        memSize = std::min(memSize, static_cast<cl_ulong>(4 * GB * 0.8));
+    }
+    cl_ulong expectedSize = alignDown(memSize, MemoryConstants::pageSize);
+
+    EXPECT_EQ(caps.globalMemSize, expectedSize);
+}
+
 TEST(Device_GetCaps, givenGlobalMemSizeWhenCalculatingMaxAllocSizeThenAdjustToHWCap) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();

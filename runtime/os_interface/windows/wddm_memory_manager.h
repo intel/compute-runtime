@@ -48,6 +48,7 @@ class WddmMemoryManager : public MemoryManager {
     void obtainGpuAddressFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
 
     uint64_t getSystemSharedMemory() override;
+    uint64_t getLocalMemorySize() override;
 
     bool tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
 

@@ -41,6 +41,10 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
     return nullptr;
 }
 
+uint64_t OsAgnosticMemoryManager::getLocalMemorySize() {
+    return 0 * GB;
+}
+
 void MemoryAllocation::overrideMemoryPool(MemoryPool::Type pool) {
     this->memoryPool = pool;
 }

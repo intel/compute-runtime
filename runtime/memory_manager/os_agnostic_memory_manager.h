@@ -60,6 +60,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     void cleanOsHandles(OsHandleStorage &handleStorage) override;
 
     uint64_t getSystemSharedMemory() override;
+    uint64_t getLocalMemorySize() override;
 
     void turnOnFakingBigAllocations();
 

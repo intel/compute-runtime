@@ -65,3 +65,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationThen
 
     memoryManager->freeGraphicsMemory(allocation);
 }
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenGetLocalMemoryIsCalledThenSizeOfLocalMemoryIsReturned) {
+    EXPECT_EQ(0 * GB, memoryManager->getLocalMemorySize());
+}

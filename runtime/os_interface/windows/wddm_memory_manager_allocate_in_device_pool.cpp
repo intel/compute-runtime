@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/helpers/basic_math.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
 namespace NEO {
@@ -17,5 +18,8 @@ bool WddmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAlloc
 }
 bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const void *requiredPtr) {
     return mapGpuVaForOneHandleAllocation(allocation, requiredPtr);
+}
+uint64_t WddmMemoryManager::getLocalMemorySize() {
+    return 0 * GB;
 }
 } // namespace NEO
