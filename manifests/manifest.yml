@@ -41,7 +41,7 @@ components:
     branch: wdk
     clean_on_sync: true
     dest_dir: wdk
-    revision: 06357fd1499ba888288e517541564865ad9c136a-1292
+    revision: 4e7310ad4b14ce24a1fa8a048619590454d57619-1293
     type: git
-converter: M-1292
+converter: M-1293
 version: '1'
