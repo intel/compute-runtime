@@ -98,6 +98,13 @@ GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     return allocate32BitGraphicsMemoryImpl(allocationData);
 }
 
+GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) {
+    if (failAllocate32Bit) {
+        return nullptr;
+    }
+    return OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(allocationData);
+}
+
 FailMemoryManager::FailMemoryManager(int32_t failedAllocationsCount, ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {
     this->failedAllocationsCount = failedAllocationsCount;
 }

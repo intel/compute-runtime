@@ -37,6 +37,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::createStorageInfoFromProperties;
     using MemoryManager::getAllocationData;
     using MemoryManager::getBanksCount;
+    using MemoryManager::gfxPartition;
     using MemoryManager::localMemoryUsageBankSelector;
     using MemoryManager::multiContextResourceDestructor;
     using MemoryManager::registeredEngines;
@@ -97,6 +98,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     }
 
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
+    GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
 
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
@@ -112,6 +114,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool allocateForImageCalled = false;
     bool failReserveAddress = false;
     bool failAllocateSystemMemory = false;
+    bool failAllocate32Bit = false;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
 };
 
