@@ -26,6 +26,7 @@
 #include "runtime/os_interface/windows/wddm_residency_allocations_container.h"
 #include "runtime/platform/platform.h"
 #include "runtime/sku_info/operations/sku_info_receiver.h"
+#include "runtime/utilities/stackvec.h"
 
 #include "gmm_memory.h"
 

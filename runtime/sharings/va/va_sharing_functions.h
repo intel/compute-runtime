@@ -10,6 +10,7 @@
 #include "runtime/sharings/va/va_sharing_defines.h"
 
 #include <functional>
+#include <vector>
 
 namespace NEO {
 

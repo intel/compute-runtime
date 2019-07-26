@@ -10,19 +10,17 @@
 #include "core/helpers/ptr_math.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
-#include "runtime/memory_manager/memory_banks.h"
-#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/memory_pool.h"
-#include "runtime/memory_manager/residency_container.h"
 #include "runtime/utilities/idlist.h"
-#include "runtime/utilities/stackvec.h"
 
 #include "engine_limits.h"
 #include "storage_info.h"
 
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 
 namespace NEO {
 
@@ -35,7 +33,6 @@ constexpr auto nonSharedResource = 0u;
 
 class Gmm;
 class MemoryManager;
-struct AllocationProperties;
 
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {
   public:
