@@ -65,11 +65,11 @@ class KernelArgSvmFixture : public api_fixture, public DeviceFixture {
     char pCrossThreadData[64];
 };
 
-typedef Test<KernelArgSvmFixture> clSetKernelArgSVMPointer_;
+typedef Test<KernelArgSvmFixture> clSetKernelArgSVMPointerTests;
 
 namespace ULT {
 
-TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidKernel) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenNullKernelWhenSettingKernelArgThenInvalidKernelErrorIsReturned) {
     auto retVal = clSetKernelArgSVMPointer(
         nullptr, // cl_kernel kernel
         0,       // cl_uint arg_index
@@ -78,7 +78,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidKernel) {
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidArgIndex) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgIndexWhenSettingKernelArgThenInvalidArgIndexErrorIsReturned) {
     auto retVal = clSetKernelArgSVMPointer(
         pMockKernel, // cl_kernel kernel
         (cl_uint)-1, // cl_uint arg_index
@@ -87,7 +87,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidArgIndex) {
     EXPECT_EQ(CL_INVALID_ARG_INDEX, retVal);
 }
 
-TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidArgAddressQualifier) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenLocalAddressAndNullArgValueWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
     pKernelInfo->kernelArgInfo[0].addressQualifier = CL_KERNEL_ARG_ADDRESS_LOCAL;
 
     auto retVal = clSetKernelArgSVMPointer(
@@ -98,7 +98,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidArgAddressQualif
     EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
 }
 
-TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidArgValue) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgValueWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
     void *ptrHost = malloc(256);
     EXPECT_NE(nullptr, ptrHost);
 
@@ -112,7 +112,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidArgValue) {
     free(ptrHost);
 }
 
-TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerWithNullArgValue_success) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndNullArgValueWhenSettingKernelArgThenSuccessIsReturned) {
     const DeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto retVal = clSetKernelArgSVMPointer(
@@ -124,7 +124,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerWithNullArgValue_success
     }
 }
 
-TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_success) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndValidArgValueWhenSettingKernelArgThenSuccessIsReturned) {
     const DeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -141,7 +141,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_success) {
     }
 }
 
-TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerConst_success) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndConstantAddressWhenSettingKernelArgThenSuccessIsReturned) {
     const DeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -160,7 +160,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerConst_success) {
     }
 }
 
-TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerWithOffset_success) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithOffsetWhenSettingKernelArgThenSuccessIsReturned) {
     const DeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
@@ -178,7 +178,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerWithOffset_success) {
     }
 }
 
-TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerWithOffset_invalidArgValue) {
+TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithInvalidOffsetWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
     const DeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
