@@ -16,10 +16,15 @@ endforeach()
 # Include needed macros
 include(common_macros.cmake)
 
+if(MSVC)
+set(CMAKE_GENERATOR_TOOLSET "host=x64")
+endif()
+
 if(NOT PROJECT_NAME)
     set(PROJECT_NAME igdrcl)
 endif()
 
+  
 project(${PROJECT_NAME})
 
 if(CMAKE_CONFIGURATION_TYPES)
