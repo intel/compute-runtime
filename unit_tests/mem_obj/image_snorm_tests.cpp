@@ -38,8 +38,7 @@ TEST_P(SnormSurfaceFormatAccessFlagsTests, givenSnormFormatWhenGetSurfaceFormatF
     EXPECT_EQ(6u, referenceSnormSurfaceFormats.size());
     cl_mem_flags flags = GetParam();
 
-    for (size_t i = 0u; i < referenceSnormSurfaceFormats.size(); i++) {
-        const auto &snormSurfaceFormat = referenceSnormSurfaceFormats[i];
+    for (const auto &snormSurfaceFormat : referenceSnormSurfaceFormats) {
         auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.OCLImageFormat);
         EXPECT_NE(nullptr, format);
         EXPECT_TRUE(memcmp(&snormSurfaceFormat, format, sizeof(SurfaceFormatInfo)) == 0);
@@ -52,8 +51,8 @@ TEST_P(SnormSurfaceFormatTests, givenSnormOclFormatWhenCheckingrReadOnlySurfaceF
     ArrayRef<const SurfaceFormatInfo> formatsTable = GetParam();
 
     size_t snormFormatsFound = 0;
-    for (size_t i = 0; i < formatsTable.size(); ++i) {
-        auto oclFormat = formatsTable[i].OCLImageFormat;
+    for (const auto &format : formatsTable) {
+        auto oclFormat = format.OCLImageFormat;
         if (CL_SNORM_INT8 == oclFormat.image_channel_data_type || CL_SNORM_INT16 == oclFormat.image_channel_data_type) {
             EXPECT_TRUE(oclFormat.image_channel_order == CL_R || oclFormat.image_channel_order == CL_RG || oclFormat.image_channel_order == CL_RGBA);
             snormFormatsFound++;

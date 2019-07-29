@@ -158,13 +158,13 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenValidFlagsWhenMigratingMemObjsThenS
 
     cl_mem_migration_flags validFlags[] = {0, CL_MIGRATE_MEM_OBJECT_HOST, CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED, CL_MIGRATE_MEM_OBJECT_HOST | CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED};
 
-    for (unsigned int i = 0; i < sizeof(validFlags) / sizeof(cl_mem_migration_flags); i++) {
+    for (auto validFlag : validFlags) {
         cl_event eventReturned = nullptr;
         auto Result = clEnqueueMigrateMemObjects(
             pCommandQueue,
             1,
             &buffer,
-            validFlags[i],
+            validFlag,
             0,
             nullptr,
             &eventReturned);
@@ -193,15 +193,15 @@ TEST_F(clEnqueueMigrateMemObjectsTests, GivenInvalidFlagsWhenMigratingMemObjsThe
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
-    cl_mem_migration_flags validFlags[] = {(cl_mem_migration_flags)0xffffffff, CL_MIGRATE_MEM_OBJECT_HOST | (1 << 10), CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED | (1 << 10), (cl_mem_migration_flags)12345};
+    cl_mem_migration_flags invalidFlags[] = {(cl_mem_migration_flags)0xffffffff, CL_MIGRATE_MEM_OBJECT_HOST | (1 << 10), CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED | (1 << 10), (cl_mem_migration_flags)12345};
 
-    for (unsigned int i = 0; i < sizeof(validFlags) / sizeof(cl_mem_migration_flags); i++) {
+    for (auto invalidFlag : invalidFlags) {
         cl_event eventReturned = nullptr;
         auto Result = clEnqueueMigrateMemObjects(
             pCommandQueue,
             1,
             &buffer,
-            validFlags[i],
+            invalidFlag,
             0,
             nullptr,
             &eventReturned);

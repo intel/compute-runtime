@@ -383,8 +383,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenNonBlockedQueueWhenPar
 
         bool dshAllocationResident = false;
 
-        for (uint32_t i = 0; i < mockCSR->madeResidentGfxAllocations.size(); i++) {
-            if (mockCSR->madeResidentGfxAllocations[i] == pDevQueue->getDshBuffer()) {
+        for (auto allocation : mockCSR->madeResidentGfxAllocations) {
+            if (allocation == pDevQueue->getDshBuffer()) {
                 dshAllocationResident = true;
                 break;
             }

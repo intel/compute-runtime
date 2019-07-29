@@ -6,7 +6,6 @@
  */
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
-#include "runtime/helpers/array_count.h"
 #include "runtime/sharings/va/va_sharing_functions.h"
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/sharings/va/mock_va_sharing.h"
@@ -160,13 +159,9 @@ TEST(VASharingFunctions, givenEnabledExtendedVaFormatsWhenQueryingSupportedForma
     EXPECT_EQ(2u, sharingFunctions.supportedFormats.size());
 
     size_t allFormatsFound = 0;
-    uint32_t fourCCExpected[] = {VA_FOURCC_NV12, VA_FOURCC_P010};
-
-    for (size_t i = 0; i < sharingFunctions.supportedFormats.size(); i++) {
-        for (size_t fourCCIndex = 0; fourCCIndex < arrayCount(fourCCExpected); fourCCIndex++) {
-            if (sharingFunctions.supportedFormats[0].fourcc == fourCCExpected[fourCCIndex]) {
-                allFormatsFound++;
-            }
+    for (const auto &supportedFormat : sharingFunctions.supportedFormats) {
+        if (supportedFormat.fourcc == VA_FOURCC_NV12 || supportedFormat.fourcc == VA_FOURCC_P010) {
+            allFormatsFound++;
         }
     }
     EXPECT_EQ(2u, allFormatsFound);

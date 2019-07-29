@@ -235,12 +235,12 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationPropertiesWhenCreateAllocatio
     AllocationProperties propertiesBuffer(false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false);
     AllocationProperties propertiesImage(false, 0, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
 
-    AllocationProperties *properties[2] = {&propertiesBuffer, &propertiesImage};
+    AllocationProperties *propertiesArray[2] = {&propertiesBuffer, &propertiesImage};
 
-    for (uint32_t i = 0; i < arrayCount(properties); i++) {
-        auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, *properties[i], false);
+    for (auto properties : propertiesArray) {
+        auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, *properties, false);
         EXPECT_NE(nullptr, allocation);
-        EXPECT_EQ(properties[i]->allocationType, allocation->getAllocationType());
+        EXPECT_EQ(properties->allocationType, allocation->getAllocationType());
         memoryManager->freeGraphicsMemory(allocation);
     }
 }

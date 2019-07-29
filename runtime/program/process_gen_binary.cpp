@@ -51,11 +51,11 @@ const KernelInfo *Program::getKernelInfo(size_t ordinal) const {
 std::string Program::getKernelNamesString() const {
     std::string semiColonDelimitedKernelNameStr;
 
-    for (uint32_t i = 0; i < kernelInfoArray.size(); i++) {
-        semiColonDelimitedKernelNameStr += kernelInfoArray[i]->name;
-        if ((i + 1) != kernelInfoArray.size()) {
-            semiColonDelimitedKernelNameStr += ";";
+    for (auto kernelInfo : kernelInfoArray) {
+        if (!semiColonDelimitedKernelNameStr.empty()) {
+            semiColonDelimitedKernelNameStr += ';';
         }
+        semiColonDelimitedKernelNameStr += kernelInfo->name;
     }
 
     return semiColonDelimitedKernelNameStr;

@@ -67,8 +67,8 @@ TEST_P(KernelReflectionSurfaceTest, GivenEmptyKernelInfoWhenPassedToGetCurbePara
 
     // 3 params with Binding Table index of type 1024
     EXPECT_EQ(3u, curbeParamsForBlock.size());
-    for (uint32_t i = 0; i < curbeParamsForBlock.size(); i++) {
-        EXPECT_EQ(1024u, curbeParamsForBlock[i].m_parameterType);
+    for (const auto &curbeParam : curbeParamsForBlock) {
+        EXPECT_EQ(1024u, curbeParam.m_parameterType);
     }
     EXPECT_EQ(0u, firstSSHTokenIndex);
 }
@@ -202,11 +202,11 @@ HWTEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithSetBindingTableStateAnd
     EXPECT_NE(0u, curbeParams.size());
     bool foundProperParam = false;
 
-    for (size_t i = 0; i < curbeParams.size(); i++) {
-        if (curbeParams[i].m_parameterType == 1024u) {
-            EXPECT_EQ(btIndex, curbeParams[i].m_patchOffset);
-            EXPECT_EQ(8u, curbeParams[i].m_parameterSize);
-            EXPECT_EQ(0u, curbeParams[i].m_sourceOffset);
+    for (const auto &curbeParam : curbeParams) {
+        if (curbeParam.m_parameterType == 1024u) {
+            EXPECT_EQ(btIndex, curbeParam.m_patchOffset);
+            EXPECT_EQ(8u, curbeParam.m_parameterSize);
+            EXPECT_EQ(0u, curbeParam.m_sourceOffset);
             foundProperParam = true;
             break;
         }
@@ -254,11 +254,11 @@ HWTEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBindingTableStateAndIma
     EXPECT_EQ(1u, curbeParams.size());
     bool foundProperParam = false;
 
-    for (size_t i = 0; i < curbeParams.size(); i++) {
-        if (curbeParams[i].m_parameterType == 1024u) {
-            EXPECT_EQ(maxBTIndex, curbeParams[i].m_patchOffset);
-            EXPECT_EQ(8u, curbeParams[i].m_parameterSize);
-            EXPECT_EQ(0u, curbeParams[i].m_sourceOffset);
+    for (const auto &curbeParam : curbeParams) {
+        if (curbeParam.m_parameterType == 1024u) {
+            EXPECT_EQ(maxBTIndex, curbeParam.m_patchOffset);
+            EXPECT_EQ(8u, curbeParam.m_parameterSize);
+            EXPECT_EQ(0u, curbeParam.m_sourceOffset);
             foundProperParam = true;
             break;
         }
@@ -347,20 +347,20 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBufferAndDataParameterBuf
     EXPECT_LT(1u, curbeParams.size());
     bool kernelArgumentTokenFound = false;
     bool kernelArgumentSSHParamFound = false;
-    for (size_t i = 0; i < curbeParams.size(); i++) {
+    for (const auto &curbeParam : curbeParams) {
 
-        if (iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT == curbeParams[i].m_parameterType) {
+        if (iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT == curbeParam.m_parameterType) {
             kernelArgumentTokenFound = true;
-            EXPECT_EQ(0u, curbeParams[i].m_sourceOffset);
-            EXPECT_EQ(8u, curbeParams[i].m_parameterSize);
-            EXPECT_EQ(40u, curbeParams[i].m_patchOffset);
+            EXPECT_EQ(0u, curbeParam.m_sourceOffset);
+            EXPECT_EQ(8u, curbeParam.m_parameterSize);
+            EXPECT_EQ(40u, curbeParam.m_patchOffset);
         }
         // kernel arg SSH param
-        if (1024 == curbeParams[i].m_parameterType) {
+        if (1024 == curbeParam.m_parameterType) {
             kernelArgumentSSHParamFound = true;
-            EXPECT_EQ(0u, curbeParams[i].m_sourceOffset);
-            EXPECT_EQ(0u, curbeParams[i].m_parameterSize);
-            EXPECT_EQ(0u, curbeParams[i].m_patchOffset);
+            EXPECT_EQ(0u, curbeParam.m_sourceOffset);
+            EXPECT_EQ(0u, curbeParam.m_parameterSize);
+            EXPECT_EQ(0u, curbeParam.m_patchOffset);
         }
     }
     EXPECT_TRUE(kernelArgumentTokenFound);
@@ -387,8 +387,8 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithBufferAndNoDataParameterB
     MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParams, tokenMask, firstSSHTokenIndex, info, pPlatform->getDevice(0)->getHardwareInfo());
 
     bool kernelArgumentTokenFound = false;
-    for (size_t i = 0; i < curbeParams.size(); i++) {
-        if (iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT == curbeParams[i].m_parameterType) {
+    for (const auto &curbeParam : curbeParams) {
+        if (iOpenCL::DATA_PARAMETER_KERNEL_ARGUMENT == curbeParam.m_parameterType) {
             kernelArgumentTokenFound = true;
         }
     }
@@ -427,12 +427,12 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithLocalMemoryParameterWhenP
     MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParams, tokenMask, firstSSHTokenIndex, info, pPlatform->getDevice(0)->getHardwareInfo());
 
     bool localMemoryTokenFound = false;
-    for (size_t i = 0; i < curbeParams.size(); i++) {
-        if (iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES == curbeParams[i].m_parameterType) {
+    for (const auto &curbeParam : curbeParams) {
+        if (iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES == curbeParam.m_parameterType) {
             localMemoryTokenFound = true;
-            EXPECT_EQ(slmAlignment, curbeParams[i].m_sourceOffset);
-            EXPECT_EQ(0u, curbeParams[i].m_parameterSize);
-            EXPECT_EQ(crossThreadOffset, curbeParams[i].m_patchOffset);
+            EXPECT_EQ(slmAlignment, curbeParam.m_sourceOffset);
+            EXPECT_EQ(0u, curbeParam.m_parameterSize);
+            EXPECT_EQ(crossThreadOffset, curbeParam.m_patchOffset);
         }
     }
     EXPECT_TRUE(localMemoryTokenFound);
@@ -470,8 +470,8 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithoutLocalMemoryParameterWh
     MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParams, tokenMask, firstSSHTokenIndex, info, pPlatform->getDevice(0)->getHardwareInfo());
 
     bool localMemoryTokenFound = false;
-    for (size_t i = 0; i < curbeParams.size(); i++) {
-        if (iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES == curbeParams[i].m_parameterType) {
+    for (const auto &curbeParam : curbeParams) {
+        if (iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES == curbeParam.m_parameterType) {
             localMemoryTokenFound = true;
         }
     }
@@ -545,9 +545,9 @@ TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsVectorWithExpectedParam
             if (pBlockInfo->name.find("kernel_reflection_dispatch_0") != std::string::npos) {
                 EXPECT_LT(1u, curbeParamsForBlock.size());
 
-                for (size_t i = 0; i < curbeParamsForBlock.size(); i++) {
+                for (const auto &curbeParams : curbeParamsForBlock) {
 
-                    switch (curbeParamsForBlock[i].m_parameterType) {
+                    switch (curbeParams.m_parameterType) {
                     case bufferType:
                         bufferFound = true;
                         break;
@@ -932,74 +932,73 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithExecutionParametersWhenPa
 
     EXPECT_LE(supportedExecutionParamTypes.size(), curbeParams.size());
 
-    uint32_t foundParams = 0;
-
-    for (uint32_t i = 0; i < supportedExecutionParamTypes.size(); i++) {
-        foundParams = 0;
-
-        for (uint32_t j = 0; j < curbeParams.size(); j++) {
-            if (supportedExecutionParamTypes[i] == curbeParams[j].m_parameterType) {
+    for (auto paramType : supportedExecutionParamTypes) {
+        auto foundParams = 0u;
+        auto j = 0;
+        for (const auto &curbeParam : curbeParams) {
+            if (paramType == curbeParam.m_parameterType) {
 
                 foundParams++;
 
-                uint32_t index = curbeParams[j].m_sourceOffset / sizeof(uint32_t);
+                uint32_t index = curbeParam.m_sourceOffset / sizeof(uint32_t);
 
-                switch (curbeParams[j].m_parameterType) {
+                switch (paramType) {
                 case iOpenCL::DATA_PARAMETER_LOCAL_WORK_SIZE:
                     if (j < 3) {
-                        EXPECT_EQ(lwsOffsets[index], curbeParams[j].m_patchOffset);
+                        EXPECT_EQ(lwsOffsets[index], curbeParam.m_patchOffset);
                     } else {
-                        EXPECT_EQ(lwsOffsets2[index], curbeParams[j].m_patchOffset);
+                        EXPECT_EQ(lwsOffsets2[index], curbeParam.m_patchOffset);
                     }
                     break;
                 case iOpenCL::DATA_PARAMETER_GLOBAL_WORK_SIZE:
-                    EXPECT_EQ(gwsOffsets[index], curbeParams[j].m_patchOffset);
+                    EXPECT_EQ(gwsOffsets[index], curbeParam.m_patchOffset);
                     break;
                 case iOpenCL::DATA_PARAMETER_NUM_WORK_GROUPS:
-                    EXPECT_EQ(numOffsets[index], curbeParams[j].m_patchOffset);
+                    EXPECT_EQ(numOffsets[index], curbeParam.m_patchOffset);
                     break;
                 case iOpenCL::DATA_PARAMETER_GLOBAL_WORK_OFFSET:
-                    EXPECT_EQ(globalOffsetOffsets[index], curbeParams[j].m_patchOffset);
+                    EXPECT_EQ(globalOffsetOffsets[index], curbeParam.m_patchOffset);
                     break;
                 case iOpenCL::DATA_PARAMETER_ENQUEUED_LOCAL_WORK_SIZE:
-                    EXPECT_EQ(enqueuedLocalWorkSizeOffsets[index], curbeParams[j].m_patchOffset);
+                    EXPECT_EQ(enqueuedLocalWorkSizeOffsets[index], curbeParam.m_patchOffset);
                     break;
                 }
             }
+            j++;
         }
-        switch (supportedExecutionParamTypes[i]) {
+        switch (paramType) {
         case iOpenCL::DATA_PARAMETER_LOCAL_WORK_SIZE:
-            EXPECT_EQ(6u, foundParams) << "Parameter token: " << supportedExecutionParamTypes[i];
+            EXPECT_EQ(6u, foundParams) << "Parameter token: " << paramType;
             break;
         case iOpenCL::DATA_PARAMETER_GLOBAL_WORK_SIZE:
         case iOpenCL::DATA_PARAMETER_NUM_WORK_GROUPS:
         case iOpenCL::DATA_PARAMETER_GLOBAL_WORK_OFFSET:
         case iOpenCL::DATA_PARAMETER_ENQUEUED_LOCAL_WORK_SIZE:
-            EXPECT_EQ(3u, foundParams) << "Parameter token: " << supportedExecutionParamTypes[i];
+            EXPECT_EQ(3u, foundParams) << "Parameter token: " << paramType;
             break;
         }
     }
 
-    for (uint32_t i = 0; i < supportedExecutionParamTypes.size(); i++) {
-        foundParams = 0;
+    for (auto paramType : supportedExecutionParamTypes) {
+        auto foundParams = 0u;
 
-        for (uint32_t j = 0; j < curbeParams.size(); j++) {
-            if (supportedExecutionParamTypes[i] == curbeParams[j].m_parameterType) {
+        for (const auto &curbeParam : curbeParams) {
+            if (paramType == curbeParam.m_parameterType) {
 
-                switch (curbeParams[j].m_parameterType) {
+                switch (paramType) {
                 case iOpenCL::DATA_PARAMETER_PARENT_EVENT:
-                    EXPECT_EQ(parentEventOffset, curbeParams[j].m_patchOffset);
+                    EXPECT_EQ(parentEventOffset, curbeParam.m_patchOffset);
                     foundParams++;
                     break;
                 case iOpenCL::DATA_PARAMETER_WORK_DIMENSIONS:
-                    EXPECT_EQ(workDimOffset, curbeParams[j].m_patchOffset);
+                    EXPECT_EQ(workDimOffset, curbeParam.m_patchOffset);
                     foundParams++;
                     break;
                 }
             }
         }
 
-        switch (supportedExecutionParamTypes[i]) {
+        switch (paramType) {
         case iOpenCL::DATA_PARAMETER_PARENT_EVENT:
         case iOpenCL::DATA_PARAMETER_WORK_DIMENSIONS:
             EXPECT_EQ(1u, foundParams);
@@ -1007,12 +1006,10 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithExecutionParametersWhenPa
         }
     }
 
-    uint64_t expectedTokens = 0;
-
-    for (uint32_t i = 0; i < supportedExecutionParamTypes.size(); i++) {
-        expectedTokens = (uint64_t)1 << supportedExecutionParamTypes[i];
-        if (supportedExecutionParamTypes[i] != iOpenCL::DATA_PARAMETER_NUM_HARDWARE_THREADS) {
-            EXPECT_TRUE((tokenMask & expectedTokens) > 0) << "Pramater Token: " << supportedExecutionParamTypes[i];
+    for (auto paramType : supportedExecutionParamTypes) {
+        if (paramType != iOpenCL::DATA_PARAMETER_NUM_HARDWARE_THREADS) {
+            auto expectedTokens = (uint64_t)1 << paramType;
+            EXPECT_TRUE((tokenMask & expectedTokens) > 0) << "Parameter Token: " << paramType;
         }
     }
 }
@@ -1080,19 +1077,17 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelRe
                 }
             }
 
-            if (pBlockInfo->kernelArgInfo.size() > 0) {
-                for (uint32_t i = 0; i < pBlockInfo->kernelArgInfo.size(); i++) {
-                    if (pBlockInfo->kernelArgInfo[i].isDeviceQueue) {
+            for (const auto &arg : pBlockInfo->kernelArgInfo) {
+                if (arg.isDeviceQueue) {
 
-                        auto *patchedPointer = ptrOffset(pCurbe, pBlockInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset);
-                        if (pBlockInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
-                            uint32_t *patchedValue = static_cast<uint32_t *>(patchedPointer);
-                            uint64_t patchedValue64 = *patchedValue;
-                            EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), patchedValue64);
-                        } else if (pBlockInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].size == sizeof(uint64_t)) {
-                            uint64_t *patchedValue = static_cast<uint64_t *>(patchedPointer);
-                            EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), *patchedValue);
-                        }
+                    auto *patchedPointer = ptrOffset(pCurbe, arg.kernelArgPatchInfoVector[0].crossthreadOffset);
+                    if (arg.kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
+                        uint32_t *patchedValue = static_cast<uint32_t *>(patchedPointer);
+                        uint64_t patchedValue64 = *patchedValue;
+                        EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), patchedValue64);
+                    } else if (arg.kernelArgPatchInfoVector[0].size == sizeof(uint64_t)) {
+                        uint64_t *patchedValue = static_cast<uint64_t *>(patchedPointer);
+                        EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), *patchedValue);
                     }
                 }
             }
@@ -1144,9 +1139,9 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelRe
 
             if (pKernelHeader->m_ParentKernelImageCount > 0) {
                 uint32_t imageIndex = 0;
-                for (uint32_t i = 0; i < pKernel->getKernelInfo().kernelArgInfo.size(); i++) {
-                    if (pKernel->getKernelInfo().kernelArgInfo[i].isImage) {
-                        EXPECT_EQ(pKernel->getKernelInfo().kernelArgInfo[i].offsetHeap, pParentImageParams[imageIndex].m_ObjectID);
+                for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
+                    if (arg.isImage) {
+                        EXPECT_EQ(arg.offsetHeap, pParentImageParams[imageIndex].m_ObjectID);
                         imageIndex++;
                     }
                 }
@@ -1154,9 +1149,9 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelRe
 
             if (pKernelHeader->m_ParentSamplerCount > 0) {
                 uint32_t samplerIndex = 0;
-                for (uint32_t i = 0; i < pKernel->getKernelInfo().kernelArgInfo.size(); i++) {
-                    if (pKernel->getKernelInfo().kernelArgInfo[i].isSampler) {
-                        EXPECT_EQ(OCLRT_ARG_OFFSET_TO_SAMPLER_OBJECT_ID(pKernel->getKernelInfo().kernelArgInfo[i].offsetHeap), pParentSamplerParams[samplerIndex].m_ObjectID);
+                for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
+                    if (arg.isSampler) {
+                        EXPECT_EQ(OCLRT_ARG_OFFSET_TO_SAMPLER_OBJECT_ID(arg.offsetHeap), pParentSamplerParams[samplerIndex].m_ObjectID);
                         samplerIndex++;
                     }
                 }

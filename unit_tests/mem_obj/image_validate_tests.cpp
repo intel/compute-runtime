@@ -6,7 +6,6 @@
  */
 
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/array_count.h"
 #include "runtime/helpers/convert_color.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
@@ -783,10 +782,9 @@ TEST_P(ValidParentImageFormatTest, givenParentChannelOrderWhenTestWithAllChannel
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     image.imageFormat = parentImageFormat;
 
-    bool retVal;
-    for (unsigned int i = 0; i < arrayCount(allChannelOrders); i++) {
-        imageFormat.image_channel_order = allChannelOrders[i];
-        retVal = image.hasValidParentImageFormat(imageFormat);
+    for (auto channelOrder : allChannelOrders) {
+        imageFormat.image_channel_order = channelOrder;
+        bool retVal = image.hasValidParentImageFormat(imageFormat);
         EXPECT_EQ(imageFormat.image_channel_order == validChannelOrder, retVal);
     }
 };

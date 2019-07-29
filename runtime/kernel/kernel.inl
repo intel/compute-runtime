@@ -62,13 +62,11 @@ void Kernel::patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printf
                 printfGpuAddress = printfSurface->getGpuAddress();
         }
 
-        if (pBlockInfo->kernelArgInfo.size() > 0) {
-            for (uint32_t i = 0; i < pBlockInfo->kernelArgInfo.size(); i++) {
-                if (pBlockInfo->kernelArgInfo[i].isDeviceQueue) {
-                    deviceQueueOffset = pBlockInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset;
-                    deviceQueueSize = pBlockInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].size;
-                    break;
-                }
+        for (const auto &arg : pBlockInfo->kernelArgInfo) {
+            if (arg.isDeviceQueue) {
+                deviceQueueOffset = arg.kernelArgPatchInfoVector[0].crossthreadOffset;
+                deviceQueueSize = arg.kernelArgPatchInfoVector[0].size;
+                break;
             }
         }
 

@@ -125,8 +125,8 @@ void WddmResidencyController::removeFromTrimCandidateListIfUsed(WddmAllocation *
 void WddmResidencyController::checkTrimCandidateCount() {
     if (DebugManager.flags.ResidencyDebugEnable.get()) {
         uint32_t sum = 0;
-        for (size_t i = 0; i < trimCandidateList.size(); i++) {
-            if (trimCandidateList[i] != nullptr) {
+        for (auto trimCandidate : trimCandidateList) {
+            if (trimCandidate != nullptr) {
                 sum++;
             }
         }

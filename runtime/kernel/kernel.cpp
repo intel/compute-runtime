@@ -1635,10 +1635,10 @@ void Kernel::getParentObjectCounts(ObjectCounts &objectCount) {
     objectCount.samplerCount = 0;
     DEBUG_BREAK_IF(!isParentKernel);
 
-    for (size_t i = 0; i < this->kernelArguments.size(); i++) {
-        if (kernelArguments[i].type == SAMPLER_OBJ) {
+    for (const auto &arg : this->kernelArguments) {
+        if (arg.type == SAMPLER_OBJ) {
             objectCount.samplerCount++;
-        } else if (kernelArguments[i].type == IMAGE_OBJ) {
+        } else if (arg.type == IMAGE_OBJ) {
             objectCount.imageCount++;
         }
     }
@@ -1799,9 +1799,9 @@ void Kernel::ReflectionSurfaceHelper::getCurbeParams(std::vector<IGIL_KernelCurb
         }
     }
 
-    for (uint32_t i = 0; i < kernelInfo.patchInfo.dataParameterBuffers.size(); i++) {
-        if (kernelInfo.patchInfo.dataParameterBuffers[i]->Type == DATA_PARAMETER_KERNEL_ARGUMENT) {
-            curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_KERNEL_ARGUMENT, kernelInfo.patchInfo.dataParameterBuffers[i]->DataSize, kernelInfo.patchInfo.dataParameterBuffers[i]->Offset, kernelInfo.patchInfo.dataParameterBuffers[i]->ArgumentNumber});
+    for (auto param : kernelInfo.patchInfo.dataParameterBuffers) {
+        if (param->Type == DATA_PARAMETER_KERNEL_ARGUMENT) {
+            curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_KERNEL_ARGUMENT, param->DataSize, param->Offset, param->ArgumentNumber});
             tokenMask |= ((uint64_t)1 << DATA_PARAMETER_KERNEL_ARGUMENT);
         }
     }
@@ -2126,12 +2126,12 @@ void Kernel::patchEventPool(DeviceQueue *devQueue) {
 void Kernel::patchBlocksSimdSize() {
     BlockKernelManager *blockManager = program->getBlockKernelManager();
 
-    for (uint32_t i = 0; i < kernelInfo.childrenKernelsIdOffset.size(); i++) {
+    for (auto &idOffset : kernelInfo.childrenKernelsIdOffset) {
 
-        DEBUG_BREAK_IF(!(kernelInfo.childrenKernelsIdOffset[i].first < static_cast<uint32_t>(blockManager->getCount())));
+        DEBUG_BREAK_IF(!(idOffset.first < static_cast<uint32_t>(blockManager->getCount())));
 
-        const KernelInfo *blockInfo = blockManager->getBlockKernelInfo(kernelInfo.childrenKernelsIdOffset[i].first);
-        uint32_t *simdSize = reinterpret_cast<uint32_t *>(&crossThreadData[kernelInfo.childrenKernelsIdOffset[i].second]);
+        const KernelInfo *blockInfo = blockManager->getBlockKernelInfo(idOffset.first);
+        uint32_t *simdSize = reinterpret_cast<uint32_t *>(&crossThreadData[idOffset.second]);
         *simdSize = blockInfo->getMaxSimdSize();
     }
 }

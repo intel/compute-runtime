@@ -14,7 +14,6 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/array_count.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
@@ -3065,8 +3064,8 @@ TEST_F(DrmMemoryManagerBasic, givenImageOrSharedResourceCopyWhenGraphicsAllocati
     GraphicsAllocation::AllocationType types[] = {GraphicsAllocation::AllocationType::IMAGE,
                                                   GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY};
 
-    for (uint32_t i = 0; i < arrayCount(types); i++) {
-        allocData.type = types[i];
+    for (auto type : types) {
+        allocData.type = type;
         auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
         EXPECT_EQ(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);

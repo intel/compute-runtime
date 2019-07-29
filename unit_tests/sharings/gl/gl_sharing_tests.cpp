@@ -789,9 +789,9 @@ TEST(glSharingBasicTest, givenCorrectFlagsWhenGettingSupportedFormatsThenCorrect
     cl_GLenum glFormats[3] = {};
     cl_uint numImageFormats = 0;
 
-    for (size_t i = 0; i < arrayCount(flags); i++) {
+    for (auto flag : flags) {
 
-        auto result = glSharingFunctions.getSupportedFormats(flags[i], image_type, arrayCount(glFormats), glFormats, &numImageFormats);
+        auto result = glSharingFunctions.getSupportedFormats(flag, image_type, arrayCount(glFormats), glFormats, &numImageFormats);
 
         EXPECT_EQ(CL_SUCCESS, result);
         EXPECT_EQ(static_cast<uint32_t>(GlSharing::gLToCLFormats.size()), numImageFormats);
@@ -809,15 +809,15 @@ TEST(glSharingBasicTest, givenSupportedImageTypesWhenGettingSupportedFormatsThen
     cl_GLenum glFormats[3] = {};
     cl_uint numImageFormats = 0;
 
-    for (size_t i = 0; i < arrayCount(image_types); i++) {
+    for (auto image_type : image_types) {
 
-        auto result = glSharingFunctions.getSupportedFormats(flags, image_types[i], arrayCount(glFormats), glFormats, &numImageFormats);
+        auto result = glSharingFunctions.getSupportedFormats(flags, image_type, arrayCount(glFormats), glFormats, &numImageFormats);
 
         EXPECT_EQ(CL_SUCCESS, result);
         EXPECT_EQ(static_cast<uint32_t>(GlSharing::gLToCLFormats.size()), numImageFormats);
 
-        for (uint32_t formatIndex = 0; formatIndex < arrayCount(glFormats); formatIndex++) {
-            EXPECT_NE(GlSharing::gLToCLFormats.end(), GlSharing::gLToCLFormats.find(glFormats[formatIndex]));
+        for (auto glFormat : glFormats) {
+            EXPECT_NE(GlSharing::gLToCLFormats.end(), GlSharing::gLToCLFormats.find(glFormat));
         }
     }
 }

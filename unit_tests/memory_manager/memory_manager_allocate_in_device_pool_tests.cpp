@@ -37,8 +37,8 @@ TEST(MemoryManagerTest, givenImageOrSharedResourceCopyWhenGraphicsAllocationInDe
     GraphicsAllocation::AllocationType types[] = {GraphicsAllocation::AllocationType::IMAGE,
                                                   GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY};
 
-    for (uint32_t i = 0; i < arrayCount(types); i++) {
-        allocData.type = types[i];
+    for (auto type : types) {
+        allocData.type = type;
         auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
         EXPECT_EQ(nullptr, allocation);
         EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);

@@ -132,8 +132,8 @@ cl_int Program::link(
 
             if (isKernelDebugEnabled()) {
                 processDebugData();
-                for (size_t i = 0; i < kernelInfoArray.size(); i++) {
-                    pDevice->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfoArray[i]);
+                for (auto kernelInfo : kernelInfoArray) {
+                    pDevice->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo);
                 }
             }
         } else {

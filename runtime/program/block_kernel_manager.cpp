@@ -29,11 +29,7 @@ BlockKernelManager::~BlockKernelManager() {
 }
 void BlockKernelManager::pushPrivateSurface(GraphicsAllocation *allocation, size_t ordinal) {
     if (blockPrivateSurfaceArray.size() < blockKernelInfoArray.size()) {
-        blockPrivateSurfaceArray.resize(blockKernelInfoArray.size());
-
-        for (uint32_t i = 0; i < blockPrivateSurfaceArray.size(); i++) {
-            blockPrivateSurfaceArray[i] = nullptr;
-        }
+        blockPrivateSurfaceArray.resize(blockKernelInfoArray.size(), nullptr);
     }
 
     DEBUG_BREAK_IF(ordinal >= blockPrivateSurfaceArray.size());

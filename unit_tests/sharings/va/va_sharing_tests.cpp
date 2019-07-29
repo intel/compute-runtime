@@ -546,11 +546,11 @@ TEST_F(ApiVaSharingTests, givenSupportedImageTypeWhenGettingSupportedVAApiFormat
 
     VAImageFormat supportedFormat = {VA_FOURCC_NV12, VA_LSB_FIRST, 8, 0, 0, 0, 0, 0};
 
-    for (size_t i = 0; i < arrayCount(flags); i++) {
+    for (auto flag : flags) {
 
         cl_int result = clGetSupportedVA_APIMediaSurfaceFormatsINTEL(
             &context,
-            flags[i],
+            flag,
             image_type,
             arrayCount(vaApiFormats),
             vaApiFormats,
