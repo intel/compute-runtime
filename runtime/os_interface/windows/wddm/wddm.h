@@ -103,6 +103,7 @@ class Wddm {
     }
 
     uint64_t getSystemSharedMemory() const;
+    uint64_t getDedicatedVideoMemory() const;
 
     uint64_t getMaxApplicationAddress() const;
 
@@ -161,6 +162,7 @@ class Wddm {
     std::unique_ptr<WorkaroundTable> workaroundTable;
     GMM_GFX_PARTITIONING gfxPartition;
     uint64_t systemSharedMemory = 0;
+    uint64_t dedicatedVideoMemory = 0;
     uint32_t maxRenderFrequency = 0;
     bool instrumentationEnabled = false;
     std::string deviceRegistryPath;

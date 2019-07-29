@@ -25,6 +25,7 @@ class WddmMock : public Wddm {
   public:
     using Wddm::adapter;
     using Wddm::currentPagingFenceValue;
+    using Wddm::dedicatedVideoMemory;
     using Wddm::device;
     using Wddm::featureTable;
     using Wddm::gdi;

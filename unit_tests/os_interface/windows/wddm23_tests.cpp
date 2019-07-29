@@ -63,6 +63,10 @@ struct Wddm23Tests : public Wddm23TestsWithoutWddmInit {
     }
 };
 
+TEST_F(Wddm23Tests, whenGetDedicatedVideoMemoryIsCalledThenCorrectValueIsReturned) {
+    EXPECT_EQ(wddm->dedicatedVideoMemory, wddm->getDedicatedVideoMemory());
+}
+
 TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
     EXPECT_TRUE(wddm->wddmInterface->hwQueuesSupported());
     EXPECT_EQ(1u, getCreateContextDataFcn()->Flags.HwQueueSupported);

@@ -144,6 +144,7 @@ bool Wddm::queryAdapterInfo() {
         deviceRegistryPath = adapterInfo.DeviceRegistryPath;
 
         systemSharedMemory = adapterInfo.SystemSharedMemory;
+        dedicatedVideoMemory = adapterInfo.DedicatedVideoMemory;
         maxRenderFrequency = adapterInfo.MaxRenderFreq;
         instrumentationEnabled = adapterInfo.Caps.InstrumentationIsEnabled != 0;
     }
@@ -810,6 +811,10 @@ void Wddm::initGfxPartition(GfxPartition &outGfxPartition) const {
 
 uint64_t Wddm::getSystemSharedMemory() const {
     return systemSharedMemory;
+}
+
+uint64_t Wddm::getDedicatedVideoMemory() const {
+    return dedicatedVideoMemory;
 }
 
 uint64_t Wddm::getMaxApplicationAddress() const {
