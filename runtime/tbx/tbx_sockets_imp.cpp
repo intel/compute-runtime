@@ -297,7 +297,7 @@ bool TbxSocketsImp::sendWriteData(const void *buffer, size_t sizeInBytes) {
 
 bool TbxSocketsImp::getResponseData(void *buffer, size_t sizeInBytes) {
     size_t totalRecv = 0;
-    auto dataBuffer = reinterpret_cast<char *>(buffer);
+    auto dataBuffer = static_cast<char *>(buffer);
 
     do {
         auto bytesRecv = ::recv(m_socket, &dataBuffer[totalRecv], static_cast<int>(sizeInBytes - totalRecv), 0);

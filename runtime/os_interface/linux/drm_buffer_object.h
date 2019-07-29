@@ -59,7 +59,7 @@ class BufferObject {
     uint64_t peekUnmapSize() const { return unmapSize; }
     StorageAllocatorType peekAllocationType() const { return storageAllocatorType; }
     void setAllocationType(StorageAllocatorType allocatorType) { this->storageAllocatorType = allocatorType; }
-    bool peekIsReusableAllocation() { return this->isReused; }
+    bool peekIsReusableAllocation() const { return this->isReused; }
 
   protected:
     BufferObject(Drm *drm, int handle, bool isAllocated);

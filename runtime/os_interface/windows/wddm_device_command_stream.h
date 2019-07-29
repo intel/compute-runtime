@@ -30,8 +30,8 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     void processEviction() override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
 
-    WddmMemoryManager *getMemoryManager();
-    Wddm *peekWddm() {
+    WddmMemoryManager *getMemoryManager() const;
+    Wddm *peekWddm() const {
         return wddm;
     }
     GmmPageTableMngr *createPageTableManager() override;

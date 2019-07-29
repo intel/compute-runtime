@@ -61,7 +61,7 @@ struct FragmentStorage {
 };
 
 struct AllocationStorageData {
-    OsHandle *osHandleStorage;
+    OsHandle *osHandleStorage = nullptr;
     size_t fragmentSize = 0;
     const void *cpuPtr = nullptr;
     bool freeTheFragment = false;
@@ -71,12 +71,6 @@ struct AllocationStorageData {
 struct OsHandleStorage {
     AllocationStorageData fragmentStorageData[maxFragmentsCount];
     uint32_t fragmentCount = 0;
-    OsHandleStorage() {
-        for (int i = 0; i < maxFragmentsCount; i++) {
-            fragmentStorageData[i].osHandleStorage = nullptr;
-            fragmentStorageData[i].cpuPtr = nullptr;
-        }
-    }
 };
 
 } // namespace NEO

@@ -104,7 +104,7 @@ void DrmCommandStreamReceiver<GfxFamily>::makeResident(BufferObject *bo) {
 template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &inputAllocationsForResidency) {
     for (auto &alloc : inputAllocationsForResidency) {
-        auto drmAlloc = static_cast<DrmAllocation *>(alloc);
+        auto drmAlloc = static_cast<const DrmAllocation *>(alloc);
         if (drmAlloc->fragmentsStorage.fragmentCount) {
             for (unsigned int f = 0; f < drmAlloc->fragmentsStorage.fragmentCount; f++) {
                 const auto osContextId = osContext->getContextId();
@@ -129,18 +129,16 @@ void DrmCommandStreamReceiver<GfxFamily>::makeNonResident(GraphicsAllocation &gf
         if (this->residency.size() != 0) {
             this->residency.clear();
         }
-        if (gfxAllocation.fragmentsStorage.fragmentCount) {
-            for (auto fragmentId = 0u; fragmentId < gfxAllocation.fragmentsStorage.fragmentCount; fragmentId++) {
-                gfxAllocation.fragmentsStorage.fragmentStorageData[fragmentId].residency->resident[osContext->getContextId()] = false;
-            }
+        for (auto fragmentId = 0u; fragmentId < gfxAllocation.fragmentsStorage.fragmentCount; fragmentId++) {
+            gfxAllocation.fragmentsStorage.fragmentStorageData[fragmentId].residency->resident[osContext->getContextId()] = false;
         }
     }
     gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
 }
 
 template <typename GfxFamily>
-DrmMemoryManager *DrmCommandStreamReceiver<GfxFamily>::getMemoryManager() {
-    return (DrmMemoryManager *)CommandStreamReceiver::getMemoryManager();
+DrmMemoryManager *DrmCommandStreamReceiver<GfxFamily>::getMemoryManager() const {
+    return static_cast<DrmMemoryManager *>(CommandStreamReceiver::getMemoryManager());
 }
 
 template <typename GfxFamily>

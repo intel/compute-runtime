@@ -755,13 +755,11 @@ void Kernel::setStartOffset(uint32_t offset) {
 }
 
 const void *Kernel::getSurfaceStateHeap() const {
-    return kernelInfo.usesSsh
-               ? pSshLocal.get()
-               : nullptr;
+    return kernelInfo.usesSsh ? pSshLocal.get() : nullptr;
 }
 
 void *Kernel::getSurfaceStateHeap() {
-    return const_cast<void *>(const_cast<const Kernel *>(this)->getSurfaceStateHeap());
+    return kernelInfo.usesSsh ? pSshLocal.get() : nullptr;
 }
 
 size_t Kernel::getDynamicStateHeapSize() const {
@@ -783,7 +781,7 @@ size_t Kernel::getNumberOfBindingTableStates() const {
 }
 
 void Kernel::resizeSurfaceStateHeap(void *pNewSsh, size_t newSshSize, size_t newBindingTableCount, size_t newBindingTableOffset) {
-    pSshLocal.reset(reinterpret_cast<char *>(pNewSsh));
+    pSshLocal.reset(static_cast<char *>(pNewSsh));
     sshLocalSize = static_cast<uint32_t>(newSshSize);
     numberOfBindingTableStates = newBindingTableCount;
     localBindingTableOffset = newBindingTableOffset;

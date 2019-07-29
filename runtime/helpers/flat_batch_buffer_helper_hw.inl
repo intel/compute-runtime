@@ -114,7 +114,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(Batch
         flatBatchBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties(flatBatchBufferProperties);
         UNRECOVERABLE_IF(flatBatchBuffer == nullptr);
 
-        char *ptr = reinterpret_cast<char *>(flatBatchBuffer->getUnderlyingBuffer());
+        char *ptr = static_cast<char *>(flatBatchBuffer->getUnderlyingBuffer());
         memcpy_s(ptr, indirectPatchCommandsSize, indirectPatchCommands.get(), indirectPatchCommandsSize);
         ptr += indirectPatchCommandsSize;
         for (auto &chunk : orderedChunks) {

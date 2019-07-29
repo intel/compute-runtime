@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-std::vector<std::string> Directory::getFiles(std::string &path) {
+std::vector<std::string> Directory::getFiles(const std::string &path) {
     std::vector<std::string> files;
     std::string newPath;
 

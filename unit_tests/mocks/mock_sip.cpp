@@ -23,7 +23,7 @@
 namespace NEO {
 std::vector<char> MockSipKernel::dummyBinaryForSip;
 std::vector<char> MockSipKernel::getDummyGenBinary() {
-    if (dummyBinaryForSip.size() == 0) {
+    if (dummyBinaryForSip.empty()) {
         dummyBinaryForSip = getBinary();
     }
     return dummyBinaryForSip;
@@ -37,7 +37,7 @@ std::vector<char> MockSipKernel::getBinary() {
 
     UNRECOVERABLE_IF(binary == nullptr);
 
-    std::vector<char> ret{reinterpret_cast<char *>(binary), reinterpret_cast<char *>(binary) + binarySize};
+    std::vector<char> ret{static_cast<char *>(binary), static_cast<char *>(binary) + binarySize};
 
     deleteDataReadFromFile(binary);
     return ret;

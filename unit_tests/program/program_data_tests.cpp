@@ -175,7 +175,7 @@ TEST_F(ProgramDataTest, AllocateConstantMemorySurfaceProgramBinaryInfo) {
     buildAndDecodeProgramPatchList();
 
     EXPECT_NE(nullptr, pProgram->getConstantSurface());
-    EXPECT_EQ(0, memcmp(constValue, reinterpret_cast<char *>(pProgram->getConstantSurface()->getUnderlyingBuffer()), constSize));
+    EXPECT_EQ(0, memcmp(constValue, pProgram->getConstantSurface()->getUnderlyingBuffer(), constSize));
 }
 
 TEST_F(MockProgramDataTest, whenGlobalConstantsAreExportedThenAllocateSurfacesAsSvm) {
@@ -327,7 +327,7 @@ TEST_F(ProgramDataTest, GivenDeviceForcing32BitMessagesWhenConstAllocationIsPres
     buildAndDecodeProgramPatchList();
 
     EXPECT_NE(nullptr, pProgram->getConstantSurface());
-    EXPECT_EQ(0, memcmp(constValue, reinterpret_cast<char *>(pProgram->getConstantSurface()->getUnderlyingBuffer()), constSize));
+    EXPECT_EQ(0, memcmp(constValue, pProgram->getConstantSurface()->getUnderlyingBuffer(), constSize));
 
     if (is64bit) {
         EXPECT_TRUE(pProgram->getConstantSurface()->is32BitAllocation());
@@ -338,7 +338,7 @@ TEST_F(ProgramDataTest, AllocateGlobalMemorySurfaceProgramBinaryInfo) {
     auto globalSize = setupGlobalAllocation();
     buildAndDecodeProgramPatchList();
     EXPECT_NE(nullptr, pProgram->getGlobalSurface());
-    EXPECT_EQ(0, memcmp(globalValue, reinterpret_cast<char *>(pProgram->getGlobalSurface()->getUnderlyingBuffer()), globalSize));
+    EXPECT_EQ(0, memcmp(globalValue, pProgram->getGlobalSurface()->getUnderlyingBuffer(), globalSize));
 }
 
 TEST_F(ProgramDataTest, GlobalPointerProgramBinaryInfo) {
@@ -390,7 +390,7 @@ TEST_F(ProgramDataTest, GlobalPointerProgramBinaryInfo) {
              sizeof(SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo));
     memcpy_s((cl_char *)pAllocateGlobalMemorySurface + sizeof(allocateGlobalMemorySurface), globalPointerSize, &pGlobalPointerValue, globalPointerSize);
 
-    pProgramPatchList = (void *)pAllocateGlobalMemorySurface;
+    pProgramPatchList = pAllocateGlobalMemorySurface;
     programPatchListSize = allocateGlobalMemorySurface.Size;
     buildAndDecodeProgramPatchList();
 
@@ -400,7 +400,7 @@ TEST_F(ProgramDataTest, GlobalPointerProgramBinaryInfo) {
 
     globalSurface->setCpuPtrAndGpuAddress(globalSurface->getUnderlyingBuffer(), globalSurface->getGpuAddress() + 1);
     EXPECT_NE(reinterpret_cast<uint64_t>(globalSurface->getUnderlyingBuffer()), globalSurface->getGpuAddress());
-    EXPECT_EQ(0, memcmp(&pGlobalPointerValue, reinterpret_cast<char *>(globalSurface->getUnderlyingBuffer()), globalPointerSize));
+    EXPECT_EQ(0, memcmp(&pGlobalPointerValue, globalSurface->getUnderlyingBuffer(), globalPointerSize));
 
     delete[] pAllocateGlobalMemorySurface;
 
@@ -423,7 +423,7 @@ TEST_F(ProgramDataTest, GlobalPointerProgramBinaryInfo) {
 
     buildAndDecodeProgramPatchList();
 
-    EXPECT_EQ(0, memcmp(&pGlobalPointerValue, reinterpret_cast<char *>(globalSurface->getUnderlyingBuffer()), globalPointerSize));
+    EXPECT_EQ(0, memcmp(&pGlobalPointerValue, globalSurface->getUnderlyingBuffer(), globalPointerSize));
 
     delete[] pGlobalPointer;
 
@@ -446,7 +446,7 @@ TEST_F(ProgramDataTest, GlobalPointerProgramBinaryInfo) {
 
     buildAndDecodeProgramPatchList();
 
-    EXPECT_EQ(0, memcmp(&pGlobalPointerValue, reinterpret_cast<char *>(globalSurface->getUnderlyingBuffer()), globalPointerSize));
+    EXPECT_EQ(0, memcmp(&pGlobalPointerValue, globalSurface->getUnderlyingBuffer(), globalPointerSize));
 
     delete[] pGlobalPointer;
 
@@ -469,7 +469,7 @@ TEST_F(ProgramDataTest, GlobalPointerProgramBinaryInfo) {
 
     buildAndDecodeProgramPatchList();
 
-    EXPECT_EQ(0, memcmp(&pGlobalPointerValue, reinterpret_cast<char *>(globalSurface->getUnderlyingBuffer()), globalPointerSize));
+    EXPECT_EQ(0, memcmp(&pGlobalPointerValue, globalSurface->getUnderlyingBuffer(), globalPointerSize));
 
     delete[] pGlobalPointer;
 
@@ -493,9 +493,9 @@ TEST_F(ProgramDataTest, GlobalPointerProgramBinaryInfo) {
     buildAndDecodeProgramPatchList();
 
     if (!globalSurface->is32BitAllocation()) {
-        EXPECT_NE(0, memcmp(&pGlobalPointerValue, reinterpret_cast<char *>(globalSurface->getUnderlyingBuffer()), globalPointerSize));
+        EXPECT_NE(0, memcmp(&pGlobalPointerValue, globalSurface->getUnderlyingBuffer(), globalPointerSize));
         ptr = pGlobalPointerValue + (globalSurface->getGpuAddressToPatch());
-        EXPECT_EQ(0, memcmp(&ptr, reinterpret_cast<char *>(globalSurface->getUnderlyingBuffer()), globalPointerSize));
+        EXPECT_EQ(0, memcmp(&ptr, globalSurface->getUnderlyingBuffer(), globalPointerSize));
     }
     delete[] pGlobalPointer;
 }
@@ -528,7 +528,7 @@ TEST_F(ProgramDataTest, Given32BitDeviceWhenGlobalMemorySurfaceIsPresentThenItHa
     buildAndDecodeProgramPatchList();
 
     EXPECT_NE(nullptr, pProgram->getGlobalSurface());
-    EXPECT_EQ(0, memcmp(globalValue, reinterpret_cast<char *>(pProgram->getGlobalSurface()->getUnderlyingBuffer()), globalSize));
+    EXPECT_EQ(0, memcmp(globalValue, pProgram->getGlobalSurface()->getUnderlyingBuffer(), globalSize));
     if (is64bit) {
         EXPECT_TRUE(pProgram->getGlobalSurface()->is32BitAllocation());
     }
@@ -602,9 +602,9 @@ TEST_F(ProgramDataTest, ConstantPointerProgramBinaryInfo) {
     constantSurface->setCpuPtrAndGpuAddress(constantSurface->getUnderlyingBuffer(), constantSurface->getGpuAddress() + 1);
     EXPECT_NE(reinterpret_cast<uint64_t>(constantSurface->getUnderlyingBuffer()), constantSurface->getGpuAddress());
 
-    EXPECT_EQ(0, memcmp(pConstantData, reinterpret_cast<char *>(constantSurface->getUnderlyingBuffer()), constantDataLen));
+    EXPECT_EQ(0, memcmp(pConstantData, constantSurface->getUnderlyingBuffer(), constantDataLen));
     // there was no PATCH_TOKEN_CONSTANT_POINTER_PROGRAM_BINARY_INFO, so constant buffer offset should be still 0
-    EXPECT_EQ(0U, *(uint64_t *)(reinterpret_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset));
+    EXPECT_EQ(0U, *reinterpret_cast<uint64_t *>(static_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset));
     // once finally constant buffer offset gets patched - the patch value depends on the bitness of the compute kernel
     auto patchOffsetValueStorage = std::unique_ptr<uint64_t>(new uint64_t); // 4bytes for 32-bit compute kernel, full 8byte for 64-bit compute kernel
     uint64_t *patchOffsetValue = patchOffsetValueStorage.get();
@@ -633,11 +633,11 @@ TEST_F(ProgramDataTest, ConstantPointerProgramBinaryInfo) {
     programPatchListSize = constantPointer.Size;
 
     buildAndDecodeProgramPatchList();
-    EXPECT_EQ(0, memcmp(pConstantData, reinterpret_cast<char *>(constantSurface->getUnderlyingBuffer()), constantDataLen));
+    EXPECT_EQ(0, memcmp(pConstantData, constantSurface->getUnderlyingBuffer(), constantDataLen));
     // check that constant pointer offset was not patched
-    EXPECT_EQ(0U, *(uint64_t *)(reinterpret_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset));
+    EXPECT_EQ(0U, *reinterpret_cast<uint64_t *>(static_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset));
     // reset the constant pointer offset
-    *(uint64_t *)((char *)constantSurface->getUnderlyingBuffer() + constantBufferOffsetPatchOffset) = 0U;
+    *reinterpret_cast<uint64_t *>(static_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset) = 0U;
 
     delete[] pConstantPointer;
 
@@ -658,9 +658,9 @@ TEST_F(ProgramDataTest, ConstantPointerProgramBinaryInfo) {
     programPatchListSize = constantPointer.Size;
 
     buildAndDecodeProgramPatchList();
-    EXPECT_EQ(0, memcmp(pConstantData, reinterpret_cast<char *>(constantSurface->getUnderlyingBuffer()), constantDataLen));
+    EXPECT_EQ(0, memcmp(pConstantData, constantSurface->getUnderlyingBuffer(), constantDataLen));
     // check that constant pointer offset was not patched
-    EXPECT_EQ(0U, *(uint64_t *)(reinterpret_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset));
+    EXPECT_EQ(0U, *reinterpret_cast<uint64_t *>(static_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset));
     // reset the constant pointer offset
     *(uint64_t *)((char *)constantSurface->getUnderlyingBuffer() + constantBufferOffsetPatchOffset) = 0U;
 
@@ -683,11 +683,11 @@ TEST_F(ProgramDataTest, ConstantPointerProgramBinaryInfo) {
     programPatchListSize = constantPointer.Size;
 
     buildAndDecodeProgramPatchList();
-    EXPECT_EQ(0, memcmp(pConstantData, reinterpret_cast<char *>(constantSurface->getUnderlyingBuffer()), constantDataLen));
+    EXPECT_EQ(0, memcmp(pConstantData, constantSurface->getUnderlyingBuffer(), constantDataLen));
     // check that constant pointer offset was not patched
-    EXPECT_EQ(0U, *(uint64_t *)(reinterpret_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset));
+    EXPECT_EQ(0U, *reinterpret_cast<uint64_t *>(static_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset));
     // reset the constant pointer offset
-    *(uint64_t *)((char *)constantSurface->getUnderlyingBuffer() + constantBufferOffsetPatchOffset) = 0U;
+    *reinterpret_cast<uint64_t *>(static_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset) = 0U;
 
     delete[] pConstantPointer;
 
@@ -709,9 +709,9 @@ TEST_F(ProgramDataTest, ConstantPointerProgramBinaryInfo) {
 
     buildAndDecodeProgramPatchList();
 
-    EXPECT_EQ(0, memcmp(pConstantData, reinterpret_cast<char *>(constantSurface->getUnderlyingBuffer()), constantDataLen));
+    EXPECT_EQ(0, memcmp(pConstantData, constantSurface->getUnderlyingBuffer(), constantDataLen));
     // check that constant pointer offset was patched
-    EXPECT_EQ(*reinterpret_cast<uint64_t *>(patchOffsetValue), *(uint64_t *)(reinterpret_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset));
+    EXPECT_EQ(*reinterpret_cast<uint64_t *>(patchOffsetValue), *reinterpret_cast<uint64_t *>(static_cast<char *>(constantSurface->getUnderlyingBuffer()) + constantBufferOffsetPatchOffset));
 
     delete[] pConstantPointer;
 }

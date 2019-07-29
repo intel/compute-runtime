@@ -30,7 +30,7 @@ void KernelDataTest::buildAndDecode() {
     kernelDataSize += sizeof(SPatchDataParameterStream);
     program->setDevice(pDevice);
 
-    pKernelData = reinterpret_cast<char *>(alignedMalloc(kernelDataSize, MemoryConstants::cacheLineSize));
+    pKernelData = static_cast<char *>(alignedMalloc(kernelDataSize, MemoryConstants::cacheLineSize));
     ASSERT_NE(nullptr, pKernelData);
 
     // kernel blob

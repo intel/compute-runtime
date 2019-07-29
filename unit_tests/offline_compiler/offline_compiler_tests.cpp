@@ -610,7 +610,7 @@ TEST(OfflineCompilerTest, getStringWithinDelimiters) {
     EXPECT_EQ(std::string::npos, dst.find("R\"===("));
     EXPECT_EQ(std::string::npos, dst.find(")===\""));
 
-    delete[] reinterpret_cast<char *>(ptrSrc);
+    delete[] static_cast<char *>(ptrSrc);
 }
 
 TEST(OfflineCompilerTest, convertToPascalCase) {

@@ -42,7 +42,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
 
-    DrmMemoryManager *getMemoryManager();
+    DrmMemoryManager *getMemoryManager() const;
 
     gemCloseWorkerMode peekGemCloseWorkerOperationMode() {
         return this->gemCloseWorkerOperationMode;

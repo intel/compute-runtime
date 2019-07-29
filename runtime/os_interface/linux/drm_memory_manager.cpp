@@ -412,7 +412,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
 BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle) {
     BufferObject *bo = nullptr;
     for (const auto &i : sharingBufferObjects) {
-        if (i->handle == static_cast<int>(boHandle)) {
+        if (i->handle == boHandle) {
             bo = i;
             bo->reference();
             break;
@@ -547,8 +547,7 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 }
 
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
-    DrmAllocation *input;
-    input = static_cast<DrmAllocation *>(gfxAllocation);
+    auto input = static_cast<DrmAllocation *>(gfxAllocation);
     for (auto handleId = 0u; handleId < maxHandleCount; handleId++) {
         if (gfxAllocation->getGmm(handleId)) {
             delete gfxAllocation->getGmm(handleId);

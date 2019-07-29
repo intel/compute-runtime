@@ -13,6 +13,6 @@ namespace NEO {
 
 class Directory {
   public:
-    static std::vector<std::string> getFiles(std::string &path);
+    static std::vector<std::string> getFiles(const std::string &path);
 };
 }; // namespace NEO

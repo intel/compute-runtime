@@ -227,11 +227,11 @@ TEST(PerThreadDataTest, generateLocalIDs) {
     auto sizePerThreadDataTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize);
 
     auto sizeOverSizedBuffer = sizePerThreadDataTotal * 4;
-    auto buffer = reinterpret_cast<char *>(alignedMalloc(sizeOverSizedBuffer, 16));
+    auto buffer = static_cast<char *>(alignedMalloc(sizeOverSizedBuffer, 16));
     memset(buffer, 0, sizeOverSizedBuffer);
 
     // Setup reference filled with zeros
-    auto reference = reinterpret_cast<char *>(alignedMalloc(sizePerThreadDataTotal, 16));
+    auto reference = static_cast<char *>(alignedMalloc(sizePerThreadDataTotal, 16));
     memset(reference, 0, sizePerThreadDataTotal);
 
     LinearStream stream(buffer, sizeOverSizedBuffer / 2);
