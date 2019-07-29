@@ -1485,6 +1485,9 @@ TEST_F(PatchTokenTests, ConstantMemoryObjectKernelArg) {
 }
 
 TEST_F(PatchTokenTests, VmeKernelArg) {
+    if (!pDevice->getExecutionEnvironment()->getHardwareInfo()->capabilityTable.supportsVme) {
+        GTEST_SKIP();
+    }
     // PATCH_TOKEN_INLINE_VME_SAMPLER_INFO token indicates a VME kernel.
     cl_device_id device = pDevice;
 

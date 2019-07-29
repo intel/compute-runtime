@@ -540,9 +540,6 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                 printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
             } else {
                 std::string extensionsList = getExtensionsList(*hwInfo);
-                std::string vme("cl_intel_device_side_avc_motion_estimation ");
-                if (extensionsList.find(vme) == std::string::npos)
-                    extensionsList += vme;
                 internalOptions.append(convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str()));
             }
         }

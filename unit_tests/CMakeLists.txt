@@ -342,6 +342,10 @@ set(TEST_KERNEL_2_0
   test_files/simple_nonuniform.cl
 )
 
+set(TEST_KERNEL_VME
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_files/vme_kernels.cl
+)
+
 set(TEST_KERNEL_SIP_DEBUG_options
   "-cl-include-sip-kernel-debug -cl-include-sip-csr -cl-set-bti:0"
 )
@@ -354,6 +358,7 @@ file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/shouldfail.cl")
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_block_kernel.cl")
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_nonuniform.cl")
+list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/vme_kernels.cl")
 
 function(gen_run_tests_with_appverifier product slices subslices eu_per_ss)
   if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND "${IGDRCL_OPTION__BITS}" STREQUAL "64" AND APPVERIFIER_ALLOWED)
@@ -407,6 +412,10 @@ macro(macro_for_each_platform)
       if(PLATFORM_SUPPORTS_2_0)
         add_dependencies(unit_tests test_kernel_2_0_${family_name_with_type})
       endif()
+      PLATFORM_HAS_VME(${GEN_TYPE} ${PLATFORM_IT} PLATFORM_SUPPORTS_VME)
+      if(PLATFORM_SUPPORTS_VME)
+        add_dependencies(unit_tests test_kernel_vme_${family_name_with_type})
+      endif()
     endif()
   endforeach()
 endmacro()
@@ -418,6 +427,7 @@ macro(macro_for_each_gen)
       string(TOLOWER ${PLATFORM_TYPE} PLATFORM_TYPE_LOWER)
       set(PLATFORM_LOWER ${DEFAULT_SUPPORTED_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
       set(PLATFORM_2_0_LOWER ${DEFAULT_SUPPORTED_2_0_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
+      set(PLATFORM_VME_LOWER ${DEFAULT_SUPPORTED_VME_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
 
       if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
         neo_gen_kernels(test_kernels_${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNELS})
@@ -448,6 +458,9 @@ macro(macro_for_each_gen)
 
         if(PLATFORM_2_0_LOWER)
           neo_gen_kernels_with_options(test_kernel_2_0_${family_name_with_type} ${PLATFORM_2_0_LOWER} ${family_name_with_type} "${TEST_KERNEL_2_0}" ${TEST_KERNEL_2_0_options})
+        endif()
+        if(PLATFORM_VME_LOWER)
+          neo_gen_kernels(test_kernel_vme_${family_name_with_type} ${PLATFORM_VME_LOWER} ${family_name_with_type} ${TEST_KERNEL_VME})
         endif()
       endif()
     endif()

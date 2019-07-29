@@ -56,6 +56,10 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
     }
 
     void SetUp() override {
+        skipVmeTest = !platform()->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.supportsVme;
+        if (skipVmeTest) {
+            GTEST_SKIP();
+        }
         Parent::kernelFilename = "vme_kernels";
         Parent::kernelName = "non_vme_kernel";
 
@@ -78,6 +82,9 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
     }
 
     void TearDown() override {
+        if (skipVmeTest) {
+            return;
+        }
         pVmeKernel->release();
 
         HardwareParse::TearDown();
@@ -88,5 +95,6 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
     GenCmdList::iterator itorWalker2;
 
     Kernel *pVmeKernel = nullptr;
+    bool skipVmeTest = false;
 };
 } // namespace NEO
