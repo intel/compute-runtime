@@ -845,8 +845,8 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithNullptr) {
     auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, GraphicsAllocation::AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, gpuAllocation);
-    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapBase(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress());
-    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition->getHeapBase(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress());
+    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(0u, gpuAllocation->fragmentsStorage.fragmentCount);
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -857,8 +857,8 @@ TEST_F(WddmMemoryManagerTest, given32BitAllocationWhenItIsCreatedThenItHasNonZer
 
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_NE(0llu, gpuAllocation->getGpuAddressToPatch());
-    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapBase(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress());
-    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition->getHeapBase(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress());
+    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
@@ -872,8 +872,8 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotDoT
 
     EXPECT_EQ(alignSizeWholePage(misalignedPtr, misalignedSize), gpuAllocation->getUnderlyingBufferSize());
 
-    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapBase(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress());
-    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition->getHeapBase(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress());
+    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTERNAL)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(0u, gpuAllocation->fragmentsStorage.fragmentCount);
 
@@ -889,7 +889,7 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemorySetsCannonizedGpuBaseAddress) {
 
     ASSERT_NE(nullptr, gpuAllocation);
 
-    uint64_t cannonizedAddress = GmmHelper::canonize(memoryManager->gfxPartition.getHeapBase(HeapIndex::HEAP_EXTERNAL));
+    uint64_t cannonizedAddress = GmmHelper::canonize(memoryManager->gfxPartition->getHeapBase(HeapIndex::HEAP_EXTERNAL));
     EXPECT_EQ(cannonizedAddress, gpuAllocation->getGpuBaseAddress());
 
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -1011,7 +1011,7 @@ TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocatio
     EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
     EXPECT_NE((uint64_t)wddmAllocation->getUnderlyingBuffer(), wddmAllocation->getGpuAddress());
     auto cannonizedHeapBase = GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress());
-    auto cannonizedHeapEnd = GmmHelper::canonize(memoryManager->gfxPartition.getHeapLimit(internalHeapIndex));
+    auto cannonizedHeapEnd = GmmHelper::canonize(memoryManager->gfxPartition->getHeapLimit(internalHeapIndex));
 
     EXPECT_GT(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
     EXPECT_LT(wddmAllocation->getGpuAddress() + wddmAllocation->getUnderlyingBufferSize(), cannonizedHeapEnd);
@@ -1030,7 +1030,7 @@ TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhe
     EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
     EXPECT_NE((uint64_t)wddmAllocation->getUnderlyingBuffer(), wddmAllocation->getGpuAddress());
     auto cannonizedHeapBase = GmmHelper::canonize(memoryManager->getInternalHeapBaseAddress());
-    auto cannonizedHeapEnd = GmmHelper::canonize(memoryManager->gfxPartition.getHeapLimit(internalHeapIndex));
+    auto cannonizedHeapEnd = GmmHelper::canonize(memoryManager->gfxPartition->getHeapLimit(internalHeapIndex));
 
     EXPECT_GT(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
     EXPECT_LT(wddmAllocation->getGpuAddress() + wddmAllocation->getUnderlyingBufferSize(), cannonizedHeapEnd);
@@ -1386,7 +1386,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithNoRegisteredOsContextsWh
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerAnd32bitBuildThenSvmPartitionIsAlwaysInitialized) {
     if (is32bit) {
-        EXPECT_EQ(memoryManager->gfxPartition.getHeapLimit(HeapIndex::HEAP_SVM), MemoryConstants::max32BitAddress);
+        EXPECT_EQ(memoryManager->gfxPartition->getHeapLimit(HeapIndex::HEAP_SVM), MemoryConstants::max32BitAddress);
     }
 }
 
@@ -1751,8 +1751,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRan
 
     auto heap = is32bit ? HeapIndex::HEAP_SVM : HeapIndex::HEAP_STANDARD;
 
-    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapBase(heap)), allocation->getGpuAddress());
-    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapLimit(heap)), allocation->getGpuAddress());
+    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition->getHeapBase(heap)), allocation->getGpuAddress());
+    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition->getHeapLimit(heap)), allocation->getGpuAddress());
 
     memoryManager->freeGraphicsMemory(allocation);
 }

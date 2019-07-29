@@ -31,7 +31,7 @@ constexpr auto internalHeapIndex = is32bit ? HeapIndex::HEAP_INTERNAL : HeapInde
 class GfxPartition {
   public:
     GfxPartition() {}
-    ~GfxPartition();
+    MOCKABLE_VIRTUAL ~GfxPartition();
 
     void init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve);
 
@@ -47,7 +47,7 @@ class GfxPartition {
         getHeap(heapIndex).free(ptr, size);
     }
 
-    void freeGpuAddressRange(uint64_t ptr, size_t size);
+    MOCKABLE_VIRTUAL void freeGpuAddressRange(uint64_t ptr, size_t size);
 
     uint64_t getHeapBase(HeapIndex heapIndex) {
         return getHeap(heapIndex).getBase();

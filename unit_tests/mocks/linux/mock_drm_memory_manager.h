@@ -53,6 +53,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::getDefaultDrmContextId;
     using DrmMemoryManager::gfxPartition;
     using DrmMemoryManager::pinThreshold;
+    using DrmMemoryManager::releaseGpuRange;
     using DrmMemoryManager::setDomainCpu;
     using DrmMemoryManager::sharingBufferObjects;
     using DrmMemoryManager::supportsMultiStorageResources;
@@ -103,7 +104,8 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     }
 
     DrmGemCloseWorker *getgemCloseWorker() { return this->gemCloseWorker.get(); }
-    void forceLimitedRangeAllocator(uint64_t range) { gfxPartition.init(range, getSizeToReserve()); }
+    void forceLimitedRangeAllocator(uint64_t range) { gfxPartition->init(range, getSizeToReserve()); }
+    void overrideGfxPartition(GfxPartition *newGfxPartition) { gfxPartition.reset(newGfxPartition); }
 
     DrmAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType) {
         bool allocateMemory = ptr == nullptr;

@@ -42,6 +42,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         this->enable64kbpages = DebugManager.flags.Enable64kbpages.get() != 0;
     }
     localMemoryUsageBankSelector.reset(new LocalMemoryUsageBankSelector(getBanksCount()));
+    gfxPartition = std::make_unique<GfxPartition>();
 }
 
 MemoryManager::~MemoryManager() {

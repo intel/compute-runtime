@@ -106,10 +106,10 @@ class MemoryManager {
     virtual uint64_t getLocalMemorySize() = 0;
 
     uint64_t getMaxApplicationAddress() { return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress; };
-    uint64_t getInternalHeapBaseAddress() { return gfxPartition.getHeapBase(internalHeapIndex); }
-    uint64_t getExternalHeapBaseAddress() { return gfxPartition.getHeapBase(HeapIndex::HEAP_EXTERNAL); }
+    uint64_t getInternalHeapBaseAddress() { return gfxPartition->getHeapBase(internalHeapIndex); }
+    uint64_t getExternalHeapBaseAddress() { return gfxPartition->getHeapBase(HeapIndex::HEAP_EXTERNAL); }
 
-    bool isLimitedRange() { return gfxPartition.isLimitedRange(); }
+    bool isLimitedRange() { return gfxPartition->isLimitedRange(); }
 
     bool peek64kbPagesEnabled() const { return enable64kbpages; }
     bool peekForce32BitAllocations() const { return force32bitAllocations; }
@@ -222,7 +222,7 @@ class MemoryManager {
     uint32_t latestContextId = std::numeric_limits<uint32_t>::max();
     uint32_t defaultEngineIndex = 0;
     std::unique_ptr<DeferredDeleter> multiContextResourceDestructor;
-    GfxPartition gfxPartition;
+    std::unique_ptr<GfxPartition> gfxPartition;
     std::unique_ptr<LocalMemoryUsageBankSelector> localMemoryUsageBankSelector;
 };
 

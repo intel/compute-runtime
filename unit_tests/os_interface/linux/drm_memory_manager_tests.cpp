@@ -30,6 +30,7 @@
 #include "test.h"
 #include "unit_tests/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_gfx_partition.h"
 #include "unit_tests/mocks/mock_gmm.h"
 
 #include "drm/i915_drm.h"
@@ -909,15 +910,15 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenLimitedRangeAllocatorSetThenH
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
     uint64_t sizeBig = 4 * MemoryConstants::megaByte + MemoryConstants::pageSize;
-    auto gpuAddressLimitedRange = memoryManager->gfxPartition.heapAllocate(HeapIndex::HEAP_STANDARD, sizeBig);
-    EXPECT_LT(memoryManager->gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD), gpuAddressLimitedRange);
-    EXPECT_GT(memoryManager->gfxPartition.getHeapLimit(HeapIndex::HEAP_STANDARD), gpuAddressLimitedRange + sizeBig);
-    EXPECT_EQ(memoryManager->gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_STANDARD), gpuAddressLimitedRange);
+    auto gpuAddressLimitedRange = memoryManager->gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, sizeBig);
+    EXPECT_LT(memoryManager->gfxPartition->getHeapBase(HeapIndex::HEAP_STANDARD), gpuAddressLimitedRange);
+    EXPECT_GT(memoryManager->gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD), gpuAddressLimitedRange + sizeBig);
+    EXPECT_EQ(memoryManager->gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD), gpuAddressLimitedRange);
 
-    auto gpuInternal32BitAlloc = memoryManager->gfxPartition.heapAllocate(internalHeapIndex, sizeBig);
-    EXPECT_LT(memoryManager->gfxPartition.getHeapBase(internalHeapIndex), gpuInternal32BitAlloc);
-    EXPECT_GT(memoryManager->gfxPartition.getHeapLimit(internalHeapIndex), gpuInternal32BitAlloc + sizeBig);
-    EXPECT_EQ(memoryManager->gfxPartition.getHeapMinimalAddress(internalHeapIndex), gpuInternal32BitAlloc);
+    auto gpuInternal32BitAlloc = memoryManager->gfxPartition->heapAllocate(internalHeapIndex, sizeBig);
+    EXPECT_LT(memoryManager->gfxPartition->getHeapBase(internalHeapIndex), gpuInternal32BitAlloc);
+    EXPECT_GT(memoryManager->gfxPartition->getHeapLimit(internalHeapIndex), gpuInternal32BitAlloc + sizeBig);
+    EXPECT_EQ(memoryManager->gfxPartition->getHeapMinimalAddress(internalHeapIndex), gpuInternal32BitAlloc);
 }
 
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForAllocationWithAlignmentThenCorrectAllocatorTypeSelected) {
@@ -967,7 +968,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForAllocationWithAlignme
 
     // emulate GPU address space exhaust
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
-    memoryManager->gfxPartition.heapInit(HeapIndex::HEAP_STANDARD, 0x0, 0x10000);
+    memoryManager->gfxPartition->heapInit(HeapIndex::HEAP_STANDARD, 0x0, 0x10000);
 
     // set size to something bigger than allowed space
     allocationData.size = 0x20000;
@@ -1136,7 +1137,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIs
     std::unique_ptr<Device> pDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     size_t size = MemoryConstants::pageSize64k;
-    auto alloc = memoryManager->gfxPartition.heapAllocate(internalHeapIndex, size);
+    auto alloc = memoryManager->gfxPartition->heapAllocate(internalHeapIndex, size);
     EXPECT_NE(0llu, alloc);
 
     size_t allocationSize = 4 * GB;
@@ -2135,12 +2136,12 @@ TEST_F(DrmMemoryManagerTest, given32BitAllocatorWithHeapAllocatorWhenLargerFragm
     memoryManager->setForce32BitAllocations(true);
 
     size_t allocationSize = 4 * MemoryConstants::pageSize;
-    auto ptr = memoryManager->gfxPartition.heapAllocate(HeapIndex::HEAP_EXTERNAL, allocationSize);
+    auto ptr = memoryManager->gfxPartition->heapAllocate(HeapIndex::HEAP_EXTERNAL, allocationSize);
     size_t smallAllocationSize = MemoryConstants::pageSize;
-    memoryManager->gfxPartition.heapAllocate(HeapIndex::HEAP_EXTERNAL, smallAllocationSize);
+    memoryManager->gfxPartition->heapAllocate(HeapIndex::HEAP_EXTERNAL, smallAllocationSize);
 
     //now free first allocation , this will move it to chunks
-    memoryManager->gfxPartition.heapFree(HeapIndex::HEAP_EXTERNAL, ptr, allocationSize);
+    memoryManager->gfxPartition->heapFree(HeapIndex::HEAP_EXTERNAL, ptr, allocationSize);
 
     //now ask for 3 pages, this will give ptr from chunks
     size_t pages3size = 3 * MemoryConstants::pageSize;
@@ -2460,7 +2461,7 @@ TEST_F(DrmMemoryManagerBasic, givenDefaultDrmMemoryManagerWhenItIsQueriedForInte
                                                                                                     true,
                                                                                                     true,
                                                                                                     executionEnvironment));
-    auto heapBase = memoryManager->gfxPartition.getHeapBase(internalHeapIndex);
+    auto heapBase = memoryManager->gfxPartition->getHeapBase(internalHeapIndex);
     EXPECT_EQ(heapBase, memoryManager->getInternalHeapBaseAddress());
 }
 
@@ -3022,14 +3023,14 @@ TEST_F(DrmMemoryManagerBasic, ifLimitedRangeAllocatorAvailableWhenAskedForAlloca
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
     size_t size = 100u;
-    auto ptr = memoryManager->gfxPartition.heapAllocate(HeapIndex::HEAP_STANDARD, size);
-    auto address64bit = ptrDiff(ptr, memoryManager->gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD));
+    auto ptr = memoryManager->gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size);
+    auto address64bit = ptrDiff(ptr, memoryManager->gfxPartition->getHeapBase(HeapIndex::HEAP_STANDARD));
 
     EXPECT_LT(address64bit, platformDevices[0]->capabilityTable.gpuAddressSpace);
 
     EXPECT_LT(0u, address64bit);
 
-    memoryManager->gfxPartition.heapFree(HeapIndex::HEAP_STANDARD, ptr, size);
+    memoryManager->gfxPartition->heapFree(HeapIndex::HEAP_STANDARD, ptr, size);
 }
 
 TEST_F(DrmMemoryManagerBasic, givenDisabledHostPtrTrackingWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWithNotAlignedPtrIsPassedThenAllocationIsCreated) {
@@ -3151,8 +3152,8 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedTh
 
     EXPECT_NE(0llu, bo->peekAddress());
 
-    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD)), bo->peekAddress());
-    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition.getHeapLimit(HeapIndex::HEAP_STANDARD)), bo->peekAddress());
+    EXPECT_LT(GmmHelper::canonize(memoryManager->gfxPartition->getHeapBase(HeapIndex::HEAP_STANDARD)), bo->peekAddress());
+    EXPECT_GT(GmmHelper::canonize(memoryManager->gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD)), bo->peekAddress());
 
     EXPECT_EQ(reinterpret_cast<void *>(allocation->getGpuAddress()), alignUp(allocation->getReservedAddressPtr(), allocationData.alignment));
     EXPECT_EQ(alignUp(allocationData.size, allocationData.alignment) + allocationData.alignment, allocation->getReservedAddressSize());
@@ -3165,7 +3166,7 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedBu
     mock->ioctl_expected.gemWait = 0;
     mock->ioctl_expected.gemClose = 1;
 
-    memoryManager->gfxPartition.heapInit(HeapIndex::HEAP_STANDARD, 0, 0);
+    memoryManager->gfxPartition->heapInit(HeapIndex::HEAP_STANDARD, 0, 0);
 
     TestedDrmMemoryManager::AllocationData allocationData;
     allocationData.size = 2 * MemoryConstants::megaByte;
@@ -3174,4 +3175,19 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedBu
 
     DrmAllocation *allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
     EXPECT_EQ(nullptr, allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndReleaseGpuRangeIsCalledThenGpuAddressIsDecanonized) {
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    mockGfxPartition->init(maxNBitValue<48>, 0);
+    auto size = 2 * MemoryConstants::megaByte;
+    auto gpuAddress = mockGfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size);
+    auto gpuAddressCanonized = GmmHelper::canonize(gpuAddress);
+    EXPECT_NE(gpuAddress, gpuAddressCanonized);
+    EXPECT_LE(gpuAddress, gpuAddressCanonized);
+
+    EXPECT_CALL(*mockGfxPartition.get(), freeGpuAddressRange(gpuAddress, size));
+
+    memoryManager->overrideGfxPartition(mockGfxPartition.release());
+    memoryManager->releaseGpuRange(reinterpret_cast<void *>(gpuAddressCanonized), size, UNKNOWN_ALLOCATOR);
 }

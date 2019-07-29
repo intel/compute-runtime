@@ -45,7 +45,7 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
     if (asyncDeleterEnabled)
         deferredDeleter = createDeferredDeleter();
     mallocRestrictions.minAddress = wddm->getWddmMinAddress();
-    wddm->initGfxPartition(gfxPartition);
+    wddm->initGfxPartition(*gfxPartition);
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) {
@@ -504,13 +504,13 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
         addressToMap = allocation->reservedGpuVirtualAddress;
     }
     auto status = wddm->mapGpuVirtualAddress(allocation->getDefaultGmm(), allocation->getDefaultHandle(),
-                                             gfxPartition.getHeapMinimalAddress(heapIndex), gfxPartition.getHeapLimit(heapIndex),
+                                             gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex),
                                              addressToMap, allocation->getGpuAddressToModify());
 
     if (!status && deferredDeleter) {
         deferredDeleter->drain(true);
         status = wddm->mapGpuVirtualAddress(allocation->getDefaultGmm(), allocation->getDefaultHandle(),
-                                            gfxPartition.getHeapMinimalAddress(heapIndex), gfxPartition.getHeapLimit(heapIndex),
+                                            gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex),
                                             addressToMap, allocation->getGpuAddressToModify());
     }
     if (!status) {
@@ -542,8 +542,8 @@ void WddmMemoryManager::obtainGpuAddressIfNeeded(WddmAllocation *allocation) {
     if (allocation->getNumHandles() > 1u) {
         auto heapIndex = selectHeap(allocation, false, executionEnvironment.isFullRangeSvm());
         allocation->reservedSizeForGpuVirtualAddress = allocation->getAlignedSize();
-        allocation->reservedGpuVirtualAddress = wddm->reserveGpuVirtualAddress(gfxPartition.getHeapMinimalAddress(heapIndex),
-                                                                               gfxPartition.getHeapLimit(heapIndex),
+        allocation->reservedGpuVirtualAddress = wddm->reserveGpuVirtualAddress(gfxPartition->getHeapMinimalAddress(heapIndex),
+                                                                               gfxPartition->getHeapLimit(heapIndex),
                                                                                allocation->reservedSizeForGpuVirtualAddress);
     }
 }
