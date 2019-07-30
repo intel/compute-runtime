@@ -2,7 +2,7 @@
 
 ## Every commit - must ...
 
-* Build under Linux - using clang (6.0, planning switch to 7.0) and multiple versions of gcc (5.2 ... 8.2)
+* Build under Linux - using clang (6.0 ... 8.0) and gcc (5.2 ... 9.0)
 
 * Build under Windows (this is currently a requirement that cannot be verified externally)
 
