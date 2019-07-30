@@ -2115,7 +2115,6 @@ TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimit
     pPatch->Size = sizeof(iOpenCL::SPatchAllocateLocalSurface);
     pPatch->TotalInlineLocalMemorySize = static_cast<uint32_t>(pDevice->getDeviceInfo().localMemSize * 2);
 
-    pBin += sizeof(SPatchAllocateLocalSurface);
     binSize += sizeof(SPatchAllocateLocalSurface);
 
     // Decode prepared program binary
