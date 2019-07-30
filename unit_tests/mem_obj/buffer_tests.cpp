@@ -726,6 +726,11 @@ HWTEST_F(BcsBufferTests, givenBcsSupportedWhenEnqueueReadWriteBufferIsCalledThen
     commandQueue->enqueueWriteBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
 
+    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(-1);
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+    commandQueue->enqueueWriteBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    commandQueue->enqueueReadBuffer(bufferForBlt.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+
     EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
 
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
