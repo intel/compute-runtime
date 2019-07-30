@@ -38,6 +38,12 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
 
     executionEnvironment.osInterface->get()->setDrm(this->drm);
     CommandStreamReceiver::osInterface = executionEnvironment.osInterface.get();
+
+    if (platform()->peekExecutionEnvironment()->getHardwareInfo()->platform.eRenderCoreFamily == GFXCORE_FAMILY::IGFX_GEN9_CORE &&
+        strcmp(platform()->peekExecutionEnvironment()->getHardwareInfo()->capabilityTable.platformType, "lp") == 0) {
+        auto gmmHelper = platform()->peekExecutionEnvironment()->getGmmHelper();
+        gmmHelper->setSimplifiedMocsTableUsage(this->drm->getSimplifiedMocsTableUsage());
+    }
 }
 
 template <typename GfxFamily>

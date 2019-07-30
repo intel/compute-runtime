@@ -7,6 +7,7 @@
 
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/preemption.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
@@ -1532,4 +1533,14 @@ typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamMemoryManagerTest;
 
 TEST_F(DrmCommandStreamMemoryManagerTest, givenDrmCommandStreamReceiverWhenMemoryManagerIsCreatedThenItHasHostMemoryValidationEnabledByDefault) {
     EXPECT_TRUE(mm->isValidateHostMemoryEnabled());
+}
+
+TEST_F(DrmCommandStreamTest, givenDrmCommandStreamWhenGettingMocsThenProperValueIsReturned) {
+    auto mocs = platform()->peekExecutionEnvironment()->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto expectedMocs = GmmHelper::cacheDisabledIndex;
+    EXPECT_EQ(mocs, expectedMocs);
+
+    mocs = platform()->peekExecutionEnvironment()->getGmmHelper()->getMOCS(0);
+    expectedMocs = GmmHelper::cacheEnabledIndex;
+    EXPECT_EQ(mocs, expectedMocs);
 }
