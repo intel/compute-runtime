@@ -45,6 +45,16 @@ apt-get install intel-opencl
 apt-get install intel-opencl-icd
 ```
 
+## Neo in docker containers
+
+Docker images are provided in [intel-opencl][https://hub.docker.com/r/intelopencl/intel-opencl] repository.
+
+Example for Fedora 30
+
+```
+docker run -it --device /dev/dri:/dev/dri --rm docker.io/intelopencl/intel-opencl:fedora-30-copr clinfo
+```
+
 ## Additional configuration
 
 To allow Neo accessing GPU device make sure user has permissions to files in /dev/dri directory.
