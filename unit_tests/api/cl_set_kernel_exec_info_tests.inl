@@ -49,7 +49,7 @@ typedef Test<KernelExecInfoFixture> clSetKernelExecInfoTests;
 
 namespace ULT {
 
-TEST_F(clSetKernelExecInfoTests, invalidKernel) {
+TEST_F(clSetKernelExecInfoTests, GivenNullKernelWhenSettingAdditionalKernelInfoThenInvalidKernelErrorIsReturned) {
     retVal = clSetKernelExecInfo(
         nullptr,                      // cl_kernel kernel
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
@@ -59,7 +59,7 @@ TEST_F(clSetKernelExecInfoTests, invalidKernel) {
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST_F(clSetKernelExecInfoTests, invalidValue_ParamValueIsNull) {
+TEST_F(clSetKernelExecInfoTests, GivenNullParamValueWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
     void **pSvmPtrList = nullptr;
     size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
@@ -72,7 +72,7 @@ TEST_F(clSetKernelExecInfoTests, invalidValue_ParamValueIsNull) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clSetKernelExecInfoTests, invalidValue_ParamValueHasNullPointer) {
+TEST_F(clSetKernelExecInfoTests, GivenNullPointerInParamValueWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
     void *pSvmPtrList[] = {nullptr};
     size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
@@ -85,7 +85,7 @@ TEST_F(clSetKernelExecInfoTests, invalidValue_ParamValueHasNullPointer) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clSetKernelExecInfoTests, invalidValue_ParamSizeIsZero) {
+TEST_F(clSetKernelExecInfoTests, GivenParamSizeZeroWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
     void *pSvmPtrList[] = {ptrSvm};
     size_t SvmPtrListSizeInBytes = 0;
 
@@ -98,7 +98,7 @@ TEST_F(clSetKernelExecInfoTests, invalidValue_ParamSizeIsZero) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clSetKernelExecInfoTests, invalidValue_ParamSizeIsNotValid) {
+TEST_F(clSetKernelExecInfoTests, GivenInvalidParamSizeWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
     void *pSvmPtrList[] = {ptrSvm};
     size_t SvmPtrListSizeInBytes = (size_t)(-1);
 
@@ -111,7 +111,7 @@ TEST_F(clSetKernelExecInfoTests, invalidValue_ParamSizeIsNotValid) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clSetKernelExecInfoTests, invalidValue_ParamNameIsNotValid) {
+TEST_F(clSetKernelExecInfoTests, GivenInvalidParamNameWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {
     void *pSvmPtrList[] = {ptrSvm};
     size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
@@ -124,7 +124,7 @@ TEST_F(clSetKernelExecInfoTests, invalidValue_ParamNameIsNotValid) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clSetKernelExecInfoTests, invalidOperation) {
+TEST_F(clSetKernelExecInfoTests, GivenInvalidOperationWhenSettingAdditionalKernelInfoThenInvalidOperationErrorIsReturned) {
     void *pSvmPtrList[] = {ptrSvm};
     size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
 
@@ -137,7 +137,7 @@ TEST_F(clSetKernelExecInfoTests, invalidOperation) {
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
-TEST_F(clSetKernelExecInfoTests, success_SvmPtrListWithSinglePointer) {
+TEST_F(clSetKernelExecInfoTests, GivenValidPointerListWithOnePointerWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
     if (svmCapabilities != 0) {
         void *pSvmPtrList[] = {ptrSvm};
         size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
@@ -154,7 +154,7 @@ TEST_F(clSetKernelExecInfoTests, success_SvmPtrListWithSinglePointer) {
     }
 }
 
-TEST_F(clSetKernelExecInfoTests, success_SvmPtrListWithMultiplePointers) {
+TEST_F(clSetKernelExecInfoTests, GivenValidPointerListWithMultiplePointersWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
     if (svmCapabilities != 0) {
         void *ptrSvm1 = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm1);
@@ -208,7 +208,7 @@ TEST_F(clSetKernelExecInfoTests, givenReadOnlySvmPtrListWhenUsedAsKernelPointers
     }
 }
 
-TEST_F(clSetKernelExecInfoTests, success_MultipleSetKernelExecInfo) {
+TEST_F(clSetKernelExecInfoTests, GivenMultipleSettingKernelInfoOperationsWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
     if (svmCapabilities != 0) {
         void *pSvmPtrList[] = {ptrSvm};
         size_t SvmPtrListSizeInBytes = 1 * sizeof(void *);
