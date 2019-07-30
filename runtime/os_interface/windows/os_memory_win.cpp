@@ -5,18 +5,28 @@
  *
  */
 
-#include "runtime/os_interface/os_memory.h"
-
-#include <windows.h>
+#include "runtime/os_interface/windows/os_memory_win.h"
 
 namespace NEO {
 
-void *OSMemory::reserveCpuAddressRange(size_t sizeToReserve) {
-    return VirtualAlloc(0, sizeToReserve, MEM_RESERVE, PAGE_READWRITE);
+std::unique_ptr<OSMemory> OSMemory::create() {
+    return std::make_unique<OSMemoryWindows>();
 }
 
-void OSMemory::releaseCpuAddressRange(void *reservedCpuAddressRange, size_t /* reservedSize */) {
-    VirtualFree(reservedCpuAddressRange, 0, MEM_RELEASE);
+void *OSMemoryWindows::reserveCpuAddressRange(size_t sizeToReserve) {
+    return virtualAllocWrapper(0, sizeToReserve, MEM_RESERVE, PAGE_READWRITE);
+}
+
+void OSMemoryWindows::releaseCpuAddressRange(void *reservedCpuAddressRange, size_t /* reservedSize */) {
+    virtualFreeWrapper(reservedCpuAddressRange, 0, MEM_RELEASE);
+}
+
+LPVOID OSMemoryWindows::virtualAllocWrapper(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect) {
+    return VirtualAlloc(lpAddress, dwSize, flAllocationType, flProtect);
+}
+
+BOOL OSMemoryWindows::virtualFreeWrapper(LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType) {
+    return VirtualFree(lpAddress, dwSize, dwFreeType);
 }
 
 } // namespace NEO

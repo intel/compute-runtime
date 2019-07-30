@@ -8,7 +8,6 @@
 #include "runtime/memory_manager/gfx_partition.h"
 
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/os_interface/os_memory.h"
 
 namespace NEO {
 
@@ -23,9 +22,12 @@ const std::array<HeapIndex, 6> GfxPartition::heapNonSvmNames{{HeapIndex::HEAP_IN
                                                               HeapIndex::HEAP_EXTERNAL,
                                                               HeapIndex::HEAP_STANDARD,
                                                               HeapIndex::HEAP_STANDARD64KB}};
+
+GfxPartition::GfxPartition() : osMemory(OSMemory::create()) {}
+
 GfxPartition::~GfxPartition() {
     if (reservedCpuAddressRange) {
-        OSMemory::releaseCpuAddressRange(reservedCpuAddressRange, reservedCpuAddressRangeSize);
+        osMemory->releaseCpuAddressRange(reservedCpuAddressRange, reservedCpuAddressRangeSize);
     }
 }
 
@@ -113,7 +115,7 @@ void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
         } else if (gpuAddressSpace == maxNBitValue<47>) {
             reservedCpuAddressRangeSize = cpuAddressRangeSizeToReserve;
             UNRECOVERABLE_IF(reservedCpuAddressRangeSize == 0);
-            reservedCpuAddressRange = OSMemory::reserveCpuAddressRange(reservedCpuAddressRangeSize);
+            reservedCpuAddressRange = osMemory->reserveCpuAddressRange(reservedCpuAddressRangeSize);
             UNRECOVERABLE_IF(reservedCpuAddressRange == nullptr);
             UNRECOVERABLE_IF(!isAligned<GfxPartition::heapGranularity>(reservedCpuAddressRange));
             gfxBase = reinterpret_cast<uint64_t>(reservedCpuAddressRange);

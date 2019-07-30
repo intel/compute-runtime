@@ -5,19 +5,28 @@
  *
  */
 
-#include "runtime/os_interface/os_memory.h"
-
-#include <fcntl.h>
-#include <sys/mman.h>
+#include "runtime/os_interface/linux/os_memory_linux.h"
 
 namespace NEO {
 
-void *OSMemory::reserveCpuAddressRange(size_t sizeToReserve) {
-    return mmap(0, sizeToReserve, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE | MAP_HUGETLB, -1, 0);
+std::unique_ptr<OSMemory> OSMemory::create() {
+    return std::make_unique<OSMemoryLinux>();
 }
 
-void OSMemory::releaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) {
-    munmap(reservedCpuAddressRange, reservedSize);
+void *OSMemoryLinux::reserveCpuAddressRange(size_t sizeToReserve) {
+    return mmapWrapper(0, sizeToReserve, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE | MAP_HUGETLB, -1, 0);
+}
+
+void OSMemoryLinux::releaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) {
+    munmapWrapper(reservedCpuAddressRange, reservedSize);
+}
+
+void *OSMemoryLinux::mmapWrapper(void *addr, size_t size, int prot, int flags, int fd, off_t off) {
+    return mmap(addr, size, prot, flags, fd, off);
+}
+
+int OSMemoryLinux::munmapWrapper(void *addr, size_t size) {
+    return munmap(addr, size);
 }
 
 } // namespace NEO
