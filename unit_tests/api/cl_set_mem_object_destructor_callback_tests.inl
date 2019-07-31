@@ -16,7 +16,7 @@ typedef api_tests clCreateBufferTests;
 namespace ULT {
 
 static int cbInvoked = 0;
-void CL_CALLBACK destructorCallBack(cl_mem memObj, void *userData) {
+void CL_CALLBACK destructorCallback(cl_mem memObj, void *userData) {
     cbInvoked++;
 }
 
@@ -53,17 +53,17 @@ struct clSetMemObjectDestructorCallbackTests : public api_fixture,
     cl_image_desc imageDesc;
 };
 
-TEST_F(clSetMemObjectDestructorCallbackTests, imageDestructorCallback_invalidMemObj) {
+TEST_F(clSetMemObjectDestructorCallbackTests, GivenNullMemObjWhenSettingMemObjCallbackThenInvalidMemObjectErrorIsReturned) {
     retVal = clSetMemObjectDestructorCallback(nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
     EXPECT_EQ(0, cbInvoked);
 }
 
-TEST_F(clSetMemObjectDestructorCallbackTests, imageDestructorCallback_success) {
+TEST_F(clSetMemObjectDestructorCallbackTests, GivenImageAndDestructorCallbackWhenSettingMemObjCallbackThenSuccessIsReturned) {
     auto image = clCreateImage(pContext, CL_MEM_READ_WRITE, &imageFormat,
                                &imageDesc, nullptr, &retVal);
 
-    retVal = clSetMemObjectDestructorCallback(image, destructorCallBack, nullptr);
+    retVal = clSetMemObjectDestructorCallback(image, destructorCallback, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseMemObject(image);
@@ -71,7 +71,7 @@ TEST_F(clSetMemObjectDestructorCallbackTests, imageDestructorCallback_success) {
     EXPECT_EQ(1, cbInvoked);
 }
 
-TEST_F(clSetMemObjectDestructorCallbackTests, imageDestructorCallback_nullPfn) {
+TEST_F(clSetMemObjectDestructorCallbackTests, GivenImageAndNullCallbackFunctionWhenSettingMemObjCallbackThenInvalidValueErrorIsReturned) {
     auto image = clCreateImage(pContext, CL_MEM_READ_WRITE, &imageFormat,
                                &imageDesc, nullptr, &retVal);
 
@@ -83,12 +83,12 @@ TEST_F(clSetMemObjectDestructorCallbackTests, imageDestructorCallback_nullPfn) {
     EXPECT_EQ(0, cbInvoked);
 }
 
-TEST_F(clSetMemObjectDestructorCallbackTests, bufferDestructorCallback_success) {
+TEST_F(clSetMemObjectDestructorCallbackTests, GivenBufferAndDestructorCallbackFunctionWhenSettingMemObjCallbackThenSuccessIsReturned) {
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 42, nullptr, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
-    retVal = clSetMemObjectDestructorCallback(buffer, destructorCallBack, nullptr);
+    retVal = clSetMemObjectDestructorCallback(buffer, destructorCallback, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseMemObject(buffer);
@@ -96,7 +96,7 @@ TEST_F(clSetMemObjectDestructorCallbackTests, bufferDestructorCallback_success) 
     EXPECT_EQ(1, cbInvoked);
 }
 
-TEST_F(clSetMemObjectDestructorCallbackTests, bufferDestructorCallback_nullPfn) {
+TEST_F(clSetMemObjectDestructorCallbackTests, GivenBufferAndNullCallbackFunctionWhenSettingMemObjCallbackThenInvalidValueErrorIsReturned) {
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 42, nullptr, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
