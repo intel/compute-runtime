@@ -8,6 +8,7 @@
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/memory_manager/unified_memory_manager.h"
@@ -137,6 +138,35 @@ HWTEST_F(BufferSetArgTest, givenSetArgBufferWhenNullArgStatefulThenProgramNullSu
 
     EXPECT_EQ(surfaceFormat, RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
     EXPECT_EQ(surfacetype, SURFACE_FORMAT::SURFACE_FORMAT_RAW);
+}
+
+HWTEST_F(BufferSetArgTest, givenSetKernelArgOnReadOnlyBufferThatIsMisalingedWhenSurfaceStateIsSetThenCachingIsOn) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
+        ptrOffset(pKernel->getSurfaceStateHeap(),
+                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+
+    pKernelInfo->requiresSshForBuffers = true;
+    pKernelInfo->kernelArgInfo[0].isReadOnly = true;
+
+    auto graphicsAllocation = castToObject<Buffer>(buffer)->getGraphicsAllocation();
+    graphicsAllocation->setSize(graphicsAllocation->getUnderlyingBufferSize() - 1);
+
+    cl_mem clMemBuffer = buffer;
+
+    cl_int ret = pKernel->setArgBuffer(0, sizeof(cl_mem), &clMemBuffer);
+
+    EXPECT_EQ(CL_SUCCESS, ret);
+
+    auto mocs = surfaceState->getMemoryObjectControlState();
+    auto gmmHelper = pDevice->getGmmHelper();
+    auto expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto expectedMocs2 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    if (expectedMocs != mocs &&
+        expectedMocs2 != mocs) {
+        EXPECT_FALSE(true);
+    }
 }
 
 HWTEST_F(BufferSetArgTest, givenSetArgBufferWithNullArgStatelessThenDontProgramNullSurfaceState) {

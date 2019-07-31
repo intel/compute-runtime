@@ -534,7 +534,7 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
     return pBuffer;
 }
 
-uint32_t Buffer::getMocsValue(bool disableL3Cache) const {
+uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) const {
     uint64_t bufferAddress = 0;
     size_t bufferSize = 0;
     if (getGraphicsAllocation()) {
@@ -546,7 +546,7 @@ uint32_t Buffer::getMocsValue(bool disableL3Cache) const {
     }
     bufferAddress += this->offset;
 
-    bool readOnlyMemObj = isValueSet(getFlags(), CL_MEM_READ_ONLY);
+    bool readOnlyMemObj = isValueSet(getFlags(), CL_MEM_READ_ONLY) || isReadOnlyArgument;
     bool alignedMemObj = isAligned<MemoryConstants::cacheLineSize>(bufferAddress) &&
                          isAligned<MemoryConstants::cacheLineSize>(bufferSize);
 
@@ -565,7 +565,7 @@ void Buffer::setSurfaceState(const Device *device,
                              GraphicsAllocation *gfxAlloc,
                              cl_mem_flags flags) {
     auto buffer = Buffer::createBufferHwFromDevice(device, flags, svmSize, svmPtr, svmPtr, gfxAlloc, true, false, false);
-    buffer->setArgStateful(surfaceState, false, false);
+    buffer->setArgStateful(surfaceState, false, false, false);
     buffer->graphicsAllocation = nullptr;
     delete buffer;
 }

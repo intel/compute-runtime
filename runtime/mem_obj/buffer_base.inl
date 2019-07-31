@@ -28,7 +28,7 @@ union SURFACE_STATE_BUFFER_LENGTH {
 };
 
 template <typename GfxFamily>
-void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool programForAuxTranslation) {
+void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool programForAuxTranslation, bool isReadOnlyArgument) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -62,7 +62,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     surfaceState->setTileMode(RENDER_SURFACE_STATE::TILE_MODE_LINEAR);
     surfaceState->setVerticalLineStride(0);
     surfaceState->setVerticalLineStrideOffset(0);
-    surfaceState->setMemoryObjectControlState(getMocsValue(programForAuxTranslation));
+    surfaceState->setMemoryObjectControlState(getMocsValue(programForAuxTranslation, isReadOnlyArgument));
     surfaceState->setSurfaceBaseAddress(bufferAddressAligned);
 
     Gmm *gmm = graphicsAllocation ? graphicsAllocation->getDefaultGmm() : nullptr;
@@ -77,7 +77,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     }
 
-    appendBufferState(memory, context, getGraphicsAllocation());
+    appendBufferState(memory, context, getGraphicsAllocation(), isReadOnlyArgument);
 }
 
 } // namespace NEO
