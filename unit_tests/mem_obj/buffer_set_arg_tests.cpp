@@ -163,10 +163,7 @@ HWTEST_F(BufferSetArgTest, givenSetKernelArgOnReadOnlyBufferThatIsMisalingedWhen
     auto gmmHelper = pDevice->getGmmHelper();
     auto expectedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     auto expectedMocs2 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
-    if (expectedMocs != mocs &&
-        expectedMocs2 != mocs) {
-        EXPECT_FALSE(true);
-    }
+    EXPECT_TRUE(expectedMocs == mocs || expectedMocs2 == mocs);
 }
 
 HWTEST_F(BufferSetArgTest, givenSetArgBufferWithNullArgStatelessThenDontProgramNullSurfaceState) {
