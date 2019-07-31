@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "core/helpers/basic_math.h"
 #include "runtime/os_interface/linux/engine_info.h"
 #include "runtime/os_interface/linux/memory_info.h"
 #include "runtime/utilities/api_intercept.h"
@@ -74,6 +75,7 @@ class Drm {
     bool getSimplifiedMocsTableUsage() const;
     void queryEngineInfo();
     void queryMemoryInfo();
+    void setMemoryRegions();
 
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();
@@ -98,6 +100,9 @@ class Drm {
 
     std::string getSysFsPciPath(int deviceID);
     void *query(uint32_t queryId);
+
+    static inline uint16_t getMemoryTypeFromRegion(uint32_t region) { return Math::log2(region >> 16); };
+    static inline uint16_t getInstanceFromRegion(uint32_t region) { return Math::log2(region & 0xFFFF); };
 
 #pragma pack(1)
     struct PCIConfig {

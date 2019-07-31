@@ -189,6 +189,7 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     drmObject->queryEngineInfo();
     if (HwHelper::get(device->pHwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*device->pHwInfo)) {
         drmObject->queryMemoryInfo();
+        drmObject->setMemoryRegions();
     }
 
     drms[deviceOrdinal % drms.size()] = drmObject.release();

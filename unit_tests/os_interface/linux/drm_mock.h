@@ -20,6 +20,8 @@ using namespace NEO;
 // Mock DRM class that responds to DRM_IOCTL_I915_GETPARAMs
 class DrmMock : public Drm {
   public:
+    using Drm::getInstanceFromRegion;
+    using Drm::getMemoryTypeFromRegion;
     using Drm::memoryInfo;
     using Drm::preemptionSupported;
     using Drm::query;
@@ -64,6 +66,10 @@ class DrmMock : public Drm {
 
     void setDeviceID(int deviceId) { this->deviceId = deviceId; }
     void setDeviceRevID(int revisionId) { this->revisionId = revisionId; }
+
+    inline uint32_t createMemoryRegionId(uint16_t type, uint16_t instance) const {
+        return (1u << (type + 16)) | (1u << instance);
+    }
 
     static const int mockFd = 33;
 
