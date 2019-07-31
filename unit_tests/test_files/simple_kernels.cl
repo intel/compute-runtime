@@ -19,7 +19,7 @@ __kernel void simple_kernel_0(
 }
 
 __kernel void simple_kernel_1(
-    __global uint *src,
+    __global const uint *src,
     const uint arg1,
     __global uint *dst) {
 
@@ -63,7 +63,7 @@ __kernel void simple_kernel_5(__global uint *dst) {
 }
 
 #define SIMPLE_KERNEL_6_ARRAY_SIZE 32
-__kernel void simple_kernel_6(__global uint *dst, __global uint2 *src, uint scalar, uint maxIterations, uint maxIterations2) {
+__kernel void simple_kernel_6(__global uint *dst, __constant uint2 *src, uint scalar, uint maxIterations, uint maxIterations2) {
     __private uint2 array[SIMPLE_KERNEL_6_ARRAY_SIZE];
     __private uint2 sum;
     __private size_t gid = get_global_id(0);

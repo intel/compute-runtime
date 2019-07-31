@@ -391,6 +391,26 @@ TEST_F(KernelFromBinaryTests, BuiltInIsSetToFalseForRegularKernels) {
     delete pKernel;
 }
 
+TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreatedThenArgumentIsMarkedAsReadOnly) {
+    cl_device_id device = pDevice;
+
+    CreateProgramFromBinary<Program>(pContext, &device, "simple_kernels");
+
+    ASSERT_NE(nullptr, pProgram);
+    retVal = pProgram->build(
+        1,
+        &device,
+        nullptr,
+        nullptr,
+        nullptr,
+        false);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto pKernelInfo = pProgram->getKernelInfo("simple_kernel_6");
+    EXPECT_TRUE(pKernelInfo->kernelArgInfo[1].isReadOnly);
+}
+
 TEST(PatchInfo, Constructor) {
     PatchInfo patchInfo;
     EXPECT_EQ(nullptr, patchInfo.interfaceDescriptorDataLoad);

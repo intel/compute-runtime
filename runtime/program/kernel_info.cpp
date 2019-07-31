@@ -328,6 +328,7 @@ void KernelInfo::storeKernelArgument(
     usesSsh |= true;
     storeKernelArgPatchInfo(argNum, pStatelessConstMemObjKernelArg->DataParamSize, pStatelessConstMemObjKernelArg->DataParamOffset, 0, offsetSSH);
     kernelArgInfo[argNum].isBuffer = true;
+    kernelArgInfo[argNum].isReadOnly = true;
     patchInfo.statelessGlobalMemObjKernelArgs.push_back(reinterpret_cast<const SPatchStatelessGlobalMemoryObjectKernelArgument *>(pStatelessConstMemObjKernelArg));
 }
 

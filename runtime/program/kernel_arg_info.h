@@ -36,6 +36,7 @@ struct KernelArgInfo {
     bool isDeviceQueue = false;
     bool isBuffer = false;
     bool pureStatefulBufferAccess = false;
+    bool isReadOnly = false;
     uint32_t samplerArgumentType = 0;
     uint32_t offsetImgWidth = undefinedOffset;
     uint32_t offsetImgHeight = undefinedOffset;
