@@ -73,7 +73,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void blitBuffer(const BlitProperties &blitProperites) override;
 
   protected:
-    void programPreemption(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags);
+    void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programPreamble(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programPipelineSelect(LinearStream &csr, DispatchFlags &dispatchFlags);

@@ -28,10 +28,8 @@ struct PreemptionConfig<GfxFamily> {
     static constexpr uint32_t midThreadVal = 0;
 };
 
-template void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStream,
-                                                            PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
-                                                            GraphicsAllocation *preemptionCsr,
-                                                            Device &device);
+template void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStream, PreemptionMode newPreemptionMode,
+                                                            PreemptionMode oldPreemptionMode, GraphicsAllocation *preemptionCsr);
 
 template size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device);
 template void PreemptionHelper::programCsrBaseAddress<GfxFamily>(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr);

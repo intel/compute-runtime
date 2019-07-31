@@ -45,7 +45,7 @@ class PreemptionHelper {
 
     template <typename GfxFamily>
     static void programCmdStream(LinearStream &cmdStream, PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
-                                 GraphicsAllocation *preemptionCsr, Device &device);
+                                 GraphicsAllocation *preemptionCsr);
 
     template <typename GfxFamily>
     static size_t getPreemptionWaCsSize(const Device &device);

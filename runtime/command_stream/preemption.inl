@@ -87,9 +87,8 @@ void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &
 }
 
 template <typename GfxFamily>
-void PreemptionHelper::programCmdStream(LinearStream &cmdStream,
-                                        PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
-                                        GraphicsAllocation *preemptionCsr, Device &device) {
+void PreemptionHelper::programCmdStream(LinearStream &cmdStream, PreemptionMode newPreemptionMode,
+                                        PreemptionMode oldPreemptionMode, GraphicsAllocation *preemptionCsr) {
     if (oldPreemptionMode == newPreemptionMode) {
         return;
     }

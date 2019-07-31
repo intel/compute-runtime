@@ -312,8 +312,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturns0WhenPreemptionModeIsN
 
         builtIns->overrideSipKernel(std::unique_ptr<NEO::SipKernel>(new NEO::SipKernel{SipKernelType::Csr, GlobalMockSipProgram::getSipProgramWithCustomBinary()}));
         mockDevice->getExecutionEnvironment()->builtins.reset(builtIns);
-        PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, mode,
-                                                       nullptr, *mockDevice);
+        PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, mode, nullptr);
     }
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
@@ -341,8 +340,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturnsSizeOfMiLoadRegisterIm
     uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
     MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
 
-    PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, differentPreemptionMode,
-                                                   nullptr, *mockDevice);
+    PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, differentPreemptionMode, nullptr);
     EXPECT_EQ(requiredSize, cmdStream.getUsed());
 }
 
@@ -353,7 +351,7 @@ HWTEST_P(PreemptionHwTest, programCmdStreamAddsProperMiLoadRegisterImmCommandToT
 
     if (false == GetPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
         LinearStream cmdStream(nullptr, 0U);
-        PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, differentPreemptionMode, nullptr, *mockDevice);
+        PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, differentPreemptionMode, nullptr);
         EXPECT_EQ(0U, cmdStream.getUsed());
         return;
     }
@@ -376,8 +374,7 @@ HWTEST_P(PreemptionHwTest, programCmdStreamAddsProperMiLoadRegisterImmCommandToT
     uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
     MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
 
-    PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, differentPreemptionMode,
-                                                   &csrSurface, *mockDevice);
+    PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, differentPreemptionMode, &csrSurface);
 
     HardwareParse cmdParser;
     cmdParser.parseCommands<FamilyType>(cmdStream);
