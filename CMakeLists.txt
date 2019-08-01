@@ -167,11 +167,7 @@ if(DISABLE_AUB_STREAM)
     unset(AUB_STREAM_DIR)
 endif()
 
-if(LIBDRM_DIR)
-  get_filename_component(I915_INCLUDES_DIR "${LIBDRM_DIR}/include" ABSOLUTE)
-else()
-  get_filename_component(I915_INCLUDES_DIR "${IGDRCL_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}/uapi" ABSOLUTE)
-endif()
+get_filename_component(I915_INCLUDES_DIR "${IGDRCL_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}/uapi" ABSOLUTE)
 message(STATUS "i915 includes dir: ${I915_INCLUDES_DIR}")
 
 if(NOT DEFINED KHRONOS_HEADERS_DIR)
