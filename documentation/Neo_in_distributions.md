@@ -6,26 +6,35 @@
 pacman -S intel-compute-runtime
 ```
 
+## Centos*
+
+```
+yum install yum-plugin-copr
+yum copr enable jdanecki/intel-opencl
+yum install intel-opencl
+```
+
 ## Clear Linux
 
 ```
 swupd bundle-add computer-vision-basic
 ```
 
-## Exherbo Linux
+## Exherbo* Linux
 
 ```
 cave resolve --execute intel-compute-runtime
 ```
 
-## Fedora 30 and rawhide
+## Fedora* 30 and rawhide
 
 ```
+dnf install dnf-plugins-core
 dnf copr enable jdanecki/intel-opencl
 dnf install intel-opencl
 ```
 
-## Gentoo
+## Gentoo*
 
 ```
 emerge intel-neo
@@ -49,7 +58,7 @@ apt-get install intel-opencl-icd
 
 Docker images are provided in [intel-opencl][https://hub.docker.com/r/intelopencl/intel-opencl] repository.
 
-Example for Fedora 30
+Example for Fedora* 30
 
 ```
 docker run -it --device /dev/dri:/dev/dri --rm docker.io/intelopencl/intel-opencl:fedora-30-copr clinfo
