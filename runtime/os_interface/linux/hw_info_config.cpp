@@ -7,6 +7,7 @@
 
 #include "runtime/os_interface/hw_info_config.h"
 
+#include "core/utilities/cpu_info.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/hw_helper.h"
@@ -15,7 +16,6 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/os_interface.h"
-#include "runtime/utilities/cpu_info.h"
 
 #include <cstring>
 

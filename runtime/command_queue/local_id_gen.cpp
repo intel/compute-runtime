@@ -7,8 +7,8 @@
 
 #include "runtime/command_queue/local_id_gen.h"
 
+#include "core/utilities/cpu_info.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/utilities/cpu_info.h"
 
 #include <array>
 

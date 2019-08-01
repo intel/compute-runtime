@@ -48,6 +48,7 @@ struct CpuInfo {
     static const uint64_t featureAvX512Cd = 0x400000000ULL;
     static const uint64_t featureSha = 0x800000000ULL;
     static const uint64_t featureMpx = 0x1000000000ULL;
+    static const uint64_t featureClflush = 0x2000000000ULL;
 
     CpuInfo() : features(featureNone) {
     }
@@ -140,6 +141,10 @@ struct CpuInfo {
             {
                 features |= cpuInfo[2] & BIT(30) ? featureRdrnd : featureNone;
             }
+
+            {
+                features |= cpuInfo[3] & BIT(19) ? featureClflush : featureNone;
+            }
         }
 
         if (numFunctionIds >= 7u) {
@@ -186,6 +191,7 @@ struct CpuInfo {
     }
 
     static void (*cpuidexFunc)(int *, int, int);
+    static void (*cpuidFunc)(int[4], int);
 
   protected:
     mutable uint64_t features;
