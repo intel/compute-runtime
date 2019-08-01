@@ -424,6 +424,9 @@ cl_int KernelInfo::resolveKernelInfo() {
         for (auto qualifierId = 0u; qualifierId < qualifierCount; qualifierId++) {
             if (strstr(argInfo.typeQualifierStr.c_str(), typeQualifiers[qualifierId].argTypeQualifier) != nullptr) {
                 argInfo.typeQualifier |= typeQualifiers[qualifierId].argTypeQualifierValue;
+                if (argInfo.typeQualifier == CL_KERNEL_ARG_TYPE_CONST) {
+                    argInfo.isReadOnly = true;
+                }
             }
         }
     }

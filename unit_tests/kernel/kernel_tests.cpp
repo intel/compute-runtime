@@ -409,6 +409,8 @@ TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreated
 
     auto pKernelInfo = pProgram->getKernelInfo("simple_kernel_6");
     EXPECT_TRUE(pKernelInfo->kernelArgInfo[1].isReadOnly);
+    pKernelInfo = pProgram->getKernelInfo("simple_kernel_1");
+    EXPECT_TRUE(pKernelInfo->kernelArgInfo[0].isReadOnly);
 }
 
 TEST(PatchInfo, Constructor) {
