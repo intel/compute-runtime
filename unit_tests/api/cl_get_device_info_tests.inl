@@ -178,8 +178,6 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_intel_accelerator ",
         "cl_intel_media_block_io ",
         "cl_intel_driver_diagnostics ",
-        "cl_khr_int64_base_atomics ",
-        "cl_khr_int64_extended_atomics ",
     };
 
     for (auto element = 0u; element < sizeof(supportedExtensions) / sizeof(supportedExtensions[0]); element++) {
