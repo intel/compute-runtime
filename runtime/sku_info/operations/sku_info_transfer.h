@@ -37,6 +37,9 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(Wddm2_1_64kbPages);
         TRANSFER_FTR_TO_GMM(TranslationTable);
         TRANSFER_FTR_TO_GMM(UserModeTranslationTable);
+        TRANSFER_FTR_TO_GMM(Wddm2Svm);
+        TRANSFER_FTR_TO_GMM(LLCBypass);
+
 #undef TRANSFER_FTR_TO_GMM
     }
 
@@ -46,6 +49,7 @@ class SkuInfoTransfer {
         TRANSFER_WA_TO_GMM(DisableEdramForDisplayRT);
         TRANSFER_WA_TO_GMM(EncryptedEdramOnlyPartials);
         TRANSFER_WA_TO_GMM(LosslessCompressionSurfaceStride);
+        TRANSFER_WA_TO_GMM(RestrictPitch128KB);
 #undef TRANSFER_WA_TO_GMM
     }
 };

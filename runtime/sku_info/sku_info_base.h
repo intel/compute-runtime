@@ -107,5 +107,6 @@ struct WorkaroundTableBase {
     bool waModifyVFEStateAfterGPGPUPreemption = false;
     bool waCSRUncachable = false;
     bool waSamplerCacheFlushBetweenRedescribedSurfaceReads = false;
+    bool waRestrictPitch128KB = false;
 };
 } // namespace NEO

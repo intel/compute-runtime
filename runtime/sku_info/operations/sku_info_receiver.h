@@ -119,6 +119,7 @@ class SkuInfoReceiver {
         RECEIVE_WA(ModifyVFEStateAfterGPGPUPreemption);
         RECEIVE_WA(CSRUncachable);
         RECEIVE_WA(SamplerCacheFlushBetweenRedescribedSurfaceReads);
+        RECEIVE_WA(RestrictPitch128KB);
 #undef RECEIVE_WA
     }
 };

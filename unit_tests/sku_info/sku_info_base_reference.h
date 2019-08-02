@@ -33,6 +33,8 @@ struct SkuInfoBaseReference {
 
         refFtrTable.FtrTranslationTable = 1;
         refFtrTable.FtrUserModeTranslationTable = 1;
+        refFtrTable.FtrLLCBypass = 1;
+        refFtrTable.FtrWddm2Svm = 1;
     }
 
     static void fillReferenceWaForTransfer(_WA_TABLE &refWaTable) {
@@ -41,6 +43,7 @@ struct SkuInfoBaseReference {
         refWaTable.WaDisableEdramForDisplayRT = 1;
         refWaTable.WaEncryptedEdramOnlyPartials = 1;
         refWaTable.WaLosslessCompressionSurfaceStride = 1;
+        refWaTable.WaRestrictPitch128KB = 1;
     }
 
     static void fillReferenceFtrToReceive(FeatureTable &refFtrTable) {
@@ -143,6 +146,7 @@ struct SkuInfoBaseReference {
         refWaTable.waModifyVFEStateAfterGPGPUPreemption = true;
         refWaTable.waCSRUncachable = true;
         refWaTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+        refWaTable.waRestrictPitch128KB = true;
     }
 }; // namespace SkuInfoBaseReference
 } // namespace NEO
