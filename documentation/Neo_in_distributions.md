@@ -56,7 +56,7 @@ apt-get install intel-opencl-icd
 
 ## Neo in docker containers
 
-Docker images are provided in [intel-opencl][https://hub.docker.com/r/intelopencl/intel-opencl] repository.
+Docker images are provided in [intel-opencl](https://hub.docker.com/r/intelopencl/intel-opencl) repository.
 
 Example for Fedora* 30
 
