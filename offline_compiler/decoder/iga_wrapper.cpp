@@ -73,7 +73,7 @@ struct IgaWrapper::Impl {
 };
 
 IgaWrapper::IgaWrapper()
-    : pimpl(new Impl()) {
+    : pimpl(std::make_unique<Impl>()) {
 }
 
 IgaWrapper::~IgaWrapper() = default;
