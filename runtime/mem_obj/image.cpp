@@ -283,7 +283,7 @@ Image *Image::create(Context *context,
                 }
             }
         }
-        transferNeeded |= isValueSet(properties.flags, CL_MEM_COPY_HOST_PTR);
+        transferNeeded |= isValueSet(properties.flags, static_cast<cl_bitfield>(CL_MEM_COPY_HOST_PTR));
 
         if (!memory) {
             break;
