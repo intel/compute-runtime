@@ -7,10 +7,10 @@
 
 #pragma once
 
+#include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/event/user_event.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"

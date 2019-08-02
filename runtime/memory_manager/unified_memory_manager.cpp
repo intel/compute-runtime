@@ -7,8 +7,8 @@
 
 #include "runtime/memory_manager/unified_memory_manager.h"
 
+#include "core/helpers/aligned_memory.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 

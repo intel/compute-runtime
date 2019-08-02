@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/built_ins/built_ins.h"
@@ -16,7 +17,6 @@
 #include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/command_stream/scratch_space_controller_base.h"
 #include "runtime/event/user_event.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/blit_commands_helper.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/preamble.h"

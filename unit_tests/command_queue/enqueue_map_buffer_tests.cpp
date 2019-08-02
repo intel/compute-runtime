@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/aligned_memory.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_queue/enqueue_map_buffer_fixture.h"

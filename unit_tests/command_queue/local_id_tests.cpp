@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/helpers/aligned_memory.h"
 #include "core/helpers/ptr_math.h"
 #include "runtime/command_queue/local_id_gen.h"
-#include "runtime/helpers/aligned_memory.h"
 
 #include "gtest/gtest.h"
 

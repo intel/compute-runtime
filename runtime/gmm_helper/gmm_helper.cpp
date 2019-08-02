@@ -7,10 +7,10 @@
 
 #include "runtime/gmm_helper/gmm_helper.h"
 
+#include "core/helpers/aligned_memory.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/resource_info.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_info.h"

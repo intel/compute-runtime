@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 #include "runtime/helpers/uint16_sse4.h"
 
 #include "gtest/gtest.h"

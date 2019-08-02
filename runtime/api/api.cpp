@@ -7,6 +7,7 @@
 
 #include "api.h"
 
+#include "core/helpers/aligned_memory.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
 #include "runtime/api/additional_extensions.h"
 #include "runtime/aub/aub_center.h"
@@ -19,7 +20,6 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/event/user_event.h"
 #include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/mem_properties_parser_helper.h"

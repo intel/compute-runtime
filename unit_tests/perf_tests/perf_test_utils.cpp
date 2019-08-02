@@ -7,7 +7,7 @@
 
 #include "perf_test_utils.h"
 
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 #include "runtime/helpers/hash.h"
 
 #include <fstream>

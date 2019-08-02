@@ -5,8 +5,8 @@
  *
  */
 
+#include <core/helpers/aligned_memory.h>
 #include <runtime/compiler_interface/binary_cache.h>
-#include <runtime/helpers/aligned_memory.h>
 #include <runtime/helpers/file_io.h>
 #include <runtime/helpers/hash.h>
 #include <runtime/helpers/hw_info.h>

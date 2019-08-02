@@ -7,6 +7,7 @@
 
 #include "runtime/event/event.h"
 
+#include "core/helpers/aligned_memory.h"
 #include "public/cl_ext_private.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/command_queue/command_queue.h"
@@ -15,7 +16,6 @@
 #include "runtime/device/device.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/event_tracker.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/timestamp_packet.h"

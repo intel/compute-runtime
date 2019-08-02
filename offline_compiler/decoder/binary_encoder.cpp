@@ -7,9 +7,9 @@
 
 #include "binary_encoder.h"
 
+#include "core/helpers/aligned_memory.h"
 #include "elf/writer.h"
 #include "offline_compiler/offline_compiler.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/hash.h"
 

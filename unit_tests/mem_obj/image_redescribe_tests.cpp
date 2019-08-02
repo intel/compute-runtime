@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"

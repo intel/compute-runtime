@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 #include "runtime/mem_obj/pipe.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 

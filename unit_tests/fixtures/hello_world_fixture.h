@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/helpers/aligned_memory.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "test.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"

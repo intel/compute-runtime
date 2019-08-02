@@ -7,7 +7,7 @@
 
 #pragma once
 #define UMDF_USING_NTSTATUS
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
 

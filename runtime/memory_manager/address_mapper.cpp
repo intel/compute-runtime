@@ -7,7 +7,7 @@
 
 #include "runtime/memory_manager/address_mapper.h"
 
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 
 #include <inttypes.h>
 #include <iostream>

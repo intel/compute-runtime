@@ -7,7 +7,6 @@
 set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/array_count_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object_tests_mt.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basic_math_tests.cpp
@@ -54,6 +53,7 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/validator_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/variable_backup.h
+  ${NEO_CORE_DIRECTORY}/unit_tests/helpers/aligned_memory_tests.cpp
   ${NEO_CORE_DIRECTORY}/unit_tests/helpers/debug_manager_state_restore.h
 )
 

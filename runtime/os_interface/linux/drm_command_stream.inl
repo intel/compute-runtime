@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/helpers/aligned_memory.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"

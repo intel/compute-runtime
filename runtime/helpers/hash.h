@@ -7,7 +7,7 @@
 
 #pragma once
 #include "common/compiler_support.h"
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 
 #include <cstdint>
 

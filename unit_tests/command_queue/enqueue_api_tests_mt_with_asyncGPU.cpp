@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/os_interface/os_context.h"
 #include "test.h"

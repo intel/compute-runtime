@@ -5,6 +5,7 @@
  *
  */
 
+#include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
 #include "core/helpers/ptr_math.h"
 #include "core/helpers/string.h"
@@ -12,7 +13,6 @@
 #include "runtime/command_stream/csr_definitions.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/address_patch.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"

@@ -7,7 +7,7 @@
 
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
 
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 #include "runtime/helpers/surface_formats.h"
 
 using namespace ::testing;

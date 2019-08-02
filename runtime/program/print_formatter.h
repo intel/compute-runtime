@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/os_interface/print.h"
 

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 #include "runtime/sharings/va/va_sharing.h"
 
 namespace NEO {

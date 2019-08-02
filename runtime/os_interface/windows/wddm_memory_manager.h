@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"

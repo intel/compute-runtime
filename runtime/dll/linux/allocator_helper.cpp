@@ -7,8 +7,8 @@
 
 #include "runtime/os_interface/linux/allocator_helper.h"
 
+#include "core/helpers/aligned_memory.h"
 #include "core/helpers/basic_math.h"
-#include "runtime/helpers/aligned_memory.h"
 
 namespace NEO {
 

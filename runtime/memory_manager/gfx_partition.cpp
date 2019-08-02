@@ -7,7 +7,7 @@
 
 #include "runtime/memory_manager/gfx_partition.h"
 
-#include "runtime/helpers/aligned_memory.h"
+#include "core/helpers/aligned_memory.h"
 
 namespace NEO {
 
