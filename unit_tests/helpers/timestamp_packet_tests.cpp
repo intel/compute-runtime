@@ -390,7 +390,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
         nullptr,
         nullptr,
         &timestampPacket,
-        device->getPreemptionMode(),
         CL_COMMAND_NDRANGE_KERNEL);
 
     HardwareParse hwParser;
@@ -435,7 +434,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketDisabledWh
         nullptr,
         nullptr,
         &timestampPacket,
-        device->getPreemptionMode(),
         CL_COMMAND_NDRANGE_KERNEL);
 
     HardwareParse hwParser;
@@ -885,7 +883,6 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
         nullptr,
         nullptr,
         &timestamp7,
-        device->getPreemptionMode(),
         CL_COMMAND_NDRANGE_KERNEL);
 
     HardwareParse hwParser;
@@ -969,7 +966,6 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
         nullptr,
         nullptr,
         &timestamp7,
-        device->getPreemptionMode(),
         CL_COMMAND_NDRANGE_KERNEL);
 
     HardwareParse hwParser;

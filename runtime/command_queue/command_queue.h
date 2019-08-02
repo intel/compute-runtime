@@ -438,6 +438,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void providePerformanceHint(TransferProperties &transferProperties);
     bool queueDependenciesClearRequired() const;
     bool blitEnqueueAllowed(bool queueBlocked, cl_command_type cmdType);
+    void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
 
     Context *context = nullptr;
     Device *device = nullptr;

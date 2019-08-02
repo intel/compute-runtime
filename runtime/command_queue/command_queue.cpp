@@ -612,4 +612,24 @@ bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const Ev
 
     return false;
 }
+
+void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo) {
+    if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
+        auto status = getGpgpuCommandStreamReceiver().checkAndActivateAubSubCapture(multiDispatchInfo);
+        if (!status.isActive) {
+            // make each enqueue blocking when subcapture is not active to split batch buffer
+            blocking = true;
+        } else if (!status.wasActiveInPreviousEnqueue) {
+            // omit timestamp packet dependencies dependencies upon subcapture activation
+            clearAllDependencies = true;
+        }
+    }
+
+    if (getGpgpuCommandStreamReceiver().getType() > CommandStreamReceiverType::CSR_HW) {
+        for (auto &dispatchInfo : multiDispatchInfo) {
+            auto kernelName = dispatchInfo.getKernel()->getKernelInfo().name;
+            getGpgpuCommandStreamReceiver().addAubComment(kernelName.c_str());
+        }
+    }
+}
 } // namespace NEO

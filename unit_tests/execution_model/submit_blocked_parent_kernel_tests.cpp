@@ -421,7 +421,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommand
             nullptr,
             nullptr,
             nullptr,
-            device->getPreemptionMode(),
             CL_COMMAND_NDRANGE_KERNEL);
 
         EXPECT_NE(nullptr, blockedCommandsData);

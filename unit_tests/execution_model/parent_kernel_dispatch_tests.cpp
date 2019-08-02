@@ -53,7 +53,6 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
             nullptr,
             nullptr,
             nullptr,
-            pDevice->getPreemptionMode(),
             CL_COMMAND_NDRANGE_KERNEL);
 
         size_t dshUsedAfter = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u).getUsed();
@@ -109,7 +108,6 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
             nullptr,
             nullptr,
             nullptr,
-            pDevice->getPreemptionMode(),
             CL_COMMAND_NDRANGE_KERNEL);
 
         auto iohUsed = ioh.getUsed();
@@ -135,7 +133,6 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
             nullptr,
             nullptr,
             nullptr,
-            pDevice->getPreemptionMode(),
             CL_COMMAND_NDRANGE_KERNEL);
 
         auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u);
@@ -171,7 +168,6 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueue
             nullptr,
             nullptr,
             nullptr,
-            pDevice->getPreemptionMode(),
             CL_COMMAND_NDRANGE_KERNEL);
         ASSERT_NE(nullptr, blockedCommandsData);
 
@@ -283,7 +279,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenBlockedQueueWhenParen
             nullptr,
             nullptr,
             nullptr,
-            pDevice->getPreemptionMode(),
             CL_COMMAND_NDRANGE_KERNEL);
 
         ASSERT_NE(nullptr, blockedCommandsData);
@@ -316,7 +311,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispa
             nullptr,
             nullptr,
             nullptr,
-            pDevice->getPreemptionMode(),
             CL_COMMAND_NDRANGE_KERNEL);
 
         LinearStream *commandStream = &pCmdQ->getCS(0);
@@ -374,7 +368,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenUsedSSHHeapWhenParent
             nullptr,
             nullptr,
             nullptr,
-            pDevice->getPreemptionMode(),
             CL_COMMAND_NDRANGE_KERNEL);
 
         EXPECT_EQ(UnitTestHelper<FamilyType>::getDefaultSshUsage(), ssh.getUsed());
@@ -410,7 +403,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenNotUsedSSHHeapWhenPar
             nullptr,
             nullptr,
             nullptr,
-            pDevice->getPreemptionMode(),
             CL_COMMAND_NDRANGE_KERNEL);
 
         EXPECT_EQ(bufferMemory, ssh.getCpuBase());

@@ -328,7 +328,6 @@ class CommandQueueHw : public CommandQueue {
                                       EventsRequest &eventsRequest,
                                       EventBuilder &eventBuilder,
                                       uint32_t taskLevel,
-                                      bool slmUsed,
                                       PrintfHandler *printfHandler);
 
     template <uint32_t commandType>
@@ -339,7 +338,6 @@ class CommandQueueHw : public CommandQueue {
                         TimestampPacketContainer *previousTimestampPacketNodes,
                         std::unique_ptr<KernelOperation> &blockedCommandsData,
                         EventsRequest &eventsRequest,
-                        bool slmUsed,
                         EventBuilder &externalEventBuilder,
                         std::unique_ptr<PrintfHandler> printfHandler);
 
@@ -386,13 +384,15 @@ class CommandQueueHw : public CommandQueue {
                                                  AuxTranslationDirection auxTranslationDirection);
 
     template <uint32_t commandType>
-    LinearStream *obtainCommandStream(const CsrDependencies &csrDependencies, bool profilingRequired,
-                                      bool perfCountersRequired, bool blitEnqueue, bool blockedQueue,
-                                      const MultiDispatchInfo &multiDispatchInfo,
-                                      const EventsRequest &eventsRequest,
+    LinearStream *obtainCommandStream(const CsrDependencies &csrDependencies, bool blitEnqueue, bool blockedQueue,
+                                      const MultiDispatchInfo &multiDispatchInfo, const EventsRequest &eventsRequest,
                                       std::unique_ptr<KernelOperation> &blockedCommandsData,
                                       Surface **surfaces, size_t numSurfaces) {
         LinearStream *commandStream = nullptr;
+
+        bool profilingRequired = (this->isProfilingEnabled() && eventsRequest.outEvent);
+        bool perfCountersRequired = (this->isPerfCountersEnabled() && eventsRequest.outEvent);
+
         if (isBlockedCommandStreamRequired(commandType, eventsRequest, blockedQueue)) {
             constexpr size_t additionalAllocationSize = CSRequirements::csOverfetchSize;
             constexpr size_t allocationSize = MemoryConstants::pageSize64k - CSRequirements::csOverfetchSize;
@@ -422,11 +422,9 @@ class CommandQueueHw : public CommandQueue {
                                                    size_t bufferSlicePitch,
                                                    size_t hostRowPitch,
                                                    size_t hostSlicePitch);
-    void processDeviceEnqueue(Kernel *parentKernel,
-                              DeviceQueueHw<GfxFamily> *devQueueHw,
+    void processDeviceEnqueue(DeviceQueueHw<GfxFamily> *devQueueHw,
                               const MultiDispatchInfo &multiDispatchInfo,
                               TagNode<HwTimeStamps> *hwTimeStamps,
-                              PreemptionMode preemption,
                               bool &blocking);
 
     template <uint32_t commandType>
@@ -434,12 +432,10 @@ class CommandQueueHw : public CommandQueue {
                                    std::unique_ptr<PrintfHandler> &printfHandler,
                                    Event *event,
                                    TagNode<NEO::HwTimeStamps> *&hwTimeStamps,
-                                   Kernel *parentKernel,
                                    bool blockQueue,
                                    DeviceQueueHw<GfxFamily> *devQueueHw,
                                    CsrDependencies &csrDeps,
                                    KernelOperation *blockedCommandsData,
-                                   TimestampPacketContainer &previousTimestampPacketNodes,
-                                   PreemptionMode preemption);
+                                   TimestampPacketContainer &previousTimestampPacketNodes);
 };
 } // namespace NEO

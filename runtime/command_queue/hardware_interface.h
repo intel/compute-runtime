@@ -44,7 +44,6 @@ class HardwareInterface {
         TagNode<HwPerfCounter> *hwPerfCounter,
         TimestampPacketContainer *previousTimestampPacketNodes,
         TimestampPacketContainer *currentTimestampPacketNodes,
-        PreemptionMode preemptionMode,
         uint32_t commandType);
 
     static void getDefaultDshSpace(
