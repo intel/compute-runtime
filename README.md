@@ -16,7 +16,7 @@ The Intel(R) Graphics Compute Runtime for OpenCL(TM) is distributed under the MI
 You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
 ## Installation
-Compiled .deb packages (for Ubuntu 16.04) are provided on the [release page](https://github.com/intel/compute-runtime/releases)
+.deb packages for Ubuntu are provided on the [release page](https://github.com/intel/compute-runtime/releases)
 
 Other installation procedures are described [here](https://github.com/intel/compute-runtime/blob/master/documentation/Neo_in_distributions.md)
 
