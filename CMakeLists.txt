@@ -740,10 +740,11 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 endif()
 
 # Project-wide include paths
+# Please keep alphabetical order
 include_directories(${IGDRCL_SOURCE_DIR})
 include_directories(${IGDRCL_BUILD_DIR})
-include_directories(${IGDRCL_SOURCE_DIR}/runtime/sku_info/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${IGDRCL_SOURCE_DIR}/runtime/os_interface/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${IGDRCL_SOURCE_DIR}/core/memory_properties${BRANCH_DIR_SUFFIX})
+include_directories(${IGDRCL_SOURCE_DIR}/runtime/built_ins/builtinops${BRANCH_DIR_SUFFIX})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/command_stream/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/gen_common/reg_configs${BRANCH_DIR_SUFFIX})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/${BRANCH_DIR_SUFFIX})
@@ -751,7 +752,8 @@ include_directories(${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/client_context${BRAN
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory${BRANCH_DIR_SUFFIX})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/mem_obj/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/memory_manager/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${IGDRCL_SOURCE_DIR}/runtime/built_ins/builtinops${BRANCH_DIR_SUFFIX})
+include_directories(${IGDRCL_SOURCE_DIR}/runtime/os_interface/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${IGDRCL_SOURCE_DIR}/runtime/sku_info/definitions${BRANCH_DIR_SUFFIX})
 
 set(HW_SRC_INCLUDE_PATH ${IGDRCL_SOURCE_DIR}/runtime/gen_common)
 
