@@ -17,24 +17,11 @@
 namespace NEO {
 static off_t lseekReturn = 4096u;
 static std::atomic<int> lseekCalledCount(0);
-static std::atomic<int> mmapMockCallCount(0);
-static std::atomic<int> munmapMockCallCount(0);
 
 inline off_t lseekMock(int fd, off_t offset, int whence) noexcept {
     lseekCalledCount++;
     return lseekReturn;
 }
-inline void *mmapMock(void *addr, size_t length, int prot, int flags,
-                      int fd, long offset) noexcept {
-    mmapMockCallCount++;
-    return reinterpret_cast<void *>(0x1000);
-}
-
-inline int munmapMock(void *addr, size_t length) noexcept {
-    munmapMockCallCount++;
-    return 0;
-}
-
 inline int closeMock(int) {
     return 0;
 }
@@ -65,13 +52,9 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
                                                                                              false,
                                                                                              executionEnvironment) {
         this->lseekFunction = &lseekMock;
-        this->mmapFunction = &mmapMock;
-        this->munmapFunction = &munmapMock;
         this->closeFunction = &closeMock;
         lseekReturn = 4096;
         lseekCalledCount = 0;
-        mmapMockCallCount = 0;
-        munmapMockCallCount = 0;
         hostPtrManager.reset(new MockHostPtrManager);
     };
     TestedDrmMemoryManager(bool enableLocalMemory,
@@ -83,13 +66,9 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
                                                                                              validateHostPtrMemory,
                                                                                              executionEnvironment) {
         this->lseekFunction = &lseekMock;
-        this->mmapFunction = &mmapMock;
-        this->munmapFunction = &munmapMock;
         this->closeFunction = &closeMock;
         lseekReturn = 4096;
         lseekCalledCount = 0;
-        mmapMockCallCount = 0;
-        munmapMockCallCount = 0;
     }
 
     void unreference(BufferObject *bo) {

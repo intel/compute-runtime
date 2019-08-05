@@ -89,12 +89,6 @@ class DrmGemCloseWorkerFixture {
     }
 
   protected:
-    class BufferObjectWrapper : public BufferObject {
-      public:
-        BufferObjectWrapper(Drm *drm, int handle)
-            : BufferObject(drm, handle, false) {
-        }
-    };
     class DrmAllocationWrapper : public DrmAllocation {
       public:
         DrmAllocationWrapper(BufferObject *bo)
@@ -110,7 +104,7 @@ TEST_F(DrmGemCloseWorkerTests, gemClose) {
     this->drmMock->gem_close_expected = 1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObjectWrapper(this->drmMock, 1);
+    auto bo = new BufferObject(this->drmMock, 1);
 
     worker->push(bo);
 
@@ -121,7 +115,7 @@ TEST_F(DrmGemCloseWorkerTests, gemCloseExit) {
     this->drmMock->gem_close_expected = -1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObjectWrapper(this->drmMock, 1);
+    auto bo = new BufferObject(this->drmMock, 1);
 
     worker->push(bo);
 
@@ -141,7 +135,7 @@ TEST_F(DrmGemCloseWorkerTests, close) {
     this->drmMock->gem_close_expected = -1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObjectWrapper(this->drmMock, 1);
+    auto bo = new BufferObject(this->drmMock, 1);
 
     worker->push(bo);
     worker->close(false);
@@ -159,7 +153,7 @@ TEST_F(DrmGemCloseWorkerTests, givenAllocationWhenAskedForUnreferenceWithForceFl
     this->drmMock->gem_close_expected = 1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObjectWrapper(this->drmMock, 1);
+    auto bo = new BufferObject(this->drmMock, 1);
 
     bo->reference();
     worker->push(bo);

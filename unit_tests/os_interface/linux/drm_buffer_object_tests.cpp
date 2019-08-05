@@ -17,7 +17,7 @@ using namespace NEO;
 
 class TestedBufferObject : public BufferObject {
   public:
-    TestedBufferObject(Drm *drm) : BufferObject(drm, 1, true) {
+    TestedBufferObject(Drm *drm) : BufferObject(drm, 1) {
     }
 
     void tileBy(uint32_t mode) {

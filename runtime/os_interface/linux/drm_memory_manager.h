@@ -52,8 +52,6 @@ class DrmMemoryManager : public MemoryManager {
 
     DrmGemCloseWorker *peekGemCloseWorker() const { return this->gemCloseWorker.get(); }
     bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) override;
-    void *reserveCpuAddressRange(size_t size) override;
-    void releaseReservedCpuAddressRange(void *reserved, size_t size) override;
 
     int obtainFdFromHandle(int boHandle);
 
@@ -64,8 +62,8 @@ class DrmMemoryManager : public MemoryManager {
     void pushSharedBufferObject(BufferObject *bo);
     BufferObject *allocUserptr(uintptr_t address, size_t size, uint64_t flags);
     bool setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable);
-    uint64_t acquireGpuRange(size_t &size, StorageAllocatorType &allocType, bool requireSpecificBitness);
-    void releaseGpuRange(void *address, size_t unmapSize, StorageAllocatorType allocatorType);
+    uint64_t acquireGpuRange(size_t &size, bool requireSpecificBitness);
+    void releaseGpuRange(void *address, size_t size);
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
     uint32_t getDefaultDrmContextId() const;
 
@@ -83,14 +81,13 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
 
     Drm *drm;
-    BufferObject *pinBB;
+    BufferObject *pinBB = nullptr;
+    void *memoryForPinBB = nullptr;
     size_t pinThreshold = 8 * 1024 * 1024;
     bool forcePinEnabled = false;
     const bool validateHostPtrMemory;
     std::unique_ptr<DrmGemCloseWorker> gemCloseWorker;
     decltype(&lseek) lseekFunction = lseek;
-    decltype(&mmap) mmapFunction = mmap;
-    decltype(&munmap) munmapFunction = munmap;
     decltype(&close) closeFunction = close;
     std::vector<BufferObject *> sharingBufferObjects;
     std::mutex mtx;

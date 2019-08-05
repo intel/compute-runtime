@@ -18,20 +18,11 @@ namespace NEO {
 class DrmMemoryManager;
 class Drm;
 
-enum StorageAllocatorType {
-    MMAP_ALLOCATOR,
-    BIT32_ALLOCATOR_EXTERNAL,
-    BIT32_ALLOCATOR_INTERNAL,
-    MALLOC_ALLOCATOR,
-    EXTERNAL_ALLOCATOR,
-    INTERNAL_ALLOCATOR_WITH_DYNAMIC_BITRANGE,
-    UNKNOWN_ALLOCATOR
-};
-
 class BufferObject {
     friend DrmMemoryManager;
 
   public:
+    BufferObject(Drm *drm, int handle);
     MOCKABLE_VIRTUAL ~BufferObject(){};
 
     bool setTiling(uint32_t mode, uint32_t stride);
@@ -48,7 +39,6 @@ class BufferObject {
     }
     uint32_t getRefCount() const;
 
-    bool peekIsAllocated() const { return isAllocated; }
     size_t peekSize() const { return size; }
     int peekHandle() const { return handle; }
     uint64_t peekAddress() const { return gpuAddress; }
@@ -57,13 +47,9 @@ class BufferObject {
     void setLockedAddress(void *cpuAddress) { this->lockedAddress = cpuAddress; }
     void setUnmapSize(uint64_t unmapSize) { this->unmapSize = unmapSize; }
     uint64_t peekUnmapSize() const { return unmapSize; }
-    StorageAllocatorType peekAllocationType() const { return storageAllocatorType; }
-    void setAllocationType(StorageAllocatorType allocatorType) { this->storageAllocatorType = allocatorType; }
     bool peekIsReusableAllocation() const { return this->isReused; }
 
   protected:
-    BufferObject(Drm *drm, int handle, bool isAllocated);
-
     Drm *drm;
 
     std::atomic<uint32_t> refCount;
@@ -82,8 +68,6 @@ class BufferObject {
     uint64_t size;
     void *lockedAddress; // CPU side virtual address
 
-    bool isAllocated = false;
     uint64_t unmapSize = 0;
-    StorageAllocatorType storageAllocatorType = UNKNOWN_ALLOCATOR;
 };
 } // namespace NEO

@@ -614,7 +614,7 @@ class DrmCommandStreamEnhancedFixture
         friend DrmCommandStreamEnhancedFixture;
 
       protected:
-        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1, false) {
+        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1) {
             this->size = alignUp(size, 4096);
         }
     };

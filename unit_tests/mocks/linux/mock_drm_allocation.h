@@ -15,7 +15,7 @@ class MockBufferObject : public BufferObject {
   public:
     using BufferObject::handle;
 
-    MockBufferObject() : BufferObject(nullptr, 0, false) {
+    MockBufferObject() : BufferObject(nullptr, 0) {
     }
 };
 

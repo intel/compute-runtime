@@ -29,7 +29,7 @@
 
 namespace NEO {
 
-BufferObject::BufferObject(Drm *drm, int handle, bool isAllocated) : drm(drm), refCount(1), handle(handle), isReused(false), isAllocated(isAllocated) {
+BufferObject::BufferObject(Drm *drm, int handle) : drm(drm), refCount(1), handle(handle), isReused(false) {
     this->tiling_mode = I915_TILING_NONE;
     this->stride = 0;
     this->size = 0;

@@ -154,8 +154,8 @@ class MemoryManager {
     virtual bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy);
     static HeapIndex selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM);
     static std::unique_ptr<MemoryManager> createMemoryManager(ExecutionEnvironment &executionEnvironment);
-    virtual void *reserveCpuAddressRange(size_t size) = 0;
-    virtual void releaseReservedCpuAddressRange(void *reserved, size_t size) = 0;
+    virtual void *reserveCpuAddressRange(size_t size) { return nullptr; };
+    virtual void releaseReservedCpuAddressRange(void *reserved, size_t size){};
 
   protected:
     struct AllocationData {
