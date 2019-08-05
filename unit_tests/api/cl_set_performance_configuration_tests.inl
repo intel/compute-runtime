@@ -25,37 +25,13 @@ struct clSetPerformanceConfigurationINTELTests : public DeviceInstrumentationFix
 };
 namespace ULT {
 
-TEST_F(clSetPerformanceConfigurationINTELTests, negativeSetPerfConfig) {
+TEST_F(clSetPerformanceConfigurationINTELTests, GivenAnyArgumentsWhenSettingPerformanceConfigurationThenInvalidOperationErrorIsReturned) {
     cl_int ret = CL_OUT_OF_RESOURCES;
     cl_uint offsets[2];
     cl_uint values[2];
 
     ret = clSetPerformanceConfigurationINTEL(device.get(), 2, offsets, values);
     EXPECT_EQ(CL_INVALID_OPERATION, ret);
-}
-
-TEST_F(clSetPerformanceConfigurationINTELTests, negativeInvalidDevice) {
-    cl_int ret = CL_OUT_OF_RESOURCES;
-    cl_uint offsets[2];
-    cl_uint values[2];
-    cl_device_id clDevice = {0};
-
-    ret = clSetPerformanceConfigurationINTEL(clDevice, 2, offsets, values);
-    EXPECT_EQ(CL_INVALID_OPERATION, ret);
-}
-
-TEST_F(clSetPerformanceConfigurationINTELTests, negativeInstrumentationDisabled) {
-    cl_int ret = CL_OUT_OF_RESOURCES;
-    cl_uint offsets[2];
-    cl_uint values[2];
-
-    bool instrumentationEnabled = hwInfo->capabilityTable.instrumentationEnabled;
-    hwInfo->capabilityTable.instrumentationEnabled = false;
-
-    ret = clSetPerformanceConfigurationINTEL(device.get(), 2, offsets, values);
-    EXPECT_EQ(CL_INVALID_OPERATION, ret);
-
-    hwInfo->capabilityTable.instrumentationEnabled = instrumentationEnabled;
 }
 
 } // namespace ULT
