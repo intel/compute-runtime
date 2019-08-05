@@ -28,6 +28,11 @@ uint32_t PreambleHelper<SKLFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 }
 
 template <>
+bool PreambleHelper<SKLFamily>::isL3Configurable(const HardwareInfo &hwInfo) {
+    return getL3Config(hwInfo, true) != getL3Config(hwInfo, false);
+}
+
+template <>
 void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStream,
                                                       const DispatchFlags &dispatchFlags,
                                                       const HardwareInfo &hwInfo) {

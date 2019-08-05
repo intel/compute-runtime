@@ -43,6 +43,7 @@ struct PreambleHelper {
                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr);
     static void programKernelDebugging(LinearStream *pCommandStream);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
+    static bool isL3Configurable(const HardwareInfo &hwInfo);
     static size_t getAdditionalCommandsSize(const Device &device);
     static size_t getThreadArbitrationCommandsSize();
     static size_t getVFECommandsSize();

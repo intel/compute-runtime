@@ -48,3 +48,16 @@ GEN9TEST_F(PreambleTestGen9, givenDisabledPreemptionAndDisabledDebuggingWhenPrea
 GEN9TEST_F(PreambleTestGen9, givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreInlcuded) {
     SourceLevelDebuggerPreambleTest<FamilyType>::givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreInlcudedTest();
 }
+
+GEN9TEST_F(PreambleTestGen9, givenGen9IsL3Programing) {
+    bool l3ConfigDifference;
+    bool isL3Programmable;
+
+    l3ConfigDifference =
+        PreambleHelper<FamilyType>::getL3Config(**platformDevices, true) !=
+        PreambleHelper<FamilyType>::getL3Config(**platformDevices, false);
+    isL3Programmable =
+        PreambleHelper<FamilyType>::isL3Configurable(**platformDevices);
+
+    EXPECT_EQ(l3ConfigDifference, isL3Programmable);
+}

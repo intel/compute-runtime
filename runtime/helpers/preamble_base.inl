@@ -82,4 +82,9 @@ size_t PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(bool debuggingA
     return 0;
 }
 
+template <typename GfxFamily>
+bool PreambleHelper<GfxFamily>::isL3Configurable(const HardwareInfo &hwInfo) {
+    return false;
+}
+
 } // namespace NEO
