@@ -17,11 +17,6 @@ GEN8TEST_F(Gen8DeviceCaps, defaultPreemptionMode) {
     EXPECT_TRUE(PreemptionMode::Disabled == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
-GEN8TEST_F(Gen8DeviceCaps, whitelistedRegister) {
-    EXPECT_FALSE(pDevice->getWhitelistedRegisters().csChicken1_0x2580);
-    EXPECT_FALSE(pDevice->getWhitelistedRegisters().chicken0hdc_0xE5F0);
-}
-
 GEN8TEST_F(Gen8DeviceCaps, kmdNotifyMechanism) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(50000, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);

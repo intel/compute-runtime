@@ -37,7 +37,6 @@ const PLATFORM LKF::platform = {
 
 const RuntimeCapabilityTable LKF::capabilityTable{
     {0, 0, 0, false, false, false},                // kmdNotifyProperties
-    {true, false},                                 // whitelistedRegisters
     MemoryConstants::max36BitAddress,              // gpuAddressSpace
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize

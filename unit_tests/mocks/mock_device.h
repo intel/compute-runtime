@@ -49,21 +49,7 @@ class MockDevice : public Device {
         preemptionMode = mode;
     }
 
-    const WhitelistedRegisters &getWhitelistedRegisters() override {
-        if (forceWhitelistedRegs) {
-            return mockWhitelistedRegs;
-        }
-        return Device::getWhitelistedRegisters();
-    }
-
     const WorkaroundTable *getWaTable() const override { return &mockWaTable; }
-
-    void setForceWhitelistedRegs(bool force, WhitelistedRegisters *mockRegs = nullptr) {
-        forceWhitelistedRegs = force;
-        if (mockRegs) {
-            mockWhitelistedRegs = *mockRegs;
-        }
-    }
 
     void injectMemoryManager(MemoryManager *);
 
@@ -109,8 +95,6 @@ class MockDevice : public Device {
     std::unique_ptr<MemoryManager> mockMemoryManager;
 
   private:
-    bool forceWhitelistedRegs = false;
-    WhitelistedRegisters mockWhitelistedRegs = {0};
     WorkaroundTable mockWaTable = {};
 };
 

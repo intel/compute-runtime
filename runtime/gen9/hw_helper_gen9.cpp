@@ -13,12 +13,6 @@ namespace NEO {
 typedef SKLFamily Family;
 
 template <>
-bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
-    pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580 = enable;
-    return pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580;
-}
-
-template <>
 SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
     if (!debuggingActive) {
         return SipKernelType::Csr;

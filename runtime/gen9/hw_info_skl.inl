@@ -42,7 +42,6 @@ const PLATFORM SKL::platform = {
 
 const RuntimeCapabilityTable SKL::capabilityTable{
     {0, 0, 0, false, false, false},                // kmdNotifyProperties
-    {true, false},                                 // whitelistedRegisters
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize

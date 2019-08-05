@@ -28,8 +28,6 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
         usedBeforeDSH = dsh->getUsed();
         usedBeforeIOH = ioh->getUsed();
         usedBeforeSSH = ssh->getUsed();
-        WhitelistedRegisters regs = {0};
-        pDevice->setForceWhitelistedRegs(true, &regs);
     }
 
     void TearDown() override {

@@ -1231,9 +1231,7 @@ HWTEST_F(DispatchWalkerTest, GivenCacheFlushAfterWalkerEnabledWhenTwoWalkersForQ
 
 HWTEST_F(DispatchWalkerTest, givenMultiDispatchWhenWhitelistedRegisterForCoherencySwitchThenDontProgramLriInTaskStream) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    WhitelistedRegisters registers = {0};
-    registers.chicken0hdc_0xE5F0 = true;
-    pDevice->setForceWhitelistedRegs(true, &registers);
+
     auto &cmdStream = pCmdQ->getCS(0);
     HardwareParse hwParser;
 

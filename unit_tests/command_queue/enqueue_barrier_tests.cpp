@@ -15,22 +15,7 @@
 
 using namespace NEO;
 
-struct BarrierTest : public CommandEnqueueFixture,
-                     public ::testing::Test {
-
-    void SetUp() override {
-        CommandEnqueueFixture::SetUp();
-        WhitelistedRegisters forceRegs = {false};
-        if (pDevice->getPreemptionMode() != PreemptionMode::Disabled) {
-            forceRegs.csChicken1_0x2580 = true;
-        }
-        pDevice->setForceWhitelistedRegs(true, &forceRegs);
-    }
-
-    void TearDown() override {
-        CommandEnqueueFixture::TearDown();
-    }
-};
+using BarrierTest = Test<CommandEnqueueFixture>;
 
 HWTEST_F(BarrierTest, givenCsrWithHigherLevelThenCommandQueueWhenEnqueueBarrierIsCalledThenCommandQueueAlignsToCsrWithoutSendingAnyCommands) {
     auto pCmdQ = this->pCmdQ;

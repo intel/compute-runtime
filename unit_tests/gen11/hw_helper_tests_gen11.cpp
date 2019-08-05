@@ -23,18 +23,6 @@ GEN11TEST_F(HwHelperTestGen11, setCapabilityCoherencyFlag) {
     EXPECT_TRUE(coherency);
 }
 
-GEN11TEST_F(HwHelperTestGen11, setupPreemptionRegisters) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    bool preemption = false;
-    preemption = helper.setupPreemptionRegisters(&hardwareInfo, preemption);
-    EXPECT_FALSE(preemption);
-
-    preemption = true;
-    preemption = helper.setupPreemptionRegisters(&hardwareInfo, preemption);
-    EXPECT_TRUE(preemption);
-}
-
 GEN11TEST_F(HwHelperTestGen11, adjustDefaultEngineType) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
     auto &helper = HwHelper::get(renderCoreFamily);

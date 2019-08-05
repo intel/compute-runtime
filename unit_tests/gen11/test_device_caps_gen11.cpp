@@ -61,11 +61,6 @@ GEN11TEST_F(Gen11DeviceCaps, defaultPreemptionMode) {
     EXPECT_TRUE(PreemptionMode::MidThread == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
-GEN11TEST_F(Gen11DeviceCaps, whitelistedRegisters) {
-    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.whitelistedRegisters.csChicken1_0x2580);
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.whitelistedRegisters.chicken0hdc_0xE5F0);
-}
-
 GEN11TEST_F(Gen11DeviceCaps, profilingTimerResolution) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(83u, caps.outProfilingTimerResolution);

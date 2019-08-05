@@ -25,18 +25,6 @@ GEN8TEST_F(HwHelperTestGen8, setCapabilityCoherencyFlag) {
     EXPECT_TRUE(coherency);
 }
 
-GEN8TEST_F(HwHelperTestGen8, setupPreemptionRegisters) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-
-    bool preemption = false;
-    preemption = helper.setupPreemptionRegisters(&hardwareInfo, preemption);
-    EXPECT_FALSE(preemption);
-
-    preemption = true;
-    preemption = helper.setupPreemptionRegisters(&hardwareInfo, preemption);
-    EXPECT_TRUE(preemption);
-}
-
 GEN8TEST_F(HwHelperTestGen8, adjustDefaultEngineType) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
     auto &helper = HwHelper::get(renderCoreFamily);

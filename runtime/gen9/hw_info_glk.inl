@@ -34,7 +34,6 @@ const PLATFORM GLK::platform = {
 
 const RuntimeCapabilityTable GLK::capabilityTable{
     {30000, 0, 0, true, false, false},             // kmdNotifyProperties
-    {true, false},                                 // whitelistedRegisters
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
     52.083,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize

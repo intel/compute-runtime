@@ -43,11 +43,6 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
 }
 
 template <typename Family>
-bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
-    return enable;
-}
-
-template <typename Family>
 size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
     return 32;
 }

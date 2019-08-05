@@ -33,7 +33,6 @@ class HwHelper {
     virtual size_t getMaxBarrierRegisterPerSlice() const = 0;
     virtual uint32_t getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const = 0;
     virtual void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) = 0;
-    virtual bool setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
     virtual void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
@@ -114,8 +113,6 @@ class HwHelperHw : public HwHelper {
     uint32_t getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const override;
 
     void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) override;
-
-    bool setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) override;
 
     void adjustDefaultEngineType(HardwareInfo *pHwInfo) override;
 

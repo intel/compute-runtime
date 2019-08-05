@@ -87,9 +87,7 @@ GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsAvailableThenStateSipIs
 
 GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramThreadGroupNoWa) {
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
-    WhitelistedRegisters regs = {};
-    regs.csChicken1_0x2580 = true;
-    pDevice->setForceWhitelistedRegs(true, &regs);
+
     const_cast<WorkaroundTable *>(pDevice->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = false;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
@@ -121,9 +119,7 @@ GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
 
 GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramThreadGroupWa) {
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
-    WhitelistedRegisters regs = {};
-    regs.csChicken1_0x2580 = true;
-    pDevice->setForceWhitelistedRegs(true, &regs);
+
     const_cast<WorkaroundTable *>(pDevice->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = true;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
@@ -212,9 +208,7 @@ GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
 
 GEN9TEST_F(Gen9PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnqueueKernelCalledThenPassDevicePreemptionModeThreadGroup) {
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
-    WhitelistedRegisters regs = {};
-    regs.csChicken1_0x2580 = true;
-    pDevice->setForceWhitelistedRegs(true, &regs);
+
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
@@ -231,9 +225,7 @@ GEN9TEST_F(Gen9PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnq
 
 GEN9TEST_F(Gen9PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnqueueKernelCalledAndBlockedThenPassDevicePreemptionModeThreadGroup) {
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
-    WhitelistedRegisters regs = {};
-    regs.csChicken1_0x2580 = true;
-    pDevice->setForceWhitelistedRegs(true, &regs);
+
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
@@ -257,9 +249,6 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename FamilyType::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
 
-    WhitelistedRegisters regs = {};
-    regs.csChicken1_0x2580 = true;
-    pDevice->setForceWhitelistedRegs(true, &regs);
     const_cast<WorkaroundTable *>(pDevice->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = false;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -337,9 +326,6 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename FamilyType::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
 
-    WhitelistedRegisters regs = {};
-    regs.csChicken1_0x2580 = true;
-    pDevice->setForceWhitelistedRegs(true, &regs);
     const_cast<WorkaroundTable *>(pDevice->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = true;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -439,8 +425,7 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
 
 GEN9TEST_F(Gen9PreemptionEnqueueKernelTest, givenDisabledPreemptionWhenEnqueueKernelCalledThenPassDisabledPreemptionMode) {
     pDevice->setPreemptionMode(PreemptionMode::Disabled);
-    WhitelistedRegisters regs = {};
-    pDevice->setForceWhitelistedRegs(true, &regs);
+
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCsr);
 

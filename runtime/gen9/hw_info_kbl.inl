@@ -34,7 +34,6 @@ const PLATFORM KBL::platform = {
 
 const RuntimeCapabilityTable KBL::capabilityTable{
     {0, 0, 0, false, false, false},                // kmdNotifyProperties
-    {true, false},                                 // whitelistedRegisters
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize

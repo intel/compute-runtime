@@ -222,8 +222,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, sameTaskLevelShouldntSendAPipeControl) {
-    WhitelistedRegisters forceRegs = {0};
-    pDevice->setForceWhitelistedRegs(true, &forceRegs);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     // Configure the CSR to not need to submit any state or commands.
@@ -240,8 +238,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, sameTaskLevelShouldntSendAPipeCont
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDeviceWithThreadGroupPreemptionSupportThenDontSendMediaVfeStateIfNotDirty) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
-    WhitelistedRegisters forceRegs = {0};
-    pDevice->setForceWhitelistedRegs(true, &forceRegs);
+
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment);
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     pDevice->resetCommandStreamReceiver(commandStreamReceiver);
@@ -621,8 +618,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressShouldNotBeSentIfT
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, shouldntAddAnyCommandsToCQCSIfEmpty) {
-    WhitelistedRegisters forceRegs = {0};
-    pDevice->setForceWhitelistedRegs(true, &forceRegs);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto usedBefore = commandStream.getUsed();
     flushTask(commandStreamReceiver);
@@ -672,9 +667,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
 
-    WhitelistedRegisters forceRegs = {0};
-    pDevice->setForceWhitelistedRegs(true, &forceRegs);
-
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.timestampPacketWriteEnabled = false;
     // Force a PIPE_CONTROL through a taskLevel transition
@@ -703,9 +695,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
-
-    WhitelistedRegisters forceRegs = {0};
-    pDevice->setForceWhitelistedRegs(true, &forceRegs);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.timestampPacketWriteEnabled = false;
@@ -920,8 +909,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, blockingFlushTaskWithOnlyPipeContr
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWithDCFlush) {
-    WhitelistedRegisters forceRegs = {0};
-    pDevice->setForceWhitelistedRegs(true, &forceRegs);
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
     configureCSRtoNonDirtyState<FamilyType>();

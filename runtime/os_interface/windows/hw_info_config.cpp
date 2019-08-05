@@ -30,7 +30,6 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
 
     hwHelper.setCapabilityCoherencyFlag(outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
 
-    hwHelper.setupPreemptionRegisters(outHwInfo, outHwInfo->workaroundTable.waEnablePreemptionGranularityControlByUMD);
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt),
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuThreadGroupLevelPreempt),

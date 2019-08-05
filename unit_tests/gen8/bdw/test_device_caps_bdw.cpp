@@ -36,11 +36,6 @@ BDWTEST_F(BdwDeviceCaps, defaultPreemptionMode) {
     EXPECT_TRUE(PreemptionMode::Disabled == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
-BDWTEST_F(BdwDeviceCaps, whitelistedRegister) {
-    EXPECT_FALSE(pDevice->getWhitelistedRegisters().csChicken1_0x2580);
-    EXPECT_FALSE(pDevice->getWhitelistedRegisters().chicken0hdc_0xE5F0);
-}
-
 BDWTEST_F(BdwDeviceCaps, BdwProfilingTimerResolution) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(80u, caps.outProfilingTimerResolution);

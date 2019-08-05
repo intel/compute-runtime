@@ -39,7 +39,6 @@ const PLATFORM BXT::platform = {
 
 const RuntimeCapabilityTable BXT::capabilityTable{
     {0, 0, 0, false, false, false},                // kmdNotifyProperties
-    {true, false},                                 // whitelistedRegisters
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
     52.083,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize

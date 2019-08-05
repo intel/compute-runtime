@@ -14,20 +14,7 @@
 
 using namespace NEO;
 
-struct MarkerFixture : public CommandEnqueueFixture {
-  public:
-    void SetUp() override {
-        CommandEnqueueFixture::SetUp();
-        WhitelistedRegisters forceRegs = {0};
-        pDevice->setForceWhitelistedRegs(true, &forceRegs);
-    }
-
-    void TearDown() override {
-        CommandEnqueueFixture::TearDown();
-    }
-};
-
-typedef Test<MarkerFixture> MarkerTest;
+using MarkerTest = Test<CommandEnqueueFixture>;
 
 HWTEST_F(MarkerTest, CS_EQ_CQ_ShouldntAddPipeControl) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;

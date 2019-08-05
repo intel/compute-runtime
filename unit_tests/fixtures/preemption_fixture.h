@@ -40,7 +40,6 @@ class DevicePreemptionTests : public ::testing::Test {
   public:
     void SetUp() override;
     void TearDown() override;
-    void forceWhitelistedRegs(bool whitelisted);
 
     DevicePreemptionTests();
     ~DevicePreemptionTests() override;

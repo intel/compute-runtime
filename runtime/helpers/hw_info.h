@@ -19,14 +19,8 @@
 
 namespace NEO {
 
-struct WhitelistedRegisters {
-    bool csChicken1_0x2580;
-    bool chicken0hdc_0xE5F0;
-};
-
 struct RuntimeCapabilityTable {
     KmdNotifyProperties kmdNotifyProperties;
-    WhitelistedRegisters whitelistedRegisters;
     uint64_t gpuAddressSpace;
     double defaultProfilingTimerResolution;
     size_t requiredPreemptionSurfaceSize;

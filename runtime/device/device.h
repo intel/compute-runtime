@@ -104,7 +104,6 @@ class Device : public BaseObject<_cl_device_id> {
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
-    MOCKABLE_VIRTUAL const WhitelistedRegisters &getWhitelistedRegisters() { return getHardwareInfo().capabilityTable.whitelistedRegisters; }
     std::vector<unsigned int> simultaneousInterops;
     std::string deviceExtensions;
     std::string name;

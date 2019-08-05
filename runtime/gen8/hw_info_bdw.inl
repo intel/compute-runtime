@@ -42,7 +42,6 @@ const PLATFORM BDW::platform = {
 
 const RuntimeCapabilityTable BDW::capabilityTable{
     {50000, 5000, 200000, true, true, true},       // kmdNotifyProperties
-    {false, false},                                // whitelistedRegisters
     MemoryConstants::max48BitAddress,              // gpuAddressSpace
     80,                                            // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize

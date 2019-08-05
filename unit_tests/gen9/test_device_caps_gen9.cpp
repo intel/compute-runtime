@@ -34,11 +34,6 @@ GEN9TEST_F(Gen9DeviceCaps, defaultPreemptionMode) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
-GEN9TEST_F(Gen9DeviceCaps, whitelistedRegisters) {
-    EXPECT_TRUE(pDevice->getWhitelistedRegisters().csChicken1_0x2580);
-    EXPECT_FALSE(pDevice->getWhitelistedRegisters().chicken0hdc_0xE5F0);
-}
-
 GEN9TEST_F(Gen9DeviceCaps, compression) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
