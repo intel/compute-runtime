@@ -664,7 +664,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     aubCsr->ppgtt.reset(ppgttMock);
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-    gfxAllocation->setAubWritable(true);
+    aubCsr->setAubWritable(true, *gfxAllocation);
 
     auto gmm = new Gmm(nullptr, 1, false);
     gfxAllocation->setDefaultGmm(gmm);

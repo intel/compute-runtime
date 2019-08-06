@@ -29,5 +29,18 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         return new PhysicalAddressAllocator();
     }
     void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) override{};
+
+    void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation) override {
+        graphicsAllocation.setAubWritable(writable, getMemoryBank(&graphicsAllocation));
+    }
+    bool isAubWritable(GraphicsAllocation &graphicsAllocation) const override {
+        return graphicsAllocation.isAubWritable(getMemoryBank(&graphicsAllocation));
+    }
+    void setTbxWritable(bool writable, GraphicsAllocation &graphicsAllocation) override {
+        graphicsAllocation.setTbxWritable(writable, getMemoryBank(&graphicsAllocation));
+    }
+    bool isTbxWritable(GraphicsAllocation &graphicsAllocation) const override {
+        return graphicsAllocation.isTbxWritable(getMemoryBank(&graphicsAllocation));
+    }
 };
 } // namespace NEO

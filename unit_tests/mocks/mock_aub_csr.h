@@ -12,6 +12,7 @@
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/platform/platform.h"
+#include "unit_tests/mocks/mock_allocation_properties.h"
 
 #include "gmock/gmock.h"
 

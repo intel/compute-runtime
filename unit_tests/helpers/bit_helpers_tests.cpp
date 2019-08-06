@@ -38,6 +38,50 @@ TEST(IsBitSetTests, givenDifferentValuesWhenTestingIsBitSetThenCorrectValueIsRet
     EXPECT_TRUE(isBitSet(field4, 3));
 }
 
+TEST(IsAnyBitSetTests, givenDifferentValuesWhenTestingIsAnyBitSetThenCorrectValueIsReturned) {
+    EXPECT_FALSE(isAnyBitSet(0, 0));
+    EXPECT_FALSE(isAnyBitSet(0, 0b1));
+    EXPECT_FALSE(isAnyBitSet(0, 0b10));
+    EXPECT_FALSE(isAnyBitSet(0, 0b1000));
+    EXPECT_FALSE(isAnyBitSet(0, 0b1010));
+    EXPECT_FALSE(isAnyBitSet(0, 0b1111));
+
+    EXPECT_FALSE(isAnyBitSet(0b1, 0));
+    EXPECT_TRUE(isAnyBitSet(0b1, 0b1));
+    EXPECT_FALSE(isAnyBitSet(0b1, 0b10));
+    EXPECT_FALSE(isAnyBitSet(0b1, 0b1000));
+    EXPECT_FALSE(isAnyBitSet(0b1, 0b1010));
+    EXPECT_TRUE(isAnyBitSet(0b1, 0b1111));
+
+    EXPECT_FALSE(isAnyBitSet(0b10, 0));
+    EXPECT_FALSE(isAnyBitSet(0b10, 0b1));
+    EXPECT_TRUE(isAnyBitSet(0b10, 0b10));
+    EXPECT_FALSE(isAnyBitSet(0b10, 0b1000));
+    EXPECT_TRUE(isAnyBitSet(0b10, 0b1010));
+    EXPECT_TRUE(isAnyBitSet(0b10, 0b1111));
+
+    EXPECT_FALSE(isAnyBitSet(0b1000, 0));
+    EXPECT_FALSE(isAnyBitSet(0b1000, 0b1));
+    EXPECT_FALSE(isAnyBitSet(0b1000, 0b10));
+    EXPECT_TRUE(isAnyBitSet(0b1000, 0b1000));
+    EXPECT_TRUE(isAnyBitSet(0b1000, 0b1010));
+    EXPECT_TRUE(isAnyBitSet(0b1000, 0b1111));
+
+    EXPECT_FALSE(isAnyBitSet(0b1010, 0));
+    EXPECT_FALSE(isAnyBitSet(0b1010, 0b1));
+    EXPECT_TRUE(isAnyBitSet(0b1010, 0b10));
+    EXPECT_TRUE(isAnyBitSet(0b1010, 0b1000));
+    EXPECT_TRUE(isAnyBitSet(0b1010, 0b1010));
+    EXPECT_TRUE(isAnyBitSet(0b1010, 0b1111));
+
+    EXPECT_FALSE(isAnyBitSet(0b1111, 0));
+    EXPECT_TRUE(isAnyBitSet(0b1111, 0b1));
+    EXPECT_TRUE(isAnyBitSet(0b1111, 0b10));
+    EXPECT_TRUE(isAnyBitSet(0b1111, 0b1000));
+    EXPECT_TRUE(isAnyBitSet(0b1111, 0b1010));
+    EXPECT_TRUE(isAnyBitSet(0b1111, 0b1111));
+}
+
 TEST(IsValueSetTests, givenDifferentValuesWhenTestingIsValueSetThenCorrectValueIsReturned) {
     size_t field1 = 0;
     size_t field2 = 0b1;
@@ -132,4 +176,24 @@ TEST(IsFieldValidTests, givenDifferentValuesWhenTestingIsFieldValidThenCorrectVa
     EXPECT_FALSE(isFieldValid(field6, field4));
     EXPECT_FALSE(isFieldValid(field6, field5));
     EXPECT_TRUE(isFieldValid(field6, field6));
+}
+
+TEST(SetBitsTests, givenDifferentValuesWhenTestingSetBitsThenCorrectValueIsReturned) {
+    EXPECT_EQ(0b0u, setBits(0b0, false, 0b0));
+    EXPECT_EQ(0b0u, setBits(0b0, false, 0b1));
+    EXPECT_EQ(0b1u, setBits(0b1, false, 0b0));
+    EXPECT_EQ(0b0u, setBits(0b1, false, 0b1));
+
+    EXPECT_EQ(0b0u, setBits(0b0, true, 0b0));
+    EXPECT_EQ(0b1u, setBits(0b0, true, 0b1));
+    EXPECT_EQ(0b1u, setBits(0b1, true, 0b0));
+    EXPECT_EQ(0b1u, setBits(0b1, true, 0b1));
+
+    EXPECT_EQ(0b1010u, setBits(0b1010, false, 0b101));
+    EXPECT_EQ(0b1111u, setBits(0b1010, true, 0b101));
+    EXPECT_EQ(0b101u, setBits(0b101, false, 0b1010));
+    EXPECT_EQ(0b1111u, setBits(0b101, true, 0b1010));
+
+    EXPECT_EQ(0b0u, setBits(0b1010, false, 0b1010));
+    EXPECT_EQ(0b1010u, setBits(0b1010, true, 0b1010));
 }

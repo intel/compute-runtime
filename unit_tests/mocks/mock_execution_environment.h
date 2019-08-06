@@ -41,14 +41,15 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
 template <typename CsrType>
 struct MockExecutionEnvironmentWithCsr : public ExecutionEnvironment {
     MockExecutionEnvironmentWithCsr() = delete;
-    MockExecutionEnvironmentWithCsr(const HardwareInfo &hwInfo) {
+    MockExecutionEnvironmentWithCsr(const HardwareInfo &hwInfo, uint32_t devicesCount) {
         setHwInfo(&hwInfo);
-
         auto &gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances();
-        commandStreamReceivers.resize(1);
+        commandStreamReceivers.resize(devicesCount);
 
         for (uint32_t csrIndex = 0; csrIndex < gpgpuEngines.size(); csrIndex++) {
-            commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(new CsrType(*this)));
+            for (auto &csr : commandStreamReceivers) {
+                csr.push_back(std::unique_ptr<CommandStreamReceiver>(new CsrType(*this)));
+            }
         }
     }
 };

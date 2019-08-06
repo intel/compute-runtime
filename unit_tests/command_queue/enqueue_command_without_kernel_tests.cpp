@@ -50,7 +50,7 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelWhenCommandEnqueuedT
 struct DispatchFlagsTests : public ::testing::Test {
     template <typename CsrType>
     void SetUpImpl() {
-        auto executionEnvironment = new MockExecutionEnvironmentWithCsr<CsrType>(**platformDevices);
+        auto executionEnvironment = new MockExecutionEnvironmentWithCsr<CsrType>(**platformDevices, 1u);
         device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, executionEnvironment, 0));
         context = std::make_unique<MockContext>(device.get());
     }

@@ -18,4 +18,8 @@ cl_int Context::processExtraProperties(cl_context_properties propertyType, cl_co
 CommandStreamReceiver *Context::getCommandStreamReceiverForBlitOperation(MemObj &memObj) const {
     return nullptr;
 }
+
+BlitOperationResult Context::blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const {
+    return BlitOperationResult::Unsupported;
+}
 } // namespace NEO

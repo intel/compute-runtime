@@ -656,6 +656,13 @@ struct BcsBufferTests : public ::testing::Test {
         CommandStreamReceiver *getCommandStreamReceiverForBlitOperation(MemObj &memObj) const override {
             return bcsCsr.get();
         }
+        BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, size_t size) const override {
+            auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                                        *bcsCsr, memory,
+                                                                                        hostPtr, true, 0, size);
+            bcsCsr->blitBuffer(blitProperties);
+            return BlitOperationResult::Success;
+        }
         std::unique_ptr<OsContext> bcsOsContext;
         std::unique_ptr<CommandStreamReceiver> bcsCsr;
     };

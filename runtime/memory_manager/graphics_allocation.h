@@ -10,6 +10,7 @@
 #include "core/helpers/ptr_math.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/memory_pool.h"
 #include "runtime/utilities/idlist.h"
 
@@ -130,10 +131,10 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool is32BitAllocation() const { return allocationInfo.flags.is32BitAllocation; }
     void set32BitAllocation(bool is32BitAllocation) { allocationInfo.flags.is32BitAllocation = is32BitAllocation; }
 
-    void setAubWritable(bool writable) { aubInfo.aubWritable = writable; }
-    bool isAubWritable() const { return aubInfo.aubWritable; }
-    void setTbxWritable(bool writable) { aubInfo.tbxWritable = writable; }
-    bool isTbxWritable() const { return aubInfo.tbxWritable; }
+    void setAubWritable(bool writable, uint32_t banks);
+    bool isAubWritable(uint32_t banks) const;
+    void setTbxWritable(bool writable, uint32_t banks);
+    bool isTbxWritable(uint32_t banks) const;
     void setAllocDumpable(bool dumpable) { aubInfo.allocDumpable = dumpable; }
     bool isAllocDumpable() const { return aubInfo.allocDumpable; }
     bool isMemObjectsAllocationWithWritableFlags() const { return aubInfo.memObjectsAllocationWithWritableFlags; }
@@ -205,6 +206,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
 
+    static constexpr uint32_t defaultBank = 0b1u;
+
   protected:
     constexpr static uint32_t objectNotResident = std::numeric_limits<uint32_t>::max();
     constexpr static uint32_t objectNotUsed = std::numeric_limits<uint32_t>::max();
@@ -215,8 +218,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         uint32_t inspectionId = 0u;
     };
     struct AubInfo {
-        bool aubWritable = true;
-        bool tbxWritable = true;
+        uint32_t aubWritable = maxNBitValue<32>;
+        uint32_t tbxWritable = maxNBitValue<32>;
         bool allocDumpable = false;
         bool memObjectsAllocationWithWritableFlags = false;
     };

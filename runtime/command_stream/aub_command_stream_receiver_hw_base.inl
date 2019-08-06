@@ -624,7 +624,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
-    if (!gfxAllocation.isAubWritable()) {
+    if (!this->isAubWritable(gfxAllocation)) {
         return false;
     }
 
@@ -651,7 +651,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     }
 
     if (AubHelper::isOneTimeAubWritableAllocationType(gfxAllocation.getAllocationType())) {
-        gfxAllocation.setAubWritable(false);
+        this->setAubWritable(false, gfxAllocation);
     }
 
     return true;
@@ -714,10 +714,11 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 
     for (auto &gfxAllocation : allocationsForResidency) {
         if (dumpAubNonWritable) {
-            gfxAllocation->setAubWritable(true);
+            this->setAubWritable(true, *gfxAllocation);
         }
         if (!writeMemory(*gfxAllocation)) {
-            DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) || !gfxAllocation->isAubWritable()));
+            DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) ||
+                             !this->isAubWritable(*gfxAllocation)));
         }
         gfxAllocation->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
     }

@@ -20,7 +20,8 @@ struct AllocationProperties {
             uint32_t forcePin : 1;
             uint32_t uncacheable : 1;
             uint32_t multiOsContextCapable : 1;
-            uint32_t reserved : 26;
+            uint32_t readOnlyMultiStorage : 1;
+            uint32_t reserved : 25;
         } flags;
         uint32_t allFlags = 0;
     };

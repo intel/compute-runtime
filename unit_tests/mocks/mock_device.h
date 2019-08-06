@@ -20,6 +20,7 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 
 class MockDevice : public Device {
   public:
+    using Device::createDeviceInternals;
     using Device::createEngine;
     using Device::enabledClVersion;
     using Device::engines;

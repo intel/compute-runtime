@@ -15,6 +15,7 @@
 #include "unit_tests/fixtures/aub_command_stream_receiver_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/mock_aub_center_fixture.h"
+#include "unit_tests/libult/ult_aub_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_aub_center.h"
 #include "unit_tests/mocks/mock_aub_csr.h"
 #include "unit_tests/mocks/mock_aub_manager.h"
@@ -693,7 +694,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
-    EXPECT_TRUE(gfxAllocation->isAubWritable());
+    EXPECT_TRUE(gfxAllocation->isAubWritable(GraphicsAllocation::defaultBank));
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -708,7 +709,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     ResidencyContainer allocationsForResidency = {gfxDefaultAllocation};
     aubCsr->processResidency(allocationsForResidency);
 
-    EXPECT_TRUE(gfxDefaultAllocation->isAubWritable());
+    EXPECT_TRUE(aubCsr->isAubWritable(*gfxDefaultAllocation));
 
     memoryManager->freeGraphicsMemory(gfxDefaultAllocation);
 }
@@ -730,11 +731,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
         GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER};
 
     for (auto allocationType : onlyOneTimeAubWritableTypes) {
-        gfxAllocation->setAubWritable(true);
+        gfxAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
         gfxAllocation->setAllocationType(allocationType);
         aubCsr->writeMemory(*gfxAllocation);
 
-        EXPECT_FALSE(gfxAllocation->isAubWritable());
+        EXPECT_FALSE(aubCsr->isAubWritable(*gfxAllocation));
     }
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -752,8 +753,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
     aubCsr->processResidency(allocationsForResidency);
 
-    EXPECT_FALSE(gfxBufferAllocation->isAubWritable());
-    EXPECT_FALSE(gfxImageAllocation->isAubWritable());
+    EXPECT_FALSE(aubCsr->isAubWritable(*gfxBufferAllocation));
+    EXPECT_FALSE(aubCsr->isAubWritable(*gfxImageAllocation));
 
     memoryManager->freeGraphicsMemory(gfxBufferAllocation);
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
@@ -767,18 +768,18 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
-    gfxBufferAllocation->setAubWritable(false);
+    aubCsr->setAubWritable(false, *gfxBufferAllocation);
 
     auto gfxImageAllocation = MockGmm::allocateImage2d(*memoryManager);
-    gfxImageAllocation->setAubWritable(false);
+    aubCsr->setAubWritable(false, *gfxImageAllocation);
 
     aubCsr->dumpAubNonWritable = true;
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
     aubCsr->processResidency(allocationsForResidency);
 
-    EXPECT_TRUE(gfxBufferAllocation->isAubWritable());
-    EXPECT_TRUE(gfxImageAllocation->isAubWritable());
+    EXPECT_TRUE(aubCsr->isAubWritable(*gfxBufferAllocation));
+    EXPECT_TRUE(aubCsr->isAubWritable(*gfxImageAllocation));
 
     memoryManager->freeGraphicsMemory(gfxBufferAllocation);
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
@@ -792,18 +793,18 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
-    gfxBufferAllocation->setAubWritable(false);
+    aubCsr->setAubWritable(false, *gfxBufferAllocation);
 
     auto gfxImageAllocation = MockGmm::allocateImage2d(*memoryManager);
-    gfxImageAllocation->setAubWritable(false);
+    aubCsr->setAubWritable(false, *gfxImageAllocation);
 
     aubCsr->dumpAubNonWritable = false;
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
     aubCsr->processResidency(allocationsForResidency);
 
-    EXPECT_FALSE(gfxBufferAllocation->isAubWritable());
-    EXPECT_FALSE(gfxImageAllocation->isAubWritable());
+    EXPECT_FALSE(aubCsr->isAubWritable(*gfxBufferAllocation));
+    EXPECT_FALSE(aubCsr->isAubWritable(*gfxImageAllocation));
 
     memoryManager->freeGraphicsMemory(gfxBufferAllocation);
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
@@ -838,7 +839,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
-    gfxAllocation->setAubWritable(false);
+    aubCsr->setAubWritable(false, *gfxAllocation);
     EXPECT_FALSE(aubCsr->writeMemory(*gfxAllocation));
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
@@ -1142,6 +1143,18 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 
     EXPECT_TRUE(aubCsr->flushBatchedSubmissionsCalled);
     EXPECT_FALSE(aubCsr->initProgrammingFlagsCalled);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, WhenBlitBufferIsCalledThenCounterIsCorrectlyIncremented) {
+    auto aubExecutionEnvironment = getEnvironment<UltAubCommandStreamReceiver<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<UltAubCommandStreamReceiver<FamilyType>>();
+    aubCsr->osContext->getEngineType() = aub_stream::ENGINE_BCS;
+    EXPECT_EQ(0u, aubCsr->blitBufferCalled);
+
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0);
+    BlitProperties blitProperties = BlitProperties::constructPropertiesForCopyBuffer(&allocation, &allocation, true, 0, 0, 0);
+    aubCsr->blitBuffer(blitProperties);
+    EXPECT_EQ(1u, aubCsr->blitBufferCalled);
 }
 
 using HardwareContextContainerTests = ::testing::Test;

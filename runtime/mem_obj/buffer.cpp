@@ -292,13 +292,9 @@ Buffer *Buffer::create(Context *context,
         bool gpuCopyRequired = (gmm && gmm->isRenderCompressed) || !MemoryPool::isSystemMemoryPool(memory->getMemoryPool());
 
         if (gpuCopyRequired) {
-            auto blitCommandStreamReceiver = context->getCommandStreamReceiverForBlitOperation(*pBuffer);
-            if (blitCommandStreamReceiver) {
-                auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                                                            *blitCommandStreamReceiver, memory,
-                                                                                            hostPtr, true, 0, size);
-                blitCommandStreamReceiver->blitBuffer(blitProperties);
-            } else {
+            auto blitMemoryToAllocationResult = context->blitMemoryToAllocation(*pBuffer, memory, hostPtr, size);
+
+            if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
                 auto cmdQ = context->getSpecialQueue();
                 if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, nullptr, 0, nullptr, nullptr)) {
                     errcodeRet = CL_OUT_OF_RESOURCES;

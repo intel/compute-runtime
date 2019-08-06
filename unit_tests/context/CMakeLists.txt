@@ -1,11 +1,12 @@
 #
-# Copyright (C) 2017-2018 Intel Corporation
+# Copyright (C) 2017-2019 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(IGDRCL_SRCS_tests_context
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/context_extra_properties_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/context_get_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/context_multi_device_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/context_negative_tests.cpp
