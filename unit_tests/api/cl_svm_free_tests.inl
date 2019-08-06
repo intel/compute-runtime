@@ -13,7 +13,7 @@ typedef api_tests clSVMFreeTests;
 
 namespace ULT {
 
-TEST_F(clSVMFreeTests, invalidParams) {
+TEST_F(clSVMFreeTests, GivenNullPtrWhenFreeingSvmThenNoAction) {
     clSVMFree(
         nullptr, // cl_context context
         nullptr  // void *svm_pointer

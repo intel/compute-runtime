@@ -35,7 +35,7 @@ struct clSVMAllocValidFlagsTests : public clSVMAllocTemplateTests {
     cl_uchar pHostPtr[64];
 };
 
-TEST_P(clSVMAllocValidFlagsTests, SVMAllocValidFlags) {
+TEST_P(clSVMAllocValidFlagsTests, GivenSvmSupportWhenAllocatingSvmThenSvmIsAllocated) {
     cl_mem_flags flags = GetParam();
     const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
     //check for svm support
@@ -95,7 +95,7 @@ INSTANTIATE_TEST_CASE_P(
     clSVMAllocFtrFlagsTests,
     testing::ValuesIn(SVMAllocValidFlags));
 
-TEST_P(clSVMAllocFtrFlagsTests, SVMAllocValidFlags) {
+TEST_P(clSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAllocated) {
     HardwareInfo *pHwInfo = pPlatform->peekExecutionEnvironment()->getMutableHardwareInfo();
 
     cl_mem_flags flags = GetParam();
@@ -130,7 +130,7 @@ TEST_P(clSVMAllocFtrFlagsTests, SVMAllocValidFlags) {
 struct clSVMAllocInvalidFlagsTests : public clSVMAllocTemplateTests {
 };
 
-TEST_P(clSVMAllocInvalidFlagsTests, SVMAllocInvalidFlags) {
+TEST_P(clSVMAllocInvalidFlagsTests, GivenInvalidFlagsWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = GetParam();
 
     auto SVMPtr = clSVMAlloc(pContext, flags, 4096 /* Size*/, 128 /* alignment */);
@@ -148,19 +148,19 @@ INSTANTIATE_TEST_CASE_P(
     clSVMAllocInvalidFlagsTests,
     testing::ValuesIn(SVMAllocInvalidFlags));
 
-TEST_F(clSVMAllocTests, nullContextReturnsNull) {
+TEST_F(clSVMAllocTests, GivenNullContextWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto SVMPtr = clSVMAlloc(0 /* cl_context */, flags, 4096 /* Size*/, 128 /* alignment */);
+    auto SVMPtr = clSVMAlloc(nullptr /* cl_context */, flags, 4096 /* Size*/, 128 /* alignment */);
     EXPECT_EQ(nullptr, SVMPtr);
 }
 
-TEST_F(clSVMAllocTests, zeroSizeReturnsNull) {
+TEST_F(clSVMAllocTests, GivenZeroSizeWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto SVMPtr = clSVMAlloc(pContext /* cl_context */, flags, 0 /* Size*/, 128 /* alignment */);
     EXPECT_EQ(nullptr, SVMPtr);
 }
 
-TEST_F(clSVMAllocTests, zeroAlignmentReturnsPtr) {
+TEST_F(clSVMAllocTests, GivenZeroAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
     const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -170,7 +170,7 @@ TEST_F(clSVMAllocTests, zeroAlignmentReturnsPtr) {
     }
 }
 
-TEST_F(clSVMAllocTests, sizeNotAlignReturnsPtr) {
+TEST_F(clSVMAllocTests, GivenUnalignedSizeAndDefaultAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
     const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -180,13 +180,13 @@ TEST_F(clSVMAllocTests, sizeNotAlignReturnsPtr) {
     }
 }
 
-TEST_F(clSVMAllocTests, AlignmentNotPowerOf2ReturnsNull) {
+TEST_F(clSVMAllocTests, GivenAlignmentNotPowerOfTwoWhenAllocatingSvmThenSvmIsNotAllocated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto SVMPtr = clSVMAlloc(pContext /* cl_context */, flags, 4096 /* Size*/, 129 /* alignment */);
     EXPECT_EQ(nullptr, SVMPtr);
 }
 
-TEST_F(clSVMAllocTests, SVMAllocAlignmentToLarge) {
+TEST_F(clSVMAllocTests, GivenAlignmentTooLargeWhenAllocatingSvmThenSvmIsNotAllocated) {
     auto SVMPtr = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 4096 /* Size */, 4096 /* alignment */);
     EXPECT_EQ(nullptr, SVMPtr);
 };
