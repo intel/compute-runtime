@@ -46,7 +46,7 @@ struct PartialAllocation {
 };
 
 struct AllocationRequirements {
-    PartialAllocation AllocationFragments[maxFragmentsCount];
+    PartialAllocation allocationFragments[maxFragmentsCount];
     uint64_t totalRequiredSize = 0u;
     uint32_t requiredFragmentsCount = 0u;
 };

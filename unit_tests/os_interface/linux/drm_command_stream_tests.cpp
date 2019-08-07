@@ -1030,7 +1030,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwiceWhenFragmentStorage) {
     csr->processResidency(csr->getResidencyAllocations());
     for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
-                  reqs.AllocationFragments[i].allocationPtr);
+                  reqs.allocationFragments[i].allocationPtr);
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_TRUE(isResident(bo));
         auto bo1 = getResident(bo);
@@ -1130,7 +1130,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationCreatedFromThreeFragmentsWhenMa
 
     for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
-                  reqs.AllocationFragments[i].allocationPtr);
+                  reqs.allocationFragments[i].allocationPtr);
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_TRUE(isResident(bo));
         auto bo1 = getResident(bo);
@@ -1165,7 +1165,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
 
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
-                  reqs.AllocationFragments[i].allocationPtr);
+                  reqs.allocationFragments[i].allocationPtr);
         auto bo = allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_TRUE(isResident(bo));
         auto bo1 = getResident(bo);
@@ -1194,7 +1194,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
 
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         ASSERT_EQ(allocation2->fragmentsStorage.fragmentStorageData[i].cpuPtr,
-                  reqs.AllocationFragments[i].allocationPtr);
+                  reqs.allocationFragments[i].allocationPtr);
         auto bo = allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo;
         EXPECT_TRUE(isResident(bo));
         auto bo1 = getResident(bo);

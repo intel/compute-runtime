@@ -1096,9 +1096,9 @@ TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
         EXPECT_NE((D3DKMT_HANDLE) nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->handle);
 
         EXPECT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gmm);
-        EXPECT_EQ(reqs.AllocationFragments[i].allocationPtr,
+        EXPECT_EQ(reqs.allocationFragments[i].allocationPtr,
                   reinterpret_cast<void *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gmm->resourceParams.pExistingSysMem));
-        EXPECT_EQ(reqs.AllocationFragments[i].allocationSize,
+        EXPECT_EQ(reqs.allocationFragments[i].allocationSize,
                   graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gmm->resourceParams.BaseWidth);
     }
     memoryManager->freeGraphicsMemory(graphicsAllocation);

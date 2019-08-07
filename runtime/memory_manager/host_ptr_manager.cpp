@@ -54,9 +54,9 @@ AllocationRequirements HostPtrManager::getAllocationRequirements(const void *inp
 
     if (alignedStartAddress != inputPtr) {
         leadingNeeded = true;
-        requiredAllocations.AllocationFragments[allocationCount].allocationPtr = alignedStartAddress;
-        requiredAllocations.AllocationFragments[allocationCount].fragmentPosition = FragmentPosition::LEADING;
-        requiredAllocations.AllocationFragments[allocationCount].allocationSize = MemoryConstants::pageSize;
+        requiredAllocations.allocationFragments[allocationCount].allocationPtr = alignedStartAddress;
+        requiredAllocations.allocationFragments[allocationCount].fragmentPosition = FragmentPosition::LEADING;
+        requiredAllocations.allocationFragments[allocationCount].allocationSize = MemoryConstants::pageSize;
         allocationCount++;
     }
 
@@ -70,16 +70,16 @@ AllocationRequirements HostPtrManager::getAllocationRequirements(const void *inp
 
     auto middleSize = wholeAllocationSize - (trailingNeeded + leadingNeeded) * MemoryConstants::pageSize;
     if (middleSize) {
-        requiredAllocations.AllocationFragments[allocationCount].allocationPtr = alignUp(inputPtr, MemoryConstants::pageSize);
-        requiredAllocations.AllocationFragments[allocationCount].fragmentPosition = FragmentPosition::MIDDLE;
-        requiredAllocations.AllocationFragments[allocationCount].allocationSize = middleSize;
+        requiredAllocations.allocationFragments[allocationCount].allocationPtr = alignUp(inputPtr, MemoryConstants::pageSize);
+        requiredAllocations.allocationFragments[allocationCount].fragmentPosition = FragmentPosition::MIDDLE;
+        requiredAllocations.allocationFragments[allocationCount].allocationSize = middleSize;
         allocationCount++;
     }
 
     if (trailingNeeded) {
-        requiredAllocations.AllocationFragments[allocationCount].allocationPtr = alignedEndAddress;
-        requiredAllocations.AllocationFragments[allocationCount].fragmentPosition = FragmentPosition::TRAILING;
-        requiredAllocations.AllocationFragments[allocationCount].allocationSize = MemoryConstants::pageSize;
+        requiredAllocations.allocationFragments[allocationCount].allocationPtr = alignedEndAddress;
+        requiredAllocations.allocationFragments[allocationCount].fragmentPosition = FragmentPosition::TRAILING;
+        requiredAllocations.allocationFragments[allocationCount].allocationSize = MemoryConstants::pageSize;
         allocationCount++;
     }
 
@@ -93,13 +93,13 @@ OsHandleStorage HostPtrManager::populateAlreadyAllocatedFragments(AllocationRequ
     OsHandleStorage handleStorage;
     for (unsigned int i = 0; i < requirements.requiredFragmentsCount; i++) {
         OverlapStatus overlapStatus = OverlapStatus::FRAGMENT_NOT_CHECKED;
-        FragmentStorage *fragmentStorage = getFragmentAndCheckForOverlaps(const_cast<void *>(requirements.AllocationFragments[i].allocationPtr), requirements.AllocationFragments[i].allocationSize, overlapStatus);
+        FragmentStorage *fragmentStorage = getFragmentAndCheckForOverlaps(const_cast<void *>(requirements.allocationFragments[i].allocationPtr), requirements.allocationFragments[i].allocationSize, overlapStatus);
         if (overlapStatus == OverlapStatus::FRAGMENT_WITHIN_STORED_FRAGMENT) {
             UNRECOVERABLE_IF(fragmentStorage == nullptr);
             fragmentStorage->refCount++;
             handleStorage.fragmentStorageData[i].osHandleStorage = fragmentStorage->osInternalStorage;
-            handleStorage.fragmentStorageData[i].cpuPtr = requirements.AllocationFragments[i].allocationPtr;
-            handleStorage.fragmentStorageData[i].fragmentSize = requirements.AllocationFragments[i].allocationSize;
+            handleStorage.fragmentStorageData[i].cpuPtr = requirements.allocationFragments[i].allocationPtr;
+            handleStorage.fragmentStorageData[i].fragmentSize = requirements.allocationFragments[i].allocationSize;
             handleStorage.fragmentStorageData[i].residency = fragmentStorage->residency;
         } else if (overlapStatus != OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
             if (fragmentStorage != nullptr) {
@@ -110,8 +110,8 @@ OsHandleStorage HostPtrManager::populateAlreadyAllocatedFragments(AllocationRequ
             } else {
                 DEBUG_BREAK_IF(overlapStatus != OverlapStatus::FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER);
             }
-            handleStorage.fragmentStorageData[i].cpuPtr = requirements.AllocationFragments[i].allocationPtr;
-            handleStorage.fragmentStorageData[i].fragmentSize = requirements.AllocationFragments[i].allocationSize;
+            handleStorage.fragmentStorageData[i].cpuPtr = requirements.allocationFragments[i].allocationPtr;
+            handleStorage.fragmentStorageData[i].fragmentSize = requirements.allocationFragments[i].allocationSize;
         } else {
             //abort whole application instead of silently passing.
             abortExecution();
@@ -258,20 +258,20 @@ RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager 
     for (unsigned int i = 0; i < requirements->requiredFragmentsCount; i++) {
         OverlapStatus overlapStatus = OverlapStatus::FRAGMENT_NOT_CHECKED;
 
-        getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, overlapStatus);
+        getFragmentAndCheckForOverlaps(requirements->allocationFragments[i].allocationPtr, requirements->allocationFragments[i].allocationSize, overlapStatus);
         if (overlapStatus == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
             // clean temporary allocations
             memoryManager.cleanTemporaryAllocationListOnAllEngines(false);
 
             // check overlapping again
-            getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, overlapStatus);
+            getFragmentAndCheckForOverlaps(requirements->allocationFragments[i].allocationPtr, requirements->allocationFragments[i].allocationSize, overlapStatus);
             if (overlapStatus == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
 
                 // Wait for completion
                 memoryManager.cleanTemporaryAllocationListOnAllEngines(true);
 
                 // check overlapping last time
-                getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, overlapStatus);
+                getFragmentAndCheckForOverlaps(requirements->allocationFragments[i].allocationPtr, requirements->allocationFragments[i].allocationSize, overlapStatus);
                 if (overlapStatus == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
                     status = RequirementsStatus::FATAL;
                     break;

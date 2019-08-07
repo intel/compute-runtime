@@ -334,8 +334,8 @@ TEST_F(MemoryAllocatorTest, GivenEmptyMemoryManagerAndMisalingedHostPtrWithHugeS
     auto graphicsAllocation = mockMemoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, cpuPtr);
     for (int i = 0; i < maxFragmentsCount; i++) {
         EXPECT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage);
-        EXPECT_EQ(reqs.AllocationFragments[i].allocationPtr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].cpuPtr);
-        EXPECT_EQ(reqs.AllocationFragments[i].allocationSize, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].fragmentSize);
+        EXPECT_EQ(reqs.allocationFragments[i].allocationPtr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].cpuPtr);
+        EXPECT_EQ(reqs.allocationFragments[i].allocationSize, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].fragmentSize);
     }
 
     EXPECT_EQ(3u, hostPtrManager->getFragmentCount());

@@ -701,8 +701,8 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
 
     for (int i = 0; i < maxFragmentsCount; i++) {
         ASSERT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo);
-        EXPECT_EQ(reqs.AllocationFragments[i].allocationSize, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekSize());
-        EXPECT_EQ(reqs.AllocationFragments[i].allocationPtr, reinterpret_cast<void *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekAddress()));
+        EXPECT_EQ(reqs.allocationFragments[i].allocationSize, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekSize());
+        EXPECT_EQ(reqs.allocationFragments[i].allocationPtr, reinterpret_cast<void *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo->peekAddress()));
     }
     memoryManager->freeGraphicsMemory(graphicsAllocation);
     EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
