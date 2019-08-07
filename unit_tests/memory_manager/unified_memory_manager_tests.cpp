@@ -48,6 +48,11 @@ TEST_F(SVMMemoryAllocatorTest, whenCreateZeroSizedSVMAllocationThenReturnNullptr
     EXPECT_EQ(ptr, nullptr);
 }
 
+TEST_F(SVMMemoryAllocatorTest, whenRequestSVMAllocsThenReturnNonNullptr) {
+    auto svmAllocs = svmManager->getSVMAllocs();
+    EXPECT_NE(svmAllocs, nullptr);
+}
+
 TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {
     auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {});
     EXPECT_NE(nullptr, ptr);
