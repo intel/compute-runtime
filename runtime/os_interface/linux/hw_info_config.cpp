@@ -17,6 +17,8 @@
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/os_interface.h"
 
+#include "instrumentation.h"
+
 #include <cstring>
 
 namespace NEO {
@@ -145,7 +147,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     hwHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
-    outHwInfo->capabilityTable.instrumentationEnabled = false;
+    outHwInfo->capabilityTable.instrumentationEnabled &= haveInstrumentation;
     outHwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
     outHwInfo->capabilityTable.ftrRenderCompressedImages = false;
 

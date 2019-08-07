@@ -379,3 +379,17 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenPointerToHwInfoWhenConfigureHwInfoCalled
     EXPECT_EQ(0, ret);
     EXPECT_EQ(outHwInfo.gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte, outHwInfo.capabilityTable.requiredPreemptionSurfaceSize);
 }
+
+TEST_F(HwInfoConfigTestLinuxDummy, givenInstrumentationForHardwareIsEnabledOrDisabledWhenConfiguringHwInfoThenOverrideItUsingHaveInstrumentation) {
+    int ret;
+
+    pInHwInfo.capabilityTable.instrumentationEnabled = false;
+    ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
+    ASSERT_EQ(0, ret);
+    EXPECT_FALSE(outHwInfo.capabilityTable.instrumentationEnabled);
+
+    pInHwInfo.capabilityTable.instrumentationEnabled = true;
+    ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
+    ASSERT_EQ(0, ret);
+    EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled == haveInstrumentation);
+}
