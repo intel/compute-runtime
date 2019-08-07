@@ -16,6 +16,7 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
@@ -1412,6 +1413,55 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetT
     auto cmdBuffer = cmdBufferList.peekHead();
 
     EXPECT_EQ(cmdBuffer->batchBuffer.throttle, QueueThrottle::HIGH);
+}
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEpilogueRequiredFlagWhenTaskIsSubmittedDirectlyThenItPointsBackToCsr) {
+    configureCSRtoNonDirtyState<FamilyType>();
+    auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DispatchFlags dispatchFlags;
+
+    EXPECT_EQ(0u, commandStreamReceiver.getCmdSizeForEpilogue(dispatchFlags));
+
+    dispatchFlags.epilogueRequired = true;
+    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+
+    EXPECT_EQ(MemoryConstants::cacheLineSize, commandStreamReceiver.getCmdSizeForEpilogue(dispatchFlags));
+
+    auto data = commandStream.getSpace(MemoryConstants::cacheLineSize);
+    memset(data, 0, MemoryConstants::cacheLineSize);
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    dsh,
+                                    ioh,
+                                    ssh,
+                                    taskLevel,
+                                    dispatchFlags,
+                                    *pDevice);
+    auto &commandStreamReceiverStream = commandStreamReceiver.getCS(0u);
+
+    EXPECT_EQ(MemoryConstants::cacheLineSize * 2, commandStream.getUsed());
+    EXPECT_EQ(MemoryConstants::cacheLineSize, commandStreamReceiverStream.getUsed());
+
+    parseCommands<FamilyType>(commandStream, 0);
+
+    auto itBBend = find<typename FamilyType::MI_BATCH_BUFFER_END *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(itBBend, cmdList.end());
+
+    auto itBatchBufferStart = find<typename FamilyType::MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(itBatchBufferStart, cmdList.end());
+
+    auto batchBufferStart = genCmdCast<typename FamilyType::MI_BATCH_BUFFER_START *>(*itBatchBufferStart);
+    EXPECT_EQ(batchBufferStart->getBatchBufferStartAddressGraphicsaddress472(), commandStreamReceiverStream.getGraphicsAllocation()->getGpuAddress());
+
+    parseCommands<FamilyType>(commandStreamReceiverStream, 0);
+
+    itBBend = find<typename FamilyType::MI_BATCH_BUFFER_END *>(cmdList.begin(), cmdList.end());
+    void *bbEndAddress = *itBBend;
+
+    EXPECT_EQ(commandStreamReceiverStream.getCpuBase(), bbEndAddress);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiverStream.getGraphicsAllocation()));
 }
 
 template <typename GfxFamily>

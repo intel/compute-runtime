@@ -49,6 +49,7 @@ struct DispatchFlags {
     bool outOfOrderExecutionAllowed = false;
     bool specialPipelineSelectMode = false;
     bool multiEngineQueue = false;
+    bool epilogueRequired = false;
 };
 
 struct CsrSizeRequestFlags {

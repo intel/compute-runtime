@@ -415,7 +415,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             this->makeResident(*commandStreamAllocation);
             this->alignToCacheLine(commandStreamCSR);
             submitCommandStreamFromCsr = true;
+        } else if (dispatchFlags.epilogueRequired) {
+            this->makeResident(*commandStreamCSR.getGraphicsAllocation());
         }
+        this->programEpilogue(commandStreamCSR, &bbEndLocation, dispatchFlags);
+
     } else if (submitCSR) {
         this->addBatchBufferEnd(commandStreamCSR, &bbEndLocation);
         this->emitNoop(commandStreamCSR, bbEndPaddingSize);
@@ -589,6 +593,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += getCmdSizeForMediaSampler(dispatchFlags.mediaSamplerRequired);
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
+    size += getCmdSizeForEpilogue(dispatchFlags);
 
     if (device.getWaTable()->waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
@@ -777,6 +782,26 @@ void CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitProperties &blitPr
         waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, false);
         internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
     }
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programEpilogue(LinearStream &csr, void **batchBufferEndLocation, DispatchFlags &dispatchFlags) {
+    if (dispatchFlags.epilogueRequired) {
+        auto currentOffset = ptrDiff(csr.getSpace(0u), csr.getCpuBase());
+        auto gpuAddress = ptrOffset(csr.getGraphicsAllocation()->getGpuAddress(), currentOffset);
+
+        addBatchBufferStart(reinterpret_cast<typename GfxFamily::MI_BATCH_BUFFER_START *>(*batchBufferEndLocation), gpuAddress, false);
+        this->addBatchBufferEnd(csr, batchBufferEndLocation);
+        this->alignToCacheLine(csr);
+    }
+}
+
+template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogue(const DispatchFlags &dispatchFlags) const {
+    if (dispatchFlags.epilogueRequired) {
+        return alignUp(sizeof(typename GfxFamily::MI_BATCH_BUFFER_END), MemoryConstants::cacheLineSize);
+    }
+    return 0u;
 }
 
 } // namespace NEO
