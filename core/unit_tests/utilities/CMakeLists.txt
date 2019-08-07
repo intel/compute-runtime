@@ -6,6 +6,7 @@
 
 set(NEO_CORE_UTILITIES_TESTS
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/clflush_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpuinfo_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/spinlock_tests.cpp
 )

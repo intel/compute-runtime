@@ -17,6 +17,7 @@ endmacro()
 apply_macro_for_each_gen("TESTED")
 
 set(IGDRCL_SRCS_LIB_ULT
+  ${IGDRCL_SOURCE_DIR}/core/unit_tests/utilities/clflush.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/built_ins_helper.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/execution_environment_helper.cpp
@@ -131,5 +132,5 @@ foreach(target_name igdrcl_libult igdrcl_libult_cs igdrcl_libult_env)
   set_property(TARGET ${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
   target_include_directories(${target_name} PRIVATE $<TARGET_PROPERTY:${NEO_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
   target_compile_definitions(${target_name} PRIVATE $<TARGET_PROPERTY:${NEO_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
-  create_project_source_tree(${target_name} ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
+  create_project_source_tree(${target_name} ${IGDRCL_SOURCE_DIR})
 endforeach()

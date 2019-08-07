@@ -50,7 +50,7 @@ macro(create_project_source_tree target)
 endmacro()
 
 macro(create_project_source_tree_with_exports target exports_filename)
-  create_project_source_tree(${target})
+  create_project_source_tree(${target} ${ARGN})
   if(MSVC)
     if(NOT "${exports_filename}" STREQUAL "")
       source_group("exports" FILES "${exports_filename}")
