@@ -15,7 +15,7 @@ typedef api_tests clUnloadPlatformCompilerTests;
 
 namespace ULT {
 
-TEST_F(clUnloadPlatformCompilerTests, notImplemented) {
+TEST_F(clUnloadPlatformCompilerTests, WhenUnloadingPlatformCompilerThenOutOfHostMemoryErrorIsReturned) {
     auto retVal = clUnloadPlatformCompiler(nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
