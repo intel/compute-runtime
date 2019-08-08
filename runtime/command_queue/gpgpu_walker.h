@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "core/helpers/register_offsets.h"
 #include "core/helpers/vec.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
@@ -31,30 +32,6 @@ template <typename GfxFamily>
 using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 template <typename GfxFamily>
 using MI_STORE_REG_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM_CMD;
-
-constexpr int32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
-
-constexpr int32_t L3SQC_BIT_LQSC_RO_PERF_DIS = 0x08000000;
-constexpr int32_t L3SQC_REG4 = 0xB118;
-
-constexpr int32_t GPGPU_WALKER_COOKIE_VALUE_BEFORE_WALKER = 0xFFFFFFFF;
-constexpr int32_t GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER = 0x00000000;
-
-constexpr int32_t CS_GPR_R0 = 0x2600;
-constexpr int32_t CS_GPR_R1 = 0x2608;
-
-constexpr int32_t ALU_OPCODE_LOAD = 0x080;
-constexpr int32_t ALU_OPCODE_STORE = 0x180;
-constexpr int32_t ALU_OPCODE_OR = 0x103;
-constexpr int32_t ALU_OPCODE_AND = 0x102;
-
-constexpr int32_t ALU_REGISTER_R_0 = 0x0;
-constexpr int32_t ALU_REGISTER_R_1 = 0x1;
-constexpr int32_t ALU_REGISTER_R_SRCA = 0x20;
-constexpr int32_t ALU_REGISTER_R_SRCB = 0x21;
-constexpr int32_t ALU_REGISTER_R_ACCU = 0x31;
-
-constexpr uint32_t GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW = 0x23A8;
 
 void computeWorkgroupSize1D(
     uint32_t maxWorkGroupSize,
