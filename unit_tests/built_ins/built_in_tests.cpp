@@ -104,6 +104,15 @@ class BuiltInTests
     std::string allBuiltIns;
 };
 
+struct VmeBuiltInTests : BuiltInTests {
+    void SetUp() override {
+        BuiltInTests::SetUp();
+        if (!pDevice->getHardwareInfo().capabilityTable.supportsVme) {
+            GTEST_SKIP();
+        }
+    }
+};
+
 TEST_F(BuiltInTests, SourceConsistency) {
     size_t size = 0;
 
@@ -690,7 +699,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnTrueIfExplicitKernelArgNotT
     EXPECT_TRUE(ret);
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetVMEBuilderReturnNonNull) {
+TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderGetVMEBuilderReturnNonNull) {
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
 
     EBuiltInOps::Type vmeOps[] = {EBuiltInOps::VmeBlockMotionEstimateIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
@@ -702,7 +711,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetVMEBuilderReturnNonNull) {
     restoreBuiltInBinaryName(pDevice);
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderVMEBuilderNullKernel) {
+TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderVMEBuilderNullKernel) {
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     EBuiltInOps::Type vmeOps[] = {EBuiltInOps::VmeBlockMotionEstimateIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
     for (auto op : vmeOps) {
@@ -719,7 +728,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderVMEBuilderNullKernel) {
     restoreBuiltInBinaryName(pDevice);
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderVMEBuilder) {
+TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderVMEBuilder) {
     MockKernelWithInternals mockKernel{*pDevice};
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD32 = 0;
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD16 = 1;
@@ -769,7 +778,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderVMEBuilder) {
     }
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderAdvancedVMEBuilder) {
+TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderAdvancedVMEBuilder) {
     MockKernelWithInternals mockKernel{*pDevice};
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD32 = 0;
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD16 = 1;
@@ -833,7 +842,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderAdvancedVMEBuilder) {
     }
 }
 
-TEST_F(BuiltInTests, getBuiltinAsString) {
+TEST_F(VmeBuiltInTests, getBuiltinAsString) {
     EXPECT_EQ(0, strcmp("aux_translation.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::AuxTranslation)));
     EXPECT_EQ(0, strcmp("copy_buffer_to_buffer.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::CopyBufferToBuffer)));
     EXPECT_EQ(0, strcmp("copy_buffer_rect.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::CopyBufferRect)));
@@ -1162,7 +1171,7 @@ TEST_F(BuiltInTests, whenQueriedProperVmeVersionIsReturned) {
     EXPECT_EQ(static_cast<cl_uint>(CL_ME_VERSION_ADVANCED_VER_2_INTEL), param);
 }
 
-TEST_F(BuiltInTests, vmeDispatchValidationHelpers) {
+TEST_F(VmeBuiltInTests, vmeDispatchValidationHelpers) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
@@ -1222,7 +1231,7 @@ TEST_F(BuiltInTests, vmeDispatchValidationHelpers) {
     }
 }
 
-TEST_F(BuiltInTests, vmeDispatchIsBidir) {
+TEST_F(VmeBuiltInTests, vmeDispatchIsBidir) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
@@ -1270,7 +1279,7 @@ const cl_image_format ImageVmeInvalidChannelOrder::imageFormat = {
     CL_RGBA,
     CL_UNORM_INT8};
 
-TEST_F(BuiltInTests, vmeValidateImages) {
+TEST_F(VmeBuiltInTests, vmeValidateImages) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
@@ -1348,7 +1357,7 @@ TEST_F(BuiltInTests, vmeValidateImages) {
     }
 }
 
-TEST_F(BuiltInTests, vmeValidateFlags) {
+TEST_F(VmeBuiltInTests, vmeValidateFlags) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
@@ -1378,7 +1387,7 @@ TEST_F(BuiltInTests, vmeValidateFlags) {
     }
 }
 
-TEST_F(BuiltInTests, vmeValidateSkipBlockType) {
+TEST_F(VmeBuiltInTests, vmeValidateSkipBlockType) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBidirectionalBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
@@ -1413,7 +1422,7 @@ TEST_F(BuiltInTests, vmeValidateSkipBlockType) {
     EXPECT_EQ(static_cast<uint32_t>(CL_ME_MB_TYPE_8x8_INTEL), skipBlockType);
 }
 
-TEST_F(BuiltInTests, setExplicitArgAccelerator) {
+TEST_F(VmeBuiltInTests, setExplicitArgAccelerator) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
 
@@ -1439,7 +1448,7 @@ TEST_F(BuiltInTests, setExplicitArgAccelerator) {
     EXPECT_EQ(CL_SUCCESS, err);
 }
 
-TEST_F(BuiltInTests, vmeValidateDispatch) {
+TEST_F(VmeBuiltInTests, vmeValidateDispatch) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     struct MockVmeBuilder : BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> {
@@ -1544,7 +1553,7 @@ TEST_F(BuiltInTests, vmeValidateDispatch) {
     }
 }
 
-TEST_F(BuiltInTests, vmeValidateVmeDispatch) {
+TEST_F(VmeBuiltInTests, vmeValidateVmeDispatch) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
@@ -1582,7 +1591,7 @@ TEST_F(BuiltInTests, vmeValidateVmeDispatch) {
     }
 }
 
-TEST_F(BuiltInTests, advancedVmeValidateVmeDispatch) {
+TEST_F(VmeBuiltInTests, advancedVmeValidateVmeDispatch) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
@@ -1642,7 +1651,7 @@ TEST_F(BuiltInTests, advancedVmeValidateVmeDispatch) {
     EXPECT_EQ(CL_SUCCESS, avmeBuilder.validateVmeDispatch(Vec3<size_t>{1, 1, 0}, Vec3<size_t>{0, 0, 0}, 1, 1));
 }
 
-TEST_F(BuiltInTests, advancedBidirectionalVmeValidateVmeDispatch) {
+TEST_F(VmeBuiltInTests, advancedBidirectionalVmeValidateVmeDispatch) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);
@@ -1690,7 +1699,7 @@ TEST_F(BuiltInTests, advancedBidirectionalVmeValidateVmeDispatch) {
     EXPECT_EQ(CL_INVALID_BUFFER_SIZE, avmeBuilder.validateVmeDispatch(Vec3<size_t>{1, 1, 0}, Vec3<size_t>{0, 0, 0}, mb.getSize() * 2, 1));
 }
 
-TEST_F(BuiltInTests, advancedVmeGetSkipResidualsBuffExpSizeDefaultValue) {
+TEST_F(VmeBuiltInTests, advancedVmeGetSkipResidualsBuffExpSizeDefaultValue) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *pContext, *this->pDevice);

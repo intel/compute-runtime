@@ -344,6 +344,8 @@ set(TEST_KERNEL_2_0
 
 set(TEST_KERNEL_VME
   ${CMAKE_CURRENT_SOURCE_DIR}/test_files/vme_kernels.cl
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_files/media_kernels_backend.cl
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_files/media_kernels_frontend.cl
 )
 
 set(TEST_KERNEL_SIP_DEBUG_options
@@ -358,7 +360,7 @@ file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/shouldfail.cl")
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_block_kernel.cl")
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_nonuniform.cl")
-list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/vme_kernels.cl")
+list(REMOVE_ITEM TEST_KERNELS ${TEST_KERNEL_VME})
 
 function(gen_run_tests_with_appverifier product slices subslices eu_per_ss)
   if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND "${IGDRCL_OPTION__BITS}" STREQUAL "64" AND APPVERIFIER_ALLOWED)
