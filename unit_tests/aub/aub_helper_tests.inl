@@ -20,12 +20,12 @@
 
 using namespace NEO;
 
-TEST(AubHelper, WhenGetMemTraceIsCalledWithZeroPDEntryBitsThenTraceNonLocalIsReturned) {
+TEST(AubHelper, GivenZeroPdEntryBitsWhenGetMemTraceIsCalledThenTraceNonLocalIsReturned) {
     int hint = AubHelper::getMemTrace(0u);
     EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, hint);
 }
 
-TEST(AubHelper, WhenGetPTEntryBitsIsCalledThenEntryBitsAreNotMasked) {
+TEST(AubHelper, WhenGetPtEntryBitsIsCalledThenEntryBitsAreNotMasked) {
     uint64_t entryBits = BIT(PageTableEntry::presentBit) |
                          BIT(PageTableEntry::writableBit) |
                          BIT(PageTableEntry::userSupervisorBit);
@@ -33,7 +33,7 @@ TEST(AubHelper, WhenGetPTEntryBitsIsCalledThenEntryBitsAreNotMasked) {
     EXPECT_EQ(entryBits, maskedEntryBits);
 }
 
-TEST(AubHelper, WhenCreateMultipleDevicesIsSetThenGetDevicesCountReturnedCorrectValue) {
+TEST(AubHelper, GivenMultipleDevicesWhenGettingDeviceCountThenCorrectValueIsReturned) {
     DebugManagerStateRestore stateRestore;
     FeatureTable featureTable = {};
     WorkaroundTable workaroundTable = {};
@@ -125,7 +125,7 @@ HWTEST_F(AubHelperHwTest, GivenEnabledLocalMemoryWhenGetMemTraceForPtEntryIsCall
     EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceLocal, addressSpace);
 }
 
-HWTEST_F(AubHelperHwTest, giverLrcaHelperWhenContextIsInitializedThenContextFlagsAreSet) {
+HWTEST_F(AubHelperHwTest, givenLrcaHelperWhenContextIsInitializedThenContextFlagsAreSet) {
     const auto &csTraits = CommandStreamReceiverSimulatedCommonHw<FamilyType>::getCsTraits(aub_stream::ENGINE_RCS);
     MockLrcaHelper lrcaHelper(csTraits.mmioBase);
 
