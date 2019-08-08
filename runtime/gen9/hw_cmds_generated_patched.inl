@@ -341,8 +341,8 @@ STATIC_ASSERT(32 == sizeof(MEDIA_SURFACE_STATE));
 typedef struct tagMI_MATH {
     union _DW0 {
         struct _BitField {
-            uint32_t DwordLength : BITFIELD_RANGE(0, 5);
-            uint32_t Reserved : BITFIELD_RANGE(6, 22);
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
+            uint32_t Reserved : BITFIELD_RANGE(8, 22);
             uint32_t InstructionOpcode : BITFIELD_RANGE(23, 28);
             uint32_t InstructionType : BITFIELD_RANGE(29, 31);
         } BitField;
