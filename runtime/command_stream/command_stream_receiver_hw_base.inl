@@ -791,6 +791,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEpilogue(LinearStream &cs
         auto gpuAddress = ptrOffset(csr.getGraphicsAllocation()->getGpuAddress(), currentOffset);
 
         addBatchBufferStart(reinterpret_cast<typename GfxFamily::MI_BATCH_BUFFER_START *>(*batchBufferEndLocation), gpuAddress, false);
+        this->programEpliogueCommands(csr, dispatchFlags);
         this->addBatchBufferEnd(csr, batchBufferEndLocation);
         this->alignToCacheLine(csr);
     }
@@ -799,7 +800,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEpilogue(LinearStream &cs
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForEpilogue(const DispatchFlags &dispatchFlags) const {
     if (dispatchFlags.epilogueRequired) {
-        return alignUp(sizeof(typename GfxFamily::MI_BATCH_BUFFER_END), MemoryConstants::cacheLineSize);
+        auto size = getCmdSizeForEpilogueCommands(dispatchFlags) + sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
+        return alignUp(size, MemoryConstants::cacheLineSize);
     }
     return 0u;
 }

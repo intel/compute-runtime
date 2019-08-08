@@ -48,6 +48,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getRequiredCmdSizeForPreamble(Device &device) const;
     size_t getCmdSizeForPreemption(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForEpilogue(const DispatchFlags &dispatchFlags) const;
+    size_t getCmdSizeForEpilogueCommands(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForL3Config() const;
     size_t getCmdSizeForPipelineSelect() const;
     size_t getCmdSizeForComputeMode();
@@ -79,6 +80,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programPreamble(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programPipelineSelect(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programEpilogue(LinearStream &csr, void **batchBufferEndLocation, DispatchFlags &dispatchFlags);
+    void programEpliogueCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programMediaSampler(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programStateSip(LinearStream &cmdStream, Device &device);
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t maxFrontEndThreads);
