@@ -79,6 +79,7 @@ cl_int CL_API_CALL clCreateTracingHandleINTEL(cl_device_id device, cl_tracing_ca
         return CL_OUT_OF_HOST_MEMORY;
     }
 
+    (*handle)->device = device;
     (*handle)->handle = new TracingHandle(callback, userData);
     if ((*handle)->handle == nullptr) {
         delete *handle;
