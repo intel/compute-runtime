@@ -9,9 +9,11 @@
 
 #include "common/helpers/bit_helpers.h"
 
+#include "memory_properties_flags.h"
+
 namespace NEO {
 
-bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, ContextType contextType, bool preferCompression) {
+bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const MemoryPropertiesFlags &properties, ContextType contextType, bool preferCompression) {
     return renderCompressed;
 }
 

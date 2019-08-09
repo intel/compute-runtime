@@ -16,6 +16,7 @@
 
 #include "CL/cl.h"
 #include "mem_obj_types.h"
+#include "memory_properties_flags.h"
 
 namespace NEO {
 
@@ -114,7 +115,7 @@ class MemObjHelper {
                isValueSet(memoryProperties.flags_intel, CL_MEM_FORCE_LINEAR_STORAGE_INTEL);
     }
 
-    static bool isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, ContextType contextType, bool preferCompression);
+    static bool isSuitableForRenderCompression(bool renderCompressed, const MemoryPropertiesFlags &properties, ContextType contextType, bool preferCompression);
 
   protected:
     static bool checkUsedFlagsForBuffer(const MemoryProperties &properties) {

@@ -27,6 +27,8 @@ struct MemoryPropertiesFlagsBase {
 
     bool locallyUncachedResource = false;
     bool allowUnrestrictedSize = false;
+
+    bool forceSharedPhysicalMemory = false;
 };
 
 } // namespace NEO

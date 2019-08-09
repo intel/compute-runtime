@@ -55,6 +55,9 @@ TEST(MemoryPropertiesFlags, givenValidPropertiesWhenCreateMemoryPropertiesFlagsT
     memoryProperties.flags_intel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
     properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(memoryProperties);
     EXPECT_TRUE(properties.locallyUncachedResource);
+
+    properties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL);
+    EXPECT_TRUE(properties.forceSharedPhysicalMemory);
 }
 
 TEST(MemoryPropertiesFlags, givenClMemForceLinearStorageFlagWhenCreateMemoryPropertiesFlagsThenReturnProperValue) {
