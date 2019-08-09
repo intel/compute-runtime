@@ -1,8 +1,8 @@
-%global igc_commit_id c7dec76146e3a18b9ed9f489d033e65ff224e869
+%global igc_commit_id e2936cf325b81797f252ba5f9fc318666c895f81
 %global major_version 1
 %global minor_version 0
-%global patch_version 10
-%global package_release 2
+%global patch_version 2364
+%global package_release 1
 
 Name: intel-igc
 Version: %{major_version}.%{minor_version}.%{patch_version}
@@ -18,6 +18,7 @@ BuildRequires: cmake clang gcc-c++ make procps flex bison python2 llvm-devel cla
 BuildRequires: intel-opencl-clang-devel
 
 %description
+Intel(R) Graphics Compiler for OpenCL(TM).
 
 %package       core
 Summary:       Intel(R) Graphics Compiler Core
@@ -25,13 +26,13 @@ Summary:       Intel(R) Graphics Compiler Core
 %description   core
 
 %package       opencl
-Summary:       Intel(R) Graphics Compiler Frontend for OpenCL(TM)
+Summary:       Intel(R) Graphics Compiler Frontend
 Requires:      %{name}-core = %{version}-%{release}
 
 %description   opencl
 
 %package       opencl-devel
-Summary:       Intel(R) Graphics Compiler development package for OpenCL(TM)
+Summary:       Intel(R) Graphics Compiler development package
 Requires:      %{name}-opencl = %{version}-%{release}
 
 %description   opencl-devel
@@ -64,14 +65,14 @@ echo "==== DONE ===="
 %files core
 %defattr(-,root,root)
 /usr/lib64/libiga64.so.%{major_version}
-/usr/lib64/libiga64.so.%{major_version}.%{minor_version}.%{patch_version}
+/usr/lib64/libiga64.so.%{major_version}.%{minor_version}.10
 /usr/lib64/libigc.so.%{major_version}
-/usr/lib64/libigc.so.%{major_version}.%{minor_version}.%{patch_version}
+/usr/lib64/libigc.so.%{major_version}.%{minor_version}.10
 
 %files opencl
 %defattr(-,root,root)
 /usr/lib64/libigdfcl.so.%{major_version}
-/usr/lib64/libigdfcl.so.%{major_version}.%{minor_version}.%{patch_version}
+/usr/lib64/libigdfcl.so.%{major_version}.%{minor_version}.10
 
 %files opencl-devel
 %defattr(-,root,root)
