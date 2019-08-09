@@ -13,6 +13,7 @@
 #include "runtime/memory_manager/memory_constants.h"
 
 #include "igfxfmid.h"
+#include "memory_properties_flags.h"
 
 namespace NEO {
 class Buffer;
@@ -139,7 +140,7 @@ class Buffer : public MemObj {
 
     Buffer();
 
-    static void checkMemory(cl_mem_flags flags,
+    static void checkMemory(MemoryPropertiesFlags memoryProperties,
                             size_t size,
                             void *hostPtr,
                             cl_int &errcodeRet,

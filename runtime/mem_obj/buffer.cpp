@@ -18,6 +18,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
@@ -151,7 +152,8 @@ Buffer *Buffer::create(Context *context,
         memoryManager->isLocalMemorySupported(),
         HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(size));
 
-    checkMemory(properties.flags, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager);
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+    checkMemory(memoryProperties, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager);
 
     if (errcodeRet != CL_SUCCESS) {
         return nullptr;
@@ -323,7 +325,7 @@ Buffer *Buffer::createSharedBuffer(Context *context, cl_mem_flags flags, Sharing
     return sharedBuffer;
 }
 
-void Buffer::checkMemory(cl_mem_flags flags,
+void Buffer::checkMemory(MemoryPropertiesFlags memoryProperties,
                          size_t size,
                          void *hostPtr,
                          cl_int &errcodeRet,
@@ -340,13 +342,13 @@ void Buffer::checkMemory(cl_mem_flags flags,
     }
 
     if (hostPtr) {
-        if (!(flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR))) {
+        if (!(memoryProperties.useHostPtr || memoryProperties.copyHostPtr)) {
             errcodeRet = CL_INVALID_HOST_PTR;
             return;
         }
     }
 
-    if (flags & CL_MEM_USE_HOST_PTR) {
+    if (memoryProperties.useHostPtr) {
         if (hostPtr) {
             auto fragment = memoryManager->getHostPtrManager()->getFragment(hostPtr);
             if (fragment && fragment->driverAllocation) {
@@ -364,7 +366,7 @@ void Buffer::checkMemory(cl_mem_flags flags,
         }
     }
 
-    if (flags & CL_MEM_COPY_HOST_PTR) {
+    if (memoryProperties.copyHostPtr) {
         if (hostPtr) {
             copyMemoryFromHostPtr = true;
         } else {
