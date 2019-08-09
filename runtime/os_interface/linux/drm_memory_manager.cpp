@@ -433,8 +433,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     if (requireSpecificBitness && this->force32bitAllocations) {
         drmAllocation->set32BitAllocation(true);
         drmAllocation->setGpuBaseAddress(GmmHelper::canonize(getExternalHeapBaseAddress()));
-    } else {
-        drmAllocation->setGpuBaseAddress(GmmHelper::canonize(gfxPartition->getHeapBase(HeapIndex::HEAP_STANDARD)));
     }
 
     if (properties.imgInfo) {

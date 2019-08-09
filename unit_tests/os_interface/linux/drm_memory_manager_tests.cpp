@@ -1713,7 +1713,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleIsCre
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
     EXPECT_EQ(1, lseekCalledCount);
 
-    EXPECT_EQ(GmmHelper::canonize(memoryManager->gfxPartition->getHeapBase(HeapIndex::HEAP_STANDARD)), drmAllocation->getGpuBaseAddress());
+    EXPECT_EQ(0llu, drmAllocation->getGpuBaseAddress());
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -1731,7 +1731,7 @@ TEST_F(DrmMemoryManagerTest, givenLimitedRangeAllocatorWhenBufferFromSharedHandl
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
 
-    EXPECT_EQ(GmmHelper::canonize(memoryManager->gfxPartition->getHeapBase(HeapIndex::HEAP_STANDARD)), drmAllocation->getGpuBaseAddress());
+    EXPECT_EQ(0llu, drmAllocation->getGpuBaseAddress());
     EXPECT_EQ(1, lseekCalledCount);
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -1749,7 +1749,7 @@ TEST_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSharedHandleIs
     auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation());
     EXPECT_EQ(1, lseekCalledCount);
-    EXPECT_EQ(GmmHelper::canonize(memoryManager->gfxPartition->getHeapBase(HeapIndex::HEAP_STANDARD)), drmAllocation->getGpuBaseAddress());
+    EXPECT_EQ(0llu, drmAllocation->getGpuBaseAddress());
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
