@@ -38,7 +38,7 @@ struct clSetMemObjectDestructorCallbackMtTests : public api_fixture,
     }
 };
 
-TEST_F(clSetMemObjectDestructorCallbackMtTests, bufferDestructorCallback_mtsafe) {
+TEST_F(clSetMemObjectDestructorCallbackMtTests, GivenMultipleThreadsWhenSettingDestructorCallbackThenCallbackWasInvokedForEachThread) {
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 42, nullptr, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);

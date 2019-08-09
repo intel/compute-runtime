@@ -16,7 +16,7 @@ typedef api_tests clGetPlatformIDsMtTests;
 
 namespace ULT {
 
-TEST_F(clGetPlatformIDsMtTests, mtsafeGet) {
+TEST_F(clGetPlatformIDsMtTests, GivenSeparateThreadWhenGettingPlatformIdThenPlatformIdIsCorrect) {
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platform = nullptr;
     cl_platform_id threadPlatform = nullptr;

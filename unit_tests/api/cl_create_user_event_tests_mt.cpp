@@ -15,7 +15,7 @@ typedef api_tests clCreateUserEventMtTests;
 
 namespace ULT {
 
-TEST_F(clCreateUserEventMtTests, WaitForUserEventThatIsCLSubmittedStalls) {
+TEST_F(clCreateUserEventMtTests, GivenClCompleteEventWhenWaitingForEventThenWaitForEventsIsCompleted) {
     auto userEvent = clCreateUserEvent(
         pContext,
         &retVal);
