@@ -24,7 +24,6 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
                 }
                 uint64_t gpuAddress = reinterpret_cast<uint64_t>(allocationData.hostPtr);
                 allocation = new MemoryAllocation(allocationData.type, cpuAllocation, cpuAllocation, gpuAddress, allocationData.size, counter++, MemoryPool::LocalMemory, false, false, false);
-                allocation->setGpuBaseAddress(gpuAddress);
             } else {
                 allocation = allocateGraphicsMemory(allocationData);
             }
