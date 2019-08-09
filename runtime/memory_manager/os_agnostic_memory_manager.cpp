@@ -317,7 +317,9 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(GraphicsAlloca
     auto memoryAllocation = new MemoryAllocation(allocationType, driverAllocatedCpuPointer, pMem, limitedGpuAddress, memSize,
                                                  count, pool, multiOsContextCapable, uncacheable, flushL3Required);
 
-    memoryAllocation->setGpuBaseAddress(GmmHelper::canonize(gfxPartition->getHeapBase(heap)));
+    if (heap == HeapIndex::HEAP_EXTERNAL) {
+        memoryAllocation->setGpuBaseAddress(GmmHelper::canonize(gfxPartition->getHeapBase(heap)));
+    }
     memoryAllocation->sizeToFree = alignedSize;
 
     return memoryAllocation;
