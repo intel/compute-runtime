@@ -1,14 +1,14 @@
-%global neo_commit_id ab74b60
+%global neo_commit_id dd689ec3ed
 
 Name: intel-opencl
-Version: 19.28.13502
+Version: 19.31.13700
 Release: 1%{?dist}
 Summary: Intel(R) Graphics Compute Runtime for OpenCL(TM)
 
 Group: System Environment/Libraries
 License: MIT
 URL: https://github.com/intel/compute-runtime
-Source0: https://github.com/intel/compute-runtime/archive/%{neo_commit_id}.tar.gz
+Source0: https://github.com/intel/compute-runtime/archive/%{neo_commit_id}/neo-%{neo_commit_id}.tar.gz
 
 %if 0%{?el7}
 BuildRequires: centos-release-scl epel-release
@@ -18,13 +18,13 @@ BuildRequires: make libva-devel gcc-c++ cmake
 %endif
 
 BuildRequires: intel-gmmlib-devel >= 19.2.3
-Requires: intel-gmmlib >= 19.2.3
-
 BuildRequires: intel-igc-opencl-devel >= 1.0.10
+
+Requires: intel-gmmlib >= 19.2.3
 Requires: intel-igc-opencl >= 1.0.10
 
 %description
-
+Intel(R) Graphics Compute Runtime for OpenCL(TM).
 
 %prep
 
@@ -34,7 +34,7 @@ echo "==== BUILD ===="
 rm -rf *
 
 mkdir neo
-tar xzf $RPM_SOURCE_DIR/%{neo_commit_id}.tar.gz -C neo --strip-components=1
+tar xzf $RPM_SOURCE_DIR/neo-%{neo_commit_id}.tar.gz -C neo --strip-components=1
 
 mkdir build
 cd build

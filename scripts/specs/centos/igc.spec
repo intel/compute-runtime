@@ -1,4 +1,4 @@
-%global igc_commit_id c7dec76146e3a18b9ed9f489d033e65ff224e869
+%global igc_commit_id e2936cf325b81797f252ba5f9fc318666c895f81
 %global cclang_commit_id 41cad395859684b18e762ca4a2c713c2fa349622
 %global spirv_llvm_commit_id 83298e3c9b124486c16d0fde54c764a6c5a2b554
 %global llvm_commit_id release_80
@@ -6,7 +6,7 @@
 %global llvm_patches_id a4af5b1386430fdbc7ea82b95706f231c656b5cf
 %global major_version 1
 %global minor_version 0
-%global patch_version 10
+%global patch_version 2364
 %global package_release 1
 
 Name:       intel-igc
@@ -29,6 +29,7 @@ BuildRequires: devtoolset-4-gcc-c++ cmake3
 BuildRequires: git make patch pkgconfig python2 procps bison flex
 
 %description
+Intel(R) Graphics Compiler for OpenCL(TM).
 
 %package       core
 Summary:       Intel(R) Graphics Compiler Core
@@ -36,13 +37,13 @@ Summary:       Intel(R) Graphics Compiler Core
 %description   core
 
 %package       opencl
-Summary:       Intel(R) Graphics Compiler Frontend for OpenCL(TM)
+Summary:       Intel(R) Graphics Compiler Frontend
 Requires:      %{name}-core = %{version}-%{release}
 
 %description   opencl
 
 %package       opencl-devel
-Summary:       Intel(R) Graphics Compiler development package for OpenCL(TM)
+Summary:       Intel(R) Graphics Compiler development package
 Requires:      %{name}-opencl = %{version}-%{release}
 
 %description   opencl-devel
@@ -118,14 +119,14 @@ echo "==== DONE ===="
 %files core
 %defattr(-,root,root)
 /usr/lib64/libiga64.so.%{major_version}
-/usr/lib64/libiga64.so.%{major_version}.%{minor_version}.%{patch_version}
+/usr/lib64/libiga64.so.%{major_version}.%{minor_version}.10
 /usr/lib64/libigc.so.%{major_version}
-/usr/lib64/libigc.so.%{major_version}.%{minor_version}.%{patch_version}
+/usr/lib64/libigc.so.%{major_version}.%{minor_version}.10
 
 %files opencl
 %defattr(-,root,root)
 /usr/lib64/libigdfcl.so.%{major_version}
-/usr/lib64/libigdfcl.so.%{major_version}.%{minor_version}.%{patch_version}
+/usr/lib64/libigdfcl.so.%{major_version}.%{minor_version}.10
 /usr/lib64/libopencl-clang.so.8
 
 %files opencl-devel
