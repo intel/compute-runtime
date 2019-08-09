@@ -35,7 +35,6 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                    bool validateHostPtrMemory,
                                    ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
                                                                                  drm(executionEnvironment.osInterface->get()->getDrm()),
-                                                                                 pinBB(nullptr),
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
     supportsMultiStorageResources = false;
