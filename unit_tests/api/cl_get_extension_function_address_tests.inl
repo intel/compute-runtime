@@ -147,4 +147,14 @@ TEST_F(clGetExtensionFunctionAddressTests, GivenClEnqueueMemAdviseINTELWhenGetti
     auto retVal = clGetExtensionFunctionAddress("clEnqueueMemAdviseINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueMemAdviseINTEL));
 }
+
+TEST_F(clGetExtensionFunctionAddressTests, GivenClGetDeviceGlobalVariablePointerINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clGetDeviceGlobalVariablePointerINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetDeviceGlobalVariablePointerINTEL));
+}
+
+TEST_F(clGetExtensionFunctionAddressTests, GivenClGetDeviceFunctionPointerINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clGetDeviceFunctionPointerINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetDeviceFunctionPointerINTEL));
+}
 } // namespace ULT

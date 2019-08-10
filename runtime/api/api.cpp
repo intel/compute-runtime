@@ -3791,6 +3791,8 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemcpyINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueMigrateMemINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemAdviseINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clGetDeviceFunctionPointerINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clGetDeviceGlobalVariablePointerINTEL);
 
     void *ret = sharingFactory.getExtensionFunctionAddress(funcName);
     if (ret != nullptr) {
@@ -4888,6 +4890,68 @@ cl_int CL_API_CALL clAddCommentINTEL(cl_platform_id platform, const char *commen
 
     if (retVal == CL_SUCCESS && aubCenter) {
         aubCenter->getAubManager()->addComment(comment);
+    }
+
+    return retVal;
+}
+
+cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
+    cl_device_id device,
+    cl_program program,
+    const char *globalVariableName,
+    size_t *globalVariableSizeRet,
+    void **globalVariablePointerRet) {
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("device", device, "program", program,
+                   "globalVariableName", globalVariableName,
+                   "globalVariablePointerRet", globalVariablePointerRet);
+    retVal = validateObjects(device, program);
+    if (globalVariablePointerRet == nullptr) {
+        retVal = CL_INVALID_ARG_VALUE;
+    }
+
+    if (CL_SUCCESS == retVal) {
+        Program *pProgram = (Program *)(program);
+        const auto &symbols = pProgram->getSymbols();
+        auto symbolIt = symbols.find(globalVariableName);
+        if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.type == NEO::SymbolInfo::Function)) {
+            retVal = CL_INVALID_ARG_VALUE;
+        } else {
+            if (globalVariableSizeRet != nullptr) {
+                *globalVariableSizeRet = symbolIt->second.symbol.size;
+            }
+            *globalVariablePointerRet = reinterpret_cast<void *>(symbolIt->second.gpuAddress);
+        }
+    }
+
+    return retVal;
+}
+
+cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
+    cl_device_id device,
+    cl_program program,
+    const char *functionName,
+    cl_ulong *functionPointerRet) {
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("device", device, "program", program,
+                   "functionName", functionName,
+                   "functionPointerRet", functionPointerRet);
+    retVal = validateObjects(device, program);
+    if ((CL_SUCCESS == retVal) && (functionPointerRet == nullptr)) {
+        retVal = CL_INVALID_ARG_VALUE;
+    }
+
+    if (CL_SUCCESS == retVal) {
+        Program *pProgram = (Program *)(program);
+        const auto &symbols = pProgram->getSymbols();
+        auto symbolIt = symbols.find(functionName);
+        if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.type != NEO::SymbolInfo::Function)) {
+            retVal = CL_INVALID_ARG_VALUE;
+        } else {
+            *functionPointerRet = static_cast<cl_ulong>(symbolIt->second.gpuAddress);
+        }
     }
 
     return retVal;

@@ -1002,6 +1002,19 @@ cl_int clEnqueueMemAdviseINTEL(
     cl_event *event);
 }
 
+cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
+    cl_device_id device,
+    cl_program program,
+    const char *functionName,
+    cl_ulong *functionPointerRet);
+
+cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
+    cl_device_id device,
+    cl_program program,
+    const char *globalVariableName,
+    size_t *globalVariableSizeRet,
+    void **globalVariablePointerRet);
+
 // OpenCL 2.2
 
 cl_int CL_API_CALL clSetProgramSpecializationConstant(
