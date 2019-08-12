@@ -220,7 +220,8 @@ Buffer *Buffer::create(Context *context,
     }
 
     if (!memory) {
-        AllocationProperties allocProperties = MemoryPropertiesParser::getAllocationProperties(properties, allocateMemory, size, allocationType, context->areMultiStorageAllocationsPreferred());
+        MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+        AllocationProperties allocProperties = MemoryPropertiesParser::getAllocationProperties(memoryProperties, allocateMemory, size, allocationType, context->areMultiStorageAllocationsPreferred());
         memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
     }
 
@@ -233,7 +234,8 @@ Buffer *Buffer::create(Context *context,
         allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
         zeroCopyAllowed = false;
         copyMemoryFromHostPtr = true;
-        AllocationProperties allocProperties = MemoryPropertiesParser::getAllocationProperties(properties, true, size, allocationType, context->areMultiStorageAllocationsPreferred());
+        MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+        AllocationProperties allocProperties = MemoryPropertiesParser::getAllocationProperties(memoryProperties, true, size, allocationType, context->areMultiStorageAllocationsPreferred());
         memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
     }
 

@@ -88,7 +88,7 @@ class MemObjHelper {
         return validateExtraMemoryProperties(properties);
     }
 
-    static AllocationProperties getAllocationPropertiesWithImageInfo(ImageInfo &imgInfo, bool allocateMemory, const MemoryProperties &memoryProperties) {
+    static AllocationProperties getAllocationPropertiesWithImageInfo(ImageInfo &imgInfo, bool allocateMemory, const MemoryPropertiesFlags &memoryProperties) {
         AllocationProperties allocationProperties{allocateMemory, imgInfo, GraphicsAllocation::AllocationType::IMAGE};
         MemoryPropertiesParser::fillPoliciesInProperties(allocationProperties, memoryProperties);
         return allocationProperties;

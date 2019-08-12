@@ -6,6 +6,7 @@
  */
 
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "test.h"
@@ -55,23 +56,29 @@ TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledT
 }
 
 TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCalledThenUncacheableFlagIsCorrectlySet) {
-    MemoryProperties memoryProperties;
-    memoryProperties.flags_intel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
+    MemoryProperties properties;
+    properties.flags_intel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
     auto allocationFlags = MemoryPropertiesParser::getAllocationProperties(memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_TRUE(allocationFlags.flags.uncacheable);
 
-    memoryProperties.flags_intel = 0;
+    properties.flags_intel = 0;
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
     allocationFlags = MemoryPropertiesParser::getAllocationProperties(memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_FALSE(allocationFlags.flags.uncacheable);
 }
 
 TEST(AllocationFlagsTest, givenReadOnlyResourceFlagWhenGetAllocationFlagsIsCalledThenFlushL3FlagsAreCorrectlySet) {
+    MemoryProperties properties;
+    properties.flags = CL_MEM_READ_ONLY;
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+
     auto allocationFlags =
-        MemoryPropertiesParser::getAllocationProperties(CL_MEM_READ_ONLY, true, 0, GraphicsAllocation::AllocationType::BUFFER, false);
+        MemoryPropertiesParser::getAllocationProperties(memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForRead);
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForWrite);
 
-    allocationFlags = MemoryPropertiesParser::getAllocationProperties(0, true, 0, GraphicsAllocation::AllocationType::BUFFER, false);
+    allocationFlags = MemoryPropertiesParser::getAllocationProperties({}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false);
     EXPECT_TRUE(allocationFlags.flags.flushL3RequiredForRead);
     EXPECT_TRUE(allocationFlags.flags.flushL3RequiredForWrite);
 }

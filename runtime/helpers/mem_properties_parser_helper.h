@@ -10,6 +10,7 @@
 #include "runtime/memory_manager/allocation_properties.h"
 
 #include "mem_obj_types.h"
+#include "memory_properties_flags.h"
 
 namespace NEO {
 
@@ -17,14 +18,14 @@ class MemoryPropertiesParser {
   public:
     static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &propertiesStruct);
 
-    static AllocationProperties getAllocationProperties(MemoryProperties memoryProperties, bool allocateMemory,
+    static AllocationProperties getAllocationProperties(MemoryPropertiesFlags memoryProperties, bool allocateMemory,
                                                         size_t size, GraphicsAllocation::AllocationType type, bool multiStorageResource) {
         AllocationProperties allocationProperties(allocateMemory, size, type, multiStorageResource);
         fillPoliciesInProperties(allocationProperties, memoryProperties);
         return allocationProperties;
     }
 
-    static void fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties);
+    static void fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryPropertiesFlags &memoryProperties);
 
     static void fillCachePolicyInProperties(AllocationProperties &allocationProperties, bool uncached, bool readOnly,
                                             bool deviceOnlyVisibilty) {

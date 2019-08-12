@@ -29,10 +29,10 @@ bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_
     return true;
 }
 
-void MemoryPropertiesParser::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties) {
+void MemoryPropertiesParser::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryPropertiesFlags &memoryProperties) {
     fillCachePolicyInProperties(allocationProperties,
-                                isValueSet(memoryProperties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE),
-                                isValueSet(memoryProperties.flags, CL_MEM_READ_ONLY),
+                                memoryProperties.locallyUncachedResource,
+                                memoryProperties.readOnly,
                                 false);
 }
 
