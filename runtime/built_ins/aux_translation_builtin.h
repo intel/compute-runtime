@@ -27,7 +27,6 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
 
         for (auto &memObj : *operationParams.memObjsForAuxTranslation) {
             DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder;
-            auto graphicsAllocation = memObj->getGraphicsAllocation();
             size_t allocationSize = alignUp(memObj->getSize(), 512);
 
             UNRECOVERABLE_IF(builder.getMaxNumDispatches() != 1);
@@ -43,14 +42,13 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
 
             if (AuxTranslationDirection::AuxToNonAux == operationParams.auxTranslationDirection) {
                 builder.setKernel(convertToNonAuxKernel[kernelInstanceNumber++].get());
-                builder.setArg(0, memObj);
-                builder.setArgSvm(1, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), nullptr, 0u);
             } else {
                 UNRECOVERABLE_IF(AuxTranslationDirection::NonAuxToAux != operationParams.auxTranslationDirection);
                 builder.setKernel(convertToAuxKernel[kernelInstanceNumber++].get());
-                builder.setArgSvm(0, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), nullptr, 0u);
-                builder.setArg(1, memObj);
             }
+
+            builder.setArg(0, memObj);
+            builder.setArg(1, memObj);
 
             size_t xGws = allocationSize / 16;
 

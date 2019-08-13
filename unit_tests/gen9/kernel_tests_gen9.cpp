@@ -46,7 +46,7 @@ GEN9TEST_F(Gen9HardwareCommandsTest, givenBufferThatIsNotZeroCopyWhenSurfaceStat
     auto gmmHelper = context.getDevice(0)->getExecutionEnvironment()->getGmmHelper();
     gmmHelper->setSimplifiedMocsTableUsage(true);
 
-    buffer->setArgStateful(&surfaceState, false, false, false);
+    buffer->setArgStateful(&surfaceState, false, false, false, false);
     //make sure proper mocs is selected
     constexpr uint32_t expectedMocs = GmmHelper::cacheEnabledIndex;
     EXPECT_EQ(expectedMocs, surfaceState.getMemoryObjectControlStateIndexToMocsTables());

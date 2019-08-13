@@ -20,6 +20,7 @@ void BuiltinDispatchInfoBuilder::populate(Context &context, Device &device, EBui
 
 BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device) : BuiltinDispatchInfoBuilder(kernelsLib) {
     BuiltinDispatchInfoBuilder::populate(context, device, EBuiltInOps::AuxTranslation, "", "fullCopy", baseKernel);
+
     resizeKernelInstances(5);
 }
 
@@ -28,15 +29,17 @@ void BuiltInOp<EBuiltInOps::AuxTranslation>::resizeKernelInstances(size_t size) 
     convertToAuxKernel.reserve(size);
 
     for (size_t i = convertToNonAuxKernel.size(); i < size; i++) {
-        auto clonedKernel1 = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), nullptr);
-        clonedKernel1->setAuxTranslationFlag(true);
-        auto clonedKernel2 = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), nullptr);
-        clonedKernel2->setAuxTranslationFlag(true);
-        clonedKernel1->cloneKernel(baseKernel);
-        clonedKernel2->cloneKernel(baseKernel);
+        auto clonedNonAuxToAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), nullptr);
+        clonedNonAuxToAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::NonAuxToAux);
 
-        convertToNonAuxKernel.emplace_back(clonedKernel1);
-        convertToAuxKernel.emplace_back(clonedKernel2);
+        auto clonedAuxToNonAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), nullptr);
+        clonedAuxToNonAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::AuxToNonAux);
+
+        clonedNonAuxToAuxKernel->cloneKernel(baseKernel);
+        clonedAuxToNonAuxKernel->cloneKernel(baseKernel);
+
+        convertToAuxKernel.emplace_back(clonedNonAuxToAuxKernel);
+        convertToNonAuxKernel.emplace_back(clonedAuxToNonAuxKernel);
     }
 }
 
