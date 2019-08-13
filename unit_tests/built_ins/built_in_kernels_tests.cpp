@@ -50,7 +50,7 @@ __kernel void CopyImage3dToBuffer16Bytes(__read_only image3d_t input,
     }
 }
 
-TEST(BuiltInKernelTests, ReadImage) {
+TEST(BuiltInKernelTests, WhenBuiltInCopiesImageThenDataIsWrittenIntoCorrectMemory) {
 
     uint width = 3;
     uint height = 3;
@@ -71,22 +71,22 @@ TEST(BuiltInKernelTests, ReadImage) {
     localSize[2] = depth;
 
     size_t size = width * height * depth * bytesPerChannel * channels;
-    char *ptrSrc = new char[64 + size + 64];
-    char *ptrDst = new char[64 + size + 64];
-    char *ptrZero = new char[64];
+    auto ptrSrc = std::make_unique<char[]>(64 + size + 64);
+    auto ptrDst = std::make_unique<char[]>(64 + size + 64);
+    auto ptrZero = std::make_unique<char[]>(64);
 
-    memset(ptrZero, 0, 64);
-    memset(ptrDst, 0, 64 + size + 64);
-    memset(ptrSrc, 0, 64 + size + 64);
+    memset(ptrZero.get(), 0, 64);
+    memset(ptrDst.get(), 0, 64 + size + 64);
+    memset(ptrSrc.get(), 0, 64 + size + 64);
 
-    char *temp = ptrSrc + 64;
+    char *temp = ptrSrc.get() + 64;
 
     for (uint i = 0; i < size; i++) {
         temp[i] = i;
     }
 
     image im;
-    im.ptr = ptrSrc + 64;
+    im.ptr = ptrSrc.get() + 64;
     im.bytesPerChannel = bytesPerChannel;
     im.channels = channels;
     im.width = width;
@@ -104,7 +104,7 @@ TEST(BuiltInKernelTests, ReadImage) {
             for (uint dimX = 0; dimX < width; dimX++) {
 
                 CopyImage3dToBuffer16Bytes(&im,
-                                           (uchar *)ptrDst + 64,
+                                           (uchar *)ptrDst.get() + 64,
                                            {0, 0, 0, 0},
                                            0,
                                            Pitch);
@@ -115,13 +115,9 @@ TEST(BuiltInKernelTests, ReadImage) {
         globalID[2]++;
     }
 
-    EXPECT_EQ(0, memcmp(im.ptr, ptrDst + 64, size)) << "Data not copied properly!\n";
+    EXPECT_EQ(0, memcmp(im.ptr, ptrDst.get() + 64, size)) << "Data not copied properly!\n";
 
-    EXPECT_EQ(0, memcmp(ptrDst, ptrZero, 64)) << "Data written before passed ptr!\n";
-    EXPECT_EQ(0, memcmp(ptrDst + size + 64, ptrZero, 64)) << "Data written after passed ptr!\n";
-
-    delete[] ptrSrc;
-    delete[] ptrDst;
-    delete[] ptrZero;
+    EXPECT_EQ(0, memcmp(ptrDst.get(), ptrZero.get(), 64)) << "Data written before passed ptr!\n";
+    EXPECT_EQ(0, memcmp(ptrDst.get() + size + 64, ptrZero.get(), 64)) << "Data written after passed ptr!\n";
 }
 } // namespace BuiltinKernelsSimulation
