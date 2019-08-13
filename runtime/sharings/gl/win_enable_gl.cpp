@@ -21,7 +21,7 @@ namespace NEO {
 bool GlSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue,
                                                 cl_int &errcodeRet) {
     if (contextData.get() == nullptr) {
-        contextData.reset(new GlCreateContextProperties);
+        contextData = std::make_unique<GlCreateContextProperties>();
     }
     bool res = false;
 
@@ -67,7 +67,7 @@ bool GlSharingContextBuilder::finalizeProperties(Context &context, int32_t &errc
 }
 
 std::unique_ptr<SharingContextBuilder> GlSharingBuilderFactory::createContextBuilder() {
-    return std::unique_ptr<SharingContextBuilder>(new GlSharingContextBuilder());
+    return std::make_unique<GlSharingContextBuilder>();
 };
 
 void GlSharingBuilderFactory::fillGlobalDispatchTable() {

@@ -23,7 +23,7 @@ namespace NEO {
 
 bool VaSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
     if (contextData.get() == nullptr) {
-        contextData.reset(new VaCreateContextProperties);
+        contextData = std::make_unique<VaCreateContextProperties>();
     }
     bool res = false;
 
@@ -53,7 +53,7 @@ bool VaSharingContextBuilder::finalizeProperties(Context &context, int32_t &errc
 }
 
 std::unique_ptr<SharingContextBuilder> VaSharingBuilderFactory::createContextBuilder() {
-    return std::unique_ptr<SharingContextBuilder>(new VaSharingContextBuilder());
+    return std::make_unique<VaSharingContextBuilder>();
 };
 
 std::string VaSharingBuilderFactory::getExtensions() {

@@ -23,7 +23,7 @@ namespace NEO {
 
 bool D3DSharingContextBuilder<D3DTypesHelper::D3D9>::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
     if (contextData.get() == nullptr) {
-        contextData.reset(new D3DCreateContextProperties<D3DTypesHelper::D3D9>);
+        contextData = std::make_unique<D3DCreateContextProperties<D3DTypesHelper::D3D9>>();
     }
     bool res = false;
 
@@ -44,7 +44,7 @@ bool D3DSharingContextBuilder<D3DTypesHelper::D3D9>::processProperties(cl_contex
 
 bool D3DSharingContextBuilder<D3DTypesHelper::D3D10>::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
     if (contextData.get() == nullptr) {
-        contextData.reset(new D3DCreateContextProperties<D3DTypesHelper::D3D10>);
+        contextData = std::make_unique<D3DCreateContextProperties<D3DTypesHelper::D3D10>>();
     }
     bool res = false;
 
@@ -60,7 +60,7 @@ bool D3DSharingContextBuilder<D3DTypesHelper::D3D10>::processProperties(cl_conte
 
 bool D3DSharingContextBuilder<D3DTypesHelper::D3D11>::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
     if (contextData.get() == nullptr) {
-        contextData.reset(new D3DCreateContextProperties<D3DTypesHelper::D3D11>);
+        contextData = std::make_unique<D3DCreateContextProperties<D3DTypesHelper::D3D11>>();
     }
     bool res = false;
     switch (propertyType) {
@@ -99,7 +99,7 @@ bool D3DSharingContextBuilder<D3D>::finalizeProperties(Context &context, int32_t
 
 template <typename D3D>
 std::unique_ptr<SharingContextBuilder> D3DSharingBuilderFactory<D3D>::createContextBuilder() {
-    return std::unique_ptr<SharingContextBuilder>(new D3DSharingContextBuilder<D3D>());
+    return std::make_unique<D3DSharingContextBuilder<D3D>>();
 };
 
 std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D9>::getExtensions() {

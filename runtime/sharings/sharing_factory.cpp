@@ -13,7 +13,7 @@
 namespace NEO {
 
 std::unique_ptr<SharingFactory> SharingFactory::build() {
-    std::unique_ptr<SharingFactory> res(new SharingFactory());
+    auto res = std::make_unique<SharingFactory>();
 
     for (auto &builder : sharingContextBuilder) {
         if (builder == nullptr)
