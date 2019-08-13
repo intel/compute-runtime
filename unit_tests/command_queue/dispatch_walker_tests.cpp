@@ -1346,7 +1346,7 @@ HWTEST_F(DispatchWalkerTest, givenKernelWhenNonAuxToAuxWhenTranslationRequiredTh
     bool dcFlushRequired = (executionEnvironment->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN8_CORE);
 
     auto beginPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[0]));
-    EXPECT_EQ(dcFlushRequired, beginPipeControl->getDcFlushEnable());
+    EXPECT_TRUE(beginPipeControl->getDcFlushEnable());
     EXPECT_TRUE(beginPipeControl->getCommandStreamerStallEnable());
 
     auto endPipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*(pipeControls[1]));

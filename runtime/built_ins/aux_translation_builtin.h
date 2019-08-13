@@ -34,8 +34,7 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
 
             if (kernelInstanceNumber == 0) {
                 // Before Kernel
-                bool dcFlush = (AuxTranslationDirection::AuxToNonAux == operationParams.auxTranslationDirection);
-                registerPipeControlProgramming<GfxFamily>(builder.getDispatchInfo(0).dispatchInitCommands, dcFlush);
+                registerPipeControlProgramming<GfxFamily>(builder.getDispatchInfo(0).dispatchInitCommands, true);
             }
             if (kernelInstanceNumber == numMemObjectsToTranslate - 1) {
                 // After Kernel
