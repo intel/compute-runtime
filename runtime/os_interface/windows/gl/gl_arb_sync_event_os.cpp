@@ -93,12 +93,12 @@ bool setupArbSyncObject(GLSharingFunctions &sharing, OSInterface &osInterface, C
     glSyncInfo.submissionSynchronizationObject = submissionSyncEventInfo.hSyncObject;
     glSyncInfo.waitCalled = false;
 
-    bool setupFailed = false;
-    setupFailed |= (glSyncInfo.event == nullptr);
-    setupFailed |= (glSyncInfo.submissionEvent == nullptr);
-    setupFailed |= (0 != serverSyncInitStatus);
-    setupFailed |= (0 != clientSyncInitStatus);
-    setupFailed |= (0 != submissionSyncInitStatus);
+    bool setupFailed =
+        (glSyncInfo.event == nullptr) ||
+        (glSyncInfo.submissionEvent == nullptr) ||
+        (0 != serverSyncInitStatus) ||
+        (0 != clientSyncInitStatus) ||
+        (0 != submissionSyncInitStatus);
 
     if (setupFailed) {
         DEBUG_BREAK_IF(true);

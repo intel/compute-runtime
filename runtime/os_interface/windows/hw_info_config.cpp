@@ -36,7 +36,8 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
                                                   static_cast<bool>(outHwInfo->featureTable.ftrGpGpuMidBatchPreempt));
     outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
 
-    outHwInfo->capabilityTable.instrumentationEnabled &= haveInstrumentation;
+    outHwInfo->capabilityTable.instrumentationEnabled =
+        (outHwInfo->capabilityTable.instrumentationEnabled && haveInstrumentation);
 
     auto &kmdNotifyProperties = outHwInfo->capabilityTable.kmdNotifyProperties;
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);

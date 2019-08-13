@@ -87,7 +87,8 @@ bool Wddm::init(HardwareInfo &outHardwareInfo) {
 
     outHardwareInfo.capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
     outHardwareInfo.capabilityTable.maxRenderFrequency = maxRenderFrequency;
-    outHardwareInfo.capabilityTable.instrumentationEnabled &= instrumentationEnabled;
+    outHardwareInfo.capabilityTable.instrumentationEnabled =
+        (outHardwareInfo.capabilityTable.instrumentationEnabled && instrumentationEnabled);
 
     HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
 
