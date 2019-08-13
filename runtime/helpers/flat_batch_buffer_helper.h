@@ -32,6 +32,7 @@ class FlatBatchBufferHelper {
     virtual GraphicsAllocation *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode) = 0;
     virtual char *getIndirectPatchCommands(size_t &indirectPatchCommandsSize, std::vector<PatchInfoData> &indirectPatchInfo) = 0;
     virtual void removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping) = 0;
+    virtual void collectScratchSpacePatchInfo(uint64_t scratchAddress, uint64_t commandOffset, const LinearStream &csr) = 0;
     static void fixCrossThreadDataInfo(std::vector<PatchInfoData> &data, size_t offsetCrossThreadData, uint64_t gpuAddress);
 
     std::vector<CommandChunk> &getCommandChunkList() { return commandChunkList; }

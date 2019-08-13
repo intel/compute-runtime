@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/helpers/flat_batch_buffer_helper.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/preamble_base.inl"
 
@@ -25,15 +26,16 @@ uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream,
-                                                const HardwareInfo &hwInfo,
-                                                int scratchSize,
-                                                uint64_t scratchAddress,
-                                                uint32_t maxFrontEndThreads) {
+uint64_t PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream,
+                                                    const HardwareInfo &hwInfo,
+                                                    int scratchSize,
+                                                    uint64_t scratchAddress,
+                                                    uint32_t maxFrontEndThreads) {
     using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
 
     addPipeControlBeforeVfeCmd(pCommandStream, &hwInfo);
 
+    auto scratchSpaceAddressOffset = static_cast<uint64_t>(pCommandStream->getUsed() + MEDIA_VFE_STATE::PATCH_CONSTANTS::SCRATCHSPACEBASEPOINTER_BYTEOFFSET);
     auto pMediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(pCommandStream->getSpace(sizeof(MEDIA_VFE_STATE)));
     *pMediaVfeState = GfxFamily::cmdInitMediaVfeState;
     pMediaVfeState->setMaximumNumberOfThreads(maxFrontEndThreads);
@@ -45,6 +47,8 @@ void PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream,
     uint32_t highAddress = static_cast<uint32_t>(0xFFFFFFFF & (scratchAddress >> 32));
     pMediaVfeState->setScratchSpaceBasePointer(lowAddress);
     pMediaVfeState->setScratchSpaceBasePointerHigh(highAddress);
+
+    return scratchSpaceAddressOffset;
 }
 
 template <typename GfxFamily>

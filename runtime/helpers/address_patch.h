@@ -21,6 +21,7 @@ enum PatchInfoAllocationType {
     TagAddress,
     TagValue,
     GUCStartMessage,
+    ScratchSpace
 };
 
 struct PatchInfoData {

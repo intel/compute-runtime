@@ -5,7 +5,9 @@
  *
  */
 
+#include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/command_stream/preemption.h"
+#include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/utilities/stackvec.h"
 #include "test.h"
@@ -186,4 +188,16 @@ HWTEST_F(PreambleTest, givenDefaultPreambleWhenGetThreadsMaxNumberIsCalledThenMa
 
     uint32_t expected = hwInfo.gtSystemInfo.EUCount * threadsPerEU;
     EXPECT_EQ(expected, value);
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenPreambleHelperWhenMediaVfeStateIsProgrammedThenOffsetToCommandIsReturned) {
+    char buffer[64];
+    MockGraphicsAllocation graphicsAllocation(buffer, sizeof(buffer));
+    LinearStream preambleStream(&graphicsAllocation, graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    FlatBatchBufferHelperHw<FamilyType> helper(*mockDevice->getExecutionEnvironment());
+    uint64_t addressToPatch = 0xC0DEC0DE;
+
+    auto offset = PreambleHelper<FamilyType>::programVFEState(&preambleStream, mockDevice->getHardwareInfo(), 1024u, addressToPatch, 10u);
+    EXPECT_NE(0u, offset);
 }

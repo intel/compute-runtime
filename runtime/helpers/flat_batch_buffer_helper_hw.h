@@ -18,6 +18,7 @@ class FlatBatchBufferHelperHw : public FlatBatchBufferHelper {
     GraphicsAllocation *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode) override;
     char *getIndirectPatchCommands(size_t &indirectPatchCommandsSize, std::vector<PatchInfoData> &indirectPatchInfo) override;
     void removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping) override;
+    void collectScratchSpacePatchInfo(uint64_t scratchAddress, uint64_t commandOffset, const LinearStream &csr) override;
 };
 
 } // namespace NEO

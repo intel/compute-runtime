@@ -190,4 +190,13 @@ void FlatBatchBufferHelperHw<GfxFamily>::removePipeControlData(size_t pipeContro
     }
 }
 
+template <typename GfxFamily>
+void FlatBatchBufferHelperHw<GfxFamily>::collectScratchSpacePatchInfo(uint64_t scratchAddress, uint64_t commandOffset, const LinearStream &csr) {
+    if (scratchAddress) {
+        auto scratchOffset = reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(csr.getCpuBase()) + commandOffset)[0] & 0x3FF;
+        PatchInfoData patchInfoData(scratchAddress, scratchOffset, PatchInfoAllocationType::ScratchSpace, csr.getGraphicsAllocation()->getGpuAddress(), commandOffset, PatchInfoAllocationType::Default);
+        patchInfoCollection.push_back(patchInfoData);
+    }
+}
+
 }; // namespace NEO
