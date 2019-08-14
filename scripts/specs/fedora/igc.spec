@@ -1,7 +1,7 @@
-%global igc_commit_id e2936cf325b81797f252ba5f9fc318666c895f81
+%global igc_commit_id 7c89d200bf9c5b5900d961bc6f7df5373f3d0ab6
 %global major_version 1
 %global minor_version 0
-%global patch_version 2364
+%global patch_version 2407
 %global package_release 1
 
 Name: intel-igc

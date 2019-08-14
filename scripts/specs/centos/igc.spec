@@ -1,12 +1,12 @@
-%global igc_commit_id e2936cf325b81797f252ba5f9fc318666c895f81
+%global igc_commit_id 7c89d200bf9c5b5900d961bc6f7df5373f3d0ab6
 %global cclang_commit_id 41cad395859684b18e762ca4a2c713c2fa349622
 %global spirv_llvm_commit_id 83298e3c9b124486c16d0fde54c764a6c5a2b554
 %global llvm_commit_id release_80
 %global clang_commit_id release_80
-%global llvm_patches_id a4af5b1386430fdbc7ea82b95706f231c656b5cf
+%global llvm_patches_id 605739e09f4b5b176a93613c43727fd37fd77e71
 %global major_version 1
 %global minor_version 0
-%global patch_version 2364
+%global patch_version 2407
 %global package_release 1
 
 Name:       intel-igc
