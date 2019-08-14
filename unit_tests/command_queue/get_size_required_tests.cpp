@@ -71,7 +71,7 @@ HWTEST_F(GetSizeRequiredTest, enqueueMarker) {
 
     size_t expectedStreamSize = 0;
     if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        expectedStreamSize = alignUp(PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(),
+        expectedStreamSize = alignUp(PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(pDevice->getHardwareInfo()),
                                      +MemoryConstants::cacheLineSize);
     }
     EXPECT_EQ(expectedStreamSize, commandStream.getUsed() - usedBeforeCS);
@@ -97,7 +97,7 @@ HWTEST_F(GetSizeRequiredTest, enqueueBarrierDoesntConsumeAnySpace) {
 
     size_t expectedStreamSize = 0;
     if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        expectedStreamSize = alignUp(PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(),
+        expectedStreamSize = alignUp(PipeControlHelper<FamilyType>::getSizeForPipeControlWithPostSyncOperation(pDevice->getHardwareInfo()),
                                      +MemoryConstants::cacheLineSize);
     }
 

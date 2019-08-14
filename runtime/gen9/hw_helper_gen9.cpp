@@ -21,7 +21,7 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
 }
 
 template <>
-void PipeControlHelper<Family>::addPipeControlWA(LinearStream &commandStream) {
+void PipeControlHelper<Family>::addPipeControlWA(LinearStream &commandStream, const HardwareInfo &hwInfo) {
     auto pCmd = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(Family::PIPE_CONTROL)));
     *pCmd = Family::cmdInitPipeControl;
     pCmd->setCommandStreamerStallEnable(true);

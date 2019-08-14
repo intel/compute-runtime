@@ -148,8 +148,9 @@ typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndPr
                                                                                                        POST_SYNC_OPERATION operation,
                                                                                                        uint64_t gpuAddress,
                                                                                                        uint64_t immediateData,
-                                                                                                       bool dcFlush) {
-    addPipeControlWA(commandStream);
+                                                                                                       bool dcFlush,
+                                                                                                       const HardwareInfo &hwInfo) {
+    addPipeControlWA(commandStream, hwInfo);
 
     auto pipeControl = obtainPipeControl(commandStream, dcFlush);
     pipeControl->setPostSyncOperation(operation);
@@ -183,7 +184,7 @@ typename GfxFamily::PIPE_CONTROL *PipeControlHelper<GfxFamily>::obtainPipeContro
 }
 
 template <typename GfxFamily>
-void PipeControlHelper<GfxFamily>::addPipeControlWA(LinearStream &commandStream) {
+void PipeControlHelper<GfxFamily>::addPipeControlWA(LinearStream &commandStream, const HardwareInfo &hwInfo) {
 }
 
 template <typename GfxFamily>
@@ -197,8 +198,8 @@ size_t PipeControlHelper<GfxFamily>::getSizeForSinglePipeControl() {
 }
 
 template <typename GfxFamily>
-size_t PipeControlHelper<GfxFamily>::getSizeForPipeControlWithPostSyncOperation() {
-    const auto pipeControlCount = HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2u : 1u;
+size_t PipeControlHelper<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo) {
+    const auto pipeControlCount = HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired(hwInfo) ? 2u : 1u;
     return pipeControlCount * getSizeForSinglePipeControl();
 }
 

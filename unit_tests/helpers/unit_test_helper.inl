@@ -44,4 +44,9 @@ template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::evaluateGshAddressForScratchSpace(uint64_t usedScratchGpuAddress, uint64_t retrievedGshAddress) {
     return usedScratchGpuAddress == retrievedGshAddress;
 }
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
+    return false;
+}
 } // namespace NEO

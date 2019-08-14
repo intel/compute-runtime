@@ -193,10 +193,10 @@ struct PipeControlHelper {
                                                                       POST_SYNC_OPERATION operation,
                                                                       uint64_t gpuAddress,
                                                                       uint64_t immediateData,
-                                                                      bool dcFlush);
-    static void addPipeControlWA(LinearStream &commandStream);
+                                                                      bool dcFlush, const HardwareInfo &hwInfo);
+    static void addPipeControlWA(LinearStream &commandStream, const HardwareInfo &hwInfo);
     static PIPE_CONTROL *addPipeControl(LinearStream &commandStream, bool dcFlush);
-    static size_t getSizeForPipeControlWithPostSyncOperation();
+    static size_t getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo);
     static size_t getSizeForSinglePipeControl();
 
   protected:

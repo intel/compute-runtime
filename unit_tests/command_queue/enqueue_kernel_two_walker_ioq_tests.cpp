@@ -40,7 +40,7 @@ HWTEST_F(IOQWithTwoWalkers, shouldHaveAPipecontrolBetweenWalkers2) {
 
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
-    auto WaNeeded = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired();
+    auto WaNeeded = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo());
 
     auto itorCmd = find<PIPE_CONTROL *>(itorWalker1, itorWalker2);
     ASSERT_NE(itorWalker2, itorCmd);

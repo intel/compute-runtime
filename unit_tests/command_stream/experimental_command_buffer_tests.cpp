@@ -90,7 +90,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     it = hwParserExCmdBuffer.cmdList.begin();
     GenCmdList::iterator end = hwParserExCmdBuffer.cmdList.end();
 
-    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         //1st PIPE_CONTROL with CS Stall
         ASSERT_NE(end, it);
         pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
@@ -120,7 +120,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(exAllocationGpuAddr, semaphoreCmd->getSemaphoreGraphicsAddress());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
-    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         //3rd PIPE_CONTROL with CS stall
         it++;
         ASSERT_NE(end, it);
@@ -218,7 +218,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     hwParserExCmdBuffer.parseCommands<FamilyType>(*mockExCmdBuffer->currentStream, cmbBufferOffset);
     it = hwParserExCmdBuffer.cmdList.begin();
     GenCmdList::iterator end = hwParserExCmdBuffer.cmdList.end();
-    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         it++;
     }
     //2nd PIPE_CONTROL
@@ -233,7 +233,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(expectedTsAddress, pipeControl->getAddress());
     EXPECT_EQ(expectedTsAddressHigh, pipeControl->getAddressHigh());
     //omit SEMAPHORE_WAIT and 3rd PIPE_CONTROL
-    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         it++;
     }
     it++;

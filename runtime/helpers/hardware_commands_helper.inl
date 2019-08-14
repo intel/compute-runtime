@@ -23,7 +23,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-bool HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired() { return false; }
+bool HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) { return false; }
 
 template <typename GfxFamily>
 uint32_t HardwareCommandsHelper<GfxFamily>::computeSlmValues(uint32_t valueIn) {

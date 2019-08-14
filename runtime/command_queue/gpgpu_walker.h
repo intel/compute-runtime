@@ -112,7 +112,8 @@ class GpgpuWalkerHelper {
 
     static void dispatchProfilingCommandsStart(
         TagNode<HwTimeStamps> &hwTimeStamps,
-        LinearStream *commandStream);
+        LinearStream *commandStream,
+        const HardwareInfo &hwInfo);
 
     static void dispatchProfilingCommandsEnd(
         TagNode<HwTimeStamps> &hwTimeStamps,
@@ -132,7 +133,8 @@ class GpgpuWalkerHelper {
         LinearStream *cmdStream,
         WALKER_TYPE<GfxFamily> *walkerCmd,
         TagNode<TimestampPacketStorage> *timestampPacketNode,
-        TimestampPacketStorage::WriteOperationType writeOperationType);
+        TimestampPacketStorage::WriteOperationType writeOperationType,
+        const HardwareInfo &hwInfo);
 
     static void dispatchScheduler(
         LinearStream &commandStream,

@@ -171,19 +171,20 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     LinearStream *cmdStream,
     WALKER_TYPE<GfxFamily> *walkerCmd,
     TagNode<TimestampPacketStorage> *timestampPacketNode,
-    TimestampPacketStorage::WriteOperationType writeOperationType) {
+    TimestampPacketStorage::WriteOperationType writeOperationType,
+    const HardwareInfo &hwInfo) {
 
     if (TimestampPacketStorage::WriteOperationType::AfterWalker == writeOperationType) {
         uint64_t address = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
         PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(*cmdStream,
-                                                                                   PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, 0, false);
+                                                                                   PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, 0, false, hwInfo);
     }
 }
 
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
     size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS(pKernel) +
-                  sizeof(PIPE_CONTROL) * (HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2 : 1);
+                  sizeof(PIPE_CONTROL) * (HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired(pKernel->getDevice().getHardwareInfo()) ? 2 : 1);
     size += HardwareCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(commandQueue, pKernel, 0U);
     size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(commandQueue.getDevice());
     if (reserveProfilingCmdsSpace) {

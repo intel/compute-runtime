@@ -57,7 +57,7 @@ inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfStartCommands(
 
     // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
     if (hwTimeStamps != nullptr) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream);
+        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream, commandQueue.getDevice().getHardwareInfo());
     }
     if (hwPerfCounter != nullptr) {
         GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(commandQueue, *hwPerfCounter, commandStream);
@@ -109,7 +109,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     if (currentTimestampPacketNodes && commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         auto timestampPacketNode = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
-        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, walkerCmd, timestampPacketNode, TimestampPacketStorage::WriteOperationType::AfterWalker);
+        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, walkerCmd, timestampPacketNode, TimestampPacketStorage::WriteOperationType::AfterWalker, commandQueue.getDevice().getHardwareInfo());
     }
 
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(

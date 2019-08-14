@@ -27,5 +27,7 @@ struct UnitTestHelper {
     static uint32_t getDefaultSshUsage();
 
     static bool evaluateGshAddressForScratchSpace(uint64_t usedScratchGpuAddress, uint64_t retrievedGshAddress);
+
+    static bool isPipeControlWArequired(const HardwareInfo &hwInfo);
 };
 } // namespace NEO

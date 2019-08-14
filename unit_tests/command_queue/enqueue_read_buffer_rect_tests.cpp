@@ -298,7 +298,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, blockingRequiresPipeContr
     auto *cmd = (PIPE_CONTROL *)*itorCmd;
     EXPECT_NE(cmdList.end(), itorCmd);
 
-    if (::renderCoreFamily == IGFX_GEN9_CORE) {
+    if (UnitTestHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         // SKL: two PIPE_CONTROLs following GPGPU_WALKER: first has DcFlush and second has Write HwTag
         EXPECT_FALSE(cmd->getDcFlushEnable());
         // Move to next PPC

@@ -104,7 +104,8 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     TagNode<HwTimeStamps> &hwTimeStamps,
-    LinearStream *commandStream) {
+    LinearStream *commandStream,
+    const HardwareInfo &hwInfo) {
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
@@ -113,7 +114,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
 
     PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(*commandStream,
                                                                                PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
-                                                                               timeStampAddress, 0llu, false);
+                                                                               timeStampAddress, 0llu, false, hwInfo);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
     timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextStartTS);

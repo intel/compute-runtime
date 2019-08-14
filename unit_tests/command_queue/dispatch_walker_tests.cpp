@@ -1374,7 +1374,7 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
     auto hwTimeStamp1 = timeStampAllocator.getTag();
     ASSERT_NE(nullptr, hwTimeStamp1);
     if (checkForStart) {
-        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream);
+        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream, pDevice->getHardwareInfo());
     } else {
         GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp1, &cmdStream);
     }
@@ -1382,7 +1382,7 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
     auto hwTimeStamp2 = timeStampAllocator.getTag();
     ASSERT_NE(nullptr, hwTimeStamp2);
     if (checkForStart) {
-        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp2, &cmdStream);
+        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp2, &cmdStream, pDevice->getHardwareInfo());
     } else {
         GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp2, &cmdStream);
     }
@@ -1413,7 +1413,7 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
     if (checkForStart) {
         auto itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itorPipeCtrl);
-        if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+        if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
             itorPipeCtrl++;
         }
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
@@ -1425,7 +1425,7 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
 
         itorPipeCtrl++;
         itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(itorPipeCtrl, cmdList.end());
-        if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired()) {
+        if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
             itorPipeCtrl++;
         }
         ASSERT_NE(cmdList.end(), itorPipeCtrl);

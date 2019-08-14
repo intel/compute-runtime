@@ -16,7 +16,7 @@
 namespace NEO {
 
 template <>
-bool HardwareCommandsHelper<SKLFamily>::isPipeControlWArequired() { return true; }
+bool HardwareCommandsHelper<SKLFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) { return true; }
 
 template struct HardwareCommandsHelper<SKLFamily>;
 } // namespace NEO
