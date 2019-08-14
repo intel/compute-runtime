@@ -249,7 +249,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
 
     bo->gpuAddress = gpuVirtualAddress;
 
-    auto allocation = new DrmAllocation(allocationData.type, bo, const_cast<void *>(alignedPtr), gpuVirtualAddress,
+    auto allocation = new DrmAllocation(allocationData.type, bo, const_cast<void *>(allocationData.hostPtr), gpuVirtualAddress,
                                         allocationData.size, MemoryPool::System4KBPages, false);
     allocation->setAllocationOffset(offsetInPage);
 
