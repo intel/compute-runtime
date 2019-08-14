@@ -17,6 +17,12 @@ class AubHelper : public NonCopyableOrMovableClass {
   public:
     static bool isOneTimeAubWritableAllocationType(const GraphicsAllocation::AllocationType &type) {
         switch (type) {
+        case GraphicsAllocation::AllocationType::PIPE:
+        case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
+        case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
+        case GraphicsAllocation::AllocationType::KERNEL_ISA:
+        case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
+        case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
         case GraphicsAllocation::AllocationType::BUFFER:
         case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
         case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:

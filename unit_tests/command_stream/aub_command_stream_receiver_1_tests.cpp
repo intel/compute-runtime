@@ -724,6 +724,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
 
     const GraphicsAllocation::AllocationType onlyOneTimeAubWritableTypes[] = {
+        GraphicsAllocation::AllocationType::PIPE,
+        GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
+        GraphicsAllocation::AllocationType::GLOBAL_SURFACE,
+        GraphicsAllocation::AllocationType::KERNEL_ISA,
+        GraphicsAllocation::AllocationType::PRIVATE_SURFACE,
+        GraphicsAllocation::AllocationType::SCRATCH_SURFACE,
         GraphicsAllocation::AllocationType::BUFFER,
         GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
         GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
