@@ -41,12 +41,13 @@ HWTEST_F(TimestampPacketAubTests, givenTwoBatchedEnqueuesWhenDependencyIsResolve
     std::fill(writePattern2, writePattern2 + sizeof(writePattern2), 1);
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, CL_MEM_COPY_HOST_PTR, bufferSize, initialMemory, retVal));
+    //make sure that GPU copy is used
     buffer->forceDisallowCPUCopy = true;
     cl_event outEvent1, outEvent2;
 
     pCmdQ->enqueueWriteBuffer(buffer.get(), CL_FALSE, 0, bufferSize, writePattern1, nullptr, 0, nullptr, &outEvent1);
     auto node1 = castToObject<Event>(outEvent1)->getTimestampPacketNodes()->peekNodes().at(0);
-    node1->getBaseGraphicsAllocation()->setAubWritable(true, GraphicsAllocation::defaultBank); // allow to write again after Buffer::create
+    node1->getBaseGraphicsAllocation()->setAubWritable(true, 0xffffffff); // allow to write again after Buffer::create
 
     pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writePattern2, nullptr, 0, nullptr, &outEvent2);
     auto node2 = castToObject<Event>(outEvent2)->getTimestampPacketNodes()->peekNodes().at(0);
