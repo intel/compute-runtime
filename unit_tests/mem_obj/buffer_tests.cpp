@@ -1200,6 +1200,7 @@ TEST_P(ValidHostPtr, getAddress) {
     if (flags & CL_MEM_USE_HOST_PTR && buffer->isMemObjZeroCopy()) {
         // Buffer should use host ptr
         EXPECT_EQ(pHostPtr, address);
+        EXPECT_EQ(pHostPtr, buffer->getHostPtr());
     } else {
         // Buffer should have a different ptr
         EXPECT_NE(pHostPtr, address);
@@ -1208,6 +1209,7 @@ TEST_P(ValidHostPtr, getAddress) {
     if (flags & CL_MEM_COPY_HOST_PTR) {
         // Buffer should contain a copy of host memory
         EXPECT_EQ(0, memcmp(pHostPtr, address, sizeof(g_scTestBufferSizeInBytes)));
+        EXPECT_EQ(nullptr, buffer->getHostPtr());
     }
 }
 
