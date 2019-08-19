@@ -79,10 +79,14 @@ TEST(Buffer, givenReadOnlySetOfInputFlagsWhenPassedToisReadOnlyMemoryPermittedBy
         using Buffer::isReadOnlyMemoryPermittedByFlags;
     };
     cl_mem_flags flags = CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY;
-    EXPECT_TRUE(MockBuffer::isReadOnlyMemoryPermittedByFlags(flags));
+    MemoryProperties properties{flags};
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+    EXPECT_TRUE(MockBuffer::isReadOnlyMemoryPermittedByFlags(memoryProperties));
 
     flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY;
-    EXPECT_TRUE(MockBuffer::isReadOnlyMemoryPermittedByFlags(flags));
+    properties = flags;
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+    EXPECT_TRUE(MockBuffer::isReadOnlyMemoryPermittedByFlags(memoryProperties));
 }
 
 class BufferReadOnlyTest : public testing::TestWithParam<uint64_t> {
@@ -95,7 +99,9 @@ TEST_P(BufferReadOnlyTest, givenNonReadOnlySetOfInputFlagsWhenPassedToisReadOnly
     };
 
     cl_mem_flags flags = GetParam() | CL_MEM_USE_HOST_PTR;
-    EXPECT_FALSE(MockBuffer::isReadOnlyMemoryPermittedByFlags(flags));
+    MemoryProperties properties{flags};
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+    EXPECT_FALSE(MockBuffer::isReadOnlyMemoryPermittedByFlags(memoryProperties));
 }
 static cl_mem_flags nonReadOnlyFlags[] = {
     CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY,

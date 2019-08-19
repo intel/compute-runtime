@@ -230,7 +230,7 @@ Buffer *Buffer::create(Context *context,
     }
 
     //if allocation failed for CL_MEM_USE_HOST_PTR case retry with non zero copy path
-    if ((properties.flags & CL_MEM_USE_HOST_PTR) && !memory && Buffer::isReadOnlyMemoryPermittedByFlags(properties.flags)) {
+    if ((properties.flags & CL_MEM_USE_HOST_PTR) && !memory && Buffer::isReadOnlyMemoryPermittedByFlags(memoryProperties)) {
         allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
         zeroCopyAllowed = false;
         copyMemoryFromHostPtr = true;
@@ -391,9 +391,9 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const Memor
     return GraphicsAllocation::AllocationType::BUFFER;
 }
 
-bool Buffer::isReadOnlyMemoryPermittedByFlags(cl_mem_flags flags) {
+bool Buffer::isReadOnlyMemoryPermittedByFlags(const MemoryPropertiesFlags &properties) {
     // Host won't access or will only read and kernel will only read
-    return (flags & (CL_MEM_HOST_NO_ACCESS | CL_MEM_HOST_READ_ONLY)) && (flags & CL_MEM_READ_ONLY);
+    return (properties.hostNoAccess || properties.hostReadOnly) && properties.readOnly;
 }
 
 Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
