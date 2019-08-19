@@ -179,7 +179,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         auto address = getTagAllocation()->getGpuAddress();
         PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(commandStreamTask,
                                                                                    PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                                                                                   address, taskCount + 1, dispatchFlags.dcFlush, device.getHardwareInfo());
+                                                                                   address, taskCount + 1, dispatchFlags.dcFlush, peekHwInfo());
 
         this->latestSentTaskCount = taskCount + 1;
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", taskCount);
