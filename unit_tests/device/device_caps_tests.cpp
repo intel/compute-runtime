@@ -625,7 +625,7 @@ TEST(Device_GetCaps, deviceReportsThrottleHintsExtension) {
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_throttle_hints")));
 }
 
-TEST(Device_GetCaps, givenAtleastOCL2DeviceThenExposesMipmapImageExtensions) {
+TEST(Device_GetCaps, givenAtleastOCL2DeviceThenExposesMipMapAndUnifiedMemoryExtensions) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(20);
 
@@ -634,9 +634,10 @@ TEST(Device_GetCaps, givenAtleastOCL2DeviceThenExposesMipmapImageExtensions) {
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_mipmap_image")));
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_mipmap_image_writes")));
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_unified_shared_memory")));
 }
 
-TEST(Device_GetCaps, givenOCL12DeviceThenDoesNotExposeMipmapImageExtensions) {
+TEST(Device_GetCaps, givenOCL12DeviceThenDoesNotExposesMipMapAndUnifiedMemoryExtensions) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(12);
 
@@ -645,6 +646,7 @@ TEST(Device_GetCaps, givenOCL12DeviceThenDoesNotExposeMipmapImageExtensions) {
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_mipmap_image"))));
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_mipmap_image_writes"))));
+    EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_unified_shared_memory"))));
 }
 
 TEST(Device_GetCaps, givenDeviceThatDoesntHaveFp64ThenExtensionIsNotReported) {
