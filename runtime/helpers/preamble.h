@@ -27,7 +27,9 @@ struct PreambleHelper {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     static void programL3(LinearStream *pCommandStream, uint32_t l3Config);
-    static void programPipelineSelect(LinearStream *pCommandStream, const DispatchFlags &dispatchFlags);
+    static void programPipelineSelect(LinearStream *pCommandStream,
+                                      const DispatchFlags &dispatchFlags,
+                                      const HardwareInfo &hwInfo);
     static uint32_t getDefaultThreadArbitrationPolicy();
     static void programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy);
     static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr);

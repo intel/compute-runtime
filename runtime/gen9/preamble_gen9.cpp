@@ -28,7 +28,10 @@ uint32_t PreambleHelper<SKLFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 }
 
 template <>
-void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStream, const DispatchFlags &dispatchFlags) {
+void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStream,
+                                                      const DispatchFlags &dispatchFlags,
+                                                      const HardwareInfo &hwInfo) {
+
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
 
     auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));

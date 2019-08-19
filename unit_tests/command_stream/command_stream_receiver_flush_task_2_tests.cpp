@@ -9,6 +9,7 @@
 #include "runtime/command_stream/csr_definitions.h"
 #include "runtime/command_stream/scratch_space_controller.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/state_base_address.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
@@ -983,8 +984,29 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleNotSentThenReq
     EXPECT_EQ(mediaSamplerConfigChangedSize, mediaSamplerConfigNotChangedSize);
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenSpecialPipelineSelectModeChangedWhenGetCmdSizeForPielineSelectIsCalledThenCorrectSizeIsReturned) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getGpgpuCommandStreamReceiver();
+
+    CsrSizeRequestFlags csrSizeRequest = {};
+    DispatchFlags flags;
+    csrSizeRequest.specialPipelineSelectModeChanged = true;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
+    size_t size = commandStreamReceiver.getCmdSizeForPipelineSelect();
+
+    size_t expectedSize = sizeof(PIPELINE_SELECT);
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlPriorToPipelineSelectWArequired(pDevice->getHardwareInfo())) {
+        expectedSize += sizeof(PIPE_CONTROL);
+    }
+    EXPECT_EQ(expectedSize, size);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleSentThenRequiredCsrSizeDependsOnmediaSamplerConfigChanged) {
-    typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
     UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getGpgpuCommandStreamReceiver();
     CsrSizeRequestFlags csrSizeRequest = {};
     DispatchFlags flags;
@@ -1000,7 +1022,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleSentThenRequir
 
     EXPECT_NE(mediaSamplerConfigChangedSize, mediaSamplerConfigNotChangedSize);
     auto difference = mediaSamplerConfigChangedSize - mediaSamplerConfigNotChangedSize;
-    EXPECT_EQ(sizeof(PIPELINE_SELECT), difference);
+
+    size_t expectedDifference = sizeof(PIPELINE_SELECT);
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlPriorToPipelineSelectWArequired(pDevice->getHardwareInfo())) {
+        expectedDifference += sizeof(PIPE_CONTROL);
+    }
+
+    EXPECT_EQ(expectedDifference, difference);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenSamplerCacheFlushSentThenRequiredCsrSizeContainsPipecontrolSize) {

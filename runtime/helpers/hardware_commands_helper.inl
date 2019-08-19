@@ -26,6 +26,11 @@ template <typename GfxFamily>
 bool HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) { return false; }
 
 template <typename GfxFamily>
+bool HardwareCommandsHelper<GfxFamily>::isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo) {
+    return false;
+}
+
+template <typename GfxFamily>
 uint32_t HardwareCommandsHelper<GfxFamily>::computeSlmValues(uint32_t valueIn) {
     auto value = std::max(valueIn, 1024u);
     value = Math::nextPowerOfTwo(value);
