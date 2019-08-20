@@ -32,9 +32,7 @@ const char *deviceExtensionsList = "cl_khr_3d_image_writes "
                                    "cl_intel_driver_diagnostics "
                                    "cl_khr_priority_hints "
                                    "cl_khr_throttle_hints "
-                                   "cl_khr_create_command_queue "
-                                   "cl_khr_int64_base_atomics "
-                                   "cl_khr_int64_extended_atomics ";
+                                   "cl_khr_create_command_queue ";
 
 std::string getExtensionsList(const HardwareInfo &hwInfo) {
     std::string allExtensionsList;
@@ -53,6 +51,11 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
 
     if (hwInfo.capabilityTable.ftrSupportsFP64) {
         allExtensionsList += "cl_khr_fp64 ";
+    }
+
+    if (hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
+        allExtensionsList += "cl_khr_int64_base_atomics ";
+        allExtensionsList += "cl_khr_int64_extended_atomics ";
     }
 
     if (hwInfo.capabilityTable.supportsVme) {

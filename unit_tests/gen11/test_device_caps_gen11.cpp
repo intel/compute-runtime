@@ -40,6 +40,7 @@ LKFTEST_F(Gen11DeviceCaps, givenLkfWhenExtensionStringIsCheckedThenFP64IsNotRepo
 LKFTEST_F(Gen11DeviceCaps, givenLkfWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
 }
+
 ICLLPTEST_F(Gen11DeviceCaps, lpSkusDontSupportFP64) {
     const auto &caps = pDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;

@@ -49,6 +49,7 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     1,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
     false,                                         // blitterOperationsSupported
+    false,                                         // ftrSupportsInteger64BitAtomics
     false,                                         // ftrSupportsFP64
     false,                                         // ftrSupports64BitMath
     false,                                         // ftrSvm

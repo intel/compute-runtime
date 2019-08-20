@@ -21,3 +21,7 @@ CFLTEST_F(CflDeviceCaps, reportsOcl21) {
 CFLTEST_F(CflDeviceCaps, GivenCFLWhenCheckftr64KBpagesThenTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }
+
+CFLTEST_F(CflDeviceCaps, givenCflWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
+}

@@ -59,3 +59,7 @@ GLKTEST_F(GlkUsDeviceIdTest, isSimulationCap) {
 GLKTEST_F(GlkUsDeviceIdTest, GivenGLKWhenCheckftr64KBpagesThenFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }
+
+GLKTEST_F(GlkUsDeviceIdTest, givenGlkWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
+}

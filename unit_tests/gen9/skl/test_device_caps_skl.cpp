@@ -69,3 +69,7 @@ SKLTEST_F(SklUsDeviceIdTest, isSimulationCap) {
 SKLTEST_F(SklUsDeviceIdTest, GivenSKLWhenCheckftr64KBpagesThenTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }
+
+SKLTEST_F(SklUsDeviceIdTest, givenSklWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
+}

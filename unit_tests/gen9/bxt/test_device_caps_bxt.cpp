@@ -47,6 +47,10 @@ BXTTEST_F(BxtDeviceCaps, GivenBXTWhenCheckftr64KBpagesThenFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }
 
+BXTTEST_F(BxtDeviceCaps, givenBXTWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
+}
+
 typedef Test<DeviceFixture> BxtUsDeviceIdTest;
 
 BXTTEST_F(BxtUsDeviceIdTest, isSimulationCap) {

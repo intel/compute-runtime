@@ -49,6 +49,7 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     1,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
     false,                                         // blitterOperationsSupported
+    false,                                         // ftrSupportsInteger64BitAtomics
     false,                                         // ftrSupportsFP64
     false,                                         // ftrSupports64BitMath
     false,                                         // ftrSvm
@@ -64,7 +65,8 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     true,                                          // sourceLevelDebuggerSupported
     false,                                         // supportsVme
     false,                                         // supportCacheFlushAfterWalker
-    true                                           // supportsImages
+    true,                                          // supportsImages
+    true                                           // supportsDeviceEnqueue
 };
 
 WorkaroundTable EHL::workaroundTable = {};

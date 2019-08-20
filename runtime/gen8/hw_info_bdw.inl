@@ -54,6 +54,7 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
     false,                                         // blitterOperationsSupported
+    true,                                          // ftrSupportsInteger64BitAtomics
     true,                                          // ftrSupportsFP64
     true,                                          // ftrSupports64BitMath
     true,                                          // ftrSvm
