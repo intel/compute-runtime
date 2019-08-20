@@ -47,19 +47,19 @@ typedef ImageValidateTest InvalidSize;
 
 TEST_P(ValidDescriptor, validSizePassedToValidateReturnsSuccess) {
     imageDesc = GetParam();
-    retVal = Image::validate(&context, 0, &surfaceFormat, &imageDesc, nullptr);
+    retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST_P(InvalidDescriptor, zeroSizePassedToValidateReturnsError) {
     imageDesc = GetParam();
-    retVal = Image::validate(&context, 0, &surfaceFormat, &imageDesc, nullptr);
+    retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
     EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
 }
 
 TEST_P(InvalidSize, invalidSizePassedToValidateReturnsError) {
     imageDesc = GetParam();
-    retVal = Image::validate(&context, 0, &surfaceFormat, &imageDesc, nullptr);
+    retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
     EXPECT_EQ(CL_INVALID_IMAGE_SIZE, retVal);
 }
 
@@ -878,11 +878,11 @@ TEST(ImageValidatorTest, givenInvalidImage2dSizesWithoutParentObjectWhenValidate
     descriptor.image_height = 1;
     descriptor.image_width = 0;
     descriptor.mem_object = nullptr;
-    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, 0, &surfaceFormat, &descriptor, dummyPtr));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, {}, &surfaceFormat, &descriptor, dummyPtr));
 
     descriptor.image_height = 0;
     descriptor.image_width = 1;
-    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, 0, &surfaceFormat, &descriptor, dummyPtr));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, {}, &surfaceFormat, &descriptor, dummyPtr));
 };
 TEST(ImageValidatorTest, givenNV12Image2dAsParentImageWhenValidateImageZeroSizedThenReturnsSuccess) {
     NullImage image;
@@ -898,7 +898,7 @@ TEST(ImageValidatorTest, givenNV12Image2dAsParentImageWhenValidateImageZeroSized
     descriptor.image_row_pitch = 0;
     descriptor.mem_object = &image;
 
-    EXPECT_EQ(CL_SUCCESS, Image::validate(&context, 0, &surfaceFormat, &descriptor, dummyPtr));
+    EXPECT_EQ(CL_SUCCESS, Image::validate(&context, {}, &surfaceFormat, &descriptor, dummyPtr));
 };
 TEST(ImageValidatorTest, givenNonNV12Image2dAsParentImageWhenValidateImageZeroSizedThenReturnsError) {
     NullImage image;
@@ -919,5 +919,5 @@ TEST(ImageValidatorTest, givenNonNV12Image2dAsParentImageWhenValidateImageZeroSi
     image.imageDesc = descriptor;
     descriptor.mem_object = &image;
 
-    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, 0, &surfaceFormat, &descriptor, dummyPtr));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, {}, &surfaceFormat, &descriptor, dummyPtr));
 };

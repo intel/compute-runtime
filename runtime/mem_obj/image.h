@@ -74,20 +74,20 @@ class Image : public MemObj {
                                     cl_mem_flags flags, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount);
 
     static cl_int validate(Context *context,
-                           const MemoryProperties &properties,
+                           const MemoryPropertiesFlags &memoryProperties,
                            const SurfaceFormatInfo *surfaceFormat,
                            const cl_image_desc *imageDesc,
                            const void *hostPtr);
     static cl_int validateImageFormat(const cl_image_format *imageFormat);
 
     static int32_t validatePlanarYUV(Context *context,
-                                     cl_mem_flags flags,
+                                     const MemoryPropertiesFlags &memoryProperties,
                                      const cl_image_desc *imageDesc,
                                      const void *hostPtr);
 
-    static int32_t validatePackedYUV(cl_mem_flags flags, const cl_image_desc *imageDesc);
+    static int32_t validatePackedYUV(const MemoryPropertiesFlags &memoryProperties, const cl_image_desc *imageDesc);
 
-    static cl_int validateImageTraits(Context *context, cl_mem_flags flags, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr);
+    static cl_int validateImageTraits(Context *context, const MemoryPropertiesFlags &memoryProperties, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr);
 
     static size_t calculateHostPtrSize(const size_t *region, size_t rowPitch, size_t slicePitch, size_t pixelSize, uint32_t imageType);
 

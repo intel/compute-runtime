@@ -6,6 +6,7 @@
  */
 
 #include "core/helpers/aligned_memory.h"
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/image.h"
@@ -53,7 +54,7 @@ class PackedYuvImageTest : public testing::Test,
         if (retVal != CL_SUCCESS)
             return;
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-        retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, nullptr);
+        retVal = Image::validate(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({flags}), surfaceFormat, &imageDesc, nullptr);
     }
 
     cl_int retVal = CL_SUCCESS;

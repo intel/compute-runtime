@@ -23,6 +23,7 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/mem_properties_parser_helper.h"
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/queue_helpers.h"
 #include "runtime/helpers/validators.h"
@@ -1052,7 +1053,7 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
     }
     if (CL_SUCCESS == retVal) {
         surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(memFlags, imageFormat);
-        retVal = Image::validate(pContext, memFlags, surfaceFormat, imageDesc, nullptr);
+        retVal = Image::validate(pContext, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags({memFlags}), surfaceFormat, imageDesc, nullptr);
     }
     if (CL_SUCCESS == retVal) {
         retVal = Image::getImageParams(pContext, memFlags, surfaceFormat, imageDesc, imageRowPitch, imageSlicePitch);

@@ -431,7 +431,7 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
 }
 
 cl_int Image::validate(Context *context,
-                       const MemoryProperties &properties,
+                       const MemoryPropertiesFlags &memoryProperties,
                        const SurfaceFormatInfo *surfaceFormat,
                        const cl_image_desc *imageDesc,
                        const void *hostPtr) {
@@ -466,7 +466,7 @@ cl_int Image::validate(Context *context,
                 ((parentBuffer->getFlags() & CL_MEM_USE_HOST_PTR) && (reinterpret_cast<uint64_t>(parentBuffer->getHostPtr()) % (*baseAddressAlignment))) ||
                 (minimumBufferSize > parentBuffer->getSize())) {
                 return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
-            } else if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR) || isValueSet(properties.flags, CL_MEM_COPY_HOST_PTR)) {
+            } else if (memoryProperties.useHostPtr || memoryProperties.copyHostPtr) {
                 return CL_INVALID_VALUE;
             }
         }
@@ -501,7 +501,7 @@ cl_int Image::validate(Context *context,
         return CL_INVALID_IMAGE_DESCRIPTOR;
     }
 
-    return validateImageTraits(context, properties.flags, &surfaceFormat->OCLImageFormat, imageDesc, hostPtr);
+    return validateImageTraits(context, memoryProperties, &surfaceFormat->OCLImageFormat, imageDesc, hostPtr);
 }
 
 cl_int Image::validateImageFormat(const cl_image_format *imageFormat) {
@@ -528,7 +528,7 @@ cl_int Image::validateImageFormat(const cl_image_format *imageFormat) {
 }
 
 cl_int Image::validatePlanarYUV(Context *context,
-                                cl_mem_flags flags,
+                                const MemoryPropertiesFlags &memoryProperties,
                                 const cl_image_desc *imageDesc,
                                 const void *hostPtr) {
     cl_int errorCode = CL_SUCCESS;
@@ -554,7 +554,7 @@ cl_int Image::validatePlanarYUV(Context *context,
             errorCode = CL_INVALID_IMAGE_DESCRIPTOR;
             break;
         }
-        if (!(flags & CL_MEM_HOST_NO_ACCESS)) {
+        if (!memoryProperties.hostNoAccess) {
             errorCode = CL_INVALID_VALUE;
             break;
         } else {
@@ -577,10 +577,10 @@ cl_int Image::validatePlanarYUV(Context *context,
     return errorCode;
 }
 
-cl_int Image::validatePackedYUV(cl_mem_flags flags, const cl_image_desc *imageDesc) {
+cl_int Image::validatePackedYUV(const MemoryPropertiesFlags &memoryProperties, const cl_image_desc *imageDesc) {
     cl_int errorCode = CL_SUCCESS;
     while (true) {
-        if (!(flags & CL_MEM_READ_ONLY)) {
+        if (!memoryProperties.readOnly) {
             errorCode = CL_INVALID_VALUE;
             break;
         } else {
@@ -595,11 +595,11 @@ cl_int Image::validatePackedYUV(cl_mem_flags flags, const cl_image_desc *imageDe
     return errorCode;
 }
 
-cl_int Image::validateImageTraits(Context *context, cl_mem_flags flags, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr) {
+cl_int Image::validateImageTraits(Context *context, const MemoryPropertiesFlags &memoryProperties, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr) {
     if (IsNV12Image(imageFormat))
-        return validatePlanarYUV(context, flags, imageDesc, hostPtr);
+        return validatePlanarYUV(context, memoryProperties, imageDesc, hostPtr);
     else if (IsPackedYuvImage(imageFormat))
-        return validatePackedYUV(flags, imageDesc);
+        return validatePackedYUV(memoryProperties, imageDesc);
 
     return CL_SUCCESS;
 }
@@ -1058,7 +1058,8 @@ Image *Image::validateAndCreateImage(Context *context,
 
     const auto surfaceFormat = Image::getSurfaceFormatFromTable(properties.flags, imageFormat);
 
-    errcodeRet = Image::validate(context, properties, surfaceFormat, imageDesc, hostPtr);
+    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+    errcodeRet = Image::validate(context, memoryProperties, surfaceFormat, imageDesc, hostPtr);
     if (errcodeRet != CL_SUCCESS) {
         return nullptr;
     }
