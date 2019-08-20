@@ -72,7 +72,7 @@ TEST(Sip, When32BitAddressesAreBeingForcedThenSipLlHas32BitAddresses) {
     EXPECT_EQ(nullptr, strstr(src, "target triple = \"spir64\""));
 }
 
-TEST(Sip, SipLlContainsMetadataRequiredByCompiler) {
+TEST(Sip, GivenSipLlWhenGettingMetadataThenMetadataRequiredByCompilerIsReturned) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
     const char *src = getSipLlSrc(*mockDevice);
@@ -82,7 +82,7 @@ TEST(Sip, SipLlContainsMetadataRequiredByCompiler) {
     EXPECT_NE(nullptr, strstr(src, "!opencl.kernels"));
 }
 
-TEST(Sip, getType) {
+TEST(Sip, WhenGettingTypeThenCorrectTypeIsReturned) {
     SipKernel csr{SipKernelType::Csr, GlobalMockSipProgram::getSipProgramWithCustomBinary()};
     EXPECT_EQ(SipKernelType::Csr, csr.getType());
 
