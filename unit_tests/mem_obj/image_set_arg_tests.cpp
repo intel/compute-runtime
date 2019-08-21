@@ -1106,3 +1106,17 @@ HWTEST_F(ImageSetArgTest, givenImageWithOffsetGreaterThan4GBWhenSurfaceStateIsPr
 
     EXPECT_EQ(expectedAddress, surfaceAddress);
 }
+
+HWTEST_F(ImageSetArgTest, givenMediaCompressedResourceSurfaceModeIsNone) {
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+    RENDER_SURFACE_STATE surfaceState;
+
+    auto gmm = srcImage->getGraphicsAllocation()->getDefaultGmm();
+
+    gmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    gmm->isRenderCompressed = true;
+    srcImage->setImageArg(&surfaceState, false, 0);
+
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
+}

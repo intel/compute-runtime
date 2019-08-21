@@ -282,6 +282,7 @@ class ImageHw : public Image {
     void setMediaSurfaceRotation(void *memory) override;
     void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override;
     void appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState);
+    void setFlagsForMediaCompression(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
     void transformImage2dArrayTo3d(void *memory) override;
     void transformImage3dTo2dArray(void *memory) override;
     static Image *create(Context *context,
