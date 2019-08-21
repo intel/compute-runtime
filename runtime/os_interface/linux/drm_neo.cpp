@@ -11,8 +11,6 @@
 #include "core/utilities/directory.h"
 #include "runtime/os_interface/os_inc_base.h"
 
-#include "drm/i915_drm.h"
-
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -131,6 +129,10 @@ void Drm::checkPreemptionSupport() {
     preemptionSupported = ((0 == ret) && (value & I915_SCHEDULER_CAP_PREEMPTION));
 }
 
+void Drm::checkQueueSliceSupport() {
+    sliceCountChangeSupported = getQueueSliceCount(&sseu) == 0 ? true : false;
+}
+
 void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
     drm_i915_gem_context_param gcp = {};
     gcp.ctx_id = drmContextId;
@@ -139,6 +141,37 @@ void Drm::setLowPriorityContextParam(uint32_t drmContextId) {
 
     auto retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &gcp);
     UNRECOVERABLE_IF(retVal != 0);
+}
+
+int Drm::getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu) {
+    drm_i915_gem_context_param contextParam = {};
+    contextParam.param = I915_CONTEXT_PARAM_SSEU;
+    sseu->engine.engine_class = I915_ENGINE_CLASS_RENDER;
+    sseu->engine.engine_instance = I915_EXEC_DEFAULT;
+    contextParam.value = reinterpret_cast<uint64_t>(sseu);
+    contextParam.size = sizeof(struct drm_i915_gem_context_param_sseu);
+
+    return ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &contextParam);
+}
+
+uint64_t Drm::getSliceMask(uint64_t sliceCount) {
+    return static_cast<uint64_t>((1 << sliceCount) - 1);
+}
+bool Drm::setQueueSliceCount(uint64_t sliceCount) {
+    if (sliceCountChangeSupported) {
+        drm_i915_gem_context_param contextParam = {};
+        sseu.slice_mask = getSliceMask(sliceCount);
+
+        contextParam.param = I915_CONTEXT_PARAM_SSEU;
+        contextParam.ctx_id = 0;
+        contextParam.value = reinterpret_cast<uint64_t>(&sseu);
+        contextParam.size = sizeof(struct drm_i915_gem_context_param_sseu);
+        int retVal = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
+        if (retVal == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 uint32_t Drm::createDrmContext() {

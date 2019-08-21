@@ -14,19 +14,24 @@
 
 #include <cstdio>
 #include <fstream>
+#include <limits.h>
 
 using namespace NEO;
 
 // Mock DRM class that responds to DRM_IOCTL_I915_GETPARAMs
 class DrmMock : public Drm {
   public:
+    using Drm::checkQueueSliceSupport;
     using Drm::getInstanceFromRegion;
     using Drm::getMemoryTypeFromRegion;
+    using Drm::getQueueSliceCount;
     using Drm::memoryInfo;
     using Drm::preemptionSupported;
     using Drm::query;
+    using Drm::sliceCountChangeSupported;
 
     DrmMock() : Drm(mockFd) {
+        sliceCountChangeSupported = true;
     }
 
     ~DrmMock() {
@@ -80,6 +85,8 @@ class DrmMock : public Drm {
     int StoredHasPooledEU = 1;
     int StoredMinEUinPool = 1;
     int StoredRetVal = 0;
+    int StoredRetValForGetSSEU = 0;
+    int StoredRetValForSetSSEU = 0;
     int StoredRetValForDeviceID = 0;
     int StoredRetValForEUVal = 0;
     int StoredRetValForSSVal = 0;
@@ -118,6 +125,7 @@ class DrmMock : public Drm {
     uint64_t lockedPtr[4];
 
     uint64_t storedGTTSize = 1ull << 47;
+    uint64_t storedParamSseu = ULONG_MAX;
 
     virtual int handleRemainingRequests(unsigned long request, void *arg) { return -1; }
 

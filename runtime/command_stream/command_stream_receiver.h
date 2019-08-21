@@ -240,6 +240,7 @@ class CommandStreamReceiver {
     uint32_t lastSentNumGrfRequired = GrfConfig::DefaultGrfNumber;
     uint32_t requiredThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
     uint32_t lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
+    uint64_t lastSentSliceCount = QueueSliceCount::defaultSliceCount;
 
     uint32_t requiredScratchSize = 0;
     uint32_t requiredPrivateScratchSize = 0;

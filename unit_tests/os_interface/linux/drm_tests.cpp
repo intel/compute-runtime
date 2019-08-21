@@ -320,3 +320,38 @@ TEST(DrmTest, givenDrmWhenGetErrnoIsCalledThenErrnoValueIsReturned) {
     EXPECT_EQ(errno, errnoFromDrm);
     delete pDrm;
 }
+TEST(DrmTest, givenPlatformWhereGetSseuRetFailureWhenCallSetQueueSliceCountThenSliceCountIsNotSet) {
+    uint64_t newSliceCount = 1;
+    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    drm->StoredRetValForGetSSEU = -1;
+    drm->checkQueueSliceSupport();
+
+    EXPECT_FALSE(drm->sliceCountChangeSupported);
+    EXPECT_FALSE(drm->setQueueSliceCount(newSliceCount));
+    EXPECT_NE(drm->getSliceMask(newSliceCount), drm->storedParamSseu);
+}
+
+TEST(DrmTest, givenPlatformWhereSetSseuRetFailureWhenCallSetQueueSliceCountThenReturnFalse) {
+    uint64_t newSliceCount = 1;
+    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    drm->StoredRetValForSetSSEU = -1;
+    drm->StoredRetValForGetSSEU = 0;
+    drm->checkQueueSliceSupport();
+
+    EXPECT_TRUE(drm->sliceCountChangeSupported);
+    EXPECT_FALSE(drm->setQueueSliceCount(newSliceCount));
+}
+
+TEST(DrmTest, givenPlatformWithSupportToChangeSliceCountWhenCallSetQueueSliceCountThenReturnTrue) {
+    uint64_t newSliceCount = 1;
+    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    drm->StoredRetValForSetSSEU = 0;
+    drm->StoredRetValForSetSSEU = 0;
+    drm->checkQueueSliceSupport();
+
+    EXPECT_TRUE(drm->sliceCountChangeSupported);
+    EXPECT_TRUE(drm->setQueueSliceCount(newSliceCount));
+    drm_i915_gem_context_param_sseu sseu = {};
+    EXPECT_EQ(0, drm->getQueueSliceCount(&sseu));
+    EXPECT_EQ(drm->getSliceMask(newSliceCount), sseu.slice_mask);
+}

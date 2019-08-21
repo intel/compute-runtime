@@ -668,6 +668,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo),                           //preemptionMode
         numGrfRequired,                                                                             //numGrfRequired
         L3CachingSettings::l3CacheOn,                                                               //l3CacheSettings
+        getSliceCount(),                                                                            //sliceCount
         blocking,                                                                                   //blocking
         shouldFlushDC(commandType, printfHandler) || allocNeedsFlushDC,                             //dcFlush
         multiDispatchInfo.usesSlm() || multiDispatchInfo.peekParentKernel(),                        //useSLM
@@ -858,6 +859,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         device->getPreemptionMode(),                                         //preemptionMode
         GrfConfig::DefaultGrfNumber,                                         //numGrfRequired
         L3CachingSettings::l3CacheOn,                                        //l3CacheSettings
+        getSliceCount(),                                                     //sliceCount
         blocking,                                                            //blocking
         false,                                                               //dcFlush
         false,                                                               //useSLM

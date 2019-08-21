@@ -149,9 +149,10 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
 
     outHwInfo->capabilityTable.instrumentationEnabled =
         (outHwInfo->capabilityTable.instrumentationEnabled && haveInstrumentation);
+
     outHwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
     outHwInfo->capabilityTable.ftrRenderCompressedImages = false;
-
+    drm->checkQueueSliceSupport();
     drm->checkPreemptionSupport();
     bool preemption = drm->isPreemptionSupported();
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,

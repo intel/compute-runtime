@@ -52,6 +52,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         PreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), nullptr), //preemptionMode
         GrfConfig::DefaultGrfNumber,                                             //numGrfRequired
         L3CachingSettings::l3CacheOn,                                            //l3CacheSettings
+        commandQueue.getSliceCount(),                                            //sliceCount
         true,                                                                    //blocking
         true,                                                                    //dcFlush
         true,                                                                    //useSLM
@@ -193,6 +194,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         preemptionMode,                                                         //preemptionMode
         kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired, //numGrfRequired
         L3CachingSettings::l3CacheOn,                                           //l3CacheSettings
+        commandQueue.getSliceCount(),                                           //sliceCount
         true,                                                                   //blocking
         flushDC,                                                                //dcFlush
         slmUsed,                                                                //useSLM
@@ -285,6 +287,7 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         commandQueue.getDevice().getPreemptionMode(),         //preemptionMode
         GrfConfig::DefaultGrfNumber,                          //numGrfRequired
         L3CachingSettings::l3CacheOn,                         //l3CacheSettings
+        commandQueue.getSliceCount(),                         //sliceCount
         true,                                                 //blocking
         false,                                                //dcFlush
         false,                                                //useSLM

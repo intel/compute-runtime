@@ -7,10 +7,8 @@
 
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
-#include "runtime/helpers/base_object.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/os_context.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"

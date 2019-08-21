@@ -59,6 +59,11 @@ class CommandQueueHw : public CommandQueue {
             getGpgpuCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
             getGpgpuCommandStreamReceiver().enableNTo1SubmissionModel();
         }
+
+        uint64_t requestedSliceCount = getCmdQueueProperties<cl_command_queue_properties>(properties, CL_QUEUE_SLICE_COUNT_INTEL);
+        if (requestedSliceCount > 0) {
+            sliceCount = requestedSliceCount;
+        }
     }
 
     static CommandQueue *create(Context *context,

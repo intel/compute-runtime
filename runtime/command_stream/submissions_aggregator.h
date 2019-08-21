@@ -9,6 +9,7 @@
 #include "core/command_stream/linear_stream.h"
 #include "core/utilities/idlist.h"
 #include "core/utilities/stackvec.h"
+#include "runtime/command_stream/csr_definitions.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/memory_manager/residency_container.h"
 
@@ -27,6 +28,7 @@ struct BatchBuffer {
                 bool requiresCoherency,
                 bool lowPriority,
                 QueueThrottle throttle,
+                uint64_t sliceCount,
                 size_t usedSize,
                 LinearStream *stream);
     BatchBuffer() {}
@@ -37,6 +39,7 @@ struct BatchBuffer {
     bool requiresCoherency = false;
     bool low_priority = false;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
+    uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
     size_t usedSize = 0u;
 
     //only used in drm csr in gem close worker active mode

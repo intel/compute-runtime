@@ -6,6 +6,9 @@
  */
 
 #pragma once
+#include "runtime/os_interface/linux/drm_command_stream.h"
+
+using namespace NEO;
 
 template <typename GfxFamily>
 class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily> {
@@ -13,6 +16,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::commandStream;
     using DrmCommandStreamReceiver<GfxFamily>::makeResidentBufferObjects;
     using DrmCommandStreamReceiver<GfxFamily>::residency;
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::lastSentSliceCount;
 
     TestedDrmCommandStreamReceiver(gemCloseWorkerMode mode, ExecutionEnvironment &executionEnvironment)
         : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, mode) {

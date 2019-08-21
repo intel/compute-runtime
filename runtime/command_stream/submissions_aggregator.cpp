@@ -53,6 +53,10 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
         return;
     }
 
+    if (primaryCommandBuffer->next->batchBuffer.sliceCount != primaryCommandBuffer->batchBuffer.sliceCount) {
+        return;
+    }
+
     auto nextCommandBuffer = primaryCommandBuffer->next;
     ResourcePackage newResources;
 
@@ -94,8 +98,16 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
     }
 }
 
-NEO::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_t startOffset, size_t chainedBatchBufferStartOffset, GraphicsAllocation *chainedBatchBuffer, bool requiresCoherency, bool lowPriority, QueueThrottle throttle, size_t usedSize, LinearStream *stream) : commandBufferAllocation(commandBufferAllocation), startOffset(startOffset), chainedBatchBufferStartOffset(chainedBatchBufferStartOffset), chainedBatchBuffer(chainedBatchBuffer), requiresCoherency(requiresCoherency), low_priority(lowPriority), throttle(throttle), usedSize(usedSize), stream(stream) {
-}
+NEO::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_t startOffset,
+                              size_t chainedBatchBufferStartOffset, GraphicsAllocation *chainedBatchBuffer,
+                              bool requiresCoherency, bool lowPriority,
+                              QueueThrottle throttle, uint64_t sliceCount,
+                              size_t usedSize, LinearStream *stream)
+    : commandBufferAllocation(commandBufferAllocation), startOffset(startOffset),
+      chainedBatchBufferStartOffset(chainedBatchBufferStartOffset), chainedBatchBuffer(chainedBatchBuffer),
+      requiresCoherency(requiresCoherency), low_priority(lowPriority),
+      throttle(throttle), sliceCount(sliceCount),
+      usedSize(usedSize), stream(stream) {}
 
 NEO::CommandBuffer::CommandBuffer(Device &device) : device(device) {
     flushStamp.reset(new FlushStampTracker(false));

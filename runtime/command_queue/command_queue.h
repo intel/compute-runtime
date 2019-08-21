@@ -421,6 +421,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     size_t estimateTimestampPacketNodesCount(const MultiDispatchInfo &dispatchInfo) const;
 
+    uint64_t getSliceCount() const { return sliceCount; }
+
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);
@@ -449,6 +451,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     QueuePriority priority = QueuePriority::MEDIUM;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
+    uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
 
     bool perfCountersEnabled = false;
 

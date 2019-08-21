@@ -11,6 +11,7 @@
 #include "runtime/os_interface/linux/memory_info.h"
 #include "runtime/utilities/api_intercept.h"
 
+#include "drm/i915_drm.h"
 #include "engine_node.h"
 #include "igfxfmid.h"
 
@@ -73,6 +74,9 @@ class Drm {
     MOCKABLE_VIRTUAL int getErrno();
     void setSimplifiedMocsTableUsage(bool value);
     bool getSimplifiedMocsTableUsage() const;
+    bool setQueueSliceCount(uint64_t sliceCount);
+    void checkQueueSliceSupport();
+    uint64_t getSliceMask(uint64_t sliceCount);
     void queryEngineInfo();
     void queryMemoryInfo();
     void setMemoryRegions();
@@ -82,6 +86,9 @@ class Drm {
     }
 
   protected:
+    int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
+    bool sliceCountChangeSupported = false;
+    drm_i915_gem_context_param_sseu sseu{};
     bool useSimplifiedMocsTable = false;
     bool preemptionSupported = false;
     int fd;
