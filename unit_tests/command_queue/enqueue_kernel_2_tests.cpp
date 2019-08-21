@@ -252,6 +252,21 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, InterfaceDe
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
+HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, givenDebugVariableToOverrideMOCSWhenStateBaseAddressIsBeingProgrammedThenItContainsDesiredIndex) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.OverrideStatelessMocsIndex.set(1);
+    typedef typename FamilyType::PARSE PARSE;
+    typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    enqueueKernel<FamilyType>();
+
+    // Extract the SBA command
+    auto itorCmd = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(itorWalker, itorCmd);
+    auto *cmdSBA = (STATE_BASE_ADDRESS *)*itorCmd;
+    auto mocsProgrammed = cmdSBA->getStatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables() >> 1;
+    EXPECT_EQ(1u, mocsProgrammed);
+}
+
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, PipelineSelect) {
     enqueueKernel<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
