@@ -613,6 +613,24 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
 }
 
 template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() const {
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+    using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
+    size_t size = 0;
+
+    if (csrSizeRequestFlags.mediaSamplerConfigChanged ||
+        csrSizeRequestFlags.specialPipelineSelectModeChanged ||
+        !isPreambleSent) {
+
+        size += sizeof(PIPELINE_SELECT);
+        if (HardwareCommandsHelper<GfxFamily>::isPipeControlPriorToPipelineSelectWArequired(peekHwInfo())) {
+            size += sizeof(PIPE_CONTROL);
+        }
+    }
+    return size;
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandStream, size_t bytesToUpdate) {
     if (bytesToUpdate) {
         auto ptr = commandStream.getSpace(bytesToUpdate);

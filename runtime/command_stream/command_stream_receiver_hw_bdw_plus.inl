@@ -54,14 +54,6 @@ void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &com
 }
 
 template <typename GfxFamily>
-inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() const {
-    if (csrSizeRequestFlags.mediaSamplerConfigChanged || !isPreambleSent) {
-        return sizeof(typename GfxFamily::PIPELINE_SELECT);
-    }
-    return 0;
-}
-
-template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceController() {
     scratchSpaceController = std::make_unique<ScratchSpaceControllerBase>(executionEnvironment, *internalAllocationStorage.get());
 }
