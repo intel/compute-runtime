@@ -11,7 +11,7 @@
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
-#include "runtime/os_interface/windows/wddm_residency_handler.h"
+#include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 #include "runtime/sharings/gl/gl_arb_sync_event.h"
 #include "runtime/sharings/gl/gl_sharing.h"
 #include "unit_tests/mocks/gl/mock_gl_sharing.h"

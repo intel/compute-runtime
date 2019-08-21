@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "core/memory_manager/residency_handler.h"
+#include "core/memory_manager/memory_operations_handler.h"
 
 #include <memory>
 
@@ -15,10 +15,10 @@ namespace NEO {
 class Wddm;
 class WddmResidentAllocationsContainer;
 
-class WddmResidencyHandler : public ResidencyHandler {
+class WddmMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
-    WddmResidencyHandler(Wddm *wddm);
-    ~WddmResidencyHandler() override = default;
+    WddmMemoryOperationsHandler(Wddm *wddm);
+    ~WddmMemoryOperationsHandler() override = default;
 
     bool makeResident(GraphicsAllocation &gfxAllocation) override;
     bool evict(GraphicsAllocation &gfxAllocation) override;

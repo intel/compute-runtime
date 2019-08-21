@@ -29,6 +29,7 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
 
     executionEnvironment.osInterface = std::make_unique<OSInterface>();
     executionEnvironment.osInterface->get()->setDrm(&mock);
+    executionEnvironment.memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
 
     DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, gemCloseWorkerMode::gemCloseWorkerInactive);
 

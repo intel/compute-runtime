@@ -8,6 +8,7 @@
 #pragma once
 
 #include "runtime/os_interface/windows/os_interface.h"
+#include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 #include "test.h"
 #include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -56,6 +57,7 @@ class MockWddmMemoryManagerFixture {
 
         executionEnvironment->osInterface.reset(new OSInterface());
         executionEnvironment->osInterface->get()->setWddm(wddm);
+        executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
         osContext = memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
@@ -101,6 +103,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         auto hwInfo = *platformDevices[0];
         wddm->init(hwInfo);
         executionEnvironment->osInterface->get()->setWddm(wddm);
+        executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = executionEnvironment->osInterface.get();
         memoryManager = new (std::nothrow) MockWddmMemoryManager(*executionEnvironment);
         //assert we have memory manager
@@ -162,6 +165,7 @@ class MockWddmMemoryManagerTest : public ::testing::Test {
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
         wddm = new WddmMock();
         executionEnvironment->osInterface->get()->setWddm(wddm);
+        executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     }
 
     HardwareInfo *hwInfo;

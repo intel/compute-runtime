@@ -9,7 +9,7 @@
 
 #include "runtime/os_interface/windows/sys_calls.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
-#include "runtime/os_interface/windows/wddm_residency_handler.h"
+#include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 
 namespace NEO {
 
@@ -25,10 +25,6 @@ OSInterface::~OSInterface() {
 
 uint32_t OSInterface::getDeviceHandle() const {
     return static_cast<uint32_t>(osInterfaceImpl->getDeviceHandle());
-}
-
-ResidencyHandler *OSInterface::getResidencyInterface() const {
-    return osInterfaceImpl->getResidencyInterface();
 }
 
 OSInterface::OSInterfaceImpl::OSInterfaceImpl() = default;
@@ -62,7 +58,6 @@ Wddm *OSInterface::OSInterfaceImpl::getWddm() const {
 
 void OSInterface::OSInterfaceImpl::setWddm(Wddm *wddm) {
     this->wddm.reset(wddm);
-    this->residencyInterface = std::make_unique<WddmResidencyHandler>(wddm);
 }
 
 HANDLE OSInterface::OSInterfaceImpl::createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,

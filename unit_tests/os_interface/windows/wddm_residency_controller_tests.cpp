@@ -5,7 +5,7 @@
  *
  */
 
-#include "core/memory_manager/residency_handler.h"
+#include "core/memory_manager/memory_operations_handler.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_helper.h"
@@ -14,6 +14,7 @@
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
+#include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
@@ -94,6 +95,7 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
 
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setWddm(wddm);
+        executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
 
         osContext = memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0], 1, preemptionMode, false);
@@ -126,6 +128,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setWddm(wddm);
+        executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
         osContext = memoryManager->createAndRegisterOsContext(nullptr, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],

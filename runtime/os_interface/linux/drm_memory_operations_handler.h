@@ -6,14 +6,14 @@
  */
 
 #pragma once
-#include "core/memory_manager/residency_handler.h"
+#include "core/memory_manager/memory_operations_handler.h"
 
 namespace NEO {
 
-class DrmResidencyHandler : public ResidencyHandler {
+class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
-    DrmResidencyHandler();
-    ~DrmResidencyHandler() override = default;
+    DrmMemoryOperationsHandler();
+    ~DrmMemoryOperationsHandler() override = default;
 
     bool makeResident(GraphicsAllocation &gfxAllocation) override;
     bool evict(GraphicsAllocation &gfxAllocation) override;

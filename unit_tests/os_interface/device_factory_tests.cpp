@@ -11,6 +11,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/device_factory.h"
+#include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/os_library.h"
 #include "runtime/platform/platform.h"
 

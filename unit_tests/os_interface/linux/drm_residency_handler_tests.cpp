@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/linux/drm_residency_handler.h"
+#include "runtime/os_interface/linux/drm_memory_operations_handler.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 
@@ -13,22 +13,22 @@
 
 using namespace NEO;
 
-struct DrmResidencyHandlerTest : public ::testing::Test {
+struct DrmMemoryOperationsHandlerTest : public ::testing::Test {
     void SetUp() override {
-        drmResidencyHandler = std::make_unique<DrmResidencyHandler>();
+        drmMemoryOperationsHandler = std::make_unique<DrmMemoryOperationsHandler>();
     }
 
     MockGraphicsAllocation graphicsAllocation;
-    std::unique_ptr<DrmResidencyHandler> drmResidencyHandler;
+    std::unique_ptr<DrmMemoryOperationsHandler> drmMemoryOperationsHandler;
 };
 
-TEST_F(DrmResidencyHandlerTest, whenMakingResidentAllocaionExpectMakeResidentFail) {
-    EXPECT_FALSE(drmResidencyHandler->makeResident(graphicsAllocation));
-    EXPECT_FALSE(drmResidencyHandler->isResident(graphicsAllocation));
+TEST_F(DrmMemoryOperationsHandlerTest, whenMakingResidentAllocaionExpectMakeResidentFail) {
+    EXPECT_FALSE(drmMemoryOperationsHandler->makeResident(graphicsAllocation));
+    EXPECT_FALSE(drmMemoryOperationsHandler->isResident(graphicsAllocation));
 }
 
-TEST_F(DrmResidencyHandlerTest, whenEvictingResidentAllocationExpectEvictFalse) {
-    EXPECT_FALSE(drmResidencyHandler->makeResident(graphicsAllocation));
-    EXPECT_FALSE(drmResidencyHandler->evict(graphicsAllocation));
-    EXPECT_FALSE(drmResidencyHandler->isResident(graphicsAllocation));
+TEST_F(DrmMemoryOperationsHandlerTest, whenEvictingResidentAllocationExpectEvictFalse) {
+    EXPECT_FALSE(drmMemoryOperationsHandler->makeResident(graphicsAllocation));
+    EXPECT_FALSE(drmMemoryOperationsHandler->evict(graphicsAllocation));
+    EXPECT_FALSE(drmMemoryOperationsHandler->isResident(graphicsAllocation));
 }

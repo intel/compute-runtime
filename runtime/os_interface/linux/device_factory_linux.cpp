@@ -11,6 +11,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/hw_info_config.h"
+#include "runtime/os_interface/linux/drm_memory_operations_handler.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/os_interface.h"
 
@@ -35,6 +36,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
         return false;
     }
 
+    executionEnvironment.memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
     executionEnvironment.osInterface.reset(new OSInterface());
     executionEnvironment.osInterface->get()->setDrm(drm);
 

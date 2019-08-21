@@ -47,6 +47,7 @@ void WddmMemoryManagerFixture::SetUp() {
     executionEnvironment = platformImpl->peekExecutionEnvironment();
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
     executionEnvironment->osInterface->get()->setWddm(wddm);
+    executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
 
     memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);
 }
@@ -1297,6 +1298,7 @@ TEST(WddmMemoryManagerDefaults, givenDefaultWddmMemoryManagerWhenItIsQueriedForI
     auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
     auto wddm = new WddmMock();
     executionEnvironment->osInterface->get()->setWddm(wddm);
+    executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     auto hwInfoMock = *platformDevices[0];
     wddm->init(hwInfoMock);
     MockWddmMemoryManager memoryManager(*executionEnvironment);
@@ -1624,6 +1626,7 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
 
     executionEnvironment.osInterface = std::make_unique<OSInterface>();
     executionEnvironment.osInterface->get()->setWddm(wddm);
+    executionEnvironment.memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     executionEnvironment.commandStreamReceivers.resize(1);
     executionEnvironment.commandStreamReceivers[0].push_back(std::unique_ptr<CommandStreamReceiver>(csr));
     executionEnvironment.memoryManager = std::make_unique<WddmMemoryManager>(executionEnvironment);

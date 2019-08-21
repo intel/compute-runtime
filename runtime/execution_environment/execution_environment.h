@@ -26,6 +26,7 @@ class GmmHelper;
 class MemoryManager;
 class SourceLevelDebugger;
 class OSInterface;
+class MemoryOperationsHandler;
 struct EngineControl;
 struct HardwareInfo;
 
@@ -63,6 +64,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     EngineControl *getEngineControlForSpecialCsr();
 
     std::unique_ptr<OSInterface> osInterface;
+    std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<AubCenter> aubCenter;
     CsrContainer commandStreamReceivers;

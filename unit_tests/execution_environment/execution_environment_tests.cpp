@@ -25,6 +25,7 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_execution_environment.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/mocks/mock_memory_operations_handler.h"
 #include "unit_tests/utilities/destructor_counted.h"
 
 using namespace NEO;
@@ -193,7 +194,7 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::vector<std::unique_ptr
                                                   sizeof(std::unique_ptr<CommandStreamReceiver>) +
                                                   sizeof(std::mutex) +
                                                   sizeof(std::unique_ptr<HardwareInfo>) +
-                                                  (is64bit ? 80 : 44),
+                                                  (is64bit ? 88 : 48),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
@@ -202,11 +203,14 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     struct MockExecutionEnvironment : ExecutionEnvironment {
         using ExecutionEnvironment::gmmHelper;
     };
-    struct GmmHelperMock : public DestructorCounted<GmmHelper, 8> {
+    struct GmmHelperMock : public DestructorCounted<GmmHelper, 9> {
         GmmHelperMock(uint32_t &destructorId, const HardwareInfo *hwInfo) : DestructorCounted(destructorId, hwInfo) {}
     };
-    struct OsInterfaceMock : public DestructorCounted<OSInterface, 7> {
+    struct OsInterfaceMock : public DestructorCounted<OSInterface, 8> {
         OsInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
+    };
+    struct MemoryOperationsHandlerMock : public DestructorCounted<MockMemoryOperationsHandler, 7> {
+        MemoryOperationsHandlerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 6> {
         MemoryMangerMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {}
@@ -235,6 +239,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->commandStreamReceivers.resize(1);
     executionEnvironment->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, platformDevices[0]);
     executionEnvironment->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
+    executionEnvironment->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId, *executionEnvironment);
     executionEnvironment->aubCenter = std::make_unique<AubCenterMock>(destructorId);
     executionEnvironment->commandStreamReceivers[0].push_back(std::make_unique<CommandStreamReceiverMock>(destructorId, *executionEnvironment));
@@ -244,7 +249,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->sourceLevelDebugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(9u, destructorId);
+    EXPECT_EQ(10u, destructorId);
 }
 
 TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {

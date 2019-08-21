@@ -11,10 +11,10 @@ namespace NEO {
 
 class GraphicsAllocation;
 
-class ResidencyHandler {
+class MemoryOperationsHandler {
   public:
-    ResidencyHandler() = default;
-    virtual ~ResidencyHandler() = default;
+    MemoryOperationsHandler() = default;
+    virtual ~MemoryOperationsHandler() = default;
 
     virtual bool makeResident(GraphicsAllocation &gfxAllocation) = 0;
     virtual bool evict(GraphicsAllocation &gfxAllocation) = 0;

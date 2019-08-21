@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/windows/wddm_residency_handler.h"
+#include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
@@ -15,22 +15,22 @@
 
 namespace NEO {
 
-WddmResidencyHandler::WddmResidencyHandler(Wddm *wddm) : wddm(wddm) {
+WddmMemoryOperationsHandler::WddmMemoryOperationsHandler(Wddm *wddm) : wddm(wddm) {
     residentAllocations = std::make_unique<WddmResidentAllocationsContainer>(wddm);
 }
 
-bool WddmResidencyHandler::makeResident(GraphicsAllocation &gfxAllocation) {
+bool WddmMemoryOperationsHandler::makeResident(GraphicsAllocation &gfxAllocation) {
     WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
     return residentAllocations->makeResidentResources(wddmAllocation.getHandles().data(), wddmAllocation.getNumHandles());
 }
 
-bool WddmResidencyHandler::evict(GraphicsAllocation &gfxAllocation) {
+bool WddmMemoryOperationsHandler::evict(GraphicsAllocation &gfxAllocation) {
     WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
     auto result = residentAllocations->evictResources(wddmAllocation.getHandles().data(), wddmAllocation.getNumHandles());
     return result == EvictionStatus::SUCCESS;
 }
 
-bool WddmResidencyHandler::isResident(GraphicsAllocation &gfxAllocation) {
+bool WddmMemoryOperationsHandler::isResident(GraphicsAllocation &gfxAllocation) {
     WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
     return residentAllocations->isAllocationResident(wddmAllocation.getDefaultHandle());
 }

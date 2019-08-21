@@ -24,6 +24,7 @@
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
+#include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 #include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
@@ -63,7 +64,6 @@ class WddmCommandStreamFixture {
         memoryManager = new MockWddmMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         wddm = static_cast<WddmMock *>(executionEnvironment->osInterface->get()->getWddm());
-
         csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
 
@@ -803,6 +803,7 @@ HWTEST_F(WddmSimpleTest, givenDefaultWddmCsrWhenItIsCreatedThenBatchingIsTurnedO
     auto wddm = Wddm::createWddm();
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
     executionEnvironment->osInterface->get()->setWddm(wddm);
+    executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     std::unique_ptr<MockWddmCsr<FamilyType>> mockCsr(new MockWddmCsr<FamilyType>(*executionEnvironment));
     EXPECT_EQ(DispatchMode::BatchedDispatch, mockCsr->dispatchMode);
 }
@@ -811,6 +812,7 @@ HWTEST_F(WddmDefaultTest, givenFtrWddmHwQueuesFlagWhenCreatingCsrThenPickWddmVer
     auto wddm = Wddm::createWddm();
     pDevice->executionEnvironment->osInterface = std::make_unique<OSInterface>();
     pDevice->executionEnvironment->osInterface->get()->setWddm(wddm);
+    pDevice->executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     WddmCommandStreamReceiver<FamilyType> wddmCsr(*pDevice->executionEnvironment);
 
     auto wddmFromCsr = wddmCsr.peekWddm();

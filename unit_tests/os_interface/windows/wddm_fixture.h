@@ -13,6 +13,7 @@
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
+#include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_wddm.h"
@@ -29,6 +30,7 @@ struct WddmFixture : ::testing::Test {
         wddm = static_cast<WddmMock *>(Wddm::createWddm());
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setWddm(wddm);
+        executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = executionEnvironment->osInterface.get();
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
@@ -55,6 +57,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
         wddm = static_cast<WddmMock *>(Wddm::createWddm());
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setWddm(wddm);
+        executionEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = executionEnvironment->osInterface.get();
     }
 

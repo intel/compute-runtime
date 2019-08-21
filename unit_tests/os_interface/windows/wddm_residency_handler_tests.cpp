@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/os_interface/windows/wddm_residency_handler.h"
+#include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_allocation_properties.h"
 #include "unit_tests/mocks/mock_wddm.h"
@@ -14,24 +14,24 @@
 
 using namespace NEO;
 
-struct WddmResidencyHandlerTest : public WddmTest {
+struct WddmMemoryOperationsHandlerTest : public WddmTest {
     void SetUp() override {
         WddmTest::SetUp();
-        wddmResidencyHandler = std::make_unique<WddmResidencyHandler>(wddm);
+        wddmMemoryOperationsHandler = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         wddmAllocation.handle = 0x2;
     }
 
-    std::unique_ptr<WddmResidencyHandler> wddmResidencyHandler;
+    std::unique_ptr<WddmMemoryOperationsHandler> wddmMemoryOperationsHandler;
     MockWddmAllocation wddmAllocation;
 };
 
-TEST_F(WddmResidencyHandlerTest, whenMakingResidentAllocaionExpectMakeResidentCalled) {
-    EXPECT_TRUE(wddmResidencyHandler->makeResident(wddmAllocation));
-    EXPECT_TRUE(wddmResidencyHandler->isResident(wddmAllocation));
+TEST_F(WddmMemoryOperationsHandlerTest, whenMakingResidentAllocaionExpectMakeResidentCalled) {
+    EXPECT_TRUE(wddmMemoryOperationsHandler->makeResident(wddmAllocation));
+    EXPECT_TRUE(wddmMemoryOperationsHandler->isResident(wddmAllocation));
 }
 
-TEST_F(WddmResidencyHandlerTest, whenEvictingResidentAllocationExpectEvictCalled) {
-    EXPECT_TRUE(wddmResidencyHandler->makeResident(wddmAllocation));
-    EXPECT_TRUE(wddmResidencyHandler->evict(wddmAllocation));
-    EXPECT_FALSE(wddmResidencyHandler->isResident(wddmAllocation));
+TEST_F(WddmMemoryOperationsHandlerTest, whenEvictingResidentAllocationExpectEvictCalled) {
+    EXPECT_TRUE(wddmMemoryOperationsHandler->makeResident(wddmAllocation));
+    EXPECT_TRUE(wddmMemoryOperationsHandler->evict(wddmAllocation));
+    EXPECT_FALSE(wddmMemoryOperationsHandler->isResident(wddmAllocation));
 }

@@ -14,6 +14,7 @@
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
+#include "runtime/os_interface/windows/wddm_memory_operations_handler.h"
 
 namespace NEO {
 
@@ -32,6 +33,7 @@ bool DeviceFactory::getDevices(size_t &numDevices, ExecutionEnvironment &executi
 
     auto totalDeviceCount = DeviceHelper::getDevicesCount(hardwareInfo);
 
+    executionEnvironment.memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm.get());
     executionEnvironment.osInterface.reset(new OSInterface());
     executionEnvironment.osInterface->get()->setWddm(wddm.release());
 

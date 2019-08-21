@@ -7,6 +7,7 @@
 
 #include "runtime/execution_environment/execution_environment.h"
 
+#include "core/memory_manager/memory_operations_handler.h"
 #include "runtime/aub/aub_center.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/sip.h"
@@ -127,5 +128,4 @@ EngineControl *ExecutionEnvironment::getEngineControlForSpecialCsr() {
     }
     return engine;
 }
-
 } // namespace NEO

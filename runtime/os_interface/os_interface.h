@@ -9,8 +9,6 @@
 
 namespace NEO {
 
-class ResidencyHandler;
-
 class OSInterface {
 
   public:
@@ -27,7 +25,6 @@ class OSInterface {
     static bool osEnableLocalMemory;
     static bool are64kbPagesEnabled();
     unsigned int getDeviceHandle() const;
-    ResidencyHandler *getResidencyInterface() const;
 
   protected:
     OSInterfaceImpl *osInterfaceImpl = nullptr;

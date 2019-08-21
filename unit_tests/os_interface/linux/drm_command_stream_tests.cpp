@@ -43,6 +43,7 @@ class DrmCommandStreamFixture {
         executionEnvironment.setHwInfo(*platformDevices);
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
         executionEnvironment.osInterface->get()->setDrm(mock.get());
+        executionEnvironment.memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
 
         osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances()[0],
                                                      PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false);
