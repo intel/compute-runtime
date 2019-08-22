@@ -181,7 +181,7 @@ Image *Image::create(Context *context,
         auto hostPtrRowPitch = imageDesc->image_row_pitch ? imageDesc->image_row_pitch : imageWidth * surfaceFormat->ImageElementSizeInBytes;
         auto hostPtrSlicePitch = imageDesc->image_slice_pitch ? imageDesc->image_slice_pitch : hostPtrRowPitch * imageHeight;
         MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
-        imgInfo.linearStorage = context->isSharedContext || !GmmHelper::allowTiling(*imageDesc) || memoryProperties.forceLinearStorage;
+        imgInfo.linearStorage = context->isSharedContext || !GmmHelper::allowTiling(*imageDesc) || memoryProperties.flags.forceLinearStorage;
         imgInfo.preferRenderCompression = MemObjHelper::isSuitableForRenderCompression(!imgInfo.linearStorage, memoryProperties,
                                                                                        context->peekContextType(), true);
 
@@ -461,7 +461,7 @@ cl_int Image::validate(Context *context,
                 ((parentBuffer->getFlags() & CL_MEM_USE_HOST_PTR) && (reinterpret_cast<uint64_t>(parentBuffer->getHostPtr()) % (*baseAddressAlignment))) ||
                 (minimumBufferSize > parentBuffer->getSize())) {
                 return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
-            } else if (memoryProperties.useHostPtr || memoryProperties.copyHostPtr) {
+            } else if (memoryProperties.flags.useHostPtr || memoryProperties.flags.copyHostPtr) {
                 return CL_INVALID_VALUE;
             }
         }
@@ -549,7 +549,7 @@ cl_int Image::validatePlanarYUV(Context *context,
             errorCode = CL_INVALID_IMAGE_DESCRIPTOR;
             break;
         }
-        if (!memoryProperties.hostNoAccess) {
+        if (!memoryProperties.flags.hostNoAccess) {
             errorCode = CL_INVALID_VALUE;
             break;
         } else {
@@ -575,7 +575,7 @@ cl_int Image::validatePlanarYUV(Context *context,
 cl_int Image::validatePackedYUV(const MemoryPropertiesFlags &memoryProperties, const cl_image_desc *imageDesc) {
     cl_int errorCode = CL_SUCCESS;
     while (true) {
-        if (!memoryProperties.readOnly) {
+        if (!memoryProperties.flags.readOnly) {
             errorCode = CL_INVALID_VALUE;
             break;
         } else {

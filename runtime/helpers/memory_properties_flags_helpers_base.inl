@@ -17,54 +17,54 @@ MemoryPropertiesFlags MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(M
     MemoryPropertiesFlags memoryPropertiesFlags;
 
     if (isValueSet(properties.flags, CL_MEM_READ_WRITE)) {
-        memoryPropertiesFlags.readWrite = true;
+        memoryPropertiesFlags.flags.readWrite = true;
     }
     if (isValueSet(properties.flags, CL_MEM_WRITE_ONLY)) {
-        memoryPropertiesFlags.writeOnly = true;
+        memoryPropertiesFlags.flags.writeOnly = true;
     }
     if (isValueSet(properties.flags, CL_MEM_READ_ONLY)) {
-        memoryPropertiesFlags.readOnly = true;
+        memoryPropertiesFlags.flags.readOnly = true;
     }
     if (isValueSet(properties.flags, CL_MEM_USE_HOST_PTR)) {
-        memoryPropertiesFlags.useHostPtr = true;
+        memoryPropertiesFlags.flags.useHostPtr = true;
     }
     if (isValueSet(properties.flags, CL_MEM_ALLOC_HOST_PTR)) {
-        memoryPropertiesFlags.allocHostPtr = true;
+        memoryPropertiesFlags.flags.allocHostPtr = true;
     }
     if (isValueSet(properties.flags, CL_MEM_COPY_HOST_PTR)) {
-        memoryPropertiesFlags.copyHostPtr = true;
+        memoryPropertiesFlags.flags.copyHostPtr = true;
     }
     if (isValueSet(properties.flags, CL_MEM_HOST_WRITE_ONLY)) {
-        memoryPropertiesFlags.hostWriteOnly = true;
+        memoryPropertiesFlags.flags.hostWriteOnly = true;
     }
     if (isValueSet(properties.flags, CL_MEM_HOST_READ_ONLY)) {
-        memoryPropertiesFlags.hostReadOnly = true;
+        memoryPropertiesFlags.flags.hostReadOnly = true;
     }
     if (isValueSet(properties.flags, CL_MEM_HOST_NO_ACCESS)) {
-        memoryPropertiesFlags.hostNoAccess = true;
+        memoryPropertiesFlags.flags.hostNoAccess = true;
     }
     if (isValueSet(properties.flags, CL_MEM_KERNEL_READ_AND_WRITE)) {
-        memoryPropertiesFlags.kernelReadAndWrite = true;
+        memoryPropertiesFlags.flags.kernelReadAndWrite = true;
     }
     if (isValueSet(properties.flags, CL_MEM_FORCE_LINEAR_STORAGE_INTEL) ||
         isValueSet(properties.flags_intel, CL_MEM_FORCE_LINEAR_STORAGE_INTEL)) {
-        memoryPropertiesFlags.forceLinearStorage = true;
+        memoryPropertiesFlags.flags.forceLinearStorage = true;
     }
     if (isValueSet(properties.flags, CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)) {
-        memoryPropertiesFlags.accessFlagsUnrestricted = true;
+        memoryPropertiesFlags.flags.accessFlagsUnrestricted = true;
     }
     if (isValueSet(properties.flags, CL_MEM_NO_ACCESS_INTEL)) {
-        memoryPropertiesFlags.noAccess = true;
+        memoryPropertiesFlags.flags.noAccess = true;
     }
     if (isValueSet(properties.flags, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
         isValueSet(properties.flags_intel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL)) {
-        memoryPropertiesFlags.allowUnrestrictedSize = true;
+        memoryPropertiesFlags.flags.allowUnrestrictedSize = true;
     }
     if (isValueSet(properties.flags_intel, CL_MEM_LOCALLY_UNCACHED_RESOURCE)) {
-        memoryPropertiesFlags.locallyUncachedResource = true;
+        memoryPropertiesFlags.flags.locallyUncachedResource = true;
     }
     if (isValueSet(properties.flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL)) {
-        memoryPropertiesFlags.forceSharedPhysicalMemory = true;
+        memoryPropertiesFlags.flags.forceSharedPhysicalMemory = true;
     }
 
     addExtraMemoryPropertiesFlags(memoryPropertiesFlags, properties);

@@ -34,22 +34,22 @@ TEST(MemObjHelper, givenClMemForceLinearStorageFlagWhenCheckForLinearStorageForc
     properties.flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     properties.flags_intel = 0;
     memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
-    EXPECT_TRUE(memoryProperties.forceLinearStorage);
+    EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
     properties.flags = 0;
     properties.flags_intel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
-    EXPECT_TRUE(memoryProperties.forceLinearStorage);
+    EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
     properties.flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     properties.flags_intel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
-    EXPECT_TRUE(memoryProperties.forceLinearStorage);
+    EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
     properties.flags = 0;
     properties.flags_intel = 0;
     memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
-    EXPECT_FALSE(memoryProperties.forceLinearStorage);
+    EXPECT_FALSE(memoryProperties.flags.forceLinearStorage);
 }
 
 TEST(MemObjHelper, givenValidPropertiesWhenValidatingMemoryPropertiesThenTrueIsReturned) {

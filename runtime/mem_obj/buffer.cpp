@@ -340,13 +340,13 @@ void Buffer::checkMemory(MemoryPropertiesFlags memoryProperties,
     }
 
     if (hostPtr) {
-        if (!(memoryProperties.useHostPtr || memoryProperties.copyHostPtr)) {
+        if (!(memoryProperties.flags.useHostPtr || memoryProperties.flags.copyHostPtr)) {
             errcodeRet = CL_INVALID_HOST_PTR;
             return;
         }
     }
 
-    if (memoryProperties.useHostPtr) {
+    if (memoryProperties.flags.useHostPtr) {
         if (hostPtr) {
             auto fragment = memoryManager->getHostPtrManager()->getFragment(hostPtr);
             if (fragment && fragment->driverAllocation) {
@@ -364,7 +364,7 @@ void Buffer::checkMemory(MemoryPropertiesFlags memoryProperties,
         }
     }
 
-    if (memoryProperties.copyHostPtr) {
+    if (memoryProperties.flags.copyHostPtr) {
         if (hostPtr) {
             copyMemoryFromHostPtr = true;
         } else {
@@ -377,11 +377,11 @@ void Buffer::checkMemory(MemoryPropertiesFlags memoryProperties,
 GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const MemoryPropertiesFlags &properties, bool sharedContext,
                                                                      ContextType contextType, bool renderCompressedBuffers,
                                                                      bool isLocalMemoryEnabled, bool preferCompression) {
-    if (is32bit || sharedContext || properties.forceSharedPhysicalMemory) {
+    if (is32bit || sharedContext || properties.flags.forceSharedPhysicalMemory) {
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
-    if (properties.useHostPtr && !isLocalMemoryEnabled) {
+    if (properties.flags.useHostPtr && !isLocalMemoryEnabled) {
         return GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
@@ -393,7 +393,7 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const Memor
 
 bool Buffer::isReadOnlyMemoryPermittedByFlags(const MemoryPropertiesFlags &properties) {
     // Host won't access or will only read and kernel will only read
-    return (properties.hostNoAccess || properties.hostReadOnly) && properties.readOnly;
+    return (properties.flags.hostNoAccess || properties.flags.hostReadOnly) && properties.flags.readOnly;
 }
 
 Buffer *Buffer::createSubBuffer(cl_mem_flags flags,

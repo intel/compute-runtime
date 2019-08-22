@@ -10,7 +10,11 @@
 
 namespace NEO {
 
-struct MemoryPropertiesFlags : MemoryPropertiesFlagsBase {
+struct MemoryPropertiesFlags {
+    union {
+        MemoryFlags flags;
+        uint32_t allFlags = 0;
+    };
+    static_assert(sizeof(MemoryPropertiesFlags::flags) == sizeof(MemoryPropertiesFlags::allFlags), "");
 };
-
 } // namespace NEO

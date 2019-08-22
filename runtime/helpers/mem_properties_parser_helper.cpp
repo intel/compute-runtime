@@ -31,8 +31,8 @@ bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_
 
 void MemoryPropertiesParser::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryPropertiesFlags &memoryProperties) {
     fillCachePolicyInProperties(allocationProperties,
-                                memoryProperties.locallyUncachedResource,
-                                memoryProperties.readOnly,
+                                memoryProperties.flags.locallyUncachedResource,
+                                memoryProperties.flags.readOnly,
                                 false);
 }
 
