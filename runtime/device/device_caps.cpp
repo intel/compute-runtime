@@ -135,7 +135,7 @@ void Device::initializeCaps() {
     }
 
     if (enabledClVersion >= 20) {
-        deviceExtensions += "cl_khr_mipmap_image cl_khr_mipmap_image_writes cl_intel_unified_shared_memory ";
+        deviceExtensions += "cl_khr_mipmap_image cl_khr_mipmap_image_writes cl_intel_unified_shared_memory_preview ";
     }
 
     if (DebugManager.flags.EnableNV12.get()) {
