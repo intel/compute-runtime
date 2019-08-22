@@ -76,7 +76,7 @@ struct OOQueueHwTest : public DeviceFixture,
     }
 };
 
-HWTEST_F(CommandQueueHwTest, enqueueBlockedMapUnmapOperationCreatesVirtualEvent) {
+HWTEST_F(CommandQueueHwTest, WhenEnqueuingBlockedMapUnmapOperationThenVirtualEventIsCreated) {
 
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
 
@@ -150,7 +150,7 @@ HWTEST_F(CommandQueueHwTest, givenNoReturnEventWhenCallingEnqueueBlockedMapUnmap
     pHwQ->virtualEvent = nullptr;
 }
 
-HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDoesntAddDependenciesIntoChild) {
+HWTEST_F(CommandQueueHwTest, WhenAddMapUnmapToWaitlistEventsThenDependenciesAreNotAddedIntoChild) {
     auto buffer = new MockBuffer;
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
     auto returnEvent = new Event(pHwQ, CL_COMMAND_MAP_BUFFER, 0, 0);
@@ -222,7 +222,7 @@ HWTEST_F(CommandQueueHwTest, givenMapCommandWhenZeroStateCommandIsSubmittedOnNon
     buffer->decRefInternal();
 }
 
-HWTEST_F(CommandQueueHwTest, enqueueBlockedMapUnmapOperationInjectedCommand) {
+HWTEST_F(CommandQueueHwTest, GivenEventWhenEnqueuingBlockedMapUnmapOperationThenEventIsRetained) {
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
     Event *returnEvent = new Event(pHwQ, CL_COMMAND_MAP_BUFFER, 0, 0);
     auto buffer = new MockBuffer;
@@ -244,12 +244,11 @@ HWTEST_F(CommandQueueHwTest, enqueueBlockedMapUnmapOperationInjectedCommand) {
     // CommandQueue has retained this event, release it
     returnEvent->release();
     pHwQ->virtualEvent = nullptr;
-    // now delete
     delete returnEvent;
     buffer->decRefInternal();
 }
 
-HWTEST_F(CommandQueueHwTest, enqueueBlockedMapUnmapOperationPreviousEventHasNotInjectedChild) {
+HWTEST_F(CommandQueueHwTest, GivenEventWhenEnqueuingBlockedMapUnmapOperationThenChildIsUnaffected) {
     auto buffer = new MockBuffer;
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
     Event *returnEvent = new Event(pHwQ, CL_COMMAND_MAP_BUFFER, 0, 0);
