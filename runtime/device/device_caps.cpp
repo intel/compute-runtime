@@ -298,7 +298,7 @@ void Device::initializeCaps() {
     deviceInfo.imageMaxArraySize = 2048;
 
     // cl_khr_image2d_from_buffer
-    deviceInfo.imagePitchAlignment = 4;
+    deviceInfo.imagePitchAlignment = hwHelper.getPitchAlignmentForImage(&hwInfo);
     deviceInfo.imageBaseAddressAlignment = 4;
     deviceInfo.maxPipeArgs = 16;
     deviceInfo.pipeMaxPacketSize = 1024;

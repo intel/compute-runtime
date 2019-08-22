@@ -269,12 +269,14 @@ TEST_F(clCreateImageTest, GivenNullHostPtrAndNonZeroRowPitchWhenCreatingImageThe
 TEST_F(clCreateImageTest, GivenNonZeroPitchWhenCreatingImageFromBufferThenImageIsCreatedAndSuccessReturned) {
 
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 4096 * 9, nullptr, nullptr);
+    auto &helper = HwHelper::get(renderCoreFamily);
+    HardwareInfo hardwareInfo = *platformDevices[0];
 
     imageDesc.mem_object = buffer;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 17;
     imageDesc.image_height = 17;
-    imageDesc.image_row_pitch = 4 * 17;
+    imageDesc.image_row_pitch = helper.getPitchAlignmentForImage(&hardwareInfo) * 17;
 
     auto image = clCreateImage(
         pContext,

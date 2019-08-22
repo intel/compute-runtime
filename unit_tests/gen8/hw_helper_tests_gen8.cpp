@@ -25,6 +25,11 @@ GEN8TEST_F(HwHelperTestGen8, setCapabilityCoherencyFlag) {
     EXPECT_TRUE(coherency);
 }
 
+GEN8TEST_F(HwHelperTestGen8, getPitchAlignmentForImage) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));
+}
+
 GEN8TEST_F(HwHelperTestGen8, adjustDefaultEngineType) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
     auto &helper = HwHelper::get(renderCoreFamily);
