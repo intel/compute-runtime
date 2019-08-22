@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/command_stream/linear_stream.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/cache_policy.h"

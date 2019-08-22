@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_stream/linear_stream.h"
+#include "core/command_stream/linear_stream.h"
 
 #include "runtime/memory_manager/graphics_allocation.h"
 

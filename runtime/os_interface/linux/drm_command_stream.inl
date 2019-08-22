@@ -5,8 +5,8 @@
  *
  */
 
+#include "core/command_stream/linear_stream.h"
 #include "core/helpers/aligned_memory.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/preamble.h"

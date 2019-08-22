@@ -7,11 +7,11 @@
 
 #pragma once
 
+#include "core/command_stream/linear_stream.h"
 #include "core/helpers/register_offsets.h"
 #include "core/helpers/vec.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/context/context.h"
 #include "runtime/device_queue/device_queue_hw.h"

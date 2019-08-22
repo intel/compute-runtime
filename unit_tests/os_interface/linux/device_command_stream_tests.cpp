@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/command_stream/linear_stream.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/os_interface/linux/device_command_stream.inl"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/os_interface.h"

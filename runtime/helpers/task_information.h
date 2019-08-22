@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "runtime/command_stream/linear_stream.h"
+#include "core/command_stream/linear_stream.h"
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/properties_helper.h"

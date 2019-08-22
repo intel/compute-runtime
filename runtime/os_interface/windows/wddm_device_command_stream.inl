@@ -9,8 +9,8 @@
 // Current order must be preserved due to two versions of igfxfmid.h
 #pragma warning(push)
 #pragma warning(disable : 4005)
+#include "core/command_stream/linear_stream.h"
 #include "core/helpers/ptr_math.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/page_table_mngr.h"

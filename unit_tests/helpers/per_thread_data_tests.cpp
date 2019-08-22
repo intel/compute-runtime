@@ -5,9 +5,9 @@
  *
  */
 
+#include "core/command_stream/linear_stream.h"
 #include "core/helpers/aligned_memory.h"
 #include "runtime/command_queue/local_id_gen.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/helpers/per_thread_data.h"
 #include "runtime/program/kernel_info.h"
 #include "test.h"

@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "core/command_stream/linear_stream.h"
 #include "runtime/built_ins/sip.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/gen_common/aub_mapper.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/mem_obj/buffer.h"

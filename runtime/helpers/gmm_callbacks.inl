@@ -5,7 +5,7 @@
  *
  */
 
-#include "runtime/command_stream/linear_stream.h"
+#include "core/command_stream/linear_stream.h"
 #include "runtime/helpers/gmm_callbacks.h"
 #include "runtime/helpers/hw_helper.h"
 

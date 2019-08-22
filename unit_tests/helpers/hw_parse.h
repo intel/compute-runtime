@@ -6,10 +6,10 @@
  */
 
 #pragma once
+#include "core/command_stream/linear_stream.h"
 #include "core/helpers/ptr_math.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/helpers/pipeline_select_helper.h"
 #include "runtime/kernel/kernel.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"

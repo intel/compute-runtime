@@ -7,8 +7,8 @@
 
 #include "runtime/command_stream/experimental_command_buffer.h"
 
+#include "core/command_stream/linear_stream.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/memory_manager/internal_allocation_storage.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/memory_manager.h"

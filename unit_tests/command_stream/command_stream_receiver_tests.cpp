@@ -5,10 +5,10 @@
  *
  */
 
+#include "core/command_stream/linear_stream.h"
 #include "core/unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/timestamp_packet.h"

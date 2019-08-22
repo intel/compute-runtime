@@ -7,8 +7,8 @@
 
 #include "runtime/helpers/timestamp_packet.h"
 
+#include "core/command_stream/linear_stream.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/utilities/tag_allocator.h"
