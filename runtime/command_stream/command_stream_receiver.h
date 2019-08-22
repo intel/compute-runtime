@@ -169,9 +169,6 @@ class CommandStreamReceiver {
 
     virtual cl_int expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
 
-    void setDisableL3Cache(bool val) {
-        disableL3Cache = val;
-    }
     bool isMultiOsContextCapable() const;
 
     void setLatestSentTaskCount(uint32_t latestSentTaskCount) {
@@ -246,7 +243,6 @@ class CommandStreamReceiver {
     bool bindingTableBaseAddressRequired = false;
     bool mediaVfeStateDirty = true;
     bool lastVmeSubslicesConfig = false;
-    bool disableL3Cache = false;
     bool stallingPipeControlOnNextFlushRequired = false;
     bool timestampPacketWriteEnabled = false;
     bool nTo1SubmissionModelEnabled = false;

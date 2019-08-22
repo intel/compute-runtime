@@ -313,7 +313,6 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(CacheSettings::l3CacheOff, csr.latestSentStatelessMocsConfig);
-    EXPECT_FALSE(csr.disableL3Cache);
 
     void *ptr2 = (void *)0x1040;
 
@@ -328,7 +327,6 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
                                       nullptr);
 
     EXPECT_EQ(CacheSettings::l3CacheOn, csr.latestSentStatelessMocsConfig);
-    EXPECT_FALSE(csr.disableL3Cache);
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelNotIncreased) {

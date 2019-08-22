@@ -593,17 +593,21 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         previousTimestampPacketNodes->makeResident(getGpgpuCommandStreamReceiver());
     }
 
+    bool anyUncacheableArgs = false;
     auto requiresCoherency = false;
     for (auto surface : CreateRange(surfaces, surfaceCount)) {
         surface->makeResident(getGpgpuCommandStreamReceiver());
         requiresCoherency |= surface->IsCoherent;
+        if (!surface->allowsL3Caching()) {
+            anyUncacheableArgs = true;
+        }
     }
 
     auto mediaSamplerRequired = false;
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
     auto specialPipelineSelectMode = false;
     Kernel *kernel = nullptr;
-    bool anyUncacheableArgs = false;
+
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {
             kernel = dispatchInfo.getKernel();
@@ -659,10 +663,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         }
     }
 
-    if (anyUncacheableArgs) {
-        getGpgpuCommandStreamReceiver().setDisableL3Cache(true);
-    }
-
     DispatchFlags dispatchFlags;
     dispatchFlags.blocking = blocking;
     dispatchFlags.dcFlush = shouldFlushDC(commandType, printfHandler) || allocNeedsFlushDC;
@@ -684,6 +684,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.specialPipelineSelectMode = specialPipelineSelectMode;
     dispatchFlags.multiEngineQueue = this->multiEngineQueue;
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
+
+    if (anyUncacheableArgs) {
+        dispatchFlags.l3CacheSettings = L3CachingSettings::l3CacheOff;
+    }
 
     if (gtpinIsGTPinInitialized()) {
         gtpinNotifyPreFlushTask(this);

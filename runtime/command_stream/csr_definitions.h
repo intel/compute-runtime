@@ -30,6 +30,10 @@ constexpr auto csOverfetchSize = MemoryConstants::pageSize;
 namespace TimeoutControls {
 constexpr int64_t maxTimeout = std::numeric_limits<int64_t>::max();
 }
+namespace L3CachingSettings {
+constexpr uint32_t l3CacheOn = 0u;
+constexpr uint32_t l3CacheOff = 1u;
+} // namespace L3CachingSettings
 
 struct DispatchFlags {
     CsrDependencies csrDependencies;
@@ -37,6 +41,7 @@ struct DispatchFlags {
     QueueThrottle throttle = QueueThrottle::MEDIUM;
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
     uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
+    uint32_t l3CacheSettings = L3CachingSettings::l3CacheOn;
     bool blocking = false;
     bool dcFlush = false;
     bool useSLM = false;

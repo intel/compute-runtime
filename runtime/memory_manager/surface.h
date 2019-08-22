@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/helpers/cache_policy.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 
@@ -18,6 +19,7 @@ class Surface {
     virtual ~Surface() = default;
     virtual void makeResident(CommandStreamReceiver &csr) = 0;
     virtual Surface *duplicate() = 0;
+    virtual bool allowsL3Caching() { return true; }
     bool IsCoherent;
 };
 
@@ -71,6 +73,10 @@ class HostPtrSurface : public Surface {
 
     bool peekIsPtrCopyAllowed() {
         return isPtrCopyAllowed;
+    }
+
+    virtual bool allowsL3Caching() override {
+        return isL3Capable(*gfxAllocation);
     }
 
   protected:

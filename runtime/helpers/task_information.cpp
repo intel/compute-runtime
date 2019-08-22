@@ -126,10 +126,14 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     IndirectHeap *ssh = kernelOperation->ssh.get();
 
     auto requiresCoherency = false;
+    auto anyUncacheableArgs = false;
     for (auto &surface : surfaces) {
         DEBUG_BREAK_IF(!surface);
         surface->makeResident(commandStreamReceiver);
         requiresCoherency |= surface->IsCoherent;
+        if (!surface->allowsL3Caching()) {
+            anyUncacheableArgs = true;
+        }
     }
 
     if (printfHandler) {
@@ -186,6 +190,10 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         dispatchFlags.csrDependencies.fillFromEventsRequestAndMakeResident(eventsRequest, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
     }
     dispatchFlags.specialPipelineSelectMode = kernel->requiresSpecialPipelineSelectMode();
+
+    if (anyUncacheableArgs) {
+        dispatchFlags.l3CacheSettings = L3CachingSettings::l3CacheOff;
+    }
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 

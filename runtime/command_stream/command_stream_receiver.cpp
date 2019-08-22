@@ -104,9 +104,6 @@ void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &alloc
 
 void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation) {
     makeResident(*gfxAllocation);
-    if (!isL3Capable(*gfxAllocation)) {
-        setDisableL3Cache(true);
-    }
 }
 
 void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {

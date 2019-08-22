@@ -35,7 +35,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
     using BaseClass::CommandStreamReceiver::cleanupResources;
     using BaseClass::CommandStreamReceiver::commandStream;
-    using BaseClass::CommandStreamReceiver::disableL3Cache;
     using BaseClass::CommandStreamReceiver::dispatchMode;
     using BaseClass::CommandStreamReceiver::executionEnvironment;
     using BaseClass::CommandStreamReceiver::experimentalCmdBuffer;

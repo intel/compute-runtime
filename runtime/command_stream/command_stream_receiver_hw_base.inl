@@ -271,9 +271,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
 
     auto requiredL3Index = CacheSettings::l3CacheOn;
-    if (this->disableL3Cache) {
+    if (dispatchFlags.l3CacheSettings == L3CachingSettings::l3CacheOff) {
         requiredL3Index = CacheSettings::l3CacheOff;
-        this->disableL3Cache = false;
     }
 
     if (requiredL3Index != latestSentStatelessMocsConfig) {

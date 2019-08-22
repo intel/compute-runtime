@@ -154,36 +154,6 @@ TEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenGetCSIsCalledThe
     EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, commandStreamAllocation->getAllocationType());
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenPtrAndSizeThatMeetL3CriteriaWhenMakeResidentHostPtrThenCsrEnableL3) {
-    void *hostPtr = reinterpret_cast<void *>(0xF000);
-    auto size = 0x2000u;
-
-    auto memoryManager = commandStreamReceiver->getMemoryManager();
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, hostPtr);
-    ASSERT_NE(nullptr, graphicsAllocation);
-    commandStreamReceiver->makeResidentHostPtrAllocation(graphicsAllocation);
-
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    EXPECT_FALSE(csr.disableL3Cache);
-    memoryManager->freeGraphicsMemory(graphicsAllocation);
-}
-
-HWTEST_F(CommandStreamReceiverTest, givenPtrAndSizeThatDoNotMeetL3CriteriaWhenMakeResidentHostPtrThenCsrDisableL3) {
-    void *hostPtr = reinterpret_cast<void *>(0xF001);
-    auto size = 0x2001u;
-
-    auto memoryManager = commandStreamReceiver->getMemoryManager();
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, hostPtr);
-    ASSERT_NE(nullptr, graphicsAllocation);
-    commandStreamReceiver->makeResidentHostPtrAllocation(graphicsAllocation);
-
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    EXPECT_TRUE(csr.disableL3Cache);
-    memoryManager->freeGraphicsMemory(graphicsAllocation);
-}
-
 TEST_F(CommandStreamReceiverTest, memoryManagerHasAccessToCSR) {
     auto *memoryManager = commandStreamReceiver->getMemoryManager();
     EXPECT_EQ(commandStreamReceiver, memoryManager->getDefaultCommandStreamReceiver(0));
@@ -206,7 +176,6 @@ HWTEST_F(CommandStreamReceiverTest, whenStoreAllocationThenStoredAllocationHasTa
 HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCheckedForInitialStatusOfStatelessMocsIndexThenUnknownMocsIsReturend) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(CacheSettings::unknownMocs, csr.latestSentStatelessMocsConfig);
-    EXPECT_FALSE(csr.disableL3Cache);
 }
 
 TEST_F(CommandStreamReceiverTest, makeResidentPushesAllocationToMemoryManagerResidencyList) {
