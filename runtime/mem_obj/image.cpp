@@ -182,8 +182,8 @@ Image *Image::create(Context *context,
 
         auto hostPtrRowPitch = imageDesc->image_row_pitch ? imageDesc->image_row_pitch : imageWidth * surfaceFormat->ImageElementSizeInBytes;
         auto hostPtrSlicePitch = imageDesc->image_slice_pitch ? imageDesc->image_slice_pitch : hostPtrRowPitch * imageHeight;
-        auto isTilingAllowed = context->isSharedContext ? false : GmmHelper::allowTiling(*imageDesc) && !MemObjHelper::isLinearStorageForced(properties);
         MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+        auto isTilingAllowed = context->isSharedContext ? false : GmmHelper::allowTiling(*imageDesc) && !memoryProperties.forceLinearStorage;
         imgInfo.preferRenderCompression = MemObjHelper::isSuitableForRenderCompression(isTilingAllowed, memoryProperties,
                                                                                        context->peekContextType(), true);
 

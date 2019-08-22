@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/helpers/memory_properties_flags_helpers.h"
 #include "runtime/mem_obj/mem_obj_helper.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/utilities/base_object_utils.h"
@@ -28,22 +29,27 @@ TEST(MemObjHelper, givenInvalidMemFlagsForSubBufferWhenFlagsAreCheckedThenTrueIs
 
 TEST(MemObjHelper, givenClMemForceLinearStorageFlagWhenCheckForLinearStorageForceThenReturnProperValue) {
     MemoryProperties properties;
+    MemoryPropertiesFlags memoryProperties;
 
     properties.flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     properties.flags_intel = 0;
-    EXPECT_TRUE(MemObjHelper::isLinearStorageForced(properties));
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+    EXPECT_TRUE(memoryProperties.forceLinearStorage);
 
     properties.flags = 0;
     properties.flags_intel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    EXPECT_TRUE(MemObjHelper::isLinearStorageForced(properties));
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+    EXPECT_TRUE(memoryProperties.forceLinearStorage);
 
     properties.flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     properties.flags_intel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    EXPECT_TRUE(MemObjHelper::isLinearStorageForced(properties));
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+    EXPECT_TRUE(memoryProperties.forceLinearStorage);
 
     properties.flags = 0;
     properties.flags_intel = 0;
-    EXPECT_FALSE(MemObjHelper::isLinearStorageForced(properties));
+    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(properties);
+    EXPECT_FALSE(memoryProperties.forceLinearStorage);
 }
 
 TEST(MemObjHelper, givenValidPropertiesWhenValidatingMemoryPropertiesThenTrueIsReturned) {
