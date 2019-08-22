@@ -32,9 +32,6 @@ class Gmm {
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);
 
-    uint32_t getRenderHAlignment();
-    uint32_t getRenderVAlignment();
-
     void applyAuxFlagsForBuffer(bool preferRenderCompression);
     void applyMemoryFlags(bool systemMemoryPool, StorageInfo &storageInfo);
 

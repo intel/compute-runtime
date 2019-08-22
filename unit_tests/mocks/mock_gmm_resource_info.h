@@ -47,7 +47,9 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     uint32_t getHAlign() override { return 4u; }
 
-    uint32_t getVAlign() override { return 4u; }
+    uint32_t getHAlignSurfaceState() override { return 1u; }
+
+    uint32_t getVAlignSurfaceState() override { return 1u; }
 
     uint32_t getMaxLod() override { return 7u; }
 
