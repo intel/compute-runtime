@@ -17,3 +17,8 @@ void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper, co
     EXPECT_EQ(16384u, hwCaps.image3DMaxWidth);
     EXPECT_TRUE(hwCaps.isStatelesToStatefullWithOffsetSupported);
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenAskedForHvAlign4RequiredThenReturnTrue) {
+    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    EXPECT_TRUE(hwHelper.hvAlign4Required());
+}

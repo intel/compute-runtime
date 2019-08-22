@@ -40,6 +40,11 @@ bool HwHelperHw<GfxFamily>::supportsYTiling() const {
 }
 
 template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::hvAlign4Required() const {
+    return true;
+}
+
+template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
     return false;
 }

@@ -161,6 +161,8 @@ TEST_F(GmmTests, validImageTypeQuery) {
         EXPECT_GT(imgInfo.qPitch, 0u);
     }
 
+    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
+
     EXPECT_EQ(queryGmm->resourceParams.Type, GMM_RESOURCE_TYPE::RESOURCE_3D);
     EXPECT_EQ(queryGmm->resourceParams.NoGfxMemory, 1u);
 
@@ -172,7 +174,7 @@ TEST_F(GmmTests, validImageTypeQuery) {
     EXPECT_EQ(queryGmm->resourceParams.BaseHeight, 17u);
     EXPECT_EQ(queryGmm->resourceParams.Depth, 17u);
     EXPECT_EQ(queryGmm->resourceParams.ArraySize, 1u);
-    EXPECT_EQ(queryGmm->resourceParams.Flags.Wa.__ForceOtherHVALIGN4, 1u);
+    EXPECT_EQ(!!queryGmm->resourceParams.Flags.Wa.__ForceOtherHVALIGN4, hwHelper.hvAlign4Required());
 }
 
 TEST_F(GmmTests, givenWidthWhenCreatingResourceThenSetWidth64Field) {

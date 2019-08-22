@@ -115,6 +115,8 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
         break;
     }
 
+    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
+
     resourceParams.NoGfxMemory = 1; // dont allocate, only query for params
 
     resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE;
@@ -124,7 +126,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
     resourceParams.BaseHeight = imageHeight;
     resourceParams.Depth = imageDepth;
     resourceParams.ArraySize = imageCount;
-    resourceParams.Flags.Wa.__ForceOtherHVALIGN4 = 1;
+    resourceParams.Flags.Wa.__ForceOtherHVALIGN4 = hwHelper.hvAlign4Required();
     resourceParams.MaxLod = imgInfo.baseMipLevel + imgInfo.mipCount;
     if (imgInfo.imgDesc->image_row_pitch && imgInfo.imgDesc->mem_object) {
         resourceParams.OverridePitch = (uint32_t)imgInfo.imgDesc->image_row_pitch;
@@ -132,7 +134,6 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo) {
     }
 
     applyAuxFlagsForImage(imgInfo);
-    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->platform.eRenderCoreFamily);
     if (!hwHelper.supportsYTiling() && resourceParams.Flags.Info.TiledY == 1) {
         resourceParams.Flags.Info.Linear = 0;
         resourceParams.Flags.Info.TiledY = 0;

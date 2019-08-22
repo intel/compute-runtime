@@ -42,6 +42,7 @@ class HwHelper {
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
     virtual bool supportsYTiling() const = 0;
+    virtual bool hvAlign4Required() const = 0;
     virtual bool obtainRenderBufferCompressionPreference(const size_t size) const = 0;
     virtual void checkResourceCompatibility(Buffer *buffer, cl_int &errorCode) = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
@@ -128,6 +129,8 @@ class HwHelperHw : public HwHelper {
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override;
 
     bool supportsYTiling() const override;
+
+    bool hvAlign4Required() const override;
 
     bool obtainRenderBufferCompressionPreference(const size_t size) const override;
 
