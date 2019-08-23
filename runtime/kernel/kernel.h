@@ -393,6 +393,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     void setUnifiedMemoryExecInfo(GraphicsAllocation *argValue);
     void clearUnifiedMemoryExecInfo();
 
+    bool areStatelessWritesUsed() { return containsStatelessWrites; }
+
   protected:
     struct ObjectCounts {
         uint32_t imageCount;
@@ -510,6 +512,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool usingSharedObjArgs;
     bool usingImagesOnly = false;
     bool auxTranslationRequired = false;
+    bool containsStatelessWrites = true;
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;
     uint32_t uncacheableArgsCount = 0;

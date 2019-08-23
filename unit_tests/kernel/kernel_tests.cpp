@@ -43,9 +43,6 @@ using namespace DeviceHostQueue;
 
 class KernelTest : public ProgramFromBinaryTest {
   public:
-    KernelTest() {
-    }
-
     ~KernelTest() override = default;
 
   protected:
@@ -99,10 +96,6 @@ TEST(KernelTest, isMemObj) {
 TEST_P(KernelTest, getKernelHeap) {
     EXPECT_EQ(pKernel->getKernelInfo().heapInfo.pKernelHeap, pKernel->getKernelHeap());
     EXPECT_EQ(pKernel->getKernelInfo().heapInfo.pKernelHeader->KernelHeapSize, pKernel->getKernelHeapSize());
-}
-
-TEST_P(KernelTest, Create_Simple) {
-    // included in the setup of fixture
 }
 
 TEST_P(KernelTest, GetInfo_InvalidParamName) {
@@ -2720,6 +2713,12 @@ TEST(KernelTest, givenKernelWithPatchInfoCollectionDisabledWhenPatchWithImplicit
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
     kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, patchToken);
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
+}
+
+TEST(KernelTest, givenDefaultKernelWhenItIsCreatedThenItReportsStatelessWrites) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    MockKernelWithInternals kernel(*device);
+    EXPECT_TRUE(kernel.mockKernel->areStatelessWritesUsed());
 }
 
 namespace NEO {
