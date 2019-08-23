@@ -52,9 +52,7 @@ void ScratchSpaceControllerBase::createScratchSpaceAllocation() {
 uint64_t ScratchSpaceControllerBase::calculateNewGSH() {
     uint64_t gsh = 0;
     if (scratchAllocation) {
-        auto &hwHelper = HwHelper::get(executionEnvironment.getHardwareInfo()->platform.eRenderCoreFamily);
-        auto scratchSpaceOffsetFor64bit = hwHelper.getScratchSpaceOffsetFor64bit();
-        gsh = scratchAllocation->getGpuAddress() - scratchSpaceOffsetFor64bit;
+        gsh = scratchAllocation->getGpuAddress() - ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
     }
     return gsh;
 }
@@ -66,10 +64,8 @@ uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
     if (scratchAllocation) {
         scratchAddress = scratchAllocation->getGpuAddressToPatch();
         if (is64bit && !getMemoryManager()->peekForce32BitAllocations()) {
-            auto &hwHelper = HwHelper::get(executionEnvironment.getHardwareInfo()->platform.eRenderCoreFamily);
-            auto scratchSpaceOffsetFor64bit = hwHelper.getScratchSpaceOffsetFor64bit();
             //this is to avoid scractch allocation offset "0"
-            scratchAddress = scratchSpaceOffsetFor64bit;
+            scratchAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
         }
     }
     return scratchAddress;

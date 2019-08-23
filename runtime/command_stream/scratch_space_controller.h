@@ -20,6 +20,10 @@ class InternalAllocationStorage;
 class MemoryManager;
 struct HardwareInfo;
 
+namespace ScratchSpaceConstants {
+constexpr size_t scratchSpaceOffsetFor64Bit = 4096u;
+}
+
 class ScratchSpaceController {
   public:
     ScratchSpaceController(ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage);

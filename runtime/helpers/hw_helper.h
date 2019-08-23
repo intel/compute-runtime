@@ -60,7 +60,6 @@ class HwHelper {
                                                 cl_mem_flags flags,
                                                 uint32_t surfaceType,
                                                 bool forceNonAuxMode) = 0;
-    virtual size_t getScratchSpaceOffsetFor64bit() = 0;
     virtual const std::vector<aub_stream::EngineType> getGpgpuEngineInstances() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
     virtual std::string getExtensions() const = 0;
@@ -150,8 +149,6 @@ class HwHelperHw : public HwHelper {
                                         cl_mem_flags flags,
                                         uint32_t surfaceType,
                                         bool forceNonAuxMode) override;
-
-    size_t getScratchSpaceOffsetFor64bit() override;
 
     const std::vector<aub_stream::EngineType> getGpgpuEngineInstances() const override;
 

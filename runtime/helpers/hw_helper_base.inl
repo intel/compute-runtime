@@ -133,11 +133,6 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(ExecutionEnvironment &ex
 }
 
 template <typename Family>
-size_t HwHelperHw<Family>::getScratchSpaceOffsetFor64bit() {
-    return 4096;
-}
-
-template <typename Family>
 bool HwHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.EnableLocalMemory.get() != -1) {
         return DebugManager.flags.EnableLocalMemory.get();

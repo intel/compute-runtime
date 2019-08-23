@@ -595,8 +595,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
         EXPECT_TRUE(graphicsAllocationScratch->is32BitAllocation());
         EXPECT_EQ(GmmHelper::decanonize(graphicsAllocationScratch->getGpuAddress()) - GSHaddress, graphicsAddress);
     } else if (!deviceInfo.svmCapabilities && is64bit) {
-        EXPECT_EQ(HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), mediaVfeState->getScratchSpaceBasePointer());
-        EXPECT_EQ(GSHaddress + HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), graphicsAllocationScratch->getGpuAddressToPatch());
+        EXPECT_EQ(ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, mediaVfeState->getScratchSpaceBasePointer());
+        EXPECT_EQ(GSHaddress + ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, graphicsAllocationScratch->getGpuAddressToPatch());
     } else {
         EXPECT_EQ((uint64_t)graphicsAllocationScratch->getUnderlyingBuffer(), graphicsAddress);
     }
@@ -608,7 +608,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
     uint64_t scratchBaseHighPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointerHigh();
 
     if (is64bit && !deviceInfo.force32BitAddressess) {
-        uint64_t expectedAddress = HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit();
+        uint64_t expectedAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
         EXPECT_EQ(expectedAddress, scratchBaseLowPart);
         EXPECT_EQ(0u, scratchBaseHighPart);
     } else {
@@ -620,7 +620,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
         EXPECT_EQ(pDevice->getMemoryManager()->getExternalHeapBaseAddress(), GSHaddress);
     } else {
         if (is64bit) {
-            EXPECT_EQ(graphicsAddress - HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), GSHaddress);
+            EXPECT_EQ(graphicsAddress - ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, GSHaddress);
         } else {
             EXPECT_EQ(0u, GSHaddress);
         }
@@ -709,8 +709,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
         EXPECT_TRUE(graphicsAllocationScratch->is32BitAllocation());
         EXPECT_EQ(GmmHelper::decanonize(graphicsAllocationScratch->getGpuAddress()) - GSHaddress, graphicsAddress);
     } else if (!deviceInfo.svmCapabilities && is64bit) {
-        EXPECT_EQ(HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), mediaVfeState->getScratchSpaceBasePointer());
-        EXPECT_EQ(GSHaddress + HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), graphicsAllocationScratch->getGpuAddressToPatch());
+        EXPECT_EQ(ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, mediaVfeState->getScratchSpaceBasePointer());
+        EXPECT_EQ(GSHaddress + ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, graphicsAllocationScratch->getGpuAddressToPatch());
     } else {
         EXPECT_EQ((uint64_t)graphicsAllocationScratch->getUnderlyingBuffer(), graphicsAddress);
     }
@@ -722,7 +722,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
     uint64_t scratchBaseHighPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointerHigh();
 
     if (is64bit && !deviceInfo.force32BitAddressess) {
-        lowPartGraphicsAddress = HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit();
+        lowPartGraphicsAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
         highPartGraphicsAddress = 0u;
     }
 
@@ -733,7 +733,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNDRangeKer
         EXPECT_EQ(pDevice->getMemoryManager()->getExternalHeapBaseAddress(), GSHaddress);
     } else {
         if (is64bit) {
-            EXPECT_EQ(graphicsAddress - HwHelperHw<FamilyType>::get().getScratchSpaceOffsetFor64bit(), GSHaddress);
+            EXPECT_EQ(graphicsAddress - ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, GSHaddress);
         } else {
             EXPECT_EQ(0u, GSHaddress);
         }
