@@ -109,11 +109,22 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenBlockKernelWithPrivate
         int32_t executionStamp = 0;
         auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment);
         pDevice->resetCommandStreamReceiver(mockCSR);
-        GraphicsAllocation *privateSurface = pKernel->getProgram()->getBlockKernelManager()->getPrivateSurface(0);
+
+        size_t kernelRequiringPrivateSurface = pKernel->getProgram()->getBlockKernelManager()->getCount();
+        for (size_t i = 0; i < pKernel->getProgram()->getBlockKernelManager()->getCount(); ++i) {
+            if (nullptr != pKernel->getProgram()->getBlockKernelManager()->getBlockKernelInfo(i)->patchInfo.pAllocateStatelessPrivateSurface) {
+                kernelRequiringPrivateSurface = i;
+                break;
+            }
+        }
+
+        ASSERT_NE(kernelRequiringPrivateSurface, pKernel->getProgram()->getBlockKernelManager()->getCount());
+
+        GraphicsAllocation *privateSurface = pKernel->getProgram()->getBlockKernelManager()->getPrivateSurface(kernelRequiringPrivateSurface);
 
         if (privateSurface == nullptr) {
             privateSurface = mockCSR->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-            pKernel->getProgram()->getBlockKernelManager()->pushPrivateSurface(privateSurface, 0);
+            pKernel->getProgram()->getBlockKernelManager()->pushPrivateSurface(privateSurface, kernelRequiringPrivateSurface);
         }
 
         pCmdQ->enqueueKernel(pKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
@@ -131,11 +142,21 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenBlocksWithPrivateMemor
         auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
         csr.storeMakeResidentAllocations = true;
 
-        auto privateAllocation = pKernel->getProgram()->getBlockKernelManager()->getPrivateSurface(0);
+        size_t kernelRequiringPrivateSurface = pKernel->getProgram()->getBlockKernelManager()->getCount();
+        for (size_t i = 0; i < pKernel->getProgram()->getBlockKernelManager()->getCount(); ++i) {
+            if (nullptr != pKernel->getProgram()->getBlockKernelManager()->getBlockKernelInfo(i)->patchInfo.pAllocateStatelessPrivateSurface) {
+                kernelRequiringPrivateSurface = i;
+                break;
+            }
+        }
+
+        ASSERT_NE(kernelRequiringPrivateSurface, pKernel->getProgram()->getBlockKernelManager()->getCount());
+
+        auto privateAllocation = pKernel->getProgram()->getBlockKernelManager()->getPrivateSurface(kernelRequiringPrivateSurface);
 
         if (privateAllocation == nullptr) {
             privateAllocation = csr.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
-            blockKernelManager->pushPrivateSurface(privateAllocation, 0);
+            blockKernelManager->pushPrivateSurface(privateAllocation, kernelRequiringPrivateSurface);
         }
 
         auto uEvent = make_releaseable<UserEvent>(pContext);
