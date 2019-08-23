@@ -22,6 +22,7 @@ namespace NEO {
 class ExecutionEnvironment;
 class GraphicsAllocation;
 struct HardwareCapabilities;
+class GmmHelper;
 
 class HwHelper {
   public:
@@ -65,6 +66,7 @@ class HwHelper {
     virtual std::string getExtensions() const = 0;
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
     virtual uint32_t getMetricsLibraryGenId() const = 0;
+    virtual uint32_t getMocsIndex(GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
 
     static constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
 
@@ -157,6 +159,8 @@ class HwHelperHw : public HwHelper {
     std::string getExtensions() const override;
 
     uint32_t getMetricsLibraryGenId() const override;
+
+    uint32_t getMocsIndex(GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const override;
 
   protected:
     HwHelperHw() = default;

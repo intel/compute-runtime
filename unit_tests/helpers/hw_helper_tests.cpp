@@ -643,3 +643,24 @@ TEST_F(HwHelperTest, givenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGetEnab
     DebugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
     EXPECT_TRUE(helper.getEnableLocalMemory(hardwareInfo));
 }
+
+TEST_F(HwHelperTest, givenVariousCachesRequestProperMOCSIndexesAreBeingReturned) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    auto gmmHelper = this->pDevice->getExecutionEnvironment()->getGmmHelper();
+    auto expectedMocsForL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    auto expectedMocsForL3on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+    auto expectedMocsForL3andL1on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
+
+    auto mocsIndex = helper.getMocsIndex(*gmmHelper, false, true);
+    EXPECT_EQ(expectedMocsForL3off, mocsIndex);
+
+    mocsIndex = helper.getMocsIndex(*gmmHelper, true, false);
+    EXPECT_EQ(expectedMocsForL3on, mocsIndex);
+
+    mocsIndex = helper.getMocsIndex(*gmmHelper, true, true);
+    if (mocsIndex != expectedMocsForL3andL1on) {
+        EXPECT_EQ(expectedMocsForL3on, mocsIndex);
+    } else {
+        EXPECT_EQ(expectedMocsForL3andL1on, mocsIndex);
+    }
+}

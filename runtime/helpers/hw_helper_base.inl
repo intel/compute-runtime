@@ -207,5 +207,12 @@ template <typename GfxFamily>
 uint32_t HwHelperHw<GfxFamily>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Gen9);
 }
+template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::getMocsIndex(GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
+    if (l3enabled) {
+        return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+    }
+    return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+}
 
 } // namespace NEO
