@@ -329,6 +329,29 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
     EXPECT_EQ(CacheSettings::l3CacheOn, csr.latestSentStatelessMocsConfig);
 }
 
+HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndSizeWhenBlockedReadBufferIsCalledThenRecordedL3IndexIsL3Off) {
+    auto ptr = reinterpret_cast<void *>(0x1039);
+
+    auto userEvent = clCreateUserEvent(pCmdQ->getContextPtr(), nullptr);
+
+    cl_int retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
+                                             CL_FALSE,
+                                             0,
+                                             MemoryConstants::cacheLineSize,
+                                             ptr,
+                                             nullptr,
+                                             1,
+                                             &userEvent,
+                                             nullptr);
+
+    clSetUserEventStatus(userEvent, 0u);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(CacheSettings::l3CacheOff, csr.latestSentStatelessMocsConfig);
+    clReleaseEvent(userEvent);
+}
+
 HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelNotIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
