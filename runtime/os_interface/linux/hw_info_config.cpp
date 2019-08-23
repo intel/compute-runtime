@@ -147,7 +147,8 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     hwHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
-    outHwInfo->capabilityTable.instrumentationEnabled &= haveInstrumentation;
+    outHwInfo->capabilityTable.instrumentationEnabled =
+        (outHwInfo->capabilityTable.instrumentationEnabled && haveInstrumentation);
     outHwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
     outHwInfo->capabilityTable.ftrRenderCompressedImages = false;
 
