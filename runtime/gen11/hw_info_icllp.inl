@@ -6,10 +6,10 @@
  */
 
 #include "runtime/aub_mem_dump/aub_services.h"
+#include "runtime/gen11/hw_cmds.h"
 #include "runtime/memory_manager/memory_constants.h"
 
 #include "engine_node.h"
-#include "hw_cmds.h"
 #include "hw_info_icllp.h"
 
 namespace NEO {

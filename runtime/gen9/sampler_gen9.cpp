@@ -5,10 +5,9 @@
  *
  */
 
+#include "runtime/gen9/hw_cmds.h"
 #include "runtime/sampler/sampler.h"
 #include "runtime/sampler/sampler.inl"
-
-#include "hw_cmds.h"
 
 namespace NEO {
 

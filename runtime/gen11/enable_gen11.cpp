@@ -5,10 +5,9 @@
  *
  */
 
+#include "runtime/gen11/hw_cmds.h"
 #include "runtime/helpers/enable_product.inl"
 #include "runtime/os_interface/hw_info_config.h"
-
-#include "hw_cmds.h"
 
 namespace NEO {
 
@@ -18,7 +17,6 @@ static EnableGfxProductHw<IGFX_ICELAKE_LP> enableGfxProductHwICLLP;
 #ifdef SUPPORT_LKF
 static EnableGfxProductHw<IGFX_LAKEFIELD> enableGfxProductHwLKF;
 #endif
-
 #ifdef SUPPORT_EHL
 static EnableGfxProductHw<IGFX_ELKHARTLAKE> enableGfxProductHwEHL;
 #endif

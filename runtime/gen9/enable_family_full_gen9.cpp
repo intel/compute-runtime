@@ -11,12 +11,11 @@
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/event/perf_counter.h"
+#include "runtime/gen8/hw_cmds.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/sampler/sampler.h"
-
-#include "hw_cmds.h"
 
 #include <type_traits>
 
