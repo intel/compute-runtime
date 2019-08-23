@@ -579,6 +579,43 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenForce32bitallocationI
     EXPECT_TRUE(memoryManager.peekForce32BitAllocations());
 }
 
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAskedFor32BitAllocationWhenLimitedAllocationIsEnabledThenGpuRangeFromExternalHeapIsAllocatiedAndBaseAddressIsSet) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    MockMemoryManager memoryManager(*executionEnvironment);
+    memoryManager.setForce32BitAllocations(true);
+    memoryManager.forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    AllocationData allocationData;
+    MockMemoryManager::getAllocationData(allocationData, {MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER}, nullptr, StorageInfo{});
+    auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithAlignment(allocationData);
+    ASSERT_NE(gfxAllocation, nullptr);
+    EXPECT_NE(gfxAllocation->getGpuBaseAddress(), 0ull);
+    EXPECT_EQ(gfxAllocation->getGpuBaseAddress(), memoryManager.getExternalHeapBaseAddress());
+    memoryManager.freeGraphicsMemory(gfxAllocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAskedForNon32BitAllocationWhenLimitedAllocationIsEnabledThenGpuRangeFromiStandardHeapIsAllocatiedAndBaseAddressIsNotSet) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
+    MockMemoryManager memoryManager(*executionEnvironment);
+    memoryManager.forceLimitedRangeAllocator(0xFFFFFFFFF);
+
+    AllocationData allocationData;
+    MockMemoryManager::getAllocationData(allocationData, {MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER}, nullptr, StorageInfo{});
+    auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithAlignment(allocationData);
+    ASSERT_NE(gfxAllocation, nullptr);
+    EXPECT_EQ(gfxAllocation->getGpuBaseAddress(), 0ull);
+    EXPECT_EQ(gfxAllocation->getGpuAddress(), memoryManager.gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD) + 1 - GfxPartition::heapGranularity - MemoryConstants::pageSize);
+    memoryManager.freeGraphicsMemory(gfxAllocation);
+}
+
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemoryForImageIsCalledThenGraphicsAllocationIsReturned) {
     ExecutionEnvironment *executionEnvironment = platformImpl->peekExecutionEnvironment();
     MockMemoryManager memoryManager(*executionEnvironment);

@@ -31,6 +31,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
   public:
     using MemoryManager::allocateGraphicsMemoryForNonSvmHostPtr;
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
+    using MemoryManager::allocateGraphicsMemoryWithAlignment;
     using MemoryManager::allocateGraphicsMemoryWithProperties;
     using MemoryManager::AllocationData;
     using MemoryManager::createGraphicsAllocation;
@@ -99,6 +100,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType);
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
+
+    void forceLimitedRangeAllocator(uint64_t range) { gfxPartition->init(range, 0); }
 
     uint32_t freeGraphicsMemoryCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
