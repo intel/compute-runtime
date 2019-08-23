@@ -300,7 +300,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, cleanupSection) {
     uint32_t taskCount = 7;
 
     mockDeviceQueueHw->buildSlbDummyCommands();
-    mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel, nullptr, taskCount);
+    uint64_t tagAddress = 0x123450000;
+    mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel, nullptr, tagAddress, taskCount);
 
     HardwareParse hwParser;
     auto *slbCS = mockDeviceQueueHw->getSlbCS();
@@ -329,6 +330,21 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, cleanupSection) {
     auto pipeControlItor = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     EXPECT_NE(hwParser.cmdList.end(), pipeControlItor);
 
+    bool tagWriteFound = false;
+    while (auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*(++pipeControlItor))) {
+        if (pipeControlCmd->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            auto expectedAddressLow = static_cast<uint32_t>(tagAddress & 0x0000FFFFFFFFULL);
+            auto expectedAddressHigh = static_cast<uint32_t>(tagAddress >> 32);
+
+            if ((expectedAddressLow == pipeControlCmd->getAddress()) && (expectedAddressHigh == pipeControlCmd->getAddressHigh())) {
+                tagWriteFound = true;
+                break;
+            }
+        }
+    }
+
+    EXPECT_TRUE(tagWriteFound);
+
     auto bbEndItor = find<MI_BATCH_BUFFER_END *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     EXPECT_NE(hwParser.cmdList.end(), bbEndItor);
     MI_BATCH_BUFFER_END *bbEnd = (MI_BATCH_BUFFER_END *)*bbEndItor;
@@ -355,7 +371,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
 
     auto hwTimeStamp = pCommandQueue->getGpgpuCommandStreamReceiver().getEventTsAllocator()->getTag();
     mockDeviceQueueHw->buildSlbDummyCommands();
-    mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel, hwTimeStamp, taskCount);
+    mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel, hwTimeStamp, 0x123, taskCount);
 
     uint64_t eventTimestampAddr = igilCmdQueue->m_controls.m_EventTimestampAddress;
     uint64_t contextCompleteAddr = hwTimeStamp->getGpuAddress() + offsetof(HwTimeStamps, ContextCompleteTS);
@@ -673,7 +689,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, addExecutionModelClea
     mockDeviceQueueHw->buildSlbDummyCommands();
 
     EXPECT_FALSE(mockDeviceQueueHw->addMediaStateClearCmdsCalled);
-    mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel.get(), nullptr, taskCount);
+    mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel.get(), nullptr, 0x123, taskCount);
     EXPECT_TRUE(mockDeviceQueueHw->addMediaStateClearCmdsCalled);
 }
 

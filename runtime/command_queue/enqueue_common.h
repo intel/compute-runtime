@@ -488,6 +488,7 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(DeviceQueueHw<GfxFamily> *d
                                             *devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
                                             parentKernel,
                                             (uint32_t)multiDispatchInfo.size(),
+                                            getGpgpuCommandStreamReceiver().getTagAllocation()->getGpuAddress(),
                                             taskCount,
                                             hwTimeStamps);
 

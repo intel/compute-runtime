@@ -99,7 +99,7 @@ void DeviceQueueHw<GfxFamily>::initPipeControl(PIPE_CONTROL *pc) {
 }
 
 template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint32_t taskCount) {
+void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount) {
     // CleanUp Section
     auto offset = slbCS.getUsed();
     auto alignmentSize = alignUp(offset, MemoryConstants::pageSize) - offset;
@@ -126,8 +126,6 @@ void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKer
     PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(slbCS,
                                                                                PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
                                                                                criticalSectionAddress, ExecutionModelCriticalSection::Free, false, device->getHardwareInfo());
-
-    uint64_t tagAddress = reinterpret_cast<uint64_t>(device->getDefaultEngine().commandStreamReceiver->getTagAddress());
 
     PipeControlHelper<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(slbCS,
                                                                                PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,

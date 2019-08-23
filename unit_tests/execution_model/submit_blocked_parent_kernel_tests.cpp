@@ -56,10 +56,10 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
         indirectStateSetup = true;
         return BaseClass::setupIndirectState(surfaceStateHeap, dynamicStateHeap, parentKernel, parentIDCount);
     }
-    void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint32_t taskCount) override {
+    void addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint64_t tagAddress, uint32_t taskCount) override {
         cleanupSectionAdded = true;
         timestampAddedInCleanupSection = hwTimeStamp ? hwTimeStamp->tagForCpuAccess : nullptr;
-        return BaseClass::addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, taskCount);
+        return BaseClass::addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, tagAddress, taskCount);
     }
     void dispatchScheduler(LinearStream &commandStream, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) override {
         schedulerDispatched = true;

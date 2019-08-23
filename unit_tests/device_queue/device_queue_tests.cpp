@@ -27,7 +27,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSimpleTest, setupExecutionModelDispatchDo
     size_t size = 20;
     IndirectHeap ssh(buffer, size);
     IndirectHeap dsh(buffer, size);
-    devQueue.setupExecutionModelDispatch(ssh, dsh, nullptr, 0, 0, 0);
+    devQueue.setupExecutionModelDispatch(ssh, dsh, nullptr, 0, 0, 0x123, 0);
 
     EXPECT_EQ(0u, ssh.getUsed());
 
