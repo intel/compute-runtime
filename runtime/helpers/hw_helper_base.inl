@@ -157,6 +157,7 @@ typename Family::PIPE_CONTROL *PipeControlHelper<Family>::obtainPipeControlAndPr
     pipeControl->setAddress(static_cast<uint32_t>(gpuAddress & 0x0000FFFFFFFFULL));
     pipeControl->setAddressHigh(static_cast<uint32_t>(gpuAddress >> 32));
     pipeControl->setDcFlushEnable(dcFlush);
+    pipeControl->setInstructionCacheInvalidateEnable(true);
     if (operation == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
         pipeControl->setImmediateData(immediateData);
     }

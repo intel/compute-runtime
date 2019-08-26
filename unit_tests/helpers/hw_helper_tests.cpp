@@ -196,6 +196,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     expectedPipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP);
     expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
     expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
+    expectedPipeControl.setInstructionCacheInvalidateEnable(true);
     HardwareInfo hardwareInfo = *platformDevices[0];
 
     auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, false, hardwareInfo);
@@ -220,6 +221,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
     expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
     expectedPipeControl.setImmediateData(immediateData);
+    expectedPipeControl.setInstructionCacheInvalidateEnable(true);
     HardwareInfo hardwareInfo = *platformDevices[0];
 
     auto pipeControl = PipeControlHelper<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, false, hardwareInfo);
