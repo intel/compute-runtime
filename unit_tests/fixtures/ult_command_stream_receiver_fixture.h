@@ -9,6 +9,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -117,7 +118,10 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.isPreambleSent = true;
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.setMediaVFEStateDirty(false);
-        commandStreamReceiver.latestSentStatelessMocsConfig = CacheSettings::l3CacheOn;
+        auto gmmHelper = commandStreamReceiver.peekExecutionEnvironment().getGmmHelper();
+        auto mocsIndex = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+
+        commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex >> 1;
         commandStreamReceiver.lastSentL3Config = L3Config;
         configureCSRHeapStatesToNonDirty<GfxFamily>();
         commandStreamReceiver.taskLevel = taskLevel;

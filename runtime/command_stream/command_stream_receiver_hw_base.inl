@@ -270,12 +270,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
 
-    auto requiredL3Index = CacheSettings::l3CacheOn;
-    if (dispatchFlags.l3CacheSettings == L3CachingSettings::l3CacheOff) {
-        requiredL3Index = CacheSettings::l3CacheOff;
-    }
+    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+    auto l3On = dispatchFlags.l3CacheSettings != L3CachingSettings::l3CacheOff;
+    auto mocsIndex = hwHelper.getMocsIndex(*device.getGmmHelper(), l3On, false);
 
-    if (requiredL3Index != latestSentStatelessMocsConfig) {
+    if (mocsIndex != latestSentStatelessMocsConfig) {
         isStateBaseAddressDirty = true;
     }
 
@@ -300,7 +299,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             ioh,
             ssh,
             newGSHbase,
-            requiredL3Index,
+            mocsIndex,
             getMemoryManager()->getInternalHeapBaseAddress(),
             device.getGmmHelper(),
             dispatchFlags);
@@ -317,7 +316,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         programStateSip(commandStreamCSR, device);
 
-        latestSentStatelessMocsConfig = requiredL3Index;
+        latestSentStatelessMocsConfig = mocsIndex;
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGSHbase);

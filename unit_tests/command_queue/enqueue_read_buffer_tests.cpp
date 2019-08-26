@@ -294,7 +294,10 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenAlignedPointerAndAlignedSizeWhenReadBuf
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(CacheSettings::l3CacheOn, csr.latestSentStatelessMocsConfig);
+    auto gmmHelper = csr.peekExecutionEnvironment().getGmmHelper();
+    auto mocsIndexL3on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+
+    EXPECT_EQ(mocsIndexL3on, csr.latestSentStatelessMocsConfig);
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenReadBufferIsCalledThenRecordedL3IndexIsL3Off) {
@@ -312,7 +315,12 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(CacheSettings::l3CacheOff, csr.latestSentStatelessMocsConfig);
+
+    auto gmmHelper = csr.peekExecutionEnvironment().getGmmHelper();
+    auto mocsIndexL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    auto mocsIndexL3on = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+
+    EXPECT_EQ(mocsIndexL3off, csr.latestSentStatelessMocsConfig);
 
     void *ptr2 = (void *)0x1040;
 
@@ -326,7 +334,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
                                       nullptr,
                                       nullptr);
 
-    EXPECT_EQ(CacheSettings::l3CacheOn, csr.latestSentStatelessMocsConfig);
+    EXPECT_EQ(mocsIndexL3on, csr.latestSentStatelessMocsConfig);
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndSizeWhenBlockedReadBufferIsCalledThenRecordedL3IndexIsL3Off) {
@@ -348,7 +356,10 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndSizeWhenBlockedRead
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(CacheSettings::l3CacheOff, csr.latestSentStatelessMocsConfig);
+    auto gmmHelper = csr.peekExecutionEnvironment().getGmmHelper();
+    auto mocsIndexL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+
+    EXPECT_EQ(mocsIndexL3off, csr.latestSentStatelessMocsConfig);
     clReleaseEvent(userEvent);
 }
 

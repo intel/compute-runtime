@@ -55,12 +55,13 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     pCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
-    //set cache settings
-    auto mocsToProgram = gmmHelper->getMOCS(statelessMocsIndex);
     if (DebugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
-        mocsToProgram = (DebugManager.flags.OverrideStatelessMocsIndex.get() << 1);
+        statelessMocsIndex = DebugManager.flags.OverrideStatelessMocsIndex.get();
     }
-    pCmd->setStatelessDataPortAccessMemoryObjectControlState(mocsToProgram);
+
+    statelessMocsIndex = statelessMocsIndex << 1;
+
+    pCmd->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
     pCmd->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
 
     appendStateBaseAddressParameters(pCmd, dsh, ioh, ssh, generalStateBase, internalHeapBase, gmmHelper, dispatchFlags);
