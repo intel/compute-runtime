@@ -9,7 +9,6 @@
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hardware_commands_helper.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
@@ -208,12 +207,4 @@ template <typename GfxFamily>
 uint32_t HwHelperHw<GfxFamily>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Gen9);
 }
-template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getMocsIndex(GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
-    if (l3enabled) {
-        return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
-    }
-    return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
-}
-
 } // namespace NEO
