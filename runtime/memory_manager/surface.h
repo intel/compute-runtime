@@ -75,7 +75,7 @@ class HostPtrSurface : public Surface {
         return isPtrCopyAllowed;
     }
 
-    virtual bool allowsL3Caching() override {
+    bool allowsL3Caching() override {
         return isL3Capable(*gfxAllocation);
     }
 
